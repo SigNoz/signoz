@@ -491,7 +491,7 @@ func IsOrderByTs(orderBy []v3.OrderBy) bool {
 // PrepareLogsQuery prepares the query for logs
 // start and end are in epoch millisecond
 // step is in seconds
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, []any, error) {
 
 	// adjust the start and end time to the step interval
 	// NOTE: Disabling this as it's creating confusion between charts and actual data
@@ -503,29 +503,29 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	if options.IsLivetailQuery {
 		query, err := buildLogsLiveTailQuery(mq)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
-		return query, nil
+		return query, nil, nil
 	} else if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the groupby names
 		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 		query = AddLimitToQuery(query, mq.Limit)
 
-		return query, nil
+		return query, nil, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
 		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
-		return query, nil
+		return query, nil, nil
 	}
 
 	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	if panelType == v3.PanelTypeValue {
 		query, err = ReduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
@@ -534,7 +534,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	if panelType == v3.PanelTypeList {
 		// check if limit exceeded
 		if mq.Limit > 0 && mq.Offset >= mq.Limit {
-			return "", fmt.Errorf("max limit exceeded")
+			return "", nil, fmt.Errorf("max limit exceeded")
 		}
 
 		if mq.PageSize > 0 {
@@ -556,5 +556,5 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		query = AddLimitToQuery(query, mq.Limit)
 	}
 
-	return query, err
+	return query, nil, nil
 }

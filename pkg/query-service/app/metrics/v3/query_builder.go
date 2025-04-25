@@ -335,7 +335,7 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 // from the database
 // start and end are in milliseconds
 // step is in seconds
-func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
+func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, []any, error) {
 
 	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, *mq)
 
@@ -386,7 +386,7 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 		}
 	}
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	if having(mq.Having) != "" {
@@ -396,7 +396,7 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	if panelType == v3.PanelTypeValue {
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
-	return query, err
+	return query, nil, err
 }
 
 func BuildPromQuery(promQuery *v3.PromQuery, step, start, end int64) *model.QueryRangeParams {

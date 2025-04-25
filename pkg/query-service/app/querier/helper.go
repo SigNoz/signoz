@@ -25,7 +25,7 @@ func prepareLogsQuery(_ context.Context,
 	end int64,
 	builderQuery *v3.BuilderQuery,
 	params *v3.QueryRangeParamsV3,
-) (string, error) {
+) (string, []any, error) {
 	query := ""
 
 	logsQueryBuilder := logsV3.PrepareLogsQuery
@@ -34,12 +34,12 @@ func prepareLogsQuery(_ context.Context,
 	}
 
 	if params == nil || builderQuery == nil {
-		return query, fmt.Errorf("params and builderQuery cannot be nil")
+		return query, nil, fmt.Errorf("params and builderQuery cannot be nil")
 	}
 
 	// for ts query with limit replace it as it is already formed
 	if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
-		limitQuery, err := logsQueryBuilder(
+		limitQuery, args, err := logsQueryBuilder(
 			start,
 			end,
 			params.CompositeQuery.QueryType,
@@ -48,9 +48,9 @@ func prepareLogsQuery(_ context.Context,
 			v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit},
 		)
 		if err != nil {
-			return query, err
+			return query, args, err
 		}
-		placeholderQuery, err := logsQueryBuilder(
+		placeholderQuery, args, err := logsQueryBuilder(
 			start,
 			end,
 			params.CompositeQuery.QueryType,
@@ -59,13 +59,13 @@ func prepareLogsQuery(_ context.Context,
 			v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit},
 		)
 		if err != nil {
-			return query, err
+			return query, args, err
 		}
 		query = strings.Replace(placeholderQuery, "#LIMIT_PLACEHOLDER", limitQuery, 1)
-		return query, err
+		return query, args, err
 	}
 
-	query, err := logsQueryBuilder(
+	query, args, err := logsQueryBuilder(
 		start,
 		end,
 		params.CompositeQuery.QueryType,
@@ -74,9 +74,9 @@ func prepareLogsQuery(_ context.Context,
 		v3.QBOptions{},
 	)
 	if err != nil {
-		return query, err
+		return query, args, err
 	}
-	return query, err
+	return query, args, err
 }
 
 func (q *querier) runBuilderQuery(
@@ -88,6 +88,7 @@ func (q *querier) runBuilderQuery(
 	wg *sync.WaitGroup,
 ) {
 	defer wg.Done()
+	var args []any
 	queryName := builderQuery.QueryName
 
 	start := params.Start
@@ -102,12 +103,12 @@ func (q *querier) runBuilderQuery(
 		var err error
 		if _, ok := cacheKeys[queryName]; !ok || params.NoCache {
 			zap.L().Info("skipping cache for logs query", zap.String("queryName", queryName), zap.Int64("start", start), zap.Int64("end", end), zap.Int64("step", builderQuery.StepInterval), zap.Bool("noCache", params.NoCache), zap.String("cacheKey", cacheKeys[queryName]))
-			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, start, end, builderQuery, params)
+			query, args, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, start, end, builderQuery, params)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
 			}
-			series, err := q.execClickHouseQuery(ctx, query)
+			series, err := q.execClickHouseQuery(ctx, query, args...)
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
 			return
 		}
@@ -117,12 +118,12 @@ func (q *querier) runBuilderQuery(
 		missedSeries := make([]querycache.CachedSeriesData, 0)
 		filteredMissedSeries := make([]querycache.CachedSeriesData, 0)
 		for _, miss := range misses {
-			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, miss.Start, miss.End, builderQuery, params)
+			query, args, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, miss.Start, miss.End, builderQuery, params)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
 			}
-			series, err := q.execClickHouseQuery(ctx, query)
+			series, err := q.execClickHouseQuery(ctx, query, args...)
 			if err != nil {
 				ch <- channelResult{
 					Err:    err,
@@ -179,7 +180,7 @@ func (q *querier) runBuilderQuery(
 		var err error
 		// for ts query with group by and limit form two queries
 		if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
-			limitQuery, err := tracesQueryBuilder(
+			limitQuery, _, err := tracesQueryBuilder(
 				start,
 				end,
 				params.CompositeQuery.PanelType,
@@ -190,7 +191,7 @@ func (q *querier) runBuilderQuery(
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
 				return
 			}
-			placeholderQuery, err := tracesQueryBuilder(
+			placeholderQuery, _, err := tracesQueryBuilder(
 				start,
 				end,
 				params.CompositeQuery.PanelType,
@@ -203,7 +204,7 @@ func (q *querier) runBuilderQuery(
 			}
 			query = strings.Replace(placeholderQuery, "#LIMIT_PLACEHOLDER", limitQuery, 1)
 		} else {
-			query, err = tracesQueryBuilder(
+			query, args, err = tracesQueryBuilder(
 				start,
 				end,
 				params.CompositeQuery.PanelType,
@@ -216,7 +217,7 @@ func (q *querier) runBuilderQuery(
 			}
 		}
 
-		series, err := q.execClickHouseQuery(ctx, query)
+		series, err := q.execClickHouseQuery(ctx, query, args...)
 		ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
 		return
 	}
@@ -237,12 +238,12 @@ func (q *querier) runBuilderQuery(
 	// If the query is not cached, we execute the query and return the result without caching it.
 	if _, ok := cacheKeys[queryName]; !ok || params.NoCache {
 		zap.L().Info("skipping cache for metrics query", zap.String("queryName", queryName), zap.Int64("start", start), zap.Int64("end", end), zap.Int64("step", builderQuery.StepInterval), zap.Bool("noCache", params.NoCache), zap.String("cacheKey", cacheKeys[queryName]))
-		query, err := metricsV3.PrepareMetricQuery(start, end, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{})
+		query, args, err := metricsV3.PrepareMetricQuery(start, end, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{})
 		if err != nil {
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 			return
 		}
-		series, err := q.execClickHouseQuery(ctx, query)
+		series, err := q.execClickHouseQuery(ctx, query, args...)
 		ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
 		return
 	}
@@ -252,7 +253,7 @@ func (q *querier) runBuilderQuery(
 	zap.L().Info("cache misses for metrics query", zap.Any("misses", misses))
 	missedSeries := make([]querycache.CachedSeriesData, 0)
 	for _, miss := range misses {
-		query, err := metricsV3.PrepareMetricQuery(
+		query, args, err := metricsV3.PrepareMetricQuery(
 			miss.Start,
 			miss.End,
 			params.CompositeQuery.QueryType,
@@ -269,7 +270,7 @@ func (q *querier) runBuilderQuery(
 			}
 			return
 		}
-		series, err := q.execClickHouseQuery(ctx, query)
+		series, err := q.execClickHouseQuery(ctx, query, args...)
 		if err != nil {
 			ch <- channelResult{
 				Err:    err,
@@ -308,7 +309,7 @@ func (q *querier) runBuilderExpression(
 
 	queryName := builderQuery.QueryName
 
-	queries, err := q.builder.PrepareQueries(params)
+	queries, args, err := q.builder.PrepareQueries(params)
 	if err != nil {
 		ch <- channelResult{Err: err, Name: queryName, Query: "", Series: nil}
 		return
@@ -317,7 +318,7 @@ func (q *querier) runBuilderExpression(
 	if _, ok := cacheKeys[queryName]; !ok || params.NoCache {
 		zap.L().Info("skipping cache for expression query", zap.String("queryName", queryName), zap.Int64("start", params.Start), zap.Int64("end", params.End), zap.Int64("step", params.Step), zap.Bool("noCache", params.NoCache), zap.String("cacheKey", cacheKeys[queryName]))
 		query := queries[queryName]
-		series, err := q.execClickHouseQuery(ctx, query)
+		series, err := q.execClickHouseQuery(ctx, query, args[queryName]...)
 		ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
 		return
 	}
@@ -328,7 +329,7 @@ func (q *querier) runBuilderExpression(
 	zap.L().Info("cache misses for expression query", zap.Any("misses", misses))
 	missedSeries := make([]querycache.CachedSeriesData, 0)
 	for _, miss := range misses {
-		missQueries, _ := q.builder.PrepareQueries(&v3.QueryRangeParamsV3{
+		missQueries, args, err := q.builder.PrepareQueries(&v3.QueryRangeParamsV3{
 			Start:          miss.Start,
 			End:            miss.End,
 			Step:           params.Step,
@@ -337,7 +338,7 @@ func (q *querier) runBuilderExpression(
 			Variables:      params.Variables,
 		})
 		query := missQueries[queryName]
-		series, err := q.execClickHouseQuery(ctx, query)
+		series, err := q.execClickHouseQuery(ctx, query, args[queryName]...)
 		if err != nil {
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 			return

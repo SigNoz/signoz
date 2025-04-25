@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	parser "github.com/SigNoz/signoz/pkg/parser/grammar"
 	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
 	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	metricsV4 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4"
@@ -17,6 +18,13 @@ import (
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
+	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -35,10 +43,12 @@ type channelResult struct {
 }
 
 type querier struct {
-	cache        cache.Cache
-	reader       interfaces.Reader
-	keyGenerator cache.KeyGenerator
-	queryCache   interfaces.QueryCache
+	cache          cache.Cache
+	reader         interfaces.Reader
+	keyGenerator   cache.KeyGenerator
+	queryCache     interfaces.QueryCache
+	telemetryStore telemetrystore.TelemetryStore
+	metadata       telemetrytypes.MetadataStore
 
 	fluxInterval time.Duration
 
@@ -57,10 +67,11 @@ type querier struct {
 }
 
 type QuerierOptions struct {
-	Reader       interfaces.Reader
-	Cache        cache.Cache
-	KeyGenerator cache.KeyGenerator
-	FluxInterval time.Duration
+	Reader         interfaces.Reader
+	Cache          cache.Cache
+	KeyGenerator   cache.KeyGenerator
+	FluxInterval   time.Duration
+	TelemetryStore telemetrystore.TelemetryStore
 
 	// used for testing
 	TestingMode       bool
@@ -83,13 +94,28 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 
 	qc := querycache.NewQueryCache(querycache.WithCache(opts.Cache), querycache.WithFluxInterval(opts.FluxInterval))
 
-	return &querier{
-		cache:        opts.Cache,
-		queryCache:   qc,
-		reader:       opts.Reader,
-		keyGenerator: opts.KeyGenerator,
-		fluxInterval: opts.FluxInterval,
+	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
+		opts.TelemetryStore,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanIndexV3TableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.AttributesMetadataTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2TableName,
+		telemetrylogs.TagAttributesV2TableName,
+		telemetrymetadata.DBName,
+		telemetrymetadata.AttributesMetadataLocalTableName,
+	)
 
+	return &querier{
+		cache:          opts.Cache,
+		queryCache:     qc,
+		reader:         opts.Reader,
+		keyGenerator:   opts.KeyGenerator,
+		fluxInterval:   opts.FluxInterval,
+		telemetryStore: opts.TelemetryStore,
+		metadata:       telemetryMetadataStore,
 		builder: queryBuilder.NewQueryBuilder(queryBuilder.QueryBuilderOptions{
 			BuildTraceQuery:  tracesQueryBuilder,
 			BuildLogQuery:    logsQueryBuilder,
@@ -106,12 +132,12 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 
 // execClickHouseQuery executes the clickhouse query and returns the series list
 // if testing mode is enabled, it returns the mocked series list
-func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.Series, error) {
+func (q *querier) execClickHouseQuery(ctx context.Context, query string, args ...any) ([]*v3.Series, error) {
 	if q.testingMode && q.reader == nil {
 		q.queriesExecuted = append(q.queriesExecuted, query)
 		return q.returnedSeries, q.returnedErr
 	}
-	result, err := q.reader.GetTimeSeriesResultV3(ctx, query)
+	result, err := q.reader.GetTimeSeriesResultV3(ctx, query, args...)
 	var pointsWithNegativeTimestamps int
 	// Filter out the points with negative or zero timestamps
 	for idx := range result {
@@ -345,12 +371,12 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 		// appending the filter to get the next set of data
 		if params.CompositeQuery.BuilderQueries[qName].DataSource == v3.DataSourceLogs {
 			params.CompositeQuery.BuilderQueries[qName].PageSize = pageSize - uint64(len(data))
-			queries, err := q.builder.PrepareQueries(params)
+			queries, args, err := q.builder.PrepareQueries(params)
 			if err != nil {
 				return nil, nil, err
 			}
 			for name, query := range queries {
-				rowList, err := q.reader.GetListResultV3(ctx, query)
+				rowList, err := q.reader.GetListResultV3(ctx, query, args[name]...)
 				if err != nil {
 					errs := []error{err}
 					errQueriesByName := map[string]error{
@@ -401,12 +427,12 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 
 			params.CompositeQuery.BuilderQueries[qName].Offset = 0
 			params.CompositeQuery.BuilderQueries[qName].Limit = tracesLimit
-			queries, err := q.builder.PrepareQueries(params)
+			queries, args, err := q.builder.PrepareQueries(params)
 			if err != nil {
 				return nil, nil, err
 			}
 			for name, query := range queries {
-				rowList, err := q.reader.GetListResultV3(ctx, query)
+				rowList, err := q.reader.GetListResultV3(ctx, query, args[name]...)
 				if err != nil {
 					errs := []error{err}
 					errQueriesByName := map[string]error{
@@ -440,6 +466,7 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 }
 
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
+	var args map[string][]any
 	// List query has support for only one query.
 	// we are skipping for PanelTypeTrace as it has a custom order by regardless of what's in the payload
 	if params.CompositeQuery != nil &&
@@ -466,7 +493,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	queries := make(map[string]string)
 	var err error
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		queries, err = q.builder.PrepareQueries(params)
+		queries, args, err = q.builder.PrepareQueries(params)
 	} else if params.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
 		for name, chQuery := range params.CompositeQuery.ClickHouseQueries {
 			queries[name] = chQuery.Query
@@ -484,7 +511,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 		wg.Add(1)
 		go func(name, query string) {
 			defer wg.Done()
-			rowList, err := q.reader.GetListResultV3(ctx, query)
+			rowList, err := q.reader.GetListResultV3(ctx, query, args[name]...)
 
 			if err != nil {
 				ch <- channelResult{Err: err, Name: name, Query: query}
@@ -518,6 +545,32 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	return res, nil, nil
 }
 
+func (q *querier) addFieldKeysToQuery(ctx context.Context, params *v3.QueryRangeParamsV3) {
+
+	keysSelectors := []*telemetrytypes.FieldKeySelector{}
+	for _, v := range params.CompositeQuery.BuilderQueries {
+		queryKeysSelectors, err := parser.QueryStringToKeysSelectors(v.SearchExpr)
+		if err != nil {
+			zap.L().Error("error in parsing query string to keys selectors", zap.Error(err))
+			continue
+		}
+		for idx := range queryKeysSelectors {
+			queryKeysSelectors[idx].Signal = telemetrytypes.Signal{String: valuer.NewString(string(v.DataSource))}
+		}
+		keysSelectors = append(keysSelectors, queryKeysSelectors...)
+	}
+
+	keys, err := q.metadata.GetKeysMulti(ctx, keysSelectors)
+	if err != nil {
+		zap.L().Error("error in getting keys", zap.Error(err))
+		return
+	}
+
+	for idx := range params.CompositeQuery.BuilderQueries {
+		params.CompositeQuery.BuilderQueries[idx].FieldKeys = keys
+	}
+}
+
 // QueryRange is the main function that runs the queries
 // and returns the results
 func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
@@ -527,6 +580,7 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3)
 	if params.CompositeQuery != nil {
 		switch params.CompositeQuery.QueryType {
 		case v3.QueryTypeBuilder:
+			q.addFieldKeysToQuery(ctx, params)
 			if params.CompositeQuery.PanelType == v3.PanelTypeList || params.CompositeQuery.PanelType == v3.PanelTypeTrace {
 				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params)
 			} else {

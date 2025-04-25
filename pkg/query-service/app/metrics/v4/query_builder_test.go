@@ -235,7 +235,7 @@ func TestPrepareMetricQueryCumulativeRate(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			// 1650991982000 - April 26, 2022 10:23:02 PM
 			// 1651078382000 - April 27, 2022 10:23:02 PM
-			query, err := PrepareMetricQuery(1650991982000, 1651078382000, v3.QueryTypeBuilder, v3.PanelTypeGraph, testCase.builderQuery, metricsV3.Options{})
+			query, _, err := PrepareMetricQuery(1650991982000, 1651078382000, v3.QueryTypeBuilder, v3.PanelTypeGraph, testCase.builderQuery, metricsV3.Options{})
 			assert.Nil(t, err)
 			assert.Contains(t, query, testCase.expectedQueryContains)
 		})
@@ -302,7 +302,7 @@ func TestPrepareMetricQueryDeltaRate(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			// 1650991982000 - April 26, 2022 10:23:02 PM
 			// 1651078382000 - April 27, 2022 10:23:02 PM
-			query, err := PrepareMetricQuery(1650991982000, 1651078382000, v3.QueryTypeBuilder, v3.PanelTypeGraph, testCase.builderQuery, metricsV3.Options{})
+			query, _, err := PrepareMetricQuery(1650991982000, 1651078382000, v3.QueryTypeBuilder, v3.PanelTypeGraph, testCase.builderQuery, metricsV3.Options{})
 			assert.Nil(t, err)
 			assert.Contains(t, query, testCase.expectedQueryContains)
 		})
@@ -387,7 +387,7 @@ func TestPrepreMetricQueryCumulativeQuantile(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			// 1650991982000 - April 26, 2022 10:23:02 PM
 			// 1651078382000 - April 27, 2022 10:23:02 PM
-			query, err := PrepareMetricQuery(1650991982000, 1651078382000, v3.QueryTypeBuilder, v3.PanelTypeGraph, testCase.builderQuery, metricsV3.Options{})
+			query, _, err := PrepareMetricQuery(1650991982000, 1651078382000, v3.QueryTypeBuilder, v3.PanelTypeGraph, testCase.builderQuery, metricsV3.Options{})
 			assert.Nil(t, err)
 			assert.Contains(t, query, testCase.expectedQueryContains)
 		})
@@ -472,7 +472,7 @@ func TestPrepreMetricQueryDeltaQuantile(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			// 1650991982000 - April 26, 2022 10:23:02 PM
 			// 1651078382000 - April 27, 2022 10:23:02 PM
-			query, err := PrepareMetricQuery(1650991982000, 1651078382000, v3.QueryTypeBuilder, v3.PanelTypeGraph, testCase.builderQuery, metricsV3.Options{})
+			query, _, err := PrepareMetricQuery(1650991982000, 1651078382000, v3.QueryTypeBuilder, v3.PanelTypeGraph, testCase.builderQuery, metricsV3.Options{})
 			assert.Nil(t, err)
 			assert.Contains(t, query, testCase.expectedQueryContains)
 		})
@@ -639,7 +639,7 @@ func TestPrepareMetricQueryGauge(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			// 1650991982000 - April 26, 2022 10:23:02 PM
 			// 1651078382000 - April 27, 2022 10:23:02 PM
-			query, err := PrepareMetricQuery(1650991982000, 1651078382000, v3.QueryTypeBuilder, v3.PanelTypeGraph, testCase.builderQuery, metricsV3.Options{})
+			query, _, err := PrepareMetricQuery(1650991982000, 1651078382000, v3.QueryTypeBuilder, v3.PanelTypeGraph, testCase.builderQuery, metricsV3.Options{})
 			assert.Nil(t, err)
 			assert.Contains(t, query, testCase.expectedQueryContains)
 		})
@@ -785,7 +785,7 @@ func TestPrepareMetricQueryValueTypePanelWithGroupBY(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			// 1735891811000 - Friday, 3 January 2025 13:40:11 GMT+05:30
 			// 1735894811000 - Friday, 3 January 2025 14:30:11 GMT+05:30
-			query, err := PrepareMetricQuery(1735891811000, 1735894811000, v3.QueryTypeBuilder, v3.PanelTypeValue, testCase.builderQuery, metricsV3.Options{})
+			query, _, err := PrepareMetricQuery(1735891811000, 1735894811000, v3.QueryTypeBuilder, v3.PanelTypeValue, testCase.builderQuery, metricsV3.Options{})
 			assert.Nil(t, err)
 			assert.Contains(t, query, testCase.expectedQueryContains)
 		})

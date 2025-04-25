@@ -1415,7 +1415,7 @@ var testPrepTracesQueryData = []struct {
 func TestPrepareTracesQuery(t *testing.T) {
 	for _, tt := range testPrepTracesQueryData {
 		Convey("TestPrepareTracesQuery", t, func() {
-			query, err := PrepareTracesQuery(tt.Start, tt.End, tt.PanelType, tt.BuilderQuery, tt.Options)
+			query, _, err := PrepareTracesQuery(tt.Start, tt.End, tt.PanelType, tt.BuilderQuery, tt.Options)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 		})

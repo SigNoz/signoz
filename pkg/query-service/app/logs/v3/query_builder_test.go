@@ -1482,7 +1482,7 @@ var testPrepLogsQueryData = []struct {
 func TestPrepareLogsQuery(t *testing.T) {
 	for _, tt := range testPrepLogsQueryData {
 		Convey("TestBuildLogsQuery", t, func() {
-			query, err := PrepareLogsQuery(tt.Start, tt.End, "", tt.PanelType, tt.BuilderQuery, tt.Options)
+			query, _, err := PrepareLogsQuery(tt.Start, tt.End, "", tt.PanelType, tt.BuilderQuery, tt.Options)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 
@@ -1588,7 +1588,7 @@ var testPrepLogsQueryLimitOffsetData = []struct {
 func TestPrepareLogsQueryLimitOffset(t *testing.T) {
 	for _, tt := range testPrepLogsQueryLimitOffsetData {
 		Convey("TestBuildLogsQuery", t, func() {
-			query, err := PrepareLogsQuery(tt.Start, tt.End, "", tt.PanelType, tt.BuilderQuery, tt.Options)
+			query, _, err := PrepareLogsQuery(tt.Start, tt.End, "", tt.PanelType, tt.BuilderQuery, tt.Options)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 

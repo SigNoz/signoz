@@ -18,7 +18,7 @@ import (
 // from the database
 // start and end are in milliseconds
 // step is in seconds
-func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
+func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, []any, error) {
 
 	if valFilter := metrics.AddMetricValueFilter(mq); valFilter != nil {
 		mq.MetricValueFilter = valFilter
@@ -71,7 +71,7 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	}
 
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	groupByWithoutLe := []v3.AttributeKey{}
@@ -93,7 +93,7 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 		query = helpers.AddSecondaryAggregation(mq.SecondaryAggregation, query)
 	}
 
-	return query, nil
+	return query, nil, nil
 }
 
 func BuildPromQuery(promQuery *v3.PromQuery, step, start, end int64) *model.QueryRangeParams {

@@ -104,12 +104,12 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 	}
 }
 
-func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.Series, error) {
+func (q *querier) execClickHouseQuery(ctx context.Context, query string, args ...any) ([]*v3.Series, error) {
 	q.queriesExecuted = append(q.queriesExecuted, query)
 	if q.testingMode && q.reader == nil {
 		return q.returnedSeries, q.returnedErr
 	}
-	result, err := q.reader.GetTimeSeriesResultV3(ctx, query)
+	result, err := q.reader.GetTimeSeriesResultV3(ctx, query, args...)
 	var pointsWithNegativeTimestamps int
 	// Filter out the points with negative or zero timestamps
 	for idx := range result {
@@ -344,12 +344,12 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 		// appending the filter to get the next set of data
 		if params.CompositeQuery.BuilderQueries[qName].DataSource == v3.DataSourceLogs {
 			params.CompositeQuery.BuilderQueries[qName].PageSize = pageSize - uint64(len(data))
-			queries, err := q.builder.PrepareQueries(params)
+			queries, args, err := q.builder.PrepareQueries(params)
 			if err != nil {
 				return nil, nil, err
 			}
 			for name, query := range queries {
-				rowList, err := q.reader.GetListResultV3(ctx, query)
+				rowList, err := q.reader.GetListResultV3(ctx, query, args[name]...)
 				if err != nil {
 					errs := []error{err}
 					errQueriesByName := map[string]error{
@@ -400,12 +400,12 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 
 			params.CompositeQuery.BuilderQueries[qName].Offset = 0
 			params.CompositeQuery.BuilderQueries[qName].Limit = tracesLimit
-			queries, err := q.builder.PrepareQueries(params)
+			queries, args, err := q.builder.PrepareQueries(params)
 			if err != nil {
 				return nil, nil, err
 			}
 			for name, query := range queries {
-				rowList, err := q.reader.GetListResultV3(ctx, query)
+				rowList, err := q.reader.GetListResultV3(ctx, query, args[name]...)
 				if err != nil {
 					errs := []error{err}
 					errQueriesByName := map[string]error{
@@ -439,6 +439,7 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 }
 
 func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {
+	var args map[string][]any
 	// List query has support for only one query
 	// we are skipping for PanelTypeTrace as it has a custom order by regardless of what's in the payload
 	if params.CompositeQuery != nil &&
@@ -465,7 +466,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 	queries := make(map[string]string)
 	var err error
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		queries, err = q.builder.PrepareQueries(params)
+		queries, args, err = q.builder.PrepareQueries(params)
 	} else if params.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
 		for name, chQuery := range params.CompositeQuery.ClickHouseQueries {
 			queries[name] = chQuery.Query
@@ -483,7 +484,7 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 		wg.Add(1)
 		go func(name, query string) {
 			defer wg.Done()
-			rowList, err := q.reader.GetListResultV3(ctx, query)
+			rowList, err := q.reader.GetListResultV3(ctx, query, args[name]...)
 
 			if err != nil {
 				ch <- channelResult{Err: err, Name: name, Query: query}

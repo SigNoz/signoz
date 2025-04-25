@@ -217,6 +217,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		FluxInterval:      opts.FluxInterval,
 		UseLogsNewSchema:  opts.UseLogsNewSchema,
 		UseTraceNewSchema: opts.UseTraceNewSchema,
+		TelemetryStore:    opts.Signoz.TelemetryStore,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
