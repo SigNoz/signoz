@@ -1610,7 +1610,7 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 		"message": message,
 	}
 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
+	if errv2 == nil {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, claims.Email, true, false)
 	}
 }
@@ -1621,7 +1621,7 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
+	if errv2 == nil {
 		switch request.EventType {
 		case model.TrackEvent:
 			telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
