@@ -3276,6 +3276,329 @@ export const END_POINT_DETAILS_QUERY_KEYS_ARRAY = [
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_LATENCY_BAR_CHARTS_DATA,
 ];
 
+export const getAllEndpointsWidgetData = (
+	groupBy: BaseAutocompleteData[],
+	domainName: string,
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+): Widgets => {
+	const isGroupedByAttribute = groupBy.length > 0;
+
+	const widget = getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Endpoint Overview',
+			description: 'Endpoint Overview',
+			panelTypes: PANEL_TYPES.TABLE,
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.String,
+						id: 'span_id--string----true',
+						isColumn: true,
+						isJSON: false,
+						key: 'span_id',
+						type: '',
+					},
+					aggregateOperator: 'count',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [
+							{
+								id: 'ec316e57',
+								key: {
+									dataType: DataTypes.String,
+									id: 'net.peer.name--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'net.peer.name',
+									type: 'tag',
+								},
+								op: '=',
+								value: domainName,
+							},
+							{
+								id: '212678b9',
+								key: {
+									key: 'kind_string',
+									dataType: DataTypes.String,
+									type: '',
+									isColumn: true,
+									isJSON: false,
+									id: 'kind_string--string----true',
+								},
+								op: '=',
+								value: 'Client',
+							},
+						],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: isGroupedByAttribute
+						? [...defaultGroupBy, ...groupBy]
+						: defaultGroupBy,
+					having: [],
+					legend: 'Num of Calls',
+					limit: 1000,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'count',
+				},
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						id: 'duration_nano--float64----true',
+						isColumn: true,
+						isJSON: false,
+						key: 'duration_nano',
+						type: '',
+					},
+					aggregateOperator: 'p99',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'B',
+					filters: {
+						items: [
+							{
+								id: '46d57857',
+								key: {
+									dataType: DataTypes.String,
+									id: 'net.peer.name--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'net.peer.name',
+									type: 'tag',
+								},
+								op: '=',
+								value: domainName,
+							},
+							{
+								id: '212678b9',
+								key: {
+									key: 'kind_string',
+									dataType: DataTypes.String,
+									type: '',
+									isColumn: true,
+									isJSON: false,
+									id: 'kind_string--string----true',
+								},
+								op: '=',
+								value: 'Client',
+							},
+						],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: isGroupedByAttribute
+						? [...defaultGroupBy, ...groupBy]
+						: defaultGroupBy,
+					having: [],
+					legend: 'Latency (ms)',
+					limit: 1000,
+					orderBy: [],
+					queryName: 'B',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'p99',
+				},
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.String,
+						id: 'timestamp------false',
+						isColumn: false,
+						key: 'timestamp',
+						type: '',
+					},
+					aggregateOperator: 'max',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'C',
+					filters: {
+						items: [
+							{
+								id: '4a237616',
+								key: {
+									dataType: DataTypes.String,
+									id: 'net.peer.name--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'net.peer.name',
+									type: 'tag',
+								},
+								op: '=',
+								value: domainName,
+							},
+							{
+								id: '212678b9',
+								key: {
+									key: 'kind_string',
+									dataType: DataTypes.String,
+									type: '',
+									isColumn: true,
+									isJSON: false,
+									id: 'kind_string--string----true',
+								},
+								op: '=',
+								value: 'Client',
+							},
+						],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: isGroupedByAttribute
+						? [...defaultGroupBy, ...groupBy]
+						: defaultGroupBy,
+					having: [],
+					legend: 'Last Used',
+					limit: 1000,
+					orderBy: [],
+					queryName: 'C',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'max',
+				},
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.String,
+						id: 'span_id--string----true',
+						isColumn: true,
+						isJSON: false,
+						key: 'span_id',
+						type: '',
+					},
+					aggregateOperator: 'count',
+					dataSource: DataSource.TRACES,
+					disabled: true,
+					expression: 'D',
+					filters: {
+						items: [
+							{
+								id: 'f162de1e',
+								key: {
+									dataType: DataTypes.String,
+									id: 'net.peer.name--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'net.peer.name',
+									type: 'tag',
+								},
+								op: '=',
+								value: domainName,
+							},
+							{
+								id: '3df0ac1d',
+								key: {
+									dataType: DataTypes.bool,
+									id: 'has_error--bool----true',
+									isColumn: true,
+									isJSON: false,
+									key: 'has_error',
+									type: '',
+								},
+								op: '=',
+								value: 'true',
+							},
+							{
+								id: '212678b9',
+								key: {
+									key: 'kind_string',
+									dataType: DataTypes.String,
+									type: '',
+									isColumn: true,
+									isJSON: false,
+									id: 'kind_string--string----true',
+								},
+								op: '=',
+								value: 'Client',
+							},
+						],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: isGroupedByAttribute
+						? [...defaultGroupBy, ...groupBy]
+						: defaultGroupBy,
+					having: [],
+					legend: '',
+					limit: 1000,
+					orderBy: [],
+					queryName: 'D',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'count',
+				},
+			],
+			queryFormulas: [
+				{
+					queryName: 'F1',
+					expression: '(D/A)*100',
+					disabled: false,
+					legend: 'error percentage',
+				},
+			],
+			yAxisUnit: 'ops/s',
+		}),
+	);
+
+	widget.renderColumnCell = {
+		A: (numOfCalls: any): ReactNode => (
+			<span>
+				{numOfCalls === 'n/a' || numOfCalls === undefined ? '-' : numOfCalls}
+			</span>
+		),
+		B: (latency: any): ReactNode => (
+			<span>
+				{latency === 'n/a' || latency === undefined
+					? '-'
+					: `${Math.round(Number(latency) / 1000000)} ms`}
+			</span>
+		),
+		C: (lastUsed: any): ReactNode => (
+			<span>
+				{lastUsed === 'n/a' || lastUsed === undefined
+					? '-'
+					: getLastUsedRelativeTime(
+							new Date(
+								new Date(Math.floor(Number(lastUsed) / 1000000)).toISOString(),
+							).getTime(),
+					  )}
+			</span>
+		),
+		F1: (errorRate: any): ReactNode => (
+			<Progress
+				status="active"
+				percent={Number(
+					((errorRate === 'n/a' || errorRate === '-'
+						? 0
+						: errorRate) as number).toFixed(1),
+				)}
+				strokeLinecap="butt"
+				size="small"
+				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
+				string => {
+					const errorRatePercent = Number(
+						((errorRate === 'n/a' || errorRate === '-'
+							? 0
+							: errorRate) as number).toFixed(1),
+					);
+					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+					return Color.BG_FOREST_500;
+				})()}
+				className="progress-bar error-rate"
+			/>
+		),
+	};
+
+	return widget;
+};
+
 export const getRateOverTimeWidgetData = (
 	domainName: string,
 	endPointName: string,

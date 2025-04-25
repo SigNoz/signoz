@@ -48,6 +48,7 @@ function GridCardGraph({
 	end,
 	analyticsEvent,
 	customTimeRange,
+	customOnRowClick,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -287,6 +288,7 @@ function GridCardGraph({
 					onOpenTraceBtnClick={onOpenTraceBtnClick}
 					customSeries={customSeries}
 					customErrorMessage={isInternalServerError ? customErrorMessage : undefined}
+					customOnRowClick={customOnRowClick}
 				/>
 			)}
 		</div>

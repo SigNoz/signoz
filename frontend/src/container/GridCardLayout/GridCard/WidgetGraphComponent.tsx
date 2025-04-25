@@ -56,6 +56,7 @@ function WidgetGraphComponent({
 	onOpenTraceBtnClick,
 	customSeries,
 	customErrorMessage,
+	customOnRowClick,
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -380,6 +381,7 @@ function WidgetGraphComponent({
 						openTracesButton={openTracesButton}
 						onOpenTraceBtnClick={onOpenTraceBtnClick}
 						customSeries={customSeries}
+						customOnRowClick={customOnRowClick}
 					/>
 				</div>
 			)}

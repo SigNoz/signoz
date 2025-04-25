@@ -20,6 +20,7 @@ function PanelWrapper({
 	openTracesButton,
 	onOpenTraceBtnClick,
 	customSeries,
+	customOnRowClick,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
@@ -46,6 +47,7 @@ function PanelWrapper({
 			searchTerm={searchTerm}
 			openTracesButton={openTracesButton}
 			onOpenTraceBtnClick={onOpenTraceBtnClick}
+			customOnRowClick={customOnRowClick}
 			customSeries={customSeries}
 		/>
 	);
