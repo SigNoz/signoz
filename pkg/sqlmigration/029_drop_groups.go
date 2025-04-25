@@ -63,12 +63,18 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	var existingUsers []*existingUser
-	if err := tx.NewSelect().Model(&existingUsers).Scan(ctx); err != nil {
+	if err := tx.
+		NewSelect().
+		Model(&existingUsers).
+		Scan(ctx); err != nil {
 		return err
 	}
 
 	var groups []*Group
-	if err := tx.NewSelect().Model(&groups).Scan(ctx); err != nil {
+	if err := tx.
+		NewSelect().
+		Model(&groups).
+		Scan(ctx); err != nil {
 		return err
 	}
 
@@ -86,25 +92,33 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 		bun.BaseModel `bun:"table:users"`
 
 		types.TimeAuditable
-		ID                string `bun:"id,pk,type:text" json:"id"`
-		Name              string `bun:"name,type:text,notnull" json:"name"`
-		Email             string `bun:"email,type:text,notnull,unique" json:"email"`
-		Password          string `bun:"password,type:text,notnull" json:"-"`
-		ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
-		OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
+		ID                string `bun:"id,pk,type:text"`
+		Name              string `bun:"name,type:text,notnull"`
+		Email             string `bun:"email,type:text,notnull,unique"`
+		Password          string `bun:"password,type:text,notnull"`
+		ProfilePictureURL string `bun:"profile_picture_url,type:text"`
+		OrgID             string `bun:"org_id,type:text,notnull"`
 	}), "group_id"); err != nil {
 		return err
 	}
 
-	//IfNotExists()
-	if _, err := tx.NewAddColumn().Table("users").ColumnExpr("role TEXT").Exec(ctx); err != nil {
+	if err := migration.sqlstore.Dialect().AddColumn(ctx, tx, "users", "role", "TEXT"); err != nil {
 		return err
 	}
 
 	for role, userIDs := range roleToUserIDMap {
-		if _, err := tx.NewUpdate().Table("users").Set("role = ?", role).Where("id IN (?)", bun.In(userIDs)).Exec(ctx); err != nil {
+		if _, err := tx.
+			NewUpdate().
+			Table("users").
+			Set("role = ?", role).
+			Where("id IN (?)", bun.In(userIDs)).
+			Exec(ctx); err != nil {
 			return err
 		}
+	}
+
+	if err := migration.sqlstore.Dialect().AddNotNullDefaultToColumn(ctx, tx, "users", "role", "TEXT", "VIEWER"); err != nil {
+		return err
 	}
 
 	if _, err := tx.

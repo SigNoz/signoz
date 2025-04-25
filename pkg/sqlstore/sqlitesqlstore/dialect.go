@@ -11,22 +11,26 @@ import (
 	"github.com/uptrace/bun"
 )
 
-var (
-	Identity = "id"
-	Integer  = "INTEGER"
-	Text     = "TEXT"
+const (
+	Identity string = "id"
+	Integer  string = "INTEGER"
+	Text     string = "TEXT"
 )
 
-var (
-	Org              = "org"
-	User             = "user"
-	CloudIntegration = "cloud_integration"
+const (
+	Org              string = "org"
+	User             string = "user"
+	CloudIntegration string = "cloud_integration"
 )
 
-var (
-	OrgReference              = `("org_id") REFERENCES "organizations" ("id")`
-	UserReference             = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
-	CloudIntegrationReference = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
+const (
+	OrgReference              string = `("org_id") REFERENCES "organizations" ("id")`
+	UserReference             string = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	CloudIntegrationReference string = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
+)
+
+const (
+	OrgField string = "org_id"
 )
 
 type dialect struct{}
@@ -434,11 +438,20 @@ func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, 
 		return nil
 	}
 
+	newTableName := existingTable.Name + "_tmp"
+
+	// Create the newTmpTable query
+	createTableQuery := bunIDB.NewCreateTable().Model(model).ModelTableExpr(newTableName)
+
 	var columnNames []string
 
 	for _, field := range existingTable.Fields {
 		if field.Name != column {
 			columnNames = append(columnNames, string(field.SQLName))
+		}
+
+		if field.Name == OrgField {
+			createTableQuery = createTableQuery.ForeignKey(OrgReference)
 		}
 	}
 
@@ -447,21 +460,12 @@ func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, 
 		return err
 	}
 
-	newTableName := existingTable.Name + "_tmp"
-
-	// Create the schema query
-	_, err = bunIDB.NewCreateTable().Model(model).ModelTableExpr(newTableName).Exec(ctx)
-	if err != nil {
+	if _, err = createTableQuery.Exec(ctx); err != nil {
 		return err
 	}
 
 	// Copy data from old table to new table
-	if _, err := bunIDB.ExecContext(ctx, fmt.Sprintf(
-		"INSERT INTO %s SELECT %s FROM %s",
-		newTableName,
-		strings.Join(columnNames, ", "),
-		existingTable.Name,
-	)); err != nil {
+	if _, err := bunIDB.ExecContext(ctx, fmt.Sprintf("INSERT INTO %s SELECT %s FROM %s", newTableName, strings.Join(columnNames, ", "), existingTable.Name)); err != nil {
 		return err
 	}
 
