@@ -23,10 +23,6 @@ func (c *Claims) Validate() error {
 		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "id is required")
 	}
 
-	if c.Role == "" {
-		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "role is required")
-	}
-
 	if c.OrgID == "" {
 		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "orgId is required")
 	}
