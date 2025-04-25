@@ -13,10 +13,11 @@ import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSea
 // 	Time,
 // } from 'container/TopNav/DateTimeSelectionV2/config';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -26,6 +27,15 @@ import EndPointsDropDown from './components/EndPointsDropDown';
 import MetricOverTimeGraph from './components/MetricOverTimeGraph';
 import StatusCodeBarCharts from './components/StatusCodeBarCharts';
 import StatusCodeTable from './components/StatusCodeTable';
+
+const httpUrlKey = {
+	dataType: DataTypes.String,
+	id: 'http.url--string--tag--false',
+	isColumn: false,
+	isJSON: false,
+	key: 'http.url',
+	type: 'tag',
+};
 
 function EndPointDetails({
 	domainName,
@@ -52,16 +62,72 @@ function EndPointDetails({
 
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
 
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
-		op: 'AND',
-		items: [],
+	// Local state for filters, combining endpoint filter and search filters
+	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
+		// Initialize filters based on the initial endPointName prop
+		const initialItems = [];
+		if (endPointName) {
+			initialItems.push({
+				id: '92b8a1c1',
+				key: httpUrlKey,
+				op: '=',
+				value: endPointName,
+			});
+		}
+		return { op: 'AND', items: initialItems };
 	});
-	// [TODO] if endPointName is there then add it to the filters under http.url key
 
-	// Manually update the query to include the filters
-	// Because using the hook is causing the global domain
-	// query to be updated and causing main domain list to
-	// refetch with the filters of endpoints
+	// Effect to synchronize local filters when the endPointName prop changes (e.g., from dropdown)
+	useEffect(() => {
+		setFilters((currentFilters) => {
+			const existingHttpUrlFilter = currentFilters.items.find(
+				(item) => item.key?.key === httpUrlKey.key,
+			);
+			const existingHttpUrlValue = (existingHttpUrlFilter?.value as string) || '';
+
+			// Only update filters if the prop value is different from what's already in filters
+			if (endPointName === existingHttpUrlValue) {
+				return currentFilters; // No change needed, prevents loop
+			}
+
+			// Rebuild filters: Keep non-http.url filters and add/update http.url filter based on prop
+			const otherFilters = currentFilters.items.filter(
+				(item) => item.key?.key !== httpUrlKey.key,
+			);
+			const newItems = [...otherFilters];
+			if (endPointName) {
+				newItems.push({
+					id: '92b8a1c1',
+					key: httpUrlKey,
+					op: '=',
+					value: endPointName,
+				});
+			}
+			return { op: 'AND', items: newItems };
+		});
+	}, [endPointName]);
+
+	// Handler for changes from the QueryBuilderSearchV2 component
+	const handleFilterChange = useCallback(
+		(newFilters: IBuilderQuery['filters']): void => {
+			// 1. Update local filters state immediately
+			setFilters(newFilters);
+
+			// 2. Derive the endpoint name from the *new* filters state
+			const httpUrlFilter = newFilters.items.find(
+				(item) => item.key?.key === httpUrlKey.key,
+			);
+			const derivedEndPointName = (httpUrlFilter?.value as string) || '';
+
+			// 3. If the derived endpoint name is different from the current prop,
+			//    it means the search change modified the effective endpoint.
+			//    Notify the parent component.
+			if (derivedEndPointName !== endPointName) {
+				setSelectedEndPointName(derivedEndPointName);
+			}
+		},
+		[endPointName, setSelectedEndPointName], // Dependencies for the callback
+	);
 
 	const updatedCurrentQuery = useMemo(
 		() => ({
@@ -72,7 +138,7 @@ function EndPointDetails({
 					{
 						...currentQuery.builder.queryData[0],
 						dataSource: DataSource.TRACES,
-						filters,
+						filters, // Use the local filters state
 					},
 				],
 			},
@@ -97,7 +163,7 @@ function EndPointDetails({
 			queryKey: [
 				END_POINT_DETAILS_QUERY_KEYS_ARRAY[index],
 				payload,
-				filters.items,
+				filters.items, // Include filters.items in queryKey for better caching
 				ENTITY_VERSION_V4,
 			],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
@@ -126,22 +192,25 @@ function EndPointDetails({
 	);
 
 	const { endpoint, port } = useMemo(
-		() => extractPortAndEndpoint(endPointName),
+		() => extractPortAndEndpoint(endPointName), // Derive display info from the prop
 		[endPointName],
+	);
+
+	// Combine domainListFilters (from parent) and local filters for graph/chart queries
+	const combinedFilters = useMemo(
+		() => ({
+			op: 'AND', // Assuming AND logic for combining filter sets
+			items: [...domainListFilters.items, ...filters.items],
+		}),
+		[domainListFilters, filters],
 	);
 
 	const [rateOverTimeWidget, latencyOverTimeWidget] = useMemo(
 		() => [
-			getRateOverTimeWidgetData(domainName, endPointName, {
-				items: [...domainListFilters.items, ...filters.items],
-				op: filters.op,
-			}),
-			getLatencyOverTimeWidgetData(domainName, endPointName, {
-				items: [...domainListFilters.items, ...filters.items],
-				op: filters.op,
-			}),
+			getRateOverTimeWidgetData(domainName, endPointName, combinedFilters),
+			getLatencyOverTimeWidgetData(domainName, endPointName, combinedFilters),
 		],
-		[domainName, endPointName, filters, domainListFilters],
+		[domainName, endPointName, combinedFilters], // Use combinedFilters
 	);
 
 	// // [TODO] Fix this later
@@ -173,9 +242,7 @@ function EndPointDetails({
 				<div className="endpoint-details-filters-container-search">
 					<QueryBuilderSearchV2
 						query={query}
-						onChange={(searchFilters): void => {
-							setFilters(searchFilters);
-						}}
+						onChange={handleFilterChange}
 						placeholder="Search for filters..."
 					/>
 				</div>
