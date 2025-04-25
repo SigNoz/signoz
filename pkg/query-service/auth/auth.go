@@ -587,10 +587,6 @@ func authenticateLogin(ctx context.Context, req *model.LoginRequest, jwt *authty
 			return nil, errors.Wrap(err, "failed to parse refresh token")
 		}
 
-		if claims.OrgID == "" {
-			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
-		}
-
 		user := &types.GettableUser{
 			User: types.User{
 				ID:    claims.UserID,
