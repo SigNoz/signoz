@@ -52,4 +52,3 @@ class SigNoz:
     sqlstore: TestContainerSQL
     telemetrystore: TestContainerClickhouse
     zeus: TestContainerDocker
-

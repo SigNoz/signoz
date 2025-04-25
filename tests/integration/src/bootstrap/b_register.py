@@ -203,4 +203,3 @@ def test_self_access(signoz: types.SigNoz, get_jwt_token) -> None:
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["group_name"] == "EDITOR"
-    
