@@ -615,6 +615,14 @@ const defaultGroupBy = [
 		key: 'http.url',
 		type: 'tag',
 	},
+	{
+		key: 'net.peer.port',
+		dataType: DataTypes.Float64,
+		type: 'tag',
+		isColumn: false,
+		isJSON: false,
+		id: 'net.peer.port--float64--tag--false',
+	},
 ];
 
 export const getEndPointsQueryPayload = (
