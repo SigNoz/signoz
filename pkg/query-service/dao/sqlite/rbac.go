@@ -3,7 +3,6 @@ package sqlite
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
@@ -95,71 +94,6 @@ func (mds *ModelDaoSqlite) GetInvites(ctx context.Context, orgID string) ([]type
 	return invites, nil
 }
 
-func (mds *ModelDaoSqlite) CreateOrg(ctx context.Context,
-	org *types.Organization) (*types.Organization, *model.ApiError) {
-
-	org.ID = uuid.NewString()
-	org.CreatedAt = time.Now()
-	_, err := mds.bundb.NewInsert().
-		Model(org).
-		Exec(ctx)
-
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return org, nil
-}
-
-func (mds *ModelDaoSqlite) GetOrg(ctx context.Context,
-	id string) (*types.Organization, *model.ApiError) {
-
-	orgs := []types.Organization{}
-
-	if err := mds.bundb.NewSelect().
-		Model(&orgs).
-		Where("id = ?", id).
-		Scan(ctx); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	// TODO(nitya): remove for multitenancy
-	if len(orgs) > 1 {
-		return nil, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: errors.New("Found multiple org with same ID"),
-		}
-	}
-
-	if len(orgs) == 0 {
-		return nil, nil
-	}
-	return &orgs[0], nil
-}
-
-func (mds *ModelDaoSqlite) GetOrgByName(ctx context.Context,
-	name string) (*types.Organization, *model.ApiError) {
-
-	orgs := []types.Organization{}
-
-	if err := mds.bundb.NewSelect().
-		Model(&orgs).
-		Where("name = ?", name).
-		Scan(ctx); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	if len(orgs) > 1 {
-		return nil, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: errors.New("Multiple orgs with same ID found"),
-		}
-	}
-	if len(orgs) == 0 {
-		return nil, nil
-	}
-	return &orgs[0], nil
-}
-
 func (mds *ModelDaoSqlite) GetOrgs(ctx context.Context) ([]types.Organization, *model.ApiError) {
 	var orgs []types.Organization
 	err := mds.bundb.NewSelect().
@@ -170,37 +104,6 @@ func (mds *ModelDaoSqlite) GetOrgs(ctx context.Context) ([]types.Organization, *
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return orgs, nil
-}
-
-func (mds *ModelDaoSqlite) EditOrg(ctx context.Context, org *types.Organization) *model.ApiError {
-	_, err := mds.bundb.NewUpdate().
-		Model(org).
-		Column("name").
-		Column("has_opted_updates").
-		Column("is_anonymous").
-		Where("id = ?", org.ID).
-		Exec(ctx)
-
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	telemetry.GetInstance().SetTelemetryAnonymous(org.IsAnonymous)
-	telemetry.GetInstance().SetDistinctId(org.ID)
-
-	return nil
-}
-
-func (mds *ModelDaoSqlite) DeleteOrg(ctx context.Context, id string) *model.ApiError {
-	_, err := mds.bundb.NewDelete().
-		Model(&types.Organization{}).
-		Where("id = ?", id).
-		Exec(ctx)
-
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return nil
 }
 
 func (mds *ModelDaoSqlite) CreateUser(ctx context.Context,
@@ -306,7 +209,7 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
 		ColumnExpr("g.name as role").
-		ColumnExpr("o.name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN groups g ON g.id = users.group_id").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.id = ?", id)
@@ -343,7 +246,7 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
 		ColumnExpr("g.name as role").
-		ColumnExpr("o.name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN groups g ON g.id = users.group_id").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.email = ?", email)
@@ -378,7 +281,7 @@ func (mds *ModelDaoSqlite) GetUsersWithOpts(ctx context.Context, limit int) ([]t
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
 		ColumnExpr("g.name as role").
-		ColumnExpr("o.name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN groups g ON g.id = users.group_id").
 		Join("JOIN organizations o ON o.id = users.org_id")
 
@@ -402,7 +305,7 @@ func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context,
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
 		ColumnExpr("g.name as role").
-		ColumnExpr("o.name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN groups g ON g.id = users.group_id").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.org_id = ?", orgId)
@@ -423,7 +326,7 @@ func (mds *ModelDaoSqlite) GetUsersByGroup(ctx context.Context,
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
 		ColumnExpr("g.name as role").
-		ColumnExpr("o.name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN groups g ON g.id = users.group_id").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.group_id = ?", groupId)

@@ -26,10 +26,6 @@ type Queries interface {
 	GetGroupByName(ctx context.Context, name string) (*types.Group, *model.ApiError)
 	GetGroups(ctx context.Context) ([]types.Group, *model.ApiError)
 
-	GetOrgs(ctx context.Context) ([]types.Organization, *model.ApiError)
-	GetOrgByName(ctx context.Context, name string) (*types.Organization, *model.ApiError)
-	GetOrg(ctx context.Context, id string) (*types.Organization, *model.ApiError)
-
 	GetResetPasswordEntry(ctx context.Context, token string) (*types.ResetPasswordRequest, *model.ApiError)
 	GetUsersByOrg(ctx context.Context, orgId string) ([]types.GettableUser, *model.ApiError)
 	GetUsersByGroup(ctx context.Context, groupId string) ([]types.GettableUser, *model.ApiError)
@@ -49,10 +45,6 @@ type Mutations interface {
 
 	CreateGroup(ctx context.Context, group *types.Group) (*types.Group, *model.ApiError)
 	DeleteGroup(ctx context.Context, id string) *model.ApiError
-
-	CreateOrg(ctx context.Context, org *types.Organization) (*types.Organization, *model.ApiError)
-	EditOrg(ctx context.Context, org *types.Organization) *model.ApiError
-	DeleteOrg(ctx context.Context, id string) *model.ApiError
 
 	CreateResetPasswordEntry(ctx context.Context, req *types.ResetPasswordRequest) *model.ApiError
 	DeleteResetPasswordEntry(ctx context.Context, token string) *model.ApiError

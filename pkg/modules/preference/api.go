@@ -15,7 +15,6 @@ type API interface {
 	GetOrgPreference(http.ResponseWriter, *http.Request)
 	UpdateOrgPreference(http.ResponseWriter, *http.Request)
 	GetAllOrgPreferences(http.ResponseWriter, *http.Request)
-
 	GetUserPreference(http.ResponseWriter, *http.Request)
 	UpdateUserPreference(http.ResponseWriter, *http.Request)
 	GetAllUserPreferences(http.ResponseWriter, *http.Request)

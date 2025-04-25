@@ -156,10 +156,8 @@ export function getAppContextMock(
 		org: [
 			{
 				createdAt: 0,
-				hasOptedUpdates: false,
 				id: 'does-not-matter-id',
-				isAnonymous: false,
-				name: 'Pentagon',
+				displayName: 'Pentagon',
 			},
 		],
 		isFetchingUser: false,

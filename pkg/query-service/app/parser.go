@@ -536,14 +536,6 @@ func parseSetApdexScoreRequest(r *http.Request) (*types.ApdexSettings, error) {
 	return &req, nil
 }
 
-func parseInsertIngestionKeyRequest(r *http.Request) (*model.IngestionKey, error) {
-	var req model.IngestionKey
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	return &req, nil
-}
-
 func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
 	var req auth.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

@@ -94,7 +94,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 			setOrgDetails({
 				...orgDetails,
-				organisationName: org[0].name,
+				organisationName: org[0].displayName,
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps

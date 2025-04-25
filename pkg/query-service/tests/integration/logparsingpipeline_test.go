@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -479,7 +480,8 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
-	user, apiErr := createTestUser()
+	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
+	user, apiErr := createTestUser(organizationModule)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}

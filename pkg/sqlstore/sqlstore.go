@@ -42,7 +42,9 @@ type SQLDialect interface {
 	AddNotNullDefaultToColumn(context.Context, bun.IDB, string, string, string, string) error
 	GetColumnType(context.Context, bun.IDB, string, string) (string, error)
 	ColumnExists(context.Context, bun.IDB, string, string) (bool, error)
+	AddColumn(context.Context, bun.IDB, string, string, string) error
 	RenameColumn(context.Context, bun.IDB, string, string, string) (bool, error)
+	DropColumn(context.Context, bun.IDB, string, string) error
 	RenameTableAndModifyModel(context.Context, bun.IDB, interface{}, interface{}, []string, func(context.Context) error) error
 	UpdatePrimaryKey(context.Context, bun.IDB, interface{}, interface{}, string, func(context.Context) error) error
 	AddPrimaryKey(context.Context, bun.IDB, interface{}, interface{}, string, func(context.Context) error) error

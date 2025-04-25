@@ -64,7 +64,7 @@ function App(): JSX.Element {
 			// wait for the required data to be loaded before doing init for anything!
 			if (!isFetchingActiveLicenseV3 && activeLicenseV3 && org) {
 				const orgName =
-					org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
+					org && Array.isArray(org) && org.length > 0 ? org[0].displayName : '';
 
 				const { name, email, role } = user;
 

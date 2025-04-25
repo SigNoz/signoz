@@ -142,7 +142,7 @@ func (r *Repo) GetDefaultOrgID(ctx context.Context) (string, *model.ApiError) {
 	if len(orgs) == 0 {
 		return "", model.InternalError(errors.New("no orgs found"))
 	}
-	return orgs[0].ID, nil
+	return orgs[0].ID.StringValue(), nil
 }
 
 // GetPipelines returns pipeline and errors (if any)

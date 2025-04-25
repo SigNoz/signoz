@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -277,7 +278,7 @@ func RevokeInvite(ctx context.Context, email string) error {
 }
 
 // GetInvite returns an invitation object for the given token.
-func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObject, error) {
+func GetInvite(ctx context.Context, token string, organizationModule organization.Module) (*model.InvitationResponseObject, error) {
 	zap.L().Debug("GetInvite method invoked for token", zap.String("token", token))
 
 	inv, apiErr := dao.DB().GetInviteFromToken(ctx, token)
@@ -289,11 +290,13 @@ func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObje
 		return nil, errors.New("user is not invited")
 	}
 
-	// TODO(Ahsan): This is not the best way to add org name in the invite response. We should
-	// either include org name in the invite table or do a join query.
-	org, apiErr := dao.DB().GetOrg(ctx, inv.OrgID)
-	if apiErr != nil {
-		return nil, errors.Wrap(apiErr.Err, "failed to query the DB")
+	orgID, err := valuer.NewUUID(inv.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	org, err := organizationModule.Get(ctx, orgID)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to query the DB")
 	}
 	return &model.InvitationResponseObject{
 		Name:         inv.Name,
@@ -301,7 +304,7 @@ func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObje
 		Token:        inv.Token,
 		CreatedAt:    inv.CreatedAt.Unix(),
 		Role:         inv.Role,
-		Organization: org.Name,
+		Organization: org.DisplayName,
 	}, nil
 }
 
@@ -390,21 +393,19 @@ func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) *mode
 }
 
 type RegisterRequest struct {
-	Name            string `json:"name"`
-	OrgID           string `json:"orgId"`
-	OrgName         string `json:"orgName"`
-	Email           string `json:"email"`
-	Password        string `json:"password"`
-	InviteToken     string `json:"token"`
-	IsAnonymous     bool   `json:"isAnonymous"`
-	HasOptedUpdates bool   `json:"hasOptedUpdates"`
+	Name           string `json:"name"`
+	OrgID          string `json:"orgId"`
+	OrgDisplayName string `json:"orgDisplayName"`
+	OrgName        string `json:"orgName"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	InviteToken    string `json:"token"`
 
 	// reference URL to track where the register request is coming from
 	SourceUrl string `json:"sourceUrl"`
 }
 
-func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*types.User, *model.ApiError) {
-
+func RegisterFirstUser(ctx context.Context, req *RegisterRequest, organizationModule organization.Module) (*types.User, *model.ApiError) {
 	if req.Email == "" {
 		return nil, model.BadRequest(model.ErrEmailRequired{})
 	}
@@ -414,13 +415,10 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*types.User, 
 	}
 
 	groupName := constants.AdminGroup
-
-	// modify this to use bun
-	org, apierr := dao.DB().CreateOrg(ctx,
-		&types.Organization{Name: req.OrgName, IsAnonymous: req.IsAnonymous, HasOptedUpdates: req.HasOptedUpdates})
-	if apierr != nil {
-		zap.L().Error("CreateOrg failed", zap.Error(apierr.ToError()))
-		return nil, apierr
+	organization := types.NewOrganization(req.OrgDisplayName)
+	err := organizationModule.Create(ctx, organization)
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
 
 	group, apiErr := dao.DB().GetGroupByName(ctx, groupName)
@@ -430,8 +428,6 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*types.User, 
 	}
 
 	var hash string
-	var err error
-
 	hash, err = PasswordHash(req.Password)
 	if err != nil {
 		zap.L().Error("failed to generate password hash when registering a user", zap.Error(err))
@@ -448,7 +444,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*types.User, 
 		},
 		ProfilePictureURL: "", // Currently unused
 		GroupID:           group.ID,
-		OrgID:             org.ID,
+		OrgID:             organization.ID.StringValue(),
 	}
 
 	return dao.DB().CreateUser(ctx, user, true)
@@ -553,7 +549,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 // Register registers a new user. For the first register request, it doesn't need an invite token
 // and also the first registration is an enforced ADMIN registration. Every subsequent request will
 // need an invite token to go through.
-func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanager.Alertmanager) (*types.User, *model.ApiError) {
+func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanager.Alertmanager, organizationModule organization.Module) (*types.User, *model.ApiError) {
 	users, err := dao.DB().GetUsers(ctx)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf("failed to get user count"))
@@ -561,7 +557,7 @@ func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanag
 
 	switch len(users) {
 	case 0:
-		user, err := RegisterFirstUser(ctx, req)
+		user, err := RegisterFirstUser(ctx, req, organizationModule)
 		if err != nil {
 			return nil, err
 		}

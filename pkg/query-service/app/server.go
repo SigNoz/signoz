@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -185,7 +186,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	telemetry.GetInstance().SetReader(reader)
-	preferenceModule := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(serverOptions.SigNoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
+	preferenceAPI := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(serverOptions.SigNoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
+	organizationAPI := implorganization.NewAPI(implorganization.NewModule(implorganization.NewStore(serverOptions.SigNoz.SQLStore)))
+	organizationModule := implorganization.NewModule(implorganization.NewStore(serverOptions.SigNoz.SQLStore))
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		SkipConfig:                    skipConfig,
@@ -204,7 +207,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
 		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore),
 		Signoz:                        serverOptions.SigNoz,
-		Preference:                    preferenceModule,
+		Preference:                    preferenceAPI,
+		OrganizationAPI:               organizationAPI,
+		OrganizationModule:            organizationModule,
 	})
 	if err != nil {
 		return nil, err

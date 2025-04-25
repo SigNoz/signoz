@@ -5,19 +5,21 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/google/uuid"
 )
 
-func NewTestIntegrationsManager(t *testing.T) *Manager {
+func NewTestIntegrationsManager(t *testing.T) (*Manager, sqlstore.SQLStore) {
 	testDB := utils.NewQueryServiceDBForTests(t)
 
 	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB)
@@ -28,22 +30,21 @@ func NewTestIntegrationsManager(t *testing.T) *Manager {
 	return &Manager{
 		availableIntegrationsRepo: &TestAvailableIntegrationsRepo{},
 		installedIntegrationsRepo: installedIntegrationsRepo,
-	}
+	}, testDB
 }
 
-func createTestUser() (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
-	org, apiErr := dao.DB().CreateOrg(ctx, &types.Organization{
-		Name: "test",
-	})
-	if apiErr != nil {
-		return nil, apiErr
+	organization := types.NewOrganization("test")
+	err := organizationModule.Create(ctx, organization)
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
 
 	group, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
 	if apiErr != nil {
-		return nil, apiErr
+		return nil, model.InternalError(apiErr)
 	}
 
 	auth.InitAuthCache(ctx)
@@ -56,7 +57,7 @@ func createTestUser() (*types.User, *model.ApiError) {
 			Name:     "test",
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
-			OrgID:    org.ID,
+			OrgID:    organization.ID.StringValue(),
 			GroupID:  group.ID,
 		},
 		true,

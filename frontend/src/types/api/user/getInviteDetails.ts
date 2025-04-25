@@ -14,6 +14,6 @@ export interface PayloadProps {
 	name: User['name'];
 	role: ROLES;
 	token: string;
-	organization: Organization['name'];
+	organization: Organization['displayName'];
 	precheck?: LoginPrecheckPayloadProps;
 }
