@@ -11,6 +11,7 @@ function TablePanelWrapper({
 	searchTerm,
 	openTracesButton,
 	onOpenTraceBtnClick,
+	customOnRowClick,
 }: PanelWrapperProps): JSX.Element {
 	const panelData =
 		(queryResponse.data?.payload?.data?.result?.[0] as any)?.table || [];
@@ -26,7 +27,9 @@ function TablePanelWrapper({
 			searchTerm={searchTerm}
 			openTracesButton={openTracesButton}
 			onOpenTraceBtnClick={onOpenTraceBtnClick}
+			customOnRowClick={customOnRowClick}
 			widgetId={widget.id}
+			renderColumnCell={widget.renderColumnCell}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
 		/>
