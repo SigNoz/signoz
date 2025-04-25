@@ -117,7 +117,7 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	if err := migration.sqlstore.Dialect().AddNotNullDefaultToColumn(ctx, tx, "users", "role", "TEXT", "VIEWER"); err != nil {
+	if err := migration.sqlstore.Dialect().AddNotNullDefaultToColumn(ctx, tx, "users", "role", "TEXT", "'VIEWER'"); err != nil {
 		return err
 	}
 
