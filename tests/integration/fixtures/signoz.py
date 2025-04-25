@@ -1,3 +1,4 @@
+import dataclasses
 import platform
 import time
 from http import HTTPStatus
@@ -16,14 +17,35 @@ logger = setup_logger(__name__)
 @pytest.fixture(name="signoz", scope="package")
 def signoz(
     network: Network,
-    zeus: types.TestContainerWiremock,
+    zeus: types.TestContainerDocker,
     sqlstore: types.TestContainerSQL,
     clickhouse: types.TestContainerClickhouse,
     request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
 ) -> types.SigNoz:
     """
     Package-scoped fixture for setting up SigNoz.
     """
+
+    dev = request.config.getoption("--dev")
+    if dev:
+        cached_signoz = pytestconfig.cache.get("signoz.container", None)
+        if cached_signoz:
+            self = types.TestContainerDocker(
+                host_config=types.TestContainerUrlConfig(
+                    cached_signoz["host_config"]["scheme"],
+                    cached_signoz["host_config"]["address"],
+                    cached_signoz["host_config"]["port"],
+                ),
+                container_config=types.TestContainerUrlConfig(
+                    cached_signoz["container_config"]["scheme"],
+                    cached_signoz["container_config"]["address"],
+                    cached_signoz["container_config"]["port"],
+                ),
+            )
+            return types.SigNoz(
+                self=self, sqlstore=sqlstore, telemetrystore=clickhouse, zeus=zeus
+            )
 
     # Run the migrations for clickhouse
     request.getfixturevalue("migrator")
@@ -95,14 +117,17 @@ def signoz(
         raise e
 
     def stop():
-        logger.info("Stopping SigNoz container %s ...", container)
-        container.stop(delete_volume=True)
+        if dev:
+            logger.info("Skipping removal of SigNoz container %s ...", container)
+            return
+        else:
+            logger.info("Removing SigNoz container %s ...", container)
+            container.stop(delete_volume=True)
 
     request.addfinalizer(stop)
 
-    return types.SigNoz(
+    cached_signoz = types.SigNoz(
         self=types.TestContainerDocker(
-            container=container,
             host_config=types.TestContainerUrlConfig(
                 "http",
                 container.get_container_host_ip(),
@@ -118,3 +143,10 @@ def signoz(
         telemetrystore=clickhouse,
         zeus=zeus,
     )
+
+    if dev:
+        pytestconfig.cache.set(
+            "signoz.container", dataclasses.asdict(cached_signoz.self)
+        )
+
+    return cached_signoz

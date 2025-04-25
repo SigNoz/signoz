@@ -4,8 +4,6 @@ from urllib.parse import urljoin
 
 import py
 from clickhouse_driver.dbapi import Connection
-from testcontainers.core.container import DockerContainer
-from wiremock.testing.testcontainer import WireMockContainer
 
 LegacyPath = py.path.local
 
@@ -27,29 +25,22 @@ class TestContainerUrlConfig:
 @dataclass
 class TestContainerDocker:
     __test__ = False
-    container: DockerContainer
     host_config: TestContainerUrlConfig
     container_config: TestContainerUrlConfig
 
 
 @dataclass
-class TestContainerWiremock(TestContainerDocker):
+class TestContainerSQL:
     __test__ = False
-    container: WireMockContainer
-
-
-@dataclass
-class TestContainerSQL(TestContainerDocker):
-    __test__ = False
-    container: DockerContainer
+    container: TestContainerDocker
     conn: any
     env: Dict[str, str]
 
 
 @dataclass
-class TestContainerClickhouse(TestContainerDocker):
+class TestContainerClickhouse:
     __test__ = False
-    container: DockerContainer
+    container: TestContainerDocker
     conn: Connection
     env: Dict[str, str]
 
@@ -60,4 +51,5 @@ class SigNoz:
     self: TestContainerDocker
     sqlstore: TestContainerSQL
     telemetrystore: TestContainerClickhouse
-    zeus: TestContainerWiremock
+    zeus: TestContainerDocker
+

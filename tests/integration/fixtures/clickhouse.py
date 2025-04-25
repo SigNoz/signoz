@@ -1,3 +1,4 @@
+import dataclasses
 import os
 from typing import Any, Generator
 
@@ -15,10 +16,46 @@ def clickhouse(
     network: Network,
     zookeeper: types.TestContainerDocker,
     request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
 ) -> types.TestContainerClickhouse:
     """
     Package-scoped fixture for Clickhouse TestContainer.
     """
+    dev = request.config.getoption("--dev")
+    if dev:
+        container = pytestconfig.cache.get("clickhouse.container", None)
+        env = pytestconfig.cache.get("clickhouse.env", None)
+
+        if container and env:
+            assert isinstance(container, dict)
+            assert isinstance(env, dict)
+
+            test_container = types.TestContainerDocker(
+                host_config=types.TestContainerUrlConfig(
+                    container["host_config"]["scheme"],
+                    container["host_config"]["address"],
+                    container["host_config"]["port"],
+                ),
+                container_config=types.TestContainerUrlConfig(
+                    container["container_config"]["scheme"],
+                    container["container_config"]["address"],
+                    container["container_config"]["port"],
+                ),
+            )
+
+            connection = clickhouse_driver.connect(
+                user=env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME"],
+                password=env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PASSWORD"],
+                host=test_container.host_config.address,
+                port=test_container.host_config.port,
+            )
+
+            return types.TestContainerClickhouse(
+                container=test_container,
+                conn=connection,
+                env=env,
+            )
+
     version = request.config.getoption("--clickhouse-version")
 
     container = ClickHouseContainer(
@@ -91,21 +128,37 @@ def clickhouse(
     )
 
     def stop():
+        if dev:
+            return
+
         connection.close()
         container.stop(delete_volume=True)
 
     request.addfinalizer(stop)
 
-    return types.TestContainerClickhouse(
-        container=container,
-        host_config=types.TestContainerUrlConfig(
-            "tcp", container.get_container_host_ip(), container.get_exposed_port(9000)
-        ),
-        container_config=types.TestContainerUrlConfig(
-            "tcp", container.get_wrapped_container().name, 9000
+    cached_clickhouse = types.TestContainerClickhouse(
+        container=types.TestContainerDocker(
+            host_config=types.TestContainerUrlConfig(
+                "tcp",
+                container.get_container_host_ip(),
+                container.get_exposed_port(9000),
+            ),
+            container_config=types.TestContainerUrlConfig(
+                "tcp", container.get_wrapped_container().name, 9000
+            ),
         ),
         conn=connection,
         env={
-            "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN": f"tcp://{container.username}:{container.password}@{container.get_wrapped_container().name}:{9000}"  # pylint: disable=line-too-long
+            "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN": f"tcp://{container.username}:{container.password}@{container.get_wrapped_container().name}:{9000}",  # pylint: disable=line-too-long
+            "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME": container.username,
+            "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PASSWORD": container.password,
         },
     )
+
+    if dev:
+        pytestconfig.cache.set(
+            "clickhouse.container", dataclasses.asdict(cached_clickhouse.container)
+        )
+        pytestconfig.cache.set("clickhouse.env", cached_clickhouse.env)
+
+    return cached_clickhouse

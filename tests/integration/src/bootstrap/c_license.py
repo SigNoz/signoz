@@ -14,7 +14,7 @@ from fixtures.types import SigNoz
 
 def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
     make_http_mocks(
-        signoz.zeus.container,
+        signoz.zeus,
         [
             Mapping(
                 request=MappingRequest(

@@ -10,10 +10,17 @@ def migrator(
     network: Network,
     clickhouse: types.TestContainerClickhouse,
     request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
 ) -> None:
     """
     Package-scoped fixture for running schema migrations.
     """
+    dev = request.config.getoption("--dev")
+    if dev:
+        cached_migrator = pytestconfig.cache.get("migrator", None)
+        if cached_migrator is not None and cached_migrator is True:
+            return None
+
     version = request.config.getoption("--schema-migrator-version")
 
     client = docker.from_env()
@@ -53,3 +60,6 @@ def migrator(
         raise RuntimeError("failed to run migrations on clickhouse")
 
     container.remove()
+
+    if dev:
+        pytestconfig.cache.set("migrator", True)
