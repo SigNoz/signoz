@@ -2,6 +2,7 @@ import '../DomainDetails.styles.scss';
 
 import { Table, TablePaginationConfig, Typography } from 'antd';
 import Skeleton from 'antd/lib/skeleton';
+import { QueryParams } from 'constants/query';
 import {
 	dependentServicesColumns,
 	DependentServicesData,
@@ -16,10 +17,15 @@ import ErrorState from './ErrorState';
 
 interface DependentServicesProps {
 	dependentServicesQuery: UseQueryResult<SuccessResponse<any>, unknown>;
+	timeRange: {
+		startTime: number;
+		endTime: number;
+	};
 }
 
 function DependentServices({
 	dependentServicesQuery,
+	timeRange,
 }: DependentServicesProps): JSX.Element {
 	const {
 		data,
@@ -85,6 +91,25 @@ function DependentServices({
 								</div>
 							),
 					}}
+					onRow={(record): { onClick: () => void; className: string } => ({
+						onClick: (): void => {
+							const url = new URL(
+								`/services/${
+									record.serviceData.serviceName &&
+									record.serviceData.serviceName !== '-'
+										? record.serviceData.serviceName
+										: ''
+								}`,
+								window.location.origin,
+							);
+							const urlQuery = new URLSearchParams();
+							urlQuery.set(QueryParams.startTime, timeRange.startTime.toString());
+							urlQuery.set(QueryParams.endTime, timeRange.endTime.toString());
+							url.search = urlQuery.toString();
+							window.open(url.toString(), '_blank');
+						},
+						className: 'clickable-row',
+					})}
 				/>
 
 				{dependentServicesData.length > 5 && (

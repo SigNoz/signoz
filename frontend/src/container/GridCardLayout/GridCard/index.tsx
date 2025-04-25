@@ -47,6 +47,7 @@ function GridCardGraph({
 	start,
 	end,
 	analyticsEvent,
+	customTimeRange,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -130,6 +131,8 @@ function GridCardGraph({
 				variables: getDashboardVariables(variables),
 				fillGaps: widget.fillSpans,
 				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
+				start: customTimeRange?.startTime || start,
+				end: customTimeRange?.endTime || end,
 			};
 		}
 		updatedQuery.builder.queryData[0].pageSize = 10;
@@ -149,6 +152,8 @@ function GridCardGraph({
 					initialDataSource === DataSource.TRACES && widget.selectedTracesFields,
 			},
 			fillGaps: widget.fillSpans,
+			start: customTimeRange?.startTime || start,
+			end: customTimeRange?.endTime || end,
 		};
 	});
 
@@ -187,8 +192,8 @@ function GridCardGraph({
 			variables: getDashboardVariables(variables),
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval,
-			start,
-			end,
+			start: customTimeRange?.startTime || start,
+			end: customTimeRange?.endTime || end,
 		},
 		version || DEFAULT_ENTITY_VERSION,
 		{
@@ -202,6 +207,9 @@ function GridCardGraph({
 				widget.timePreferance,
 				widget.fillSpans,
 				requestData,
+				...(customTimeRange && customTimeRange.startTime && customTimeRange.endTime
+					? [customTimeRange.startTime, customTimeRange.endTime]
+					: []),
 			],
 			retry(failureCount, error): boolean {
 				if (
