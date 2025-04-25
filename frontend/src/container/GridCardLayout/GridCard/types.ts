@@ -61,6 +61,10 @@ export interface GridCardGraphProps {
 	start?: number;
 	end?: number;
 	analyticsEvent?: string;
+	customTimeRange?: {
+		startTime: number;
+		endTime: number;
+	};
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

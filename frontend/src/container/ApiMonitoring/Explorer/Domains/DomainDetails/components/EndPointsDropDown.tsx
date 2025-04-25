@@ -52,6 +52,10 @@ function EndPointsDropDown({
 					: (triggerNode): HTMLElement => triggerNode.parentNode as HTMLElement
 			}
 			dropdownStyle={dropdownStyle}
+			allowClear
+			onClear={(): void => {
+				setSelectedEndPointName('');
+			}}
 		/>
 	);
 }

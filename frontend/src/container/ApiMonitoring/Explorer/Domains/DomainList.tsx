@@ -60,7 +60,6 @@ function DomainList({ showIP }: { showIP: boolean }): JSX.Element {
 					aggregateAttribute: {
 						...initialQueriesMap.traces.builder.queryData[0].aggregateAttribute,
 					},
-					queryName: '',
 				},
 			],
 		},

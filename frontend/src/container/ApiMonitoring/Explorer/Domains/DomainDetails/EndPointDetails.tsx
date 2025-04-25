@@ -8,6 +8,10 @@ import {
 	getRateOverTimeWidgetData,
 } from 'container/ApiMonitoring/utils';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
+// import {
+// 	CustomTimeType,
+// 	Time,
+// } from 'container/TopNav/DateTimeSelectionV2/config';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
@@ -29,7 +33,8 @@ function EndPointDetails({
 	setSelectedEndPointName,
 	domainListFilters,
 	timeRange,
-}: {
+}: // handleTimeChange,
+{
 	domainName: string;
 	endPointName: string;
 	setSelectedEndPointName: (value: string) => void;
@@ -38,6 +43,10 @@ function EndPointDetails({
 		startTime: number;
 		endTime: number;
 	};
+	// handleTimeChange: (
+	// 	interval: Time | CustomTimeType,
+	// 	dateTimeRange?: [number, number],
+	// ) => void;
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
@@ -47,6 +56,7 @@ function EndPointDetails({
 		op: 'AND',
 		items: [],
 	});
+	// [TODO] if endPointName is there then add it to the filters under http.url key
 
 	// Manually update the query to include the filters
 	// Because using the hook is causing the global domain
@@ -78,15 +88,8 @@ function EndPointDetails({
 	);
 
 	const endPointDetailsQueryPayload = useMemo(
-		() =>
-			getEndPointDetailsQueryPayload(
-				domainName,
-				endPointName,
-				minTime,
-				maxTime,
-				filters,
-			),
-		[domainName, endPointName, filters, minTime, maxTime],
+		() => getEndPointDetailsQueryPayload(domainName, minTime, maxTime, filters),
+		[domainName, filters, minTime, maxTime],
 	);
 
 	const endPointDetailsDataQueries = useQueries(
@@ -141,6 +144,20 @@ function EndPointDetails({
 		[domainName, endPointName, filters, domainListFilters],
 	);
 
+	// // [TODO] Fix this later
+	// const onDragSelect = useCallback(
+	// 	(start: number, end: number) => {
+	// 		const startTimestamp = Math.trunc(start);
+	// 		const endTimestamp = Math.trunc(end);
+
+	// 		if (startTimestamp !== endTimestamp) {
+	// 			// update the value in local time picker
+	// 			handleTimeChange('custom', [startTimestamp, endTimestamp]);
+	// 		}
+	// 	},
+	// 	[handleTimeChange],
+	// );
+
 	return (
 		<div className="endpoint-details-container">
 			<div className="endpoint-details-filters-container">
@@ -166,7 +183,9 @@ function EndPointDetails({
 			<div className="endpoint-meta-data">
 				<div className="endpoint-meta-data-pill">
 					<div className="endpoint-meta-data-label">Endpoint</div>
-					<div className="endpoint-meta-data-value">{endpoint || '-'}</div>
+					<div className="endpoint-meta-data-value">
+						{endpoint || 'All Endpoints'}
+					</div>
 				</div>
 				<div className="endpoint-meta-data-pill">
 					<div className="endpoint-meta-data-label">Port</div>
@@ -177,6 +196,7 @@ function EndPointDetails({
 			{!isServicesFilterApplied && (
 				<DependentServices
 					dependentServicesQuery={endPointDependentServicesDataQuery}
+					timeRange={timeRange}
 				/>
 			)}
 			<StatusCodeBarCharts
@@ -191,8 +211,16 @@ function EndPointDetails({
 				timeRange={timeRange}
 			/>
 			<StatusCodeTable endPointStatusCodeDataQuery={endPointStatusCodeDataQuery} />
-			<MetricOverTimeGraph widget={rateOverTimeWidget} timeRange={timeRange} />
-			<MetricOverTimeGraph widget={latencyOverTimeWidget} timeRange={timeRange} />
+			<MetricOverTimeGraph
+				widget={rateOverTimeWidget}
+				timeRange={timeRange}
+				onDragSelect={(): void => {}}
+			/>
+			<MetricOverTimeGraph
+				widget={latencyOverTimeWidget}
+				timeRange={timeRange}
+				onDragSelect={(): void => {}}
+			/>
 		</div>
 	);
 }

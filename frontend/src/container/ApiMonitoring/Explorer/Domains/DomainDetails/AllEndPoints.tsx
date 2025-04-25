@@ -159,7 +159,7 @@ function AllEndPoints({
 	const handleRowClick = (record: EndPointsTableRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedEndPointName(record.endpointName); // this will open up the endpoint details tab
-			setSelectedView(VIEW_TYPES.ENDPOINT_DETAILS);
+			setSelectedView(VIEW_TYPES.ENDPOINT_STATS);
 			logEvent('API Monitoring: Endpoint name row clicked', {});
 		} else {
 			handleGroupByRowClick(record); // this will prepare the nested query payload

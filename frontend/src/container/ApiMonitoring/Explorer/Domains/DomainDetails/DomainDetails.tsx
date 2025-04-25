@@ -20,7 +20,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import AllEndPoints from './AllEndPoints';
 import DomainMetrics from './components/DomainMetrics';
 import { VIEW_TYPES, VIEWS } from './constants';
-import EndPointDetailsWrapper from './EndPointDetailsWrapper';
+import EndPointDetails from './EndPointDetails';
 import TopErrors from './TopErrors';
 
 const TimeRangeOffset = 1000000000;
@@ -156,7 +156,10 @@ function DomainDetails({
 		>
 			{domainData && (
 				<>
-					<DomainMetrics domainData={domainData} />
+					<DomainMetrics
+						domainName={domainData.domainName}
+						timeRange={modalTimeRange}
+					/>
 					<div className="views-tabs-container">
 						<Radio.Group
 							className="views-tabs"
@@ -174,13 +177,13 @@ function DomainDetails({
 							</Radio.Button>
 							<Radio.Button
 								className={
-									selectedView === VIEW_TYPES.ENDPOINT_DETAILS
+									selectedView === VIEW_TYPES.ENDPOINT_STATS
 										? 'tab selected_view'
 										: 'tab'
 								}
-								value={VIEW_TYPES.ENDPOINT_DETAILS}
+								value={VIEW_TYPES.ENDPOINT_STATS}
 							>
-								<div className="view-title">Endpoint Details</div>
+								<div className="view-title">Endpoint(s) Stats</div>
 							</Radio.Button>
 							<Radio.Button
 								className={
@@ -188,7 +191,7 @@ function DomainDetails({
 								}
 								value={VIEW_TYPES.TOP_ERRORS}
 							>
-								<div className="view-title">Top Errors</div>
+								<div className="view-title">Top 10 Errors</div>
 							</Radio.Button>
 						</Radio.Group>
 					</div>
@@ -203,13 +206,14 @@ function DomainDetails({
 						/>
 					)}
 
-					{selectedView === VIEW_TYPES.ENDPOINT_DETAILS && (
-						<EndPointDetailsWrapper
+					{selectedView === VIEW_TYPES.ENDPOINT_STATS && (
+						<EndPointDetails
 							domainName={domainData.domainName}
 							endPointName={selectedEndPointName}
 							setSelectedEndPointName={setSelectedEndPointName}
 							domainListFilters={domainListFilters}
 							timeRange={modalTimeRange}
+							// handleTimeChange={handleTimeChange}
 						/>
 					)}
 

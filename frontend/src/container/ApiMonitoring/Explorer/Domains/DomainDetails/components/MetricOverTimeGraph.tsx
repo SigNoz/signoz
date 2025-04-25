@@ -5,9 +5,11 @@ import { Widgets } from 'types/api/dashboard/getAll';
 function MetricOverTimeGraph({
 	widget,
 	timeRange,
+	onDragSelect,
 }: {
 	widget: Widgets;
 	timeRange: { startTime: number; endTime: number };
+	onDragSelect: (start: number, end: number) => void;
 }): JSX.Element {
 	return (
 		<div>
@@ -16,10 +18,9 @@ function MetricOverTimeGraph({
 					<GridCard
 						widget={widget}
 						isQueryEnabled
-						onDragSelect={(): void => {}}
+						onDragSelect={onDragSelect}
 						customOnDragSelect={(): void => {}}
-						start={timeRange.startTime}
-						end={timeRange.endTime}
+						customTimeRange={timeRange}
 					/>
 				</div>
 			</Card>
