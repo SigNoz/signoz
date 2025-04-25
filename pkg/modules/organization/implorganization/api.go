@@ -21,11 +21,12 @@ func NewAPI(module organization.Module) organization.API {
 }
 
 func (api *organizationAPI) Get(rw http.ResponseWriter, r *http.Request) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
+
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid org id"))
@@ -52,11 +53,12 @@ func (api *organizationAPI) GetAll(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (api *organizationAPI) Update(rw http.ResponseWriter, r *http.Request) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
+
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid org id"))

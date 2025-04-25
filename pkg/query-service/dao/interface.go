@@ -23,10 +23,6 @@ type Queries interface {
 	GetUsers(ctx context.Context) ([]types.GettableUser, *model.ApiError)
 	GetUsersWithOpts(ctx context.Context, limit int) ([]types.GettableUser, *model.ApiError)
 
-	GetOrgs(ctx context.Context) ([]types.Organization, *model.ApiError)
-	GetOrgByName(ctx context.Context, name string) (*types.Organization, *model.ApiError)
-	GetOrg(ctx context.Context, id string) (*types.Organization, *model.ApiError)
-
 	GetResetPasswordEntry(ctx context.Context, token string) (*types.ResetPasswordRequest, *model.ApiError)
 	GetUsersByOrg(ctx context.Context, orgId string) ([]types.GettableUser, *model.ApiError)
 	GetUsersByRole(ctx context.Context, role authtypes.Role) ([]types.GettableUser, *model.ApiError)
@@ -43,10 +39,6 @@ type Mutations interface {
 	CreateUser(ctx context.Context, user *types.User, isFirstUser bool) (*types.User, *model.ApiError)
 	EditUser(ctx context.Context, update *types.User) (*types.User, *model.ApiError)
 	DeleteUser(ctx context.Context, id string) *model.ApiError
-
-	CreateOrg(ctx context.Context, org *types.Organization) (*types.Organization, *model.ApiError)
-	EditOrg(ctx context.Context, org *types.Organization) *model.ApiError
-	DeleteOrg(ctx context.Context, id string) *model.ApiError
 
 	CreateResetPasswordEntry(ctx context.Context, req *types.ResetPasswordRequest) *model.ApiError
 	DeleteResetPasswordEntry(ctx context.Context, token string) *model.ApiError
