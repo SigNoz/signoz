@@ -3555,6 +3555,12 @@ export const getAllEndpointsWidgetData = (
 	);
 
 	widget.renderColumnCell = {
+		'http.url': (url: any): ReactNode => {
+			const { endpoint } = extractPortAndEndpoint(url);
+			return (
+				<span>{endpoint === 'n/a' || url === undefined ? '-' : endpoint}</span>
+			);
+		},
 		A: (numOfCalls: any): ReactNode => (
 			<span>
 				{numOfCalls === 'n/a' || numOfCalls === undefined ? '-' : numOfCalls}
@@ -3602,6 +3608,11 @@ export const getAllEndpointsWidgetData = (
 				className="progress-bar error-rate"
 			/>
 		),
+	};
+
+	widget.customColTitles = {
+		'http.url': 'Endpoint',
+		'net.peer.port': 'Port',
 	};
 
 	return widget;
