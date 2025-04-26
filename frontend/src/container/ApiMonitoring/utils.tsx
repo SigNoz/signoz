@@ -615,14 +615,14 @@ const defaultGroupBy = [
 		key: 'http.url',
 		type: 'tag',
 	},
-	{
-		key: 'net.peer.port',
-		dataType: DataTypes.Float64,
-		type: 'tag',
-		isColumn: false,
-		isJSON: false,
-		id: 'net.peer.port--float64--tag--false',
-	},
+	// {
+	// 	key: 'net.peer.port',
+	// 	dataType: DataTypes.Float64,
+	// 	type: 'tag',
+	// 	isColumn: false,
+	// 	isJSON: false,
+	// 	id: 'net.peer.port--float64--tag--false',
+	// },
 ];
 
 export const getEndPointsQueryPayload = (
@@ -3185,19 +3185,23 @@ export const getStatusCodeBarChartWidgetData = (
 								op: '=',
 								value: domainName,
 							},
-							{
-								id: '8b1be6f0',
-								key: {
-									dataType: DataTypes.String,
-									id: 'http.url--string--tag--false',
-									isColumn: false,
-									isJSON: false,
-									key: 'http.url',
-									type: 'tag',
-								},
-								op: '=',
-								value: endPointName,
-							},
+							...(endPointName
+								? [
+										{
+											id: '8b1be6f0',
+											key: {
+												dataType: DataTypes.String,
+												id: 'http.url--string--tag--false',
+												isColumn: false,
+												isJSON: false,
+												key: 'http.url',
+												type: 'tag',
+											},
+											op: '=',
+											value: endPointName,
+										},
+								  ]
+								: []),
 							...filters.items,
 						],
 						op: 'AND',
