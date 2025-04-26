@@ -36,6 +36,7 @@ function StatusCodeBarCharts({
 	domainListFilters,
 	filters,
 	timeRange,
+	onDragSelect,
 }: {
 	endPointStatusCodeBarChartsDataQuery: UseQueryResult<
 		SuccessResponse<any>,
@@ -53,6 +54,7 @@ function StatusCodeBarCharts({
 		startTime: number;
 		endTime: number;
 	};
+	onDragSelect: (start: number, end: number) => void;
 }): JSX.Element {
 	// 0 : Status Code Count
 	// 1 : Status Code Latency
@@ -187,6 +189,7 @@ function StatusCodeBarCharts({
 				panelType: PANEL_TYPES.BAR,
 				onClickHandler: graphClickHandler,
 				customSeries: getCustomSeries,
+				onDragSelect,
 			}),
 		[
 			minTime,
@@ -198,6 +201,7 @@ function StatusCodeBarCharts({
 			isDarkMode,
 			graphClickHandler,
 			getCustomSeries,
+			onDragSelect,
 		],
 	);
 

@@ -113,6 +113,8 @@ function DomainDetails({
 							defaultRelativeTime="5m"
 							isModalTimeSelection
 							modalSelectedInterval={selectedInterval}
+							modalInitialStartTime={modalTimeRange.startTime * 1000}
+							modalInitialEndTime={modalTimeRange.endTime * 1000}
 						/>
 						<Button.Group className="domain-details-drawer-header-ctas">
 							<Button
@@ -213,7 +215,7 @@ function DomainDetails({
 							setSelectedEndPointName={setSelectedEndPointName}
 							domainListFilters={domainListFilters}
 							timeRange={modalTimeRange}
-							// handleTimeChange={handleTimeChange}
+							handleTimeChange={handleTimeChange}
 						/>
 					)}
 

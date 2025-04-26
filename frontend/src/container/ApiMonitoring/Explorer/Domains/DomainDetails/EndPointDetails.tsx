@@ -8,10 +8,10 @@ import {
 	getRateOverTimeWidgetData,
 } from 'container/ApiMonitoring/utils';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
-// import {
-// 	CustomTimeType,
-// 	Time,
-// } from 'container/TopNav/DateTimeSelectionV2/config';
+import {
+	CustomTimeType,
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
@@ -43,8 +43,8 @@ function EndPointDetails({
 	setSelectedEndPointName,
 	domainListFilters,
 	timeRange,
-}: // handleTimeChange,
-{
+	handleTimeChange,
+}: {
 	domainName: string;
 	endPointName: string;
 	setSelectedEndPointName: (value: string) => void;
@@ -53,10 +53,10 @@ function EndPointDetails({
 		startTime: number;
 		endTime: number;
 	};
-	// handleTimeChange: (
-	// 	interval: Time | CustomTimeType,
-	// 	dateTimeRange?: [number, number],
-	// ) => void;
+	handleTimeChange: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	) => void;
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
@@ -214,18 +214,18 @@ function EndPointDetails({
 	);
 
 	// // [TODO] Fix this later
-	// const onDragSelect = useCallback(
-	// 	(start: number, end: number) => {
-	// 		const startTimestamp = Math.trunc(start);
-	// 		const endTimestamp = Math.trunc(end);
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
 
-	// 		if (startTimestamp !== endTimestamp) {
-	// 			// update the value in local time picker
-	// 			handleTimeChange('custom', [startTimestamp, endTimestamp]);
-	// 		}
-	// 	},
-	// 	[handleTimeChange],
-	// );
+			if (startTimestamp !== endTimestamp) {
+				// update the value in local time picker
+				handleTimeChange('custom', [startTimestamp, endTimestamp]);
+			}
+		},
+		[handleTimeChange],
+	);
 
 	return (
 		<div className="endpoint-details-container">
@@ -276,17 +276,18 @@ function EndPointDetails({
 				domainListFilters={domainListFilters}
 				filters={filters}
 				timeRange={timeRange}
+				onDragSelect={onDragSelect}
 			/>
 			<StatusCodeTable endPointStatusCodeDataQuery={endPointStatusCodeDataQuery} />
 			<MetricOverTimeGraph
 				widget={rateOverTimeWidget}
 				timeRange={timeRange}
-				onDragSelect={(): void => {}}
+				onDragSelect={onDragSelect}
 			/>
 			<MetricOverTimeGraph
 				widget={latencyOverTimeWidget}
 				timeRange={timeRange}
-				onDragSelect={(): void => {}}
+				onDragSelect={onDragSelect}
 			/>
 		</div>
 	);
