@@ -405,3 +405,95 @@
 		gap: 8px;
 	}
 }
+
+.lightMode {
+	.inspect-metrics-modal {
+		.inspect-metrics-title {
+			.inspect-metrics-button {
+				color: var(--text-ink-400);
+			}
+		}
+
+		.inspect-metrics-content {
+			.inspect-metrics-content-first-col {
+				.inspect-metrics-graph-view {
+					.inspect-metrics-graph-view-header {
+						.ant-btn-group {
+							.time-series-button-label,
+							.metric-name-button-label {
+								span {
+									color: var(--text-ink-100);
+								}
+							}
+						}
+					}
+				}
+
+				.inspect-metrics-query-builder {
+					.inspect-metrics-query-builder-header {
+						.query-builder-button-label {
+							span {
+								color: var(--text-ink-100);
+							}
+						}
+					}
+
+					.metric-filters {
+						.query-builder-search-v2 {
+							.ant-select {
+								.ant-select-selector {
+									background-color: var(--bg-vanilla-100);
+									color: var(--text-ink-100);
+									border: 0.5px solid var(--bg-slate-300) !important;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	.graph-popover {
+		.graph-popover-card {
+			.graph-popover-header-text {
+				color: var(--text-ink-400);
+			}
+
+			.graph-popover-row-label {
+				color: var(--bg-slate-50);
+			}
+
+			.graph-popover-cell {
+				background-color: var(--bg-vanilla-300);
+				color: var(--text-ink-100);
+			}
+
+			.footer-row {
+				.footer-divider {
+					border-top: 1px dashed var(--bg-slate-300);
+				}
+			}
+		}
+	}
+
+	.expanded-view {
+		.labels-table {
+			border: 1px solid var(--bg-vanilla-400);
+
+			.labels-key {
+				color: var(--bg-slate-400);
+				background-color: var(--bg-vanilla-400);
+			}
+
+			.labels-value {
+				background-color: var(--bg-vanilla-400);
+				.field-renderer-container {
+					.label {
+						color: var(--bg-vanilla-400);
+					}
+				}
+			}
+		}
+	}
+}
