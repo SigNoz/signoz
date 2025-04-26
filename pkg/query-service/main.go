@@ -47,10 +47,14 @@ func main() {
 
 	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
 	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
+	// Deprecated
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	// Deprecated
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
+	// Deprecated
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
 	flag.BoolVar(&preferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
+	// Deprecated
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", constants.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
@@ -58,8 +62,11 @@ func main() {
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	// Allow using the consistent naming with the signoz collector
 	flag.StringVar(&cluster, "cluster-name", "cluster", "(cluster name - defaults to 'cluster')")
+	// Deprecated
 	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
+	// Deprecated
 	flag.IntVar(&maxOpenConns, "max-open-conns", 100, "(max connections for use at any time, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
+	// Deprecated
 	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.Parse()
 
@@ -113,12 +120,8 @@ func main() {
 	serverOptions := &app.ServerOptions{
 		Config:                     config,
 		HTTPHostPort:               constants.HTTPHostPort,
-		PromConfigPath:             promConfigPath,
-		SkipTopLvlOpsPath:          skipTopLvlOpsPath,
 		PreferSpanMetrics:          preferSpanMetrics,
 		PrivateHostPort:            constants.PrivateHostPort,
-		DisableRules:               disableRules,
-		RuleRepoURL:                ruleRepoURL,
 		CacheConfigPath:            cacheConfigPath,
 		FluxInterval:               fluxInterval,
 		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,

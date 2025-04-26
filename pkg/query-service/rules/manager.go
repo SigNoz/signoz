@@ -84,18 +84,14 @@ func prepareTaskName(ruleId interface{}) string {
 type ManagerOptions struct {
 	TelemetryStore telemetrystore.TelemetryStore
 	Prometheus     prometheus.Prometheus
-	// RepoURL is used to generate a backlink in sent alert messages
-	RepoURL string
-
 	// rule db conn
 	DBConn *sqlx.DB
 
-	Context      context.Context
-	Logger       *zap.Logger
-	ResendDelay  time.Duration
-	DisableRules bool
-	Reader       interfaces.Reader
-	Cache        cache.Cache
+	Context     context.Context
+	Logger      *zap.Logger
+	ResendDelay time.Duration
+	Reader      interfaces.Reader
+	Cache       cache.Cache
 
 	EvalDelay time.Duration
 
@@ -395,13 +391,6 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) er
 			return err
 		}
 
-		if !m.opts.DisableRules {
-			err = m.syncRuleStateWithTask(ctx, claims.OrgID, prepareTaskName(existingRule.ID.StringValue()), parsedRule)
-			if err != nil {
-				return err
-			}
-		}
-
 		return nil
 	})
 }
@@ -495,11 +484,6 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 			return err
 		}
 
-		taskName := prepareTaskName(id.StringValue())
-		if !m.opts.DisableRules {
-			m.deleteTask(taskName)
-		}
-
 		return nil
 	})
 }
@@ -578,13 +562,6 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		err = m.alertmanager.SetConfig(ctx, cfg)
 		if err != nil {
 			return err
-		}
-
-		taskName := prepareTaskName(id.StringValue())
-		if !m.opts.DisableRules {
-			if err := m.addTask(ctx, claims.OrgID, parsedRule, taskName); err != nil {
-				return err
-			}
 		}
 
 		return nil
@@ -724,9 +701,6 @@ func (m *Manager) prepareNotifyFunc() NotifyFunc {
 
 		for _, alert := range alerts {
 			generatorURL := alert.GeneratorURL
-			if generatorURL == "" {
-				generatorURL = m.opts.RepoURL
-			}
 
 			a := &alertmanagertypes.PostableAlert{
 				Annotations: alert.Annotations.Map(),
@@ -759,9 +733,6 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 
 		alert := alerts[0]
 		generatorURL := alert.GeneratorURL
-		if generatorURL == "" {
-			generatorURL = m.opts.RepoURL
-		}
 
 		a := &alertmanagertypes.PostableAlert{
 			Annotations: alert.Annotations.Map(),

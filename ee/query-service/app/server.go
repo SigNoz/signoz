@@ -45,25 +45,17 @@ import (
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
-	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 
-const AppDbEngine = "sqlite"
-
 type ServerOptions struct {
-	Config            signoz.Config
-	SigNoz            *signoz.SigNoz
-	PromConfigPath    string
-	SkipTopLvlOpsPath string
-	HTTPHostPort      string
-	PrivateHostPort   string
-	// alert specific params
-	DisableRules               bool
-	RuleRepoURL                string
+	Config                     signoz.Config
+	SigNoz                     *signoz.SigNoz
+	HTTPHostPort               string
+	PrivateHostPort            string
 	PreferSpanMetrics          bool
 	CacheConfigPath            string
 	FluxInterval               string
@@ -146,14 +138,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.SigNoz.Cache,
 	)
 
-	skipConfig := &basemodel.SkipConfig{}
-	if serverOptions.SkipTopLvlOpsPath != "" {
-		// read skip config
-		skipConfig, err = basemodel.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
-		if err != nil {
-			return nil, err
-		}
-	}
 	var c cache.Cache
 	if serverOptions.CacheConfigPath != "" {
 		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
@@ -164,11 +148,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	rm, err := makeRulesManager(
-		serverOptions.RuleRepoURL,
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
 		c,
-		serverOptions.DisableRules,
 		serverOptions.UseLogsNewSchema,
 		serverOptions.UseTraceNewSchema,
 		serverOptions.SigNoz.Alertmanager,
@@ -238,7 +220,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
-		SkipConfig:                    skipConfig,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
 		AppDao:                        modelDao,
 		RulesManager:                  rm,
@@ -411,13 +392,7 @@ func (s *Server) initListeners() error {
 
 // Start listening on http and private http port concurrently
 func (s *Server) Start(ctx context.Context) error {
-
-	// initiate rule manager first
-	if !s.serverOptions.DisableRules {
-		s.ruleManager.Start(ctx)
-	} else {
-		zap.L().Info("msg: Rules disabled as rules.disable is set to TRUE")
-	}
+	s.ruleManager.Start(ctx)
 
 	err := s.initListeners()
 	if err != nil {
@@ -508,11 +483,9 @@ func (s *Server) Stop() error {
 }
 
 func makeRulesManager(
-	ruleRepoURL string,
 	db *sqlx.DB,
 	ch baseint.Reader,
 	cache cache.Cache,
-	disableRules bool,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
 	alertmanager alertmanager.Alertmanager,
@@ -524,11 +497,9 @@ func makeRulesManager(
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
 		Prometheus:          prometheus,
-		RepoURL:             ruleRepoURL,
 		DBConn:              db,
 		Context:             context.Background(),
 		Logger:              zap.L(),
-		DisableRules:        disableRules,
 		Reader:              ch,
 		Cache:               cache,
 		EvalDelay:           baseconst.GetEvalDelay(),
