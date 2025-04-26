@@ -582,23 +582,13 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
-	// === Preference APIs ===
-
-	// user actions
 	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.Signoz.Handlers.Preference.GetAllUser)).Methods(http.MethodGet)
-
 	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.Signoz.Handlers.Preference.GetUser)).Methods(http.MethodGet)
-
 	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.Signoz.Handlers.Preference.UpdateUser)).Methods(http.MethodPut)
-
-	// org actions
 	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.Signoz.Handlers.Preference.GetAllOrg)).Methods(http.MethodGet)
-
 	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.Signoz.Handlers.Preference.GetOrg)).Methods(http.MethodGet)
-
 	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.Signoz.Handlers.Preference.UpdateOrg)).Methods(http.MethodPut)
 
-	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/invite/bulk", am.AdminAccess(aH.inviteUsers)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.getInvite)).Methods(http.MethodGet)
@@ -4635,7 +4625,6 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
-
 	viewID := mux.Vars(r)["viewId"]
 	viewUUID, err := valuer.NewUUID(viewID)
 	if err != nil {
