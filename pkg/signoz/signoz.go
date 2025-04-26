@@ -19,12 +19,13 @@ import (
 
 type SigNoz struct {
 	*factory.Registry
-	Cache          cache.Cache
-	Web            web.Web
-	SQLStore       sqlstore.SQLStore
-	TelemetryStore telemetrystore.TelemetryStore
-	Prometheus     prometheus.Prometheus
-	Alertmanager   alertmanager.Alertmanager
+	Instrumentation instrumentation.Instrumentation
+	Cache           cache.Cache
+	Web             web.Web
+	SQLStore        sqlstore.SQLStore
+	TelemetryStore  telemetrystore.TelemetryStore
+	Prometheus      prometheus.Prometheus
+	Alertmanager    alertmanager.Alertmanager
 }
 
 func New(
@@ -144,12 +145,13 @@ func New(
 	}
 
 	return &SigNoz{
-		Registry:       registry,
-		Cache:          cache,
-		Web:            web,
-		SQLStore:       sqlstore,
-		TelemetryStore: telemetrystore,
-		Prometheus:     prometheus,
-		Alertmanager:   alertmanager,
+		Registry:        registry,
+		Instrumentation: instrumentation,
+		Cache:           cache,
+		Web:             web,
+		SQLStore:        sqlstore,
+		TelemetryStore:  telemetrystore,
+		Prometheus:      prometheus,
+		Alertmanager:    alertmanager,
 	}, nil
 }

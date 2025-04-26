@@ -151,7 +151,6 @@ export function getAppContextMock(
 			organization: 'Nightswatch',
 			orgId: 'does-not-matter-id',
 			role: role as ROLES,
-			groupId: 'does-not-matter-groupId',
 		},
 		org: [
 			{

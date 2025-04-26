@@ -20,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -158,13 +157,6 @@ func createTestUser(organizationModule organization.Module) (*types.User, *model
 		return nil, model.InternalError(err)
 	}
 
-	group, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
-	if apiErr != nil {
-		return nil, model.InternalError(apiErr)
-	}
-
-	auth.InitAuthCache(ctx)
-
 	userId := uuid.NewString()
 
 	return dao.DB().CreateUser(
@@ -175,7 +167,7 @@ func createTestUser(organizationModule organization.Module) (*types.User, *model
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
 			OrgID:    organization.ID.StringValue(),
-			GroupID:  group.ID,
+			Role:     authtypes.RoleAdmin.String(),
 		},
 		true,
 	)

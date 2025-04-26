@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
@@ -30,9 +29,9 @@ func NewAPI(usecase Usecase) API {
 
 func (p *preferenceAPI) GetOrgPreference(rw http.ResponseWriter, r *http.Request) {
 	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 	preference, err := p.usecase.GetOrgPreference(
@@ -49,18 +48,18 @@ func (p *preferenceAPI) GetOrgPreference(rw http.ResponseWriter, r *http.Request
 func (p *preferenceAPI) UpdateOrgPreference(rw http.ResponseWriter, r *http.Request) {
 	preferenceId := mux.Vars(r)["preferenceId"]
 	req := preferencetypes.UpdatablePreference{}
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-
+	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
+
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = p.usecase.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
@@ -71,9 +70,9 @@ func (p *preferenceAPI) UpdateOrgPreference(rw http.ResponseWriter, r *http.Requ
 }
 
 func (p *preferenceAPI) GetAllOrgPreferences(rw http.ResponseWriter, r *http.Request) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 	preferences, err := p.usecase.GetAllOrgPreferences(
@@ -89,9 +88,9 @@ func (p *preferenceAPI) GetAllOrgPreferences(rw http.ResponseWriter, r *http.Req
 
 func (p *preferenceAPI) GetUserPreference(rw http.ResponseWriter, r *http.Request) {
 	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -108,14 +107,14 @@ func (p *preferenceAPI) GetUserPreference(rw http.ResponseWriter, r *http.Reques
 
 func (p *preferenceAPI) UpdateUserPreference(rw http.ResponseWriter, r *http.Request) {
 	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 	req := preferencetypes.UpdatablePreference{}
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err = json.NewDecoder(r.Body).Decode(&req)
 
 	if err != nil {
 		render.Error(rw, err)
@@ -131,9 +130,9 @@ func (p *preferenceAPI) UpdateUserPreference(rw http.ResponseWriter, r *http.Req
 }
 
 func (p *preferenceAPI) GetAllUserPreferences(rw http.ResponseWriter, r *http.Request) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 	preferences, err := p.usecase.GetAllUserPreferences(

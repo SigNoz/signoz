@@ -28,10 +28,9 @@ var (
 	CloudIntegrationReference = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
 )
 
-type dialect struct {
-}
+type dialect struct{}
 
-func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) IntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
 	columnType, err := dialect.GetColumnType(ctx, bun, table, column)
 	if err != nil {
 		return err
@@ -78,7 +77,7 @@ func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, 
 	return nil
 }
 
-func (dialect *dialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) IntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
 	columnExists, err := dialect.ColumnExists(ctx, bun, table, column)
 	if err != nil {
 		return err
@@ -414,6 +413,29 @@ func (dialect *dialect) AddPrimaryKey(ctx context.Context, bun bun.IDB, oldModel
 
 	_, err = bun.
 		ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s", newTableName, oldTableName))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, bunIDB bun.IDB, model interface{}, column string) error {
+	existingTable := bunIDB.Dialect().Tables().Get(reflect.TypeOf(model))
+	columnExists, err := dialect.ColumnExists(ctx, bunIDB, existingTable.Name, column)
+	if err != nil {
+		return err
+	}
+
+	if !columnExists {
+		return nil
+	}
+
+	_, err = bunIDB.
+		NewDropColumn().
+		Model(model).
+		Column(column).
+		Exec(ctx)
 	if err != nil {
 		return err
 	}

@@ -44,10 +44,8 @@ jobs:
       - name: run
         run: |
           cd tests/integration && \
-            poetry run pytest -ra \
+            poetry run pytest \
             --basetemp=./tmp/ \
-            -vv \
-            --capture=no \
             src/${{matrix.src}} \
             --sqlstore-provider ${{matrix.sqlstore-provider}} \
             --postgres-version ${{matrix.postgres-version}} \

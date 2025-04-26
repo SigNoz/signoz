@@ -6,14 +6,13 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/google/uuid"
@@ -42,13 +41,6 @@ func createTestUser(organizationModule organization.Module) (*types.User, *model
 		return nil, model.InternalError(err)
 	}
 
-	group, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
-	if apiErr != nil {
-		return nil, model.InternalError(apiErr)
-	}
-
-	auth.InitAuthCache(ctx)
-
 	userId := uuid.NewString()
 	return dao.DB().CreateUser(
 		ctx,
@@ -58,7 +50,7 @@ func createTestUser(organizationModule organization.Module) (*types.User, *model
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
 			OrgID:    organization.ID.StringValue(),
-			GroupID:  group.ID,
+			Role:     authtypes.RoleAdmin.String(),
 		},
 		true,
 	)

@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/pkg/errors"
 )
 
@@ -163,11 +163,11 @@ func (mds *ModelDaoSqlite) UpdateUserPassword(ctx context.Context, passwordHash,
 	return nil
 }
 
-func (mds *ModelDaoSqlite) UpdateUserGroup(ctx context.Context, userId, groupId string) *model.ApiError {
+func (mds *ModelDaoSqlite) UpdateUserRole(ctx context.Context, userId string, role authtypes.Role) *model.ApiError {
 
 	_, err := mds.bundb.NewUpdate().
 		Model(&types.User{}).
-		Set("group_id = ?", groupId).
+		Set("role = ?", role).
 		Where("id = ?", userId).
 		Exec(ctx)
 
@@ -207,10 +207,8 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 	users := []types.GettableUser{}
 	query := mds.bundb.NewSelect().
 		Table("users").
-		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
-		ColumnExpr("g.name as role").
-		ColumnExpr("o.display_name as organization").
-		Join("JOIN groups g ON g.id = users.group_id").
+		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.role").
+		ColumnExpr("o.name as organization").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.id = ?", id)
 
@@ -244,10 +242,8 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
 	users := []types.GettableUser{}
 	query := mds.bundb.NewSelect().
 		Table("users").
-		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
-		ColumnExpr("g.name as role").
-		ColumnExpr("o.display_name as organization").
-		Join("JOIN groups g ON g.id = users.group_id").
+		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.role").
+		ColumnExpr("o.name as organization").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.email = ?", email)
 
@@ -279,10 +275,9 @@ func (mds *ModelDaoSqlite) GetUsersWithOpts(ctx context.Context, limit int) ([]t
 
 	query := mds.bundb.NewSelect().
 		Table("users").
-		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
-		ColumnExpr("g.name as role").
-		ColumnExpr("o.display_name as organization").
-		Join("JOIN groups g ON g.id = users.group_id").
+		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.role").
+		ColumnExpr("users.role as role").
+		ColumnExpr("o.name as organization").
 		Join("JOIN organizations o ON o.id = users.org_id")
 
 	if limit > 0 {
@@ -303,10 +298,9 @@ func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context,
 
 	query := mds.bundb.NewSelect().
 		Table("users").
-		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
-		ColumnExpr("g.name as role").
-		ColumnExpr("o.display_name as organization").
-		Join("JOIN groups g ON g.id = users.group_id").
+		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.role").
+		ColumnExpr("users.role as role").
+		ColumnExpr("o.name as organization").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.org_id = ?", orgId)
 
@@ -317,19 +311,16 @@ func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context,
 	return users, nil
 }
 
-func (mds *ModelDaoSqlite) GetUsersByGroup(ctx context.Context,
-	groupId string) ([]types.GettableUser, *model.ApiError) {
-
+func (mds *ModelDaoSqlite) GetUsersByRole(ctx context.Context, role authtypes.Role) ([]types.GettableUser, *model.ApiError) {
 	users := []types.GettableUser{}
 
 	query := mds.bundb.NewSelect().
 		Table("users").
-		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
-		ColumnExpr("g.name as role").
-		ColumnExpr("o.display_name as organization").
-		Join("JOIN groups g ON g.id = users.group_id").
+		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.role").
+		ColumnExpr("users.role as role").
+		ColumnExpr("o.name as organization").
 		Join("JOIN organizations o ON o.id = users.org_id").
-		Where("users.group_id = ?", groupId)
+		Where("users.role = ?", role)
 
 	err := query.Scan(ctx, &users)
 	if err != nil {
@@ -338,98 +329,7 @@ func (mds *ModelDaoSqlite) GetUsersByGroup(ctx context.Context,
 	return users, nil
 }
 
-func (mds *ModelDaoSqlite) CreateGroup(ctx context.Context,
-	group *types.Group) (*types.Group, *model.ApiError) {
-
-	group.ID = uuid.NewString()
-
-	if _, err := mds.bundb.NewInsert().
-		Model(group).
-		Exec(ctx); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return group, nil
-}
-
-func (mds *ModelDaoSqlite) DeleteGroup(ctx context.Context, id string) *model.ApiError {
-
-	_, err := mds.bundb.NewDelete().
-		Model(&types.Group{}).
-		Where("id = ?", id).
-		Exec(ctx)
-
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return nil
-}
-
-func (mds *ModelDaoSqlite) GetGroup(ctx context.Context,
-	id string) (*types.Group, *model.ApiError) {
-
-	groups := []types.Group{}
-	if err := mds.bundb.NewSelect().
-		Model(&groups).
-		Where("id = ?", id).
-		Scan(ctx); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	if len(groups) > 1 {
-		return nil, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: errors.New("Found multiple groups with same ID."),
-		}
-	}
-
-	if len(groups) == 0 {
-		return nil, nil
-	}
-	return &groups[0], nil
-}
-
-func (mds *ModelDaoSqlite) GetGroupByName(ctx context.Context,
-	name string) (*types.Group, *model.ApiError) {
-
-	groups := []types.Group{}
-	err := mds.bundb.NewSelect().
-		Model(&groups).
-		Where("name = ?", name).
-		Scan(ctx)
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	if len(groups) > 1 {
-		return nil, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: errors.New("Found multiple groups with same name"),
-		}
-	}
-
-	if len(groups) == 0 {
-		return nil, nil
-	}
-
-	return &groups[0], nil
-}
-
-// TODO(nitya): should have org id
-func (mds *ModelDaoSqlite) GetGroups(ctx context.Context) ([]types.Group, *model.ApiError) {
-
-	groups := []types.Group{}
-	if err := mds.bundb.NewSelect().
-		Model(&groups).
-		Scan(ctx); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return groups, nil
-}
-
-func (mds *ModelDaoSqlite) CreateResetPasswordEntry(ctx context.Context,
-	req *types.ResetPasswordRequest) *model.ApiError {
+func (mds *ModelDaoSqlite) CreateResetPasswordEntry(ctx context.Context, req *types.ResetPasswordRequest) *model.ApiError {
 
 	if _, err := mds.bundb.NewInsert().
 		Model(req).
@@ -439,8 +339,7 @@ func (mds *ModelDaoSqlite) CreateResetPasswordEntry(ctx context.Context,
 	return nil
 }
 
-func (mds *ModelDaoSqlite) DeleteResetPasswordEntry(ctx context.Context,
-	token string) *model.ApiError {
+func (mds *ModelDaoSqlite) DeleteResetPasswordEntry(ctx context.Context, token string) *model.ApiError {
 	_, err := mds.bundb.NewDelete().
 		Model(&types.ResetPasswordRequest{}).
 		Where("token = ?", token).
@@ -452,8 +351,7 @@ func (mds *ModelDaoSqlite) DeleteResetPasswordEntry(ctx context.Context,
 	return nil
 }
 
-func (mds *ModelDaoSqlite) GetResetPasswordEntry(ctx context.Context,
-	token string) (*types.ResetPasswordRequest, *model.ApiError) {
+func (mds *ModelDaoSqlite) GetResetPasswordEntry(ctx context.Context, token string) (*types.ResetPasswordRequest, *model.ApiError) {
 
 	entries := []types.ResetPasswordRequest{}
 
@@ -489,14 +387,6 @@ func (mds *ModelDaoSqlite) PrecheckLogin(ctx context.Context, email, sourceUrl s
 	}
 
 	return resp, nil
-}
-
-func (mds *ModelDaoSqlite) GetUserRole(ctx context.Context, groupId string) (string, error) {
-	role, err := mds.GetGroup(ctx, groupId)
-	if err != nil || role == nil {
-		return "", err
-	}
-	return role.Name, nil
 }
 
 func (mds *ModelDaoSqlite) GetUserCount(ctx context.Context) (int, error) {

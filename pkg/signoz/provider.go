@@ -73,6 +73,7 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewAddVirtualFieldsFactory(),
 		sqlmigration.NewUpdateIntegrationsFactory(sqlstore),
 		sqlmigration.NewUpdateOrganizationsFactory(sqlstore),
+		sqlmigration.NewDropGroupsFactory(sqlstore),
 	)
 }
 

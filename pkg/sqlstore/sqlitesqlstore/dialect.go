@@ -5,33 +5,53 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/uptrace/bun"
 )
 
-var (
-	Identity = "id"
-	Integer  = "INTEGER"
-	Text     = "TEXT"
+const (
+	Identity string = "id"
+	Integer  string = "INTEGER"
+	Text     string = "TEXT"
 )
 
-var (
-	Org              = "org"
-	User             = "user"
-	CloudIntegration = "cloud_integration"
+const (
+	Org              string = "org"
+	User             string = "user"
+	CloudIntegration string = "cloud_integration"
 )
 
-var (
-	OrgReference              = `("org_id") REFERENCES "organizations" ("id")`
-	UserReference             = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
-	CloudIntegrationReference = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
+const (
+	OrgReference              string = `("org_id") REFERENCES "organizations" ("id")`
+	UserReference             string = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	CloudIntegrationReference string = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
 )
 
-type dialect struct {
+const (
+	OrgField string = "org_id"
+)
+
+type dialect struct{}
+
+func (dialect *dialect) GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
+	var columnType string
+
+	err := bun.
+		NewSelect().
+		ColumnExpr("type").
+		TableExpr("pragma_table_info(?)", table).
+		Where("name = ?", column).
+		Scan(ctx, &columnType)
+	if err != nil {
+		return "", err
+	}
+
+	return columnType, nil
 }
 
-func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) IntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
 	columnType, err := dialect.GetColumnType(ctx, bun, table, column)
 	if err != nil {
 		return err
@@ -73,7 +93,7 @@ func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, 
 	return nil
 }
 
-func (dialect *dialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) IntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
 	columnExists, err := dialect.ColumnExists(ctx, bun, table, column)
 	if err != nil {
 		return err
@@ -116,22 +136,6 @@ func (dialect *dialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, ta
 	}
 
 	return nil
-}
-
-func (dialect *dialect) GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
-	var columnType string
-
-	err := bun.
-		NewSelect().
-		ColumnExpr("type").
-		TableExpr("pragma_table_info(?)", table).
-		Where("name = ?", column).
-		Scan(ctx, &columnType)
-	if err != nil {
-		return "", err
-	}
-
-	return columnType, nil
 }
 
 func (dialect *dialect) ColumnExists(ctx context.Context, bun bun.IDB, table string, column string) (bool, error) {
@@ -217,7 +221,6 @@ func (dialect *dialect) DropColumn(ctx context.Context, bun bun.IDB, table strin
 }
 
 func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table interface{}) (bool, error) {
-
 	count := 0
 	err := bun.
 		NewSelect().
@@ -418,6 +421,66 @@ func (dialect *dialect) AddPrimaryKey(ctx context.Context, bun bun.IDB, oldModel
 	_, err = bun.
 		ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s", newTableName, oldTableName))
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, bunIDB bun.IDB, model interface{}, column string) error {
+	existingTable := bunIDB.Dialect().Tables().Get(reflect.TypeOf(model))
+	columnExists, err := dialect.ColumnExists(ctx, bunIDB, existingTable.Name, column)
+	if err != nil {
+		return err
+	}
+
+	if !columnExists {
+		return nil
+	}
+
+	newTableName := existingTable.Name + "_tmp"
+
+	// Create the newTmpTable query
+	createTableQuery := bunIDB.NewCreateTable().Model(model).ModelTableExpr(newTableName)
+
+	var columnNames []string
+
+	for _, field := range existingTable.Fields {
+		if field.Name != column {
+			columnNames = append(columnNames, string(field.SQLName))
+		}
+
+		if field.Name == OrgField {
+			createTableQuery = createTableQuery.ForeignKey(OrgReference)
+		}
+	}
+
+	// Disable foreign keys temporarily
+	if _, err := bunIDB.ExecContext(ctx, "PRAGMA foreign_keys = OFF"); err != nil {
+		return err
+	}
+
+	if _, err = createTableQuery.Exec(ctx); err != nil {
+		return err
+	}
+
+	// Copy data from old table to new table
+	if _, err := bunIDB.ExecContext(ctx, fmt.Sprintf("INSERT INTO %s SELECT %s FROM %s", newTableName, strings.Join(columnNames, ", "), existingTable.Name)); err != nil {
+		return err
+	}
+
+	_, err = bunIDB.NewDropTable().Table(existingTable.Name).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = bunIDB.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s", newTableName, existingTable.Name))
+	if err != nil {
+		return err
+	}
+
+	// Re-enable foreign keys
+	if _, err := bunIDB.ExecContext(ctx, "PRAGMA foreign_keys = ON"); err != nil {
 		return err
 	}
 

@@ -12,11 +12,11 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	eeTypes "github.com/SigNoz/signoz/ee/types"
+	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -30,6 +30,12 @@ type CloudIntegrationConnectionParamsResponse struct {
 }
 
 func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	if cloudProvider != "aws" {
 		RespondError(w, basemodel.BadRequest(fmt.Errorf(
@@ -38,15 +44,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	currentUser, err := auth.GetUserFromReqContext(r.Context())
-	if err != nil {
-		RespondError(w, basemodel.UnauthorizedError(fmt.Errorf(
-			"couldn't deduce current user: %w", err,
-		)), nil)
-		return
-	}
-
-	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), currentUser.OrgID, cloudProvider)
+	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), claims.OrgID, cloudProvider)
 	if apiErr != nil {
 		RespondError(w, basemodel.WrapApiError(
 			apiErr, "couldn't provision PAT for cloud integration:",
@@ -137,7 +135,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 
 	newPAT := eeTypes.NewGettablePAT(
 		integrationPATName,
-		baseconstants.ViewerGroup,
+		authtypes.RoleViewer.String(),
 		integrationUser.ID,
 		0,
 	)
@@ -181,11 +179,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 		OrgID: orgId,
 	}
 
-	viewerGroup, apiErr := dao.DB().GetGroupByName(ctx, baseconstants.ViewerGroup)
-	if apiErr != nil {
-		return nil, basemodel.WrapApiError(apiErr, "couldn't get viewer group for creating integration user")
-	}
-	newUser.GroupID = viewerGroup.ID
+	newUser.Role = authtypes.RoleViewer.String()
 
 	passwordHash, err := auth.PasswordHash(uuid.NewString())
 	if err != nil {
