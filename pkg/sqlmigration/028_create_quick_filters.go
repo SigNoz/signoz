@@ -16,6 +16,16 @@ type createQuickFilters struct {
 	store sqlstore.SQLStore
 }
 
+type quickFilter struct {
+	bun.BaseModel `bun:"table:quick_filter"`
+	types.Identifiable
+	OrgID  string `bun:"org_id,notnull,unique:org_id_signal,type:text"`
+	Filter string `bun:"filter,notnull,type:text"`
+	Signal string `bun:"signal,notnull,unique:org_id_signal,type:text"`
+	types.TimeAuditable
+	types.UserAuditable
+}
+
 func NewCreateQuickFiltersFactory(store sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("create_quick_filters"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 		return &createQuickFilters{store: store}, nil
@@ -49,7 +59,10 @@ func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 	err = tx.NewSelect().Table("organizations").Column("id").Limit(1).Scan(ctx, &defaultOrg)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			tx.Commit()
+			err := tx.Commit()
+			if err != nil {
+				return err
+			}
 			return nil
 		}
 		return err
@@ -58,19 +71,14 @@ func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 
 	// Insert all filters in a single transaction
 	_, err = tx.NewInsert().Model(&storableQuickFilters).Exec(ctx)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Commit the transaction before returning
+	return tx.Commit()
 }
 
 func (m *createQuickFilters) Down(ctx context.Context, db *bun.DB) error {
 	return nil
-}
-
-type quickFilter struct {
-	bun.BaseModel `bun:"table:quick_filter"`
-	types.Identifiable
-	OrgID  string `bun:"org_id,notnull,unique:org_id_signal,type:text"`
-	Filter string `bun:"filter,notnull,type:text"`
-	Signal string `bun:"signal,notnull,unique:org_id_signal,type:text"`
-	types.TimeAuditable
-	types.UserAuditable
 }
