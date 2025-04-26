@@ -27,13 +27,13 @@ import EndPointsDropDown from './components/EndPointsDropDown';
 import MetricOverTimeGraph from './components/MetricOverTimeGraph';
 import StatusCodeBarCharts from './components/StatusCodeBarCharts';
 import StatusCodeTable from './components/StatusCodeTable';
+import { SPAN_ATTRIBUTES } from './constants';
 
 const httpUrlKey = {
 	dataType: DataTypes.String,
-	id: 'http.url--string--tag--false',
 	isColumn: false,
 	isJSON: false,
-	key: 'http.url',
+	key: SPAN_ATTRIBUTES.URL_PATH,
 	type: 'tag',
 };
 

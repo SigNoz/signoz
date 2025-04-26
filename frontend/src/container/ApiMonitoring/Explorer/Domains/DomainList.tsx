@@ -92,7 +92,6 @@ function DomainList({ showIP }: { showIP: boolean }): JSX.Element {
 							type: '',
 							isColumn: true,
 							isJSON: false,
-							id: 'kind_string--string----true',
 						},
 						op: '=',
 						value: 'Client',
