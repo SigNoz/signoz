@@ -20,6 +20,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import EndPointsDropDown from './components/EndPointsDropDown';
 import ErrorState from './components/ErrorState';
+import { SPAN_ATTRIBUTES } from './constants';
 
 function TopErrors({
 	domainName,
@@ -44,10 +45,9 @@ function TopErrors({
 								id: '92b8a1c1',
 								key: {
 									dataType: DataTypes.String,
-									id: 'http.url--string--tag--false',
 									isColumn: false,
 									isJSON: false,
-									key: 'http.url',
+									key: SPAN_ATTRIBUTES.URL_PATH,
 									type: 'tag',
 								},
 								op: '=',

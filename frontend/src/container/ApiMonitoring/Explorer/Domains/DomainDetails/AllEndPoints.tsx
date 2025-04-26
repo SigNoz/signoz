@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { VIEWS } from './constants';
+import { SPAN_ATTRIBUTES, VIEWS } from './constants';
 
 function AllEndPoints({
 	domainName,
@@ -101,7 +101,7 @@ function AllEndPoints({
 					customOnDragSelect={(): void => {}}
 					customTimeRange={timeRange}
 					customOnRowClick={(props): void => {
-						setSelectedEndPointName(props['http.url'] as string);
+						setSelectedEndPointName(props[SPAN_ATTRIBUTES.URL_PATH] as string);
 						setSelectedView(VIEWS.ENDPOINT_STATS);
 					}}
 				/>

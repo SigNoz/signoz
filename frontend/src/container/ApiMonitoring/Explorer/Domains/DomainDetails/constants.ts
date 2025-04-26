@@ -9,3 +9,11 @@ export const VIEW_TYPES = {
 	ENDPOINT_STATS: VIEWS.ENDPOINT_STATS,
 	TOP_ERRORS: VIEWS.TOP_ERRORS,
 };
+
+// Span attribute keys - these are the source of truth for all attribute keys
+export const SPAN_ATTRIBUTES = {
+	URL_PATH: 'http.url',
+	STATUS_CODE: 'status_code',
+	SERVER_NAME: 'net.peer.name',
+	SERVER_PORT: 'net.peer.port',
+} as const;
