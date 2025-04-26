@@ -227,6 +227,18 @@ function GridTableComponent({
 		[newColumnData, props.renderColumnCell],
 	);
 
+	const newColumnsWithCustomColTitles = useMemo(
+		() =>
+			newColumnsWithRenderColumnCell.map((column) => ({
+				...column,
+				...('dataIndex' in column &&
+				props.customColTitles?.[column.dataIndex as string]
+					? { title: props.customColTitles[column.dataIndex as string] }
+					: {}),
+			})),
+		[newColumnsWithRenderColumnCell, props.customColTitles],
+	);
+
 	useEffect(() => {
 		eventEmitter.emit(Events.TABLE_COLUMNS_DATA, {
 			columns: newColumnData,
@@ -243,7 +255,7 @@ function GridTableComponent({
 				columns={
 					openTracesButton
 						? columnDataWithOpenTracesButton
-						: newColumnsWithRenderColumnCell
+						: newColumnsWithCustomColTitles
 				}
 				dataSource={dataSource}
 				sticky={sticky}
