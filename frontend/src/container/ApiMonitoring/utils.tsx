@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Tag } from 'antd';
+import { Progress, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	FiltersType,
@@ -13,7 +13,7 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
-import { ArrowUpDown, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
 import { ReactNode } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -3537,6 +3537,28 @@ export const getAllEndpointsWidgetData = (
 		[SPAN_ATTRIBUTES.URL_PATH]: 'Endpoint',
 		'net.peer.port': 'Port',
 	};
+
+	widget.title = (
+		<div
+			style={{
+				display: 'flex',
+				alignItems: 'center',
+				gap: '10px',
+				padding: '12px',
+				color: 'var(--Vanilla-100, #fff)',
+				fontFamily: 'Inter',
+				fontSize: '14px',
+				fontStyle: 'normal',
+				fontWeight: 400,
+				lineHeight: '18px',
+			}}
+		>
+			Endpoint Overview
+			<Tooltip title="Click on any row to get corresponding endpoint stats">
+				<Info size={16} color="white" />
+			</Tooltip>
+		</div>
+	);
 
 	return widget;
 };
