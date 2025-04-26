@@ -52,6 +52,3 @@ def test_api_key(signoz: types.SigNoz, get_jwt_token) -> None:
     assert found_pat["userId"] == found_user["id"]
     assert found_pat["name"] == "admin"
     assert found_pat["role"] == "ADMIN"
-
-        
-        
