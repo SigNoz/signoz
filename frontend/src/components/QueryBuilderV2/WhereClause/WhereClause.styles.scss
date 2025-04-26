@@ -1,0 +1,88 @@
+.where-clause {
+	width: 100%;
+	border: 1px solid #d9d9d9;
+	border-radius: 2px;
+	background-color: #fff;
+
+	&-header {
+		padding: 8px 12px;
+		border-bottom: 1px solid #f0f0f0;
+	}
+
+	&-content {
+		padding: 12px;
+
+		.query-input {
+			width: 100%;
+			margin-bottom: 8px;
+			font-family: monospace;
+
+			&.error {
+				border-color: #ff4d4f;
+			}
+
+			&.valid {
+				border-color: #52c41a;
+			}
+		}
+
+		.error-alert,
+		.success-alert {
+			margin-bottom: 8px;
+		}
+
+		.query-examples {
+			margin-top: 8px;
+
+			ul {
+				margin: 8px 0;
+				padding-left: 0;
+				list-style-type: none;
+
+				li {
+					margin: 4px 0;
+				}
+			}
+		}
+	}
+}
+
+.condition-builder {
+	display: flex;
+	align-items: center;
+	margin-bottom: 16px;
+}
+
+.conditions-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.condition-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px;
+	background: #f5f5f5;
+	color: #000;
+	border-radius: 4px;
+}
+
+.where-clause-content {
+	.query-examples {
+		ul {
+			li {
+				margin: 4px 0;
+				padding-left: 0;
+				list-style-type: none;
+
+				color: #000;
+
+				code {
+					color: #000;
+				}
+			}
+		}
+	}
+}
