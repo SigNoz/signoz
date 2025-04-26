@@ -30,6 +30,7 @@ function TablePanelWrapper({
 			customOnRowClick={customOnRowClick}
 			widgetId={widget.id}
 			renderColumnCell={widget.renderColumnCell}
+			customColTitles={widget.customColTitles}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
 		/>

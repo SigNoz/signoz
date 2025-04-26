@@ -115,6 +115,7 @@ export interface IBaseWidget {
 export interface Widgets extends IBaseWidget {
 	query: Query;
 	renderColumnCell?: QueryTableProps['renderColumnCell'];
+	customColTitles?: Record<string, string>;
 }
 
 export interface PromQLWidgets extends IBaseWidget {
