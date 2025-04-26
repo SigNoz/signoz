@@ -14,11 +14,9 @@ type updateOrganizations struct {
 }
 
 func NewUpdateOrganizationsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(
-		factory.MustNewName("update_organizations"),
-		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return newUpdateOrganizations(ctx, ps, c, sqlstore)
-		})
+	return factory.NewProviderFactory(factory.MustNewName("update_organizations"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return newUpdateOrganizations(ctx, ps, c, sqlstore)
+	})
 }
 
 func newUpdateOrganizations(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
@@ -26,8 +24,7 @@ func newUpdateOrganizations(_ context.Context, _ factory.ProviderSettings, _ Con
 }
 
 func (migration *updateOrganizations) Register(migrations *migrate.Migrations) error {
-	if err := migrations.
-		Register(migration.Up, migration.Down); err != nil {
+	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
 
@@ -35,8 +32,7 @@ func (migration *updateOrganizations) Register(migrations *migrate.Migrations) e
 }
 
 func (migration *updateOrganizations) Up(ctx context.Context, db *bun.DB) error {
-	tx, err := db.
-		BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}

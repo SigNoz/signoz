@@ -49,12 +49,9 @@ type newUserPreference struct {
 }
 
 func NewUpdatePreferencesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.
-		NewProviderFactory(
-			factory.MustNewName("update_preferences"),
-			func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-				return newUpdatePreferences(ctx, ps, c, sqlstore)
-			})
+	return factory.NewProviderFactory(factory.MustNewName("update_preferences"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return newUpdatePreferences(ctx, ps, c, sqlstore)
+	})
 }
 
 func newUpdatePreferences(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
@@ -62,8 +59,7 @@ func newUpdatePreferences(_ context.Context, _ factory.ProviderSettings, _ Confi
 }
 
 func (migration *updatePreferences) Register(migrations *migrate.Migrations) error {
-	if err := migrations.
-		Register(migration.Up, migration.Down); err != nil {
+	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
 
@@ -71,8 +67,7 @@ func (migration *updatePreferences) Register(migrations *migrate.Migrations) err
 }
 
 func (migration *updatePreferences) Up(ctx context.Context, db *bun.DB) error {
-	tx, err := db.
-		BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -135,8 +130,7 @@ func (migration *updatePreferences) Up(ctx context.Context, db *bun.DB) error {
 			}
 
 			if err == nil && len(existingUserPreferences) > 0 {
-				newUserPreferences := migration.
-					CopyOldUserPreferencesToNewUserPreferences(existingUserPreferences)
+				newUserPreferences := migration.CopyOldUserPreferencesToNewUserPreferences(existingUserPreferences)
 				_, err = tx.
 					NewInsert().
 					Model(&newUserPreferences).

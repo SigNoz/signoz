@@ -61,12 +61,9 @@ type newPersonalAccessToken struct {
 }
 
 func NewUpdateResetPasswordFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.
-		NewProviderFactory(
-			factory.MustNewName("update_reset_password"),
-			func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-				return newUpdateResetPassword(ctx, ps, c, sqlstore)
-			})
+	return factory.NewProviderFactory(factory.MustNewName("update_reset_password"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return newUpdateResetPassword(ctx, ps, c, sqlstore)
+	})
 }
 
 func newUpdateResetPassword(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
@@ -74,8 +71,7 @@ func newUpdateResetPassword(_ context.Context, _ factory.ProviderSettings, _ Con
 }
 
 func (migration *updateResetPassword) Register(migrations *migrate.Migrations) error {
-	if err := migrations.
-		Register(migration.Up, migration.Down); err != nil {
+	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
 
@@ -83,8 +79,7 @@ func (migration *updateResetPassword) Register(migrations *migrate.Migrations) e
 }
 
 func (migration *updateResetPassword) Up(ctx context.Context, db *bun.DB) error {
-	tx, err := db.
-		BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -104,8 +99,7 @@ func (migration *updateResetPassword) Up(ctx context.Context, db *bun.DB) error 
 		}
 
 		if err == nil && len(existingResetPasswordRequests) > 0 {
-			newResetPasswordRequests := migration.
-				CopyExistingResetPasswordRequestsToNewResetPasswordRequests(existingResetPasswordRequests)
+			newResetPasswordRequests := migration.CopyExistingResetPasswordRequestsToNewResetPasswordRequests(existingResetPasswordRequests)
 			_, err = tx.
 				NewInsert().
 				Model(&newResetPasswordRequests).
@@ -134,8 +128,7 @@ func (migration *updateResetPassword) Up(ctx context.Context, db *bun.DB) error 
 		}
 
 		if err == nil && len(existingPersonalAccessTokens) > 0 {
-			newPersonalAccessTokens := migration.
-				CopyExistingPATsToNewPATs(existingPersonalAccessTokens)
+			newPersonalAccessTokens := migration.CopyExistingPATsToNewPATs(existingPersonalAccessTokens)
 			_, err = tx.NewInsert().Model(&newPersonalAccessTokens).Exec(ctx)
 			if err != nil {
 				return err
