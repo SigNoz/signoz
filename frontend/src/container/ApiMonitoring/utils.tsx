@@ -32,6 +32,8 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
+import { SPAN_ATTRIBUTES } from './Explorer/Domains/DomainDetails/constants';
+
 export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
@@ -273,7 +275,7 @@ export const hardcodedAttributeKeys: BaseAutocompleteData[] = [
 	},
 ];
 
-const domainNameKey = 'net.peer.name';
+const domainNameKey = SPAN_ATTRIBUTES.SERVER_NAME;
 
 interface APIMonitoringResponseRow {
 	data: {
@@ -350,10 +352,9 @@ export const getDomainMetricsQueryPayload = (
 						aggregateOperator: 'count',
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							id: 'http.url--string--tag--false',
 							isColumn: false,
 							isJSON: false,
-							key: 'http.url',
+							key: SPAN_ATTRIBUTES.URL_PATH,
 							type: 'tag',
 						},
 						timeAggregation: 'rate',
@@ -365,10 +366,9 @@ export const getDomainMetricsQueryPayload = (
 									id: '4c57937c',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -393,7 +393,6 @@ export const getDomainMetricsQueryPayload = (
 						aggregateOperator: 'p99',
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							id: 'duration_nano--float64----true',
 							isColumn: true,
 							isJSON: false,
 							key: 'duration_nano',
@@ -408,10 +407,9 @@ export const getDomainMetricsQueryPayload = (
 									id: '2cf675cd',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -450,10 +448,9 @@ export const getDomainMetricsQueryPayload = (
 									id: '3db0f605',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -463,7 +460,6 @@ export const getDomainMetricsQueryPayload = (
 									id: '6096f745',
 									key: {
 										dataType: DataTypes.bool,
-										id: 'has_error--bool----true',
 										isColumn: true,
 										isJSON: false,
 										key: 'has_error',
@@ -505,10 +501,9 @@ export const getDomainMetricsQueryPayload = (
 									id: '8ff8dea1',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -609,19 +604,17 @@ export const formatDomainMetricsDataForTable = (
 const defaultGroupBy = [
 	{
 		dataType: DataTypes.String,
-		id: 'http.url--string--tag--false',
 		isColumn: false,
 		isJSON: false,
-		key: 'http.url',
+		key: SPAN_ATTRIBUTES.URL_PATH,
 		type: 'tag',
 	},
 	// {
-	// 	key: 'net.peer.port',
+	// 	key: SPAN_ATTRIBUTES.SERVER_PORT,
 	// 	dataType: DataTypes.Float64,
 	// 	type: 'tag',
 	// 	isColumn: false,
 	// 	isJSON: false,
-	// 	id: 'net.peer.port--float64--tag--false',
 	// },
 ];
 
@@ -642,7 +635,6 @@ export const getEndPointsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.String,
-								id: 'span_id--string----true',
 								isColumn: true,
 								isJSON: false,
 								key: 'span_id',
@@ -658,10 +650,9 @@ export const getEndPointsQueryPayload = (
 										id: 'ec316e57',
 										key: {
 											dataType: DataTypes.String,
-											id: 'net.peer.name--string--tag--false',
 											isColumn: false,
 											isJSON: false,
-											key: 'net.peer.name',
+											key: SPAN_ATTRIBUTES.SERVER_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -675,7 +666,6 @@ export const getEndPointsQueryPayload = (
 											type: '',
 											isColumn: true,
 											isJSON: false,
-											id: 'kind_string--string----true',
 										},
 										op: '=',
 										value: 'Client',
@@ -698,7 +688,6 @@ export const getEndPointsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'duration_nano--float64----true',
 								isColumn: true,
 								isJSON: false,
 								key: 'duration_nano',
@@ -714,10 +703,9 @@ export const getEndPointsQueryPayload = (
 										id: '46d57857',
 										key: {
 											dataType: DataTypes.String,
-											id: 'net.peer.name--string--tag--false',
 											isColumn: false,
 											isJSON: false,
-											key: 'net.peer.name',
+											key: SPAN_ATTRIBUTES.SERVER_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -731,7 +719,6 @@ export const getEndPointsQueryPayload = (
 											type: '',
 											isColumn: true,
 											isJSON: false,
-											id: 'kind_string--string----true',
 										},
 										op: '=',
 										value: 'Client',
@@ -769,10 +756,9 @@ export const getEndPointsQueryPayload = (
 										id: '4a237616',
 										key: {
 											dataType: DataTypes.String,
-											id: 'net.peer.name--string--tag--false',
 											isColumn: false,
 											isJSON: false,
-											key: 'net.peer.name',
+											key: SPAN_ATTRIBUTES.SERVER_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -786,7 +772,6 @@ export const getEndPointsQueryPayload = (
 											type: '',
 											isColumn: true,
 											isJSON: false,
-											id: 'kind_string--string----true',
 										},
 										op: '=',
 										value: 'Client',
@@ -809,7 +794,6 @@ export const getEndPointsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.String,
-								id: 'span_id--string----true',
 								isColumn: true,
 								isJSON: false,
 								key: 'span_id',
@@ -825,10 +809,9 @@ export const getEndPointsQueryPayload = (
 										id: 'f162de1e',
 										key: {
 											dataType: DataTypes.String,
-											id: 'net.peer.name--string--tag--false',
 											isColumn: false,
 											isJSON: false,
-											key: 'net.peer.name',
+											key: SPAN_ATTRIBUTES.SERVER_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -838,7 +821,6 @@ export const getEndPointsQueryPayload = (
 										id: '3df0ac1d',
 										key: {
 											dataType: DataTypes.bool,
-											id: 'has_error--bool----true',
 											isColumn: true,
 											isJSON: false,
 											key: 'has_error',
@@ -855,7 +837,6 @@ export const getEndPointsQueryPayload = (
 											type: '',
 											isColumn: true,
 											isJSON: false,
-											id: 'kind_string--string----true',
 										},
 										op: '=',
 										value: 'Client',
@@ -951,7 +932,6 @@ export const getTopErrorsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -964,7 +944,6 @@ export const getTopErrorsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'status_message--string----true',
 									},
 									op: 'exists',
 									value: '',
@@ -972,12 +951,11 @@ export const getTopErrorsQueryPayload = (
 								{
 									id: 'b1af6bdb',
 									key: {
-										key: 'http.url',
+										key: SPAN_ATTRIBUTES.URL_PATH,
 										dataType: DataTypes.String,
 										type: 'tag',
 										isColumn: false,
 										isJSON: false,
-										id: 'http.url--string--tag--false',
 									},
 									op: 'exists',
 									value: '',
@@ -985,12 +963,11 @@ export const getTopErrorsQueryPayload = (
 								{
 									id: '4872bf91',
 									key: {
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										dataType: DataTypes.String,
 										type: 'tag',
 										isColumn: false,
 										isJSON: false,
-										id: 'net.peer.name--string--tag--false',
 									},
 									op: '=',
 									value: domainName,
@@ -1011,12 +988,11 @@ export const getTopErrorsQueryPayload = (
 						],
 						groupBy: [
 							{
-								key: 'http.url',
+								key: SPAN_ATTRIBUTES.URL_PATH,
 								dataType: DataTypes.String,
 								type: 'tag',
 								isColumn: false,
 								isJSON: false,
-								id: 'http.url--string--tag--false',
 							},
 							{
 								key: 'status_code',
@@ -1024,7 +1000,6 @@ export const getTopErrorsQueryPayload = (
 								type: '',
 								isColumn: true,
 								isJSON: false,
-								id: 'status_code--float64----true',
 							},
 							{
 								key: 'status_message',
@@ -1032,7 +1007,6 @@ export const getTopErrorsQueryPayload = (
 								type: '',
 								isColumn: true,
 								isJSON: false,
-								id: 'status_message--string----true',
 							},
 						],
 						legend: '',
@@ -1245,11 +1219,11 @@ export const formatEndPointsDataForTable = (
 	if (!isGroupedByAttribute) {
 		formattedData = data?.map((endpoint) => {
 			const { port } = extractPortAndEndpoint(
-				(endpoint.data['http.url'] as string) || '',
+				(endpoint.data[SPAN_ATTRIBUTES.URL_PATH] as string) || '',
 			);
 			return {
 				key: v4(),
-				endpointName: (endpoint.data['http.url'] as string) || '-',
+				endpointName: (endpoint.data[SPAN_ATTRIBUTES.URL_PATH] as string) || '-',
 				port,
 				callCount:
 					endpoint.data.A === 'n/a' || endpoint.data.A === undefined
@@ -1347,8 +1321,8 @@ export const formatEndPointsDataForTable = (
 
 export interface TopErrorsResponseRow {
 	metric: {
-		'http.url': string;
-		status_code: string;
+		[SPAN_ATTRIBUTES.URL_PATH]: string;
+		[SPAN_ATTRIBUTES.STATUS_CODE]: string;
 		status_message: string;
 	};
 	values: [number, string][];
@@ -1372,13 +1346,15 @@ export const formatTopErrorsDataForTable = (
 	return data.map((row) => ({
 		key: v4(),
 		endpointName:
-			row.metric['http.url'] === 'n/a' || row.metric['http.url'] === undefined
+			row.metric[SPAN_ATTRIBUTES.URL_PATH] === 'n/a' ||
+			row.metric[SPAN_ATTRIBUTES.URL_PATH] === undefined
 				? '-'
-				: row.metric['http.url'],
+				: row.metric[SPAN_ATTRIBUTES.URL_PATH],
 		statusCode:
-			row.metric.status_code === 'n/a' || row.metric.status_code === undefined
+			row.metric[SPAN_ATTRIBUTES.STATUS_CODE] === 'n/a' ||
+			row.metric[SPAN_ATTRIBUTES.STATUS_CODE] === undefined
 				? '-'
-				: row.metric.status_code,
+				: row.metric[SPAN_ATTRIBUTES.STATUS_CODE],
 		statusMessage:
 			row.metric.status_message === 'n/a' ||
 			row.metric.status_message === undefined
@@ -1503,10 +1479,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: '874562e1',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -1520,7 +1495,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -1544,7 +1518,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							id: 'duration_nano--float64----true',
 							isColumn: true,
 							isJSON: false,
 							key: 'duration_nano',
@@ -1560,10 +1533,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: '0c5564e0',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -1577,7 +1549,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -1601,7 +1572,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							id: 'span_id--string----true',
 							isColumn: true,
 							isJSON: false,
 							key: 'span_id',
@@ -1617,10 +1587,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: '0d656701',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -1630,7 +1599,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: '83ef9a1b',
 									key: {
 										dataType: DataTypes.bool,
-										id: 'has_error--bool----true',
 										isColumn: true,
 										isJSON: false,
 										key: 'has_error',
@@ -1647,7 +1615,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -1686,10 +1653,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: '918f5b99',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -1703,7 +1669,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -1727,7 +1692,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							id: 'span_id--string----true',
 							isColumn: true,
 							isJSON: false,
 							key: 'span_id',
@@ -1743,10 +1707,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'b355d1aa',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -1760,7 +1723,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -1825,7 +1787,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							id: 'span_id--string----true',
 							isColumn: true,
 							isJSON: false,
 							key: 'span_id',
@@ -1841,10 +1802,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: '23450eb8',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -1858,7 +1818,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -1871,7 +1830,6 @@ export const getEndPointDetailsQueryPayload = (
 						groupBy: [
 							{
 								dataType: DataTypes.String,
-								id: 'response_status_code--string----true',
 								isColumn: true,
 								isJSON: false,
 								key: 'response_status_code',
@@ -1891,7 +1849,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							id: 'duration_nano--float64----true',
 							isColumn: true,
 							isJSON: false,
 							key: 'duration_nano',
@@ -1907,10 +1864,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: '2687dc18',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -1924,7 +1880,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -1937,7 +1892,6 @@ export const getEndPointDetailsQueryPayload = (
 						groupBy: [
 							{
 								dataType: DataTypes.String,
-								id: 'response_status_code--string----true',
 								isColumn: true,
 								isJSON: false,
 								key: 'response_status_code',
@@ -2006,7 +1960,7 @@ export const getEndPointDetailsQueryPayload = (
 								{
 									id: '3db61dd6',
 									key: {
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										dataType: DataTypes.String,
 										type: 'tag',
 										isColumn: false,
@@ -2023,7 +1977,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -2041,7 +1994,7 @@ export const getEndPointDetailsQueryPayload = (
 						orderBy: [],
 						groupBy: [
 							{
-								key: 'http.url',
+								key: SPAN_ATTRIBUTES.URL_PATH,
 								dataType: DataTypes.String,
 								type: 'tag',
 								isColumn: false,
@@ -2087,7 +2040,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							id: 'span_id--string----true',
 							isColumn: true,
 							isJSON: false,
 							key: 'span_id',
@@ -2103,10 +2055,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'b78ff216',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -2120,7 +2071,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -2153,7 +2103,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							id: 'duration_nano--float64----true',
 							isColumn: true,
 							isJSON: false,
 							key: 'duration_nano',
@@ -2169,10 +2118,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'a9024472',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -2186,7 +2134,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -2234,10 +2181,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: '1b6c062d',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -2251,7 +2197,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -2284,7 +2229,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.String,
-							id: 'span_id--string----true',
 							isColumn: true,
 							isJSON: false,
 							key: 'span_id',
@@ -2300,10 +2244,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'd14792a8',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -2313,7 +2256,6 @@ export const getEndPointDetailsQueryPayload = (
 									id: '3212bf1a',
 									key: {
 										dataType: DataTypes.bool,
-										id: 'has_error--bool----true',
 										isColumn: true,
 										isJSON: false,
 										key: 'has_error',
@@ -2330,7 +2272,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -2419,10 +2360,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'c6724407',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -2436,7 +2376,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -2449,7 +2388,6 @@ export const getEndPointDetailsQueryPayload = (
 						groupBy: [
 							{
 								dataType: DataTypes.String,
-								id: 'response_status_code--string----true',
 								isColumn: true,
 								isJSON: false,
 								key: 'response_status_code',
@@ -2503,7 +2441,6 @@ export const getEndPointDetailsQueryPayload = (
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							id: 'duration_nano--float64----true',
 							isColumn: true,
 							isJSON: false,
 							key: 'duration_nano',
@@ -2519,10 +2456,9 @@ export const getEndPointDetailsQueryPayload = (
 									id: 'aae93366',
 									key: {
 										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
 										isColumn: false,
 										isJSON: false,
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										type: 'tag',
 									},
 									op: '=',
@@ -2536,7 +2472,6 @@ export const getEndPointDetailsQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -2549,7 +2484,6 @@ export const getEndPointDetailsQueryPayload = (
 						groupBy: [
 							{
 								dataType: DataTypes.String,
-								id: 'response_status_code--string----true',
 								isColumn: true,
 								isJSON: false,
 								key: 'response_status_code',
@@ -2625,7 +2559,7 @@ export const getEndPointZeroStateQueryPayload = (
 								{
 									id: '3db61dd6',
 									key: {
-										key: 'net.peer.name',
+										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										dataType: DataTypes.String,
 										type: 'tag',
 										isColumn: false,
@@ -2642,7 +2576,6 @@ export const getEndPointZeroStateQueryPayload = (
 										type: '',
 										isColumn: true,
 										isJSON: false,
-										id: 'kind_string--string----true',
 									},
 									op: '=',
 									value: 'Client',
@@ -2659,7 +2592,7 @@ export const getEndPointZeroStateQueryPayload = (
 						orderBy: [],
 						groupBy: [
 							{
-								key: 'http.url',
+								key: SPAN_ATTRIBUTES.URL_PATH,
 								dataType: DataTypes.String,
 								type: 'tag',
 								isColumn: false,
@@ -2818,7 +2751,7 @@ export const statusCodeWidgetInfo = [
 
 interface EndPointDropDownResponseRow {
 	data: {
-		['http.url']: string;
+		[SPAN_ATTRIBUTES.URL_PATH]: string;
 		A: number;
 	};
 }
@@ -2834,8 +2767,8 @@ export const getFormattedEndPointDropDownData = (
 ): EndPointDropDownData[] =>
 	data?.map((row) => ({
 		key: v4(),
-		label: row.data['http.url'] || '-',
-		value: row.data['http.url'] || '-',
+		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
+		value: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
 	}));
 
 interface DependentServicesResponseRow {
@@ -3176,10 +3109,9 @@ export const getStatusCodeBarChartWidgetData = (
 								id: 'c6724407',
 								key: {
 									dataType: DataTypes.String,
-									id: 'net.peer.name--string--tag--false',
 									isColumn: false,
 									isJSON: false,
-									key: 'net.peer.name',
+									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
 								op: '=',
@@ -3191,10 +3123,9 @@ export const getStatusCodeBarChartWidgetData = (
 											id: '8b1be6f0',
 											key: {
 												dataType: DataTypes.String,
-												id: 'http.url--string--tag--false',
 												isColumn: false,
 												isJSON: false,
-												key: 'http.url',
+												key: SPAN_ATTRIBUTES.URL_PATH,
 												type: 'tag',
 											},
 											op: '=',
@@ -3304,7 +3235,6 @@ export const getAllEndpointsWidgetData = (
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.String,
-						id: 'span_id--string----true',
 						isColumn: true,
 						isJSON: false,
 						key: 'span_id',
@@ -3320,10 +3250,9 @@ export const getAllEndpointsWidgetData = (
 								id: 'ec316e57',
 								key: {
 									dataType: DataTypes.String,
-									id: 'net.peer.name--string--tag--false',
 									isColumn: false,
 									isJSON: false,
-									key: 'net.peer.name',
+									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
 								op: '=',
@@ -3337,7 +3266,6 @@ export const getAllEndpointsWidgetData = (
 									type: '',
 									isColumn: true,
 									isJSON: false,
-									id: 'kind_string--string----true',
 								},
 								op: '=',
 								value: 'Client',
@@ -3362,7 +3290,6 @@ export const getAllEndpointsWidgetData = (
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						id: 'duration_nano--float64----true',
 						isColumn: true,
 						isJSON: false,
 						key: 'duration_nano',
@@ -3378,10 +3305,9 @@ export const getAllEndpointsWidgetData = (
 								id: '46d57857',
 								key: {
 									dataType: DataTypes.String,
-									id: 'net.peer.name--string--tag--false',
 									isColumn: false,
 									isJSON: false,
-									key: 'net.peer.name',
+									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
 								op: '=',
@@ -3395,7 +3321,6 @@ export const getAllEndpointsWidgetData = (
 									type: '',
 									isColumn: true,
 									isJSON: false,
-									id: 'kind_string--string----true',
 								},
 								op: '=',
 								value: 'Client',
@@ -3435,10 +3360,9 @@ export const getAllEndpointsWidgetData = (
 								id: '4a237616',
 								key: {
 									dataType: DataTypes.String,
-									id: 'net.peer.name--string--tag--false',
 									isColumn: false,
 									isJSON: false,
-									key: 'net.peer.name',
+									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
 								op: '=',
@@ -3452,7 +3376,6 @@ export const getAllEndpointsWidgetData = (
 									type: '',
 									isColumn: true,
 									isJSON: false,
-									id: 'kind_string--string----true',
 								},
 								op: '=',
 								value: 'Client',
@@ -3477,7 +3400,6 @@ export const getAllEndpointsWidgetData = (
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.String,
-						id: 'span_id--string----true',
 						isColumn: true,
 						isJSON: false,
 						key: 'span_id',
@@ -3493,10 +3415,9 @@ export const getAllEndpointsWidgetData = (
 								id: 'f162de1e',
 								key: {
 									dataType: DataTypes.String,
-									id: 'net.peer.name--string--tag--false',
 									isColumn: false,
 									isJSON: false,
-									key: 'net.peer.name',
+									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
 								op: '=',
@@ -3506,7 +3427,6 @@ export const getAllEndpointsWidgetData = (
 								id: '3df0ac1d',
 								key: {
 									dataType: DataTypes.bool,
-									id: 'has_error--bool----true',
 									isColumn: true,
 									isJSON: false,
 									key: 'has_error',
@@ -3523,7 +3443,6 @@ export const getAllEndpointsWidgetData = (
 									type: '',
 									isColumn: true,
 									isJSON: false,
-									id: 'kind_string--string----true',
 								},
 								op: '=',
 								value: 'Client',
@@ -3559,7 +3478,7 @@ export const getAllEndpointsWidgetData = (
 	);
 
 	widget.renderColumnCell = {
-		'http.url': (url: any): ReactNode => {
+		[SPAN_ATTRIBUTES.URL_PATH]: (url: any): ReactNode => {
 			const { endpoint } = extractPortAndEndpoint(url);
 			return (
 				<span>{endpoint === 'n/a' || url === undefined ? '-' : endpoint}</span>
@@ -3615,7 +3534,7 @@ export const getAllEndpointsWidgetData = (
 	};
 
 	widget.customColTitles = {
-		'http.url': 'Endpoint',
+		[SPAN_ATTRIBUTES.URL_PATH]: 'Endpoint',
 		'net.peer.port': 'Port',
 	};
 
@@ -3657,10 +3576,9 @@ export const getRateOverTimeWidgetData = (
 								id: '3c76fe0b',
 								key: {
 									dataType: DataTypes.String,
-									id: 'net.peer.name--string--tag--false',
 									isColumn: false,
 									isJSON: false,
-									key: 'net.peer.name',
+									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
 								op: '=',
@@ -3708,7 +3626,6 @@ export const getLatencyOverTimeWidgetData = (
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						id: 'duration_nano--float64----true',
 						isColumn: true,
 						isJSON: false,
 						key: 'duration_nano',
@@ -3724,10 +3641,9 @@ export const getLatencyOverTimeWidgetData = (
 								id: '63adb3ff',
 								key: {
 									dataType: DataTypes.String,
-									id: 'net.peer.name--string--tag--false',
 									isColumn: false,
 									isJSON: false,
-									key: 'net.peer.name',
+									key: SPAN_ATTRIBUTES.SERVER_NAME,
 									type: 'tag',
 								},
 								op: '=',
