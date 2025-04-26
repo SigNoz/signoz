@@ -55,6 +55,7 @@
 		"ansi-to-html": "0.7.2",
 		"antd": "5.11.0",
 		"antd-table-saveas-excel": "2.2.1",
+		"antlr4": "4.13.2",
 		"axios": "1.7.7",
 		"babel-eslint": "^10.1.0",
 		"babel-jest": "^29.6.4",
