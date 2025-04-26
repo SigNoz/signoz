@@ -23,8 +23,6 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -147,11 +145,6 @@ type APIHandler struct {
 	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
-
-	Preference preference.API
-
-	OrganizationAPI    organization.API
-	OrganizationModule organization.Module
 }
 
 type APIHandlerOpts struct {
@@ -199,10 +192,6 @@ type APIHandlerOpts struct {
 	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
-
-	Preference         preference.API
-	OrganizationAPI    organization.API
-	OrganizationModule organization.Module
 }
 
 // NewAPIHandler returns an APIHandler
@@ -271,10 +260,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		Signoz:                        opts.Signoz,
-		Preference:                    opts.Preference,
 		FieldsAPI:                     opts.FieldsAPI,
-		OrganizationAPI:               opts.OrganizationAPI,
-		OrganizationModule:            opts.OrganizationModule,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -599,18 +585,18 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// === Preference APIs ===
 
 	// user actions
-	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.getAllUserPreferences)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.Signoz.Handlers.Preference.GetAllUser)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.getUserPreference)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.Signoz.Handlers.Preference.GetUser)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.updateUserPreference)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.Signoz.Handlers.Preference.UpdateUser)).Methods(http.MethodPut)
 
 	// org actions
-	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.getAllOrgPreferences)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.Signoz.Handlers.Preference.GetAllOrg)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.getOrgPreference)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.Signoz.Handlers.Preference.GetOrg)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.updateOrgPreference)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.Signoz.Handlers.Preference.UpdateOrg)).Methods(http.MethodPut)
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
@@ -633,9 +619,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/orgUsers/{id}", am.AdminAccess(aH.getOrgUsers)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v2/orgs", am.AdminAccess(aH.getOrgs)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.getOrg)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.updateOrg)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Get)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Update)).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
@@ -2064,7 +2049,7 @@ func (aH *APIHandler) inviteUsers(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 	token := mux.Vars(r)["token"]
 
-	resp, err := auth.GetInvite(context.Background(), token, aH.OrganizationModule)
+	resp, err := auth.GetInvite(context.Background(), token, aH.Signoz.Modules.Organization)
 	if err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorNotFound}, nil)
 		return
@@ -2105,7 +2090,7 @@ func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request)
 		if err != nil {
 			render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid org_id in the invite"))
 		}
-		org, err := aH.OrganizationModule.Get(ctx, orgID)
+		org, err := aH.Signoz.Modules.Organization.Get(ctx, orgID)
 		if err != nil {
 			render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, err.Error()))
 		}
@@ -2132,7 +2117,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager, aH.OrganizationModule)
+	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager, aH.Signoz.Modules.Organization)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -2389,18 +2374,6 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.WriteJSON(w, r, map[string]string{"data": "user group updated successfully"})
-}
-
-func (aH *APIHandler) getOrgs(w http.ResponseWriter, r *http.Request) {
-	aH.OrganizationAPI.GetAll(w, r)
-}
-
-func (aH *APIHandler) getOrg(w http.ResponseWriter, r *http.Request) {
-	aH.OrganizationAPI.Get(w, r)
-}
-
-func (aH *APIHandler) updateOrg(w http.ResponseWriter, r *http.Request) {
-	aH.OrganizationAPI.Update(w, r)
 }
 
 func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {
@@ -3435,44 +3408,6 @@ func (aH *APIHandler) getProducerConsumerEval(
 		Result: result,
 	}
 	aH.Respond(w, resp)
-}
-
-// Preferences
-
-func (aH *APIHandler) getUserPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.GetUserPreference(w, r)
-}
-
-func (aH *APIHandler) updateUserPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.UpdateUserPreference(w, r)
-}
-
-func (aH *APIHandler) getAllUserPreferences(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.GetAllUserPreferences(w, r)
-}
-
-func (aH *APIHandler) getOrgPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.GetOrgPreference(w, r)
-}
-
-func (aH *APIHandler) updateOrgPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.UpdateOrgPreference(w, r)
-}
-
-func (aH *APIHandler) getAllOrgPreferences(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.GetAllOrgPreferences(w, r)
 }
 
 // RegisterIntegrationRoutes Registers all Integrations

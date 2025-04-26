@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/jmoiron/sqlx"
 	"github.com/uptrace/bun"
 )
@@ -30,6 +31,12 @@ type SQLStore interface {
 	// BunDBCtx returns an instance of bun.IDB for the given context.
 	// If a transaction is present in the context, it will be used. Otherwise, the default will be used.
 	BunDBCtx(ctx context.Context) bun.IDB
+
+	// WrapNotFoundErrf wraps the given error with the given message and returns it.
+	WrapNotFoundErrf(err error, code errors.Code, format string, args ...any) error
+
+	// WrapAlreadyExistsErrf wraps the given error with the given message and returns it.
+	WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error
 }
 
 type SQLStoreHook interface {

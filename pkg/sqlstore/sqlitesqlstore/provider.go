@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
+	sqlite3 "github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 )
@@ -76,4 +77,22 @@ func (provider *provider) BunDBCtx(ctx context.Context) bun.IDB {
 
 func (provider *provider) RunInTxCtx(ctx context.Context, opts *sql.TxOptions, cb func(ctx context.Context) error) error {
 	return provider.bundb.RunInTxCtx(ctx, opts, cb)
+}
+
+func (provider *provider) WrapNotFoundErrf(err error, code errors.Code, format string, args ...any) error {
+	if err == sql.ErrNoRows {
+		return errors.Wrapf(err, errors.TypeNotFound, code, format, args...)
+	}
+
+	return err
+}
+
+func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
+	if sqlite3Err, ok := err.(sqlite3.Error); ok {
+		if sqlite3Err.ExtendedCode == sqlite3.ErrConstraintUnique {
+			return errors.Wrapf(err, errors.TypeAlreadyExists, code, format, args...)
+		}
+	}
+
+	return err
 }

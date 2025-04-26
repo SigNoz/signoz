@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/jmoiron/sqlx"
 	"github.com/uptrace/bun"
@@ -73,4 +74,12 @@ func (provider *Provider) BunDBCtx(ctx context.Context) bun.IDB {
 
 func (provider *Provider) RunInTxCtx(ctx context.Context, opts *sql.TxOptions, cb func(ctx context.Context) error) error {
 	return cb(ctx)
+}
+
+func (provider *Provider) WrapNotFoundErrf(err error, code errors.Code, format string, args ...any) error {
+	return fmt.Errorf(format, args...)
+}
+
+func (provider *Provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
+	return fmt.Errorf(format, args...)
 }

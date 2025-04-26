@@ -8,26 +8,26 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type organizationModule struct {
+type module struct {
 	store types.OrganizationStore
 }
 
 func NewModule(organizationStore types.OrganizationStore) organization.Module {
-	return &organizationModule{store: organizationStore}
+	return &module{store: organizationStore}
 }
 
-func (o *organizationModule) Create(ctx context.Context, organization *types.Organization) error {
-	return o.store.Create(ctx, organization)
+func (module *module) Create(ctx context.Context, organization *types.Organization) error {
+	return module.store.Create(ctx, organization)
 }
 
-func (o *organizationModule) Get(ctx context.Context, id valuer.UUID) (*types.Organization, error) {
-	return o.store.Get(ctx, id)
+func (module *module) Get(ctx context.Context, id valuer.UUID) (*types.Organization, error) {
+	return module.store.Get(ctx, id)
 }
 
-func (o *organizationModule) GetAll(ctx context.Context) ([]*types.Organization, error) {
-	return o.store.GetAll(ctx)
+func (module *module) GetAll(ctx context.Context) ([]*types.Organization, error) {
+	return module.store.GetAll(ctx)
 }
 
-func (o *organizationModule) Update(ctx context.Context, updatedOrganization *types.Organization) error {
-	return o.store.Update(ctx, updatedOrganization)
+func (module *module) Update(ctx context.Context, updatedOrganization *types.Organization) error {
+	return module.store.Update(ctx, updatedOrganization)
 }

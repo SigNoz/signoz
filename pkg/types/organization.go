@@ -4,8 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
+)
+
+var (
+	ErrOrganizationAlreadyExists = errors.MustNewCode("organization_already_exists")
+	ErrOrganizationNotFound      = errors.MustNewCode("organization_not_found")
 )
 
 type Organization struct {

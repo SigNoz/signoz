@@ -13,9 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
-	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
-	"github.com/SigNoz/signoz/pkg/modules/preference"
-	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -26,7 +23,6 @@ import (
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
 )
@@ -60,10 +56,6 @@ type APIHandler struct {
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
-	preference := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(signoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
-	organizationAPI := implorganization.NewAPI(implorganization.NewModule(implorganization.NewStore(signoz.SQLStore)))
-	organizationModule := implorganization.NewModule(implorganization.NewStore(signoz.SQLStore))
-
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
 		SkipConfig:                    opts.SkipConfig,
@@ -81,9 +73,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore),
 		Signoz:                        signoz,
-		Preference:                    preference,
-		OrganizationAPI:               organizationAPI,
-		OrganizationModule:            organizationModule,
 	})
 
 	if err != nil {

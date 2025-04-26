@@ -6,31 +6,31 @@ import (
 )
 
 var (
-	CodeInvalidInput     code = code{"invalid_input"}
-	CodeInternal              = code{"internal"}
-	CodeUnsupported           = code{"unsupported"}
-	CodeNotFound              = code{"not_found"}
-	CodeMethodNotAllowed      = code{"method_not_allowed"}
-	CodeAlreadyExists         = code{"already_exists"}
-	CodeUnauthenticated       = code{"unauthenticated"}
-	CodeForbidden             = code{"forbidden"}
+	CodeInvalidInput     Code = Code{"invalid_input"}
+	CodeInternal              = Code{"internal"}
+	CodeUnsupported           = Code{"unsupported"}
+	CodeNotFound              = Code{"not_found"}
+	CodeMethodNotAllowed      = Code{"method_not_allowed"}
+	CodeAlreadyExists         = Code{"already_exists"}
+	CodeUnauthenticated       = Code{"unauthenticated"}
+	CodeForbidden             = Code{"forbidden"}
 )
 
 var (
 	codeRegex = regexp.MustCompile(`^[a-z_]+$`)
 )
 
-type code struct{ s string }
+type Code struct{ s string }
 
-func NewCode(s string) (code, error) {
+func NewCode(s string) (Code, error) {
 	if !codeRegex.MatchString(s) {
-		return code{}, fmt.Errorf("invalid code: %v", s)
+		return Code{}, fmt.Errorf("invalid code: %v", s)
 	}
 
-	return code{s: s}, nil
+	return Code{s: s}, nil
 }
 
-func MustNewCode(s string) code {
+func MustNewCode(s string) Code {
 	code, err := NewCode(s)
 	if err != nil {
 		panic(err)
@@ -39,6 +39,6 @@ func MustNewCode(s string) code {
 	return code
 }
 
-func (c code) String() string {
+func (c Code) String() string {
 	return c.s
 }

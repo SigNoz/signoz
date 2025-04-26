@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -86,4 +88,21 @@ func (provider *provider) BunDBCtx(ctx context.Context) bun.IDB {
 
 func (provider *provider) RunInTxCtx(ctx context.Context, opts *sql.TxOptions, cb func(ctx context.Context) error) error {
 	return provider.bundb.RunInTxCtx(ctx, opts, cb)
+}
+
+func (provider *provider) WrapNotFoundErrf(err error, code errors.Code, format string, args ...any) error {
+	if err == sql.ErrNoRows {
+		return errors.Wrapf(err, errors.TypeNotFound, code, format, args...)
+	}
+
+	return err
+}
+
+func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		return errors.Wrapf(err, errors.TypeAlreadyExists, code, format, args...)
+	}
+
+	return err
 }

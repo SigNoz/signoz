@@ -26,6 +26,8 @@ type SigNoz struct {
 	TelemetryStore  telemetrystore.TelemetryStore
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
+	Modules         Modules
+	Handlers        Handlers
 }
 
 func New(
@@ -124,6 +126,7 @@ func New(
 		return nil, err
 	}
 
+	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
@@ -134,6 +137,12 @@ func New(
 	if err != nil {
 		return nil, err
 	}
+
+	// Initialize all modules
+	modules := NewModules(sqlstore)
+
+	// Initialize all handlers for the modules
+	handlers := NewHandlers(modules)
 
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),
@@ -153,5 +162,7 @@ func New(
 		TelemetryStore:  telemetrystore,
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
+		Modules:         modules,
+		Handlers:        handlers,
 	}, nil
 }

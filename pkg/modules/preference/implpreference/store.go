@@ -1,4 +1,4 @@
-package core
+package implpreference
 
 import (
 	"context"
@@ -11,11 +11,11 @@ type store struct {
 	store sqlstore.SQLStore
 }
 
-func NewStore(db sqlstore.SQLStore) preferencetypes.PreferenceStore {
+func NewStore(db sqlstore.SQLStore) preferencetypes.Store {
 	return &store{store: db}
 }
 
-func (store *store) GetOrgPreference(ctx context.Context, orgID string, preferenceID string) (*preferencetypes.StorableOrgPreference, error) {
+func (store *store) GetOrg(ctx context.Context, orgID string, preferenceID string) (*preferencetypes.StorableOrgPreference, error) {
 	orgPreference := new(preferencetypes.StorableOrgPreference)
 	err := store.
 		store.
@@ -33,7 +33,7 @@ func (store *store) GetOrgPreference(ctx context.Context, orgID string, preferen
 	return orgPreference, nil
 }
 
-func (store *store) GetAllOrgPreferences(ctx context.Context, orgID string) ([]*preferencetypes.StorableOrgPreference, error) {
+func (store *store) GetAllOrg(ctx context.Context, orgID string) ([]*preferencetypes.StorableOrgPreference, error) {
 	orgPreferences := make([]*preferencetypes.StorableOrgPreference, 0)
 	err := store.
 		store.
@@ -50,7 +50,7 @@ func (store *store) GetAllOrgPreferences(ctx context.Context, orgID string) ([]*
 	return orgPreferences, nil
 }
 
-func (store *store) UpsertOrgPreference(ctx context.Context, orgPreference *preferencetypes.StorableOrgPreference) error {
+func (store *store) UpsertOrg(ctx context.Context, orgPreference *preferencetypes.StorableOrgPreference) error {
 	_, err := store.
 		store.
 		BunDB().
@@ -65,7 +65,7 @@ func (store *store) UpsertOrgPreference(ctx context.Context, orgPreference *pref
 	return nil
 }
 
-func (store *store) GetUserPreference(ctx context.Context, userID string, preferenceID string) (*preferencetypes.StorableUserPreference, error) {
+func (store *store) GetUser(ctx context.Context, userID string, preferenceID string) (*preferencetypes.StorableUserPreference, error) {
 	userPreference := new(preferencetypes.StorableUserPreference)
 	err := store.
 		store.
@@ -83,7 +83,7 @@ func (store *store) GetUserPreference(ctx context.Context, userID string, prefer
 	return userPreference, nil
 }
 
-func (store *store) GetAllUserPreferences(ctx context.Context, userID string) ([]*preferencetypes.StorableUserPreference, error) {
+func (store *store) GetAllUser(ctx context.Context, userID string) ([]*preferencetypes.StorableUserPreference, error) {
 	userPreferences := make([]*preferencetypes.StorableUserPreference, 0)
 	err := store.
 		store.
@@ -100,7 +100,7 @@ func (store *store) GetAllUserPreferences(ctx context.Context, userID string) ([
 	return userPreferences, nil
 }
 
-func (store *store) UpsertUserPreference(ctx context.Context, userPreference *preferencetypes.StorableUserPreference) error {
+func (store *store) UpsertUser(ctx context.Context, userPreference *preferencetypes.StorableUserPreference) error {
 	_, err := store.
 		store.
 		BunDB().

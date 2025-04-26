@@ -2,77 +2,69 @@ package implorganization
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type store struct {
-	store sqlstore.SQLStore
+	sqlstore sqlstore.SQLStore
 }
 
-func NewStore(db sqlstore.SQLStore) types.OrganizationStore {
-	return &store{store: db}
+func NewStore(sqlstore sqlstore.SQLStore) types.OrganizationStore {
+	return &store{sqlstore: sqlstore}
 }
 
-func (s *store) Create(ctx context.Context, organization *types.Organization) error {
-	_, err := s.
-		store.
+func (store *store) Create(ctx context.Context, organization *types.Organization) error {
+	_, err := store.
+		sqlstore.
 		BunDB().
 		NewInsert().
 		Model(organization).
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create organization")
+		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrOrganizationAlreadyExists, "organization with name: %s already exists", organization.Name)
 	}
 
 	return nil
 }
 
-func (s *store) Get(ctx context.Context, id valuer.UUID) (*types.Organization, error) {
+func (store *store) Get(ctx context.Context, id valuer.UUID) (*types.Organization, error) {
 	organization := new(types.Organization)
-	err := s.
-		store.
+	err := store.
+		sqlstore.
 		BunDB().
 		NewSelect().
 		Model(organization).
 		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "no organization found with id: %s", id.StringValue())
-		}
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get organization with id: %s", id.StringValue())
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrOrganizationNotFound, "organization with id: %s does not exist", id.StringValue())
 	}
 
 	return organization, nil
 }
 
-func (s *store) GetAll(ctx context.Context) ([]*types.Organization, error) {
+func (store *store) GetAll(ctx context.Context) ([]*types.Organization, error) {
 	organizations := make([]*types.Organization, 0)
-	err := s.
-		store.
+	err := store.
+		sqlstore.
 		BunDB().
 		NewSelect().
 		Model(&organizations).
 		Scan(ctx)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "no organizations found")
-		}
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get all organizations")
+		return nil, err
 	}
 
 	return organizations, nil
 }
 
-func (s *store) Update(ctx context.Context, organization *types.Organization) error {
-	_, err := s.
-		store.
+func (store *store) Update(ctx context.Context, organization *types.Organization) error {
+	_, err := store.
+		sqlstore.
 		BunDB().
 		NewUpdate().
 		Model(organization).
@@ -81,21 +73,21 @@ func (s *store) Update(ctx context.Context, organization *types.Organization) er
 		Where("id = ?", organization.ID.StringValue()).
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to update organization with id: %s", organization.ID.StringValue())
+		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrOrganizationAlreadyExists, "organization already exists")
 	}
 	return nil
 }
 
-func (s *store) Delete(ctx context.Context, id valuer.UUID) error {
-	_, err := s.
-		store.
+func (store *store) Delete(ctx context.Context, id valuer.UUID) error {
+	_, err := store.
+		sqlstore.
 		BunDB().
 		NewDelete().
 		Model(new(types.Organization)).
 		Where("id = ?", id.StringValue()).
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete organization with id: %s", id.StringValue())
+		return err
 	}
 
 	return nil

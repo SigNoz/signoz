@@ -1,8 +1,10 @@
 package implorganization
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -12,16 +14,19 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type organizationAPI struct {
+type handler struct {
 	module organization.Module
 }
 
-func NewAPI(module organization.Module) organization.API {
-	return &organizationAPI{module: module}
+func NewHandler(module organization.Module) organization.Handler {
+	return &handler{module: module}
 }
 
-func (api *organizationAPI) Get(rw http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
+func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -29,11 +34,11 @@ func (api *organizationAPI) Get(rw http.ResponseWriter, r *http.Request) {
 
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid org id"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is invalid"))
 		return
 	}
 
-	organization, err := api.module.Get(r.Context(), orgID)
+	organization, err := handler.module.Get(ctx, orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -42,18 +47,11 @@ func (api *organizationAPI) Get(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, organization)
 }
 
-func (api *organizationAPI) GetAll(rw http.ResponseWriter, r *http.Request) {
-	organizations, err := api.module.GetAll(r.Context())
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
 
-	render.Success(rw, http.StatusOK, organizations)
-}
-
-func (api *organizationAPI) Update(rw http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -72,7 +70,7 @@ func (api *organizationAPI) Update(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req.ID = orgID
-	err = api.module.Update(r.Context(), req)
+	err = handler.module.Update(ctx, req)
 	if err != nil {
 		render.Error(rw, err)
 		return
