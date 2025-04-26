@@ -3536,7 +3536,7 @@ func (aH *APIHandler) getAllOrgPreferences(
 func (aH *APIHandler) getAllQuickFilters(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	aH.QuickFilters.GetOrgQuickFilters(w, r)
+	aH.QuickFilters.GetQuickFilters(w, r)
 }
 
 func (aH *APIHandler) getSignalFilters(

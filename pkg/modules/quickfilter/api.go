@@ -13,7 +13,7 @@ import (
 )
 
 type API interface {
-	GetOrgQuickFilters(http.ResponseWriter, *http.Request)
+	GetQuickFilters(http.ResponseWriter, *http.Request)
 	UpdateQuickFilters(http.ResponseWriter, *http.Request)
 	GetSignalFilters(http.ResponseWriter, *http.Request)
 }
@@ -26,7 +26,7 @@ func NewAPI(usecase Usecase) API {
 	return &quickFiltersAPI{usecase: usecase}
 }
 
-func (q *quickFiltersAPI) GetOrgQuickFilters(rw http.ResponseWriter, r *http.Request) {
+func (q *quickFiltersAPI) GetQuickFilters(rw http.ResponseWriter, r *http.Request) {
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
 		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
