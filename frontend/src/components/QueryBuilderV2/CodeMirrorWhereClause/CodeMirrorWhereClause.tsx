@@ -114,8 +114,8 @@ function CodeMirrorWhereClause(): JSX.Element {
 	// 	isLoading: queryKeyValuesSuggestionsLoading,
 	// 	refetch: refetchQueryKeyValuesSuggestions,
 	// } = useGetQueryKeyValueSuggestions({
-	// 	signal: 'traces',
 	// 	key: 'status',
+	// 	signal: 'traces',
 	// });
 
 	const generateOptions = (data: any): any[] => {
@@ -300,6 +300,33 @@ function CodeMirrorWhereClause(): JSX.Element {
 		};
 	}
 
+	const customTheme = EditorView.theme({
+		'&': {
+			fontFamily: '"Space Mono", monospace', // Change to any font
+			fontSize: '13px', // Set font size
+			lineHeight: '1.8', // Set line height
+			margin: '8px 0px',
+		},
+		'.cm-line': {
+			lineHeight: '2.2', // Set line height
+		},
+		'.cm-gutters': {
+			lineHeight: '1.8', // Set line height
+			display: 'none',
+		},
+		'.cm-content': {
+			lineHeight: '2.2', // Set line height
+			borderRadius: '2px',
+			border: '1px solid var(--bg-ink-400) !important',
+			background: 'var(--bg-ink-400) !important',
+			padding: '0px',
+		},
+		'.cm-focused': {
+			border: '1px solid var(--bg-robin-500) !important',
+			background: 'var(--bg-ink-400) !important',
+		},
+	});
+
 	return (
 		<div className="code-mirror-where-clause">
 			<Card
@@ -322,7 +349,11 @@ function CodeMirrorWhereClause(): JSX.Element {
 						autocompletion({ override: [myCompletions] }),
 						collapseSpacesOutsideStrings(),
 						javascript({ jsx: false, typescript: false }),
+						customTheme,
 					]}
+					basicSetup={{
+						lineNumbers: false,
+					}}
 				/>
 
 				<Space className="cursor-position" size={4}>
