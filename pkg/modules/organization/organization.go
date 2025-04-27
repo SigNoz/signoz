@@ -22,12 +22,9 @@ type Module interface {
 	Update(context.Context, *types.Organization) error
 }
 
-type API interface {
+type Handler interface {
 	// Get gets the organization based on the id in claims
 	Get(http.ResponseWriter, *http.Request)
-
-	// GetAll gets all the organizations
-	GetAll(http.ResponseWriter, *http.Request)
 
 	// Update updates the organization based on the id in claims
 	Update(http.ResponseWriter, *http.Request)

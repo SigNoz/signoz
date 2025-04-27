@@ -10,6 +10,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/signoz"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
@@ -360,12 +361,19 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
+	modules := signoz.NewModules(testDB)
+	handlers := signoz.NewHandlers(modules)
+
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,
 		AppDao:                      dao.DB(),
 		CloudIntegrationsController: controller,
 		FeatureFlags:                fm,
 		JWT:                         jwt,
+		Signoz: &signoz.SigNoz{
+			Modules:  modules,
+			Handlers: handlers,
+		},
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)

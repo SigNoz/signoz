@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
@@ -566,6 +567,9 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		t.Fatalf("could not create cloud integrations controller: %v", err)
 	}
 
+	modules := signoz.NewModules(testDB)
+	handlers := signoz.NewHandlers(modules)
+
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,
 		AppDao:                      dao.DB(),
@@ -573,6 +577,10 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		FeatureFlags:                fm,
 		JWT:                         jwt,
 		CloudIntegrationsController: cloudIntegrationsController,
+		Signoz: &signoz.SigNoz{
+			Modules:  modules,
+			Handlers: handlers,
+		},
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
