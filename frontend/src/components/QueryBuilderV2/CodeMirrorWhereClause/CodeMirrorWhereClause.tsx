@@ -2,13 +2,19 @@
 
 import './CodeMirrorWhereClause.styles.scss';
 
+import {
+	CheckCircleFilled,
+	CloseCircleFilled,
+	InfoCircleOutlined,
+	QuestionCircleOutlined,
+} from '@ant-design/icons';
 import CodeMirror, { EditorView } from '@uiw/react-codemirror';
-import { Typography } from 'antd';
+import { Badge, Card, Divider, Space, Tooltip, Typography } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { IQueryContext, IValidationResult } from 'types/antlrQueryTypes';
 import { getQueryContextAtCursor, validateQuery } from 'utils/antlrQueryUtils';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 function CodeMirrorWhereClause(): JSX.Element {
 	const [query, setQuery] = useState<string>('');
@@ -74,82 +80,169 @@ function CodeMirrorWhereClause(): JSX.Element {
 		}
 	}, [query, cursorPos]);
 
-	useEffect(() => {
-		console.log('cursorPos', cursorPos);
-	}, [cursorPos]);
-
 	const handleChange = (value: string): void => {
-		console.log('value', value);
 		setQuery(value);
 		handleQueryChange(value);
 	};
 
+	const renderContextBadge = (): JSX.Element | null => {
+		if (!queryContext) return null;
+
+		let color = 'black';
+		let text = 'Unknown';
+
+		if (queryContext.isInKey) {
+			color = 'blue';
+			text = 'Key';
+		} else if (queryContext.isInOperator) {
+			color = 'purple';
+			text = 'Operator';
+		} else if (queryContext.isInValue) {
+			color = 'green';
+			text = 'Value';
+		} else if (queryContext.isInFunction) {
+			color = 'orange';
+			text = 'Function';
+		} else if (queryContext.isInConjunction) {
+			color = 'magenta';
+			text = 'Conjunction';
+		} else if (queryContext.isInParenthesis) {
+			color = 'grey';
+			text = 'Parenthesis';
+		}
+
+		return (
+			<Badge
+				color={color}
+				text={text}
+				style={{
+					color: 'black',
+				}}
+			/>
+		);
+	};
+
 	return (
 		<div className="code-mirror-where-clause">
-			<CodeMirror
-				value={query}
-				onChange={handleChange}
-				onUpdate={handleUpdate}
-				placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
-			/>
+			<Card
+				size="small"
+				title={<Title level={5}>Where Clause</Title>}
+				extra={
+					<Tooltip title="Write a query to filter your data">
+						<QuestionCircleOutlined />
+					</Tooltip>
+				}
+			>
+				<CodeMirror
+					value={query}
+					theme="dark"
+					onChange={handleChange}
+					onUpdate={handleUpdate}
+					placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
+				/>
 
-			<div className="cursor-position">
-				Cursor at Line: {cursorPos.line}, Ch: {cursorPos.ch}
-			</div>
+				<Space className="cursor-position" size={4}>
+					<InfoCircleOutlined />
+					<Text style={{ color: 'black' }}>
+						Line: {cursorPos.line}, Position: {cursorPos.ch}
+					</Text>
+				</Space>
+
+				<Divider style={{ margin: '8px 0' }} />
+
+				<div className="query-validation">
+					<Text>Status:</Text>
+					<div className={validation.isValid ? 'valid' : 'invalid'}>
+						{validation.isValid ? (
+							<>
+								<CheckCircleFilled /> Valid
+							</>
+						) : (
+							<>
+								<CloseCircleFilled /> Invalid
+							</>
+						)}
+					</div>
+					{validation.message && (
+						<Tooltip title={validation.message}>
+							<InfoCircleOutlined style={{ marginLeft: 8 }} />
+						</Tooltip>
+					)}
+				</div>
+			</Card>
 
 			{queryContext && (
-				<div className="query-context">
-					<h3>Current Context</h3>
+				<Card size="small" title="Current Context" className="query-context">
 					<div className="context-details">
-						<p>
-							<strong>Token:</strong> {queryContext.currentToken}
-						</p>
-						<p>
-							<strong>Type:</strong> {queryContext.tokenType}
-						</p>
-						<p>
-							<strong>Context:</strong>{' '}
-							{queryContext.isInValue
-								? 'Value'
-								: queryContext.isInKey
-								? 'Key'
-								: queryContext.isInOperator
-								? 'Operator'
-								: queryContext.isInFunction
-								? 'Function'
-								: 'Unknown'}
-						</p>
+						<Space direction="vertical" size={4}>
+							<Space>
+								<Text strong style={{ color: 'black' }}>
+									Token:
+								</Text>
+								<Text code style={{ color: 'black' }}>
+									{queryContext.currentToken || '-'}
+								</Text>
+							</Space>
+							<Space>
+								<Text strong style={{ color: 'black' }}>
+									Type:
+								</Text>
+								<Text style={{ color: 'black' }}>{queryContext.tokenType || '-'}</Text>
+							</Space>
+							<Space>
+								<Text strong style={{ color: 'black' }}>
+									Context:
+								</Text>
+								{renderContextBadge()}
+							</Space>
+						</Space>
 					</div>
-				</div>
+				</Card>
 			)}
 
-			<div className="query-examples">
-				<Text type="secondary">Examples:</Text>
+			<Card
+				size="small"
+				title="Query Examples"
+				className="query-examples"
+				style={{
+					backgroundColor: 'var(--bg-vanilla-100)',
+					color: 'black',
+				}}
+			>
+				<div className="query-examples-list">Query Examples</div>
 				<ul>
 					<li>
-						<Text code>status = &apos;error&apos;</Text>
+						<Text code style={{ color: 'black' }}>
+							status = &apos;error&apos;
+						</Text>
 					</li>
 					<li>
-						<Text code>
+						<Text code style={{ color: 'black' }}>
 							service = &apos;frontend&apos; AND level = &apos;error&apos;
 						</Text>
 					</li>
 					<li>
-						<Text code>message LIKE &apos;%timeout%&apos;</Text>
+						<Text code style={{ color: 'black' }}>
+							message LIKE &apos;%timeout%&apos;
+						</Text>
 					</li>
 					<li>
-						<Text code>duration {'>'} 1000</Text>
+						<Text code style={{ color: 'black' }}>
+							duration {'>'} 1000
+						</Text>
 					</li>
 					<li>
-						<Text code>tags IN [&apos;prod&apos;, &apos;frontend&apos;]</Text>
+						<Text code style={{ color: 'black' }}>
+							tags IN [&apos;prod&apos;, &apos;frontend&apos;]
+						</Text>
 					</li>
 					<li>
-						<Text code>
+						<Text code style={{ color: 'black' }}>
 							NOT (status = &apos;error&apos; OR level = &apos;error&apos;)
 						</Text>
 					</li>
 				</ul>
-			</div>
+			</Card>
 		</div>
 	);
 }
