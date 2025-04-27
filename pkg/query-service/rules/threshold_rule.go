@@ -29,7 +29,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 
 	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
-	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/formatter"
 
@@ -52,16 +51,12 @@ type ThresholdRule struct {
 	// used for attribute metadata enrichment for logs and traces
 	logsKeys  map[string]v3.AttributeKey
 	spansKeys map[string]v3.AttributeKey
-
-	useTraceNewSchema bool
 }
 
 func NewThresholdRule(
 	id string,
 	p *ruletypes.PostableRule,
 	reader interfaces.Reader,
-	useLogsNewSchema bool,
-	useTraceNewSchema bool,
 	opts ...RuleOption,
 ) (*ThresholdRule, error) {
 
@@ -73,25 +68,20 @@ func NewThresholdRule(
 	}
 
 	t := ThresholdRule{
-		BaseRule:          baseRule,
-		version:           p.Version,
-		useTraceNewSchema: useTraceNewSchema,
+		BaseRule: baseRule,
+		version:  p.Version,
 	}
 
 	querierOption := querier.QuerierOptions{
-		Reader:            reader,
-		Cache:             nil,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
+		Reader:       reader,
+		Cache:        nil,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:            reader,
-		Cache:             nil,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
+		Reader:       reader,
+		Cache:        nil,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
 	}
 
 	t.querier = querier.NewQuerier(querierOption)
@@ -301,11 +291,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (rul
 				return nil, err
 			}
 			r.spansKeys = spanKeys
-			if r.useTraceNewSchema {
-				tracesV4.Enrich(params, spanKeys)
-			} else {
-				tracesV3.Enrich(params, spanKeys)
-			}
+			tracesV4.Enrich(params, spanKeys)
 		}
 	}
 

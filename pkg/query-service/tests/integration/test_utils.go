@@ -46,8 +46,6 @@ func NewMockClickhouseReader(t *testing.T, testDB sqlstore.SQLStore) (*clickhous
 		telemetryStore,
 		prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
 		"",
-		true,
-		true,
 		time.Duration(time.Second),
 		nil,
 	)
