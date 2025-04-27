@@ -43,7 +43,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, _ zeus.
 
 	return &Provider{
 		settings:   settings,
-		config:     eezues.Config,
+		config:     eezues.Config(),
 		httpClient: httpClient,
 	}, nil
 }

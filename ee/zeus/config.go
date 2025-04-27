@@ -3,6 +3,7 @@ package zeus
 import (
 	"fmt"
 	neturl "net/url"
+	"sync"
 
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -11,23 +12,31 @@ import (
 var (
 	url           string = "<unset>"
 	deprecatedURL string = "<unset>"
-	Config        zeus.Config
+)
+
+var (
+	config zeus.Config
+	once   sync.Once
 )
 
 // init initializes and validates the Zeus configuration
-func init() {
-	parsedURL, err := neturl.Parse(url)
-	if err != nil {
-		panic(fmt.Errorf("invalid zeus URL: %w", err))
-	}
+func Config() zeus.Config {
+	once.Do(func() {
+		parsedURL, err := neturl.Parse(url)
+		if err != nil {
+			panic(fmt.Errorf("invalid zeus URL: %w", err))
+		}
 
-	deprecatedParsedURL, err := neturl.Parse(deprecatedURL)
-	if err != nil {
-		panic(fmt.Errorf("invalid zeus deprecated URL: %w", err))
-	}
+		deprecatedParsedURL, err := neturl.Parse(deprecatedURL)
+		if err != nil {
+			panic(fmt.Errorf("invalid zeus deprecated URL: %w", err))
+		}
 
-	Config = zeus.Config{URL: parsedURL, DeprecatedURL: deprecatedParsedURL}
-	if err := Config.Validate(); err != nil {
-		panic(fmt.Errorf("invalid zeus config: %w", err))
-	}
+		config = zeus.Config{URL: parsedURL, DeprecatedURL: deprecatedParsedURL}
+		if err := config.Validate(); err != nil {
+			panic(fmt.Errorf("invalid zeus config: %w", err))
+		}
+	})
+
+	return config
 }
