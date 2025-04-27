@@ -122,8 +122,6 @@ function CodeMirrorWhereClause(): JSX.Element {
 		async (key: string): Promise<void> => {
 			if (!key || (key === activeKey && !isLoadingSuggestions)) return;
 
-			console.log('Fetching suggestions for key:', key);
-
 			// Set loading state and store the key we're fetching for
 			setIsLoadingSuggestions(true);
 			lastKeyRef.current = key;
@@ -149,26 +147,42 @@ function CodeMirrorWhereClause(): JSX.Element {
 				const stringValues = values.stringValues || [];
 				const numberValues = values.numberValues || [];
 
-				// Generate options from string values
-				const stringOptions = stringValues.map((value: string) => ({
-					label: value || '""',
-					type: 'value',
-				}));
+				// Generate options from string values - explicitly handle empty strings
+				const stringOptions = stringValues
+					// Strict filtering for empty string - we'll handle it as a special case if needed
+					.filter(
+						(value: string | null | undefined): value is string =>
+							value !== null && value !== undefined && value !== '',
+					)
+					.map((value: string) => ({
+						label: value,
+						type: 'value',
+					}));
 
 				// Generate options from number values
-				const numberOptions = numberValues.map((value: number) => ({
-					label: value.toString(),
-					type: 'number',
-				}));
+				const numberOptions = numberValues
+					.filter(
+						(value: number | null | undefined): value is number =>
+							value !== null && value !== undefined,
+					)
+					.map((value: number) => ({
+						label: value.toString(),
+						type: 'number',
+					}));
 
-				// Update suggestions
-				const allOptions = [...stringOptions, ...numberOptions];
+				// Combine all options and make sure we don't have duplicate labels
+				let allOptions = [...stringOptions, ...numberOptions];
+
+				// Remove duplicates by label
+				allOptions = allOptions.filter(
+					(option, index, self) =>
+						index === self.findIndex((o) => o.label === option.label),
+				);
 
 				// Only if we're still on the same key
 				if (lastKeyRef.current === key) {
 					if (allOptions.length > 0) {
 						setValueSuggestions(allOptions);
-						console.log('Updated value suggestions:', allOptions);
 					} else {
 						setValueSuggestions([
 							{ label: 'No suggestions available', type: 'text' },
@@ -319,12 +333,8 @@ function CodeMirrorWhereClause(): JSX.Element {
 		}
 
 		if (queryContext.isInValue) {
-			console.log('is In Value', queryContext.currentToken);
-
 			// Fetch values based on the key - use the keyToken if available
 			const key = queryContext.keyToken || queryContext.currentToken;
-
-			console.log('key', key);
 
 			// Trigger fetch only if key is different from activeKey or if we're still loading
 			if (key && (key !== activeKey || isLoadingSuggestions)) {
