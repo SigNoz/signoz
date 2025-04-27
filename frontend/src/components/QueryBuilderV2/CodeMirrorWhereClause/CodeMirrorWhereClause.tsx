@@ -1,3 +1,5 @@
+/* eslint-disable sonarjs/no-collapsible-if */
+/* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-nested-ternary */
 
@@ -13,11 +15,13 @@ import {
 	autocompletion,
 	CompletionContext,
 	CompletionResult,
+	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, { EditorView, Extension } from '@uiw/react-codemirror';
 import { Badge, Card, Divider, Space, Tooltip, Typography } from 'antd';
+import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 // import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -85,7 +89,12 @@ function collapseSpacesOutsideStrings(): Extension {
 
 function CodeMirrorWhereClause(): JSX.Element {
 	const [query, setQuery] = useState<string>('');
-	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
+		{ label: 'error', type: 'value' },
+		{ label: 'frontend', type: 'value' },
+	]);
+	const [activeKey, setActiveKey] = useState<string>('');
+	const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 	const [queryContext, setQueryContext] = useState<IQueryContext | null>(null);
 	const [validation, setValidation] = useState<IValidationResult>({
 		isValid: false,
@@ -100,45 +109,99 @@ function CodeMirrorWhereClause(): JSX.Element {
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
 
-	const {
-		data: queryKeySuggestions,
-		// isLoading: queryKeySuggestionsLoading,
-		// isRefetching: queryKeySuggestionsRefetching,
-		// refetch: queryKeySuggestionsRefetch,
-		// error: queryKeySuggestionsError,
-		// isError: queryKeySuggestionsIsError,
-	} = useGetQueryKeySuggestions({ signal: 'traces' });
+	// Reference to the editor view for programmatic autocompletion
+	const editorRef = useRef<EditorView | null>(null);
+	const lastKeyRef = useRef<string>('');
 
-	// const {
-	// 	data: queryKeyValuesSuggestions,
-	// 	isLoading: queryKeyValuesSuggestionsLoading,
-	// 	refetch: refetchQueryKeyValuesSuggestions,
-	// } = useGetQueryKeyValueSuggestions({
-	// 	key: 'status',
-	// 	signal: 'traces',
-	// });
+	const { data: queryKeySuggestions } = useGetQueryKeySuggestions({
+		signal: 'traces',
+	});
 
-	console.log('loading', isLoading);
+	// Use callback to prevent dependency changes on each render
+	const fetchValueSuggestions = useCallback(
+		async (key: string): Promise<void> => {
+			if (!key || (key === activeKey && !isLoadingSuggestions)) return;
 
-	const generateOptions = (data: any): any[] =>
-		Object.values(data.keys).flatMap((items: any) =>
-			items.map(({ name, fieldDataType, fieldContext }: any) => ({
-				label: name,
-				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
-				info: fieldContext,
-				details: '',
-			})),
-		);
+			console.log('Fetching suggestions for key:', key);
 
-	useEffect(() => {
-		if (queryKeySuggestions) {
-			const options = generateOptions(queryKeySuggestions.data.data);
+			// Set loading state and store the key we're fetching for
+			setIsLoadingSuggestions(true);
+			lastKeyRef.current = key;
+			setActiveKey(key);
 
-			setKeySuggestions(options);
-		}
-	}, [queryKeySuggestions]);
+			// Replace current suggestions with loading indicator
+			setValueSuggestions([{ label: 'Loading suggestions...', type: 'text' }]);
+
+			try {
+				const response = await getValueSuggestions({
+					key,
+					signal: 'traces',
+				});
+
+				// Verify we're still on the same key (user hasn't moved on)
+				if (lastKeyRef.current !== key) {
+					return; // Skip updating if key has changed
+				}
+
+				// Process the response data
+				const responseData = response.data as any;
+				const values = responseData.data?.values || {};
+				const stringValues = values.stringValues || [];
+				const numberValues = values.numberValues || [];
+
+				// Generate options from string values
+				const stringOptions = stringValues.map((value: string) => ({
+					label: value || '""',
+					type: 'value',
+				}));
+
+				// Generate options from number values
+				const numberOptions = numberValues.map((value: number) => ({
+					label: value.toString(),
+					type: 'number',
+				}));
+
+				// Update suggestions
+				const allOptions = [...stringOptions, ...numberOptions];
+
+				// Only if we're still on the same key
+				if (lastKeyRef.current === key) {
+					if (allOptions.length > 0) {
+						setValueSuggestions(allOptions);
+						console.log('Updated value suggestions:', allOptions);
+					} else {
+						setValueSuggestions([
+							{ label: 'No suggestions available', type: 'text' },
+						]);
+					}
+
+					// Force reopen the completion if editor is available
+					if (editorRef.current) {
+						setTimeout(() => {
+							startCompletion(editorRef.current!);
+						}, 10);
+					}
+					setIsLoadingSuggestions(false);
+				}
+			} catch (error) {
+				console.error('Error fetching suggestions:', error);
+				if (lastKeyRef.current === key) {
+					setValueSuggestions([
+						{ label: 'Error loading suggestions', type: 'text' },
+					]);
+					setIsLoadingSuggestions(false);
+				}
+			}
+		},
+		[activeKey, isLoadingSuggestions],
+	);
 
 	const handleUpdate = (viewUpdate: { view: EditorView }): void => {
+		// Store editor reference
+		if (!editorRef.current) {
+			editorRef.current = viewUpdate.view;
+		}
+
 		const selection = viewUpdate.view.state.selection.main;
 		const pos = selection.head;
 
@@ -158,7 +221,6 @@ function CodeMirrorWhereClause(): JSX.Element {
 	};
 
 	const handleQueryChange = useCallback(async (newQuery: string) => {
-		setIsLoading(true);
 		setQuery(newQuery);
 
 		try {
@@ -170,8 +232,6 @@ function CodeMirrorWhereClause(): JSX.Element {
 				message: 'Failed to process query',
 				errors: [error instanceof Error ? error.message : 'Unknown error'],
 			});
-		} finally {
-			setIsLoading(false);
 		}
 	}, []);
 
@@ -244,43 +304,69 @@ function CodeMirrorWhereClause(): JSX.Element {
 
 		if (queryContext.isInKey) {
 			options = keySuggestions || [];
-		} else if (queryContext.isInOperator) {
+			return {
+				from: word?.from ?? 0,
+				options,
+			};
+		}
+
+		if (queryContext.isInOperator) {
 			options = queryOperatorSuggestions;
-		} else if (queryContext.isInValue) {
+			return {
+				from: word?.from ?? 0,
+				options,
+			};
+		}
+
+		if (queryContext.isInValue) {
 			console.log('is In Value', queryContext.currentToken);
-			// refetchQueryKeyValuesSuggestions();
 
 			// Fetch values based on the key - use the keyToken if available
 			const key = queryContext.keyToken || queryContext.currentToken;
 
 			console.log('key', key);
 
-			// const response = refetchQueryKeyValuesSuggestions({
-			// 	key: 'status',
-			// 	signal: 'traces',
-			// });
+			// Trigger fetch only if key is different from activeKey or if we're still loading
+			if (key && (key !== activeKey || isLoadingSuggestions)) {
+				// Don't trigger a new fetch if we're already loading for this key
+				if (!(isLoadingSuggestions && lastKeyRef.current === key)) {
+					fetchValueSuggestions(key);
+				}
+			}
 
-			options = [
-				{ label: 'error', type: 'value' },
-				{ label: 'frontend', type: 'value' },
-				// Add more value options here
-			];
-		} else if (queryContext.isInFunction) {
+			// Return current value suggestions from state
+			return {
+				from: word?.from ?? 0,
+				options: valueSuggestions,
+			};
+		}
+
+		if (queryContext.isInFunction) {
 			options = [
 				{ label: 'HAS', type: 'function' },
 				{ label: 'HASANY', type: 'function' },
 				// Add more function options here
 			];
-		} else if (queryContext.isInConjunction) {
+			return {
+				from: word?.from ?? 0,
+				options,
+			};
+		}
+
+		if (queryContext.isInConjunction) {
 			options = [
 				{ label: 'AND', type: 'conjunction' },
 				{ label: 'OR', type: 'conjunction' },
 			];
+			return {
+				from: word?.from ?? 0,
+				options,
+			};
 		}
 
 		return {
 			from: word?.from ?? 0,
-			options,
+			options: [],
 		};
 	}
 
@@ -311,6 +397,37 @@ function CodeMirrorWhereClause(): JSX.Element {
 		},
 	});
 
+	// Add back the generateOptions function and useEffect
+	const generateOptions = (data: any): any[] =>
+		Object.values(data.keys).flatMap((items: any) =>
+			items.map(({ name, fieldDataType, fieldContext }: any) => ({
+				label: name,
+				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
+				info: fieldContext,
+				details: '',
+			})),
+		);
+
+	useEffect(() => {
+		if (queryKeySuggestions) {
+			const options = generateOptions(queryKeySuggestions.data.data);
+			setKeySuggestions(options);
+		}
+	}, [queryKeySuggestions]);
+
+	// Update state when query context changes to trigger suggestion refresh
+	useEffect(() => {
+		if (queryContext?.isInValue) {
+			const key = queryContext.keyToken || queryContext.currentToken;
+			if (key && (key !== activeKey || isLoadingSuggestions)) {
+				// Don't trigger a new fetch if we're already loading for this key
+				if (!(isLoadingSuggestions && lastKeyRef.current === key)) {
+					fetchValueSuggestions(key);
+				}
+			}
+		}
+	}, [queryContext, activeKey, fetchValueSuggestions, isLoadingSuggestions]);
+
 	return (
 		<div className="code-mirror-where-clause">
 			<Card
@@ -330,7 +447,13 @@ function CodeMirrorWhereClause(): JSX.Element {
 					autoFocus
 					placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
 					extensions={[
-						autocompletion({ override: [myCompletions] }),
+						autocompletion({
+							override: [myCompletions],
+							defaultKeymap: true,
+							closeOnBlur: false,
+							activateOnTyping: true,
+							maxRenderedOptions: 50,
+						}),
 						collapseSpacesOutsideStrings(),
 						javascript({ jsx: false, typescript: false }),
 						customTheme,
