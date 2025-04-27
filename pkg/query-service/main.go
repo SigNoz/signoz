@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
+	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/SigNoz/signoz/pkg/zeus/noopzeus"
 
 	"go.uber.org/zap"
@@ -91,11 +92,12 @@ func main() {
 	signoz, err := signoz.New(
 		context.Background(),
 		config,
+		zeus.Config{},
+		noopzeus.NewProviderFactory(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),
 		signoz.NewSQLStoreProviderFactories(),
 		signoz.NewTelemetryStoreProviderFactories(),
-		noopzeus.NewProviderFactory(),
 	)
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz", zap.Error(err))

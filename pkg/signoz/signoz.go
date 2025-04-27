@@ -35,11 +35,12 @@ type SigNoz struct {
 func New(
 	ctx context.Context,
 	config Config,
+	zeusConfig zeus.Config,
+	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
-	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -58,7 +59,7 @@ func New(
 	zeus, err := zeusProviderFactory.New(
 		ctx,
 		providerSettings,
-		zeus.Config{},
+		zeusConfig,
 	)
 	if err != nil {
 		return nil, err
