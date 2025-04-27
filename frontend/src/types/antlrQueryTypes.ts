@@ -1,7 +1,7 @@
 export interface IValidationResult {
 	isValid: boolean;
 	message: string;
-	errors: string[];
+	errors: IDetailedError[];
 }
 
 export interface IToken {
