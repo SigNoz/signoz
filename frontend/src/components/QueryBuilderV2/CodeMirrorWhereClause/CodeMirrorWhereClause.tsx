@@ -131,13 +131,58 @@ function CodeMirrorWhereClause(): JSX.Element {
 	function myCompletions(context: CompletionContext): CompletionResult | null {
 		const word = context.matchBefore(/\w*/);
 		if (word?.from === word?.to && !context.explicit) return null;
+
+		// Get the query context at the cursor position
+		const queryContext = getQueryContextAtCursor(query, cursorPos.ch);
+
+		// Define autocomplete options based on the context
+		let options: {
+			label: string;
+			type: string;
+			info?: string;
+			apply?: string;
+			detail?: string;
+		}[] = [];
+
+		if (queryContext.isInKey) {
+			options = [
+				{ label: 'status', type: 'keyword' },
+				{ label: 'service', type: 'keyword' },
+				// Add more key options here
+			];
+		} else if (queryContext.isInOperator) {
+			options = [
+				{ label: '=', type: 'operator' },
+				{ label: '!=', type: 'operator' },
+				// Add more operator options here
+			];
+		} else if (queryContext.isInValue) {
+			options = [
+				{ label: 'error', type: 'value' },
+				{ label: 'frontend', type: 'value' },
+				// Add more value options here
+			];
+		} else if (queryContext.isInFunction) {
+			options = [
+				{ label: 'HAS', type: 'function' },
+				{ label: 'HASANY', type: 'function' },
+				// Add more function options here
+			];
+		} else if (queryContext.isInConjunction) {
+			options = [
+				{ label: 'AND', type: 'conjunction' },
+				{ label: 'OR', type: 'conjunction' },
+			];
+		} else if (queryContext.isInParenthesis) {
+			options = [
+				{ label: '(', type: 'parenthesis' },
+				{ label: ')', type: 'parenthesis' },
+			];
+		}
+
 		return {
 			from: word?.from ?? 0,
-			options: [
-				{ label: 'match', type: 'keyword' },
-				{ label: 'hello', type: 'variable', info: '(World)' },
-				{ label: 'magic', type: 'text', apply: '⠁⭒*.✩.*⭒⠁', detail: 'macro' },
-			],
+			options,
 		};
 	}
 
