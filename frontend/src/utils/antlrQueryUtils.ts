@@ -233,14 +233,6 @@ export function getQueryContextAtCursor(
 			}
 		}
 
-		console.log('Cursor context:', {
-			cursorIndex,
-			query,
-			exact: exactToken,
-			prev: previousToken,
-			next: nextToken,
-		});
-
 		// Determine the context based on cursor position and surrounding tokens
 		let currentToken: IToken | null = null;
 
@@ -398,6 +390,21 @@ export function getQueryContextAtCursor(
 				isInOperator: false,
 				isInFunction: false,
 				isInConjunction: false,
+				isInParenthesis: false,
+			};
+		}
+		if (isInParenthesis && query[currentToken.stop + 1] === ' ') {
+			return {
+				tokenType: currentToken.type,
+				text: currentToken.text,
+				start: currentToken.start,
+				stop: currentToken.stop,
+				currentToken: currentToken.text,
+				isInValue: false,
+				isInKey: false, // Suggest keys
+				isInOperator: false,
+				isInFunction: false,
+				isInConjunction: true, // Suggest conjunctions
 				isInParenthesis: false,
 			};
 		}
