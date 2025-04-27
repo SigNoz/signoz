@@ -290,11 +290,11 @@ export function getQueryContextAtCursor(
 			currentToken.type,
 		);
 
-		// Determine if the current token is a parenthesis
-		const isInParenthesis = [
-			FilterQueryLexer.LPAREN,
-			FilterQueryLexer.RPAREN,
-		].includes(currentToken.type);
+		// // Determine if the current token is a parenthesis
+		// const isInParenthesis = [
+		// 	FilterQueryLexer.LPAREN,
+		// 	FilterQueryLexer.RPAREN,
+		// ].includes(currentToken.type);
 
 		// Determine the context based on the token type
 		const isInValue = [
@@ -332,82 +332,82 @@ export function getQueryContextAtCursor(
 			FilterQueryLexer.HASNONE,
 		].includes(currentToken.type);
 
-		// Handle transitions based on spaces and current state
-		if (isInKey && query[currentToken.stop + 1] === ' ') {
-			return {
-				tokenType: currentToken.type,
-				text: currentToken.text,
-				start: currentToken.start,
-				stop: currentToken.stop,
-				currentToken: currentToken.text,
-				isInValue: false,
-				isInKey: false,
-				isInOperator: true,
-				isInFunction: false,
-				isInConjunction: false,
-				isInParenthesis: false,
-			};
-		}
-		if (isInOperator && query[currentToken.stop + 1] === ' ') {
-			return {
-				tokenType: currentToken.type,
-				text: currentToken.text,
-				start: currentToken.start,
-				stop: currentToken.stop,
-				currentToken: currentToken.text,
-				isInValue: true,
-				isInKey: false,
-				isInOperator: false,
-				isInFunction: false,
-				isInConjunction: false,
-				isInParenthesis: false,
-			};
-		}
-		if (isInValue && query[currentToken.stop + 1] === ' ') {
-			return {
-				tokenType: currentToken.type,
-				text: currentToken.text,
-				start: currentToken.start,
-				stop: currentToken.stop,
-				currentToken: currentToken.text,
-				isInValue: false,
-				isInKey: false,
-				isInOperator: false,
-				isInFunction: false,
-				isInConjunction: true,
-				isInParenthesis: false,
-			};
-		}
-		if (isInConjunction && query[currentToken.stop + 1] === ' ') {
-			return {
-				tokenType: currentToken.type,
-				text: currentToken.text,
-				start: currentToken.start,
-				stop: currentToken.stop,
-				currentToken: currentToken.text,
-				isInValue: false,
-				isInKey: true,
-				isInOperator: false,
-				isInFunction: false,
-				isInConjunction: false,
-				isInParenthesis: false,
-			};
-		}
-		if (isInParenthesis && query[currentToken.stop + 1] === ' ') {
-			return {
-				tokenType: currentToken.type,
-				text: currentToken.text,
-				start: currentToken.start,
-				stop: currentToken.stop,
-				currentToken: currentToken.text,
-				isInValue: false,
-				isInKey: false, // Suggest keys
-				isInOperator: false,
-				isInFunction: false,
-				isInConjunction: true, // Suggest conjunctions
-				isInParenthesis: false,
-			};
-		}
+		// // Handle transitions based on spaces and current state
+		// if (isInKey && query[currentToken.stop + 1] === ' ') {
+		// 	return {
+		// 		tokenType: currentToken.type,
+		// 		text: currentToken.text,
+		// 		start: currentToken.start,
+		// 		stop: currentToken.stop,
+		// 		currentToken: currentToken.text,
+		// 		isInValue: false,
+		// 		isInKey: false,
+		// 		isInOperator: true,
+		// 		isInFunction: false,
+		// 		isInConjunction: false,
+		// 		isInParenthesis: false,
+		// 	};
+		// }
+		// if (isInOperator && query[currentToken.stop + 1] === ' ') {
+		// 	return {
+		// 		tokenType: currentToken.type,
+		// 		text: currentToken.text,
+		// 		start: currentToken.start,
+		// 		stop: currentToken.stop,
+		// 		currentToken: currentToken.text,
+		// 		isInValue: true,
+		// 		isInKey: false,
+		// 		isInOperator: false,
+		// 		isInFunction: false,
+		// 		isInConjunction: false,
+		// 		isInParenthesis: false,
+		// 	};
+		// }
+		// if (isInValue && query[currentToken.stop + 1] === ' ') {
+		// 	return {
+		// 		tokenType: currentToken.type,
+		// 		text: currentToken.text,
+		// 		start: currentToken.start,
+		// 		stop: currentToken.stop,
+		// 		currentToken: currentToken.text,
+		// 		isInValue: false,
+		// 		isInKey: false,
+		// 		isInOperator: false,
+		// 		isInFunction: false,
+		// 		isInConjunction: true,
+		// 		isInParenthesis: false,
+		// 	};
+		// }
+		// if (isInConjunction && query[currentToken.stop + 1] === ' ') {
+		// 	return {
+		// 		tokenType: currentToken.type,
+		// 		text: currentToken.text,
+		// 		start: currentToken.start,
+		// 		stop: currentToken.stop,
+		// 		currentToken: currentToken.text,
+		// 		isInValue: false,
+		// 		isInKey: true,
+		// 		isInOperator: false,
+		// 		isInFunction: false,
+		// 		isInConjunction: false,
+		// 		isInParenthesis: false,
+		// 	};
+		// }
+		// if (isInParenthesis && query[currentToken.stop + 1] === ' ') {
+		// 	return {
+		// 		tokenType: currentToken.type,
+		// 		text: currentToken.text,
+		// 		start: currentToken.start,
+		// 		stop: currentToken.stop,
+		// 		currentToken: currentToken.text,
+		// 		isInValue: false,
+		// 		isInKey: false, // Suggest keys
+		// 		isInOperator: false,
+		// 		isInFunction: false,
+		// 		isInConjunction: true, // Suggest conjunctions
+		// 		isInParenthesis: false,
+		// 	};
+		// }
 
 		return {
 			tokenType: currentToken.type,
@@ -420,7 +420,7 @@ export function getQueryContextAtCursor(
 			isInOperator,
 			isInFunction,
 			isInConjunction,
-			isInParenthesis,
+			// isInParenthesis,
 		};
 	} catch (error) {
 		console.error('Error in getQueryContextAtCursor:', error);
@@ -439,3 +439,23 @@ export function getQueryContextAtCursor(
 		};
 	}
 }
+
+export const queryOperatorSuggestions = [
+	{ label: '=', type: 'operator', info: 'Equal to' },
+	{ label: '!=', type: 'operator', info: 'Not equal to' },
+	{ label: '>', type: 'operator', info: 'Greater than' },
+	{ label: '<', type: 'operator', info: 'Less than' },
+	{ label: '>=', type: 'operator', info: 'Greater than or equal to' },
+	{ label: '<=', type: 'operator', info: 'Less than or equal to' },
+	{ label: 'LIKE', type: 'operator', info: 'Like' },
+	{ label: 'ILIKE', type: 'operator', info: 'Case insensitive like' },
+	{ label: 'BETWEEN', type: 'operator', info: 'Between' },
+	{ label: 'EXISTS', type: 'operator', info: 'Exists' },
+	{ label: 'REGEXP', type: 'operator', info: 'Regular expression' },
+	{ label: 'CONTAINS', type: 'operator', info: 'Contains' },
+	{ label: 'IN', type: 'operator', info: 'In' },
+	{ label: 'NOT', type: 'operator', info: 'Not' },
+	{ label: 'NOT_LIKE', type: 'operator', info: 'Not like' },
+	{ label: 'IS_NULL', type: 'operator', info: 'Is null' },
+	{ label: 'IS_NOT_NULL', type: 'operator', info: 'Is not null' },
+];
