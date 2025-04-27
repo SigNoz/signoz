@@ -1,7 +1,6 @@
 /* eslint-disable sonarjs/no-collapsible-if */
 /* eslint-disable no-continue */
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable max-classes-per-file */
 import { CharStreams, CommonTokenStream } from 'antlr4';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser from 'parser/FilterQueryParser';
@@ -273,8 +272,21 @@ export function getQueryContextAtCursor(
 				isInKey: false,
 				isInOperator: false,
 				isInFunction: false,
+				isInConjunction: false,
+				isInParenthesis: false,
 			};
 		}
+
+		// Determine if the current token is a conjunction (AND or OR)
+		const isInConjunction = [FilterQueryLexer.AND, FilterQueryLexer.OR].includes(
+			currentToken.type,
+		);
+
+		// Determine if the current token is a parenthesis
+		const isInParenthesis = [
+			FilterQueryLexer.LPAREN,
+			FilterQueryLexer.RPAREN,
+		].includes(currentToken.type);
 
 		// Determine the context based on the token type
 		const isInValue = [
@@ -322,6 +334,8 @@ export function getQueryContextAtCursor(
 			isInKey,
 			isInOperator,
 			isInFunction,
+			isInConjunction,
+			isInParenthesis,
 		};
 	} catch (error) {
 		console.error('Error in getQueryContextAtCursor:', error);
@@ -335,6 +349,8 @@ export function getQueryContextAtCursor(
 			isInKey: false,
 			isInOperator: false,
 			isInFunction: false,
+			isInConjunction: false,
+			isInParenthesis: false,
 		};
 	}
 }
