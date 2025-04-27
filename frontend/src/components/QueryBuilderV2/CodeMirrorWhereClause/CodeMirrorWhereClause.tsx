@@ -16,8 +16,11 @@ import {
 } from '@codemirror/autocomplete';
 import CodeMirror, { EditorView } from '@uiw/react-codemirror';
 import { Badge, Card, Divider, Space, Tooltip, Typography } from 'antd';
+import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
+// import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { IQueryContext, IValidationResult } from 'types/antlrQueryTypes';
+import { QueryKeySuggestionsProps } from 'types/api/querySuggestions/types';
 import { getQueryContextAtCursor, validateQuery } from 'utils/antlrQueryUtils';
 
 const { Text, Title } = Typography;
@@ -32,8 +35,57 @@ function CodeMirrorWhereClause(): JSX.Element {
 		errors: [],
 	});
 
+	const [keySuggestions, setKeySuggestions] = useState<
+		QueryKeySuggestionsProps[] | null
+	>(null);
+
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
+
+	const {
+		data: queryKeySuggestions,
+		// isLoading: queryKeySuggestionsLoading,
+		// isRefetching: queryKeySuggestionsRefetching,
+		// refetch: queryKeySuggestionsRefetch,
+		// error: queryKeySuggestionsError,
+		// isError: queryKeySuggestionsIsError,
+	} = useGetQueryKeySuggestions({ signal: 'traces' });
+
+	// const {
+	// 	data: queryKeyValuesSuggestions,
+	// 	isLoading: queryKeyValuesSuggestionsLoading,
+	// 	refetch: refetchQueryKeyValuesSuggestions,
+	// } = useGetQueryKeyValueSuggestions({
+	// 	signal: 'traces',
+	// 	key: 'status',
+	// });
+
+	const generateOptions = (data: any): any[] => {
+		const options = Object.values(data.keys).flatMap((items: any) =>
+			items.map(({ name, fieldDataType, fieldContext }: any) => ({
+				label: name,
+				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
+				info: fieldContext,
+				details: '',
+			})),
+		);
+
+		console.log('options', options);
+
+		return options;
+	};
+
+	useEffect(() => {
+		if (queryKeySuggestions) {
+			console.log('queryKeySuggestions', queryKeySuggestions);
+
+			const options = generateOptions(queryKeySuggestions.data.data);
+
+			setKeySuggestions(options);
+		}
+	}, [queryKeySuggestions]);
+
+	console.log('keySuggestions', keySuggestions);
 
 	const handleUpdate = (viewUpdate: { view: EditorView }): void => {
 		const selection = viewUpdate.view.state.selection.main;
@@ -145,18 +197,41 @@ function CodeMirrorWhereClause(): JSX.Element {
 		}[] = [];
 
 		if (queryContext.isInKey) {
-			options = [
-				{ label: 'status', type: 'keyword' },
-				{ label: 'service', type: 'keyword' },
-				// Add more key options here
-			];
+			options = keySuggestions || [];
 		} else if (queryContext.isInOperator) {
 			options = [
-				{ label: '=', type: 'operator' },
-				{ label: '!=', type: 'operator' },
+				{ label: '=', type: 'operator', info: 'Equal to' },
+				{ label: '!=', type: 'operator', info: 'Not equal to' },
+				{ label: '>', type: 'operator', info: 'Greater than' },
+				{ label: '<', type: 'operator', info: 'Less than' },
+				{ label: '>=', type: 'operator', info: 'Greater than or equal to' },
+				{ label: '<=', type: 'operator', info: 'Less than or equal to' },
+				{ label: 'LIKE', type: 'operator', info: 'Like' },
+				{ label: 'ILIKE', type: 'operator', info: 'Case insensitive like' },
+				{ label: 'BETWEEN', type: 'operator', info: 'Between' },
+				{ label: 'EXISTS', type: 'operator', info: 'Exists' },
+				{ label: 'REGEXP', type: 'operator', info: 'Regular expression' },
+				{ label: 'CONTAINS', type: 'operator', info: 'Contains' },
+				{ label: 'IN', type: 'operator', info: 'In' },
+				{ label: 'NOT', type: 'operator', info: 'Not' },
 				// Add more operator options here
 			];
 		} else if (queryContext.isInValue) {
+			// refetchQueryKeyValuesSuggestions();
+
+			// Fetch values based on the key
+			const key = queryContext.currentToken;
+			// refetchQueryKeyValuesSuggestions({ key }).then((response) => {
+			// 	if (response && response.data && Array.isArray(response.data.values)) {
+			// 		options = response.data.values.map((value: string) => ({
+			// 			label: value,
+			// 			type: 'value',
+			// 		}));
+			// 	}
+			// });
+
+			console.log('key', key, queryContext, query);
+
 			options = [
 				{ label: 'error', type: 'value' },
 				{ label: 'frontend', type: 'value' },
