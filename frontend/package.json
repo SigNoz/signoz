@@ -28,6 +28,7 @@
 	"dependencies": {
 		"@ant-design/colors": "6.0.0",
 		"@ant-design/icons": "4.8.0",
+		"@codemirror/autocomplete": "6.18.6",
 		"@codemirror/lang-javascript": "6.2.3",
 		"@dnd-kit/core": "6.1.0",
 		"@dnd-kit/modifiers": "7.0.0",
