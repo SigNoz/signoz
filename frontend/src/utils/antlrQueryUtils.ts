@@ -233,6 +233,11 @@ export function getQueryContextAtCursor(
 			}
 		}
 
+		console.log('exactToken', exactToken);
+		console.log('previousToken', previousToken);
+		console.log('nextToken', nextToken);
+		console.log('query', query);
+
 		// Determine the context based on cursor position and surrounding tokens
 		let currentToken: IToken | null = null;
 
