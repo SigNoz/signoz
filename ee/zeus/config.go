@@ -19,7 +19,7 @@ var (
 	once   sync.Once
 )
 
-// init initializes and validates the Zeus configuration
+// initializes the Zeus configuration
 func Config() zeus.Config {
 	once.Do(func() {
 		parsedURL, err := neturl.Parse(url)
