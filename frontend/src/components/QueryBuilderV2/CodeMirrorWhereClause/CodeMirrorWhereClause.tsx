@@ -118,8 +118,10 @@ function CodeMirrorWhereClause(): JSX.Element {
 	// 	signal: 'traces',
 	// });
 
-	const generateOptions = (data: any): any[] => {
-		const options = Object.values(data.keys).flatMap((items: any) =>
+	console.log('loading', isLoading);
+
+	const generateOptions = (data: any): any[] =>
+		Object.values(data.keys).flatMap((items: any) =>
 			items.map(({ name, fieldDataType, fieldContext }: any) => ({
 				label: name,
 				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
@@ -128,22 +130,13 @@ function CodeMirrorWhereClause(): JSX.Element {
 			})),
 		);
 
-		console.log('options', options);
-
-		return options;
-	};
-
 	useEffect(() => {
 		if (queryKeySuggestions) {
-			console.log('queryKeySuggestions', queryKeySuggestions);
-
 			const options = generateOptions(queryKeySuggestions.data.data);
 
 			setKeySuggestions(options);
 		}
 	}, [queryKeySuggestions]);
-
-	console.log('keySuggestions', keySuggestions);
 
 	const handleUpdate = (viewUpdate: { view: EditorView }): void => {
 		const selection = viewUpdate.view.state.selection.main;
@@ -163,13 +156,6 @@ function CodeMirrorWhereClause(): JSX.Element {
 			lastPosRef.current = newPos;
 		}
 	};
-
-	console.log({
-		cursorPos,
-		queryContext,
-		validation,
-		isLoading,
-	});
 
 	const handleQueryChange = useCallback(async (newQuery: string) => {
 		setIsLoading(true);
@@ -261,20 +247,18 @@ function CodeMirrorWhereClause(): JSX.Element {
 		} else if (queryContext.isInOperator) {
 			options = queryOperatorSuggestions;
 		} else if (queryContext.isInValue) {
+			console.log('is In Value', queryContext.currentToken);
 			// refetchQueryKeyValuesSuggestions();
 
-			// Fetch values based on the key
-			const key = queryContext.currentToken;
-			// refetchQueryKeyValuesSuggestions({ key }).then((response) => {
-			// 	if (response && response.data && Array.isArray(response.data.values)) {
-			// 		options = response.data.values.map((value: string) => ({
-			// 			label: value,
-			// 			type: 'value',
-			// 		}));
-			// 	}
-			// });
+			// Fetch values based on the key - use the keyToken if available
+			const key = queryContext.keyToken || queryContext.currentToken;
 
-			console.log('key', key, queryContext, query);
+			console.log('key', key);
+
+			// const response = refetchQueryKeyValuesSuggestions({
+			// 	key: 'status',
+			// 	signal: 'traces',
+			// });
 
 			options = [
 				{ label: 'error', type: 'value' },
@@ -410,6 +394,40 @@ function CodeMirrorWhereClause(): JSX.Element {
 								</Text>
 								{renderContextBadge()}
 							</Space>
+
+							{/* Display the key-operator-value triplet when available */}
+							{queryContext.keyToken && (
+								<Space>
+									<Text strong style={{ color: 'black' }}>
+										Key:
+									</Text>
+									<Text code style={{ color: 'blue' }}>
+										{queryContext.keyToken}
+									</Text>
+								</Space>
+							)}
+
+							{queryContext.operatorToken && (
+								<Space>
+									<Text strong style={{ color: 'black' }}>
+										Operator:
+									</Text>
+									<Text code style={{ color: 'purple' }}>
+										{queryContext.operatorToken}
+									</Text>
+								</Space>
+							)}
+
+							{queryContext.valueToken && (
+								<Space>
+									<Text strong style={{ color: 'black' }}>
+										Value:
+									</Text>
+									<Text code style={{ color: 'green' }}>
+										{queryContext.valueToken}
+									</Text>
+								</Space>
+							)}
 						</Space>
 					</div>
 				</Card>
