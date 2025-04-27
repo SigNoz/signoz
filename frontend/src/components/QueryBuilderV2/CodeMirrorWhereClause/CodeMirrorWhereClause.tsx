@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-nested-ternary */
 
 import './CodeMirrorWhereClause.styles.scss';
@@ -8,6 +9,11 @@ import {
 	InfoCircleOutlined,
 	QuestionCircleOutlined,
 } from '@ant-design/icons';
+import {
+	autocompletion,
+	CompletionContext,
+	CompletionResult,
+} from '@codemirror/autocomplete';
 import CodeMirror, { EditorView } from '@uiw/react-codemirror';
 import { Badge, Card, Divider, Space, Tooltip, Typography } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -122,6 +128,19 @@ function CodeMirrorWhereClause(): JSX.Element {
 		);
 	};
 
+	function myCompletions(context: CompletionContext): CompletionResult | null {
+		const word = context.matchBefore(/\w*/);
+		if (word?.from === word?.to && !context.explicit) return null;
+		return {
+			from: word?.from ?? 0,
+			options: [
+				{ label: 'match', type: 'keyword' },
+				{ label: 'hello', type: 'variable', info: '(World)' },
+				{ label: 'magic', type: 'text', apply: '⠁⭒*.✩.*⭒⠁', detail: 'macro' },
+			],
+		};
+	}
+
 	return (
 		<div className="code-mirror-where-clause">
 			<Card
@@ -138,7 +157,9 @@ function CodeMirrorWhereClause(): JSX.Element {
 					theme="dark"
 					onChange={handleChange}
 					onUpdate={handleUpdate}
+					autoFocus
 					placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
+					extensions={[autocompletion({ override: [myCompletions] })]}
 				/>
 
 				<Space className="cursor-position" size={4}>
