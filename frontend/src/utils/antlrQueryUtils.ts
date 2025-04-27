@@ -332,83 +332,262 @@ export function getQueryContextAtCursor(
 			FilterQueryLexer.HASNONE,
 		].includes(currentToken.type);
 
-		// // Handle transitions based on spaces and current state
-		// if (isInKey && query[currentToken.stop + 1] === ' ') {
-		// 	return {
-		// 		tokenType: currentToken.type,
-		// 		text: currentToken.text,
-		// 		start: currentToken.start,
-		// 		stop: currentToken.stop,
-		// 		currentToken: currentToken.text,
-		// 		isInValue: false,
-		// 		isInKey: false,
-		// 		isInOperator: true,
-		// 		isInFunction: false,
-		// 		isInConjunction: false,
-		// 		isInParenthesis: false,
-		// 	};
-		// }
-		// if (isInOperator && query[currentToken.stop + 1] === ' ') {
-		// 	return {
-		// 		tokenType: currentToken.type,
-		// 		text: currentToken.text,
-		// 		start: currentToken.start,
-		// 		stop: currentToken.stop,
-		// 		currentToken: currentToken.text,
-		// 		isInValue: true,
-		// 		isInKey: false,
-		// 		isInOperator: false,
-		// 		isInFunction: false,
-		// 		isInConjunction: false,
-		// 		isInParenthesis: false,
-		// 	};
-		// }
-		// if (isInValue && query[currentToken.stop + 1] === ' ') {
-		// 	return {
-		// 		tokenType: currentToken.type,
-		// 		text: currentToken.text,
-		// 		start: currentToken.start,
-		// 		stop: currentToken.stop,
-		// 		currentToken: currentToken.text,
-		// 		isInValue: false,
-		// 		isInKey: false,
-		// 		isInOperator: false,
-		// 		isInFunction: false,
-		// 		isInConjunction: true,
-		// 		isInParenthesis: false,
-		// 	};
-		// }
-		// if (isInConjunction && query[currentToken.stop + 1] === ' ') {
-		// 	return {
-		// 		tokenType: currentToken.type,
-		// 		text: currentToken.text,
-		// 		start: currentToken.start,
-		// 		stop: currentToken.stop,
-		// 		currentToken: currentToken.text,
-		// 		isInValue: false,
-		// 		isInKey: true,
-		// 		isInOperator: false,
-		// 		isInFunction: false,
-		// 		isInConjunction: false,
-		// 		isInParenthesis: false,
-		// 	};
-		// }
-		// if (isInParenthesis && query[currentToken.stop + 1] === ' ') {
-		// 	return {
-		// 		tokenType: currentToken.type,
-		// 		text: currentToken.text,
-		// 		start: currentToken.start,
-		// 		stop: currentToken.stop,
-		// 		currentToken: currentToken.text,
-		// 		isInValue: false,
-		// 		isInKey: false, // Suggest keys
-		// 		isInOperator: false,
-		// 		isInFunction: false,
-		// 		isInConjunction: true, // Suggest conjunctions
-		// 		isInParenthesis: false,
-		// 	};
-		// }
+		console.log('currentToken', currentToken);
 
+		// Handle transitions based on spaces
+		// When a user adds a space after a token, change the context accordingly
+		if (
+			currentToken &&
+			cursorIndex === currentToken.stop + 2 &&
+			query[currentToken.stop + 1] === ' '
+		) {
+			// User added a space right after this token
+
+			if (isInKey) {
+				// After a key + space, we should be in operator context
+				return {
+					tokenType: currentToken.type,
+					text: currentToken.text,
+					start: currentToken.start,
+					stop: currentToken.stop,
+					currentToken: currentToken.text,
+					isInValue: false,
+					isInKey: false,
+					isInOperator: true,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+				};
+			}
+
+			if (isInOperator) {
+				// After an operator + space, we should be in value context
+				return {
+					tokenType: currentToken.type,
+					text: currentToken.text,
+					start: currentToken.start,
+					stop: currentToken.stop,
+					currentToken: currentToken.text,
+					isInValue: true,
+					isInKey: false,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+				};
+			}
+
+			if (isInValue) {
+				// After a value + space, we should be in conjunction context
+				return {
+					tokenType: currentToken.type,
+					text: currentToken.text,
+					start: currentToken.start,
+					stop: currentToken.stop,
+					currentToken: currentToken.text,
+					isInValue: false,
+					isInKey: false,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: true,
+					isInParenthesis: false,
+				};
+			}
+
+			if (isInConjunction) {
+				// After a conjunction + space, we should be in key context again
+				return {
+					tokenType: currentToken.type,
+					text: currentToken.text,
+					start: currentToken.start,
+					stop: currentToken.stop,
+					currentToken: currentToken.text,
+					isInValue: false,
+					isInKey: true,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+				};
+			}
+		}
+
+		// Add logic for context detection that works for both forward and backward navigation
+		// This handles both cases: when user is typing forward and when they're moving backward
+		if (previousToken && nextToken) {
+			// Determine context based on token sequence pattern
+
+			// Key -> Operator -> Value -> Conjunction pattern detection
+			if (isInKey && nextToken.type === FilterQueryLexer.EQUALS) {
+				// When cursor is on a key and next token is an operator
+				return {
+					tokenType: currentToken.type,
+					text: currentToken.text,
+					start: currentToken.start,
+					stop: currentToken.stop,
+					currentToken: currentToken.text,
+					isInValue: false,
+					isInKey: true,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+				};
+			}
+
+			if (
+				isInOperator &&
+				previousToken.type === FilterQueryLexer.KEY &&
+				(nextToken.type === FilterQueryLexer.QUOTED_TEXT ||
+					nextToken.type === FilterQueryLexer.NUMBER ||
+					nextToken.type === FilterQueryLexer.BOOL)
+			) {
+				// When cursor is on an operator between a key and value
+				return {
+					tokenType: currentToken.type,
+					text: currentToken.text,
+					start: currentToken.start,
+					stop: currentToken.stop,
+					currentToken: currentToken.text,
+					isInValue: false,
+					isInKey: false,
+					isInOperator: true,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+				};
+			}
+
+			if (
+				isInValue &&
+				previousToken.type !== FilterQueryLexer.AND &&
+				previousToken.type !== FilterQueryLexer.OR &&
+				(nextToken.type === FilterQueryLexer.AND ||
+					nextToken.type === FilterQueryLexer.OR)
+			) {
+				// When cursor is on a value and next token is a conjunction
+				return {
+					tokenType: currentToken.type,
+					text: currentToken.text,
+					start: currentToken.start,
+					stop: currentToken.stop,
+					currentToken: currentToken.text,
+					isInValue: true,
+					isInKey: false,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+				};
+			}
+
+			if (
+				isInConjunction &&
+				(previousToken.type === FilterQueryLexer.QUOTED_TEXT ||
+					previousToken.type === FilterQueryLexer.NUMBER ||
+					previousToken.type === FilterQueryLexer.BOOL) &&
+				nextToken.type === FilterQueryLexer.KEY
+			) {
+				// When cursor is on a conjunction between a value and a key
+				return {
+					tokenType: currentToken.type,
+					text: currentToken.text,
+					start: currentToken.start,
+					stop: currentToken.stop,
+					currentToken: currentToken.text,
+					isInValue: false,
+					isInKey: false,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: true,
+					isInParenthesis: false,
+				};
+			}
+		}
+
+		// If we're in between tokens (no exact token match), use next token type to determine context
+		if (!exactToken && nextToken) {
+			if (nextToken.type === FilterQueryLexer.KEY) {
+				return {
+					tokenType: -1,
+					text: '',
+					start: cursorIndex,
+					stop: cursorIndex,
+					currentToken: '',
+					isInValue: false,
+					isInKey: true,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+				};
+			}
+
+			if (
+				[
+					FilterQueryLexer.EQUALS,
+					FilterQueryLexer.NOT_EQUALS,
+					FilterQueryLexer.GT,
+					FilterQueryLexer.LT,
+					FilterQueryLexer.GE,
+					FilterQueryLexer.LE,
+				].includes(nextToken.type)
+			) {
+				return {
+					tokenType: -1,
+					text: '',
+					start: cursorIndex,
+					stop: cursorIndex,
+					currentToken: '',
+					isInValue: false,
+					isInKey: false,
+					isInOperator: true,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+				};
+			}
+
+			if (
+				[
+					FilterQueryLexer.QUOTED_TEXT,
+					FilterQueryLexer.NUMBER,
+					FilterQueryLexer.BOOL,
+				].includes(nextToken.type)
+			) {
+				return {
+					tokenType: -1,
+					text: '',
+					start: cursorIndex,
+					stop: cursorIndex,
+					currentToken: '',
+					isInValue: true,
+					isInKey: false,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+				};
+			}
+
+			if ([FilterQueryLexer.AND, FilterQueryLexer.OR].includes(nextToken.type)) {
+				return {
+					tokenType: -1,
+					text: '',
+					start: cursorIndex,
+					stop: cursorIndex,
+					currentToken: '',
+					isInValue: false,
+					isInKey: false,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: true,
+					isInParenthesis: false,
+				};
+			}
+		}
+
+		// Fall back to default context detection based on current token
 		return {
 			tokenType: currentToken.type,
 			text: currentToken.text,
