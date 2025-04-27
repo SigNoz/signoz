@@ -159,7 +159,7 @@ func (lm *Manager) UploadUsage() {
 
 	body, errv2 := json.Marshal(payload)
 	if errv2 != nil {
-		zap.L().Error("error while marshalling usage payload: %v", zap.Error(err))
+		zap.L().Error("error while marshalling usage payload: %v", zap.Error(errv2))
 		return
 	}
 
