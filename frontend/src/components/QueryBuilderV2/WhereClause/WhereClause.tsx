@@ -37,7 +37,13 @@ function QueryWhereClause(): JSX.Element {
 			setValidation({
 				isValid: false,
 				message: 'Failed to process query',
-				errors: [error instanceof Error ? error.message : 'Unknown error'],
+				errors: [
+					{
+						message: error instanceof Error ? error.message : 'Unknown error',
+						line: 0,
+						column: 0,
+					},
+				],
 			});
 		} finally {
 			setIsLoading(false);
@@ -79,7 +85,7 @@ function QueryWhereClause(): JSX.Element {
 
 				{queryContext && (
 					<div className="query-context">
-						<h3>Current Context</h3>
+						<Text strong>Current Context</Text>
 						<div className="context-details">
 							<p>
 								<strong>Token:</strong> {queryContext.currentToken}
