@@ -5,12 +5,7 @@
 
 import './CodeMirrorWhereClause.styles.scss';
 
-import {
-	CheckCircleFilled,
-	CloseCircleFilled,
-	InfoCircleOutlined,
-	QuestionCircleOutlined,
-} from '@ant-design/icons';
+import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import {
 	autocompletion,
 	CompletionContext,
@@ -20,12 +15,15 @@ import {
 import { javascript } from '@codemirror/lang-javascript';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, { EditorView, Extension } from '@uiw/react-codemirror';
-import { Badge, Card, Divider, Space, Tooltip, Typography } from 'antd';
+import { Badge, Card, Divider, Space, Typography } from 'antd';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-// import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { IQueryContext, IValidationResult } from 'types/antlrQueryTypes';
+import {
+	IDetailedError,
+	IQueryContext,
+	IValidationResult,
+} from 'types/antlrQueryTypes';
 import { QueryKeySuggestionsProps } from 'types/api/querySuggestions/types';
 import {
 	getQueryContextAtCursor,
@@ -33,7 +31,7 @@ import {
 	validateQuery,
 } from 'utils/antlrQueryUtils';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 function collapseSpacesOutsideStrings(): Extension {
 	return EditorView.inputHandler.of((view, from, to, text) => {
@@ -244,7 +242,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 			setValidation({
 				isValid: false,
 				message: 'Failed to process query',
-				errors: [error instanceof Error ? error.message : 'Unknown error'],
+				errors: [error as IDetailedError],
 			});
 		}
 	}, []);
@@ -289,15 +287,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 		// 	text = 'Parenthesis';
 		// }
 
-		return (
-			<Badge
-				color={color}
-				text={text}
-				style={{
-					color: 'black',
-				}}
-			/>
-		);
+		return <Badge color={color} text={text} />;
 	};
 
 	function myCompletions(context: CompletionContext): CompletionResult | null {
@@ -380,33 +370,6 @@ function CodeMirrorWhereClause(): JSX.Element {
 		};
 	}
 
-	const customTheme = EditorView.theme({
-		'&': {
-			fontFamily: '"Space Mono", monospace', // Change to any font
-			fontSize: '13px', // Set font size
-			lineHeight: '1.8', // Set line height
-			margin: '8px 0px',
-		},
-		'.cm-line': {
-			lineHeight: '2.2', // Set line height
-		},
-		'.cm-gutters': {
-			lineHeight: '1.8', // Set line height
-			display: 'none',
-		},
-		'.cm-content': {
-			lineHeight: '2.2', // Set line height
-			borderRadius: '2px',
-			border: '1px solid var(--bg-ink-400) !important',
-			background: 'var(--bg-ink-400) !important',
-			padding: '0px',
-		},
-		'.cm-focused': {
-			border: '1px solid var(--bg-robin-500) !important',
-			background: 'var(--bg-ink-400) !important',
-		},
-	});
-
 	// Add back the generateOptions function and useEffect
 	const generateOptions = (data: any): any[] =>
 		Object.values(data.keys).flatMap((items: any) =>
@@ -440,15 +403,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 
 	return (
 		<div className="code-mirror-where-clause">
-			<Card
-				size="small"
-				title={<Title level={5}>Where Clause</Title>}
-				extra={
-					<Tooltip title="Write a query to filter your data">
-						<QuestionCircleOutlined />
-					</Tooltip>
-				}
-			>
+			<Card size="small">
 				<CodeMirror
 					value={query}
 					theme={copilot}
@@ -466,41 +421,57 @@ function CodeMirrorWhereClause(): JSX.Element {
 						}),
 						collapseSpacesOutsideStrings(),
 						javascript({ jsx: false, typescript: false }),
-						customTheme,
+						// customTheme,
 					]}
 					basicSetup={{
 						lineNumbers: false,
 					}}
 				/>
 
-				<Space className="cursor-position" size={4}>
-					<InfoCircleOutlined />
-					<Text style={{ color: 'black' }}>
-						Line: {cursorPos.line}, Position: {cursorPos.ch}
-					</Text>
-				</Space>
+				{query && (
+					<>
+						<Divider style={{ margin: '8px 0' }} />
+						<Space direction="vertical" size={4}>
+							<Text>Query:</Text>
+							<Text code>{query}</Text>
+						</Space>
+					</>
+				)}
 
-				<Divider style={{ margin: '8px 0' }} />
+				{query && (
+					<>
+						<Divider style={{ margin: '8px 0' }} />
 
-				<div className="query-validation">
-					<Text>Status:</Text>
-					<div className={validation.isValid ? 'valid' : 'invalid'}>
-						{validation.isValid ? (
-							<>
-								<CheckCircleFilled /> Valid
-							</>
-						) : (
-							<>
-								<CloseCircleFilled /> Invalid
-							</>
-						)}
-					</div>
-					{validation.message && (
-						<Tooltip title={validation.message}>
-							<InfoCircleOutlined style={{ marginLeft: 8 }} />
-						</Tooltip>
-					)}
-				</div>
+						<div className="query-validation">
+							<div className="query-validation-status">
+								<Text>Status:</Text>
+								<div className={validation.isValid ? 'valid' : 'invalid'}>
+									{validation.isValid ? (
+										<Space>
+											<CheckCircleFilled /> Valid
+										</Space>
+									) : (
+										<Space>
+											<CloseCircleFilled /> Invalid
+										</Space>
+									)}
+								</div>
+							</div>
+
+							<div className="query-validation-errors">
+								{validation.errors.map((error) => (
+									<div key={error.message} className="query-validation-error">
+										<div className="query-validation-error-line">
+											{error.line}:{error.column}
+										</div>
+
+										<div className="query-validation-error-message">{error.message}</div>
+									</div>
+								))}
+							</div>
+						</div>
+					</>
+				)}
 			</Card>
 
 			{queryContext && (
@@ -508,107 +479,43 @@ function CodeMirrorWhereClause(): JSX.Element {
 					<div className="context-details">
 						<Space direction="vertical" size={4}>
 							<Space>
-								<Text strong style={{ color: 'black' }}>
-									Token:
-								</Text>
-								<Text code style={{ color: 'black' }}>
-									{queryContext.currentToken || '-'}
-								</Text>
+								<Text strong>Token:</Text>
+								<Text code>{queryContext.currentToken || '-'}</Text>
 							</Space>
 							<Space>
-								<Text strong style={{ color: 'black' }}>
-									Type:
-								</Text>
-								<Text style={{ color: 'black' }}>{queryContext.tokenType || '-'}</Text>
+								<Text strong>Type:</Text>
+								<Text>{queryContext.tokenType || '-'}</Text>
 							</Space>
 							<Space>
-								<Text strong style={{ color: 'black' }}>
-									Context:
-								</Text>
+								<Text strong>Context:</Text>
 								{renderContextBadge()}
 							</Space>
 
 							{/* Display the key-operator-value triplet when available */}
 							{queryContext.keyToken && (
 								<Space>
-									<Text strong style={{ color: 'black' }}>
-										Key:
-									</Text>
-									<Text code style={{ color: 'blue' }}>
-										{queryContext.keyToken}
-									</Text>
+									<Text strong>Key:</Text>
+									<Text code>{queryContext.keyToken}</Text>
 								</Space>
 							)}
 
 							{queryContext.operatorToken && (
 								<Space>
-									<Text strong style={{ color: 'black' }}>
-										Operator:
-									</Text>
-									<Text code style={{ color: 'purple' }}>
-										{queryContext.operatorToken}
-									</Text>
+									<Text strong>Operator:</Text>
+									<Text code>{queryContext.operatorToken}</Text>
 								</Space>
 							)}
 
 							{queryContext.valueToken && (
 								<Space>
-									<Text strong style={{ color: 'black' }}>
-										Value:
-									</Text>
-									<Text code style={{ color: 'green' }}>
-										{queryContext.valueToken}
-									</Text>
+									<Text strong>Value:</Text>
+									<Text code>{queryContext.valueToken}</Text>
 								</Space>
 							)}
 						</Space>
 					</div>
 				</Card>
 			)}
-
-			<Card
-				size="small"
-				title="Query Examples"
-				className="query-examples"
-				style={{
-					backgroundColor: 'var(--bg-vanilla-100)',
-					color: 'black',
-				}}
-			>
-				<div className="query-examples-list">Query Examples</div>
-				<ul>
-					<li>
-						<Text code style={{ color: 'black' }}>
-							status = &apos;error&apos;
-						</Text>
-					</li>
-					<li>
-						<Text code style={{ color: 'black' }}>
-							service = &apos;frontend&apos; AND level = &apos;error&apos;
-						</Text>
-					</li>
-					<li>
-						<Text code style={{ color: 'black' }}>
-							message LIKE &apos;%timeout%&apos;
-						</Text>
-					</li>
-					<li>
-						<Text code style={{ color: 'black' }}>
-							duration {'>'} 1000
-						</Text>
-					</li>
-					<li>
-						<Text code style={{ color: 'black' }}>
-							tags IN [&apos;prod&apos;, &apos;frontend&apos;]
-						</Text>
-					</li>
-					<li>
-						<Text code style={{ color: 'black' }}>
-							NOT (status = &apos;error&apos; OR level = &apos;error&apos;)
-						</Text>
-					</li>
-				</ul>
-			</Card>
 		</div>
 	);
 }

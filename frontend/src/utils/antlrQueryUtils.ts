@@ -92,14 +92,22 @@ class QueryErrorListener {
 
 	getFormattedErrors(): string[] {
 		return this.errors.map((error) => {
-			let message = `Line ${error.line}:${error.column} - ${error.message}`;
+			const {
+				offendingSymbol,
+				expectedTokens,
+				message: errorMessage,
+				line,
+				column,
+			} = error;
 
-			if (error.offendingSymbol && error.offendingSymbol !== 'undefined') {
-				message += `\nOffending symbol: '${error.offendingSymbol}'`;
+			let message = `Line ${line}:${column} - ${errorMessage}`;
+
+			if (offendingSymbol && offendingSymbol !== 'undefined') {
+				message += `\n Symbol: '${offendingSymbol}'`;
 			}
 
-			if (error.expectedTokens && error.expectedTokens.length > 0) {
-				message += `\nExpected: ${error.expectedTokens.join(', ')}`;
+			if (expectedTokens && expectedTokens.length > 0) {
+				message += `\n Expected: ${expectedTokens.join(', ')}`;
 			}
 
 			return message;
@@ -113,7 +121,15 @@ export const validateQuery = (query: string): IValidationResult => {
 		return {
 			isValid: false,
 			message: 'Query cannot be empty',
-			errors: ['Query cannot be empty'],
+			errors: [
+				{
+					message: 'Query cannot be empty',
+					line: 0,
+					column: 0,
+					offendingSymbol: '',
+					expectedTokens: [],
+				},
+			],
 		};
 	}
 
@@ -133,16 +149,14 @@ export const validateQuery = (query: string): IValidationResult => {
 		parser.addErrorListener(errorListener);
 
 		// Try parsing
-		const parsedTree = parser.query();
-
-		console.log('parsedTree', parsedTree);
+		parser.query();
 
 		// Check if any errors were captured
 		if (errorListener.hasErrors()) {
 			return {
 				isValid: false,
 				message: 'Query syntax error',
-				errors: errorListener.getFormattedErrors(),
+				errors: errorListener.getErrors(),
 			};
 		}
 
@@ -154,10 +168,18 @@ export const validateQuery = (query: string): IValidationResult => {
 	} catch (error) {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Invalid query syntax';
+
+		const detailedError: IDetailedError = {
+			message: errorMessage,
+			line: 0,
+			column: 0,
+			offendingSymbol: '',
+			expectedTokens: [],
+		};
 		return {
 			isValid: false,
 			message: 'Invalid query syntax',
-			errors: [errorMessage],
+			errors: [detailedError],
 		};
 	}
 };
