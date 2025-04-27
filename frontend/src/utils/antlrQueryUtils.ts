@@ -162,6 +162,103 @@ export const validateQuery = (query: string): IValidationResult => {
 	}
 };
 
+// Helper function to find key-operator-value triplets in token stream
+function findKeyOperatorValueTriplet(
+	allTokens: IToken[],
+	currentToken: IToken,
+	isInKey: boolean,
+	isInOperator: boolean,
+	isInValue: boolean,
+): { keyToken?: string; operatorToken?: string; valueToken?: string } {
+	// Find current token index in allTokens
+	let currentTokenIndex = -1;
+	for (let i = 0; i < allTokens.length; i++) {
+		if (
+			allTokens[i].start === currentToken.start &&
+			allTokens[i].stop === currentToken.stop &&
+			allTokens[i].type === currentToken.type
+		) {
+			currentTokenIndex = i;
+			break;
+		}
+	}
+
+	if (currentTokenIndex === -1) return {};
+
+	// Initialize result with empty object
+	const result: {
+		keyToken?: string;
+		operatorToken?: string;
+		valueToken?: string;
+	} = {};
+
+	if (isInKey) {
+		// When in key context, we only know the key
+		result.keyToken = currentToken.text;
+	} else if (isInOperator) {
+		// When in operator context, we know the operator and can find the preceding key
+		result.operatorToken = currentToken.text;
+
+		// Look backward for key
+		for (let i = currentTokenIndex - 1; i >= 0; i--) {
+			const token = allTokens[i];
+			// Skip whitespace and other hidden channel tokens
+			if (token.channel !== 0) continue;
+
+			if (token.type === FilterQueryLexer.KEY) {
+				result.keyToken = token.text;
+				break;
+			}
+		}
+	} else if (isInValue) {
+		// When in value context, we know the value and can find the preceding operator and key
+		result.valueToken = currentToken.text;
+
+		let foundOperator = false;
+
+		// Look backward for operator and key
+		for (let i = currentTokenIndex - 1; i >= 0; i--) {
+			const token = allTokens[i];
+			// Skip whitespace and other hidden channel tokens
+			if (token.channel !== 0) continue;
+
+			// If we haven't found an operator yet, check for operator
+			if (
+				!foundOperator &&
+				[
+					FilterQueryLexer.EQUALS,
+					FilterQueryLexer.NOT_EQUALS,
+					FilterQueryLexer.NEQ,
+					FilterQueryLexer.LT,
+					FilterQueryLexer.LE,
+					FilterQueryLexer.GT,
+					FilterQueryLexer.GE,
+					FilterQueryLexer.LIKE,
+					FilterQueryLexer.NOT_LIKE,
+					FilterQueryLexer.ILIKE,
+					FilterQueryLexer.NOT_ILIKE,
+					FilterQueryLexer.BETWEEN,
+					FilterQueryLexer.EXISTS,
+					FilterQueryLexer.REGEXP,
+					FilterQueryLexer.CONTAINS,
+					FilterQueryLexer.IN,
+					FilterQueryLexer.NOT,
+				].includes(token.type)
+			) {
+				result.operatorToken = token.text;
+				foundOperator = true;
+			}
+			// If we already found an operator and this is a key, record it
+			else if (foundOperator && token.type === FilterQueryLexer.KEY) {
+				result.keyToken = token.text;
+				break; // We found our triplet
+			}
+		}
+	}
+
+	return result;
+}
+
 export function getQueryContextAtCursor(
 	query: string,
 	cursorIndex: number,
@@ -232,11 +329,6 @@ export function getQueryContextAtCursor(
 				}
 			}
 		}
-
-		console.log('exactToken', exactToken);
-		console.log('previousToken', previousToken);
-		console.log('nextToken', nextToken);
-		console.log('query', query);
 
 		// Determine the context based on cursor position and surrounding tokens
 		let currentToken: IToken | null = null;
@@ -337,7 +429,14 @@ export function getQueryContextAtCursor(
 			FilterQueryLexer.HASNONE,
 		].includes(currentToken.type);
 
-		console.log('currentToken', currentToken);
+		// Get the context-related tokens (key, operator, value)
+		const relationTokens = findKeyOperatorValueTriplet(
+			allTokens,
+			currentToken,
+			isInKey,
+			isInOperator,
+			isInValue,
+		);
 
 		// Handle transitions based on spaces
 		// When a user adds a space after a token, change the context accordingly
@@ -362,6 +461,7 @@ export function getQueryContextAtCursor(
 					isInFunction: false,
 					isInConjunction: false,
 					isInParenthesis: false,
+					...relationTokens, // Include related tokens
 				};
 			}
 
@@ -379,6 +479,7 @@ export function getQueryContextAtCursor(
 					isInFunction: false,
 					isInConjunction: false,
 					isInParenthesis: false,
+					...relationTokens, // Include related tokens
 				};
 			}
 
@@ -396,6 +497,7 @@ export function getQueryContextAtCursor(
 					isInFunction: false,
 					isInConjunction: true,
 					isInParenthesis: false,
+					...relationTokens, // Include related tokens
 				};
 			}
 
@@ -413,6 +515,7 @@ export function getQueryContextAtCursor(
 					isInFunction: false,
 					isInConjunction: false,
 					isInParenthesis: false,
+					...relationTokens, // Include related tokens
 				};
 			}
 		}
@@ -437,6 +540,7 @@ export function getQueryContextAtCursor(
 					isInFunction: false,
 					isInConjunction: false,
 					isInParenthesis: false,
+					...relationTokens, // Include related tokens
 				};
 			}
 
@@ -460,6 +564,7 @@ export function getQueryContextAtCursor(
 					isInFunction: false,
 					isInConjunction: false,
 					isInParenthesis: false,
+					...relationTokens, // Include related tokens
 				};
 			}
 
@@ -483,6 +588,7 @@ export function getQueryContextAtCursor(
 					isInFunction: false,
 					isInConjunction: false,
 					isInParenthesis: false,
+					...relationTokens, // Include related tokens
 				};
 			}
 
@@ -525,6 +631,7 @@ export function getQueryContextAtCursor(
 					isInFunction: false,
 					isInConjunction: false,
 					isInParenthesis: false,
+					...relationTokens, // Include related tokens
 				};
 			}
 
@@ -550,6 +657,7 @@ export function getQueryContextAtCursor(
 					isInFunction: false,
 					isInConjunction: false,
 					isInParenthesis: false,
+					...relationTokens, // Include related tokens
 				};
 			}
 
@@ -572,6 +680,7 @@ export function getQueryContextAtCursor(
 					isInFunction: false,
 					isInConjunction: false,
 					isInParenthesis: false,
+					...relationTokens, // Include related tokens
 				};
 			}
 
@@ -588,6 +697,7 @@ export function getQueryContextAtCursor(
 					isInFunction: false,
 					isInConjunction: true,
 					isInParenthesis: false,
+					...relationTokens, // Include related tokens
 				};
 			}
 		}
@@ -605,6 +715,7 @@ export function getQueryContextAtCursor(
 			isInFunction,
 			isInConjunction,
 			// isInParenthesis,
+			...relationTokens, // Include related tokens
 		};
 	} catch (error) {
 		console.error('Error in getQueryContextAtCursor:', error);
