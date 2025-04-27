@@ -3,7 +3,6 @@ package httpzeus
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -50,10 +49,12 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, _ zeus.
 }
 
 func (provider *Provider) GetLicense(ctx context.Context, key string) ([]byte, error) {
-	response, err := provider.get(
+	response, err := provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/licenses/me"),
+		http.MethodGet,
 		key,
+		nil,
 	)
 	if err != nil {
 		return nil, err
@@ -62,11 +63,13 @@ func (provider *Provider) GetLicense(ctx context.Context, key string) ([]byte, e
 	return []byte(gjson.GetBytes(response, "data").String()), nil
 }
 
-func (provider *Provider) GetCheckoutURL(ctx context.Context, key string) ([]byte, error) {
-	response, err := provider.get(
+func (provider *Provider) GetCheckoutURL(ctx context.Context, key string, body []byte) ([]byte, error) {
+	response, err := provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/subscriptions/me/sessions/checkout"),
+		http.MethodPost,
 		key,
+		body,
 	)
 	if err != nil {
 		return nil, err
@@ -75,11 +78,13 @@ func (provider *Provider) GetCheckoutURL(ctx context.Context, key string) ([]byt
 	return []byte(gjson.GetBytes(response, "data").String()), nil
 }
 
-func (provider *Provider) GetPortalURL(ctx context.Context, key string) ([]byte, error) {
-	response, err := provider.get(
+func (provider *Provider) GetPortalURL(ctx context.Context, key string, body []byte) ([]byte, error) {
+	response, err := provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/subscriptions/me/sessions/portal"),
+		http.MethodPost,
 		key,
+		body,
 	)
 	if err != nil {
 		return nil, err
@@ -89,10 +94,12 @@ func (provider *Provider) GetPortalURL(ctx context.Context, key string) ([]byte,
 }
 
 func (provider *Provider) GetDeployment(ctx context.Context, key string) ([]byte, error) {
-	response, err := provider.get(
+	response, err := provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/deployments/me"),
+		http.MethodGet,
 		key,
+		nil,
 	)
 	if err != nil {
 		return nil, err
@@ -101,38 +108,44 @@ func (provider *Provider) GetDeployment(ctx context.Context, key string) ([]byte
 	return []byte(gjson.GetBytes(response, "data").String()), nil
 }
 
-func (provider *Provider) PutMeters(ctx context.Context, key string, data any) error {
-	return provider.postOrPut(
+func (provider *Provider) PutMeters(ctx context.Context, key string, data []byte) error {
+	_, err := provider.do(
 		ctx,
 		provider.config.DeprecatedURL.JoinPath("/api/v1/usage"),
 		http.MethodPost,
 		key,
 		data,
 	)
+
+	return err
 }
 
-func (provider *Provider) PutProfile(ctx context.Context, key string, data any) error {
-	return provider.postOrPut(
+func (provider *Provider) PutProfile(ctx context.Context, key string, body []byte) error {
+	_, err := provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/profiles/me"),
 		http.MethodPut,
 		key,
-		data,
+		body,
 	)
+
+	return err
 }
 
-func (provider *Provider) PutHost(ctx context.Context, key string, data any) error {
-	return provider.postOrPut(
+func (provider *Provider) PutHost(ctx context.Context, key string, body []byte) error {
+	_, err := provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/deployments/me/hosts"),
 		http.MethodPut,
 		key,
-		data,
+		body,
 	)
+
+	return err
 }
 
-func (provider *Provider) get(ctx context.Context, url *url.URL, key string) ([]byte, error) {
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
+func (provider *Provider) do(ctx context.Context, url *url.URL, method string, key string, requestBody []byte) ([]byte, error) {
+	request, err := http.NewRequestWithContext(ctx, method, url.String(), bytes.NewBuffer(requestBody))
 	if err != nil {
 		return nil, err
 	}
@@ -158,35 +171,6 @@ func (provider *Provider) get(ctx context.Context, url *url.URL, key string) ([]
 	}
 
 	return nil, provider.errFromStatusCode(response.StatusCode)
-}
-
-func (provider *Provider) postOrPut(ctx context.Context, url *url.URL, method string, key string, requestBody any) error {
-	body, err := json.Marshal(requestBody)
-	if err != nil {
-		return err
-	}
-
-	request, err := http.NewRequestWithContext(ctx, method, url.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	request.Header.Set("X-Signoz-Cloud-Api-Key", key)
-	request.Header.Set("Content-Type", "application/json")
-
-	response, err := provider.httpClient.Do(request)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		_ = response.Body.Close()
-	}()
-
-	if response.StatusCode/100 == 2 {
-		return nil
-	}
-
-	return provider.errFromStatusCode(response.StatusCode)
 }
 
 // This can be taken down to the client package

@@ -16,20 +16,20 @@ type Zeus interface {
 	GetLicense(context.Context, string) ([]byte, error)
 
 	// Returns the checkout URL for the given license key.
-	GetCheckoutURL(context.Context, string) ([]byte, error)
+	GetCheckoutURL(context.Context, string, []byte) ([]byte, error)
 
 	// Returns the portal URL for the given license key.
-	GetPortalURL(context.Context, string) ([]byte, error)
+	GetPortalURL(context.Context, string, []byte) ([]byte, error)
 
 	// Returns the deployment for the given license key.
 	GetDeployment(context.Context, string) ([]byte, error)
 
 	// Puts the meters for the given license key.
-	PutMeters(context.Context, string, any) error
+	PutMeters(context.Context, string, []byte) error
 
 	// Put profile for the given license key.
-	PutProfile(context.Context, string, any) error
+	PutProfile(context.Context, string, []byte) error
 
 	// Put host for the given license key.
-	PutHost(context.Context, string, any) error
+	PutHost(context.Context, string, []byte) error
 }

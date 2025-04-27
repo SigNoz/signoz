@@ -24,11 +24,11 @@ func (provider *provider) GetLicense(_ context.Context, _ string) ([]byte, error
 	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "fetching license is not supported")
 }
 
-func (provider *provider) GetCheckoutURL(_ context.Context, _ string) ([]byte, error) {
+func (provider *provider) GetCheckoutURL(_ context.Context, _ string, _ []byte) ([]byte, error) {
 	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "getting the checkout url is not supported")
 }
 
-func (provider *provider) GetPortalURL(_ context.Context, _ string) ([]byte, error) {
+func (provider *provider) GetPortalURL(_ context.Context, _ string, _ []byte) ([]byte, error) {
 	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "getting the portal url is not supported")
 }
 
@@ -36,14 +36,14 @@ func (provider *provider) GetDeployment(_ context.Context, _ string) ([]byte, er
 	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "getting the deployment is not supported")
 }
 
-func (provider *provider) PutMeters(_ context.Context, _ string, _ any) error {
+func (provider *provider) PutMeters(_ context.Context, _ string, _ []byte) error {
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meters is not supported")
 }
 
-func (provider *provider) PutProfile(_ context.Context, _ string, _ any) error {
+func (provider *provider) PutProfile(_ context.Context, _ string, _ []byte) error {
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting profile is not supported")
 }
 
-func (provider *provider) PutHost(_ context.Context, _ string, _ any) error {
+func (provider *provider) PutHost(_ context.Context, _ string, _ []byte) error {
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting host is not supported")
 }
