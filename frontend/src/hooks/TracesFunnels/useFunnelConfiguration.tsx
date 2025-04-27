@@ -86,14 +86,14 @@ export default function useFunnelConfiguration({
 	);
 
 	// Mutation payload preparation
-	const getUpdatePayload = useCallback(
-		() => ({
+	const getUpdatePayload = useCallback(() => {
+		console.log('Funnel ID:', funnel.id);
+		return {
 			funnel_id: funnel.id,
 			steps: debouncedSteps,
 			updated_timestamp: Date.now(),
-		}),
-		[funnel.id, debouncedSteps],
-	);
+		};
+	}, [funnel.id, debouncedSteps]);
 
 	const queryClient = useQueryClient();
 	const { selectedTime } = useFunnelContext();
