@@ -3,11 +3,17 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { useQuery, UseQueryResult } from 'react-query';
 import { QueryKeyValueSuggestionsResponseProps } from 'types/api/querySuggestions/types';
 
-export const useGetQueryKeyValueSuggestions = (): UseQueryResult<
+export const useGetQueryKeyValueSuggestions = ({
+	key,
+	signal,
+}: {
+	key: string;
+	signal: string;
+}): UseQueryResult<
 	AxiosResponse<QueryKeyValueSuggestionsResponseProps>,
 	AxiosError
 > =>
 	useQuery<AxiosResponse<QueryKeyValueSuggestionsResponseProps>, AxiosError>({
-		queryKey: ['queryKeyValueSuggestions'],
-		queryFn: () => getValueSuggestions({ signal: 'trace', key: 'trace' }),
+		queryKey: ['queryKeyValueSuggestions', key, signal],
+		queryFn: () => getValueSuggestions({ signal, key }),
 	});
