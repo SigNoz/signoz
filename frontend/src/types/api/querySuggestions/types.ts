@@ -1,6 +1,9 @@
 export interface QueryKeySuggestionsProps {
-	id: string;
-	name: string;
+	label: string;
+	type: string;
+	info?: string;
+	apply?: string;
+	detail?: string;
 }
 
 export interface QueryKeySuggestionsResponseProps {
