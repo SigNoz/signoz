@@ -14,6 +14,8 @@ import {
 	CompletionContext,
 	CompletionResult,
 } from '@codemirror/autocomplete';
+import { javascript } from '@codemirror/lang-javascript';
+import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, { EditorView, Extension } from '@uiw/react-codemirror';
 import { Badge, Card, Divider, Space, Tooltip, Typography } from 'antd';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
@@ -311,7 +313,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 			>
 				<CodeMirror
 					value={query}
-					theme="dark"
+					theme={copilot}
 					onChange={handleChange}
 					onUpdate={handleUpdate}
 					autoFocus
@@ -319,6 +321,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 					extensions={[
 						autocompletion({ override: [myCompletions] }),
 						collapseSpacesOutsideStrings(),
+						javascript({ jsx: false, typescript: false }),
 					]}
 				/>
 
