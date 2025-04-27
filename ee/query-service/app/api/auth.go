@@ -134,7 +134,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, registerError := baseauth.Register(ctx, req, ah.Signoz.Alertmanager, ah.OrganizationModule)
+		_, registerError := baseauth.Register(ctx, req, ah.Signoz.Alertmanager, ah.Signoz.Modules.Organization)
 		if !registerError.IsNil() {
 			RespondError(w, apierr, nil)
 			return
@@ -152,7 +152,7 @@ func (ah *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 	token := mux.Vars(r)["token"]
 	sourceUrl := r.URL.Query().Get("ref")
 
-	inviteObject, err := baseauth.GetInvite(r.Context(), token, ah.OrganizationModule)
+	inviteObject, err := baseauth.GetInvite(r.Context(), token, ah.Signoz.Modules.Organization)
 	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
