@@ -60,12 +60,11 @@ export const getFunnelById = async (
 	const response: AxiosResponse = await axios.get(
 		`${FUNNELS_BASE_PATH}/${funnelId}`,
 	);
-
 	return {
 		statusCode: 200,
 		error: null,
 		message: '',
-		payload: response.data,
+		payload: response.data.funnel,
 	};
 };
 
