@@ -24,6 +24,9 @@ export interface IQueryContext {
 	isInFunction: boolean;
 	isInConjunction?: boolean;
 	isInParenthesis?: boolean;
+	keyToken?: string;
+	operatorToken?: string;
+	valueToken?: string;
 }
 
 export interface IDetailedError {
