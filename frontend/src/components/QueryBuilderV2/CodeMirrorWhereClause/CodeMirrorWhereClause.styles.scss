@@ -23,6 +23,10 @@
 			border-radius: 2px;
 			border: 1px solid var(--Slate-400, #1d212d);
 			background: var(--Ink-300, #16181d);
+
+			&:focus-within {
+				border-color: var(--bg-ink-200);
+			}
 		}
 
 		.cm-tooltip-autocomplete {
