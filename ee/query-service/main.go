@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
+	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
@@ -102,6 +103,7 @@ func main() {
 		signoz.NewWebProviderFactories(),
 		sqlStoreFactories,
 		signoz.NewTelemetryStoreProviderFactories(),
+		httpzeus.NewProviderFactory(),
 	)
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz", zap.Error(err))

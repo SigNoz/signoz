@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/version"
+	"github.com/SigNoz/signoz/pkg/zeus"
 
 	"github.com/SigNoz/signoz/pkg/web"
 )
@@ -26,6 +27,7 @@ type SigNoz struct {
 	TelemetryStore  telemetrystore.TelemetryStore
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
+	Zeus            zeus.Zeus
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -37,6 +39,7 @@ func New(
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
+	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -49,6 +52,17 @@ func New(
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
+
+	// Initialize zeus from the available zeus provider factory. This is not config controlled
+	// and depends on the variant of the build.
+	zeus, err := zeusProviderFactory.New(
+		ctx,
+		providerSettings,
+		zeus.Config{},
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize cache from the available cache provider factories
 	cache, err := factory.NewProviderFromNamedMap(
@@ -162,6 +176,7 @@ func New(
 		TelemetryStore:  telemetrystore,
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
+		Zeus:            zeus,
 		Modules:         modules,
 		Handlers:        handlers,
 	}, nil

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
+	eezues "github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/client"
@@ -27,7 +28,7 @@ func NewProviderFactory() factory.ProviderFactory[zeus.Zeus, zeus.Config] {
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config zeus.Config) (zeus.Zeus, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, _ zeus.Config) (zeus.Zeus, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/zeus/httpzeus")
 
 	httpClient, err := client.New(
@@ -43,7 +44,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	return &Provider{
 		settings:   settings,
-		config:     config,
+		config:     eezues.Config,
 		httpClient: httpClient,
 	}, nil
 }
