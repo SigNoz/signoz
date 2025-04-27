@@ -262,6 +262,22 @@ export function getQueryContextAtCursor(
 
 		// If still no token (empty query or all whitespace), return default context
 		if (!currentToken) {
+			// Handle transitions based on spaces and current state
+			if (query.trim() === '') {
+				return {
+					tokenType: -1,
+					text: '',
+					start: cursorIndex,
+					stop: cursorIndex,
+					currentToken: '',
+					isInValue: false,
+					isInKey: true, // Default to key context when input is empty
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+				};
+			}
 			return {
 				tokenType: -1,
 				text: '',
@@ -323,6 +339,68 @@ export function getQueryContextAtCursor(
 			FilterQueryLexer.HASALL,
 			FilterQueryLexer.HASNONE,
 		].includes(currentToken.type);
+
+		// Handle transitions based on spaces and current state
+		if (isInKey && query[currentToken.stop + 1] === ' ') {
+			return {
+				tokenType: currentToken.type,
+				text: currentToken.text,
+				start: currentToken.start,
+				stop: currentToken.stop,
+				currentToken: currentToken.text,
+				isInValue: false,
+				isInKey: false,
+				isInOperator: true,
+				isInFunction: false,
+				isInConjunction: false,
+				isInParenthesis: false,
+			};
+		}
+		if (isInOperator && query[currentToken.stop + 1] === ' ') {
+			return {
+				tokenType: currentToken.type,
+				text: currentToken.text,
+				start: currentToken.start,
+				stop: currentToken.stop,
+				currentToken: currentToken.text,
+				isInValue: true,
+				isInKey: false,
+				isInOperator: false,
+				isInFunction: false,
+				isInConjunction: false,
+				isInParenthesis: false,
+			};
+		}
+		if (isInValue && query[currentToken.stop + 1] === ' ') {
+			return {
+				tokenType: currentToken.type,
+				text: currentToken.text,
+				start: currentToken.start,
+				stop: currentToken.stop,
+				currentToken: currentToken.text,
+				isInValue: false,
+				isInKey: false,
+				isInOperator: false,
+				isInFunction: false,
+				isInConjunction: true,
+				isInParenthesis: false,
+			};
+		}
+		if (isInConjunction && query[currentToken.stop + 1] === ' ') {
+			return {
+				tokenType: currentToken.type,
+				text: currentToken.text,
+				start: currentToken.start,
+				stop: currentToken.stop,
+				currentToken: currentToken.text,
+				isInValue: false,
+				isInKey: true,
+				isInOperator: false,
+				isInFunction: false,
+				isInConjunction: false,
+				isInParenthesis: false,
+			};
+		}
 
 		return {
 			tokenType: currentToken.type,
