@@ -115,6 +115,58 @@ function CodeMirrorWhereClause(): JSX.Element {
 		signal: 'traces',
 	});
 
+	// Helper function to wrap string values in quotes if they aren't already quoted
+	const wrapStringValueInQuotes = (value: string): string => {
+		// If value is already quoted (with single quotes), return as is
+		if (/^'.*'$/.test(value)) {
+			return value;
+		}
+
+		// If value contains single quotes, escape them and wrap in single quotes
+		if (value.includes("'")) {
+			// Replace single quotes with escaped single quotes
+			const escapedValue = value.replace(/'/g, "\\'");
+			return `'${escapedValue}'`;
+		}
+
+		// Otherwise, simply wrap in single quotes
+		return `'${value}'`;
+	};
+
+	// Helper function to check if operator is for list operations (IN, NOT IN, etc.)
+	const isListOperator = (op: string | undefined): boolean => {
+		if (!op) return false;
+		return op.toUpperCase() === 'IN' || op.toUpperCase() === 'NOT IN';
+	};
+
+	// Helper function to format value based on operator type and value type
+	const formatValueForOperator = (
+		value: string,
+		operatorToken: string | undefined,
+		type: string,
+	): string => {
+		// If operator requires a list and value isn't already in list format
+		if (isListOperator(operatorToken) && !value.startsWith('[')) {
+			// For string values, wrap in quotes first, then in brackets
+			if (type === 'value' || type === 'keyword') {
+				const quotedValue = wrapStringValueInQuotes(value);
+				return `[${quotedValue}]`;
+			}
+			// For numbers, just wrap in brackets
+			return `[${value}]`;
+		}
+
+		// For regular string values with regular operators
+		if (
+			(type === 'value' || type === 'keyword') &&
+			!isListOperator(operatorToken)
+		) {
+			return wrapStringValueInQuotes(value);
+		}
+
+		return value;
+	};
+
 	// Use callback to prevent dependency changes on each render
 	const fetchValueSuggestions = useCallback(
 		async (key: string): Promise<void> => {
@@ -126,7 +178,14 @@ function CodeMirrorWhereClause(): JSX.Element {
 			setActiveKey(key);
 
 			// Replace current suggestions with loading indicator
-			setValueSuggestions([{ label: 'Loading suggestions...', type: 'text' }]);
+			setValueSuggestions([
+				{
+					label: 'Loading suggestions...',
+					type: 'text',
+					boost: -99, // Lower boost to appear at the bottom
+					apply: (): boolean => false, // Prevent selection
+				},
+			]);
 
 			try {
 				const response = await getValueSuggestions({
@@ -183,7 +242,12 @@ function CodeMirrorWhereClause(): JSX.Element {
 						setValueSuggestions(allOptions);
 					} else {
 						setValueSuggestions([
-							{ label: 'No suggestions available', type: 'text' },
+							{
+								label: 'No suggestions available',
+								type: 'text',
+								boost: -99, // Lower boost to appear at the bottom
+								apply: (): boolean => false, // Prevent selection
+							},
 						]);
 					}
 
@@ -199,7 +263,12 @@ function CodeMirrorWhereClause(): JSX.Element {
 				console.error('Error fetching suggestions:', error);
 				if (lastKeyRef.current === key) {
 					setValueSuggestions([
-						{ label: 'Error loading suggestions', type: 'text' },
+						{
+							label: 'Error loading suggestions',
+							type: 'text',
+							boost: -99, // Lower boost to appear at the bottom
+							apply: (): boolean => false, // Prevent selection
+						},
 					]);
 					setIsLoadingSuggestions(false);
 				}
@@ -324,7 +393,8 @@ function CodeMirrorWhereClause(): JSX.Element {
 
 		if (queryContext.isInValue) {
 			// Fetch values based on the key - use the keyToken if available
-			const key = queryContext.keyToken || queryContext.currentToken;
+			const { keyToken, currentToken, operatorToken } = queryContext;
+			const key = keyToken || currentToken;
 
 			// Trigger fetch only if key is different from activeKey or if we're still loading
 			if (key && (key !== activeKey || isLoadingSuggestions)) {
@@ -334,10 +404,46 @@ function CodeMirrorWhereClause(): JSX.Element {
 				}
 			}
 
+			// Process options to add appropriate formatting when selected
+			const processedOptions = valueSuggestions.map((option) => {
+				// Clone the option to avoid modifying the original
+				const processedOption = { ...option };
+
+				// Skip processing for non-selectable items
+				if (option.apply === false || typeof option.apply === 'function') {
+					return option;
+				}
+
+				// Format values based on their type and the operator
+				if (option.type === 'value' || option.type === 'keyword') {
+					// String values get quoted
+					processedOption.apply = formatValueForOperator(
+						option.label,
+						operatorToken,
+						option.type,
+					);
+				} else if (option.type === 'number') {
+					// Numbers don't get quoted but may need brackets for IN operators
+					if (isListOperator(operatorToken)) {
+						processedOption.apply = `[${option.label}]`;
+					} else {
+						processedOption.apply = option.label;
+					}
+				} else if (option.type === 'boolean') {
+					// Boolean values don't get quoted
+					processedOption.apply = option.label;
+				} else if (option.type === 'array') {
+					// Arrays are already formatted as arrays
+					processedOption.apply = option.label;
+				}
+
+				return processedOption;
+			});
+
 			// Return current value suggestions from state
 			return {
 				from: word?.from ?? 0,
-				options: valueSuggestions,
+				options: processedOptions,
 			};
 		}
 
@@ -391,13 +497,18 @@ function CodeMirrorWhereClause(): JSX.Element {
 	// Update state when query context changes to trigger suggestion refresh
 	useEffect(() => {
 		if (queryContext?.isInValue) {
-			const key = queryContext.keyToken || queryContext.currentToken;
+			const { keyToken, currentToken } = queryContext;
+			const key = keyToken || currentToken;
+
 			if (key && (key !== activeKey || isLoadingSuggestions)) {
 				// Don't trigger a new fetch if we're already loading for this key
 				if (!(isLoadingSuggestions && lastKeyRef.current === key)) {
 					fetchValueSuggestions(key);
 				}
 			}
+
+			// We're no longer automatically adding quotes here - they will be added
+			// only when a specific value is selected from the dropdown
 		}
 	}, [queryContext, activeKey, fetchValueSuggestions, isLoadingSuggestions]);
 
