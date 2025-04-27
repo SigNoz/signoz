@@ -243,7 +243,7 @@ func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (*model.Li
 	// insert the new license to the sqlite db
 	modelErr := lm.repo.InsertLicenseV3(ctx, license)
 	if modelErr != nil {
-		zap.L().Error("failed to activate license", zap.Error(err))
+		zap.L().Error("failed to activate license", zap.Error(modelErr))
 		return nil, modelErr
 	}
 
