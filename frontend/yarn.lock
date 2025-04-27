@@ -4876,6 +4876,22 @@
     "@codemirror/state" "^6.0.0"
     "@codemirror/view" "^6.0.0"
 
+"@uiw/codemirror-theme-copilot@4.23.11":
+  version "4.23.11"
+  resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-copilot/-/codemirror-theme-copilot-4.23.11.tgz#075a2a6449c62835af2cb7fdef4fe9558bf20f30"
+  integrity sha512-m6vvsWHbji0s25ly3L35BdjSMys4DL3dzb4wbVtYa7m79heA3h2YNiWFIkOjbyPtoOh4RUGB6tBT8z0J/5PmTA==
+  dependencies:
+    "@uiw/codemirror-themes" "4.23.11"
+
+"@uiw/codemirror-themes@4.23.11":
+  version "4.23.11"
+  resolved "https://registry.yarnpkg.com/@uiw/codemirror-themes/-/codemirror-themes-4.23.11.tgz#abd022b9d65c851d72ecbc93169bb5143b9c35b7"
+  integrity sha512-90joUOau/3E6KNdA5ePr/t8LVBA/426wIsOuwaZohsDM5a5gsYfdMWGYfClnLMkpfHJUDYYMO+b2JPhJf9mzHw==
+  dependencies:
+    "@codemirror/language" "^6.0.0"
+    "@codemirror/state" "^6.0.0"
+    "@codemirror/view" "^6.0.0"
+
 "@uiw/copy-to-clipboard@~1.0.12":
   version "1.0.15"
   resolved "https://registry.yarnpkg.com/@uiw/copy-to-clipboard/-/copy-to-clipboard-1.0.15.tgz#959cebbae64df353964647bb5b9d705176b2e613"
