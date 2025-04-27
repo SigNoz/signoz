@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"math"
 	"net/http"
@@ -31,7 +32,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
@@ -150,12 +150,10 @@ type APIHandler struct {
 
 	Signoz *signoz.SigNoz
 
-	Preference preference.API
-
+	Preference         preference.API
 	OrganizationAPI    organization.API
 	OrganizationModule organization.Module
-	Preference   preference.API
-	TraceFunnels *traceFunnels.SQLClient
+	TraceFunnels       *traceFunnels.SQLClient
 }
 
 type APIHandlerOpts struct {
@@ -5627,7 +5625,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterTraceFunnelsRoutes adds trace funnels routes
-func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// Main messaging queues router
 	traceFunnelsRouter := router.PathPrefix("/api/v1/trace-funnels").Subrouter()
@@ -5660,8 +5658,8 @@ func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
 		http.Error(w, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -5720,8 +5718,8 @@ func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
 		http.Error(w, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -5783,15 +5781,14 @@ func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Requ
 }
 
 func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
 		http.Error(w, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 	orgID := claims.OrgID
 
 	var dbFunnels []*traceFunnels.Funnel
-	var err error
 
 	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
 
@@ -5929,8 +5926,8 @@ func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
 		http.Error(w, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
