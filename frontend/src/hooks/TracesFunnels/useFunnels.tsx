@@ -106,9 +106,12 @@ export const useUpdateFunnelSteps = (
 	UpdateFunnelStepsPayload
 > =>
 	useMutation({
-		mutationFn: updateFunnelSteps,
+		mutationFn: (payload) =>
+			updateFunnelSteps({
+				...payload,
+				funnel_id: funnelId,
+			}),
 		mutationKey: [REACT_QUERY_KEY.UPDATE_FUNNEL_STEPS, funnelId],
-
 		onError: (error) => {
 			notification.error({
 				message: 'Failed to update funnel steps',
