@@ -14,16 +14,72 @@ import {
 	CompletionContext,
 	CompletionResult,
 } from '@codemirror/autocomplete';
-import CodeMirror, { EditorView } from '@uiw/react-codemirror';
+import CodeMirror, { EditorView, Extension } from '@uiw/react-codemirror';
 import { Badge, Card, Divider, Space, Tooltip, Typography } from 'antd';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 // import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { IQueryContext, IValidationResult } from 'types/antlrQueryTypes';
 import { QueryKeySuggestionsProps } from 'types/api/querySuggestions/types';
-import { getQueryContextAtCursor, validateQuery } from 'utils/antlrQueryUtils';
+import {
+	getQueryContextAtCursor,
+	queryOperatorSuggestions,
+	validateQuery,
+} from 'utils/antlrQueryUtils';
 
 const { Text, Title } = Typography;
+
+function collapseSpacesOutsideStrings(): Extension {
+	return EditorView.inputHandler.of((view, from, to, text) => {
+		// Get the current line text
+		const { state } = view;
+		const line = state.doc.lineAt(from);
+
+		// Find the position within the line
+		const before = line.text.slice(0, from - line.from);
+		const after = line.text.slice(to - line.from);
+
+		const fullText = before + text + after;
+
+		let insideString = false;
+		let escaped = false;
+		let processed = '';
+
+		for (let i = 0; i < fullText.length; i++) {
+			const char = fullText[i];
+
+			if (char === '"' && !escaped) {
+				insideString = !insideString;
+			}
+			if (char === '\\' && !escaped) {
+				escaped = true;
+			} else {
+				escaped = false;
+			}
+
+			if (!insideString && char === ' ' && processed.endsWith(' ')) {
+				// Collapse multiple spaces outside strings
+				// Skip this space
+			} else {
+				processed += char;
+			}
+		}
+
+		// Only dispatch if the processed text differs
+		if (processed !== fullText) {
+			view.dispatch({
+				changes: {
+					from: line.from,
+					to: line.to,
+					insert: processed,
+				},
+			});
+			return true;
+		}
+
+		return false;
+	});
+}
 
 function CodeMirrorWhereClause(): JSX.Element {
 	const [query, setQuery] = useState<string>('');
@@ -164,10 +220,12 @@ function CodeMirrorWhereClause(): JSX.Element {
 		} else if (queryContext.isInConjunction) {
 			color = 'magenta';
 			text = 'Conjunction';
-		} else if (queryContext.isInParenthesis) {
-			color = 'grey';
-			text = 'Parenthesis';
 		}
+
+		// else if (queryContext.isInParenthesis) {
+		// 	color = 'grey';
+		// 	text = 'Parenthesis';
+		// }
 
 		return (
 			<Badge
@@ -199,23 +257,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 		if (queryContext.isInKey) {
 			options = keySuggestions || [];
 		} else if (queryContext.isInOperator) {
-			options = [
-				{ label: '=', type: 'operator', info: 'Equal to' },
-				{ label: '!=', type: 'operator', info: 'Not equal to' },
-				{ label: '>', type: 'operator', info: 'Greater than' },
-				{ label: '<', type: 'operator', info: 'Less than' },
-				{ label: '>=', type: 'operator', info: 'Greater than or equal to' },
-				{ label: '<=', type: 'operator', info: 'Less than or equal to' },
-				{ label: 'LIKE', type: 'operator', info: 'Like' },
-				{ label: 'ILIKE', type: 'operator', info: 'Case insensitive like' },
-				{ label: 'BETWEEN', type: 'operator', info: 'Between' },
-				{ label: 'EXISTS', type: 'operator', info: 'Exists' },
-				{ label: 'REGEXP', type: 'operator', info: 'Regular expression' },
-				{ label: 'CONTAINS', type: 'operator', info: 'Contains' },
-				{ label: 'IN', type: 'operator', info: 'In' },
-				{ label: 'NOT', type: 'operator', info: 'Not' },
-				// Add more operator options here
-			];
+			options = queryOperatorSuggestions;
 		} else if (queryContext.isInValue) {
 			// refetchQueryKeyValuesSuggestions();
 
@@ -248,11 +290,6 @@ function CodeMirrorWhereClause(): JSX.Element {
 				{ label: 'AND', type: 'conjunction' },
 				{ label: 'OR', type: 'conjunction' },
 			];
-		} else if (queryContext.isInParenthesis) {
-			options = [
-				{ label: '(', type: 'parenthesis' },
-				{ label: ')', type: 'parenthesis' },
-			];
 		}
 
 		return {
@@ -279,7 +316,10 @@ function CodeMirrorWhereClause(): JSX.Element {
 					onUpdate={handleUpdate}
 					autoFocus
 					placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
-					extensions={[autocompletion({ override: [myCompletions] })]}
+					extensions={[
+						autocompletion({ override: [myCompletions] }),
+						collapseSpacesOutsideStrings(),
+					]}
 				/>
 
 				<Space className="cursor-position" size={4}>
