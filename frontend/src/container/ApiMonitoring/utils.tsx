@@ -1513,7 +1513,7 @@ export const createFiltersForSelectedRowData = (
 };
 
 // First query payload for endpoint metrics
-// Second query payload for endpoint status code
+// Second query payload for endpoint status code table
 // Third query payload for endpoint dropdown selection
 // Fourth query payload for endpoint dependant services
 // Fifth query payload for endpoint response status count bar chart
@@ -1977,6 +1977,70 @@ export const getEndPointDetailsQueryPayload = (
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'p99',
+					},
+					{
+						dataSource: DataSource.TRACES,
+						queryName: 'C',
+						aggregateOperator: 'rate',
+						aggregateAttribute: {
+							dataType: DataTypes.String,
+							id: '------false',
+							isColumn: false,
+							key: '',
+							type: '',
+						},
+						timeAggregation: 'rate',
+						spaceAggregation: 'sum',
+						functions: [],
+						filters: {
+							items: [
+								{
+									id: '334840be',
+									key: {
+										dataType: DataTypes.String,
+										id: 'net.peer.name--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'net.peer.name',
+										type: 'tag',
+									},
+									op: '=',
+									value: 'api.github.com',
+								},
+								{
+									id: '212678b9',
+									key: {
+										key: 'kind_string',
+										dataType: DataTypes.String,
+										type: '',
+										isColumn: true,
+										isJSON: false,
+									},
+									op: '=',
+									value: 'Client',
+								},
+								...filters.items,
+							],
+							op: 'AND',
+						},
+						expression: 'C',
+						disabled: false,
+						stepInterval: 60,
+						having: [],
+						limit: null,
+						orderBy: [],
+						groupBy: [
+							{
+								dataType: DataTypes.String,
+								isColumn: true,
+								isJSON: false,
+								key: 'response_status_code',
+								type: '',
+								id: 'response_status_code--string----true',
+							},
+						],
+						legend: 'rate',
+						reduceTo: 'avg',
 					},
 				],
 				queryFormulas: [],
@@ -2716,6 +2780,7 @@ interface EndPointStatusCodeResponseRow {
 		response_status_code: string;
 		A: number | string;
 		B: number | string;
+		C: number | string;
 	};
 }
 
@@ -2731,6 +2796,7 @@ interface EndPointStatusCodeData {
 	key: string;
 	statusCode: string;
 	count: number | string;
+	rate: number | string;
 	p99Latency: number | string;
 }
 
@@ -2762,6 +2828,7 @@ export const getFormattedEndPointStatusCodeData = (
 				? '-'
 				: row.data.response_status_code,
 		count: row.data.A === 'n/a' || row.data.A === undefined ? '-' : row.data.A,
+		rate: row.data.C === 'n/a' || row.data.C === undefined ? '-' : row.data.C,
 		p99Latency:
 			row.data.B === 'n/a' || row.data.B === undefined
 				? '-'
@@ -2797,6 +2864,20 @@ export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
 			const countA = a.count === '-' || a.count === 'n/a' ? 0 : Number(a.count);
 			const countB = b.count === '-' || b.count === 'n/a' ? 0 : Number(b.count);
 			return countA - countB;
+		},
+	},
+	{
+		title: 'RATE',
+		dataIndex: 'rate',
+		key: 'rate',
+		align: 'right',
+		render: (rate: number | string): ReactNode => (
+			<span>{rate !== '-' && rate !== 'n/a' ? `${rate}ops/sec` : '-'}</span>
+		),
+		sorter: (a: EndPointStatusCodeData, b: EndPointStatusCodeData): number => {
+			const rateA = a.rate === '-' || a.rate === 'n/a' ? 0 : Number(a.rate);
+			const rateB = b.rate === '-' || b.rate === 'n/a' ? 0 : Number(b.rate);
+			return rateA - rateB;
 		},
 	},
 	{
@@ -3004,6 +3085,7 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		render: (rate: number): ReactNode => (
 			<div className="top-services-item-rate">{rate || '-'} ops/sec</div>
 		),
+		// eslint-disable-next-line sonarjs/no-identical-functions
 		sorter: (a: DependentServicesData, b: DependentServicesData): number => {
 			const rateA = a.rate === '-' || a.rate === 'n/a' ? 0 : Number(a.rate);
 			const rateB = b.rate === '-' || b.rate === 'n/a' ? 0 : Number(b.rate);
