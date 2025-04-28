@@ -228,6 +228,40 @@
 	}
 }
 
+.inspect-graph-popover {
+	position: fixed;
+	z-index: 1000;
+
+	.inspect-graph-popover-content {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		min-width: 350px;
+
+		.inspect-graph-popover-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+			width: 100%;
+		}
+
+		.inspect-graph-popover-button-row {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+
+			.ant-btn {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 8px;
+				margin-top: 16px;
+			}
+		}
+	}
+}
+
 .graph-popover {
 	position: fixed;
 	z-index: 1000;

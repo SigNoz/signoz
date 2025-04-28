@@ -637,8 +637,20 @@ export const formatTimestampToFullDateTime = (
 
 export function getTimeSeriesLabel(
 	timeSeries: InspectMetricsSeries | null,
-): string {
-	return `${timeSeries?.title}: ${JSON.stringify(timeSeries?.labels)}`;
+	textColor: string | undefined,
+): JSX.Element {
+	return (
+		<>
+			{Object.entries(timeSeries?.labels ?? {}).map(([key, value]) => (
+				<span key={key}>
+					<Typography.Text style={{ color: textColor, fontWeight: 600 }}>
+						{key}
+					</Typography.Text>
+					: {value}{' '}
+				</span>
+			))}
+		</>
+	);
 }
 
 export function HoverPopover({
@@ -646,6 +658,29 @@ export function HoverPopover({
 }: {
 	options: GraphPopoverOptions;
 }): JSX.Element {
+	const closestTimestamp = useMemo(() => {
+		if (!options.timeSeries) {
+			return options.timestamp;
+		}
+		return options.timeSeries?.values.reduce((prev, curr) => {
+			const prevDiff = Math.abs(prev.timestamp - options.timestamp);
+			const currDiff = Math.abs(curr.timestamp - options.timestamp);
+			return prevDiff < currDiff ? prev : curr;
+		}).timestamp;
+	}, [options.timeSeries, options.timestamp]);
+
+	const closestValue = useMemo(() => {
+		if (!options.timeSeries) {
+			return options.value;
+		}
+		const index = options.timeSeries.values.findIndex(
+			(value) => value.timestamp === closestTimestamp,
+		);
+		return index !== undefined && index >= 0
+			? options.timeSeries?.values[index].value
+			: null;
+	}, [options.timeSeries, closestTimestamp, options.value]);
+
 	return (
 		<Card
 			className="hover-popover-card"
@@ -656,18 +691,18 @@ export function HoverPopover({
 		>
 			<div className="hover-popover-row">
 				<Typography.Text>
-					{formatTimestampToFullDateTime(options.timestamp)}
+					{formatTimestampToFullDateTime(closestTimestamp ?? 0)}
 				</Typography.Text>
-				<Typography.Text>{options.value.toFixed(0)}</Typography.Text>
+				<Typography.Text>{Number(closestValue).toFixed(2)}</Typography.Text>
 			</div>
 			{options.timeSeries && (
 				<Typography.Text
 					style={{
 						color: options.timeSeries?.strokeColor,
-						fontWeight: 600,
+						fontWeight: 200,
 					}}
 				>
-					{getTimeSeriesLabel(options.timeSeries)}
+					{getTimeSeriesLabel(options.timeSeries, options.timeSeries?.strokeColor)}
 				</Typography.Text>
 			)}
 		</Card>
@@ -701,6 +736,7 @@ export function onGraphHover(
 			timestamp: xVal,
 			timeSeries: undefined,
 		});
+		return;
 	}
 
 	const series = inspectMetricsTimeSeries[seriesIndex - 1];

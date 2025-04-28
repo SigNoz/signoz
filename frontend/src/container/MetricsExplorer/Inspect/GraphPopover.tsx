@@ -2,119 +2,44 @@ import { Button, Card, Typography } from 'antd';
 import { ArrowRight } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { GraphPopoverProps, InspectionStep } from './types';
-import {
-	formatTimestampToFullDateTime,
-	getRawDataFromTimeSeries,
-	getSpaceAggregatedDataFromTimeSeries,
-	getTimeSeriesLabel,
-} from './utils';
+import { GraphPopoverProps } from './types';
+import { formatTimestampToFullDateTime } from './utils';
 
 function GraphPopover({
 	options,
-	spaceAggregationSeriesMap,
 	popoverRef,
-	step,
 	openInExpandedView,
 }: GraphPopoverProps): JSX.Element | null {
-	const { x, y, timestamp, timeSeries } = options || {
+	const { x, y, value, timestamp, timeSeries } = options || {
 		x: 0,
 		y: 0,
-		value: '',
+		value: 0,
 		timestamp: 0,
 		timeSeries: null,
 	};
 
-	const absoluteValue = useMemo(
-		() =>
-			options?.timeSeries?.values.find(
-				(value) => value.timestamp >= options?.timestamp,
-			)?.value ?? options?.value,
-		[options],
-	);
+	const closestTimestamp = useMemo(() => {
+		if (!timeSeries) {
+			return timestamp;
+		}
+		return timeSeries?.values.reduce((prev, curr) => {
+			const prevDiff = Math.abs(prev.timestamp - timestamp);
+			const currDiff = Math.abs(curr.timestamp - timestamp);
+			return prevDiff < currDiff ? prev : curr;
+		}).timestamp;
+	}, [timeSeries, timestamp]);
 
-	const data = useMemo(() => {
-		if (step === InspectionStep.TIME_AGGREGATION) {
-			return null;
+	const closestValue = useMemo(() => {
+		if (!timeSeries) {
+			return value;
 		}
-		if (step === InspectionStep.SPACE_AGGREGATION) {
-			if (!timeSeries || !timestamp) return [];
-			return getRawDataFromTimeSeries(timeSeries, timestamp);
-		}
-		if (step === InspectionStep.COMPLETED) {
-			if (!timeSeries || !spaceAggregationSeriesMap) return [];
-			return getSpaceAggregatedDataFromTimeSeries(
-				timeSeries,
-				spaceAggregationSeriesMap,
-				timestamp,
-			);
-		}
-		return null;
-	}, [spaceAggregationSeriesMap, step, timeSeries, timestamp]);
-
-	const timeAggregationDisplay = useMemo(() => {
-		if (step !== InspectionStep.SPACE_AGGREGATION) return null;
-		return (
-			<>
-				<div className="graph-popover-row">
-					<Typography.Text className="graph-popover-row-label">
-						RAW VALUES
-					</Typography.Text>
-					<div className="graph-popover-inner-row">
-						{data?.map(({ value: rawValue }) => (
-							<div key={rawValue} className="graph-popover-cell">
-								{rawValue}
-							</div>
-						))}
-					</div>
-				</div>
-				<div className="graph-popover-row">
-					<Typography.Text className="graph-popover-row-label">
-						TIMESTAMPS
-					</Typography.Text>
-					<div className="graph-popover-inner-row">
-						{data?.map(({ timestamp }) => (
-							<div key={timestamp} className="graph-popover-cell">
-								{formatTimestampToFullDateTime(timestamp ?? '', true)}
-							</div>
-						))}
-					</div>
-				</div>
-			</>
+		const index = timeSeries.values.findIndex(
+			(value) => value.timestamp === closestTimestamp,
 		);
-	}, [data, step]);
-
-	const spaceAggregationDisplay = useMemo(() => {
-		if (step !== InspectionStep.COMPLETED) return null;
-		return (
-			<>
-				<div className="graph-popover-row">
-					<Typography.Text className="graph-popover-row-label">
-						VALUES
-					</Typography.Text>
-					<div className="graph-popover-inner-row">
-						{data?.map(({ value }) => (
-							<div key={value} className="graph-popover-cell">
-								{value}
-							</div>
-						))}
-					</div>
-				</div>
-				<div className="graph-popover-row">
-					<Typography.Text className="graph-popover-row-label">
-						TIME SERIES
-					</Typography.Text>
-					<div className="graph-popover-inner-row">
-						{data?.map(({ title }) => (
-							<div key={title} className="graph-popover-cell">
-								{title}
-							</div>
-						))}
-					</div>
-				</div>
-			</>
-		);
-	}, [data, step]);
+		return index !== undefined && index >= 0
+			? timeSeries?.values[index].value
+			: null;
+	}, [timeSeries, closestTimestamp, value]);
 
 	return (
 		<div
@@ -123,47 +48,19 @@ function GraphPopover({
 				left: x + 10,
 			}}
 			ref={popoverRef}
-			className="graph-popover"
+			className="inspect-graph-popover"
 		>
-			<Card className="graph-popover-card" size="small">
-				{/* Header */}
-				<Typography.Text className="graph-popover-header-text">
-					{formatTimestampToFullDateTime(timestamp)}
-				</Typography.Text>
-				<div className="graph-popover-row">
-					<div className="graph-popover-inner-row">
-						<div
-							style={{
-								width: 10,
-								height: 10,
-								backgroundColor: timeSeries?.strokeColor,
-								borderRadius: '50%',
-								marginRight: 8,
-							}}
-						/>
-						{timeSeries && (
-							<Typography.Text>{getTimeSeriesLabel(timeSeries)}</Typography.Text>
-						)}
-					</div>
-					<Typography.Text strong>
-						{Number(absoluteValue).toFixed(0)}
+			<Card className="inspect-graph-popover-content" size="small">
+				<div className="inspect-graph-popover-row">
+					<Typography.Text type="secondary">
+						{formatTimestampToFullDateTime(closestTimestamp)}
 					</Typography.Text>
+					<Typography.Text>{Number(closestValue).toFixed(2)}</Typography.Text>
 				</div>
-
-				{/* Table */}
-				{timeAggregationDisplay}
-				{spaceAggregationDisplay}
-				{/* Footer */}
-				<div className="footer-row">
-					<Typography.Text className="footer-text">
-						Click to see more
-					</Typography.Text>
-
-					{/* Dotted horizontal line that stretches */}
-					<div className="footer-divider" />
-
-					<Button type="text" onClick={openInExpandedView}>
-						<ArrowRight size={14} />
+				<div className="inspect-graph-popover-button-row">
+					<Button size="small" type="primary" onClick={openInExpandedView}>
+						<Typography.Text>Click to see more</Typography.Text>
+						<ArrowRight size={10} />
 					</Button>
 				</div>
 			</Card>
