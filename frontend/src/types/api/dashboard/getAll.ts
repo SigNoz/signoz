@@ -48,6 +48,9 @@ export interface IDashboardVariable {
 	modificationUUID?: string;
 	allSelected?: boolean;
 	change?: boolean;
+	defaultValue?: string;
+	dynamicVariablesAttribute?: string;
+	dynamicVariablesSource?: string;
 }
 export interface Dashboard {
 	id: number;
