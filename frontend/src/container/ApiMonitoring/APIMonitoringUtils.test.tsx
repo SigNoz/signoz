@@ -5,6 +5,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { SPAN_ATTRIBUTES } from './Explorer/Domains/DomainDetails/constants';
 import {
+	endPointStatusCodeColumns,
 	extractPortAndEndpoint,
 	formatTopErrorsDataForTable,
 	getAllEndpointsWidgetData,
@@ -996,7 +997,7 @@ describe('API Monitoring Utils', () => {
 			const mockData = [
 				{
 					data: {
-						response_status_code: 'n/a', // Changed from undefined to match expected type
+						response_status_code: 'n/a',
 						A: 'n/a',
 						B: undefined,
 						C: 'n/a',
@@ -1035,6 +1036,53 @@ describe('API Monitoring Utils', () => {
 			// Assert
 			expect(result).toBeDefined();
 			expect(result).toEqual([]);
+		});
+
+		it('should handle mixed status code formats and preserve order', () => {
+			// Arrange - testing with various formats and order
+			const mockData = [
+				{
+					data: {
+						response_status_code: '404',
+						A: '20',
+						B: '5000000',
+						C: '1',
+					},
+				},
+				{
+					data: {
+						response_status_code: '200',
+						A: '150',
+						B: '10000000',
+						C: '5',
+					},
+				},
+				{
+					data: {
+						response_status_code: 'unknown',
+						A: '5',
+						B: '8000000',
+						C: '2',
+					},
+				},
+			];
+
+			// Act
+			const result = getFormattedEndPointStatusCodeData(mockData as any);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.length).toBe(3);
+
+			// Check order preservation - should maintain the same order as input
+			expect(result[0].statusCode).toBe('404');
+			expect(result[1].statusCode).toBe('200');
+			expect(result[2].statusCode).toBe('unknown');
+
+			// Check special formatting for non-standard status code
+			expect(result[2].statusCode).toBe('unknown');
+			expect(result[2].count).toBe('5');
+			expect(result[2].p99Latency).toBe(8); // Converted from ns to ms
 		});
 	});
 
@@ -1500,6 +1548,48 @@ describe('API Monitoring Utils', () => {
 			if (endRangeFilter) {
 				expect(endRangeFilter.value).toBe('');
 			}
+		});
+	});
+
+	describe('endPointStatusCodeColumns', () => {
+		it('should have the expected columns', () => {
+			// Assert
+			expect(endPointStatusCodeColumns).toBeDefined();
+			expect(endPointStatusCodeColumns.length).toBeGreaterThan(0);
+
+			// Verify column keys
+			const columnKeys = endPointStatusCodeColumns.map((col) => col.dataIndex);
+			expect(columnKeys).toContain('statusCode');
+			expect(columnKeys).toContain('count');
+			expect(columnKeys).toContain('rate');
+			expect(columnKeys).toContain('p99Latency');
+		});
+
+		it('should have properly configured columns with render functions', () => {
+			// Check that columns have appropriate render functions
+			const statusCodeColumn = endPointStatusCodeColumns.find(
+				(col) => col.dataIndex === 'statusCode',
+			);
+			expect(statusCodeColumn).toBeDefined();
+			expect(statusCodeColumn?.title).toBeDefined();
+
+			const countColumn = endPointStatusCodeColumns.find(
+				(col) => col.dataIndex === 'count',
+			);
+			expect(countColumn).toBeDefined();
+			expect(countColumn?.title).toBeDefined();
+
+			const rateColumn = endPointStatusCodeColumns.find(
+				(col) => col.dataIndex === 'rate',
+			);
+			expect(rateColumn).toBeDefined();
+			expect(rateColumn?.title).toBeDefined();
+
+			const latencyColumn = endPointStatusCodeColumns.find(
+				(col) => col.dataIndex === 'p99Latency',
+			);
+			expect(latencyColumn).toBeDefined();
+			expect(latencyColumn?.title).toBeDefined();
 		});
 	});
 });
