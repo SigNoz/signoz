@@ -14,8 +14,8 @@ import {
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
 import { copilot } from '@uiw/codemirror-theme-copilot';
-import CodeMirror, { EditorView, Extension } from '@uiw/react-codemirror';
-import { Badge, Card, Divider, Space, Typography } from 'antd';
+import CodeMirror, { EditorView } from '@uiw/react-codemirror';
+import { Card, Collapse, Space, Typography } from 'antd';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -32,58 +32,100 @@ import {
 } from 'utils/antlrQueryUtils';
 
 const { Text } = Typography;
+const { Panel } = Collapse;
 
-function collapseSpacesOutsideStrings(): Extension {
-	return EditorView.inputHandler.of((view, from, to, text) => {
-		// Get the current line text
-		const { state } = view;
-		const line = state.doc.lineAt(from);
+const queryExamples = [
+	{
+		label: 'Basic Query',
+		query: "status = 'error'",
+		description: 'Find all errors',
+	},
+	{
+		label: 'Multiple Conditions',
+		query: "status = 'error' AND service = 'frontend'",
+		description: 'Find errors from frontend service',
+	},
+	{
+		label: 'IN Operator',
+		query: "status IN ['error', 'warning']",
+		description: 'Find items with specific statuses',
+	},
+	{
+		label: 'Function Usage',
+		query: "HAS(service, 'frontend')",
+		description: 'Use HAS function',
+	},
+	{
+		label: 'Numeric Comparison',
+		query: 'duration > 1000',
+		description: 'Find items with duration greater than 1000ms',
+	},
+	{
+		label: 'Range Query',
+		query: 'duration BETWEEN 100 AND 1000',
+		description: 'Find items with duration between 100ms and 1000ms',
+	},
+	{
+		label: 'Pattern Matching',
+		query: "service LIKE 'front%'",
+		description: 'Find services starting with "front"',
+	},
+	{
+		label: 'Complex Conditions',
+		query: "(status = 'error' OR status = 'warning') AND service = 'frontend'",
+		description: 'Find errors or warnings from frontend service',
+	},
+	{
+		label: 'Multiple Functions',
+		query: "HAS(service, 'frontend') AND HAS(status, 'error')",
+		description: 'Use multiple HAS functions',
+	},
+	{
+		label: 'NOT Operator',
+		query: "NOT status = 'success'",
+		description: 'Find items that are not successful',
+	},
+	{
+		label: 'Array Contains',
+		query: "tags CONTAINS 'production'",
+		description: 'Find items with production tag',
+	},
+	{
+		label: 'Regex Pattern',
+		query: "service REGEXP '^prod-.*'",
+		description: 'Find services matching regex pattern',
+	},
+	{
+		label: 'Null Check',
+		query: 'error IS NULL',
+		description: 'Find items without errors',
+	},
+	{
+		label: 'Multiple Attributes',
+		query:
+			"service = 'frontend' AND environment = 'production' AND status = 'error'",
+		description: 'Find production frontend errors',
+	},
+	{
+		label: 'Nested Conditions',
+		query:
+			"(service = 'frontend' OR service = 'backend') AND (status = 'error' OR status = 'warning')",
+		description: 'Find errors or warnings from frontend or backend',
+	},
+];
 
-		// Find the position within the line
-		const before = line.text.slice(0, from - line.from);
-		const after = line.text.slice(to - line.from);
-
-		const fullText = before + text + after;
-
-		let insideString = false;
-		let escaped = false;
-		let processed = '';
-
-		for (let i = 0; i < fullText.length; i++) {
-			const char = fullText[i];
-
-			if (char === '"' && !escaped) {
-				insideString = !insideString;
-			}
-			if (char === '\\' && !escaped) {
-				escaped = true;
-			} else {
-				escaped = false;
-			}
-
-			if (!insideString && char === ' ' && processed.endsWith(' ')) {
-				// Collapse multiple spaces outside strings
-				// Skip this space
-			} else {
-				processed += char;
-			}
-		}
-
-		// Only dispatch if the processed text differs
-		if (processed !== fullText) {
-			view.dispatch({
-				changes: {
-					from: line.from,
-					to: line.to,
-					insert: processed,
-				},
-			});
-			return true;
-		}
-
+// Custom extension to stop events
+const stopEventsExtension = EditorView.domEventHandlers({
+	keydown: (event) => {
+		event.stopPropagation();
+		// Optionally: event.preventDefault();
+		return false; // Important for CM to know you handled it
+	},
+	input: (event) => {
+		event.stopPropagation();
 		return false;
-	});
-}
+	},
+});
 
 function CodeMirrorWhereClause(): JSX.Element {
 	const [query, setQuery] = useState<string>('');
@@ -328,34 +370,41 @@ function CodeMirrorWhereClause(): JSX.Element {
 		handleQueryChange(value);
 	};
 
-	const renderContextBadge = (): JSX.Element | null => {
-		if (!queryContext) return null;
-
-		let color = 'black';
-		let text = 'Unknown';
-
-		if (queryContext.isInKey) {
-			color = 'blue';
-			text = 'Key';
-		} else if (queryContext.isInOperator) {
-			color = 'purple';
-			text = 'Operator';
-		} else if (queryContext.isInValue) {
-			color = 'green';
-			text = 'Value';
-		} else if (queryContext.isInFunction) {
-			color = 'orange';
-			text = 'Function';
-		} else if (queryContext.isInConjunction) {
-			color = 'magenta';
-			text = 'Conjunction';
-		} else if (queryContext.isInParenthesis) {
-			color = 'grey';
-			text = 'Parenthesis';
-		}
-
-		return <Badge color={color} text={text} />;
+	const handleExampleClick = (exampleQuery: string): void => {
+		// If there's an existing query, append the example with AND
+		const newQuery = query ? `${query} AND ${exampleQuery}` : exampleQuery;
+		setQuery(newQuery);
+		handleQueryChange(newQuery);
 	};
+
+	// const renderContextBadge = (): JSX.Element | null => {
+	// 	if (!queryContext) return null;
+
+	// 	let color = 'black';
+	// 	let text = 'Unknown';
+
+	// 	if (queryContext.isInKey) {
+	// 		color = 'blue';
+	// 		text = 'Key';
+	// 	} else if (queryContext.isInOperator) {
+	// 		color = 'purple';
+	// 		text = 'Operator';
+	// 	} else if (queryContext.isInValue) {
+	// 		color = 'green';
+	// 		text = 'Value';
+	// 	} else if (queryContext.isInFunction) {
+	// 		color = 'orange';
+	// 		text = 'Function';
+	// 	} else if (queryContext.isInConjunction) {
+	// 		color = 'magenta';
+	// 		text = 'Conjunction';
+	// 	} else if (queryContext.isInParenthesis) {
+	// 		color = 'grey';
+	// 		text = 'Parenthesis';
+	// 	}
+
+	// 	return <Badge color={color} text={text} />;
+	// };
 
 	function myCompletions(context: CompletionContext): CompletionResult | null {
 		const word = context.matchBefore(/\w*/);
@@ -552,7 +601,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 
 	return (
 		<div className="code-mirror-where-clause">
-			<Card size="small">
+			<Card className="code-mirror-card">
 				<CodeMirror
 					value={query}
 					theme={copilot}
@@ -568,62 +617,95 @@ function CodeMirrorWhereClause(): JSX.Element {
 							activateOnTyping: true,
 							maxRenderedOptions: 50,
 						}),
-						collapseSpacesOutsideStrings(),
 						javascript({ jsx: false, typescript: false }),
+						EditorView.lineWrapping,
+						stopEventsExtension,
 						// customTheme,
 					]}
 					basicSetup={{
 						lineNumbers: false,
 					}}
 				/>
-
-				{query && (
-					<>
-						<Divider style={{ margin: '8px 0' }} />
-						<Space direction="vertical" size={4}>
-							<Text>Query:</Text>
-							<Text code>{query}</Text>
-						</Space>
-					</>
-				)}
-
-				{query && (
-					<>
-						<Divider style={{ margin: '8px 0' }} />
-
-						<div className="query-validation">
-							<div className="query-validation-status">
-								<Text>Status:</Text>
-								<div className={validation.isValid ? 'valid' : 'invalid'}>
-									{validation.isValid ? (
-										<Space>
-											<CheckCircleFilled /> Valid
-										</Space>
-									) : (
-										<Space>
-											<CloseCircleFilled /> Invalid
-										</Space>
-									)}
-								</div>
-							</div>
-
-							<div className="query-validation-errors">
-								{validation.errors.map((error) => (
-									<div key={error.message} className="query-validation-error">
-										<div className="query-validation-error-line">
-											{error.line}:{error.column}
-										</div>
-
-										<div className="query-validation-error-message">{error.message}</div>
-									</div>
-								))}
-							</div>
-						</div>
-					</>
-				)}
 			</Card>
 
-			{queryContext && (
+			{query && (
+				<Card size="small">
+					<Space direction="vertical" size={4}>
+						<Text className="query-text-preview-title">searchExpr</Text>
+						<Text className="query-text-preview">{query}</Text>
+					</Space>
+
+					<div className="query-validation">
+						<div className="query-validation-status">
+							<Text>Status:</Text>
+							<div className={validation.isValid ? 'valid' : 'invalid'}>
+								{validation.isValid ? (
+									<Space>
+										<CheckCircleFilled /> Valid
+									</Space>
+								) : (
+									<Space>
+										<CloseCircleFilled /> Invalid
+									</Space>
+								)}
+							</div>
+						</div>
+
+						<div className="query-validation-errors">
+							{validation.errors.map((error) => (
+								<div key={error.message} className="query-validation-error">
+									<div className="query-validation-error-line">
+										{error.line}:{error.column}
+									</div>
+
+									<div className="query-validation-error-message">{error.message}</div>
+								</div>
+							))}
+						</div>
+					</div>
+				</Card>
+			)}
+
+			<Card size="small" className="query-examples-card">
+				<Collapse
+					ghost
+					size="small"
+					className="query-examples"
+					defaultActiveKey={[]}
+				>
+					<Panel header="Query Examples" key="1">
+						<div className="query-examples-list">
+							{queryExamples.map((example) => (
+								<div
+									className="query-example-content"
+									key={example.label}
+									onClick={(): void => handleExampleClick(example.query)}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(e): void => {
+										if (e.key === 'Enter' || e.key === ' ') {
+											handleExampleClick(example.query);
+										}
+									}}
+								>
+									<CodeMirror
+										value={example.query}
+										theme={copilot}
+										extensions={[
+											javascript({ jsx: false, typescript: false }),
+											EditorView.editable.of(false),
+										]}
+										basicSetup={{ lineNumbers: false }}
+										className="query-example-code-mirror"
+									/>
+								</div>
+							))}
+						</div>
+					</Panel>
+				</Collapse>
+			</Card>
+
+			{/* {queryContext && (
 				<Card size="small" title="Current Context" className="query-context">
 					<div className="context-details">
 						<Space direction="vertical" size={4}>
@@ -640,7 +722,6 @@ function CodeMirrorWhereClause(): JSX.Element {
 								{renderContextBadge()}
 							</Space>
 
-							{/* Display the key-operator-value triplet when available */}
 							{queryContext.keyToken && (
 								<Space>
 									<Text strong>Key:</Text>
@@ -664,7 +745,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 						</Space>
 					</div>
 				</Card>
-			)}
+			)} */}
 		</div>
 	);
 }
