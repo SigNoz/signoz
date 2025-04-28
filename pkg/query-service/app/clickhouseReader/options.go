@@ -17,8 +17,6 @@ const (
 
 const (
 	defaultTraceDB                 string        = "signoz_traces"
-	defaultOperationsTable         string        = "distributed_signoz_operations"
-	defaultIndexTable              string        = "distributed_signoz_index_v2"
 	defaultLocalIndexTable         string        = "signoz_index_v2"
 	defaultErrorTable              string        = "distributed_signoz_error_index_v2"
 	defaultDurationTable           string        = "distributed_durationSort"
@@ -59,19 +57,10 @@ type namespaceConfig struct {
 	Enabled                 bool
 	Datasource              string
 	TraceDB                 string
-	OperationsTable         string
-	IndexTable              string
-	LocalIndexTable         string
-	DurationTable           string
-	UsageExplorerTable      string
-	SpansTable              string
 	ErrorTable              string
+	LocalIndexTable         string
 	SpanAttributeTableV2    string
 	SpanAttributeKeysTable  string
-	DependencyGraphTable    string
-	TopLevelOperationsTable string
-	LogsDB                  string
-	LogsTable               string
 	LogsLocalTable          string
 	LogsAttributeKeysTable  string
 	LogsResourceKeysTable   string
@@ -82,6 +71,7 @@ type namespaceConfig struct {
 	Encoding                Encoding
 	Connector               Connector
 
+	LogsDB                   string
 	LogsLocalTableV2         string
 	LogsTableV2              string
 	LogsResourceLocalTableV2 string

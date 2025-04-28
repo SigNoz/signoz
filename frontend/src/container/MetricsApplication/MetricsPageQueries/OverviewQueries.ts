@@ -481,7 +481,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 export const operationPerSec = ({
 	servicename,
 	tagFilterItems,
-	topLevelOperations,
 }: OperationPerSecProps): QueryBuilderData => {
 	const autocompleteData: BaseAutocompleteData[] = [
 		{

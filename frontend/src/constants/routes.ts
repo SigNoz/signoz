@@ -17,7 +17,6 @@ const ROUTES = {
 		'/get-started/infrastructure-monitoring',
 	GET_STARTED_AWS_MONITORING: '/get-started/aws-monitoring',
 	GET_STARTED_AZURE_MONITORING: '/get-started/azure-monitoring',
-	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',
 	DASHBOARD: '/dashboard/:dashboardId',

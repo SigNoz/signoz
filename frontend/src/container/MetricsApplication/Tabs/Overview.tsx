@@ -1,7 +1,4 @@
 import logEvent from 'api/common/logEvent';
-import getTopLevelOperations, {
-	ServiceDataProps,
-} from 'api/metrics/getTopLevelOperations';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -110,21 +107,6 @@ function Application(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const {
-		data: topLevelOperations,
-		error: topLevelOperationsError,
-		isLoading: topLevelOperationsIsLoading,
-		isError: topLevelOperationsIsError,
-	} = useQuery<ServiceDataProps>({
-		queryKey: [servicename, minTime, maxTime],
-		queryFn: (): Promise<ServiceDataProps> =>
-			getTopLevelOperations({
-				service: servicename || '',
-				start: minTime,
-				end: maxTime,
-			}),
-	});
-
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
@@ -135,14 +117,6 @@ function Application(): JSX.Element {
 		() =>
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
-	);
-
-	const topLevelOperationsRoute = useMemo(
-		() =>
-			topLevelOperations
-				? defaultTo(topLevelOperations[servicename || ''], [])
-				: [],
-		[servicename, topLevelOperations],
 	);
 
 	const operationPerSecWidget = useMemo(

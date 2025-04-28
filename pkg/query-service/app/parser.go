@@ -171,42 +171,6 @@ func parseQueryRangeRequest(r *http.Request) (*model.QueryRangeParams, *model.Ap
 	return &queryRangeParams, nil
 }
 
-func parseGetUsageRequest(r *http.Request) (*model.GetUsageParams, error) {
-	startTime, err := parseTime("start", r)
-	if err != nil {
-		return nil, err
-	}
-	endTime, err := parseTime("end", r)
-	if err != nil {
-		return nil, err
-	}
-
-	stepStr := r.URL.Query().Get("step")
-	if len(stepStr) == 0 {
-		return nil, errors.New("step param missing in query")
-	}
-	stepInt, err := strconv.Atoi(stepStr)
-	if err != nil {
-		return nil, errors.New("step param is not in correct format")
-	}
-
-	serviceName := r.URL.Query().Get("service")
-	stepHour := stepInt / 3600
-
-	getUsageParams := model.GetUsageParams{
-		StartTime:   startTime.Format(time.RFC3339Nano),
-		EndTime:     endTime.Format(time.RFC3339Nano),
-		Start:       startTime,
-		End:         endTime,
-		ServiceName: serviceName,
-		Period:      fmt.Sprintf("PT%dH", stepHour),
-		StepHour:    stepHour,
-	}
-
-	return &getUsageParams, nil
-
-}
-
 func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) {
 
 	var postData *model.GetServicesParams

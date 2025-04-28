@@ -12,7 +12,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -37,9 +36,7 @@ import (
 	"go.uber.org/zap"
 
 	queryprogress "github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader/query_progress"
-	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
 	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
-	"github.com/SigNoz/signoz/pkg/query-service/app/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/smart"
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
@@ -118,24 +115,15 @@ type ClickHouseReader struct {
 	prometheus              prometheus.Prometheus
 	sqlDB                   sqlstore.SQLStore
 	TraceDB                 string
-	operationsTable         string
-	durationTable           string
-	indexTable              string
 	errorTable              string
-	usageExplorerTable      string
-	SpansTable              string
 	spanAttributeTableV2    string
 	spanAttributesKeysTable string
-	dependencyGraphTable    string
-	topLevelOperationsTable string
-	logsDB                  string
-	logsTable               string
-	logsLocalTable          string
 	logsAttributeKeys       string
 	logsResourceKeys        string
 	logsTagAttributeTableV2 string
 	queryProgressTracker    queryprogress.QueryProgressTracker
 
+	logsDB                   string
 	logsTableV2              string
 	logsLocalTableV2         string
 	logsResourceTableV2      string
@@ -190,19 +178,10 @@ func NewReaderFromClickhouseConnection(
 		prometheus:                 prometheus,
 		sqlDB:                      sqlDB,
 		TraceDB:                    options.primary.TraceDB,
-		operationsTable:            options.primary.OperationsTable,
-		indexTable:                 options.primary.IndexTable,
 		errorTable:                 options.primary.ErrorTable,
-		usageExplorerTable:         options.primary.UsageExplorerTable,
-		durationTable:              options.primary.DurationTable,
-		SpansTable:                 options.primary.SpansTable,
 		spanAttributeTableV2:       options.primary.SpanAttributeTableV2,
 		spanAttributesKeysTable:    options.primary.SpanAttributeKeysTable,
-		dependencyGraphTable:       options.primary.DependencyGraphTable,
-		topLevelOperationsTable:    options.primary.TopLevelOperationsTable,
 		logsDB:                     options.primary.LogsDB,
-		logsTable:                  options.primary.LogsTable,
-		logsLocalTable:             options.primary.LogsLocalTable,
 		logsAttributeKeys:          options.primary.LogsAttributeKeysTable,
 		logsResourceKeys:           options.primary.LogsResourceKeysTable,
 		logsTagAttributeTableV2:    options.primary.LogsTagAttributeTableV2,
@@ -283,41 +262,6 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	return &services, nil
 }
 
-func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, start, end time.Time, services []string) (*map[string][]string, *model.ApiError) {
-	start = start.In(time.UTC)
-
-	// The `top_level_operations` that have `time` >= start
-	operations := map[string][]string{}
-	// We can't use the `end` because the `top_level_operations` table has the most recent instances of the operations
-	// We can only use the `start` time to filter the operations
-	query := fmt.Sprintf(`SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= @start`, r.TraceDB, r.topLevelOperationsTable)
-	if len(services) > 0 {
-		query += ` AND serviceName IN @services`
-	}
-	query += ` GROUP BY name, serviceName ORDER BY ts DESC LIMIT 5000`
-
-	rows, err := r.db.Query(ctx, query, clickhouse.Named("start", start), clickhouse.Named("services", services))
-
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		var name, serviceName string
-		var t time.Time
-		if err := rows.Scan(&name, &serviceName, &t); err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error in reading data")}
-		}
-		if _, ok := operations[serviceName]; !ok {
-			operations[serviceName] = []string{"overflow_operation"}
-		}
-		operations[serviceName] = append(operations[serviceName], name)
-	}
-	return &operations, nil
-}
-
 func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc string, start, end time.Time) (string, error) {
 	// assuming all will be resource attributes.
 	// and resource attributes are string for traces
@@ -375,131 +319,6 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 		return "", err
 	}
 	return resourceSubQuery, nil
-}
-
-func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
-
-	if r.indexTable == "" {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
-	}
-
-	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, *queryParams.Start, *queryParams.End, nil)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	serviceItems := []model.ServiceItem{}
-	var wg sync.WaitGroup
-	// limit the number of concurrent queries to not overload the clickhouse server
-	sem := make(chan struct{}, 10)
-	var mtx sync.RWMutex
-
-	for svc, ops := range *topLevelOps {
-		sem <- struct{}{}
-		wg.Add(1)
-		go func(svc string, ops []string) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			var serviceItem model.ServiceItem
-			var numErrors uint64
-
-			// Even if the total number of operations within the time range is less and the all
-			// the top level operations are high, we want to warn to let user know the issue
-			// with the instrumentation
-			serviceItem.DataWarning = model.DataWarning{
-				TopLevelOps: (*topLevelOps)[svc],
-			}
-
-			// default max_query_size = 262144
-			// Let's assume the average size of the item in `ops` is 50 bytes
-			// We can have 262144/50 = 5242 items in the `ops` array
-			// Although we have make it as big as 5k, We cap the number of items
-			// in the `ops` array to 1500
-
-			ops = ops[:int(math.Min(1500, float64(len(ops))))]
-
-			query := fmt.Sprintf(
-				`SELECT
-					quantile(0.99)(durationNano) as p99,
-					avg(durationNano) as avgDuration,
-					count(*) as numCalls
-				FROM %s.%s
-				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
-				r.TraceDB, r.traceTableName,
-			)
-			errorQuery := fmt.Sprintf(
-				`SELECT
-					count(*) as numErrors
-				FROM %s.%s
-				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
-				r.TraceDB, r.traceTableName,
-			)
-
-			args := []interface{}{}
-			args = append(args,
-				clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
-				clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
-				clickhouse.Named("serviceName", svc),
-				clickhouse.Named("names", ops),
-			)
-
-			resourceSubQuery, err := r.buildResourceSubQuery(queryParams.Tags, svc, *queryParams.Start, *queryParams.End)
-			if err != nil {
-				zap.L().Error("Error in processing sql query", zap.Error(err))
-				return
-			}
-			query += `
-					AND (
-						resource_fingerprint GLOBAL IN ` +
-				resourceSubQuery +
-				`) AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket`
-
-			args = append(args,
-				clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
-				clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
-			)
-
-			err = r.db.QueryRow(
-				ctx,
-				query,
-				args...,
-			).ScanStruct(&serviceItem)
-
-			if serviceItem.NumCalls == 0 {
-				return
-			}
-
-			if err != nil {
-				zap.L().Error("Error in processing sql query", zap.Error(err))
-				return
-			}
-
-			errorQuery += `
-					AND (
-						resource_fingerprint GLOBAL IN ` +
-				resourceSubQuery +
-				`) AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket`
-
-			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
-			if err != nil {
-				zap.L().Error("Error in processing sql query", zap.Error(err))
-				return
-			}
-
-			serviceItem.ServiceName = svc
-			serviceItem.NumErrors = numErrors
-			mtx.Lock()
-			serviceItems = append(serviceItems, serviceItem)
-			mtx.Unlock()
-		}(svc, ops)
-	}
-	wg.Wait()
-
-	for idx := range serviceItems {
-		serviceItems[idx].CallRate = float64(serviceItems[idx].NumCalls) / float64(queryParams.Period)
-		serviceItems[idx].ErrorRate = float64(serviceItems[idx].NumErrors) * 100 / float64(serviceItems[idx].NumCalls)
-	}
-	return &serviceItems, nil
 }
 
 func getStatusFilters(query string, statusParams []string, excludeMap map[string]struct{}) string {
@@ -680,7 +499,6 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 }
 
 func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
-
 	namedArgs := []interface{}{
 		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
 		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
@@ -732,42 +550,6 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 	}
 
 	return &topOperationsItems, nil
-}
-
-func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetUsageParams) (*[]model.UsageItem, error) {
-
-	var usageItems []model.UsageItem
-	namedArgs := []interface{}{
-		clickhouse.Named("interval", queryParams.StepHour),
-		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
-		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
-	}
-	var query string
-	if len(queryParams.ServiceName) != 0 {
-		namedArgs = append(namedArgs, clickhouse.Named("serviceName", queryParams.ServiceName))
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL @interval HOUR) as time, sum(count) as count FROM %s.%s WHERE service_name=@serviceName AND timestamp>=@start AND timestamp<=@end GROUP BY time ORDER BY time ASC", r.TraceDB, r.usageExplorerTable)
-	} else {
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL @interval HOUR) as time, sum(count) as count FROM %s.%s WHERE timestamp>=@start AND timestamp<=@end GROUP BY time ORDER BY time ASC", r.TraceDB, r.usageExplorerTable)
-	}
-
-	err := r.db.Select(ctx, &usageItems, query, namedArgs...)
-
-	zap.L().Info(query)
-
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, fmt.Errorf("error in processing sql query")
-	}
-
-	for i := range usageItems {
-		usageItems[i].Timestamp = uint64(usageItems[i].Time.UnixNano())
-	}
-
-	if usageItems == nil {
-		usageItems = []model.UsageItem{}
-	}
-
-	return &usageItems, nil
 }
 
 func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string, traceDetailsQuery string) ([]model.SpanItemV2, *model.ApiError) {
@@ -1152,54 +934,6 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 	return trace, nil
 }
 
-func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
-
-	response := []model.ServiceMapDependencyResponseItem{}
-
-	args := []interface{}{}
-	args = append(args,
-		clickhouse.Named("start", uint64(queryParams.Start.Unix())),
-		clickhouse.Named("end", uint64(queryParams.End.Unix())),
-		clickhouse.Named("duration", uint64(queryParams.End.Unix()-queryParams.Start.Unix())),
-	)
-
-	query := fmt.Sprintf(`
-		WITH
-			quantilesMergeState(0.5, 0.75, 0.9, 0.95, 0.99)(duration_quantiles_state) AS duration_quantiles_state,
-			finalizeAggregation(duration_quantiles_state) AS result
-		SELECT
-			src as parent,
-			dest as child,
-			result[1] AS p50,
-			result[2] AS p75,
-			result[3] AS p90,
-			result[4] AS p95,
-			result[5] AS p99,
-			sum(total_count) as callCount,
-			sum(total_count)/ @duration AS callRate,
-			sum(error_count)/sum(total_count) * 100 as errorRate
-		FROM %s.%s
-		WHERE toUInt64(toDateTime(timestamp)) >= @start AND toUInt64(toDateTime(timestamp)) <= @end`,
-		r.TraceDB, r.dependencyGraphTable,
-	)
-
-	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
-	filterQuery, filterArgs := services.BuildServiceMapQuery(tags)
-	query += filterQuery + " GROUP BY src, dest;"
-	args = append(args, filterArgs...)
-
-	zap.L().Debug("GetDependencyGraph query", zap.String("query", query), zap.Any("args", args))
-
-	err := r.db.Select(ctx, &response, query, args...)
-
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, fmt.Errorf("error in processing sql query %w", err)
-	}
-
-	return &response, nil
-}
-
 func getLocalTableName(tableName string) string {
 
 	tableNameSplit := strings.Split(tableName, ".")
@@ -1355,9 +1089,6 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 	tableNames := []string{
 		r.TraceDB + "." + r.traceTableName,
 		r.TraceDB + "." + r.traceResourceTableV3,
-		r.TraceDB + "." + signozErrorIndexTable,
-		r.TraceDB + "." + signozUsageExplorerTable,
-		r.TraceDB + "." + defaultDependencyGraphTable,
 		r.TraceDB + "." + r.traceSummaryTable,
 	}
 
@@ -2706,218 +2437,6 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 	}
 
 	return nil
-}
-
-func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.SignozLog, *model.ApiError) {
-	response := []model.SignozLog{}
-	fields, apiErr := r.GetLogFields(ctx)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	isPaginatePrev := logs.CheckIfPrevousPaginateAndModifyOrder(params)
-	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, params)
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
-	}
-
-	data := map[string]interface{}{
-		"lenFilters": lenFilters,
-	}
-	if lenFilters != 0 {
-		claims, errv2 := authtypes.ClaimsFromContext(ctx)
-		if errv2 == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
-		}
-	}
-
-	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
-
-	if filterSql != "" {
-		query = fmt.Sprintf("%s where %s", query, filterSql)
-	}
-
-	query = fmt.Sprintf("%s order by %s %s limit %d", query, params.OrderBy, params.Order, params.Limit)
-	err = r.db.Select(ctx, &response, query)
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
-	}
-	if isPaginatePrev {
-		// rever the results from db
-		for i, j := 0, len(response)-1; i < j; i, j = i+1, j-1 {
-			response[i], response[j] = response[j], response[i]
-		}
-	}
-	return &response, nil
-}
-
-func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailClient) {
-
-	fields, apiErr := r.GetLogFields(ctx)
-	if apiErr != nil {
-		client.Error <- apiErr.Err
-		return
-	}
-
-	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
-		Query: client.Filter.Query,
-	})
-
-	data := map[string]interface{}{
-		"lenFilters": lenFilters,
-	}
-	if lenFilters != 0 {
-		claims, errv2 := authtypes.ClaimsFromContext(ctx)
-		if errv2 == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
-		}
-	}
-
-	if err != nil {
-		client.Error <- err
-		return
-	}
-
-	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
-
-	tsStart := uint64(time.Now().UnixNano())
-	if client.Filter.TimestampStart != 0 {
-		tsStart = client.Filter.TimestampStart
-	}
-
-	var idStart string
-	if client.Filter.IdGt != "" {
-		idStart = client.Filter.IdGt
-	}
-
-	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			done := true
-			client.Done <- &done
-			zap.L().Debug("closing go routine : " + client.Name)
-			return
-		case <-ticker.C:
-			// get the new 100 logs as anything more older won't make sense
-			tmpQuery := fmt.Sprintf("%s where timestamp >='%d'", query, tsStart)
-			if filterSql != "" {
-				tmpQuery = fmt.Sprintf("%s and %s", tmpQuery, filterSql)
-			}
-			if idStart != "" {
-				tmpQuery = fmt.Sprintf("%s and id > '%s'", tmpQuery, idStart)
-			}
-			tmpQuery = fmt.Sprintf("%s order by timestamp desc, id desc limit 100", tmpQuery)
-			response := []model.SignozLog{}
-			err := r.db.Select(ctx, &response, tmpQuery)
-			if err != nil {
-				zap.L().Error("Error while getting logs", zap.Error(err))
-				client.Error <- err
-				return
-			}
-			for i := len(response) - 1; i >= 0; i-- {
-				select {
-				case <-ctx.Done():
-					done := true
-					client.Done <- &done
-					zap.L().Debug("closing go routine while sending logs : " + client.Name)
-					return
-				default:
-					client.Logs <- &response[i]
-					if i == 0 {
-						tsStart = response[i].Timestamp
-						idStart = response[i].ID
-					}
-				}
-			}
-		}
-	}
-}
-
-func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.LogsAggregateParams) (*model.GetLogsAggregatesResponse, *model.ApiError) {
-	logAggregatesDBResponseItems := []model.LogsAggregatesDBResponseItem{}
-
-	function := "toFloat64(count()) as value"
-	if params.Function != "" {
-		function = fmt.Sprintf("toFloat64(%s) as value", params.Function)
-	}
-
-	fields, apiErr := r.GetLogFields(ctx)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
-		Query: params.Query,
-	})
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
-	}
-
-	data := map[string]interface{}{
-		"lenFilters": lenFilters,
-	}
-	if lenFilters != 0 {
-		claims, errv2 := authtypes.ClaimsFromContext(ctx)
-		if errv2 == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
-		}
-	}
-
-	query := ""
-	if params.GroupBy != "" {
-		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as ts_start_interval, toString(%s) as groupBy, "+
-			"%s "+
-			"FROM %s.%s WHERE (timestamp >= '%d' AND timestamp <= '%d' )",
-			params.StepSeconds/60, params.GroupBy, function, r.logsDB, r.logsTable, params.TimestampStart, params.TimestampEnd)
-	} else {
-		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as ts_start_interval, "+
-			"%s "+
-			"FROM %s.%s WHERE (timestamp >= '%d' AND timestamp <= '%d' )",
-			params.StepSeconds/60, function, r.logsDB, r.logsTable, params.TimestampStart, params.TimestampEnd)
-	}
-	if filterSql != "" {
-		query = fmt.Sprintf("%s AND ( %s ) ", query, filterSql)
-	}
-	if params.GroupBy != "" {
-		query = fmt.Sprintf("%s GROUP BY ts_start_interval, toString(%s) as groupBy ORDER BY ts_start_interval", query, params.GroupBy)
-	} else {
-		query = fmt.Sprintf("%s GROUP BY ts_start_interval ORDER BY ts_start_interval", query)
-	}
-
-	err = r.db.Select(ctx, &logAggregatesDBResponseItems, query)
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
-	}
-
-	aggregateResponse := model.GetLogsAggregatesResponse{
-		Items: make(map[int64]model.LogsAggregatesResponseItem),
-	}
-
-	for i := range logAggregatesDBResponseItems {
-		if elem, ok := aggregateResponse.Items[int64(logAggregatesDBResponseItems[i].Timestamp)]; ok {
-			if params.GroupBy != "" && logAggregatesDBResponseItems[i].GroupBy != "" {
-				elem.GroupBy[logAggregatesDBResponseItems[i].GroupBy] = logAggregatesDBResponseItems[i].Value
-			}
-			aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = elem
-		} else {
-			if params.GroupBy != "" && logAggregatesDBResponseItems[i].GroupBy != "" {
-				aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = model.LogsAggregatesResponseItem{
-					Timestamp: logAggregatesDBResponseItems[i].Timestamp,
-					GroupBy:   map[string]interface{}{logAggregatesDBResponseItems[i].GroupBy: logAggregatesDBResponseItems[i].Value},
-				}
-			} else if params.GroupBy == "" {
-				aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = model.LogsAggregatesResponseItem{
-					Timestamp: logAggregatesDBResponseItems[i].Timestamp,
-					Value:     logAggregatesDBResponseItems[i].Value,
-				}
-			}
-		}
-
-	}
-
-	return &aggregateResponse, nil
 }
 
 func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error) {
@@ -4908,34 +4427,7 @@ func (r *ClickHouseReader) GetTriggersByInterval(ctx context.Context, ruleID str
 	return result[0], nil
 }
 
-func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error) {
-	var minTime, maxTime time.Time
-
-	query := fmt.Sprintf("SELECT min(timestamp), max(timestamp) FROM %s.%s WHERE traceID IN ('%s')",
-		r.TraceDB, r.SpansTable, strings.Join(traceID, "','"))
-
-	zap.L().Debug("GetMinAndMaxTimestampForTraceID", zap.String("query", query))
-
-	err := r.db.QueryRow(ctx, query).Scan(&minTime, &maxTime)
-	if err != nil {
-		zap.L().Error("Error while executing query", zap.Error(err))
-		return 0, 0, err
-	}
-
-	// return current time if traceID not found
-	if minTime.IsZero() || maxTime.IsZero() {
-		zap.L().Debug("minTime or maxTime is zero, traceID not found")
-		return time.Now().UnixNano(), time.Now().UnixNano(), nil
-	}
-
-	zap.L().Debug("GetMinAndMaxTimestampForTraceID", zap.Any("minTime", minTime), zap.Any("maxTime", maxTime))
-
-	return minTime.UnixNano(), maxTime.UnixNano(), nil
-}
-
-func (r *ClickHouseReader) ReportQueryStartForProgressTracking(
-	queryId string,
-) (func(), *model.ApiError) {
+func (r *ClickHouseReader) ReportQueryStartForProgressTracking(queryId string) (func(), *model.ApiError) {
 	return r.queryProgressTracker.ReportQueryStarted(queryId)
 }
 

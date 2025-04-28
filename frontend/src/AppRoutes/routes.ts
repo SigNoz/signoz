@@ -57,7 +57,6 @@ import {
 	TracesFunnels,
 	TracesSaveViews,
 	UnAuthorized,
-	UsageExplorerPage,
 	WorkspaceAccessRestricted,
 	WorkspaceBlocked,
 	WorkspaceSuspended,
@@ -154,13 +153,6 @@ const routes: AppRoutes[] = [
 		component: SettingsPage,
 		isPrivate: true,
 		key: 'SETTINGS',
-	},
-	{
-		path: ROUTES.USAGE_EXPLORER,
-		exact: true,
-		component: UsageExplorerPage,
-		isPrivate: true,
-		key: 'USAGE_EXPLORER',
 	},
 	{
 		path: ROUTES.ALL_DASHBOARD,
