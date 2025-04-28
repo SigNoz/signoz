@@ -10,6 +10,8 @@ import {
 	getAllEndpointsWidgetData,
 	getEndPointDetailsQueryPayload,
 	getFormattedEndPointDropDownData,
+	getFormattedEndPointMetricsData,
+	getFormattedEndPointStatusCodeData,
 	getGroupByFiltersFromGroupByValues,
 	getLatencyOverTimeWidgetData,
 	getRateOverTimeWidgetData,
@@ -800,6 +802,7 @@ describe('API Monitoring Utils', () => {
 			expect(result[1]).toHaveProperty('value', '/api/orders');
 		});
 
+		// eslint-disable-next-line sonarjs/no-duplicate-string
 		it('should handle empty input array', () => {
 			// Act
 			const result = getFormattedEndPointDropDownData([]);
@@ -808,6 +811,7 @@ describe('API Monitoring Utils', () => {
 			expect(result).toEqual([]);
 		});
 
+		// eslint-disable-next-line sonarjs/no-duplicate-string
 		it('should handle undefined input', () => {
 			// Arrange
 			const undefinedInput = undefined as any;
@@ -856,6 +860,175 @@ describe('API Monitoring Utils', () => {
 			expect(result).toHaveLength(2);
 			expect(result[0]).toHaveProperty('value', '-');
 			expect(result[1]).toHaveProperty('value', '/api/valid-path');
+		});
+	});
+
+	describe('getFormattedEndPointMetricsData', () => {
+		it('should format endpoint metrics data correctly', () => {
+			// Arrange
+			const mockData = [
+				{
+					data: {
+						A: '50', // rate
+						B: '15000000', // latency in nanoseconds
+						C: '5', // required by type
+						D: '1640995200000000', // timestamp in nanoseconds
+						F1: '5.5', // error rate
+					},
+				},
+			];
+
+			// Act
+			const result = getFormattedEndPointMetricsData(mockData as any);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.key).toBeDefined();
+			expect(result.rate).toBe('50');
+			expect(result.latency).toBe(15); // Should be converted from ns to ms
+			expect(result.errorRate).toBe(5.5);
+			expect(typeof result.lastUsed).toBe('string'); // Time formatting is tested elsewhere
+		});
+
+		it('should handle undefined values in data', () => {
+			// Arrange
+			const mockData = [
+				{
+					data: {
+						A: undefined,
+						B: 'n/a',
+						C: '', // required by type
+						D: undefined,
+						F1: 'n/a',
+					},
+				},
+			];
+
+			// Act
+			const result = getFormattedEndPointMetricsData(mockData as any);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.rate).toBe('-');
+			expect(result.latency).toBe('-');
+			expect(result.errorRate).toBe(0);
+			expect(result.lastUsed).toBe('-');
+		});
+
+		it('should handle empty input array', () => {
+			// Act
+			const result = getFormattedEndPointMetricsData([]);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.rate).toBe('-');
+			expect(result.latency).toBe('-');
+			expect(result.errorRate).toBe(0);
+			expect(result.lastUsed).toBe('-');
+		});
+
+		it('should handle undefined input', () => {
+			// Arrange
+			const undefinedInput = undefined as any;
+
+			// Act
+			const result = getFormattedEndPointMetricsData(undefinedInput);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.rate).toBe('-');
+			expect(result.latency).toBe('-');
+			expect(result.errorRate).toBe(0);
+			expect(result.lastUsed).toBe('-');
+		});
+	});
+
+	describe('getFormattedEndPointStatusCodeData', () => {
+		it('should format status code data correctly', () => {
+			// Arrange
+			const mockData = [
+				{
+					data: {
+						response_status_code: '200',
+						A: '150', // count
+						B: '10000000', // latency in nanoseconds
+						C: '5', // rate
+					},
+				},
+				{
+					data: {
+						response_status_code: '404',
+						A: '20',
+						B: '5000000',
+						C: '1',
+					},
+				},
+			];
+
+			// Act
+			const result = getFormattedEndPointStatusCodeData(mockData as any);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.length).toBe(2);
+
+			// Check first item
+			expect(result[0].statusCode).toBe('200');
+			expect(result[0].count).toBe('150');
+			expect(result[0].p99Latency).toBe(10); // Converted from ns to ms
+			expect(result[0].rate).toBe('5');
+
+			// Check second item
+			expect(result[1].statusCode).toBe('404');
+			expect(result[1].count).toBe('20');
+			expect(result[1].p99Latency).toBe(5); // Converted from ns to ms
+			expect(result[1].rate).toBe('1');
+		});
+
+		it('should handle undefined values in data', () => {
+			// Arrange
+			const mockData = [
+				{
+					data: {
+						response_status_code: 'n/a', // Changed from undefined to match expected type
+						A: 'n/a',
+						B: undefined,
+						C: 'n/a',
+					},
+				},
+			];
+
+			// Act
+			const result = getFormattedEndPointStatusCodeData(mockData as any);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.length).toBe(1);
+			expect(result[0].statusCode).toBe('-');
+			expect(result[0].count).toBe('-');
+			expect(result[0].p99Latency).toBe('-');
+			expect(result[0].rate).toBe('-');
+		});
+
+		it('should handle empty input array', () => {
+			// Act
+			const result = getFormattedEndPointStatusCodeData([]);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result).toEqual([]);
+		});
+
+		it('should handle undefined input', () => {
+			// Arrange
+			const undefinedInput = undefined as any;
+
+			// Act
+			const result = getFormattedEndPointStatusCodeData(undefinedInput);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result).toEqual([]);
 		});
 	});
 });

@@ -2802,25 +2802,38 @@ interface EndPointStatusCodeData {
 
 export const getFormattedEndPointMetricsData = (
 	data: EndPointMetricsResponseRow[],
-): EndPointMetricsData => ({
-	key: v4(),
-	rate: data[0].data.A === 'n/a' || !data[0].data.A ? '-' : data[0].data.A,
-	latency:
-		data[0].data.B === 'n/a' || data[0].data.B === undefined
-			? '-'
-			: Math.round(Number(data[0].data.B) / 1000000),
-	errorRate:
-		data[0].data.F1 === 'n/a' || !data[0].data.F1 ? 0 : Number(data[0].data.F1),
-	lastUsed:
-		data[0].data.D === 'n/a' || !data[0].data.D
-			? '-'
-			: getLastUsedRelativeTime(Math.floor(Number(data[0].data.D) / 1000000)),
-});
+): EndPointMetricsData => {
+	if (!data || data.length === 0) {
+		return {
+			key: v4(),
+			rate: '-',
+			latency: '-',
+			errorRate: 0,
+			lastUsed: '-',
+		};
+	}
+
+	return {
+		key: v4(),
+		rate: data[0].data.A === 'n/a' || !data[0].data.A ? '-' : data[0].data.A,
+		latency:
+			data[0].data.B === 'n/a' || data[0].data.B === undefined
+				? '-'
+				: Math.round(Number(data[0].data.B) / 1000000),
+		errorRate:
+			data[0].data.F1 === 'n/a' || !data[0].data.F1 ? 0 : Number(data[0].data.F1),
+		lastUsed:
+			data[0].data.D === 'n/a' || !data[0].data.D
+				? '-'
+				: getLastUsedRelativeTime(Math.floor(Number(data[0].data.D) / 1000000)),
+	};
+};
 
 export const getFormattedEndPointStatusCodeData = (
 	data: EndPointStatusCodeResponseRow[],
-): EndPointStatusCodeData[] =>
-	data?.map((row) => ({
+): EndPointStatusCodeData[] => {
+	if (!data) return [];
+	return data.map((row) => ({
 		key: v4(),
 		statusCode:
 			row.data.response_status_code === 'n/a' ||
@@ -2834,6 +2847,7 @@ export const getFormattedEndPointStatusCodeData = (
 				? '-'
 				: Math.round(Number(row.data.B) / 1000000), // Convert from nanoseconds to milliseconds,
 	}));
+};
 
 export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
 	{
