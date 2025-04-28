@@ -23,7 +23,6 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
@@ -148,8 +147,6 @@ type APIHandler struct {
 
 	Signoz *signoz.SigNoz
 
-	Preference preference.API
-
 	QuickFilters quickfilter.API
 
 	QuickFilterModule quickfilter.Usecase
@@ -200,8 +197,6 @@ type APIHandlerOpts struct {
 	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
-
-	Preference preference.API
 
 	QuickFilters quickfilter.API
 
@@ -3423,44 +3418,6 @@ func (aH *APIHandler) getProducerConsumerEval(
 	aH.Respond(w, resp)
 }
 
-// Preferences
-
-func (aH *APIHandler) getUserPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.GetUserPreference(w, r)
-}
-
-func (aH *APIHandler) updateUserPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.UpdateUserPreference(w, r)
-}
-
-func (aH *APIHandler) getAllUserPreferences(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.GetAllUserPreferences(w, r)
-}
-
-func (aH *APIHandler) getOrgPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.GetOrgPreference(w, r)
-}
-
-func (aH *APIHandler) updateOrgPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.UpdateOrgPreference(w, r)
-}
-
-func (aH *APIHandler) getAllOrgPreferences(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.Preference.GetAllOrgPreferences(w, r)
-}
-
 // Quick Filters - Registers/Upserts all Quick Filters based on Signals
 func (aH *APIHandler) getAllQuickFilters(
 	w http.ResponseWriter, r *http.Request,
@@ -3479,6 +3436,7 @@ func (aH *APIHandler) updateQuickFilters(
 ) {
 	aH.QuickFilters.UpdateQuickFilters(w, r)
 }
+
 // RegisterIntegrationRoutes Registers all Integrations
 func (aH *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()

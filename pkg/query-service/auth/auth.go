@@ -538,7 +538,7 @@ func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanag
 
 	switch len(users) {
 	case 0:
-		user, err := RegisterFirstUser(ctx, req, organizationModule, quickfiltermodule)
+		user, err := RegisterFirstUser(ctx, req, organizationModule)
 		if err != nil {
 			return nil, err
 		}

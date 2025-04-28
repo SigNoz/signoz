@@ -12,11 +12,9 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
-	"github.com/SigNoz/signoz/pkg/modules/preference"
-	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
+	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
-	"github.com/SigNoz/signoz/pkg/http/middleware"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -60,7 +58,6 @@ type APIHandler struct {
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
-	preference := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(signoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
 	quickFilter := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(signoz.SQLStore)))
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
@@ -79,7 +76,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore),
 		Signoz:                        signoz,
-		Preference:                    preference,
 		QuickFilters:                  quickFilter,
 	})
 

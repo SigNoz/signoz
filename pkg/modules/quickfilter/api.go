@@ -28,7 +28,7 @@ func NewAPI(usecase Usecase) API {
 
 func (q *quickFiltersAPI) GetQuickFilters(rw http.ResponseWriter, r *http.Request) {
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
+	if ok != nil {
 		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
@@ -44,7 +44,7 @@ func (q *quickFiltersAPI) GetQuickFilters(rw http.ResponseWriter, r *http.Reques
 
 func (q *quickFiltersAPI) UpdateQuickFilters(rw http.ResponseWriter, r *http.Request) {
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
+	if ok != nil {
 		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
@@ -67,7 +67,7 @@ func (q *quickFiltersAPI) UpdateQuickFilters(rw http.ResponseWriter, r *http.Req
 
 func (q *quickFiltersAPI) GetSignalFilters(rw http.ResponseWriter, r *http.Request) {
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
+	if ok != nil {
 		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}

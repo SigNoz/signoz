@@ -70,7 +70,10 @@ func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 	storableQuickFilters := quickfiltertypes.NewDefaultQuickFilter(defaultOrg)
 
 	// Insert all filters in a single transaction
-	_, err = tx.NewInsert().Model(&storableQuickFilters).Exec(ctx)
+	_, err = tx.NewInsert().
+		Model(&storableQuickFilters).
+		On("CONFLICT (org_id, signal) DO NOTHING").
+		Exec(ctx)
 	if err != nil {
 		return err
 	}
