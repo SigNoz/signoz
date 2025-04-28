@@ -71,6 +71,7 @@ def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
 
     assert response.json()["count"] >= 1
 
+
 def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
     make_http_mocks(
         signoz.zeus,
@@ -121,7 +122,9 @@ def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None
     assert response.status_code == http.HTTPStatus.NO_CONTENT
 
     cursor = signoz.sqlstore.conn.cursor()
-    cursor.execute("SELECT data FROM licenses_v3 WHERE id='0196360e-90cd-7a74-8313-1aa815ce2a67'")
+    cursor.execute(
+        "SELECT data FROM licenses_v3 WHERE id='0196360e-90cd-7a74-8313-1aa815ce2a67'"
+    )
     record = cursor.fetchone()[0]
     assert json.loads(record)["valid_from"] == 1732146922
 
@@ -134,7 +137,7 @@ def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None
     assert response.json()["count"] >= 1
 
 
-def test_license_checkout(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None: 
+def test_license_checkout(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
     make_http_mocks(
         signoz.zeus,
         [
@@ -152,9 +155,7 @@ def test_license_checkout(signoz: SigNoz, make_http_mocks, get_jwt_token) -> Non
                     status=200,
                     json_body={
                         "status": "success",
-                        "data": {
-                            "url": "https://signoz.checkout.com"
-                        },
+                        "data": {"url": "https://signoz.checkout.com"},
                     },
                 ),
                 persistent=False,
@@ -170,7 +171,6 @@ def test_license_checkout(signoz: SigNoz, make_http_mocks, get_jwt_token) -> Non
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
     )
-    
 
     assert response.status_code == http.HTTPStatus.OK
     assert response.json()["data"]["redirectURL"] == "https://signoz.checkout.com"
@@ -183,7 +183,8 @@ def test_license_checkout(signoz: SigNoz, make_http_mocks, get_jwt_token) -> Non
 
     assert response.json()["count"] == 1
 
-def test_license_portal(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None: 
+
+def test_license_portal(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
     make_http_mocks(
         signoz.zeus,
         [
@@ -201,9 +202,7 @@ def test_license_portal(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
                     status=200,
                     json_body={
                         "status": "success",
-                        "data": {
-                            "url": "https://signoz.portal.com"
-                        },
+                        "data": {"url": "https://signoz.portal.com"},
                     },
                 ),
                 persistent=False,
@@ -219,7 +218,6 @@ def test_license_portal(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
     )
-    
 
     assert response.status_code == http.HTTPStatus.OK
     assert response.json()["data"]["redirectURL"] == "https://signoz.portal.com"
