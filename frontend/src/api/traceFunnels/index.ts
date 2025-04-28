@@ -14,7 +14,7 @@ export const createFunnel = async (
 	payload: CreateFunnelPayload,
 ): Promise<SuccessResponse<CreateFunnelResponse> | ErrorResponse> => {
 	const response: AxiosResponse = await axios.post(
-		`${FUNNELS_BASE_PATH}/new-funnel`,
+		`${FUNNELS_BASE_PATH}/new`,
 		payload,
 	);
 
