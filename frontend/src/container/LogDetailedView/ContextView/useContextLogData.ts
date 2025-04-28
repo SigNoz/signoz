@@ -136,6 +136,9 @@ export const useContextLogData = ({
 		},
 		undefined, // params
 		false, // isDependentOnQB
+		undefined, // keyRef
+		undefined, // headers
+		'custom', // selectedTimeInterval
 	);
 
 	const handleShowNextLines = useCallback(() => {
