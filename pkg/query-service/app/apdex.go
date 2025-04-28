@@ -1,19 +1,19 @@
 package app
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
 func (aH *APIHandler) setApdexSettings(w http.ResponseWriter, r *http.Request) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		RespondError(w, &model.ApiError{Err: errors.New("unauthorized"), Typ: model.ErrorUnauthorized}, nil)
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
 		return
 	}
 	req, err := parseSetApdexScoreRequest(r)
@@ -31,9 +31,9 @@ func (aH *APIHandler) setApdexSettings(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getApdexSettings(w http.ResponseWriter, r *http.Request) {
 	services := r.URL.Query().Get("services")
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		RespondError(w, &model.ApiError{Err: errors.New("unauthorized"), Typ: model.ErrorUnauthorized}, nil)
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
 		return
 	}
 	apdexSet, err := dao.DB().GetApdexSettings(r.Context(), claims.OrgID, strings.Split(strings.TrimSpace(services), ","))

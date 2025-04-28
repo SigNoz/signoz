@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -137,10 +136,6 @@ func main() {
 
 	if err := server.Start(context.Background()); err != nil {
 		logger.Fatal("Could not start servers", zap.Error(err))
-	}
-
-	if err := auth.InitAuthCache(context.Background()); err != nil {
-		logger.Fatal("Failed to initialize auth cache", zap.Error(err))
 	}
 
 	signoz.Start(context.Background())

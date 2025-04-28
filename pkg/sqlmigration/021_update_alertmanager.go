@@ -77,12 +77,9 @@ type newAlertmanagerState struct {
 }
 
 func NewUpdateAlertmanagerFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.
-		NewProviderFactory(
-			factory.MustNewName("update_alertmanager"),
-			func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-				return newUpdateAlertmanager(ctx, ps, c, sqlstore)
-			})
+	return factory.NewProviderFactory(factory.MustNewName("update_alertmanager"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return newUpdateAlertmanager(ctx, ps, c, sqlstore)
+	})
 }
 
 func newUpdateAlertmanager(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
@@ -90,8 +87,7 @@ func newUpdateAlertmanager(_ context.Context, _ factory.ProviderSettings, _ Conf
 }
 
 func (migration *updateAlertmanager) Register(migrations *migrate.Migrations) error {
-	if err := migrations.
-		Register(migration.Up, migration.Down); err != nil {
+	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
 
@@ -99,8 +95,7 @@ func (migration *updateAlertmanager) Register(migrations *migrate.Migrations) er
 }
 
 func (migration *updateAlertmanager) Up(ctx context.Context, db *bun.DB) error {
-	tx, err := db.
-		BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}

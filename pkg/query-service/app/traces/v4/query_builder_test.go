@@ -693,6 +693,38 @@ func Test_buildTracesQuery(t *testing.T) {
 			want: "SELECT  max(toUnixTimestamp64Nano(timestamp)) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND " +
 				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) order by value DESC",
 		},
+		{
+			name: "test rate for graph panel",
+			args: args{
+				panelType: v3.PanelTypeGraph,
+				start:     1745315470000000000,
+				end:       1745319070000000000,
+				step:      60,
+				mq: &v3.BuilderQuery{
+					AggregateOperator: v3.AggregateOperatorRate,
+					StepInterval:      60,
+					Filters:           &v3.FilterSet{},
+				},
+			},
+			want: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, count()/60.000000 as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1745315470000000000' AND " +
+				"timestamp <= '1745319070000000000') AND (ts_bucket_start >= 1745313670 AND ts_bucket_start <= 1745319070) group by ts order by value DESC",
+		},
+		{
+			name: "test rate for table panel",
+			args: args{
+				panelType: v3.PanelTypeTable,
+				start:     1745315470000000000,
+				end:       1745319070000000000,
+				step:      60,
+				mq: &v3.BuilderQuery{
+					AggregateOperator: v3.AggregateOperatorRate,
+					StepInterval:      60,
+					Filters:           &v3.FilterSet{},
+				},
+			},
+			want: "SELECT  count()/3600.000000 as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1745315470000000000' AND " +
+				"timestamp <= '1745319070000000000') AND (ts_bucket_start >= 1745313670 AND ts_bucket_start <= 1745319070) order by value DESC",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -2,7 +2,6 @@ package sqlrulestore
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -60,10 +59,9 @@ func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.U
 }
 
 func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance ruletypes.GettablePlannedMaintenance) (valuer.UUID, error) {
-
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return valuer.UUID{}, errors.New("no claims found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return valuer.UUID{}, err
 	}
 
 	storablePlannedMaintenance := ruletypes.StorablePlannedMaintenance{
@@ -100,7 +98,7 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		})
 	}
 
-	err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+	err = r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewInsert().
@@ -147,9 +145,9 @@ func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UU
 }
 
 func (r *maintenance) EditPlannedMaintenance(ctx context.Context, maintenance ruletypes.GettablePlannedMaintenance, id valuer.UUID) error {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return errors.New("no claims found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
 	}
 
 	storablePlannedMaintenance := ruletypes.StorablePlannedMaintenance{
@@ -186,7 +184,7 @@ func (r *maintenance) EditPlannedMaintenance(ctx context.Context, maintenance ru
 		})
 	}
 
-	err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+	err = r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewUpdate().

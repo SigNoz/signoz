@@ -26,6 +26,7 @@ var AggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorMax:     "max",
 	v3.AggregateOperatorMin:     "min",
 	v3.AggregateOperatorSum:     "sum",
+	v3.AggregateOperatorRate:    "count",
 	v3.AggregateOperatorRateSum: "sum",
 	v3.AggregateOperatorRateAvg: "avg",
 	v3.AggregateOperatorRateMax: "max",

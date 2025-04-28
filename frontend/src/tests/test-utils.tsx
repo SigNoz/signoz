@@ -151,15 +151,12 @@ export function getAppContextMock(
 			organization: 'Nightswatch',
 			orgId: 'does-not-matter-id',
 			role: role as ROLES,
-			groupId: 'does-not-matter-groupId',
 		},
 		org: [
 			{
 				createdAt: 0,
-				hasOptedUpdates: false,
 				id: 'does-not-matter-id',
-				isAnonymous: false,
-				name: 'Pentagon',
+				displayName: 'Pentagon',
 			},
 		],
 		isFetchingUser: false,
