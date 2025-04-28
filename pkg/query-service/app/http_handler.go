@@ -118,9 +118,6 @@ type APIHandler struct {
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
 
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
-
 	hostsRepo      *inframetrics.HostsRepo
 	processesRepo  *inframetrics.ProcessesRepo
 	podsRepo       *inframetrics.PodsRepo
@@ -177,11 +174,6 @@ type APIHandlerOpts struct {
 	// Querier Influx Interval
 	FluxInterval time.Duration
 
-	// Use Logs New schema
-	UseLogsNewSchema bool
-
-	UseTraceNewSchema bool
-
 	JWT *authtypes.JWT
 
 	AlertmanagerAPI *alertmanager.API
@@ -194,21 +186,17 @@ type APIHandlerOpts struct {
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	querierOpts := querier.QuerierOptions{
-		Reader:            opts.Reader,
-		Cache:             opts.Cache,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FluxInterval:      opts.FluxInterval,
-		UseLogsNewSchema:  opts.UseLogsNewSchema,
-		UseTraceNewSchema: opts.UseTraceNewSchema,
+		Reader:       opts.Reader,
+		Cache:        opts.Cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		FluxInterval: opts.FluxInterval,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:            opts.Reader,
-		Cache:             opts.Cache,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FluxInterval:      opts.FluxInterval,
-		UseLogsNewSchema:  opts.UseLogsNewSchema,
-		UseTraceNewSchema: opts.UseTraceNewSchema,
+		Reader:       opts.Reader,
+		Cache:        opts.Cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		FluxInterval: opts.FluxInterval,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
@@ -239,8 +227,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
-		UseLogsNewSchema:              opts.UseLogsNewSchema,
-		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
 		podsRepo:                      podsRepo,
@@ -259,15 +245,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		FieldsAPI:                     opts.FieldsAPI,
 	}
 
-	logsQueryBuilder := logsv3.PrepareLogsQuery
-	if opts.UseLogsNewSchema {
-		logsQueryBuilder = logsv4.PrepareLogsQuery
-	}
-
-	tracesQueryBuilder := tracesV3.PrepareTracesQuery
-	if opts.UseTraceNewSchema {
-		tracesQueryBuilder = tracesV4.PrepareTracesQuery
-	}
+	logsQueryBuilder := logsv4.PrepareLogsQuery
+	tracesQueryBuilder := tracesV4.PrepareTracesQuery
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
@@ -4839,11 +4818,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		if aH.UseTraceNewSchema {
-			tracesV4.Enrich(queryRangeParams, spanKeys)
-		} else {
-			tracesV3.Enrich(queryRangeParams, spanKeys)
-		}
+		tracesV4.Enrich(queryRangeParams, spanKeys)
 
 	}
 
@@ -5202,88 +5177,7 @@ func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
-	if aH.UseLogsNewSchema {
-		aH.liveTailLogsV2(w, r)
-		return
-	}
-
-	// get the param from url and add it to body
-	stringReader := strings.NewReader(r.URL.Query().Get("q"))
-	r.Body = io.NopCloser(stringReader)
-
-	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
-	if apiErrorObj != nil {
-		zap.L().Error(apiErrorObj.Err.Error())
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	var err error
-	var queryString string
-	switch queryRangeParams.CompositeQuery.QueryType {
-	case v3.QueryTypeBuilder:
-		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
-			logsFields, err := aH.reader.GetLogFields(r.Context())
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, nil)
-				return
-			}
-			// get the fields if any logs query is present
-			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
-			logsv3.Enrich(queryRangeParams, fields)
-		}
-
-		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-			return
-		}
-
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	// create the client
-	client := &model.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
-	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
-
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(200)
-
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
-		RespondError(w, &err, "streaming is not supported")
-		return
-	}
-	// flush the headers
-	flusher.Flush()
-	for {
-		select {
-		case log := <-client.Logs:
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
-			flusher.Flush()
-		case <-client.Done:
-			zap.L().Debug("done!")
-			return
-		case err := <-client.Error:
-			zap.L().Error("error occurred", zap.Error(err))
-			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
-			flusher.Flush()
-			return
-		}
-	}
-
+	aH.liveTailLogsV2(w, r)
 }
 
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
@@ -5324,11 +5218,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		if aH.UseTraceNewSchema {
-			tracesV4.Enrich(queryRangeParams, spanKeys)
-		} else {
-			tracesV3.Enrich(queryRangeParams, spanKeys)
-		}
+		tracesV4.Enrich(queryRangeParams, spanKeys)
 	}
 
 	// WARN: Only works for AND operator in traces query
