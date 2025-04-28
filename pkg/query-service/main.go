@@ -14,6 +14,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
+	"github.com/SigNoz/signoz/pkg/zeus"
+	"github.com/SigNoz/signoz/pkg/zeus/noopzeus"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -97,6 +99,8 @@ func main() {
 	signoz, err := signoz.New(
 		context.Background(),
 		config,
+		zeus.Config{},
+		noopzeus.NewProviderFactory(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),
 		signoz.NewSQLStoreProviderFactories(),
