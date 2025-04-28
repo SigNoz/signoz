@@ -3,7 +3,7 @@ import './ApiMonitoringPage.styles.scss';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import history from 'lib/history';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-use';
 
 import { Explorer } from './constants';
 
