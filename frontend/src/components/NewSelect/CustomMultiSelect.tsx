@@ -529,28 +529,34 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		(text: string, searchQuery: string): React.ReactNode => {
 			if (!searchQuery || !highlightSearch) return text;
 
-			const parts = text.split(
-				new RegExp(
-					`(${searchQuery.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')})`,
-					'gi',
-				),
-			);
-			return (
-				<>
-					{parts.map((part, i) => {
-						// Create a unique key that doesn't rely on array index
-						const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
+			try {
+				const parts = text.split(
+					new RegExp(
+						`(${searchQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`,
+						'gi',
+					),
+				);
+				return (
+					<>
+						{parts.map((part, i) => {
+							// Create a unique key that doesn't rely on array index
+							const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
 
-						return part.toLowerCase() === searchQuery.toLowerCase() ? (
-							<span key={uniqueKey} className="highlight-text">
-								{part}
-							</span>
-						) : (
-							part
-						);
-					})}
-				</>
-			);
+							return part.toLowerCase() === searchQuery.toLowerCase() ? (
+								<span key={uniqueKey} className="highlight-text">
+									{part}
+								</span>
+							) : (
+								part
+							);
+						})}
+					</>
+				);
+			} catch (error) {
+				// If regex fails, return the original text without highlighting
+				console.error('Error in text highlighting:', error);
+				return text;
+			}
 		},
 		[highlightSearch],
 	);
