@@ -40,11 +40,7 @@ function DynamicVariable({
 		AttributeSource.METRICS,
 	];
 
-	const [attributeSource, setAttributeSource] = useState<AttributeSource>(
-		dynamicVariablesSelectedValue?.value
-			? (dynamicVariablesSelectedValue.value as AttributeSource)
-			: AttributeSource.ALL_SOURCES,
-	);
+	const [attributeSource, setAttributeSource] = useState<AttributeSource>();
 
 	const [attributes, setAttributes] = useState<Record<string, FieldKey[]>>({});
 	const [selectedAttribute, setSelectedAttribute] = useState<string>();
@@ -53,7 +49,8 @@ function DynamicVariable({
 		signal:
 			attributeSource === AttributeSource.ALL_SOURCES
 				? undefined
-				: (attributeSource.toLowerCase() as 'traces' | 'logs' | 'metrics'),
+				: (attributeSource?.toLowerCase() as 'traces' | 'logs' | 'metrics'),
+		enabled: !!attributeSource,
 	});
 
 	useEffect(() => {
@@ -108,7 +105,7 @@ function DynamicVariable({
 				placeholder="Source"
 				defaultValue={AttributeSource.ALL_SOURCES}
 				options={sources.map((source) => ({ label: source, value: source }))}
-				onChange={(value): void => setAttributeSource(value)}
+				onChange={(value): void => setAttributeSource(value as AttributeSource)}
 				value={attributeSource || dynamicVariablesSelectedValue?.value}
 			/>
 		</div>
