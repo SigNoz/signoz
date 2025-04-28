@@ -45,6 +45,9 @@ function DomainDetails({
 	const [endPointsGroupBy, setEndPointsGroupBy] = useState<
 		IBuilderQuery['groupBy']
 	>([]);
+	const [initialFiltersEndPointStats, setInitialFiltersEndPointStats] = useState<
+		IBuilderQuery['filters']
+	>(domainListFilters);
 	const isDarkMode = useIsDarkMode();
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
@@ -160,6 +163,7 @@ function DomainDetails({
 				<>
 					<DomainMetrics
 						domainName={domainData.domainName}
+						domainListFilters={domainListFilters}
 						timeRange={modalTimeRange}
 					/>
 					<div className="views-tabs-container">
@@ -205,6 +209,8 @@ function DomainDetails({
 							groupBy={endPointsGroupBy}
 							setGroupBy={setEndPointsGroupBy}
 							timeRange={modalTimeRange}
+							initialFilters={domainListFilters}
+							setInitialFiltersEndPointStats={setInitialFiltersEndPointStats}
 						/>
 					)}
 
@@ -213,7 +219,7 @@ function DomainDetails({
 							domainName={domainData.domainName}
 							endPointName={selectedEndPointName}
 							setSelectedEndPointName={setSelectedEndPointName}
-							domainListFilters={domainListFilters}
+							initialFilters={initialFiltersEndPointStats}
 							timeRange={modalTimeRange}
 							handleTimeChange={handleTimeChange}
 						/>
@@ -222,7 +228,9 @@ function DomainDetails({
 					{selectedView === VIEW_TYPES.TOP_ERRORS && (
 						<TopErrors
 							domainName={domainData.domainName}
+							initialFilters={domainListFilters}
 							timeRange={modalTimeRange}
+							handleTimeChange={handleTimeChange}
 						/>
 					)}
 				</>

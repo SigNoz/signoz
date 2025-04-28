@@ -33,7 +33,6 @@ function StatusCodeBarCharts({
 	endPointStatusCodeLatencyBarChartsDataQuery,
 	domainName,
 	endPointName,
-	domainListFilters,
 	filters,
 	timeRange,
 	onDragSelect,
@@ -48,7 +47,6 @@ function StatusCodeBarCharts({
 	>;
 	domainName: string;
 	endPointName: string;
-	domainListFilters: IBuilderQuery['filters'];
 	filters: IBuilderQuery['filters'];
 	timeRange: {
 		startTime: number;
@@ -132,10 +130,10 @@ function StatusCodeBarCharts({
 	const widget = useMemo<Widgets>(
 		() =>
 			getStatusCodeBarChartWidgetData(domainName, endPointName, {
-				items: [...domainListFilters.items, ...filters.items],
+				items: [...filters.items],
 				op: filters.op,
 			}),
-		[domainName, endPointName, domainListFilters, filters],
+		[domainName, endPointName, filters],
 	);
 
 	const graphClickHandler = useCallback(

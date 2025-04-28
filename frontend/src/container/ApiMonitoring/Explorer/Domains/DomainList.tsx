@@ -39,7 +39,9 @@ function DomainList({ showIP }: { showIP: boolean }): JSX.Element {
 	);
 
 	const { currentQuery, handleRunQuery } = useQueryBuilder();
-	const query = currentQuery?.builder?.queryData[0] || null;
+	const query = useMemo(() => currentQuery?.builder?.queryData[0] || null, [
+		currentQuery,
+	]);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
@@ -96,7 +98,7 @@ function DomainList({ showIP }: { showIP: boolean }): JSX.Element {
 						op: '=',
 						value: 'Client',
 					},
-					...(query?.filters.items || []),
+					...(compositeData?.builder?.queryData[0]?.filters.items || []),
 				],
 			},
 		};
