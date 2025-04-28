@@ -2916,12 +2916,14 @@ interface EndPointDropDownData {
 
 export const getFormattedEndPointDropDownData = (
 	data: EndPointDropDownResponseRow[],
-): EndPointDropDownData[] =>
-	data?.map((row) => ({
+): EndPointDropDownData[] => {
+	if (!data) return [];
+	return data.map((row) => ({
 		key: v4(),
 		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
 		value: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
 	}));
+};
 
 interface DependentServicesResponseRow {
 	data: {
