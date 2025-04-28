@@ -14,9 +14,9 @@ ARCHS					?= amd64 arm64
 TARGET_DIR              ?= $(shell pwd)/target
 
 ZEUS_URL					   		?= https://api.signoz.cloud
-GO_BUILD_LDFLAG_ZEUS_URL 			= -X github.com/SigNoz/signoz/ee/query-service/constants.ZeusURL=$(ZEUS_URL)
-LICENSE_URL 						?= https://license.signoz.io/api/v1
-GO_BUILD_LDFLAG_LICENSE_SIGNOZ_IO 	= -X github.com/SigNoz/signoz/ee/query-service/constants.LicenseSignozIo=$(LICENSE_URL)
+GO_BUILD_LDFLAG_ZEUS_URL 			= -X github.com/SigNoz/signoz/ee/zeus.url=$(ZEUS_URL)
+LICENSE_URL 						?= https://license.signoz.io
+GO_BUILD_LDFLAG_LICENSE_SIGNOZ_IO 	= -X github.com/SigNoz/signoz/ee/zeus.deprecatedURL=$(LICENSE_URL)
 
 GO_BUILD_VERSION_LDFLAGS 		= -X github.com/SigNoz/signoz/pkg/version.version=$(VERSION) -X github.com/SigNoz/signoz/pkg/version.hash=$(COMMIT_SHORT_SHA) -X github.com/SigNoz/signoz/pkg/version.time=$(TIMESTAMP) -X github.com/SigNoz/signoz/pkg/version.branch=$(BRANCH_NAME)
 GO_BUILD_ARCHS_COMMUNITY 		= $(addprefix go-build-community-,$(ARCHS))

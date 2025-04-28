@@ -8,6 +8,8 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
+	"github.com/SigNoz/signoz/ee/zeus"
+	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
@@ -21,6 +23,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// Deprecated: Please use the logger from pkg/instrumentation.
 func initZapLog() *zap.Logger {
 	config := zap.NewProductionConfig()
 	config.EncoderConfig.TimeKey = "timestamp"
@@ -50,7 +53,9 @@ func main() {
 	var gatewayUrl string
 	var useLicensesV3 bool
 
+	// Deprecated
 	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
+	// Deprecated
 	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
 	// Deprecated
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
@@ -106,6 +111,8 @@ func main() {
 	signoz, err := signoz.New(
 		context.Background(),
 		config,
+		zeus.Config(),
+		httpzeus.NewProviderFactory(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),
 		sqlStoreFactories,
@@ -136,8 +143,6 @@ func main() {
 		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
 		Cluster:                    cluster,
 		GatewayUrl:                 gatewayUrl,
-		UseLogsNewSchema:           useLogsNewSchema,
-		UseTraceNewSchema:          useTraceNewSchema,
 		Jwt:                        jwt,
 	}
 

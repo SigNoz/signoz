@@ -53,8 +53,6 @@ type ServerOptions struct {
 	FluxInterval               string
 	FluxIntervalForTraceDetail string
 	Cluster                    string
-	UseLogsNewSchema           bool
-	UseTraceNewSchema          bool
 	SigNoz                     *signoz.SigNoz
 	Jwt                        *authtypes.JWT
 }
@@ -110,8 +108,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.SigNoz.TelemetryStore,
 		serverOptions.SigNoz.Prometheus,
 		serverOptions.Cluster,
-		serverOptions.UseLogsNewSchema,
-		serverOptions.UseTraceNewSchema,
 		fluxIntervalForTraceDetail,
 		serverOptions.SigNoz.Cache,
 	)
@@ -129,8 +125,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
 		c,
-		serverOptions.UseLogsNewSchema,
-		serverOptions.UseTraceNewSchema,
 		serverOptions.SigNoz.SQLStore,
 		serverOptions.SigNoz.TelemetryStore,
 		serverOptions.SigNoz.Prometheus,
@@ -173,8 +167,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
-		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
-		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
 		JWT:                           serverOptions.Jwt,
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
 		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore),
@@ -435,25 +427,21 @@ func makeRulesManager(
 	db *sqlx.DB,
 	ch interfaces.Reader,
 	cache cache.Cache,
-	useLogsNewSchema bool,
-	useTraceNewSchema bool,
 	sqlstore sqlstore.SQLStore,
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 ) (*rules.Manager, error) {
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		TelemetryStore:    telemetryStore,
-		Prometheus:        prometheus,
-		DBConn:            db,
-		Context:           context.Background(),
-		Logger:            zap.L(),
-		Reader:            ch,
-		Cache:             cache,
-		EvalDelay:         constants.GetEvalDelay(),
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
-		SQLStore:          sqlstore,
+		TelemetryStore: telemetryStore,
+		Prometheus:     prometheus,
+		DBConn:         db,
+		Context:        context.Background(),
+		Logger:         zap.L(),
+		Reader:         ch,
+		Cache:          cache,
+		EvalDelay:      constants.GetEvalDelay(),
+		SQLStore:       sqlstore,
 	}
 
 	// create Manager
