@@ -1,6 +1,7 @@
 import './DynamicVariable.styles.scss';
 
 import { Select, Typography } from 'antd';
+import CustomSelect from 'components/NewSelect/CustomSelect';
 import { useGetFieldKeys } from 'hooks/dynamicVariables/useGetFieldKeys';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { FieldKey } from 'types/api/dynamicVariables/getFieldKeys';
@@ -14,6 +15,7 @@ enum AttributeSource {
 
 function DynamicVariable({
 	setDynamicVariablesSelectedValue,
+	dynamicVariablesSelectedValue,
 }: {
 	setDynamicVariablesSelectedValue: Dispatch<
 		SetStateAction<
@@ -24,6 +26,12 @@ function DynamicVariable({
 			| undefined
 		>
 	>;
+	dynamicVariablesSelectedValue:
+		| {
+				name: string;
+				value: string;
+		  }
+		| undefined;
 }): JSX.Element {
 	const sources = [
 		AttributeSource.ALL_SOURCES,
@@ -33,7 +41,9 @@ function DynamicVariable({
 	];
 
 	const [attributeSource, setAttributeSource] = useState<AttributeSource>(
-		AttributeSource.ALL_SOURCES,
+		dynamicVariablesSelectedValue?.value
+			? (dynamicVariablesSelectedValue.value as AttributeSource)
+			: AttributeSource.ALL_SOURCES,
 	);
 
 	const [attributes, setAttributes] = useState<Record<string, FieldKey[]>>({});
@@ -59,17 +69,26 @@ function DynamicVariable({
 
 	// update setDynamicVariablesSelectedValue with debounce when attribute and source is selected
 	useEffect(() => {
-		if (selectedAttribute && attributeSource) {
+		if (selectedAttribute || attributeSource) {
 			setDynamicVariablesSelectedValue({
-				name: selectedAttribute,
-				value: attributeSource,
+				name: selectedAttribute || dynamicVariablesSelectedValue?.name || '',
+				value:
+					attributeSource ||
+					dynamicVariablesSelectedValue?.value ||
+					AttributeSource.ALL_SOURCES,
 			});
 		}
-	}, [selectedAttribute, attributeSource, setDynamicVariablesSelectedValue]);
+	}, [
+		selectedAttribute,
+		attributeSource,
+		setDynamicVariablesSelectedValue,
+		dynamicVariablesSelectedValue?.name,
+		dynamicVariablesSelectedValue?.value,
+	]);
 
 	return (
 		<div className="dynamic-variable-container">
-			<Select
+			<CustomSelect
 				placeholder="Select an Attribute"
 				options={Object.keys(attributes).map((key) => ({
 					label: key,
@@ -81,6 +100,8 @@ function DynamicVariable({
 					setSelectedAttribute(value);
 				}}
 				showSearch
+				errorMessage={error as any}
+				value={selectedAttribute || dynamicVariablesSelectedValue?.name}
 			/>
 			<Typography className="dynamic-variable-from-text">from</Typography>
 			<Select
@@ -88,6 +109,7 @@ function DynamicVariable({
 				defaultValue={AttributeSource.ALL_SOURCES}
 				options={sources.map((source) => ({ label: source, value: source }))}
 				onChange={(value): void => setAttributeSource(value)}
+				value={attributeSource || dynamicVariablesSelectedValue?.value}
 			/>
 		</div>
 	);
