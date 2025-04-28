@@ -1,6 +1,8 @@
-from fixtures import types
-import requests
 from http import HTTPStatus
+
+import requests
+
+from fixtures import types
 
 
 def test_api_key(signoz: types.SigNoz, get_jwt_token) -> None:

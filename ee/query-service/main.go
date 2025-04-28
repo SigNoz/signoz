@@ -8,6 +8,8 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
+	"github.com/SigNoz/signoz/ee/zeus"
+	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
@@ -109,6 +111,8 @@ func main() {
 	signoz, err := signoz.New(
 		context.Background(),
 		config,
+		zeus.Config(),
+		httpzeus.NewProviderFactory(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),
 		sqlStoreFactories,
