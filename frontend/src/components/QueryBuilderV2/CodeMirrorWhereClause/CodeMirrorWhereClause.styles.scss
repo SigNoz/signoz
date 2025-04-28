@@ -4,7 +4,7 @@
 	display: flex;
 	flex-direction: column;
 	padding: 16px;
-	gap: 16px;
+	gap: 8px;
 	font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
 		'Helvetica Neue', sans-serif;
 
@@ -42,10 +42,12 @@
 
 			border-radius: 4px;
 			border: 1px solid var(--bg-slate-200, #1d212d);
+			font-family: 'Space Mono', monospace !important;
 
 			ul {
 				width: 100% !important;
 				max-width: 100% !important;
+				font-family: 'Space Mono', monospace !important;
 
 				&::-webkit-scrollbar {
 					width: 0.3rem;
@@ -71,6 +73,8 @@
 					align-items: center !important;
 					gap: 8px !important;
 
+					font-family: 'Space Mono', monospace !important;
+
 					.cm-completionIcon {
 						display: none !important;
 					}
@@ -87,9 +91,9 @@
 		}
 
 		.cm-line {
-			line-height: 1.8 !important;
+			line-height: 24px !important;
 			background: var(--bg-ink-300) !important;
-
+			font-family: 'Space Mono', monospace !important;
 			::-moz-selection {
 				background: var(--bg-ink-100) !important;
 				opacity: 0.5 !important;
@@ -124,6 +128,7 @@
 		flex-direction: column;
 		gap: 8px;
 		margin-bottom: 8px;
+		margin-top: 16px;
 
 		.valid,
 		.invalid {
@@ -196,22 +201,109 @@
 		}
 	}
 
-	.query-examples {
-		padding: 12px;
-		background-color: var(--bg-vanilla-100);
-		border: 1px solid var(--bg-vanilla-300);
-		border-radius: 4px;
+	.code-mirror-card {
+		.ant-card-body {
+			padding: 8px;
+		}
+	}
 
-		ul {
-			margin-top: 8px;
-			margin-bottom: 0;
-			padding-left: 16px;
-			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-			gap: 8px;
+	.query-text-preview-title {
+		font-size: 13px;
+		color: var(--bg-vanilla-100);
+		background-color: var(--bg-robin-500);
+		padding: 2px 6px;
+		border-radius: 2px;
+		margin-right: 4px;
+	}
 
-			li {
-				margin-bottom: 4px;
+	.query-text-preview {
+		font-family: 'Space Mono', monospace;
+		font-size: 13px;
+		color: var(--bg-vanilla-200);
+		padding: 2px 6px;
+		font-style: italic;
+	}
+
+	.query-examples-card {
+		background-color: var(--bg-ink-400);
+		border: 1px solid var(--bg-slate-200);
+
+		.ant-card-body {
+			padding: 0;
+		}
+
+		.query-examples {
+			.ant-collapse-header {
+				padding: 8px 16px !important;
+				color: var(--bg-vanilla-300) !important;
+				font-weight: 500;
+			}
+
+			.ant-collapse-content {
+				background-color: transparent !important;
+			}
+
+			.query-examples-list {
+				display: flex;
+				flex-direction: row;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+
+			.query-example-tag {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				padding: 8px 12px;
+				background-color: var(--bg-ink-400);
+				border: 1px solid var(--bg-slate-200);
+				border-radius: 4px;
+				cursor: pointer;
+				transition: all 0.2s ease;
+				outline: none;
+
+				&:hover {
+					background-color: var(--bg-ink-300);
+					border-color: var(--bg-robin-500);
+				}
+
+				&:focus-visible {
+					outline: 2px solid var(--bg-robin-500);
+					outline-offset: 2px;
+				}
+
+				.query-example-content {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+				}
+
+				.query-example-label {
+					font-weight: 500;
+					color: var(--bg-vanilla-300);
+					font-size: 13px;
+				}
+
+				.query-example-query {
+					font-family: 'Space Mono', monospace;
+					font-size: 12px;
+					color: var(--bg-vanilla-200);
+					background-color: var(--bg-ink-300);
+					padding: 2px 6px;
+					border-radius: 2px;
+				}
+
+				.query-example-description {
+					font-size: 12px;
+					color: var(--bg-vanilla-200);
+					opacity: 0.8;
+				}
+			}
+
+			.query-example-content {
+				display: inline-flex;
+
+				cursor: pointer;
 			}
 		}
 	}
@@ -247,10 +339,36 @@
 			}
 		}
 
-		.query-examples {
+		.query-examples-card {
 			background-color: var(--bg-ink-400);
 			border-color: var(--bg-slate-500);
-			color: var(--bg-vanilla-100);
+
+			.ant-collapse-header {
+				color: var(--bg-vanilla-100) !important;
+			}
+
+			.query-example-tag {
+				background-color: var(--bg-ink-400);
+				border-color: var(--bg-slate-500);
+
+				&:hover {
+					background-color: var(--bg-ink-300);
+					border-color: var(--bg-robin-500);
+				}
+
+				.query-example-label {
+					color: var(--bg-vanilla-100);
+				}
+
+				.query-example-query {
+					color: var(--bg-vanilla-100);
+					background-color: var(--bg-ink-300);
+				}
+
+				.query-example-description {
+					color: var(--bg-vanilla-100);
+				}
+			}
 		}
 	}
 }
