@@ -1,5 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Table, Tooltip, Typography } from 'antd';
+import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V4 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -7,6 +8,7 @@ import {
 	formatTopErrorsDataForTable,
 	getEndPointDetailsQueryPayload,
 	getTopErrorsColumnsConfig,
+	getTopErrorsCoRelationQueryFilters,
 	getTopErrorsQueryPayload,
 	TopErrorsResponseRow,
 } from 'container/ApiMonitoring/utils';
@@ -21,7 +23,7 @@ import { useQueries } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import EndPointsDropDown from './components/EndPointsDropDown';
 import ErrorState from './components/ErrorState';
@@ -30,7 +32,6 @@ import { SPAN_ATTRIBUTES } from './constants';
 function TopErrors({
 	domainName,
 	timeRange,
-	initialFilters,
 	handleTimeChange,
 }: {
 	domainName: string;
@@ -38,7 +39,6 @@ function TopErrors({
 		startTime: number;
 		endTime: number;
 	};
-	initialFilters: IBuilderQuery['filters'];
 	handleTimeChange: (
 		interval: Time | CustomTimeType,
 		dateTimeRange?: [number, number],
@@ -65,12 +65,11 @@ function TopErrors({
 								op: '=',
 								value: endPointName,
 							},
-							...initialFilters.items,
 					  ]
 					: [],
 				op: 'AND',
 			}),
-		[domainName, endPointName, minTime, maxTime, initialFilters],
+		[domainName, endPointName, minTime, maxTime],
 	);
 
 	// Since only one query here
@@ -140,6 +139,8 @@ function TopErrors({
 		handleTimeChange('6h');
 	}, [handleTimeChange]);
 
+	const navigateToExplorer = useNavigateToExplorer();
+
 	if (isError) {
 		return (
 			<div className="all-endpoints-error-state-wrapper">
@@ -201,6 +202,22 @@ function TopErrors({
 					rowClassName={(_, index): string =>
 						index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
 					}
+					onRow={(record): { onClick: () => void } => ({
+						onClick: (): void => {
+							const filters = getTopErrorsCoRelationQueryFilters(
+								domainName,
+								record.endpointName,
+								record.statusCode,
+							);
+							navigateToExplorer({
+								filters: [...filters.items],
+								dataSource: DataSource.TRACES,
+								startTime: minTime,
+								endTime: maxTime,
+								shouldResolveQuery: true,
+							});
+						},
+					})}
 				/>
 			</div>
 		</div>

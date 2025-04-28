@@ -228,7 +228,6 @@ function DomainDetails({
 					{selectedView === VIEW_TYPES.TOP_ERRORS && (
 						<TopErrors
 							domainName={domainData.domainName}
-							initialFilters={domainListFilters}
 							timeRange={modalTimeRange}
 							handleTimeChange={handleTimeChange}
 						/>
