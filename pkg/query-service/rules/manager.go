@@ -379,6 +379,11 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) er
 			return err
 		}
 
+		err = m.syncRuleStateWithTask(ctx, claims.OrgID, prepareTaskName(existingRule.ID.StringValue()), parsedRule)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 }
@@ -470,6 +475,9 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 			return err
 		}
 
+		taskName := prepareTaskName(id.StringValue())
+		m.deleteTask(taskName)
+
 		return nil
 	})
 }
@@ -547,6 +555,11 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 
 		err = m.alertmanager.SetConfig(ctx, cfg)
 		if err != nil {
+			return err
+		}
+
+		taskName := prepareTaskName(id.StringValue())
+		if err := m.addTask(ctx, claims.OrgID, parsedRule, taskName); err != nil {
 			return err
 		}
 
