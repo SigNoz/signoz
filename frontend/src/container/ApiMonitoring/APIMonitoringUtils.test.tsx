@@ -9,6 +9,7 @@ import {
 	formatTopErrorsDataForTable,
 	getAllEndpointsWidgetData,
 	getEndPointDetailsQueryPayload,
+	getFormattedDependentServicesData,
 	getFormattedEndPointDropDownData,
 	getFormattedEndPointMetricsData,
 	getFormattedEndPointStatusCodeData,
@@ -890,6 +891,7 @@ describe('API Monitoring Utils', () => {
 			expect(typeof result.lastUsed).toBe('string'); // Time formatting is tested elsewhere
 		});
 
+		// eslint-disable-next-line sonarjs/no-duplicate-string
 		it('should handle undefined values in data', () => {
 			// Arrange
 			const mockData = [
@@ -1029,6 +1031,139 @@ describe('API Monitoring Utils', () => {
 			// Assert
 			expect(result).toBeDefined();
 			expect(result).toEqual([]);
+		});
+	});
+
+	describe('getFormattedDependentServicesData', () => {
+		it('should format dependent services data correctly', () => {
+			// Arrange
+			const mockData = [
+				{
+					data: {
+						// eslint-disable-next-line sonarjs/no-duplicate-string
+						'service.name': 'auth-service',
+						A: '500', // count
+						B: '120000000', // latency in nanoseconds
+						C: '15', // rate
+						F1: '2.5', // error percentage
+					},
+				},
+				{
+					data: {
+						'service.name': 'db-service',
+						A: '300',
+						B: '80000000',
+						C: '10',
+						F1: '1.2',
+					},
+				},
+			];
+
+			// Act
+			const result = getFormattedDependentServicesData(mockData as any);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.length).toBe(2);
+
+			// Check first service
+			expect(result[0].key).toBeDefined();
+			expect(result[0].serviceData.serviceName).toBe('auth-service');
+			expect(result[0].serviceData.count).toBe(500);
+			expect(typeof result[0].serviceData.percentage).toBe('number');
+			expect(result[0].latency).toBe(120); // Should be converted from ns to ms
+			expect(result[0].rate).toBe('15');
+			expect(result[0].errorPercentage).toBe('2.5');
+
+			// Check second service
+			expect(result[1].serviceData.serviceName).toBe('db-service');
+			expect(result[1].serviceData.count).toBe(300);
+			expect(result[1].latency).toBe(80);
+			expect(result[1].rate).toBe('10');
+			expect(result[1].errorPercentage).toBe('1.2');
+
+			// Verify percentage calculation
+			const totalCount = 500 + 300;
+			expect(result[0].serviceData.percentage).toBeCloseTo(
+				(500 / totalCount) * 100,
+				2,
+			);
+			expect(result[1].serviceData.percentage).toBeCloseTo(
+				(300 / totalCount) * 100,
+				2,
+			);
+		});
+
+		it('should handle undefined values in data', () => {
+			// Arrange
+			const mockData = [
+				{
+					data: {
+						'service.name': 'auth-service',
+						A: 'n/a',
+						B: undefined,
+						C: 'n/a',
+						F1: undefined,
+					},
+				},
+			];
+
+			// Act
+			const result = getFormattedDependentServicesData(mockData as any);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.length).toBe(1);
+			expect(result[0].serviceData.serviceName).toBe('auth-service');
+			expect(result[0].serviceData.count).toBe('-');
+			expect(result[0].serviceData.percentage).toBe(0);
+			expect(result[0].latency).toBe('-');
+			expect(result[0].rate).toBe('-');
+			expect(result[0].errorPercentage).toBe(0);
+		});
+
+		it('should handle empty input array', () => {
+			// Act
+			const result = getFormattedDependentServicesData([]);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result).toEqual([]);
+		});
+
+		it('should handle undefined input', () => {
+			// Arrange
+			const undefinedInput = undefined as any;
+
+			// Act
+			const result = getFormattedDependentServicesData(undefinedInput);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result).toEqual([]);
+		});
+
+		it('should handle missing service name', () => {
+			// Arrange
+			const mockData = [
+				{
+					data: {
+						// Missing service.name
+						A: '200',
+						B: '50000000',
+						C: '8',
+						F1: '0.5',
+					},
+				},
+			];
+
+			// Act
+			const result = getFormattedDependentServicesData(mockData as any);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.length).toBe(1);
+			expect(result[0].serviceData.serviceName).toBe('-');
 		});
 	});
 });
