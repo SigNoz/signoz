@@ -163,7 +163,7 @@ func (r *rule) getChannels() (*[]model.ChannelItem, *model.ApiError) {
 func (r *rule) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 	alertsInfo := model.AlertsInfo{}
 	// fetch alerts from rules db
-	query := "SELECT data FROM rules"
+	query := "SELECT data FROM rule"
 	var alertsData []string
 	var alertNames []string
 	err := r.Select(&alertsData, query)
