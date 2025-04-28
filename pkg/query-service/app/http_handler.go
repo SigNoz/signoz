@@ -90,7 +90,6 @@ func NewRouter() *mux.Router {
 // APIHandler implements the query service public API
 type APIHandler struct {
 	reader            interfaces.Reader
-	skipConfig        *model.SkipConfig
 	appDao            dao.ModelDao
 	ruleManager       *rules.Manager
 	featureFlags      interfaces.FeatureLookup
@@ -156,8 +155,6 @@ type APIHandlerOpts struct {
 
 	// business data reader e.g. clickhouse
 	Reader interfaces.Reader
-
-	SkipConfig *model.SkipConfig
 
 	PreferSpanMetrics bool
 
@@ -243,7 +240,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	aH := &APIHandler{
 		reader:                        opts.Reader,
 		appDao:                        opts.AppDao,
-		skipConfig:                    opts.SkipConfig,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
@@ -1702,7 +1698,7 @@ func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Requ
 		end = time.Unix(0, endEpochInt)
 	}
 
-	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end, services)
+	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), start, end, services)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -1718,7 +1714,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetServices(r.Context(), query, aH.skipConfig)
+	result, apiErr := aH.reader.GetServices(r.Context(), query)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}

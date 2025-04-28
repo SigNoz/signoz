@@ -31,7 +31,6 @@ import (
 
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
-	SkipConfig                    *basemodel.SkipConfig
 	PreferSpanMetrics             bool
 	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
@@ -61,7 +60,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 	quickFilter := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(signoz.SQLStore)))
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
-		SkipConfig:                    opts.SkipConfig,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
 		AppDao:                        opts.AppDao,
 		RuleManager:                   opts.RulesManager,
