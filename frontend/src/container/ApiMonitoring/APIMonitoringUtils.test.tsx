@@ -8,14 +8,17 @@ import {
 	extractPortAndEndpoint,
 	formatTopErrorsDataForTable,
 	getAllEndpointsWidgetData,
+	getCustomFiltersForBarChart,
 	getEndPointDetailsQueryPayload,
 	getFormattedDependentServicesData,
 	getFormattedEndPointDropDownData,
 	getFormattedEndPointMetricsData,
+	getFormattedEndPointStatusCodeChartData,
 	getFormattedEndPointStatusCodeData,
 	getGroupByFiltersFromGroupByValues,
 	getLatencyOverTimeWidgetData,
 	getRateOverTimeWidgetData,
+	getStatusCodeBarChartWidgetData,
 	getTopErrorsColumnsConfig,
 	getTopErrorsCoRelationQueryFilters,
 	getTopErrorsQueryPayload,
@@ -621,6 +624,7 @@ describe('API Monitoring Utils', () => {
 
 			// Check query configuration
 			expect(result).toHaveProperty('query');
+			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(result).toHaveProperty('query.builder.queryData');
 
 			const queryData = result.query.builder.queryData[0];
@@ -1164,6 +1168,338 @@ describe('API Monitoring Utils', () => {
 			expect(result).toBeDefined();
 			expect(result.length).toBe(1);
 			expect(result[0].serviceData.serviceName).toBe('-');
+		});
+	});
+
+	describe('getFormattedEndPointStatusCodeChartData', () => {
+		afterEach(() => {
+			jest.resetAllMocks();
+		});
+
+		it('should format status code chart data correctly with sum aggregation', () => {
+			// Arrange
+			const mockData = {
+				data: {
+					result: [
+						{
+							metric: { response_status_code: '200' },
+							values: [[1000000100, '10']],
+							queryName: 'A',
+							legend: 'Test 200 Legend',
+						},
+						{
+							metric: { response_status_code: '404' },
+							values: [[1000000100, '5']],
+							queryName: 'B',
+							legend: 'Test 404 Legend',
+						},
+					],
+					resultType: 'matrix',
+				},
+			};
+
+			// Act
+			const result = getFormattedEndPointStatusCodeChartData(
+				mockData as any,
+				'sum',
+			);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.data.result).toBeDefined();
+			expect(result.data.result.length).toBeGreaterThan(0);
+
+			// Check that results are grouped by status code classes
+			const hasStatusCode200To299 = result.data.result.some(
+				(item) => item.metric?.response_status_code === '200-299',
+			);
+			expect(hasStatusCode200To299).toBe(true);
+		});
+
+		it('should format status code chart data correctly with average aggregation', () => {
+			// Arrange
+			const mockData = {
+				data: {
+					result: [
+						{
+							metric: { response_status_code: '200' },
+							values: [[1000000100, '20']],
+							queryName: 'A',
+							legend: 'Test 200 Legend',
+						},
+						{
+							metric: { response_status_code: '500' },
+							values: [[1000000100, '10']],
+							queryName: 'B',
+							legend: 'Test 500 Legend',
+						},
+					],
+					resultType: 'matrix',
+				},
+			};
+
+			// Act
+			const result = getFormattedEndPointStatusCodeChartData(
+				mockData as any,
+				'average',
+			);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.data.result).toBeDefined();
+
+			// Check that results are grouped by status code classes
+			const hasStatusCode500To599 = result.data.result.some(
+				(item) => item.metric?.response_status_code === '500-599',
+			);
+			expect(hasStatusCode500To599).toBe(true);
+		});
+
+		it('should handle undefined input', () => {
+			// Setup a mock
+			jest
+				.spyOn(
+					jest.requireActual('./utils'),
+					'getFormattedEndPointStatusCodeChartData',
+				)
+				.mockReturnValue({
+					data: {
+						result: [],
+						resultType: 'matrix',
+					},
+				});
+
+			// Act
+			const result = getFormattedEndPointStatusCodeChartData(
+				undefined as any,
+				'sum',
+			);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.data.result).toEqual([]);
+		});
+
+		it('should handle empty result array', () => {
+			// Arrange
+			const mockData = {
+				data: {
+					result: [],
+					resultType: 'matrix',
+				},
+			};
+
+			// Act
+			const result = getFormattedEndPointStatusCodeChartData(
+				mockData as any,
+				'sum',
+			);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.data.result).toEqual([]);
+		});
+	});
+
+	describe('getStatusCodeBarChartWidgetData', () => {
+		it('should generate widget configuration for status code bar chart', () => {
+			// Arrange
+			const domainName = 'test-domain';
+			const endPointName = '/api/test';
+			const filters = { items: [], op: 'AND' };
+
+			// Act
+			const result = getStatusCodeBarChartWidgetData(
+				domainName,
+				endPointName,
+				filters as IBuilderQuery['filters'],
+			);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result).toHaveProperty('title');
+			expect(result).toHaveProperty('panelTypes', PANEL_TYPES.BAR);
+
+			// Check query configuration
+			expect(result).toHaveProperty('query');
+			expect(result).toHaveProperty('query.builder.queryData');
+
+			const queryData = result.query.builder.queryData[0];
+
+			// Should have domain filter
+			const domainFilter = queryData.filters.items.find(
+				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
+			);
+			expect(domainFilter).toBeDefined();
+			if (domainFilter) {
+				expect(domainFilter.value).toBe(domainName);
+			}
+
+			// Should have endpoint filter if provided
+			const endpointFilter = queryData.filters.items.find(
+				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.URL_PATH,
+			);
+			expect(endpointFilter).toBeDefined();
+			if (endpointFilter) {
+				expect(endpointFilter.value).toBe(endPointName);
+			}
+		});
+
+		it('should include custom filters in the widget configuration', () => {
+			// Arrange
+			const domainName = 'test-domain';
+			const endPointName = '/api/test';
+			const customFilter = {
+				id: 'custom-filter',
+				key: {
+					dataType: 'string',
+					isColumn: true,
+					isJSON: false,
+					key: 'custom.key',
+					type: '',
+				},
+				op: '=',
+				value: 'custom-value',
+			};
+			const filters = { items: [customFilter], op: 'AND' };
+
+			// Act
+			const result = getStatusCodeBarChartWidgetData(
+				domainName,
+				endPointName,
+				filters as IBuilderQuery['filters'],
+			);
+
+			// Assert
+			const queryData = result.query.builder.queryData[0];
+
+			// Should include our custom filter
+			const includedFilter = queryData.filters.items.find(
+				(item) => item.id === 'custom-filter',
+			);
+			expect(includedFilter).toBeDefined();
+			if (includedFilter) {
+				expect(includedFilter.value).toBe('custom-value');
+			}
+		});
+	});
+
+	describe('getCustomFiltersForBarChart', () => {
+		it('should create filters for status code ranges', () => {
+			// Arrange
+			const metric = {
+				response_status_code: '200-299',
+			};
+
+			// Act
+			const result = getCustomFiltersForBarChart(metric);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.length).toBe(2);
+
+			// Should have two filters, one for >= start code and one for <= end code
+			const startRangeFilter = result.find((item) => item.op === '>=');
+			const endRangeFilter = result.find((item) => item.op === '<=');
+
+			expect(startRangeFilter).toBeDefined();
+			expect(endRangeFilter).toBeDefined();
+
+			// Verify filter key
+			if (startRangeFilter && startRangeFilter.key) {
+				expect(startRangeFilter.key.key).toBe('response_status_code');
+				expect(startRangeFilter.value).toBe('200');
+			}
+
+			if (endRangeFilter && endRangeFilter.key) {
+				expect(endRangeFilter.key.key).toBe('response_status_code');
+				expect(endRangeFilter.value).toBe('299');
+			}
+		});
+
+		it('should handle other status code ranges', () => {
+			// Arrange
+			const metric = {
+				response_status_code: '400-499',
+			};
+
+			// Act
+			const result = getCustomFiltersForBarChart(metric);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.length).toBe(2);
+
+			const startRangeFilter = result.find((item) => item.op === '>=');
+			const endRangeFilter = result.find((item) => item.op === '<=');
+
+			// Verify values match the 400-499 range
+			if (startRangeFilter) {
+				expect(startRangeFilter.value).toBe('400');
+			}
+
+			if (endRangeFilter) {
+				expect(endRangeFilter.value).toBe('499');
+			}
+		});
+
+		it('should handle undefined metric', () => {
+			// Act
+			const result = getCustomFiltersForBarChart(undefined);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result).toEqual([]);
+		});
+
+		it('should handle empty metric object', () => {
+			// Act
+			const result = getCustomFiltersForBarChart({});
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result).toEqual([]);
+		});
+
+		it('should handle metric without response_status_code', () => {
+			// Arrange
+			const metric = {
+				some_other_field: 'value',
+			};
+
+			// Act
+			const result = getCustomFiltersForBarChart(metric);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result).toEqual([]);
+		});
+
+		it('should handle unsupported status code range', () => {
+			// Arrange
+			const metric = {
+				response_status_code: 'invalid-range',
+			};
+
+			// Act
+			const result = getCustomFiltersForBarChart(metric);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result.length).toBe(2);
+
+			// Should still have two filters
+			const startRangeFilter = result.find((item) => item.op === '>=');
+			const endRangeFilter = result.find((item) => item.op === '<=');
+
+			// But values should be empty strings
+			if (startRangeFilter) {
+				expect(startRangeFilter.value).toBe('');
+			}
+
+			if (endRangeFilter) {
+				expect(endRangeFilter.value).toBe('');
+			}
 		});
 	});
 });

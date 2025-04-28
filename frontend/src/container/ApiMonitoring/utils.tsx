@@ -3242,7 +3242,6 @@ export const groupStatusCodes = (
 			return [timestamp, finalValue.toString()];
 		});
 	});
-
 	// Define the order of status code ranges
 	const statusCodeOrder = ['200-299', '300-399', '400-499', '500-599', 'Other'];
 
@@ -3366,7 +3365,13 @@ export const getFormattedEndPointStatusCodeChartData = (
 	aggregationType: 'sum' | 'average' = 'sum',
 ): EndPointStatusCodePayloadData => {
 	if (!data) {
-		return data;
+		return {
+			data: {
+				result: [],
+				newResult: [],
+				resultType: 'matrix',
+			},
+		};
 	}
 	return {
 		data: {
