@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import './Home.styles.scss';
 
+import { Button as SignozButton } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
 import { Alert, Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -305,6 +306,9 @@ export default function Home(): JSX.Element {
 					}
 					rightComponent={
 						<div className="home-header-right">
+							<SignozButton variant="solid" size="lg" color="primary">
+								Button
+							</SignozButton>
 							{isWelcomeChecklistSkipped && (
 								<Popover
 									placement="bottomRight"
