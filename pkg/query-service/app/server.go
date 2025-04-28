@@ -17,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
+	tfCore "github.com/SigNoz/signoz/pkg/modules/tracefunnel/core"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
@@ -186,6 +188,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	preferenceAPI := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(serverOptions.SigNoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
 	organizationAPI := implorganization.NewAPI(implorganization.NewModule(implorganization.NewStore(serverOptions.SigNoz.SQLStore)))
 	organizationModule := implorganization.NewModule(implorganization.NewStore(serverOptions.SigNoz.SQLStore))
+	tracefunnels := tracefunnel.NewAPI(tfCore.NewStore(serverOptions.SigNoz.SQLStore))
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		SkipConfig:                    skipConfig,
@@ -207,6 +210,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Preference:                    preferenceAPI,
 		OrganizationAPI:               organizationAPI,
 		OrganizationModule:            organizationModule,
+		TraceFunnels:                  tracefunnels,
 	})
 	if err != nil {
 		return nil, err
@@ -319,6 +323,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.RegisterMessagingQueuesRoutes(r, am)
 	api.RegisterThirdPartyApiRoutes(r, am)
 	api.MetricExplorerRoutes(r, am)
+	api.RegisterTraceFunnelsRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -417,7 +422,6 @@ func (s *Server) Start(ctx context.Context) error {
 	if port, err := utils.GetPort(s.privateConn.Addr()); err == nil {
 		privatePort = port
 	}
-	fmt.Println("starting private http")
 	go func() {
 		zap.L().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.serverOptions.PrivateHostPort))
 

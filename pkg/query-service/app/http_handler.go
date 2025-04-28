@@ -25,6 +25,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
+	traceFunnel "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -61,7 +62,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	tracefunnel "github.com/SigNoz/signoz/pkg/types/tracefunnel"
 
 	"go.uber.org/zap"
 
@@ -152,6 +154,8 @@ type APIHandler struct {
 
 	OrganizationAPI    organization.API
 	OrganizationModule organization.Module
+
+	TraceFunnels traceFunnel.Api
 }
 
 type APIHandlerOpts struct {
@@ -203,6 +207,7 @@ type APIHandlerOpts struct {
 	Preference         preference.API
 	OrganizationAPI    organization.API
 	OrganizationModule organization.Module
+	TraceFunnels       traceFunnel.Api
 }
 
 // NewAPIHandler returns an APIHandler
@@ -275,6 +280,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		FieldsAPI:                     opts.FieldsAPI,
 		OrganizationAPI:               opts.OrganizationAPI,
 		OrganizationModule:            opts.OrganizationModule,
+		TraceFunnels:                  opts.TraceFunnels,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -5614,4 +5620,464 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		Result: result,
 	}
 	aH.Respond(w, resp)
+}
+
+// RegisterTraceFunnelsRoutes adds trace funnels routes
+func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middleware.AuthZ) {
+	// Main trace funnels router
+	traceFunnelsRouter := router.PathPrefix("/api/v1/trace-funnels").Subrouter()
+
+	// API endpoints
+	traceFunnelsRouter.HandleFunc("/new-funnel", aH.handleNewFunnel).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/steps/update", aH.handleUpdateFunnelStep).Methods("PUT")
+	traceFunnelsRouter.HandleFunc("/list", aH.handleListFunnels).Methods("GET")
+
+	// Standard RESTful endpoints for funnel resource
+	traceFunnelsRouter.HandleFunc("/{funnel_id}", aH.handleGetFunnel).Methods("GET")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}", aH.handleDeleteFunnel).Methods("DELETE")
+	traceFunnelsRouter.HandleFunc("/save", aH.handleSaveFunnel).Methods("POST")
+
+	// Analytics endpoints
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", aH.handleValidateTraces).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", aH.handleFunnelAnalytics).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", aH.handleStepAnalytics).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", aH.handleFunnelSlowTraces).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", aH.handleFunnelErrorTraces).Methods("POST")
+}
+
+// handleNewFunnel handles the creation of a new funnel
+func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
+	var req tracefunnel.FunnelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorUnauthorized, Err: fmt.Errorf("unauthenticated")}, nil)
+		return
+	}
+	userID := claims.UserID
+	orgID := claims.OrgID
+
+	// Check if a funnel with the same name already exists for this org
+	funnels, err := aH.TraceFunnels.ListFunnels(r.Context(), orgID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to list funnels: %v", err)}, nil)
+		return
+	}
+
+	for _, f := range funnels {
+		if f.Name == req.Name {
+			RespondError(w, &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("a funnel with name '%s' already exists in this organization", req.Name),
+			}, nil)
+			return
+		}
+	}
+
+	funnel, err := aH.TraceFunnels.CreateFunnel(r.Context(), req.Timestamp, req.Name, userID, orgID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to create funnel: %v", err)}, nil)
+		return
+	}
+
+	response := tracefunnel.FunnelResponse{
+		FunnelID:          funnel.ID.String(),
+		FunnelName:        funnel.Name,
+		CreationTimestamp: req.Timestamp,
+		UserEmail:         claims.Email,
+		OrgID:             orgID,
+	}
+
+	aH.Respond(w, response)
+}
+
+// handleUpdateFunnelStep adds or updates steps for an existing funnel
+func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Request) {
+	var req tracefunnel.FunnelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorUnauthorized, Err: fmt.Errorf("unauthenticated")}, nil)
+		return
+	}
+	userID := claims.UserID
+	orgID := claims.OrgID
+
+	if err := traceFunnel.ValidateTimestamp(req.Timestamp, "timestamp"); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	funnel, err := aH.TraceFunnels.GetFunnel(r.Context(), req.FunnelID.String())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	// Check if name is being updated and if it already exists
+	if req.Name != "" && req.Name != funnel.Name {
+		funnels, err := aH.TraceFunnels.ListFunnels(r.Context(), orgID)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to list funnels: %v", err)}, nil)
+			return
+		}
+
+		for _, f := range funnels {
+			if f.Name == req.Name {
+				RespondError(w, &model.ApiError{
+					Typ: model.ErrorBadData,
+					Err: fmt.Errorf("a funnel with name '%s' already exists in this organization", req.Name),
+				}, nil)
+				return
+			}
+		}
+	}
+
+	// Process each step in the request
+	for i := range req.Steps {
+		if req.Steps[i].Order < 1 {
+			req.Steps[i].Order = int64(i + 1) // Default to sequential ordering if not specified
+		}
+	}
+
+	if err := traceFunnel.ValidateFunnelSteps(req.Steps); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid funnel steps: %v", err)}, nil)
+		return
+	}
+
+	// Normalize step orders
+	req.Steps = traceFunnel.NormalizeFunnelSteps(req.Steps)
+
+	// Update the funnel with new steps
+	funnel.Steps = req.Steps
+	funnel.UpdatedAt = time.Unix(0, req.Timestamp*1000000) // Convert to nanoseconds
+	funnel.UpdatedBy = userID
+
+	// Update funnel in database
+	err = aH.TraceFunnels.UpdateFunnel(r.Context(), funnel, userID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to update funnel in database: %v", err)}, nil)
+		return
+	}
+
+	// Update name and description if provided
+	if req.Name != "" || req.Description != "" {
+		// If name is not provided, use the existing name
+		name := req.Name
+		if name == "" {
+			name = funnel.Name
+		}
+		// If description is not provided, use the existing description
+		description := req.Description
+		if description == "" {
+			description = funnel.Description
+		}
+
+		err = aH.TraceFunnels.UpdateMetadata(r.Context(), funnel.ID, name, description, userID)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to update funnel metadata: %v", err)}, nil)
+			return
+		}
+	}
+
+	// Get the updated funnel to return in response
+	updatedFunnel, err := aH.TraceFunnels.GetFunnel(r.Context(), funnel.ID.String())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to get updated funnel: %v", err)}, nil)
+		return
+	}
+
+	response := tracefunnel.FunnelResponse{
+		FunnelName:  updatedFunnel.Name,
+		FunnelID:    updatedFunnel.ID.String(),
+		Steps:       updatedFunnel.Steps,
+		CreatedAt:   updatedFunnel.CreatedAt.UnixNano() / 1000000,
+		CreatedBy:   updatedFunnel.CreatedBy,
+		OrgID:       updatedFunnel.OrgID.String(),
+		UpdatedBy:   userID,
+		UpdatedAt:   updatedFunnel.UpdatedAt.UnixNano() / 1000000,
+		Description: updatedFunnel.Description,
+	}
+
+	aH.Respond(w, response)
+}
+
+// handleListFunnels handles listing all funnels for a user
+func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorUnauthorized,
+			Err: fmt.Errorf("unauthenticated"),
+		}, nil)
+		return
+	}
+
+	orgID := claims.OrgID
+	funnels, err := aH.TraceFunnels.ListFunnels(r.Context(), orgID)
+	if err != nil {
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: fmt.Errorf("failed to list funnels: %v", err),
+		}, nil)
+		return
+	}
+
+	var response []tracefunnel.FunnelResponse
+	for _, f := range funnels {
+		funnelResp := tracefunnel.FunnelResponse{
+			FunnelName:  f.Name,
+			FunnelID:    f.ID.String(),
+			CreatedAt:   f.CreatedAt.UnixNano() / 1000000,
+			CreatedBy:   f.CreatedBy,
+			OrgID:       f.OrgID.String(),
+			UpdatedAt:   f.UpdatedAt.UnixNano() / 1000000,
+			UpdatedBy:   f.UpdatedBy,
+			Description: f.Description,
+		}
+
+		// Get user email if available
+		if f.CreatedByUser != nil {
+			funnelResp.UserEmail = f.CreatedByUser.Email
+		}
+
+		response = append(response, funnelResp)
+	}
+
+	aH.Respond(w, response)
+}
+
+// handleGetFunnel handles getting a single funnel
+func (aH *APIHandler) handleGetFunnel(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.TraceFunnels.GetFunnel(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	// Create a response with only the email from CreatedByUser
+	response := tracefunnel.FunnelResponse{
+		FunnelID:    funnel.ID.String(),
+		FunnelName:  funnel.Name,
+		Description: funnel.Description,
+		CreatedAt:   funnel.CreatedAt.UnixNano() / 1000000,
+		UpdatedAt:   funnel.UpdatedAt.UnixNano() / 1000000,
+		CreatedBy:   funnel.CreatedBy,
+		UpdatedBy:   funnel.UpdatedBy,
+		OrgID:       funnel.OrgID.String(),
+		Steps:       funnel.Steps,
+		UserEmail:   funnel.CreatedByUser.Email,
+	}
+
+	aH.Respond(w, response)
+}
+
+// handleDeleteFunnel handles deleting a funnel
+func (aH *APIHandler) handleDeleteFunnel(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	err := aH.TraceFunnels.DeleteFunnel(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to delete funnel: %v", err)}, nil)
+		return
+	}
+
+	aH.Respond(w, nil)
+}
+
+// handleSaveFunnel saves a funnel to the SQLite database
+func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
+	var req tracefunnel.FunnelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorUnauthorized, Err: fmt.Errorf("unauthenticated")}, nil)
+		return
+	}
+	orgID := claims.OrgID
+	usrID := claims.UserID
+
+	funnel, err := aH.TraceFunnels.GetFunnel(r.Context(), req.FunnelID.String())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	updateTimestamp := req.Timestamp
+	if updateTimestamp == 0 {
+		updateTimestamp = time.Now().UnixMilli()
+	} else if !traceFunnel.ValidateTimestampIsMilliseconds(updateTimestamp) {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("timestamp must be in milliseconds format (13 digits)")}, nil)
+		return
+	}
+	funnel.UpdatedAt = time.Unix(0, updateTimestamp*1000000) // Convert to nanoseconds
+
+	if req.UserID != "" {
+		funnel.UpdatedBy = usrID
+	}
+
+	funnel.Description = req.Description
+
+	if err := aH.TraceFunnels.SaveFunnel(r.Context(), funnel, funnel.UpdatedBy, orgID); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to save funnel: %v", err)}, nil)
+		return
+	}
+
+	// Try to fetch metadata from DB
+	createdAt, updatedAt, extraDataFromDB, err := aH.TraceFunnels.GetFunnelMetadata(r.Context(), funnel.ID.String())
+	resp := tracefunnel.FunnelResponse{
+		FunnelName:  funnel.Name,
+		CreatedAt:   createdAt,
+		UpdatedAt:   updatedAt,
+		CreatedBy:   funnel.CreatedBy,
+		UpdatedBy:   funnel.UpdatedBy,
+		OrgID:       funnel.OrgID.String(),
+		Description: extraDataFromDB,
+	}
+
+	aH.Respond(w, resp)
+}
+
+// handleValidateTraces handles validating traces in a funnel
+func (aH *APIHandler) handleValidateTraces(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.TraceFunnels.GetFunnel(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	var timeRange tracefunnel.TimeRange
+	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
+		return
+	}
+
+	response, err := aH.TraceFunnels.ValidateTraces(r.Context(), funnel, timeRange)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error validating traces: %v", err)}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
+// handleFunnelAnalytics handles getting analytics for a funnel
+func (aH *APIHandler) handleFunnelAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.TraceFunnels.GetFunnel(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	var timeRange tracefunnel.TimeRange
+	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
+		return
+	}
+
+	response, err := aH.TraceFunnels.GetFunnelAnalytics(r.Context(), funnel, timeRange)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error getting funnel analytics: %v", err)}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
+// handleStepAnalytics handles getting analytics for each step
+func (aH *APIHandler) handleStepAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.TraceFunnels.GetFunnel(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	var timeRange tracefunnel.TimeRange
+	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
+		return
+	}
+
+	response, err := aH.TraceFunnels.GetStepAnalytics(r.Context(), funnel, timeRange)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error getting step analytics: %v", err)}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
+// handleFunnelSlowTraces handles requests for slow traces in a funnel
+func (aH *APIHandler) handleFunnelSlowTraces(w http.ResponseWriter, r *http.Request) {
+	aH.handleTracesWithLatency(w, r, false)
+}
+
+// handleFunnelErrorTraces handles requests for error traces in a funnel
+func (aH *APIHandler) handleFunnelErrorTraces(w http.ResponseWriter, r *http.Request) {
+	aH.handleTracesWithLatency(w, r, true)
+}
+
+// handleTracesWithLatency handles both slow and error traces with common logic
+func (aH *APIHandler) handleTracesWithLatency(w http.ResponseWriter, r *http.Request, isError bool) {
+	funnel, req, err := aH.validateTracesRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	if err := traceFunnel.ValidateSteps(funnel, req.StepAOrder, req.StepBOrder); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	response, err := aH.TraceFunnels.GetSlowestTraces(r.Context(), funnel, req.StepAOrder, req.StepBOrder, req.TimeRange, isError)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error getting traces: %v", err)}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
+// validateTracesRequest validates and extracts the request parameters
+func (aH *APIHandler) validateTracesRequest(r *http.Request) (*tracefunnel.Funnel, *tracefunnel.StepTransitionRequest, error) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.TraceFunnels.GetFunnel(r.Context(), funnelID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("funnel not found: %v", err)
+	}
+
+	var req tracefunnel.StepTransitionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, nil, fmt.Errorf("invalid request body: %v", err)
+	}
+
+	return funnel, &req, nil
 }
