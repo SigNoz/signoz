@@ -29,7 +29,6 @@ import (
 
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
-	SkipConfig                    *basemodel.SkipConfig
 	PreferSpanMetrics             bool
 	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
@@ -58,7 +57,6 @@ type APIHandler struct {
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
-		SkipConfig:                    opts.SkipConfig,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
 		AppDao:                        opts.AppDao,
 		RuleManager:                   opts.RulesManager,
