@@ -8,7 +8,7 @@ import './DashboardVariableSelection.styles.scss';
 
 import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
-import { Input, Popover, Typography } from 'antd';
+import { Input, Popover, Tooltip, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -358,6 +358,12 @@ function VariableItem({
 							value={tempSelection || selectValue}
 							onDropdownVisibleChange={handleDropdownVisibleChange}
 							errorMessage={errorMessage}
+							// eslint-disable-next-line react/no-unstable-nested-components
+							maxTagPlaceholder={(omittedValues): JSX.Element => (
+								<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>
+									<span>+ {omittedValues.length} </span>
+								</Tooltip>
+							)}
 						/>
 					) : (
 						<CustomSelect
