@@ -601,32 +601,30 @@ function CodeMirrorWhereClause(): JSX.Element {
 
 	return (
 		<div className="code-mirror-where-clause">
-			<Card className="code-mirror-card">
-				<CodeMirror
-					value={query}
-					theme={copilot}
-					onChange={handleChange}
-					onUpdate={handleUpdate}
-					autoFocus
-					placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
-					extensions={[
-						autocompletion({
-							override: [myCompletions],
-							defaultKeymap: true,
-							closeOnBlur: false,
-							activateOnTyping: true,
-							maxRenderedOptions: 50,
-						}),
-						javascript({ jsx: false, typescript: false }),
-						EditorView.lineWrapping,
-						stopEventsExtension,
-						// customTheme,
-					]}
-					basicSetup={{
-						lineNumbers: false,
-					}}
-				/>
-			</Card>
+			<CodeMirror
+				value={query}
+				theme={copilot}
+				onChange={handleChange}
+				onUpdate={handleUpdate}
+				autoFocus
+				placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
+				extensions={[
+					autocompletion({
+						override: [myCompletions],
+						defaultKeymap: true,
+						closeOnBlur: false,
+						activateOnTyping: true,
+						maxRenderedOptions: 50,
+					}),
+					javascript({ jsx: false, typescript: false }),
+					EditorView.lineWrapping,
+					stopEventsExtension,
+					// customTheme,
+				]}
+				basicSetup={{
+					lineNumbers: false,
+				}}
+			/>
 
 			{query && (
 				<Card size="small">
