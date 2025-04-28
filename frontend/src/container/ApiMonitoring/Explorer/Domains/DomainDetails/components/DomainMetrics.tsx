@@ -12,21 +12,30 @@ import { useMemo } from 'react';
 import { useQueries } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import ErrorState from './ErrorState';
 
 function DomainMetrics({
 	domainName,
 	timeRange,
+	domainListFilters,
 }: {
 	domainName: string;
 	timeRange: { startTime: number; endTime: number };
+	domainListFilters: IBuilderQuery['filters'];
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
 	const queryPayloads = useMemo(
-		() => getDomainMetricsQueryPayload(domainName, minTime, maxTime),
-		[domainName, minTime, maxTime],
+		() =>
+			getDomainMetricsQueryPayload(
+				domainName,
+				minTime,
+				maxTime,
+				domainListFilters,
+			),
+		[domainName, minTime, maxTime, domainListFilters],
 	);
 
 	// Since only one query here
