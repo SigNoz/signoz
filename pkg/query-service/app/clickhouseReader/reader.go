@@ -316,8 +316,7 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	return &services, nil
 }
 
-func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig, start, end time.Time, services []string) (*map[string][]string, *model.ApiError) {
-
+func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, start, end time.Time, services []string) (*map[string][]string, *model.ApiError) {
 	start = start.In(time.UTC)
 
 	// The `top_level_operations` that have `time` >= start
@@ -346,9 +345,6 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 		}
 		if _, ok := operations[serviceName]; !ok {
 			operations[serviceName] = []string{"overflow_operation"}
-		}
-		if skipConfig.ShouldSkip(serviceName, name) {
-			continue
 		}
 		operations[serviceName] = append(operations[serviceName], name)
 	}
@@ -414,13 +410,13 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 	return resourceSubQuery, nil
 }
 
-func (r *ClickHouseReader) GetServicesV2(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
+func (r *ClickHouseReader) GetServicesV2(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
 
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
 	}
 
-	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End, nil)
+	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, *queryParams.Start, *queryParams.End, nil)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -539,16 +535,16 @@ func (r *ClickHouseReader) GetServicesV2(ctx context.Context, queryParams *model
 	return &serviceItems, nil
 }
 
-func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
+func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
 	if r.useTraceNewSchema {
-		return r.GetServicesV2(ctx, queryParams, skipConfig)
+		return r.GetServicesV2(ctx, queryParams)
 	}
 
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
 	}
 
-	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End, nil)
+	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, *queryParams.Start, *queryParams.End, nil)
 	if apiErr != nil {
 		return nil, apiErr
 	}

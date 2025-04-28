@@ -208,7 +208,7 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 	query := mds.bundb.NewSelect().
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.role").
-		ColumnExpr("o.name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.id = ?", id)
 
@@ -243,7 +243,7 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
 	query := mds.bundb.NewSelect().
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.role").
-		ColumnExpr("o.name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.email = ?", email)
 
@@ -277,7 +277,7 @@ func (mds *ModelDaoSqlite) GetUsersWithOpts(ctx context.Context, limit int) ([]t
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.role").
 		ColumnExpr("users.role as role").
-		ColumnExpr("o.name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN organizations o ON o.id = users.org_id")
 
 	if limit > 0 {
@@ -300,7 +300,7 @@ func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context,
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.role").
 		ColumnExpr("users.role as role").
-		ColumnExpr("o.name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.org_id = ?", orgId)
 
@@ -318,7 +318,7 @@ func (mds *ModelDaoSqlite) GetUsersByRole(ctx context.Context, role authtypes.Ro
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.role").
 		ColumnExpr("users.role as role").
-		ColumnExpr("o.name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.role = ?", role)
 
