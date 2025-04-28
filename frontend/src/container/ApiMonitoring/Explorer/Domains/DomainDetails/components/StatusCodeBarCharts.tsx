@@ -115,16 +115,21 @@ function StatusCodeBarCharts({
 	const navigateToExplorerPages = useNavigateToExplorerPages();
 	const { notifications } = useNotifications();
 
-	const { getCustomSeries } = useGetGraphCustomSeries({
-		isDarkMode,
-		drawStyle: 'bars',
-		colorMapping: {
+	const colorMapping = useMemo(
+		() => ({
 			'200-299': Color.BG_FOREST_500,
 			'300-399': Color.BG_AMBER_400,
 			'400-499': Color.BG_CHERRY_500,
 			'500-599': Color.BG_ROBIN_500,
 			Other: Color.BG_SIENNA_500,
-		},
+		}),
+		[],
+	);
+
+	const { getCustomSeries } = useGetGraphCustomSeries({
+		isDarkMode,
+		drawStyle: 'bars',
+		colorMapping,
 	});
 
 	const widget = useMemo<Widgets>(
@@ -188,6 +193,7 @@ function StatusCodeBarCharts({
 				onClickHandler: graphClickHandler,
 				customSeries: getCustomSeries,
 				onDragSelect,
+				colorMapping,
 			}),
 		[
 			minTime,
@@ -200,6 +206,7 @@ function StatusCodeBarCharts({
 			graphClickHandler,
 			getCustomSeries,
 			onDragSelect,
+			colorMapping,
 		],
 	);
 
