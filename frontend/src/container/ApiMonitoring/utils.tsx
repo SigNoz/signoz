@@ -339,6 +339,7 @@ export const getDomainMetricsQueryPayload = (
 	domainName: string,
 	start: number,
 	end: number,
+	filters: IBuilderQuery['filters'],
 ): GetQueryResultsProps[] => [
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -374,6 +375,7 @@ export const getDomainMetricsQueryPayload = (
 									op: '=',
 									value: domainName,
 								},
+								...filters.items,
 							],
 							op: 'AND',
 						},
@@ -415,6 +417,7 @@ export const getDomainMetricsQueryPayload = (
 									op: '=',
 									value: domainName,
 								},
+								...filters.items,
 							],
 							op: 'AND',
 						},
@@ -468,6 +471,7 @@ export const getDomainMetricsQueryPayload = (
 									op: '=',
 									value: 'true',
 								},
+								...filters.items,
 							],
 							op: 'AND',
 						},
@@ -509,6 +513,7 @@ export const getDomainMetricsQueryPayload = (
 									op: '=',
 									value: domainName,
 								},
+								...filters.items,
 							],
 							op: 'AND',
 						},
@@ -1379,9 +1384,10 @@ export const getTopErrorsColumnsConfig = (): ColumnType<TopErrorsTableRowData>[]
 		ellipsis: true,
 		sorter: false,
 		className: 'column',
-		render: (text: string, record: TopErrorsTableRowData): React.ReactNode => (
-			<div className="endpoint-name-value">{record.endpointName}</div>
-		),
+		render: (text: string, record: TopErrorsTableRowData): React.ReactNode => {
+			const { endpoint } = extractPortAndEndpoint(record.endpointName);
+			return <div className="endpoint-name-value">{endpoint}</div>;
+		},
 	},
 	{
 		title: <div className="column-header">Status code</div>,
@@ -2730,7 +2736,7 @@ export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
 		},
 	},
 	{
-		title: 'P99',
+		title: 'P99 Latency',
 		dataIndex: 'p99Latency',
 		key: 'p99Latency',
 		align: 'right',
@@ -2741,6 +2747,7 @@ export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
 				b.p99Latency === '-' || b.p99Latency === 'n/a' ? 0 : Number(b.p99Latency);
 			return p99LatencyA - p99LatencyB;
 		},
+		render: (latency: number): ReactNode => <span>{latency || '-'}ms</span>,
 	},
 ];
 
@@ -3222,6 +3229,7 @@ export const END_POINT_DETAILS_QUERY_KEYS_ARRAY = [
 export const getAllEndpointsWidgetData = (
 	groupBy: BaseAutocompleteData[],
 	domainName: string,
+	filters: IBuilderQuery['filters'],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): Widgets => {
 	const isGroupedByAttribute = groupBy.length > 0;
@@ -3270,6 +3278,7 @@ export const getAllEndpointsWidgetData = (
 								op: '=',
 								value: 'Client',
 							},
+							...filters.items,
 						],
 						op: 'AND',
 					},
@@ -3325,6 +3334,7 @@ export const getAllEndpointsWidgetData = (
 								op: '=',
 								value: 'Client',
 							},
+							...filters.items,
 						],
 						op: 'AND',
 					},
@@ -3380,6 +3390,7 @@ export const getAllEndpointsWidgetData = (
 								op: '=',
 								value: 'Client',
 							},
+							...filters.items,
 						],
 						op: 'AND',
 					},
@@ -3447,6 +3458,7 @@ export const getAllEndpointsWidgetData = (
 								op: '=',
 								value: 'Client',
 							},
+							...filters.items,
 						],
 						op: 'AND',
 					},
@@ -3479,9 +3491,12 @@ export const getAllEndpointsWidgetData = (
 
 	widget.renderColumnCell = {
 		[SPAN_ATTRIBUTES.URL_PATH]: (url: any): ReactNode => {
-			const { endpoint } = extractPortAndEndpoint(url);
+			const { endpoint, port } = extractPortAndEndpoint(url);
 			return (
-				<span>{endpoint === 'n/a' || url === undefined ? '-' : endpoint}</span>
+				<span>
+					{port !== '-' && port !== 'n/a' ? `:${port}` : ''}
+					{endpoint === 'n/a' || url === undefined ? '-' : endpoint}
+				</span>
 			);
 		},
 		A: (numOfCalls: any): ReactNode => (
@@ -3561,6 +3576,37 @@ export const getAllEndpointsWidgetData = (
 	);
 
 	return widget;
+};
+
+const keysToRemove = ['http.url', 'A', 'B', 'C', 'F1'];
+
+export const getGroupByFiltersFromGroupByValues = (
+	rowData: any,
+	groupBy: BaseAutocompleteData[],
+): IBuilderQuery['filters'] => {
+	const items = Object.keys(rowData)
+		.filter((key) => !keysToRemove.includes(key))
+		.map((key) => {
+			const groupByAttribute = groupBy.find((gb) => gb.key === key);
+			return {
+				id: groupByAttribute?.id || v4(),
+				key: {
+					dataType: groupByAttribute?.dataType || DataTypes.String,
+					isColumn: groupByAttribute?.isColumn || true,
+					isJSON: groupByAttribute?.isJSON || false,
+					key: groupByAttribute?.key || key,
+					type: groupByAttribute?.type || '',
+				},
+				op: '=', // operator for every attribute -> discuss
+				value: rowData[key],
+			};
+		});
+
+	console.log('uncaught items', items);
+	return {
+		items,
+		op: 'AND',
+	};
 };
 
 export const getRateOverTimeWidgetData = (

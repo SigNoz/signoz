@@ -1,6 +1,11 @@
 import { Select } from 'antd';
-import { getAllEndpointsWidgetData } from 'container/ApiMonitoring/utils';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import {
+	getAllEndpointsWidgetData,
+	getGroupByFiltersFromGroupByValues,
+} from 'container/ApiMonitoring/utils';
 import GridCard from 'container/GridCardLayout/GridCard';
+import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -15,6 +20,8 @@ function AllEndPoints({
 	groupBy,
 	setGroupBy,
 	timeRange,
+	initialFilters,
+	setInitialFiltersEndPointStats,
 }: {
 	domainName: string;
 	setSelectedEndPointName: (name: string) => void;
@@ -25,6 +32,8 @@ function AllEndPoints({
 		startTime: number;
 		endTime: number;
 	};
+	initialFilters: IBuilderQuery['filters'];
+	setInitialFiltersEndPointStats: (filters: IBuilderQuery['filters']) => void;
 }): JSX.Element {
 	const {
 		data: groupByFiltersData,
@@ -72,13 +81,81 @@ function AllEndPoints({
 		}
 	}, [groupByFiltersData]);
 
+	const currentQuery = initialQueriesMap[DataSource.TRACES];
+
+	// Local state for filters, combining endpoint filter and search filters
+	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
+		// Initialize filters based on the initial endPointName prop
+		const initialItems = [...initialFilters.items];
+		return { op: 'AND', items: initialItems };
+	});
+
+	// Handler for changes from the QueryBuilderSearchV2 component
+	const handleFilterChange = useCallback(
+		(newFilters: IBuilderQuery['filters']): void => {
+			// 1. Update local filters state immediately
+			setFilters(newFilters);
+		},
+		[], // Dependencies for the callback
+	);
+
+	const updatedCurrentQuery = useMemo(
+		() => ({
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: [
+					{
+						...currentQuery.builder.queryData[0],
+						dataSource: DataSource.TRACES,
+						filters, // Use the local filters state
+					},
+				],
+			},
+		}),
+		[filters, currentQuery],
+	);
+
+	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
+
 	const allEndpointsWidgetData = useMemo(
-		() => getAllEndpointsWidgetData(groupBy, domainName),
-		[groupBy, domainName],
+		() => getAllEndpointsWidgetData(groupBy, domainName, filters),
+		[groupBy, domainName, filters],
+	);
+
+	const onRowClick = useCallback(
+		(props: any): void => {
+			setSelectedEndPointName(props[SPAN_ATTRIBUTES.URL_PATH] as string);
+			setSelectedView(VIEWS.ENDPOINT_STATS);
+			const initialItems = [
+				...filters.items,
+				...getGroupByFiltersFromGroupByValues(props, groupBy).items,
+			];
+			setInitialFiltersEndPointStats({
+				items: initialItems,
+				op: 'AND',
+			});
+		},
+		[
+			filters,
+			setInitialFiltersEndPointStats,
+			setSelectedEndPointName,
+			setSelectedView,
+			groupBy,
+		],
 	);
 
 	return (
 		<div className="all-endpoints-container">
+			<div className="all-endpoints-header">
+				<div className="filter-container">
+					<QueryBuilderSearchV2
+						query={query}
+						onChange={handleFilterChange}
+						placeholder="Search for filters..."
+					/>
+				</div>
+			</div>
 			<div className="group-by-container">
 				<div className="group-by-label"> Group by </div>
 				<Select
@@ -100,10 +177,7 @@ function AllEndPoints({
 					onDragSelect={(): void => {}}
 					customOnDragSelect={(): void => {}}
 					customTimeRange={timeRange}
-					customOnRowClick={(props): void => {
-						setSelectedEndPointName(props[SPAN_ATTRIBUTES.URL_PATH] as string);
-						setSelectedView(VIEWS.ENDPOINT_STATS);
-					}}
+					customOnRowClick={onRowClick}
 				/>
 			</div>
 		</div>

@@ -41,14 +41,14 @@ function EndPointDetails({
 	domainName,
 	endPointName,
 	setSelectedEndPointName,
-	domainListFilters,
+	initialFilters,
 	timeRange,
 	handleTimeChange,
 }: {
 	domainName: string;
 	endPointName: string;
 	setSelectedEndPointName: (value: string) => void;
-	domainListFilters: IBuilderQuery['filters'];
+	initialFilters: IBuilderQuery['filters'];
 	timeRange: {
 		startTime: number;
 		endTime: number;
@@ -65,7 +65,7 @@ function EndPointDetails({
 	// Local state for filters, combining endpoint filter and search filters
 	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
 		// Initialize filters based on the initial endPointName prop
-		const initialItems = [];
+		const initialItems = [...initialFilters.items];
 		if (endPointName) {
 			initialItems.push({
 				id: '92b8a1c1',
@@ -196,21 +196,12 @@ function EndPointDetails({
 		[endPointName],
 	);
 
-	// Combine domainListFilters (from parent) and local filters for graph/chart queries
-	const combinedFilters = useMemo(
-		() => ({
-			op: 'AND', // Assuming AND logic for combining filter sets
-			items: [...domainListFilters.items, ...filters.items],
-		}),
-		[domainListFilters, filters],
-	);
-
 	const [rateOverTimeWidget, latencyOverTimeWidget] = useMemo(
 		() => [
-			getRateOverTimeWidgetData(domainName, endPointName, combinedFilters),
-			getLatencyOverTimeWidgetData(domainName, endPointName, combinedFilters),
+			getRateOverTimeWidgetData(domainName, endPointName, filters),
+			getLatencyOverTimeWidgetData(domainName, endPointName, filters),
 		],
-		[domainName, endPointName, combinedFilters], // Use combinedFilters
+		[domainName, endPointName, filters], // Use combinedFilters
 	);
 
 	// // [TODO] Fix this later
@@ -273,7 +264,6 @@ function EndPointDetails({
 				}
 				domainName={domainName}
 				endPointName={endPointName}
-				domainListFilters={domainListFilters}
 				filters={filters}
 				timeRange={timeRange}
 				onDragSelect={onDragSelect}
