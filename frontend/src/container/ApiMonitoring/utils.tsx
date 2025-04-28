@@ -1375,6 +1375,66 @@ export const formatTopErrorsDataForTable = (
 	}));
 };
 
+export const getTopErrorsCoRelationQueryFilters = (
+	domainName: string,
+	endPointName: string,
+	statusCode: string,
+): IBuilderQuery['filters'] => ({
+	items: [
+		{
+			id: 'ea16470b',
+			key: {
+				key: 'http.url',
+				dataType: DataTypes.String,
+				type: 'tag',
+				isColumn: false,
+				isJSON: false,
+				id: 'http.url--string--tag--false',
+			},
+			op: '=',
+			value: endPointName,
+		},
+		{
+			id: 'b0ef3799',
+			key: {
+				key: 'has_error',
+				dataType: DataTypes.bool,
+				type: '',
+				isColumn: false,
+				isJSON: false,
+			},
+			op: '=',
+			value: 'true',
+		},
+		{
+			id: 'e8a043b7',
+			key: {
+				key: 'net.peer.name',
+				dataType: DataTypes.String,
+				type: '',
+				isColumn: false,
+				isJSON: false,
+			},
+			op: '=',
+			value: domainName,
+		},
+		{
+			id: 'f6891e27',
+			key: {
+				key: 'status_code',
+				dataType: DataTypes.Float64,
+				type: '',
+				isColumn: true,
+				isJSON: false,
+				id: 'status_code--float64----true',
+			},
+			op: '=',
+			value: statusCode,
+		},
+	],
+	op: 'AND',
+});
+
 export const getTopErrorsColumnsConfig = (): ColumnType<TopErrorsTableRowData>[] => [
 	{
 		title: <div className="endpoint-name-header">Endpoint</div>,
@@ -1386,7 +1446,11 @@ export const getTopErrorsColumnsConfig = (): ColumnType<TopErrorsTableRowData>[]
 		className: 'column',
 		render: (text: string, record: TopErrorsTableRowData): React.ReactNode => {
 			const { endpoint } = extractPortAndEndpoint(record.endpointName);
-			return <div className="endpoint-name-value">{endpoint}</div>;
+			return (
+				<Tooltip title="Click to open traces">
+					<div className="endpoint-name-value">{endpoint}</div>
+				</Tooltip>
+			);
 		},
 	},
 	{
@@ -3602,7 +3666,6 @@ export const getGroupByFiltersFromGroupByValues = (
 			};
 		});
 
-	console.log('uncaught items', items);
 	return {
 		items,
 		op: 'AND',
