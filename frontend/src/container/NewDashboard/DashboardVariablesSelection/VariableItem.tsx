@@ -291,11 +291,6 @@ function VariableItem({
 			? 'ALL'
 			: selectedValueStringified;
 
-	const mode: 'multiple' | undefined =
-		variableData.multiSelect && !variableData.allSelected
-			? 'multiple'
-			: undefined;
-
 	useEffect(() => {
 		// Fetch options for CUSTOM Type
 		if (variableData.type === 'CUSTOM') {
@@ -351,7 +346,6 @@ function VariableItem({
 							bordered={false}
 							placeholder="Select value"
 							placement="bottomLeft"
-							mode={mode}
 							style={SelectItemStyle}
 							loading={isLoading}
 							showSearch
@@ -361,7 +355,7 @@ function VariableItem({
 							maxTagCount={4}
 							getPopupContainer={popupContainer}
 							allowClear
-							value={tempSelection || selectedValueStringified}
+							value={tempSelection || selectValue}
 							onDropdownVisibleChange={handleDropdownVisibleChange}
 						/>
 					) : (
