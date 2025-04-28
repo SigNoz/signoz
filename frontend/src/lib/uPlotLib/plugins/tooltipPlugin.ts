@@ -48,6 +48,7 @@ const generateTooltipContent = (
 	isMergedSeries?: boolean,
 	stackBarChart?: boolean,
 	timezone?: string,
+	colorMapping?: Record<string, string>,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -95,10 +96,12 @@ const generateTooltipContent = (
 					? ''
 					: getLabelName(metric, queryName || '', legend || '');
 
-				let color = generateColor(
-					label,
-					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-				);
+				let color =
+					colorMapping?.[label] ||
+					generateColor(
+						label,
+						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+					);
 
 				// in case of billing graph pick colors from the series options
 				if (isBillingUsageGraphs) {
@@ -230,6 +233,7 @@ type ToolTipPluginProps = {
 	isDarkMode: boolean;
 	customTooltipElement?: HTMLDivElement;
 	timezone?: string;
+	colorMapping?: Record<string, string>;
 };
 
 const tooltipPlugin = ({
@@ -242,6 +246,7 @@ const tooltipPlugin = ({
 	isDarkMode,
 	customTooltipElement,
 	timezone,
+	colorMapping,
 }: // eslint-disable-next-line sonarjs/cognitive-complexity
 ToolTipPluginProps): any => {
 	let over: HTMLElement;
@@ -309,6 +314,7 @@ ToolTipPluginProps): any => {
 							isMergedSeries,
 							stackBarChart,
 							timezone,
+							colorMapping,
 						);
 						if (customTooltipElement) {
 							content.appendChild(customTooltipElement);
