@@ -49,7 +49,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
-	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/cache"
@@ -118,9 +117,6 @@ type APIHandler struct {
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
 
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
-
 	hostsRepo      *inframetrics.HostsRepo
 	processesRepo  *inframetrics.ProcessesRepo
 	podsRepo       *inframetrics.PodsRepo
@@ -177,11 +173,6 @@ type APIHandlerOpts struct {
 	// Querier Influx Interval
 	FluxInterval time.Duration
 
-	// Use Logs New schema
-	UseLogsNewSchema bool
-
-	UseTraceNewSchema bool
-
 	JWT *authtypes.JWT
 
 	AlertmanagerAPI *alertmanager.API
@@ -194,21 +185,17 @@ type APIHandlerOpts struct {
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	querierOpts := querier.QuerierOptions{
-		Reader:            opts.Reader,
-		Cache:             opts.Cache,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FluxInterval:      opts.FluxInterval,
-		UseLogsNewSchema:  opts.UseLogsNewSchema,
-		UseTraceNewSchema: opts.UseTraceNewSchema,
+		Reader:       opts.Reader,
+		Cache:        opts.Cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		FluxInterval: opts.FluxInterval,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:            opts.Reader,
-		Cache:             opts.Cache,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FluxInterval:      opts.FluxInterval,
-		UseLogsNewSchema:  opts.UseLogsNewSchema,
-		UseTraceNewSchema: opts.UseTraceNewSchema,
+		Reader:       opts.Reader,
+		Cache:        opts.Cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		FluxInterval: opts.FluxInterval,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
@@ -239,8 +226,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
-		UseLogsNewSchema:              opts.UseLogsNewSchema,
-		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
 		podsRepo:                      podsRepo,
@@ -259,15 +244,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		FieldsAPI:                     opts.FieldsAPI,
 	}
 
-	logsQueryBuilder := logsv3.PrepareLogsQuery
-	if opts.UseLogsNewSchema {
-		logsQueryBuilder = logsv4.PrepareLogsQuery
-	}
-
-	tracesQueryBuilder := tracesV3.PrepareTracesQuery
-	if opts.UseTraceNewSchema {
-		tracesQueryBuilder = tracesV4.PrepareTracesQuery
-	}
+	logsQueryBuilder := logsv4.PrepareLogsQuery
+	tracesQueryBuilder := tracesV4.PrepareTracesQuery
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
@@ -550,12 +528,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/service/top_level_operations", am.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/usage", am.ViewAccess(aH.getUsage)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.setApdexSettings)).Methods(http.MethodPost)
@@ -1624,122 +1598,13 @@ func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetUsageRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := aH.reader.GetUsage(r.Context(), query)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
-
-	var start, end time.Time
-	var services []string
-
-	type topLevelOpsParams struct {
-		Service string `json:"service"`
-		Start   string `json:"start"`
-		End     string `json:"end"`
-	}
-
-	var params topLevelOpsParams
-	err := json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		zap.L().Error("Error in getting req body for get top operations API", zap.Error(err))
-	}
-
-	if params.Service != "" {
-		services = []string{params.Service}
-	}
-
-	startEpoch := params.Start
-	if startEpoch != "" {
-		startEpochInt, err := strconv.ParseInt(startEpoch, 10, 64)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading start time")
-			return
-		}
-		start = time.Unix(0, startEpochInt)
-	}
-	endEpoch := params.End
-	if endEpoch != "" {
-		endEpochInt, err := strconv.ParseInt(endEpoch, 10, 64)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading end time")
-			return
-		}
-		end = time.Unix(0, endEpochInt)
-	}
-
-	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), start, end, services)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
 func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServicesRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := aH.reader.GetServices(r.Context(), query)
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	data := map[string]interface{}{
-		"number": len(*result),
-	}
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, claims.Email, true, false)
-	}
-
-	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
-		telemetry.GetInstance().AddActiveTracesUser()
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) dependencyGraph(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServicesRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := aH.reader.GetDependencyGraph(r.Context(), query)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.WriteJSON(w, r, result)
-}
-
-func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
-
 	result, err := aH.reader.GetServicesList(r.Context())
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	aH.WriteJSON(w, r, result)
-
 }
 
 func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
@@ -4239,11 +4104,8 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 // logs
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
-	subRouter.HandleFunc("", am.ViewAccess(aH.getLogs)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/tail", am.ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", am.ViewAccess(aH.logFields)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", am.EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/aggregate", am.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
 
 	// log pipelines
 	subRouter.HandleFunc("/pipelines/preview", am.ViewAccess(aH.PreviewLogsPipelinesHandler)).Methods(http.MethodPost)
@@ -4281,81 +4143,6 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.WriteJSON(w, r, field)
-}
-
-func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
-	params, err := logs.ParseLogFilterParams(r)
-	if err != nil {
-		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
-		return
-	}
-	res, apiErr := aH.reader.GetLogs(r.Context(), params)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch logs from the DB")
-		return
-	}
-	aH.WriteJSON(w, r, map[string]interface{}{"results": res})
-}
-
-func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
-	params, err := logs.ParseLogFilterParams(r)
-	if err != nil {
-		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
-		return
-	}
-
-	// create the client
-	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error), Filter: *params}
-	go aH.reader.TailLogs(r.Context(), client)
-
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(200)
-
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
-		RespondError(w, &err, "streaming is not supported")
-		return
-	}
-	// flush the headers
-	flusher.Flush()
-
-	for {
-		select {
-		case log := <-client.Logs:
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
-			flusher.Flush()
-		case <-client.Done:
-			zap.L().Debug("done!")
-			return
-		case err := <-client.Error:
-			zap.L().Error("error occured", zap.Error(err))
-			return
-		}
-	}
-}
-
-func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
-	params, err := logs.ParseLogAggregateParams(r)
-	if err != nil {
-		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
-		return
-	}
-	res, apiErr := aH.reader.AggregateLogs(r.Context(), params)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch logs aggregate from the DB")
-		return
-	}
-	aH.WriteJSON(w, r, res)
 }
 
 const logPipelines = "log_pipelines"
@@ -4839,28 +4626,8 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		if aH.UseTraceNewSchema {
-			tracesV4.Enrich(queryRangeParams, spanKeys)
-		} else {
-			tracesV3.Enrich(queryRangeParams, spanKeys)
-		}
+		tracesV4.Enrich(queryRangeParams, spanKeys)
 
-	}
-
-	// WARN: Only works for AND operator in traces query
-	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
-		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
-		if isUsed && len(traceIDs) > 0 {
-			zap.L().Debug("traceID used as filter in traces query")
-			// query signoz_spans table with traceID to get min and max timestamp
-			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
-			if err == nil {
-				// add timestamp filter to queryRange params
-				tracesV3.AddTimestampFilters(min, max, queryRangeParams)
-				zap.L().Debug("post adding timestamp filter in traces query", zap.Any("queryRangeParams", queryRangeParams))
-			}
-		}
 	}
 
 	// Hook up query progress tracking if requested
@@ -5202,88 +4969,7 @@ func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
-	if aH.UseLogsNewSchema {
-		aH.liveTailLogsV2(w, r)
-		return
-	}
-
-	// get the param from url and add it to body
-	stringReader := strings.NewReader(r.URL.Query().Get("q"))
-	r.Body = io.NopCloser(stringReader)
-
-	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
-	if apiErrorObj != nil {
-		zap.L().Error(apiErrorObj.Err.Error())
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	var err error
-	var queryString string
-	switch queryRangeParams.CompositeQuery.QueryType {
-	case v3.QueryTypeBuilder:
-		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
-			logsFields, err := aH.reader.GetLogFields(r.Context())
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, nil)
-				return
-			}
-			// get the fields if any logs query is present
-			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
-			logsv3.Enrich(queryRangeParams, fields)
-		}
-
-		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-			return
-		}
-
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	// create the client
-	client := &model.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
-	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
-
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(200)
-
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
-		RespondError(w, &err, "streaming is not supported")
-		return
-	}
-	// flush the headers
-	flusher.Flush()
-	for {
-		select {
-		case log := <-client.Logs:
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
-			flusher.Flush()
-		case <-client.Done:
-			zap.L().Debug("done!")
-			return
-		case err := <-client.Error:
-			zap.L().Error("error occurred", zap.Error(err))
-			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
-			flusher.Flush()
-			return
-		}
-	}
-
+	aH.liveTailLogsV2(w, r)
 }
 
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
@@ -5324,27 +5010,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		if aH.UseTraceNewSchema {
-			tracesV4.Enrich(queryRangeParams, spanKeys)
-		} else {
-			tracesV3.Enrich(queryRangeParams, spanKeys)
-		}
-	}
-
-	// WARN: Only works for AND operator in traces query
-	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
-		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
-		if isUsed && len(traceIDs) > 0 {
-			zap.L().Debug("traceID used as filter in traces query")
-			// query signoz_spans table with traceID to get min and max timestamp
-			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
-			if err == nil {
-				// add timestamp filter to queryRange params
-				tracesV3.AddTimestampFilters(min, max, queryRangeParams)
-				zap.L().Debug("post adding timestamp filter in traces query", zap.Any("queryRangeParams", queryRangeParams))
-			}
-		}
+		tracesV4.Enrich(queryRangeParams, spanKeys)
 	}
 
 	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams)

@@ -47,7 +47,9 @@ func main() {
 	var maxOpenConns int
 	var dialTimeout time.Duration
 
+	// Deprecated
 	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
+	// Deprecated
 	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
 	// Deprecated
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
@@ -130,8 +132,6 @@ func main() {
 		FluxInterval:               fluxInterval,
 		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
 		Cluster:                    cluster,
-		UseLogsNewSchema:           useLogsNewSchema,
-		UseTraceNewSchema:          useTraceNewSchema,
 		SigNoz:                     signoz,
 		Jwt:                        jwt,
 	}

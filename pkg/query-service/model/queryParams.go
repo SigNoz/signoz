@@ -70,16 +70,6 @@ type RegisterEventParams struct {
 	RateLimited bool                   `json:"rateLimited"`
 }
 
-type GetUsageParams struct {
-	StartTime   string
-	EndTime     string
-	ServiceName string
-	Period      string
-	StepHour    int
-	Start       *time.Time
-	End         *time.Time
-}
-
 type GetServicesParams struct {
 	StartTime string `json:"start"`
 	EndTime   string `json:"end"`

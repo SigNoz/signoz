@@ -64,10 +64,6 @@ export const TraceDetail = Loadable(
 		),
 );
 
-export const UsageExplorerPage = Loadable(
-	() => import(/* webpackChunkName: "UsageExplorerPage" */ 'modules/Usage'),
-);
-
 export const SignupPage = Loadable(
 	() => import(/* webpackChunkName: "SignupPage" */ 'pages/SignUp'),
 );

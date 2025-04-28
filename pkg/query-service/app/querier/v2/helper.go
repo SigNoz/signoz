@@ -6,11 +6,9 @@ import (
 	"strings"
 	"sync"
 
-	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
 	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	metricsV3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
 	metricsV4 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4"
-	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -19,17 +17,14 @@ import (
 	"go.uber.org/zap"
 )
 
-func prepareLogsQuery(_ context.Context,
-	useLogsNewSchema bool,
+func prepareLogsQuery(
+	_ context.Context,
 	start,
 	end int64,
 	builderQuery *v3.BuilderQuery,
 	params *v3.QueryRangeParamsV3,
 ) (string, error) {
-	logsQueryBuilder := logsV3.PrepareLogsQuery
-	if useLogsNewSchema {
-		logsQueryBuilder = logsV4.PrepareLogsQuery
-	}
+	logsQueryBuilder := logsV4.PrepareLogsQuery
 	query := ""
 
 	if params == nil || builderQuery == nil {
@@ -102,7 +97,7 @@ func (q *querier) runBuilderQuery(
 		var err error
 		if _, ok := cacheKeys[queryName]; !ok || params.NoCache {
 			zap.L().Info("skipping cache for logs query", zap.String("queryName", queryName), zap.Int64("start", params.Start), zap.Int64("end", params.End), zap.Int64("step", params.Step), zap.Bool("noCache", params.NoCache), zap.String("cacheKey", cacheKeys[queryName]))
-			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, start, end, builderQuery, params)
+			query, err = prepareLogsQuery(ctx, start, end, builderQuery, params)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -116,7 +111,7 @@ func (q *querier) runBuilderQuery(
 		missedSeries := make([]querycache.CachedSeriesData, 0)
 		filteredMissedSeries := make([]querycache.CachedSeriesData, 0)
 		for _, miss := range misses {
-			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, miss.Start, miss.End, builderQuery, params)
+			query, err = prepareLogsQuery(ctx, miss.Start, miss.End, builderQuery, params)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -169,11 +164,7 @@ func (q *querier) runBuilderQuery(
 	}
 
 	if builderQuery.DataSource == v3.DataSourceTraces {
-
-		tracesQueryBuilder := tracesV3.PrepareTracesQuery
-		if q.UseTraceNewSchema {
-			tracesQueryBuilder = tracesV4.PrepareTracesQuery
-		}
+		tracesQueryBuilder := tracesV4.PrepareTracesQuery
 
 		var query string
 		var err error

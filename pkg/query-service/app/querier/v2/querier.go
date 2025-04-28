@@ -6,11 +6,9 @@ import (
 	"sync"
 	"time"
 
-	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
 	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	metricsV4 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
-	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -49,11 +47,9 @@ type querier struct {
 	testingMode     bool
 	queriesExecuted []string
 	// tuple of start and end time in milliseconds
-	timeRanges        [][]int
-	returnedSeries    []*v3.Series
-	returnedErr       error
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
+	timeRanges     [][]int
+	returnedSeries []*v3.Series
+	returnedErr    error
 }
 
 type QuerierOptions struct {
@@ -63,23 +59,14 @@ type QuerierOptions struct {
 	FluxInterval time.Duration
 
 	// used for testing
-	TestingMode       bool
-	ReturnedSeries    []*v3.Series
-	ReturnedErr       error
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
+	TestingMode    bool
+	ReturnedSeries []*v3.Series
+	ReturnedErr    error
 }
 
 func NewQuerier(opts QuerierOptions) interfaces.Querier {
-	logsQueryBuilder := logsV3.PrepareLogsQuery
-	if opts.UseLogsNewSchema {
-		logsQueryBuilder = logsV4.PrepareLogsQuery
-	}
-
-	tracesQueryBuilder := tracesV3.PrepareTracesQuery
-	if opts.UseTraceNewSchema {
-		tracesQueryBuilder = tracesV4.PrepareTracesQuery
-	}
+	logsQueryBuilder := logsV4.PrepareLogsQuery
+	tracesQueryBuilder := tracesV4.PrepareTracesQuery
 
 	qc := querycache.NewQueryCache(querycache.WithCache(opts.Cache), querycache.WithFluxInterval(opts.FluxInterval))
 
@@ -96,11 +83,9 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 			BuildMetricQuery: metricsV4.PrepareMetricQuery,
 		}),
 
-		testingMode:       opts.TestingMode,
-		returnedSeries:    opts.ReturnedSeries,
-		returnedErr:       opts.ReturnedErr,
-		UseLogsNewSchema:  opts.UseLogsNewSchema,
-		UseTraceNewSchema: opts.UseTraceNewSchema,
+		testingMode:    opts.TestingMode,
+		returnedSeries: opts.ReturnedSeries,
+		returnedErr:    opts.ReturnedErr,
 	}
 }
 
@@ -446,11 +431,6 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 		len(params.CompositeQuery.BuilderQueries) == 1 &&
 		params.CompositeQuery.PanelType != v3.PanelTypeTrace {
 		for _, v := range params.CompositeQuery.BuilderQueries {
-			if (v.DataSource == v3.DataSourceLogs && !q.UseLogsNewSchema) ||
-				(v.DataSource == v3.DataSourceTraces && !q.UseTraceNewSchema) {
-				break
-			}
-
 			// only allow of logs queries with timestamp ordering desc
 			// TODO(nitya): allow for timestamp asc
 			if (v.DataSource == v3.DataSourceLogs || v.DataSource == v3.DataSourceTraces) &&

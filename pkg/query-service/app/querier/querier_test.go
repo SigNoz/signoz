@@ -1370,8 +1370,6 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				telemetryStore,
 				prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
 				"",
-				true,
-				true,
 				time.Duration(time.Second),
 				nil,
 			)
