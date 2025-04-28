@@ -21,6 +21,7 @@ export enum SELECTED_VIEWS {
 	SEARCH = 'search',
 	QUERY_BUILDER = 'query-builder',
 	CLICKHOUSE = 'clickhouse',
+	QUERY_BUILDER_V2 = 'query-builder-v2',
 }
 
 export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
