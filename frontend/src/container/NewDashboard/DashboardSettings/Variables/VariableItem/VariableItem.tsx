@@ -6,6 +6,7 @@ import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
 import Editor from 'components/Editor';
+import { CustomSelect } from 'components/NewSelect';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
@@ -84,12 +85,29 @@ function VariableItem({
 		variableData.showALLOption || false,
 	);
 	const [previewValues, setPreviewValues] = useState<string[]>([]);
+	const [variableDefaultValue, setVariableDefaultValue] = useState<string>(
+		(variableData.defaultValue as string) || '',
+	);
 
 	const [
 		dynamicVariablesSelectedValue,
 		setDynamicVariablesSelectedValue,
 	] = useState<{ name: string; value: string }>();
 
+	useEffect(() => {
+		if (
+			variableData.dynamicVariablesAttribute &&
+			variableData.dynamicVariablesSource
+		) {
+			setDynamicVariablesSelectedValue({
+				name: variableData.dynamicVariablesAttribute,
+				value: variableData.dynamicVariablesSource,
+			});
+		}
+	}, [
+		variableData.dynamicVariablesAttribute,
+		variableData.dynamicVariablesSource,
+	]);
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
@@ -163,9 +181,16 @@ function VariableItem({
 				selectedValue: (variableData.selectedValue ||
 					variableTextboxValue) as never,
 			}),
+			...(queryType !== 'TEXTBOX' && {
+				defaultValue: variableDefaultValue as never,
+			}),
 			modificationUUID: generateUUID(),
 			id: variableData.id || generateUUID(),
 			order: variableData.order,
+			...(queryType === 'DYNAMIC' && {
+				dynamicVariablesAttribute: dynamicVariablesSelectedValue?.name,
+				dynamicVariablesSource: dynamicVariablesSelectedValue?.value,
+			}),
 		};
 
 		onSave(mode, variable);
@@ -505,6 +530,20 @@ function VariableItem({
 									/>
 								</VariableItemRow>
 							)}
+							<VariableItemRow className="default-value-section">
+								<LabelContainer>
+									<Typography className="typography-variables">Default Value</Typography>
+								</LabelContainer>
+								<CustomSelect
+									placeholder="Select a default value"
+									value={variableDefaultValue}
+									onChange={(value): void => setVariableDefaultValue(value)}
+									options={previewValues.map((value) => ({
+										label: value,
+										value,
+									}))}
+								/>
+							</VariableItemRow>
 						</>
 					)}
 				</div>

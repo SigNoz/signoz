@@ -198,6 +198,11 @@
 			}
 		}
 
+		.default-value-section {
+			display: grid;
+			grid-template-columns: max-content 1fr;
+		}
+
 		.variable-textbox-section {
 			justify-content: space-between;
 			margin-bottom: 0;
