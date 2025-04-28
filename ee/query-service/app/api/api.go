@@ -16,6 +16,7 @@ import (
 	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
+	"github.com/SigNoz/signoz/pkg/http/middleware"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -26,7 +27,6 @@ import (
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
 )
@@ -62,7 +62,6 @@ type APIHandler struct {
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
 	preference := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(signoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
 	quickFilter := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(signoz.SQLStore)))
-
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
 		SkipConfig:                    opts.SkipConfig,
@@ -125,7 +124,7 @@ func (ah *APIHandler) CheckFeature(f string) bool {
 }
 
 // RegisterRoutes registers routes for this handler on the given router
-func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddleware) {
+func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// note: add ee override methods first
 
 	// routes available only in ee version
@@ -198,7 +197,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 
 }
 
-func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *baseapp.AuthMiddleware) {
+func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	ah.APIHandler.RegisterCloudIntegrationsRoutes(router, am)
 

@@ -56,6 +56,11 @@ devenv-clickhouse: ## Run clickhouse in devenv
 	@cd .devenv/docker/clickhouse; \
 	docker compose -f compose.yaml up -d
 
+.PHONY: devenv-postgres
+devenv-postgres: ## Run postgres in devenv
+	@cd .devenv/docker/postgres; \
+	docker compose -f compose.yaml up -d
+
 ##############################################################
 # go commands
 ##############################################################

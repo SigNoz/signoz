@@ -17,6 +17,12 @@ pytest_plugins = [
 
 def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
+        "--dev",
+        action="store",
+        default=False,
+        help="Run in dev mode. In this mode, the containers are not torn down after test run and are reused in subsequent test runs.",
+    )
+    parser.addoption(
         "--sqlstore-provider",
         action="store",
         default="postgres",

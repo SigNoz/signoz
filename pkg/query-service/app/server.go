@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -31,15 +30,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/explorer"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
@@ -189,7 +185,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetReader(reader)
 	preferenceModule := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(serverOptions.SigNoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
 	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(serverOptions.SigNoz.SQLStore)))
-
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		SkipConfig:                    skipConfig,
@@ -308,21 +303,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
 	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
-	// add auth middleware
-	getUserFromRequest := func(ctx context.Context) (*types.GettableUser, error) {
-		user, err := auth.GetUserFromReqContext(ctx)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if user.User.OrgID == "" {
-			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
-		}
-
-		return user, nil
-	}
-	am := NewAuthMiddleware(getUserFromRequest)
+	am := middleware.NewAuthZ(s.serverOptions.SigNoz.Instrumentation.Logger())
 
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)

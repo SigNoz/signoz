@@ -332,9 +332,9 @@ func (m *Manager) Stop(ctx context.Context) {
 // EditRuleDefinition writes the rule definition to the
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) error {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return errors.New("claims not found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
 	}
 
 	ruleUUID, err := valuer.NewUUID(idStr)
@@ -469,9 +469,9 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return fmt.Errorf("delete rule received an rule id in invalid format, must be a valid uuid-v7")
 	}
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return errors.New("claims not found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
 	}
 
 	_, err = m.ruleStore.GetStoredRule(ctx, id)
@@ -523,9 +523,9 @@ func (m *Manager) deleteTask(taskName string) {
 // CreateRule stores rule def into db and also
 // starts an executor for the rule
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error) {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, errors.New("claims not found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	parsedRule, err := ruletypes.ParsePostableRule([]byte(ruleStr))
@@ -804,9 +804,9 @@ func (m *Manager) ListActiveRules() ([]Rule, error) {
 }
 
 func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules, error) {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, errors.New("claims not found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	// fetch rules from DB
 	storedRules, err := m.ruleStore.GetStoredRules(ctx, claims.OrgID)
@@ -918,9 +918,9 @@ func (m *Manager) syncRuleStateWithTask(ctx context.Context, orgID string, taskN
 //   - re-deploy or undeploy task as necessary
 //   - update the patched rule in the DB
 func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleIdStr string) (*ruletypes.GettableRule, error) {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, errors.New("claims not found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	ruleID, err := valuer.NewUUID(ruleIdStr)
@@ -1020,9 +1020,9 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 }
 
 func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames []string) (map[string][]ruletypes.GettableRule, *model.ApiError) {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: errors.New("claims not found in context")}
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
 	result := make(map[string][]ruletypes.GettableRule)
