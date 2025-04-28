@@ -146,7 +146,7 @@ func (r *rule) ListOrgs(ctx context.Context) ([]string, error) {
 func (r *rule) getChannels() (*[]model.ChannelItem, *model.ApiError) {
 	channels := []model.ChannelItem{}
 
-	query := "SELECT id, created_at, updated_at, name, type, data FROM notification_channels"
+	query := "SELECT id, created_at, updated_at, name, type, data FROM notification_channel"
 
 	err := r.Select(&channels, query)
 
@@ -163,7 +163,7 @@ func (r *rule) getChannels() (*[]model.ChannelItem, *model.ApiError) {
 func (r *rule) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 	alertsInfo := model.AlertsInfo{}
 	// fetch alerts from rules db
-	query := "SELECT data FROM rules"
+	query := "SELECT data FROM rule"
 	var alertsData []string
 	var alertNames []string
 	err := r.Select(&alertsData, query)
