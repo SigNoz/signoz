@@ -656,6 +656,10 @@ $custom-border-color: #2c3044;
 			border: 1px solid #e8e8e8;
 			color: rgba(0, 0, 0, 0.85);
 
+			font-size: 12px !important;
+			height: 20px;
+			line-height: 18px;
+
 			.ant-select-selection-item-content {
 				color: rgba(0, 0, 0, 0.85);
 			}
