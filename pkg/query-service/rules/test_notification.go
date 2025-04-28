@@ -15,7 +15,6 @@ import (
 // TestNotification prepares a dummy rule for given rule parameters and
 // sends a test notification. returns alert count and error (if any)
 func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError) {
-
 	ctx := context.Background()
 
 	if opts.Rule == nil {
@@ -48,8 +47,6 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 			alertname,
 			parsedRule,
 			opts.Reader,
-			opts.UseLogsNewSchema,
-			opts.UseTraceNewSchema,
 			WithSendAlways(),
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),
