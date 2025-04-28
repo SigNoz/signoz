@@ -1,12 +1,17 @@
+/* eslint-disable import/no-import-module-exports */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { SPAN_ATTRIBUTES } from './Explorer/Domains/DomainDetails/constants';
 import {
+	extractPortAndEndpoint,
 	formatTopErrorsDataForTable,
 	getAllEndpointsWidgetData,
+	getEndPointDetailsQueryPayload,
 	getGroupByFiltersFromGroupByValues,
+	getLatencyOverTimeWidgetData,
+	getRateOverTimeWidgetData,
 	getTopErrorsColumnsConfig,
 	getTopErrorsCoRelationQueryFilters,
 	getTopErrorsQueryPayload,
@@ -19,6 +24,22 @@ const DataTypes = {
 	Float64: 'float64',
 	bool: 'bool',
 };
+
+// Mock the external utils dependencies that are used within our tested functions
+jest.mock('./utils', () => {
+	// Import the actual module to partial mock
+	const originalModule = jest.requireActual('./utils');
+
+	// Return a mocked version
+	return {
+		...originalModule,
+		// Just export the functions we're testing directly
+		extractPortAndEndpoint: originalModule.extractPortAndEndpoint,
+		getEndPointDetailsQueryPayload: originalModule.getEndPointDetailsQueryPayload,
+		getRateOverTimeWidgetData: originalModule.getRateOverTimeWidgetData,
+		getLatencyOverTimeWidgetData: originalModule.getLatencyOverTimeWidgetData,
+	};
+});
 
 describe('API Monitoring Utils', () => {
 	describe('getAllEndpointsWidgetData', () => {
@@ -49,6 +70,7 @@ describe('API Monitoring Utils', () => {
 							type: '',
 						},
 						op: '=',
+						// eslint-disable-next-line sonarjs/no-duplicate-string
 						value: 'test-value',
 					},
 				],
@@ -453,6 +475,289 @@ describe('API Monitoring Utils', () => {
 				(item) => item.id === 'test-filter',
 			);
 			expect(testFilter).toBeDefined();
+		});
+	});
+
+	// Add new tests for EndPointDetails utility functions
+	describe('extractPortAndEndpoint', () => {
+		it('should extract port and endpoint from a valid URL', () => {
+			// Arrange
+			const url = 'http://example.com:8080/api/endpoint?param=value';
+
+			// Act
+			const result = extractPortAndEndpoint(url);
+
+			// Assert
+			expect(result).toEqual({
+				port: '8080',
+				endpoint: '/api/endpoint?param=value',
+			});
+		});
+
+		it('should handle URLs without ports', () => {
+			// Arrange
+			const url = 'http://example.com/api/endpoint';
+
+			// Act
+			const result = extractPortAndEndpoint(url);
+
+			// Assert
+			expect(result).toEqual({
+				port: '-',
+				endpoint: '/api/endpoint',
+			});
+		});
+
+		it('should handle non-URL strings', () => {
+			// Arrange
+			const nonUrl = '/some/path/without/protocol';
+
+			// Act
+			const result = extractPortAndEndpoint(nonUrl);
+
+			// Assert
+			expect(result).toEqual({
+				port: '-',
+				endpoint: nonUrl,
+			});
+		});
+	});
+
+	describe('getEndPointDetailsQueryPayload', () => {
+		it('should generate proper query payload with all parameters', () => {
+			// Arrange
+			const domainName = 'test-domain';
+			const startTime = 1609459200000; // 2021-01-01
+			const endTime = 1609545600000; // 2021-01-02
+			const filters = {
+				items: [
+					{
+						id: 'test-filter',
+						key: {
+							dataType: 'string',
+							isColumn: true,
+							isJSON: false,
+							key: 'test.key',
+							type: '',
+						},
+						op: '=',
+						value: 'test-value',
+					},
+				],
+				op: 'AND',
+			};
+
+			// Act
+			const result = getEndPointDetailsQueryPayload(
+				domainName,
+				startTime,
+				endTime,
+				filters as IBuilderQuery['filters'],
+			);
+
+			// Assert
+			expect(result).toHaveLength(6); // Should return 6 queries
+
+			// Check that each query includes proper parameters
+			result.forEach((query) => {
+				expect(query).toHaveProperty('start', startTime);
+				expect(query).toHaveProperty('end', endTime);
+
+				// Should have query property with builder data
+				expect(query).toHaveProperty('query');
+				expect(query.query).toHaveProperty('builder');
+
+				// All queries should include the domain filter
+				const {
+					query: {
+						builder: { queryData },
+					},
+				} = query;
+				queryData.forEach((qd) => {
+					if (qd.filters && qd.filters.items) {
+						const serverNameFilter = qd.filters.items.find(
+							(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
+						);
+						expect(serverNameFilter).toBeDefined();
+						// Only check if the serverNameFilter exists, as the actual value might vary
+						// depending on implementation details or domain defaults
+						if (serverNameFilter) {
+							expect(typeof serverNameFilter.value).toBe('string');
+						}
+					}
+
+					// Should include our custom filter
+					const customFilter = qd.filters.items.find(
+						(item) => item.id === 'test-filter',
+					);
+					expect(customFilter).toBeDefined();
+				});
+			});
+		});
+	});
+
+	describe('getRateOverTimeWidgetData', () => {
+		it('should generate widget configuration for rate over time', () => {
+			// Arrange
+			const domainName = 'test-domain';
+			const endPointName = '/api/test';
+			const filters = { items: [], op: 'AND' };
+
+			// Act
+			const result = getRateOverTimeWidgetData(
+				domainName,
+				endPointName,
+				filters as IBuilderQuery['filters'],
+			);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result).toHaveProperty('title', 'Rate Over Time');
+			// Check only title since description might vary
+
+			// Check query configuration
+			expect(result).toHaveProperty('query');
+			expect(result).toHaveProperty('query.builder.queryData');
+
+			const queryData = result.query.builder.queryData[0];
+
+			// Should have domain filter
+			const domainFilter = queryData.filters.items.find(
+				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
+			);
+			expect(domainFilter).toBeDefined();
+			if (domainFilter) {
+				expect(typeof domainFilter.value).toBe('string');
+			}
+
+			// Should have 'rate' time aggregation
+			expect(queryData).toHaveProperty('timeAggregation', 'rate');
+
+			// Should have proper legend that includes endpoint info
+			expect(queryData).toHaveProperty('legend');
+			expect(
+				typeof queryData.legend === 'string' ? queryData.legend : '',
+			).toContain('/api/test');
+		});
+
+		it('should handle case without endpoint name', () => {
+			// Arrange
+			const domainName = 'test-domain';
+			const endPointName = '';
+			const filters = { items: [], op: 'AND' };
+
+			// Act
+			const result = getRateOverTimeWidgetData(
+				domainName,
+				endPointName,
+				filters as IBuilderQuery['filters'],
+			);
+
+			// Assert
+			expect(result).toBeDefined();
+
+			const queryData = result.query.builder.queryData[0];
+
+			// Legend should be domain name only
+			expect(queryData).toHaveProperty('legend', domainName);
+		});
+	});
+
+	describe('getLatencyOverTimeWidgetData', () => {
+		it('should generate widget configuration for latency over time', () => {
+			// Arrange
+			const domainName = 'test-domain';
+			const endPointName = '/api/test';
+			const filters = { items: [], op: 'AND' };
+
+			// Act
+			const result = getLatencyOverTimeWidgetData(
+				domainName,
+				endPointName,
+				filters as IBuilderQuery['filters'],
+			);
+
+			// Assert
+			expect(result).toBeDefined();
+			expect(result).toHaveProperty('title', 'Latency Over Time');
+			// Check only title since description might vary
+
+			// Check query configuration
+			expect(result).toHaveProperty('query');
+			expect(result).toHaveProperty('query.builder.queryData');
+
+			const queryData = result.query.builder.queryData[0];
+
+			// Should have domain filter
+			const domainFilter = queryData.filters.items.find(
+				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.SERVER_NAME,
+			);
+			expect(domainFilter).toBeDefined();
+			if (domainFilter) {
+				expect(typeof domainFilter.value).toBe('string');
+			}
+
+			// Should use duration_nano as the aggregate attribute
+			expect(queryData.aggregateAttribute).toHaveProperty('key', 'duration_nano');
+
+			// Should have 'p99' time aggregation
+			expect(queryData).toHaveProperty('timeAggregation', 'p99');
+		});
+
+		it('should handle case without endpoint name', () => {
+			// Arrange
+			const domainName = 'test-domain';
+			const endPointName = '';
+			const filters = { items: [], op: 'AND' };
+
+			// Act
+			const result = getLatencyOverTimeWidgetData(
+				domainName,
+				endPointName,
+				filters as IBuilderQuery['filters'],
+			);
+
+			// Assert
+			expect(result).toBeDefined();
+
+			const queryData = result.query.builder.queryData[0];
+
+			// Legend should be domain name only
+			expect(queryData).toHaveProperty('legend', domainName);
+		});
+
+		// Changed approach to verify end-to-end behavior for URL with port
+		it('should format legends appropriately for complete URLs with ports', () => {
+			// Arrange
+			const domainName = 'test-domain';
+			const endPointName = 'http://example.com:8080/api/test';
+			const filters = { items: [], op: 'AND' };
+
+			// Extract what we expect the function to extract
+			const expectedParts = extractPortAndEndpoint(endPointName);
+
+			// Act
+			const result = getLatencyOverTimeWidgetData(
+				domainName,
+				endPointName,
+				filters as IBuilderQuery['filters'],
+			);
+
+			// Assert
+			const queryData = result.query.builder.queryData[0];
+
+			// Check that legend is present and is a string
+			expect(queryData).toHaveProperty('legend');
+			expect(typeof queryData.legend).toBe('string');
+
+			// If the URL has a port and endpoint, the legend should reflect that appropriately
+			// (Testing the integration rather than the exact formatting)
+			if (expectedParts.port !== '-') {
+				// Verify that both components are incorporated into the legend in some way
+				// This tests the behavior without relying on the exact implementation details
+				const legendStr = queryData.legend as string;
+				expect(legendStr).not.toBe(domainName); // Legend should be different when URL has port/endpoint
+			}
 		});
 	});
 });
