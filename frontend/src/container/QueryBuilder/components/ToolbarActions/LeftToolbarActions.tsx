@@ -3,7 +3,7 @@ import './ToolbarActions.styles.scss';
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Switch, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
-import { Atom, SquareMousePointer, Terminal } from 'lucide-react';
+import { Atom, Binoculars, SquareMousePointer, Terminal } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 
 interface LeftToolbarActionsProps {
@@ -19,7 +19,7 @@ interface LeftToolbarActionsProps {
 const activeTab = 'active-tab';
 const actionBtn = 'action-btn';
 export const queryBuilder = 'query-builder';
-
+export const queryBuilderV2 = 'query-builder-v2';
 export default function LeftToolbarActions({
 	items,
 	selectedView,
@@ -81,6 +81,22 @@ export default function LeftToolbarActions({
 						<Terminal size={14} data-testid="clickhouse-view" />
 					</Button>
 				)}
+
+				<Tooltip title="Query Builder V2">
+					<Button
+						disabled={QB.disabled}
+						className={cx(
+							queryBuilderV2,
+							actionBtn,
+							selectedView === queryBuilderV2 ? activeTab : '',
+						)}
+						onClick={(): void =>
+							onChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER_V2)
+						}
+					>
+						<Binoculars size={14} data-testid="query-builder-view-v2" />
+					</Button>
+				</Tooltip>
 			</div>
 
 			<div className="frequency-chart-view-controller">
