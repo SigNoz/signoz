@@ -409,11 +409,13 @@ export function getQueryContextAtCursor(
 			currentToken.type,
 		);
 
-		// // Determine if the current token is a parenthesis
-		// const isInParenthesis = [
-		// 	FilterQueryLexer.LPAREN,
-		// 	FilterQueryLexer.RPAREN,
-		// ].includes(currentToken.type);
+		// Determine if the current token is a parenthesis or bracket
+		const isInParenthesis = [
+			FilterQueryLexer.LPAREN,
+			FilterQueryLexer.RPAREN,
+			FilterQueryLexer.LBRACK,
+			FilterQueryLexer.RBRACK,
+		].includes(currentToken.type);
 
 		// Determine the context based on the token type
 		const isInValue = [
@@ -539,6 +541,66 @@ export function getQueryContextAtCursor(
 					isInParenthesis: false,
 					...relationTokens, // Include related tokens
 				};
+			}
+
+			if (isInParenthesis) {
+				// After a parenthesis/bracket + space, determine context based on which bracket
+				if (currentToken.type === FilterQueryLexer.LPAREN) {
+					// After an opening parenthesis + space, we should be in key context
+					return {
+						tokenType: currentToken.type,
+						text: currentToken.text,
+						start: currentToken.start,
+						stop: currentToken.stop,
+						currentToken: currentToken.text,
+						isInValue: false,
+						isInKey: true,
+						isInOperator: false,
+						isInFunction: false,
+						isInConjunction: false,
+						isInParenthesis: false,
+						...relationTokens,
+					};
+				}
+
+				if (
+					currentToken.type === FilterQueryLexer.RPAREN ||
+					currentToken.type === FilterQueryLexer.RBRACK
+				) {
+					// After a closing parenthesis/bracket + space, we should be in conjunction context
+					return {
+						tokenType: currentToken.type,
+						text: currentToken.text,
+						start: currentToken.start,
+						stop: currentToken.stop,
+						currentToken: currentToken.text,
+						isInValue: false,
+						isInKey: false,
+						isInOperator: false,
+						isInFunction: false,
+						isInConjunction: true,
+						isInParenthesis: false,
+						...relationTokens,
+					};
+				}
+
+				if (currentToken.type === FilterQueryLexer.LBRACK) {
+					// After an opening bracket + space, we should be in value context (for arrays)
+					return {
+						tokenType: currentToken.type,
+						text: currentToken.text,
+						start: currentToken.start,
+						stop: currentToken.stop,
+						currentToken: currentToken.text,
+						isInValue: true,
+						isInKey: false,
+						isInOperator: false,
+						isInFunction: false,
+						isInConjunction: false,
+						isInParenthesis: false,
+						...relationTokens,
+					};
+				}
 			}
 		}
 
@@ -722,6 +784,31 @@ export function getQueryContextAtCursor(
 					...relationTokens, // Include related tokens
 				};
 			}
+
+			// Add case for parentheses and brackets
+			if (
+				[
+					FilterQueryLexer.LPAREN,
+					FilterQueryLexer.RPAREN,
+					FilterQueryLexer.LBRACK,
+					FilterQueryLexer.RBRACK,
+				].includes(nextToken.type)
+			) {
+				return {
+					tokenType: -1,
+					text: '',
+					start: cursorIndex,
+					stop: cursorIndex,
+					currentToken: '',
+					isInValue: false,
+					isInKey: false,
+					isInOperator: false,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: true,
+					...relationTokens, // Include related tokens
+				};
+			}
 		}
 
 		// Fall back to default context detection based on current token
@@ -736,7 +823,7 @@ export function getQueryContextAtCursor(
 			isInOperator,
 			isInFunction,
 			isInConjunction,
-			// isInParenthesis,
+			isInParenthesis,
 			...relationTokens, // Include related tokens
 		};
 	} catch (error) {
