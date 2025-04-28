@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"strings"
 
+	parser "github.com/SigNoz/signoz/pkg/parser/grammar"
 	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/huandu/go-sqlbuilder"
 )
 
 const NANOSECOND = 1000000000
@@ -238,7 +242,7 @@ func buildSpanScopeQuery(fs *v3.FilterSet) (string, error) {
 	return "", nil
 }
 
-func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.PanelType, options v3.QBOptions) (string, error) {
+func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.PanelType, options v3.QBOptions) (string, []any, error) {
 	tracesStart := utils.GetEpochNanoSecs(start)
 	tracesEnd := utils.GetEpochNanoSecs(end)
 
@@ -248,9 +252,29 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 
 	timeFilter := fmt.Sprintf("(timestamp >= '%d' AND timestamp <= '%d') AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", tracesStart, tracesEnd, bucketStart, bucketEnd)
 
-	filterSubQuery, err := buildTracesFilterQuery(mq.Filters)
-	if err != nil {
-		return "", err
+	var filterSubQuery string
+	var err error
+	var args []any
+
+	if !mq.UseSearchExpr {
+		filterSubQuery, err = buildTracesFilterQuery(mq.Filters)
+		if err != nil {
+			return "", nil, err
+		}
+	} else {
+		whereClause, _, err := parser.PrepareWhereClause(
+			mq.SearchExpr,
+			mq.FieldKeys,
+			telemetrytraces.NewConditionBuilder(),
+			&telemetrytypes.TelemetryFieldKey{},
+		)
+		filterSubQuery, args = whereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
+		if err != nil {
+			return "", nil, err
+		}
+		if filterSubQuery != "" {
+			filterSubQuery = filterSubQuery[6:]
+		}
 	}
 	if filterSubQuery != "" {
 		filterSubQuery = " AND " + filterSubQuery
@@ -258,7 +282,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 
 	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(mq.GroupBy)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	if emptyValuesInGroupByFilter != "" {
 		filterSubQuery = filterSubQuery + " AND " + emptyValuesInGroupByFilter
@@ -266,7 +290,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 
 	resourceSubQuery, err := resource.BuildResourceSubQuery("signoz_traces", "distributed_traces_v3_resource", bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	// join both the filter clauses
 	if resourceSubQuery != "" {
@@ -302,16 +326,16 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 			query += " settings distributed_product_mode='allow', max_memory_usage=10000000000"
 		} else if panelType == v3.PanelTypeList {
 			if len(mq.SelectColumns) == 0 {
-				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
+				return "", nil, fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
 			}
 			selectLabels = getSelectLabels(mq.SelectColumns)
 			// add it to the select labels
 			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where %s %s" + "%s"
 			query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
 		} else {
-			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
+			return "", nil, fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
 		}
-		return query, nil
+		return query, args, nil
 		// ---- NOOP ends here ----
 	}
 
@@ -378,7 +402,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 
 		op := fmt.Sprintf("%s(%s)/%f", tracesV3.AggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
-		return query, nil
+		return query, args, nil
 	case
 		v3.AggregateOperatorP05,
 		v3.AggregateOperatorP10,
@@ -391,11 +415,11 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		v3.AggregateOperatorP99:
 		op := fmt.Sprintf("quantile(%v)(%s)", tracesV3.AggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
-		return query, nil
+		return query, args, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(%s)", tracesV3.AggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
-		return query, nil
+		return query, args, nil
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
 			if mq.AggregateAttribute.IsColumn {
@@ -411,20 +435,21 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		}
 		op := "toFloat64(count())"
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
-		return query, nil
+		return query, args, nil
 	case v3.AggregateOperatorCountDistinct:
 		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
-		return query, nil
+		return query, args, nil
 	default:
-		return "", fmt.Errorf("unsupported aggregate operator %s", mq.AggregateOperator)
+		return "", nil, fmt.Errorf("unsupported aggregate operator %s", mq.AggregateOperator)
 	}
 }
 
 // PrepareTracesQuery returns the query string for traces
 // start and end are in epoch millisecond
 // step is in seconds
-func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
+func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, []any, error) {
+	var args []any
 	// adjust the start and end time to the step interval
 	if panelType == v3.PanelTypeGraph {
 		// adjust the start and end time to the step interval for graph panel types
@@ -433,24 +458,24 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 	}
 	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group by names
-		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, panelType, options)
+		query, args, err := buildTracesQuery(start, end, mq.StepInterval, mq, panelType, options)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 		query = tracesV3.AddLimitToQuery(query, mq.Limit)
 
-		return query, nil
+		return query, args, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, panelType, options)
+		query, args, err := buildTracesQuery(start, end, mq.StepInterval, mq, panelType, options)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
-		return query, nil
+		return query, args, nil
 	}
 
-	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, panelType, options)
+	query, args, err := buildTracesQuery(start, end, mq.StepInterval, mq, panelType, options)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	if panelType == v3.PanelTypeValue {
 		query, err = tracesV3.ReduceToQuery(query, mq.ReduceTo, mq.AggregateOperator)
@@ -462,5 +487,5 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 			query = tracesV3.AddOffsetToQuery(query, mq.Offset)
 		}
 	}
-	return query, err
+	return query, args, nil
 }

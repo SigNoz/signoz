@@ -809,7 +809,7 @@ func Test_buildLogsQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildLogsQuery(tt.args.panelType, tt.args.start, tt.args.end, tt.args.step, tt.args.mq, tt.args.graphLimitQtype)
+			got, _, err := buildLogsQuery(tt.args.panelType, tt.args.start, tt.args.end, tt.args.step, tt.args.mq, v3.QBOptions{GraphLimitQtype: tt.args.graphLimitQtype})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildLogsQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -1116,7 +1116,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := PrepareLogsQuery(tt.args.start, tt.args.end, tt.args.queryType, tt.args.panelType, tt.args.mq, tt.args.options)
+			got, _, err := PrepareLogsQuery(tt.args.start, tt.args.end, tt.args.queryType, tt.args.panelType, tt.args.mq, tt.args.options)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PrepareLogsQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return

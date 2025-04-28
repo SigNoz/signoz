@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -882,28 +883,31 @@ func (m *MetricValueFilter) Clone() *MetricValueFilter {
 }
 
 type BuilderQuery struct {
-	QueryName            string               `json:"queryName"`
-	StepInterval         int64                `json:"stepInterval"`
-	DataSource           DataSource           `json:"dataSource"`
-	AggregateOperator    AggregateOperator    `json:"aggregateOperator"`
-	AggregateAttribute   AttributeKey         `json:"aggregateAttribute,omitempty"`
-	Temporality          Temporality          `json:"temporality,omitempty"`
-	Filters              *FilterSet           `json:"filters,omitempty"`
-	GroupBy              []AttributeKey       `json:"groupBy,omitempty"`
-	Expression           string               `json:"expression"`
-	Disabled             bool                 `json:"disabled"`
-	Having               []Having             `json:"having,omitempty"`
-	Legend               string               `json:"legend,omitempty"`
-	Limit                uint64               `json:"limit"`
-	Offset               uint64               `json:"offset"`
-	PageSize             uint64               `json:"pageSize"`
-	OrderBy              []OrderBy            `json:"orderBy,omitempty"`
-	ReduceTo             ReduceToOperator     `json:"reduceTo,omitempty"`
-	SelectColumns        []AttributeKey       `json:"selectColumns,omitempty"`
-	TimeAggregation      TimeAggregation      `json:"timeAggregation,omitempty"`
-	SpaceAggregation     SpaceAggregation     `json:"spaceAggregation,omitempty"`
-	SecondaryAggregation SecondaryAggregation `json:"seriesAggregation,omitempty"`
-	Functions            []Function           `json:"functions,omitempty"`
+	QueryName            string                                         `json:"queryName"`
+	StepInterval         int64                                          `json:"stepInterval"`
+	DataSource           DataSource                                     `json:"dataSource"`
+	AggregateOperator    AggregateOperator                              `json:"aggregateOperator"`
+	AggregateAttribute   AttributeKey                                   `json:"aggregateAttribute,omitempty"`
+	Temporality          Temporality                                    `json:"temporality,omitempty"`
+	Filters              *FilterSet                                     `json:"filters,omitempty"`
+	SearchExpr           string                                         `json:"searchExpr,omitempty"`
+	UseSearchExpr        bool                                           `json:"useSearchExpr,omitempty"`
+	FieldKeys            map[string][]*telemetrytypes.TelemetryFieldKey `json:"-"`
+	GroupBy              []AttributeKey                                 `json:"groupBy,omitempty"`
+	Expression           string                                         `json:"expression"`
+	Disabled             bool                                           `json:"disabled"`
+	Having               []Having                                       `json:"having,omitempty"`
+	Legend               string                                         `json:"legend,omitempty"`
+	Limit                uint64                                         `json:"limit"`
+	Offset               uint64                                         `json:"offset"`
+	PageSize             uint64                                         `json:"pageSize"`
+	OrderBy              []OrderBy                                      `json:"orderBy,omitempty"`
+	ReduceTo             ReduceToOperator                               `json:"reduceTo,omitempty"`
+	SelectColumns        []AttributeKey                                 `json:"selectColumns,omitempty"`
+	TimeAggregation      TimeAggregation                                `json:"timeAggregation,omitempty"`
+	SpaceAggregation     SpaceAggregation                               `json:"spaceAggregation,omitempty"`
+	SecondaryAggregation SecondaryAggregation                           `json:"seriesAggregation,omitempty"`
+	Functions            []Function                                     `json:"functions,omitempty"`
 	ShiftBy              int64
 	IsAnomaly            bool
 	QueriesUsedInFormula []string
@@ -1476,4 +1480,5 @@ type URLShareableOptions struct {
 type QBOptions struct {
 	GraphLimitQtype string
 	IsLivetailQuery bool
+	FieldKeys       map[string][]telemetrytypes.TelemetryFieldKey
 }
