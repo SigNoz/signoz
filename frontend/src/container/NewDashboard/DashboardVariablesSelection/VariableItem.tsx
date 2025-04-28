@@ -367,6 +367,7 @@ function VariableItem({
 							onClear={(): void => {
 								handleChange([]);
 							}}
+							enableAllSelection={enableSelectAll}
 						/>
 					) : (
 						<CustomSelect
