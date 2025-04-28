@@ -126,7 +126,12 @@ function VariableItem({
 	]);
 
 	useEffect(() => {
-		if (queryType === 'DYNAMIC' && fieldValues) {
+		if (
+			queryType === 'DYNAMIC' &&
+			fieldValues &&
+			dynamicVariablesSelectedValue?.name &&
+			dynamicVariablesSelectedValue?.value
+		) {
 			setPreviewValues(
 				sortValues(
 					fieldValues.payload?.values?.stringValues || [],
@@ -134,7 +139,14 @@ function VariableItem({
 				) as never,
 			);
 		}
-	}, [fieldValues, variableSortType, queryType, dynamicVariablesSelectedValue]);
+	}, [
+		fieldValues,
+		variableSortType,
+		queryType,
+		dynamicVariablesSelectedValue?.name,
+		dynamicVariablesSelectedValue?.value,
+		dynamicVariablesSelectedValue,
+	]);
 
 	const handleSave = (): void => {
 		const variable: IDashboardVariable = {
@@ -331,6 +343,7 @@ function VariableItem({
 						<div className="variable-dynamic-section">
 							<DynamicVariable
 								setDynamicVariablesSelectedValue={setDynamicVariablesSelectedValue}
+								dynamicVariablesSelectedValue={dynamicVariablesSelectedValue}
 							/>
 						</div>
 					)}
