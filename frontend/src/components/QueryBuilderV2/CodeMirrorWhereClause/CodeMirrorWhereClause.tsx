@@ -349,12 +349,10 @@ function CodeMirrorWhereClause(): JSX.Element {
 		} else if (queryContext.isInConjunction) {
 			color = 'magenta';
 			text = 'Conjunction';
+		} else if (queryContext.isInParenthesis) {
+			color = 'grey';
+			text = 'Parenthesis';
 		}
-
-		// else if (queryContext.isInParenthesis) {
-		// 	color = 'grey';
-		// 	text = 'Parenthesis';
-		// }
 
 		return <Badge color={color} text={text} />;
 	};
@@ -451,7 +449,8 @@ function CodeMirrorWhereClause(): JSX.Element {
 			options = [
 				{ label: 'HAS', type: 'function' },
 				{ label: 'HASANY', type: 'function' },
-				// Add more function options here
+				{ label: 'HASALL', type: 'function' },
+				{ label: 'HASNONE', type: 'function' },
 			];
 			return {
 				from: word?.from ?? 0,
@@ -468,6 +467,45 @@ function CodeMirrorWhereClause(): JSX.Element {
 				from: word?.from ?? 0,
 				options,
 			};
+		}
+
+		if (queryContext.isInParenthesis) {
+			// Different suggestions based on the context within parenthesis or bracket
+			const curChar = query.charAt(cursorPos.ch - 1) || '';
+
+			if (curChar === '(' || curChar === '[') {
+				// Right after opening parenthesis/bracket
+				if (curChar === '(') {
+					// In expression context, suggest keys, functions, or nested parentheses
+					return {
+						from: word?.from ?? 0,
+						options: [
+							...(keySuggestions || []),
+							{ label: '(', type: 'parenthesis', info: 'Open nested group' },
+							{ label: 'NOT', type: 'operator', info: 'Negate expression' },
+							...options.filter((opt) => opt.type === 'function'),
+						],
+					};
+				}
+
+				// Inside square brackets (likely for IN operator)
+				// Suggest values, commas, or closing bracket
+				return {
+					from: word?.from ?? 0,
+					options: valueSuggestions,
+				};
+			}
+
+			if (curChar === ')' || curChar === ']') {
+				// After closing parenthesis/bracket, suggest conjunctions
+				return {
+					from: word?.from ?? 0,
+					options: [
+						{ label: 'AND', type: 'conjunction' },
+						{ label: 'OR', type: 'conjunction' },
+					],
+				};
+			}
 		}
 
 		return {
