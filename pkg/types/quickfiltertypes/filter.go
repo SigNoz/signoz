@@ -1,6 +1,7 @@
 package quickfiltertypes
 
 import (
+	"encoding/json"
 	"fmt"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -76,182 +77,70 @@ func (u *UpdatableQuickFilters) Validate() error {
 }
 
 func NewDefaultQuickFilter(orgID valuer.UUID) []*StorableQuickFilter {
+	// Define filters for TRACES
+	tracesFilters := []map[string]interface{}{
+		{"key": "deployment.environment", "dataType": "string", "type": "resource", "isColumn": false, "isJSON": false},
+		{"key": "hasError", "dataType": "bool", "type": "tag", "isColumn": false, "isJSON": false},
+		{"key": "serviceName", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false},
+		{"key": "name", "dataType": "string", "type": "resource", "isColumn": false, "isJSON": false},
+		{"key": "rpcMethod", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false},
+		{"key": "responseStatusCode", "dataType": "string", "type": "resource", "isColumn": false, "isJSON": false},
+		{"key": "httpHost", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false},
+		{"key": "httpMethod", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false},
+		{"key": "httpRoute", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false},
+		{"key": "httpUrl", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false},
+		{"key": "traceID", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false},
+	}
+
+	// Define filters for LOGS
+	logsFilters := []map[string]interface{}{
+		{"key": "severity_text", "dataType": "string", "type": "resource", "isColumn": false, "isJSON": false},
+		{"key": "deployment.environment", "dataType": "string", "type": "resource", "isColumn": false, "isJSON": false},
+		{"key": "serviceName", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false},
+		{"key": "host.name", "dataType": "string", "type": "resource", "isColumn": false, "isJSON": false},
+		{"key": "k8s.cluster.name", "dataType": "string", "type": "resource", "isColumn": false, "isJSON": false},
+		{"key": "k8s.deployment.name", "dataType": "string", "type": "resource", "isColumn": false, "isJSON": false},
+		{"key": "k8s.namespace.name", "dataType": "string", "type": "resource", "isColumn": false, "isJSON": false},
+		{"key": "k8s.pod.name", "dataType": "string", "type": "resource", "isColumn": false, "isJSON": false},
+	}
+
+	// Define filters for API_MONITORING
+	apiMonitoringFilters := []map[string]interface{}{
+		{"key": "deployment.environment", "dataType": "string", "type": "resource", "isColumn": false, "isJSON": false},
+		{"key": "serviceName", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false},
+		{"key": "rpcMethod", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false},
+	}
+
+	// Convert to JSON strings
+	tracesJSON, _ := json.Marshal(tracesFilters)
+	logsJSON, _ := json.Marshal(logsFilters)
+	apiMonitoringJSON, _ := json.Marshal(apiMonitoringFilters)
+
+	// Create one entry per signal
 	return []*StorableQuickFilter{
 		{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
 			OrgID:  orgID,
-			Filter: `{"key":"deployment.environment","datatype":"string","type":"resource"}`,
-			Signal: "TRACES",
+			Filter: string(tracesJSON),
+			Signal: "traces",
 		},
 		{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
 			OrgID:  orgID,
-			Filter: `{"key":"hasError","datatype":"bool","type":"tag"}`,
-			Signal: "TRACES",
+			Filter: string(logsJSON),
+			Signal: "logs",
 		},
 		{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
 			OrgID:  orgID,
-			Filter: `{"key":"serviceName","datatype":"string","type":"tag"}`,
-			Signal: "TRACES",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"name","datatype":"string","type":"resource"}`,
-			Signal: "TRACES",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"rpcMethod","datatype":"string","type":"tag"}`,
-			Signal: "TRACES",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"responseStatusCode","datatype":"string","type":"resource"}`,
-			Signal: "TRACES",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"httpHost","datatype":"string","type":"tag"}`,
-			Signal: "TRACES",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"httpMethod","datatype":"string","type":"tag"}`,
-			Signal: "TRACES",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"httpRoute","datatype":"string","type":"tag"}`,
-			Signal: "TRACES",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"httpUrl","datatype":"string","type":"tag"}`,
-			Signal: "TRACES",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"traceID","datatype":"string","type":"tag"}`,
-			Signal: "TRACES",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"severity_text","datatype":"string","type":"resource"}`,
-			Signal: "LOGS",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"deployment.environment","datatype":"string","type":"resource"}`,
-			Signal: "LOGS",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"serviceName","datatype":"string","type":"tag"}`,
-			Signal: "LOGS",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"host.name","datatype":"string","type":"resource"}`,
-			Signal: "LOGS",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"k8s.cluster.name","datatype":"string","type":"resource"}`,
-			Signal: "LOGS",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"k8s.deployment.name","datatype":"string","type":"resource"}`,
-			Signal: "LOGS",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"k8s.namespace.name","datatype":"string","type":"resource"}`,
-			Signal: "LOGS",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"k8s.pod.name","datatype":"string","type":"resource"}`,
-			Signal: "LOGS",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"deployment.environment","datatype":"string","type":"resource"}`,
-			Signal: "API_MONITORING",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"serviceName","datatype":"string","type":"tag"}`,
-			Signal: "API_MONITORING",
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: `{"key":"rpcMethod","datatype":"string","type":"tag"}`,
-			Signal: "API_MONITORING",
+			Filter: string(apiMonitoringJSON),
+			Signal: "api_monitoring",
 		},
 	}
 }

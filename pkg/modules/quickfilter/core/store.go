@@ -73,10 +73,12 @@ func (s *store) Upsert(ctx context.Context, filter *quickfiltertypes.StorableQui
 }
 
 func (s *store) Create(ctx context.Context, filters []*quickfiltertypes.StorableQuickFilter) error {
+	// Using SQLite-specific conflict resolution
 	_, err := s.store.
 		BunDB().
 		NewInsert().
-		Model(filters).
+		Model(&filters).
+		On("CONFLICT (org_id, signal) DO NOTHING").
 		Exec(ctx)
 
 	return err

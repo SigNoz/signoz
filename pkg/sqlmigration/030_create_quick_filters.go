@@ -37,14 +37,13 @@ func (m *createQuickFilters) Register(migrations *migrate.Migrations) error {
 }
 
 func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
-	tx, err := db.
-		BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback()
 
+	// Create table if not exists
 	_, err = tx.NewCreateTable().
 		Model((*quickFilter)(nil)).
 		IfNotExists().
@@ -59,6 +58,7 @@ func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 	err = tx.NewSelect().Table("organizations").Column("id").Limit(1).Scan(ctx, &defaultOrg)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			// No organizations found, nothing to insert, commit and return
 			err := tx.Commit()
 			if err != nil {
 				return err
@@ -67,18 +67,34 @@ func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 		}
 		return err
 	}
+
+	// Get the default quick filters
 	storableQuickFilters := quickfiltertypes.NewDefaultQuickFilter(defaultOrg)
 
-	// Insert all filters in a single transaction
-	_, err = tx.NewInsert().
-		Model(&storableQuickFilters).
-		On("CONFLICT (org_id, signal) DO NOTHING").
-		Exec(ctx)
-	if err != nil {
-		return err
+	// For SQLite, insert each filter individually with proper conflict handling
+	for _, filter := range storableQuickFilters {
+		// Check if the record already exists
+		exists, err := tx.NewSelect().
+			Model((*quickFilter)(nil)).
+			Where("org_id = ? AND signal = ?", filter.OrgID, filter.Signal).
+			Exists(ctx)
+		if err != nil {
+			return err
+		}
+
+		// Only insert if it doesn't exist
+		if !exists {
+			_, err = tx.NewInsert().
+				Model(&filter).
+				Exec(ctx)
+
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	// Commit the transaction before returning
+	// Commit the transaction
 	return tx.Commit()
 }
 

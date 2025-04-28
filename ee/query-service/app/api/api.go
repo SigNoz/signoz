@@ -57,7 +57,8 @@ type APIHandler struct {
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
-	quickFilter := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(signoz.SQLStore)))
+	quickfiltermodule := quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(signoz.SQLStore))
+	quickFilter := quickfilter.NewAPI(quickfiltermodule)
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
@@ -75,6 +76,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuickFilters:                  quickFilter,
+		QuickFilterModule:             quickfiltermodule,
 	})
 
 	if err != nil {
