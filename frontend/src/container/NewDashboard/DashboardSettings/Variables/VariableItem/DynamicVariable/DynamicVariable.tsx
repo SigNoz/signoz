@@ -60,6 +60,19 @@ function DynamicVariable({
 		Record<string, FieldKey[]>
 	>({});
 
+	useEffect(() => {
+		if (dynamicVariablesSelectedValue?.name) {
+			setSelectedAttribute(dynamicVariablesSelectedValue.name);
+		}
+
+		if (dynamicVariablesSelectedValue?.value) {
+			setAttributeSource(dynamicVariablesSelectedValue.value as AttributeSource);
+		}
+	}, [
+		dynamicVariablesSelectedValue?.name,
+		dynamicVariablesSelectedValue?.value,
+	]);
+
 	const { data, error, isLoading, refetch } = useGetFieldKeys({
 		signal:
 			attributeSource === AttributeSource.ALL_SOURCES
@@ -81,7 +94,9 @@ function DynamicVariable({
 
 	// refetch when attributeSource changes
 	useEffect(() => {
-		refetch();
+		if (attributeSource) {
+			refetch();
+		}
 	}, [attributeSource, refetch, debouncedApiSearchText]);
 
 	// Handle search based on whether we have complete data or not
