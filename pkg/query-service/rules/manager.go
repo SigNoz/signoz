@@ -34,33 +34,29 @@ import (
 )
 
 type PrepareTaskOptions struct {
-	Rule              *ruletypes.PostableRule
-	TaskName          string
-	RuleStore         ruletypes.RuleStore
-	MaintenanceStore  ruletypes.MaintenanceStore
-	Logger            *zap.Logger
-	Reader            interfaces.Reader
-	Cache             cache.Cache
-	ManagerOpts       *ManagerOptions
-	NotifyFunc        NotifyFunc
-	SQLStore          sqlstore.SQLStore
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
-	OrgID             string
+	Rule             *ruletypes.PostableRule
+	TaskName         string
+	RuleStore        ruletypes.RuleStore
+	MaintenanceStore ruletypes.MaintenanceStore
+	Logger           *zap.Logger
+	Reader           interfaces.Reader
+	Cache            cache.Cache
+	ManagerOpts      *ManagerOptions
+	NotifyFunc       NotifyFunc
+	SQLStore         sqlstore.SQLStore
+	OrgID            string
 }
 
 type PrepareTestRuleOptions struct {
-	Rule              *ruletypes.PostableRule
-	RuleStore         ruletypes.RuleStore
-	MaintenanceStore  ruletypes.MaintenanceStore
-	Logger            *zap.Logger
-	Reader            interfaces.Reader
-	Cache             cache.Cache
-	ManagerOpts       *ManagerOptions
-	NotifyFunc        NotifyFunc
-	SQLStore          sqlstore.SQLStore
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
+	Rule             *ruletypes.PostableRule
+	RuleStore        ruletypes.RuleStore
+	MaintenanceStore ruletypes.MaintenanceStore
+	Logger           *zap.Logger
+	Reader           interfaces.Reader
+	Cache            cache.Cache
+	ManagerOpts      *ManagerOptions
+	NotifyFunc       NotifyFunc
+	SQLStore         sqlstore.SQLStore
 }
 
 const taskNamesuffix = "webAppEditor"
@@ -95,10 +91,7 @@ type ManagerOptions struct {
 
 	EvalDelay time.Duration
 
-	PrepareTaskFunc func(opts PrepareTaskOptions) (Task, error)
-
-	UseLogsNewSchema    bool
-	UseTraceNewSchema   bool
+	PrepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	PrepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	Alertmanager        alertmanager.Alertmanager
 	SQLStore            sqlstore.SQLStore
@@ -120,9 +113,6 @@ type Manager struct {
 	cache               cache.Cache
 	prepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	prepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
-
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
 
 	alertmanager alertmanager.Alertmanager
 	sqlstore     sqlstore.SQLStore
@@ -156,8 +146,6 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			ruleId,
 			opts.Rule,
 			opts.Reader,
-			opts.UseLogsNewSchema,
-			opts.UseTraceNewSchema,
 			WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			WithSQLStore(opts.SQLStore),
 		)
@@ -407,19 +395,17 @@ func (m *Manager) editTask(_ context.Context, orgID string, rule *ruletypes.Post
 	zap.L().Debug("editing a rule task", zap.String("name", taskName))
 
 	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
-		Rule:              rule,
-		TaskName:          taskName,
-		RuleStore:         m.ruleStore,
-		MaintenanceStore:  m.maintenanceStore,
-		Logger:            m.logger,
-		Reader:            m.reader,
-		Cache:             m.cache,
-		ManagerOpts:       m.opts,
-		NotifyFunc:        m.prepareNotifyFunc(),
-		SQLStore:          m.sqlstore,
-		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
-		UseTraceNewSchema: m.opts.UseTraceNewSchema,
-		OrgID:             orgID,
+		Rule:             rule,
+		TaskName:         taskName,
+		RuleStore:        m.ruleStore,
+		MaintenanceStore: m.maintenanceStore,
+		Logger:           m.logger,
+		Reader:           m.reader,
+		Cache:            m.cache,
+		ManagerOpts:      m.opts,
+		NotifyFunc:       m.prepareNotifyFunc(),
+		SQLStore:         m.sqlstore,
+		OrgID:            orgID,
 	})
 
 	if err != nil {
@@ -595,19 +581,17 @@ func (m *Manager) addTask(_ context.Context, orgID string, rule *ruletypes.Posta
 
 	zap.L().Debug("adding a new rule task", zap.String("name", taskName))
 	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
-		Rule:              rule,
-		TaskName:          taskName,
-		RuleStore:         m.ruleStore,
-		MaintenanceStore:  m.maintenanceStore,
-		Logger:            m.logger,
-		Reader:            m.reader,
-		Cache:             m.cache,
-		ManagerOpts:       m.opts,
-		NotifyFunc:        m.prepareNotifyFunc(),
-		SQLStore:          m.sqlstore,
-		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
-		UseTraceNewSchema: m.opts.UseTraceNewSchema,
-		OrgID:             orgID,
+		Rule:             rule,
+		TaskName:         taskName,
+		RuleStore:        m.ruleStore,
+		MaintenanceStore: m.maintenanceStore,
+		Logger:           m.logger,
+		Reader:           m.reader,
+		Cache:            m.cache,
+		ManagerOpts:      m.opts,
+		NotifyFunc:       m.prepareNotifyFunc(),
+		SQLStore:         m.sqlstore,
+		OrgID:            orgID,
 	})
 
 	if err != nil {
@@ -987,17 +971,15 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 	}
 
 	alertCount, apiErr := m.prepareTestRuleFunc(PrepareTestRuleOptions{
-		Rule:              parsedRule,
-		RuleStore:         m.ruleStore,
-		MaintenanceStore:  m.maintenanceStore,
-		Logger:            m.logger,
-		Reader:            m.reader,
-		Cache:             m.cache,
-		ManagerOpts:       m.opts,
-		NotifyFunc:        m.prepareTestNotifyFunc(),
-		SQLStore:          m.sqlstore,
-		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
-		UseTraceNewSchema: m.opts.UseTraceNewSchema,
+		Rule:             parsedRule,
+		RuleStore:        m.ruleStore,
+		MaintenanceStore: m.maintenanceStore,
+		Logger:           m.logger,
+		Reader:           m.reader,
+		Cache:            m.cache,
+		ManagerOpts:      m.opts,
+		NotifyFunc:       m.prepareTestNotifyFunc(),
+		SQLStore:         m.sqlstore,
 	})
 
 	return alertCount, apiErr

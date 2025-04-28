@@ -9,6 +9,8 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
 type DayWiseBreakdown struct {
@@ -90,8 +92,13 @@ func (ah *APIHandler) getActiveLicenseV3(w http.ResponseWriter, r *http.Request)
 
 // this function is called by zeus when inserting licenses in the query-service
 func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
-	var licenseKey ApplyLicenseRequest
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
+	var licenseKey ApplyLicenseRequest
 	if err := json.NewDecoder(r.Body).Decode(&licenseKey); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
@@ -102,9 +109,10 @@ func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiError := ah.LM().ActivateV3(r.Context(), licenseKey.LicenseKey)
-	if apiError != nil {
-		RespondError(w, apiError, nil)
+	_, err = ah.LM().ActivateV3(r.Context(), licenseKey.LicenseKey)
+	if err != nil {
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_ACT_FAILED, map[string]interface{}{"err": err.Error()}, claims.Email, true, false)
+		render.Error(w, err)
 		return
 	}
 
@@ -112,10 +120,9 @@ func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) {
-
-	apiError := ah.LM().RefreshLicense(r.Context())
-	if apiError != nil {
-		RespondError(w, apiError, nil)
+	err := ah.LM().RefreshLicense(r.Context())
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -127,7 +134,6 @@ func getCheckoutPortalResponse(redirectURL string) *Redirect {
 }
 
 func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
-
 	checkoutRequest := &model.CheckoutRequest{}
 	if err := json.NewDecoder(r.Body).Decode(checkoutRequest); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -140,9 +146,9 @@ func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	redirectUrl, err := signozio.CheckoutSession(r.Context(), checkoutRequest, license.Key)
+	redirectUrl, err := signozio.CheckoutSession(r.Context(), checkoutRequest, license.Key, ah.Signoz.Zeus)
 	if err != nil {
-		RespondError(w, err, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -230,7 +236,6 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
-
 	portalRequest := &model.PortalRequest{}
 	if err := json.NewDecoder(r.Body).Decode(portalRequest); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -243,9 +248,9 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	redirectUrl, err := signozio.PortalSession(r.Context(), portalRequest, license.Key)
+	redirectUrl, err := signozio.PortalSession(r.Context(), portalRequest, license.Key, ah.Signoz.Zeus)
 	if err != nil {
-		RespondError(w, err, nil)
+		render.Error(w, err)
 		return
 	}
 
