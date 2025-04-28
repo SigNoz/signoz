@@ -138,15 +138,6 @@ func (lm *Manager) UploadUsage() {
 
 	zap.L().Info("uploading usage data")
 
-	orgName := ""
-	orgNames, orgError := lm.modelDao.GetOrgs(ctx)
-	if orgError != nil {
-		zap.L().Error("failed to get org data: %v", zap.Error(orgError))
-	}
-	if len(orgNames) == 1 {
-		orgName = orgNames[0].Name
-	}
-
 	usagesPayload := []model.Usage{}
 	for _, usage := range usages {
 		usageDataBytes, err := encryption.Decrypt([]byte(usage.ExporterID[:32]), []byte(usage.Data))
@@ -166,7 +157,7 @@ func (lm *Manager) UploadUsage() {
 		usageData.ExporterID = usage.ExporterID
 		usageData.Type = usage.Type
 		usageData.Tenant = "default"
-		usageData.OrgName = orgName
+		usageData.OrgName = "default"
 		usageData.TenantId = lm.tenantID
 		usagesPayload = append(usagesPayload, usageData)
 	}

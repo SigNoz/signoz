@@ -58,6 +58,8 @@ func Error(rw http.ResponseWriter, cause error) {
 		httpCode = http.StatusUnauthorized
 	case errors.TypeUnsupported:
 		httpCode = http.StatusNotImplemented
+	case errors.TypeForbidden:
+		httpCode = http.StatusForbidden
 	}
 
 	rea := make([]responseerroradditional, len(a))

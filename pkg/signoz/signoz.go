@@ -19,12 +19,15 @@ import (
 
 type SigNoz struct {
 	*factory.Registry
-	Cache          cache.Cache
-	Web            web.Web
-	SQLStore       sqlstore.SQLStore
-	TelemetryStore telemetrystore.TelemetryStore
-	Prometheus     prometheus.Prometheus
-	Alertmanager   alertmanager.Alertmanager
+	Instrumentation instrumentation.Instrumentation
+	Cache           cache.Cache
+	Web             web.Web
+	SQLStore        sqlstore.SQLStore
+	TelemetryStore  telemetrystore.TelemetryStore
+	Prometheus      prometheus.Prometheus
+	Alertmanager    alertmanager.Alertmanager
+	Modules         Modules
+	Handlers        Handlers
 }
 
 func New(
@@ -123,6 +126,7 @@ func New(
 		return nil, err
 	}
 
+	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
@@ -134,6 +138,12 @@ func New(
 		return nil, err
 	}
 
+	// Initialize all modules
+	modules := NewModules(sqlstore)
+
+	// Initialize all handlers for the modules
+	handlers := NewHandlers(modules)
+
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
@@ -144,12 +154,15 @@ func New(
 	}
 
 	return &SigNoz{
-		Registry:       registry,
-		Cache:          cache,
-		Web:            web,
-		SQLStore:       sqlstore,
-		TelemetryStore: telemetrystore,
-		Prometheus:     prometheus,
-		Alertmanager:   alertmanager,
+		Registry:        registry,
+		Instrumentation: instrumentation,
+		Cache:           cache,
+		Web:             web,
+		SQLStore:        sqlstore,
+		TelemetryStore:  telemetrystore,
+		Prometheus:      prometheus,
+		Alertmanager:    alertmanager,
+		Modules:         modules,
+		Handlers:        handlers,
 	}, nil
 }

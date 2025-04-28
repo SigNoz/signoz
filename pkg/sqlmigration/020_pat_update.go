@@ -20,9 +20,7 @@ func NewUpdatePatFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQL
 }
 
 func newUpdatePat(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
-	return &updatePat{
-		store: store,
-	}, nil
+	return &updatePat{store: store}, nil
 }
 
 func (migration *updatePat) Register(migrations *migrate.Migrations) error {
@@ -34,25 +32,33 @@ func (migration *updatePat) Register(migrations *migrate.Migrations) error {
 }
 
 func (migration *updatePat) Up(ctx context.Context, db *bun.DB) error {
-
-	// begin transaction
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
+
 	defer tx.Rollback()
 
 	for _, column := range []string{"last_used", "expires_at"} {
-		if err := migration.store.Dialect().AddNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", column, "INTEGER", "0"); err != nil {
+		if err := migration.
+			store.
+			Dialect().
+			AddNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", column, "INTEGER", "0"); err != nil {
 			return err
 		}
 	}
 
-	if err := migration.store.Dialect().AddNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", "revoked", "BOOLEAN", "false"); err != nil {
+	if err := migration.
+		store.
+		Dialect().
+		AddNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", "revoked", "BOOLEAN", "false"); err != nil {
 		return err
 	}
 
-	if err := migration.store.Dialect().AddNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", "updated_by_user_id", "TEXT", "''"); err != nil {
+	if err := migration.
+		store.
+		Dialect().
+		AddNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", "updated_by_user_id", "TEXT", "''"); err != nil {
 		return err
 	}
 

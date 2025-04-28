@@ -10,13 +10,15 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
@@ -296,11 +298,17 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
+	modules := signoz.NewModules(testDB)
+
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:       reader,
 		AppDao:       dao.DB(),
 		FeatureFlags: fm,
 		JWT:          jwt,
+		Signoz: &signoz.SigNoz{
+			Modules:  modules,
+			Handlers: signoz.NewHandlers(modules),
+		},
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
@@ -309,11 +317,12 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	router := app.NewRouter()
 	//add the jwt middleware
 	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	am := app.NewAuthMiddleware(auth.GetUserFromReqContext)
+	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterQueryRangeV3Routes(router, am)
 
-	user, apiErr := createTestUser()
+	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
+	user, apiErr := createTestUser(organizationModule)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}

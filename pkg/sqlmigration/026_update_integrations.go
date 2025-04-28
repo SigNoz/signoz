@@ -26,9 +26,7 @@ func NewUpdateIntegrationsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFa
 }
 
 func newUpdateIntegrations(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
-	return &updateIntegrations{
-		store: store,
-	}, nil
+	return &updateIntegrations{store: store}, nil
 }
 
 func (migration *updateIntegrations) Register(migrations *migrate.Migrations) error {
@@ -136,9 +134,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 		return nil
 	}
 
-	// ---
 	// installed integrations
-	// ---
 	err = migration.
 		store.
 		Dialect().
@@ -171,9 +167,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// ---
 	// cloud integrations
-	// ---
 	err = migration.
 		store.
 		Dialect().
@@ -213,9 +207,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// ---
 	// cloud integration service
-	// ---
 	err = migration.
 		store.
 		Dialect().
@@ -359,7 +351,20 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIn
 }
 
 func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID string) error {
-	user := &types.User{}
+	type oldUser struct {
+		bun.BaseModel `bun:"table:users"`
+
+		types.TimeAuditable
+		ID                string `bun:"id,pk,type:text" json:"id"`
+		Name              string `bun:"name,type:text,notnull" json:"name"`
+		Email             string `bun:"email,type:text,notnull,unique" json:"email"`
+		Password          string `bun:"password,type:text,notnull" json:"-"`
+		ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
+		GroupID           string `bun:"group_id,type:text,notnull" json:"groupId"`
+		OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
+	}
+
+	user := &oldUser{}
 	err := tx.NewSelect().Model(user).Where("email = ?", "aws-integration@signoz.io").Scan(context.Background())
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -374,7 +379,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 	}
 
 	// new user
-	newUser := &types.User{
+	newUser := &oldUser{
 		ID: uuid.New().String(),
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),

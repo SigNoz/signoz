@@ -84,18 +84,14 @@ func prepareTaskName(ruleId interface{}) string {
 type ManagerOptions struct {
 	TelemetryStore telemetrystore.TelemetryStore
 	Prometheus     prometheus.Prometheus
-	// RepoURL is used to generate a backlink in sent alert messages
-	RepoURL string
-
 	// rule db conn
 	DBConn *sqlx.DB
 
-	Context      context.Context
-	Logger       *zap.Logger
-	ResendDelay  time.Duration
-	DisableRules bool
-	Reader       interfaces.Reader
-	Cache        cache.Cache
+	Context     context.Context
+	Logger      *zap.Logger
+	ResendDelay time.Duration
+	Reader      interfaces.Reader
+	Cache       cache.Cache
 
 	EvalDelay time.Duration
 
@@ -332,9 +328,9 @@ func (m *Manager) Stop(ctx context.Context) {
 // EditRuleDefinition writes the rule definition to the
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) error {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return errors.New("claims not found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
 	}
 
 	ruleUUID, err := valuer.NewUUID(idStr)
@@ -395,11 +391,9 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) er
 			return err
 		}
 
-		if !m.opts.DisableRules {
-			err = m.syncRuleStateWithTask(ctx, claims.OrgID, prepareTaskName(existingRule.ID.StringValue()), parsedRule)
-			if err != nil {
-				return err
-			}
+		err = m.syncRuleStateWithTask(ctx, claims.OrgID, prepareTaskName(existingRule.ID.StringValue()), parsedRule)
+		if err != nil {
+			return err
 		}
 
 		return nil
@@ -469,9 +463,9 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return fmt.Errorf("delete rule received an rule id in invalid format, must be a valid uuid-v7")
 	}
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return errors.New("claims not found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
 	}
 
 	_, err = m.ruleStore.GetStoredRule(ctx, id)
@@ -496,9 +490,7 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		}
 
 		taskName := prepareTaskName(id.StringValue())
-		if !m.opts.DisableRules {
-			m.deleteTask(taskName)
-		}
+		m.deleteTask(taskName)
 
 		return nil
 	})
@@ -523,9 +515,9 @@ func (m *Manager) deleteTask(taskName string) {
 // CreateRule stores rule def into db and also
 // starts an executor for the rule
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error) {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, errors.New("claims not found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	parsedRule, err := ruletypes.ParsePostableRule([]byte(ruleStr))
@@ -581,10 +573,8 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		}
 
 		taskName := prepareTaskName(id.StringValue())
-		if !m.opts.DisableRules {
-			if err := m.addTask(ctx, claims.OrgID, parsedRule, taskName); err != nil {
-				return err
-			}
+		if err := m.addTask(ctx, claims.OrgID, parsedRule, taskName); err != nil {
+			return err
 		}
 
 		return nil
@@ -724,9 +714,6 @@ func (m *Manager) prepareNotifyFunc() NotifyFunc {
 
 		for _, alert := range alerts {
 			generatorURL := alert.GeneratorURL
-			if generatorURL == "" {
-				generatorURL = m.opts.RepoURL
-			}
 
 			a := &alertmanagertypes.PostableAlert{
 				Annotations: alert.Annotations.Map(),
@@ -759,9 +746,6 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 
 		alert := alerts[0]
 		generatorURL := alert.GeneratorURL
-		if generatorURL == "" {
-			generatorURL = m.opts.RepoURL
-		}
 
 		a := &alertmanagertypes.PostableAlert{
 			Annotations: alert.Annotations.Map(),
@@ -804,9 +788,9 @@ func (m *Manager) ListActiveRules() ([]Rule, error) {
 }
 
 func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules, error) {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, errors.New("claims not found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	// fetch rules from DB
 	storedRules, err := m.ruleStore.GetStoredRules(ctx, claims.OrgID)
@@ -918,9 +902,9 @@ func (m *Manager) syncRuleStateWithTask(ctx context.Context, orgID string, taskN
 //   - re-deploy or undeploy task as necessary
 //   - update the patched rule in the DB
 func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleIdStr string) (*ruletypes.GettableRule, error) {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, errors.New("claims not found in context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	ruleID, err := valuer.NewUUID(ruleIdStr)
@@ -1020,9 +1004,9 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 }
 
 func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames []string) (map[string][]ruletypes.GettableRule, *model.ApiError) {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: errors.New("claims not found in context")}
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
 	result := make(map[string][]ruletypes.GettableRule)
