@@ -2,7 +2,6 @@ package preferencetypes
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -133,7 +132,7 @@ func NewDefaultPreferenceMap() map[string]Preference {
 }
 
 func (p *Preference) ErrorValueTypeMismatch() error {
-	return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("the preference value is not of expected type: %s", p.ValueType))
+	return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "the preference value is not of expected type: %s", p.ValueType)
 }
 
 func (p *Preference) checkIfInAllowedValues(preferenceValue interface{}) (bool, error) {
@@ -219,7 +218,7 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) error {
 		}
 		if !p.IsDiscreteValues {
 			if val < p.Range.Min || val > p.Range.Max {
-				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("the preference value is not in the range specified, min: %v , max:%v", p.Range.Min, p.Range.Max))
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "the preference value is not in the range specified, min: %v , max: %v", p.Range.Min, p.Range.Max)
 			}
 		}
 	case PreferenceValueTypeString:
@@ -248,7 +247,7 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) error {
 				return valueMisMatchErr
 			}
 			if !isInAllowedValues {
-				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("the preference value is not in the list of allowedValues: %v", p.AllowedValues))
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "the preference value is not in the list of allowedValues: %v", p.AllowedValues)
 			}
 		}
 	}
@@ -280,11 +279,11 @@ func (p *Preference) SanitizeValue(preferenceValue interface{}) interface{} {
 	}
 }
 
-type PreferenceStore interface {
-	GetOrgPreference(context.Context, string, string) (*StorableOrgPreference, error)
-	GetAllOrgPreferences(context.Context, string) ([]*StorableOrgPreference, error)
-	UpsertOrgPreference(context.Context, *StorableOrgPreference) error
-	GetUserPreference(context.Context, string, string) (*StorableUserPreference, error)
-	GetAllUserPreferences(context.Context, string) ([]*StorableUserPreference, error)
-	UpsertUserPreference(context.Context, *StorableUserPreference) error
+type Store interface {
+	GetOrg(context.Context, string, string) (*StorableOrgPreference, error)
+	GetAllOrg(context.Context, string) ([]*StorableOrgPreference, error)
+	UpsertOrg(context.Context, *StorableOrgPreference) error
+	GetUser(context.Context, string, string) (*StorableUserPreference, error)
+	GetAllUser(context.Context, string) ([]*StorableUserPreference, error)
+	UpsertUser(context.Context, *StorableUserPreference) error
 }

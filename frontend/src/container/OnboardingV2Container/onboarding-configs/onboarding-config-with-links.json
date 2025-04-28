@@ -1,5 +1,18 @@
 [
 	{
+		"dataSource": "quickstart",
+		"label": "Start with Demo Data in <5 minutes",
+		"tags": ["quickstart"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+		"send data",
+		"demo",
+		"quickstart"
+		],
+		"imgUrl": "/Logos/quickstart.svg",
+		"link": "https://signoz.io/docs/cloud/quickstart/"
+	},
+	{
 		"dataSource": "java",
 		"entityID": "dataSource",
 		"label": "Java",
@@ -372,6 +385,8 @@
 			"nestjs",
 			"angular",
 			"nextjs",
+			"reactjs",
+			"nuxtjs",
 			"js",
 			"typescript",
 			"ts"
@@ -536,6 +551,68 @@
 								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/"
 							}
 						]
+					}
+				},
+				{
+					"key": "reactjs",
+					"label": "ReactJS",
+					"imgUrl": "/Logos/reactjs.svg",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/",
+					"question": {
+					  "desc": "What is your Environment?",
+					  "type": "select",
+					  "entityID": "environment",
+					  "options": [
+							{
+							"key": "vm",
+							"label": "VM",
+							"imgUrl": "/Logos/vm.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+							},
+							{
+							"key": "k8s",
+							"label": "Kubernetes",
+							"imgUrl": "/Logos/kubernetes.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+							},
+							{
+							"key": "windows",
+							"label": "Windows",
+							"imgUrl": "/Logos/windows.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+							}
+					  	]
+					}
+				},
+				{
+					"key": "nuxtjs",
+					"label": "NuxtJS",
+					"imgUrl": "/Logos/nuxtjs.svg",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/",
+					"question": {
+					  "desc": "What is your Environment?",
+					  "type": "select",
+					  "entityID": "environment",
+					  "options": [
+							{
+							"key": "vm",
+							"label": "VM",
+							"imgUrl": "/Logos/vm.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/"
+							},
+							{
+							"key": "k8s",
+							"label": "Kubernetes",
+							"imgUrl": "/Logos/kubernetes.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/"
+							},
+							{
+							"key": "windows",
+							"label": "Windows",
+							"imgUrl": "/Logos/windows.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/"
+							}
+					  	]
 					}
 				}
 			]
@@ -1703,7 +1780,8 @@
 		"rds logs to signoz"
 		],
 		"imgUrl": "/Logos/rds.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/rds-logs/"
+		"link": "https://signoz.io/docs/aws-monitoring/rds-logs/",
+		"internalRedirect": true
 	},
 	{
 		"dataSource": "aws-lambda",
@@ -1714,7 +1792,6 @@
 		"aws lambda logs",
 		"lambda observability",
 		"lambda monitoring otel",
-		"lambda metrics collection",
 		"opentelemetry aws lambda",
 		"collect lambda telemetry",
 		"serverless monitoring",
@@ -1897,7 +1974,7 @@
 	{
 		"dataSource": "sql-database-metrics",
 		"label": "Azure SQL Database Metrics",
-		"tags": ["Azure"],
+		"tags": ["Azure","database"],
 		"module": "metrics",
 		"relatedSearchKeywords": [
 		"azure sql database metrics",
@@ -2496,5 +2573,306 @@
 		"document load to signoz"
 		],
 		"link": "https://signoz.io/docs/frontend-monitoring/document-load/"
+	},
+	{
+		"dataSource": "self-hosted-kafka",
+		"label": "Self-Hosted Kafka",
+		"imgUrl": "/Logos/kafka.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+		"self hosted kafka",
+		"kafka setup",
+		"kafka open source",
+		"kafka observability",
+		"kafka integration"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/kafka/"
+	},
+	{
+		"dataSource": "amazon-msk",
+		"label": "Amazon MSK",
+		"imgUrl": "/Logos/amazon-msk.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+		"amazon msk",
+		"msk kafka",
+		"aws kafka",
+		"msk tracing",
+		"msk monitoring"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/msk/"
+	},
+	{
+		"dataSource": "confluent-kafka",
+		"label": "Confluent Kafka",
+		"imgUrl": "/Logos/confluent-kafka.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+		"confluent kafka",
+		"confluent cloud",
+		"kafka tracing",
+		"kafka cloud",
+		"kafka monitoring"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/confluent-kafka/"
+	},
+	{
+		"dataSource": "strimzi-kafka",
+		"label": "Strimzi Kafka",
+		"imgUrl": "/Logos/strimzi.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+		"strimzi kafka",
+		"kafka on kubernetes",
+		"strimzi operator",
+		"kafka helm chart",
+		"monitor kafka strimzi"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/strimzi/"
+	},
+	{
+		"dataSource": "celery",
+		"label": "Celery",
+		"imgUrl": "/Logos/celery.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-celery",
+		"relatedSearchKeywords": [
+		"celery python",
+		"celery tracing",
+		"celery monitoring",
+		"task queue tracing",
+		"celery opentelemetry"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/celery-setup/"
+	},
+	{
+		"dataSource": "redis",
+		"label": "Redis",
+		"tags": ["integrations", "database"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+		"redis",
+		"redis logs",
+		"redis metrics",
+		"database"
+		],
+		"imgUrl": "/Logos/redis.svg",
+		"link": "/integrations?integration=builtin-redis",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "postgresql",
+		"label": "PostgreSQL",
+		"tags": ["integrations", "database"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+		"postgresql",
+		"postgresql logs",
+		"postgresql metrics",
+		"database"
+		],
+		"imgUrl": "/Logos/postgresql.svg",
+		"link": "/integrations?integration=builtin-postgres",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "nginx",
+		"label": "Nginx",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+		"nginx",
+		"nginx logs",
+		"nginx metrics",
+		"proxy"
+		],
+		"imgUrl": "/Logos/nginx.svg",
+		"link": "/integrations?integration=builtin-nginx",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "mongo",
+		"label": "Mongo",
+		"tags": ["integrations", "database"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"mongodb",
+			"mongo logs",
+			"mongo metrics",
+			"nosql database",
+			"database"
+		],
+		"imgUrl": "/Logos/mongo.svg",
+		"link": "/integrations?integration=builtin-mongo",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "clickhouse",
+		"label": "ClickHouse",
+		"tags": ["integrations", "database"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"clickhouse",
+			"clickhouse logs",
+			"clickhouse metrics",
+			"olap database",
+			"columnar database",
+			"database"
+		],
+		"imgUrl": "/Logos/clickhouse.svg",
+		"link": "/integrations?integration=builtin-clickhouse",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-rds-postgresql",
+		"label": "AWS RDS (PostgreSQL)",
+		"tags": ["integrations", "database"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"aws rds postgresql",
+			"postgresql",
+			"rds logs",
+			"rds metrics",
+			"aws database",
+			"database"
+		],
+		"imgUrl": "/Logos/rds.svg",
+		"link": "/integrations?integration=builtin-aws_rds_postgresql",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-rds-mysql",
+		"label": "AWS RDS (MySQL)",
+		"tags": ["integrations", "database"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"aws rds mysql",
+			"mysql",
+			"rds logs",
+			"rds metrics",
+			"aws database",
+			"database"
+		],
+		"imgUrl": "/Logos/rds.svg",
+		"link": "/integrations?integration=builtin-aws_rds_mysql",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-elasticache-redis",
+		"label": "AWS ElastiCache (redis)",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"aws elasticache redis",
+			"elasticache",
+			"redis",
+			"cache metrics",
+			"aws cache",
+			"redis"
+		],
+		"imgUrl": "/Logos/elasticache.svg",
+		"link": "/integrations?integration=builtin-aws_elasticache_redis",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-alb",
+		"label": "AWS ALB - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"alb",
+			"aws alb",
+			"application load balancer",
+			"alb logs",
+			"alb metrics",
+			"load balancer"
+		],
+		"imgUrl": "/Logos/aws-alb.svg",
+		"link": "/integrations?integration=aws-integration&service=alb",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "api-gateway",
+		"label": "AWS API Gateway - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"api gateway",
+			"aws api gateway",
+			"apigateway logs",
+			"apigateway metrics",
+			"api monitoring"
+		],
+		"imgUrl": "/Logos/api-gateway.svg",
+		"link": "/integrations?integration=aws-integration&service=api-gateway",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "ec2",
+		"label": "EC2 - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"ec2",
+			"aws ec2",
+			"ec2 logs",
+			"ec2 metrics",
+			"compute instance"
+		],
+		"imgUrl": "/Logos/ec2.svg",
+		"link": "/integrations?integration=aws-integration&service=ec2",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-lambda",
+		"label": "AWS Lambda - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"aws lambda",
+			"lambda logs",
+			"lambda metrics",
+			"serverless monitoring",
+			"function logs"
+		],
+		"imgUrl": "/Logos/lambda.svg",
+		"link": "/integrations?integration=aws-integration&service=lambda",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "amazon-msk",
+		"label": "Amazon MSK - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"amazon msk",
+			"aws msk",
+			"msk logs",
+			"msk metrics",
+			"kafka"
+		],
+		"imgUrl": "/Logos/amazon-msk.svg",
+		"link": "/integrations?integration=aws-integration&service=msk",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "amazon-rds",
+		"label": "Amazon RDS - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"amazon rds",
+			"aws rds",
+			"rds logs",
+			"rds metrics",
+			"database"
+		],
+		"imgUrl": "/Logos/rds.svg",
+		"link": "/integrations?integration=aws-integration&service=rds",
+		"internalRedirect": true
 	}
 ]

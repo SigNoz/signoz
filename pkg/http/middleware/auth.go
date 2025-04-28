@@ -28,9 +28,7 @@ func (a *Auth) Wrap(next http.Handler) http.Handler {
 			values = append(values, r.Header.Get(header))
 		}
 
-		ctx, err := a.jwt.ContextFromRequest(
-			r.Context(),
-			values...)
+		ctx, err := a.jwt.ContextFromRequest(r.Context(), values...)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return

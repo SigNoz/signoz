@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -22,11 +21,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
@@ -334,24 +331,8 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 }
 
 func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*http.Server, error) {
-
 	r := baseapp.NewRouter()
-
-	// add auth middleware
-	getUserFromRequest := func(ctx context.Context) (*types.GettableUser, error) {
-		user, err := auth.GetUserFromReqContext(ctx)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if user.User.OrgID == "" {
-			return nil, basemodel.UnauthorizedError(errors.New("orgId is missing in the claims"))
-		}
-
-		return user, nil
-	}
-	am := baseapp.NewAuthMiddleware(getUserFromRequest)
+	am := middleware.NewAuthZ(s.serverOptions.SigNoz.Instrumentation.Logger())
 
 	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
 	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
