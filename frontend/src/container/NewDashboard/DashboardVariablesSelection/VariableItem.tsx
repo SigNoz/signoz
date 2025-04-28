@@ -364,6 +364,9 @@ function VariableItem({
 									<span>+ {omittedValues.length} </span>
 								</Tooltip>
 							)}
+							onClear={(): void => {
+								handleChange([]);
+							}}
 						/>
 					) : (
 						<CustomSelect
