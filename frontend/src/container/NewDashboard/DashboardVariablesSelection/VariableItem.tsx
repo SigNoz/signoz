@@ -7,25 +7,15 @@
 import './DashboardVariableSelection.styles.scss';
 
 import { orange } from '@ant-design/colors';
-import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
-import {
-	Checkbox,
-	Input,
-	Popover,
-	Select,
-	Tag,
-	Tooltip,
-	Typography,
-} from 'antd';
-import { CheckboxChangeEvent } from 'antd/es/checkbox';
+import { WarningOutlined } from '@ant-design/icons';
+import { Input, Popover, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
-import { CustomSelect } from 'components/NewSelect';
+import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { debounce, isArray, isString } from 'lodash-es';
-import map from 'lodash-es/map';
-import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -39,11 +29,6 @@ import { SelectItemStyle } from './styles';
 import { areArraysEqual, checkAPIInvocation, IDependencyData } from './util';
 
 const ALL_SELECT_VALUE = '__ALL__';
-
-enum ToggleTagValue {
-	Only = 'Only',
-	All = 'All',
-}
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
@@ -84,6 +69,9 @@ function VariableItem({
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
 	);
+	const [tempSelection, setTempSelection] = useState<
+		string | string[] | undefined
+	>(undefined);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -266,6 +254,27 @@ function VariableItem({
 		}
 	};
 
+	// Add a handler for tracking temporary selection changes
+	const handleTempChange = (inputValue: string | string[]): void => {
+		// Store the selection in temporary state while dropdown is open
+		const value = variableData.multiSelect && !inputValue ? [] : inputValue;
+		setTempSelection(value);
+	};
+
+	// Handle dropdown visibility changes
+	const handleDropdownVisibleChange = (visible: boolean): void => {
+		// Initialize temp selection when opening dropdown
+		if (visible) {
+			setTempSelection(getSelectValue(variableData.selectedValue, variableData));
+		}
+		// Apply changes when closing dropdown
+		else if (!visible && tempSelection !== undefined) {
+			// Call handleChange with the temporarily stored selection
+			handleChange(tempSelection);
+			setTempSelection(undefined);
+		}
+	};
+
 	// do not debounce the above function as we do not need debounce in select variables
 	const debouncedHandleChange = debounce(handleChange, 500);
 
@@ -295,112 +304,7 @@ function VariableItem({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [variableData.type, variableData.customValue]);
 
-	const checkAll = (e: MouseEvent): void => {
-		e.stopPropagation();
-		e.preventDefault();
-		const isChecked =
-			variableData.allSelected || selectValue?.includes(ALL_SELECT_VALUE);
-
-		if (isChecked) {
-			handleChange([]);
-		} else {
-			handleChange(ALL_SELECT_VALUE);
-		}
-	};
-
-	const handleOptionSelect = (
-		e: CheckboxChangeEvent,
-		option: string | number | boolean,
-	): void => {
-		const newSelectedValue = Array.isArray(selectedValue)
-			? ((selectedValue.filter(
-					(val) => val.toString() !== option.toString(),
-			  ) as unknown) as string[])
-			: [];
-
-		if (
-			!e.target.checked &&
-			Array.isArray(selectedValueStringified) &&
-			selectedValueStringified.includes(option.toString())
-		) {
-			if (newSelectedValue.length === 1) {
-				handleChange(newSelectedValue[0].toString());
-				return;
-			}
-			handleChange(newSelectedValue);
-		} else if (!e.target.checked && selectedValue === option.toString()) {
-			handleChange(ALL_SELECT_VALUE);
-		} else if (newSelectedValue.length === optionsData.length - 1) {
-			handleChange(ALL_SELECT_VALUE);
-		}
-	};
-
-	const [optionState, setOptionState] = useState({
-		tag: '',
-		visible: false,
-	});
-
-	function currentToggleTagValue({
-		option,
-	}: {
-		option: string;
-	}): ToggleTagValue {
-		if (
-			option.toString() === selectValue ||
-			(Array.isArray(selectValue) &&
-				selectValue?.includes(option.toString()) &&
-				selectValue.length === 1)
-		) {
-			return ToggleTagValue.All;
-		}
-		return ToggleTagValue.Only;
-	}
-
-	function handleToggle(e: ChangeEvent, option: string): void {
-		e.stopPropagation();
-		const mode = currentToggleTagValue({ option: option as string });
-		const isChecked =
-			variableData.allSelected ||
-			option.toString() === selectValue ||
-			(Array.isArray(selectValue) && selectValue?.includes(option.toString()));
-
-		if (isChecked) {
-			if (mode === ToggleTagValue.Only && variableData.multiSelect) {
-				handleChange([option.toString()]);
-			} else if (!variableData.multiSelect) {
-				handleChange(option.toString());
-			} else {
-				handleChange(ALL_SELECT_VALUE);
-			}
-		} else {
-			handleChange(option.toString());
-		}
-	}
-
-	function retProps(
-		option: string,
-	): {
-		onMouseOver: () => void;
-		onMouseOut: () => void;
-	} {
-		return {
-			onMouseOver: (): void =>
-				setOptionState({
-					tag: option.toString(),
-					visible: true,
-				}),
-			onMouseOut: (): void =>
-				setOptionState({
-					tag: option.toString(),
-					visible: false,
-				}),
-		};
-	}
-
-	const ensureValidOption = (option: string): boolean =>
-		!(
-			currentToggleTagValue({ option }) === ToggleTagValue.All && !enableSelectAll
-		);
+	console.log(tempSelection, selectedValueStringified, variableData.allSelected);
 
 	return (
 		<div className="variable-item">
@@ -432,14 +336,18 @@ function VariableItem({
 					!errorMessage &&
 					optionsData &&
 					(variableData.multiSelect ? (
-						<Select
+						<CustomMultiSelect
 							key={
 								selectValue && Array.isArray(selectValue)
 									? selectValue.join(' ')
 									: selectValue || variableData.id
 							}
+							options={optionsData.map((option) => ({
+								label: option.toString(),
+								value: option.toString(),
+							}))}
 							defaultValue={selectValue}
-							onChange={handleChange}
+							onChange={handleTempChange}
 							bordered={false}
 							placeholder="Select value"
 							placement="bottomLeft"
@@ -452,82 +360,10 @@ function VariableItem({
 							popupClassName="dropdown-styles"
 							maxTagCount={4}
 							getPopupContainer={popupContainer}
-							// eslint-disable-next-line react/no-unstable-nested-components
-							tagRender={(props): JSX.Element => (
-								<Tag closable onClose={props.onClose}>
-									{props.value}
-								</Tag>
-							)}
-							// eslint-disable-next-line react/no-unstable-nested-components
-							maxTagPlaceholder={(omittedValues): JSX.Element => (
-								<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>
-									<span>+ {omittedValues.length} </span>
-								</Tooltip>
-							)}
-							allowClear={selectValue !== ALL_SELECT_VALUE && selectValue !== 'ALL'}
-						>
-							{enableSelectAll && (
-								<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
-									<div className="all-label" onClick={(e): void => checkAll(e as any)}>
-										<Checkbox checked={variableData.allSelected} />
-										ALL
-									</div>
-								</Select.Option>
-							)}
-							{map(optionsData, (option) => (
-								<Select.Option
-									data-testid={`option-${option}`}
-									key={option.toString()}
-									value={option}
-								>
-									<div
-										className={variableData.multiSelect ? 'dropdown-checkbox-label' : ''}
-									>
-										{variableData.multiSelect && (
-											<Checkbox
-												onChange={(e): void => {
-													e.stopPropagation();
-													e.preventDefault();
-													handleOptionSelect(e, option);
-												}}
-												checked={
-													variableData.allSelected ||
-													option.toString() === selectValue ||
-													(Array.isArray(selectValue) &&
-														selectValue?.includes(option.toString()))
-												}
-											/>
-										)}
-										<div
-											className="dropdown-value"
-											{...retProps(option as string)}
-											onClick={(e): void => handleToggle(e as any, option as string)}
-										>
-											<Typography.Text
-												ellipsis={{
-													tooltip: {
-														placement: variableData.multiSelect ? 'top' : 'right',
-														autoAdjustOverflow: true,
-													},
-												}}
-												className="option-text"
-											>
-												{option.toString()}
-											</Typography.Text>
-
-											{variableData.multiSelect &&
-												optionState.tag === option.toString() &&
-												optionState.visible &&
-												ensureValidOption(option as string) && (
-													<Typography.Text className="toggle-tag-label">
-														{currentToggleTagValue({ option: option as string })}
-													</Typography.Text>
-												)}
-										</div>
-									</div>
-								</Select.Option>
-							))}
-						</Select>
+							allowClear
+							value={tempSelection || selectedValueStringified}
+							onDropdownVisibleChange={handleDropdownVisibleChange}
+						/>
 					) : (
 						<CustomSelect
 							key={
