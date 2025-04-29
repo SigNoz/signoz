@@ -79,7 +79,10 @@ function DynamicVariableSelection({
 			enabled: variableData.type === 'DYNAMIC',
 			queryFn: () =>
 				getFieldValues(
-					variableData.dynamicVariablesSource as 'traces' | 'logs' | 'metrics',
+					variableData.dynamicVariablesSource?.toLowerCase() as
+						| 'traces'
+						| 'logs'
+						| 'metrics',
 					variableData.dynamicVariablesAttribute,
 					debouncedApiSearchText,
 				),
