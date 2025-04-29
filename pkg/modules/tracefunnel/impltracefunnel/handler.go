@@ -1,7 +1,6 @@
 package impltracefunnel
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -21,25 +20,6 @@ func NewHandler(module tracefunnel.Module) tracefunnel.Handler {
 	return &handler{module: module}
 }
 
-// Helper function to check for duplicate funnel names
-func (handler *handler) checkDuplicateName(ctx context.Context, orgID string, name string, excludeID string) error {
-	funnels, err := handler.module.List(ctx, orgID)
-	if err != nil {
-		return errors.Newf(errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"failed to list funnels: %v", err)
-	}
-
-	for _, f := range funnels {
-		if f.ID.String() != excludeID && f.Name == name {
-			return errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"a funnel with name '%s' already exists in this organization", name)
-		}
-	}
-	return nil
-}
-
 func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
 	var req tf.FunnelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -53,16 +33,11 @@ func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := handler.checkDuplicateName(r.Context(), claims.OrgID, req.Name, ""); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
 	funnel, err := handler.module.Create(r.Context(), req.Timestamp, req.Name, claims.UserID, claims.OrgID)
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"failed to create funnel"))
+			"failed to create funnel: %v", err))
 		return
 	}
 
@@ -95,13 +70,6 @@ func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
 			errors.CodeInvalidInput,
 			"funnel not found: %v", err))
 		return
-	}
-
-	if req.Name != "" && req.Name != funnel.Name {
-		if err := handler.checkDuplicateName(r.Context(), claims.OrgID, req.Name, funnel.ID.String()); err != nil {
-			render.Error(rw, err)
-			return
-		}
 	}
 
 	steps, err := tracefunnel.ProcessFunnelSteps(req.Steps)
@@ -168,13 +136,6 @@ func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
 			errors.CodeInvalidInput,
 			"funnel not found: %v", err))
 		return
-	}
-
-	if req.Name != "" && req.Name != funnel.Name {
-		if err := handler.checkDuplicateName(r.Context(), claims.OrgID, req.Name, funnel.ID.String()); err != nil {
-			render.Error(rw, err)
-			return
-		}
 	}
 
 	funnel.UpdatedAt = updatedAt
@@ -300,9 +261,7 @@ func (handler *handler) Save(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	funnel.UpdatedAt = updatedAt
-	if req.UserID != "" {
-		funnel.UpdatedBy = claims.UserID
-	}
+	funnel.UpdatedBy = claims.UserID
 	funnel.Description = req.Description
 
 	if err := handler.module.Save(r.Context(), funnel, funnel.UpdatedBy, claims.OrgID); err != nil {
