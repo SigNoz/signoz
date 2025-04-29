@@ -7,6 +7,7 @@ import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import DynamicVariableSelection from './DynamicVariableSelection';
 import {
 	buildDependencies,
 	buildDependencyGraph,
@@ -165,25 +166,38 @@ function DashboardVariableSelection(): JSX.Element | null {
 		(a: { order: number }, b: { order: number }) => a.order - b.order,
 	);
 
+	console.log(orderBasedSortedVariables);
+
 	return (
 		<Row style={{ display: 'flex', gap: '12px' }}>
 			{orderBasedSortedVariables &&
 				Array.isArray(orderBasedSortedVariables) &&
 				orderBasedSortedVariables.length > 0 &&
-				orderBasedSortedVariables.map((variable) => (
-					<VariableItem
-						key={`${variable.name}${variable.id}}${variable.order}`}
-						existingVariables={variables}
-						variableData={{
-							name: variable.name,
-							...variable,
-						}}
-						onValueUpdate={onValueUpdate}
-						variablesToGetUpdated={variablesToGetUpdated}
-						setVariablesToGetUpdated={setVariablesToGetUpdated}
-						dependencyData={dependencyData}
-					/>
-				))}
+				orderBasedSortedVariables.map((variable) =>
+					variable.type === 'DYNAMIC' ? (
+						<DynamicVariableSelection
+							key={`${variable.name}${variable.id}}${variable.order}`}
+							variableData={{
+								name: variable.name,
+								...variable,
+							}}
+							onValueUpdate={onValueUpdate}
+						/>
+					) : (
+						<VariableItem
+							key={`${variable.name}${variable.id}}${variable.order}`}
+							existingVariables={variables}
+							variableData={{
+								name: variable.name,
+								...variable,
+							}}
+							onValueUpdate={onValueUpdate}
+							variablesToGetUpdated={variablesToGetUpdated}
+							setVariablesToGetUpdated={setVariablesToGetUpdated}
+							dependencyData={dependencyData}
+						/>
+					),
+				)}
 		</Row>
 	);
 }
