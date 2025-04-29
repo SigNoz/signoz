@@ -127,7 +127,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new threshold rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new threshold rule for test", zap.String("name", alertname), zap.Error(err))
 			return 0, basemodel.BadRequest(err)
 		}
 
@@ -146,7 +146,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new promql rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new promql rule for test", zap.String("name", alertname), zap.Error(err))
 			return 0, basemodel.BadRequest(err)
 		}
 	} else if parsedRule.RuleType == ruletypes.RuleTypeAnomaly {
@@ -161,7 +161,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			baserules.WithSQLStore(opts.SQLStore),
 		)
 		if err != nil {
-			zap.L().Error("failed to prepare a new anomaly rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new anomaly rule for test", zap.String("name", alertname), zap.Error(err))
 			return 0, basemodel.BadRequest(err)
 		}
 	} else {
