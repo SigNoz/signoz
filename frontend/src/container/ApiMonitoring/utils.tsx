@@ -953,6 +953,18 @@ export const getTopErrorsQueryPayload = (
 									value: '',
 								},
 								{
+									id: '75d65388',
+									key: {
+										key: 'status_message',
+										dataType: DataTypes.String,
+										type: '',
+										isColumn: true,
+										isJSON: false,
+									},
+									op: 'exists',
+									value: '',
+								},
+								{
 									id: '4872bf91',
 									key: {
 										key: SPAN_ATTRIBUTES.SERVER_NAME,

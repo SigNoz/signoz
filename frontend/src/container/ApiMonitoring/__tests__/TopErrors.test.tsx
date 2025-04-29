@@ -61,6 +61,10 @@ describe('TopErrors', () => {
 			startTime: 1000000000,
 			endTime: 1000010000,
 		},
+		initialFilters: {
+			items: [],
+			op: 'AND',
+		},
 	};
 
 	// Setup basic mocks

@@ -19,6 +19,7 @@ import { useQueries } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import EndPointsDropDown from './components/EndPointsDropDown';
@@ -28,12 +29,14 @@ import { SPAN_ATTRIBUTES } from './constants';
 function TopErrors({
 	domainName,
 	timeRange,
+	initialFilters,
 }: {
 	domainName: string;
 	timeRange: {
 		startTime: number;
 		endTime: number;
 	};
+	initialFilters: IBuilderQuery['filters'];
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
@@ -56,11 +59,12 @@ function TopErrors({
 								op: '=',
 								value: endPointName,
 							},
+							...initialFilters.items,
 					  ]
-					: [],
+					: [...initialFilters.items],
 				op: 'AND',
 			}),
-		[domainName, endPointName, minTime, maxTime],
+		[domainName, endPointName, minTime, maxTime, initialFilters],
 	);
 
 	// Since only one query here
@@ -155,7 +159,7 @@ function TopErrors({
 			<div className="endpoints-table-container">
 				<div className="endpoints-table-header">
 					Top Errors{' '}
-					<Tooltip title="Shows top 10 errors, sorted by count">
+					<Tooltip title="Shows top 10 errors only when status message is propagated">
 						<Info size={16} color="white" />
 					</Tooltip>
 				</div>
