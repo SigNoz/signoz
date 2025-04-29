@@ -1,6 +1,5 @@
 import { render, RenderResult, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -95,12 +94,12 @@ const renderContextLogRenderer = (): RenderResult => {
 describe('ContextLogRenderer', () => {
 	beforeEach(() => {
 		server.use(
-			rest.get(`${ENVIRONMENT.baseURL}/api/v1/logs`, (req, res, ctx) =>
+			rest.get(`http://localhost/api/v1/logs`, (req, res, ctx) =>
 				res(ctx.status(200), ctx.json({ logs: [mockLog] })),
 			),
 		);
 		server.use(
-			rest.post(`${ENVIRONMENT.baseURL}/api/v3/query_range`, (req, res, ctx) =>
+			rest.post(`http://localhost/api/v3/query_range`, (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(mockQueryRangeResponse)),
 			),
 		);
