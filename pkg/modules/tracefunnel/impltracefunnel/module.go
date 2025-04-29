@@ -70,20 +70,12 @@ func (module *module) List(ctx context.Context, orgID string) ([]*traceFunnels.F
 		return nil, fmt.Errorf("invalid org ID: %v", err)
 	}
 
-	funnels, err := module.store.List(ctx)
+	funnels, err := module.store.List(ctx, orgUUID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list funnels: %v", err)
 	}
 
-	// Filter by orgID
-	var orgFunnels []*traceFunnels.Funnel
-	for _, f := range funnels {
-		if f.OrgID == orgUUID {
-			orgFunnels = append(orgFunnels, f)
-		}
-	}
-
-	return orgFunnels, nil
+	return funnels, nil
 }
 
 // Delete deletes a funnel
