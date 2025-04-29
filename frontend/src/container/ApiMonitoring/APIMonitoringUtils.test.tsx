@@ -327,7 +327,7 @@ describe('API Monitoring Utils', () => {
 
 			// Act
 			const result = formatTopErrorsDataForTable(
-				(inputData as unknown) as TopErrorsResponseRow[],
+				inputData as TopErrorsResponseRow[],
 			);
 
 			// Assert
