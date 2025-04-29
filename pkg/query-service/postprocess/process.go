@@ -50,7 +50,7 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
 		// The way we distinguish between a formula and a query is by checking if the expression
 		// is the same as the query name
-		// TODO(srikanthccv): Update the UI to send a flag to distinguish between a formula and a query
+		// TODO(srikanthccv): UpdateSteps the UI to send a flag to distinguish between a formula and a query
 		if query.Expression != query.QueryName {
 			expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs())
 			// This shouldn't happen here, because it should have been caught earlier in validation

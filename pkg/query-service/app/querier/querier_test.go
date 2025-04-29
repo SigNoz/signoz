@@ -1382,7 +1382,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 					},
 				),
 			}
-			// Update query parameters
+			// UpdateSteps query parameters
 			params.Start = tc.queryParams.start
 			params.End = tc.queryParams.end
 			params.CompositeQuery.BuilderQueries["A"].Limit = tc.queryParams.limit

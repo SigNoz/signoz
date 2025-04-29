@@ -153,7 +153,7 @@ func InviteUsers(ctx context.Context, req *model.BulkInviteRequest) (*model.Bulk
 		}
 	}
 
-	// Update the status based on the results
+	// UpdateSteps the status based on the results
 	if response.Summary.FailedInvites == response.Summary.TotalInvites {
 		response.Status = "failure"
 	} else if response.Summary.FailedInvites > 0 {

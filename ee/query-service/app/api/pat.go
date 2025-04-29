@@ -119,7 +119,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 
 	req.UpdatedByUserID = claims.UserID
 	req.UpdatedAt = time.Now()
-	zap.L().Info("Got Update PAT request", zap.Any("pat", req))
+	zap.L().Info("Got UpdateSteps PAT request", zap.Any("pat", req))
 	var apierr basemodel.BaseApiError
 	if apierr = ah.AppDao().UpdatePAT(r.Context(), claims.OrgID, req, id); apierr != nil {
 		RespondError(w, apierr, nil)

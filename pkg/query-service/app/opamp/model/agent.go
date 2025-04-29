@@ -104,7 +104,7 @@ func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (
 		agent.Status = newStatus
 		agentDescrChanged = true
 	} else {
-		// Not a new Agent. Update the Status.
+		// Not a new Agent. UpdateSteps the Status.
 		agent.Status.SequenceNum = newStatus.SequenceNum
 
 		// Check what's changed in the AgentDescription.
@@ -127,7 +127,7 @@ func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (
 			agentDescrChanged = false
 		}
 
-		// Update remote config status if it is included and is different from what we have.
+		// UpdateSteps remote config status if it is included and is different from what we have.
 		if newStatus.RemoteConfigStatus != nil &&
 			!proto.Equal(agent.Status.RemoteConfigStatus, newStatus.RemoteConfigStatus) {
 			agent.Status.RemoteConfigStatus = newStatus.RemoteConfigStatus
@@ -164,7 +164,7 @@ func (agent *Agent) updateHealth(newStatus *protobufs.AgentToServer) {
 }
 
 func (agent *Agent) updateRemoteConfigStatus(newStatus *protobufs.AgentToServer) {
-	// Update remote config status if it is included and is different from what we have.
+	// UpdateSteps remote config status if it is included and is different from what we have.
 	if newStatus.RemoteConfigStatus != nil {
 		agent.Status.RemoteConfigStatus = newStatus.RemoteConfigStatus
 	}
@@ -184,7 +184,7 @@ func (agent *Agent) updateStatusField(newStatus *protobufs.AgentToServer) (agent
 }
 
 func (agent *Agent) updateEffectiveConfig(newStatus *protobufs.AgentToServer, response *protobufs.ServerToAgent) {
-	// Update effective config if provided.
+	// UpdateSteps effective config if provided.
 	if newStatus.EffectiveConfig != nil {
 		if newStatus.EffectiveConfig.ConfigMap != nil {
 			agent.Status.EffectiveConfig = newStatus.EffectiveConfig

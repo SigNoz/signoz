@@ -140,7 +140,7 @@ func funcEWMA(result *v3.Result, alpha float64) *v3.Result {
 			}
 
 			if !math.IsNaN(point.Value) {
-				// Update EWMA with the current value
+				// UpdateSteps EWMA with the current value
 				ewma = alpha*point.Value + (1-alpha)*ewma
 			}
 			// Set the EWMA value for the current point
