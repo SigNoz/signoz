@@ -93,25 +93,30 @@ function AllEndPoints({
 				})) || [],
 			);
 
-			// Cache all available options to preserve selected values
-			const newOptions = { ...allAvailableGroupByOptions };
-			groupByFiltersData?.payload?.attributeKeys?.forEach((filter) => {
-				newOptions[filter.key] = filter;
+			// Cache all available options to preserve selected values using functional update
+			// to avoid dependency on allAvailableGroupByOptions
+			setAllAvailableGroupByOptions((prevOptions) => {
+				const newOptions = { ...prevOptions };
+				groupByFiltersData?.payload?.attributeKeys?.forEach((filter) => {
+					newOptions[filter.key] = filter;
+				});
+				return newOptions;
 			});
-			setAllAvailableGroupByOptions(newOptions);
 		}
-	}, [groupByFiltersData, allAvailableGroupByOptions]);
+	}, [groupByFiltersData]); // Only depends on groupByFiltersData now
 
 	// Cache existing selected options on component mount
 	useEffect(() => {
 		if (groupBy && groupBy.length > 0) {
-			const newOptions = { ...allAvailableGroupByOptions };
-			groupBy.forEach((option) => {
-				newOptions[option.key] = option;
+			setAllAvailableGroupByOptions((prevOptions) => {
+				const newOptions = { ...prevOptions };
+				groupBy.forEach((option) => {
+					newOptions[option.key] = option;
+				});
+				return newOptions;
 			});
-			setAllAvailableGroupByOptions(newOptions);
 		}
-	}, [groupBy, allAvailableGroupByOptions]);
+	}, [groupBy]); // Removed allAvailableGroupByOptions from dependencies
 
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
 
