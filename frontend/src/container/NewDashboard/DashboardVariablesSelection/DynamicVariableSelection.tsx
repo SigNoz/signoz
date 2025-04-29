@@ -3,7 +3,9 @@ import './DashboardVariableSelection.styles.scss';
 import { Tooltip, Typography } from 'antd';
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import useDebounce from 'hooks/useDebounce';
 import { isEmpty } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -38,6 +40,12 @@ function DynamicVariableSelection({
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
+	const [isComplete, setIsComplete] = useState<boolean>(false);
+
+	const [filteredOptionsData, setFilteredOptionsData] = useState<
+		(string | number | boolean)[]
+	>([]);
+
 	const [tempSelection, setTempSelection] = useState<
 		string | string[] | undefined
 	>(undefined);
@@ -56,7 +64,11 @@ function DynamicVariableSelection({
 		return dynamicVars || 'no_dynamic_variables';
 	}, [existingVariables]);
 
-	const { isLoading } = useQuery(
+	const [apiSearchText, setApiSearchText] = useState<string>('');
+
+	const debouncedApiSearchText = useDebounce(apiSearchText, DEBOUNCE_DELAY);
+
+	const { isLoading, refetch } = useQuery(
 		[
 			REACT_QUERY_KEY.DASHBOARD_BY_ID,
 			variableData.name || `variable_${variableData.id}`,
@@ -68,9 +80,12 @@ function DynamicVariableSelection({
 				getFieldValues(
 					variableData.dynamicVariablesSource as 'traces' | 'logs' | 'metrics',
 					variableData.dynamicVariablesAttribute,
+					debouncedApiSearchText,
 				),
 			onSuccess: (data) => {
 				setOptionsData(data.payload?.values?.stringValues || []);
+				setIsComplete(data.payload?.complete || false);
+				setFilteredOptionsData(data.payload?.values?.stringValues || []);
 			},
 			onError: (error: any) => {
 				if (error) {
@@ -107,6 +122,42 @@ function DynamicVariableSelection({
 			}
 		},
 		[variableData, onValueUpdate, optionsData],
+	);
+
+	useEffect(() => {
+		if (
+			variableData.dynamicVariablesSource &&
+			variableData.dynamicVariablesAttribute
+		) {
+			refetch();
+		}
+	}, [
+		refetch,
+		variableData.dynamicVariablesSource,
+		variableData.dynamicVariablesAttribute,
+		debouncedApiSearchText,
+	]);
+
+	const handleSearch = useCallback(
+		(text: string) => {
+			if (isComplete) {
+				if (!text) {
+					setFilteredOptionsData(optionsData);
+					return;
+				}
+
+				const localFilteredOptionsData: (string | number | boolean)[] = [];
+				optionsData.forEach((option) => {
+					if (option.toString().toLowerCase().includes(text.toLowerCase())) {
+						localFilteredOptionsData.push(option);
+					}
+				});
+				setFilteredOptionsData(localFilteredOptionsData);
+			} else {
+				setApiSearchText(text);
+			}
+		},
+		[isComplete, optionsData],
 	);
 
 	const { selectedValue } = variableData;
@@ -208,7 +259,7 @@ function DynamicVariableSelection({
 								? selectValue.join(' ')
 								: selectValue || variableData.id
 						}
-						options={optionsData.map((option) => ({
+						options={filteredOptionsData.map((option) => ({
 							label: option.toString(),
 							value: option.toString(),
 						}))}
@@ -239,6 +290,7 @@ function DynamicVariableSelection({
 						}}
 						enableAllSelection={enableSelectAll}
 						maxTagTextLength={30}
+						onSearch={handleSearch}
 					/>
 				) : (
 					<CustomSelect
@@ -257,13 +309,14 @@ function DynamicVariableSelection({
 						className="variable-select"
 						popupClassName="dropdown-styles"
 						getPopupContainer={popupContainer}
-						options={optionsData.map((option) => ({
+						options={filteredOptionsData.map((option) => ({
 							label: option.toString(),
 							value: option.toString(),
 						}))}
 						value={selectValue}
 						defaultValue={variableData.defaultValue}
 						errorMessage={errorMessage}
+						onSearch={handleSearch}
 					/>
 				)}
 			</div>
