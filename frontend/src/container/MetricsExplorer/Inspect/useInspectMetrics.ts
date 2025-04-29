@@ -11,6 +11,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { convertNanoToMilliseconds } from '../Summary/utils';
 import { INITIAL_INSPECT_METRICS_OPTIONS } from './constants';
 import {
+	GraphPopoverData,
 	InspectionStep,
 	MetricInspectionAction,
 	MetricInspectionOptions,
@@ -134,6 +135,9 @@ export function useInspectMetrics(
 	const [spaceAggregatedSeriesMap, setSpaceAggregatedSeriesMap] = useState<
 		Map<string, InspectMetricsSeries[]>
 	>(new Map());
+	const [timeAggregatedSeriesMap, setTimeAggregatedSeriesMap] = useState<
+		Map<number, GraphPopoverData[]>
+	>(new Map());
 	const [aggregatedTimeSeries, setAggregatedTimeSeries] = useState<
 		InspectMetricsSeries[]
 	>(inspectMetricsTimeSeries);
@@ -159,10 +163,12 @@ export function useInspectMetrics(
 			metricInspectionOptions.timeAggregationOption &&
 			metricInspectionOptions.timeAggregationInterval
 		) {
-			timeSeries = applyTimeAggregation(
-				inspectMetricsTimeSeries,
-				metricInspectionOptions,
-			);
+			const {
+				timeAggregatedSeries,
+				timeAggregatedSeriesMap,
+			} = applyTimeAggregation(inspectMetricsTimeSeries, metricInspectionOptions);
+			timeSeries = timeAggregatedSeries;
+			setTimeAggregatedSeriesMap(timeAggregatedSeriesMap);
 			setAggregatedTimeSeries(timeSeries);
 		}
 		// Apply space aggregation
@@ -215,5 +221,6 @@ export function useInspectMetrics(
 		isInspectMetricsRefetching,
 		spaceAggregatedSeriesMap,
 		aggregatedTimeSeries,
+		timeAggregatedSeriesMap,
 	};
 }

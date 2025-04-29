@@ -290,71 +290,94 @@ export function applyFilters(
 export function applyTimeAggregation(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
 	metricInspectionOptions: MetricInspectionOptions,
-): InspectMetricsSeries[] {
+): {
+	timeAggregatedSeries: InspectMetricsSeries[];
+	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
+} {
 	const {
 		timeAggregationOption,
 		timeAggregationInterval,
 	} = metricInspectionOptions;
 
 	if (!timeAggregationInterval) {
-		return inspectMetricsTimeSeries;
+		return {
+			timeAggregatedSeries: inspectMetricsTimeSeries,
+			timeAggregatedSeriesMap: new Map(),
+		};
 	}
 
 	// Group timestamps into intervals and aggregate values for each series independently
-	return inspectMetricsTimeSeries.map((series) => {
-		const groupedTimestamps = new Map<number, number[]>();
+	const timeAggregatedSeriesMap: Map<number, GraphPopoverData[]> = new Map();
 
-		series.values.forEach(({ timestamp, value }) => {
-			const intervalBucket =
-				Math.floor(timestamp / (timeAggregationInterval * 1000)) *
-				(timeAggregationInterval * 1000);
+	const timeAggregatedSeries: InspectMetricsSeries[] = inspectMetricsTimeSeries.map(
+		(series) => {
+			const groupedTimestamps = new Map<number, number[]>();
 
-			if (!groupedTimestamps.has(intervalBucket)) {
-				groupedTimestamps.set(intervalBucket, []);
-			}
-			groupedTimestamps.get(intervalBucket)?.push(parseFloat(value));
-		});
+			series.values.forEach(({ timestamp, value }) => {
+				const intervalBucket =
+					Math.floor(timestamp / (timeAggregationInterval * 1000)) *
+					(timeAggregationInterval * 1000);
 
-		const aggregatedValues = Array.from(groupedTimestamps.entries()).map(
-			([intervalStart, values]) => {
-				let aggregatedValue: number;
-
-				switch (timeAggregationOption) {
-					case TimeAggregationOptions.LATEST:
-						aggregatedValue = values[values.length - 1];
-						break;
-					case TimeAggregationOptions.SUM:
-						aggregatedValue = values.reduce((sum, val) => sum + val, 0);
-						break;
-					case TimeAggregationOptions.AVG:
-						aggregatedValue =
-							values.reduce((sum, val) => sum + val, 0) / values.length;
-						break;
-					case TimeAggregationOptions.MIN:
-						aggregatedValue = Math.min(...values);
-						break;
-					case TimeAggregationOptions.MAX:
-						aggregatedValue = Math.max(...values);
-						break;
-					case TimeAggregationOptions.COUNT:
-						aggregatedValue = values.length;
-						break;
-					default:
-						aggregatedValue = values[values.length - 1];
+				if (!groupedTimestamps.has(intervalBucket)) {
+					groupedTimestamps.set(intervalBucket, []);
+				}
+				if (!timeAggregatedSeriesMap.has(intervalBucket)) {
+					timeAggregatedSeriesMap.set(intervalBucket, []);
 				}
 
-				return {
-					timestamp: intervalStart,
-					value: aggregatedValue.toString(),
-				};
-			},
-		);
+				groupedTimestamps.get(intervalBucket)?.push(parseFloat(value));
+				timeAggregatedSeriesMap.get(intervalBucket)?.push({
+					timestamp,
+					value,
+					type: 'instance',
+					title: series.title,
+					timeSeries: series,
+				});
+			});
 
-		return {
-			...series,
-			values: aggregatedValues,
-		};
-	});
+			const aggregatedValues = Array.from(groupedTimestamps.entries()).map(
+				([intervalStart, values]) => {
+					let aggregatedValue: number;
+
+					switch (timeAggregationOption) {
+						case TimeAggregationOptions.LATEST:
+							aggregatedValue = values[values.length - 1];
+							break;
+						case TimeAggregationOptions.SUM:
+							aggregatedValue = values.reduce((sum, val) => sum + val, 0);
+							break;
+						case TimeAggregationOptions.AVG:
+							aggregatedValue =
+								values.reduce((sum, val) => sum + val, 0) / values.length;
+							break;
+						case TimeAggregationOptions.MIN:
+							aggregatedValue = Math.min(...values);
+							break;
+						case TimeAggregationOptions.MAX:
+							aggregatedValue = Math.max(...values);
+							break;
+						case TimeAggregationOptions.COUNT:
+							aggregatedValue = values.length;
+							break;
+						default:
+							aggregatedValue = values[values.length - 1];
+					}
+
+					return {
+						timestamp: intervalStart,
+						value: aggregatedValue.toString(),
+					};
+				},
+			);
+
+			return {
+				...series,
+				values: aggregatedValues,
+			};
+		},
+	);
+
+	return { timeAggregatedSeries, timeAggregatedSeriesMap };
 }
 
 export function applySpaceAggregation(
@@ -511,17 +534,21 @@ export function onGraphClick(
 
 	const series = inspectMetricsTimeSeries[seriesIndex - 1];
 
-	const { left, top } = u.over.getBoundingClientRect();
+	const { left } = u.over.getBoundingClientRect();
 	const x = e.clientX - left;
-	const y = e.clientY - top;
 	const xVal = u.posToVal(x, 'x'); // Get actual x-axis value
-	const yVal = u.posToVal(y, 'y'); // Get actual y-axis value value (metric value)
+
+	const closestPoint = series?.values.reduce((prev, curr) => {
+		const prevDiff = Math.abs(prev.timestamp - xVal);
+		const currDiff = Math.abs(curr.timestamp - xVal);
+		return prevDiff < currDiff ? prev : curr;
+	});
 
 	setPopoverOptions({
 		x: e.clientX,
 		y: e.clientY,
-		value: yVal,
-		timestamp: xVal,
+		value: parseFloat(closestPoint?.value ?? '0'),
+		timestamp: closestPoint?.timestamp,
 		timeSeries: series,
 	});
 	setShowPopover(true);

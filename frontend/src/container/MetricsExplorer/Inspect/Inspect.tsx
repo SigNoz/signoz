@@ -50,6 +50,7 @@ function Inspect({
 		isInspectMetricsRefetching,
 		spaceAggregatedSeriesMap: spaceAggregationSeriesMap,
 		aggregatedTimeSeries,
+		timeAggregatedSeriesMap,
 	} = useInspectMetrics(metricName);
 
 	const selectedMetricType = useMemo(
@@ -145,6 +146,8 @@ function Inspect({
 							options={expandedViewOptions}
 							spaceAggregationSeriesMap={spaceAggregationSeriesMap}
 							step={inspectionStep}
+							metricInspectionOptions={metricInspectionOptions}
+							timeAggregatedSeriesMap={timeAggregatedSeriesMap}
 						/>
 					)}
 				</div>
@@ -164,12 +167,13 @@ function Inspect({
 		selectedMetricType,
 		spaceAggregationSeriesMap,
 		inspectionStep,
-		popoverOptions,
 		showExpandedView,
-		expandedViewOptions,
+		popoverOptions,
 		spaceAggregationLabels,
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
+		expandedViewOptions,
+		timeAggregatedSeriesMap,
 	]);
 
 	return (

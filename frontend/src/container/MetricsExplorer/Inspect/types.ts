@@ -22,6 +22,7 @@ export interface UseInspectMetricsReturnData {
 	isInspectMetricsRefetching: boolean;
 	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>;
 	aggregatedTimeSeries: InspectMetricsSeries[];
+	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
 }
 
 export interface GraphViewProps {
@@ -147,4 +148,6 @@ export interface ExpandedViewProps {
 	options: GraphPopoverOptions | null;
 	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;
 	step: InspectionStep;
+	metricInspectionOptions: MetricInspectionOptions;
+	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
 }

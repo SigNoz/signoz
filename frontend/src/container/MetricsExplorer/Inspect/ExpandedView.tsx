@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import { Color } from '@signozhq/design-tokens';
@@ -10,7 +11,16 @@ import { DataType } from 'container/LogDetailedView/TableView';
 import { Focus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { ExpandedViewProps, InspectionStep } from './types';
+import {
+	SPACE_AGGREGATION_OPTIONS,
+	TIME_AGGREGATION_OPTIONS,
+} from './constants';
+import {
+	ExpandedViewProps,
+	InspectionStep,
+	SpaceAggregationOptions,
+	TimeAggregationOptions,
+} from './types';
 import {
 	formatTimestampToFullDateTime,
 	getRawDataFromTimeSeries,
@@ -21,6 +31,8 @@ function ExpandedView({
 	options,
 	spaceAggregationSeriesMap,
 	step,
+	metricInspectionOptions,
+	timeAggregatedSeriesMap,
 }: ExpandedViewProps): JSX.Element {
 	const [
 		selectedTimeSeries,
@@ -66,6 +78,13 @@ function ExpandedView({
 		[options],
 	);
 
+	const timeAggregatedData = useMemo(() => {
+		if (step !== InspectionStep.SPACE_AGGREGATION || !options?.timestamp) {
+			return [];
+		}
+		return timeAggregatedSeriesMap.get(options?.timestamp) ?? [];
+	}, [step, options?.timestamp, timeAggregatedSeriesMap]);
+
 	const tableData = useMemo(() => {
 		if (!selectedTimeSeries) {
 			return [];
@@ -107,28 +126,22 @@ function ExpandedView({
 					<div>POINT INSPECTOR</div>
 				</Typography.Title>
 			</div>
+			{/* Show only when space aggregation is completed */}
 			{step === InspectionStep.COMPLETED && (
 				<div className="graph-popover">
 					<Card className="graph-popover-card" size="small">
 						{/* Header */}
-						<Typography.Text className="graph-popover-header-text">
-							{formatTimestampToFullDateTime(options?.timestamp ?? 0)}
-						</Typography.Text>
 						<div className="graph-popover-row">
-							<div className="graph-popover-inner-row">
-								<div
-									style={{
-										width: 10,
-										height: 10,
-										backgroundColor: options?.timeSeries?.strokeColor,
-										borderRadius: '50%',
-										marginRight: 8,
-									}}
-								/>
-								<Typography.Text>{options?.timeSeries?.title}</Typography.Text>
-							</div>
+							<Typography.Text className="graph-popover-header-text">
+								{formatTimestampToFullDateTime(options?.timestamp ?? 0)}
+							</Typography.Text>
 							<Typography.Text strong>
-								{Number(absoluteValue).toFixed(0)}
+								{`${Number(absoluteValue).toFixed(0)} is the ${
+									SPACE_AGGREGATION_OPTIONS[
+										metricInspectionOptions.spaceAggregationOption ??
+											SpaceAggregationOptions.SUM_BY
+									]
+								} of`}
 							</Typography.Text>
 						</div>
 
@@ -171,29 +184,17 @@ function ExpandedView({
 					</Card>
 				</div>
 			)}
-
-			{selectedTimeSeries && (
+			{/* Show only for space aggregated or raw data */}
+			{selectedTimeSeries && step !== InspectionStep.SPACE_AGGREGATION && (
 				<div className="graph-popover">
 					<Card className="graph-popover-card" size="small">
 						{/* Header */}
-						{step !== InspectionStep.COMPLETED && (
-							<Typography.Text className="graph-popover-header-text">
-								{formatTimestampToFullDateTime(options?.timestamp ?? 0)}
-							</Typography.Text>
-						)}
 						<div className="graph-popover-row">
-							<div className="graph-popover-inner-row">
-								<div
-									style={{
-										width: 10,
-										height: 10,
-										backgroundColor: selectedTimeSeries?.strokeColor,
-										borderRadius: '50%',
-										marginRight: 8,
-									}}
-								/>
-								<Typography.Text>{selectedTimeSeries?.title}</Typography.Text>
-							</div>
+							{step !== InspectionStep.COMPLETED && (
+								<Typography.Text className="graph-popover-header-text">
+									{formatTimestampToFullDateTime(options?.timestamp ?? 0)}
+								</Typography.Text>
+							)}
 							<Typography.Text strong>
 								{Number(
 									selectedTimeSeries?.values.find(
@@ -223,6 +224,60 @@ function ExpandedView({
 								</Typography.Text>
 								<div className="graph-popover-inner-row">
 									{rawData?.map(({ timestamp }) => (
+										<Tooltip
+											key={timestamp}
+											title={formatTimestampToFullDateTime(timestamp ?? '', true)}
+										>
+											<div className="graph-popover-cell">
+												{formatTimestampToFullDateTime(timestamp ?? '', true)}
+											</div>
+										</Tooltip>
+									))}
+								</div>
+							</div>
+						</div>
+					</Card>
+				</div>
+			)}
+			{/* Show raw values breakdown only for time aggregated data */}
+			{selectedTimeSeries && step === InspectionStep.SPACE_AGGREGATION && (
+				<div className="graph-popover">
+					<Card className="graph-popover-card" size="small">
+						{/* Header */}
+						<div className="graph-popover-row">
+							<Typography.Text className="graph-popover-header-text">
+								{formatTimestampToFullDateTime(options?.timestamp ?? 0)}
+							</Typography.Text>
+							<Typography.Text strong>
+								{`${Number(absoluteValue).toFixed(0)} is the ${
+									TIME_AGGREGATION_OPTIONS[
+										metricInspectionOptions.timeAggregationOption ??
+											TimeAggregationOptions.SUM
+									]
+								} of`}
+							</Typography.Text>
+						</div>
+
+						{/* Table */}
+						<div className="graph-popover-section">
+							<div className="graph-popover-row">
+								<Typography.Text className="graph-popover-row-label">
+									RAW VALUES
+								</Typography.Text>
+								<div className="graph-popover-inner-row">
+									{timeAggregatedData?.map(({ value }) => (
+										<Tooltip key={value} title={value}>
+											<div className="graph-popover-cell">{value}</div>
+										</Tooltip>
+									))}
+								</div>
+							</div>
+							<div className="graph-popover-row">
+								<Typography.Text className="graph-popover-row-label">
+									TIMESTAMPS
+								</Typography.Text>
+								<div className="graph-popover-inner-row">
+									{timeAggregatedData?.map(({ timestamp }) => (
 										<Tooltip
 											key={timestamp}
 											title={formatTimestampToFullDateTime(timestamp ?? '', true)}
