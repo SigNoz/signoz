@@ -3,6 +3,7 @@ package impltracefunnel
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -14,7 +15,7 @@ type store struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func NewStore(sqlstore sqlstore.SQLStore) traceFunnels.TraceFunnelStore {
+func NewStore(sqlstore sqlstore.SQLStore) traceFunnels.FunnelStore {
 	return &store{sqlstore: sqlstore}
 }
 
@@ -30,6 +31,11 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.Funnel) err
 		funnel.UpdatedAt = time.Now()
 	}
 
+	// Set created_by if CreatedByUser is present
+	if funnel.CreatedByUser != nil {
+		funnel.CreatedBy = funnel.CreatedByUser.ID
+	}
+
 	_, err := store.
 		sqlstore.
 		BunDB().
@@ -37,18 +43,10 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.Funnel) err
 		Model(funnel).
 		Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to create funnel: %v", err)
-	}
-
-	if funnel.CreatedByUser != nil {
-		_, err = store.sqlstore.BunDB().NewUpdate().
-			Model(funnel).
-			Set("created_by = ?", funnel.CreatedByUser.ID).
-			Where("id = ?", funnel.ID).
-			Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to update funnel user relationship: %v", err)
+		if strings.Contains(err.Error(), "idx_trace_funnel_org_id_name") {
+			return fmt.Errorf("a funnel with name '%s' already exists in this organization", funnel.Name)
 		}
+		return fmt.Errorf("failed to create funnel: %v", err)
 	}
 
 	return nil
@@ -83,6 +81,9 @@ func (store *store) Update(ctx context.Context, funnel *traceFunnels.Funnel) err
 		WherePK().
 		Exec(ctx)
 	if err != nil {
+		if strings.Contains(err.Error(), "idx_trace_funnel_org_id_name") {
+			return fmt.Errorf("a funnel with name '%s' already exists in this organization", funnel.Name)
+		}
 		return fmt.Errorf("failed to update funnel: %v", err)
 	}
 	return nil
