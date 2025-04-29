@@ -60,6 +60,39 @@
 							}
 						}
 					}
+
+					.view-toggle-button {
+						display: flex;
+						gap: 8px;
+						align-items: center;
+					}
+				}
+
+				.graph-view-container {
+					min-height: 520px;
+
+					.inspect-metrics-table-view {
+						.ant-spin-nested-loading {
+							.ant-spin-container {
+								.ant-table {
+									height: 450px;
+									overflow-y: scroll;
+									-webkit-overflow-scrolling: touch;
+									scrollbar-width: thin;
+									scrollbar-color: #ccc transparent;
+								}
+							}
+						}
+
+						.table-view-title-header,
+						.table-view-values-header {
+							overflow-x: auto;
+							white-space: nowrap;
+							-webkit-overflow-scrolling: touch;
+							scrollbar-width: thin;
+							scrollbar-color: #ccc transparent;
+						}
+					}
 				}
 			}
 

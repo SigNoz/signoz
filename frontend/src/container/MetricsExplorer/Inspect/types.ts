@@ -153,3 +153,16 @@ export interface ExpandedViewProps {
 	metricInspectionOptions: MetricInspectionOptions;
 	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
 }
+
+export interface TableViewProps {
+	inspectionStep: InspectionStep;
+	inspectMetricsTimeSeries: InspectMetricsSeries[];
+	setShowExpandedView: (showExpandedView: boolean) => void;
+	setExpandedViewOptions: (options: GraphPopoverOptions | null) => void;
+}
+
+export interface TableViewDataItem {
+	title: JSX.Element;
+	values: JSX.Element;
+	key: number;
+}
