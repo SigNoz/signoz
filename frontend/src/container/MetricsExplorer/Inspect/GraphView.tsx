@@ -222,7 +222,7 @@ function GraphView({
 				/>
 			)}
 			{showHoverPopover && !showGraphPopover && hoverPopoverOptions && (
-				<HoverPopover options={hoverPopoverOptions} />
+				<HoverPopover options={hoverPopoverOptions} step={inspectionStep} />
 			)}
 		</div>
 	);

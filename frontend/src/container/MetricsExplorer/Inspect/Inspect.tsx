@@ -78,6 +78,12 @@ function Inspect({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [metricName]);
 
+	// Hide expanded view whenever inspection step changes
+	useEffect(() => {
+		setShowExpandedView(false);
+		setExpandedViewOptions(null);
+	}, [inspectionStep]);
+
 	const content = useMemo(() => {
 		if (isInspectMetricsLoading && !isInspectMetricsRefetching) {
 			return (
@@ -134,6 +140,7 @@ function Inspect({
 						metricInspectionOptions={metricInspectionOptions}
 						dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
 						inspectionStep={inspectionStep}
+						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
 					/>
 				</div>
 				<div className="inspect-metrics-content-second-col">
@@ -158,7 +165,7 @@ function Inspect({
 		isInspectMetricsRefetching,
 		isInspectMetricsError,
 		inspectMetricsStatusCode,
-		inspectMetricsTimeSeries.length,
+		inspectMetricsTimeSeries,
 		aggregatedTimeSeries,
 		formattedInspectMetricsTimeSeries,
 		resetInspection,

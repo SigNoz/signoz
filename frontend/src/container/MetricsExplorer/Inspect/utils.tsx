@@ -54,6 +54,20 @@ export function getAllTimestampsOfMetrics(
 	);
 }
 
+export function getDefaultTimeAggregationInterval(
+	timeSeries: InspectMetricsSeries | undefined,
+): number {
+	if (!timeSeries) {
+		return 60;
+	}
+	const reportingInterval =
+		timeSeries.values.length > 1
+			? Math.abs(timeSeries.values[1].timestamp - timeSeries.values[0].timestamp) /
+			  1000
+			: 0;
+	return Math.max(60, reportingInterval);
+}
+
 export function MetricNameSearch({
 	metricName,
 	setMetricName,
@@ -138,6 +152,7 @@ export function MetricTimeAggregation({
 	metricInspectionOptions,
 	dispatchMetricInspectionOptions,
 	inspectionStep,
+	inspectMetricsTimeSeries,
 }: MetricTimeAggregationProps): JSX.Element {
 	return (
 		<div className="metric-time-aggregation">
@@ -159,6 +174,15 @@ export function MetricTimeAggregation({
 								type: 'SET_TIME_AGGREGATION_OPTION',
 								payload: value,
 							});
+							// set the time aggregation interval to the default value if it is not set
+							if (!metricInspectionOptions.timeAggregationInterval) {
+								dispatchMetricInspectionOptions({
+									type: 'SET_TIME_AGGREGATION_INTERVAL',
+									payload: getDefaultTimeAggregationInterval(
+										inspectMetricsTimeSeries[0],
+									),
+								});
+							}
 						}}
 						style={{ width: 130 }}
 						placeholder="Select option"
@@ -184,6 +208,7 @@ export function MetricTimeAggregation({
 								payload: parseInt(e.target.value, 10),
 							});
 						}}
+						onWheel={(e): void => (e.target as HTMLInputElement).blur()}
 					/>
 				</div>
 			</div>
@@ -405,7 +430,7 @@ export function applySpaceAggregation(
 	// Aggregate each group based on space aggregation option
 	const aggregatedSeries: InspectMetricsSeries[] = [];
 
-	groupedSeries.forEach((seriesGroup) => {
+	groupedSeries.forEach((seriesGroup, key) => {
 		// Get the first series to use as template for labels and timestamps
 		const templateSeries = seriesGroup[0];
 
@@ -457,6 +482,7 @@ export function applySpaceAggregation(
 		aggregatedSeries.push({
 			...templateSeries,
 			values: aggregatedValues.sort((a, b) => a.timestamp - b.timestamp),
+			title: key.split(',').join(' '),
 		});
 	});
 
@@ -682,8 +708,10 @@ export function getTimeSeriesLabel(
 
 export function HoverPopover({
 	options,
+	step,
 }: {
 	options: GraphPopoverOptions;
+	step: InspectionStep;
 }): JSX.Element {
 	const closestTimestamp = useMemo(() => {
 		if (!options.timeSeries) {
@@ -729,7 +757,9 @@ export function HoverPopover({
 						fontWeight: 200,
 					}}
 				>
-					{getTimeSeriesLabel(options.timeSeries, options.timeSeries?.strokeColor)}
+					{step === InspectionStep.COMPLETED
+						? options.timeSeries.title
+						: getTimeSeriesLabel(options.timeSeries, options.timeSeries?.strokeColor)}
 				</Typography.Text>
 			)}
 		</Card>

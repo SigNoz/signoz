@@ -49,6 +49,7 @@ export interface QueryBuilderProps {
 	metricInspectionOptions: MetricInspectionOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
+	inspectMetricsTimeSeries: InspectMetricsSeries[];
 }
 
 export interface MetricNameSearchProps {
@@ -68,6 +69,7 @@ export interface MetricTimeAggregationProps {
 	metricInspectionOptions: MetricInspectionOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
+	inspectMetricsTimeSeries: InspectMetricsSeries[];
 }
 
 export interface MetricSpaceAggregationProps {
