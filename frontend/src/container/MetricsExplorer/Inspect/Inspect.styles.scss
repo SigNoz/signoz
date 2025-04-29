@@ -401,6 +401,9 @@
 
 			.timeseries-cell {
 				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
 				&:hover {
 					opacity: 60%;
 				}

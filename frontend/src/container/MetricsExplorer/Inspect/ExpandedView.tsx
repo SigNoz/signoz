@@ -8,7 +8,7 @@ import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetai
 import classNames from 'classnames';
 import ResizeTable from 'components/ResizeTable/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { Focus } from 'lucide-react';
+import { ArrowDownCircle, ArrowRightCircle, Focus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -82,8 +82,19 @@ function ExpandedView({
 		if (step !== InspectionStep.SPACE_AGGREGATION || !options?.timestamp) {
 			return [];
 		}
-		return timeAggregatedSeriesMap.get(options?.timestamp) ?? [];
-	}, [step, options?.timestamp, timeAggregatedSeriesMap]);
+		return (
+			timeAggregatedSeriesMap
+				.get(options?.timestamp)
+				?.filter(
+					(popoverData) => popoverData.title === options.timeSeries?.title,
+				) ?? []
+		);
+	}, [
+		step,
+		options?.timestamp,
+		options?.timeSeries?.title,
+		timeAggregatedSeriesMap,
+	]);
 
 	const tableData = useMemo(() => {
 		if (!selectedTimeSeries) {
@@ -175,6 +186,11 @@ function ExpandedView({
 												}}
 											>
 												{title}
+												{selectedTimeSeries?.title === title ? (
+													<ArrowDownCircle color={Color.BG_FOREST_300} size={12} />
+												) : (
+													<ArrowRightCircle size={12} />
+												)}
 											</div>
 										</Tooltip>
 									))}

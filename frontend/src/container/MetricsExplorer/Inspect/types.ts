@@ -23,6 +23,7 @@ export interface UseInspectMetricsReturnData {
 	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>;
 	aggregatedTimeSeries: InspectMetricsSeries[];
 	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
+	reset: () => void;
 }
 
 export interface GraphViewProps {

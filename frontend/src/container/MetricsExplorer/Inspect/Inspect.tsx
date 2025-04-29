@@ -51,6 +51,7 @@ function Inspect({
 		spaceAggregatedSeriesMap: spaceAggregationSeriesMap,
 		aggregatedTimeSeries,
 		timeAggregatedSeriesMap,
+		reset,
 	} = useInspectMetrics(metricName);
 
 	const selectedMetricType = useMemo(
@@ -64,13 +65,11 @@ function Inspect({
 	);
 
 	const resetInspection = useCallback(() => {
-		dispatchMetricInspectionOptions({
-			type: 'RESET_INSPECTION',
-		});
 		setShowExpandedView(false);
 		setPopoverOptions(null);
 		setExpandedViewOptions(null);
-	}, [dispatchMetricInspectionOptions]);
+		reset();
+	}, [reset]);
 
 	// Reset inspection when the selected metric changes
 	useEffect(() => {

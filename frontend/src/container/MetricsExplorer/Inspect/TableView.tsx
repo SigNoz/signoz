@@ -3,7 +3,7 @@ import { ColumnsType } from 'antd/es/table';
 import { useMemo } from 'react';
 
 import { InspectionStep, TableViewDataItem, TableViewProps } from './types';
-import { getTimeSeriesLabel } from './utils';
+import { formatTimestampToFullDateTime, getTimeSeriesLabel } from './utils';
 
 function TableView({
 	inspectionStep,
@@ -48,7 +48,12 @@ function TableView({
 					<div className="table-view-values-header">
 						<Typography.Text>
 							{series.values
-								.map((value) => `(${value.timestamp}, ${value.value})`)
+								.map(
+									(value) =>
+										`(${formatTimestampToFullDateTime(value.timestamp, true)}, ${
+											value.value
+										})`,
+								)
 								.join(', ')}
 						</Typography.Text>
 					</div>

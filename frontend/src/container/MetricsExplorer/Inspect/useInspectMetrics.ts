@@ -3,7 +3,7 @@ import { themeColors } from 'constants/theme';
 import { useGetInspectMetricsDetails } from 'hooks/metricsExplorer/useGetInspectMetricsDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -205,6 +205,15 @@ export function useInspectMetrics(
 		return Array.from(labels);
 	}, [inspectMetricsData]);
 
+	const reset = useCallback(() => {
+		dispatchMetricInspectionOptions({
+			type: 'RESET_INSPECTION',
+		});
+		setSpaceAggregatedSeriesMap(new Map());
+		setTimeAggregatedSeriesMap(new Map());
+		setAggregatedTimeSeries(inspectMetricsTimeSeries);
+	}, [dispatchMetricInspectionOptions, inspectMetricsTimeSeries]);
+
 	return {
 		inspectMetricsTimeSeries,
 		inspectMetricsStatusCode,
@@ -219,5 +228,6 @@ export function useInspectMetrics(
 		spaceAggregatedSeriesMap,
 		aggregatedTimeSeries,
 		timeAggregatedSeriesMap,
+		reset,
 	};
 }
