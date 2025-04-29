@@ -3,6 +3,7 @@ import './DashboardVariableSelection.styles.scss';
 import { Tooltip, Typography } from 'antd';
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useDebounce from 'hooks/useDebounce';
@@ -89,9 +90,13 @@ function DynamicVariableSelection({
 			},
 			onError: (error: any) => {
 				if (error) {
-					const message =
-						'Please make sure query is valid and dependent variables are selected';
-
+					let message = SOMETHING_WENT_WRONG;
+					if (error?.message) {
+						message = error?.message;
+					} else {
+						message =
+							'Please make sure configuration is valid and you have required setup and permissions';
+					}
 					setErrorMessage(message);
 				}
 			},
@@ -291,6 +296,9 @@ function DynamicVariableSelection({
 						enableAllSelection={enableSelectAll}
 						maxTagTextLength={30}
 						onSearch={handleSearch}
+						onRetry={(): void => {
+							refetch();
+						}}
 					/>
 				) : (
 					<CustomSelect
@@ -317,6 +325,9 @@ function DynamicVariableSelection({
 						defaultValue={variableData.defaultValue}
 						errorMessage={errorMessage}
 						onSearch={handleSearch}
+						onRetry={(): void => {
+							refetch();
+						}}
 					/>
 				)}
 			</div>

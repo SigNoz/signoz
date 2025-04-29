@@ -2,6 +2,7 @@ import './DynamicVariable.styles.scss';
 
 import { Select, Typography } from 'antd';
 import CustomSelect from 'components/NewSelect/CustomSelect';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useGetFieldKeys } from 'hooks/dynamicVariables/useGetFieldKeys';
 import useDebounce from 'hooks/useDebounce';
@@ -142,7 +143,7 @@ function DynamicVariable({
 		dynamicVariablesSelectedValue?.value,
 	]);
 
-	const errorMessage = (error as any)?.message;
+	const errorMessage = (error as any)?.message || SOMETHING_WENT_WRONG;
 	return (
 		<div className="dynamic-variable-container">
 			<CustomSelect
@@ -160,6 +161,9 @@ function DynamicVariable({
 				errorMessage={errorMessage as any}
 				value={selectedAttribute || dynamicVariablesSelectedValue?.name}
 				onSearch={handleSearch}
+				onRetry={(): void => {
+					refetch();
+				}}
 			/>
 			<Typography className="dynamic-variable-from-text">from</Typography>
 			<Select
