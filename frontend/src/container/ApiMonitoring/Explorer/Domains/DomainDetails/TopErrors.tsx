@@ -12,13 +12,9 @@ import {
 	getTopErrorsQueryPayload,
 	TopErrorsResponseRow,
 } from 'container/ApiMonitoring/utils';
-import {
-	CustomTimeType,
-	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { Info } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -32,17 +28,12 @@ import { SPAN_ATTRIBUTES } from './constants';
 function TopErrors({
 	domainName,
 	timeRange,
-	handleTimeChange,
 }: {
 	domainName: string;
 	timeRange: {
 		startTime: number;
 		endTime: number;
 	};
-	handleTimeChange: (
-		interval: Time | CustomTimeType,
-		dateTimeRange?: [number, number],
-	) => void;
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
@@ -135,12 +126,6 @@ function TopErrors({
 		[endPointDropDownDataQueries],
 	);
 
-	useEffect(() => {
-		if (maxTime - minTime < 60 * 60 * 6) {
-			handleTimeChange('6h');
-		}
-	}, [handleTimeChange, maxTime, minTime]);
-
 	const navigateToExplorer = useNavigateToExplorer();
 
 	if (isError) {
@@ -170,7 +155,7 @@ function TopErrors({
 			<div className="endpoints-table-container">
 				<div className="endpoints-table-header">
 					Top Errors{' '}
-					<Tooltip title="Shows top 10 errors only when status message is propagated">
+					<Tooltip title="Shows top 10 errors, sorted by count">
 						<Info size={16} color="white" />
 					</Tooltip>
 				</div>

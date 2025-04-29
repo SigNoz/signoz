@@ -941,18 +941,6 @@ export const getTopErrorsQueryPayload = (
 									value: 'Client',
 								},
 								{
-									id: '75d65388',
-									key: {
-										key: 'status_message',
-										dataType: DataTypes.String,
-										type: '',
-										isColumn: true,
-										isJSON: false,
-									},
-									op: 'exists',
-									value: '',
-								},
-								{
 									id: 'b1af6bdb',
 									key: {
 										key: SPAN_ATTRIBUTES.URL_PATH,
@@ -975,6 +963,18 @@ export const getTopErrorsQueryPayload = (
 									},
 									op: '=',
 									value: domainName,
+								},
+								{
+									id: 'ab4c885d',
+									key: {
+										key: 'has_error',
+										dataType: DataTypes.bool,
+										type: '',
+										isColumn: true,
+										isJSON: false,
+									},
+									op: '=',
+									value: true,
 								},
 								...filters.items,
 							],
@@ -999,11 +999,12 @@ export const getTopErrorsQueryPayload = (
 								isJSON: false,
 							},
 							{
-								key: 'status_code',
-								dataType: DataTypes.Float64,
-								type: '',
+								dataType: DataTypes.String,
 								isColumn: true,
 								isJSON: false,
+								key: 'response_status_code',
+								type: '',
+								id: 'response_status_code--string----true',
 							},
 							{
 								key: 'status_message',
@@ -1326,7 +1327,7 @@ export const formatEndPointsDataForTable = (
 export interface TopErrorsResponseRow {
 	metric: {
 		[SPAN_ATTRIBUTES.URL_PATH]: string;
-		[SPAN_ATTRIBUTES.STATUS_CODE]: string;
+		[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]: string;
 		status_message: string;
 	};
 	values: [number, string][];
@@ -1355,10 +1356,10 @@ export const formatTopErrorsDataForTable = (
 				? '-'
 				: row.metric[SPAN_ATTRIBUTES.URL_PATH],
 		statusCode:
-			row.metric[SPAN_ATTRIBUTES.STATUS_CODE] === 'n/a' ||
-			row.metric[SPAN_ATTRIBUTES.STATUS_CODE] === undefined
+			row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE] === 'n/a' ||
+			row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE] === undefined
 				? '-'
-				: row.metric[SPAN_ATTRIBUTES.STATUS_CODE],
+				: row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE],
 		statusMessage:
 			row.metric.status_message === 'n/a' ||
 			row.metric.status_message === undefined
@@ -2004,7 +2005,7 @@ export const getEndPointDetailsQueryPayload = (
 										type: 'tag',
 									},
 									op: '=',
-									value: 'api.github.com',
+									value: domainName,
 								},
 								{
 									id: '212678b9',
