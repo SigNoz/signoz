@@ -2,13 +2,14 @@ package tracefunnel
 
 import (
 	"fmt"
+	"net/http"
+	"sort"
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	tracefunnel "github.com/SigNoz/signoz/pkg/types/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"net/http"
-	"sort"
-	"time"
 )
 
 // ValidateTimestamp validates a timestamp
@@ -102,6 +103,14 @@ func ConstructFunnelResponse(funnel *tracefunnel.Funnel, claims *authtypes.Claim
 }
 
 func ProcessFunnelSteps(steps []tracefunnel.FunnelStep) ([]tracefunnel.FunnelStep, error) {
+	// First validate the steps
+	if err := ValidateFunnelSteps(steps); err != nil {
+		return nil, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"invalid funnel steps: %v", err)
+	}
+
+	// Then process the steps
 	for i := range steps {
 		if steps[i].Order < 1 {
 			steps[i].Order = int64(i + 1)
@@ -109,12 +118,6 @@ func ProcessFunnelSteps(steps []tracefunnel.FunnelStep) ([]tracefunnel.FunnelSte
 		if steps[i].Id.IsZero() {
 			steps[i].Id = valuer.GenerateUUID()
 		}
-	}
-
-	if err := ValidateFunnelSteps(steps); err != nil {
-		return nil, errors.Newf(errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"invalid funnel steps: %v", err)
 	}
 
 	return NormalizeFunnelSteps(steps), nil
