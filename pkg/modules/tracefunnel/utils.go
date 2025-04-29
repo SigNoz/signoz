@@ -52,19 +52,16 @@ func ValidateFunnelSteps(steps []tracefunnel.FunnelStep) error {
 // Returns a new slice with normalized step orders, leaving the input slice unchanged.
 func NormalizeFunnelSteps(steps []tracefunnel.FunnelStep) []tracefunnel.FunnelStep {
 	if len(steps) == 0 {
-		return nil
+		return []tracefunnel.FunnelStep{}
 	}
 
-	// Create a copy of the input slice
 	newSteps := make([]tracefunnel.FunnelStep, len(steps))
 	copy(newSteps, steps)
 
-	// Sort the copy
 	sort.Slice(newSteps, func(i, j int) bool {
 		return newSteps[i].Order < newSteps[j].Order
 	})
 
-	// Update orders in the copy
 	for i := range newSteps {
 		newSteps[i].Order = int64(i + 1)
 	}
