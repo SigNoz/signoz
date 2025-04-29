@@ -73,19 +73,11 @@ function DynamicVariableSelection({
 			onSuccess: (data) => {
 				setOptionsData(data.payload?.values?.stringValues || []);
 			},
-			onError: (error: {
-				details: {
-					error: string;
-				};
-			}) => {
-				const { details } = error;
+			onError: (error: any) => {
+				if (error) {
+					const message =
+						'Please make sure query is valid and dependent variables are selected';
 
-				if (details.error) {
-					let message = details.error;
-					if (details.error.includes('Syntax error:')) {
-						message =
-							'Please make sure query is valid and dependent variables are selected';
-					}
 					setErrorMessage(message);
 				}
 			},
