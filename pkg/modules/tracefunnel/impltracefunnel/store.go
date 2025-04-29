@@ -3,7 +3,6 @@ package impltracefunnel
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -43,10 +42,7 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.Funnel) err
 		Model(funnel).
 		Exec(ctx)
 	if err != nil {
-		if strings.Contains(err.Error(), "idx_trace_funnel_org_id_name") {
-			return fmt.Errorf("a funnel with name '%s' already exists in this organization", funnel.Name)
-		}
-		return fmt.Errorf("failed to create funnel: %v", err)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, traceFunnels.ErrFunnelAlreadyExists, "a funnel with name '%s' already exists in this organization", funnel.Name)
 	}
 
 	return nil
@@ -81,10 +77,7 @@ func (store *store) Update(ctx context.Context, funnel *traceFunnels.Funnel) err
 		WherePK().
 		Exec(ctx)
 	if err != nil {
-		if strings.Contains(err.Error(), "idx_trace_funnel_org_id_name") {
-			return fmt.Errorf("a funnel with name '%s' already exists in this organization", funnel.Name)
-		}
-		return fmt.Errorf("failed to update funnel: %v", err)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, traceFunnels.ErrFunnelAlreadyExists, "a funnel with name '%s' already exists in this organization", funnel.Name)
 	}
 	return nil
 }
