@@ -26,8 +26,8 @@ func (m *MockStore) Get(ctx context.Context, uuid valuer.UUID) (*traceFunnels.Fu
 	return args.Get(0).(*traceFunnels.Funnel), args.Error(1)
 }
 
-func (m *MockStore) List(ctx context.Context) ([]*traceFunnels.Funnel, error) {
-	args := m.Called(ctx)
+func (m *MockStore) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnels.Funnel, error) {
+	args := m.Called(ctx, orgID)
 	return args.Get(0).([]*traceFunnels.Funnel), args.Error(1)
 }
 
@@ -51,7 +51,14 @@ func TestModule_Create(t *testing.T) {
 	userID := "user-123"
 	orgID := valuer.GenerateUUID().String()
 
-	mockStore.On("Create", ctx, mock.AnythingOfType("*tracefunnels.Funnel")).Return(nil)
+	mockStore.On("Create", ctx, mock.MatchedBy(func(f *traceFunnels.Funnel) bool {
+		return f.Name == name &&
+			f.CreatedBy == userID &&
+			f.OrgID.String() == orgID &&
+			f.CreatedByUser != nil &&
+			f.CreatedByUser.ID == userID &&
+			f.CreatedAt.UnixNano()/1000000 == timestamp
+	})).Return(nil)
 
 	funnel, err := module.Create(ctx, timestamp, name, userID, orgID)
 	assert.NoError(t, err)
@@ -59,6 +66,8 @@ func TestModule_Create(t *testing.T) {
 	assert.Equal(t, name, funnel.Name)
 	assert.Equal(t, userID, funnel.CreatedBy)
 	assert.Equal(t, orgID, funnel.OrgID.String())
+	assert.NotNil(t, funnel.CreatedByUser)
+	assert.Equal(t, userID, funnel.CreatedByUser.ID)
 
 	mockStore.AssertExpectations(t)
 }
@@ -111,22 +120,23 @@ func TestModule_List(t *testing.T) {
 
 	ctx := context.Background()
 	orgID := valuer.GenerateUUID().String()
+	orgUUID := valuer.MustNewUUID(orgID)
 	expectedFunnels := []*traceFunnels.Funnel{
 		{
 			BaseMetadata: traceFunnels.BaseMetadata{
 				Name:  "funnel-1",
-				OrgID: valuer.MustNewUUID(orgID),
+				OrgID: orgUUID,
 			},
 		},
 		{
 			BaseMetadata: traceFunnels.BaseMetadata{
 				Name:  "funnel-2",
-				OrgID: valuer.MustNewUUID(orgID),
+				OrgID: orgUUID,
 			},
 		},
 	}
 
-	mockStore.On("List", ctx).Return(expectedFunnels, nil)
+	mockStore.On("List", ctx, orgUUID).Return(expectedFunnels, nil)
 
 	funnels, err := module.List(ctx, orgID)
 	assert.NoError(t, err)
