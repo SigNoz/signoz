@@ -115,8 +115,8 @@ func ProcessFunnelSteps(steps []tracefunnel.FunnelStep) ([]tracefunnel.FunnelSte
 		if steps[i].Order < 1 {
 			steps[i].Order = int64(i + 1)
 		}
-		if steps[i].Id.IsZero() {
-			steps[i].Id = valuer.GenerateUUID()
+		if steps[i].ID.IsZero() {
+			steps[i].ID = valuer.GenerateUUID()
 		}
 	}
 

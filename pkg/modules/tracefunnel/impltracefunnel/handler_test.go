@@ -125,14 +125,14 @@ func TestHandler_Update(t *testing.T) {
 		Name:     "updated-funnel",
 		Steps: []traceFunnels.FunnelStep{
 			{
-				Id:          valuer.GenerateUUID(),
+				ID:          valuer.GenerateUUID(),
 				Name:        "Step 1",
 				ServiceName: "test-service",
 				SpanName:    "test-span",
 				Order:       1,
 			},
 			{
-				Id:          valuer.GenerateUUID(),
+				ID:          valuer.GenerateUUID(),
 				Name:        "Step 2",
 				ServiceName: "test-service",
 				SpanName:    "test-span-2",
