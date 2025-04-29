@@ -208,17 +208,16 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		align: 'right',
 		className: `column`,
 		render: (errorRate: number | string): React.ReactNode => {
-			if (errorRate === 'n/a' || errorRate === '-') {
-				return '-';
-			}
+			const errorRateValue =
+				errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate;
 			return (
 				<Progress
 					status="active"
-					percent={Number((errorRate as number).toFixed(1))}
+					percent={Number((errorRateValue as number).toFixed(2))}
 					strokeLinecap="butt"
 					size="small"
 					strokeColor={((): string => {
-						const errorRatePercent = Number((errorRate as number).toFixed(1));
+						const errorRatePercent = Number((errorRateValue as number).toFixed(2));
 						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
 						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
 						return Color.BG_FOREST_500;
@@ -3057,28 +3056,28 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		render: (
 			errorPercentage: number | string,
 			// eslint-disable-next-line sonarjs/no-identical-functions
-		): React.ReactNode => (
-			<Progress
-				status="active"
-				percent={Number(
-					((errorPercentage === 'n/a' || errorPercentage === '-'
-						? 0
-						: errorPercentage) as number).toFixed(1),
-				)}
-				strokeLinecap="butt"
-				size="small"
-				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
-				string => {
-					const errorPercentagePercent = Number(
-						(errorPercentage as number).toFixed(1),
-					);
-					if (errorPercentagePercent >= 90) return Color.BG_SAKURA_500;
-					if (errorPercentagePercent >= 60) return Color.BG_AMBER_500;
-					return Color.BG_FOREST_500;
-				})()}
-				className="progress-bar error-rate"
-			/>
-		),
+		): React.ReactNode => {
+			const errorPercentageValue =
+				errorPercentage === 'n/a' || errorPercentage === '-' ? 0 : errorPercentage;
+			return (
+				<Progress
+					status="active"
+					percent={Number((errorPercentageValue as number).toFixed(2))}
+					strokeLinecap="butt"
+					size="small"
+					strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
+					string => {
+						const errorPercentagePercent = Number(
+							(errorPercentageValue as number).toFixed(2),
+						);
+						if (errorPercentagePercent >= 90) return Color.BG_SAKURA_500;
+						if (errorPercentagePercent >= 60) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
+					className="progress-bar error-rate"
+				/>
+			);
+		},
 		sorter: (a: DependentServicesData, b: DependentServicesData): number => {
 			const errorPercentageA =
 				a.errorPercentage === '-' || a.errorPercentage === 'n/a'
@@ -3658,12 +3657,9 @@ export const getAllEndpointsWidgetData = (
 
 	widget.renderColumnCell = {
 		[SPAN_ATTRIBUTES.URL_PATH]: (url: any): ReactNode => {
-			const { endpoint, port } = extractPortAndEndpoint(url);
+			const { endpoint } = extractPortAndEndpoint(url);
 			return (
-				<span>
-					{port !== '-' && port !== 'n/a' ? `:${port}` : ''}
-					{endpoint === 'n/a' || url === undefined ? '-' : endpoint}
-				</span>
+				<span>{endpoint === 'n/a' || url === undefined ? '-' : endpoint}</span>
 			);
 		},
 		A: (numOfCalls: any): ReactNode => (
@@ -3695,7 +3691,7 @@ export const getAllEndpointsWidgetData = (
 				percent={Number(
 					((errorRate === 'n/a' || errorRate === '-'
 						? 0
-						: errorRate) as number).toFixed(1),
+						: errorRate) as number).toFixed(2),
 				)}
 				strokeLinecap="butt"
 				size="small"
@@ -3704,7 +3700,7 @@ export const getAllEndpointsWidgetData = (
 					const errorRatePercent = Number(
 						((errorRate === 'n/a' || errorRate === '-'
 							? 0
-							: errorRate) as number).toFixed(1),
+							: errorRate) as number).toFixed(2),
 					);
 					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
 					if (errorRatePercent >= 60) return Color.BG_AMBER_500;

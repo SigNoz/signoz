@@ -146,13 +146,13 @@ function DomainMetrics({
 								<Progress
 									status="active"
 									percent={Number(
-										Number(formattedDomainMetricsData.errorRate).toFixed(1),
+										Number(formattedDomainMetricsData.errorRate).toFixed(2),
 									)}
 									strokeLinecap="butt"
 									size="small"
 									strokeColor={((): string => {
 										const errorRatePercent = Number(
-											Number(formattedDomainMetricsData.errorRate).toFixed(1),
+											Number(formattedDomainMetricsData.errorRate).toFixed(2),
 										);
 										if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
 										if (errorRatePercent >= 60) return Color.BG_AMBER_500;

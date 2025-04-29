@@ -35,6 +35,8 @@ function AllEndPoints({
 	initialFilters: IBuilderQuery['filters'];
 	setInitialFiltersEndPointStats: (filters: IBuilderQuery['filters']) => void;
 }): JSX.Element {
+	const [groupBySearchValue, setGroupBySearchValue] = useState<string>('');
+
 	const {
 		data: groupByFiltersData,
 		isLoading: isLoadingGroupByFilters,
@@ -42,7 +44,7 @@ function AllEndPoints({
 		dataSource: DataSource.TRACES,
 		aggregateAttribute: '',
 		aggregateOperator: 'noop',
-		searchText: '',
+		searchText: groupBySearchValue,
 		tagType: '',
 	});
 
@@ -168,6 +170,7 @@ function AllEndPoints({
 					placeholder="Search for attribute"
 					options={groupByOptions}
 					onChange={handleGroupByChange}
+					onSearch={(value: string): void => setGroupBySearchValue(value)}
 				/>{' '}
 			</div>
 			<div className="endpoints-table-container">

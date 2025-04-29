@@ -136,8 +136,10 @@ function TopErrors({
 	);
 
 	useEffect(() => {
-		handleTimeChange('6h');
-	}, [handleTimeChange]);
+		if (maxTime - minTime < 60 * 60 * 6) {
+			handleTimeChange('6h');
+		}
+	}, [handleTimeChange, maxTime, minTime]);
 
 	const navigateToExplorer = useNavigateToExplorer();
 
