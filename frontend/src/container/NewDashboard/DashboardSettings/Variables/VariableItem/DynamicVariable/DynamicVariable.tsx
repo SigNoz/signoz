@@ -2,7 +2,6 @@ import './DynamicVariable.styles.scss';
 
 import { Select, Typography } from 'antd';
 import CustomSelect from 'components/NewSelect/CustomSelect';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useGetFieldKeys } from 'hooks/dynamicVariables/useGetFieldKeys';
 import useDebounce from 'hooks/useDebounce';
@@ -143,7 +142,7 @@ function DynamicVariable({
 		dynamicVariablesSelectedValue?.value,
 	]);
 
-	const errorMessage = (error as any)?.message || SOMETHING_WENT_WRONG;
+	const errorMessage = (error as any)?.message;
 	return (
 		<div className="dynamic-variable-container">
 			<CustomSelect
