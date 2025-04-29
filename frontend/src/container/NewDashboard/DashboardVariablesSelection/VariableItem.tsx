@@ -58,7 +58,7 @@ interface VariableItemProps {
 	dependencyData: IDependencyData | null;
 }
 
-const getSelectValue = (
+export const getSelectValue = (
 	selectedValue: IDashboardVariable['selectedValue'],
 	variableData: IDashboardVariable,
 ): string | string[] | undefined => {
