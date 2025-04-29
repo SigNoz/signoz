@@ -17,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 )
 
 type Handlers struct {
