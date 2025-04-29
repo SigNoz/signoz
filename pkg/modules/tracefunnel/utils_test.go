@@ -98,14 +98,14 @@ func TestValidateFunnelSteps(t *testing.T) {
 			name: "valid steps",
 			steps: []tracefunnel.FunnelStep{
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
 					ServiceName: "test-service",
 					SpanName:    "test-span",
 					Order:       1,
 				},
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 2",
 					ServiceName: "test-service",
 					SpanName:    "test-span-2",
@@ -118,7 +118,7 @@ func TestValidateFunnelSteps(t *testing.T) {
 			name: "too few steps",
 			steps: []tracefunnel.FunnelStep{
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
 					ServiceName: "test-service",
 					SpanName:    "test-span",
@@ -131,13 +131,13 @@ func TestValidateFunnelSteps(t *testing.T) {
 			name: "missing service name",
 			steps: []tracefunnel.FunnelStep{
 				{
-					Id:       valuer.GenerateUUID(),
+					ID:       valuer.GenerateUUID(),
 					Name:     "Step 1",
 					SpanName: "test-span",
 					Order:    1,
 				},
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 2",
 					ServiceName: "test-service",
 					SpanName:    "test-span-2",
@@ -150,13 +150,13 @@ func TestValidateFunnelSteps(t *testing.T) {
 			name: "missing span name",
 			steps: []tracefunnel.FunnelStep{
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
 					ServiceName: "test-service",
 					Order:       1,
 				},
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 2",
 					ServiceName: "test-service",
 					SpanName:    "test-span-2",
@@ -169,14 +169,14 @@ func TestValidateFunnelSteps(t *testing.T) {
 			name: "negative order",
 			steps: []tracefunnel.FunnelStep{
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
 					ServiceName: "test-service",
 					SpanName:    "test-span",
 					Order:       -1,
 				},
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 2",
 					ServiceName: "test-service",
 					SpanName:    "test-span-2",
@@ -209,14 +209,14 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 			name: "already normalized steps",
 			steps: []tracefunnel.FunnelStep{
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
 					ServiceName: "test-service",
 					SpanName:    "test-span",
 					Order:       1,
 				},
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 2",
 					ServiceName: "test-service",
 					SpanName:    "test-span-2",
@@ -242,14 +242,14 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 			name: "unordered steps",
 			steps: []tracefunnel.FunnelStep{
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 2",
 					ServiceName: "test-service",
 					SpanName:    "test-span-2",
 					Order:       2,
 				},
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
 					ServiceName: "test-service",
 					SpanName:    "test-span",
@@ -275,21 +275,21 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 			name: "steps with gaps in order",
 			steps: []tracefunnel.FunnelStep{
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
 					ServiceName: "test-service",
 					SpanName:    "test-span",
 					Order:       1,
 				},
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 3",
 					ServiceName: "test-service",
 					SpanName:    "test-span-3",
 					Order:       3,
 				},
 				{
-					Id:          valuer.GenerateUUID(),
+					ID:          valuer.GenerateUUID(),
 					Name:        "Step 2",
 					ServiceName: "test-service",
 					SpanName:    "test-span-2",
@@ -457,7 +457,7 @@ func TestConstructFunnelResponse(t *testing.T) {
 				},
 				Steps: []tracefunnel.FunnelStep{
 					{
-						Id:          valuer.GenerateUUID(),
+						ID:          valuer.GenerateUUID(),
 						Name:        "Step 1",
 						ServiceName: "test-service",
 						SpanName:    "test-span",
@@ -509,7 +509,7 @@ func TestConstructFunnelResponse(t *testing.T) {
 				},
 				Steps: []tracefunnel.FunnelStep{
 					{
-						Id:          valuer.GenerateUUID(),
+						ID:          valuer.GenerateUUID(),
 						Name:        "Step 1",
 						ServiceName: "test-service",
 						SpanName:    "test-span",
@@ -644,7 +644,7 @@ func TestProcessFunnelSteps(t *testing.T) {
 
 				// Verify IDs are generated
 				for _, step := range result {
-					assert.False(t, step.Id.IsZero())
+					assert.False(t, step.ID.IsZero())
 				}
 
 				// Verify orders are normalized
