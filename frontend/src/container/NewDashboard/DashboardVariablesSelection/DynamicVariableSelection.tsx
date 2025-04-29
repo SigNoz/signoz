@@ -4,7 +4,8 @@ import { Tooltip, Typography } from 'antd';
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useMemo, useState } from 'react';
+import { isEmpty } from 'lodash-es';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -24,7 +25,7 @@ interface DynamicVariableSelectionProps {
 	) => void;
 }
 
-const ALL_SELECT_VALUE = '__ALL__';
+const ALL_SELECT_VALUE = '__all__';
 
 function DynamicVariableSelection({
 	variableData,
@@ -34,8 +35,6 @@ function DynamicVariableSelection({
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
 	);
-
-	console.log(existingVariables);
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
@@ -84,28 +83,31 @@ function DynamicVariableSelection({
 		},
 	);
 
-	const handleChange = (inputValue: string | string[]): void => {
-		const value = variableData.multiSelect && !inputValue ? [] : inputValue;
+	const handleChange = useCallback(
+		(inputValue: string | string[]): void => {
+			const value = variableData.multiSelect && !inputValue ? [] : inputValue;
 
-		if (
-			value === variableData.selectedValue ||
-			(Array.isArray(value) &&
-				Array.isArray(variableData.selectedValue) &&
-				areArraysEqual(value, variableData.selectedValue))
-		) {
-			return;
-		}
-		if (variableData.name) {
 			if (
-				value === ALL_SELECT_VALUE ||
-				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
+				value === variableData.selectedValue ||
+				(Array.isArray(value) &&
+					Array.isArray(variableData.selectedValue) &&
+					areArraysEqual(value, variableData.selectedValue))
 			) {
-				onValueUpdate(variableData.name, variableData.id, optionsData, true);
-			} else {
-				onValueUpdate(variableData.name, variableData.id, value, false);
+				return;
 			}
-		}
-	};
+			if (variableData.name) {
+				if (
+					value === ALL_SELECT_VALUE ||
+					(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
+				) {
+					onValueUpdate(variableData.name, variableData.id, optionsData, true);
+				} else {
+					onValueUpdate(variableData.name, variableData.id, value, false);
+				}
+			}
+		},
+		[variableData, onValueUpdate, optionsData],
+	);
 
 	const { selectedValue } = variableData;
 	const selectedValueStringified = useMemo(
@@ -141,6 +143,58 @@ function DynamicVariableSelection({
 		}
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const finalSelectedValues = useMemo(() => {
+		if (variableData.multiSelect) {
+			let value = tempSelection || selectedValue;
+			if (isEmpty(value)) {
+				if (variableData.showALLOption) {
+					if (variableData.defaultValue) {
+						value = variableData.defaultValue;
+					} else {
+						value = optionsData;
+					}
+				} else if (variableData.defaultValue) {
+					value = variableData.defaultValue;
+				} else {
+					value = optionsData?.[0];
+				}
+			}
+
+			return value;
+		}
+		if (isEmpty(selectedValue)) {
+			if (variableData.defaultValue) {
+				return variableData.defaultValue;
+			}
+			return optionsData[0]?.toString();
+		}
+
+		return selectedValue;
+	}, [
+		variableData.multiSelect,
+		variableData.showALLOption,
+		variableData.defaultValue,
+		selectedValue,
+		tempSelection,
+		optionsData,
+	]);
+
+	useEffect(() => {
+		if (
+			(variableData.multiSelect && !(tempSelection || selectValue)) ||
+			isEmpty(selectValue)
+		) {
+			handleChange(finalSelectedValues as string[] | string);
+		}
+	}, [
+		finalSelectedValues,
+		handleChange,
+		selectValue,
+		tempSelection,
+		variableData.multiSelect,
+	]);
+
 	return (
 		<div className="variable-item">
 			<Typography.Text className="variable-name" ellipsis>
@@ -158,7 +212,7 @@ function DynamicVariableSelection({
 							label: option.toString(),
 							value: option.toString(),
 						}))}
-						defaultValue={selectValue}
+						defaultValue={variableData.defaultValue}
 						onChange={handleTempChange}
 						bordered={false}
 						placeholder="Select value"
@@ -171,7 +225,6 @@ function DynamicVariableSelection({
 						popupClassName="dropdown-styles"
 						maxTagCount={4}
 						getPopupContainer={popupContainer}
-						allowClear
 						value={tempSelection || selectValue}
 						onDropdownVisibleChange={handleDropdownVisibleChange}
 						errorMessage={errorMessage}
