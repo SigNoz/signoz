@@ -38,7 +38,7 @@ function TableView({
 				title: (
 					<div className="table-view-title-header">
 						<Typography.Text style={{ color: series.strokeColor }}>
-							{inspectionStep === InspectionStep.COMPLETED
+							{inspectionStep === InspectionStep.COMPLETED && series.title
 								? series.title
 								: getTimeSeriesLabel(series, series.strokeColor)}
 						</Typography.Text>

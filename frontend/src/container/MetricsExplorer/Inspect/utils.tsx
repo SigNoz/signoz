@@ -757,7 +757,7 @@ export function HoverPopover({
 						fontWeight: 200,
 					}}
 				>
-					{step === InspectionStep.COMPLETED
+					{step === InspectionStep.COMPLETED && options.timeSeries.title
 						? options.timeSeries.title
 						: getTimeSeriesLabel(options.timeSeries, options.timeSeries?.strokeColor)}
 				</Typography.Text>

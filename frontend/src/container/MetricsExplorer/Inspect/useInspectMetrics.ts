@@ -117,10 +117,7 @@ export function useInspectMetrics(
 
 	// Evaluate inspection step
 	const inspectionStep = useMemo(() => {
-		if (
-			metricInspectionOptions.spaceAggregationOption &&
-			metricInspectionOptions.spaceAggregationLabels.length > 0
-		) {
+		if (metricInspectionOptions.spaceAggregationOption) {
 			return InspectionStep.COMPLETED;
 		}
 		if (
