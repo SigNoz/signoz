@@ -50,7 +50,7 @@ function FunnelConfiguration({
 				</div>
 				{!isTraceDetailsPage && (
 					<StepsFooter
-						funnelId={funnel.id}
+						funnelId={funnel.funnel_id}
 						stepsCount={steps.length}
 						funnelDescription={funnel?.description || ''}
 					/>

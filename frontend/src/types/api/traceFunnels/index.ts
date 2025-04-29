@@ -21,11 +21,11 @@ export interface FunnelStepData {
 }
 
 export interface FunnelData {
-	id: string;
+	funnel_id: string;
 	funnel_name: string;
-	creation_timestamp: number;
-	updated_timestamp: number;
-	user: string;
+	created_at: number;
+	updated_at: number;
+	user_email: string;
 	description?: string;
 	steps?: FunnelStepData[];
 }
@@ -33,7 +33,7 @@ export interface FunnelData {
 export interface CreateFunnelPayload {
 	funnel_name: string;
 	user?: string;
-	creation_timestamp: number;
+	timestamp: number;
 }
 
 export interface CreateFunnelResponse {
