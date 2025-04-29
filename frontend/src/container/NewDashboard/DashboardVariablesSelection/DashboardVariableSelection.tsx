@@ -166,8 +166,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 		(a: { order: number }, b: { order: number }) => a.order - b.order,
 	);
 
-	console.log(orderBasedSortedVariables);
-
 	return (
 		<Row style={{ display: 'flex', gap: '12px' }}>
 			{orderBasedSortedVariables &&
@@ -177,6 +175,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 					variable.type === 'DYNAMIC' ? (
 						<DynamicVariableSelection
 							key={`${variable.name}${variable.id}}${variable.order}`}
+							existingVariables={variables}
 							variableData={{
 								name: variable.name,
 								...variable,

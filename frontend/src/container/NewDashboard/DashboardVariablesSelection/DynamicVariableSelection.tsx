@@ -15,6 +15,7 @@ import { getSelectValue } from './VariableItem';
 
 interface DynamicVariableSelectionProps {
 	variableData: IDashboardVariable;
+	existingVariables: Record<string, IDashboardVariable>;
 	onValueUpdate: (
 		name: string,
 		id: string,
@@ -28,10 +29,13 @@ const ALL_SELECT_VALUE = '__ALL__';
 function DynamicVariableSelection({
 	variableData,
 	onValueUpdate,
+	existingVariables,
 }: DynamicVariableSelectionProps): JSX.Element {
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
 	);
+
+	console.log(existingVariables);
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
@@ -39,8 +43,26 @@ function DynamicVariableSelection({
 		string | string[] | undefined
 	>(undefined);
 
+	// Create a dependency key from all dynamic variables
+	const dynamicVariablesKey = useMemo(() => {
+		if (!existingVariables) return 'no_variables';
+
+		const dynamicVars = Object.values(existingVariables)
+			.filter((v) => v.type === 'DYNAMIC')
+			.map(
+				(v) => `${v.name || 'unnamed'}:${JSON.stringify(v.selectedValue || null)}`,
+			)
+			.join('|');
+
+		return dynamicVars || 'no_dynamic_variables';
+	}, [existingVariables]);
+
 	const { isLoading } = useQuery(
-		[REACT_QUERY_KEY.DASHBOARD_BY_ID, variableData.name || ''],
+		[
+			REACT_QUERY_KEY.DASHBOARD_BY_ID,
+			variableData.name || `variable_${variableData.id}`,
+			dynamicVariablesKey,
+		],
 		{
 			enabled: variableData.type === 'DYNAMIC',
 			queryFn: () =>
