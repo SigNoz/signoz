@@ -16,7 +16,7 @@ import Spinner from 'components/Spinner';
 import useFunnelGraph from 'hooks/TracesFunnels/useFunnelGraph';
 import { useFunnelStepsGraphData } from 'hooks/TracesFunnels/useFunnels';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 // Register required components
 Chart.register(
@@ -41,13 +41,33 @@ function FunnelGraph(): JSX.Element {
 		stepsData?.payload?.data,
 	]);
 
+	const [hoveredBar, setHoveredBar] = useState<{
+		index: number;
+		type: 'total' | 'error';
+	} | null>(null);
+
 	const {
 		successSteps,
 		errorSteps,
 		totalSteps,
 		canvasRef,
 		renderLegendItem,
-	} = useFunnelGraph({ data });
+	} = useFunnelGraph({
+		data,
+		hoveredBar,
+	});
+
+	const handleLegendHover = useCallback(
+		(index: number, type: 'total' | 'error') => {
+			const hover = { index, type };
+			setHoveredBar(hover);
+		},
+		[setHoveredBar],
+	);
+
+	const handleLegendLeave = useCallback(() => {
+		setHoveredBar(null);
+	}, [setHoveredBar]);
 
 	if (isLoading) {
 		return (
@@ -90,6 +110,11 @@ function FunnelGraph(): JSX.Element {
 							successSteps[index],
 							errorSteps[index],
 							prevTotalSpans,
+							{
+								onTotalHover: () => handleLegendHover(index, 'total'),
+								onErrorHover: () => handleLegendHover(index, 'error'),
+								onLegendLeave: handleLegendLeave,
+							},
 						);
 					})}
 				</div>
