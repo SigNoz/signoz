@@ -202,8 +202,10 @@ func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "timestamp is invalid: %v", err))
 		return
 	}
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
 
-	funnel, err := handler.module.Get(r.Context(), req.FunnelID.String())
+	funnel, err := handler.module.Get(r.Context(), funnelID)
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "funnel not found: %v", err))
 		return
