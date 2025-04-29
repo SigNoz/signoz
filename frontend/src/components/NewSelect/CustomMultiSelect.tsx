@@ -1762,7 +1762,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			onSearch={handleSearch}
 			value={displayValue}
 			onChange={handleInternalChange}
-			onClear={(): void => handleInternalChange([])}
+			onClear={(): void => {
+				handleInternalChange([]);
+				if (onClear) onClear();
+			}}
 			onDropdownVisibleChange={handleDropdownVisibleChange}
 			open={isOpen}
 			defaultActiveFirstOption={defaultActiveFirstOption}
