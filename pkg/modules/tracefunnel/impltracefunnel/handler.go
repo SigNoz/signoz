@@ -1,6 +1,7 @@
 package impltracefunnel
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -8,9 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	tf "github.com/SigNoz/signoz/pkg/types/tracefunnel"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
@@ -22,6 +21,25 @@ func NewHandler(module tracefunnel.Module) tracefunnel.Handler {
 	return &handler{module: module}
 }
 
+// Helper function to check for duplicate funnel names
+func (handler *handler) checkDuplicateName(ctx context.Context, orgID string, name string, excludeID string) error {
+	funnels, err := handler.module.List(ctx, orgID)
+	if err != nil {
+		return errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"failed to list funnels: %v", err)
+	}
+
+	for _, f := range funnels {
+		if f.ID.String() != excludeID && f.Name == name {
+			return errors.Newf(errors.TypeInvalidInput,
+				errors.CodeInvalidInput,
+				"a funnel with name '%s' already exists in this organization", name)
+		}
+	}
+	return nil
+}
+
 func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
 	var req tf.FunnelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -29,48 +47,26 @@ func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	userID := claims.UserID
-	orgID := claims.OrgID
-
-	funnels, err := handler.module.List(r.Context(), orgID)
+	claims, err := tracefunnel.GetClaims(r)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	for _, f := range funnels {
-		if f.Name == req.Name {
-			render.Error(rw,
-				errors.Newf(errors.TypeInvalidInput,
-					errors.CodeInvalidInput,
-					"a funnel with name '%s' already exists in this organization",
-					req.Name))
-			return
-		}
-	}
-
-	funnel, err := handler.module.Create(r.Context(), req.Timestamp, req.Name, userID, orgID)
-	if err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"failed to create funnel"))
+	if err := handler.checkDuplicateName(r.Context(), claims.OrgID, req.Name, ""); err != nil {
+		render.Error(rw, err)
 		return
 	}
 
-	response := tf.FunnelResponse{
-		FunnelID:   funnel.ID.String(),
-		FunnelName: funnel.Name,
-		CreatedAt:  req.Timestamp,
-		UserEmail:  claims.Email,
-		OrgID:      orgID,
+	funnel, err := handler.module.Create(r.Context(), req.Timestamp, req.Name, claims.UserID, claims.OrgID)
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"failed to create funnel"))
+		return
 	}
 
+	response := tracefunnel.ConstructFunnelResponse(funnel, claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
@@ -81,80 +77,42 @@ func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := authtypes.ClaimsFromContext(r.Context())
+	claims, err := tracefunnel.GetClaims(r)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
-	userID := claims.UserID
-	orgID := claims.OrgID
 
-	if err := tracefunnel.ValidateTimestamp(req.Timestamp, "timestamp"); err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"timestamp is invalid: %v", err))
+	updatedAt, err := tracefunnel.ValidateAndConvertTimestamp(req.Timestamp)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
 	funnel, err := handler.module.Get(r.Context(), req.FunnelID.String())
 	if err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"funnel not found: %v", err))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"funnel not found: %v", err))
 		return
 	}
 
-	// Check if name is being updated and if it already exists
 	if req.Name != "" && req.Name != funnel.Name {
-		funnels, err := handler.module.List(r.Context(), orgID)
-		if err != nil {
-			render.Error(rw,
-				errors.Newf(errors.TypeInvalidInput,
-					errors.CodeInvalidInput,
-					"failed to list funnels: %v", err))
+		if err := handler.checkDuplicateName(r.Context(), claims.OrgID, req.Name, funnel.ID.String()); err != nil {
+			render.Error(rw, err)
 			return
 		}
-
-		for _, f := range funnels {
-			if f.Name == req.Name {
-				render.Error(rw,
-					errors.Newf(errors.TypeInvalidInput,
-						errors.CodeInvalidInput,
-						"a funnel with name '%s' already exists in this organization", req.Name))
-				return
-			}
-		}
 	}
 
-	// Process each step in the request
-	for i := range req.Steps {
-		if req.Steps[i].Order < 1 {
-			req.Steps[i].Order = int64(i + 1) // Default to sequential ordering if not specified
-		}
-		// Generate a new UUID for the step if it doesn't have one
-		if req.Steps[i].Id.IsZero() {
-			newUUID := valuer.GenerateUUID()
-			req.Steps[i].Id = newUUID
-		}
-	}
-
-	if err := tracefunnel.ValidateFunnelSteps(req.Steps); err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"invalid funnel steps: %v", err))
+	steps, err := tracefunnel.ProcessFunnelSteps(req.Steps)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
-	// Normalize step orders
-	req.Steps = tracefunnel.NormalizeFunnelSteps(req.Steps)
-
-	// Update the funnel with new steps
-	funnel.Steps = req.Steps
-	funnel.UpdatedAt = time.Unix(0, req.Timestamp*1000000) // Convert to nanoseconds
-	funnel.UpdatedBy = userID
+	funnel.Steps = steps
+	funnel.UpdatedAt = updatedAt
+	funnel.UpdatedBy = claims.UserID
 
 	if req.Name != "" {
 		funnel.Name = req.Name
@@ -163,39 +121,22 @@ func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
 		funnel.Description = req.Description
 	}
 
-	// Update funnel in database
-	err = handler.module.Update(r.Context(), funnel, userID)
-	if err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"failed to update funnel in database: %v", err))
+	if err := handler.module.Update(r.Context(), funnel, claims.UserID); err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"failed to update funnel in database: %v", err))
 		return
 	}
 
-	// Get the updated funnel to return in response
 	updatedFunnel, err := handler.module.Get(r.Context(), funnel.ID.String())
 	if err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"failed to get updated funnel: %v", err))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"failed to get updated funnel: %v", err))
 		return
 	}
 
-	response := tf.FunnelResponse{
-		FunnelName:  updatedFunnel.Name,
-		FunnelID:    updatedFunnel.ID.String(),
-		Steps:       updatedFunnel.Steps,
-		CreatedAt:   updatedFunnel.CreatedAt.UnixNano() / 1000000,
-		CreatedBy:   updatedFunnel.CreatedBy,
-		OrgID:       updatedFunnel.OrgID.String(),
-		UpdatedBy:   userID,
-		UpdatedAt:   updatedFunnel.UpdatedAt.UnixNano() / 1000000,
-		Description: updatedFunnel.Description,
-		UserEmail:   claims.Email,
-	}
-
+	response := tracefunnel.ConstructFunnelResponse(updatedFunnel, claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
@@ -206,45 +147,38 @@ func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := authtypes.ClaimsFromContext(r.Context())
+	claims, err := tracefunnel.GetClaims(r)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
-	userID := claims.UserID
-	orgID := claims.OrgID
 
-	if err := tracefunnel.ValidateTimestamp(req.Timestamp, "timestamp"); err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "timestamp is invalid: %v", err))
+	updatedAt, err := tracefunnel.ValidateAndConvertTimestamp(req.Timestamp)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
+
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
 	funnel, err := handler.module.Get(r.Context(), funnelID)
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "funnel not found: %v", err))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"funnel not found: %v", err))
 		return
 	}
 
-	// Check if name is being updated and if it already exists
 	if req.Name != "" && req.Name != funnel.Name {
-		funnels, err := handler.module.List(r.Context(), orgID)
-		if err != nil {
-			render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to list funnels: %v", err))
+		if err := handler.checkDuplicateName(r.Context(), claims.OrgID, req.Name, funnel.ID.String()); err != nil {
+			render.Error(rw, err)
 			return
-		}
-
-		for _, f := range funnels {
-			if f.Name == req.Name {
-				render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "a funnel with name '%s' already exists in this organization", req.Name))
-				return
-			}
 		}
 	}
 
-	funnel.UpdatedAt = time.Unix(0, req.Timestamp*1000000) // Convert to nanoseconds
-	funnel.UpdatedBy = userID
+	funnel.UpdatedAt = updatedAt
+	funnel.UpdatedBy = claims.UserID
 
 	if req.Name != "" {
 		funnel.Name = req.Name
@@ -253,74 +187,43 @@ func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
 		funnel.Description = req.Description
 	}
 
-	err = handler.module.Update(r.Context(), funnel, userID)
-	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to update funnel in database: %v", err))
+	if err := handler.module.Update(r.Context(), funnel, claims.UserID); err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"failed to update funnel in database: %v", err))
 		return
 	}
 
-	// Get the updated funnel to return in response
 	updatedFunnel, err := handler.module.Get(r.Context(), funnel.ID.String())
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to get updated funnel: %v", err))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"failed to get updated funnel: %v", err))
 		return
 	}
 
-	response := tf.FunnelResponse{
-		FunnelName:  updatedFunnel.Name,
-		FunnelID:    updatedFunnel.ID.String(),
-		Steps:       updatedFunnel.Steps,
-		CreatedAt:   updatedFunnel.CreatedAt.UnixNano() / 1000000,
-		CreatedBy:   updatedFunnel.CreatedBy,
-		OrgID:       updatedFunnel.OrgID.String(),
-		UpdatedBy:   userID,
-		UpdatedAt:   updatedFunnel.UpdatedAt.UnixNano() / 1000000,
-		Description: updatedFunnel.Description,
-		UserEmail:   claims.Email,
-	}
-
+	response := tracefunnel.ConstructFunnelResponse(updatedFunnel, claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
+	claims, err := tracefunnel.GetClaims(r)
 	if err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"unauthenticated"))
+		render.Error(rw, err)
 		return
 	}
 
-	orgID := claims.OrgID
-	funnels, err := handler.module.List(r.Context(), orgID)
+	funnels, err := handler.module.List(r.Context(), claims.OrgID)
 	if err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"failed to list funnels: %v", err))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"failed to list funnels: %v", err))
 		return
 	}
 
 	var response []tf.FunnelResponse
 	for _, f := range funnels {
-		funnelResp := tf.FunnelResponse{
-			FunnelName:  f.Name,
-			FunnelID:    f.ID.String(),
-			CreatedAt:   f.CreatedAt.UnixNano() / 1000000,
-			CreatedBy:   f.CreatedBy,
-			OrgID:       f.OrgID.String(),
-			UpdatedAt:   f.UpdatedAt.UnixNano() / 1000000,
-			UpdatedBy:   f.UpdatedBy,
-			Description: f.Description,
-		}
-
-		// Get user email if available
-		if f.CreatedByUser != nil {
-			funnelResp.UserEmail = f.CreatedByUser.Email
-		}
-
-		response = append(response, funnelResp)
+		response = append(response, tracefunnel.ConstructFunnelResponse(f, claims))
 	}
 
 	render.Success(rw, http.StatusOK, response)
@@ -332,29 +235,14 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 
 	funnel, err := handler.module.Get(r.Context(), funnelID)
 	if err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"funnel not found: %v", err))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"funnel not found: %v", err))
 		return
 	}
 
-	response := tf.FunnelResponse{
-		FunnelID:    funnel.ID.String(),
-		FunnelName:  funnel.Name,
-		Description: funnel.Description,
-		CreatedAt:   funnel.CreatedAt.UnixNano() / 1000000,
-		UpdatedAt:   funnel.UpdatedAt.UnixNano() / 1000000,
-		CreatedBy:   funnel.CreatedBy,
-		UpdatedBy:   funnel.UpdatedBy,
-		OrgID:       funnel.OrgID.String(),
-		Steps:       funnel.Steps,
-	}
-
-	if funnel.CreatedByUser != nil {
-		response.UserEmail = funnel.CreatedByUser.Email
-	}
-
+	claims, _ := tracefunnel.GetClaims(r) // Ignore error as email is optional
+	response := tracefunnel.ConstructFunnelResponse(funnel, claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
@@ -362,12 +250,10 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	err := handler.module.Delete(r.Context(), funnelID)
-	if err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"failed to delete funnel: %v", err))
+	if err := handler.module.Delete(r.Context(), funnelID); err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"failed to delete funnel: %v", err))
 		return
 	}
 
@@ -377,30 +263,23 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 func (handler *handler) Save(rw http.ResponseWriter, r *http.Request) {
 	var req tf.FunnelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"invalid request: %v", err))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"invalid request: %v", err))
 		return
 	}
 
-	claims, err := authtypes.ClaimsFromContext(r.Context())
+	claims, err := tracefunnel.GetClaims(r)
 	if err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"unauthenticated"))
+		render.Error(rw, err)
 		return
 	}
-	orgID := claims.OrgID
-	usrID := claims.UserID
 
 	funnel, err := handler.module.Get(r.Context(), req.FunnelID.String())
 	if err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"funnel not found: %v", err))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"funnel not found: %v", err))
 		return
 	}
 
@@ -408,45 +287,48 @@ func (handler *handler) Save(rw http.ResponseWriter, r *http.Request) {
 	if updateTimestamp == 0 {
 		updateTimestamp = time.Now().UnixMilli()
 	} else if !tracefunnel.ValidateTimestampIsMilliseconds(updateTimestamp) {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"timestamp must be in milliseconds format (13 digits)"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"timestamp must be in milliseconds format (13 digits)"))
 		return
 	}
-	funnel.UpdatedAt = time.Unix(0, updateTimestamp*1000000) // Convert to nanoseconds
 
-	if req.UserID != "" {
-		funnel.UpdatedBy = usrID
+	updatedAt, err := tracefunnel.ValidateAndConvertTimestamp(updateTimestamp)
+	if err != nil {
+		render.Error(rw, err)
+		return
 	}
 
+	funnel.UpdatedAt = updatedAt
+	if req.UserID != "" {
+		funnel.UpdatedBy = claims.UserID
+	}
 	funnel.Description = req.Description
 
-	if err := handler.module.Save(r.Context(), funnel, funnel.UpdatedBy, orgID); err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"failed to save funnel: %v", err))
+	if err := handler.module.Save(r.Context(), funnel, funnel.UpdatedBy, claims.OrgID); err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"failed to save funnel: %v", err))
 		return
 	}
 
-	createdAt, updatedAt, extraDataFromDB, err := handler.module.GetFunnelMetadata(r.Context(), funnel.ID.String())
+	createdAtMillis, updatedAtMillis, extraDataFromDB, err := handler.module.GetFunnelMetadata(r.Context(), funnel.ID.String())
 	if err != nil {
-		render.Error(rw,
-			errors.Newf(errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"failed to get funnel metadata: %v", err))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"failed to get funnel metadata: %v", err))
 		return
 	}
 
 	resp := tf.FunnelResponse{
 		FunnelName:  funnel.Name,
-		CreatedAt:   createdAt,
-		UpdatedAt:   updatedAt,
+		CreatedAt:   createdAtMillis,
+		UpdatedAt:   updatedAtMillis,
 		CreatedBy:   funnel.CreatedBy,
 		UpdatedBy:   funnel.UpdatedBy,
 		OrgID:       funnel.OrgID.String(),
 		Description: extraDataFromDB,
+		UserEmail:   claims.Email,
 	}
 
 	render.Success(rw, http.StatusOK, resp)
