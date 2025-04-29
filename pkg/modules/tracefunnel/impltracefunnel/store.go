@@ -88,8 +88,8 @@ func (store *store) Update(ctx context.Context, funnel *traceFunnels.Funnel) err
 	return nil
 }
 
-// List retrieves all funnels
-func (store *store) List(ctx context.Context) ([]*traceFunnels.Funnel, error) {
+// List retrieves all funnels for a given organization
+func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnels.Funnel, error) {
 	var funnels []*traceFunnels.Funnel
 	err := store.
 		sqlstore.
@@ -97,6 +97,7 @@ func (store *store) List(ctx context.Context) ([]*traceFunnels.Funnel, error) {
 		NewSelect().
 		Model(&funnels).
 		Relation("CreatedByUser").
+		Where("?TableAlias.org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list funnels: %v", err)
