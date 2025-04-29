@@ -451,6 +451,9 @@ function OnboardingAddDataSource(): JSX.Element {
 				case 'integrations':
 					history.push(ROUTES.INTEGRATIONS);
 					break;
+				case 'home':
+					history.push(ROUTES.HOME);
+					break;
 				default:
 					history.push(ROUTES.APPLICATION);
 			}

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import {
 	getAllEndpointsWidgetData,
 	getGroupByFiltersFromGroupByValues,
@@ -127,6 +127,11 @@ describe('AllEndPoints', () => {
 			items: [{ id: 'group-filter', key: 'status', op: '=', value: '200' }],
 			op: 'AND',
 		});
+	});
+
+	// Add cleanup after each test
+	afterEach(() => {
+		cleanup();
 	});
 
 	it('renders component correctly', () => {

@@ -61,7 +61,10 @@ describe('TopErrors', () => {
 			startTime: 1000000000,
 			endTime: 1000010000,
 		},
-		handleTimeChange: jest.fn(),
+		initialFilters: {
+			items: [],
+			op: 'AND',
+		},
 	};
 
 	// Setup basic mocks
@@ -221,12 +224,6 @@ describe('TopErrors', () => {
 			expect(within(row).getByText('500')).toBeInTheDocument();
 			expect(within(row).getByText('Internal Server Error')).toBeInTheDocument();
 		}
-	});
-
-	it('calls handleTimeChange with 6h on mount', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
-		render(<TopErrors {...mockProps} />);
-		expect(mockProps.handleTimeChange).toHaveBeenCalledWith('6h');
 	});
 
 	it('renders error state when isError is true', () => {

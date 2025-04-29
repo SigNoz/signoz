@@ -316,7 +316,7 @@ describe('API Monitoring Utils', () => {
 				{
 					metric: {
 						[SPAN_ATTRIBUTES.URL_PATH]: '/api/test',
-						[SPAN_ATTRIBUTES.STATUS_CODE]: '500',
+						[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]: '500',
 						status_message: 'Internal Server Error',
 					},
 					values: [[1000000100, '10']],

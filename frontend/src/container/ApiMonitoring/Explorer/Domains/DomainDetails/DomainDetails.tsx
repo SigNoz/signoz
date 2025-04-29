@@ -229,7 +229,7 @@ function DomainDetails({
 						<TopErrors
 							domainName={domainData.domainName}
 							timeRange={modalTimeRange}
-							handleTimeChange={handleTimeChange}
+							initialFilters={domainListFilters}
 						/>
 					)}
 				</>
