@@ -407,7 +407,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 	// };
 
 	function myCompletions(context: CompletionContext): CompletionResult | null {
-		const word = context.matchBefore(/\w*/);
+		const word = context.matchBefore(/[.\w]*/);
 		if (word?.from === word?.to && !context.explicit) return null;
 
 		// Get the query context at the cursor position
@@ -423,17 +423,25 @@ function CodeMirrorWhereClause(): JSX.Element {
 		}[] = [];
 
 		if (queryContext.isInKey) {
-			options = keySuggestions || [];
+			const searchText = word?.text.toLowerCase() ?? '';
+
+			options = (keySuggestions || []).filter((option) =>
+				option.label.toLowerCase().includes(searchText),
+			);
+
 			return {
 				from: word?.from ?? 0,
+				to: word?.to ?? cursorPos.ch,
 				options,
 			};
 		}
 
 		if (queryContext.isInOperator) {
+			options = [];
 			options = queryOperatorSuggestions;
 			return {
 				from: word?.from ?? 0,
+				to: word?.to ?? cursorPos.ch,
 				options,
 			};
 		}
