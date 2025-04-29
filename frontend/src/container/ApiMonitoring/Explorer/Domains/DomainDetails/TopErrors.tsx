@@ -12,17 +12,14 @@ import {
 	getTopErrorsQueryPayload,
 	TopErrorsResponseRow,
 } from 'container/ApiMonitoring/utils';
-import {
-	CustomTimeType,
-	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { Info } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import EndPointsDropDown from './components/EndPointsDropDown';
@@ -32,17 +29,14 @@ import { SPAN_ATTRIBUTES } from './constants';
 function TopErrors({
 	domainName,
 	timeRange,
-	handleTimeChange,
+	initialFilters,
 }: {
 	domainName: string;
 	timeRange: {
 		startTime: number;
 		endTime: number;
 	};
-	handleTimeChange: (
-		interval: Time | CustomTimeType,
-		dateTimeRange?: [number, number],
-	) => void;
+	initialFilters: IBuilderQuery['filters'];
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
@@ -65,11 +59,12 @@ function TopErrors({
 								op: '=',
 								value: endPointName,
 							},
+							...initialFilters.items,
 					  ]
-					: [],
+					: [...initialFilters.items],
 				op: 'AND',
 			}),
-		[domainName, endPointName, minTime, maxTime],
+		[domainName, endPointName, minTime, maxTime, initialFilters],
 	);
 
 	// Since only one query here
@@ -134,10 +129,6 @@ function TopErrors({
 		() => [endPointDropDownDataQueries[0]],
 		[endPointDropDownDataQueries],
 	);
-
-	useEffect(() => {
-		handleTimeChange('6h');
-	}, [handleTimeChange]);
 
 	const navigateToExplorer = useNavigateToExplorer();
 

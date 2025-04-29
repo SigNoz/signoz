@@ -14,6 +14,7 @@ export const VIEW_TYPES = {
 export const SPAN_ATTRIBUTES = {
 	URL_PATH: 'http.url',
 	STATUS_CODE: 'status_code',
+	RESPONSE_STATUS_CODE: 'response_status_code',
 	SERVER_NAME: 'net.peer.name',
 	SERVER_PORT: 'net.peer.port',
 } as const;
