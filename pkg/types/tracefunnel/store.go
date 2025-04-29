@@ -1,4 +1,4 @@
-package tracefunnels
+package tracefunnel
 
 import (
 	"context"
