@@ -13,6 +13,34 @@
 		"link": "https://signoz.io/docs/cloud/quickstart/"
 	},
 	{
+		"dataSource": "migrate-from-datadog",
+		"label": "From Datadog",
+		"tags": ["migrate to SigNoz"],
+		"module": "home",
+		"relatedSearchKeywords": [
+		"datadog",
+		"opentelemetry"
+		],
+		"imgUrl": "/Logos/datadog.svg",
+		"link": "https://signoz.io/docs/migration/migrate-from-datadog/"
+	},
+	{
+		"dataSource": "migrate-from-lgtm",
+		"label": "From Grafana",
+		"tags": ["migrate to SigNoz"],
+		"module": "home",
+		"relatedSearchKeywords": [
+		"grafana",
+		"loki",
+		"mirmir",
+		"tempo",
+		"alloy",
+		"opentelemetry"
+		],
+		"imgUrl": "/Logos/grafana.svg",
+		"link": "https://signoz.io/docs/migration/migrate-from-grafana/"
+	},
+	{
 		"dataSource": "java",
 		"entityID": "dataSource",
 		"label": "Java",
@@ -1108,6 +1136,21 @@
 		],
 		"id": "opentelemetry-cpp",
 		"link": "https://signoz.io/docs/instrumentation/opentelemetry-cpp/"
+	},
+	{
+		"dataSource": "nginx-tracing",
+		"label": "Nginx - Tracing",
+		"imgUrl": "/Logos/nginx.svg",
+		"tags": ["apm"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+		"tracing",
+		"nginx server",
+		"nginx proxy",
+		"nginx" 
+		],
+		"id": "nginx-tracing",
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-nginx/"
 	},
 	{
 		"dataSource": "kubernetes-pod-logs",
@@ -2874,5 +2917,43 @@
 		"imgUrl": "/Logos/rds.svg",
 		"link": "/integrations?integration=aws-integration&service=rds",
 		"internalRedirect": true
+	},
+	{
+		"dataSource": "temporal",
+		"label": "Temporal",
+		"imgUrl": "/Logos/temporal.svg",
+		"tags": ["integrations"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+		"temporal metrics",
+		"temporal traces",
+		"temporal logs",
+		"temporal cloud",
+		"temporal"
+		],
+		"question": {
+			"desc": "What are you using ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "temporal-cloud",
+					"label": "Cloud Metrics",
+					"imgUrl": "/Logos/temporal.svg",
+					"link": "https://signoz.io/docs/integrations/temporal-cloud-metrics/"
+				},
+				{
+					"key": "temporal-golang",
+					"label": "Go",
+					"imgUrl": "/Logos/go.svg",
+					"link": "https://signoz.io/docs/integrations/temporal-golang-opentelemetry/"
+				},
+				{
+					"key": "temporal-typescript",
+					"label": "TypeScript",
+					"imgUrl": "/Logos/javascript.svg",
+					"link": "https://signoz.io/docs/integrations/temporal-typescript-opentelemetry/"
+				}
+			]
+		}
 	}
 ]
