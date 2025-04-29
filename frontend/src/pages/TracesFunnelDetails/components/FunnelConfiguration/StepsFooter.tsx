@@ -2,7 +2,6 @@ import './StepsFooter.styles.scss';
 
 import { SyncOutlined } from '@ant-design/icons';
 import { Button, Skeleton } from 'antd';
-import cx from 'classnames';
 import { Check, Cone, Play } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useState } from 'react';
@@ -40,15 +39,15 @@ function ValidTracesCount(): JSX.Element {
 		);
 	}
 
-	return (
-		<span
-			className={cx('steps-footer__valid-traces', {
-				'steps-footer__valid-traces--none': validTracesCount === 0,
-			})}
-		>
-			{validTracesCount} valid traces
-		</span>
-	);
+	if (validTracesCount === 0) {
+		return (
+			<span className="steps-footer__valid-traces steps-footer__valid-traces--none">
+				No valid traces found
+			</span>
+		);
+	}
+
+	return <span className="steps-footer__valid-traces">Valid traces found</span>;
 }
 
 function StepsFooter({
