@@ -79,7 +79,6 @@ function DynamicVariable({
 				? undefined
 				: (attributeSource?.toLowerCase() as 'traces' | 'logs' | 'metrics'),
 		name: debouncedApiSearchText,
-		enabled: !!attributeSource,
 	});
 
 	const isComplete = useMemo(() => data?.payload?.complete === true, [data]);
