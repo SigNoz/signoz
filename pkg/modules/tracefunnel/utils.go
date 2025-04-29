@@ -2,8 +2,13 @@ package tracefunnel
 
 import (
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	tracefunnel "github.com/SigNoz/signoz/pkg/types/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"net/http"
 	"sort"
+	"time"
 )
 
 // ValidateTimestamp validates a timestamp
@@ -53,4 +58,64 @@ func NormalizeFunnelSteps(steps []tracefunnel.FunnelStep) []tracefunnel.FunnelSt
 	}
 
 	return steps
+}
+
+func GetClaims(r *http.Request) (*authtypes.Claims, error) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		return nil, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"unauthenticated")
+	}
+	return &claims, nil
+}
+
+func ValidateAndConvertTimestamp(timestamp int64) (time.Time, error) {
+	if err := ValidateTimestamp(timestamp, "timestamp"); err != nil {
+		return time.Time{}, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"timestamp is invalid: %v", err)
+	}
+	return time.Unix(0, timestamp*1000000), nil // Convert to nanoseconds
+}
+
+func ConstructFunnelResponse(funnel *tracefunnel.Funnel, claims *authtypes.Claims) tracefunnel.FunnelResponse {
+	resp := tracefunnel.FunnelResponse{
+		FunnelName:  funnel.Name,
+		FunnelID:    funnel.ID.String(),
+		Steps:       funnel.Steps,
+		CreatedAt:   funnel.CreatedAt.UnixNano() / 1000000,
+		CreatedBy:   funnel.CreatedBy,
+		OrgID:       funnel.OrgID.String(),
+		UpdatedBy:   funnel.UpdatedBy,
+		UpdatedAt:   funnel.UpdatedAt.UnixNano() / 1000000,
+		Description: funnel.Description,
+	}
+
+	if funnel.CreatedByUser != nil {
+		resp.UserEmail = funnel.CreatedByUser.Email
+	} else if claims != nil {
+		resp.UserEmail = claims.Email
+	}
+
+	return resp
+}
+
+func ProcessFunnelSteps(steps []tracefunnel.FunnelStep) ([]tracefunnel.FunnelStep, error) {
+	for i := range steps {
+		if steps[i].Order < 1 {
+			steps[i].Order = int64(i + 1)
+		}
+		if steps[i].Id.IsZero() {
+			steps[i].Id = valuer.GenerateUUID()
+		}
+	}
+
+	if err := ValidateFunnelSteps(steps); err != nil {
+		return nil, errors.Newf(errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"invalid funnel steps: %v", err)
+	}
+
+	return NormalizeFunnelSteps(steps), nil
 }
