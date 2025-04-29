@@ -24,6 +24,11 @@ export default function Toolbar({
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
 		pathname,
 	]);
+
+	const isApiMonitoringPage = useMemo(() => pathname === ROUTES.API_MONITORING, [
+		pathname,
+	]);
+
 	return (
 		<div className="toolbar">
 			<div className="leftActions">{leftActions}</div>
@@ -31,7 +36,7 @@ export default function Toolbar({
 				{showOldCTA && <NewExplorerCTA />}
 				<DateTimeSelectionV2
 					showAutoRefresh={showAutoRefresh}
-					showRefreshText={!isLogsExplorerPage}
+					showRefreshText={!isLogsExplorerPage && !isApiMonitoringPage}
 				/>
 			</div>
 			<div className="rightActions">{rightActions}</div>

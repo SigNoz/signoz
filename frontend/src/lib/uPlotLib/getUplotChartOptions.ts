@@ -59,6 +59,7 @@ export interface GetUPlotChartOptions {
 	timezone?: string;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
 	isLogScale?: boolean;
+	colorMapping?: Record<string, string>;
 }
 
 /** the function converts series A , series B , series C to
@@ -166,6 +167,7 @@ export const getUPlotChartOptions = ({
 	timezone,
 	customSeries,
 	isLogScale,
+	colorMapping,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -229,10 +231,11 @@ export const getUPlotChartOptions = ({
 			tooltipPlugin({
 				apiResponse,
 				yAxisUnit,
-				stackBarChart,
 				isDarkMode,
-				customTooltipElement,
+				stackBarChart,
 				timezone,
+				colorMapping,
+				customTooltipElement,
 			}),
 			onClickPlugin({
 				onClick: onClickHandler,
