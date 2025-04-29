@@ -36,6 +36,9 @@ function AllEndPoints({
 	setInitialFiltersEndPointStats: (filters: IBuilderQuery['filters']) => void;
 }): JSX.Element {
 	const [groupBySearchValue, setGroupBySearchValue] = useState<string>('');
+	const [allAvailableGroupByOptions, setAllAvailableGroupByOptions] = useState<{
+		[key: string]: any;
+	}>({});
 
 	const {
 		data: groupByFiltersData,
@@ -54,34 +57,61 @@ function AllEndPoints({
 
 	const handleGroupByChange = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
-			const groupBy = [];
+			const newGroupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
 				const element = (value[index] as unknown) as string;
 
-				const key = groupByFiltersData?.payload?.attributeKeys?.find(
-					(key) => key.key === element,
-				);
+				// Check if the key exists in our cached options first
+				if (allAvailableGroupByOptions[element]) {
+					newGroupBy.push(allAvailableGroupByOptions[element]);
+				} else {
+					// If not found in cache, check the current filtered results
+					const key = groupByFiltersData?.payload?.attributeKeys?.find(
+						(key) => key.key === element,
+					);
 
-				if (key) {
-					groupBy.push(key);
+					if (key) {
+						newGroupBy.push(key);
+					}
 				}
 			}
-			setGroupBy(groupBy);
+
+			setGroupBy(newGroupBy);
+			setGroupBySearchValue('');
 		},
-		[groupByFiltersData, setGroupBy],
+		[groupByFiltersData, setGroupBy, allAvailableGroupByOptions],
 	);
 
 	useEffect(() => {
 		if (groupByFiltersData?.payload) {
+			// Update dropdown options
 			setGroupByOptions(
 				groupByFiltersData?.payload?.attributeKeys?.map((filter) => ({
 					value: filter.key,
 					label: filter.key,
 				})) || [],
 			);
+
+			// Cache all available options to preserve selected values
+			const newOptions = { ...allAvailableGroupByOptions };
+			groupByFiltersData?.payload?.attributeKeys?.forEach((filter) => {
+				newOptions[filter.key] = filter;
+			});
+			setAllAvailableGroupByOptions(newOptions);
 		}
-	}, [groupByFiltersData]);
+	}, [groupByFiltersData, allAvailableGroupByOptions]);
+
+	// Cache existing selected options on component mount
+	useEffect(() => {
+		if (groupBy && groupBy.length > 0) {
+			const newOptions = { ...allAvailableGroupByOptions };
+			groupBy.forEach((option) => {
+				newOptions[option.key] = option;
+			});
+			setAllAvailableGroupByOptions(newOptions);
+		}
+	}, [groupBy, allAvailableGroupByOptions]);
 
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
 
