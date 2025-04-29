@@ -116,7 +116,10 @@ function VariableItem({
 		signal:
 			dynamicVariablesSelectedValue?.value === 'All Sources'
 				? undefined
-				: (dynamicVariablesSelectedValue?.value as 'traces' | 'logs' | 'metrics'),
+				: (dynamicVariablesSelectedValue?.value?.toLowerCase() as
+						| 'traces'
+						| 'logs'
+						| 'metrics'),
 		name: dynamicVariablesSelectedValue?.name || '',
 		enabled:
 			!!dynamicVariablesSelectedValue?.name &&
