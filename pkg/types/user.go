@@ -16,18 +16,8 @@ type Invite struct {
 	Role  string `bun:"role,type:text,notnull" json:"role"`
 }
 
-type Group struct {
-	bun.BaseModel `bun:"table:groups"`
-
-	TimeAuditable
-	OrgID string `bun:"org_id,type:text"`
-	ID    string `bun:"id,pk,type:text" json:"id"`
-	Name  string `bun:"name,type:text,notnull,unique" json:"name"`
-}
-
 type GettableUser struct {
 	User
-	Role         string `json:"role"`
 	Organization string `json:"organization"`
 }
 
@@ -40,7 +30,7 @@ type User struct {
 	Email             string `bun:"email,type:text,notnull,unique" json:"email"`
 	Password          string `bun:"password,type:text,notnull" json:"-"`
 	ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
-	GroupID           string `bun:"group_id,type:text,notnull" json:"groupId"`
+	Role              string `bun:"role,type:text,notnull" json:"role"`
 	OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
 }
 

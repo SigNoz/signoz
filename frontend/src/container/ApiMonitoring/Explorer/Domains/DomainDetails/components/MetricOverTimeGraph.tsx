@@ -2,7 +2,15 @@ import { Card } from 'antd';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Widgets } from 'types/api/dashboard/getAll';
 
-function MetricOverTimeGraph({ widget }: { widget: Widgets }): JSX.Element {
+function MetricOverTimeGraph({
+	widget,
+	timeRange,
+	onDragSelect,
+}: {
+	widget: Widgets;
+	timeRange: { startTime: number; endTime: number };
+	onDragSelect: (start: number, end: number) => void;
+}): JSX.Element {
 	return (
 		<div>
 			<Card bordered className="endpoint-details-card">
@@ -10,8 +18,9 @@ function MetricOverTimeGraph({ widget }: { widget: Widgets }): JSX.Element {
 					<GridCard
 						widget={widget}
 						isQueryEnabled
-						onDragSelect={(): void => {}}
+						onDragSelect={onDragSelect}
 						customOnDragSelect={(): void => {}}
+						customTimeRange={timeRange}
 					/>
 				</div>
 			</Card>

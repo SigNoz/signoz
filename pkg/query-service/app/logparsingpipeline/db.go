@@ -53,8 +53,8 @@ func (r *Repo) insertPipeline(
 		))
 	}
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
 		return nil, model.UnauthorizedError(fmt.Errorf("failed to get email from context"))
 	}
 
@@ -142,7 +142,7 @@ func (r *Repo) GetDefaultOrgID(ctx context.Context) (string, *model.ApiError) {
 	if len(orgs) == 0 {
 		return "", model.InternalError(errors.New("no orgs found"))
 	}
-	return orgs[0].ID, nil
+	return orgs[0].ID.StringValue(), nil
 }
 
 // GetPipelines returns pipeline and errors (if any)

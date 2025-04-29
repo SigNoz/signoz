@@ -26,6 +26,7 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
+import { Userpilot } from 'userpilot';
 import { extractDomain } from 'utils/app';
 
 import { Home } from './pageComponents';
@@ -59,12 +60,14 @@ function App(): JSX.Element {
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
+	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
+
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
 			// wait for the required data to be loaded before doing init for anything!
 			if (!isFetchingActiveLicenseV3 && activeLicenseV3 && org) {
 				const orgName =
-					org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
+					org && Array.isArray(org) && org.length > 0 ? org[0].displayName : '';
 
 				const { name, email, role } = user;
 
@@ -99,6 +102,18 @@ function App(): JSX.Element {
 				if (domain) {
 					logEvent('Domain Identified', groupTraits, 'group');
 				}
+
+				Userpilot.identify(email, {
+					email,
+					name,
+					orgName,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
+					source: 'signoz-ui',
+					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
+				});
 
 				posthog?.identify(email, {
 					email,
@@ -276,25 +291,33 @@ function App(): JSX.Element {
 				});
 			}
 
-			Sentry.init({
-				dsn: process.env.SENTRY_DSN,
-				tunnel: process.env.TUNNEL_URL,
-				environment: 'production',
-				integrations: [
-					Sentry.browserTracingIntegration(),
-					Sentry.replayIntegration({
-						maskAllText: false,
-						blockAllMedia: false,
-					}),
-				],
-				// Performance Monitoring
-				tracesSampleRate: 1.0, //  Capture 100% of the transactions
-				// Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-				tracePropagationTargets: [],
-				// Session Replay
-				replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-				replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
-			});
+			if (process.env.USERPILOT_KEY) {
+				Userpilot.initialize(process.env.USERPILOT_KEY);
+			}
+
+			if (!isSentryInitialized) {
+				Sentry.init({
+					dsn: process.env.SENTRY_DSN,
+					tunnel: process.env.TUNNEL_URL,
+					environment: 'production',
+					integrations: [
+						Sentry.browserTracingIntegration(),
+						Sentry.replayIntegration({
+							maskAllText: false,
+							blockAllMedia: false,
+						}),
+					],
+					// Performance Monitoring
+					tracesSampleRate: 1.0, //  Capture 100% of the transactions
+					// Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+					tracePropagationTargets: [],
+					// Session Replay
+					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
+					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+				});
+
+				setIsSentryInitialized(true);
+			}
 		} else {
 			posthog.reset();
 			Sentry.close();
@@ -303,6 +326,7 @@ function App(): JSX.Element {
 				window.cioanalytics.reset();
 			}
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);
 
 	// if the user is in logged in state

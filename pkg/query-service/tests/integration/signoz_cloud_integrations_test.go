@@ -9,9 +9,12 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/signoz"
+
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -358,12 +361,19 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
+	modules := signoz.NewModules(testDB)
+	handlers := signoz.NewHandlers(modules)
+
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,
 		AppDao:                      dao.DB(),
 		CloudIntegrationsController: controller,
 		FeatureFlags:                fm,
 		JWT:                         jwt,
+		Signoz: &signoz.SigNoz{
+			Modules:  modules,
+			Handlers: handlers,
+		},
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
@@ -371,11 +381,12 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 
 	router := app.NewRouter()
 	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	am := app.NewAuthMiddleware(auth.GetUserFromReqContext)
+	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterCloudIntegrationsRoutes(router, am)
 
-	user, apiErr := createTestUser()
+	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
+	user, apiErr := createTestUser(organizationModule)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
