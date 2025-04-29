@@ -30,6 +30,11 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.Funnel) err
 		funnel.UpdatedAt = time.Now()
 	}
 
+	// Set created_by if CreatedByUser is present
+	if funnel.CreatedByUser != nil {
+		funnel.CreatedBy = funnel.CreatedByUser.ID
+	}
+
 	_, err := store.
 		sqlstore.
 		BunDB().
@@ -38,17 +43,6 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.Funnel) err
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create funnel: %v", err)
-	}
-
-	if funnel.CreatedByUser != nil {
-		_, err = store.sqlstore.BunDB().NewUpdate().
-			Model(funnel).
-			Set("created_by = ?", funnel.CreatedByUser.ID).
-			Where("id = ?", funnel.ID).
-			Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to update funnel user relationship: %v", err)
-		}
 	}
 
 	return nil
