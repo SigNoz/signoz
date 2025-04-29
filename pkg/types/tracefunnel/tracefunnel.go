@@ -1,4 +1,4 @@
-package tracefunnels
+package tracefunnel
 
 import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
