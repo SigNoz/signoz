@@ -35,6 +35,10 @@ function DynamicVariableSelection({
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
+	const [tempSelection, setTempSelection] = useState<
+		string | string[] | undefined
+	>(undefined);
+
 	const { isLoading } = useQuery(
 		[REACT_QUERY_KEY.DASHBOARD_BY_ID, variableData.name || ''],
 		{
@@ -102,6 +106,27 @@ function DynamicVariableSelection({
 			? 'ALL'
 			: selectedValueStringified;
 
+	// Add a handler for tracking temporary selection changes
+	const handleTempChange = (inputValue: string | string[]): void => {
+		// Store the selection in temporary state while dropdown is open
+		const value = variableData.multiSelect && !inputValue ? [] : inputValue;
+		setTempSelection(value);
+	};
+
+	// Handle dropdown visibility changes
+	const handleDropdownVisibleChange = (visible: boolean): void => {
+		// Initialize temp selection when opening dropdown
+		if (visible) {
+			setTempSelection(getSelectValue(variableData.selectedValue, variableData));
+		}
+		// Apply changes when closing dropdown
+		else if (!visible && tempSelection !== undefined) {
+			// Call handleChange with the temporarily stored selection
+			handleChange(tempSelection);
+			setTempSelection(undefined);
+		}
+	};
+
 	return (
 		<div className="variable-item">
 			<Typography.Text className="variable-name" ellipsis>
@@ -119,20 +144,23 @@ function DynamicVariableSelection({
 							label: option.toString(),
 							value: option.toString(),
 						}))}
-						defaultValue={variableData.defaultValue}
-						onChange={handleChange}
+						defaultValue={selectValue}
+						onChange={handleTempChange}
 						bordered={false}
 						placeholder="Select value"
 						placement="bottomLeft"
 						style={SelectItemStyle}
 						loading={isLoading}
 						showSearch
+						data-testid="variable-select"
+						className="variable-select"
 						popupClassName="dropdown-styles"
 						maxTagCount={4}
 						getPopupContainer={popupContainer}
 						allowClear
-						value={selectValue}
-						errorMessage={errorMessage as any}
+						value={tempSelection || selectValue}
+						onDropdownVisibleChange={handleDropdownVisibleChange}
+						errorMessage={errorMessage}
 						// eslint-disable-next-line react/no-unstable-nested-components
 						maxTagPlaceholder={(omittedValues): JSX.Element => (
 							<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>
@@ -143,6 +171,7 @@ function DynamicVariableSelection({
 							handleChange([]);
 						}}
 						enableAllSelection={enableSelectAll}
+						maxTagTextLength={30}
 					/>
 				) : (
 					<CustomSelect
