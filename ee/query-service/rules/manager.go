@@ -25,8 +25,6 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			ruleId,
 			opts.Rule,
 			opts.Reader,
-			opts.UseLogsNewSchema,
-			opts.UseTraceNewSchema,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			baserules.WithSQLStore(opts.SQLStore),
 		)
@@ -123,8 +121,6 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			alertname,
 			parsedRule,
 			opts.Reader,
-			opts.UseLogsNewSchema,
-			opts.UseTraceNewSchema,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),

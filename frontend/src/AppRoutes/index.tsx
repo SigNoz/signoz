@@ -26,6 +26,7 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
+import { Userpilot } from 'userpilot';
 import { extractDomain } from 'utils/app';
 
 import { Home } from './pageComponents';
@@ -99,6 +100,18 @@ function App(): JSX.Element {
 				if (domain) {
 					logEvent('Domain Identified', groupTraits, 'group');
 				}
+
+				Userpilot.identify(email, {
+					email,
+					name,
+					orgName,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
+					source: 'signoz-ui',
+					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
+				});
 
 				posthog?.identify(email, {
 					email,
@@ -274,6 +287,10 @@ function App(): JSX.Element {
 					api_host: 'https://us.i.posthog.com',
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
+			}
+
+			if (process.env.USERPILOT_KEY) {
+				Userpilot.initialize(process.env.USERPILOT_KEY);
 			}
 
 			Sentry.init({
