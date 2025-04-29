@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 	"net/http"
-	"strings"
 )
 
 type API interface {
@@ -73,12 +72,9 @@ func (q *quickFiltersAPI) GetSignalFilters(rw http.ResponseWriter, r *http.Reque
 	}
 
 	signal := mux.Vars(r)["signal"]
-	if !quickfiltertypes.IsValidSignal(strings.ToLower(signal)) {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid signal: %s", signal))
-		return
-	}
+	validatedSignal, _ := quickfiltertypes.NewSignal(signal)
 
-	filters, err := q.usecase.GetSignalFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), quickfiltertypes.SignalFromString(signal))
+	filters, err := q.usecase.GetSignalFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSignal)
 	if err != nil {
 		render.Error(rw, err)
 		return

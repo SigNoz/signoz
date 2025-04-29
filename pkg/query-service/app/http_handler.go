@@ -598,9 +598,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.Signoz.Handlers.Preference.UpdateOrg)).Methods(http.MethodPut)
 
 	// Quick Filters
-	router.HandleFunc("/api/v1/org/filters", am.AdminAccess(aH.getAllQuickFilters)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/filters/{signal}", am.AdminAccess(aH.getSignalFilters)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/filters", am.AdminAccess(aH.updateQuickFilters)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.QuickFilters.GetQuickFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.AdminAccess(aH.QuickFilters.GetSignalFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.QuickFilters.UpdateQuickFilters)).Methods(http.MethodPut)
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
@@ -3412,25 +3412,6 @@ func (aH *APIHandler) getProducerConsumerEval(
 		Result: result,
 	}
 	aH.Respond(w, resp)
-}
-
-// Quick Filters - Registers/Upserts all Quick Filters based on Signals
-func (aH *APIHandler) getAllQuickFilters(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.QuickFilters.GetQuickFilters(w, r)
-}
-
-func (aH *APIHandler) getSignalFilters(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.QuickFilters.GetSignalFilters(w, r)
-}
-
-func (aH *APIHandler) updateQuickFilters(
-	w http.ResponseWriter, r *http.Request,
-) {
-	aH.QuickFilters.UpdateQuickFilters(w, r)
 }
 
 // RegisterIntegrationRoutes Registers all Integrations

@@ -69,7 +69,10 @@ func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	// Get the default quick filters
-	storableQuickFilters := quickfiltertypes.NewDefaultQuickFilter(defaultOrg)
+	storableQuickFilters, err := quickfiltertypes.NewDefaultQuickFilter(defaultOrg)
+	if err != nil {
+		return err
+	}
 
 	// For SQLite, insert each filter individually with proper conflict handling
 	for _, filter := range storableQuickFilters {

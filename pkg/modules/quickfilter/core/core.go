@@ -31,16 +31,11 @@ func (u *usecase) GetQuickFilters(ctx context.Context, orgID valuer.UUID) ([]*qu
 
 	result := make([]*quickfiltertypes.SignalFilters, 0, len(storedFilters))
 	for _, storedFilter := range storedFilters {
-		var filters []v3.AttributeKey
-		err := json.Unmarshal([]byte(storedFilter.Filter), &filters)
+		signalFilter, err := quickfiltertypes.NewSignalFilterFromStorableQuickFilter(storedFilter)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error unmarshalling filters")
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error processing filter for signal: %s", storedFilter.Signal)
 		}
-
-		result = append(result, &quickfiltertypes.SignalFilters{
-			Signal:  quickfiltertypes.SignalFromString(storedFilter.Signal),
-			Filters: filters,
-		})
+		result = append(result, signalFilter)
 	}
 
 	return result, nil
@@ -48,36 +43,30 @@ func (u *usecase) GetQuickFilters(ctx context.Context, orgID valuer.UUID) ([]*qu
 
 // GetSignalFilters returns quick filters for a specific signal in an organization
 func (u *usecase) GetSignalFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal) (*quickfiltertypes.SignalFilters, error) {
-	if !quickfiltertypes.IsValidSignal(signal.StringValue()) {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", signal)
-	}
-
 	storedFilter, err := u.store.GetBySignal(ctx, orgID, signal.StringValue())
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error fetching signal filters")
 	}
 
-	var filters []v3.AttributeKey
-	if storedFilter != nil {
-		err := json.Unmarshal([]byte(storedFilter.Filter), &filters)
-		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error unmarshalling filters")
-		}
+	// If no filter exists for this signal, return empty filters with the requested signal
+	if storedFilter == nil {
+		return &quickfiltertypes.SignalFilters{
+			Signal:  signal,
+			Filters: []v3.AttributeKey{},
+		}, nil
 	}
 
-	return &quickfiltertypes.SignalFilters{
-		Signal:  signal,
-		Filters: filters,
-	}, nil
+	// Convert stored filter to signal filter
+	signalFilter, err := quickfiltertypes.NewSignalFilterFromStorableQuickFilter(storedFilter)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error processing filter for signal: %s", storedFilter.Signal)
+	}
+
+	return signalFilter, nil
 }
 
 // UpdateQuickFilters updates quick filters for a specific signal in an organization
 func (u *usecase) UpdateQuickFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal, filters []v3.AttributeKey) error {
-	signalStr := signal.StringValue()
-	if !quickfiltertypes.IsValidSignal(signalStr) {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", signalStr)
-	}
-
 	// Validate each filter
 	for _, filter := range filters {
 		if err := filter.Validate(); err != nil {
@@ -92,43 +81,55 @@ func (u *usecase) UpdateQuickFilters(ctx context.Context, orgID valuer.UUID, sig
 	}
 
 	// Check if filter exists
-	existingFilter, err := u.store.GetBySignal(ctx, orgID, signalStr)
+	existingFilter, err := u.store.GetBySignal(ctx, orgID, signal.StringValue())
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error checking existing filters")
 	}
 
-	now := time.Now()
 	var filter *quickfiltertypes.StorableQuickFilter
-
 	if existingFilter != nil {
-		// Update existing filter
-		filter = existingFilter
-		filter.Filter = string(filterJSON)
-		filter.UpdatedAt = now
+		filter = updateExistingFilter(existingFilter, filterJSON)
 	} else {
-		// Create new filter
-		filter = &quickfiltertypes.StorableQuickFilter{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			}, OrgID: orgID,
-			Signal: signalStr,
-			Filter: string(filterJSON),
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: now,
-				UpdatedAt: now,
-			},
-		}
+		filter = createNewFilter(orgID, signal, filterJSON)
 	}
 
 	err = u.store.Upsert(ctx, filter)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error updating filters for signal: %s", signalStr))
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error updating filters for signal: %s", signal.StringValue()))
 	}
 
 	return nil
 }
 
 func (u *usecase) SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error {
-	storableQuickFilters := quickfiltertypes.NewDefaultQuickFilter(orgID)
+	storableQuickFilters, err := quickfiltertypes.NewDefaultQuickFilter(orgID)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error creating default quick filters")
+	}
 	return u.store.Create(ctx, storableQuickFilters)
+}
+
+// updateExistingFilter updates an existing StorableQuickFilter with new filter data
+func updateExistingFilter(existingFilter *quickfiltertypes.StorableQuickFilter, filterJSON []byte) *quickfiltertypes.StorableQuickFilter {
+	filter := existingFilter
+	filter.Filter = string(filterJSON)
+	filter.UpdatedAt = time.Now()
+	return filter
+}
+
+// createNewFilter creates a new StorableQuickFilter
+func createNewFilter(orgID valuer.UUID, signal quickfiltertypes.Signal, filterJSON []byte) *quickfiltertypes.StorableQuickFilter {
+	now := time.Now()
+	return &quickfiltertypes.StorableQuickFilter{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		OrgID:  orgID,
+		Signal: signal.StringValue(),
+		Filter: string(filterJSON),
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+	}
 }
