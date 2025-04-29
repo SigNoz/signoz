@@ -464,7 +464,6 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 				<div className="no-section-options">
 					{nonSectionOptions.length > 0 && mapOptions(nonSectionOptions)}
 				</div>
-
 				{/* Section options */}
 				{sectionOptions.length > 0 &&
 					sectionOptions.map((section) =>
