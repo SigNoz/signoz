@@ -395,7 +395,13 @@ func TestHandler_Save(t *testing.T) {
 	}
 
 	mockModule.On("Get", req.Context(), reqBody.FunnelID.String()).Return(existingFunnel, nil)
-	mockModule.On("Save", req.Context(), mock.AnythingOfType("*tracefunnels.Funnel"), "user-123", orgID).Return(nil)
+	mockModule.On("Save", req.Context(), mock.MatchedBy(func(f *traceFunnels.Funnel) bool {
+		return f.ID.String() == reqBody.FunnelID.String() &&
+			f.Name == existingFunnel.Name &&
+			f.Description == reqBody.Description &&
+			f.UpdatedBy == "user-123" &&
+			f.OrgID.String() == orgID
+	}), "user-123", orgID).Return(nil)
 	mockModule.On("GetFunnelMetadata", req.Context(), reqBody.FunnelID.String()).Return(int64(0), int64(0), reqBody.Description, nil)
 
 	handler.Save(rr, req)
