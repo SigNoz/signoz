@@ -17,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
@@ -30,6 +32,7 @@ type Modules struct {
 	Apdex        apdex.Module
 	Dashboard    dashboard.Module
 	QuickFilter  quickfilter.Module
+	TraceFunnel  tracefunnel.Module
 }
 
 func NewModules(sqlstore sqlstore.SQLStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings) Modules {
@@ -41,5 +44,6 @@ func NewModules(sqlstore sqlstore.SQLStore, jwt *authtypes.JWT, emailing emailin
 		Dashboard:    impldashboard.NewModule(sqlstore),
 		User:         impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), jwt, emailing, providerSettings),
 		QuickFilter:  implquickfilter.NewModule(implquickfilter.NewStore(sqlstore)),
+		TraceFunnel:  impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 	}
 }
