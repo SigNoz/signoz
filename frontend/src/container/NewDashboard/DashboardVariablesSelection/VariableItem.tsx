@@ -362,6 +362,7 @@ function VariableItem({
 								handleChange([]);
 							}}
 							enableAllSelection={enableSelectAll}
+							maxTagTextLength={30}
 						/>
 					) : (
 						<CustomSelect
