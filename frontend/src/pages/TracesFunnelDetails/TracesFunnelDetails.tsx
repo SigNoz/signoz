@@ -15,7 +15,7 @@ function TracesFunnelDetails(): JSX.Element {
 	const { data, isLoading, isError } = useFunnelDetails({ funnelId });
 
 	if (isLoading || !data?.payload) {
-		return <Spinner size="large" tip="Loading..." />;
+		return <Spinner size="large" />;
 	}
 
 	if (isError) {

@@ -60,7 +60,7 @@ function StepsFooter({
 	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
 
 	return (
-		<div className="steps-footer">
+		<div className="steps-footer" data-testid="steps-footer">
 			<div className="steps-footer__left">
 				<Cone className="funnel-icon" size={14} />
 				<span>{stepsCount} steps</span>
