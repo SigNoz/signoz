@@ -12,10 +12,10 @@ import (
 )
 
 type module struct {
-	store traceFunnels.TraceFunnelStore
+	store traceFunnels.FunnelStore
 }
 
-func NewModule(store traceFunnels.TraceFunnelStore) tracefunnel.Module {
+func NewModule(store traceFunnels.FunnelStore) tracefunnel.Module {
 	return &module{
 		store: store,
 	}
