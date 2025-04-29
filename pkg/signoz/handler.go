@@ -15,6 +15,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 )
 
 type Handlers struct {
@@ -25,6 +27,7 @@ type Handlers struct {
 	Apdex        apdex.Handler
 	Dashboard    dashboard.Handler
 	QuickFilter  quickfilter.Handler
+	TraceFunnel  tracefunnel.Handler
 }
 
 func NewHandlers(modules Modules) Handlers {
@@ -36,5 +39,6 @@ func NewHandlers(modules Modules) Handlers {
 		Apdex:        implapdex.NewHandler(modules.Apdex),
 		Dashboard:    impldashboard.NewHandler(modules.Dashboard),
 		QuickFilter:  implquickfilter.NewHandler(modules.QuickFilter),
+		TraceFunnel:  impltracefunnel.NewHandler(modules.TraceFunnel),
 	}
 }
