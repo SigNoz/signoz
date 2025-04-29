@@ -27,7 +27,7 @@ type Funnel struct {
 }
 
 type FunnelStep struct {
-	Id             valuer.UUID   `json:"id,omitempty"`
+	ID             valuer.UUID   `json:"id,omitempty"`
 	Name           string        `json:"name,omitempty"`        // step name
 	Description    string        `json:"description,omitempty"` // step description
 	Order          int64         `json:"step_order"`
