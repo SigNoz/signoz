@@ -14,7 +14,7 @@ import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { debounce, isArray, isString } from 'lodash-es';
+import { debounce, isArray, isEmpty, isString } from 'lodash-es';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -294,6 +294,30 @@ function VariableItem({
 			? 'ALL'
 			: selectedValueStringified;
 
+	// Apply default value on first render if no selection exists
+	useEffect(() => {
+		// Only for multi-select and when there's no selection but a default value exists
+		if (
+			variableData.multiSelect &&
+			variableData.defaultValue &&
+			(isEmpty(variableData.selectedValue) ||
+				(Array.isArray(variableData.selectedValue) &&
+					variableData.selectedValue.length === 0)) &&
+			variableData.name &&
+			optionsData.length > 0 && // Ensure options are loaded
+			!isLoading
+		) {
+			// Apply the default value
+			onValueUpdate(
+				variableData.name,
+				variableData.id,
+				variableData.defaultValue,
+				false,
+			);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [optionsData.length, isLoading]);
+
 	useEffect(() => {
 		// Fetch options for CUSTOM Type
 		if (variableData.type === 'CUSTOM') {
@@ -335,7 +359,7 @@ function VariableItem({
 								label: option.toString(),
 								value: option.toString(),
 							}))}
-							defaultValue={selectValue}
+							defaultValue={variableData.defaultValue || selectValue}
 							onChange={handleTempChange}
 							bordered={false}
 							placeholder="Select value"
@@ -371,7 +395,7 @@ function VariableItem({
 									? selectValue.join(' ')
 									: selectValue || variableData.id
 							}
-							defaultValue={selectValue}
+							defaultValue={variableData.defaultValue || selectValue}
 							onChange={handleChange}
 							bordered={false}
 							placeholder="Select value"
