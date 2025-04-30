@@ -61,8 +61,16 @@ func (m *module) CreateUserWithPassword(ctx context.Context, user *types.User, p
 	return user, nil
 }
 
+func (m *module) CreateUser(ctx context.Context, user *types.User) error {
+	return m.store.CreateUser(ctx, user)
+}
+
 func (m *module) GetUserByID(ctx context.Context, orgID string, id string) (*types.User, error) {
 	return m.store.GetUserByID(ctx, orgID, id)
+}
+
+func (m *module) GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.User, error) {
+	return m.store.GetUserByEmailInOrg(ctx, orgID, email)
 }
 
 func (m *module) GetUsersByEmail(ctx context.Context, email string) ([]*types.User, error) {

@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
 func (mds *ModelDaoSqlite) GetOrgs(ctx context.Context) ([]types.Organization, *model.ApiError) {
@@ -20,7 +19,7 @@ func (mds *ModelDaoSqlite) GetOrgs(ctx context.Context) ([]types.Organization, *
 	return orgs, nil
 }
 
-func (mds *ModelDaoSqlite) UpdateUserRole(ctx context.Context, userId string, role authtypes.Role) *model.ApiError {
+func (mds *ModelDaoSqlite) UpdateUserRole(ctx context.Context, userId string, role types.Role) *model.ApiError {
 
 	_, err := mds.bundb.NewUpdate().
 		Model(&types.User{}).

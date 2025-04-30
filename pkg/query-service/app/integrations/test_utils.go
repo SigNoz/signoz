@@ -6,13 +6,12 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
@@ -31,7 +30,7 @@ func NewTestIntegrationsManager(t *testing.T) (*Manager, sqlstore.SQLStore) {
 	}, testDB
 }
 
-func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
 	organization := types.NewOrganization("test")
@@ -45,16 +44,16 @@ func createTestUser(organizationModule organization.Module) (*types.User, *model
 		return nil, model.InternalError(err)
 	}
 
-	user, err := types.NewUser("test", random+"test@test.com", authtypes.RoleAdmin.String(), organization.ID.StringValue())
+	user, err := types.NewUser("test", random+"test@test.com", types.RoleAdmin.String(), organization.ID.StringValue())
 	if err != nil {
 		return nil, model.InternalError(err)
 	}
 
-	return dao.DB().CreateUser(
-		ctx,
-		user,
-		true,
-	)
+	err = userModule.CreateUser(ctx, user)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+	return user, nil
 }
 
 type TestAvailableIntegrationsRepo struct{}

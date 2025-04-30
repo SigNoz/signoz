@@ -113,6 +113,16 @@ func (s *store) CreateUserWithPassword(ctx context.Context, user *types.User, pa
 	return user, nil
 }
 
+func (s *store) CreateUser(ctx context.Context, user *types.User) error {
+	_, err := s.sqlstore.BunDB().NewInsert().
+		Model(user).
+		Exec(ctx)
+	if err != nil {
+		return s.sqlstore.WrapAlreadyExistsErrf(err, types.ErrUserAlreadyExists, "user with email: %s already exists in org: %s", user.Email, user.OrgID)
+	}
+	return nil
+}
+
 func (s *store) GetUserByID(ctx context.Context, orgID string, id string) (*types.User, error) {
 	var user types.User
 	err := s.sqlstore.BunDB().NewSelect().
@@ -122,6 +132,19 @@ func (s *store) GetUserByID(ctx context.Context, orgID string, id string) (*type
 		Scan(ctx)
 	if err != nil {
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrUserNotFound, "user with id: %s does not exist in org: %s", id, orgID)
+	}
+	return &user, nil
+}
+
+func (s *store) GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.User, error) {
+	var user types.User
+	err := s.sqlstore.BunDB().NewSelect().
+		Model(&user).
+		Where("org_id = ?", orgID).
+		Where("email = ?", email).
+		Scan(ctx)
+	if err != nil {
+		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrUserNotFound, "user with email: %s does not exist in org: %s", email, orgID)
 	}
 	return &user, nil
 }

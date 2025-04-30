@@ -18,15 +18,16 @@ type Module interface {
 
 	// user
 	CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error)
+	CreateUser(ctx context.Context, user *types.User) error
 	GetUserByID(ctx context.Context, orgID string, id string) (*types.User, error)
+	GetUsersByEmail(ctx context.Context, email string) ([]*types.User, error) // public function
+	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.User, error)
 	ListUsers(ctx context.Context, orgID string) ([]*types.User, error)
 	UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
 	// remove this later
 	SendUserTelemetry(user *types.User, firstRegistration bool)
-
-	GetUsersByEmail(ctx context.Context, email string) ([]*types.User, error) // public function
 
 	CreateResetPasswordToken(ctx context.Context, userID string) (*types.FactorResetPasswordRequest, error)
 	GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error)

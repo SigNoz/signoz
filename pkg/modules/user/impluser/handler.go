@@ -77,45 +77,6 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusCreated, user)
 }
 
-func (h *handler) CreateFirstUser(w http.ResponseWriter, r *http.Request) {
-	// ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	// defer cancel()
-
-	// req := new(types.FirstUserRegisterRequest)
-	// if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-	// 	render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode user"))
-	// 	return
-	// }
-
-	// user, err := types.NewUser(req.Name, req.Email, req.Password, "", "")
-	// if err != nil {
-	// 	render.Error(w, err)
-	// 	return
-	// }
-
-	// // create the organization
-
-	// // create the password
-
-	// // create the user
-	// user, err = h.module.Create(ctx, user)
-	// if err != nil {
-	// 	render.Error(w, err)
-	// 	return
-	// }
-
-	// // data := map[string]interface{}{
-	// // 	"name":              user.HName,
-	// // 	"email":             user.Email,
-	// // 	"firstRegistration": true,
-	// // }
-
-	// // telemetry.GetInstance().IdentifyUser(user)
-	// // telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data, user.Email, true, false)
-
-	// render.Success(w, http.StatusCreated, user)
-}
-
 func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -183,11 +144,11 @@ func (h *handler) inviteUsers(ctx context.Context, claims authtypes.Claims, bulk
 
 	for _, invite := range bulkInvites.Invites {
 		// check if user exists
-		// if user, err := dao.DB().GetUserByEmailInOrg(ctx, claims.OrgID, invite.Email); err != nil {
-		// 	return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check already existing user")
-		// } else if user != nil {
-		// 	return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
-		// }
+		if user, err := h.module.GetUserByEmailInOrg(ctx, claims.OrgID, invite.Email); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check already existing user")
+		} else if user != nil {
+			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
+		}
 
 		// Check if an invite already exists
 		if invite, err := h.module.GetInviteByEmailInOrg(ctx, claims.OrgID, invite.Email); err != nil {

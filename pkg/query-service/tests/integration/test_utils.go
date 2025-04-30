@@ -15,12 +15,12 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -147,7 +147,7 @@ func makeTestSignozLog(
 	return testLog
 }
 
-func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
 	organization := types.NewOrganization("test")
@@ -158,18 +158,17 @@ func createTestUser(organizationModule organization.Module) (*types.User, *model
 
 	userId := valuer.GenerateUUID()
 
-	return dao.DB().CreateUser(
-		ctx,
-		&types.User{
-			Identifiable: types.Identifiable{ID: userId},
-			HName:        "test",
-			Email:        userId.String() + "test@test.com",
-			// Password:     "test",
-			OrgID: organization.ID.StringValue(),
-			Role:  authtypes.RoleAdmin.String(),
-		},
-		true,
-	)
+	user, err := types.NewUser("test", userId.String()+"test@test.com", types.RoleAdmin.String(), organization.ID.StringValue())
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	err = userModule.CreateUser(ctx, user)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	return user, nil
 }
 
 func AuthenticatedRequestForTest(

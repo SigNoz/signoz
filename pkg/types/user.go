@@ -28,28 +28,21 @@ type UserStore interface {
 
 	// user
 	CreateUserWithPassword(ctx context.Context, user *User, password *FactorPassword) (*User, error)
+	CreateUser(ctx context.Context, user *User) error
 	GetUserByID(ctx context.Context, orgID string, id string) (*User, error)
+	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*User, error)
+	GetUsersByEmail(ctx context.Context, email string) ([]*User, error)
 	ListUsers(ctx context.Context, orgID string) ([]*User, error)
 	UpdateUser(ctx context.Context, orgID string, id string, user *User) (*User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
-	GetUsersByEmail(ctx context.Context, email string) ([]*User, error)
 
+	// password
 	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *FactorResetPasswordRequest) error
 	GetPasswordByUserID(ctx context.Context, id string) (*FactorPassword, error)
 	GetFactorResetPassword(ctx context.Context, token string) (*FactorResetPasswordRequest, error)
 	UpdatePassword(ctx context.Context, userID string, password string) error
 	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error
 }
-
-// type GettableUserOrg struct {
-// 	*User        `bun:",extend"`
-// 	Organization *Organization `bun:"rel:belongs-to,join:org_user_id=id" json:"organization"`
-// }
-
-// type GettableUserOrgs struct {
-// 	*User        `bun:",extend"`
-// 	Organization []*Organization `bun:"rel:has-many,join:org_user_id=id" json:"organization"`
-// }
 
 type User struct {
 	bun.BaseModel `bun:"table:users"`
@@ -63,13 +56,7 @@ type User struct {
 	OrgID             string `bun:"org_id,type:text,notnull,unique:org_email" json:"orgId"`
 }
 
-func NewUser(
-	hName string,
-	email string,
-	role string,
-	orgID string,
-) (*User, error) {
-
+func NewUser(hName string, email string, role string, orgID string) (*User, error) {
 	if hName == "" {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "hName is required")
 	}
