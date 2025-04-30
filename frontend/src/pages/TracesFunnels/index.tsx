@@ -12,6 +12,7 @@ import FunnelsEmptyState from './components/FunnelsEmptyState/FunnelsEmptyState'
 import FunnelsList from './components/FunnelsList/FunnelsList';
 import Header from './components/Header/Header';
 import SearchBar from './components/SearchBar/SearchBar';
+import { filterFunnelsByQuery } from './utils';
 
 interface TracesFunnelsContentRendererProps {
 	isLoading: boolean;
@@ -77,11 +78,13 @@ TracesFunnelsContentRenderer.defaultProps = {
 function TracesFunnels(): JSX.Element {
 	const { searchQuery, handleSearch } = useHandleTraceFunnelsSearch();
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-	const { data, isLoading, isError } = useFunnelsList({ searchQuery });
+	const { data, isLoading, isError } = useFunnelsList();
 
 	const { sortOrder, handleSort, sortedData } = useHandleTraceFunnelsSort({
 		data: data?.payload || [],
 	});
+
+	const filteredData = filterFunnelsByQuery(sortedData, searchQuery);
 
 	const handleCreateFunnel = (): void => {
 		setIsCreateModalOpen(true);
@@ -101,7 +104,7 @@ function TracesFunnels(): JSX.Element {
 				<TracesFunnelsContentRenderer
 					isError={isError}
 					isLoading={isLoading}
-					data={sortedData}
+					data={filteredData}
 					onCreateFunnel={handleCreateFunnel}
 				/>
 				<CreateFunnel
