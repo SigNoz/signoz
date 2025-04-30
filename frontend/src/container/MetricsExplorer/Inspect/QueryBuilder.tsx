@@ -17,6 +17,7 @@ function QueryBuilder({
 	dispatchMetricInspectionOptions,
 	metricType,
 	inspectionStep,
+	inspectMetricsTimeSeries,
 }: QueryBuilderProps): JSX.Element {
 	return (
 		<div className="inspect-metrics-query-builder">
@@ -43,6 +44,7 @@ function QueryBuilder({
 					inspectionStep={inspectionStep}
 					metricInspectionOptions={metricInspectionOptions}
 					dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
+					inspectMetricsTimeSeries={inspectMetricsTimeSeries}
 				/>
 				<MetricSpaceAggregation
 					inspectionStep={inspectionStep}
