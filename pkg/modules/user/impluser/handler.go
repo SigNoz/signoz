@@ -72,7 +72,7 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send telemetry
-	h.sendUserTelemetry(user, true)
+	h.module.SendUserTelemetry(user, false)
 
 	render.Success(w, http.StatusCreated, user)
 }
@@ -116,17 +116,6 @@ func (h *handler) CreateFirstUser(w http.ResponseWriter, r *http.Request) {
 	// render.Success(w, http.StatusCreated, user)
 }
 
-func (h *handler) sendUserTelemetry(user *types.User, firstRegistration bool) {
-	data := map[string]interface{}{
-		"name":              user.HName,
-		"email":             user.Email,
-		"firstRegistration": firstRegistration,
-	}
-
-	// telemetry.GetInstance().IdentifyUser(user)
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data, user.Email, true, false)
-}
-
 func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -137,14 +126,14 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, err := types.NewPostableInvite(r)
-	if err != nil {
+	var req types.PostableInvite
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
 	invites, err := h.inviteUsers(ctx, claims, &types.PostableBulkInviteRequest{
-		Invites: []types.PostableInvite{*req},
+		Invites: []types.PostableInvite{req},
 	})
 	if err != nil {
 		render.Error(rw, err)
@@ -165,13 +154,19 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, err := types.NewPostableBulkInviteRequest(r)
-	if err != nil {
+	var req types.PostableBulkInviteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	invites, err := h.inviteUsers(ctx, claims, req)
+	// Validate that the request contains users
+	if len(req.Invites) == 0 {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no invites provided for invitation"))
+		return
+	}
+
+	invites, err := h.inviteUsers(ctx, claims, &req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -201,7 +196,7 @@ func (h *handler) inviteUsers(ctx context.Context, claims authtypes.Claims, bulk
 			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email")
 		}
 
-		role, err := authtypes.NewRole(invite.Role)
+		role, err := types.NewRole(invite.Role.String())
 		if err != nil {
 			return nil, err
 		}
@@ -551,11 +546,48 @@ func (h *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resetPasswordRequest, err := h.module.CreateResetPasswordToken(ctx, req.UserID)
+	entry, err := h.module.GetFactorResetPassword(ctx, req.Token)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	render.Success(w, http.StatusOK, resetPasswordRequest)
+	err = h.module.UpdatePasswordAndDeleteResetPasswordEntry(ctx, entry.PasswordID, req.Password)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, nil)
+}
+
+func (h *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	var req types.ChangePasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	// get the current password
+	password, err := h.module.GetPasswordByUserID(ctx, req.UserId)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	if !types.ComparePassword(password.Password, req.OldPassword) {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "old password is incorrect"))
+		return
+	}
+
+	err = h.module.UpdatePassword(ctx, req.UserId, req.NewPassword)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, nil)
 }

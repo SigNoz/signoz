@@ -566,8 +566,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Update)).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.Signoz.Handlers.User.GetResetPasswordToken)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.changePassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.Signoz.Handlers.User.ResetPassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.Signoz.Handlers.User.ChangePassword)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v3/licenses", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
 		render.Success(rw, http.StatusOK, []any{})
@@ -2001,36 +2001,6 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	// })
 
 	aH.WriteJSON(w, r, resp)
-}
-
-func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
-	req, err := parseResetPasswordRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	if err := auth.ResetPassword(context.Background(), req); err != nil {
-		zap.L().Error("resetPassword failed", zap.Error(err))
-		if aH.HandleError(w, err, http.StatusInternalServerError) {
-			return
-		}
-
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "password reset successfully"})
-}
-
-func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
-	req, err := parseChangePasswordRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	if apiErr := auth.ChangePassword(context.Background(), req); apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "password changed successfully"})
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {

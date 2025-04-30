@@ -515,20 +515,6 @@ func parseEditOrgRequest(r *http.Request) (*types.Organization, error) {
 	return &req, nil
 }
 
-func parseChangePasswordRequest(r *http.Request) (*model.ChangePasswordRequest, error) {
-	id := mux.Vars(r)["id"]
-	var req model.ChangePasswordRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	req.UserId = id
-	// if err := auth.ValidatePassword(req.NewPassword); err != nil {
-	// 	return nil, err
-	// }
-
-	return &req, nil
-}
-
 func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequest, error) {
 	var req v3.AggregateAttributeRequest
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -16,6 +17,17 @@ type module struct {
 
 func NewModule(store types.UserStore) user.Module {
 	return &module{store: store}
+}
+
+func (m *module) SendUserTelemetry(user *types.User, firstRegistration bool) {
+	data := map[string]interface{}{
+		"name":              user.HName,
+		"email":             user.Email,
+		"firstRegistration": firstRegistration,
+	}
+
+	// telemetry.GetInstance().IdentifyUser(user)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data, user.Email, true, false)
 }
 
 // CreateBulk implements invite.Module.
@@ -99,4 +111,25 @@ func (m *module) CreateResetPasswordToken(ctx context.Context, userID string) (*
 
 func (m *module) GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error) {
 	return m.store.GetPasswordByUserID(ctx, id)
+}
+
+func (m *module) GetFactorResetPassword(ctx context.Context, token string) (*types.FactorResetPasswordRequest, error) {
+	return m.store.GetFactorResetPassword(ctx, token)
+}
+
+func (m *module) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error {
+	hashedPassword, err := types.HashPassword(password)
+	if err != nil {
+		return err
+	}
+
+	return m.store.UpdatePasswordAndDeleteResetPasswordEntry(ctx, userID, hashedPassword)
+}
+
+func (m *module) UpdatePassword(ctx context.Context, userID string, password string) error {
+	hashedPassword, err := types.HashPassword(password)
+	if err != nil {
+		return err
+	}
+	return m.store.UpdatePassword(ctx, userID, hashedPassword)
 }

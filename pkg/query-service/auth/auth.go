@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -28,52 +31,66 @@ var (
 	ErrorAskAdmin           = errors.New("An invitation is needed to create an account. Please ask your admin (the person who has first installed SIgNoz) to send an invite.")
 )
 
-func ResetPassword(ctx context.Context, req *model.ResetPasswordRequest) error {
-	entry, apiErr := dao.DB().GetResetPasswordEntry(ctx, req.Token)
-	if apiErr != nil {
-		return errors.Wrap(apiErr.Err, "failed to query the DB")
-	}
+type RegisterRequest struct {
+	Name           string `json:"name"`
+	OrgID          string `json:"orgId"`
+	OrgDisplayName string `json:"orgDisplayName"`
+	OrgName        string `json:"orgName"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	InviteToken    string `json:"token"`
 
-	if entry == nil {
-		return errors.New("Invalid reset password request")
-	}
-
-	hash, err := PasswordHash(req.Password)
-	if err != nil {
-		return errors.Wrap(err, "Failed to generate password hash")
-	}
-
-	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, entry.UserID); apiErr != nil {
-		return apiErr.Err
-	}
-
-	if apiErr := dao.DB().DeleteResetPasswordEntry(ctx, req.Token); apiErr != nil {
-		return errors.Wrap(apiErr.Err, "failed to delete reset token from DB")
-	}
-
-	return nil
+	// reference URL to track where the register request is coming from
+	SourceUrl string `json:"sourceUrl"`
 }
 
-func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) *model.ApiError {
-	user, apiErr := dao.DB().GetUser(ctx, req.UserId)
-	if apiErr != nil {
-		return apiErr
+func RegisterFirstUser(ctx context.Context, req *RegisterRequest, organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
+	if req.Email == "" {
+		return nil, model.BadRequest(model.ErrEmailRequired{})
 	}
 
-	if user == nil || !passwordMatch(user.Password, req.OldPassword) {
-		return model.ForbiddenError(ErrorInvalidCreds)
+	if req.Password == "" {
+		return nil, model.BadRequest(model.ErrPasswordRequired{})
 	}
 
-	hash, err := PasswordHash(req.NewPassword)
+	organization := types.NewOrganization(req.OrgDisplayName)
+	err := organizationModule.Create(ctx, organization)
 	if err != nil {
-		return model.InternalError(errors.New("Failed to generate password hash"))
+		return nil, model.InternalError(err)
 	}
 
-	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, user.ID); apiErr != nil {
-		return apiErr
+	user, err := types.NewUser(req.Name, req.Email, types.RoleAdmin.String(), organization.ID.StringValue())
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
 
-	return nil
+	password, err := types.NewFactorPassword(req.Password)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	user, err = userModule.CreateUserWithPassword(ctx, user, password)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	userModule.SendUserTelemetry(user, true)
+
+	return user, nil
+}
+
+// First user registration
+func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanager.Alertmanager, organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
+	user, err := RegisterFirstUser(ctx, req, organizationModule, userModule)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := alertmanager.SetDefaultConfig(ctx, user.OrgID); err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	return user, nil
 }
 
 // Login method returns access and refresh tokens on successful login, else it errors out.

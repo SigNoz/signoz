@@ -26,12 +26,6 @@ type LoginResponse struct {
 	UserId string `json:"userId"`
 }
 
-type ChangePasswordRequest struct {
-	UserId      string `json:"userId"`
-	OldPassword string `json:"oldPassword"`
-	NewPassword string `json:"newPassword"`
-}
-
 type UserRole struct {
 	UserId    string `json:"user_id"`
 	GroupName string `json:"group_name"`

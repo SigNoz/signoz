@@ -197,3 +197,69 @@ func (s *store) GetPasswordByUserID(ctx context.Context, id string) (*types.Fact
 	}
 	return &password, nil
 }
+
+func (s *store) GetFactorResetPassword(ctx context.Context, token string) (*types.FactorResetPasswordRequest, error) {
+	var resetPasswordRequest types.FactorResetPasswordRequest
+	err := s.sqlstore.BunDB().NewSelect().
+		Model(&resetPasswordRequest).
+		Where("token = ?", token).
+		Scan(ctx)
+	if err != nil {
+		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token with token: %s does not exist", token)
+	}
+	return &resetPasswordRequest, nil
+}
+
+func (s *store) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error {
+	tx, err := s.sqlstore.BunDB().Begin()
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	factorPassword := &types.FactorPassword{
+		UserID:   userID,
+		Password: password,
+	}
+	_, err = tx.NewUpdate().
+		Model(factorPassword).
+		Column("password").
+		Where("user_id = ?", userID).
+		Exec(ctx)
+	if err != nil {
+		return s.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with user id: %s does not exist", userID)
+	}
+
+	_, err = tx.NewDelete().
+		Model(&types.FactorResetPasswordRequest{}).
+		Where("password_id = ?", userID).
+		Exec(ctx)
+	if err != nil {
+		return s.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token with password id: %s does not exist", userID)
+	}
+
+	return nil
+}
+
+func (s *store) UpdatePassword(ctx context.Context, userID string, password string) error {
+	factorPassword := &types.FactorPassword{
+		UserID:   userID,
+		Password: password,
+	}
+	_, err := s.sqlstore.BunDB().NewUpdate().
+		Model(factorPassword).
+		Column("password").
+		Where("user_id = ?", userID).
+		Exec(ctx)
+	if err != nil {
+		return s.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with user id: %s does not exist", userID)
+	}
+	return nil
+}

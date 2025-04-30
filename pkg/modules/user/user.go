@@ -23,10 +23,16 @@ type Module interface {
 	UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
+	// remove this later
+	SendUserTelemetry(user *types.User, firstRegistration bool)
+
 	GetUsersByEmail(ctx context.Context, email string) ([]*types.User, error) // public function
 
 	CreateResetPasswordToken(ctx context.Context, userID string) (*types.FactorResetPasswordRequest, error)
 	GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error)
+	GetFactorResetPassword(ctx context.Context, token string) (*types.FactorResetPasswordRequest, error)
+	UpdatePassword(ctx context.Context, userID string, password string) error
+	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error
 }
 
 type Handler interface {
@@ -49,4 +55,5 @@ type Handler interface {
 	LoginPrecheck(http.ResponseWriter, *http.Request)
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)
 	ResetPassword(http.ResponseWriter, *http.Request)
+	ChangePassword(http.ResponseWriter, *http.Request)
 }

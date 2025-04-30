@@ -15,6 +15,7 @@ var (
 	ErrUserNotFound                    = errors.MustNewCode("user_not_found")
 	ErrResetPasswordTokenAlreadyExists = errors.MustNewCode("reset_password_token_already_exists")
 	ErrPasswordNotFound                = errors.MustNewCode("password_not_found")
+	ErrResetPasswordTokenNotFound      = errors.MustNewCode("reset_password_token_not_found")
 )
 
 type UserStore interface {
@@ -33,8 +34,11 @@ type UserStore interface {
 	DeleteUser(ctx context.Context, orgID string, id string) error
 	GetUsersByEmail(ctx context.Context, email string) ([]*User, error)
 
-	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *ResetPasswordRequest) error
+	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *FactorResetPasswordRequest) error
 	GetPasswordByUserID(ctx context.Context, id string) (*FactorPassword, error)
+	GetFactorResetPassword(ctx context.Context, token string) (*FactorResetPasswordRequest, error)
+	UpdatePassword(ctx context.Context, userID string, password string) error
+	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error
 }
 
 // type GettableUserOrg struct {
@@ -133,16 +137,29 @@ type FactorPassword struct {
 }
 
 func NewFactorPassword(password string) (*FactorPassword, error) {
-	// bcrypt automatically handles salting and uses a secure work factor
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	hashedPassword, err := HashPassword(password)
 	if err != nil {
 		return nil, err
 	}
 
 	return &FactorPassword{
-		Password:  string(hashedPassword),
+		Password:  hashedPassword,
 		Temporary: false,
 	}, nil
+}
+
+func HashPassword(password string) (string, error) {
+	// bcrypt automatically handles salting and uses a secure work factor
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
+}
+
+func ComparePassword(hashedPassword, password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) == nil
 }
 
 type FactorResetPasswordRequest struct {
@@ -153,16 +170,20 @@ type FactorResetPasswordRequest struct {
 	PasswordID string `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
 }
 
-type PostableResetPassword struct {
-	Identifiable
-
-	Token  string `json:"token"`
-	UserID string `json:"userId"`
-}
-
 func NewFactorResetPasswordRequest(passwordID string) (*FactorResetPasswordRequest, error) {
 	return &FactorResetPasswordRequest{
 		Token:      valuer.GenerateUUID().String(),
 		PasswordID: passwordID,
 	}, nil
+}
+
+type PostableResetPassword struct {
+	Password string `json:"password"`
+	Token    string `json:"token"`
+}
+
+type ChangePasswordRequest struct {
+	UserId      string `json:"userId"`
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
 }
