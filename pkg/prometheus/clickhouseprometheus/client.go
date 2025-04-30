@@ -3,13 +3,13 @@ package clickhouseprometheus
 import (
 	"context"
 	"fmt"
-	value2 "github.com/prometheus/prometheus/model/value"
 	"math"
 	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	promValue "github.com/prometheus/prometheus/model/value"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/storage/remote"
@@ -205,7 +205,7 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 		}
 
 		if flags&1 == 1 {
-			value = math.Float64frombits(value2.StaleNaN)
+			value = math.Float64frombits(promValue.StaleNaN)
 		}
 
 		// add samples to current time series
