@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/http/client/plugin"
+	"github.com/gojek/heimdall/v7"
 	"github.com/gojek/heimdall/v7/httpclient"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/metric"
@@ -31,6 +32,15 @@ func New(logger *slog.Logger, tracerProvider trace.TracerProvider, meterProvider
 	netc := &http.Client{
 		Timeout:   clientOpts.timeout,
 		Transport: otelhttp.NewTransport(http.DefaultTransport, otelhttp.WithTracerProvider(tracerProvider), otelhttp.WithMeterProvider(meterProvider)),
+	}
+
+	if clientOpts.retriable == nil {
+		clientOpts.retriable = heimdall.NewRetrier(
+			heimdall.NewConstantBackoff(
+				2*time.Second,
+				100*time.Millisecond,
+			),
+		)
 	}
 
 	c := httpclient.NewClient(

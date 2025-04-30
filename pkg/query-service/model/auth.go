@@ -88,6 +88,11 @@ type ChangePasswordRequest struct {
 	NewPassword string `json:"newPassword"`
 }
 
+type ResetPasswordRequest struct {
+	Password string `json:"password"`
+	Token    string `json:"token"`
+}
+
 type UserRole struct {
 	UserId    string `json:"user_id"`
 	GroupName string `json:"group_name"`

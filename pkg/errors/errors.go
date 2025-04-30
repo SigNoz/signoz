@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	codeUnknown code = MustNewCode("unknown")
+	codeUnknown Code = MustNewCode("unknown")
 )
 
 // base is the fundamental struct that implements the error interface.
@@ -16,7 +16,7 @@ type base struct {
 	// t denotes the custom type of the error.
 	t typ
 	// c denotes the short code for the error message.
-	c code
+	c Code
 	// m contains error message passed through errors.New.
 	m string
 	// e is the actual error being wrapped.
@@ -47,7 +47,7 @@ func (b *base) Error() string {
 }
 
 // New returns a base error. It requires type, code and message as input.
-func New(t typ, code code, message string) *base {
+func New(t typ, code Code, message string) *base {
 	return &base{
 		t: t,
 		c: code,
@@ -59,7 +59,7 @@ func New(t typ, code code, message string) *base {
 }
 
 // Newf returns a new base by formatting the error message with the supplied format specifier.
-func Newf(t typ, code code, format string, args ...interface{}) *base {
+func Newf(t typ, code Code, format string, args ...interface{}) *base {
 	return &base{
 		t: t,
 		c: code,
@@ -70,7 +70,7 @@ func Newf(t typ, code code, format string, args ...interface{}) *base {
 
 // Wrapf returns a new error by formatting the error message with the supplied format specifier
 // and wrapping another error with base.
-func Wrapf(cause error, t typ, code code, format string, args ...interface{}) *base {
+func Wrapf(cause error, t typ, code Code, format string, args ...interface{}) *base {
 	return &base{
 		t: t,
 		c: code,
@@ -110,7 +110,7 @@ func (b *base) WithAdditional(a ...string) *base {
 // and the error itself.
 //
 //lint:ignore ST1008 we want to return arguments in the 'TCMEUA' order of the struct
-func Unwrapb(cause error) (typ, code, string, error, string, []string) {
+func Unwrapb(cause error) (typ, Code, string, error, string, []string) {
 	base, ok := cause.(*base)
 	if ok {
 		return base.t, base.c, base.m, base.e, base.u, base.a
@@ -127,7 +127,7 @@ func Ast(cause error, typ typ) bool {
 }
 
 // Ast checks if the provided error matches the specified custom error code.
-func Asc(cause error, code code) bool {
+func Asc(cause error, code Code) bool {
 	_, c, _, _, _, _ := Unwrapb(cause)
 
 	return c.s == code.s
@@ -136,4 +136,8 @@ func Asc(cause error, code code) bool {
 // Join is a wrapper around errors.Join.
 func Join(errs ...error) error {
 	return errors.Join(errs...)
+}
+
+func As(err error, target any) bool {
+	return errors.As(err, target)
 }

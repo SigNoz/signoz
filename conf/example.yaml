@@ -103,6 +103,13 @@ telemetrystore:
   clickhouse:
     # The DSN to use for clickhouse.
     dsn: tcp://localhost:9000
+    # The query settings for clickhouse.
+    settings:
+      max_execution_time: 0
+      max_execution_time_leaf: 0
+      timeout_before_checking_execution_speed: 0
+      max_bytes_to_read: 0
+      max_result_rows_for_ch_query: 0
 
 ##################### Prometheus #####################
 prometheus:

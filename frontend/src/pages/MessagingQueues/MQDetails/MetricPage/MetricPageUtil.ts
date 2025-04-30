@@ -3,7 +3,10 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderFormula,
+	IBuilderQuery,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
@@ -12,6 +15,7 @@ interface GetWidgetQueryProps {
 	title: string;
 	description: string;
 	queryData: IBuilderQuery[];
+	queryFormulas?: IBuilderFormula[];
 	panelTypes?: PANEL_TYPES;
 	yAxisUnit?: string;
 	columnUnits?: Record<string, string>;
@@ -67,7 +71,7 @@ export function getWidgetQuery(
 			promql: [],
 			builder: {
 				queryData: props.queryData,
-				queryFormulas: [],
+				queryFormulas: (props.queryFormulas as IBuilderFormula[]) || [],
 			},
 			clickhouse_sql: [],
 			id: uuid(),

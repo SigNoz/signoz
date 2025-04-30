@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +21,8 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	user, apiErr := createTestUser()
+	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
+	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 
 	// should be able to generate connection url for
@@ -66,8 +68,8 @@ func TestAgentCheckIns(t *testing.T) {
 	sqlStore := utils.NewQueryServiceDBForTests(t)
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
-
-	user, apiErr := createTestUser()
+	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
+	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 
 	// An agent should be able to check in from a cloud account even
@@ -118,7 +120,7 @@ func TestAgentCheckIns(t *testing.T) {
 
 	// After disconnecting existing account record, the agent should be able to
 	// connected for a particular cloud account id
-	_, apiErr = controller.DisconnectAccount(
+	_, _ = controller.DisconnectAccount(
 		context.TODO(), user.OrgID, "aws", testAccountId1,
 	)
 
@@ -153,7 +155,8 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	user, apiErr := createTestUser()
+	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
+	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 
 	// Attempting to disconnect a non-existent account should return error
@@ -171,7 +174,8 @@ func TestConfigureService(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	user, apiErr := createTestUser()
+	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
+	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 
 	// create a connected account
@@ -286,22 +290,14 @@ func makeTestConnectedAccount(t *testing.T, orgId string, controller *Controller
 	return acc
 }
 
-func createTestUser() (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
-	org, apiErr := dao.DB().CreateOrg(ctx, &types.Organization{
-		Name: "test",
-	})
-	if apiErr != nil {
-		return nil, apiErr
+	organization := types.NewOrganization("test")
+	err := organizationModule.Create(ctx, organization)
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
-
-	group, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	auth.InitAuthCache(ctx)
 
 	userId := uuid.NewString()
 	return dao.DB().CreateUser(
@@ -311,8 +307,8 @@ func createTestUser() (*types.User, *model.ApiError) {
 			Name:     "test",
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
-			OrgID:    org.ID,
-			GroupID:  group.ID,
+			OrgID:    organization.ID.StringValue(),
+			Role:     authtypes.RoleAdmin.String(),
 		},
 		true,
 	)
