@@ -64,8 +64,9 @@ jobs:
         run: |
           mkdir -p frontend
           echo 'CI=1' > frontend/.env
-          echo 'TUNNEL_URL=https://telemetry.staging.signoz.cloud/tunnel' >> frontend/.env
-          echo 'TUNNEL_DOMAIN=https://telemetry.staging.signoz.cloud' >> frontend/.env
+          echo 'TUNNEL_URL="${{ secrets.NP_TUNNEL_URL }}"' >> frontend/.env
+          echo 'TUNNEL_DOMAIN="${{ secrets.NP_TUNNEL_DOMAIN }}"' >> frontend/.env
+          echo 'USERPILOT_KEY="${{ secrets.NP_USERPILOT_KEY }}"' >> frontend/.env
       - name: cache-dotenv
         uses: actions/cache@v4
         with:
