@@ -472,28 +472,11 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	return &model.GetTTLParams{Type: typeTTL}, nil
 }
 
-// func parseUserRequest(r *http.Request) (*types.User, error) {
-// 	var req types.User
-// 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-// 		return nil, err
-// 	}
-// 	return &req, nil
-// }
-
 func parseSetApdexScoreRequest(r *http.Request) (*types.ApdexSettings, error) {
 	var req types.ApdexSettings
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
-	return &req, nil
-}
-
-func parseLoginRequest(r *http.Request) (*model.LoginRequest, error) {
-	var req model.LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
 	return &req, nil
 }
 

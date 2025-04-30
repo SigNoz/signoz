@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -266,6 +267,7 @@ type FilterSuggestionsTestBed struct {
 	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
+	userModule     user.Module
 }
 
 func (tb *FilterSuggestionsTestBed) GetQBFilterSuggestionsForLogs(
@@ -341,6 +343,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
+		userModule:     userModule,
 	}
 }
 
@@ -357,7 +360,7 @@ func (tb *FilterSuggestionsTestBed) QSGetRequest(
 	}
 
 	req, err := AuthenticatedRequestForTest(
-		tb.testUser, path, nil,
+		tb.userModule, tb.testUser, path, nil,
 	)
 	if err != nil {
 		tb.t.Fatalf("couldn't create authenticated test request: %v", err)

@@ -283,47 +283,6 @@ func (h *handler) DeleteInvite(w http.ResponseWriter, r *http.Request) {
 	}
 	render.Success(w, http.StatusNoContent, nil)
 }
-
-func (h *handler) RegisterOrgAndAdmin(w http.ResponseWriter, r *http.Request) {
-	// req := new(types.PostableRegisterOrgAndAdmin)
-	// if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-	// 	render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode user"))
-	// 	return
-	// }
-
-	// get the count of users from db
-	// users := []*types.User{}
-
-	// users, err := dao.DB().GetUsers(ctx)
-	// if err != nil {
-	// 	return nil, model.InternalError(fmt.Errorf("failed to get user count"))
-	// }
-
-	// switch len(users) {
-	// case 0:
-	// 	user, err := h.CreateFirstUser(ctx, req, organizationModule)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	if err := alertmanager.SetDefaultConfig(ctx, user.OrgID); err != nil {
-	// 		return nil, model.InternalError(err)
-	// 	}
-
-	// 	return user, nil
-	// default:
-	// 	return RegisterInvitedUser(ctx, req, false)
-	// }
-
-	// if !aH.SetupCompleted {
-	// 	// since the first user is now created, we can disable self-registration as
-	// 	// from here onwards, we expect admin (owner) to invite other users.
-	// 	aH.SetupCompleted = true
-	// }
-
-	render.Success(w, http.StatusOK, nil)
-}
-
 func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -551,4 +510,29 @@ func (h *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, http.StatusOK, nil)
+}
+
+func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	var req types.PostableLoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	user, err := h.module.GetAuthenticatedUser(ctx, req.OrgID, req.Email, req.Password, req.RefreshToken)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	jwt, err := h.module.GetJWTForUser(ctx, user)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, jwt)
 }

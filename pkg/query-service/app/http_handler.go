@@ -554,7 +554,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(aH.Signoz.Handlers.User.AcceptInvite)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.loginUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.Signoz.Handlers.User.Login)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v2/orgs/me/users", am.AdminAccess(aH.Signoz.Handlers.User.ListUsers)).Methods(http.MethodGet)
@@ -1945,21 +1945,22 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 // Register extends registerUser for non-internal packages
-// func (aH *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
-// 	aH.registerUser(w, r)
-// }
+func (aH *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
+	aH.registerUser(w, r)
+}
 
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
-	// req, err := parseRegisterRequest(r)
-	// if aH.HandleError(w, err, http.StatusBadRequest) {
-	// 	return
-	// }
+	var req types.PostableRegisterOrgAndAdmin
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorBadData}, nil)
+		return
+	}
 
-	// _, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager, aH.Signoz.Modules.Organization)
-	// if apiErr != nil {
-	// 	RespondError(w, apiErr, nil)
-	// 	return
-	// }
+	_, apiErr := auth.Register(context.Background(), &req, aH.Signoz.Alertmanager, aH.Signoz.Modules.Organization, aH.Signoz.Modules.User)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
 
 	// if !aH.SetupCompleted {
 	// 	// since the first user is now created, we can disable self-registration as
@@ -1967,56 +1968,8 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	// 	aH.SetupCompleted = true
 	// }
 
-	// aH.Respond(w, nil)
+	aH.Respond(w, nil)
 }
-
-func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
-	req, err := parseLoginRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	// c, err := r.Cookie("refresh-token")
-	// if err != nil {
-	// 	if err != http.ErrNoCookie {
-	// 		w.WriteHeader(http.StatusBadRequest)
-	// 		return
-	// 	}
-	// }
-
-	// if c != nil {
-	// 	req.RefreshToken = c.Value
-	// }
-
-	resp, err := auth.Login(context.Background(), req, aH.JWT)
-	if aH.HandleError(w, err, http.StatusUnauthorized) {
-		return
-	}
-
-	// http.SetCookie(w, &http.Cookie{
-	// 	Name:     "refresh-token",
-	// 	Value:    resp.RefreshJwt,
-	// 	Expires:  time.Unix(resp.RefreshJwtExpiry, 0),
-	// 	HttpOnly: true,
-	// })
-
-	aH.WriteJSON(w, r, resp)
-}
-
-// func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
-// 	// vars := mux.Vars(r)
-
-// 	query, err := parseApplicationPercentileRequest(r)
-// 	if aH.HandleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
-
-// 	result, err := aH.reader.GetApplicationPercentiles(context.Background(), query)
-// 	if aH.HandleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
-// 	aH.WriteJSON(w, r, result)
-// }
 
 func (aH *APIHandler) HandleError(w http.ResponseWriter, err error, statusCode int) bool {
 	if err == nil {

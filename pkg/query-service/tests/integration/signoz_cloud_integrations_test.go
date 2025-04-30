@@ -10,6 +10,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/signoz"
 
@@ -345,6 +346,7 @@ type CloudIntegrationsTestBed struct {
 	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
+	userModule     user.Module
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
@@ -398,6 +400,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
+		userModule:     userModule,
 	}
 }
 
@@ -554,7 +557,7 @@ func (tb *CloudIntegrationsTestBed) RequestQS(
 	postData interface{},
 ) (responseDataJson []byte) {
 	req, err := AuthenticatedRequestForTest(
-		tb.testUser, path, postData,
+		tb.userModule, tb.testUser, path, postData,
 	)
 	if err != nil {
 		tb.t.Fatalf("couldn't create authenticated test request: %v", err)

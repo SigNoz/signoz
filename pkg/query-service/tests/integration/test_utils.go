@@ -20,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -172,11 +171,12 @@ func createTestUser(organizationModule organization.Module, userModule user.Modu
 }
 
 func AuthenticatedRequestForTest(
+	userModule user.Module,
 	user *types.User,
 	path string,
 	postData interface{},
 ) (*http.Request, error) {
-	userJwt, err := auth.GenerateJWTForUser(user, jwt)
+	userJwt, err := userModule.GetJWTForUser(context.Background(), user)
 	if err != nil {
 		return nil, err
 	}

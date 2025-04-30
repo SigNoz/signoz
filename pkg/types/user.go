@@ -174,3 +174,17 @@ type ChangePasswordRequest struct {
 	OldPassword string `json:"oldPassword"`
 	NewPassword string `json:"newPassword"`
 }
+
+type PostableLoginRequest struct {
+	OrgID        string `json:"orgId"`
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	RefreshToken string `json:"refreshToken"`
+}
+
+type GettableUserJwt struct {
+	AccessJwt        string `json:"accessJwt"`
+	AccessJwtExpiry  int64  `json:"accessJwtExpiry"`
+	RefreshJwt       string `json:"refreshJwt"`
+	RefreshJwtExpiry int64  `json:"refreshJwtExpiry"`
+}

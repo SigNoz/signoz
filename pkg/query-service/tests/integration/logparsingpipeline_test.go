@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
@@ -449,6 +450,7 @@ type LogPipelinesTestBed struct {
 	agentConfMgr    *agentConf.Manager
 	opampServer     *opamp.Server
 	opampClientConn *opamp.MockOpAmpConnection
+	userModule      user.Module
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
@@ -541,7 +543,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 	expectedStatusCode int,
 ) *logparsingpipeline.PipelinesResponse {
 	req, err := AuthenticatedRequestForTest(
-		tb.testUser, "/api/v1/logs/pipelines", postablePipelines,
+		tb.userModule, tb.testUser, "/api/v1/logs/pipelines", postablePipelines,
 	)
 	if err != nil {
 		tb.t.Fatalf("couldn't create authenticated test request: %v", err)
@@ -596,7 +598,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQS(
 
 func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.PipelinesResponse {
 	req, err := AuthenticatedRequestForTest(
-		tb.testUser, "/api/v1/logs/pipelines/latest", nil,
+		tb.userModule, tb.testUser, "/api/v1/logs/pipelines/latest", nil,
 	)
 	if err != nil {
 		tb.t.Fatalf("couldn't create authenticated test request: %v", err)

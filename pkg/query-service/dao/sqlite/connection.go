@@ -24,8 +24,9 @@ func InitDB(sqlStore sqlstore.SQLStore) (*ModelDaoSqlite, error) {
 		return nil, err
 	}
 
-	telemetry.GetInstance().SetUserCountCallback(mds.GetUserCount)
-	telemetry.GetInstance().SetGetUsersCallback(mds.GetUsers)
+	// TODO(Nitya): Check if we can do DI in this
+	// telemetry.GetInstance().SetUserCountCallback(mds.GetUserCount)
+	// telemetry.GetInstance().SetGetUsersCallback(mds.GetUsers)
 
 	return mds, nil
 }
@@ -62,12 +63,13 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 	// set telemetry fields from userPreferences
 	telemetry.GetInstance().SetDistinctId(org.ID.StringValue())
 
-	users, _ := mds.GetUsers(ctx)
-	countUsers := len(users)
-	if countUsers > 0 {
-		telemetry.GetInstance().SetCompanyDomain(users[countUsers-1].Email)
-		telemetry.GetInstance().SetUserEmail(users[countUsers-1].Email)
-	}
+	// TODO(check): Check if we can do DI in this
+	// users, _ := mds.GetUsers(ctx)
+	// countUsers := len(users)
+	// if countUsers > 0 {
+	// 	telemetry.GetInstance().SetCompanyDomain(users[countUsers-1].Email)
+	// 	telemetry.GetInstance().SetUserEmail(users[countUsers-1].Email)
+	// }
 
 	return nil
 }

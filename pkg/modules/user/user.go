@@ -26,9 +26,14 @@ type Module interface {
 	UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
+	// login
+	GetAuthenticatedUser(ctx context.Context, orgID, email, password, refreshToken string) (*types.User, error)
+	GetJWTForUser(ctx context.Context, user *types.User) (types.GettableUserJwt, error)
+
 	// remove this later
 	SendUserTelemetry(user *types.User, firstRegistration bool)
 
+	// password
 	CreateResetPasswordToken(ctx context.Context, userID string) (*types.FactorResetPasswordRequest, error)
 	GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error)
 	GetFactorResetPassword(ctx context.Context, token string) (*types.FactorResetPasswordRequest, error)
@@ -45,8 +50,6 @@ type Handler interface {
 	DeleteInvite(http.ResponseWriter, *http.Request)
 	CreateBulkInvite(http.ResponseWriter, *http.Request)
 
-	// this is for the first user registration with org
-	RegisterOrgAndAdmin(http.ResponseWriter, *http.Request)
 	GetUser(http.ResponseWriter, *http.Request)
 	ListUsers(http.ResponseWriter, *http.Request)
 	UpdateUser(http.ResponseWriter, *http.Request)
@@ -54,6 +57,9 @@ type Handler interface {
 
 	// Login
 	LoginPrecheck(http.ResponseWriter, *http.Request)
+	Login(http.ResponseWriter, *http.Request)
+
+	// Reset Password
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)
 	ResetPassword(http.ResponseWriter, *http.Request)
 	ChangePassword(http.ResponseWriter, *http.Request)
