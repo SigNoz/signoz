@@ -299,17 +299,18 @@ func createTestUser(organizationModule organization.Module) (*types.User, *model
 		return nil, model.InternalError(err)
 	}
 
-	userId := uuid.NewString()
+	random, err := utils.RandomHex(3)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	user, err := types.NewUser("test", random+"test@test.com", authtypes.RoleAdmin.String(), organization.ID.StringValue())
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
 	return dao.DB().CreateUser(
 		ctx,
-		&types.User{
-			ID:       userId,
-			Name:     "test",
-			Email:    userId[:8] + "test@test.com",
-			Password: "test",
-			OrgID:    organization.ID.StringValue(),
-			Role:     authtypes.RoleAdmin.String(),
-		},
+		user,
 		true,
 	)
 }

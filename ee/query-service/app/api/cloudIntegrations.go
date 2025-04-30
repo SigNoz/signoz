@@ -123,7 +123,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		))
 	}
 	for _, p := range allPats {
-		if p.UserID == integrationUser.ID && p.Name == integrationPATName {
+		if p.UserID == integrationUser.ID.String() && p.Name == integrationPATName {
 			return p.Token, nil
 		}
 	}

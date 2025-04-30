@@ -206,7 +206,7 @@ type Telemetry struct {
 
 	alertsInfoCallback     func(ctx context.Context) (*model.AlertsInfo, error)
 	userCountCallback      func(ctx context.Context) (int, error)
-	getUsersCallback       func(ctx context.Context) ([]types.GettableUser, *model.ApiError)
+	getUsersCallback       func(ctx context.Context) ([]types.User, *model.ApiError)
 	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
 	savedViewsInfoCallback func(ctx context.Context) (*model.SavedViewsInfo, error)
 }
@@ -219,7 +219,7 @@ func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context) (int
 	a.userCountCallback = callback
 }
 
-func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context) ([]types.GettableUser, *model.ApiError)) {
+func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context) ([]types.User, *model.ApiError)) {
 	a.getUsersCallback = callback
 }
 
@@ -554,7 +554,7 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	if a.saasOperator != nil {
 		_ = a.saasOperator.Enqueue(analytics.Identify{
 			UserId: a.userEmail,
-			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("role", user.Role),
+			Traits: analytics.NewTraits().SetName(user.HName).SetEmail(user.Email).Set("role", user.Role),
 		})
 
 		_ = a.saasOperator.Enqueue(analytics.Group{
@@ -567,7 +567,7 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	if a.ossOperator != nil {
 		_ = a.ossOperator.Enqueue(analytics.Identify{
 			UserId: a.ipAddress,
-			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
+			Traits: analytics.NewTraits().SetName(user.HName).SetEmail(user.Email).Set("ip", a.ipAddress),
 		})
 		// Updating a groups properties
 		_ = a.ossOperator.Enqueue(analytics.Group{

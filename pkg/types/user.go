@@ -1,42 +1,168 @@
 package types
 
 import (
+	"context"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
+	"golang.org/x/crypto/bcrypt"
 )
 
-type Invite struct {
-	bun.BaseModel `bun:"table:user_invite"`
+var (
+	ErrUserAlreadyExists               = errors.MustNewCode("user_already_exists")
+	ErrPasswordAlreadyExists           = errors.MustNewCode("password_already_exists")
+	ErrUserNotFound                    = errors.MustNewCode("user_not_found")
+	ErrResetPasswordTokenAlreadyExists = errors.MustNewCode("reset_password_token_already_exists")
+	ErrPasswordNotFound                = errors.MustNewCode("password_not_found")
+)
 
-	Identifiable
-	TimeAuditable
-	OrgID string `bun:"org_id,type:text,notnull" json:"orgId"`
-	Name  string `bun:"name,type:text,notnull" json:"name"`
-	Email string `bun:"email,type:text,notnull,unique" json:"email"`
-	Token string `bun:"token,type:text,notnull" json:"token"`
-	Role  string `bun:"role,type:text,notnull" json:"role"`
+type UserStore interface {
+	// invite
+	CreateBulkInvite(ctx context.Context, invites []*Invite) error
+	ListInvite(ctx context.Context, orgID string) ([]*Invite, error)
+	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
+	GetInviteByToken(ctx context.Context, token string) (*Invite, error)
+	GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*Invite, error)
+
+	// user
+	CreateUserWithPassword(ctx context.Context, user *User, password *FactorPassword) (*User, error)
+	GetUserByID(ctx context.Context, orgID string, id string) (*User, error)
+	ListUsers(ctx context.Context, orgID string) ([]*User, error)
+	UpdateUser(ctx context.Context, orgID string, id string, user *User) (*User, error)
+	DeleteUser(ctx context.Context, orgID string, id string) error
+	GetUsersByEmail(ctx context.Context, email string) ([]*User, error)
+
+	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *ResetPasswordRequest) error
+	GetPasswordByUserID(ctx context.Context, id string) (*FactorPassword, error)
 }
 
-type GettableUser struct {
-	User
-	Organization string `json:"organization"`
-}
+// type GettableUserOrg struct {
+// 	*User        `bun:",extend"`
+// 	Organization *Organization `bun:"rel:belongs-to,join:org_user_id=id" json:"organization"`
+// }
+
+// type GettableUserOrgs struct {
+// 	*User        `bun:",extend"`
+// 	Organization []*Organization `bun:"rel:has-many,join:org_user_id=id" json:"organization"`
+// }
 
 type User struct {
 	bun.BaseModel `bun:"table:users"`
 
+	Identifiable
 	TimeAuditable
-	ID                string `bun:"id,pk,type:text" json:"id"`
-	Name              string `bun:"name,type:text,notnull" json:"name"`
-	Email             string `bun:"email,type:text,notnull,unique" json:"email"`
-	Password          string `bun:"password,type:text,notnull" json:"-"`
+	HName             string `bun:"h_name,type:text,notnull" json:"hName"`
+	Email             string `bun:"email,type:text,notnull,unique:org_email" json:"email"`
 	ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
 	Role              string `bun:"role,type:text,notnull" json:"role"`
-	OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
+	OrgID             string `bun:"org_id,type:text,notnull,unique:org_email" json:"orgId"`
 }
 
-type ResetPasswordRequest struct {
-	bun.BaseModel `bun:"table:reset_password_request"`
+func NewUser(
+	hName string,
+	email string,
+	role string,
+	orgID string,
+) (*User, error) {
+
+	if hName == "" {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "hName is required")
+	}
+
+	if email == "" {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
+	}
+
+	if role == "" {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "role is required")
+	}
+
+	if orgID == "" {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is required")
+	}
+
+	return &User{
+		Identifiable: Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		HName: hName,
+		Email: email,
+		Role:  role,
+		OrgID: orgID,
+	}, nil
+}
+
+type PostableRegisterOrgAndAdmin struct {
+	PostableAcceptInvite
+	Name           string `json:"name"`
+	OrgID          string `json:"orgId"`
+	OrgDisplayName string `json:"orgDisplayName"`
+	OrgName        string `json:"orgName"`
+	Email          string `json:"email"`
+
+	// reference URL to track where the register request is coming from
+	SourceUrl string `json:"sourceUrl"`
+}
+
+type PostableAcceptInvite struct {
+	InviteToken string `json:"token"`
+	Password    string `json:"password"`
+}
+
+func (p *PostableAcceptInvite) Validate() error {
+	if p.InviteToken == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite token is required")
+	}
+
+	if p.Password != "" && len(p.Password) < 8 {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password must be at least 8 characters long")
+	}
+
+	return nil
+}
+
+type FactorPassword struct {
+	bun.BaseModel `bun:"table:factor_password"`
+
 	Identifiable
-	Token  string `bun:"token,type:text,notnull" json:"token"`
-	UserID string `bun:"user_id,type:text,notnull" json:"userId"`
+	TimeAuditable
+	Password  string `bun:"password,type:text,notnull" json:"password"`
+	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
+	UserID    string `bun:"user_id,type:text,notnull,unique" json:"userId"`
+}
+
+func NewFactorPassword(password string) (*FactorPassword, error) {
+	// bcrypt automatically handles salting and uses a secure work factor
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	return &FactorPassword{
+		Password:  string(hashedPassword),
+		Temporary: false,
+	}, nil
+}
+
+type FactorResetPasswordRequest struct {
+	bun.BaseModel `bun:"table:reset_password_request"`
+
+	Identifiable
+	Token      string `bun:"token,type:text,notnull" json:"token"`
+	PasswordID string `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
+}
+
+type PostableResetPassword struct {
+	Identifiable
+
+	Token  string `json:"token"`
+	UserID string `json:"userId"`
+}
+
+func NewFactorResetPasswordRequest(passwordID string) (*FactorResetPasswordRequest, error) {
+	return &FactorResetPasswordRequest{
+		Token:      valuer.GenerateUUID().String(),
+		PasswordID: passwordID,
+	}, nil
 }
