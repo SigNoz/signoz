@@ -160,7 +160,7 @@ export default function CustomDomainSettings(): JSX.Element {
 				{!isLoadingDeploymentsData && (
 					<Card className="custom-domain-settings-card">
 						<div className="custom-domain-settings-content-header">
-							Team {org?.[0]?.name} Information
+							Team {org?.[0]?.displayName} Information
 						</div>
 
 						<div className="custom-domain-settings-content-body">
