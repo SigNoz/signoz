@@ -3,7 +3,7 @@ import { themeColors } from 'constants/theme';
 import { useGetInspectMetricsDetails } from 'hooks/metricsExplorer/useGetInspectMetricsDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -11,6 +11,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { convertNanoToMilliseconds } from '../Summary/utils';
 import { INITIAL_INSPECT_METRICS_OPTIONS } from './constants';
 import {
+	GraphPopoverData,
 	InspectionStep,
 	MetricInspectionAction,
 	MetricInspectionOptions,
@@ -20,6 +21,7 @@ import {
 	applyFilters,
 	applySpaceAggregation,
 	applyTimeAggregation,
+	getAllTimestampsOfMetrics,
 } from './utils';
 
 const metricInspectionReducer = (
@@ -115,10 +117,7 @@ export function useInspectMetrics(
 
 	// Evaluate inspection step
 	const inspectionStep = useMemo(() => {
-		if (
-			metricInspectionOptions.spaceAggregationOption &&
-			metricInspectionOptions.spaceAggregationLabels.length > 0
-		) {
+		if (metricInspectionOptions.spaceAggregationOption) {
 			return InspectionStep.COMPLETED;
 		}
 		if (
@@ -133,6 +132,9 @@ export function useInspectMetrics(
 	const [spaceAggregatedSeriesMap, setSpaceAggregatedSeriesMap] = useState<
 		Map<string, InspectMetricsSeries[]>
 	>(new Map());
+	const [timeAggregatedSeriesMap, setTimeAggregatedSeriesMap] = useState<
+		Map<number, GraphPopoverData[]>
+	>(new Map());
 	const [aggregatedTimeSeries, setAggregatedTimeSeries] = useState<
 		InspectMetricsSeries[]
 	>(inspectMetricsTimeSeries);
@@ -142,9 +144,6 @@ export function useInspectMetrics(
 	}, [inspectMetricsTimeSeries]);
 
 	const formattedInspectMetricsTimeSeries = useMemo(() => {
-		const allTimestamps = new Set<number>();
-		const seriesValuesMap: Map<number, number | null>[] = [];
-
 		let timeSeries: InspectMetricsSeries[] = [...inspectMetricsTimeSeries];
 
 		// Apply filters
@@ -161,10 +160,12 @@ export function useInspectMetrics(
 			metricInspectionOptions.timeAggregationOption &&
 			metricInspectionOptions.timeAggregationInterval
 		) {
-			timeSeries = applyTimeAggregation(
-				inspectMetricsTimeSeries,
-				metricInspectionOptions,
-			);
+			const {
+				timeAggregatedSeries,
+				timeAggregatedSeriesMap,
+			} = applyTimeAggregation(inspectMetricsTimeSeries, metricInspectionOptions);
+			timeSeries = timeAggregatedSeries;
+			setTimeAggregatedSeriesMap(timeAggregatedSeriesMap);
 			setAggregatedTimeSeries(timeSeries);
 		}
 		// Apply space aggregation
@@ -178,26 +179,20 @@ export function useInspectMetrics(
 			setAggregatedTimeSeries(aggregatedSeries);
 		}
 
-		// Collect timestamps and format into chart compatible format
-		timeSeries.forEach((series, idx) => {
-			seriesValuesMap[idx] = new Map();
+		const timestamps = getAllTimestampsOfMetrics(timeSeries);
+
+		const timeseriesArray = timeSeries.map((series) => {
+			const valuesMap = new Map<number, number>();
+
 			series.values.forEach(({ timestamp, value }) => {
-				allTimestamps.add(timestamp);
-				seriesValuesMap[idx].set(timestamp, parseFloat(value));
+				valuesMap.set(timestamp, parseFloat(value));
 			});
+
+			return timestamps.map((timestamp) => valuesMap.get(timestamp) ?? NaN);
 		});
 
-		// Convert timestamps to sorted array
-		const timestamps = Float64Array.from(
-			[...allTimestamps].sort((a, b) => a - b),
-		);
-
-		// Map values to corresponding timestamps, filling missing ones with `0`
-		const formattedSeries = timeSeries.map((_, idx) =>
-			timestamps.map((t) => seriesValuesMap[idx].get(t) ?? 0),
-		);
-
-		return [timestamps, ...formattedSeries];
+		const rawData = [timestamps, ...timeseriesArray];
+		return rawData.map((series) => new Float64Array(series));
 	}, [inspectMetricsTimeSeries, inspectionStep, metricInspectionOptions]);
 
 	const spaceAggregationLabels = useMemo(() => {
@@ -209,6 +204,15 @@ export function useInspectMetrics(
 		});
 		return Array.from(labels);
 	}, [inspectMetricsData]);
+
+	const reset = useCallback(() => {
+		dispatchMetricInspectionOptions({
+			type: 'RESET_INSPECTION',
+		});
+		setSpaceAggregatedSeriesMap(new Map());
+		setTimeAggregatedSeriesMap(new Map());
+		setAggregatedTimeSeries(inspectMetricsTimeSeries);
+	}, [dispatchMetricInspectionOptions, inspectMetricsTimeSeries]);
 
 	return {
 		inspectMetricsTimeSeries,
@@ -223,5 +227,7 @@ export function useInspectMetrics(
 		isInspectMetricsRefetching,
 		spaceAggregatedSeriesMap,
 		aggregatedTimeSeries,
+		timeAggregatedSeriesMap,
+		reset,
 	};
 }

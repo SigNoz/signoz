@@ -60,6 +60,39 @@
 							}
 						}
 					}
+
+					.view-toggle-button {
+						display: flex;
+						gap: 8px;
+						align-items: center;
+					}
+				}
+
+				.graph-view-container {
+					min-height: 520px;
+
+					.inspect-metrics-table-view {
+						.ant-spin-nested-loading {
+							.ant-spin-container {
+								.ant-table {
+									height: 450px;
+									overflow-y: scroll;
+									-webkit-overflow-scrolling: touch;
+									scrollbar-width: thin;
+									scrollbar-color: #ccc transparent;
+								}
+							}
+						}
+
+						.table-view-title-header,
+						.table-view-values-header {
+							overflow-x: auto;
+							white-space: nowrap;
+							-webkit-overflow-scrolling: touch;
+							scrollbar-width: thin;
+							scrollbar-color: #ccc transparent;
+						}
+					}
 				}
 			}
 
@@ -228,6 +261,40 @@
 	}
 }
 
+.inspect-graph-popover {
+	position: fixed;
+	z-index: 1000;
+
+	.inspect-graph-popover-content {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		min-width: 350px;
+
+		.inspect-graph-popover-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+			width: 100%;
+		}
+
+		.inspect-graph-popover-button-row {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+
+			.ant-btn {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 8px;
+				margin-top: 16px;
+			}
+		}
+	}
+}
+
 .graph-popover {
 	position: fixed;
 	z-index: 1000;
@@ -238,6 +305,10 @@
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 16px;
+
+		.ant-card-body {
+			width: fit-content;
+		}
 
 		.graph-popover-row {
 			margin-top: 12px;
@@ -251,16 +322,23 @@
 			}
 
 			.graph-popover-inner-row {
-				width: 400px;
-				margin-top: 4px;
-				align-items: center;
 				display: flex;
+				align-items: center;
 				gap: 8px;
-				overflow-x: auto;
-				white-space: nowrap;
-				-webkit-overflow-scrolling: touch;
-				scrollbar-width: thin;
-				scrollbar-color: #ccc transparent;
+
+				.ant-typography {
+					width: 400px;
+					margin-top: 4px;
+					align-items: center;
+					display: flex;
+					gap: 8px;
+					overflow-x: auto;
+					white-space: nowrap;
+					-webkit-overflow-scrolling: touch;
+					scrollbar-width: thin;
+					scrollbar-color: #ccc transparent;
+					text-overflow: ellipsis;
+				}
 			}
 		}
 
@@ -323,13 +401,38 @@
 
 			.timeseries-cell {
 				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
 				&:hover {
-					opacity: 80%;
+					opacity: 60%;
 				}
 			}
 
 			.selected {
 				opacity: 90%;
+			}
+
+			.graph-popover-section {
+				width: 500px;
+				overflow-x: scroll;
+				white-space: nowrap;
+				-webkit-overflow-scrolling: touch;
+				scrollbar-width: thin;
+				scrollbar-color: #ccc transparent;
+				text-overflow: ellipsis;
+
+				.graph-popover-row {
+					.graph-popover-row-label {
+						min-width: 100px;
+					}
+
+					.graph-popover-inner-row {
+						display: flex;
+						align-items: center;
+						gap: 8px;
+					}
+				}
 			}
 		}
 	}
@@ -351,6 +454,114 @@
 			.field-renderer-container {
 				.label {
 					color: var(--bg-slate-400);
+				}
+			}
+		}
+	}
+}
+
+.hover-popover-card {
+	position: fixed;
+	z-index: 500;
+	max-width: 700px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	.hover-popover-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+	}
+}
+
+.lightMode {
+	.inspect-metrics-modal {
+		.inspect-metrics-title {
+			.inspect-metrics-button {
+				color: var(--text-ink-400);
+			}
+		}
+
+		.inspect-metrics-content {
+			.inspect-metrics-content-first-col {
+				.inspect-metrics-graph-view {
+					.inspect-metrics-graph-view-header {
+						.ant-btn-group {
+							.time-series-button-label,
+							.metric-name-button-label {
+								span {
+									color: var(--text-ink-100);
+								}
+							}
+						}
+					}
+				}
+
+				.inspect-metrics-query-builder {
+					.inspect-metrics-query-builder-header {
+						.query-builder-button-label {
+							span {
+								color: var(--text-ink-100);
+							}
+						}
+					}
+
+					.metric-filters {
+						.query-builder-search-v2 {
+							.ant-select {
+								.ant-select-selector {
+									background-color: var(--bg-vanilla-100);
+									color: var(--text-ink-100);
+									border: 0.5px solid var(--bg-slate-300) !important;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	.graph-popover {
+		.graph-popover-card {
+			.graph-popover-header-text {
+				color: var(--text-ink-400);
+			}
+
+			.graph-popover-row-label {
+				color: var(--bg-slate-50);
+			}
+
+			.graph-popover-cell {
+				background-color: var(--bg-vanilla-300);
+				color: var(--text-ink-100);
+			}
+
+			.footer-row {
+				.footer-divider {
+					border-top: 1px dashed var(--bg-slate-300);
+				}
+			}
+		}
+	}
+
+	.expanded-view {
+		.labels-table {
+			border: 1px solid var(--bg-vanilla-400);
+
+			.labels-key {
+				color: var(--bg-slate-400);
+				background-color: var(--bg-vanilla-400);
+			}
+
+			.labels-value {
+				background-color: var(--bg-vanilla-400);
+				.field-renderer-container {
+					.label {
+						color: var(--bg-vanilla-400);
+					}
 				}
 			}
 		}

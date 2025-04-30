@@ -50,6 +50,8 @@ function Inspect({
 		isInspectMetricsRefetching,
 		spaceAggregatedSeriesMap: spaceAggregationSeriesMap,
 		aggregatedTimeSeries,
+		timeAggregatedSeriesMap,
+		reset,
 	} = useInspectMetrics(metricName);
 
 	const selectedMetricType = useMemo(
@@ -63,19 +65,23 @@ function Inspect({
 	);
 
 	const resetInspection = useCallback(() => {
-		dispatchMetricInspectionOptions({
-			type: 'RESET_INSPECTION',
-		});
 		setShowExpandedView(false);
 		setPopoverOptions(null);
 		setExpandedViewOptions(null);
-	}, [dispatchMetricInspectionOptions]);
+		reset();
+	}, [reset]);
 
 	// Reset inspection when the selected metric changes
 	useEffect(() => {
 		resetInspection();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [metricName]);
+
+	// Hide expanded view whenever inspection step changes
+	useEffect(() => {
+		setShowExpandedView(false);
+		setExpandedViewOptions(null);
+	}, [inspectionStep]);
 
 	const content = useMemo(() => {
 		if (isInspectMetricsLoading && !isInspectMetricsRefetching) {
@@ -133,6 +139,7 @@ function Inspect({
 						metricInspectionOptions={metricInspectionOptions}
 						dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
 						inspectionStep={inspectionStep}
+						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
 					/>
 				</div>
 				<div className="inspect-metrics-content-second-col">
@@ -145,6 +152,8 @@ function Inspect({
 							options={expandedViewOptions}
 							spaceAggregationSeriesMap={spaceAggregationSeriesMap}
 							step={inspectionStep}
+							metricInspectionOptions={metricInspectionOptions}
+							timeAggregatedSeriesMap={timeAggregatedSeriesMap}
 						/>
 					)}
 				</div>
@@ -155,7 +164,7 @@ function Inspect({
 		isInspectMetricsRefetching,
 		isInspectMetricsError,
 		inspectMetricsStatusCode,
-		inspectMetricsTimeSeries.length,
+		inspectMetricsTimeSeries,
 		aggregatedTimeSeries,
 		formattedInspectMetricsTimeSeries,
 		resetInspection,
@@ -164,12 +173,13 @@ function Inspect({
 		selectedMetricType,
 		spaceAggregationSeriesMap,
 		inspectionStep,
-		popoverOptions,
 		showExpandedView,
-		expandedViewOptions,
+		popoverOptions,
 		spaceAggregationLabels,
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
+		expandedViewOptions,
+		timeAggregatedSeriesMap,
 	]);
 
 	return (

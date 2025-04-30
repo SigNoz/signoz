@@ -1,9 +1,8 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
+import { Button, Switch, Typography } from 'antd';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { RefreshCcwIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -12,13 +11,13 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { METRIC_TYPE_TO_COLOR_MAP, METRIC_TYPE_TO_ICON_MAP } from './constants';
 import GraphPopover from './GraphPopover';
-import { GraphViewProps } from './types';
-import { onGraphClick } from './utils';
+import TableView from './TableView';
+import { GraphPopoverOptions, GraphViewProps } from './types';
+import { HoverPopover, onGraphClick, onGraphHover } from './utils';
 
 function GraphView({
 	inspectMetricsTimeSeries,
 	formattedInspectMetricsTimeSeries,
-	resetInspection,
 	metricUnit,
 	metricName,
 	metricType,
@@ -40,6 +39,12 @@ function GraphView({
 	]);
 	const end = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [maxTime]);
 	const [showGraphPopover, setShowGraphPopover] = useState(false);
+	const [showHoverPopover, setShowHoverPopover] = useState(false);
+	const [
+		hoverPopoverOptions,
+		setHoverPopoverOptions,
+	] = useState<GraphPopoverOptions | null>(null);
+	const [viewType, setViewType] = useState<'graph' | 'table'>('graph');
 
 	const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -98,7 +103,8 @@ function GraphView({
 				},
 			],
 			series: [
-				...formattedInspectMetricsTimeSeries.map((_, index) => ({
+				{ label: 'Time' }, // This config is required as a placeholder for x-axis,
+				...formattedInspectMetricsTimeSeries.slice(1).map((_, index) => ({
 					drawStyle: 'line',
 					lineInterpolation: 'spline',
 					show: true,
@@ -131,7 +137,23 @@ function GraphView({
 								inspectMetricsTimeSeries,
 								showGraphPopover,
 								setShowGraphPopover,
+								formattedInspectMetricsTimeSeries,
 							);
+						});
+						u.over.addEventListener('mousemove', (e) => {
+							onGraphHover(
+								e,
+								u,
+								setHoverPopoverOptions,
+								inspectMetricsTimeSeries,
+								formattedInspectMetricsTimeSeries,
+							);
+						});
+						u.over.addEventListener('mouseenter', () => {
+							setShowHoverPopover(true);
+						});
+						u.over.addEventListener('mouseleave', () => {
+							setShowHoverPopover(false);
 						});
 					},
 				],
@@ -176,16 +198,29 @@ function GraphView({
 						{`${formattedInspectMetricsTimeSeries.length - 1} time series`}
 					</Button>
 				</Button.Group>
-
-				<Button
-					size="middle"
-					icon={<RefreshCcwIcon size={14} />}
-					onClick={resetInspection}
-				>
-					Show different data
-				</Button>
+				<div className="view-toggle-button">
+					<Switch
+						checked={viewType === 'graph'}
+						onChange={(checked): void => setViewType(checked ? 'graph' : 'table')}
+					/>
+					<Typography.Text>
+						{viewType === 'graph' ? 'Graph View' : 'Table View'}
+					</Typography.Text>
+				</div>
 			</div>
-			<Uplot data={formattedInspectMetricsTimeSeries} options={options} />
+			<div className="graph-view-container">
+				{viewType === 'graph' && (
+					<Uplot data={formattedInspectMetricsTimeSeries} options={options} />
+				)}
+				{viewType === 'table' && (
+					<TableView
+						inspectionStep={inspectionStep}
+						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
+						setShowExpandedView={setShowExpandedView}
+						setExpandedViewOptions={setExpandedViewOptions}
+					/>
+				)}
+			</div>
 			{showGraphPopover && (
 				<GraphPopover
 					options={popoverOptions}
@@ -198,6 +233,9 @@ function GraphView({
 						setExpandedViewOptions(popoverOptions);
 					}}
 				/>
+			)}
+			{showHoverPopover && !showGraphPopover && hoverPopoverOptions && (
+				<HoverPopover options={hoverPopoverOptions} step={inspectionStep} />
 			)}
 		</div>
 	);

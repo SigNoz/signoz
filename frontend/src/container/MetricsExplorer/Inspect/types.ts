@@ -22,6 +22,8 @@ export interface UseInspectMetricsReturnData {
 	isInspectMetricsRefetching: boolean;
 	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>;
 	aggregatedTimeSeries: InspectMetricsSeries[];
+	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
+	reset: () => void;
 }
 
 export interface GraphViewProps {
@@ -48,6 +50,7 @@ export interface QueryBuilderProps {
 	metricInspectionOptions: MetricInspectionOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
+	inspectMetricsTimeSeries: InspectMetricsSeries[];
 }
 
 export interface MetricNameSearchProps {
@@ -67,6 +70,7 @@ export interface MetricTimeAggregationProps {
 	metricInspectionOptions: MetricInspectionOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
+	inspectMetricsTimeSeries: InspectMetricsSeries[];
 }
 
 export interface MetricSpaceAggregationProps {
@@ -124,7 +128,7 @@ export interface GraphPopoverOptions {
 	y: number;
 	value: number;
 	timestamp: number;
-	timeSeries: InspectMetricsSeries;
+	timeSeries: InspectMetricsSeries | undefined;
 }
 
 export interface GraphPopoverProps {
@@ -147,4 +151,19 @@ export interface ExpandedViewProps {
 	options: GraphPopoverOptions | null;
 	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;
 	step: InspectionStep;
+	metricInspectionOptions: MetricInspectionOptions;
+	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
+}
+
+export interface TableViewProps {
+	inspectionStep: InspectionStep;
+	inspectMetricsTimeSeries: InspectMetricsSeries[];
+	setShowExpandedView: (showExpandedView: boolean) => void;
+	setExpandedViewOptions: (options: GraphPopoverOptions | null) => void;
+}
+
+export interface TableViewDataItem {
+	title: JSX.Element;
+	values: JSX.Element;
+	key: number;
 }

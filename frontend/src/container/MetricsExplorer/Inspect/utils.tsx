@@ -1,5 +1,5 @@
 import { InfoCircleFilled } from '@ant-design/icons';
-import { Input, Select, Typography } from 'antd';
+import { Card, Input, Select, Typography } from 'antd';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import classNames from 'classnames';
 import { initialQueriesMap } from 'constants/queryBuilder';
@@ -14,6 +14,7 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
+	GRAPH_CLICK_PIXEL_TOLERANCE,
 	INSPECT_FEATURE_FLAG_KEY,
 	SPACE_AGGREGATION_OPTIONS,
 	TIME_AGGREGATION_OPTIONS,
@@ -39,6 +40,32 @@ import {
 export function isInspectEnabled(): boolean {
 	const featureFlag = localStorage.getItem(INSPECT_FEATURE_FLAG_KEY);
 	return featureFlag === 'true';
+}
+
+export function getAllTimestampsOfMetrics(
+	inspectMetricsTimeSeries: InspectMetricsSeries[],
+): number[] {
+	return Array.from(
+		new Set(
+			inspectMetricsTimeSeries
+				.flatMap((series) => series.values.map((value) => value.timestamp))
+				.sort((a, b) => a - b),
+		),
+	);
+}
+
+export function getDefaultTimeAggregationInterval(
+	timeSeries: InspectMetricsSeries | undefined,
+): number {
+	if (!timeSeries) {
+		return 60;
+	}
+	const reportingInterval =
+		timeSeries.values.length > 1
+			? Math.abs(timeSeries.values[1].timestamp - timeSeries.values[0].timestamp) /
+			  1000
+			: 0;
+	return Math.max(60, reportingInterval);
 }
 
 export function MetricNameSearch({
@@ -125,6 +152,7 @@ export function MetricTimeAggregation({
 	metricInspectionOptions,
 	dispatchMetricInspectionOptions,
 	inspectionStep,
+	inspectMetricsTimeSeries,
 }: MetricTimeAggregationProps): JSX.Element {
 	return (
 		<div className="metric-time-aggregation">
@@ -146,6 +174,15 @@ export function MetricTimeAggregation({
 								type: 'SET_TIME_AGGREGATION_OPTION',
 								payload: value,
 							});
+							// set the time aggregation interval to the default value if it is not set
+							if (!metricInspectionOptions.timeAggregationInterval) {
+								dispatchMetricInspectionOptions({
+									type: 'SET_TIME_AGGREGATION_INTERVAL',
+									payload: getDefaultTimeAggregationInterval(
+										inspectMetricsTimeSeries[0],
+									),
+								});
+							}
 						}}
 						style={{ width: 130 }}
 						placeholder="Select option"
@@ -171,6 +208,7 @@ export function MetricTimeAggregation({
 								payload: parseInt(e.target.value, 10),
 							});
 						}}
+						onWheel={(e): void => (e.target as HTMLInputElement).blur()}
 					/>
 				</div>
 			</div>
@@ -277,71 +315,94 @@ export function applyFilters(
 export function applyTimeAggregation(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
 	metricInspectionOptions: MetricInspectionOptions,
-): InspectMetricsSeries[] {
+): {
+	timeAggregatedSeries: InspectMetricsSeries[];
+	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
+} {
 	const {
 		timeAggregationOption,
 		timeAggregationInterval,
 	} = metricInspectionOptions;
 
 	if (!timeAggregationInterval) {
-		return inspectMetricsTimeSeries;
+		return {
+			timeAggregatedSeries: inspectMetricsTimeSeries,
+			timeAggregatedSeriesMap: new Map(),
+		};
 	}
 
 	// Group timestamps into intervals and aggregate values for each series independently
-	return inspectMetricsTimeSeries.map((series) => {
-		const groupedTimestamps = new Map<number, number[]>();
+	const timeAggregatedSeriesMap: Map<number, GraphPopoverData[]> = new Map();
 
-		series.values.forEach(({ timestamp, value }) => {
-			const intervalBucket =
-				Math.floor(timestamp / (timeAggregationInterval * 1000)) *
-				(timeAggregationInterval * 1000);
+	const timeAggregatedSeries: InspectMetricsSeries[] = inspectMetricsTimeSeries.map(
+		(series) => {
+			const groupedTimestamps = new Map<number, number[]>();
 
-			if (!groupedTimestamps.has(intervalBucket)) {
-				groupedTimestamps.set(intervalBucket, []);
-			}
-			groupedTimestamps.get(intervalBucket)?.push(parseFloat(value));
-		});
+			series.values.forEach(({ timestamp, value }) => {
+				const intervalBucket =
+					Math.floor(timestamp / (timeAggregationInterval * 1000)) *
+					(timeAggregationInterval * 1000);
 
-		const aggregatedValues = Array.from(groupedTimestamps.entries()).map(
-			([intervalStart, values]) => {
-				let aggregatedValue: number;
-
-				switch (timeAggregationOption) {
-					case TimeAggregationOptions.LATEST:
-						aggregatedValue = values[values.length - 1];
-						break;
-					case TimeAggregationOptions.SUM:
-						aggregatedValue = values.reduce((sum, val) => sum + val, 0);
-						break;
-					case TimeAggregationOptions.AVG:
-						aggregatedValue =
-							values.reduce((sum, val) => sum + val, 0) / values.length;
-						break;
-					case TimeAggregationOptions.MIN:
-						aggregatedValue = Math.min(...values);
-						break;
-					case TimeAggregationOptions.MAX:
-						aggregatedValue = Math.max(...values);
-						break;
-					case TimeAggregationOptions.COUNT:
-						aggregatedValue = values.length;
-						break;
-					default:
-						aggregatedValue = values[values.length - 1];
+				if (!groupedTimestamps.has(intervalBucket)) {
+					groupedTimestamps.set(intervalBucket, []);
+				}
+				if (!timeAggregatedSeriesMap.has(intervalBucket)) {
+					timeAggregatedSeriesMap.set(intervalBucket, []);
 				}
 
-				return {
-					timestamp: intervalStart,
-					value: aggregatedValue.toString(),
-				};
-			},
-		);
+				groupedTimestamps.get(intervalBucket)?.push(parseFloat(value));
+				timeAggregatedSeriesMap.get(intervalBucket)?.push({
+					timestamp,
+					value,
+					type: 'instance',
+					title: series.title,
+					timeSeries: series,
+				});
+			});
 
-		return {
-			...series,
-			values: aggregatedValues,
-		};
-	});
+			const aggregatedValues = Array.from(groupedTimestamps.entries()).map(
+				([intervalStart, values]) => {
+					let aggregatedValue: number;
+
+					switch (timeAggregationOption) {
+						case TimeAggregationOptions.LATEST:
+							aggregatedValue = values[values.length - 1];
+							break;
+						case TimeAggregationOptions.SUM:
+							aggregatedValue = values.reduce((sum, val) => sum + val, 0);
+							break;
+						case TimeAggregationOptions.AVG:
+							aggregatedValue =
+								values.reduce((sum, val) => sum + val, 0) / values.length;
+							break;
+						case TimeAggregationOptions.MIN:
+							aggregatedValue = Math.min(...values);
+							break;
+						case TimeAggregationOptions.MAX:
+							aggregatedValue = Math.max(...values);
+							break;
+						case TimeAggregationOptions.COUNT:
+							aggregatedValue = values.length;
+							break;
+						default:
+							aggregatedValue = values[values.length - 1];
+					}
+
+					return {
+						timestamp: intervalStart,
+						value: aggregatedValue.toString(),
+					};
+				},
+			);
+
+			return {
+				...series,
+				values: aggregatedValues,
+			};
+		},
+	);
+
+	return { timeAggregatedSeries, timeAggregatedSeriesMap };
 }
 
 export function applySpaceAggregation(
@@ -369,7 +430,7 @@ export function applySpaceAggregation(
 	// Aggregate each group based on space aggregation option
 	const aggregatedSeries: InspectMetricsSeries[] = [];
 
-	groupedSeries.forEach((seriesGroup) => {
+	groupedSeries.forEach((seriesGroup, key) => {
 		// Get the first series to use as template for labels and timestamps
 		const templateSeries = seriesGroup[0];
 
@@ -421,6 +482,7 @@ export function applySpaceAggregation(
 		aggregatedSeries.push({
 			...templateSeries,
 			values: aggregatedValues.sort((a, b) => a.timestamp - b.timestamp),
+			title: key.split(',').join(' '),
 		});
 	});
 
@@ -430,86 +492,42 @@ export function applySpaceAggregation(
 	};
 }
 
-function getClosestIndex(arr: number[], target: number): number {
-	let low = 0;
-	let high = arr.length - 1;
-
-	while (low <= high) {
-		const mid = Math.floor((low + high) / 2);
-		if (arr[mid] === target) return mid;
-
-		if (arr[mid] < target) {
-			low = mid + 1;
-		} else {
-			high = mid - 1;
-		}
-	}
-
-	if (low >= arr.length) return arr.length - 1;
-	if (high < 0) return 0;
-
-	const lowDiff = Math.abs(arr[low] - target);
-	const highDiff = Math.abs(arr[high] - target);
-
-	return lowDiff < highDiff ? low : high;
-}
-
-function findClosestSeriesLabel(
+export function getSeriesIndexFromPixel(
+	e: MouseEvent,
 	u: uPlot,
-	mouseX: number,
-	mouseY: number,
-	xVals: number[],
-	idx: number,
-): string | undefined {
-	let minDist = Infinity;
-	let closestLabel: string | undefined;
+	formattedInspectMetricsTimeSeries: uPlot.AlignedData,
+): number {
+	const bbox = u.over.getBoundingClientRect(); // plot area only
+	const left = e.clientX - bbox.left;
+	const top = e.clientY - bbox.top;
 
-	const px = u.valToPos(xVals[idx], 'x');
+	const timestampIndex = u.posToIdx(left);
+	let seriesIndex = -1;
+	let closestPixelDiff = Infinity;
 
-	// Iterate from the last series to the first (stacked series are on top)
-	for (let i = u.series.length - 1; i >= 1; i--) {
-		const ySeries = u.data[i] as number[];
-		const yVal = ySeries[idx];
+	for (let i = 1; i < formattedInspectMetricsTimeSeries.length; i++) {
+		const series = formattedInspectMetricsTimeSeries[i];
+		const seriesValue = series[timestampIndex];
 
-		// Validate y-value before processing
-		const isValid = yVal != null && Number.isFinite(yVal);
+		if (
+			seriesValue !== undefined &&
+			seriesValue !== null &&
+			!Number.isNaN(seriesValue)
+		) {
+			const seriesYPx = u.valToPos(seriesValue, 'y');
+			const pixelDiff = Math.abs(seriesYPx - top);
 
-		if (isValid) {
-			const py = u.valToPos(yVal, 'y');
-
-			// Calculate the distance in both x and y axes (Euclidean distance)
-			const dx = mouseX - px;
-			const dy = mouseY - py;
-			const dist = Math.sqrt(dx * dx + dy * dy); // Euclidean distance
-
-			// If we found a closer point, update the closest label
-			if (dist < minDist && dist <= 10) {
-				minDist = dist;
-				closestLabel = u.series[i].label; // Keep the label of the closest series
+			if (
+				pixelDiff < GRAPH_CLICK_PIXEL_TOLERANCE &&
+				pixelDiff < closestPixelDiff
+			) {
+				closestPixelDiff = pixelDiff;
+				seriesIndex = i;
 			}
 		}
 	}
 
-	return closestLabel;
-}
-
-export function getSeriesLabelFromPixel(
-	e: MouseEvent,
-	u: uPlot,
-): string | undefined {
-	const { left, top } = u.over.getBoundingClientRect();
-	const mouseX = e.clientX - left;
-	const mouseY = e.clientY - top;
-
-	const dataX = u.posToVal(mouseX, 'x');
-	const xVals = u.data[0] as number[];
-
-	// Get the closest index based on the x-axis
-	const idx = getClosestIndex(xVals, dataX);
-	if (idx === -1) return undefined;
-
-	// Find the closest series using both x and y distance
-	return findClosestSeriesLabel(u, mouseX, mouseY, xVals, idx);
+	return seriesIndex;
 }
 
 export function onGraphClick(
@@ -520,6 +538,7 @@ export function onGraphClick(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
 	showPopover: boolean,
 	setShowPopover: (showPopover: boolean) => void,
+	formattedInspectMetricsTimeSeries: uPlot.AlignedData,
 ): void {
 	if (popoverRef.current && popoverRef.current.contains(e.target as Node)) {
 		// Clicked inside the popover, don't close
@@ -532,24 +551,30 @@ export function onGraphClick(
 	}
 	// Get which series the user clicked on
 	// If no series is clicked, return
-	const seriesLabel = getSeriesLabelFromPixel(e, u);
-	if (!seriesLabel) return;
+	const seriesIndex = getSeriesIndexFromPixel(
+		e,
+		u,
+		formattedInspectMetricsTimeSeries,
+	);
+	if (seriesIndex <= 0) return;
 
-	// Get the series data
-	const seriesIndex = seriesLabel.charCodeAt(0) - 65;
-	const series = inspectMetricsTimeSeries[seriesIndex];
+	const series = inspectMetricsTimeSeries[seriesIndex - 1];
 
-	const { left, top } = u.over.getBoundingClientRect();
+	const { left } = u.over.getBoundingClientRect();
 	const x = e.clientX - left;
-	const y = e.clientY - top;
 	const xVal = u.posToVal(x, 'x'); // Get actual x-axis value
-	const yVal = u.posToVal(y, 'y'); // Get actual y-axis value value (metric value)
+
+	const closestPoint = series?.values.reduce((prev, curr) => {
+		const prevDiff = Math.abs(prev.timestamp - xVal);
+		const currDiff = Math.abs(curr.timestamp - xVal);
+		return prevDiff < currDiff ? prev : curr;
+	});
 
 	setPopoverOptions({
 		x: e.clientX,
 		y: e.clientY,
-		value: yVal,
-		timestamp: xVal,
+		value: parseFloat(closestPoint?.value ?? '0'),
+		timestamp: closestPoint?.timestamp,
 		timeSeries: series,
 	});
 	setShowPopover(true);
@@ -558,7 +583,17 @@ export function onGraphClick(
 export function getRawDataFromTimeSeries(
 	timeSeries: InspectMetricsSeries,
 	timestamp: number,
+	showAll = false,
 ): GraphPopoverData[] {
+	if (showAll) {
+		return timeSeries.values.map((value) => ({
+			timestamp: value.timestamp,
+			type: 'instance',
+			value: value.value,
+			title: timeSeries.title,
+		}));
+	}
+
 	const timestampIndex = timeSeries.values.findIndex(
 		(value) => value.timestamp >= timestamp,
 	);
@@ -584,6 +619,7 @@ export function getSpaceAggregatedDataFromTimeSeries(
 	timeSeries: InspectMetricsSeries,
 	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>,
 	timestamp: number,
+	showAll = false,
 ): GraphPopoverData[] {
 	if (spaceAggregatedSeriesMap.size === 0) {
 		return [];
@@ -607,21 +643,23 @@ export function getSpaceAggregatedDataFromTimeSeries(
 		}
 	});
 
-	return matchingSeries.map((series) => {
-		const timestampIndex = series.values.findIndex(
-			(value) => value.timestamp >= timestamp,
-		);
-		const value = series.values[timestampIndex]?.value;
-		return {
-			timeseries: Object.entries(series.labels)
-				.map(([key, value]) => `${key}:${value}`)
-				.join(','),
-			type: 'aggregated',
-			value: value ?? '-',
-			title: series.title,
-			timeSeries: series,
-		};
-	});
+	return matchingSeries
+		.slice(0, showAll ? matchingSeries.length : 5)
+		.map((series) => {
+			const timestampIndex = series.values.findIndex(
+				(value) => value.timestamp >= timestamp,
+			);
+			const value = series.values[timestampIndex]?.value;
+			return {
+				timeseries: Object.entries(series.labels)
+					.map(([key, value]) => `${key}:${value}`)
+					.join(','),
+				type: 'aggregated',
+				value: value ?? '-',
+				title: series.title,
+				timeSeries: series,
+			};
+		});
 }
 
 export const formatTimestampToFullDateTime = (
@@ -649,3 +687,122 @@ export const formatTimestampToFullDateTime = (
 
 	return `${datePart} ⎯ ${timePart}`;
 };
+
+export function getTimeSeriesLabel(
+	timeSeries: InspectMetricsSeries | null,
+	textColor: string | undefined,
+): JSX.Element {
+	return (
+		<>
+			{Object.entries(timeSeries?.labels ?? {}).map(([key, value]) => (
+				<span key={key}>
+					<Typography.Text style={{ color: textColor, fontWeight: 600 }}>
+						{key}
+					</Typography.Text>
+					: {value}{' '}
+				</span>
+			))}
+		</>
+	);
+}
+
+export function HoverPopover({
+	options,
+	step,
+}: {
+	options: GraphPopoverOptions;
+	step: InspectionStep;
+}): JSX.Element {
+	const closestTimestamp = useMemo(() => {
+		if (!options.timeSeries) {
+			return options.timestamp;
+		}
+		return options.timeSeries?.values.reduce((prev, curr) => {
+			const prevDiff = Math.abs(prev.timestamp - options.timestamp);
+			const currDiff = Math.abs(curr.timestamp - options.timestamp);
+			return prevDiff < currDiff ? prev : curr;
+		}).timestamp;
+	}, [options.timeSeries, options.timestamp]);
+
+	const closestValue = useMemo(() => {
+		if (!options.timeSeries) {
+			return options.value;
+		}
+		const index = options.timeSeries.values.findIndex(
+			(value) => value.timestamp === closestTimestamp,
+		);
+		return index !== undefined && index >= 0
+			? options.timeSeries?.values[index].value
+			: null;
+	}, [options.timeSeries, closestTimestamp, options.value]);
+
+	return (
+		<Card
+			className="hover-popover-card"
+			style={{
+				top: options.y + 10,
+				left: options.x + 10,
+			}}
+		>
+			<div className="hover-popover-row">
+				<Typography.Text>
+					{formatTimestampToFullDateTime(closestTimestamp ?? 0)}
+				</Typography.Text>
+				<Typography.Text>{Number(closestValue).toFixed(2)}</Typography.Text>
+			</div>
+			{options.timeSeries && (
+				<Typography.Text
+					style={{
+						color: options.timeSeries?.strokeColor,
+						fontWeight: 200,
+					}}
+				>
+					{step === InspectionStep.COMPLETED && options.timeSeries.title
+						? options.timeSeries.title
+						: getTimeSeriesLabel(options.timeSeries, options.timeSeries?.strokeColor)}
+				</Typography.Text>
+			)}
+		</Card>
+	);
+}
+
+export function onGraphHover(
+	e: MouseEvent,
+	u: uPlot,
+	setPopoverOptions: (options: GraphPopoverOptions | null) => void,
+	inspectMetricsTimeSeries: InspectMetricsSeries[],
+	formattedInspectMetricsTimeSeries: uPlot.AlignedData,
+): void {
+	const { left, top } = u.over.getBoundingClientRect();
+	const x = e.clientX - left;
+	const y = e.clientY - top;
+	const xVal = u.posToVal(x, 'x'); // Get actual x-axis value
+	const yVal = u.posToVal(y, 'y'); // Get actual y-axis value value (metric value)
+
+	// Get which series the user clicked on
+	const seriesIndex = getSeriesIndexFromPixel(
+		e,
+		u,
+		formattedInspectMetricsTimeSeries,
+	);
+	if (seriesIndex === -1) {
+		setPopoverOptions({
+			x: e.clientX,
+			y: e.clientY,
+			value: yVal,
+			timestamp: xVal,
+			timeSeries: undefined,
+		});
+		return;
+	}
+
+	const series = inspectMetricsTimeSeries[seriesIndex - 1];
+
+	setPopoverOptions({
+		x: e.clientX,
+		y: e.clientY,
+		value: yVal,
+		timestamp: xVal,
+		timeSeries: series,
+	});
+}
