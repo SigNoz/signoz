@@ -1,33 +1,45 @@
-package querycache
+package querybuildertypes
 
 import (
+	"context"
 	"encoding/json"
 	"math"
 	"sort"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/cache"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
 
-type queryCache struct {
-	cache        cache.Cache
-	fluxInterval time.Duration
+type SeriesData struct {
+	Start int64        `json:"start"`
+	End   int64        `json:"end"`
+	Data  []*v3.Series `json:"data"`
+}
+
+type CachedSeriesData struct {
+	Series []*SeriesData
 }
 
 type MissInterval struct {
 	Start, End int64 // in milliseconds
 }
 
-type CachedSeriesData struct {
-	Start int64        `json:"start"`
-	End   int64        `json:"end"`
-	Data  []*v3.Series `json:"data"`
+func (c *CachedSeriesData) MarshalBinary() (data []byte, err error) {
+	return json.Marshal(c)
+}
+func (c *CachedSeriesData) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, c)
 }
 
 type QueryCacheOption func(q *queryCache)
+
+type queryCache struct {
+	cache        cache.Cache
+	fluxInterval time.Duration
+}
 
 func NewQueryCache(opts ...QueryCacheOption) *queryCache {
 	q := &queryCache{}
@@ -51,29 +63,29 @@ func WithFluxInterval(fluxInterval time.Duration) QueryCacheOption {
 
 // FindMissingTimeRangesV2 is a new correct implementation of FindMissingTimeRanges
 // It takes care of any timestamps that were not queried due to rounding in the first version.
-func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cacheKey string) []MissInterval {
+func (q *queryCache) FindMissingTimeRangesV2(ctx context.Context, start, end int64, step int64, cacheKey string) []*MissInterval {
 	if q.cache == nil || cacheKey == "" {
-		return []MissInterval{{Start: start, End: end}}
+		return []*MissInterval{{Start: start, End: end}}
 	}
 
 	stepMs := step * 1000
 
 	// when the window is too small to be cached, we return the entire range as a miss
 	if (start + stepMs) > end {
-		return []MissInterval{{Start: start, End: end}}
+		return []*MissInterval{{Start: start, End: end}}
 	}
 
-	cachedSeriesDataList := q.getCachedSeriesData(cacheKey)
+	cachedSeriesDataList := q.getCachedSeriesData(ctx, cacheKey)
 
 	// Sort the cached data by start time
 	sort.Slice(cachedSeriesDataList, func(i, j int) bool {
 		return cachedSeriesDataList[i].Start < cachedSeriesDataList[j].Start
 	})
 
-	zap.L().Info("Number of non-overlapping cached series data", zap.Int("count", len(cachedSeriesDataList)))
+	// TODO[@vikrantgupta25]: added logger here
+	// zap.L().Info("Number of non-overlapping cached series data", zap.Int("count", len(cachedSeriesDataList)))
 
 	// Exclude the flux interval from the cached end time
-
 	// Why do we use `time.Now()` here?
 	// When querying for a range [start, now())
 	// we don't want to use the cached data inside the flux interval period
@@ -90,13 +102,13 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 		)
 	}
 
-	var missingRanges []MissInterval
+	var missingRanges []*MissInterval
 	currentTime := start
 
 	// check if start is a complete aggregation window if not then add it as a miss
 	if start%stepMs != 0 {
 		nextAggStart := start - (start % stepMs) + stepMs
-		missingRanges = append(missingRanges, MissInterval{Start: start, End: nextAggStart})
+		missingRanges = append(missingRanges, &MissInterval{Start: start, End: nextAggStart})
 		currentTime = nextAggStart
 	}
 
@@ -112,7 +124,7 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 
 		// Add missing range if there's a gap
 		if currentTime < data.Start {
-			missingRanges = append(missingRanges, MissInterval{Start: currentTime, End: min(data.Start, end)})
+			missingRanges = append(missingRanges, &MissInterval{Start: currentTime, End: min(data.Start, end)})
 		}
 
 		// Update currentTime, but don't go past the end time
@@ -127,20 +139,20 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 	// The test case "start lies near the start of aggregation interval and end lies near the end of another aggregation interval"
 	// shows this case.
 	if currentTime < end {
-		missingRanges = append(missingRanges, MissInterval{Start: currentTime, End: end})
+		missingRanges = append(missingRanges, &MissInterval{Start: currentTime, End: end})
 	} else if end%stepMs != 0 {
 		// check if end is a complete aggregation window if not then add it as a miss
 		prevAggEnd := end - (end % stepMs)
-		missingRanges = append(missingRanges, MissInterval{Start: prevAggEnd, End: end})
+		missingRanges = append(missingRanges, &MissInterval{Start: prevAggEnd, End: end})
 	}
 
 	// Merge overlapping or adjacent missing ranges
 	if len(missingRanges) <= 1 {
 		return missingRanges
 	}
-	merged := []MissInterval{missingRanges[0]}
+	merged := []*MissInterval{missingRanges[0]}
 	for _, curr := range missingRanges[1:] {
-		last := &merged[len(merged)-1]
+		last := merged[len(merged)-1]
 		if last.End >= curr.Start {
 			last.End = max(last.End, curr.End)
 		} else {
@@ -151,19 +163,20 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 	return merged
 }
 
-func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey string) []MissInterval {
+func (q *queryCache) FindMissingTimeRanges(ctx context.Context, start, end, step int64, cacheKey string) []*MissInterval {
 	if q.cache == nil || cacheKey == "" {
-		return []MissInterval{{Start: start, End: end}}
+		return []*MissInterval{{Start: start, End: end}}
 	}
 
-	cachedSeriesDataList := q.getCachedSeriesData(cacheKey)
+	cachedSeriesDataList := q.getCachedSeriesData(ctx, cacheKey)
 
 	// Sort the cached data by start time
 	sort.Slice(cachedSeriesDataList, func(i, j int) bool {
 		return cachedSeriesDataList[i].Start < cachedSeriesDataList[j].Start
 	})
 
-	zap.L().Info("Number of non-overlapping cached series data", zap.Int("count", len(cachedSeriesDataList)))
+	// TODO[@vikrantgupta25]: added logger here
+	// zap.L().Info("Number of non-overlapping cached series data", zap.Int("count", len(cachedSeriesDataList)))
 
 	// Exclude the flux interval from the cached end time
 
@@ -187,7 +200,7 @@ func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey stri
 		)
 	}
 
-	var missingRanges []MissInterval
+	var missingRanges []*MissInterval
 	currentTime := start
 
 	for _, data := range cachedSeriesDataList {
@@ -202,7 +215,7 @@ func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey stri
 
 		// Add missing range if there's a gap
 		if currentTime < data.Start {
-			missingRanges = append(missingRanges, MissInterval{Start: currentTime, End: min(data.Start, end)})
+			missingRanges = append(missingRanges, &MissInterval{Start: currentTime, End: min(data.Start, end)})
 		}
 
 		// Update currentTime, but don't go past the end time
@@ -211,19 +224,20 @@ func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey stri
 
 	// Add final missing range if necessary
 	if currentTime < end {
-		missingRanges = append(missingRanges, MissInterval{Start: currentTime, End: end})
+		missingRanges = append(missingRanges, &MissInterval{Start: currentTime, End: end})
 	}
 
 	return missingRanges
 }
 
-func (q *queryCache) getCachedSeriesData(cacheKey string) []*CachedSeriesData {
-	cachedData, _, _ := q.cache.Retrieve(cacheKey, true)
-	var cachedSeriesDataList []*CachedSeriesData
-	if err := json.Unmarshal(cachedData, &cachedSeriesDataList); err != nil {
+func (q *queryCache) getCachedSeriesData(ctx context.Context, cacheKey string) []*SeriesData {
+	cachedSeriesData := new(CachedSeriesData)
+	_, err := q.cache.Retrieve(ctx, cacheKey, cachedSeriesData, true)
+	if err != nil {
 		return nil
 	}
-	return cachedSeriesDataList
+
+	return cachedSeriesData.Series
 }
 
 func (q *queryCache) mergeSeries(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
@@ -263,45 +277,40 @@ func (q *queryCache) mergeSeries(cachedSeries, missedSeries []*v3.Series) []*v3.
 	return mergedSeries
 }
 
-func (q *queryCache) storeMergedData(cacheKey string, mergedData []CachedSeriesData) {
+func (q *queryCache) storeMergedData(ctx context.Context, cacheKey string, mergedData []*SeriesData) {
 	if q.cache == nil {
 		return
 	}
-	mergedDataJSON, err := json.Marshal(mergedData)
-	if err != nil {
-		zap.L().Error("error marshalling merged data", zap.Error(err))
-		return
-	}
-	err = q.cache.Store(cacheKey, mergedDataJSON, 0)
+	cachedSeriesData := CachedSeriesData{Series: mergedData}
+	err := q.cache.Store(ctx, cacheKey, &cachedSeriesData, 0)
 	if err != nil {
 		zap.L().Error("error storing merged data", zap.Error(err))
 	}
 }
 
-func (q *queryCache) MergeWithCachedSeriesDataV2(cacheKey string, newData []CachedSeriesData) []CachedSeriesData {
+func (q *queryCache) MergeWithCachedSeriesDataV2(ctx context.Context, cacheKey string, newData []*SeriesData) []*SeriesData {
 	if q.cache == nil {
 		return newData
 	}
 
-	cachedData, _, _ := q.cache.Retrieve(cacheKey, true)
-	var existingData []CachedSeriesData
-	if err := json.Unmarshal(cachedData, &existingData); err != nil {
-		zap.L().Error("error unmarshalling existing data", zap.Error(err))
-		return newData
+	cachedSeriesData := new(CachedSeriesData)
+	_, err := q.cache.Retrieve(ctx, cacheKey, cachedSeriesData, true)
+	if err != nil {
+		return nil
 	}
 
-	allData := append(existingData, newData...)
+	allData := append(cachedSeriesData.Series, newData...)
 
 	sort.Slice(allData, func(i, j int) bool {
 		return allData[i].Start < allData[j].Start
 	})
 
-	var mergedData []CachedSeriesData
-	var current *CachedSeriesData
+	var mergedData []*SeriesData
+	var current *SeriesData
 
 	for _, data := range allData {
 		if current == nil {
-			current = &CachedSeriesData{
+			current = &SeriesData{
 				Start: data.Start,
 				End:   data.End,
 				Data:  data.Data,
@@ -316,9 +325,9 @@ func (q *queryCache) MergeWithCachedSeriesDataV2(cacheKey string, newData []Cach
 			current.Data = q.mergeSeries(current.Data, data.Data)
 		} else {
 			// No overlap, add current to mergedData
-			mergedData = append(mergedData, *current)
+			mergedData = append(mergedData, current)
 			// Start new current
-			current = &CachedSeriesData{
+			current = &SeriesData{
 				Start: data.Start,
 				End:   data.End,
 				Data:  data.Data,
@@ -328,19 +337,19 @@ func (q *queryCache) MergeWithCachedSeriesDataV2(cacheKey string, newData []Cach
 
 	// After the loop, add the last current
 	if current != nil {
-		mergedData = append(mergedData, *current)
+		mergedData = append(mergedData, current)
 	}
 
 	return mergedData
 }
 
-func (q *queryCache) MergeWithCachedSeriesData(cacheKey string, newData []CachedSeriesData) []CachedSeriesData {
+func (q *queryCache) MergeWithCachedSeriesData(ctx context.Context, cacheKey string, newData []*SeriesData) []*SeriesData {
 
-	mergedData := q.MergeWithCachedSeriesDataV2(cacheKey, newData)
-	q.storeMergedData(cacheKey, mergedData)
+	mergedData := q.MergeWithCachedSeriesDataV2(ctx, cacheKey, newData)
+	q.storeMergedData(ctx, cacheKey, mergedData)
 	return mergedData
 }
 
-func (q *queryCache) StoreSeriesInCache(cacheKey string, series []CachedSeriesData) {
-	q.storeMergedData(cacheKey, series)
+func (q *queryCache) StoreSeriesInCache(ctx context.Context, cacheKey string, series []*SeriesData) {
+	q.storeMergedData(ctx, cacheKey, series)
 }

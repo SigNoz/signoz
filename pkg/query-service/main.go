@@ -128,7 +128,6 @@ func main() {
 		HTTPHostPort:               constants.HTTPHostPort,
 		PreferSpanMetrics:          preferSpanMetrics,
 		PrivateHostPort:            constants.PrivateHostPort,
-		CacheConfigPath:            cacheConfigPath,
 		FluxInterval:               fluxInterval,
 		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
 		Cluster:                    cluster,

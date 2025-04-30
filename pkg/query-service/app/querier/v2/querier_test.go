@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -10,18 +9,20 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/cache/inmemory"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 )
@@ -63,7 +64,7 @@ func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 		requestedEnd      int64 // in milliseconds
 		requestedStep     int64 // in seconds
 		cachedSeries      []*v3.Series
-		expectedMiss      []querycache.MissInterval
+		expectedMiss      []*querybuildertypes.MissInterval
 		replaceCachedData bool
 	}{
 		{
@@ -88,7 +89,7 @@ func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 					},
 				},
 			},
-			expectedMiss: []querycache.MissInterval{
+			expectedMiss: []*querybuildertypes.MissInterval{
 				{
 					Start: 1675115596722,
 					End:   1675115596722 + 60*60*1000,
@@ -129,7 +130,7 @@ func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 					},
 				},
 			},
-			expectedMiss: []querycache.MissInterval{},
+			expectedMiss: []*querybuildertypes.MissInterval{},
 		},
 		{
 			name:           "cached time range is a left overlap of the requested time range",
@@ -157,7 +158,7 @@ func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 					},
 				},
 			},
-			expectedMiss: []querycache.MissInterval{
+			expectedMiss: []*querybuildertypes.MissInterval{
 				{
 					Start: 1675115596722 + 120*60*1000,
 					End:   1675115596722 + 180*60*1000,
@@ -190,7 +191,7 @@ func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 					},
 				},
 			},
-			expectedMiss: []querycache.MissInterval{
+			expectedMiss: []*querybuildertypes.MissInterval{
 				{
 					Start: 1675115596722,
 					End:   1675115596722 + 60*60*1000,
@@ -223,7 +224,7 @@ func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 					},
 				},
 			},
-			expectedMiss: []querycache.MissInterval{
+			expectedMiss: []*querybuildertypes.MissInterval{
 				{
 					Start: 1675115596722,
 					End:   1675115596722 + 180*60*1000,
@@ -232,29 +233,35 @@ func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 			replaceCachedData: true,
 		},
 	}
+	opts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	if err != nil {
+		t.Errorf("error initialising cache: %v", err)
+	}
 
-	c := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
-
-	qc := querycache.NewQueryCache(querycache.WithCache(c))
+	qc := querybuildertypes.NewQueryCache(querybuildertypes.WithCache(c))
 
 	for idx, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cacheKey := fmt.Sprintf("test-cache-key-%d", idx)
-			cachedData := &querycache.CachedSeriesData{
+			cachedData := &querybuildertypes.SeriesData{
 				Start: minTimestamp(tc.cachedSeries),
 				End:   maxTimestamp(tc.cachedSeries),
 				Data:  tc.cachedSeries,
 			}
-			jsonData, err := json.Marshal([]*querycache.CachedSeriesData{cachedData})
+			data := querybuildertypes.CachedSeriesData{Series: []*querybuildertypes.SeriesData{cachedData}}
 			if err != nil {
 				t.Errorf("error marshalling cached data: %v", err)
 			}
-			err = c.Store(cacheKey, jsonData, 5*time.Minute)
+			err = c.Store(context.Background(), cacheKey, &data, 5*time.Minute)
 			if err != nil {
 				t.Errorf("error storing cached data: %v", err)
 			}
 
-			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
+			misses := qc.FindMissingTimeRanges(context.Background(), tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
@@ -280,7 +287,7 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 		requestedStep  int64
 		cachedSeries   []*v3.Series
 		fluxInterval   time.Duration
-		expectedMiss   []querycache.MissInterval
+		expectedMiss   []*querybuildertypes.MissInterval
 	}{
 		{
 			name:           "cached time range is a subset of the requested time range",
@@ -305,7 +312,7 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				},
 			},
 			fluxInterval: 5 * time.Minute,
-			expectedMiss: []querycache.MissInterval{
+			expectedMiss: []*querybuildertypes.MissInterval{
 				{
 					Start: 1675115596722,
 					End:   1675115596722 + 60*60*1000,
@@ -347,7 +354,7 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				},
 			},
 			fluxInterval: 5 * time.Minute,
-			expectedMiss: []querycache.MissInterval{},
+			expectedMiss: []*querybuildertypes.MissInterval{},
 		},
 		{
 			name:           "cache time range is a left overlap of the requested time range",
@@ -376,7 +383,7 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				},
 			},
 			fluxInterval: 5 * time.Minute,
-			expectedMiss: []querycache.MissInterval{
+			expectedMiss: []*querybuildertypes.MissInterval{
 				{
 					Start: 1675115596722 + 120*60*1000,
 					End:   1675115596722 + 180*60*1000,
@@ -410,7 +417,7 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				},
 			},
 			fluxInterval: 5 * time.Minute,
-			expectedMiss: []querycache.MissInterval{
+			expectedMiss: []*querybuildertypes.MissInterval{
 				{
 					Start: 1675115596722,
 					End:   1675115596722 + 60*60*1000,
@@ -444,7 +451,7 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				},
 			},
 			fluxInterval: 5 * time.Minute,
-			expectedMiss: []querycache.MissInterval{
+			expectedMiss: []*querybuildertypes.MissInterval{
 				{
 					Start: 1675115596722,
 					End:   1675115596722 + 180*60*1000,
@@ -453,29 +460,35 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 		},
 	}
 
-	c := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
-
-	qc := querycache.NewQueryCache(querycache.WithCache(c))
+	opts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	if err != nil {
+		t.Errorf("error initialising cache: %v", err)
+	}
+	qc := querybuildertypes.NewQueryCache(querybuildertypes.WithCache(c))
 
 	for idx, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cacheKey := fmt.Sprintf("test-cache-key-%d", idx)
-			cachedData := &querycache.CachedSeriesData{
+			cachedData := &querybuildertypes.SeriesData{
 				Start: minTimestamp(tc.cachedSeries),
 				End:   maxTimestamp(tc.cachedSeries),
 				Data:  tc.cachedSeries,
 			}
-			jsonData, err := json.Marshal([]*querycache.CachedSeriesData{cachedData})
+			data := querybuildertypes.CachedSeriesData{Series: []*querybuildertypes.SeriesData{cachedData}}
 			if err != nil {
 				t.Errorf("error marshalling cached data: %v", err)
 				return
 			}
-			err = c.Store(cacheKey, jsonData, 5*time.Minute)
+			err = c.Store(context.Background(), cacheKey, &data, 5*time.Minute)
 			if err != nil {
 				t.Errorf("error storing cached data: %v", err)
 				return
 			}
-			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
+			misses := qc.FindMissingTimeRanges(context.Background(), tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
@@ -634,9 +647,17 @@ func TestV2QueryRangePanelGraph(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheOpts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheOpts})
+	if err != nil {
+		t.Errorf("error initialising cache: %v", err)
+	}
+
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -783,9 +804,17 @@ func TestV2QueryRangeValueType(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+
+	cacheopts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheopts})
+	if err != nil {
+		t.Errorf("error initialising cache: %v", err)
+	}
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -944,9 +973,16 @@ func TestV2QueryRangeTimeShiftWithCache(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheopts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheopts})
+	if err != nil {
+		t.Errorf("error initialising cache: %v", err)
+	}
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -1047,9 +1083,16 @@ func TestV2QueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheopts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheopts})
+	if err != nil {
+		t.Errorf("error initialising cache: %v", err)
+	}
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -1121,9 +1164,16 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheopts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheopts})
+	if err != nil {
+		t.Errorf("error initialising cache: %v", err)
+	}
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -1148,17 +1198,17 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 
 	expectedQueryAndTimeRanges := []struct {
 		query  string
-		ranges []querycache.MissInterval
+		ranges []*querybuildertypes.MissInterval
 	}{
 		{
 			query: "signoz_calls_total",
-			ranges: []querycache.MissInterval{
+			ranges: []*querybuildertypes.MissInterval{
 				{Start: 1675115596722, End: 1675115596722 + 120*60*1000},
 			},
 		},
 		{
 			query: "signoz_latency_bucket",
-			ranges: []querycache.MissInterval{
+			ranges: []*querybuildertypes.MissInterval{
 				{Start: 1675115596722 + 60*60*1000, End: 1675115596722 + 180*60*1000},
 			},
 		},

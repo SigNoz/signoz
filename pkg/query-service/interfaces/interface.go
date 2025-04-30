@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/querycache"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 )
@@ -151,9 +151,9 @@ type Querier interface {
 }
 
 type QueryCache interface {
-	FindMissingTimeRanges(start, end int64, step int64, cacheKey string) []querycache.MissInterval
-	FindMissingTimeRangesV2(start, end int64, step int64, cacheKey string) []querycache.MissInterval
-	MergeWithCachedSeriesData(cacheKey string, newData []querycache.CachedSeriesData) []querycache.CachedSeriesData
-	StoreSeriesInCache(cacheKey string, series []querycache.CachedSeriesData)
-	MergeWithCachedSeriesDataV2(cacheKey string, series []querycache.CachedSeriesData) []querycache.CachedSeriesData
+	FindMissingTimeRanges(ctx context.Context, start, end int64, step int64, cacheKey string) []*querybuildertypes.MissInterval
+	FindMissingTimeRangesV2(ctx context.Context, start, end int64, step int64, cacheKey string) []*querybuildertypes.MissInterval
+	MergeWithCachedSeriesData(ctx context.Context, cacheKey string, newData []*querybuildertypes.SeriesData) []*querybuildertypes.SeriesData
+	StoreSeriesInCache(ctx context.Context, cacheKey string, series []*querybuildertypes.SeriesData)
+	MergeWithCachedSeriesDataV2(ctx context.Context, cacheKey string, series []*querybuildertypes.SeriesData) []*querybuildertypes.SeriesData
 }

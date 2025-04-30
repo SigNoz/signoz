@@ -13,7 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/querycache"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes"
 	"go.uber.org/zap"
 )
 
@@ -106,10 +106,10 @@ func (q *querier) runBuilderQuery(
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
 			return
 		}
-		misses := q.queryCache.FindMissingTimeRangesV2(start, end, builderQuery.StepInterval, cacheKeys[queryName])
+		misses := q.queryCache.FindMissingTimeRangesV2(ctx, start, end, builderQuery.StepInterval, cacheKeys[queryName])
 		zap.L().Info("cache misses for logs query", zap.Any("misses", misses))
-		missedSeries := make([]querycache.CachedSeriesData, 0)
-		filteredMissedSeries := make([]querycache.CachedSeriesData, 0)
+		missedSeries := make([]*querybuildertypes.SeriesData, 0)
+		filteredMissedSeries := make([]*querybuildertypes.SeriesData, 0)
 		for _, miss := range misses {
 			query, err = prepareLogsQuery(ctx, miss.Start, miss.End, builderQuery, params)
 			if err != nil {
@@ -132,7 +132,7 @@ func (q *querier) runBuilderQuery(
 			// making sure that empty range doesn't doesn't enter the cache
 			// empty results from filteredSeries means data was filtered out, but empty series means actual empty data
 			if len(filteredSeries) > 0 || len(series) == 0 {
-				filteredMissedSeries = append(filteredMissedSeries, querycache.CachedSeriesData{
+				filteredMissedSeries = append(filteredMissedSeries, &querybuildertypes.SeriesData{
 					Data:  filteredSeries,
 					Start: startTime,
 					End:   endTime,
@@ -140,17 +140,17 @@ func (q *querier) runBuilderQuery(
 			}
 
 			// for the actual response
-			missedSeries = append(missedSeries, querycache.CachedSeriesData{
+			missedSeries = append(missedSeries, &querybuildertypes.SeriesData{
 				Data:  series,
 				Start: miss.Start,
 				End:   miss.End,
 			})
 		}
 
-		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], filteredMissedSeries)
-		q.queryCache.StoreSeriesInCache(cacheKeys[queryName], filteredMergedSeries)
+		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(ctx, cacheKeys[queryName], filteredMissedSeries)
+		q.queryCache.StoreSeriesInCache(ctx, cacheKeys[queryName], filteredMergedSeries)
 
-		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], missedSeries)
+		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(ctx, cacheKeys[queryName], missedSeries)
 
 		resultSeries := common.GetSeriesFromCachedDataV2(mergedSeries, start, end, builderQuery.StepInterval)
 
@@ -238,9 +238,9 @@ func (q *querier) runBuilderQuery(
 		return
 	}
 
-	misses := q.queryCache.FindMissingTimeRanges(start, end, builderQuery.StepInterval, cacheKeys[queryName])
+	misses := q.queryCache.FindMissingTimeRanges(ctx, start, end, builderQuery.StepInterval, cacheKeys[queryName])
 	zap.L().Info("cache misses for metrics query", zap.Any("misses", misses))
-	missedSeries := make([]querycache.CachedSeriesData, 0)
+	missedSeries := make([]*querybuildertypes.SeriesData, 0)
 	for _, miss := range misses {
 		query, err := metricsV4.PrepareMetricQuery(
 			miss.Start,
@@ -269,13 +269,13 @@ func (q *querier) runBuilderQuery(
 			}
 			return
 		}
-		missedSeries = append(missedSeries, querycache.CachedSeriesData{
+		missedSeries = append(missedSeries, &querybuildertypes.SeriesData{
 			Data:  series,
 			Start: miss.Start,
 			End:   miss.End,
 		})
 	}
-	mergedSeries := q.queryCache.MergeWithCachedSeriesData(cacheKeys[queryName], missedSeries)
+	mergedSeries := q.queryCache.MergeWithCachedSeriesData(ctx, cacheKeys[queryName], missedSeries)
 
 	resultSeries := common.GetSeriesFromCachedData(mergedSeries, start, end)
 

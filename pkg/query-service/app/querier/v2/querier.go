@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	metricsV4 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -13,10 +14,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes"
 
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -68,7 +68,7 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 	logsQueryBuilder := logsV4.PrepareLogsQuery
 	tracesQueryBuilder := tracesV4.PrepareTracesQuery
 
-	qc := querycache.NewQueryCache(querycache.WithCache(opts.Cache), querycache.WithFluxInterval(opts.FluxInterval))
+	qc := querybuildertypes.NewQueryCache(querybuildertypes.WithCache(opts.Cache), querybuildertypes.WithFluxInterval(opts.FluxInterval))
 
 	return &querier{
 		cache:        opts.Cache,
@@ -212,9 +212,9 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 				channelResults <- channelResult{Err: err, Name: queryName, Query: query.Query, Series: series}
 				return
 			}
-			misses := q.queryCache.FindMissingTimeRanges(params.Start, params.End, params.Step, cacheKey)
+			misses := q.queryCache.FindMissingTimeRanges(ctx, params.Start, params.End, params.Step, cacheKey)
 			zap.L().Info("cache misses for metrics prom query", zap.Any("misses", misses))
-			missedSeries := make([]querycache.CachedSeriesData, 0)
+			missedSeries := make([]*querybuildertypes.SeriesData, 0)
 			for _, miss := range misses {
 				query := metricsV4.BuildPromQuery(promQuery, params.Step, miss.Start, miss.End)
 				series, err := q.execPromQuery(ctx, query)
@@ -222,13 +222,13 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 					channelResults <- channelResult{Err: err, Name: queryName, Query: query.Query, Series: nil}
 					return
 				}
-				missedSeries = append(missedSeries, querycache.CachedSeriesData{
+				missedSeries = append(missedSeries, &querybuildertypes.SeriesData{
 					Data:  series,
 					Start: miss.Start,
 					End:   miss.End,
 				})
 			}
-			mergedSeries := q.queryCache.MergeWithCachedSeriesData(cacheKey, missedSeries)
+			mergedSeries := q.queryCache.MergeWithCachedSeriesData(ctx, cacheKey, missedSeries)
 			resultSeries := common.GetSeriesFromCachedData(mergedSeries, params.Start, params.End)
 			channelResults <- channelResult{Err: nil, Name: queryName, Query: promQuery.Query, Series: resultSeries}
 		}(queryName, promQuery)

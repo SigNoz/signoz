@@ -9,8 +9,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes"
 )
 
 func AdjustedMetricTimeRange(start, end, step int64, mq v3.BuilderQuery) (int64, int64) {
@@ -93,7 +93,7 @@ func NormalizeLabelName(name string) string {
 	return normalized
 }
 
-func GetSeriesFromCachedData(data []querycache.CachedSeriesData, start, end int64) []*v3.Series {
+func GetSeriesFromCachedData(data []*querybuildertypes.SeriesData, start, end int64) []*v3.Series {
 	series := make(map[uint64]*v3.Series)
 
 	for _, cachedData := range data {
@@ -126,7 +126,7 @@ func GetSeriesFromCachedData(data []querycache.CachedSeriesData, start, end int6
 }
 
 // It is different from GetSeriesFromCachedData because doesn't remove a point if it is >= (start - (start % step*1000))
-func GetSeriesFromCachedDataV2(data []querycache.CachedSeriesData, start, end, step int64) []*v3.Series {
+func GetSeriesFromCachedDataV2(data []*querybuildertypes.SeriesData, start, end, step int64) []*v3.Series {
 	series := make(map[uint64]*v3.Series)
 
 	for _, cachedData := range data {

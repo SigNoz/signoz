@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/SigNoz/signoz/ee/query-service/anomaly"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"

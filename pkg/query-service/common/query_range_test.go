@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/querycache"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes"
 )
 
 func TestFilterSeriesPoints(t *testing.T) {
@@ -308,7 +308,7 @@ func TestFilterSeriesPoints(t *testing.T) {
 func TestGetSeriesFromCachedData(t *testing.T) {
 	testCases := []struct {
 		name           string
-		data           []querycache.CachedSeriesData
+		data           []*querybuildertypes.SeriesData
 		start          int64
 		end            int64
 		expectedCount  int
@@ -316,7 +316,7 @@ func TestGetSeriesFromCachedData(t *testing.T) {
 	}{
 		{
 			name: "Single point outside range",
-			data: []querycache.CachedSeriesData{
+			data: []*querybuildertypes.SeriesData{
 				{
 					Data: []*v3.Series{
 						{
@@ -335,7 +335,7 @@ func TestGetSeriesFromCachedData(t *testing.T) {
 		},
 		{
 			name: "Single point inside range",
-			data: []querycache.CachedSeriesData{
+			data: []*querybuildertypes.SeriesData{
 				{
 					Data: []*v3.Series{
 						{
@@ -371,7 +371,7 @@ func TestGetSeriesFromCachedData(t *testing.T) {
 func TestGetSeriesFromCachedDataV2(t *testing.T) {
 	testCases := []struct {
 		name           string
-		data           []querycache.CachedSeriesData
+		data           []*querybuildertypes.SeriesData
 		start          int64
 		end            int64
 		step           int64
@@ -380,7 +380,7 @@ func TestGetSeriesFromCachedDataV2(t *testing.T) {
 	}{
 		{
 			name: "Single point outside range",
-			data: []querycache.CachedSeriesData{
+			data: []*querybuildertypes.SeriesData{
 				{
 					Data: []*v3.Series{
 						{
@@ -400,7 +400,7 @@ func TestGetSeriesFromCachedDataV2(t *testing.T) {
 		},
 		{
 			name: "Single point inside range",
-			data: []querycache.CachedSeriesData{
+			data: []*querybuildertypes.SeriesData{
 				{
 					Data: []*v3.Series{
 						{
