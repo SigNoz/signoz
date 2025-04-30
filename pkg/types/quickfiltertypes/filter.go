@@ -15,11 +15,11 @@ type Signal struct {
 }
 
 var (
-	SignalTraces = Signal{valuer.NewString("TRACES")}
-	SignalLogs   = Signal{valuer.NewString("LOGS")}
+	SignalTraces = Signal{valuer.NewString("traces")}
+	SignalLogs   = Signal{valuer.NewString("logs")}
 	//SignalMetrics     = Signal{valuer.NewString("METRICS")}
 	//SignalInfra       = Signal{valuer.NewString("INFRA")}
-	SignalApiMonitoring = Signal{valuer.NewString("API_MONITORING")}
+	SignalApiMonitoring = Signal{valuer.NewString("api_monitoring")}
 )
 
 // NewSignal creates a Signal from a string
@@ -41,7 +41,7 @@ type StorableQuickFilter struct {
 	types.Identifiable
 	OrgID  valuer.UUID `bun:"org_id,type:text,notnull"` // Changed from valuer.String to string
 	Filter string      `bun:"filter,type:text,notnull"` // Changed from valuer.String to string
-	Signal string      `bun:"signal,type:text,notnull"` // Changed from Signal to string
+	Signal Signal      `bun:"signal,type:text,notnull"` // Changed from Signal to string
 	types.TimeAuditable
 }
 
@@ -60,13 +60,6 @@ func NewSignalFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFi
 	if storableQuickFilter == nil {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "storableQuickFilter cannot be nil")
 	}
-
-	// Convert signal string to Signal type
-	signal, err := NewSignal(storableQuickFilter.Signal)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "invalid signal type: %s", storableQuickFilter.Signal)
-	}
-
 	// Unmarshal filters from JSON string
 	var filters []v3.AttributeKey
 	if storableQuickFilter.Filter != "" {
@@ -77,7 +70,7 @@ func NewSignalFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFi
 	}
 
 	return &SignalFilters{
-		Signal:  signal,
+		Signal:  storableQuickFilter.Signal,
 		Filters: filters,
 	}, nil
 }
@@ -141,7 +134,7 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			},
 			OrgID:  orgID,
 			Filter: string(tracesJSON),
-			Signal: "traces",
+			Signal: SignalTraces,
 		},
 		{
 			Identifiable: types.Identifiable{
@@ -149,7 +142,7 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			},
 			OrgID:  orgID,
 			Filter: string(logsJSON),
-			Signal: "logs",
+			Signal: SignalLogs,
 		},
 		{
 			Identifiable: types.Identifiable{
@@ -157,7 +150,7 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			},
 			OrgID:  orgID,
 			Filter: string(apiMonitoringJSON),
-			Signal: "api_monitoring",
+			Signal: SignalApiMonitoring,
 		},
 	}, nil
 }

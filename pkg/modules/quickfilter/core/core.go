@@ -125,7 +125,7 @@ func createNewFilter(orgID valuer.UUID, signal quickfiltertypes.Signal, filterJS
 			ID: valuer.GenerateUUID(),
 		},
 		OrgID:  orgID,
-		Signal: signal.StringValue(),
+		Signal: signal,
 		Filter: string(filterJSON),
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: now,
