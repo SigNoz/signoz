@@ -63,13 +63,10 @@ func (s RetrieveStatus) String() string {
 
 // cache interface
 type Cache interface {
-	Connect(ctx context.Context) error
-	Store(ctx context.Context, cacheKey string, data CacheableEntity, ttl time.Duration) error
-	Retrieve(ctx context.Context, cacheKey string, dest CacheableEntity, allowExpired bool) (RetrieveStatus, error)
-	SetTTL(ctx context.Context, cacheKey string, ttl time.Duration)
-	Remove(ctx context.Context, cacheKey string)
-	BulkRemove(ctx context.Context, cacheKeys []string)
-	Close(ctx context.Context) error
+	Set(ctx context.Context, orgID string, cacheKey string, data CacheableEntity, ttl time.Duration) error
+	Get(ctx context.Context, orgID string, cacheKey string, dest CacheableEntity, allowExpired bool) (RetrieveStatus, error)
+	Delete(ctx context.Context, orgID string, cacheKey string)
+	DeleteMany(ctx context.Context, orgID string, cacheKeys []string)
 }
 
 type KeyGenerator interface {
