@@ -14,6 +14,21 @@ type Signal struct {
 	valuer.String
 }
 
+func (enum *Signal) UnmarshalJSON(data []byte) error {
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+
+	signal, err := NewSignal(str)
+	if err != nil {
+		return err
+	}
+
+	*enum = signal
+	return nil
+}
+
 var (
 	SignalTraces = Signal{valuer.NewString("traces")}
 	SignalLogs   = Signal{valuer.NewString("logs")}
