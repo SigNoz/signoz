@@ -4205,7 +4205,7 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 	}
 
 	result, apiErr := aH.CloudIntegrationsController.UpdateServiceConfig(
-		r.Context(), claims.OrgID, cloudProvider, serviceId, req,
+		r.Context(), claims.OrgID, cloudProvider, serviceId, &req,
 	)
 
 	if apiErr != nil {

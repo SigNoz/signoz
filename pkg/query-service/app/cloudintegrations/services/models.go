@@ -8,10 +8,6 @@ type Metadata struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`
 	Icon  string `json:"icon"`
-
-	// Present only if the service has been configured in the
-	// context of a cloud provider account.
-	// Config *CloudServiceConfig `json:"config,omitempty"`
 }
 
 type Definition struct {

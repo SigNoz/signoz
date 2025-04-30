@@ -437,16 +437,12 @@ func (c *Controller) GetServiceDetails(
 			}
 
 			// add links to service dashboards, making them clickable.
-			for i, d := range service.Assets.Dashboards {
+			for i, d := range definition.Assets.Dashboards {
 				dashboardUuid := c.dashboardUuid(
 					cloudProvider, serviceId, d.Id,
 				)
 				if enabled {
-					service.Assets.Dashboards[i].Url = fmt.Sprintf(
-						"/dashboard/%s", dashboardUuid,
-					)
-				} else {
-					service.Assets.Dashboards[i].Url = ""
+					definition.Assets.Dashboards[i].Url = fmt.Sprintf("/dashboard/%s", dashboardUuid)
 				}
 			}
 		}
@@ -456,21 +452,23 @@ func (c *Controller) GetServiceDetails(
 }
 
 type UpdateServiceConfigRequest struct {
-	CloudAccountId string        `json:"cloud_account_id"`
-	Config         ServiceConfig `json:"config"`
+	CloudAccountId string                   `json:"cloud_account_id"`
+	Config         types.CloudServiceConfig `json:"config"`
 }
 
 func (u *UpdateServiceConfigRequest) Validate(def *services.Definition) error {
 	if def.Id != services.S3Sync && u.Config.Logs != nil && u.Config.Logs.S3Buckets != nil {
 		return fmt.Errorf("s3 buckets can only be added to service-type[%s]", services.S3Sync)
+	} else if u.Config.Logs.S3Buckets != nil {
+		// TODO: add validation for aws regions
 	}
 
 	return nil
 }
 
 type UpdateServiceConfigResponse struct {
-	Id     string        `json:"id"`
-	Config ServiceConfig `json:"config"`
+	Id     string                   `json:"id"`
+	Config types.CloudServiceConfig `json:"config"`
 }
 
 func (c *Controller) UpdateServiceConfig(
@@ -495,7 +493,7 @@ func (c *Controller) UpdateServiceConfig(
 	}
 
 	// can only update config for a connected cloud account id
-	_, apiErr := c.accountsRepo.getConnectedCloudAccount(
+	_, apiErr = c.accountsRepo.getConnectedCloudAccount(
 		ctx, orgID, cloudProvider, req.CloudAccountId,
 	)
 	if apiErr != nil {
@@ -503,7 +501,7 @@ func (c *Controller) UpdateServiceConfig(
 	}
 
 	updatedConfig, apiErr := c.serviceConfigRepo.upsert(
-		ctx, orgID, cloudProvider, req.CloudAccountId, serviceId, req.Config,
+		ctx, orgID, cloudProvider, req.CloudAccountId, serviceType, req.Config,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't update service config")

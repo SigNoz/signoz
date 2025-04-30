@@ -140,7 +140,6 @@ func (r *serviceConfigSQLRepository) getAllForAccount(
 	orgID string,
 	cloudAccountId string,
 ) (map[string]*types.CloudServiceConfig, *model.ApiError) {
-
 	serviceConfigs := []types.CloudIntegrationService{}
 
 	err := r.store.BunDB().NewSelect().

@@ -208,7 +208,7 @@ func TestConfigureService(t *testing.T) {
 		},
 	}
 	updateSvcConfigResp, apiErr := controller.UpdateServiceConfig(
-		context.TODO(), user.OrgID, "aws", testSvcId, UpdateServiceConfigRequest{
+		context.TODO(), user.OrgID, "aws", testSvcId, &UpdateServiceConfigRequest{
 			CloudAccountId: testCloudAccountId,
 			Config:         testSvcConfig,
 		},
@@ -242,7 +242,7 @@ func TestConfigureService(t *testing.T) {
 
 	_, apiErr = controller.UpdateServiceConfig(
 		context.TODO(), user.OrgID, "aws", testSvcId,
-		UpdateServiceConfigRequest{
+		&UpdateServiceConfigRequest{
 			CloudAccountId: testCloudAccountId,
 			Config:         testSvcConfig,
 		},
@@ -252,7 +252,7 @@ func TestConfigureService(t *testing.T) {
 	// should not be able to configure a service for a cloud account id that is not connected yet
 	_, apiErr = controller.UpdateServiceConfig(
 		context.TODO(), user.OrgID, "aws", testSvcId,
-		UpdateServiceConfigRequest{
+		&UpdateServiceConfigRequest{
 			CloudAccountId: "9999999999",
 			Config:         testSvcConfig,
 		},
@@ -261,7 +261,7 @@ func TestConfigureService(t *testing.T) {
 
 	// should not be able to set config for an unsupported service
 	_, apiErr = controller.UpdateServiceConfig(
-		context.TODO(), user.OrgID, "aws", "bad-service", UpdateServiceConfigRequest{
+		context.TODO(), user.OrgID, "aws", "bad-service", &UpdateServiceConfigRequest{
 			CloudAccountId: testCloudAccountId,
 			Config:         testSvcConfig,
 		},
