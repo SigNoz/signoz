@@ -8,7 +8,6 @@ import (
 	basedao "github.com/SigNoz/signoz/pkg/query-service/dao"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
-	ossTypes "github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
@@ -40,7 +39,6 @@ type ModelDao interface {
 	UpdatePAT(ctx context.Context, orgID string, p types.GettablePAT, id valuer.UUID) basemodel.BaseApiError
 	GetPAT(ctx context.Context, pat string) (*types.GettablePAT, basemodel.BaseApiError)
 	GetPATByID(ctx context.Context, orgID string, id valuer.UUID) (*types.GettablePAT, basemodel.BaseApiError)
-	GetUserByPAT(ctx context.Context, orgID string, token string) (*ossTypes.GettableUser, basemodel.BaseApiError)
 	ListPATs(ctx context.Context, orgID string) ([]types.GettablePAT, basemodel.BaseApiError)
 	RevokePAT(ctx context.Context, orgID string, id valuer.UUID, userID string) basemodel.BaseApiError
 }

@@ -5,18 +5,23 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/google/uuid"
 )
 
-func NewTestIntegrationsManager(t *testing.T) *Manager {
+func NewTestIntegrationsManager(t *testing.T) (*Manager, sqlstore.SQLStore) {
 	testDB := utils.NewQueryServiceDBForTests(t)
 
-	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB.SQLxDB())
+	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB)
 	if err != nil {
 		t.Fatalf("could not init sqlite DB for installed integrations: %v", err)
 	}
@@ -24,7 +29,31 @@ func NewTestIntegrationsManager(t *testing.T) *Manager {
 	return &Manager{
 		availableIntegrationsRepo: &TestAvailableIntegrationsRepo{},
 		installedIntegrationsRepo: installedIntegrationsRepo,
+	}, testDB
+}
+
+func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
+	// Create a test user for auth
+	ctx := context.Background()
+	organization := types.NewOrganization("test")
+	err := organizationModule.Create(ctx, organization)
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
+
+	userId := uuid.NewString()
+	return dao.DB().CreateUser(
+		ctx,
+		&types.User{
+			ID:       userId,
+			Name:     "test",
+			Email:    userId[:8] + "test@test.com",
+			Password: "test",
+			OrgID:    organization.ID.StringValue(),
+			Role:     authtypes.RoleAdmin.String(),
+		},
+		true,
+	)
 }
 
 type TestAvailableIntegrationsRepo struct{}
@@ -93,7 +122,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 					},
 				},
 				Dashboards: []types.DashboardData{},
-				Alerts:     []rules.PostableRule{},
+				Alerts:     []ruletypes.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
 				Logs: &LogsConnectionTest{
@@ -161,7 +190,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 					},
 				},
 				Dashboards: []types.DashboardData{},
-				Alerts:     []rules.PostableRule{},
+				Alerts:     []ruletypes.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
 				Logs: &LogsConnectionTest{

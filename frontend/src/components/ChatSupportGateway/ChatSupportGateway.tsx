@@ -45,6 +45,7 @@ export default function ChatSupportGateway(): JSX.Element {
 		},
 	);
 	const { pathname } = useLocation();
+
 	const handleAddCreditCard = (): void => {
 		logEvent('Add Credit card modal: Clicked', {
 			source: `intercom icon`,
@@ -52,7 +53,7 @@ export default function ChatSupportGateway(): JSX.Element {
 		});
 
 		updateCreditCard({
-			url: window.location.href,
+			url: window.location.origin,
 		});
 	};
 

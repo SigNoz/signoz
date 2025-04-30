@@ -15,7 +15,7 @@ export interface MetricDetails {
 	timeSeriesTotal: number;
 	timeSeriesActive: number;
 	lastReceived: string;
-	attributes: MetricDetailsAttribute[];
+	attributes: MetricDetailsAttribute[] | null;
 	metadata?: {
 		metric_type: MetricType;
 		description: string;

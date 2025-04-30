@@ -33,24 +33,19 @@ func TestGetKeys(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata, err := NewTelemetryMetaStore(
+	metadata := NewTelemetryMetaStore(
 		mockTelemetryStore,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,
 		telemetrytraces.SpanIndexV3TableName,
 		telemetrymetrics.DBName,
-		telemetrymetrics.TimeseriesV41weekTableName,
-		telemetrymetrics.TimeseriesV41weekTableName,
+		telemetrymetrics.AttributesMetadataTableName,
 		telemetrylogs.DBName,
 		telemetrylogs.LogsV2TableName,
 		telemetrylogs.TagAttributesV2TableName,
 		DBName,
 		AttributesMetadataLocalTableName,
 	)
-
-	if err != nil {
-		t.Fatalf("Failed to create telemetry metadata store: %v", err)
-	}
 
 	rows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "statement", Type: "String"},

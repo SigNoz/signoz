@@ -27,6 +27,18 @@ type TelemetryFieldKey struct {
 	Materialized  bool          `json:"materialized,omitempty"`
 }
 
+func (f TelemetryFieldKey) String() string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("name=%s", f.Name))
+	if f.FieldContext != FieldContextUnspecified {
+		sb.WriteString(fmt.Sprintf(",context=%s", f.FieldContext.String))
+	}
+	if f.FieldDataType != FieldDataTypeUnspecified {
+		sb.WriteString(fmt.Sprintf(",type=%s", f.FieldDataType.StringValue()))
+	}
+	return sb.String()
+}
+
 // GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
 // The key text is expected to be in the format of `fieldContext.fieldName:fieldDataType` in the search query.
 func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
@@ -87,11 +99,11 @@ func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("%s_%s_%s", key.FieldContext, key.FieldDataType.String, strings.ReplaceAll(key.Name, ".", "$$"))
+	return fmt.Sprintf("%s_%s_%s", key.FieldContext.String, fieldDataTypes[key.FieldDataType.StringValue()].StringValue(), strings.ReplaceAll(key.Name, ".", "$$"))
 }
 
 func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("%s_%s_%s_exists", key.FieldContext, key.FieldDataType.String, strings.ReplaceAll(key.Name, ".", "$$"))
+	return fmt.Sprintf("%s_%s_%s_exists", key.FieldContext.String, fieldDataTypes[key.FieldDataType.StringValue()].StringValue(), strings.ReplaceAll(key.Name, ".", "$$"))
 }
 
 type TelemetryFieldValues struct {
@@ -118,7 +130,7 @@ type FieldKeySelector struct {
 }
 
 type FieldValueSelector struct {
-	FieldKeySelector
+	*FieldKeySelector
 	ExistingQuery string `json:"existingQuery"`
 	Value         string `json:"value"`
 	Limit         int    `json:"limit"`

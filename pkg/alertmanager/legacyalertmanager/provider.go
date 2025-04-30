@@ -25,6 +25,25 @@ type postableAlert struct {
 	Receivers []string `json:"receivers"`
 }
 
+func (pa *postableAlert) MarshalJSON() ([]byte, error) {
+	// Marshal the embedded PostableAlert to get its JSON representation.
+	alertJSON, err := json.Marshal(pa.PostableAlert)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal that JSON into a map so we can add extra fields.
+	var m map[string]interface{}
+	if err := json.Unmarshal(alertJSON, &m); err != nil {
+		return nil, err
+	}
+
+	// Add the Receivers field.
+	m["receivers"] = pa.Receivers
+
+	return json.Marshal(m)
+}
+
 const (
 	alertsPath       string = "/v1/alerts"
 	routesPath       string = "/v1/routes"

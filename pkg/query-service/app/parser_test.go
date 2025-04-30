@@ -112,6 +112,7 @@ func TestParseFilterAttributeKeyRequest(t *testing.T) {
 		expectedSearchText string
 		expectErr          bool
 		errMsg             string
+		expectedTagType    v3.TagType
 	}{
 		{
 			desc:               "valid operator and data source",
@@ -166,6 +167,38 @@ func TestParseFilterAttributeKeyRequest(t *testing.T) {
 			queryString:        "aggregateOperator=avg&dataSource=traces&limit=abc",
 			expectedOperator:   v3.AggregateOperatorAvg,
 			expectedDataSource: v3.DataSourceTraces,
+			expectedLimit:      50,
+		},
+		{
+			desc:               "invalid tag type",
+			queryString:        "aggregateOperator=avg&dataSource=traces&tagType=invalid",
+			expectedOperator:   v3.AggregateOperatorAvg,
+			expectedDataSource: v3.DataSourceTraces,
+			expectedTagType:    "",
+			expectedLimit:      50,
+		},
+		{
+			desc:               "valid tag type",
+			queryString:        "aggregateOperator=avg&dataSource=traces&tagType=resource",
+			expectedOperator:   v3.AggregateOperatorAvg,
+			expectedDataSource: v3.DataSourceTraces,
+			expectedTagType:    v3.TagTypeResource,
+			expectedLimit:      50,
+		},
+		{
+			desc:               "valid tag type",
+			queryString:        "aggregateOperator=avg&dataSource=traces&tagType=scope",
+			expectedOperator:   v3.AggregateOperatorAvg,
+			expectedDataSource: v3.DataSourceTraces,
+			expectedTagType:    v3.TagTypeInstrumentationScope,
+			expectedLimit:      50,
+		},
+		{
+			desc:               "valid tag type",
+			queryString:        "aggregateOperator=avg&dataSource=traces&tagType=tag",
+			expectedOperator:   v3.AggregateOperatorAvg,
+			expectedDataSource: v3.DataSourceTraces,
+			expectedTagType:    v3.TagTypeTag,
 			expectedLimit:      50,
 		},
 	}

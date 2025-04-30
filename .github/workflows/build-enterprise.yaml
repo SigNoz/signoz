@@ -69,11 +69,12 @@ jobs:
           echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
           echo 'CUSTOMERIO_ID="${{ secrets.CUSTOMERIO_ID }}"' >> frontend/.env
           echo 'CUSTOMERIO_SITE_ID="${{ secrets.CUSTOMERIO_SITE_ID }}"' >> frontend/.env
+          echo 'USERPILOT_KEY="${{ secrets.USERPILOT_KEY }}"' >> frontend/.env
       - name: cache-dotenv
         uses: actions/cache@v4
         with:
           path: frontend/.env
-          key: dotenv-${{ github.sha }}
+          key: enterprise-dotenv-${{ github.sha }}
   js-build:
     uses: signoz/primus.workflows/.github/workflows/js-build.yaml@main
     needs: prepare
@@ -81,10 +82,10 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
-      JS_INPUT_ARTIFACT_CACHE_KEY: dotenv-${{ github.sha }}
+      JS_INPUT_ARTIFACT_CACHE_KEY: enterprise-dotenv-${{ github.sha }}
       JS_INPUT_ARTIFACT_PATH: frontend/.env
-      JS_OUTPUT_ARTIFACT_CACHE_KEY: jsbuild-${{ github.sha }}
-      JS_OUTPUT_ARTIFACT_PATH: frontend/build
+      JS_OUTPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
+      JS_OUTPUT_ARTIFACT_PATH: frontend/build 
       DOCKER_BUILD: false
       DOCKER_MANIFEST: false
   go-build:
@@ -93,7 +94,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
-      GO_INPUT_ARTIFACT_CACHE_KEY: jsbuild-${{ github.sha }}
+      GO_INPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
       GO_INPUT_ARTIFACT_PATH: frontend/build
       GO_BUILD_CONTEXT: ./ee/query-service
       GO_BUILD_FLAGS: >-
@@ -104,6 +105,8 @@ jobs:
         -X github.com/SigNoz/signoz/pkg/version.hash=${{ needs.prepare.outputs.hash }}
         -X github.com/SigNoz/signoz/pkg/version.time=${{ needs.prepare.outputs.time }}
         -X github.com/SigNoz/signoz/pkg/version.branch=${{ needs.prepare.outputs.branch }}
+        -X github.com/SigNoz/signoz/ee/zeus.url=https://api.signoz.cloud
+        -X github.com/SigNoz/signoz/ee/zeus.deprecatedURL=https://license.signoz.io
         -X github.com/SigNoz/signoz/ee/query-service/constants.ZeusURL=https://api.signoz.cloud
         -X github.com/SigNoz/signoz/ee/query-service/constants.LicenseSignozIo=https://license.signoz.io/api/v1'
       GO_CGO_ENABLED: 1

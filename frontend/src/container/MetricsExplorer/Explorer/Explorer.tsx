@@ -12,6 +12,7 @@ import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -56,6 +57,8 @@ function Explorer(): JSX.Element {
 			),
 		[currentQuery, updateAllQueriesOperators],
 	);
+
+	useShareBuilderUrl(exportDefaultQuery);
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null): void => {

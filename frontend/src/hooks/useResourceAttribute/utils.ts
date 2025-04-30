@@ -2,7 +2,10 @@ import {
 	getResourceAttributesTagKeys,
 	getResourceAttributesTagValues,
 } from 'api/metrics/getResourceAttributes';
-import { OperatorConversions } from 'constants/resourceAttributes';
+import {
+	CompositeQueryOperatorsConfig,
+	OperatorConversions,
+} from 'constants/resourceAttributes';
 import ROUTES from 'constants/routes';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import {
@@ -48,6 +51,32 @@ export const convertOperatorLabelToTraceOperator = (
 ): OperatorValues =>
 	OperatorConversions.find((operator) => operator.label === label)
 		?.traceValue as OperatorValues;
+
+export function convertOperatorLabelForExceptions(
+	label: string,
+): OperatorValues {
+	return CompositeQueryOperatorsConfig.find(
+		(operator) => operator.label === label,
+	)?.traceValue as OperatorValues;
+}
+
+export function formatStringValuesForTrace(
+	val: TagFilterItem['value'] = [],
+): string[] {
+	return !Array.isArray(val) ? [String(val)] : val;
+}
+
+export const convertCompositeQueryToTraceSelectedTags = (
+	filterItems: TagFilterItem[] = [],
+): Tags[] =>
+	filterItems.map((item) => ({
+		Key: item?.key?.key,
+		Operator: convertOperatorLabelForExceptions(item.op),
+		StringValues: formatStringValuesForTrace(item?.value),
+		NumberValues: [],
+		BoolValues: [],
+		TagType: 'ResourceAttribute',
+	})) as Tags[];
 
 export const convertRawQueriesToTraceSelectedTags = (
 	queries: IResourceAttribute[],

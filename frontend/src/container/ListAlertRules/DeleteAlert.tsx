@@ -24,7 +24,7 @@ function DeleteAlert({
 
 	const defaultErrorMessage = 'Something went wrong';
 
-	const onDeleteHandler = async (id: number): Promise<void> => {
+	const onDeleteHandler = async (id: string): Promise<void> => {
 		try {
 			const response = await deleteAlerts({
 				id,

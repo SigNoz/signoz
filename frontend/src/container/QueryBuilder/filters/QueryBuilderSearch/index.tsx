@@ -56,7 +56,6 @@ import { PLACEHOLDER } from './constant';
 import ExampleQueriesRendererForLogs from './ExampleQueriesRendererForLogs';
 import OptionRenderer from './OptionRenderer';
 import OptionRendererForLogs from './OptionRendererForLogs';
-import SpanScopeSelector from './SpanScopeSelector';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	convertExampleQueriesToOptions,
@@ -83,11 +82,6 @@ function QueryBuilderSearch({
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
 		pathname,
 	]);
-
-	const isTracesExplorerPage = useMemo(
-		() => pathname === ROUTES.TRACES_EXPLORER,
-		[pathname],
-	);
 
 	const [isEditingTag, setIsEditingTag] = useState(false);
 
@@ -489,7 +483,6 @@ function QueryBuilderSearch({
 							</Select.Option>
 					  ))}
 			</Select>
-			{isTracesExplorerPage && <SpanScopeSelector queryName={query.queryName} />}
 		</div>
 	);
 }

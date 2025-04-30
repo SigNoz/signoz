@@ -63,7 +63,7 @@ func (plugin *reqResLog) OnRequestEnd(request *http.Request, response *http.Resp
 func (plugin *reqResLog) OnError(request *http.Request, err error) {
 	host, port, _ := net.SplitHostPort(request.Host)
 	fields := []any{
-		err,
+		"error", err,
 		string(semconv.HTTPRequestMethodKey), request.Method,
 		string(semconv.URLPathKey), request.URL.Path,
 		string(semconv.URLSchemeKey), request.URL.Scheme,
