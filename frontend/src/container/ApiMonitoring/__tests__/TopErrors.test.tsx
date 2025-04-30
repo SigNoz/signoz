@@ -211,8 +211,9 @@ describe('TopErrors', () => {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		const { container } = render(<TopErrors {...mockProps} />);
 
-		// Check if the title is rendered
-		expect(screen.getByText('Top Errors')).toBeInTheDocument();
+		// Check if the title and toggle are rendered
+		expect(screen.getByText('Errors with Status Message')).toBeInTheDocument();
+		expect(screen.getByText('Status Message Exists')).toBeInTheDocument();
 
 		// Find the table row and verify content
 		const tableBody = container.querySelector('.ant-table-tbody');
@@ -289,5 +290,85 @@ describe('TopErrors', () => {
 
 		// Check if getTopErrorsQueryPayload was called with updated parameters
 		expect(getTopErrorsQueryPayload).toHaveBeenCalled();
+	});
+
+	it('handles status message toggle correctly', () => {
+		// eslint-disable-next-line react/jsx-props-no-spreading
+		render(<TopErrors {...mockProps} />);
+
+		// Find the toggle switch
+		const toggle = screen.getByRole('switch');
+		expect(toggle).toBeInTheDocument();
+
+		// Toggle should be on by default
+		expect(toggle).toHaveAttribute('aria-checked', 'true');
+
+		// Click the toggle to turn it off
+		fireEvent.click(toggle);
+
+		// Check if getTopErrorsQueryPayload was called with showStatusCodeErrors=false
+		expect(getTopErrorsQueryPayload).toHaveBeenCalledWith(
+			mockProps.domainName,
+			mockProps.timeRange.startTime,
+			mockProps.timeRange.endTime,
+			expect.any(Object),
+			false,
+		);
+
+		// Title should change
+		expect(screen.getByText('All Errors')).toBeInTheDocument();
+
+		// Click the toggle to turn it back on
+		fireEvent.click(toggle);
+
+		// Check if getTopErrorsQueryPayload was called with showStatusCodeErrors=true
+		expect(getTopErrorsQueryPayload).toHaveBeenCalledWith(
+			mockProps.domainName,
+			mockProps.timeRange.startTime,
+			mockProps.timeRange.endTime,
+			expect.any(Object),
+			true,
+		);
+
+		// Title should change back
+		expect(screen.getByText('Errors with Status Message')).toBeInTheDocument();
+	});
+
+	it('includes toggle state in query key for cache busting', () => {
+		// eslint-disable-next-line react/jsx-props-no-spreading
+		render(<TopErrors {...mockProps} />);
+
+		const toggle = screen.getByRole('switch');
+
+		// Initial query should include showStatusCodeErrors=true
+		expect(useQueries).toHaveBeenCalledWith(
+			expect.arrayContaining([
+				expect.objectContaining({
+					queryKey: expect.arrayContaining([
+						REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
+						expect.any(Object),
+						expect.any(String),
+						true,
+					]),
+				}),
+			]),
+		);
+
+		// Click toggle
+		fireEvent.click(toggle);
+
+		// Query should be called with showStatusCodeErrors=false in key
+		expect(useQueries).toHaveBeenCalledWith(
+			expect.arrayContaining([
+				expect.objectContaining({
+					queryKey: expect.arrayContaining([
+						REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
+						expect.any(Object),
+						expect.any(String),
+						false,
+					]),
+				}),
+			]),
+		);
 	});
 });
