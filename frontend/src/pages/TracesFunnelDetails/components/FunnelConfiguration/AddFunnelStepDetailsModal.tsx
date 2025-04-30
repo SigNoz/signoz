@@ -6,36 +6,40 @@ import { useUpdateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, X } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+
+import { FunnelStepPopoverProps } from './FunnelStepPopover';
 
 interface AddFunnelStepDetailsModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	stepOrder: number;
+	stepData: FunnelStepPopoverProps['stepData'];
 }
 
 function AddFunnelStepDetailsModal({
 	isOpen,
 	onClose,
-	stepOrder,
+	stepData,
 }: AddFunnelStepDetailsModalProps): JSX.Element {
 	const { funnelId, steps, setSteps } = useFunnelContext();
-	const initialStepName = useMemo(
-		() => steps?.find((step) => step.step_order === stepOrder)?.name || '',
-		[steps, stepOrder],
+
+	const [stepName, setStepName] = useState<string>(stepData?.name || '');
+	const [description, setDescription] = useState<string>(
+		stepData?.description || '',
 	);
-	const initialStepDescription = useMemo(
-		() => steps?.find((step) => step.step_order === stepOrder)?.description || '',
-		[steps, stepOrder],
-	);
-	const [stepName, setStepName] = useState<string>(initialStepName);
-	const [description, setDescription] = useState<string>(initialStepDescription);
 	const { notifications } = useNotifications();
 
 	const { mutate: updateFunnelStepDetails, isLoading } = useUpdateFunnelSteps(
 		funnelId,
 		notifications,
 	);
+
+	useEffect(() => {
+		if (isOpen) {
+			setStepName(stepData?.name || '');
+			setDescription(stepData?.description || '');
+		}
+	}, [isOpen, stepData]);
 
 	const handleCancel = (): void => {
 		setStepName('');
@@ -49,7 +53,7 @@ function AddFunnelStepDetailsModal({
 				funnel_id: funnelId,
 				steps: steps.map((step) => ({
 					...step,
-					...(step.step_order === stepOrder
+					...(step.step_order === stepData.step_order
 						? {
 								name: stepName || '',
 								description: description || '',

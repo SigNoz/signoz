@@ -100,11 +100,15 @@ function FunnelStep({
 						<FunnelStepPopover
 							isPopoverOpen={isPopoverOpen}
 							setIsPopoverOpen={setIsPopoverOpen}
-							stepOrder={stepData.step_order}
 							onStepRemove={(): void => onStepRemove(index)}
 							stepsCount={stepsCount}
 							isAddDetailsModalOpen={isAddDetailsModalOpen}
 							setIsAddDetailsModalOpen={setIsAddDetailsModalOpen}
+							stepData={{
+								step_order: stepData.step_order,
+								name: stepData.name,
+								description: stepData.description,
+							}}
 						/>
 					</div>
 				</div>
