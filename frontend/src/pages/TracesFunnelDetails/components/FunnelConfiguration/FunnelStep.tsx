@@ -75,8 +75,8 @@ function FunnelStep({
 			<Form form={form}>
 				<div className="funnel-step__header">
 					<div className="funnel-step-details">
-						{stepData.title ? (
-							<div className="funnel-step-details__title">{stepData.title}</div>
+						{stepData.name ? (
+							<div className="funnel-step-details__title">{stepData.name}</div>
 						) : (
 							<div className="funnel-step-details__title">Step {index + 1}</div>
 						)}

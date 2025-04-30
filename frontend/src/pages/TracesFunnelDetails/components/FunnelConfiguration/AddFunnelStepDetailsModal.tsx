@@ -2,13 +2,11 @@ import './AddFunnelStepDetailsModal.styles.scss';
 
 import { Input } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useUpdateFunnelStepDetails } from 'hooks/TracesFunnels/useFunnels';
+import { useUpdateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, X } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useState } from 'react';
-import { useQueryClient } from 'react-query';
+import { useMemo, useState } from 'react';
 
 interface AddFunnelStepDetailsModalProps {
 	isOpen: boolean;
@@ -21,16 +19,23 @@ function AddFunnelStepDetailsModal({
 	onClose,
 	stepOrder,
 }: AddFunnelStepDetailsModalProps): JSX.Element {
-	const { funnelId } = useFunnelContext();
-	const [stepName, setStepName] = useState<string>('');
-	const [description, setDescription] = useState<string>('');
+	const { funnelId, steps, setSteps } = useFunnelContext();
+	const initialStepName = useMemo(
+		() => steps?.find((step) => step.step_order === stepOrder)?.name || '',
+		[steps, stepOrder],
+	);
+	const initialStepDescription = useMemo(
+		() => steps?.find((step) => step.step_order === stepOrder)?.description || '',
+		[steps, stepOrder],
+	);
+	const [stepName, setStepName] = useState<string>(initialStepName);
+	const [description, setDescription] = useState<string>(initialStepDescription);
 	const { notifications } = useNotifications();
-	const queryClient = useQueryClient();
 
-	const {
-		mutate: updateFunnelStepDetails,
-		isLoading,
-	} = useUpdateFunnelStepDetails({ stepOrder });
+	const { mutate: updateFunnelStepDetails, isLoading } = useUpdateFunnelSteps(
+		funnelId,
+		notifications,
+	);
 
 	const handleCancel = (): void => {
 		setStepName('');
@@ -42,21 +47,22 @@ function AddFunnelStepDetailsModal({
 		updateFunnelStepDetails(
 			{
 				funnel_id: funnelId,
-				steps: [
-					{
-						step_name: stepName,
-						description,
-					},
-				],
-				updated_at: Date.now(),
+				steps: steps.map((step) => ({
+					...step,
+					...(step.step_order === stepOrder
+						? {
+								name: stepName || '',
+								description: description || '',
+						  }
+						: {}),
+				})),
+				timestamp: Date.now(),
 			},
 			{
-				onSuccess: () => {
-					queryClient.invalidateQueries([
-						REACT_QUERY_KEY.GET_FUNNEL_DETAILS,
-						funnelId,
-					]);
-					console.log('funnelId', funnelId);
+				onSuccess: (data) => {
+					if (data.payload?.steps) {
+						setSteps(data.payload.steps);
+					}
 					notifications.success({
 						message: 'Success',
 						description: 'Funnel step details updated successfully',

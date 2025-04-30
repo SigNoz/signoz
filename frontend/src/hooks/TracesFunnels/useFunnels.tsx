@@ -18,8 +18,6 @@ import {
 	saveFunnelDescription,
 	SlowTraceData,
 	SlowTracesPayload,
-	updateFunnelStepDetails,
-	UpdateFunnelStepDetailsPayload,
 	updateFunnelSteps,
 	UpdateFunnelStepsPayload,
 	ValidateFunnelResponse,
@@ -136,20 +134,6 @@ export const useValidateFunnelSteps = ({
 		queryKey: [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId, selectedTime],
 		enabled: !!funnelId && !!selectedTime && !!startTime && !!endTime,
 		staleTime: 1000 * 60 * 5,
-	});
-
-export const useUpdateFunnelStepDetails = ({
-	stepOrder,
-}: {
-	stepOrder: number;
-}): UseMutationResult<
-	SuccessResponse<FunnelData> | ErrorResponse,
-	Error,
-	UpdateFunnelStepDetailsPayload
-> =>
-	useMutation({
-		mutationFn: (payload) => updateFunnelStepDetails({ payload, stepOrder }),
-		mutationKey: [REACT_QUERY_KEY.UPDATE_FUNNEL_STEP_DETAILS, stepOrder],
 	});
 
 interface SaveFunnelDescriptionPayload {

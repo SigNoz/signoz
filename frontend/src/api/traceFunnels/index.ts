@@ -159,26 +159,6 @@ export interface UpdateFunnelStepDetailsPayload {
 	updated_at: number;
 }
 
-export const updateFunnelStepDetails = async ({
-	stepOrder,
-	payload,
-}: {
-	stepOrder: number;
-	payload: UpdateFunnelStepDetailsPayload;
-}): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
-	const response: AxiosResponse = await axios.put(
-		`${FUNNELS_BASE_PATH}/steps/${stepOrder}/update`,
-		payload,
-	);
-
-	return {
-		statusCode: 200,
-		error: null,
-		message: 'Funnel step details updated successfully',
-		payload: response.data,
-	};
-};
-
 interface UpdateFunnelDescriptionPayload {
 	funnel_id: string;
 	description: string;
