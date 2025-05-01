@@ -38,7 +38,6 @@ func New(ctx context.Context, settings factory.ProviderSettings, config cache.Co
 	return provider, nil
 }
 
-// WithClient creates a new cache with the given client
 func WithClient(client *redis.Client) *provider {
 	return &provider{client: client}
 }
@@ -72,8 +71,3 @@ func (c *provider) DeleteMany(ctx context.Context, orgID valuer.UUID, cacheKeys 
 		zap.L().Error("error deleting cache keys", zap.Strings("cacheKeys", cacheKeys), zap.Error(err))
 	}
 }
-
-// // Ping pings the redis server
-// func (c *provider) Ping(ctx context.Context) error {
-// 	return c.client.Ping(ctx).Err()
-// }

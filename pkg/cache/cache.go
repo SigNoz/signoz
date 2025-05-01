@@ -65,9 +65,9 @@ type Cache interface {
 	Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data CacheableEntity, ttl time.Duration) error
 	// Get gets the cacheble entity in the dest entity passed
 	Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest CacheableEntity, allowExpired bool) (RetrieveStatus, error)
-	// Delete deletes the cache kv pair from cache
+	// Delete deletes the cacheable entity from cache
 	Delete(ctx context.Context, orgID valuer.UUID, cacheKey string)
-	// DeleteMany deletes multiple cache kv pairs from  cache
+	// DeleteMany deletes multiple cacheble entities from cache
 	DeleteMany(ctx context.Context, orgID valuer.UUID, cacheKeys []string)
 }
 

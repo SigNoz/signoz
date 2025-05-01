@@ -23,7 +23,7 @@ type Task interface {
 
 	Type() TaskType
 	CopyState(from Task) error
-	Eval(ctx context.Context, orgID valuer.UUID, ts time.Time)
+	Eval(ctx context.Context, ts time.Time)
 	Run(ctx context.Context)
 	Rules() []Rule
 	Stop()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -31,7 +32,7 @@ func (c *provider) Set(_ context.Context, orgID valuer.UUID, cacheKey string, da
 		return cache.WrapCacheableEntityErrors(reflect.TypeOf(data), "inmemory")
 	}
 
-	c.cc.Set(cacheKey, data, ttl)
+	c.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), data, ttl)
 	return nil
 }
 
@@ -47,7 +48,7 @@ func (c *provider) Get(_ context.Context, orgID valuer.UUID, cacheKey string, de
 		return cache.RetrieveStatusError, fmt.Errorf("destination value is not settable, %s", dstv.Elem())
 	}
 
-	data, found := c.cc.Get(cacheKey)
+	data, found := c.cc.Get(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 	if !found {
 		return cache.RetrieveStatusKeyMiss, nil
 	}
@@ -64,11 +65,11 @@ func (c *provider) Get(_ context.Context, orgID valuer.UUID, cacheKey string, de
 }
 
 func (c *provider) Delete(_ context.Context, orgID valuer.UUID, cacheKey string) {
-	c.cc.Delete(cacheKey)
+	c.cc.Delete(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 }
 
 func (c *provider) DeleteMany(_ context.Context, orgID valuer.UUID, cacheKeys []string) {
 	for _, cacheKey := range cacheKeys {
-		c.cc.Delete(cacheKey)
+		c.cc.Delete(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 	}
 }

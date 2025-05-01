@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // A Rule encapsulates a vector expression which is evaluated at a specified
@@ -28,7 +27,7 @@ type Rule interface {
 
 	PreferredChannels() []string
 
-	Eval(context.Context, valuer.UUID, time.Time) (interface{}, error)
+	Eval(context.Context, time.Time) (interface{}, error)
 	String() string
 	SetLastError(error)
 	LastError() error

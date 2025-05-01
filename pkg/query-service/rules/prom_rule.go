@@ -29,6 +29,7 @@ type PromRule struct {
 
 func NewPromRule(
 	id string,
+	orgID valuer.UUID,
 	postableRule *ruletypes.PostableRule,
 	logger *zap.Logger,
 	reader interfaces.Reader,
@@ -36,7 +37,7 @@ func NewPromRule(
 	opts ...RuleOption,
 ) (*PromRule, error) {
 
-	baseRule, err := NewBaseRule(id, postableRule, reader, opts...)
+	baseRule, err := NewBaseRule(id, orgID, postableRule, reader, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func (r *PromRule) getPqlQuery() (string, error) {
 	return "", fmt.Errorf("invalid promql rule query")
 }
 
-func (r *PromRule) Eval(ctx context.Context, orgID valuer.UUID, ts time.Time) (interface{}, error) {
+func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
 
 	prevState := r.State()
 

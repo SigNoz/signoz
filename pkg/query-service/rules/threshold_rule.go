@@ -56,6 +56,7 @@ type ThresholdRule struct {
 
 func NewThresholdRule(
 	id string,
+	orgID valuer.UUID,
 	p *ruletypes.PostableRule,
 	reader interfaces.Reader,
 	opts ...RuleOption,
@@ -63,7 +64,7 @@ func NewThresholdRule(
 
 	zap.L().Info("creating new ThresholdRule", zap.String("id", id), zap.Any("opts", opts))
 
-	baseRule, err := NewBaseRule(id, p, reader, opts...)
+	baseRule, err := NewBaseRule(id, orgID, p, reader, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -357,12 +358,12 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 	return resultVector, nil
 }
 
-func (r *ThresholdRule) Eval(ctx context.Context, orgID valuer.UUID, ts time.Time) (interface{}, error) {
+func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
 
 	prevState := r.State()
 
 	valueFormatter := formatter.FromUnit(r.Unit())
-	res, err := r.buildAndRunQuery(ctx, orgID, ts)
+	res, err := r.buildAndRunQuery(ctx, r.orgID, ts)
 
 	if err != nil {
 		return nil, err

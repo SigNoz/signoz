@@ -802,7 +802,7 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewThresholdRule("69", &postableRule, nil, WithEvalDelay(2*time.Minute))
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, WithEvalDelay(2*time.Minute))
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -890,7 +890,7 @@ func TestPrepareLinksToLogs(t *testing.T) {
 		},
 	}
 
-	rule, err := NewThresholdRule("69", &postableRule, nil, WithEvalDelay(2*time.Minute))
+	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, WithEvalDelay(2*time.Minute))
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -931,7 +931,7 @@ func TestPrepareLinksToTraces(t *testing.T) {
 		},
 	}
 
-	rule, err := NewThresholdRule("69", &postableRule, nil, WithEvalDelay(2*time.Minute))
+	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, WithEvalDelay(2*time.Minute))
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -1006,7 +1006,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewThresholdRule("69", &postableRule, nil, WithEvalDelay(2*time.Minute))
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, WithEvalDelay(2*time.Minute))
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1058,7 +1058,7 @@ func TestThresholdRuleEvalDelay(t *testing.T) {
 	}
 
 	for idx, c := range cases {
-		rule, err := NewThresholdRule("69", &postableRule, nil) // no eval delay
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil) // no eval delay
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1106,7 +1106,7 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 	}
 
 	for idx, c := range cases {
-		rule, err := NewThresholdRule("69", &postableRule, nil, WithEvalDelay(2*time.Minute))
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, WithEvalDelay(2*time.Minute))
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1246,7 +1246,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		readerCache, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
 		require.NoError(t, err)
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), readerCache)
-		rule, err := NewThresholdRule("69", &postableRule, reader)
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
@@ -1256,7 +1256,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), valuer.GenerateUUID(), time.Now())
+		retVal, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1343,7 +1343,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), readerCache)
 
-		rule, err := NewThresholdRule("69", &postableRule, reader)
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
@@ -1353,7 +1353,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), valuer.GenerateUUID(), time.Now())
+		retVal, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1447,7 +1447,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil)
 
-		rule, err := NewThresholdRule("69", &postableRule, reader)
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
@@ -1457,7 +1457,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), valuer.GenerateUUID(), time.Now())
+		retVal, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1568,7 +1568,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), nil)
 
-		rule, err := NewThresholdRule("69", &postableRule, reader)
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
 				v3.Delta: true,
@@ -1578,7 +1578,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), valuer.GenerateUUID(), time.Now())
+		retVal, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1644,7 +1644,7 @@ func TestThresholdRuleShiftBy(t *testing.T) {
 		},
 	}
 
-	rule, err := NewThresholdRule("69", &postableRule, nil)
+	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil)
 	if err != nil {
 		assert.NoError(t, err)
 	}

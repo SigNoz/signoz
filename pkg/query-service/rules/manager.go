@@ -145,6 +145,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		// create a threshold rule
 		tr, err := NewThresholdRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
 			opts.Reader,
 			WithEvalDelay(opts.ManagerOpts.EvalDelay),
@@ -165,6 +166,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		// create promql rule
 		pr, err := NewPromRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
 			opts.Logger,
 			opts.Reader,

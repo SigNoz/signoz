@@ -24,6 +24,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		// create a threshold rule
 		tr, err := baserules.NewThresholdRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
 			opts.Reader,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
@@ -44,6 +45,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		// create promql rule
 		pr, err := baserules.NewPromRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
 			opts.Logger,
 			opts.Reader,
@@ -64,6 +66,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		// create anomaly rule
 		ar, err := NewAnomalyRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
 			opts.Reader,
 			opts.Cache,
@@ -120,6 +123,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		// create a threshold rule
 		rule, err = baserules.NewThresholdRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Reader,
 			baserules.WithSendAlways(),
@@ -137,6 +141,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		// create promql rule
 		rule, err = baserules.NewPromRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Logger,
 			opts.Reader,
@@ -154,6 +159,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		// create anomaly rule
 		rule, err = NewAnomalyRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Reader,
 			opts.Cache,
@@ -172,7 +178,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 	// set timestamp to current utc time
 	ts := time.Now().UTC()
 
-	count, err := rule.Eval(ctx, opts.OrgID, ts)
+	count, err := rule.Eval(ctx, ts)
 	if err != nil {
 		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
 		return 0, basemodel.InternalError(fmt.Errorf("rule evaluation failed"))

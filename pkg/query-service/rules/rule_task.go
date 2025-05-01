@@ -117,7 +117,7 @@ func (g *RuleTask) Run(ctx context.Context) {
 			return
 		}
 		start := time.Now()
-		g.Eval(ctx, g.orgID, evalTimestamp)
+		g.Eval(ctx, evalTimestamp)
 		timeSinceStart := time.Since(start)
 
 		g.setEvaluationTime(timeSinceStart)
@@ -299,7 +299,7 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 }
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
-func (g *RuleTask) Eval(ctx context.Context, orgID valuer.UUID, ts time.Time) {
+func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -359,7 +359,7 @@ func (g *RuleTask) Eval(ctx context.Context, orgID valuer.UUID, ts time.Time) {
 			}
 			ctx = context.WithValue(ctx, common.LogCommentKey, kvs)
 
-			_, err := rule.Eval(ctx, g.orgID, ts)
+			_, err := rule.Eval(ctx, ts)
 			if err != nil {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)

@@ -23,6 +23,7 @@ import (
 type BaseRule struct {
 	id             string
 	name           string
+	orgID          valuer.UUID
 	source         string
 	handledRestart bool
 
@@ -117,13 +118,14 @@ func WithSQLStore(sqlstore sqlstore.SQLStore) RuleOption {
 	}
 }
 
-func NewBaseRule(id string, p *ruletypes.PostableRule, reader interfaces.Reader, opts ...RuleOption) (*BaseRule, error) {
+func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader interfaces.Reader, opts ...RuleOption) (*BaseRule, error) {
 	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
 	}
 
 	baseRule := &BaseRule{
 		id:                id,
+		orgID:             orgID,
 		name:              p.AlertName,
 		source:            p.Source,
 		typ:               p.AlertType,
@@ -219,6 +221,7 @@ func (r *ThresholdRule) hostFromSource() string {
 }
 
 func (r *BaseRule) ID() string                          { return r.id }
+func (r *BaseRule) OrgID() valuer.UUID                  { return r.orgID }
 func (r *BaseRule) Name() string                        { return r.name }
 func (r *BaseRule) Condition() *ruletypes.RuleCondition { return r.ruleCondition }
 func (r *BaseRule) Labels() qslabels.BaseLabels         { return r.labels }

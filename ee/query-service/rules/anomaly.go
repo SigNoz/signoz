@@ -54,6 +54,7 @@ type AnomalyRule struct {
 
 func NewAnomalyRule(
 	id string,
+	orgID valuer.UUID,
 	p *ruletypes.PostableRule,
 	reader interfaces.Reader,
 	cache cache.Cache,
@@ -67,7 +68,7 @@ func NewAnomalyRule(
 		p.RuleCondition.Target = &target
 	}
 
-	baseRule, err := baserules.NewBaseRule(id, p, reader, opts...)
+	baseRule, err := baserules.NewBaseRule(id, orgID, p, reader, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -200,12 +201,12 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 	return resultVector, nil
 }
 
-func (r *AnomalyRule) Eval(ctx context.Context, orgID valuer.UUID, ts time.Time) (interface{}, error) {
+func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
 
 	prevState := r.State()
 
 	valueFormatter := formatter.FromUnit(r.Unit())
-	res, err := r.buildAndRunQuery(ctx, orgID, ts)
+	res, err := r.buildAndRunQuery(ctx, r.OrgID(), ts)
 
 	if err != nil {
 		return nil, err
