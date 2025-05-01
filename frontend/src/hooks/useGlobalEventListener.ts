@@ -5,7 +5,7 @@ export type EventHandler<K extends keyof WindowEventMap> = (
 ) => void;
 
 export function useGlobalEventListener<K extends keyof WindowEventMap>(
-	type: K,
+	eventName: K,
 	handler: EventHandler<K>,
 	options?: AddEventListenerOptions,
 ): void {
@@ -22,10 +22,10 @@ export function useGlobalEventListener<K extends keyof WindowEventMap>(
 			}
 		};
 
-		window.addEventListener(type, eventListener, options);
+		window.addEventListener(eventName, eventListener, options);
 
 		return (): void => {
-			window.removeEventListener(type, eventListener, options);
+			window.removeEventListener(eventName, eventListener, options);
 		};
-	});
+	}, [eventName, options]);
 }

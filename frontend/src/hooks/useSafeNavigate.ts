@@ -53,7 +53,6 @@ const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
  * 2. Either:
  *    - Current URL has no params and target URL has params, or
  *    - Target URL has new params that didn't exist in current URL
- * TODO: SMIT Share callback function with multiple instances of this hook
  */
 const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
 	// Different pathnames means it's not a default navigation
@@ -75,6 +74,7 @@ const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
 	return newKeys.length > 0;
 };
 
+// TODO: SMIT Share callback function with multiple instances of this hook
 export const useSafeNavigate = (
 	{ preventSameUrlNavigation }: UseSafeNavigateProps = {
 		preventSameUrlNavigation: true,

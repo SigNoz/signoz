@@ -23,7 +23,6 @@ import { QueryHistoryState } from 'container/LiveLogs/types';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax, { isValidTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
@@ -43,6 +42,7 @@ import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 
 import AutoRefresh from '../AutoRefreshV2';
@@ -75,14 +75,12 @@ function DateTimeSelection({
 	modalSelectedInterval,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
-	const { safeNavigate } = useSafeNavigate();
 	const navigationType = useNavigationType(); // Returns 'POP' for back/forward navigation
 	const dispatch = useDispatch();
 	const location = useLocation();
 
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
-
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
@@ -193,8 +191,11 @@ function DateTimeSelection({
 
 		const path = `${ROUTES.LIVE_LOGS}?${QueryParams.compositeQuery}=${JSONCompositeQuery}`;
 
-		safeNavigate(path, { state: queryHistoryState });
-	}, [panelType, queryClient, safeNavigate, stagedQuery]);
+		safeNavigateNoSameURLMemo(path, {
+			state: queryHistoryState,
+			flushSync: true,
+		});
+	}, [panelType, queryClient, stagedQuery]);
 
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
@@ -347,7 +348,7 @@ function DateTimeSelection({
 			urlQuery.set(QueryParams.relativeTime, value);
 
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			safeNavigate(generatedUrl);
+			safeNavigateNoSameURLMemo(generatedUrl);
 
 			// For logs explorer - time range handling is managed in useCopyLogLink.ts:52
 
@@ -364,7 +365,6 @@ function DateTimeSelection({
 			location.pathname,
 			onTimeChange,
 			refreshButtonHidden,
-			safeNavigate,
 			stagedQuery,
 			updateLocalStorageForRoutes,
 			updateTimeInterval,
@@ -436,7 +436,7 @@ function DateTimeSelection({
 				urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
 				urlQuery.delete(QueryParams.relativeTime);
 				const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-				safeNavigate(generatedUrl);
+				safeNavigateNoSameURLMemo(generatedUrl);
 			}
 		}
 	};
@@ -461,7 +461,7 @@ function DateTimeSelection({
 		urlQuery.set(QueryParams.relativeTime, dateTimeStr);
 
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-		safeNavigate(generatedUrl);
+		safeNavigateNoSameURLMemo(generatedUrl);
 
 		if (!stagedQuery) {
 			return;
@@ -609,7 +609,7 @@ function DateTimeSelection({
 			updateTimeInterval(defaultRelativeTime);
 			urlQuery.set(QueryParams.relativeTime, defaultRelativeTime);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			safeNavigate(generatedUrl);
+			safeNavigateNoSameURLMemo(generatedUrl);
 			return;
 		}
 
@@ -647,9 +647,9 @@ function DateTimeSelection({
 
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 
-		safeNavigate(generatedUrl);
+		safeNavigateNoSameURLMemo(generatedUrl, { flushSync: true });
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
+	}, [location.pathname, urlQuery, updateTimeInterval, globalTimeLoading]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const shareModalContent = (): JSX.Element => {

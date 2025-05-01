@@ -312,21 +312,31 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	// global event listener for NAVIGATE event
 	// This will provide access to useNavigation hook from outside of components
-	useGlobalEventListener('SAFE_NAVIGATE', (event: CustomEvent) => {
-		const { to, options } = event.detail;
-		console.log('🚀 ~ useGlobalEventListener ~ SAFE_NAVIGATE:', to, options);
-		if (to) {
-			safeNavigate(to, options);
-		}
-	});
+	useGlobalEventListener(
+		'SAFE_NAVIGATE',
+		(event: CustomEvent) => {
+			const { to, options } = event.detail;
+			if (to) {
+				safeNavigate(to, options);
+			}
+		},
+		{
+			passive: true,
+		},
+	);
 
-	useGlobalEventListener('UNSAFE_NAVIGATE', (event: CustomEvent) => {
-		const { to, options } = event.detail;
-		console.log('🚀 ~ useGlobalEventListener ~ UNSAFE_NAVIGATE:', to, options);
-		if (to) {
-			unsafeNavigate(to, options);
-		}
-	});
+	useGlobalEventListener(
+		'UNSAFE_NAVIGATE',
+		(event: CustomEvent) => {
+			const { to, options } = event.detail;
+			if (to) {
+				unsafeNavigate(to, options);
+			}
+		},
+		{
+			passive: true,
+		},
+	);
 
 	// NOTE: disabling this rule as there is no need to have div
 	// eslint-disable-next-line react/jsx-no-useless-fragment

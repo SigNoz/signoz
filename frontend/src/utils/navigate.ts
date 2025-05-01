@@ -6,17 +6,18 @@ const navigate = (
 	options?: NavigateOptions,
 ): void => {
 	if (window !== undefined) {
-		console.log(`🚀 ~ window:${eventName} -> dispatch`, to, options);
 		window.dispatchEvent(
 			new CustomEvent(eventName, {
 				detail: {
 					to,
 					options,
 				},
+				bubbles: false,
+				cancelable: false,
 			}),
 		);
 	} else {
-		throw new Error('Failed navigation from non-compnent: window is undefined');
+		throw new Error('Failed navigation from non-component: window is undefined');
 	}
 };
 
