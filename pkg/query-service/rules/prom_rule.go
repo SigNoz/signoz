@@ -209,7 +209,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
-		// Update the last value and annotations if so, create a new alert entry otherwise.
+		// UpdateSteps the last value and annotations if so, create a new alert entry otherwise.
 		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations

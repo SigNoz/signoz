@@ -115,7 +115,7 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 			missingRanges = append(missingRanges, MissInterval{Start: currentTime, End: min(data.Start, end)})
 		}
 
-		// Update currentTime, but don't go past the end time
+		// UpdateSteps currentTime, but don't go past the end time
 		currentTime = max(currentTime, min(data.End, end))
 	}
 
@@ -205,7 +205,7 @@ func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey stri
 			missingRanges = append(missingRanges, MissInterval{Start: currentTime, End: min(data.Start, end)})
 		}
 
-		// Update currentTime, but don't go past the end time
+		// UpdateSteps currentTime, but don't go past the end time
 		currentTime = max(currentTime, min(data.End, end))
 	}
 
