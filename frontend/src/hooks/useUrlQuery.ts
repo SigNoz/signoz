@@ -1,11 +1,10 @@
-import { useMemo } from 'react';
-import { useLocation } from 'react-router';
+import { useSearchParams } from 'react-router';
 
-// TODO: useSearchParams -> https://reactrouter.com/api/hooks/useSearchParams#usesearchparams
+// TODO: Migrate to useSearchParams -> https://reactrouter.com/api/hooks/useSearchParams#usesearchparams
 function useUrlQuery(): URLSearchParams {
-	const { search } = useLocation();
+	const [params] = useSearchParams();
 
-	return useMemo(() => new URLSearchParams(search), [search]);
+	return params;
 }
 
 export default useUrlQuery;
