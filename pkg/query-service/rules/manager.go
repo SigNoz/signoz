@@ -57,6 +57,7 @@ type PrepareTestRuleOptions struct {
 	ManagerOpts      *ManagerOptions
 	NotifyFunc       NotifyFunc
 	SQLStore         sqlstore.SQLStore
+	OrgID            valuer.UUID
 }
 
 const taskNamesuffix = "webAppEditor"
@@ -976,7 +977,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleIdStr strin
 
 // TestNotification prepares a dummy rule for given rule parameters and
 // sends a test notification. returns alert count and error (if any)
-func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *model.ApiError) {
+func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleStr string) (int, *model.ApiError) {
 
 	parsedRule, err := ruletypes.ParsePostableRule([]byte(ruleStr))
 
@@ -994,6 +995,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 		ManagerOpts:      m.opts,
 		NotifyFunc:       m.prepareTestNotifyFunc(),
 		SQLStore:         m.sqlstore,
+		OrgID:            orgID,
 	})
 
 	return alertCount, apiErr

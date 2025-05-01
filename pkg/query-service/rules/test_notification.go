@@ -82,7 +82,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	// set timestamp to current utc time
 	ts := time.Now().UTC()
 
-	count, err := rule.Eval(ctx, ts)
+	count, err := rule.Eval(ctx, opts.OrgID, ts)
 	if err != nil {
 		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
 		return 0, model.InternalError(fmt.Errorf("rule evaluation failed"))

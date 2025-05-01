@@ -1320,7 +1320,16 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
-
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -1332,7 +1341,7 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	alertCount, apiRrr := aH.ruleManager.TestNotification(ctx, string(body))
+	alertCount, apiRrr := aH.ruleManager.TestNotification(ctx, orgID, string(body))
 	if apiRrr != nil {
 		RespondError(w, apiRrr, nil)
 		return

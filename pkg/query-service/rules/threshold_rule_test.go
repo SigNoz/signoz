@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
@@ -1255,7 +1256,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		retVal, err := rule.Eval(context.Background(), valuer.GenerateUUID(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1352,7 +1353,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		retVal, err := rule.Eval(context.Background(), valuer.GenerateUUID(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1456,7 +1457,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		retVal, err := rule.Eval(context.Background(), valuer.GenerateUUID(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1577,7 +1578,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		retVal, err := rule.Eval(context.Background(), valuer.GenerateUUID(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
