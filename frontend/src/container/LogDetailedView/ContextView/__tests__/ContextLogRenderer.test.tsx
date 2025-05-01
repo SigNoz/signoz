@@ -1,4 +1,10 @@
-import { render, RenderResult, screen, waitFor } from '@testing-library/react';
+import {
+	act,
+	render,
+	RenderResult,
+	screen,
+	waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap } from 'constants/queryBuilder';
@@ -107,7 +113,9 @@ describe('ContextLogRenderer', () => {
 	});
 
 	it('renders without crashing', async () => {
-		renderContextLogRenderer();
+		await act(async () => {
+			renderContextLogRenderer();
+		});
 
 		await waitFor(() => {
 			expect(screen.getAllByText('Load more')).toHaveLength(2);
@@ -116,7 +124,9 @@ describe('ContextLogRenderer', () => {
 	});
 
 	it('loads new logs when clicking Load more button', async () => {
-		renderContextLogRenderer();
+		await act(async () => {
+			renderContextLogRenderer();
+		});
 
 		await waitFor(() => {
 			expect(screen.getAllByText('Load more')).toHaveLength(2);
@@ -124,7 +134,9 @@ describe('ContextLogRenderer', () => {
 		});
 
 		const loadMoreButtons = screen.getAllByText('Load more');
-		await userEvent.click(loadMoreButtons[1]);
+		await act(async () => {
+			await userEvent.click(loadMoreButtons[1]);
+		});
 
 		await waitFor(() => {
 			expect(screen.getAllByText(/Failed to authenticate/)).toHaveLength(3);
