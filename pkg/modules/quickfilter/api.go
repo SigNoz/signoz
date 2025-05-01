@@ -2,7 +2,6 @@ package quickfilter
 
 import (
 	"encoding/json"
-	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/quickfiltertypes"
@@ -26,9 +25,9 @@ func NewAPI(usecase Usecase) API {
 }
 
 func (q *quickFiltersAPI) GetQuickFilters(rw http.ResponseWriter, r *http.Request) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if ok != nil {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -42,16 +41,16 @@ func (q *quickFiltersAPI) GetQuickFilters(rw http.ResponseWriter, r *http.Reques
 }
 
 func (q *quickFiltersAPI) UpdateQuickFilters(rw http.ResponseWriter, r *http.Request) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if ok != nil {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
 	var req quickfiltertypes.UpdatableQuickFilters
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid request body: %v", err))
+	decodeErr := json.NewDecoder(r.Body).Decode(&req)
+	if decodeErr != nil {
+		render.Error(rw, decodeErr)
 		return
 	}
 
@@ -65,14 +64,18 @@ func (q *quickFiltersAPI) UpdateQuickFilters(rw http.ResponseWriter, r *http.Req
 }
 
 func (q *quickFiltersAPI) GetSignalFilters(rw http.ResponseWriter, r *http.Request) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if ok != nil {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
 	signal := mux.Vars(r)["signal"]
-	validatedSignal, _ := quickfiltertypes.NewSignal(signal)
+	validatedSignal, err := quickfiltertypes.NewSignal(signal)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
 	filters, err := q.usecase.GetSignalFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSignal)
 	if err != nil {

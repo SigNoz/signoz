@@ -7,10 +7,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/quickfiltertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"time"
 )
 
 type usecase struct {
@@ -45,7 +43,7 @@ func (u *usecase) GetQuickFilters(ctx context.Context, orgID valuer.UUID) ([]*qu
 func (u *usecase) GetSignalFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal) (*quickfiltertypes.SignalFilters, error) {
 	storedFilter, err := u.store.GetBySignal(ctx, orgID, signal.StringValue())
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error fetching signal filters")
+		return nil, err
 	}
 
 	// If no filter exists for this signal, return empty filters with the requested signal
@@ -88,9 +86,9 @@ func (u *usecase) UpdateQuickFilters(ctx context.Context, orgID valuer.UUID, sig
 
 	var filter *quickfiltertypes.StorableQuickFilter
 	if existingFilter != nil {
-		filter = updateExistingFilter(existingFilter, filterJSON)
+		filter = quickfiltertypes.UpdateExistingFilter(existingFilter, filterJSON)
 	} else {
-		filter = createNewFilter(orgID, signal, filterJSON)
+		filter = quickfiltertypes.CreateNewFilter(orgID, signal, filterJSON)
 	}
 
 	err = u.store.Upsert(ctx, filter)
@@ -107,29 +105,4 @@ func (u *usecase) SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error creating default quick filters")
 	}
 	return u.store.Create(ctx, storableQuickFilters)
-}
-
-// updateExistingFilter updates an existing StorableQuickFilter with new filter data
-func updateExistingFilter(existingFilter *quickfiltertypes.StorableQuickFilter, filterJSON []byte) *quickfiltertypes.StorableQuickFilter {
-	filter := existingFilter
-	filter.Filter = string(filterJSON)
-	filter.UpdatedAt = time.Now()
-	return filter
-}
-
-// createNewFilter creates a new StorableQuickFilter
-func createNewFilter(orgID valuer.UUID, signal quickfiltertypes.Signal, filterJSON []byte) *quickfiltertypes.StorableQuickFilter {
-	now := time.Now()
-	return &quickfiltertypes.StorableQuickFilter{
-		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		OrgID:  orgID,
-		Signal: signal,
-		Filter: string(filterJSON),
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: now,
-			UpdatedAt: now,
-		},
-	}
 }

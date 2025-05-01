@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
+	"time"
 )
 
 type Signal struct {
@@ -51,6 +52,15 @@ func NewSignal(s string) (Signal, error) {
 	}
 }
 
+// updateExistingFilter updates an existing StorableQuickFilter with new filter data
+func UpdateExistingFilter(existingFilter *StorableQuickFilter, filterJSON []byte) *StorableQuickFilter {
+	// Validation of existing filter and filterJson has been done already
+	filter := existingFilter
+	filter.Filter = string(filterJSON)
+	filter.UpdatedAt = time.Now()
+	return filter
+}
+
 type StorableQuickFilter struct {
 	bun.BaseModel `bun:"table:quick_filter"`
 	types.Identifiable
@@ -88,6 +98,23 @@ func NewSignalFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFi
 		Signal:  storableQuickFilter.Signal,
 		Filters: filters,
 	}, nil
+}
+
+// createNewFilter creates a new StorableQuickFilter
+func CreateNewFilter(orgID valuer.UUID, signal Signal, filterJSON []byte) *StorableQuickFilter {
+	now := time.Now()
+	return &StorableQuickFilter{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		OrgID:  orgID,
+		Signal: signal,
+		Filter: string(filterJSON),
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+	}
 }
 
 func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
