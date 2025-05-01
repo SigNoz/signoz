@@ -1,17 +1,16 @@
 import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router';
-import { safeNavigateNoSameURLMemo } from 'utils/navigate';
-
-import useUrlQuery from './useUrlQuery';
+import { useSearchParams } from 'react-router';
 
 const useUrlQueryData = <T>(
 	queryKey: string,
 	defaultData?: T,
 ): UseUrlQueryData<T> => {
-	const location = useLocation();
-	const urlQuery = useUrlQuery();
+	const [searchParams, setSearchParams] = useSearchParams();
 
-	const query = useMemo(() => urlQuery.get(queryKey), [urlQuery, queryKey]);
+	const query = useMemo(() => searchParams.get(queryKey), [
+		searchParams,
+		queryKey,
+	]);
 
 	const queryData: T = useMemo(() => (query ? JSON.parse(query) : defaultData), [
 		query,
@@ -24,17 +23,20 @@ const useUrlQueryData = <T>(
 
 			// Create a new URLSearchParams object with the current URL's search params
 			// This ensures we're working with the most up-to-date URL state
-			const currentUrlQuery = new URLSearchParams(window.location.search);
-
+			// const currentUrlQuery = new URLSearchParams(location.search);
+			// TODO: Smit remove above comment after test
 			// Update or add the specified query parameter with the new serialized data
-			currentUrlQuery.set(queryKey, newQuery);
-
-			// Construct the new URL by combining the current pathname with the updated query string
-			const generatedUrl = `${location.pathname}?${currentUrlQuery.toString()}`;
-
-			safeNavigateNoSameURLMemo(generatedUrl);
+			// Immediately propogate navigation event instead of waiting for the routing cycle
+			requestAnimationFrame(() => {
+				setSearchParams(
+					(params: URLSearchParams): URLSearchParams => {
+						params.set(queryKey, newQuery);
+						return params;
+					},
+				);
+			});
 		},
-		[location.pathname, queryKey],
+		[queryKey, setSearchParams],
 	);
 
 	return {

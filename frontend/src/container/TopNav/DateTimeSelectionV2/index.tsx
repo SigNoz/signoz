@@ -23,7 +23,6 @@ import { QueryHistoryState } from 'container/LiveLogs/types';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax, { isValidTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import { isObject } from 'lodash-es';
@@ -32,7 +31,7 @@ import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigationType } from 'react-router';
+import { useLocation, useNavigationType, useSearchParams } from 'react-router';
 import { useCopyToClipboard } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -78,13 +77,14 @@ function DateTimeSelection({
 	const navigationType = useNavigationType(); // Returns 'POP' for back/forward navigation
 	const dispatch = useDispatch();
 	const location = useLocation();
+	const [searchParams] = useSearchParams();
 
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
-	const urlQuery = useUrlQuery();
-	const searchStartTime = urlQuery.get('startTime');
-	const searchEndTime = urlQuery.get('endTime');
-	const relativeTimeFromUrl = urlQuery.get(QueryParams.relativeTime);
+	const searchStartTime = searchParams.get(QueryParams.startTime);
+	const searchEndTime = searchParams.get(QueryParams.endTime);
+	const relativeTimeFromUrl = searchParams.get(QueryParams.relativeTime);
+
 	const queryClient = useQueryClient();
 	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(false);
 	const [isValidteRelativeTime, setIsValidteRelativeTime] = useState(false);
@@ -342,12 +342,12 @@ function DateTimeSelection({
 				return;
 			}
 
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+			searchParams.delete(QueryParams.startTime);
+			searchParams.delete(QueryParams.endTime);
 
-			urlQuery.set(QueryParams.relativeTime, value);
+			searchParams.set(QueryParams.relativeTime, value);
 
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			const generatedUrl = `${location.pathname}?${searchParams.toString()}`;
 			safeNavigateNoSameURLMemo(generatedUrl);
 
 			// For logs explorer - time range handling is managed in useCopyLogLink.ts:52
@@ -368,7 +368,7 @@ function DateTimeSelection({
 			stagedQuery,
 			updateLocalStorageForRoutes,
 			updateTimeInterval,
-			urlQuery,
+			searchParams,
 		],
 	);
 
@@ -424,18 +424,21 @@ function DateTimeSelection({
 					endTime.toDate().getTime(),
 				]);
 
-				setLocalStorageKey('startTime', startTime.toString());
-				setLocalStorageKey('endTime', endTime.toString());
+				setLocalStorageKey(QueryParams.startTime, startTime.toString());
+				setLocalStorageKey(QueryParams.endTime, endTime.toString());
 
 				updateLocalStorageForRoutes(JSON.stringify({ startTime, endTime }));
 
-				urlQuery.set(
+				searchParams.set(
 					QueryParams.startTime,
 					startTime?.toDate().getTime().toString(),
 				);
-				urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
-				urlQuery.delete(QueryParams.relativeTime);
-				const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+				searchParams.set(
+					QueryParams.endTime,
+					endTime?.toDate().getTime().toString(),
+				);
+				searchParams.delete(QueryParams.relativeTime);
+				const generatedUrl = `${location.pathname}?${searchParams.toString()}`;
 				safeNavigateNoSameURLMemo(generatedUrl);
 			}
 		}
@@ -450,17 +453,17 @@ function DateTimeSelection({
 		updateTimeInterval(dateTimeStr);
 		updateLocalStorageForRoutes(dateTimeStr);
 
-		urlQuery.delete('startTime');
-		urlQuery.delete('endTime');
+		searchParams.delete(QueryParams.startTime);
+		searchParams.delete(QueryParams.endTime);
 
 		setIsValidteRelativeTime(true);
 
-		urlQuery.delete('startTime');
-		urlQuery.delete('endTime');
+		searchParams.delete(QueryParams.startTime);
+		searchParams.delete(QueryParams.endTime);
 
-		urlQuery.set(QueryParams.relativeTime, dateTimeStr);
+		searchParams.set(QueryParams.relativeTime, dateTimeStr);
 
-		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+		const generatedUrl = `${location.pathname}?${searchParams.toString()}`;
 		safeNavigateNoSameURLMemo(generatedUrl);
 
 		if (!stagedQuery) {
@@ -600,15 +603,15 @@ function DateTimeSelection({
 
 		// set the default relative time for alert history and overview pages if relative time is not specified
 		if (
-			(!urlQuery.has(QueryParams.startTime) ||
-				!urlQuery.has(QueryParams.endTime)) &&
-			!urlQuery.has(QueryParams.relativeTime) &&
+			(!searchParams.has(QueryParams.startTime) ||
+				!searchParams.has(QueryParams.endTime)) &&
+			!searchParams.has(QueryParams.relativeTime) &&
 			(currentRoute === ROUTES.ALERT_OVERVIEW ||
 				currentRoute === ROUTES.ALERT_HISTORY)
 		) {
 			updateTimeInterval(defaultRelativeTime);
-			urlQuery.set(QueryParams.relativeTime, defaultRelativeTime);
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			searchParams.set(QueryParams.relativeTime, defaultRelativeTime);
+			const generatedUrl = `${location.pathname}?${searchParams.toString()}`;
 			safeNavigateNoSameURLMemo(generatedUrl);
 			return;
 		}
@@ -633,58 +636,63 @@ function DateTimeSelection({
 		}
 
 		if (updatedTime !== 'custom') {
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
-			urlQuery.set(QueryParams.relativeTime, updatedTime);
+			searchParams.delete(QueryParams.startTime);
+			searchParams.delete(QueryParams.endTime);
+			searchParams.set(QueryParams.relativeTime, updatedTime);
 		} else {
 			const startTime = preStartTime.toString();
 			const endTime = preEndTime.toString();
 
-			urlQuery.set(QueryParams.startTime, startTime);
-			urlQuery.set(QueryParams.endTime, endTime);
-			urlQuery.delete(QueryParams.relativeTime);
+			searchParams.set(QueryParams.startTime, startTime);
+			searchParams.set(QueryParams.endTime, endTime);
+			searchParams.delete(QueryParams.relativeTime);
 		}
 
-		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+		const generatedUrl = `${location.pathname}?${searchParams.toString()}`;
 
 		safeNavigateNoSameURLMemo(generatedUrl, { flushSync: true });
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [location.pathname, urlQuery, updateTimeInterval, globalTimeLoading]);
+	}, [
+		location.pathname,
+		relativeTimeFromUrl,
+		updateTimeInterval,
+		globalTimeLoading,
+	]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const shareModalContent = (): JSX.Element => {
 		let currentUrl = window.location.href;
 
-		const startTime = urlQuery.get(QueryParams.startTime);
-		const endTime = urlQuery.get(QueryParams.endTime);
+		const startTime = searchParams.get(QueryParams.startTime);
+		const endTime = searchParams.get(QueryParams.endTime);
 		const isCustomTime = !!(startTime && endTime && selectedTime === 'custom');
 
 		if (enableAbsoluteTime || isCustomTime) {
 			if (selectedTime === 'custom') {
 				if (searchStartTime && searchEndTime) {
-					urlQuery.set(QueryParams.startTime, searchStartTime.toString());
-					urlQuery.set(QueryParams.endTime, searchEndTime.toString());
+					searchParams.set(QueryParams.startTime, searchStartTime.toString());
+					searchParams.set(QueryParams.endTime, searchEndTime.toString());
 				}
 			} else {
 				const { minTime, maxTime } = GetMinMax(selectedTime);
 
-				urlQuery.set(QueryParams.startTime, minTime.toString());
-				urlQuery.set(QueryParams.endTime, maxTime.toString());
+				searchParams.set(QueryParams.startTime, minTime.toString());
+				searchParams.set(QueryParams.endTime, maxTime.toString());
 			}
 
-			urlQuery.delete(QueryParams.relativeTime);
+			searchParams.delete(QueryParams.relativeTime);
 
 			currentUrl = `${window.location.origin}${
 				location.pathname
-			}?${urlQuery.toString()}`;
+			}?${searchParams.toString()}`;
 		} else {
-			urlQuery.delete(QueryParams.startTime);
-			urlQuery.delete(QueryParams.endTime);
+			searchParams.delete(QueryParams.startTime);
+			searchParams.delete(QueryParams.endTime);
 
-			urlQuery.set(QueryParams.relativeTime, selectedTime);
+			searchParams.set(QueryParams.relativeTime, selectedTime);
 			currentUrl = `${window.location.origin}${
 				location.pathname
-			}?${urlQuery.toString()}`;
+			}?${searchParams.toString()}`;
 		}
 
 		return (
