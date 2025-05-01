@@ -165,7 +165,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 	if err != nil {
 		return nil, err
 	}
-	err = r.PopulateTemporality(ctx, params)
+	err = r.PopulateTemporality(ctx, orgID, params)
 	if err != nil {
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}

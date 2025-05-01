@@ -206,9 +206,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
-	errorList := reader.PreloadMetricsMetadata(context.Background())
-	for _, er := range errorList {
-		zap.L().Error("preload metrics updated metadata failed", zap.Error(er))
+	orgs, err := apiHandler.Signoz.Modules.Organization.GetAll(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	for _, org := range orgs {
+		errorList := reader.PreloadMetricsMetadata(context.Background(), org.ID)
+		for _, er := range errorList {
+			zap.L().Error("failed to preload metrics metadata", zap.Error(er))
+		}
 	}
 
 	return s, nil
