@@ -83,7 +83,10 @@ export function MetricNameSearch({
 	};
 
 	return (
-		<div className="inspect-metrics-input-group metric-name-search">
+		<div
+			data-testid="metric-name-search"
+			className="inspect-metrics-input-group metric-name-search"
+		>
 			<Typography.Text>From</Typography.Text>
 			<AggregatorFilter
 				defaultValue={searchText ?? ''}
@@ -131,7 +134,10 @@ export function MetricFilters({
 	);
 
 	return (
-		<div className="inspect-metrics-input-group metric-filters">
+		<div
+			data-testid="metric-filters"
+			className="inspect-metrics-input-group metric-filters"
+		>
 			<Typography.Text>Where</Typography.Text>
 			<QueryBuilderSearchV2
 				onChange={(value): void => {
@@ -155,7 +161,10 @@ export function MetricTimeAggregation({
 	inspectMetricsTimeSeries,
 }: MetricTimeAggregationProps): JSX.Element {
 	return (
-		<div className="metric-time-aggregation">
+		<div
+			data-testid="metric-time-aggregation"
+			className="metric-time-aggregation"
+		>
 			<div
 				className={classNames('metric-time-aggregation-header', {
 					'selected-step': inspectionStep === InspectionStep.TIME_AGGREGATION,
@@ -223,7 +232,10 @@ export function MetricSpaceAggregation({
 	inspectionStep,
 }: MetricSpaceAggregationProps): JSX.Element {
 	return (
-		<div className="metric-space-aggregation">
+		<div
+			data-testid="metric-space-aggregation"
+			className="metric-space-aggregation"
+		>
 			<div
 				className={classNames('metric-space-aggregation-header', {
 					'selected-step': inspectionStep === InspectionStep.SPACE_AGGREGATION,

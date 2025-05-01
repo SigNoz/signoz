@@ -165,7 +165,9 @@ function ExpandedView({
 								<div className="graph-popover-inner-row">
 									{spaceAggregatedData?.map(({ value }) => (
 										<Tooltip key={value} title={value}>
-											<div className="graph-popover-cell">{value}</div>
+											<div className="graph-popover-cell" data-testid="graph-popover-cell">
+												{value}
+											</div>
 										</Tooltip>
 									))}
 								</div>
@@ -178,6 +180,7 @@ function ExpandedView({
 									{spaceAggregatedData?.map(({ title, timeSeries }) => (
 										<Tooltip key={title} title={title}>
 											<div
+												data-testid="graph-popover-cell"
 												className={classNames('graph-popover-cell', 'timeseries-cell', {
 													selected: title === selectedTimeSeries?.title,
 												})}
@@ -229,7 +232,9 @@ function ExpandedView({
 								<div className="graph-popover-inner-row">
 									{rawData?.map(({ value: rawValue }) => (
 										<Tooltip key={rawValue} title={rawValue}>
-											<div className="graph-popover-cell">{rawValue}</div>
+											<div className="graph-popover-cell" data-testid="graph-popover-cell">
+												{rawValue}
+											</div>
 										</Tooltip>
 									))}
 								</div>
@@ -244,7 +249,7 @@ function ExpandedView({
 											key={timestamp}
 											title={formatTimestampToFullDateTime(timestamp ?? '', true)}
 										>
-											<div className="graph-popover-cell">
+											<div className="graph-popover-cell" data-testid="graph-popover-cell">
 												{formatTimestampToFullDateTime(timestamp ?? '', true)}
 											</div>
 										</Tooltip>
@@ -283,7 +288,9 @@ function ExpandedView({
 								<div className="graph-popover-inner-row">
 									{timeAggregatedData?.map(({ value }) => (
 										<Tooltip key={value} title={value}>
-											<div className="graph-popover-cell">{value}</div>
+											<div className="graph-popover-cell" data-testid="graph-popover-cell">
+												{value}
+											</div>
 										</Tooltip>
 									))}
 								</div>
@@ -298,7 +305,7 @@ function ExpandedView({
 											key={timestamp}
 											title={formatTimestampToFullDateTime(timestamp ?? '', true)}
 										>
-											<div className="graph-popover-cell">
+											<div className="graph-popover-cell" data-testid="graph-popover-cell">
 												{formatTimestampToFullDateTime(timestamp ?? '', true)}
 											</div>
 										</Tooltip>

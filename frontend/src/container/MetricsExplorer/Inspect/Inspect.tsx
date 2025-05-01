@@ -86,7 +86,10 @@ function Inspect({
 	const content = useMemo(() => {
 		if (isInspectMetricsLoading && !isInspectMetricsRefetching) {
 			return (
-				<div className="inspect-metrics-fallback">
+				<div
+					data-testid="inspect-metrics-loading"
+					className="inspect-metrics-fallback"
+				>
 					<Skeleton active />
 				</div>
 			);
@@ -99,7 +102,10 @@ function Inspect({
 					: 'Error loading inspect metrics.';
 
 			return (
-				<div className="inspect-metrics-fallback">
+				<div
+					data-testid="inspect-metrics-error"
+					className="inspect-metrics-fallback"
+				>
 					<Empty description={errorMessage} />
 				</div>
 			);
@@ -107,7 +113,10 @@ function Inspect({
 
 		if (!inspectMetricsTimeSeries.length) {
 			return (
-				<div className="inspect-metrics-fallback">
+				<div
+					data-testid="inspect-metrics-empty"
+					className="inspect-metrics-fallback"
+				>
 					<Empty description="No time series found for this metric to inspect." />
 				</div>
 			);
