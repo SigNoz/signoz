@@ -15,6 +15,7 @@ import (
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
@@ -679,7 +680,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 	return nil
 }
 
-func (r *BaseRule) PopulateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, qp *v3.QueryRangeParamsV3) error {
 
 	missingTemporality := make([]string, 0)
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
@@ -711,7 +712,7 @@ func (r *BaseRule) PopulateTemporality(ctx context.Context, qp *v3.QueryRangePar
 	var err error
 
 	if len(missingTemporality) > 0 {
-		nameToTemporality, err = r.reader.FetchTemporality(ctx, missingTemporality)
+		nameToTemporality, err = r.reader.FetchTemporality(ctx, orgID, missingTemporality)
 		if err != nil {
 			return err
 		}

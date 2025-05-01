@@ -256,7 +256,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 	if err != nil {
 		return nil, err
 	}
-	err = r.PopulateTemporality(ctx, params)
+	err = r.PopulateTemporality(ctx, orgID, params)
 	if err != nil {
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}

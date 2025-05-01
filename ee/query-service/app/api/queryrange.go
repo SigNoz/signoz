@@ -42,7 +42,7 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams.Version = "v4"
 
 	// add temporality for each metric
-	temporalityErr := aH.PopulateTemporality(r.Context(), queryRangeParams)
+	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
 		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
