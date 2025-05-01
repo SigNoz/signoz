@@ -11,10 +11,10 @@ import { FunnelContextType } from '../FunnelContext';
 
 // Helper to create consistent mock data
 export const createMockFunnel = (id: string, name: string): FunnelData => ({
-	id,
+	funnel_id: id,
 	funnel_name: name,
-	creation_timestamp: Date.now() - getRandomNumber(10000, 50000), // Mock timestamp
-	updated_timestamp: Date.now(),
+	created_at: Date.now() - getRandomNumber(10000, 50000), // Mock timestamp
+	updated_at: Date.now(),
 	steps: [
 		{
 			id: 'step-1',
@@ -28,7 +28,7 @@ export const createMockFunnel = (id: string, name: string): FunnelData => ({
 			latency_pointer: 'start',
 			latency_type: 'p99',
 			has_errors: false,
-			title: 'Step 1',
+			name: 'Step 1',
 			description: 'First step',
 		},
 		{
@@ -43,11 +43,11 @@ export const createMockFunnel = (id: string, name: string): FunnelData => ({
 			latency_pointer: 'start',
 			latency_type: 'p99',
 			has_errors: false,
-			title: 'Step 2',
+			name: 'Step 2',
 			description: 'Second step',
 		},
 	],
-	user: `user-${id}`,
+	user_email: `user-${id}`,
 	description: `Description for ${name}`,
 });
 
@@ -81,6 +81,7 @@ export const defaultMockFunnelContext: FunnelContextType = {
 	hasAllEmptyStepFields: false,
 	setHasAllEmptyStepFields: jest.fn(),
 	handleReplaceStep: jest.fn(),
+	handleRestoreSteps: jest.fn(),
 };
 
 export const mockOverviewData: FunnelOverviewResponse = {

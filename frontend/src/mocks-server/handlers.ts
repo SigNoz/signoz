@@ -299,7 +299,7 @@ export const handlers = [
 			// Ensure the mock data always uses the requested funnelId
 			const responseData: FunnelData = {
 				...mockSingleFunnelData,
-				id: funnelId as string,
+				funnel_id: funnelId as string,
 			};
 
 			return res(ctx.status(200), ctx.json(responseData));

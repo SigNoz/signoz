@@ -83,13 +83,15 @@ describe('Viewing and Navigating Funnels', () => {
 
 			// Check for formatted date (adjust format if needed)
 			const expectedDateFormat = DATE_TIME_FORMATS.FUNNELS_LIST_DATE;
-			const expectedDate = dayjs(firstFunnel.creation_timestamp).format(
+			const expectedDate = dayjs(firstFunnel.created_at).format(
 				expectedDateFormat,
 			);
 			expect(screen.getByText(expectedDate)).toBeInTheDocument();
 
 			// Check for user
-			expect(screen.getByText(firstFunnel.user as string)).toBeInTheDocument();
+			expect(
+				screen.getByText(firstFunnel.user_email as string),
+			).toBeInTheDocument();
 
 			// Find the first funnel item container and check within it
 			const firstFunnelItem = screen
@@ -97,7 +99,9 @@ describe('Viewing and Navigating Funnels', () => {
 				.closest('.funnel-item');
 
 			// Get the expected initial
-			const expectedInitial = firstFunnel.user?.substring(0, 1).toUpperCase();
+			const expectedInitial = firstFunnel.user_email
+				?.substring(0, 1)
+				.toUpperCase();
 
 			// Look for the avatar initial specifically within the first funnel item
 			const avatarElement = within(firstFunnelItem as HTMLElement).getByText(
@@ -119,11 +123,11 @@ describe('Viewing and Navigating Funnels', () => {
 
 			const expectedPath1 = ROUTES.TRACES_FUNNELS_DETAIL.replace(
 				':funnelId',
-				mockFunnelsListData[0].id,
+				mockFunnelsListData[0].funnel_id,
 			);
 			const expectedPath2 = ROUTES.TRACES_FUNNELS_DETAIL.replace(
 				':funnelId',
-				mockFunnelsListData[1].id,
+				mockFunnelsListData[1].funnel_id,
 			);
 
 			expect(firstFunnelLink).toHaveAttribute('href', expectedPath1);
