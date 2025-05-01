@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
@@ -131,7 +132,7 @@ func (p *ClustersRepo) getMetadataAttributes(ctx context.Context, req model.Clus
 	return clusterAttrs, nil
 }
 
-func (p *ClustersRepo) getTopClusterGroups(ctx context.Context, req model.ClusterListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (p *ClustersRepo) getTopClusterGroups(ctx context.Context, orgID valuer.UUID, req model.ClusterListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopClusters(req)
 
 	queryNames := queryNamesForClusters[req.OrderBy.ColumnName]
@@ -162,7 +163,7 @@ func (p *ClustersRepo) getTopClusterGroups(ctx context.Context, req model.Cluste
 		topClusterGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, topClusterGroupsQueryRangeParams)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topClusterGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -201,7 +202,7 @@ func (p *ClustersRepo) getTopClusterGroups(ctx context.Context, req model.Cluste
 	return topClusterGroups, allClusterGroups, nil
 }
 
-func (p *ClustersRepo) GetClusterList(ctx context.Context, req model.ClusterListRequest) (model.ClusterListResponse, error) {
+func (p *ClustersRepo) GetClusterList(ctx context.Context, orgID valuer.UUID, req model.ClusterListRequest) (model.ClusterListResponse, error) {
 	resp := model.ClusterListResponse{}
 
 	if req.Limit == 0 {
@@ -243,7 +244,7 @@ func (p *ClustersRepo) GetClusterList(ctx context.Context, req model.ClusterList
 		return resp, err
 	}
 
-	topClusterGroups, allClusterGroups, err := p.getTopClusterGroups(ctx, req, query)
+	topClusterGroups, allClusterGroups, err := p.getTopClusterGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -277,7 +278,7 @@ func (p *ClustersRepo) GetClusterList(ctx context.Context, req model.ClusterList
 		}
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}

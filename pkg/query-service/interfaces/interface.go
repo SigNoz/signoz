@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 )
@@ -143,7 +144,7 @@ type Reader interface {
 }
 
 type Querier interface {
-	QueryRange(context.Context, *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error)
+	QueryRange(context.Context, valuer.UUID, *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error)
 
 	// test helpers
 	QueriesExecuted() []string
@@ -151,9 +152,9 @@ type Querier interface {
 }
 
 type QueryCache interface {
-	FindMissingTimeRanges(start, end int64, step int64, cacheKey string) []querycache.MissInterval
-	FindMissingTimeRangesV2(start, end int64, step int64, cacheKey string) []querycache.MissInterval
-	MergeWithCachedSeriesData(cacheKey string, newData []querycache.CachedSeriesData) []querycache.CachedSeriesData
-	StoreSeriesInCache(cacheKey string, series []querycache.CachedSeriesData)
-	MergeWithCachedSeriesDataV2(cacheKey string, series []querycache.CachedSeriesData) []querycache.CachedSeriesData
+	FindMissingTimeRanges(orgID valuer.UUID, start, end int64, step int64, cacheKey string) []querycache.MissInterval
+	FindMissingTimeRangesV2(orgID valuer.UUID, start, end int64, step int64, cacheKey string) []querycache.MissInterval
+	MergeWithCachedSeriesData(orgID valuer.UUID, cacheKey string, newData []querycache.CachedSeriesData) []querycache.CachedSeriesData
+	StoreSeriesInCache(orgID valuer.UUID, cacheKey string, series []querycache.CachedSeriesData)
+	MergeWithCachedSeriesDataV2(orgID valuer.UUID, cacheKey string, series []querycache.CachedSeriesData) []querycache.CachedSeriesData
 }

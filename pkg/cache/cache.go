@@ -8,9 +8,9 @@ import (
 	"time"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// cacheable entity
 type CacheableEntity interface {
 	encoding.BinaryMarshaler
 	encoding.BinaryUnmarshaler
@@ -29,7 +29,6 @@ func WrapCacheableEntityErrors(rt reflect.Type, caller string) error {
 
 }
 
-// cache status
 type RetrieveStatus int
 
 const (
@@ -61,15 +60,15 @@ func (s RetrieveStatus) String() string {
 	}
 }
 
-// cache interface
 type Cache interface {
-	Connect(ctx context.Context) error
-	Store(ctx context.Context, cacheKey string, data CacheableEntity, ttl time.Duration) error
-	Retrieve(ctx context.Context, cacheKey string, dest CacheableEntity, allowExpired bool) (RetrieveStatus, error)
-	SetTTL(ctx context.Context, cacheKey string, ttl time.Duration)
-	Remove(ctx context.Context, cacheKey string)
-	BulkRemove(ctx context.Context, cacheKeys []string)
-	Close(ctx context.Context) error
+	// Set sets the cacheable entity in cache.
+	Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data CacheableEntity, ttl time.Duration) error
+	// Get gets the cacheble entity in the dest entity passed
+	Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest CacheableEntity, allowExpired bool) (RetrieveStatus, error)
+	// Delete deletes the cache kv pair from cache
+	Delete(ctx context.Context, orgID valuer.UUID, cacheKey string)
+	// DeleteMany deletes multiple cache kv pairs from  cache
+	DeleteMany(ctx context.Context, orgID valuer.UUID, cacheKeys []string)
 }
 
 type KeyGenerator interface {
