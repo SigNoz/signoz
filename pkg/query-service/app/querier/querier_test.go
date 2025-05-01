@@ -665,9 +665,10 @@ func TestQueryRange(t *testing.T) {
 		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115580000+60*60*1000)*int64(1000000), (1675115580000+180*60*1000)*int64(1000000)),
 	}
 
+	orgID := valuer.GenerateUUID()
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
+		_, errByName, err := q.QueryRange(context.Background(), orgID, param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
