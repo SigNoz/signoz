@@ -1,23 +1,31 @@
 package querycache_test
 
 import (
-	"encoding/json"
+	"context"
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/cache/inmemory"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFindMissingTimeRanges(t *testing.T) {
 	// Initialize the mock cache
-	mockCache := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
+	opts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	require.NoError(t, err)
 
 	// Create a queryCache instance with the mock cache and a fluxInterval
 	q := querycache.NewQueryCache(
-		querycache.WithCache(mockCache),
+		querycache.WithCache(c),
 		querycache.WithFluxInterval(0), // Set to zero for testing purposes
 	)
 
@@ -217,9 +225,8 @@ func TestFindMissingTimeRanges(t *testing.T) {
 
 			// Store the cached data in the mock cache
 			if len(tc.cachedData) > 0 {
-				cachedDataJSON, err := json.Marshal(tc.cachedData)
-				assert.NoError(t, err)
-				err = mockCache.Store(tc.cacheKey, cachedDataJSON, 0)
+				cacheableData := querycache.CacheableSeriesData{Series: tc.cachedData}
+				err = c.Store(context.Background(), tc.cacheKey, &cacheableData, 0)
 				assert.NoError(t, err)
 			}
 
@@ -234,11 +241,16 @@ func TestFindMissingTimeRanges(t *testing.T) {
 
 func TestFindMissingTimeRangesV2(t *testing.T) {
 	// Initialize the mock cache
-	mockCache := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
+	opts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	require.NoError(t, err)
 
 	// Create a queryCache instance with the mock cache and a fluxInterval
 	q := querycache.NewQueryCache(
-		querycache.WithCache(mockCache),
+		querycache.WithCache(c),
 		querycache.WithFluxInterval(0), // Set to zero for testing purposes
 	)
 
@@ -559,9 +571,8 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 
 			// Store the cached data in the mock cache
 			if len(tc.cachedData) > 0 {
-				cachedDataJSON, err := json.Marshal(tc.cachedData)
-				assert.NoError(t, err)
-				err = mockCache.Store(tc.cacheKey, cachedDataJSON, 0)
+				cacheableData := querycache.CacheableSeriesData{Series: tc.cachedData}
+				err = c.Store(context.Background(), tc.cacheKey, &cacheableData, 0)
 				assert.NoError(t, err)
 			}
 
@@ -576,11 +587,16 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 
 func TestMergeWithCachedSeriesData(t *testing.T) {
 	// Initialize the mock cache
-	mockCache := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
+	opts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	require.NoError(t, err)
 
 	// Create a queryCache instance with the mock cache and a fluxInterval
 	q := querycache.NewQueryCache(
-		querycache.WithCache(mockCache),
+		querycache.WithCache(c),
 		querycache.WithFluxInterval(0), // Set to zero for testing purposes
 	)
 
@@ -649,9 +665,9 @@ func TestMergeWithCachedSeriesData(t *testing.T) {
 	}
 
 	// Store existing data in cache
-	cachedDataJSON, err := json.Marshal(existingData)
-	assert.NoError(t, err)
-	err = mockCache.Store(cacheKey, cachedDataJSON, 0)
+
+	cacheableData := querycache.CacheableSeriesData{Series: existingData}
+	err = c.Store(context.Background(), cacheKey, &cacheableData, 0)
 	assert.NoError(t, err)
 
 	// Call MergeWithCachedSeriesData

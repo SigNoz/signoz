@@ -1,12 +1,13 @@
 package querycache
 
 import (
+	"context"
 	"encoding/json"
 	"math"
 	"sort"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/cache"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
@@ -25,6 +26,17 @@ type CachedSeriesData struct {
 	Start int64        `json:"start"`
 	End   int64        `json:"end"`
 	Data  []*v3.Series `json:"data"`
+}
+
+type CacheableSeriesData struct {
+	Series []CachedSeriesData
+}
+
+func (c *CacheableSeriesData) MarshalBinary() (data []byte, err error) {
+	return json.Marshal(c)
+}
+func (c *CacheableSeriesData) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, c)
 }
 
 type QueryCacheOption func(q *queryCache)
@@ -218,12 +230,16 @@ func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey stri
 }
 
 func (q *queryCache) getCachedSeriesData(cacheKey string) []*CachedSeriesData {
-	cachedData, _, _ := q.cache.Retrieve(cacheKey, true)
-	var cachedSeriesDataList []*CachedSeriesData
-	if err := json.Unmarshal(cachedData, &cachedSeriesDataList); err != nil {
+	cacheableSeriesData := new(CacheableSeriesData)
+	_, err := q.cache.Retrieve(context.TODO(), cacheKey, cacheableSeriesData, true)
+	if err != nil {
 		return nil
 	}
-	return cachedSeriesDataList
+	cachedSeriesData := make([]*CachedSeriesData, 0)
+	for _, cachedSeries := range cacheableSeriesData.Series {
+		cachedSeriesData = append(cachedSeriesData, &cachedSeries)
+	}
+	return cachedSeriesData
 }
 
 func (q *queryCache) mergeSeries(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
@@ -267,12 +283,8 @@ func (q *queryCache) storeMergedData(cacheKey string, mergedData []CachedSeriesD
 	if q.cache == nil {
 		return
 	}
-	mergedDataJSON, err := json.Marshal(mergedData)
-	if err != nil {
-		zap.L().Error("error marshalling merged data", zap.Error(err))
-		return
-	}
-	err = q.cache.Store(cacheKey, mergedDataJSON, 0)
+	cacheableSeriesData := CacheableSeriesData{Series: mergedData}
+	err := q.cache.Store(context.TODO(), cacheKey, &cacheableSeriesData, 0)
 	if err != nil {
 		zap.L().Error("error storing merged data", zap.Error(err))
 	}
@@ -283,14 +295,12 @@ func (q *queryCache) MergeWithCachedSeriesDataV2(cacheKey string, newData []Cach
 		return newData
 	}
 
-	cachedData, _, _ := q.cache.Retrieve(cacheKey, true)
-	var existingData []CachedSeriesData
-	if err := json.Unmarshal(cachedData, &existingData); err != nil {
-		zap.L().Error("error unmarshalling existing data", zap.Error(err))
-		return newData
+	cacheableSeriesData := new(CacheableSeriesData)
+	_, err := q.cache.Retrieve(context.TODO(), cacheKey, cacheableSeriesData, true)
+	if err != nil {
+		return nil
 	}
-
-	allData := append(existingData, newData...)
+	allData := append(cacheableSeriesData.Series, newData...)
 
 	sort.Slice(allData, func(i, j int) bool {
 		return allData[i].Start < allData[j].Start

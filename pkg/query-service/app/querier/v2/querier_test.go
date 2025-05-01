@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -10,19 +9,22 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/cache/inmemory"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -233,26 +235,25 @@ func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 		},
 	}
 
-	c := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
-
+	opts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	require.NoError(t, err)
 	qc := querycache.NewQueryCache(querycache.WithCache(c))
 
 	for idx, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cacheKey := fmt.Sprintf("test-cache-key-%d", idx)
-			cachedData := &querycache.CachedSeriesData{
+			cachedData := querycache.CachedSeriesData{
 				Start: minTimestamp(tc.cachedSeries),
 				End:   maxTimestamp(tc.cachedSeries),
 				Data:  tc.cachedSeries,
 			}
-			jsonData, err := json.Marshal([]*querycache.CachedSeriesData{cachedData})
-			if err != nil {
-				t.Errorf("error marshalling cached data: %v", err)
-			}
-			err = c.Store(cacheKey, jsonData, 5*time.Minute)
-			if err != nil {
-				t.Errorf("error storing cached data: %v", err)
-			}
+			cacheableData := querycache.CacheableSeriesData{Series: []querycache.CachedSeriesData{cachedData}}
+			err = c.Store(context.Background(), cacheKey, &cacheableData, 0)
+			assert.NoError(t, err)
 
 			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
@@ -453,28 +454,26 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 		},
 	}
 
-	c := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
-
+	opts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	require.NoError(t, err)
 	qc := querycache.NewQueryCache(querycache.WithCache(c))
 
 	for idx, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cacheKey := fmt.Sprintf("test-cache-key-%d", idx)
-			cachedData := &querycache.CachedSeriesData{
+			cachedData := querycache.CachedSeriesData{
 				Start: minTimestamp(tc.cachedSeries),
 				End:   maxTimestamp(tc.cachedSeries),
 				Data:  tc.cachedSeries,
 			}
-			jsonData, err := json.Marshal([]*querycache.CachedSeriesData{cachedData})
-			if err != nil {
-				t.Errorf("error marshalling cached data: %v", err)
-				return
-			}
-			err = c.Store(cacheKey, jsonData, 5*time.Minute)
-			if err != nil {
-				t.Errorf("error storing cached data: %v", err)
-				return
-			}
+			cacheableData := querycache.CacheableSeriesData{Series: []querycache.CachedSeriesData{cachedData}}
+			err = c.Store(context.Background(), cacheKey, &cacheableData, 0)
+			assert.NoError(t, err)
+
 			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
@@ -634,9 +633,14 @@ func TestV2QueryRangePanelGraph(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheOpts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheOpts})
+	require.NoError(t, err)
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -783,9 +787,14 @@ func TestV2QueryRangeValueType(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheOpts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheOpts})
+	require.NoError(t, err)
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -944,9 +953,14 @@ func TestV2QueryRangeTimeShiftWithCache(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheOpts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheOpts})
+	require.NoError(t, err)
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -1047,9 +1061,14 @@ func TestV2QueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheOpts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheOpts})
+	require.NoError(t, err)
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -1121,9 +1140,14 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheOpts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheOpts})
+	require.NoError(t, err)
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
