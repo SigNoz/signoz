@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import 'jest-canvas-mock';
 
 import { screen, waitFor, within } from '@testing-library/react';
@@ -26,7 +27,10 @@ const mockUseParams = jest.requireMock('react-router-dom')
 const renderFunnelDetailsWithAct = async (): Promise<void> => {
 	await act(async () => {
 		renderTraceFunnelRoutes([
-			ROUTES.TRACES_FUNNELS_DETAIL.replace(':funnelId', mockSingleFunnelData.id),
+			ROUTES.TRACES_FUNNELS_DETAIL.replace(
+				':funnelId',
+				mockSingleFunnelData.funnel_id,
+			),
 		]);
 	});
 };
@@ -42,19 +46,19 @@ window.ResizeObserver =
 describe('Viewing Funnel Details', () => {
 	beforeEach(() => {
 		mockUseParams.mockReturnValue({
-			funnelId: mockSingleFunnelData.id,
+			funnelId: mockSingleFunnelData.funnel_id,
 		});
 	});
 	it('should render the Funnel Details page and display the funnel name', async () => {
 		// Mock the API call to fetch funnel details
 		server.use(
 			rest.get(
-				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.id}`,
+				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}`,
 				(_, res, ctx) => res(ctx.status(200), ctx.json(mockSingleFunnelData)),
 			),
 			// Mock validate endpoint as it might be called on load
 			rest.post(
-				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.id}/analytics/validate`,
+				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}/analytics/validate`,
 				(_, res, ctx) => res(ctx.status(200), ctx.json({ data: [] })),
 			),
 		);
@@ -73,11 +77,11 @@ describe('Viewing Funnel Details', () => {
 		// Mock API calls
 		server.use(
 			rest.get(
-				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.id}`,
+				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}`,
 				(_, res, ctx) => res(ctx.status(200), ctx.json(mockSingleFunnelData)),
 			),
 			rest.post(
-				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.id}/analytics/validate`,
+				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}/analytics/validate`,
 				(_, res, ctx) => res(ctx.status(200), ctx.json({ data: [] })),
 			),
 		);
@@ -107,11 +111,11 @@ describe('Viewing Funnel Details', () => {
 
 			server.use(
 				rest.post(
-					`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.id}/analytics/validate`,
+					`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}/analytics/validate`,
 					(_, res, ctx) => res(ctx.status(200), ctx.json({ data: [] })),
 				),
 				rest.get(
-					`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.id}`,
+					`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}`,
 					(_, res, ctx) => res(ctx.status(200), ctx.json(mockSingleFunnelData)),
 				),
 			);
@@ -187,11 +191,12 @@ describe('Viewing Funnel Details', () => {
 					isValidateStepsLoading: false,
 				});
 
+				// eslint-disable-next-line sonarjs/no-identical-functions
 				await act(async () => {
 					renderTraceFunnelRoutes([
 						ROUTES.TRACES_FUNNELS_DETAIL.replace(
 							':funnelId',
-							mockSingleFunnelData.id,
+							mockSingleFunnelData.funnel_id,
 						),
 					]);
 				});

@@ -51,7 +51,7 @@ const renderTraceWaterfallSuccess = (
 ): RenderResult =>
 	render(
 		<MockQueryClientProvider>
-			<FunnelProvider funnelId={firstFunnel.id}>
+			<FunnelProvider funnelId={firstFunnel.funnel_id}>
 				<MemoryRouter initialEntries={[ROUTES.TRACES_FUNNELS_DETAIL]}>
 					<Success {...mockSpanSuccessComponentProps} {...props} />
 				</MemoryRouter>
@@ -191,10 +191,10 @@ describe('Add span to funnel from trace details page', () => {
 				within(addSpanToFunnelModal).getByText(secondFunnel.funnel_name),
 			).toBeInTheDocument();
 			expect(
-				within(addSpanToFunnelModal).getByText(firstFunnel.user),
+				within(addSpanToFunnelModal).getByText(firstFunnel.user_email),
 			).toBeInTheDocument();
 			expect(
-				within(addSpanToFunnelModal).getByText(secondFunnel.user),
+				within(addSpanToFunnelModal).getByText(secondFunnel.user_email),
 			).toBeInTheDocument();
 		});
 
@@ -281,7 +281,7 @@ describe('Add span to funnel from trace details page', () => {
 					within(addSpanToFunnelModal).getByText(firstFunnel.funnel_name),
 				).toBeInTheDocument();
 				expect(
-					within(addSpanToFunnelModal).getByText(firstFunnel.user),
+					within(addSpanToFunnelModal).getByText(firstFunnel.user_email),
 				).toBeInTheDocument();
 			});
 			it('should render the funnel steps correctly', async () => {
