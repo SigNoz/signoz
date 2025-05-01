@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
@@ -249,7 +250,7 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 	return r.ruleCondition.GetSelectedQueryName()
 }
 
-func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
+func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
 
 	params, err := r.prepareQueryRange(ts)
 	if err != nil {
@@ -299,9 +300,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (rul
 	var queryErrors map[string]error
 
 	if r.version == "v4" {
-		results, queryErrors, err = r.querierV2.QueryRange(ctx, params)
+		results, queryErrors, err = r.querierV2.QueryRange(ctx, orgID, params)
 	} else {
-		results, queryErrors, err = r.querier.QueryRange(ctx, params)
+		results, queryErrors, err = r.querier.QueryRange(ctx, orgID, params)
 	}
 
 	if err != nil {
@@ -356,12 +357,12 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (rul
 	return resultVector, nil
 }
 
-func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
+func (r *ThresholdRule) Eval(ctx context.Context, orgID valuer.UUID, ts time.Time) (interface{}, error) {
 
 	prevState := r.State()
 
 	valueFormatter := formatter.FromUnit(r.Unit())
-	res, err := r.buildAndRunQuery(ctx, ts)
+	res, err := r.buildAndRunQuery(ctx, orgID, ts)
 
 	if err != nil {
 		return nil, err

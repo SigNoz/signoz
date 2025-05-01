@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -94,7 +95,7 @@ func (r *PromRule) getPqlQuery() (string, error) {
 	return "", fmt.Errorf("invalid promql rule query")
 }
 
-func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
+func (r *PromRule) Eval(ctx context.Context, orgID valuer.UUID, ts time.Time) (interface{}, error) {
 
 	prevState := r.State()
 

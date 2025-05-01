@@ -23,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -251,11 +252,12 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 				End:   maxTimestamp(tc.cachedSeries),
 				Data:  tc.cachedSeries,
 			}
+			orgID := valuer.GenerateUUID()
 			cacheableData := querycache.CacheableSeriesData{Series: []querycache.CachedSeriesData{cachedData}}
-			err = c.Store(context.Background(), cacheKey, &cacheableData, 0)
+			err = c.Set(context.Background(), orgID, cacheKey, &cacheableData, 0)
 			assert.NoError(t, err)
 
-			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
+			misses := qc.FindMissingTimeRanges(orgID, tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
@@ -470,11 +472,12 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				End:   maxTimestamp(tc.cachedSeries),
 				Data:  tc.cachedSeries,
 			}
+			orgID := valuer.GenerateUUID()
 			cacheableData := querycache.CacheableSeriesData{Series: []querycache.CachedSeriesData{cachedData}}
-			err = c.Store(context.Background(), cacheKey, &cacheableData, 0)
+			err = c.Set(context.Background(), orgID, cacheKey, &cacheableData, 0)
 			assert.NoError(t, err)
 
-			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
+			misses := qc.FindMissingTimeRanges(orgID, tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
@@ -664,7 +667,7 @@ func TestQueryRange(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -779,7 +782,7 @@ func TestQueryRangeValueType(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -833,7 +836,7 @@ func TestQueryRangeTimeShift(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -937,7 +940,7 @@ func TestQueryRangeTimeShiftWithCache(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -1043,7 +1046,7 @@ func TestQueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -1138,7 +1141,7 @@ func TestQueryRangeValueTypePromQL(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}

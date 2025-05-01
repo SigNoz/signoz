@@ -215,7 +215,7 @@ func (q *querier) runBuilderQuery(
 	}
 
 	if builderQuery.DataSource == v3.DataSourceMetrics && !q.testingMode {
-		metadata, apiError := q.reader.GetUpdatedMetricsMetadata(ctx, builderQuery.AggregateAttribute.Key)
+		metadata, apiError := q.reader.GetUpdatedMetricsMetadata(ctx, orgID, builderQuery.AggregateAttribute.Key)
 		if apiError != nil {
 			zap.L().Error("Error in getting metrics cached metadata", zap.Error(apiError))
 		}

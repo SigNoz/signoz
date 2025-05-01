@@ -250,6 +250,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
+	// TODO[@vikrantgupta25]: check this!
 	errorList := reader.PreloadMetricsMetadata(context.Background())
 	for _, er := range errorList {
 		zap.L().Error("failed to preload metrics metadata", zap.Error(er))

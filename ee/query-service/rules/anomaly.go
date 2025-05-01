@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -158,7 +159,7 @@ func (r *AnomalyRule) GetSelectedQuery() string {
 	return r.Condition().GetSelectedQueryName()
 }
 
-func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
+func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
 
 	params, err := r.prepareQueryRange(ts)
 	if err != nil {
@@ -169,7 +170,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (rulet
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}
 
-	anomalies, err := r.provider.GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
+	anomalies, err := r.provider.GetAnomalies(ctx, orgID, &anomaly.GetAnomaliesRequest{
 		Params:      params,
 		Seasonality: r.seasonality,
 	})
@@ -199,12 +200,12 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (rulet
 	return resultVector, nil
 }
 
-func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
+func (r *AnomalyRule) Eval(ctx context.Context, orgID valuer.UUID, ts time.Time) (interface{}, error) {
 
 	prevState := r.State()
 
 	valueFormatter := formatter.FromUnit(r.Unit())
-	res, err := r.buildAndRunQuery(ctx, ts)
+	res, err := r.buildAndRunQuery(ctx, orgID, ts)
 
 	if err != nil {
 		return nil, err

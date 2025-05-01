@@ -23,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -251,11 +252,12 @@ func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 				End:   maxTimestamp(tc.cachedSeries),
 				Data:  tc.cachedSeries,
 			}
+			orgID := valuer.GenerateUUID()
 			cacheableData := querycache.CacheableSeriesData{Series: []querycache.CachedSeriesData{cachedData}}
-			err = c.Store(context.Background(), cacheKey, &cacheableData, 0)
+			err = c.Set(context.Background(), orgID, cacheKey, &cacheableData, 0)
 			assert.NoError(t, err)
 
-			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
+			misses := qc.FindMissingTimeRanges(orgID, tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
@@ -470,11 +472,12 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 				End:   maxTimestamp(tc.cachedSeries),
 				Data:  tc.cachedSeries,
 			}
+			orgID := valuer.GenerateUUID()
 			cacheableData := querycache.CacheableSeriesData{Series: []querycache.CachedSeriesData{cachedData}}
-			err = c.Store(context.Background(), cacheKey, &cacheableData, 0)
+			err = c.Set(context.Background(), orgID, cacheKey, &cacheableData, 0)
 			assert.NoError(t, err)
 
-			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
+			misses := qc.FindMissingTimeRanges(orgID, tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
@@ -671,9 +674,10 @@ func TestV2QueryRangePanelGraph(t *testing.T) {
 		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115580000+60*60*1000)*int64(1000000), (1675115580000+180*60*1000)*int64(1000000)), // 31st Jan, 04:23:00 to 31st Jan, 06:23:00
 	}
 
+	orgID := valuer.GenerateUUID()
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), orgID, param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -824,7 +828,7 @@ func TestV2QueryRangeValueType(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -879,7 +883,7 @@ func TestV2QueryRangeTimeShift(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -985,7 +989,7 @@ func TestV2QueryRangeTimeShiftWithCache(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -1093,7 +1097,7 @@ func TestV2QueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -1190,7 +1194,7 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}

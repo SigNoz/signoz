@@ -7,14 +7,27 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/ee/query-service/anomaly"
+	"github.com/SigNoz/signoz/pkg/http/render"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
 func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -108,7 +121,7 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 				anomaly.WithReader[*anomaly.DailyProvider](aH.opts.DataConnector),
 			)
 		}
-		anomalies, err := provider.GetAnomalies(r.Context(), &anomaly.GetAnomaliesRequest{Params: queryRangeParams})
+		anomalies, err := provider.GetAnomalies(r.Context(), orgID, &anomaly.GetAnomaliesRequest{Params: queryRangeParams})
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 			return

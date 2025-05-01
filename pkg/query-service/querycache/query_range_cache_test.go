@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -224,14 +225,15 @@ func TestFindMissingTimeRanges(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			// Store the cached data in the mock cache
+			orgID := valuer.GenerateUUID()
 			if len(tc.cachedData) > 0 {
 				cacheableData := querycache.CacheableSeriesData{Series: tc.cachedData}
-				err = c.Store(context.Background(), tc.cacheKey, &cacheableData, 0)
+				err = c.Set(context.Background(), orgID, tc.cacheKey, &cacheableData, 0)
 				assert.NoError(t, err)
 			}
 
 			// Call FindMissingTimeRanges
-			missingRanges := q.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.step, tc.cacheKey)
+			missingRanges := q.FindMissingTimeRanges(orgID, tc.requestedStart, tc.requestedEnd, tc.step, tc.cacheKey)
 
 			// Verify the missing ranges
 			assert.Equal(t, tc.expectedMiss, missingRanges)
@@ -569,15 +571,16 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 
+			orgID := valuer.GenerateUUID()
 			// Store the cached data in the mock cache
 			if len(tc.cachedData) > 0 {
 				cacheableData := querycache.CacheableSeriesData{Series: tc.cachedData}
-				err = c.Store(context.Background(), tc.cacheKey, &cacheableData, 0)
+				err = c.Set(context.Background(), orgID, tc.cacheKey, &cacheableData, 0)
 				assert.NoError(t, err)
 			}
 
 			// Call FindMissingTimeRanges
-			missingRanges := q.FindMissingTimeRangesV2(tc.requestedStart, tc.requestedEnd, tc.step, tc.cacheKey)
+			missingRanges := q.FindMissingTimeRangesV2(orgID, tc.requestedStart, tc.requestedEnd, tc.step, tc.cacheKey)
 
 			// Verify the missing ranges
 			assert.Equal(t, tc.expectedMiss, missingRanges)
@@ -666,12 +669,13 @@ func TestMergeWithCachedSeriesData(t *testing.T) {
 
 	// Store existing data in cache
 
+	orgID := valuer.GenerateUUID()
 	cacheableData := querycache.CacheableSeriesData{Series: existingData}
-	err = c.Store(context.Background(), cacheKey, &cacheableData, 0)
+	err = c.Set(context.Background(), orgID, cacheKey, &cacheableData, 0)
 	assert.NoError(t, err)
 
 	// Call MergeWithCachedSeriesData
-	mergedData := q.MergeWithCachedSeriesData(cacheKey, newData)
+	mergedData := q.MergeWithCachedSeriesData(orgID, cacheKey, newData)
 
 	// Verify the merged data
 	assert.Equal(t, len(expectedMergedData), len(mergedData))
