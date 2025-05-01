@@ -754,30 +754,30 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 	}
 
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
-		sb.And(sb.E("attr_type", fieldValueSelector.FieldContext.TagType()))
+		sb.Where(sb.E("attr_type", fieldValueSelector.FieldContext.TagType()))
 	}
 
 	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-		sb.And(sb.E("attr_datatype", fieldValueSelector.FieldDataType.TagDataType()))
+		sb.Where(sb.E("attr_datatype", fieldValueSelector.FieldDataType.TagDataType()))
 	}
 
 	if fieldValueSelector.MetricContext != nil {
-		sb.And(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
+		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
 	}
 
 	if fieldValueSelector.StartUnixMilli > 0 {
-		sb.And(sb.GE("last_reported_unix_milli", fieldValueSelector.StartUnixMilli))
+		sb.Where(sb.GE("last_reported_unix_milli", fieldValueSelector.StartUnixMilli))
 	}
 
 	if fieldValueSelector.EndUnixMilli > 0 {
-		sb.And(sb.LE("first_reported_unix_milli", fieldValueSelector.EndUnixMilli))
+		sb.Where(sb.LE("first_reported_unix_milli", fieldValueSelector.EndUnixMilli))
 	}
 
 	if fieldValueSelector.Value != "" {
 		if fieldValueSelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
-			sb.And(sb.E("attr_string_value", fieldValueSelector.Value))
+			sb.Where(sb.E("attr_string_value", fieldValueSelector.Value))
 		} else {
-			sb.And(sb.Like("attr_string_value", "%"+fieldValueSelector.Value+"%"))
+			sb.Where(sb.Like("attr_string_value", "%"+fieldValueSelector.Value+"%"))
 		}
 	}
 
@@ -829,7 +829,7 @@ func populateAllUnspecifiedValues(allUnspecifiedValues *telemetrytypes.Telemetry
 }
 
 func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
-	var values *telemetrytypes.TelemetryFieldValues
+	values := &telemetrytypes.TelemetryFieldValues{}
 	var err error
 	switch fieldValueSelector.Signal {
 	case telemetrytypes.SignalTraces:

@@ -75,7 +75,8 @@ func (c *conditionBuilder) GetCondition(
 		return "", nil
 	}
 
-	if key.FieldDataType != telemetrytypes.FieldDataTypeString {
+	if key.FieldDataType != telemetrytypes.FieldDataTypeString &&
+		key.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
 		// if the field data type is not string, we can't build a condition for related values
 		return "", nil
 	}
