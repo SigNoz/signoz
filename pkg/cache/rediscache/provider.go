@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
+
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -24,7 +26,7 @@ func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
 func New(ctx context.Context, settings factory.ProviderSettings, config cache.Config) (cache.Cache, error) {
 	provider := new(provider)
 	provider.client = redis.NewClient(&redis.Options{
-		Addr:     strings.Join([]string{config.Redis.Host, string(config.Redis.Port)}, ":"),
+		Addr:     strings.Join([]string{config.Redis.Host, fmt.Sprint(config.Redis.Port)}, ":"),
 		Password: config.Redis.Password,
 		DB:       config.Redis.DB,
 	})
