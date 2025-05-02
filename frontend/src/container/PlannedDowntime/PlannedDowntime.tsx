@@ -3,7 +3,7 @@ import 'dayjs/locale/en';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Form, Input, Typography } from 'antd';
+import { Button, Flex, Form, Input, Tooltip, Typography } from 'antd';
 import getAll from 'api/alerts/getAll';
 import { useDeleteDowntimeSchedule } from 'api/plannedDowntime/deleteDowntimeSchedule';
 import {
@@ -13,8 +13,10 @@ import {
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { Search } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
+import { USER_ROLES } from 'types/roles';
 
 import { PlannedDowntimeDeleteModal } from './PlannedDowntimeDeleteModal';
 import { PlannedDowntimeForm } from './PlannedDowntimeForm';
@@ -33,6 +35,7 @@ export function PlannedDowntime(): JSX.Element {
 	});
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [form] = Form.useForm();
+	const { user } = useAppContext();
 
 	const [initialValues, setInitialValues] = useState<
 		Partial<DowntimeSchedules & { editMode: boolean }>
@@ -108,18 +111,27 @@ export function PlannedDowntime(): JSX.Element {
 						value={searchValue}
 						onChange={handleSearch}
 					/>
-					<Button
-						icon={<PlusOutlined />}
-						type="primary"
-						onClick={(): void => {
-							setInitialValues({ ...defautlInitialValues, editMode: false });
-							setIsOpen(true);
-							setEditMode(false);
-							form.resetFields();
-						}}
+					<Tooltip
+						title={
+							user?.role === USER_ROLES.VIEWER
+								? 'You need edit permissions to create a planned downtime'
+								: ''
+						}
 					>
-						New downtime
-					</Button>
+						<Button
+							icon={<PlusOutlined />}
+							type="primary"
+							onClick={(): void => {
+								setInitialValues({ ...defautlInitialValues, editMode: false });
+								setIsOpen(true);
+								setEditMode(false);
+								form.resetFields();
+							}}
+							disabled={user?.role === USER_ROLES.VIEWER}
+						>
+							New downtime
+						</Button>
+					</Tooltip>
 				</Flex>
 				<br />
 				<PlannedDowntimeList

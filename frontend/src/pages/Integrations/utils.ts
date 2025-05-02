@@ -19,4 +19,10 @@ export const INTEGRATION_TELEMETRY_EVENTS = {
 		'Integrations Detail Page: Clicked remove Integration button for integration',
 	INTEGRATIONS_DETAIL_CONFIGURE_INSTRUCTION:
 		'Integrations Detail Page: Navigated to configure an integration',
+	AWS_INTEGRATION_ACCOUNT_REMOVED:
+		'AWS Integration Detail page: Clicked remove Integration button for integration',
+};
+
+export const INTEGRATION_TYPES = {
+	AWS_INTEGRATION: 'aws-integration',
 };

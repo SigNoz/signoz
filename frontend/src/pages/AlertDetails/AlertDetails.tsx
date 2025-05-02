@@ -1,13 +1,14 @@
 import './AlertDetails.styles.scss';
 
 import { Breadcrumb, Button, Divider } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
 import NotFound from 'components/NotFound';
 import RouteTab from 'components/RouteTab';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
@@ -79,6 +80,11 @@ function AlertDetails(): JSX.Element {
 		alertDetailsResponse,
 	} = useGetAlertRuleDetails();
 
+	useEffect(() => {
+		const alertTitle = alertDetailsResponse?.payload?.data.alert;
+		document.title = alertTitle || document.title;
+	}, [alertDetailsResponse?.payload?.data.alert, isRefetching]);
+
 	if (
 		isError ||
 		!isValidRuleId ||
@@ -86,6 +92,12 @@ function AlertDetails(): JSX.Element {
 	) {
 		return <NotFound />;
 	}
+
+	const handleTabChange = (route: string): void => {
+		if (route === ROUTES.ALERT_HISTORY) {
+			logEvent('Alert History tab: Visited', { ruleId });
+		}
+	};
 
 	return (
 		<div className="alert-details">
@@ -113,6 +125,7 @@ function AlertDetails(): JSX.Element {
 					routes={routes}
 					activeKey={pathname}
 					history={history}
+					onChangeHandler={handleTabChange}
 					tabBarExtraContent={<Filters />}
 				/>
 			</div>

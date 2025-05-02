@@ -41,7 +41,7 @@ fn init_tracer() -> Result<sdktrace::Tracer, TraceError> {
     let signoz_access_token = std::env::var("SIGNOZ_ACCESS_TOKEN").expect("SIGNOZ_ACCESS_TOKEN not set");
     let mut metadata = MetadataMap::new();
     metadata.insert(
-        "signoz-access-token",
+        "signoz-ingestion-key",
         MetadataValue::from_str(&signoz_access_token).unwrap(),
     );
     opentelemetry_otlp::new_pipeline()

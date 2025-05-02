@@ -3,8 +3,8 @@ package v3
 import (
 	"testing"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	. "github.com/smartystreets/goconvey/convey"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 var testGetJSONFilterKeyData = []struct {

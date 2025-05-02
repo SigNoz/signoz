@@ -1,6 +1,6 @@
 import './Slider.styles.scss';
 
-import { IQuickFiltersConfig } from 'components/QuickFilters/QuickFilters';
+import { IQuickFiltersConfig } from 'components/QuickFilters/types';
 
 interface ISliderProps {
 	filter: IQuickFiltersConfig;

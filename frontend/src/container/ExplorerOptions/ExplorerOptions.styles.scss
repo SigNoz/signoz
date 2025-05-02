@@ -18,7 +18,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 12px;
-	padding: 10px 12px;
+	padding: 10px 10px;
 	border-radius: 50px;
 	border: 1px solid var(--bg-slate-400);
 	background: rgba(22, 24, 29, 0.6);
@@ -33,6 +33,7 @@
 		border: 1px solid var(--bg-slate-400);
 		background: var(--bg-slate-500);
 		cursor: pointer;
+		box-shadow: none;
 	}
 
 	.hidden {

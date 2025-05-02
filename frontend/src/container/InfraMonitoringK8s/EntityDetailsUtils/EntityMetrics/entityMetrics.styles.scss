@@ -1,0 +1,39 @@
+// Metrics
+.entity-metrics-container {
+	margin-top: 1rem;
+}
+
+.metrics-header {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: 1rem;
+
+	gap: 8px;
+	padding: 12px;
+	border-radius: 3px;
+	border: 1px solid var(--bg-slate-500);
+}
+
+.entity-metrics-card {
+	margin: 8px 0 1rem 0;
+	height: 300px;
+	padding: 10px;
+
+	border: 1px solid var(--bg-slate-500);
+
+	.ant-card-body {
+		padding: 0;
+	}
+
+	.chart-container {
+		width: 100%;
+		height: 100%;
+	}
+
+	.no-data-container {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+}

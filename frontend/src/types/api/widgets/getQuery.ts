@@ -8,6 +8,10 @@ export interface PayloadProps {
 export type ListItem = { timestamp: string; data: Omit<ILog, 'timestamp'> };
 
 export interface QueryData {
+	lowerBoundSeries?: [number, string][];
+	upperBoundSeries?: [number, string][];
+	predictedSeries?: [number, string][];
+	anomalyScores?: [number, string][];
 	metric: {
 		[key: string]: string;
 	};
@@ -16,6 +20,16 @@ export interface QueryData {
 	values: [number, string][];
 	quantity?: number[];
 	unit?: string;
+	table?: {
+		rows: {
+			data: {
+				[key: string]: any;
+			};
+		}[];
+		columns: {
+			[key: string]: string;
+		}[];
+	};
 }
 
 export interface SeriesItem {
@@ -34,6 +48,11 @@ export interface QueryDataV3 {
 	quantity?: number;
 	unitPrice?: number;
 	unit?: string;
+	lowerBoundSeries?: SeriesItem[] | null;
+	upperBoundSeries?: SeriesItem[] | null;
+	predictedSeries?: SeriesItem[] | null;
+	anomalyScores?: SeriesItem[] | null;
+	isAnomaly?: boolean;
 }
 
 export interface Props {

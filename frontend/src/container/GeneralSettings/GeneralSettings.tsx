@@ -5,14 +5,14 @@ import setRetentionApi from 'api/settings/setRetention';
 import TextToolTip from 'components/TextToolTip';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import find from 'lodash-es/find';
+import { useAppContext } from 'providers/App/App';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
 import { useInterval } from 'react-use';
-import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	IDiskType,
@@ -24,8 +24,6 @@ import {
 	PayloadPropsMetrics as GetRetentionPeriodMetricsPayload,
 	PayloadPropsTraces as GetRetentionPeriodTracesPayload,
 } from 'types/api/settings/getRetention';
-import AppReducer from 'types/reducer/app';
-import { isCloudUser } from 'utils/app';
 
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
@@ -68,11 +66,11 @@ function GeneralSettings({
 		logsTtlValuesPayload,
 	);
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const [setRetentionPermission] = useComponentPermission(
 		['set_retention_period'],
-		role,
+		user.role,
 	);
 
 	const [
@@ -396,7 +394,7 @@ function GeneralSettings({
 		onModalToggleHandler(type);
 	};
 
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const renderConfig = [
 		{

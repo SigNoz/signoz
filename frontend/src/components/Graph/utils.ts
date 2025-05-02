@@ -1,5 +1,7 @@
 import { Chart, ChartConfiguration, ChartData, Color } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
+import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { MutableRefObject } from 'react';
 
@@ -50,6 +52,7 @@ export const getGraphOptions = (
 	isStacked: boolean | undefined,
 	onClickHandler: GraphOnClickHandler | undefined,
 	data: ChartData,
+	timezone: Timezone,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): CustomChartOptions => ({
 	animation: {
@@ -97,7 +100,9 @@ export const getGraphOptions = (
 			callbacks: {
 				title(context): string | string[] {
 					const date = dayjs(context[0].parsed.x);
-					return date.format('MMM DD, YYYY, HH:mm:ss');
+					return date
+						.tz(timezone.value)
+						.format(DATE_TIME_FORMATS.MONTH_DATETIME_FULL_SECONDS);
 				},
 				label(context): string | string[] {
 					let label = context.dataset.label || '';
@@ -139,6 +144,7 @@ export const getGraphOptions = (
 	},
 	scales: {
 		x: {
+			stacked: isStacked,
 			grid: {
 				display: true,
 				color: getGridColor(),
@@ -151,20 +157,21 @@ export const getGraphOptions = (
 				unit: xAxisTimeUnit?.unitName || 'minute',
 				stepSize: xAxisTimeUnit?.stepSize || 1,
 				displayFormats: {
-					millisecond: 'HH:mm:ss',
-					second: 'HH:mm:ss',
-					minute: 'HH:mm',
-					hour: 'MM/dd HH:mm',
-					day: 'MM/dd',
-					week: 'MM/dd',
-					month: 'yy-MM',
-					year: 'yy',
+					millisecond: DATE_TIME_FORMATS.TIME_SECONDS,
+					second: DATE_TIME_FORMATS.TIME_SECONDS,
+					minute: DATE_TIME_FORMATS.TIME,
+					hour: DATE_TIME_FORMATS.SLASH_SHORT,
+					day: DATE_TIME_FORMATS.DATE_SHORT,
+					week: DATE_TIME_FORMATS.DATE_SHORT,
+					month: DATE_TIME_FORMATS.YEAR_MONTH,
+					year: DATE_TIME_FORMATS.YEAR_SHORT,
 				},
 			},
 			type: 'time',
 			ticks: { color: getAxisLabelColor(currentTheme) },
 		},
 		y: {
+			stacked: isStacked,
 			display: true,
 			grid: {
 				display: true,
@@ -177,9 +184,6 @@ export const getGraphOptions = (
 					return getYAxisFormattedValue(value.toString(), yAxisUnit);
 				},
 			},
-		},
-		stacked: {
-			display: isStacked === undefined ? false : 'auto',
 		},
 	},
 	elements: {

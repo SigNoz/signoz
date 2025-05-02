@@ -9,26 +9,27 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
+	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
+	opampModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/app/opamp"
-	opampModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
-	"go.signoz.io/signoz/pkg/query-service/utils"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -63,15 +64,15 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		},
 	}
 
-	postablePipelines := logparsingpipeline.PostablePipelines{
-		Pipelines: []logparsingpipeline.PostablePipeline{
+	postablePipelines := pipelinetypes.PostablePipelines{
+		Pipelines: []pipelinetypes.PostablePipeline{
 			{
-				OrderId: 1,
+				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  pipelineFilterSet,
-				Config: []logparsingpipeline.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -83,12 +84,12 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 					},
 				},
 			}, {
-				OrderId: 2,
+				OrderID: 2,
 				Name:    "pipeline2",
 				Alias:   "pipeline2",
 				Enabled: true,
 				Filter:  pipelineFilterSet,
-				Config: []logparsingpipeline.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "remove",
@@ -180,10 +181,10 @@ func TestLogPipelinesHistory(t *testing.T) {
 	getPipelinesResp := testbed.GetPipelinesFromQS()
 	require.Equal(0, len(getPipelinesResp.History))
 
-	postablePipelines := logparsingpipeline.PostablePipelines{
-		Pipelines: []logparsingpipeline.PostablePipeline{
+	postablePipelines := pipelinetypes.PostablePipelines{
+		Pipelines: []pipelinetypes.PostablePipeline{
 			{
-				OrderId: 1,
+				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
 				Enabled: true,
@@ -201,7 +202,7 @@ func TestLogPipelinesHistory(t *testing.T) {
 						},
 					},
 				},
-				Config: []logparsingpipeline.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -223,7 +224,7 @@ func TestLogPipelinesHistory(t *testing.T) {
 
 	postablePipelines.Pipelines[0].Config = append(
 		postablePipelines.Pipelines[0].Config,
-		logparsingpipeline.PipelineOperator{
+		pipelinetypes.PipelineOperator{
 			OrderId: 2,
 			ID:      "remove",
 			Type:    "remove",
@@ -260,18 +261,18 @@ func TestLogPipelinesValidation(t *testing.T) {
 
 	testCases := []struct {
 		Name                       string
-		Pipeline                   logparsingpipeline.PostablePipeline
+		Pipeline                   pipelinetypes.PostablePipeline
 		ExpectedResponseStatusCode int
 	}{
 		{
 			Name: "Valid Pipeline",
-			Pipeline: logparsingpipeline.PostablePipeline{
-				OrderId: 1,
+			Pipeline: pipelinetypes.PostablePipeline{
+				OrderID: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  validPipelineFilterSet,
-				Config: []logparsingpipeline.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -287,13 +288,13 @@ func TestLogPipelinesValidation(t *testing.T) {
 		},
 		{
 			Name: "Invalid orderId",
-			Pipeline: logparsingpipeline.PostablePipeline{
-				OrderId: 0,
+			Pipeline: pipelinetypes.PostablePipeline{
+				OrderID: 0,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  validPipelineFilterSet,
-				Config: []logparsingpipeline.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -309,13 +310,13 @@ func TestLogPipelinesValidation(t *testing.T) {
 		},
 		{
 			Name: "Invalid filter",
-			Pipeline: logparsingpipeline.PostablePipeline{
-				OrderId: 1,
+			Pipeline: pipelinetypes.PostablePipeline{
+				OrderID: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  &v3.FilterSet{},
-				Config: []logparsingpipeline.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -331,13 +332,13 @@ func TestLogPipelinesValidation(t *testing.T) {
 		},
 		{
 			Name: "Invalid operator field",
-			Pipeline: logparsingpipeline.PostablePipeline{
-				OrderId: 1,
+			Pipeline: pipelinetypes.PostablePipeline{
+				OrderID: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  validPipelineFilterSet,
-				Config: []logparsingpipeline.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -350,6 +351,27 @@ func TestLogPipelinesValidation(t *testing.T) {
 				},
 			},
 			ExpectedResponseStatusCode: 400,
+		}, {
+			Name: "Invalid from field path",
+			Pipeline: pipelinetypes.PostablePipeline{
+				OrderID: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  validPipelineFilterSet,
+				Config: []pipelinetypes.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "move",
+						Type:    "move",
+						From:    `attributes.temp_parsed_body."@l"`,
+						To:      "attributes.test",
+						Enabled: true,
+						Name:    "test move",
+					},
+				},
+			},
+			ExpectedResponseStatusCode: 400,
 		},
 	}
 
@@ -357,8 +379,8 @@ func TestLogPipelinesValidation(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			testbed := NewLogPipelinesTestBed(t, nil)
 			testbed.PostPipelinesToQSExpectingStatusCode(
-				logparsingpipeline.PostablePipelines{
-					Pipelines: []logparsingpipeline.PostablePipeline{tc.Pipeline},
+				pipelinetypes.PostablePipelines{
+					Pipelines: []pipelinetypes.PostablePipeline{tc.Pipeline},
 				},
 				tc.ExpectedResponseStatusCode,
 			)
@@ -374,10 +396,10 @@ func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 	require.Equal(0, len(getPipelinesResp.Pipelines))
 	require.Equal(0, len(getPipelinesResp.History))
 
-	postablePipelines := logparsingpipeline.PostablePipelines{
-		Pipelines: []logparsingpipeline.PostablePipeline{
+	postablePipelines := pipelinetypes.PostablePipelines{
+		Pipelines: []pipelinetypes.PostablePipeline{
 			{
-				OrderId: 1,
+				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
 				Enabled: true,
@@ -395,7 +417,7 @@ func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 						},
 					},
 				},
-				Config: []logparsingpipeline.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -421,7 +443,7 @@ func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 // configuring log pipelines and provides test helpers.
 type LogPipelinesTestBed struct {
 	t               *testing.T
-	testUser        *model.User
+	testUser        *types.User
 	apiHandler      *app.APIHandler
 	agentConfMgr    *agentConf.Manager
 	opampServer     *opamp.Server
@@ -429,18 +451,21 @@ type LogPipelinesTestBed struct {
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
-func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed {
-	if testDB == nil {
-		testDB = utils.NewQueryServiceDBForTests(t)
+func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipelinesTestBed {
+	if sqlStore == nil {
+		sqlStore = utils.NewQueryServiceDBForTests(t)
 	}
 
-	ic, err := integrations.NewController(testDB)
+	// create test org
+	// utils.CreateTestOrg(t, sqlStore)
+
+	ic, err := integrations.NewController(sqlStore)
 	if err != nil {
 		t.Fatalf("could not create integrations controller: %v", err)
 	}
 
 	controller, err := logparsingpipeline.NewLogParsingPipelinesController(
-		testDB, "sqlite", ic.GetPipelinesForInstalledIntegrations,
+		sqlStore, ic.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		t.Fatalf("could not create a logparsingpipelines controller: %v", err)
@@ -449,23 +474,24 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		AppDao:                        dao.DB(),
 		LogsParsingPipelineController: controller,
+		JWT:                           jwt,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
-	user, apiErr := createTestUser()
+	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
+	user, apiErr := createTestUser(organizationModule)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
 
 	// Mock an available opamp agent
-	testDB, err = opampModel.InitDB(testDB)
+	testDB, err := opampModel.InitDB(sqlStore.SQLxDB())
 	require.Nil(t, err, "failed to init opamp model")
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:       testDB,
-		DBEngine: "sqlite",
+		DB: testDB,
 		AgentFeatures: []agentConf.AgentFeature{
 			apiHandler.LogsParsingPipelineController,
 		}})
@@ -479,7 +505,7 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 	}
 }
 
-func NewLogPipelinesTestBed(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed {
+func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipelinesTestBed {
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
 	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
@@ -509,7 +535,7 @@ func NewLogPipelinesTestBed(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 }
 
 func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
-	postablePipelines logparsingpipeline.PostablePipelines,
+	postablePipelines pipelinetypes.PostablePipelines,
 	expectedStatusCode int,
 ) *logparsingpipeline.PipelinesResponse {
 	req, err := AuthenticatedRequestForTest(
@@ -520,7 +546,12 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 	}
 
 	respWriter := httptest.NewRecorder()
-	ctx := auth.AttachJwtToContext(req.Context(), req)
+
+	ctx, err := tb.apiHandler.JWT.ContextFromRequest(req.Context(), req.Header.Get("Authorization"))
+	if err != nil {
+		tb.t.Fatalf("couldn't get jwt from request: %v", err)
+	}
+
 	req = req.WithContext(ctx)
 	tb.apiHandler.CreateLogsPipeline(respWriter, req)
 
@@ -554,7 +585,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 }
 
 func (tb *LogPipelinesTestBed) PostPipelinesToQS(
-	postablePipelines logparsingpipeline.PostablePipelines,
+	postablePipelines pipelinetypes.PostablePipelines,
 ) *logparsingpipeline.PipelinesResponse {
 	return tb.PostPipelinesToQSExpectingStatusCode(
 		postablePipelines, 200,
@@ -603,7 +634,7 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.Pipeline
 }
 
 func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
-	pipelines []logparsingpipeline.Pipeline,
+	pipelines []pipelinetypes.GettablePipeline,
 ) {
 	lastMsg := tb.opampClientConn.LatestMsgFromServer()
 	assertPipelinesRecommendedInRemoteConfig(
@@ -614,7 +645,7 @@ func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
 func assertPipelinesRecommendedInRemoteConfig(
 	t *testing.T,
 	msg *protobufs.ServerToAgent,
-	pipelines []logparsingpipeline.Pipeline,
+	gettablePipelines []pipelinetypes.GettablePipeline,
 ) {
 	collectorConfigFiles := msg.RemoteConfig.Config.ConfigMap
 	require.Equal(
@@ -644,7 +675,7 @@ func assertPipelinesRecommendedInRemoteConfig(
 		}
 	}
 
-	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(pipelines)
+	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(gettablePipelines)
 	require.NoError(t, err)
 	require.Equal(
 		t, expectedLogProcessorNames, collectorConfLogsPipelineProcNames,
@@ -673,12 +704,12 @@ func assertPipelinesRecommendedInRemoteConfig(
 
 		// find logparsingpipeline.Pipeline whose processor is being validated here
 		pipelineIdx := slices.IndexFunc(
-			pipelines, func(p logparsingpipeline.Pipeline) bool {
+			gettablePipelines, func(p pipelinetypes.GettablePipeline) bool {
 				return logparsingpipeline.CollectorConfProcessorName(p) == procName
 			},
 		)
 		require.GreaterOrEqual(t, pipelineIdx, 0)
-		expectedExpr, err := queryBuilderToExpr.Parse(pipelines[pipelineIdx].Filter)
+		expectedExpr, err := queryBuilderToExpr.Parse(gettablePipelines[pipelineIdx].Filter)
 		require.Nil(t, err)
 		require.Equal(t, expectedExpr, pipelineFilterExpr)
 	}
@@ -699,7 +730,7 @@ func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig
 }
 
 func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
-	pipelines []logparsingpipeline.Pipeline,
+	pipelines []pipelinetypes.GettablePipeline,
 ) {
 	newAgentConn := &opamp.MockOpAmpConnection{}
 	tb.opampServer.OnMessage(
@@ -737,7 +768,7 @@ func unmarshalPipelinesResponse(apiResponse *app.ApiResponse) (
 
 func assertPipelinesResponseMatchesPostedPipelines(
 	t *testing.T,
-	postablePipelines logparsingpipeline.PostablePipelines,
+	postablePipelines pipelinetypes.PostablePipelines,
 	pipelinesResp *logparsingpipeline.PipelinesResponse,
 ) {
 	require.Equal(
@@ -747,7 +778,7 @@ func assertPipelinesResponseMatchesPostedPipelines(
 	for i, pipeline := range pipelinesResp.Pipelines {
 		postable := postablePipelines.Pipelines[i]
 		require.Equal(t, postable.Name, pipeline.Name, "pipeline.Name mismatch")
-		require.Equal(t, postable.OrderId, pipeline.OrderId, "pipeline.OrderId mismatch")
+		require.Equal(t, postable.OrderID, pipeline.OrderID, "pipeline.OrderId mismatch")
 		require.Equal(t, postable.Enabled, pipeline.Enabled, "pipeline.Enabled mismatch")
 		require.Equal(t, postable.Config, pipeline.Config, "pipeline.Config mismatch")
 	}

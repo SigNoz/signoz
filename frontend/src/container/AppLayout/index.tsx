@@ -5,40 +5,45 @@ import './AppLayout.styles.scss';
 
 import * as Sentry from '@sentry/react';
 import { Flex } from 'antd';
-import getLocalStorageKey from 'api/browser/localstorage/get';
+import manageCreditCardApi from 'api/billing/manage';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
+import logEvent from 'api/common/logEvent';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
+import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import useFeatureFlags from 'hooks/useFeatureFlag';
-import useLicense from 'hooks/useLicense';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { INTEGRATION_TYPES } from 'pages/Integrations/utils';
+import { useAppContext } from 'providers/App/App';
 import {
 	ReactNode,
 	useCallback,
 	useEffect,
-	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
 } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { useQueries } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
+import { useMutation, useQueries } from 'react-query';
+import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
-import { sideBarCollapse } from 'store/actions';
-import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {
 	UPDATE_CURRENT_ERROR,
@@ -46,46 +51,81 @@ import {
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
-import AppReducer from 'types/reducer/app';
-import { isCloudUser } from 'utils/app';
-import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import {
+	LicenseEvent,
+	LicensePlatform,
+	LicenseState,
+} from 'types/api/licensesV3/getActive';
+import { USER_ROLES } from 'types/roles';
+import { eventEmitter } from 'utils/getEventEmitter';
+import {
+	getFormattedDate,
+	getFormattedDateWithMinutes,
+	getRemainingDays,
+} from 'utils/timeUtils';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
 import { getRouteKey } from './utils';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function AppLayout(props: AppLayoutProps): JSX.Element {
-	const { isLoggedIn, user, role } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
-
-	const [collapsed, setCollapsed] = useState<boolean>(
-		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
-	);
+	const {
+		isLoggedIn,
+		user,
+		trialInfo,
+		activeLicenseV3,
+		isFetchingActiveLicenseV3,
+		featureFlags,
+		isFetchingFeatureFlags,
+		featureFlagsFetchError,
+	} = useAppContext();
 
 	const { notifications } = useNotifications();
 
+	const [
+		showPaymentFailedWarning,
+		setShowPaymentFailedWarning,
+	] = useState<boolean>(false);
+
+	const [showSlowApiWarning, setShowSlowApiWarning] = useState(false);
+	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
+
+	const handleBillingOnSuccess = (
+		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
+	): void => {
+		if (data?.payload?.redirectURL) {
+			const newTab = document.createElement('a');
+			newTab.href = data.payload.redirectURL;
+			newTab.target = '_blank';
+			newTab.rel = 'noopener noreferrer';
+			newTab.click();
+		}
+	};
+
+	const handleBillingOnError = (): void => {
+		notifications.error({
+			message: SOMETHING_WENT_WRONG,
+		});
+	};
+
+	const {
+		mutate: manageCreditCard,
+		isLoading: isLoadingManageBilling,
+	} = useMutation(manageCreditCardApi, {
+		onSuccess: (data) => {
+			handleBillingOnSuccess(data);
+		},
+		onError: handleBillingOnError,
+	});
+
 	const isDarkMode = useIsDarkMode();
-
-	const { data: licenseData, isFetching } = useLicense();
-
-	const isPremiumChatSupportEnabled =
-		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
-
-	const isChatSupportEnabled =
-		useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active || false;
-
-	const isCloudUserVal = isCloudUser();
-
-	const showAddCreditCardModal =
-		isLoggedIn &&
-		isChatSupportEnabled &&
-		isCloudUserVal &&
-		!isPremiumChatSupportEnabled &&
-		!licenseData?.payload?.trialConvertedToSubscription;
 
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
+
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const [getUserVersionResponse, getUserLatestVersionResponse] = useQueries([
 		{
@@ -116,14 +156,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const latestCurrentCounter = useRef(0);
 	const latestVersionCounter = useRef(0);
-
-	const onCollapse = useCallback(() => {
-		setCollapsed((collapsed) => !collapsed);
-	}, []);
-
-	useLayoutEffect(() => {
-		dispatch(sideBarCollapse(collapsed));
-	}, [collapsed, dispatch]);
 
 	useEffect(() => {
 		if (
@@ -214,6 +246,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const pageTitle = t(routeKey);
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
+		pathname === ROUTES.ONBOARDING ||
+		pathname === ROUTES.GET_STARTED_WITH_CLOUD ||
 		pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING ||
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
 		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
@@ -222,23 +256,80 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 
+	const [showWorkspaceRestricted, setShowWorkspaceRestricted] = useState(false);
+
 	useEffect(() => {
 		if (
-			!isFetching &&
-			licenseData?.payload?.onTrial &&
-			!licenseData?.payload?.trialConvertedToSubscription &&
-			!licenseData?.payload?.workSpaceBlock &&
-			getRemainingDays(licenseData?.payload.trialEnd) < 7
+			!isFetchingActiveLicenseV3 &&
+			activeLicenseV3 &&
+			trialInfo?.onTrial &&
+			!trialInfo?.trialConvertedToSubscription &&
+			!trialInfo?.workSpaceBlock &&
+			getRemainingDays(trialInfo?.trialEnd) < 7
 		) {
 			setShowTrialExpiryBanner(true);
 		}
-	}, [licenseData, isFetching]);
+	}, [isFetchingActiveLicenseV3, activeLicenseV3, trialInfo]);
 
-	const handleUpgrade = (): void => {
-		if (role === 'ADMIN') {
+	useEffect(() => {
+		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+			const isTerminated = activeLicenseV3.state === LicenseState.TERMINATED;
+			const isExpired = activeLicenseV3.state === LicenseState.EXPIRED;
+			const isCancelled = activeLicenseV3.state === LicenseState.CANCELLED;
+			const isDefaulted = activeLicenseV3.state === LicenseState.DEFAULTED;
+			const isEvaluationExpired =
+				activeLicenseV3.state === LicenseState.EVALUATION_EXPIRED;
+
+			const isWorkspaceAccessRestricted =
+				isTerminated ||
+				isExpired ||
+				isCancelled ||
+				isDefaulted ||
+				isEvaluationExpired;
+
+			const { platform } = activeLicenseV3;
+
+			if (
+				isWorkspaceAccessRestricted &&
+				platform === LicensePlatform.SELF_HOSTED
+			) {
+				setShowWorkspaceRestricted(true);
+			}
+		}
+	}, [isFetchingActiveLicenseV3, activeLicenseV3]);
+
+	useEffect(() => {
+		if (
+			!isFetchingActiveLicenseV3 &&
+			!isNull(activeLicenseV3) &&
+			activeLicenseV3?.event_queue?.event === LicenseEvent.DEFAULT
+		) {
+			setShowPaymentFailedWarning(true);
+		}
+	}, [activeLicenseV3, isFetchingActiveLicenseV3]);
+
+	useEffect(() => {
+		// after logging out hide the trial expiry banner
+		if (!isLoggedIn) {
+			setShowTrialExpiryBanner(false);
+			setShowPaymentFailedWarning(false);
+			setShowSlowApiWarning(false);
+		}
+	}, [isLoggedIn]);
+
+	const handleUpgrade = useCallback((): void => {
+		if (user.role === USER_ROLES.ADMIN) {
 			history.push(ROUTES.BILLING);
 		}
-	};
+	}, [user.role]);
+
+	const handleFailedPayment = useCallback((): void => {
+		manageCreditCard({
+			url: window.location.origin,
+		});
+	}, [manageCreditCard]);
+
+	const isHome = (): boolean => routeKey === 'HOME';
 
 	const isLogsView = (): boolean =>
 		routeKey === 'LOGS' ||
@@ -246,28 +337,41 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'LOGS_PIPELINES' ||
 		routeKey === 'LOGS_SAVE_VIEWS';
 
+	const isApiMonitoringView = (): boolean => routeKey === 'API_MONITORING';
+
+	const isExceptionsView = (): boolean => routeKey === 'ALL_ERROR';
+
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
 	const isMessagingQueues = (): boolean =>
-		routeKey === 'MESSAGING_QUEUES' || routeKey === 'MESSAGING_QUEUES_DETAIL';
+		routeKey === 'MESSAGING_QUEUES_KAFKA' ||
+		routeKey === 'MESSAGING_QUEUES_KAFKA_DETAIL' ||
+		routeKey === 'MESSAGING_QUEUES_CELERY_TASK' ||
+		routeKey === 'MESSAGING_QUEUES_OVERVIEW';
+
+	const isCloudIntegrationPage = (): boolean =>
+		routeKey === 'INTEGRATIONS' &&
+		new URLSearchParams(window.location.search).get('integration') ===
+			INTEGRATION_TYPES.AWS_INTEGRATION;
 
 	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
 	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
 	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
-	const isDashboardView = (): boolean => {
-		/**
-		 * need to match using regex here as the getRoute function will not work for
-		 * routes with id
-		 */
-		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+$/;
-		return regex.test(pathname);
-	};
+	const isInfraMonitoring = (): boolean =>
+		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS' ||
+		routeKey === 'INFRASTRUCTURE_MONITORING_KUBERNETES';
+	const isTracesFunnels = (): boolean => routeKey === 'TRACES_FUNNELS';
+	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
 
-	const isDashboardWidgetView = (): boolean => {
-		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+\/new$/;
-		return regex.test(pathname);
-	};
+	const isDashboardView = (): boolean =>
+		isPathMatch(/^\/dashboard\/[a-zA-Z0-9_-]+$/);
+
+	const isDashboardWidgetView = (): boolean =>
+		isPathMatch(/^\/dashboard\/[a-zA-Z0-9_-]+\/new$/);
+
+	const isTraceDetailsView = (): boolean =>
+		isPathMatch(/^\/trace\/[a-zA-Z0-9]+(\?.*)?$/);
 
 	useEffect(() => {
 		if (isDarkMode) {
@@ -279,34 +383,221 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [isDarkMode]);
 
-	const isSideNavCollapsed = getLocalStorageKey(IS_SIDEBAR_COLLAPSED);
+	const showAddCreditCardModal = useMemo(() => {
+		if (
+			!isFetchingFeatureFlags &&
+			(featureFlags || featureFlagsFetchError) &&
+			activeLicenseV3 &&
+			trialInfo
+		) {
+			let isChatSupportEnabled = false;
+			let isPremiumSupportEnabled = false;
+			if (featureFlags && featureFlags.length > 0) {
+				isChatSupportEnabled =
+					featureFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)
+						?.active || false;
 
-	/**
-	 * Note: Right now we don't have a page-level method to pass the sidebar collapse state.
-	 * Since the use case for overriding is not widely needed, we are setting it here
-	 * so that the workspace locked page will have an expanded sidebar regardless of how users
-	 * have set it or what is stored in localStorage. This will not affect the localStorage config.
-	 */
-	const isWorkspaceLocked = pathname === ROUTES.WORKSPACE_LOCKED;
+				isPremiumSupportEnabled =
+					featureFlags.find((flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT)
+						?.active || false;
+			}
+			return (
+				isLoggedIn &&
+				!isPremiumSupportEnabled &&
+				isChatSupportEnabled &&
+				!trialInfo?.trialConvertedToSubscription &&
+				isCloudUserVal
+			);
+		}
+		return false;
+	}, [
+		featureFlags,
+		featureFlagsFetchError,
+		isCloudUserVal,
+		isFetchingFeatureFlags,
+		isLoggedIn,
+		activeLicenseV3,
+		trialInfo,
+	]);
+
+	// Listen for API warnings
+	const handleWarning = (
+		isSlow: boolean,
+		data: { duration: number; url: string; threshold: number },
+	): void => {
+		const dontShowSlowApiWarning = getLocalStorageApi(
+			LOCALSTORAGE.DONT_SHOW_SLOW_API_WARNING,
+		);
+
+		logEvent(
+			`Slow API Warning`,
+			{
+				durationMs: data.duration,
+				url: data.url,
+				thresholdMs: data.threshold,
+			},
+			'track',
+			true, // rate limited - controlled by Backend
+		);
+
+		const isDontShowSlowApiWarning = dontShowSlowApiWarning === 'true';
+
+		if (isDontShowSlowApiWarning) {
+			setShowSlowApiWarning(false);
+		} else {
+			setShowSlowApiWarning(isSlow);
+		}
+	};
+
+	useEffect(() => {
+		eventEmitter.on(Events.SLOW_API_WARNING, handleWarning);
+
+		return (): void => {
+			eventEmitter.off(Events.SLOW_API_WARNING, handleWarning);
+		};
+	}, []);
+
+	const handleDismissSlowApiWarning = (): void => {
+		setShowSlowApiWarning(false);
+
+		setLocalStorageApi(LOCALSTORAGE.DONT_SHOW_SLOW_API_WARNING, 'true');
+	};
+
+	useEffect(() => {
+		if (
+			showSlowApiWarning &&
+			trialInfo?.onTrial &&
+			!trialInfo?.trialConvertedToSubscription &&
+			!slowApiWarningShown
+		) {
+			setSlowApiWarningShown(true);
+
+			notifications.info({
+				message: (
+					<div>
+						Our systems are taking longer than expected for your trial workspace.
+						Please{' '}
+						{user.role === USER_ROLES.ADMIN ? (
+							<span>
+								<a
+									className="upgrade-link"
+									onClick={(): void => {
+										notifications.destroy('slow-api-warning');
+
+										logEvent(`Slow API Banner: Upgrade clicked`, {});
+
+										handleUpgrade();
+									}}
+								>
+									upgrade
+								</a>
+								your workspace for a smoother experience.
+							</span>
+						) : (
+							'contact your administrator for upgrading to a paid plan for a smoother experience.'
+						)}
+					</div>
+				),
+				duration: 60000,
+				placement: 'topRight',
+				onClose: handleDismissSlowApiWarning,
+				key: 'slow-api-warning',
+			});
+		}
+	}, [
+		showSlowApiWarning,
+		notifications,
+		user.role,
+		isLoadingManageBilling,
+		handleFailedPayment,
+		slowApiWarningShown,
+		handleUpgrade,
+		trialInfo?.onTrial,
+		trialInfo?.trialConvertedToSubscription,
+	]);
+
+	const renderWorkspaceRestrictedBanner = (): JSX.Element => (
+		<div className="workspace-restricted-banner">
+			{activeLicenseV3?.state === LicenseState.TERMINATED && (
+				<>
+					Your SigNoz license is terminated, enterprise features have been disabled.
+					Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for new license
+				</>
+			)}
+			{activeLicenseV3?.state === LicenseState.EXPIRED && (
+				<>
+					Your SigNoz license has expired. Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for renewal to
+					avoid termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+			{activeLicenseV3?.state === LicenseState.CANCELLED && (
+				<>
+					Your SigNoz license is cancelled. Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for reactivation
+					to avoid termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+
+			{activeLicenseV3?.state === LicenseState.DEFAULTED && (
+				<>
+					Your SigNoz license is defaulted. Please clear the bill to continue using
+					the enterprise features. Contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> to avoid
+					termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+
+			{activeLicenseV3?.state === LicenseState.EVALUATION_EXPIRED && (
+				<>
+					Your SigNoz trial has ended. Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for next steps to
+					avoid termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+		</div>
+	);
 
 	return (
-		<Layout
-			className={cx(
-				isDarkMode ? 'darkMode' : 'lightMode',
-				isSideNavCollapsed ? 'sidebarCollapsed' : '',
-			)}
-		>
+		<Layout className={cx(isDarkMode ? 'darkMode' : 'lightMode')}>
 			<Helmet>
 				<title>{pageTitle}</title>
 			</Helmet>
 
-			{showTrialExpiryBanner && (
+			{showTrialExpiryBanner && !showPaymentFailedWarning && (
 				<div className="trial-expiry-banner">
 					You are in free trial period. Your free trial will end on{' '}
-					<span>
-						{getFormattedDate(licenseData?.payload?.trialEnd || Date.now())}.
-					</span>
-					{role === 'ADMIN' ? (
+					<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
+					{user.role === USER_ROLES.ADMIN ? (
 						<span>
 							{' '}
 							Please{' '}
@@ -321,23 +612,38 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				</div>
 			)}
 
-			<Flex
-				className={cx(
-					'app-layout',
-					isDarkMode ? 'darkMode' : 'lightMode',
-					!collapsed && !renderFullScreen ? 'docked' : '',
-				)}
-			>
-				{isToDisplayLayout && !renderFullScreen && (
-					<SideNav
-						licenseData={licenseData}
-						isFetching={isFetching}
-						onCollapse={onCollapse}
-						collapsed={isWorkspaceLocked ? false : collapsed}
-					/>
-				)}
+			{showWorkspaceRestricted && renderWorkspaceRestrictedBanner()}
+
+			{!showTrialExpiryBanner && showPaymentFailedWarning && (
+				<div className="payment-failed-banner">
+					Your bill payment has failed. Your workspace will get suspended on{' '}
+					<span>
+						{getFormattedDateWithMinutes(
+							dayjs(activeLicenseV3?.event_queue?.scheduled_at).unix() || Date.now(),
+						)}
+						.
+					</span>
+					{user.role === USER_ROLES.ADMIN ? (
+						<span>
+							{' '}
+							Please{' '}
+							<a className="upgrade-link" onClick={handleFailedPayment}>
+								pay the bill
+							</a>
+							to continue using SigNoz features.
+						</span>
+					) : (
+						' Please contact your administrator to pay the bill.'
+					)}
+				</div>
+			)}
+
+			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
+				{isToDisplayLayout && !renderFullScreen && <SideNav />}
 				<div
-					className={cx('app-content', collapsed ? 'collapsed' : '')}
+					className={cx('app-content', {
+						'full-screen-content': renderFullScreen,
+					})}
 					data-overlayscrollbars-initialize
 				>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
@@ -346,6 +652,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 								<ChildrenContainer
 									style={{
 										margin:
+											isHome() ||
 											isLogsView() ||
 											isTracesView() ||
 											isDashboardView() ||
@@ -353,9 +660,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isDashboardListView() ||
 											isAlertHistory() ||
 											isAlertOverview() ||
-											isMessagingQueues()
+											isMessagingQueues() ||
+											isCloudIntegrationPage() ||
+											isInfraMonitoring() ||
+											isApiMonitoringView() ||
+											isExceptionsView()
 												? 0
 												: '0 1rem',
+
+										...(isTraceDetailsView() || isTracesFunnels() ? { margin: 0 } : {}),
 									}}
 								>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}

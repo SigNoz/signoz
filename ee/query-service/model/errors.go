@@ -3,7 +3,7 @@ package model
 import (
 	"fmt"
 
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 type ApiError struct {
@@ -42,6 +42,13 @@ func NewApiError(typ basemodel.ErrorType, err error) *ApiError {
 func BadRequest(err error) *ApiError {
 	return &ApiError{
 		Typ: basemodel.ErrorBadData,
+		Err: err,
+	}
+}
+
+func Unauthorized(err error) *ApiError {
+	return &ApiError{
+		Typ: basemodel.ErrorUnauthorized,
 		Err: err,
 	}
 }

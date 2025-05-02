@@ -22,7 +22,7 @@ function TopContributorsCard({
 	const viewAllTopContributorsParam = searchParams.get('viewAllTopContributors');
 
 	const [isViewAllVisible, setIsViewAllVisible] = useState(
-		!!viewAllTopContributorsParam ?? false,
+		!!viewAllTopContributorsParam,
 	);
 
 	const isDarkMode = useIsDarkMode();

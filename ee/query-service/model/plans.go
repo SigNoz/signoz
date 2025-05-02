@@ -1,19 +1,30 @@
 package model
 
 import (
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 const SSO = "SSO"
 const Basic = "BASIC_PLAN"
-const Pro = "PRO_PLAN"
 const Enterprise = "ENTERPRISE_PLAN"
-const DisableUpsell = "DISABLE_UPSELL"
+
+var (
+	PlanNameEnterprise = "ENTERPRISE"
+	PlanNameBasic      = "BASIC"
+)
+
+var (
+	MapOldPlanKeyToNewPlanName map[string]string = map[string]string{PlanNameBasic: Basic, PlanNameEnterprise: Enterprise}
+)
+
+var (
+	LicenseStatusInvalid = "INVALID"
+)
+
 const Onboarding = "ONBOARDING"
 const ChatSupport = "CHAT_SUPPORT"
 const Gateway = "GATEWAY"
 const PremiumSupport = "PREMIUM_SUPPORT"
-const QueryBuilderSearchV2 = "QUERY_BUILDER_SEARCH_V2"
 
 var BasicPlan = basemodel.FeatureSet{
 	basemodel.Feature{
@@ -24,90 +35,6 @@ var BasicPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       basemodel.OSS,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       DisableUpsell,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.SmartTraceDetail,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.CustomMetricsFunction,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.QueryBuilderPanels,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.QueryBuilderAlerts,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelSlack,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelWebhook,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelPagerduty,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelOpsgenie,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelEmail,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelMsTeams,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
 		Name:       basemodel.UseSpanMetrics,
 		Active:     false,
 		Usage:      0,
@@ -129,122 +56,14 @@ var BasicPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       QueryBuilderSearchV2,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-}
-
-var ProPlan = basemodel.FeatureSet{
-	basemodel.Feature{
-		Name:       SSO,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.OSS,
+		Name:       basemodel.AnomalyDetection,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       basemodel.SmartTraceDetail,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.CustomMetricsFunction,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.QueryBuilderPanels,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.QueryBuilderAlerts,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelSlack,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelWebhook,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelPagerduty,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelOpsgenie,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelEmail,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelMsTeams,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.UseSpanMetrics,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       Gateway,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       PremiumSupport,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       QueryBuilderSearchV2,
+		Name:       basemodel.TraceFunnels,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
@@ -255,83 +74,6 @@ var ProPlan = basemodel.FeatureSet{
 var EnterprisePlan = basemodel.FeatureSet{
 	basemodel.Feature{
 		Name:       SSO,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.OSS,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.SmartTraceDetail,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.CustomMetricsFunction,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.QueryBuilderPanels,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.QueryBuilderAlerts,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelSlack,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelWebhook,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelPagerduty,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelOpsgenie,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelEmail,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.AlertChannelMsTeams,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
@@ -373,7 +115,14 @@ var EnterprisePlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       QueryBuilderSearchV2,
+		Name:       basemodel.AnomalyDetection,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       basemodel.TraceFunnels,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,

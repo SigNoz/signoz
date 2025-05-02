@@ -24,6 +24,12 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
+import { useOptionsMenu } from 'container/OptionsMenu';
+import {
+	defaultLogsSelectedColumns,
+	defaultTraceSelectedColumns,
+} from 'container/OptionsMenu/constants';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
@@ -34,7 +40,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isEqual, omit } from 'lodash-es';
 import {
 	Check,
 	ConciergeBell,
@@ -42,8 +48,8 @@ import {
 	PanelBottomClose,
 	Plus,
 	X,
-	XCircle,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import {
 	CSSProperties,
 	Dispatch,
@@ -54,13 +60,12 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
-import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
 import { PreservedViewsTypes } from './constants';
@@ -95,11 +100,19 @@ function ExplorerOptions({
 	const ref = useRef<RefSelectProps>(null);
 	const isDarkMode = useIsDarkMode();
 	const isLogsExplorer = sourcepage === DataSource.LOGS;
+	const isMetricsExplorer = sourcepage === DataSource.METRICS;
 
 	const PRESERVED_VIEW_LOCAL_STORAGE_KEY = LOCALSTORAGE.LAST_USED_SAVED_VIEWS;
-	const PRESERVED_VIEW_TYPE = isLogsExplorer
-		? PreservedViewsTypes.LOGS
-		: PreservedViewsTypes.TRACES;
+
+	const PRESERVED_VIEW_TYPE = useMemo(() => {
+		if (isLogsExplorer) {
+			return PreservedViewsTypes.LOGS;
+		}
+		if (isMetricsExplorer) {
+			return PreservedViewsTypes.METRICS;
+		}
+		return PreservedViewsTypes.TRACES;
+	}, [isLogsExplorer, isMetricsExplorer]);
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -110,6 +123,7 @@ function ExplorerOptions({
 		panelType,
 		isStagedQueryUpdated,
 		redirectWithQueryBuilderData,
+		isDefaultQuery,
 	} = useQueryBuilder();
 
 	const handleSaveViewModalToggle = (): void => {
@@ -121,6 +135,10 @@ function ExplorerOptions({
 			logEvent('Logs Explorer: Save view clicked', {
 				panelType,
 			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Save view clicked', {
+				panelType,
+			});
 		}
 		setIsSaveModalOpen(!isSaveModalOpen);
 	};
@@ -129,7 +147,7 @@ function ExplorerOptions({
 		setIsSaveModalOpen(false);
 	};
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const handleConditionalQueryModification = useCallback((): string => {
 		if (
@@ -153,6 +171,10 @@ function ExplorerOptions({
 			});
 		} else if (isLogsExplorer) {
 			logEvent('Logs Explorer: Create alert', {
+				panelType,
+			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Create alert', {
 				panelType,
 			});
 		}
@@ -180,6 +202,10 @@ function ExplorerOptions({
 			logEvent('Logs Explorer: Add to dashboard clicked', {
 				panelType,
 			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Add to dashboard clicked', {
+				panelType,
+			});
 		}
 		setIsExport(true);
 	};
@@ -197,7 +223,7 @@ function ExplorerOptions({
 	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
 
-	const extraData = viewsData?.data?.data?.find((view) => view.uuid === viewKey)
+	const extraData = viewsData?.data?.data?.find((view) => view.id === viewKey)
 		?.extraData;
 
 	const extraDataColor = extraData ? JSON.parse(extraData).color : '';
@@ -206,13 +232,46 @@ function ExplorerOptions({
 		0.08,
 	);
 
+	const { options, handleOptionsChange } = useOptionsMenu({
+		storageKey:
+			sourcepage === DataSource.TRACES
+				? LOCALSTORAGE.TRACES_LIST_OPTIONS
+				: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: sourcepage,
+		aggregateOperator: StringOperators.NOOP,
+	});
+
+	const getUpdatedExtraData = (
+		extraData: string | undefined,
+		newSelectedColumns: BaseAutocompleteData[],
+	): string => {
+		let updatedExtraData;
+
+		if (extraData) {
+			const parsedExtraData = JSON.parse(extraData);
+			parsedExtraData.selectColumns = newSelectedColumns;
+			updatedExtraData = JSON.stringify(parsedExtraData);
+		} else {
+			updatedExtraData = JSON.stringify({
+				color: Color.BG_SIENNA_500,
+				selectColumns: newSelectedColumns,
+			});
+		}
+		return updatedExtraData;
+	};
+
+	const updatedExtraData = getUpdatedExtraData(
+		extraData,
+		options?.selectColumns,
+	);
+
 	const {
 		mutateAsync: updateViewAsync,
 		isLoading: isViewUpdating,
 	} = useUpdateView({
 		compositeQuery,
 		viewKey,
-		extraData: extraData || JSON.stringify({ color: Color.BG_SIENNA_500 }),
+		extraData: updatedExtraData,
 		sourcePage: sourcepage,
 		viewName,
 	});
@@ -224,13 +283,11 @@ function ExplorerOptions({
 	};
 
 	const onUpdateQueryHandler = (): void => {
-		const extraData = viewsData?.data?.data?.find((view) => view.uuid === viewKey)
-			?.extraData;
 		updateViewAsync(
 			{
 				compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
 				viewKey,
-				extraData: extraData || JSON.stringify({ color: Color.BG_SIENNA_500 }),
+				extraData: updatedExtraData,
 				sourcePage: sourcepage,
 				viewName,
 			},
@@ -252,6 +309,47 @@ function ExplorerOptions({
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
+	type ExtraData = {
+		selectColumns?: BaseAutocompleteData[];
+		version?: number;
+	};
+
+	const updateOrRestoreSelectColumns = (
+		key: string,
+		allViewsData: ViewProps[] | undefined,
+		options: OptionsQuery,
+		handleOptionsChange: (newQueryData: OptionsQuery) => void,
+	): void => {
+		const currentViewDetails = getViewDetailsUsingViewKey(key, allViewsData);
+		if (!currentViewDetails) {
+			return;
+		}
+
+		let extraData: ExtraData = {};
+		try {
+			extraData = JSON.parse(currentViewDetails?.extraData ?? '{}') as ExtraData;
+		} catch (error) {
+			console.error('Error parsing extraData:', error);
+		}
+
+		let backwardCompatibleOptions = options;
+
+		if (!extraData?.version) {
+			backwardCompatibleOptions = omit(options, 'version');
+		}
+
+		if (extraData.selectColumns?.length) {
+			handleOptionsChange({
+				...backwardCompatibleOptions,
+				selectColumns: extraData.selectColumns,
+			});
+		} else if (!isEqual(defaultTraceSelectedColumns, options.selectColumns)) {
+			handleOptionsChange({
+				...backwardCompatibleOptions,
+				selectColumns: defaultTraceSelectedColumns,
+			});
+		}
+	};
 	const onMenuItemSelectHandler = useCallback(
 		({ key }: { key: string }): void => {
 			const currentViewDetails = getViewDetailsUsingViewKey(
@@ -259,17 +357,12 @@ function ExplorerOptions({
 				viewsData?.data?.data,
 			);
 			if (!currentViewDetails) return;
-			const {
-				query,
-				name,
-				uuid,
-				panelType: currentPanelType,
-			} = currentViewDetails;
+			const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
 			handleExplorerTabChange(currentPanelType, {
 				query,
 				name,
-				uuid,
+				id,
 			});
 		},
 		[viewsData, handleExplorerTabChange],
@@ -317,9 +410,21 @@ function ExplorerOptions({
 				panelType,
 				viewName: option?.value,
 			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Select view', {
+				panelType,
+				viewName: option?.value,
+			});
 		}
 
 		updatePreservedViewInLocalStorage(option);
+
+		updateOrRestoreSelectColumns(
+			option.key,
+			viewsData?.data?.data,
+			options,
+			handleOptionsChange,
+		);
 
 		if (ref.current) {
 			ref.current.blur();
@@ -348,10 +453,22 @@ function ExplorerOptions({
 	const handleClearSelect = (): void => {
 		removeCurrentViewFromLocalStorage();
 
+		handleOptionsChange({
+			...options,
+			selectColumns:
+				sourcepage === DataSource.TRACES
+					? defaultTraceSelectedColumns
+					: defaultLogsSelectedColumns,
+		});
+
 		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
 	};
 
-	const isQueryUpdated = isStagedQueryUpdated(viewsData?.data?.data, viewKey);
+	const isQueryUpdated = isStagedQueryUpdated(
+		viewsData?.data?.data,
+		viewKey,
+		options,
+	);
 
 	const {
 		isLoading: isSaveViewLoading,
@@ -360,14 +477,21 @@ function ExplorerOptions({
 		viewName: newViewName || '',
 		compositeQuery,
 		sourcePage: sourcepage,
-		extraData: JSON.stringify({ color }),
+		extraData: JSON.stringify({
+			color,
+			selectColumns: options.selectColumns,
+		}),
 	});
 
 	const onSaveHandler = (): void => {
 		saveNewViewHandler({
 			compositeQuery,
 			handlePopOverClose: hideSaveViewModal,
-			extraData: JSON.stringify({ color }),
+			extraData: JSON.stringify({
+				color,
+				selectColumns: options.selectColumns,
+				version: 1,
+			}),
 			notifications,
 			panelType: panelType || PANEL_TYPES.LIST,
 			redirectWithQueryBuilderData,
@@ -384,6 +508,11 @@ function ExplorerOptions({
 			});
 		} else if (isLogsExplorer) {
 			logEvent('Logs Explorer: Save view successful', {
+				panelType,
+				viewName: newViewName,
+			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Save view successful', {
 				panelType,
 				viewName: newViewName,
 			});
@@ -415,7 +544,7 @@ function ExplorerOptions({
 		}
 	};
 
-	const isEditDeleteSupported = allowedRoles.includes(role as string);
+	const isEditDeleteSupported = allowedRoles.includes(user.role as string);
 
 	const [
 		isRecentlyUsedSavedViewSelected,
@@ -423,6 +552,11 @@ function ExplorerOptions({
 	] = useState(false);
 
 	useEffect(() => {
+		// If the query is not the default query, don't set the recently used saved view
+		if (!isDefaultQuery({ currentQuery, sourcePage: sourcepage })) {
+			return;
+		}
+
 		const parsedPreservedView = JSON.parse(
 			localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY) || '{}',
 		);
@@ -444,20 +578,51 @@ function ExplorerOptions({
 			setIsRecentlyUsedSavedViewSelected(false);
 		}
 
-		return (): void => clearTimeout(timeoutId);
+		// eslint-disable-next-line consistent-return
+		return (): void => {
+			clearTimeout(timeoutId);
+		};
 	}, [
 		PRESERVED_VIEW_LOCAL_STORAGE_KEY,
 		PRESERVED_VIEW_TYPE,
+		currentQuery,
+		isDefaultQuery,
 		isRecentlyUsedSavedViewSelected,
 		onMenuItemSelectHandler,
+		sourcepage,
 		viewKey,
 		viewName,
 		viewsData?.data?.data,
 	]);
 
+	const infoIconText = useMemo(() => {
+		if (isLogsExplorer) {
+			return 'Learn more about Logs explorer';
+		}
+		if (isMetricsExplorer) {
+			return 'Learn more about Metrics explorer';
+		}
+		return 'Learn more about Traces explorer';
+	}, [isLogsExplorer, isMetricsExplorer]);
+
+	const infoIconLink = useMemo(() => {
+		if (isLogsExplorer) {
+			return 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar';
+		}
+		// TODO: Add metrics explorer info icon link
+		if (isMetricsExplorer) {
+			return '';
+		}
+		return 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar';
+	}, [isLogsExplorer, isMetricsExplorer]);
+
 	return (
 		<div className="explorer-options-container">
-			{isQueryUpdated && !isExplorerOptionHidden && (
+			{
+				// if a viewName is selected and the explorer options are not hidden then
+				// always show the clear option
+			}
+			{!isExplorerOptionHidden && viewName && (
 				<div
 					className={cx(
 						isEditDeleteSupported ? '' : 'hide-update',
@@ -471,18 +636,25 @@ function ExplorerOptions({
 							icon={<X size={14} />}
 						/>
 					</Tooltip>
-					<Divider
-						type="vertical"
-						className={isEditDeleteSupported ? '' : 'hidden'}
-					/>
-					<Tooltip title="Update this view" placement="top">
-						<Button
-							className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
-							disabled={isViewUpdating}
-							onClick={onUpdateQueryHandler}
-							icon={<Disc3 size={14} />}
-						/>
-					</Tooltip>
+					{
+						// only show the update view option when the query is updated
+					}
+					{isQueryUpdated && (
+						<>
+							<Divider
+								type="vertical"
+								className={isEditDeleteSupported ? '' : 'hidden'}
+							/>
+							<Tooltip title="Update this view" placement="top">
+								<Button
+									className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
+									disabled={isViewUpdating}
+									onClick={onUpdateQueryHandler}
+									icon={<Disc3 size={14} />}
+								/>
+							</Tooltip>
+						</>
+					)}
 				</div>
 			)}
 			{!isExplorerOptionHidden && (
@@ -506,10 +678,7 @@ function ExplorerOptions({
 							}}
 							dropdownStyle={dropdownStyle}
 							className="views-dropdown"
-							allowClear={{
-								clearIcon: <XCircle size={16} style={{ marginTop: '-3px' }} />,
-							}}
-							onClear={handleClearSelect}
+							allowClear={false}
 							ref={ref}
 						>
 							{viewsData?.data?.data?.map((view) => {
@@ -520,7 +689,7 @@ function ExplorerOptions({
 									bgColor = extraData.color;
 								}
 								return (
-									<Select.Option key={view.uuid} value={view.name}>
+									<Select.Option key={view.id} value={view.name}>
 										<div className="render-options">
 											<span
 												className="dot"
@@ -570,28 +739,22 @@ function ExplorerOptions({
 						</Button>
 					</div>
 					<div className="actions">
-						<Tooltip
-							title={
-								<div>
-									{isLogsExplorer
-										? 'Learn more about Logs explorer '
-										: 'Learn more about Traces explorer '}
-									<Typography.Link
-										href={
-											isLogsExplorer
-												? 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar'
-												: 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar'
-										}
-										target="_blank"
-									>
-										{' '}
-										here
-									</Typography.Link>{' '}
-								</div>
-							}
-						>
-							<InfoCircleOutlined className="info-icon" />
-						</Tooltip>
+						{/* Hide the info icon for metrics explorer until we get the docs link */}
+						{!isMetricsExplorer && (
+							<Tooltip
+								title={
+									<div>
+										{infoIconText}
+										<Typography.Link href={infoIconLink} target="_blank">
+											{' '}
+											here
+										</Typography.Link>{' '}
+									</div>
+								}
+							>
+								<InfoCircleOutlined className="info-icon" />
+							</Tooltip>
+						)}
 						<Tooltip title="Hide">
 							<Button
 								disabled={disabled}
@@ -604,8 +767,8 @@ function ExplorerOptions({
 					</div>
 				</div>
 			)}
-
 			<ExplorerOptionsHideArea
+				viewName={viewName}
 				isExplorerOptionHidden={isExplorerOptionHidden}
 				setIsExplorerOptionHidden={setIsExplorerOptionHidden}
 				sourcepage={sourcepage}
@@ -614,7 +777,6 @@ function ExplorerOptions({
 				onUpdateQueryHandler={onUpdateQueryHandler}
 				isEditDeleteSupported={isEditDeleteSupported}
 			/>
-
 			<Modal
 				className="save-view-modal"
 				title={<span className="title">Save this view</span>}
@@ -647,7 +809,6 @@ function ExplorerOptions({
 					/>
 				</div>
 			</Modal>
-
 			<Modal
 				footer={null}
 				onOk={onCancel(false)}

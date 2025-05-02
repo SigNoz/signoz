@@ -1,0 +1,46 @@
+.celery-overview-filters {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+
+	.celery-filters {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+
+		.config-select-option {
+			width: 100%;
+			min-width: 160px;
+			max-width: fit-content;
+
+			.ant-select-selector {
+				display: flex;
+				min-height: 32px;
+				align-items: center;
+				gap: 16px;
+				min-width: 164px;
+
+				border-radius: 2px;
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-300);
+			}
+		}
+	}
+
+	.copy-url-btn {
+		flex-shrink: 0;
+	}
+}
+
+.lightMode {
+	.celery-overview-filters {
+		.celery-filters {
+			.config-select-option {
+				.ant-select-selector {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-100);
+				}
+			}
+		}
+	}
+}

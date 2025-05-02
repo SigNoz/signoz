@@ -5,7 +5,6 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 export type LogTimeRange = {
 	start: number;
 	end: number;
-	pageSize: number;
 };
 
 export type UseCopyLogLink = {
@@ -13,7 +12,6 @@ export type UseCopyLogLink = {
 	isLogsExplorerPage: boolean;
 	activeLogId: string | null;
 	onLogCopy: MouseEventHandler<HTMLElement>;
-	onTimeRangeChange: (newTimeRange: LogTimeRange | null) => void;
 };
 
 export type UseActiveLog = {

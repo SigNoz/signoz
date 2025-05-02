@@ -11,17 +11,16 @@ import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import history from 'lib/history';
 import {
 	AlertTriangle,
 	CheckSquare,
-	ChevronLeftCircle,
-	ChevronRightCircle,
-	PanelRight,
-	RocketIcon,
+	PackagePlus,
 	UserCircle,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -30,7 +29,7 @@ import { AppState } from 'store/reducers';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
+import { checkVersionState } from 'utils/app';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
@@ -52,28 +51,19 @@ interface UserManagementMenuItems {
 	icon: JSX.Element;
 }
 
-function SideNav({
-	licenseData,
-	isFetching,
-	onCollapse,
-	collapsed,
-}: {
-	licenseData: any;
-	isFetching: boolean;
-	onCollapse: () => void;
-	collapsed: boolean;
-}): JSX.Element {
+function SideNav(): JSX.Element {
 	const [menuItems, setMenuItems] = useState(defaultMenuItems);
-
 	const { pathname, search } = useLocation();
-	const {
-		user,
-		role,
-		featureResponse,
-		currentVersion,
-		latestVersion,
-		isCurrentVersionError,
-	} = useSelector<AppState, AppReducer>((state) => state.app);
+	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
+		AppState,
+		AppReducer
+	>((state) => state.app);
+
+	const { user, featureFlags, licenses, trialInfo } = useAppContext();
+
+	const isOnboardingV3Enabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
+	)?.active;
 
 	const [licenseTag, setLicenseTag] = useState('');
 
@@ -85,7 +75,7 @@ function SideNav({
 
 	const [userManagementMenuItems, setUserManagementMenuItems] = useState<
 		UserManagementMenuItems[]
-	>([manageLicenseMenuItem]);
+	>([]);
 
 	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
@@ -93,78 +83,27 @@ function SideNav({
 
 	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
-	const [inviteMembers] = useComponentPermission(['invite_members'], role);
+	const [inviteMembers] = useComponentPermission(['invite_members'], user.role);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const isCloudUserVal = isCloudUser();
-
-	useEffect(() => {
-		if (inviteMembers) {
-			const updatedUserManagementMenuItems = [
-				inviteMemberMenuItem,
-				manageLicenseMenuItem,
-			];
-
-			setUserManagementMenuItems(updatedUserManagementMenuItems);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [inviteMembers]);
-
-	useEffect((): void => {
-		const isOnboardingEnabled =
-			featureResponse.data?.find(
-				(feature) => feature.name === FeatureKeys.ONBOARDING,
-			)?.active || false;
-
-		if (!isOnboardingEnabled || !isCloudUser()) {
-			let items = [...menuItems];
-
-			items = items.filter((item) => item.key !== ROUTES.GET_STARTED);
-
-			setMenuItems(items);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [featureResponse.data]);
-
-	// using a separate useEffect as the license fetching call takes few milliseconds
-	useEffect(() => {
-		if (!isFetching) {
-			let items = [...menuItems];
-
-			const isOnBasicPlan =
-				licenseData?.payload?.licenses?.some(
-					(license: License) =>
-						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-				) || licenseData?.payload?.licenses === null;
-
-			if (
-				role !== USER_ROLES.ADMIN ||
-				isOnBasicPlan ||
-				!(isCloudUserVal || isEECloudUser())
-			) {
-				items = items.filter((item) => item.key !== ROUTES.BILLING);
-			}
-
-			setMenuItems(items);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [licenseData?.payload?.licenses, isFetching, role]);
+	const {
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityUser,
+		isCommunityEnterpriseUser,
+	} = useGetTenantLicense();
 
 	const { t } = useTranslation('');
 
 	const licenseStatus: string =
-		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ||
-		'';
+		licenses?.licenses?.find((e: License) => e.isCurrent)?.status || '';
+
+	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
 	const isLicenseActive =
 		licenseStatus?.toLocaleLowerCase() ===
 		LICENSE_PLAN_STATUS.VALID.toLocaleLowerCase();
-
-	const isEnterprise = licenseData?.payload?.licenses?.some(
-		(license: License) =>
-			license.isCurrent && license.planKey === LICENSE_PLAN_KEY.ENTERPRISE_PLAN,
-	);
 
 	const onClickSignozCloud = (): void => {
 		window.open(
@@ -197,20 +136,25 @@ function SideNav({
 			menuRoute: '/get-started',
 			menuLabel: 'Get Started',
 		});
+
+		const onboaringRoute = isOnboardingV3Enabled
+			? ROUTES.GET_STARTED_WITH_CLOUD
+			: ROUTES.GET_STARTED;
+
 		if (isCtrlMetaKey(event)) {
-			openInNewTab('/get-started');
+			openInNewTab(onboaringRoute);
 		} else {
-			history.push(`/get-started`);
+			history.push(onboaringRoute);
 		}
 	};
 
-	const onClickVersionHandler = (event: MouseEvent): void => {
+	const onClickVersionHandler = useCallback((event: MouseEvent): void => {
 		if (isCtrlMetaKey(event)) {
 			openInNewTab(ROUTES.VERSION);
 		} else {
 			history.push(ROUTES.VERSION);
 		}
-	};
+	}, []);
 
 	const onClickHandler = useCallback(
 		(key: string, event: MouseEvent | null) => {
@@ -236,34 +180,6 @@ function SideNav({
 		pathname,
 	]);
 
-	useEffect(() => {
-		if (isCloudUser() || isEECloudUser()) {
-			const updatedUserManagementMenuItems = [helpSupportMenuItem];
-
-			setUserManagementMenuItems(updatedUserManagementMenuItems);
-		} else if (currentVersion && latestVersion) {
-			const versionMenuItem = {
-				key: SecondaryMenuItemKey.Version,
-				label: !isCurrentVersionError ? currentVersion : t('n_a'),
-				icon: !isLatestVersion ? (
-					<AlertTriangle color={Color.BG_CHERRY_600} size={16} />
-				) : (
-					<CheckSquare color={Color.BG_FOREST_500} size={16} />
-				),
-				onClick: onClickVersionHandler,
-			};
-
-			const updatedUserManagementMenuItems = [
-				versionMenuItem,
-				slackSupportMenuItem,
-				manageLicenseMenuItem,
-			];
-
-			setUserManagementMenuItems(updatedUserManagementMenuItems);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentVersion, latestVersion]);
-
 	const handleUserManagentMenuItemClick = (
 		key: string,
 		event: MouseEvent,
@@ -282,31 +198,25 @@ function SideNav({
 	};
 
 	useEffect(() => {
-		if (!isFetching) {
-			if (isCloudUserVal) {
-				setLicenseTag('Cloud');
-			} else if (isEnterprise) {
-				setLicenseTag('Enterprise');
-			} else {
-				setLicenseTag('Free');
-			}
+		if (isCloudUser) {
+			setLicenseTag('Cloud');
+		} else if (isEnterpriseSelfHostedUser) {
+			setLicenseTag('Enterprise');
+		} else if (isCommunityEnterpriseUser) {
+			setLicenseTag('Enterprise');
+		} else if (isCommunityUser) {
+			setLicenseTag('Community');
 		}
-	}, [isCloudUserVal, isEnterprise, isFetching]);
-
-	useEffect(() => {
-		if (!(isCloudUserVal || isEECloudUser())) {
-			let updatedMenuItems = [...menuItems];
-			updatedMenuItems = updatedMenuItems.filter(
-				(item) => item.key !== ROUTES.INTEGRATIONS,
-			);
-			setMenuItems(updatedMenuItems);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityEnterpriseUser,
+		isCommunityUser,
+	]);
 
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
-		role,
+		user.role,
 	);
 
 	const settingsRoute = isCurrentOrgSettings
@@ -330,8 +240,6 @@ function SideNav({
 	};
 
 	useEffect(() => {
-		registerShortcut(GlobalShortcuts.SidebarCollapse, onCollapse);
-
 		registerShortcut(GlobalShortcuts.NavigateToServices, () =>
 			onClickHandler(ROUTES.APPLICATION, null),
 		);
@@ -348,7 +256,7 @@ function SideNav({
 		);
 
 		registerShortcut(GlobalShortcuts.NavigateToMessagingQueues, () =>
-			onClickHandler(ROUTES.MESSAGING_QUEUES, null),
+			onClickHandler(ROUTES.MESSAGING_QUEUES_OVERVIEW, null),
 		);
 
 		registerShortcut(GlobalShortcuts.NavigateToAlerts, () =>
@@ -359,7 +267,6 @@ function SideNav({
 		);
 
 		return (): void => {
-			deregisterShortcut(GlobalShortcuts.SidebarCollapse);
 			deregisterShortcut(GlobalShortcuts.NavigateToServices);
 			deregisterShortcut(GlobalShortcuts.NavigateToTraces);
 			deregisterShortcut(GlobalShortcuts.NavigateToLogs);
@@ -368,11 +275,87 @@ function SideNav({
 			deregisterShortcut(GlobalShortcuts.NavigateToExceptions);
 			deregisterShortcut(GlobalShortcuts.NavigateToMessagingQueues);
 		};
-	}, [deregisterShortcut, onClickHandler, onCollapse, registerShortcut]);
+	}, [deregisterShortcut, onClickHandler, registerShortcut]);
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	useEffect(() => {
+		let updatedMenuItems = defaultMenuItems;
+		let updatedUserManagementItems: UserManagementMenuItems[] = [
+			manageLicenseMenuItem,
+		];
+
+		if (isCloudUser || isEnterpriseSelfHostedUser) {
+			const isOnboardingEnabled =
+				featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
+					?.active || false;
+
+			if (!isOnboardingEnabled) {
+				updatedMenuItems = updatedMenuItems.filter(
+					(item) =>
+						item.key !== ROUTES.GET_STARTED &&
+						item.key !== ROUTES.ONBOARDING &&
+						item.key !== ROUTES.GET_STARTED_WITH_CLOUD,
+				);
+			}
+
+			const isOnBasicPlan =
+				licenses?.licenses?.some(
+					(license: License) =>
+						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
+				) || licenses?.licenses === null;
+
+			if (user.role !== USER_ROLES.ADMIN || isOnBasicPlan) {
+				updatedMenuItems = updatedMenuItems.filter(
+					(item) => item.key !== ROUTES.BILLING,
+				);
+			}
+
+			updatedUserManagementItems = [helpSupportMenuItem];
+
+			// Show manage license menu item for EE cloud users with a active license
+			if (isEnterpriseSelfHostedUser) {
+				updatedUserManagementItems.push(manageLicenseMenuItem);
+			}
+		} else {
+			updatedMenuItems = updatedMenuItems.filter(
+				(item) => item.key !== ROUTES.INTEGRATIONS && item.key !== ROUTES.BILLING,
+			);
+			const versionMenuItem = {
+				key: SecondaryMenuItemKey.Version,
+				label: !isCurrentVersionError ? currentVersion : t('n_a'),
+				icon: !isLatestVersion ? (
+					<AlertTriangle color={Color.BG_CHERRY_600} size={16} />
+				) : (
+					<CheckSquare color={Color.BG_FOREST_500} size={16} />
+				),
+				onClick: onClickVersionHandler,
+			};
+
+			updatedUserManagementItems = [versionMenuItem, slackSupportMenuItem];
+
+			if (isCommunityEnterpriseUser) {
+				updatedUserManagementItems.push(manageLicenseMenuItem);
+			}
+		}
+		setMenuItems(updatedMenuItems);
+		setUserManagementMenuItems(updatedUserManagementItems);
+	}, [
+		isCommunityEnterpriseUser,
+		currentVersion,
+		featureFlags,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCurrentVersionError,
+		isLatestVersion,
+		licenses?.licenses,
+		onClickVersionHandler,
+		t,
+		user.role,
+	]);
 
 	return (
-		<div className={cx('sidenav-container', !collapsed ? 'docked' : '')}>
-			<div className={cx('sideNav', !collapsed ? 'docked' : '')}>
+		<div className={cx('sidenav-container')}>
+			<div className={cx('sideNav')}>
 				<div className="brand">
 					<div className="brand-company-meta">
 						<div
@@ -380,7 +363,7 @@ function SideNav({
 							// eslint-disable-next-line react/no-unknown-property
 							onClick={(event: MouseEvent): void => {
 								// Current home page
-								onClickHandler(ROUTES.APPLICATION, event);
+								onClickHandler(ROUTES.HOME, event);
 							}}
 						>
 							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
@@ -389,44 +372,61 @@ function SideNav({
 						</div>
 
 						{licenseTag && (
-							<div className="license tag nav-item-label">{licenseTag}</div>
+							<Tooltip
+								title={
+									// eslint-disable-next-line no-nested-ternary
+									isCommunityUser
+										? 'You are running the community version of SigNoz. You have to install the Enterprise edition in order enable Enterprise features.'
+										: isCommunityEnterpriseUser
+										? 'You do not have an active license present. Add an active license to enable Enterprise features.'
+										: ''
+								}
+								placement="bottomRight"
+							>
+								<div
+									className={cx(
+										'license tag nav-item-label',
+										isCommunityEnterpriseUser && 'community-enterprise-user',
+									)}
+								>
+									{licenseTag}
+								</div>
+							</Tooltip>
 						)}
 					</div>
-
-					<Tooltip
-						title={collapsed ? 'Dock Sidebar' : 'Undock Sidebar'}
-						placement="right"
-					>
-						<Button
-							className="periscope-btn nav-item-label dockBtn"
-							icon={<PanelRight size={16} />}
-							onClick={onCollapse}
-						/>
-					</Tooltip>
 				</div>
 
-				{isCloudUserVal && (
+				{isCloudUser && user?.role !== USER_ROLES.VIEWER && (
 					<div className="get-started-nav-items">
 						<Button
 							className="get-started-btn"
+							disabled={isWorkspaceBlocked}
 							onClick={(event: MouseEvent): void => {
+								if (isWorkspaceBlocked) {
+									return;
+								}
 								onClickGetStarted(event);
 							}}
 						>
-							<RocketIcon size={16} />
+							<PackagePlus size={16} />
 
-							<div className="license tag nav-item-label"> Get Started </div>
+							<div className="license tag nav-item-label"> New source </div>
 						</Button>
 					</div>
 				)}
 
-				<div className={cx(`nav-wrapper`, isCloudUserVal && 'nav-wrapper-cloud')}>
+				<div className={cx(`nav-wrapper`, isCloudUser && 'nav-wrapper-cloud')}>
 					<div className="primary-nav-items">
 						{menuItems.map((item, index) => (
 							<NavItem
 								key={item.key || index}
 								item={item}
 								isActive={activeMenuKey === item.key}
+								isDisabled={
+									isWorkspaceBlocked &&
+									item.key !== ROUTES.BILLING &&
+									item.key !== ROUTES.SETTINGS
+								}
 								onClick={(event): void => {
 									handleMenuItemClick(event, item);
 								}}
@@ -438,15 +438,17 @@ function SideNav({
 						<NavItem
 							key="keyboardShortcuts"
 							item={shortcutMenuItem}
+							isDisabled={isWorkspaceBlocked}
 							isActive={false}
 							onClick={onClickShortcuts}
 						/>
 
-						{licenseData && !isLicenseActive && (
+						{licenses && !isLicenseActive && (
 							<NavItem
 								key="trySignozCloud"
 								item={trySignozCloudMenuItem}
 								isActive={false}
+								isDisabled={isWorkspaceBlocked}
 								onClick={onClickSignozCloud}
 							/>
 						)}
@@ -457,6 +459,7 @@ function SideNav({
 									key={item?.key || index}
 									item={item}
 									isActive={activeMenuKey === item?.key}
+									isDisabled={isWorkspaceBlocked}
 									onClick={(event: MouseEvent): void => {
 										handleUserManagentMenuItemClick(item?.key as string, event);
 										logEvent('Sidebar: Menu clicked', {
@@ -473,6 +476,7 @@ function SideNav({
 								key={inviteMemberMenuItem.key}
 								item={inviteMemberMenuItem}
 								isActive={activeMenuKey === inviteMemberMenuItem?.key}
+								isDisabled={false}
 								onClick={(event: React.MouseEvent): void => {
 									if (isCtrlMetaKey(event)) {
 										openInNewTab(`${inviteMemberMenuItem.key}`);
@@ -492,6 +496,7 @@ function SideNav({
 								key={ROUTES.MY_SETTINGS}
 								item={userSettingsMenuItem}
 								isActive={activeMenuKey === userSettingsMenuItem?.key}
+								isDisabled={false}
 								onClick={(event: MouseEvent): void => {
 									handleUserManagentMenuItemClick(
 										userSettingsMenuItem?.key as string,
@@ -504,14 +509,6 @@ function SideNav({
 								}}
 							/>
 						)}
-
-						<div className="collapse-expand-handlers" onClick={onCollapse}>
-							{collapsed ? (
-								<ChevronRightCircle size={18} />
-							) : (
-								<ChevronLeftCircle size={18} />
-							)}
-						</div>
 					</div>
 				</div>
 			</div>

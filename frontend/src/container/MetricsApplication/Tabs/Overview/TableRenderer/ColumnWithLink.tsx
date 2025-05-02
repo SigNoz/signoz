@@ -1,5 +1,6 @@
 import { Tooltip, Typography } from 'antd';
 import { navigateToTrace } from 'container/MetricsApplication/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { v4 as uuid } from 'uuid';
@@ -14,6 +15,7 @@ function ColumnWithLink({
 	record,
 }: LinkColumnProps): JSX.Element {
 	const text = record.toString();
+	const { safeNavigate } = useSafeNavigate();
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({
 		servicename,
@@ -42,6 +44,7 @@ function ColumnWithLink({
 			maxTime,
 			selectedTraceTags,
 			apmToTraceQuery,
+			safeNavigate,
 		});
 	};
 

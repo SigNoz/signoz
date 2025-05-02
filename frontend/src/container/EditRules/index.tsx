@@ -7,24 +7,22 @@ function EditRules({ initialValue, ruleId }: EditRulesProps): JSX.Element {
 	const [formInstance] = Form.useForm();
 
 	return (
-		<div style={{ marginTop: '1rem' }}>
-			<FormAlertRules
-				alertType={
-					initialValue.alertType
-						? (initialValue.alertType as AlertTypes)
-						: AlertTypes.METRICS_BASED_ALERT
-				}
-				formInstance={formInstance}
-				initialValue={initialValue}
-				ruleId={ruleId}
-			/>
-		</div>
+		<FormAlertRules
+			alertType={
+				initialValue.alertType
+					? (initialValue.alertType as AlertTypes)
+					: AlertTypes.METRICS_BASED_ALERT
+			}
+			formInstance={formInstance}
+			initialValue={initialValue}
+			ruleId={ruleId}
+		/>
 	);
 }
 
 interface EditRulesProps {
 	initialValue: AlertDef;
-	ruleId: number;
+	ruleId: string;
 }
 
 export default EditRules;

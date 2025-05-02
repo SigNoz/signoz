@@ -1,6 +1,5 @@
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
 
 import { TopOperationList } from './TopOperationsTable';
 import { NavigateToTraceProps } from './types';
@@ -19,10 +18,14 @@ export const navigateToTrace = ({
 	maxTime,
 	selectedTraceTags,
 	apmToTraceQuery,
+	safeNavigate,
 }: NavigateToTraceProps): void => {
 	const urlParams = new URLSearchParams();
-	urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
-	urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
+	urlParams.set(
+		QueryParams.startTime,
+		Math.floor(minTime / 1_000_000).toString(),
+	);
+	urlParams.set(QueryParams.endTime, Math.floor(maxTime / 1_000_000).toString());
 
 	const JSONCompositeQuery = encodeURIComponent(JSON.stringify(apmToTraceQuery));
 
@@ -32,7 +35,7 @@ export const navigateToTrace = ({
 		QueryParams.compositeQuery
 	}=${JSONCompositeQuery}`;
 
-	history.push(newTraceExplorerPath);
+	safeNavigate(newTraceExplorerPath);
 };
 
 export const getNearestHighestBucketValue = (

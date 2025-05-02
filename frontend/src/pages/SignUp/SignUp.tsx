@@ -1,32 +1,20 @@
-import { Button, Form, Input, Space, Switch, Typography } from 'antd';
+import { Button, Form, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import editOrg from 'api/user/editOrg';
 import getInviteDetails from 'api/user/getInviteDetails';
 import loginApi from 'api/user/login';
 import signUpApi from 'api/user/signup';
 import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
-import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/user/getUser';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
-import { isCloudUser } from 'utils/app';
 
-import {
-	ButtonContainer,
-	FormContainer,
-	FormWrapper,
-	Label,
-	MarginTop,
-} from './styles';
+import { ButtonContainer, FormContainer, FormWrapper, Label } from './styles';
 import { isPasswordNotValidMessage, isPasswordValid } from './utils';
 
 const { Title } = Typography;
@@ -60,8 +48,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
-
-	const isOnboardingEnabled = useFeatureFlag(FeatureKeys.ONBOARDING)?.active;
 
 	const getInviteDetailsResponse = useQuery({
 		queryFn: () =>
@@ -119,19 +105,13 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	const isPreferenceVisible = token === null;
 
-	const commonHandler = async (
-		values: FormValues,
-		callback: (
-			e: SuccessResponse<PayloadProps>,
-			values: FormValues,
-		) => Promise<void> | VoidFunction,
-	): Promise<void> => {
+	const commonHandler = async (values: FormValues): Promise<void> => {
 		try {
 			const { organizationName, password, firstName, email } = values;
 			const response = await signUpApi({
 				email,
 				name: firstName,
-				orgName: organizationName,
+				orgDisplayName: organizationName,
 				password,
 				token: params.get('token') || undefined,
 			});
@@ -144,14 +124,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 				if (loginResponse.statusCode === 200) {
 					const { payload } = loginResponse;
-					const userResponse = await afterLogin(
-						payload.userId,
-						payload.accessJwt,
-						payload.refreshJwt,
-					);
-					if (userResponse) {
-						callback(userResponse, values);
-					}
+					await afterLogin(payload.userId, payload.accessJwt, payload.refreshJwt);
 				} else {
 					notifications.error({
 						message: loginResponse.error || t('unexpected_error'),
@@ -169,24 +142,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		}
 	};
 
-	const onAdminAfterLogin = async (
-		userResponse: SuccessResponse<PayloadProps>,
-		values: FormValues,
-	): Promise<void> => {
-		const editResponse = await editOrg({
-			isAnonymous: values.isAnonymous,
-			name: values.organizationName,
-			hasOptedUpdates: values.hasOptedUpdates,
-			orgId: userResponse.payload.orgId,
-		});
-		if (editResponse.statusCode === 200) {
-			history.push(ROUTES.APPLICATION);
-		} else {
-			notifications.error({
-				message: editResponse.error || t('unexpected_error'),
-			});
-		}
-	};
 	const handleSubmitSSO = async (): Promise<void> => {
 		if (!params.get('token')) {
 			notifications.error({
@@ -201,7 +156,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			const response = await signUpApi({
 				email: values.email,
 				name: values.firstName,
-				orgName: values.organizationName,
+				orgDisplayName: values.organizationName,
 				password: values.password,
 				token: params.get('token') || undefined,
 				sourceUrl: encodeURIComponent(window.location.href),
@@ -233,6 +188,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		setLoading(false);
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
 			try {
@@ -250,23 +206,14 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				}
 
 				if (isPreferenceVisible) {
-					await commonHandler(values, onAdminAfterLogin);
+					await commonHandler(values);
 				} else {
 					logEvent('Account Created Successfully', {
 						email: values.email,
 						name: values.firstName,
 					});
 
-					await commonHandler(
-						values,
-						async (): Promise<void> => {
-							if (isOnboardingEnabled && isCloudUser()) {
-								history.push(ROUTES.GET_STARTED);
-							} else {
-								history.push(ROUTES.APPLICATION);
-							}
-						},
-					);
+					await commonHandler(values);
 				}
 
 				setLoading(false);
@@ -303,7 +250,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		return (
 			loading ||
 			!values.email ||
-			!values.organizationName ||
 			(!precheck.sso && (!values.password || !values.confirmPassword)) ||
 			(!isDetailsDisable && !values.firstName) ||
 			confirmPasswordError ||
@@ -317,7 +263,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				<FormContainer
 					onFinish={!precheck.sso ? handleSubmit : handleSubmitSSO}
 					onValuesChange={handleValuesChange}
-					initialValues={{ hasOptedUpdates: true, isAnonymous: false }}
 					form={form}
 				>
 					<Title level={4}>Create your account</Title>
@@ -354,7 +299,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						<FormContainer.Item noStyle name="organizationName">
 							<Input
 								placeholder={t('placeholder_orgname')}
-								required
 								id="organizationName"
 								disabled={isDetailsDisable}
 							/>
@@ -399,34 +343,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 							)}
 						</div>
 					)}
-
-					{isPreferenceVisible && (
-						<>
-							<MarginTop marginTop="2.4375rem">
-								<Space>
-									<FormContainer.Item
-										noStyle
-										name="hasOptedUpdates"
-										valuePropName="checked"
-									>
-										<Switch />
-									</FormContainer.Item>
-
-									<Typography>{t('prompt_keepme_posted')} </Typography>
-								</Space>
-							</MarginTop>
-
-							<MarginTop marginTop="0.5rem">
-								<Space>
-									<FormContainer.Item noStyle name="isAnonymous" valuePropName="checked">
-										<Switch />
-									</FormContainer.Item>
-									<Typography>{t('prompt_anonymise')}</Typography>
-								</Space>
-							</MarginTop>
-						</>
-					)}
-
 					{isPreferenceVisible && (
 						<Typography.Paragraph
 							italic

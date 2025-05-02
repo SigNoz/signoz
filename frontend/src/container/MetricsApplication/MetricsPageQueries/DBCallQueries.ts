@@ -58,12 +58,17 @@ export const databaseCallsRPS = ({
 	const legends = [legend];
 	const dataSource = DataSource.METRICS;
 
+	const timeAggregateOperators = [MetricAggregateOperator.RATE];
+	const spaceAggregateOperators = [MetricAggregateOperator.SUM];
+
 	return getQueryBuilderQueries({
 		autocompleteData,
 		groupBy,
 		legends,
 		filterItems,
 		dataSource,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 	});
 };
 

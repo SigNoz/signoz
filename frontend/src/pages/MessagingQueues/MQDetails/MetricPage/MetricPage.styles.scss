@@ -1,0 +1,128 @@
+.metric-page {
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+
+	.metric-page-container {
+		display: flex;
+		flex-direction: column;
+
+		.row-panel {
+			padding-left: 10px;
+		}
+
+		.metric-page-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			align-items: flex-start;
+			gap: 10px;
+
+			.metric-graph {
+				height: 320px;
+				padding: 10px;
+				width: 100%;
+				box-sizing: border-box;
+			}
+		}
+
+		@media (max-width: 768px) {
+			.metric-page-grid {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		.graph-description {
+			padding: 16px 10px 16px 10px;
+		}
+	}
+
+	.row-panel {
+		border-radius: 4px;
+		background: rgba(18, 19, 23, 0.4);
+		padding: 8px;
+		display: flex;
+		gap: 6px;
+		align-items: center;
+		height: 48px !important;
+
+		.ant-typography {
+			font-size: 14px;
+			font-weight: 500;
+		}
+
+		.row-panel-section {
+			display: flex;
+			gap: 6px;
+			align-items: center;
+
+			.row-icon {
+				color: var(--bg-vanilla-400);
+				cursor: pointer;
+			}
+
+			.section-title {
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px;
+				letter-spacing: -0.07px;
+			}
+		}
+	}
+
+	.metric-column-graph-container {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		gap: 10px;
+
+		.metric-column-graph {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+
+			.row-panel {
+				justify-content: center;
+			}
+
+			.metric-page-grid {
+				display: flex;
+				flex-direction: column;
+				flex: 1;
+				min-width: 0;
+				gap: 10px;
+
+				.metric-graph {
+					height: 320px;
+					padding: 10px;
+					width: 100%;
+					box-sizing: border-box;
+				}
+			}
+		}
+	}
+
+	@media (max-width: 768px) {
+		.metric-column-graph-container {
+			grid-template-columns: 1fr;
+		}
+	}
+}
+
+.lightMode {
+	.metric-page {
+		.row-panel {
+			.row-panel-section {
+				.row-icon {
+					color: var(--bg-ink-300);
+				}
+
+				.section-title {
+					color: var(--bg-ink-300);
+				}
+			}
+		}
+	}
+}

@@ -12,6 +12,10 @@
 		font-weight: 400;
 		line-height: 18px;
 		letter-spacing: -0.005em;
+		&,
+		&:hover {
+			color: var(--text-vanilla-400);
+		}
 	}
 	&__key {
 		background: var(--bg-ink-400);
@@ -20,13 +24,15 @@
 	&__value {
 		background: var(--bg-slate-400);
 	}
-	color: var(--text-vanilla-400);
 }
 
 .lightMode {
 	.key-value-label {
 		border-color: var(--bg-vanilla-400);
-		color: var(--text-ink-400);
+		&__key,
+		&__value {
+			color: var(--text-ink-400);
+		}
 		&__key {
 			background: var(--bg-vanilla-300);
 		}

@@ -19,17 +19,14 @@ import {
 import updateCreditCardApi from 'api/billing/checkout';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { CircleArrowRight } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useAppContext } from 'providers/App/App';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { License } from 'types/api/licenses/def';
-import AppReducer from 'types/reducer/app';
+import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -42,34 +39,52 @@ import {
 } from './workspaceLocked.data';
 
 export default function WorkspaceBlocked(): JSX.Element {
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-	const isAdmin = role === 'ADMIN';
-	const [activeLicense, setActiveLicense] = useState<License | null>(null);
+	const {
+		user,
+		isFetchingActiveLicenseV3,
+		trialInfo,
+		activeLicenseV3,
+	} = useAppContext();
+	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
 
 	const { t } = useTranslation(['workspaceLocked']);
-	const {
-		isFetching: isFetchingLicenseData,
-		isLoading: isLoadingLicenseData,
-		data: licensesData,
-	} = useLicense();
+
+	useEffect((): void => {
+		logEvent('Workspace Blocked: Screen Viewed', {});
+	}, []);
+
+	const handleContactUsClick = (): void => {
+		logEvent('Workspace Blocked: Contact Us Clicked', {});
+	};
+
+	const handleTabClick = (key: string): void => {
+		logEvent('Workspace Blocked: Screen Tabs Clicked', { tabKey: key });
+	};
+
+	const handleCollapseChange = (key: string | string[]): void => {
+		const lastKey = Array.isArray(key) ? key.slice(-1)[0] : key;
+		logEvent('Workspace Blocked: Screen Tab FAQ Item Clicked', {
+			panelKey: lastKey,
+		});
+	};
 
 	useEffect(() => {
-		if (!isFetchingLicenseData) {
-			const shouldBlockWorkspace = licensesData?.payload?.workSpaceBlock;
+		if (!isFetchingActiveLicenseV3) {
+			const shouldBlockWorkspace = trialInfo?.workSpaceBlock;
 
-			if (!shouldBlockWorkspace) {
-				history.push(ROUTES.APPLICATION);
+			if (
+				!shouldBlockWorkspace ||
+				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
+			) {
+				history.push(ROUTES.HOME);
 			}
-
-			const activeValidLicense =
-				licensesData?.payload?.licenses?.find(
-					(license) => license.isCurrent === true,
-				) || null;
-
-			setActiveLicense(activeValidLicense);
 		}
-	}, [isFetchingLicenseData, licensesData]);
+	}, [
+		isFetchingActiveLicenseV3,
+		trialInfo?.workSpaceBlock,
+		activeLicenseV3?.platform,
+	]);
 
 	const { mutate: updateCreditCard, isLoading } = useMutation(
 		updateCreditCardApi,
@@ -94,12 +109,10 @@ export default function WorkspaceBlocked(): JSX.Element {
 		logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
 
 		updateCreditCard({
-			licenseKey: activeLicense?.key || '',
-			successURL: window.location.origin,
-			cancelURL: window.location.origin,
+			url: window.location.origin,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [activeLicense?.key, updateCreditCard]);
+	}, [updateCreditCard]);
 
 	const handleExtendTrial = (): void => {
 		logEvent('Workspace Blocked: User Clicked Extend Trial', {});
@@ -115,6 +128,12 @@ export default function WorkspaceBlocked(): JSX.Element {
 				</Typography>
 			),
 		});
+	};
+
+	const handleViewBilling = (): void => {
+		logEvent('Workspace Blocked: User Clicked View Billing', {});
+
+		history.push(ROUTES.BILLING);
 	};
 
 	const renderCustomerStories = (
@@ -135,7 +154,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 
 	const tabItems: TabsProps['items'] = [
 		{
-			key: '1',
+			key: 'whyChooseSignoz',
 			label: t('whyChooseSignoz'),
 			children: (
 				<Row align="middle" justify="center">
@@ -182,13 +201,23 @@ export default function WorkspaceBlocked(): JSX.Element {
 			),
 		},
 		{
-			key: '2',
+			key: 'youAreInGoodCompany',
 			label: t('youAreInGoodCompany'),
 			children: (
 				<Row gutter={[24, 16]} justify="center">
 					{/* #FIXME: please suggest if there is any better way to loop in different columns to get the masonry layout */}
-					<Col span={10}>{renderCustomerStories((index) => index % 2 === 0)}</Col>
-					<Col span={10}>{renderCustomerStories((index) => index % 2 !== 0)}</Col>
+					<Col
+						span={10}
+						className="workspace-locked__customer-stories__left-container"
+					>
+						{renderCustomerStories((index) => index % 2 === 0)}
+					</Col>
+					<Col
+						span={10}
+						className="workspace-locked__customer-stories__right-container"
+					>
+						{renderCustomerStories((index) => index % 2 !== 0)}
+					</Col>
 					{isAdmin && (
 						<Col span={24}>
 							<Flex justify="center">
@@ -214,13 +243,21 @@ export default function WorkspaceBlocked(): JSX.Element {
 		// 	children: 'Our Pricing',
 		// },
 		{
-			key: '4',
+			key: 'faqs',
 			label: t('faqs'),
 			children: (
 				<Row align="middle" justify="center">
-					<Col span={18}>
-						<Space size="large" direction="vertical">
-							<Collapse items={faqData} defaultActiveKey={['1']} />
+					<Col span={12}>
+						<Space
+							size="large"
+							direction="vertical"
+							className="workspace-locked__faq-container"
+						>
+							<Collapse
+								items={faqData}
+								defaultActiveKey={['signoz-cloud-vs-community']}
+								onChange={handleCollapseChange}
+							/>
 							{isAdmin && (
 								<Button
 									type="primary"
@@ -249,6 +286,18 @@ export default function WorkspaceBlocked(): JSX.Element {
 							{t('trialPlanExpired')}
 						</span>
 						<span className="workspace-locked__modal__header__actions">
+							{isAdmin && (
+								<Button
+									className="workspace-locked__modal__header__actions__billing"
+									type="link"
+									size="small"
+									role="button"
+									onClick={handleViewBilling}
+								>
+									View Billing
+								</Button>
+							)}
+
 							<Typography.Text className="workspace-locked__modal__title">
 								Got Questions?
 							</Typography.Text>
@@ -258,6 +307,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 								size="middle"
 								href="mailto:cloud-support@signoz.io"
 								role="button"
+								onClick={handleContactUsClick}
 							>
 								Contact Us
 							</Button>
@@ -270,7 +320,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				width="65%"
 			>
 				<div className="workspace-locked__container">
-					{isLoadingLicenseData || !licensesData ? (
+					{isFetchingActiveLicenseV3 || !trialInfo ? (
 						<Skeleton />
 					) : (
 						<>
@@ -285,9 +335,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 											<br />
 											{t('yourDataIsSafe')}{' '}
 											<span className="workspace-locked__details__highlight">
-												{getFormattedDate(
-													licensesData.payload?.gracePeriodEnd || Date.now(),
-												)}
+												{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
 											</span>{' '}
 											{t('actNow')}
 										</Typography.Paragraph>
@@ -324,7 +372,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 											loading={isLoading}
 											onClick={handleUpdateCreditCard}
 										>
-											continue my journey
+											Continue my Journey
 										</Button>
 									</Col>
 									<Col>
@@ -340,9 +388,13 @@ export default function WorkspaceBlocked(): JSX.Element {
 								</Row>
 							)}
 
-							<Flex justify="center" className="workspace-locked__tabs">
-								<Tabs items={tabItems} defaultActiveKey="2" />
-							</Flex>
+							<div className="workspace-locked__tabs">
+								<Tabs
+									items={tabItems}
+									defaultActiveKey="youAreInGoodCompany"
+									onTabClick={handleTabClick}
+								/>
+							</div>
 						</>
 					)}
 				</div>

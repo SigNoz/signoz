@@ -153,14 +153,22 @@ function PipelineListsView({
 	}, [currPipelineData, pipelineSearchValue]);
 
 	const handleAlert = useCallback(
-		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
+		({
+			title,
+			descrition,
+			buttontext,
+			onCancel,
+			onOk,
+			className,
+		}: AlertMessage) => {
 			modal.confirm({
 				title: <AlertModalTitle>{title}</AlertModalTitle>,
 				icon: <ExclamationCircleOutlined />,
 				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
-				okText: <span>{buttontext}</span>,
+				okText: <span className={`${className}-ok-text`}>{buttontext}</span>,
 				cancelText: <span>{t('cancel')}</span>,
 				onOk,
+				className,
 				onCancel,
 			});
 		},
@@ -195,6 +203,7 @@ function PipelineListsView({
 				descrition: t('delete_pipeline_description'),
 				buttontext: t('delete'),
 				onOk: pipelineDeleteHandler(record),
+				className: 'delete-pipeline',
 			});
 		},
 		[handleAlert, pipelineDeleteHandler, t],
@@ -561,6 +570,7 @@ export interface AlertMessage {
 	buttontext: string;
 	onOk: VoidFunction;
 	onCancel?: VoidFunction;
+	className?: string;
 }
 
 export default PipelineListsView;

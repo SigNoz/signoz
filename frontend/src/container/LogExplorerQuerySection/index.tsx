@@ -1,6 +1,5 @@
 import './LogsExplorerQuerySection.styles.scss';
 
-import { FeatureKeys } from 'constants/features';
 import {
 	initialQueriesMap,
 	OPERATORS,
@@ -9,14 +8,12 @@ import {
 import ExplorerOrderBy from 'container/ExplorerOrderBy';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
-import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import useFeatureFlags from 'hooks/useFeatureFlag';
 import {
 	prepareQueryWithDefaultTimestamp,
 	SELECTED_VIEWS,
@@ -89,26 +86,15 @@ function LogExplorerQuerySection({
 		[handleChangeQueryData],
 	);
 
-	const isSearchV2Enabled =
-		useFeatureFlags(FeatureKeys.QUERY_BUILDER_SEARCH_V2)?.active || false;
-
 	return (
 		<>
 			{selectedView === SELECTED_VIEWS.SEARCH && (
 				<div className="qb-search-view-container">
-					{isSearchV2Enabled ? (
-						<QueryBuilderSearchV2
-							query={query}
-							onChange={handleChangeTagFilters}
-							whereClauseConfig={filterConfigs?.filters}
-						/>
-					) : (
-						<QueryBuilderSearch
-							query={query}
-							onChange={handleChangeTagFilters}
-							whereClauseConfig={filterConfigs?.filters}
-						/>
-					)}
+					<QueryBuilderSearchV2
+						query={query}
+						onChange={handleChangeTagFilters}
+						whereClauseConfig={filterConfigs?.filters}
+					/>
 				</div>
 			)}
 

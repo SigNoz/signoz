@@ -11,7 +11,7 @@ function RouteTab({
 }: RouteTabProps & TabsProps): JSX.Element {
 	const onChange = (activeRoute: string): void => {
 		if (onChangeHandler) {
-			onChangeHandler();
+			onChangeHandler(activeRoute);
 		}
 
 		const selectedRoute = routes.find((e) => e.key === activeRoute);

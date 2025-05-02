@@ -106,6 +106,9 @@ export const useThemeConfig = (): ThemeConfig => {
 			Input: {
 				colorBorder: isDarkMode ? '#1D212D' : '#E9E9E9',
 			},
+			Breadcrumb: {
+				separatorMargin: 4,
+			},
 		},
 	};
 };

@@ -1,0 +1,15 @@
+.wait-list-container {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	.wait-list-text {
+		font-weight: 300;
+	}
+
+	.join-waitlist-btn {
+		width: 160px;
+		border-radius: 2px;
+		background: var(--slate-500);
+	}
+}

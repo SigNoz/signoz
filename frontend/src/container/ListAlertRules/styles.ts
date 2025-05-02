@@ -9,12 +9,6 @@ export const SearchContainer = styled.div`
 		gap: 2rem;
 	}
 `;
-export const ButtonContainer = styled.div`
-	&&& {
-		display: flex;
-		align-items: center;
-	}
-`;
 
 export const Button = styled(ButtonComponent)`
 	&&& {

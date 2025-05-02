@@ -9,18 +9,21 @@ const editWebhook = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		let httpConfig = {};
-		if (props.username !== '' && props.password !== '') {
+		const username = props.username ? props.username.trim() : '';
+		const password = props.password ? props.password.trim() : '';
+
+		if (username !== '' && password !== '') {
 			httpConfig = {
 				basic_auth: {
-					username: props.username,
-					password: props.password,
+					username,
+					password,
 				},
 			};
-		} else if (props.username === '' && props.password !== '') {
+		} else if (username === '' && password !== '') {
 			httpConfig = {
 				authorization: {
-					type: 'bearer',
-					credentials: props.password,
+					type: 'Bearer',
+					credentials: password,
 				},
 			};
 		}

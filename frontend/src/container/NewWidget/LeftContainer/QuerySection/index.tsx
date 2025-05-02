@@ -1,14 +1,16 @@
 import './QuerySection.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Tabs, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
-import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
-import { getDefaultWidgetData } from 'container/NewWidget/utils';
+import {
+	getDefaultWidgetData,
+	PANEL_TYPE_TO_QUERY_TYPES,
+} from 'container/NewWidget/utils';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
@@ -26,14 +28,11 @@ import {
 } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import AppReducer from 'types/reducer/app';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
@@ -45,10 +44,6 @@ function QuerySection({
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-
-	const { featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
 
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -112,16 +107,16 @@ function QuerySection({
 		],
 	);
 
-	const handleQueryCategoryChange = (qCategory: string): void => {
-		const currentQueryType = qCategory;
-
-		featureResponse.refetch().then(() => {
+	const handleQueryCategoryChange = useCallback(
+		(qCategory: string): void => {
+			const currentQueryType = qCategory;
 			handleStageQuery({
 				...currentQuery,
 				queryType: currentQueryType as EQueryType,
 			});
-		});
-	};
+		},
+		[currentQuery, handleStageQuery],
+	);
 
 	const handleRunQuery = (): void => {
 		const widgetId = urlQuery.get('widgetId');
@@ -147,72 +142,55 @@ function QuerySection({
 		return config;
 	}, []);
 
-	const listItems = [
-		{
-			key: EQueryType.QUERY_BUILDER,
-			label: (
-				<Button className="nav-btns">
-					<Atom size={14} />
-					<Typography>Query Builder</Typography>
-				</Button>
-			),
-			tab: <Typography>Query Builder</Typography>,
-			children: (
-				<QueryBuilder
-					panelType={PANEL_TYPES.LIST}
-					filterConfigs={filterConfigs}
-					version={selectedDashboard?.data?.version || 'v3'}
-					isListViewPanel
-				/>
-			),
-		},
-	];
+	const items = useMemo(() => {
+		const supportedQueryTypes = PANEL_TYPE_TO_QUERY_TYPES[selectedGraph] || [];
 
-	const items = [
-		{
-			key: EQueryType.QUERY_BUILDER,
+		const queryTypeComponents = {
+			[EQueryType.QUERY_BUILDER]: {
+				icon: <Atom size={14} />,
+				label: 'Query Builder',
+				component: (
+					<QueryBuilder
+						panelType={selectedGraph}
+						filterConfigs={filterConfigs}
+						version={selectedDashboard?.data?.version || 'v3'}
+						isListViewPanel={selectedGraph === PANEL_TYPES.LIST}
+					/>
+				),
+			},
+			[EQueryType.CLICKHOUSE]: {
+				icon: <Terminal size={14} />,
+				label: 'ClickHouse Query',
+				component: <ClickHouseQueryContainer />,
+			},
+			[EQueryType.PROM]: {
+				icon: (
+					<PromQLIcon
+						fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
+					/>
+				),
+				label: 'PromQL',
+				component: <PromQLQueryContainer />,
+			},
+		};
+
+		return supportedQueryTypes.map((queryType) => ({
+			key: queryType,
 			label: (
 				<Button className="nav-btns">
-					<Atom size={14} />
-					<Typography>Query Builder</Typography>
+					{queryTypeComponents[queryType].icon}
+					<Typography>{queryTypeComponents[queryType].label}</Typography>
 				</Button>
 			),
-			tab: <Typography>Query Builder</Typography>,
-			children: (
-				<QueryBuilder
-					panelType={selectedGraph}
-					filterConfigs={filterConfigs}
-					version={selectedDashboard?.data?.version || 'v3'}
-				/>
-			),
-		},
-		{
-			key: EQueryType.CLICKHOUSE,
-			label: (
-				<Button className="nav-btns">
-					<Terminal size={14} />
-					<Typography>ClickHouse Query</Typography>
-				</Button>
-			),
-			tab: <Typography>ClickHouse Query</Typography>,
-			children: <ClickHouseQueryContainer />,
-		},
-		{
-			key: EQueryType.PROM,
-			label: (
-				<Tooltip title="PromQL">
-					<Button className="nav-btns">
-						<PromQLIcon
-							fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
-						/>
-						<Typography>PromQL</Typography>
-					</Button>
-				</Tooltip>
-			),
-			tab: <Typography>PromQL</Typography>,
-			children: <PromQLQueryContainer />,
-		},
-	];
+			tab: <Typography>{queryTypeComponents[queryType].label}</Typography>,
+			children: queryTypeComponents[queryType].component,
+		}));
+	}, [
+		selectedGraph,
+		filterConfigs,
+		selectedDashboard?.data?.version,
+		isDarkMode,
+	]);
 
 	useEffect(() => {
 		registerShortcut(QBShortcuts.StageAndRunQuery, handleRunQuery);
@@ -222,6 +200,16 @@ function QuerySection({
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [handleRunQuery]);
+
+	useEffect(() => {
+		// switch to query builder if query type is not supported
+		if (
+			(selectedGraph === PANEL_TYPES.TABLE || selectedGraph === PANEL_TYPES.PIE) &&
+			currentQuery.queryType === EQueryType.PROM
+		) {
+			handleQueryCategoryChange(EQueryType.QUERY_BUILDER);
+		}
+	}, [currentQuery, handleQueryCategoryChange, selectedGraph]);
 
 	return (
 		<div className="dashboard-navigation">
@@ -237,21 +225,6 @@ function QuerySection({
 				onChange={handleQueryCategoryChange}
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-						<LaunchChatSupport
-							attributes={{
-								uuid: selectedDashboard?.uuid,
-								title: selectedDashboard?.data.title,
-								screen: 'Dashboard widget',
-								panelType: selectedGraph,
-								widgetId: query.id,
-								queryType: currentQuery.queryType,
-							}}
-							eventName="Dashboard: Facing Issues in dashboard"
-							buttonText="Need help with this chart?"
-							// message={chartHelpMessage(selectedDashboard, graphType)}
-							onHoverText="Click here to get help with this dashboard widget"
-							intercomMessageDisabled
-						/>
 						<TextToolTip
 							text="This will temporarily save the current query and graph state. This will persist across tab change"
 							url="https://signoz.io/docs/userguide/query-builder?utm_source=product&utm_medium=query-builder"
@@ -267,7 +240,7 @@ function QuerySection({
 						</Button>
 					</span>
 				}
-				items={selectedGraph === PANEL_TYPES.LIST ? listItems : items}
+				items={items}
 			/>
 		</div>
 	);

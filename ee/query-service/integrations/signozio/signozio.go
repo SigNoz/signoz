@@ -1,159 +1,67 @@
 package signozio
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
 
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
-
-	"go.signoz.io/signoz/ee/query-service/constants"
-	"go.signoz.io/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/zeus"
+	"github.com/tidwall/gjson"
 )
 
-var C *Client
-
-const (
-	POST             = "POST"
-	APPLICATION_JSON = "application/json"
-)
-
-type Client struct {
-	Prefix string
-}
-
-func New() *Client {
-	return &Client{
-		Prefix: constants.LicenseSignozIo,
-	}
-}
-
-func init() {
-	C = New()
-}
-
-// ActivateLicense sends key to license.signoz.io and gets activation data
-func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) {
-	licenseReq := map[string]string{
-		"key":    key,
-		"siteId": siteId,
-	}
-
-	reqString, _ := json.Marshal(licenseReq)
-	httpResponse, err := http.Post(C.Prefix+"/licenses/activate", APPLICATION_JSON, bytes.NewBuffer(reqString))
-
-	if err != nil {
-		zap.L().Error("failed to connect to license.signoz.io", zap.Error(err))
-		return nil, model.BadRequest(fmt.Errorf("unable to connect with license.signoz.io, please check your network connection"))
-	}
-
-	httpBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		zap.L().Error("failed to read activation response from license.signoz.io", zap.Error(err))
-		return nil, model.BadRequest(fmt.Errorf("failed to read activation response from license.signoz.io"))
-	}
-
-	defer httpResponse.Body.Close()
-
-	// read api request result
-	result := ActivationResult{}
-	err = json.Unmarshal(httpBody, &result)
-	if err != nil {
-		zap.L().Error("failed to marshal activation response from license.signoz.io", zap.Error(err))
-		return nil, model.InternalError(errors.Wrap(err, "failed to marshal license activation response"))
-	}
-
-	switch httpResponse.StatusCode {
-	case 200, 201:
-		return result.Data, nil
-	case 400, 401:
-		return nil, model.BadRequest(fmt.Errorf(fmt.Sprintf("failed to activate: %s", result.Error)))
-	default:
-		return nil, model.InternalError(fmt.Errorf(fmt.Sprintf("failed to activate: %s", result.Error)))
-	}
-
-}
-
-// ValidateLicense validates the license key
-func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError) {
-	validReq := map[string]string{
-		"activationId": activationId,
-	}
-
-	reqString, _ := json.Marshal(validReq)
-	response, err := http.Post(C.Prefix+"/licenses/validate", APPLICATION_JSON, bytes.NewBuffer(reqString))
-
-	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
-	}
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "failed to read validation response from license.signoz.io"))
-	}
-
-	defer response.Body.Close()
-
-	switch response.StatusCode {
-	case 200, 201:
-		a := ActivationResult{}
-		err = json.Unmarshal(body, &a)
-		if err != nil {
-			return nil, model.BadRequest(errors.Wrap(err, "failed to marshal license validation response"))
-		}
-		return a.Data, nil
-	case 400, 401:
-		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
-			"bad request error received from license.signoz.io"))
-	default:
-		return nil, model.InternalError(errors.Wrap(fmt.Errorf(string(body)),
-			"internal error received from license.signoz.io"))
-	}
-
-}
-
-func NewPostRequestWithCtx(ctx context.Context, url string, contentType string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequestWithContext(ctx, POST, url, body)
+func ValidateLicenseV3(ctx context.Context, licenseKey string, zeus zeus.Zeus) (*model.LicenseV3, error) {
+	data, err := zeus.GetLicense(ctx, licenseKey)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Content-Type", contentType)
-	return req, err
 
+	var m map[string]any
+	if err = json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+
+	license, err := model.NewLicenseV3(m)
+	if err != nil {
+		return nil, err
+	}
+
+	return license, nil
 }
 
 // SendUsage reports the usage of signoz to license server
-func SendUsage(ctx context.Context, usage model.UsagePayload) *model.ApiError {
-	reqString, _ := json.Marshal(usage)
-	req, err := NewPostRequestWithCtx(ctx, C.Prefix+"/usage", APPLICATION_JSON, bytes.NewBuffer(reqString))
+func SendUsage(ctx context.Context, usage model.UsagePayload, zeus zeus.Zeus) error {
+	body, err := json.Marshal(usage)
 	if err != nil {
-		return model.BadRequest(errors.Wrap(err, "unable to create http request"))
+		return err
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	return zeus.PutMeters(ctx, usage.LicenseKey.String(), body)
+}
+
+func CheckoutSession(ctx context.Context, checkoutRequest *model.CheckoutRequest, licenseKey string, zeus zeus.Zeus) (string, error) {
+	body, err := json.Marshal(checkoutRequest)
 	if err != nil {
-		return model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
+		return "", err
 	}
 
-	body, err := io.ReadAll(res.Body)
+	response, err := zeus.GetCheckoutURL(ctx, licenseKey, body)
 	if err != nil {
-		return model.BadRequest(errors.Wrap(err, "failed to read usage response from license.signoz.io"))
+		return "", err
 	}
 
-	defer res.Body.Close()
+	return gjson.GetBytes(response, "url").String(), nil
+}
 
-	switch res.StatusCode {
-	case 200, 201:
-		return nil
-	case 400, 401:
-		return model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
-			"bad request error received from license.signoz.io"))
-	default:
-		return model.InternalError(errors.Wrap(fmt.Errorf(string(body)),
-			"internal error received from license.signoz.io"))
+func PortalSession(ctx context.Context, portalRequest *model.PortalRequest, licenseKey string, zeus zeus.Zeus) (string, error) {
+	body, err := json.Marshal(portalRequest)
+	if err != nil {
+		return "", err
 	}
+
+	response, err := zeus.GetPortalURL(ctx, licenseKey, body)
+	if err != nil {
+		return "", err
+	}
+
+	return gjson.GetBytes(response, "url").String(), nil
 }

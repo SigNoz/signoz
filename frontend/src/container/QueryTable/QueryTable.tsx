@@ -3,8 +3,11 @@ import './QueryTable.styles.scss';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
-import { createTableColumnsFromQuery } from 'lib/query/createTableColumnsFromQuery';
-import { useMemo } from 'react';
+import {
+	createTableColumnsFromQuery,
+	RowData,
+} from 'lib/query/createTableColumnsFromQuery';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { QueryTableProps } from './QueryTable.intefaces';
@@ -20,6 +23,8 @@ export function QueryTable({
 	columns,
 	dataSource,
 	sticky,
+	searchTerm,
+	widgetId,
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
@@ -55,6 +60,27 @@ export function QueryTable({
 		hideOnSinglePage: true,
 	};
 
+	const [filterTable, setFilterTable] = useState<RowData[] | null>(null);
+
+	const onTableSearch = useCallback(
+		(value?: string): void => {
+			const filterTable = newDataSource.filter((o) =>
+				Object.keys(o).some((k) =>
+					String(o[k])
+						.toLowerCase()
+						.includes(value?.toLowerCase() || ''),
+				),
+			);
+
+			setFilterTable(filterTable);
+		},
+		[newDataSource],
+	);
+
+	useEffect(() => {
+		onTableSearch(searchTerm);
+	}, [newDataSource, onTableSearch, searchTerm]);
+
 	return (
 		<div className="query-table">
 			{isDownloadEnabled && (
@@ -69,9 +95,11 @@ export function QueryTable({
 			<ResizeTable
 				columns={tableColumns}
 				tableLayout="fixed"
-				dataSource={newDataSource}
-				scroll={{ x: true }}
+				dataSource={filterTable === null ? newDataSource : filterTable}
+				scroll={{ x: 'max-content' }}
 				pagination={paginationConfig}
+				widgetId={widgetId}
+				shouldPersistColumnWidths
 				sticky={sticky}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}

@@ -6,12 +6,20 @@ import './Checkbox.styles.scss';
 
 import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
-import { IQuickFiltersConfig } from 'components/QuickFilters/QuickFilters';
-import { OPERATORS } from 'constants/queryBuilder';
+import {
+	IQuickFiltersConfig,
+	QuickFiltersSource,
+} from 'components/QuickFilters/types';
+import {
+	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
+	OPERATORS,
+} from 'constants/queryBuilder';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isArray, isEmpty, isEqual } from 'lodash-es';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
+import { cloneDeep, isArray, isEmpty, isEqual, isFunction } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -19,8 +27,12 @@ import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
+import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
+
 const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'nin'];
+
+const SOURCES_WITH_EMPTY_STATE_ENABLED = [QuickFiltersSource.LOGS_EXPLORER];
 
 function setDefaultValues(
 	values: string[],
@@ -34,10 +46,13 @@ function setDefaultValues(
 }
 interface ICheckboxProps {
 	filter: IQuickFiltersConfig;
+	source: QuickFiltersSource;
+	onFilterChange?: (query: Query) => void;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
-	const { filter } = props;
+	const { source, filter, onFilterChange } = props;
 	const [searchText, setSearchText] = useState<string>('');
 	const [isOpen, setIsOpen] = useState<boolean>(filter.defaultOpen);
 	const [visibleItemsCount, setVisibleItemsCount] = useState<number>(10);
@@ -50,9 +65,9 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	const { data, isLoading } = useGetAggregateValues(
 		{
-			aggregateOperator: 'noop',
-			dataSource: DataSource.LOGS,
-			aggregateAttribute: '',
+			aggregateOperator: filter.aggregateOperator || 'noop',
+			dataSource: filter.dataSource || DataSource.LOGS,
+			aggregateAttribute: filter.aggregateAttribute || '',
 			attributeKey: filter.attributeKey.key,
 			filterAttributeKeyDataType: filter.attributeKey.dataType || DataTypes.EMPTY,
 			tagType: filter.attributeKey.type || '',
@@ -64,15 +79,19 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		},
 	);
 
-	const attributeValues: string[] = useMemo(
-		() =>
-			((Object.values(data?.payload || {}).find((el) => !!el) ||
-				[]) as string[]).filter((val) => !isEmpty(val)),
-		[data?.payload],
-	);
+	const attributeValues: string[] = useMemo(() => {
+		const dataType = filter.attributeKey.dataType || DataTypes.String;
+		const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+		return (data?.payload?.[key] || []).filter((val) => !isEmpty(val));
+	}, [data?.payload, filter.attributeKey.dataType]);
+
 	const currentAttributeKeys = attributeValues.slice(0, visibleItemsCount);
 
-	// derive the state of each filter key here in the renderer itself and keep it in sync with staged query
+	const setSearchTextDebounced = useDebouncedFn((...args) => {
+		setSearchText(args[0] as string);
+	}, DEBOUNCE_DELAY);
+
+	// derive the state of each filter key here in the renderer itself and keep it in sync with current query
 	// also we need to keep a note of last focussed query.
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const currentFilterState = useMemo(() => {
@@ -159,7 +178,12 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				})),
 			},
 		};
-		redirectWithQueryBuilderData(preparedQuery);
+
+		if (onFilterChange && isFunction(onFilterChange)) {
+			onFilterChange(preparedQuery);
+		} else {
+			redirectWithQueryBuilderData(preparedQuery);
+		}
 	};
 
 	const isSomeFilterPresentForCurrentAttribute = currentQuery.builder.queryData?.[
@@ -391,36 +415,48 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			},
 		};
 
-		redirectWithQueryBuilderData(finalQuery);
+		if (onFilterChange && isFunction(onFilterChange)) {
+			onFilterChange(finalQuery);
+		} else {
+			redirectWithQueryBuilderData(finalQuery);
+		}
 	};
+
+	const isEmptyStateWithDocsEnabled =
+		SOURCES_WITH_EMPTY_STATE_ENABLED.includes(source) &&
+		!searchText &&
+		!attributeValues.length;
 
 	return (
 		<div className="checkbox-filter">
-			<section className="filter-header-checkbox">
+			<section
+				className="filter-header-checkbox"
+				onClick={(): void => {
+					if (isOpen) {
+						setIsOpen(false);
+						setVisibleItemsCount(10);
+					} else {
+						setIsOpen(true);
+					}
+				}}
+			>
 				<section className="left-action">
 					{isOpen ? (
-						<ChevronDown
-							size={13}
-							cursor="pointer"
-							onClick={(): void => {
-								setIsOpen(false);
-								setVisibleItemsCount(10);
-							}}
-						/>
+						<ChevronDown size={13} cursor="pointer" />
 					) : (
-						<ChevronRight
-							size={13}
-							onClick={(): void => setIsOpen(true)}
-							cursor="pointer"
-						/>
+						<ChevronRight size={13} cursor="pointer" />
 					)}
 					<Typography.Text className="title">{filter.title}</Typography.Text>
 				</section>
 				<section className="right-action">
-					{isOpen && (
+					{isOpen && !!attributeValues.length && (
 						<Typography.Text
 							className="clear-all"
-							onClick={handleClearFilterAttribute}
+							onClick={(e): void => {
+								e.stopPropagation();
+								e.preventDefault();
+								handleClearFilterAttribute();
+							}}
 						>
 							Clear All
 						</Typography.Text>
@@ -434,13 +470,15 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			)}
 			{isOpen && !isLoading && (
 				<>
-					<section className="search">
-						<Input
-							placeholder="Filter values"
-							onChange={(e): void => setSearchText(e.target.value)}
-							disabled={isFilterDisabled}
-						/>
-					</section>
+					{!isEmptyStateWithDocsEnabled && (
+						<section className="search">
+							<Input
+								placeholder="Filter values"
+								onChange={(e): void => setSearchTextDebounced(e.target.value)}
+								disabled={isFilterDisabled}
+							/>
+						</section>
+					)}
 					{attributeValues.length > 0 ? (
 						<section className="values">
 							{currentAttributeKeys.map((value: string) => (
@@ -488,6 +526,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 								</div>
 							))}
 						</section>
+					) : isEmptyStateWithDocsEnabled ? (
+						<LogsQuickFilterEmptyState attributeKey={filter.attributeKey.key} />
 					) : (
 						<section className="no-data">
 							<Typography.Text>No values found</Typography.Text>{' '}
@@ -508,3 +548,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		</div>
 	);
 }
+
+CheckboxFilter.defaultProps = {
+	onFilterChange: null,
+};

@@ -2,11 +2,8 @@ import { NotificationInstance } from 'antd/es/notification/interface';
 import deleteAlerts from 'api/alerts/delete';
 import { State } from 'hooks/useFetch';
 import { Dispatch, SetStateAction, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
 import { GettableAlert } from 'types/api/alerts/get';
-import AppReducer from 'types/reducer/app';
 
 import { ColumnButton } from './styles';
 
@@ -25,13 +22,9 @@ function DeleteAlert({
 		payload: undefined,
 	});
 
-	const { featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
-
 	const defaultErrorMessage = 'Something went wrong';
 
-	const onDeleteHandler = async (id: number): Promise<void> => {
+	const onDeleteHandler = async (id: string): Promise<void> => {
 		try {
 			const response = await deleteAlerts({
 				id,
@@ -79,20 +72,7 @@ function DeleteAlert({
 			...state,
 			loading: true,
 		}));
-		featureResponse
-			.refetch()
-			.then(() => {
-				onDeleteHandler(id);
-			})
-			.catch(() => {
-				setDeleteAlertState((state) => ({
-					...state,
-					loading: false,
-				}));
-				notifications.error({
-					message: defaultErrorMessage,
-				});
-			});
+		onDeleteHandler(id);
 	};
 
 	return (

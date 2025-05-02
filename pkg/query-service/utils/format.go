@@ -7,13 +7,16 @@ import (
 	"strconv"
 	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/metrics"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
 
 // ValidateAndCastValue validates and casts the value of a key to the corresponding data type of the key
 func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (interface{}, error) {
+	// get the actual value if it's a pointer
+	v = getPointerValue(v)
 	switch dataType {
 	case v3.AttributeKeyDataTypeString:
 		switch x := v.(type) {
@@ -38,6 +41,8 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 					return nil, fmt.Errorf("invalid data type, expected string, got %v", reflect.TypeOf(val))
 				}
 			}
+			return x, nil
+		case []string:
 			return x, nil
 		default:
 			return nil, fmt.Errorf("invalid data type, expected string, got %v", reflect.TypeOf(v))
@@ -154,9 +159,18 @@ func QuoteEscapedString(str string) string {
 	return str
 }
 
-func QuoteEscapedStringForContains(str string) string {
+func QuoteEscapedStringForContains(str string, isIndex bool) string {
 	// https: //clickhouse.com/docs/en/sql-reference/functions/string-search-functions#like
 	str = QuoteEscapedString(str)
+
+	// we are adding this because if a string contains quote `"` it will be stored as \" in clickhouse
+	// to query that using like our query should be \\\\"
+	if isIndex {
+		// isIndex is true means that the extra slash is present
+		// [\"a\",\"b\",\"sdf\"]
+		str = strings.ReplaceAll(str, `"`, `\\\\"`)
+	}
+
 	str = strings.ReplaceAll(str, `%`, `\%`)
 	str = strings.ReplaceAll(str, `_`, `\_`)
 	return str
@@ -217,6 +231,34 @@ func ClickHouseFormattedValue(v interface{}) string {
 	}
 }
 
+func ClickHouseFormattedMetricNames(v interface{}) string {
+	if name, ok := v.(string); ok {
+		if newName, ok := metrics.MetricsUnderTransition[name]; ok {
+			return ClickHouseFormattedValue([]interface{}{name, newName})
+		} else {
+			return ClickHouseFormattedValue([]interface{}{name})
+		}
+	}
+
+	return ClickHouseFormattedValue(v)
+}
+
+func AddBackTickToFormatTag(str string) string {
+	if strings.Contains(str, ".") {
+		return "`" + str + "`"
+	} else {
+		return str
+	}
+}
+
+func AddBackTickToFormatTags(inputs ...string) []string {
+	result := make([]string, len(inputs))
+	for i, str := range inputs {
+		result[i] = AddBackTickToFormatTag(str)
+	}
+	return result
+}
+
 func getPointerValue(v interface{}) interface{} {
 	switch x := v.(type) {
 	case *uint8:
@@ -261,7 +303,7 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 		typeName = constants.Attributes
 	}
 
-	if typeName != string(v3.AttributeKeyTypeResource) {
+	if typeName != string(v3.AttributeKeyTypeResource) && len(typeName) > 0 {
 		typeName = typeName[:len(typeName)-1]
 	}
 
@@ -277,7 +319,7 @@ func GetClickhouseColumnNameV2(typeName string, dataType, field string) string {
 		typeName = constants.Attributes
 	}
 
-	if typeName != string(v3.AttributeKeyTypeResource) {
+	if typeName != string(v3.AttributeKeyTypeResource) && len(typeName) > 0 {
 		typeName = typeName[:len(typeName)-1]
 	}
 
@@ -307,4 +349,43 @@ func GetEpochNanoSecs(epoch int64) int64 {
 		}
 	}
 	return temp * int64(math.Pow(10, float64(19-count)))
+}
+
+func NormalizeMap(data map[string]uint64) map[string]float64 {
+	if len(data) == 0 {
+		return nil
+	}
+
+	var minVal, maxVal uint64
+	first := true
+	for _, v := range data {
+		if first {
+			minVal, maxVal = v, v
+			first = false
+		} else {
+			if v < minVal {
+				minVal = v
+			}
+			if v > maxVal {
+				maxVal = v
+			}
+		}
+	}
+
+	// If all values are the same, avoid division by zero
+	if minVal == maxVal {
+		normalized := make(map[string]float64)
+		for k := range data {
+			normalized[k] = 1.0 // or 0.0, depending on the convention
+		}
+		return normalized
+	}
+
+	// Normalize the values using min-max normalization
+	normalized := make(map[string]float64)
+	for k, v := range data {
+		normalized[k] = float64(v-minVal) / float64(maxVal-minVal)
+	}
+
+	return normalized
 }

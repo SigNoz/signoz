@@ -195,6 +195,7 @@ export const compositeQuery: Query = {
 export const redirectWithQueryBuilderData = jest.fn();
 
 export const qbProviderValue = {
+	isDefaultQuery: jest.fn(() => false),
 	currentQuery: {
 		...initialQueriesMap.traces,
 		builder: {

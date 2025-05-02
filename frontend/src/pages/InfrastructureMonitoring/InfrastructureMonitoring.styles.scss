@@ -1,0 +1,52 @@
+.infra-monitoring-module-container {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+
+	.ant-tabs {
+		height: 100%;
+	}
+
+	.ant-tabs-nav {
+		padding: 0 8px;
+		margin-bottom: 0px;
+
+		&::before {
+			border-bottom: 1px solid var(--bg-slate-400) !important;
+		}
+	}
+
+	.ant-tabs-content-holder {
+		display: flex;
+
+		.ant-tabs-content {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+
+			.ant-tabs-tabpane {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+			}
+		}
+	}
+
+	.tab-item {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+	}
+}
+
+.lightMode {
+	.infra-monitoring-module-container {
+		.ant-tabs-nav {
+			&::before {
+				border-bottom: 1px solid var(--bg-vanilla-300) !important;
+			}
+		}
+	}
+}

@@ -25,6 +25,12 @@ jest.mock(
 		},
 );
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
 describe('Dashboard landing page actions header tests', () => {
 	it('unlock dashboard should be disabled for integrations created dashboards', async () => {
 		const mockLocation = {

@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/react';
 import { Button, Card, Tabs, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import axios from 'axios';
+import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
@@ -23,7 +24,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { cloneDeep, isEmpty, set } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -60,6 +61,7 @@ function TracesExplorer(): JSX.Element {
 	const currentPanelType = useGetPanelTypesQueryParam();
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+	const { safeNavigate } = useSafeNavigate();
 
 	const currentTab = panelType || PANEL_TYPES.LIST;
 
@@ -196,7 +198,7 @@ function TracesExplorer(): JSX.Element {
 						widgetId,
 					});
 
-					history.push(dashboardEditView);
+					safeNavigate(dashboardEditView);
 				},
 				onError: (error) => {
 					if (axios.isAxiosError(error)) {
@@ -244,7 +246,11 @@ function TracesExplorer(): JSX.Element {
 				<Card className="filter" hidden={!isOpen}>
 					<Filter setOpen={setOpen} />
 				</Card>
-				<Card className="trace-explorer">
+				<Card
+					className={cx('trace-explorer', {
+						'filters-expanded': isOpen,
+					})}
+				>
 					<div className={`trace-explorer-header ${isOpen ? 'single-child' : ''}`}>
 						{!isOpen && (
 							<Tooltip title="Expand filters" placement="right">

@@ -1,31 +1,86 @@
 package utils
 
 import (
+	"context"
 	"os"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlmigrator"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-func NewQueryServiceDBForTests(t *testing.T) *sqlx.DB {
+func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath string) {
 	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
 	if err != nil {
 		t.Fatalf("could not create temp file for test db: %v", err)
 	}
-	testDBFilePath := testDBFile.Name()
+	testDBFilePath = testDBFile.Name()
 	t.Cleanup(func() { os.Remove(testDBFilePath) })
 	testDBFile.Close()
 
-	testDB, err := sqlx.Open("sqlite3", testDBFilePath)
+	sqlStore, err = sqlitesqlstore.New(context.Background(), factorytest.NewSettings(), sqlstore.Config{Provider: "sqlite", Sqlite: sqlstore.SqliteConfig{Path: testDBFilePath}})
 	if err != nil {
-		t.Fatalf("could not open test db sqlite file: %v", err)
+		t.Fatalf("could not create test db sqlite store: %v", err)
 	}
 
-	// TODO(Raj): This should not require passing in the DB file path
-	dao.InitDao("sqlite", testDBFilePath)
-	dashboards.InitDB(testDBFilePath)
+	sqlmigrations, err := sqlmigration.New(
+		context.Background(),
+		factorytest.NewSettings(),
+		sqlmigration.Config{},
+		factory.MustNewNamedMap(
+			sqlmigration.NewAddDataMigrationsFactory(),
+			sqlmigration.NewAddOrganizationFactory(),
+			sqlmigration.NewAddPreferencesFactory(),
+			sqlmigration.NewAddDashboardsFactory(),
+			sqlmigration.NewAddSavedViewsFactory(),
+			sqlmigration.NewAddAgentsFactory(),
+			sqlmigration.NewAddPipelinesFactory(),
+			sqlmigration.NewAddIntegrationsFactory(),
+			sqlmigration.NewAddLicensesFactory(),
+			sqlmigration.NewAddPatsFactory(),
+			sqlmigration.NewModifyDatetimeFactory(),
+			sqlmigration.NewModifyOrgDomainFactory(),
+			sqlmigration.NewUpdateOrganizationFactory(sqlStore),
+			sqlmigration.NewAddAlertmanagerFactory(sqlStore),
+			sqlmigration.NewUpdateDashboardAndSavedViewsFactory(sqlStore),
+			sqlmigration.NewUpdatePatAndOrgDomainsFactory(sqlStore),
+			sqlmigration.NewUpdatePipelines(sqlStore),
+			sqlmigration.NewDropLicensesSitesFactory(sqlStore),
+			sqlmigration.NewUpdateInvitesFactory(sqlStore),
+			sqlmigration.NewUpdatePatFactory(sqlStore),
+			sqlmigration.NewAddVirtualFieldsFactory(),
+			sqlmigration.NewUpdateIntegrationsFactory(sqlStore),
+			sqlmigration.NewUpdateOrganizationsFactory(sqlStore),
+			sqlmigration.NewDropGroupsFactory(sqlStore),
+		),
+	)
+	if err != nil {
+		t.Fatalf("could not create test db sql migrations: %v", err)
+	}
 
-	return testDB
+	err = sqlmigrator.New(context.Background(), factorytest.NewSettings(), sqlStore, sqlmigrations, sqlmigrator.Config{}).Migrate(context.Background())
+	if err != nil {
+		t.Fatalf("could not migrate test db sql migrations: %v", err)
+	}
+
+	return sqlStore, testDBFilePath
+}
+
+func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
+	sqlStore, _ := NewTestSqliteDB(t)
+
+	err := dao.InitDao(sqlStore)
+	if err != nil {
+		t.Fatalf("could not initialize dao: %v", err)
+	}
+	_ = dashboards.InitDB(sqlStore)
+
+	return sqlStore
 }

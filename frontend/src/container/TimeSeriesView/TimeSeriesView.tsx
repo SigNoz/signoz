@@ -1,10 +1,13 @@
 import './TimeSeriesView.styles.scss';
 
+import logEvent from 'api/common/logEvent';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
+import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
+import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/MetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
@@ -17,6 +20,7 @@ import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
+import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -26,6 +30,7 @@ import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { Container } from './styles';
@@ -118,6 +123,26 @@ function TimeSeriesView({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	useEffect(() => {
+		if (chartData[0] && chartData[0]?.length !== 0 && !isLoading && !isError) {
+			if (dataSource === DataSource.TRACES) {
+				logEvent('Traces Explorer: Data present', {
+					panelType: 'TIME_SERIES',
+				});
+			} else if (dataSource === DataSource.LOGS) {
+				logEvent('Logs Explorer: Data present', {
+					panelType: 'TIME_SERIES',
+				});
+			} else if (dataSource === DataSource.METRICS) {
+				logEvent('Metrics Explorer: Data present', {
+					panelType: 'TIME_SERIES',
+				});
+			}
+		}
+	}, [isLoading, isError, chartData, dataSource]);
+
+	const { timezone } = useTimezone();
+
 	const chartOptions = getUPlotChartOptions({
 		onDragSelect,
 		yAxisUnit: yAxisUnit || '',
@@ -131,6 +156,9 @@ function TimeSeriesView({
 		maxTimeScale,
 		softMax: null,
 		softMin: null,
+		tzDate: (timestamp: number) =>
+			uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
+		timezone: timezone.value,
 	});
 
 	return (
@@ -142,8 +170,9 @@ function TimeSeriesView({
 				ref={graphRef}
 				data-testid="time-series-graph"
 			>
-				{isLoading &&
-					(dataSource === DataSource.LOGS ? <LogsLoading /> : <TracesLoading />)}
+				{isLoading && dataSource === DataSource.LOGS && <LogsLoading />}
+				{isLoading && dataSource === DataSource.TRACES && <TracesLoading />}
+				{isLoading && dataSource === DataSource.METRICS && <MetricsLoading />}
 
 				{chartData &&
 					chartData[0] &&
@@ -159,7 +188,15 @@ function TimeSeriesView({
 					chartData[0]?.length === 0 &&
 					!isLoading &&
 					!isError &&
-					!isFilterApplied && <NoLogs dataSource={dataSource} />}
+					!isFilterApplied &&
+					dataSource !== DataSource.METRICS && <NoLogs dataSource={dataSource} />}
+
+				{chartData &&
+					chartData[0] &&
+					chartData[0]?.length === 0 &&
+					!isLoading &&
+					!isError &&
+					dataSource === DataSource.METRICS && <EmptyMetricsSearch />}
 
 				{!isLoading &&
 					!isError &&

@@ -25,16 +25,18 @@ import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
-import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
-import { dashboardListMessage } from 'components/LaunchChatSupport/util';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import { sanitizeDashboardData } from 'container/NewDashboard/DashboardDescription';
+import { downloadObjectAsJson } from 'container/NewDashboard/DashboardDescription/utils';
 import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
 import dayjs from 'dayjs';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { get, isEmpty, isUndefined } from 'lodash-es';
 import {
 	ArrowDownWideNarrow,
@@ -46,6 +48,7 @@ import {
 	EllipsisVertical,
 	Expand,
 	ExternalLink,
+	FileJson,
 	Github,
 	HdmiPort,
 	LayoutGrid,
@@ -58,7 +61,9 @@ import {
 // #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
 // see more: https://github.com/lucide-icons/lucide/issues/94
 import { handleContactSupport } from 'pages/Integrations/utils';
+import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useTimezone } from 'providers/Timezone';
 import {
 	ChangeEvent,
 	Key,
@@ -68,17 +73,20 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { generatePath, Link } from 'react-router-dom';
+import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { AppState } from 'store/reducers';
-import { Dashboard } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
-import { isCloudUser } from 'utils/app';
+import {
+	Dashboard,
+	IDashboardVariable,
+	WidgetRow,
+	Widgets,
+} from 'types/api/dashboard/getAll';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
+import { RequestDashboardBtn } from './RequestDashboardBtn';
 import { DeleteButton } from './TableComponents/DeleteButton';
 import {
 	DashboardDynamicColumns,
@@ -91,23 +99,26 @@ function DashboardsList(): JSX.Element {
 	const {
 		data: dashboardListResponse,
 		isLoading: isDashboardListLoading,
+		isRefetching: isDashboardListRefetching,
 		error: dashboardFetchError,
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-
+	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 	const {
 		listSortOrder: sortOrder,
 		setListSortOrder: setSortOrder,
 	} = useDashboard();
+
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const [searchString, setSearchString] = useState<string>(
 		sortOrder.search || '',
 	);
 	const [action, createNewDashboard] = useComponentPermission(
 		['action', 'create_new_dashboards'],
-		role,
+		user.role,
 	);
 
 	const [
@@ -175,16 +186,14 @@ function DashboardsList(): JSX.Element {
 
 	const sortDashboardsByCreatedAt = (dashboards: Dashboard[]): void => {
 		const sortedDashboards = dashboards.sort(
-			(a, b) =>
-				new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+			(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
 		);
 		setDashboards(sortedDashboards);
 	};
 
 	const sortDashboardsByUpdatedAt = (dashboards: Dashboard[]): void => {
 		const sortedDashboards = dashboards.sort(
-			(a, b) =>
-				new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+			(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
 		);
 		setDashboards(sortedDashboards);
 	};
@@ -249,17 +258,22 @@ function DashboardsList(): JSX.Element {
 
 	const data: Data[] =
 		dashboards?.map((e) => ({
-			createdAt: e.created_at,
+			createdAt: e.createdAt,
 			description: e.data.description || '',
 			id: e.uuid,
-			lastUpdatedTime: e.updated_at,
+			lastUpdatedTime: e.updatedAt,
 			name: e.data.title,
 			tags: e.data.tags || [],
 			key: e.uuid,
-			createdBy: e.created_by,
+			createdBy: e.createdBy,
 			isLocked: !!e.isLocked || false,
-			lastUpdatedBy: e.updated_by,
+			lastUpdatedBy: e.updatedBy,
 			image: e.data.image || Base64Icons[0],
+			variables: e.data.variables,
+			widgets: e.data.widgets,
+			layout: e.data.layout,
+			panelMap: e.data.panelMap,
+			version: e.data.version,
 			refetchDashboardList,
 		})) || [];
 
@@ -279,7 +293,7 @@ function DashboardsList(): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				history.push(
+				safeNavigate(
 					generatePath(ROUTES.DASHBOARD, {
 						dashboardId: response.payload.uuid,
 					}),
@@ -299,7 +313,7 @@ function DashboardsList(): JSX.Element {
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState, t]);
+	}, [newDashboardState, safeNavigate, t]);
 
 	const onModalHandler = (uploadedGrafana: boolean): void => {
 		logEvent('Dashboard List: Import JSON clicked', {});
@@ -343,31 +357,13 @@ function DashboardsList(): JSX.Element {
 		}
 	}, [state.error, state.value, t, notifications]);
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	function getFormattedTime(dashboard: Dashboard, option: string): string {
-		const timeOptions: Intl.DateTimeFormatOptions = {
-			hour: '2-digit',
-			minute: '2-digit',
-			second: '2-digit',
-			hour12: false,
-		};
-		const formattedTime = new Date(get(dashboard, option, '')).toLocaleTimeString(
-			'en-US',
-			timeOptions,
+		return formatTimezoneAdjustedTimestamp(
+			get(dashboard, option, ''),
+			DATE_TIME_FORMATS.DASH_DATETIME_UTC,
 		);
-
-		const dateOptions: Intl.DateTimeFormatOptions = {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric',
-		};
-
-		const formattedDate = new Date(get(dashboard, option, '')).toLocaleDateString(
-			'en-US',
-			dateOptions,
-		);
-
-		// Combine time and date
-		return `${formattedDate} ⎯ ${formattedTime}`;
 	}
 
 	const onLastUpdated = (time: string): string => {
@@ -410,43 +406,33 @@ function DashboardsList(): JSX.Element {
 			title: 'Dashboards',
 			key: 'dashboard',
 			render: (dashboard: Data, _, index): JSX.Element => {
-				const timeOptions: Intl.DateTimeFormatOptions = {
-					hour: '2-digit',
-					minute: '2-digit',
-					second: '2-digit',
-					hour12: false,
-				};
-				const formattedTime = new Date(dashboard.createdAt).toLocaleTimeString(
-					'en-US',
-					timeOptions,
+				const formattedDateAndTime = formatTimezoneAdjustedTimestamp(
+					dashboard.createdAt,
+					DATE_TIME_FORMATS.DASH_DATETIME_UTC,
 				);
-
-				const dateOptions: Intl.DateTimeFormatOptions = {
-					month: 'short',
-					day: 'numeric',
-					year: 'numeric',
-				};
-
-				const formattedDate = new Date(dashboard.createdAt).toLocaleDateString(
-					'en-US',
-					dateOptions,
-				);
-
-				// Combine time and date
-				const formattedDateAndTime = `${formattedDate} ⎯ ${formattedTime}`;
 
 				const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;
 
 				const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
+					event.stopPropagation();
 					if (event.metaKey || event.ctrlKey) {
 						window.open(getLink(), '_blank');
 					} else {
-						history.push(getLink());
+						safeNavigate(getLink());
 					}
 					logEvent('Dashboard List: Clicked on dashboard', {
 						dashboardId: dashboard.id,
 						dashboardName: dashboard.name,
 					});
+				};
+
+				const handleJsonExport = (event: React.MouseEvent<HTMLElement>): void => {
+					event.stopPropagation();
+					event.preventDefault();
+					downloadObjectAsJson(
+						sanitizeDashboardData({ ...dashboard, title: dashboard.name }),
+						dashboard.name,
+					);
 				};
 
 				return (
@@ -458,17 +444,25 @@ function DashboardsList(): JSX.Element {
 									placement="left"
 									overlayClassName="title-toolip"
 								>
-									<Typography.Text data-testid={`dashboard-title-${index}`}>
-										<Link to={getLink()} className="title">
-											<img
-												src={dashboard?.image || Base64Icons[0]}
-												style={{ height: '14px', width: '14px' }}
-												alt="dashboard-image"
-												className="dashboard-icon"
-											/>
+									<div
+										className="title-link"
+										onClick={(e): void => {
+											e.stopPropagation();
+											safeNavigate(getLink());
+										}}
+									>
+										<img
+											src={dashboard?.image || Base64Icons[0]}
+											alt="dashboard-image"
+											className="dashboard-icon"
+										/>
+										<Typography.Text
+											data-testid={`dashboard-title-${index}`}
+											className="title"
+										>
 											{dashboard.name}
-										</Link>
-									</Typography.Text>
+										</Typography.Text>
+									</div>
 								</Tooltip>
 							</div>
 
@@ -516,6 +510,14 @@ function DashboardsList(): JSX.Element {
 												>
 													Copy Link
 												</Button>
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<FileJson size={12} />}
+													onClick={handleJsonExport}
+												>
+													Export JSON
+												</Button>
 											</section>
 											<section className="section-2">
 												<DeleteButton
@@ -534,6 +536,7 @@ function DashboardsList(): JSX.Element {
 									<EllipsisVertical
 										className="dashboard-action-icon"
 										size={14}
+										data-testid="dashboard-action-icon"
 										onClick={(e): void => {
 											e.stopPropagation();
 											e.preventDefault();
@@ -690,20 +693,19 @@ function DashboardsList(): JSX.Element {
 						<Typography.Text className="subtitle">
 							Create and manage dashboards for your workspace.
 						</Typography.Text>
-						<LaunchChatSupport
-							attributes={{
-								screen: 'Dashboard list page',
-							}}
-							eventName="Dashboard: Facing Issues in dashboard"
-							message={dashboardListMessage}
-							buttonText="Need help with dashboards?"
-							onHoverText="Click here to get help with dashboards"
-							intercomMessageDisabled
-						/>
 					</Flex>
+					{isCloudUserVal && (
+						<div className="integrations-container">
+							<div className="integrations-content">
+								<RequestDashboardBtn />
+							</div>
+						</div>
+					)}
 				</div>
 
-				{isDashboardListLoading || isFilteringDashboards ? (
+				{isDashboardListLoading ||
+				isFilteringDashboards ||
+				isDashboardListRefetching ? (
 					<div className="loading-dashboard-details">
 						<Skeleton.Input active size="large" className="skeleton-1" />
 						<Skeleton.Input active size="large" className="skeleton-1" />
@@ -733,7 +735,7 @@ function DashboardsList(): JSX.Element {
 							<Button
 								type="text"
 								className="learn-more"
-								onClick={(): void => handleContactSupport(isCloudUser())}
+								onClick={(): void => handleContactSupport(isCloudUserVal)}
 							>
 								Contact Support
 							</Button>
@@ -902,7 +904,11 @@ function DashboardsList(): JSX.Element {
 									columns={columns}
 									dataSource={data}
 									showSorterTooltip
-									loading={isDashboardListLoading || isFilteringDashboards}
+									loading={
+										isDashboardListLoading ||
+										isFilteringDashboards ||
+										isDashboardListRefetching
+									}
 									showHeader={false}
 									pagination={paginationConfig}
 								/>
@@ -970,10 +976,10 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.createdBy && (
 										<div className="user">
 											<Typography.Text className="user-tag">
-												{dashboards?.[0]?.created_by?.substring(0, 1).toUpperCase()}
+												{dashboards?.[0]?.createdBy?.substring(0, 1).toUpperCase()}
 											</Typography.Text>
 											<Typography.Text className="dashboard-created-by">
-												{dashboards?.[0]?.created_by}
+												{dashboards?.[0]?.createdBy}
 											</Typography.Text>
 										</div>
 									)}
@@ -982,16 +988,16 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.updatedAt && (
 										<Typography.Text className="formatted-time">
 											<CalendarClock size={14} />
-											{onLastUpdated(dashboards?.[0]?.updated_at || '')}
+											{onLastUpdated(dashboards?.[0]?.updatedAt || '')}
 										</Typography.Text>
 									)}
 									{visibleColumns.updatedBy && (
 										<div className="user">
 											<Typography.Text className="user-tag">
-												{dashboards?.[0]?.updated_by?.substring(0, 1).toUpperCase()}
+												{dashboards?.[0]?.updatedBy?.substring(0, 1).toUpperCase()}
 											</Typography.Text>
 											<Typography.Text className="dashboard-created-by">
-												{dashboards?.[0]?.updated_by}
+												{dashboards?.[0]?.updatedBy}
 											</Typography.Text>
 										</div>
 									)}
@@ -1095,6 +1101,11 @@ export interface Data {
 	isLocked: boolean;
 	id: string;
 	image?: string;
+	widgets?: Array<WidgetRow | Widgets>;
+	layout?: Layout[];
+	panelMap?: Record<string, { widgets: Layout[]; collapsed: boolean }>;
+	variables: Record<string, IDashboardVariable>;
+	version?: string;
 }
 
 export default DashboardsList;

@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -11,6 +12,7 @@ import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -34,20 +36,36 @@ function GridCardGraph({
 	version,
 	onClickHandler,
 	onDragSelect,
+	customOnDragSelect,
 	customTooltipElement,
 	dataAvailable,
+	getGraphData,
+	openTracesButton,
+	onOpenTraceBtnClick,
+	customSeries,
+	customErrorMessage,
+	start,
+	end,
+	analyticsEvent,
+	customTimeRange,
+	customOnRowClick,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
+	const [isInternalServerError, setIsInternalServerError] = useState<boolean>(
+		false,
+	);
 	const {
 		toScrollWidgetId,
 		setToScrollWidgetId,
 		variablesToGetUpdated,
+		setDashboardQueryRangeCalled,
 	} = useDashboard();
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const queryClient = useQueryClient();
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -114,6 +132,8 @@ function GridCardGraph({
 				variables: getDashboardVariables(variables),
 				fillGaps: widget.fillSpans,
 				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
+				start: customTimeRange?.startTime || start,
+				end: customTimeRange?.endTime || end,
 			};
 		}
 		updatedQuery.builder.queryData[0].pageSize = 10;
@@ -133,8 +153,29 @@ function GridCardGraph({
 					initialDataSource === DataSource.TRACES && widget.selectedTracesFields,
 			},
 			fillGaps: widget.fillSpans,
+			start: customTimeRange?.startTime || start,
+			end: customTimeRange?.endTime || end,
 		};
 	});
+
+	// TODO [vikrantgupta25] remove this useEffect with refactor as this is prone to race condition
+	// this is added to tackle the case of async communication between VariableItem.tsx and GridCard.tsx
+	useEffect(() => {
+		if (variablesToGetUpdated.length > 0) {
+			queryClient.cancelQueries([
+				maxTime,
+				minTime,
+				globalSelectedInterval,
+				variables,
+				widget?.query,
+				widget?.panelTypes,
+				widget.timePreferance,
+				widget.fillSpans,
+				requestData,
+			]);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [variablesToGetUpdated]);
 
 	useEffect(() => {
 		if (!isEqual(updatedQuery, requestData.query)) {
@@ -152,6 +193,8 @@ function GridCardGraph({
 			variables: getDashboardVariables(variables),
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval,
+			start: customTimeRange?.startTime || start,
+			end: customTimeRange?.endTime || end,
 		},
 		version || DEFAULT_ENTITY_VERSION,
 		{
@@ -165,6 +208,9 @@ function GridCardGraph({
 				widget.timePreferance,
 				widget.fillSpans,
 				requestData,
+				...(customTimeRange && customTimeRange.startTime && customTimeRange.endTime
+					? [customTimeRange.startTime, customTimeRange.endTime]
+					: []),
 			],
 			retry(failureCount, error): boolean {
 				if (
@@ -181,11 +227,24 @@ function GridCardGraph({
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
+				if (customErrorMessage) {
+					setIsInternalServerError(
+						String(error.message).includes('API responded with 500'),
+					);
+					if (analyticsEvent) {
+						logEvent(analyticsEvent, {
+							error: error.message,
+						});
+					}
+				}
+				setDashboardQueryRangeCalled(true);
 			},
 			onSettled: (data) => {
 				dataAvailable?.(
 					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
 				);
+				getGraphData?.(data?.payload?.data);
+				setDashboardQueryRangeCalled(true);
 			},
 		},
 	);
@@ -223,7 +282,13 @@ function GridCardGraph({
 					setRequestData={setRequestData}
 					onClickHandler={onClickHandler}
 					onDragSelect={onDragSelect}
+					customOnDragSelect={customOnDragSelect}
 					customTooltipElement={customTooltipElement}
+					openTracesButton={openTracesButton}
+					onOpenTraceBtnClick={onOpenTraceBtnClick}
+					customSeries={customSeries}
+					customErrorMessage={isInternalServerError ? customErrorMessage : undefined}
+					customOnRowClick={customOnRowClick}
 				/>
 			)}
 		</div>
@@ -237,6 +302,7 @@ GridCardGraph.defaultProps = {
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
 	version: 'v3',
+	analyticsEvent: undefined,
 };
 
 export default memo(GridCardGraph);

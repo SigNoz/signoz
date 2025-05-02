@@ -5,8 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
@@ -17,7 +18,7 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 
 	// Build queries for each builder query
 	for queryName, query := range compositeQuery.BuilderQueries {
-		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
+		if query.Expression != queryName || query.DataSource != v3.DataSourceLogs {
 			continue
 		}
 
@@ -61,26 +62,23 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 	return false
 }
 
+// if the field is timestamp/id/value we don't need to enrich
+// if the field is static we don't need to enrich
+// for all others we need to enrich
+// an attribute/resource can be materialized/dematerialized
+// but the query should work regardless and shouldn't fail
 func isEnriched(field v3.AttributeKey) bool {
 	// if it is timestamp/id dont check
-	if field.Key == "timestamp" || field.Key == "id" || field.Key == constants.SigNozOrderByValue {
+	if field.Key == "timestamp" || field.Key == "id" || field.Key == constants.SigNozOrderByValue || field.Type == v3.AttributeKeyTypeInstrumentationScope {
 		return true
 	}
 
-	if field.IsColumn {
+	// don't need to enrich the static fields as they will be always used a column
+	if _, ok := constants.StaticFieldsLogsV3[field.Key]; ok && field.IsColumn {
 		return true
 	}
 
-	if field.Type == v3.AttributeKeyTypeUnspecified || field.DataType == v3.AttributeKeyDataTypeUnspecified {
-		return false
-	}
-
-	// try to enrich all attributes which doesn't have isColumn = true
-	if !field.IsColumn {
-		return false
-	}
-
-	return true
+	return false
 }
 
 func Enrich(params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey) {
@@ -94,11 +92,11 @@ func Enrich(params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey) {
 		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
 			continue
 		}
-		enrichLogsQuery(query, fields)
+		_ = EnrichLogsQuery(query, fields)
 	}
 }
 
-func enrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) error {
+func EnrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) error {
 	// enrich aggregation attribute
 	if query.AggregateAttribute.Key != "" {
 		query.AggregateAttribute = enrichFieldWithMetadata(query.AggregateAttribute, fields)
@@ -144,13 +142,9 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	}
 
 	// check if the field is present in the fields map
-	if existingField, ok := fields[field.Key]; ok {
-		// don't update if type is not the same
-		if (field.Type == "" && field.DataType == "") ||
-			(field.Type == existingField.Type && field.DataType == existingField.DataType) ||
-			(field.Type == "" && field.DataType == existingField.DataType) ||
-			(field.DataType == "" && field.Type == existingField.Type) {
-			return existingField
+	for _, key := range utils.GenerateEnrichmentKeys(field) {
+		if val, ok := fields[key]; ok {
+			return val
 		}
 	}
 
@@ -173,6 +167,22 @@ func jsonFilterEnrich(filter v3.FilterItem) v3.FilterItem {
 	// check if the value is a int, float, string, bool
 	valueType := ""
 	switch filter.Value.(type) {
+	// even the filter value is an array the actual type of the value is string.
+	case []interface{}:
+		// check first value type in array and use that
+		if len(filter.Value.([]interface{})) > 0 {
+			firstVal := filter.Value.([]interface{})[0]
+			switch firstVal.(type) {
+			case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
+				valueType = "int64"
+			case float32, float64:
+				valueType = "float64"
+			case bool:
+				valueType = "bool"
+			default:
+				valueType = "string"
+			}
+		}
 	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
 		valueType = "int64"
 	case float32, float64:

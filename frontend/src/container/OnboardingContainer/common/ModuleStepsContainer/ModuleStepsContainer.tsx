@@ -380,7 +380,7 @@ export default function ModuleStepsContainer({
 	};
 
 	const handleLogoClick = (): void => {
-		history.push('/');
+		history.push('/home');
 	};
 
 	return (

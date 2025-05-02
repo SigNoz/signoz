@@ -11,6 +11,20 @@ import {
 	getTableColumn,
 } from '../PipelineListsView/utils';
 
+jest.mock('uplot', () => {
+	const paths = {
+		spline: jest.fn(),
+		bars: jest.fn(),
+	};
+	const uplotMock = jest.fn(() => ({
+		paths,
+	}));
+	return {
+		paths,
+		default: uplotMock,
+	};
+});
+
 describe('Utils testing of Pipeline Page', () => {
 	test('it should be check form field of add pipeline', () => {
 		expect(pipelineFields.length).toBe(3);

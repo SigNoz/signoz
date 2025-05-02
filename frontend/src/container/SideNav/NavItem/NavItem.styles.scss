@@ -15,6 +15,13 @@
 		}
 	}
 
+	&.disabled {
+		.nav-item-data {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	}
+
 	&:hover {
 		cursor: pointer;
 

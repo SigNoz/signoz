@@ -22,34 +22,23 @@
 		}
 
 		&.INFO {
-			background-color: var(--bg-slate-400);
+			background-color: var(--bg-robin-500);
 		}
-
 		&.WARNING,
 		&.WARN {
 			background-color: var(--bg-amber-500);
 		}
-
 		&.ERROR {
 			background-color: var(--bg-cherry-500);
 		}
-
 		&.TRACE {
-			background-color: var(--bg-robin-300);
+			background-color: var(--bg-forest-400);
 		}
-
 		&.DEBUG {
-			background-color: var(--bg-forest-500);
+			background-color: var(--bg-aqua-500);
 		}
-
 		&.FATAL {
 			background-color: var(--bg-sakura-500);
-		}
-	}
-
-	&.isActive {
-		.line {
-			background-color: var(--bg-robin-400, #7190f9);
 		}
 	}
 }

@@ -59,9 +59,10 @@ export const useOrderByFilter = ({
 		];
 	}, [searchText]);
 
-	const selectedValue = useMemo(() => transformToOrderByStringValues(query), [
-		query,
-	]);
+	const selectedValue = useMemo(
+		() => transformToOrderByStringValues(query, entityVersion),
+		[query, entityVersion],
+	);
 
 	const generateOptions = useCallback(
 		(options: IOption[]): IOption[] => {

@@ -1,6 +1,7 @@
 import './LogsExplorerList.style.scss';
 
 import { Card } from 'antd';
+import logEvent from 'api/common/logEvent';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 // components
@@ -18,7 +19,7 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useCallback, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
@@ -71,7 +72,13 @@ function LogsExplorerList({
 		() => convertKeysToColumnFields(options.selectColumns),
 		[options],
 	);
-
+	useEffect(() => {
+		if (!isLoading && !isFetching && !isError && logs.length !== 0) {
+			logEvent('Logs Explorer: Data present', {
+				panelType: 'LIST',
+			});
+		}
+	}, [isLoading, isFetching, isError, logs.length]);
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {

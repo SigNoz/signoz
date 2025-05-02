@@ -12,6 +12,7 @@ function TraceExplorerControls({
 	totalCount,
 	perPageOptions,
 	config,
+	showSizeChanger = true,
 }: TraceExplorerControlsProps): JSX.Element | null {
 	const {
 		pagination,
@@ -38,6 +39,7 @@ function TraceExplorerControls({
 				handleCountItemsPerPageChange={handleCountItemsPerPageChange}
 				handleNavigateNext={handleNavigateNext}
 				handleNavigatePrevious={handleNavigatePrevious}
+				showSizeChanger={showSizeChanger}
 			/>
 		</Container>
 	);
@@ -52,6 +54,11 @@ type TraceExplorerControlsProps = Pick<
 	'isLoading' | 'totalCount' | 'perPageOptions'
 > & {
 	config?: OptionsMenuConfig | null;
+	showSizeChanger?: boolean;
+};
+
+TraceExplorerControls.defaultProps = {
+	showSizeChanger: true,
 };
 
 export default memo(TraceExplorerControls);

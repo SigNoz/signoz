@@ -4,20 +4,20 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	baseauth "github.com/SigNoz/signoz/pkg/query-service/auth"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
-	"go.signoz.io/signoz/ee/query-service/constants"
-	"go.signoz.io/signoz/ee/query-service/model"
-	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
-	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 
-func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (*basemodel.User, basemodel.BaseApiError) {
+func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (*types.User, basemodel.BaseApiError) {
 	// get auth domain from email domain
 	domain, apierr := m.GetDomainByEmail(ctx, email)
 	if apierr != nil {
@@ -35,24 +35,20 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 		return nil, model.InternalErrorStr("failed to generate password hash")
 	}
 
-	group, apiErr := m.GetGroupByName(ctx, baseconst.ViewerGroup)
-	if apiErr != nil {
-		zap.L().Error("GetGroupByName failed", zap.Error(apiErr))
-		return nil, apiErr
-	}
-
-	user := &basemodel.User{
-		Id:                uuid.NewString(),
-		Name:              "",
-		Email:             email,
-		Password:          hash,
-		CreatedAt:         time.Now().Unix(),
+	user := &types.User{
+		ID:       uuid.New().String(),
+		Name:     "",
+		Email:    email,
+		Password: hash,
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+		},
 		ProfilePictureURL: "", // Currently unused
-		GroupId:           group.Id,
-		OrgId:             domain.OrgId,
+		Role:              authtypes.RoleViewer.String(),
+		OrgID:             domain.OrgID,
 	}
 
-	user, apiErr = m.CreateUser(ctx, user, false)
+	user, apiErr := m.CreateUser(ctx, user, false)
 	if apiErr != nil {
 		zap.L().Error("CreateUser failed", zap.Error(apiErr))
 		return nil, apiErr
@@ -64,7 +60,7 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 
 // PrepareSsoRedirect prepares redirect page link after SSO response
 // is successfully parsed (i.e. valid email is available)
-func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr basemodel.BaseApiError) {
+func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (redirectURL string, apierr basemodel.BaseApiError) {
 
 	userPayload, apierr := m.GetUserByEmail(ctx, email)
 	if !apierr.IsNil() {
@@ -72,7 +68,7 @@ func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email st
 		return "", model.BadRequestStr("invalid user email received from the auth provider")
 	}
 
-	user := &basemodel.User{}
+	user := &types.User{}
 
 	if userPayload == nil {
 		newUser, apiErr := m.createUserForSAMLRequest(ctx, email)
@@ -85,7 +81,7 @@ func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email st
 		user = &userPayload.User
 	}
 
-	tokenStore, err := baseauth.GenerateJWTForUser(user)
+	tokenStore, err := baseauth.GenerateJWTForUser(user, jwt)
 	if err != nil {
 		zap.L().Error("failed to generate token for SSO login user", zap.Error(err))
 		return "", model.InternalErrorStr("failed to generate token for the user")
@@ -94,7 +90,7 @@ func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email st
 	return fmt.Sprintf("%s?jwt=%s&usr=%s&refreshjwt=%s",
 		redirectUri,
 		tokenStore.AccessJwt,
-		user.Id,
+		user.ID,
 		tokenStore.RefreshJwt), nil
 }
 
@@ -112,7 +108,7 @@ func (m *modelDao) CanUsePassword(ctx context.Context, email string) (bool, base
 			return false, baseapierr
 		}
 
-		if userPayload.Role != baseconst.AdminGroup {
+		if userPayload.Role != authtypes.RoleAdmin.String() {
 			return false, model.BadRequest(fmt.Errorf("auth method not supported"))
 		}
 
@@ -158,12 +154,7 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 		// find domain from email
 		orgDomain, apierr := m.GetDomainByEmail(ctx, email)
 		if apierr != nil {
-			var emailDomain string
-			emailComponents := strings.Split(email, "@")
-			if len(emailComponents) > 0 {
-				emailDomain = emailComponents[1]
-			}
-			zap.L().Error("failed to get org domain from email", zap.String("emailDomain", emailDomain), zap.Error(apierr.ToError()))
+			zap.L().Error("failed to get org domain from email", zap.String("email", email), zap.Error(apierr.ToError()))
 			return resp, apierr
 		}
 

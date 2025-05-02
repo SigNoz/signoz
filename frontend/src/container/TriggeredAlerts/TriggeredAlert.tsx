@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import Filter, { Value } from './Filter';
@@ -6,18 +5,21 @@ import FilteredTable from './FilteredTable';
 import NoFilterTable from './NoFilterTable';
 import { NoTableContainer } from './styles';
 
-function TriggeredAlerts({ allAlerts }: TriggeredAlertsProps): JSX.Element {
-	const [selectedGroup, setSelectedGroup] = useState<Value[]>([]);
-	const [selectedFilter, setSelectedFilter] = useState<Value[]>([]);
-
+function TriggeredAlerts({
+	allAlerts,
+	selectedFilter,
+	selectedGroup,
+	onSelectedFilterChange,
+	onSelectedGroupChange,
+}: TriggeredAlertsProps): JSX.Element {
 	return (
 		<div>
 			<Filter
 				allAlerts={allAlerts}
 				selectedFilter={selectedFilter}
 				selectedGroup={selectedGroup}
-				setSelectedFilter={setSelectedFilter}
-				setSelectedGroup={setSelectedGroup}
+				onSelectedFilterChange={onSelectedFilterChange}
+				onSelectedGroupChange={onSelectedGroupChange}
 			/>
 
 			{selectedFilter.length === 0 && selectedGroup.length === 0 ? (
@@ -45,6 +47,10 @@ function TriggeredAlerts({ allAlerts }: TriggeredAlertsProps): JSX.Element {
 
 interface TriggeredAlertsProps {
 	allAlerts: Alerts[];
+	selectedFilter: Array<Value>;
+	selectedGroup: Array<Value>;
+	onSelectedFilterChange: (value: Array<Value>) => void;
+	onSelectedGroupChange: (value: Array<Value>) => void;
 }
 
 export default TriggeredAlerts;

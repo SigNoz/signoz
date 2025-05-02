@@ -4,10 +4,10 @@ import (
 	"os"
 	"time"
 
-	inmemory "go.signoz.io/signoz/pkg/query-service/cache/inmemory"
-	redis "go.signoz.io/signoz/pkg/query-service/cache/redis"
-	"go.signoz.io/signoz/pkg/query-service/cache/status"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	inmemory "github.com/SigNoz/signoz/pkg/query-service/cache/inmemory"
+	redis "github.com/SigNoz/signoz/pkg/query-service/cache/redis"
+	"github.com/SigNoz/signoz/pkg/query-service/cache/status"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"gopkg.in/yaml.v2"
 )
 

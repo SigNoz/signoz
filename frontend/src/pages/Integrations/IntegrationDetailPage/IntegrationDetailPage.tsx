@@ -5,13 +5,11 @@ import './IntegrationDetailPage.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Skeleton, Typography } from 'antd';
-import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
-import { integrationDetailMessage } from 'components/LaunchChatSupport/util';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { defaultTo } from 'lodash-es';
 import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
-import { isCloudUser } from 'utils/app';
 
 import { handleContactSupport } from '../utils';
 import IntegrationDetailContent from './IntegrationDetailContent';
@@ -46,6 +44,8 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 		integrationId: selectedIntegration,
 	});
 
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+
 	const {
 		data: integrationStatus,
 		isLoading: isStatusLoading,
@@ -77,18 +77,6 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 				>
 					All Integrations
 				</Button>
-				<LaunchChatSupport
-					attributes={{
-						screen: 'Integrations detail page',
-						activeTab: activeDetailTab,
-						integrationTitle: integrationData?.title || '',
-						integrationId: selectedIntegration,
-					}}
-					eventName="Integrations: Facing issues in integrations"
-					buttonText="Facing issues with integration"
-					message={integrationDetailMessage(selectedIntegration)}
-					onHoverText="Click here to get help with this integration"
-				/>
 			</Flex>
 
 			{loading ? (
@@ -118,7 +106,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							</Button>
 							<div
 								className="contact-support"
-								onClick={(): void => handleContactSupport(isCloudUser())}
+								onClick={(): void => handleContactSupport(isCloudUserVal)}
 							>
 								<Typography.Link className="text">Contact Support </Typography.Link>
 
@@ -140,7 +128,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 								logs: null,
 								metrics: null,
 							})}
-							refetchIntegrationDetails={refetch}
+							onUnInstallSuccess={refetch}
 							setActiveDetailTab={setActiveDetailTab}
 						/>
 						<IntegrationDetailContent
@@ -154,7 +142,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							<IntergrationsUninstallBar
 								integrationTitle={defaultTo(integrationData?.title, '')}
 								integrationId={selectedIntegration}
-								refetchIntegrationDetails={refetch}
+								onUnInstallSuccess={refetch}
 								connectionStatus={connectionStatus}
 							/>
 						)}

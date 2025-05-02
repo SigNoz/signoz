@@ -10,7 +10,7 @@ const editMsTeams = async (
 	try {
 		const response = await axios.put(`/channels/${props.id}`, {
 			name: props.name,
-			msteams_configs: [
+			msteamsv2_configs: [
 				{
 					send_resolved: props.send_resolved,
 					webhook_url: props.webhook_url,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 function useFetch<PayloadProps, FunctionParams>(
@@ -10,7 +10,7 @@ function useFetch<PayloadProps, FunctionParams>(
 		(arg0: any): Promise<SuccessResponse<PayloadProps> | ErrorResponse>;
 	},
 	param?: FunctionParams,
-): State<PayloadProps | undefined> {
+): State<PayloadProps | undefined> & { refetch: () => Promise<void> } {
 	const [state, setStates] = useState<State<PayloadProps | undefined>>({
 		loading: true,
 		success: null,
@@ -19,37 +19,28 @@ function useFetch<PayloadProps, FunctionParams>(
 		payload: undefined,
 	});
 
-	const loadingRef = useRef(0);
-
-	useEffect(() => {
+	const fetchData = useCallback(async (): Promise<void> => {
+		setStates((prev) => ({ ...prev, loading: true }));
 		try {
-			(async (): Promise<void> => {
-				if (state.loading) {
-					const response = await functions(param);
+			const response = await functions(param);
 
-					if (loadingRef.current === 0) {
-						loadingRef.current = 1;
-
-						if (response.statusCode === 200) {
-							setStates({
-								loading: false,
-								error: false,
-								success: true,
-								payload: response.payload,
-								errorMessage: '',
-							});
-						} else {
-							setStates({
-								loading: false,
-								error: true,
-								success: false,
-								payload: undefined,
-								errorMessage: response.error as string,
-							});
-						}
-					}
-				}
-			})();
+			if (response.statusCode === 200) {
+				setStates({
+					loading: false,
+					error: false,
+					success: true,
+					payload: response.payload,
+					errorMessage: '',
+				});
+			} else {
+				setStates({
+					loading: false,
+					error: true,
+					success: false,
+					payload: undefined,
+					errorMessage: response.error as string,
+				});
+			}
 		} catch (error) {
 			setStates({
 				payload: undefined,
@@ -59,13 +50,16 @@ function useFetch<PayloadProps, FunctionParams>(
 				errorMessage: error as string,
 			});
 		}
-		return (): void => {
-			loadingRef.current = 1;
-		};
-	}, [functions, param, state.loading]);
+	}, [functions, param]);
+
+	// Initial fetch
+	useEffect(() => {
+		fetchData();
+	}, [fetchData]);
 
 	return {
 		...state,
+		refetch: fetchData,
 	};
 }
 

@@ -6,13 +6,11 @@ import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Channels, PayloadProps } from 'types/api/channels/getAll';
-import AppReducer from 'types/reducer/app';
 
 import Delete from './Delete';
 
@@ -20,8 +18,8 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const { t } = useTranslation(['channels']);
 	const { notifications } = useNotifications();
 	const [channels, setChannels] = useState<Channels[]>(allChannels);
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-	const [action] = useComponentPermission(['new_alert_action'], role);
+	const { user } = useAppContext();
+	const [action] = useComponentPermission(['new_alert_action'], user.role);
 
 	const onClickEditHandler = useCallback((id: string) => {
 		history.replace(

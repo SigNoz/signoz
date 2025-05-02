@@ -1,5 +1,4 @@
 /* eslint-disable no-nested-ternary */
-import { Color } from '@signozhq/design-tokens';
 import { themeColors } from 'constants/theme';
 import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';
@@ -8,7 +7,7 @@ import { getActiveLogBackground } from 'utils/logs';
 interface TableHeaderCellStyledProps {
 	$isDragColumn: boolean;
 	$isDarkMode: boolean;
-	$isTimestamp?: boolean;
+	$isLogIndicator?: boolean;
 	fontSize?: FontSize;
 }
 
@@ -29,21 +28,21 @@ export const TableCellStyled = styled.td<TableHeaderCellStyledProps>`
 	background-color: ${(props): string =>
 		props.$isDarkMode ? 'inherit' : themeColors.whiteCream};
 
+	${({ $isLogIndicator }): string =>
+		$isLogIndicator ? 'padding: 0 0 0 8px;width: 15px;' : ''}
 	color: ${(props): string =>
 		props.$isDarkMode ? themeColors.white : themeColors.bckgGrey};
 `;
 
-// handle the light theme here
 export const TableRowStyled = styled.tr<{
 	$isActiveLog: boolean;
 	$isDarkMode: boolean;
+	$logType: string;
 }>`
 	td {
-		${({ $isActiveLog, $isDarkMode }): string =>
+		${({ $isActiveLog, $isDarkMode, $logType }): string =>
 			$isActiveLog
-				? `background-color: ${
-						$isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_300
-				  } !important`
+				? getActiveLogBackground($isActiveLog, $isDarkMode, $logType)
 				: ''};
 	}
 
@@ -87,7 +86,7 @@ export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 			: fontSize === FontSize.LARGE
 			? `font-size:14px; line-height:24px; padding: 0.5rem;`
 			: ``};
-	${({ $isTimestamp }): string => ($isTimestamp ? 'padding-left: 24px;' : '')}
+	${({ $isLogIndicator }): string => ($isLogIndicator ? 'padding: 0px; ' : '')}
 	color: ${(props): string =>
 		props.$isDarkMode ? 'var(--bg-vanilla-100, #fff)' : themeColors.bckgGrey};
 `;

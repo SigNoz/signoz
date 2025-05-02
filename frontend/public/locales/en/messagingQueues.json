@@ -1,0 +1,24 @@
+{
+	"metricGraphCategory": {
+		"brokerMetrics": {
+			"title": "Broker Metrics",
+			"description": "The Kafka Broker metrics here inform you of data loss/delay through unclean leader elections and network throughputs, as well as request fails through request purgatories and timeouts metrics"
+		},
+		"consumerMetrics": {
+			"title": "Consumer Metrics",
+			"description": "Kafka Consumer metrics provide insights into lag between message production and consumption, success rates and latency of message delivery, and the volume of data consumed."
+		},
+		"producerMetrics": {
+			"title": "Producer Metrics",
+			"description": "Kafka Producers send messages to brokers for storage and distribution by topic. These metrics inform you of the volume and rate of data sent, and the success rate of message delivery."
+		},
+		"brokerJVMMetrics": {
+			"title": "Broker JVM Metrics",
+			"description": "Kafka brokers are Java applications that expose JVM metrics to inform on the broker's system health. Garbage collection metrics like those below provide key insights into free memory, broker performance, and heap size. You need to enable new_gc_metrics for this section to populate."
+		},
+		"partitionMetrics": {
+			"title": "Partition Metrics",
+			"description": "Kafka partitions are the unit of parallelism in Kafka. These metrics inform you of the number of partitions per topic, the current offset of each partition, the oldest offset, and the number of in-sync replicas."
+		}
+	}
+}

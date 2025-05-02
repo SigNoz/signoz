@@ -7,6 +7,6 @@ export interface PatchProps {
 }
 
 export interface Props {
-	id?: number;
+	id?: string;
 	data: PatchProps;
 }

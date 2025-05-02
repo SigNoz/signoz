@@ -34,7 +34,7 @@ export function useGetAllConfigOptions(
 			});
 
 			if (payload) {
-				const values = Object.values(payload).find((el) => !!el) || [];
+				const values = payload.stringAttributeValues || [];
 				const options: DefaultOptionType[] = values.map((val: string) => ({
 					label: val,
 					value: val,

@@ -1,0 +1,156 @@
+.cloud-account-setup-success-view {
+	display: flex;
+	flex-direction: column;
+	gap: 40px;
+	text-align: center;
+	padding-top: 34px;
+	p,
+	h3,
+	h4 {
+		margin: 0;
+	}
+	&__content {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		.cloud-account-setup-success-view {
+			&__title {
+				h3 {
+					color: var(--bg-vanilla-100);
+					font-size: 20px;
+					font-weight: 500;
+					line-height: 32px;
+				}
+			}
+			&__description {
+				color: var(--bg-vanilla-400);
+				font-size: 14px;
+				font-weight: 400;
+				line-height: 20px;
+				letter-spacing: -0.07px;
+			}
+		}
+	}
+	&__what-next {
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+		text-align: left;
+		&-title {
+			color: var(--bg-slate-50);
+			font-size: 11px;
+			font-weight: 500;
+			line-height: 18px;
+			letter-spacing: 0.88px;
+			text-transform: uppercase;
+		}
+		.what-next-items-wrapper {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			&__item {
+				display: flex;
+				gap: 10px;
+				align-items: baseline;
+				&.ant-alert {
+					padding: 14px;
+					border-radius: 8px;
+					font-size: 14px;
+					line-height: 20px; /* 142.857% */
+					letter-spacing: -0.21px;
+				}
+				&.ant-alert-info {
+					border: 1px solid rgba(63, 94, 204, 0.5);
+					background: rgba(78, 116, 248, 0.2);
+					color: var(--bg-robin-400);
+				}
+
+				.what-next-item {
+					color: var(--bg-robin-400);
+					&-bullet-icon {
+						font-size: 20px;
+						line-height: 20px;
+					}
+					&-text {
+						font-size: 14px;
+						font-weight: 500;
+						line-height: 20px;
+						letter-spacing: -0.21px;
+					}
+				}
+			}
+		}
+	}
+	&__footer {
+		padding-top: 18px;
+		.ant-btn {
+			background: var(--bg-robin-500);
+			color: var(--bg-vanilla-100);
+			font-size: 14px;
+			font-weight: 500;
+			line-height: 20px;
+			height: 36px;
+		}
+	}
+}
+.lottie-container {
+	position: absolute;
+	width: 743.5px;
+	height: 990.342px;
+	top: -100px;
+	left: -36px;
+	z-index: 1;
+}
+
+.lightMode {
+	.cloud-account-setup-success-view {
+		&__content {
+			.cloud-account-setup-success-view {
+				&__title {
+					h3 {
+						color: var(--bg-ink-500);
+					}
+				}
+
+				&__description {
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+
+		&__what-next {
+			&-title {
+				color: var(--bg-ink-500);
+			}
+
+			.what-next-items-wrapper {
+				&__item {
+					&.ant-alert-info {
+						border: 1px solid rgba(63, 94, 204, 0.2);
+						background: rgba(78, 116, 248, 0.1);
+						color: var(--bg-robin-500);
+					}
+
+					.what-next-item {
+						color: var(--bg-robin-500);
+
+						&-text {
+							color: var(--bg-robin-500);
+						}
+					}
+				}
+			}
+		}
+
+		&__footer {
+			.ant-btn {
+				background: var(--bg-robin-500);
+				color: var(--bg-vanilla-100);
+
+				&:hover {
+					background: var(--bg-robin-400);
+				}
+			}
+		}
+	}
+}

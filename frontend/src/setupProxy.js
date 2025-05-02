@@ -1,13 +1,13 @@
 /* eslint-disable  */
 // @ts-ignore
 // @ts-nocheck
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import { legacyCreateProxyMiddleware } from 'http-proxy-middleware';
 
 export default function (app) {
 	app.use(
 		'/tunnel',
-		createProxyMiddleware({
-			target: process.env.TUNNEL_DOMAIN,
+		legacyCreateProxyMiddleware({
+			target: `${process.env.TUNNEL_DOMAIN}/tunnel`,
 			changeOrigin: true,
 		}),
 	);

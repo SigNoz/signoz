@@ -1,6 +1,7 @@
 .trace-explorer-header {
 	display: flex;
 	justify-content: space-between;
+	align-items: center;
 
 	.trace-explorer-run-query {
 		display: flex;
@@ -57,6 +58,9 @@
 		}
 
 		border-color: var(--bg-slate-400);
+	}
+	.trace-explorer.filters-expanded {
+		width: calc(100% - 260px);
 	}
 }
 

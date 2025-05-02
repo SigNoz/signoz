@@ -13,7 +13,11 @@ export const useGetCompositeQueryParam = (): Query | null => {
 		try {
 			if (!compositeQuery) return null;
 
-			parsedCompositeQuery = JSON.parse(decodeURIComponent(compositeQuery));
+			// MDN reference - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent#decoding_query_parameters_from_a_url
+			// MDN reference to support + characters using encoding - https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams#preserving_plus_signs add later
+			parsedCompositeQuery = JSON.parse(
+				decodeURIComponent(compositeQuery.replace(/\+/g, ' ')),
+			);
 		} catch (e) {
 			parsedCompositeQuery = null;
 		}

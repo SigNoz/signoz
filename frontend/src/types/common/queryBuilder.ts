@@ -1,6 +1,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { Format } from 'container/NewWidget/RightContainer/types';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import { Dispatch, SetStateAction } from 'react';
 import {
 	IBuilderFormula,
@@ -153,6 +154,7 @@ export enum LogsAggregatorOperator {
 }
 
 export enum QueryFunctionsTypes {
+	ANOMALY = 'anomaly',
 	CUTOFF_MIN = 'cutOffMin',
 	CUTOFF_MAX = 'cutOffMax',
 	CLAMP_MIN = 'clampMin',
@@ -245,10 +247,17 @@ export type QueryBuilderContextType = {
 	isStagedQueryUpdated: (
 		viewData: ViewProps[] | undefined,
 		viewKey: string,
+		options: OptionsQuery,
 	) => boolean;
+	isDefaultQuery: (props: IsDefaultQueryProps) => boolean;
 };
 
 export type QueryAdditionalFilter = {
 	field: keyof IBuilderQuery;
 	text: string;
+};
+
+export type IsDefaultQueryProps = {
+	currentQuery: Query;
+	sourcePage: DataSource;
 };

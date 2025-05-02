@@ -1,0 +1,31 @@
+.error-flamegraph {
+	display: flex;
+	gap: 4px;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 15vh;
+
+	.error-flamegraph-img {
+		height: 32px;
+		width: 32px;
+	}
+
+	.no-data-text {
+		color: var(--bg-vanilla-400);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 18px; /* 128.571% */
+		letter-spacing: -0.07px;
+	}
+}
+
+.lightMode {
+	.error-flamegraph {
+		.no-data-text {
+			color: var(--bg-ink-400);
+		}
+	}
+}

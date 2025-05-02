@@ -10,6 +10,7 @@ export const getWidgetQueryBuilder = ({
 	yAxisUnit = '',
 	fillSpans = false,
 	id,
+	columnUnits,
 }: GetWidgetQueryBuilderProps): Widgets => ({
 	description: '',
 	id: id || v4(),
@@ -26,4 +27,5 @@ export const getWidgetQueryBuilder = ({
 	selectedLogFields: [],
 	selectedTracesFields: [],
 	fillSpans,
+	columnUnits,
 });

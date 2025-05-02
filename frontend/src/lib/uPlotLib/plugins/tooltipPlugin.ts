@@ -1,4 +1,5 @@
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { themeColors } from 'constants/theme';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -46,6 +47,8 @@ const generateTooltipContent = (
 	isHistogramGraphs?: boolean,
 	isMergedSeries?: boolean,
 	stackBarChart?: boolean,
+	timezone?: string,
+	colorMapping?: Record<string, string>,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -69,9 +72,13 @@ const generateTooltipContent = (
 		series.forEach((item, index) => {
 			if (index === 0) {
 				if (isBillingUsageGraphs) {
-					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY');
+					tooltipTitle = dayjs(data[0][idx] * 1000)
+						.tz(timezone)
+						.format(DATE_TIME_FORMATS.MONTH_YEAR);
 				} else {
-					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
+					tooltipTitle = dayjs(data[0][idx] * 1000)
+						.tz(timezone)
+						.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
 				}
 			} else if (item.show) {
 				const {
@@ -89,10 +96,12 @@ const generateTooltipContent = (
 					? ''
 					: getLabelName(metric, queryName || '', legend || '');
 
-				let color = generateColor(
-					label,
-					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-				);
+				let color =
+					colorMapping?.[label] ||
+					generateColor(
+						label,
+						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+					);
 
 				// in case of billing graph pick colors from the series options
 				if (isBillingUsageGraphs) {
@@ -223,6 +232,8 @@ type ToolTipPluginProps = {
 	stackBarChart?: boolean;
 	isDarkMode: boolean;
 	customTooltipElement?: HTMLDivElement;
+	timezone?: string;
+	colorMapping?: Record<string, string>;
 };
 
 const tooltipPlugin = ({
@@ -234,6 +245,8 @@ const tooltipPlugin = ({
 	stackBarChart,
 	isDarkMode,
 	customTooltipElement,
+	timezone,
+	colorMapping,
 }: // eslint-disable-next-line sonarjs/cognitive-complexity
 ToolTipPluginProps): any => {
 	let over: HTMLElement;
@@ -300,6 +313,8 @@ ToolTipPluginProps): any => {
 							isHistogramGraphs,
 							isMergedSeries,
 							stackBarChart,
+							timezone,
+							colorMapping,
 						);
 						if (customTooltipElement) {
 							content.appendChild(customTooltipElement);

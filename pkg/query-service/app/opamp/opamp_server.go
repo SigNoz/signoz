@@ -3,10 +3,10 @@ package opamp
 import (
 	"context"
 
+	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server"
 	"github.com/open-telemetry/opamp-go/server/types"
-	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 
 	"go.uber.org/zap"
 )
@@ -71,7 +71,7 @@ func (srv *Server) Stop() {
 		defer cleanup()
 	}
 
-	srv.server.Stop(context.Background())
+	_ = srv.server.Stop(context.Background())
 }
 
 func (srv *Server) onDisconnect(conn types.Connection) {

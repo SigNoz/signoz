@@ -1,11 +1,9 @@
 package clickhouseReader
 
 import (
-	"context"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"go.uber.org/zap"
 )
 
 type Encoding string
@@ -18,28 +16,41 @@ const (
 )
 
 const (
-	defaultDatasource              string        = "tcp://localhost:9000"
 	defaultTraceDB                 string        = "signoz_traces"
 	defaultOperationsTable         string        = "distributed_signoz_operations"
 	defaultIndexTable              string        = "distributed_signoz_index_v2"
+	defaultLocalIndexTable         string        = "signoz_index_v2"
 	defaultErrorTable              string        = "distributed_signoz_error_index_v2"
 	defaultDurationTable           string        = "distributed_durationSort"
 	defaultUsageExplorerTable      string        = "distributed_usage_explorer"
 	defaultSpansTable              string        = "distributed_signoz_spans"
 	defaultDependencyGraphTable    string        = "distributed_dependency_graph_minutes_v2"
 	defaultTopLevelOperationsTable string        = "distributed_top_level_operations"
-	defaultSpanAttributeTable      string        = "distributed_span_attributes"
+	defaultSpanAttributeTableV2    string        = "distributed_tag_attributes_v2"
 	defaultSpanAttributeKeysTable  string        = "distributed_span_attributes_keys"
 	defaultLogsDB                  string        = "signoz_logs"
 	defaultLogsTable               string        = "distributed_logs"
 	defaultLogsLocalTable          string        = "logs"
 	defaultLogAttributeKeysTable   string        = "distributed_logs_attribute_keys"
 	defaultLogResourceKeysTable    string        = "distributed_logs_resource_keys"
-	defaultLogTagAttributeTable    string        = "distributed_tag_attributes"
+	defaultLogTagAttributeTableV2  string        = "distributed_tag_attributes_v2"
 	defaultLiveTailRefreshSeconds  int           = 5
 	defaultWriteBatchDelay         time.Duration = 5 * time.Second
 	defaultWriteBatchSize          int           = 10000
 	defaultEncoding                Encoding      = EncodingJSON
+
+	defaultLogsLocalTableV2         string = "logs_v2"
+	defaultLogsTableV2              string = "distributed_logs_v2"
+	defaultLogsResourceLocalTableV2 string = "logs_v2_resource"
+	defaultLogsResourceTableV2      string = "distributed_logs_v2_resource"
+
+	defaultTraceIndexTableV3    string = "distributed_signoz_index_v3"
+	defaultTraceLocalTableName  string = "signoz_index_v3"
+	defaultTraceResourceTableV3 string = "distributed_traces_v3_resource"
+	defaultTraceSummaryTable    string = "distributed_trace_summary"
+
+	defaultMetadataDB    string = "signoz_metadata"
+	defaultMetadataTable string = "distributed_attributes_metadata"
 )
 
 // NamespaceConfig is Clickhouse's internal configuration data
@@ -47,17 +58,15 @@ type namespaceConfig struct {
 	namespace               string
 	Enabled                 bool
 	Datasource              string
-	MaxIdleConns            int
-	MaxOpenConns            int
-	DialTimeout             time.Duration
 	TraceDB                 string
 	OperationsTable         string
 	IndexTable              string
+	LocalIndexTable         string
 	DurationTable           string
 	UsageExplorerTable      string
 	SpansTable              string
 	ErrorTable              string
-	SpanAttributeTable      string
+	SpanAttributeTableV2    string
 	SpanAttributeKeysTable  string
 	DependencyGraphTable    string
 	TopLevelOperationsTable string
@@ -66,47 +75,28 @@ type namespaceConfig struct {
 	LogsLocalTable          string
 	LogsAttributeKeysTable  string
 	LogsResourceKeysTable   string
-	LogsTagAttributeTable   string
+	LogsTagAttributeTableV2 string
 	LiveTailRefreshSeconds  int
 	WriteBatchDelay         time.Duration
 	WriteBatchSize          int
 	Encoding                Encoding
 	Connector               Connector
+
+	LogsLocalTableV2         string
+	LogsTableV2              string
+	LogsResourceLocalTableV2 string
+	LogsResourceTableV2      string
+
+	TraceIndexTableV3     string
+	TraceLocalTableNameV3 string
+	TraceResourceTableV3  string
+	TraceSummaryTable     string
+	MetadataDB            string
+	MetadataTable         string
 }
 
 // Connecto defines how to connect to the database
 type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
-
-func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
-	ctx := context.Background()
-	options, err := clickhouse.ParseDSN(cfg.Datasource)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if the DSN contained any of the following options, if not set from configuration
-	if options.MaxIdleConns == 0 {
-		options.MaxIdleConns = cfg.MaxIdleConns
-	}
-	if options.MaxOpenConns == 0 {
-		options.MaxOpenConns = cfg.MaxOpenConns
-	}
-	if options.DialTimeout == 0 {
-		options.DialTimeout = cfg.DialTimeout
-	}
-
-	zap.L().Info("Connecting to Clickhouse", zap.String("at", options.Addr[0]), zap.Int("MaxIdleConns", options.MaxIdleConns), zap.Int("MaxOpenConns", options.MaxOpenConns), zap.Duration("DialTimeout", options.DialTimeout))
-	db, err := clickhouse.Open(options)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := db.Ping(ctx); err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
 
 // Options store storage plugin related configs
 type Options struct {
@@ -117,34 +107,22 @@ type Options struct {
 
 // NewOptions creates a new Options struct.
 func NewOptions(
-	datasource string,
-	maxIdleConns int,
-	maxOpenConns int,
-	dialTimeout time.Duration,
 	primaryNamespace string,
 	otherNamespaces ...string,
 ) *Options {
-
-	if datasource == "" {
-		datasource = defaultDatasource
-	}
-
 	options := &Options{
 		primary: &namespaceConfig{
 			namespace:               primaryNamespace,
 			Enabled:                 true,
-			Datasource:              datasource,
-			MaxIdleConns:            maxIdleConns,
-			MaxOpenConns:            maxOpenConns,
-			DialTimeout:             dialTimeout,
 			TraceDB:                 defaultTraceDB,
 			OperationsTable:         defaultOperationsTable,
 			IndexTable:              defaultIndexTable,
+			LocalIndexTable:         defaultLocalIndexTable,
 			ErrorTable:              defaultErrorTable,
 			DurationTable:           defaultDurationTable,
 			UsageExplorerTable:      defaultUsageExplorerTable,
 			SpansTable:              defaultSpansTable,
-			SpanAttributeTable:      defaultSpanAttributeTable,
+			SpanAttributeTableV2:    defaultSpanAttributeTableV2,
 			SpanAttributeKeysTable:  defaultSpanAttributeKeysTable,
 			DependencyGraphTable:    defaultDependencyGraphTable,
 			TopLevelOperationsTable: defaultTopLevelOperationsTable,
@@ -153,12 +131,23 @@ func NewOptions(
 			LogsLocalTable:          defaultLogsLocalTable,
 			LogsAttributeKeysTable:  defaultLogAttributeKeysTable,
 			LogsResourceKeysTable:   defaultLogResourceKeysTable,
-			LogsTagAttributeTable:   defaultLogTagAttributeTable,
+			LogsTagAttributeTableV2: defaultLogTagAttributeTableV2,
 			LiveTailRefreshSeconds:  defaultLiveTailRefreshSeconds,
 			WriteBatchDelay:         defaultWriteBatchDelay,
 			WriteBatchSize:          defaultWriteBatchSize,
 			Encoding:                defaultEncoding,
-			Connector:               defaultConnector,
+
+			LogsTableV2:              defaultLogsTableV2,
+			LogsLocalTableV2:         defaultLogsLocalTableV2,
+			LogsResourceTableV2:      defaultLogsResourceTableV2,
+			LogsResourceLocalTableV2: defaultLogsResourceLocalTableV2,
+
+			TraceIndexTableV3:     defaultTraceIndexTableV3,
+			TraceLocalTableNameV3: defaultTraceLocalTableName,
+			TraceResourceTableV3:  defaultTraceResourceTableV3,
+			TraceSummaryTable:     defaultTraceSummaryTable,
+			MetadataDB:            defaultMetadataDB,
+			MetadataTable:         defaultMetadataTable,
 		},
 		others: make(map[string]*namespaceConfig, len(otherNamespaces)),
 	}
@@ -167,7 +156,6 @@ func NewOptions(
 		if namespace == archiveNamespace {
 			options.others[namespace] = &namespaceConfig{
 				namespace:              namespace,
-				Datasource:             datasource,
 				TraceDB:                "",
 				OperationsTable:        "",
 				IndexTable:             "",
@@ -181,7 +169,6 @@ func NewOptions(
 				WriteBatchDelay:        defaultWriteBatchDelay,
 				WriteBatchSize:         defaultWriteBatchSize,
 				Encoding:               defaultEncoding,
-				Connector:              defaultConnector,
 			}
 		} else {
 			options.others[namespace] = &namespaceConfig{namespace: namespace}

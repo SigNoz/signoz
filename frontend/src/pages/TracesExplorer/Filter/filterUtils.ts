@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
+import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import {
 	BaseAutocompleteData,
@@ -327,8 +328,9 @@ export function useGetAggregateValues(
 			});
 
 			if (payload) {
-				const values = Object.values(payload).find((el) => !!el) || [];
-				setResults(values);
+				const key =
+					DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[keyData.dataType as Partial<DataTypes>];
+				setResults(key ? payload[key] || [] : []);
 			}
 		} catch (e) {
 			console.error(e);

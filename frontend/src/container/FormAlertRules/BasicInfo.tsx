@@ -8,13 +8,11 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useFetch from 'hooks/useFetch';
-import { useCallback, useEffect, useState } from 'react';
+import { useAppContext } from 'providers/App/App';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef, Labels } from 'types/api/alerts/def';
-import AppReducer from 'types/reducer/app';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -45,10 +43,10 @@ function BasicInfo({
 	const { t } = useTranslation('alerts');
 
 	const channels = useFetch(getChannels);
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 	const [addNewChannelPermission] = useComponentPermission(
 		['add_new_channel'],
-		role,
+		user.role,
 	);
 
 	const [
@@ -83,20 +81,26 @@ function BasicInfo({
 		window.open(ROUTES.CHANNELS_NEW, '_blank');
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+	const hasLoggedEvent = useRef(false);
 
 	useEffect(() => {
-		if (!channels.loading && isNewRule) {
+		if (!channels.loading && isNewRule && !hasLoggedEvent.current) {
 			logEvent('Alert: New alert creation page visited', {
 				dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
 				numberOfChannels: channels?.payload?.length,
 			});
+			hasLoggedEvent.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [channels.payload, channels.loading]);
+	}, [channels.loading]);
+
+	const refetchChannels = async (): Promise<void> => {
+		await channels.refetch();
+	};
 
 	return (
 		<>
-			<StepHeading> {t('alert_form_step3')} </StepHeading>
+			<StepHeading> {t('alert_form_step4')} </StepHeading>
 			<FormContainer>
 				<Form.Item
 					label={t('field_severity')}
@@ -189,6 +193,7 @@ function BasicInfo({
 							checked={shouldBroadCastToAllChannels}
 							onChange={handleBroadcastToAllChannels}
 							disabled={noChannels || !!channels.loading}
+							data-testid="alert-broadcast-to-all-channels"
 						/>
 					</Tooltip>
 				</FormItemMedium>
@@ -196,7 +201,7 @@ function BasicInfo({
 				{!shouldBroadCastToAllChannels && (
 					<Tooltip
 						title={
-							noChannels
+							noChannels && !addNewChannelPermission
 								? 'No channels. Ask an admin to create a notification channel'
 								: undefined
 						}
@@ -211,10 +216,10 @@ function BasicInfo({
 							]}
 						>
 							<ChannelSelect
-								disabled={
-									shouldBroadCastToAllChannels || noChannels || !!channels.loading
-								}
+								onDropdownOpen={refetchChannels}
+								disabled={shouldBroadCastToAllChannels}
 								currentValue={alertDef.preferredChannels}
+								handleCreateNewChannels={handleCreateNewChannels}
 								channels={channels}
 								onSelectChannels={(preferredChannels): void => {
 									setAlertDef({

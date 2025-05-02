@@ -1,4 +1,4 @@
-import { Button, Modal, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Modal, Row, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
 import { QueryParams } from 'constants/query';
@@ -6,7 +6,8 @@ import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { useState } from 'react';
+import { PanelRight } from 'lucide-react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -18,6 +19,8 @@ import Events from './Events';
 import { CardContainer, CustomSubText, styles } from './styles';
 import Tags from './Tags';
 
+const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
+
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -28,6 +31,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		firstSpanStartTime,
 		traceStartTime = minTime,
 		traceEndTime = maxTime,
+		setCollapsed,
 	} = props;
 
 	const { id: traceId } = useParams<Params>();
@@ -84,8 +88,10 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		history.push(
 			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
 				[QueryParams.compositeQuery]: JSON.stringify(query),
-				[QueryParams.startTime]: minTime,
-				[QueryParams.endTime]: maxTime,
+				// we subtract 5 minutes from the start time to handle the cases when the trace duration is in nanoseconds
+				[QueryParams.startTime]: traceStartTime - FIVE_MINUTES_IN_MS,
+				// we add 5 minutes to the end time for nano second duration traces
+				[QueryParams.endTime]: traceEndTime + FIVE_MINUTES_IN_MS,
 			})}`,
 		);
 	};
@@ -96,14 +102,14 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				styledclass={[styles.selectedSpanDetailsContainer, styles.overflow]}
 				direction="vertical"
 			>
-				<Typography.Text
-					strong
-					style={{
-						marginTop: '16px',
-					}}
-				>
-					Details for selected Span
-				</Typography.Text>
+				<Row align="middle" justify="space-between">
+					<Typography.Text strong>Details for selected Span</Typography.Text>
+					<Button
+						className="periscope-btn nav-item-label expand-collapse-btn"
+						icon={<PanelRight size={16} />}
+						onClick={(): void => setCollapsed((prev) => !prev)}
+					/>
+				</Row>
 
 				<Typography.Text style={{ fontWeight: 700 }}>Service</Typography.Text>
 
@@ -170,6 +176,7 @@ interface SelectedSpanDetailsProps {
 	firstSpanStartTime: number;
 	traceStartTime?: number;
 	traceEndTime?: number;
+	setCollapsed: Dispatch<SetStateAction<boolean>>;
 }
 
 SelectedSpanDetails.defaultProps = {

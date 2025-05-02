@@ -1,4 +1,5 @@
 /* eslint-disable no-bitwise */
+
 export function hashFn(str: string): number {
 	let hash = 5381;
 	for (let i = 0; i < str.length; i++) {

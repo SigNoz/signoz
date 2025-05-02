@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 var logOperators = map[v3.FilterOperator]string{
@@ -17,10 +18,10 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorLessThanOrEq:    "<=",
 	v3.FilterOperatorGreaterThan:     ">",
 	v3.FilterOperatorGreaterThanOrEq: ">=",
-	v3.FilterOperatorLike:            "LIKE",
-	v3.FilterOperatorNotLike:         "NOT LIKE",
-	v3.FilterOperatorContains:        "LIKE",
-	v3.FilterOperatorNotContains:     "NOT LIKE",
+	v3.FilterOperatorLike:            "ILIKE",
+	v3.FilterOperatorNotLike:         "NOT ILIKE",
+	v3.FilterOperatorContains:        "ILIKE",
+	v3.FilterOperatorNotContains:     "NOT ILIKE",
 	v3.FilterOperatorRegex:           "match(%s, %s)",
 	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",
@@ -33,6 +34,7 @@ const (
 	BODY                         = "body"
 	DISTRIBUTED_LOGS_V2          = "distributed_logs_v2"
 	DISTRIBUTED_LOGS_V2_RESOURCE = "distributed_logs_v2_resource"
+	DB_NAME                      = "signoz_logs"
 	NANOSECOND                   = 1000000000
 )
 
@@ -80,9 +82,23 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 
 func getExistsNexistsFilter(op v3.FilterOperator, item v3.FilterItem) string {
 	if _, ok := constants.StaticFieldsLogsV3[item.Key.Key]; ok && item.Key.Type == v3.AttributeKeyTypeUnspecified {
-		// no exists filter for static fields as they exists everywhere
-		// TODO(nitya): Think what we can do here
-		return ""
+		// https://opentelemetry.io/docs/specs/otel/logs/data-model/
+		// for top level keys of the log model: trace_id, span_id, severity_number, trace_flags etc
+		// we don't have an exists column.
+		// to check if they exists/nexists
+		// we can use = 0 or != 0 for numbers
+		// we can use = '' or != '' for strings
+		chOp := "!="
+		if op == v3.FilterOperatorNotExists {
+			chOp = "="
+		}
+		key := getClickhouseKey(item.Key)
+		if item.Key.DataType == v3.AttributeKeyDataTypeString {
+			return fmt.Sprintf("%s %s ''", key, chOp)
+		}
+		// we just have two types, number and string for top level columns
+
+		return fmt.Sprintf("%s %s 0", key, chOp)
 	} else if item.Key.IsColumn {
 		// get filter for materialized columns
 		val := true
@@ -132,21 +148,25 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 
 			return fmt.Sprintf(logsOp, keyName, fmtVal), nil
 		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-			val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value))
+			// we also want to treat %, _ as literals for contains
+			val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value), false)
 			// for body the contains is case insensitive
 			if keyName == BODY {
+				logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
 				return fmt.Sprintf("lower(%s) %s lower('%%%s%%')", keyName, logsOp, val), nil
 			} else {
 				return fmt.Sprintf("%s %s '%%%s%%'", keyName, logsOp, val), nil
 			}
-		default:
-			// for use lower for like and ilike
-			if op == v3.FilterOperatorLike || op == v3.FilterOperatorNotLike {
-				if keyName == BODY {
-					keyName = fmt.Sprintf("lower(%s)", keyName)
-					fmtVal = fmt.Sprintf("lower(%s)", fmtVal)
-				}
+		case v3.FilterOperatorLike, v3.FilterOperatorNotLike:
+			// for body use lower for like and ilike
+			val := utils.QuoteEscapedString(fmt.Sprintf("%s", item.Value))
+			if keyName == BODY {
+				logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
+				return fmt.Sprintf("lower(%s) %s lower('%s')", keyName, logsOp, val), nil
+			} else {
+				return fmt.Sprintf("%s %s '%s'", keyName, logsOp, val), nil
 			}
+		default:
 			return fmt.Sprintf("%s %s %s", keyName, logsOp, fmtVal), nil
 		}
 	} else {
@@ -235,9 +255,6 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getClickhouseKey(attr)
-			if item.IsColumn {
-				name = "`" + name + "`"
-			}
 			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}
 	}
@@ -265,10 +282,9 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 	return str
 }
 
-func generateAggregateClause(aggOp v3.AggregateOperator,
+func generateAggregateClause(panelType v3.PanelType, start, end int64, aggOp v3.AggregateOperator,
 	aggKey string,
 	step int64,
-	preferRPM bool,
 	timeFilter string,
 	whereClause string,
 	groupBy string,
@@ -280,23 +296,19 @@ func generateAggregateClause(aggOp v3.AggregateOperator,
 		"%s%s" +
 		"%s"
 	switch aggOp {
-	case v3.AggregateOperatorRate:
-		rate := float64(step)
-		if preferRPM {
-			rate = rate / 60.0
-		}
-
-		op := fmt.Sprintf("count(%s)/%f", aggKey, rate)
-		query := fmt.Sprintf(queryTmpl, op, whereClause, groupBy, having, orderBy)
-		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
 		v3.AggregateOperatorRateMax,
 		v3.AggregateOperatorRateAvg,
-		v3.AggregateOperatorRateMin:
+		v3.AggregateOperatorRateMin,
+		v3.AggregateOperatorRate:
 		rate := float64(step)
-		if preferRPM {
-			rate = rate / 60.0
+		if panelType == v3.PanelTypeTable {
+			// if the panel type is table the denominator will be the total time range
+			duration := end - start
+			if duration >= 0 {
+				rate = float64(duration) / NANOSECOND
+			}
 		}
 
 		op := fmt.Sprintf("%s(%s)/%f", logsV3.AggregateOperatorToSQLFunc[aggOp], aggKey, rate)
@@ -332,7 +344,7 @@ func generateAggregateClause(aggOp v3.AggregateOperator,
 	}
 }
 
-func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
+func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string) (string, error) {
 	// timerange will be sent in epoch millisecond
 	logsStart := utils.GetEpochNanoSecs(start)
 	logsEnd := utils.GetEpochNanoSecs(end)
@@ -354,7 +366,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	// build the where clause for resource table
-	resourceSubQuery, err := buildResourceSubQuery(bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
+	resourceSubQuery, err := resource.BuildResourceSubQuery(DB_NAME, DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
 	if err != nil {
 		return "", err
 	}
@@ -408,7 +420,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", logsV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "#LIMIT_PLACEHOLDER)"
 	}
 
-	aggClause, err := generateAggregateClause(mq.AggregateOperator, aggregationKey, step, preferRPM, timeFilter, filterSubQuery, groupBy, having, orderBy)
+	aggClause, err := generateAggregateClause(panelType, logsStart, logsEnd, mq.AggregateOperator, aggregationKey, step, timeFilter, filterSubQuery, groupBy, having, orderBy)
 	if err != nil {
 		return "", err
 	}
@@ -419,8 +431,6 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	} else if panelType == v3.PanelTypeTable {
 		queryTmplPrefix =
 			"SELECT"
-		// step or aggregate interval is whole time period in case of table panel
-		step = (utils.GetEpochNanoSecs(end) - utils.GetEpochNanoSecs(start)) / NANOSECOND
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmplPrefix =
@@ -445,13 +455,17 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 	}
 
 	// no values for bucket start and end
-	resourceSubQuery, err := buildResourceSubQuery(0, 0, mq.Filters, mq.GroupBy, mq.AggregateAttribute, true)
+	resourceSubQuery, err := resource.BuildResourceSubQuery(DB_NAME, DISTRIBUTED_LOGS_V2_RESOURCE, 0, 0, mq.Filters, mq.GroupBy, mq.AggregateAttribute, true)
 	if err != nil {
 		return "", err
 	}
 	// join both the filter clauses
 	if resourceSubQuery != "" {
-		filterSubQuery = filterSubQuery + " AND (resource_fingerprint GLOBAL IN " + resourceSubQuery
+		if filterSubQuery != "" {
+			filterSubQuery = filterSubQuery + " AND (resource_fingerprint GLOBAL IN " + resourceSubQuery
+		} else {
+			filterSubQuery = "(resource_fingerprint GLOBAL IN " + resourceSubQuery
+		}
 	}
 
 	// the reader will add the timestamp and id filters
@@ -469,7 +483,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 }
 
 // PrepareLogsQuery prepares the query for logs
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.LogQBOptions) (string, error) {
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
 
 	// adjust the start and end time to the step interval
 	// NOTE: Disabling this as it's creating confusion between charts and actual data
@@ -486,7 +500,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		return query, nil
 	} else if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group_by names (no values)
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 		if err != nil {
 			return "", err
 		}
@@ -494,14 +508,14 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 
 		return query, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 		if err != nil {
 			return "", err
 		}
 		return query, nil
 	}
 
-	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 	if err != nil {
 		return "", err
 	}

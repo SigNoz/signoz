@@ -18,126 +18,12 @@ type QueryRangeParams struct {
 	Stats string
 }
 
-type MetricQuery struct {
-	QueryName         string            `json:"queryName"`
-	MetricName        string            `json:"metricName"`
-	TagFilters        *FilterSet        `json:"tagFilters,omitempty"`
-	GroupingTags      []string          `json:"groupBy,omitempty"`
-	AggregateOperator AggregateOperator `json:"aggregateOperator"`
-	Expression        string            `json:"expression"`
-	Disabled          bool              `json:"disabled"`
-	ReduceTo          ReduceToOperator  `json:"reduceTo,omitempty"`
-}
-
-type ReduceToOperator int
-
-const (
-	_ ReduceToOperator = iota
-	RLAST
-	RSUM
-	RAVG
-	RMAX
-	RMIN
-)
-
-type QueryType int
-
-const (
-	_ QueryType = iota
-	QUERY_BUILDER
-	CLICKHOUSE
-	PROM
-)
-
-type PromQuery struct {
-	Query    string `json:"query"`
-	Stats    string `json:"stats,omitempty"`
-	Disabled bool   `json:"disabled"`
-}
-
-type ClickHouseQuery struct {
-	Query    string `json:"query"`
-	Disabled bool   `json:"disabled"`
-}
-
-type PanelType int
-
-const (
-	_ PanelType = iota
-	TIME_SERIES
-	QUERY_VALUE
-)
-
-type CompositeMetricQuery struct {
-	BuilderQueries    map[string]*MetricQuery     `json:"builderQueries,omitempty"`
-	ClickHouseQueries map[string]*ClickHouseQuery `json:"chQueries,omitempty"`
-	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
-	PanelType         PanelType                   `json:"panelType"`
-	QueryType         QueryType                   `json:"queryType"`
-}
-
-type AggregateOperator int
-
-const (
-	_ AggregateOperator = iota
-	NOOP
-	COUNT
-	COUNT_DISTINCT
-	SUM
-	AVG
-	MAX
-	MIN
-	P05
-	P10
-	P20
-	P25
-	P50
-	P75
-	P90
-	P95
-	P99
-	RATE
-	SUM_RATE
-	// leave blank space for possily {AVG, X}_RATE
-	_
-	_
-	_
-	RATE_SUM
-	RATE_AVG
-	RATE_MAX
-	RATE_MIN
-	HIST_QUANTILE_50
-	HIST_QUANTILE_75
-	HIST_QUANTILE_90
-	HIST_QUANTILE_95
-	HIST_QUANTILE_99
-)
-
-type DataSource int
-
-const (
-	_ DataSource = iota
-	METRICS
-	TRACES
-	LOGS
-)
-
 const (
 	StringTagMapCol   = "stringTagMap"
 	NumberTagMapCol   = "numberTagMap"
 	BoolTagMapCol     = "boolTagMap"
 	ResourceTagMapCol = "resourceTagsMap"
 )
-
-type QueryRangeParamsV2 struct {
-	DataSource           DataSource             `json:"dataSource"`
-	Start                int64                  `json:"start"`
-	End                  int64                  `json:"end"`
-	Step                 int64                  `json:"step"`
-	CompositeMetricQuery *CompositeMetricQuery  `json:"compositeMetricQuery"`
-	Variables            map[string]interface{} `json:"variables,omitempty"`
-	NoCache              bool                   `json:"noCache"`
-}
 
 type DashboardVars struct {
 	Query     string                 `json:"query"`
@@ -164,7 +50,21 @@ type GetTopOperationsParams struct {
 	Limit       int             `json:"limit"`
 }
 
+type EventType string
+
+const (
+	TrackEvent    EventType = "track"
+	IdentifyEvent EventType = "identify"
+	GroupEvent    EventType = "group"
+)
+
+// IsValid checks if the EventType is one of the valid values
+func (e EventType) IsValid() bool {
+	return e == TrackEvent || e == IdentifyEvent || e == GroupEvent
+}
+
 type RegisterEventParams struct {
+	EventType   EventType              `json:"eventType"`
 	EventName   string                 `json:"eventName"`
 	Attributes  map[string]interface{} `json:"attributes"`
 	RateLimited bool                   `json:"rateLimited"`
@@ -427,6 +327,16 @@ type SearchTracesParams struct {
 	SpanID           string `json:"spanId"`
 	SpansRenderLimit int    `json:"spansRenderLimit"`
 	MaxSpansInTrace  int    `json:"maxSpansInTrace"`
+}
+
+type GetWaterfallSpansForTraceWithMetadataParams struct {
+	SelectedSpanID              string   `json:"selectedSpanId"`
+	IsSelectedSpanIDUnCollapsed bool     `json:"isSelectedSpanIDUnCollapsed"`
+	UncollapsedSpans            []string `json:"uncollapsedSpans"`
+}
+
+type GetFlamegraphSpansForTraceParams struct {
+	SelectedSpanID string `json:"selectedSpanId"`
 }
 
 type SpanFilterParams struct {

@@ -76,6 +76,7 @@ receivers:
   azureeventhub:
     connection: Endpoint=sb://namespace.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=superSecret1234=;EntityPath=hubName
     format: "azure"
+    apply_semantic_conventions: true
   azuremonitor:
     subscription_id: "<Subscription ID>"
     tenant_id: "<AD Tenant ID>"
@@ -91,7 +92,7 @@ exporters:
     tls:
       insecure: false
     headers:
-      "signoz-access-token": "{{SIGNOZ_INGESTION_KEY}}"
+      "signoz-ingestion-key": "{{SIGNOZ_INGESTION_KEY}}"
 ```
 
 &nbsp;

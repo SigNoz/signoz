@@ -15,7 +15,7 @@ function AddToQueryHOC({
 }: AddToQueryHOCProps): JSX.Element {
 	const handleQueryAdd = (event: MouseEvent<HTMLDivElement>): void => {
 		event.stopPropagation();
-		onAddToQuery(fieldKey, fieldValue, OPERATORS.IN);
+		onAddToQuery(fieldKey, fieldValue, OPERATORS['=']);
 	};
 
 	const popOverContent = useMemo(() => <span>Add to query: {fieldKey}</span>, [

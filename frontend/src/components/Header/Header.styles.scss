@@ -1,0 +1,29 @@
+.header-container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px 16px;
+	height: 48px;
+	box-sizing: border-box;
+	background: rgba(11, 12, 14, 0.9);
+	backdrop-filter: blur(20px);
+	border-bottom: 1px solid var(--Slate-500, #161922);
+}
+
+.header-left {
+	display: flex;
+	align-items: center;
+}
+
+.header-right {
+	display: flex;
+	align-items: center;
+}
+
+.lightMode {
+	.header-container {
+		background: var(--bg-vanilla-100);
+		backdrop-filter: blur(20px);
+		border-bottom: 1px solid var(--bg-vanilla-300);
+	}
+}

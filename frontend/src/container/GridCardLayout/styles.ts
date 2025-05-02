@@ -33,7 +33,14 @@ export const Card = styled(CardComponent)<CardProps>`
 	}
 
 	.ant-card-body {
-		height: calc(100% - 30px);
+		${({ $panelType }): StyledCSS =>
+			$panelType === PANEL_TYPES.TABLE
+				? css`
+						height: 100%;
+				  `
+				: css`
+						height: calc(100% - 30px);
+				  `}
 		padding: 0;
 	}
 `;

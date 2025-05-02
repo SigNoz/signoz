@@ -4,6 +4,7 @@ import getPendingInvites from 'api/user/getPendingInvites';
 import sendInvite from 'api/user/sendInvite';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
 import {
 	Dispatch,
 	SetStateAction,
@@ -13,10 +14,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/user/getPendingInvites';
-import AppReducer from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
 import InviteTeamMembers from '../InviteTeamMembers';
@@ -48,7 +46,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 	} = props;
 	const { notifications } = useNotifications();
 	const { t } = useTranslation(['organizationsettings', 'common']);
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 	const [isInvitingMembers, setIsInvitingMembers] = useState<boolean>(false);
 	const [modalForm] = Form.useForm<InviteMemberFormValues>(form);
 

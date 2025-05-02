@@ -43,6 +43,15 @@
 		.ant-select-item {
 			display: flex;
 			align-items: center;
+			gap: 8px;
+		}
+
+		.rc-virtual-list-holder {
+			[data-testid='option-ALL'] {
+				border-bottom: 1px solid var(--bg-slate-400);
+				padding-bottom: 12px;
+				margin-bottom: 8px;
+			}
 		}
 
 		.all-label {
@@ -56,28 +65,25 @@
 		}
 
 		.dropdown-value {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
+			display: grid;
+			grid-template-columns: 1fr max-content;
 
 			.option-text {
-				max-width: 180px;
 				padding: 0 8px;
 			}
 
 			.toggle-tag-label {
 				padding-left: 8px;
 				right: 40px;
-				font-weight: normal;
-				position: absolute;
+				font-weight: 500;
 			}
 		}
 	}
 }
 
 .dropdown-styles {
-	min-width: 300px;
-	max-width: 350px;
+	min-width: 400px;
+	max-width: 500px;
 }
 
 .lightMode {

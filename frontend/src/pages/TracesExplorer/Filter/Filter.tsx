@@ -11,7 +11,7 @@ import logEvent from 'api/common/logEvent';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isArray, isEqual } from 'lodash-es';
+import { cloneDeep, isArray, isEmpty, isEqual } from 'lodash-es';
 import {
 	Dispatch,
 	SetStateAction,
@@ -177,6 +177,21 @@ export function Filter(props: FilterProps): JSX.Element {
 		return items as TagFilterItem[];
 	};
 
+	const removeFilterItemIds = (query: Query): Query => {
+		const clonedQuery = cloneDeep(query);
+		clonedQuery.builder.queryData = clonedQuery.builder.queryData.map((data) => ({
+			...data,
+			filters: {
+				...data.filters,
+				items: data.filters?.items?.map((item) => ({
+					...item,
+					id: '',
+				})),
+			},
+		}));
+		return clonedQuery;
+	};
+
 	const handleRun = useCallback(
 		(props?: HandleRunProps): void => {
 			const preparedQuery: Query = {
@@ -189,7 +204,7 @@ export function Filter(props: FilterProps): JSX.Element {
 							...item.filters,
 							items: props?.resetAll
 								? []
-								: (unionTagFilterItems(item.filters.items, preparePostData())
+								: (unionTagFilterItems(item.filters?.items, preparePostData())
 										.map((item) =>
 											item.key?.key === props?.clearByType ? undefined : item,
 										)
@@ -198,11 +213,22 @@ export function Filter(props: FilterProps): JSX.Element {
 					})),
 				},
 			};
-			if (selectedFilters) {
+			if (!isEmpty(selectedFilters)) {
 				logEvent('Traces Explorer: Sidebar filter used', {
 					selectedFilters,
 				});
 			}
+
+			const currentQueryWithoutIds = removeFilterItemIds(currentQuery);
+			const preparedQueryWithoutIds = removeFilterItemIds(preparedQuery);
+
+			if (
+				isEqual(currentQueryWithoutIds, preparedQueryWithoutIds) &&
+				!props?.resetAll
+			) {
+				return;
+			}
+
 			redirectWithQueryBuilderData(preparedQuery);
 		},
 		[currentQuery, redirectWithQueryBuilderData, selectedFilters],

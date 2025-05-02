@@ -1,9 +1,6 @@
 import { Divider, Space } from 'antd';
 import { FeatureKeys } from 'constants/features';
-import { useIsFeatureDisabled } from 'hooks/useFeatureFlag';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
+import { useAppContext } from 'providers/App/App';
 
 import AuthDomains from './AuthDomains';
 import DisplayName from './DisplayName';
@@ -11,13 +8,12 @@ import Members from './Members';
 import PendingInvitesContainer from './PendingInvitesContainer';
 
 function OrganizationSettings(): JSX.Element {
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { org, featureFlags } = useAppContext();
 
-	const isNotSSO = useIsFeatureDisabled(FeatureKeys.SSO);
+	const isNotSSO =
+		!featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
 
-	const isNoUpSell = useIsFeatureDisabled(FeatureKeys.DISABLE_UPSELL);
-
-	const isAuthDomain = !isNoUpSell || (isNoUpSell && !isNotSSO);
+	const isAuthDomain = !isNotSSO;
 
 	if (!org) {
 		return <div />;
@@ -27,12 +23,7 @@ function OrganizationSettings(): JSX.Element {
 		<>
 			<Space direction="vertical">
 				{org.map((e, index) => (
-					<DisplayName
-						isAnonymous={e.isAnonymous}
-						key={e.id}
-						id={e.id}
-						index={index}
-					/>
+					<DisplayName key={e.id} id={e.id} index={index} />
 				))}
 			</Space>
 			<Divider />

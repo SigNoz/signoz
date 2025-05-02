@@ -1,9 +1,9 @@
 import './LogsPanelComponent.styles.scss';
 
-import { Table } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Controls from 'container/Controls';
@@ -15,6 +15,7 @@ import { useLogsData } from 'hooks/useLogsData';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	HTMLAttributes,
@@ -76,7 +77,17 @@ function LogsPanelComponent({
 		});
 	};
 
-	const columns = getLogPanelColumnsList(widget.selectedLogFields);
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
+	const columns = useMemo(
+		() =>
+			getLogPanelColumnsList(
+				widget.selectedLogFields,
+				formatTimezoneAdjustedTimestamp,
+			),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[widget.selectedLogFields],
+	);
 
 	const dataLength =
 		queryResponse.data?.payload?.data?.newResult?.data?.result[0]?.list?.length;
@@ -210,16 +221,18 @@ function LogsPanelComponent({
 			<div className="logs-table">
 				<div className="resize-table">
 					<OverlayScrollbar>
-						<Table
+						<ResizeTable
 							pagination={false}
 							tableLayout="fixed"
-							scroll={{ x: `calc(50vw - 10px)` }}
+							scroll={{ x: `max-content` }}
 							sticky
 							loading={queryResponse.isFetching}
 							style={tableStyles}
 							dataSource={flattenLogData}
 							columns={columns}
 							onRow={handleRow}
+							widgetId={widget.id}
+							shouldPersistColumnWidths
 						/>
 					</OverlayScrollbar>
 				</div>

@@ -1,0 +1,45 @@
+.old-trace-container {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+
+	.top-header {
+		display: flex;
+		flex-direction: row-reverse;
+		padding: 5px;
+		border-bottom: 1px solid var(--bg-slate-400);
+
+		.new-cta-btn {
+			display: flex;
+			padding: 4px 6px;
+			align-items: center;
+			gap: 8px;
+			color: var(--Vanilla-400, #c0c1c3);
+
+			/* Bifrost (Ancient)/Content/sm */
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+			box-shadow: none;
+
+			.ant-btn-icon {
+				margin-inline-end: 0px;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.old-trace-container {
+		.top-header {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.new-cta-btn {
+				color: var(--bg-ink-400);
+			}
+		}
+	}
+}

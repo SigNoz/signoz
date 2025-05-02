@@ -2,9 +2,10 @@ package helpers
 
 import (
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"strings"
 
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 // groupingSets returns a string of comma separated tags for group by clause
@@ -18,6 +19,7 @@ func groupingSets(tags ...string) string {
 func GroupingSetsByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
+		tag.Key = utils.AddBackTickToFormatTag(tag.Key)
 		groupTags = append(groupTags, tag.Key)
 	}
 	return groupingSets(groupTags...)
@@ -27,6 +29,7 @@ func GroupingSetsByAttributeKeyTags(tags ...v3.AttributeKey) string {
 func GroupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
+		tag.Key = utils.AddBackTickToFormatTag(tag.Key)
 		groupTags = append(groupTags, tag.Key)
 	}
 	groupTags = append(groupTags, "ts")
@@ -42,11 +45,13 @@ func OrderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string 
 		for _, item := range items {
 			if item.ColumnName == tag.Key {
 				found = true
+				item.ColumnName = utils.AddBackTickToFormatTag(item.ColumnName)
 				orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
 				break
 			}
 		}
 		if !found {
+			tag.Key = utils.AddBackTickToFormatTag(tag.Key)
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag.Key))
 		}
 	}
@@ -59,6 +64,7 @@ func OrderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string 
 func SelectLabelsAny(tags []v3.AttributeKey) string {
 	var selectLabelsAny []string
 	for _, tag := range tags {
+		tag.Key = utils.AddBackTickToFormatTag(tag.Key)
 		selectLabelsAny = append(selectLabelsAny, fmt.Sprintf("any(%s) as %s,", tag.Key, tag.Key))
 	}
 	return strings.Join(selectLabelsAny, " ")
@@ -67,6 +73,7 @@ func SelectLabelsAny(tags []v3.AttributeKey) string {
 func SelectLabels(tags []v3.AttributeKey) string {
 	var selectLabels []string
 	for _, tag := range tags {
+		tag.Key = utils.AddBackTickToFormatTag(tag.Key)
 		selectLabels = append(selectLabels, fmt.Sprintf("%s,", tag.Key))
 	}
 	return strings.Join(selectLabels, " ")

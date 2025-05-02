@@ -5,6 +5,7 @@
 	"SERVICE_METRICS": "SigNoz | Service Metrics",
 	"SERVICE_MAP": "SigNoz | Service Map",
 	"TRACE": "SigNoz | Trace",
+	"HOME": "SigNoz | Home",
 	"TRACE_DETAIL": "SigNoz | Trace Detail",
 	"TRACES_EXPLORER": "SigNoz | Traces Explorer",
 	"SETTINGS": "SigNoz | Settings",
@@ -26,7 +27,8 @@
 	"MY_SETTINGS": "SigNoz | My Settings",
 	"ORG_SETTINGS": "SigNoz | Organization Settings",
 	"INGESTION_SETTINGS": "SigNoz | Ingestion Settings",
-	"API_KEYS": "SigNoz | Access Tokens",
+	"API_KEYS": "SigNoz | API Keys",
+	"CUSTOM_DOMAIN_SETTINGS": "SigNoz | Custom Domain Settings",
 	"SOMETHING_WENT_WRONG": "SigNoz | Something Went Wrong",
 	"UN_AUTHORIZED": "SigNoz | Unauthorized",
 	"NOT_FOUND": "SigNoz | Page Not Found",
@@ -37,8 +39,12 @@
 	"PASSWORD_RESET": "SigNoz | Password Reset",
 	"LIST_LICENSES": "SigNoz | List of Licenses",
 	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
+	"WORKSPACE_SUSPENDED": "SigNoz | Workspace Suspended",
+	"WORKSPACE_ACCESS_RESTRICTED": "SigNoz | Workspace Access Restricted",
 	"SUPPORT": "SigNoz | Support",
 	"DEFAULT": "Open source Observability Platform | SigNoz",
 	"ALERT_HISTORY": "SigNoz | Alert Rule History",
-	"ALERT_OVERVIEW": "SigNoz | Alert Rule Overview"
+	"ALERT_OVERVIEW": "SigNoz | Alert Rule Overview",
+	"INFRASTRUCTURE_MONITORING_HOSTS": "SigNoz | Infra Monitoring",
+	"INFRASTRUCTURE_MONITORING_KUBERNETES": "SigNoz | Infra Monitoring"
 }

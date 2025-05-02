@@ -38,7 +38,7 @@ const useSampleLogs = ({
 			filters: filter || initialFilters,
 			aggregateOperator: LogsAggregatorOperator.NOOP,
 			orderBy: [{ columnName: 'timestamp', order: 'desc' }],
-			limit: count || DEFAULT_SAMPLE_LOGS_COUNT,
+			pageSize: count || DEFAULT_SAMPLE_LOGS_COUNT,
 		};
 		return q;
 	}, [count, filter]);

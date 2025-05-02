@@ -11,15 +11,13 @@ import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { isEmpty } from 'lodash-es';
 import { Atom, Play, Terminal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
-import AppReducer from 'types/reducer/app';
 
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
@@ -38,14 +36,9 @@ function QuerySection({
 	const { t } = useTranslation('alerts');
 	const [currentTab, setCurrentTab] = useState(queryCategory);
 
-	const { featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
-
+	// TODO[vikrantgupta25] : check if this is still required ??
 	const handleQueryCategoryChange = (queryType: string): void => {
-		featureResponse.refetch().then(() => {
-			setQueryCategory(queryType as EQueryType);
-		});
+		setQueryCategory(queryType as EQueryType);
 		setCurrentTab(queryType as EQueryType);
 	};
 
@@ -99,7 +92,7 @@ function QuerySection({
 			{
 				label: (
 					<Tooltip title="Query Builder">
-						<Button className="nav-btns">
+						<Button className="nav-btns" data-testid="query-builder-tab">
 							<Atom size={14} />
 						</Button>
 					</Tooltip>
@@ -164,7 +157,7 @@ function QuerySection({
 											runQuery();
 											logEvent('Alert: Stage and run query', {
 												dataSource: ALERTS_DATA_SOURCE_MAP[alertType],
-												isNewRule: !ruleId || ruleId === 0,
+												isNewRule: !ruleId || isEmpty(ruleId),
 												ruleId,
 												queryType: queryCategory,
 											});
@@ -222,7 +215,7 @@ function QuerySection({
 	};
 	return (
 		<>
-			<StepHeading> {t('alert_form_step1')}</StepHeading>
+			<StepHeading> {t('alert_form_step2')}</StepHeading>
 			<FormContainer>
 				<div>{renderTabs(alertType)}</div>
 				{renderQuerySection(currentTab)}
@@ -238,7 +231,7 @@ interface QuerySectionProps {
 	runQuery: VoidFunction;
 	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
-	ruleId: number;
+	ruleId: string;
 }
 
 export default QuerySection;

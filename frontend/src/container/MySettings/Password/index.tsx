@@ -3,11 +3,9 @@ import changeMyPassword from 'api/user/changeMyPassword';
 import { useNotifications } from 'hooks/useNotifications';
 import { Save } from 'lucide-react';
 import { isPasswordNotValidMessage, isPasswordValid } from 'pages/SignUp/utils';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 
 import { Password } from '../styles';
 
@@ -15,7 +13,7 @@ function PasswordContainer(): JSX.Element {
 	const [currentPassword, setCurrentPassword] = useState<string>('');
 	const [updatePassword, setUpdatePassword] = useState<string>('');
 	const { t } = useTranslation(['routes', 'settings', 'common']);
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [isPasswordPolicyError, setIsPasswordPolicyError] = useState<boolean>(
 		false,
@@ -50,7 +48,7 @@ function PasswordContainer(): JSX.Element {
 			const { statusCode, error } = await changeMyPassword({
 				newPassword: updatePassword,
 				oldPassword: currentPassword,
-				userId: user.userId,
+				userId: user.id,
 			});
 
 			if (statusCode === 200) {

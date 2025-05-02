@@ -3,13 +3,15 @@
 import './LogsError.styles.scss';
 
 import { Typography } from 'antd';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
-import { isCloudUser } from 'utils/app';
 
 export default function LogsError(): JSX.Element {
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+
 	const handleContactSupport = (): void => {
-		if (isCloudUser()) {
+		if (isCloudUserVal) {
 			history.push('/support');
 		} else {
 			window.open('https://signoz.io/slack', '_blank');

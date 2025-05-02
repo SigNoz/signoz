@@ -1,4 +1,5 @@
 import { OPERATORS } from 'constants/queryBuilder';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import {
 	getRemovePrefixFromKey,
 	getTagToken,
@@ -28,6 +29,9 @@ export const useAutoComplete = (
 	query: IBuilderQuery,
 	whereClauseConfig?: WhereClauseConfig,
 	shouldUseSuggestions?: boolean,
+	isInfraMonitoring?: boolean,
+	entity?: K8sCategory | null,
+	isMetricsExplorer?: boolean,
 ): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [searchKey, setSearchKey] = useState<string>('');
@@ -37,6 +41,9 @@ export const useAutoComplete = (
 		query,
 		searchKey,
 		shouldUseSuggestions,
+		isInfraMonitoring,
+		entity,
+		isMetricsExplorer,
 	);
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
@@ -148,6 +155,7 @@ export const useAutoComplete = (
 		isMulti,
 		isFetching,
 		setSearchKey,
+		setSearchValue,
 		searchKey,
 		key,
 		exampleQueries,
@@ -167,7 +175,9 @@ interface IAutoComplete {
 	isMulti: boolean;
 	isFetching: boolean;
 	setSearchKey: (value: string) => void;
+	setSearchValue: (value: string) => void;
 	searchKey: string;
 	key: string;
 	exampleQueries: TagFilter[];
+	isInfraMonitoring?: boolean;
 }

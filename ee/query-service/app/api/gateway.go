@@ -4,12 +4,20 @@ import (
 	"net/http"
 	"strings"
 
-	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
+	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 )
 
 func (ah *APIHandler) ServeGatewayHTTP(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	if !strings.HasPrefix(req.URL.Path, gateway.RoutePrefix+gateway.AllowedPrefix) {
+	validPath := false
+	for _, allowedPrefix := range gateway.AllowedPrefix {
+		if strings.HasPrefix(req.URL.Path, gateway.RoutePrefix+allowedPrefix) {
+			validPath = true
+			break
+		}
+	}
+
+	if !validPath {
 		rw.WriteHeader(http.StatusNotFound)
 		return
 	}

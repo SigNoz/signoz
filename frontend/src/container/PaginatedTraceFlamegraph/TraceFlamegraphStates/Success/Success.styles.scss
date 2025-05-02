@@ -1,0 +1,28 @@
+.trace-flamegraph {
+	height: 90%;
+	overflow-x: hidden;
+	overflow-y: auto;
+
+	.trace-flamegraph-virtuoso {
+		overflow-x: hidden;
+
+		.flamegraph-row {
+			display: flex;
+			align-items: center;
+			height: 18px;
+			padding-bottom: 6px;
+
+			.span-item {
+				position: absolute;
+				height: 12px;
+				background-color: yellow;
+				border-radius: 6px;
+				cursor: pointer;
+			}
+		}
+
+		&::-webkit-scrollbar {
+			width: 0rem;
+		}
+	}
+}

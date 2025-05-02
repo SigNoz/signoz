@@ -26,9 +26,9 @@ describe('APIKeys component', () => {
 	});
 
 	it('renders APIKeys component without crashing', () => {
-		expect(screen.getByText('Access Tokens')).toBeInTheDocument();
+		expect(screen.getByText('API Keys')).toBeInTheDocument();
 		expect(
-			screen.getByText('Create and manage access tokens for the SigNoz API'),
+			screen.getByText('Create and manage API keys for the SigNoz API'),
 		).toBeInTheDocument();
 	});
 
@@ -40,16 +40,16 @@ describe('APIKeys component', () => {
 		);
 
 		await waitFor(() => {
-			expect(screen.getByText('No Expiry Token')).toBeInTheDocument();
-			expect(screen.getByText('1-5 of 18 tokens')).toBeInTheDocument();
+			expect(screen.getByText('No Expiry Key')).toBeInTheDocument();
+			expect(screen.getByText('1-5 of 18 keys')).toBeInTheDocument();
 		});
 	});
 
 	it('opens add new key modal on button click', async () => {
-		fireEvent.click(screen.getByText('New Token'));
+		fireEvent.click(screen.getByText('New Key'));
 		await waitFor(() => {
 			const createNewKeyBtn = screen.getByRole('button', {
-				name: /Create new token/i,
+				name: /Create new key/i,
 			});
 
 			expect(createNewKeyBtn).toBeInTheDocument();
@@ -57,10 +57,10 @@ describe('APIKeys component', () => {
 	});
 
 	it('closes add new key modal on cancel button click', async () => {
-		fireEvent.click(screen.getByText('New Token'));
+		fireEvent.click(screen.getByText('New Key'));
 
 		const createNewKeyBtn = screen.getByRole('button', {
-			name: /Create new token/i,
+			name: /Create new key/i,
 		});
 
 		await waitFor(() => {
@@ -79,10 +79,10 @@ describe('APIKeys component', () => {
 			),
 		);
 
-		fireEvent.click(screen.getByText('New Token'));
+		fireEvent.click(screen.getByText('New Key'));
 
 		const createNewKeyBtn = screen.getByRole('button', {
-			name: /Create new token/i,
+			name: /Create new key/i,
 		});
 
 		await waitFor(() => {
@@ -90,7 +90,7 @@ describe('APIKeys component', () => {
 		});
 
 		act(() => {
-			const inputElement = screen.getByPlaceholderText('Enter Token Name');
+			const inputElement = screen.getByPlaceholderText('Enter Key Name');
 			fireEvent.change(inputElement, { target: { value: 'Top Secret' } });
 			fireEvent.click(screen.getByTestId('create-form-admin-role-btn'));
 			fireEvent.click(createNewKeyBtn);

@@ -29,7 +29,8 @@ function TimeSeriesViewContainer({
 		currentQuery.builder.queryData.forEach(
 			({ aggregateAttribute, aggregateOperator }) => {
 				const isExistDurationNanoAttribute =
-					aggregateAttribute.key === 'durationNano';
+					aggregateAttribute.key === 'durationNano' ||
+					aggregateAttribute.key === 'duration_nano';
 
 				const isCountOperator =
 					aggregateOperator === 'count' || aggregateOperator === 'count_distinct';

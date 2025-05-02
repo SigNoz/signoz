@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 var jsonLogOperators = map[v3.FilterOperator]string{

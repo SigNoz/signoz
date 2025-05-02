@@ -1,0 +1,224 @@
+.api-monitoring-page {
+	display: flex;
+	height: 100%;
+
+	.api-quick-filter-left-section {
+		width: 0%;
+		flex-shrink: 0;
+
+		.api-quick-filters-header {
+			padding: 12px;
+			border-bottom: 1px solid var(--bg-slate-400);
+			border-right: 1px solid var(--bg-slate-400);
+
+			display: flex;
+			align-items: center;
+			gap: 6px;
+
+			font-size: 14px;
+			line-height: 18px;
+		}
+	}
+
+	.api-module-right-section {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+
+		.toolbar {
+			border-bottom: 1px solid var(--bg-slate-400);
+		}
+
+		.api-monitoring-list-header {
+			width: 100%;
+			padding: 8px;
+			display: flex;
+
+			justify-content: space-between;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.query-builder-search-v2 {
+			min-width: 80%;
+			flex: 1;
+		}
+	}
+
+	.api-monitoring-domain-list-table {
+		.ant-table {
+			.ant-table-thead > tr > th {
+				padding: 12px;
+				font-weight: 500;
+				font-size: 12px;
+				line-height: 18px;
+				border-bottom: none;
+
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 11px;
+				font-style: normal;
+				font-weight: 600;
+				line-height: 18px;
+				/* 163.636% */
+				letter-spacing: 0.44px;
+				text-transform: uppercase;
+				background: none;
+
+				&::before {
+					background-color: transparent;
+				}
+			}
+
+			.ant-table-thead > tr > th:has(.domain-list-name-col-header) {
+				background: var(--bg-ink-300);
+				opacity: 0.6;
+			}
+
+			.ant-table-cell {
+				padding: 12px;
+				font-size: 13px;
+				line-height: 20px;
+				color: var(--bg-vanilla-100);
+				border-bottom: none;
+			}
+
+			.ant-table-cell:has(.domain-list-name-col-value) {
+				background: var(--bg-ink-300);
+				opacity: 0.6;
+			}
+
+			.round-metric-tag {
+				display: inline-flex;
+				padding: 2px 8px;
+				align-items: center;
+				gap: 6px;
+				width: fit-content;
+
+				border-radius: 50px;
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-slate-500);
+				text-transform: lowercase;
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: rgba(255, 255, 255, 0.04);
+			}
+
+			.ant-table-cell:first-child {
+				text-align: justify;
+			}
+
+			.ant-table-cell:nth-child(2) {
+				padding-left: 16px;
+				padding-right: 16px;
+			}
+
+			.ant-table-cell:nth-child(n + 3) {
+				padding-right: 24px;
+			}
+
+			.column-header-right {
+				text-align: right;
+			}
+
+			.ant-table-tbody > tr > td {
+				border-bottom: none;
+			}
+
+			.ant-table-thead
+				> tr
+				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				background-color: transparent;
+			}
+
+			.ant-empty-normal {
+				visibility: hidden;
+			}
+
+			.table-row-light {
+				background: none;
+			}
+
+			.table-row-dark {
+				background: var(--bg-ink-300);
+			}
+
+			.error-rate {
+				width: 120px;
+			}
+		}
+	}
+
+	&.filter-visible {
+		.api-quick-filter-left-section {
+			width: 260px;
+		}
+
+		.api-module-right-section {
+			width: calc(100% - 260px);
+		}
+	}
+}
+
+.no-filtered-domains-message-container {
+	height: 30vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	.no-filtered-domains-message-content {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+
+		width: fit-content;
+		padding: 24px;
+	}
+
+	.no-filtered-domains-message {
+		margin-top: 8px;
+	}
+}
+
+.lightMode {
+	.api-monitoring-domain-list-table {
+		.ant-table {
+			.ant-table-thead > tr > th {
+				background: var(--bg-vanilla-100);
+				color: var(--text-ink-300);
+			}
+
+			.ant-table-thead > tr > th:has(.domain-list-name-col-header) {
+				background: var(--bg-vanilla-100);
+			}
+
+			.ant-table-cell {
+				background: var(--bg-vanilla-100);
+				color: var(--bg-ink-500);
+			}
+
+			.ant-table-cell:has(.domain-list-name-col-value) {
+				background: var(--bg-vanilla-100);
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: rgba(0, 0, 0, 0.04);
+			}
+
+			.table-row-light {
+				background: none;
+			}
+
+			.table-row-dark {
+				background: none;
+			}
+
+			.round-metric-tag {
+				color: var(--bg-vanilla-100);
+			}
+		}
+	}
+}

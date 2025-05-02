@@ -1,10 +1,5 @@
-import { QueryObserverBaseResult } from 'react-query';
 import { PayloadProps as ConfigPayload } from 'types/api/dynamicConfigs/getDynamicConfigs';
-import { FeatureFlagProps as FeatureFlagPayload } from 'types/api/features/getFeaturesFlags';
-import { PayloadProps as OrgPayload } from 'types/api/user/getOrganization';
 import { PayloadProps as UserPayload } from 'types/api/user/getUser';
-import { UserFlags } from 'types/api/user/setFlags';
-import { ROLES } from 'types/roles';
 
 export interface User {
 	accessJwt: string;
@@ -15,24 +10,36 @@ export interface User {
 	profilePictureURL: UserPayload['profilePictureURL'];
 }
 
+export interface OrgPreference {
+	key: string;
+	name: string;
+	description: string;
+	valueType: string;
+	defaultValue: boolean;
+	allowedValues: any[];
+	isDiscreteValues: boolean;
+	allowedScopes: string[];
+	value: boolean;
+}
+
+export interface UserPreference {
+	key: string;
+	name: string;
+	description: string;
+	valueType: string;
+	defaultValue: boolean;
+	allowedValues: any[];
+	isDiscreteValues: boolean;
+	allowedScopes: string[];
+	value: boolean;
+}
+
 export default interface AppReducer {
-	isLoggedIn: boolean;
-	isSideBarCollapsed: boolean;
 	currentVersion: string;
 	latestVersion: string;
 	isCurrentVersionError: boolean;
 	isLatestVersionError: boolean;
-	user: null | User;
-	isUserFetching: boolean;
-	isUserFetchingError: boolean;
-	role: ROLES | null;
-	org: OrgPayload | null;
 	configs: ConfigPayload;
-	userFlags: null | UserFlags;
 	ee: 'Y' | 'N';
 	setupCompleted: boolean;
-	featureResponse: {
-		data: FeatureFlagPayload[] | null;
-		refetch: QueryObserverBaseResult['refetch'];
-	};
 }

@@ -16,6 +16,11 @@ function PanelWrapper({
 	selectedGraph,
 	tableProcessedDataRef,
 	customTooltipElement,
+	searchTerm,
+	openTracesButton,
+	onOpenTraceBtnClick,
+	customSeries,
+	customOnRowClick,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
@@ -39,6 +44,11 @@ function PanelWrapper({
 			selectedGraph={selectedGraph}
 			tableProcessedDataRef={tableProcessedDataRef}
 			customTooltipElement={customTooltipElement}
+			searchTerm={searchTerm}
+			openTracesButton={openTracesButton}
+			onOpenTraceBtnClick={onOpenTraceBtnClick}
+			customOnRowClick={customOnRowClick}
+			customSeries={customSeries}
 		/>
 	);
 }

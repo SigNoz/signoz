@@ -1,73 +1,53 @@
 package api
 
 import (
-	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	eeTypes "github.com/SigNoz/signoz/ee/types"
+	"github.com/SigNoz/signoz/pkg/errors"
+	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
-func generatePATToken() string {
-	// Generate a 32-byte random token.
-	token := make([]byte, 32)
-	rand.Read(token)
-	// Encode the token in base64.
-	encodedToken := base64.StdEncoding.EncodeToString(token)
-	return encodedToken
-}
-
 func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	req := model.CreatePATRequestBody{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	user, err := auth.GetUserFromRequest(r)
-	if err != nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
-			Err: err,
-		}, nil)
-		return
-	}
-	pat := model.PAT{
-		Name:      req.Name,
-		Role:      req.Role,
-		ExpiresAt: req.ExpiresInDays,
-	}
+
+	pat := eeTypes.NewGettablePAT(
+		req.Name,
+		req.Role,
+		claims.UserID,
+		req.ExpiresInDays,
+	)
 	err = validatePATRequest(pat)
 	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	// All the PATs are associated with the user creating the PAT.
-	pat.UserID = user.Id
-	pat.CreatedAt = time.Now().Unix()
-	pat.UpdatedAt = time.Now().Unix()
-	pat.LastUsed = 0
-	pat.Token = generatePATToken()
-
-	if pat.ExpiresAt != 0 {
-		// convert expiresAt to unix timestamp from days
-		pat.ExpiresAt = time.Now().Unix() + (pat.ExpiresAt * 24 * 60 * 60)
-	}
-
 	zap.L().Info("Got Create PAT request", zap.Any("pat", pat))
 	var apierr basemodel.BaseApiError
-	if pat, apierr = ah.AppDao().CreatePAT(ctx, pat); apierr != nil {
+	if pat, apierr = ah.AppDao().CreatePAT(r.Context(), claims.OrgID, pat); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
@@ -75,34 +55,59 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	ah.Respond(w, &pat)
 }
 
-func validatePATRequest(req model.PAT) error {
-	if req.Role == "" || (req.Role != baseconstants.ViewerGroup && req.Role != baseconstants.EditorGroup && req.Role != baseconstants.AdminGroup) {
-		return fmt.Errorf("valid role is required")
+func validatePATRequest(req eeTypes.GettablePAT) error {
+	_, err := authtypes.NewRole(req.Role)
+	if err != nil {
+		return err
 	}
+
 	if req.ExpiresAt < 0 {
 		return fmt.Errorf("valid expiresAt is required")
 	}
+
 	if req.Name == "" {
 		return fmt.Errorf("valid name is required")
 	}
+
 	return nil
 }
 
 func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	req := model.PAT{}
+	req := eeTypes.GettablePAT{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	user, err := auth.GetUserFromRequest(r)
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
-			Err: err,
-		}, nil)
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
+
+	//get the pat
+	existingPAT, paterr := ah.AppDao().GetPATByID(r.Context(), claims.OrgID, id)
+	if paterr != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, paterr.Error()))
+		return
+	}
+
+	// get the user
+	createdByUser, usererr := ah.AppDao().GetUser(r.Context(), existingPAT.UserID)
+	if usererr != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, usererr.Error()))
+		return
+	}
+
+	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email)) {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "integration user pat cannot be updated"))
 		return
 	}
 
@@ -112,12 +117,11 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.UpdatedByUserID = user.Id
-	id := mux.Vars(r)["id"]
-	req.UpdatedAt = time.Now().Unix()
+	req.UpdatedByUserID = claims.UserID
+	req.UpdatedAt = time.Now()
 	zap.L().Info("Got Update PAT request", zap.Any("pat", req))
 	var apierr basemodel.BaseApiError
-	if apierr = ah.AppDao().UpdatePAT(ctx, req, id); apierr != nil {
+	if apierr = ah.AppDao().UpdatePAT(r.Context(), claims.OrgID, req, id); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
@@ -126,38 +130,56 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	user, err := auth.GetUserFromRequest(r)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
-			Err: err,
-		}, nil)
+		render.Error(w, err)
 		return
 	}
-	zap.L().Info("Get PATs for user", zap.String("user_id", user.Id))
-	pats, apierr := ah.AppDao().ListPATs(ctx)
+
+	pats, apierr := ah.AppDao().ListPATs(r.Context(), claims.OrgID)
 	if apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
+
 	ah.Respond(w, pats)
 }
 
 func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	id := mux.Vars(r)["id"]
-	user, err := auth.GetUserFromRequest(r)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
-			Err: err,
-		}, nil)
+		render.Error(w, err)
 		return
 	}
 
-	zap.L().Info("Revoke PAT with id", zap.String("id", id))
-	if apierr := ah.AppDao().RevokePAT(ctx, id, user.Id); apierr != nil {
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
+
+	//get the pat
+	existingPAT, paterr := ah.AppDao().GetPATByID(r.Context(), claims.OrgID, id)
+	if paterr != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, paterr.Error()))
+		return
+	}
+
+	// get the user
+	createdByUser, usererr := ah.AppDao().GetUser(r.Context(), existingPAT.UserID)
+	if usererr != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, usererr.Error()))
+		return
+	}
+
+	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email)) {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "integration user pat cannot be updated"))
+		return
+	}
+
+	zap.L().Info("Revoke PAT with id", zap.String("id", id.StringValue()))
+	if apierr := ah.AppDao().RevokePAT(r.Context(), claims.OrgID, id, claims.UserID); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}

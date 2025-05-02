@@ -1,0 +1,180 @@
+.anomaly-alert-evaluation-view {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	gap: 8px;
+	width: 100%;
+	height: 100%;
+
+	.anomaly-alert-evaluation-view-chart-section {
+		height: 100%;
+		width: 100%;
+
+		display: flex;
+		justify-content: center;
+		align-items: center;
+
+		&.has-multi-series-data {
+			width: calc(100% - 240px);
+		}
+
+		.anomaly-alert-evaluation-view-no-data-container {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			gap: 8px;
+		}
+	}
+
+	.anomaly-alert-evaluation-view-series-selection {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		width: 240px;
+		padding: 0px 8px;
+		height: 100%;
+
+		.anomaly-alert-evaluation-view-series-list {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			height: 100%;
+
+			.anomaly-alert-evaluation-view-series-list-search {
+				margin-bottom: 16px;
+			}
+
+			.anomaly-alert-evaluation-view-series-list-title {
+				margin-top: 12px;
+				font-size: 13px !important;
+				font-weight: 400;
+			}
+
+			.anomaly-alert-evaluation-view-series-list-items {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				height: 100%;
+				overflow-y: auto;
+
+				.anomaly-alert-evaluation-view-series-list-item {
+					display: flex;
+					flex-direction: row;
+					gap: 8px;
+
+					.anomaly-alert-evaluation-view-series-list-item-color {
+						width: 6px;
+						height: 6px;
+						border-radius: 50%;
+
+						display: inline-flex;
+						margin-right: 8px;
+						vertical-align: middle;
+					}
+
+					cursor: pointer;
+				}
+
+				&::-webkit-scrollbar {
+					width: 0.1rem;
+				}
+				&::-webkit-scrollbar-corner {
+					background: transparent;
+				}
+				&::-webkit-scrollbar-thumb {
+					background: rgb(136, 136, 136);
+					border-radius: 0.625rem;
+				}
+				&::-webkit-scrollbar-track {
+					background: transparent;
+				}
+			}
+		}
+	}
+
+	.uplot {
+		.u-title {
+			text-align: center;
+			font-size: 18px;
+			font-weight: 400;
+			display: flex;
+			height: 40px;
+			font-size: 13px;
+			align-items: center;
+		}
+
+		.u-legend {
+			display: flex;
+			margin-top: 16px;
+
+			tbody {
+				width: 100%;
+
+				.u-series {
+					display: inline-flex;
+				}
+			}
+		}
+	}
+}
+
+.uplot-tooltip {
+	background-color: rgba(0, 0, 0, 0.9);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	color: #ddd;
+	font-size: 13px;
+	line-height: 1.4;
+	padding: 8px 12px;
+	pointer-events: none;
+	position: absolute;
+	z-index: 100;
+	max-height: 500px;
+	width: 280px;
+	overflow-y: auto;
+	display: none; /* Hide tooltip by default */
+
+	&::-webkit-scrollbar {
+		width: 0.3rem;
+	}
+	&::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+	&::-webkit-scrollbar-thumb {
+		background: rgb(136, 136, 136);
+		border-radius: 0.625rem;
+	}
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+}
+
+.uplot-tooltip-title {
+	font-weight: bold;
+	margin-bottom: 4px;
+}
+
+.uplot-tooltip-series {
+	display: flex;
+	gap: 4px;
+	padding: 4px 0px;
+	align-items: center;
+}
+
+.uplot-tooltip-series-name {
+	margin-right: 4px;
+}
+
+.uplot-tooltip-band {
+	font-style: italic;
+	color: #666;
+}
+
+.uplot-tooltip-marker {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	margin-right: 8px;
+	vertical-align: middle;
+}

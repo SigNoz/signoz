@@ -1,3 +1,4 @@
+import { DefaultOptionType } from 'antd/es/select';
 import { omitIdFromQuery } from 'components/ExplorerCard/utils';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -8,10 +9,19 @@ import {
 	listViewInitialTraceQuery,
 	PANEL_TYPES_INITIAL_QUERY,
 } from 'container/NewDashboard/ComponentsSlider/constants';
-import { cloneDeep, isEqual, set, unset } from 'lodash-es';
+import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFilter/config';
+import { cloneDeep, defaultTo, isEmpty, isEqual, set, unset } from 'lodash-es';
+import { Layout } from 'react-grid-layout';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
+
+import {
+	dataTypeCategories,
+	getCategoryName,
+} from './RightContainer/dataFormatCategories';
+import { CategoryNames } from './RightContainer/types';
 
 export const getIsQueryModified = (
 	currentQuery: Query,
@@ -492,3 +502,172 @@ export const getDefaultWidgetData = (
 		...listViewInitialTraceQuery.builder.queryData[0].selectColumns,
 	],
 });
+
+export const PANEL_TYPE_TO_QUERY_TYPES: Record<PANEL_TYPES, EQueryType[]> = {
+	[PANEL_TYPES.TIME_SERIES]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.TABLE]: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	[PANEL_TYPES.VALUE]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.LIST]: [EQueryType.QUERY_BUILDER],
+	[PANEL_TYPES.TRACE]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.BAR]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.PIE]: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	[PANEL_TYPES.HISTOGRAM]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+	[PANEL_TYPES.EMPTY_WIDGET]: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
+};
+
+/**
+ * Retrieves a list of category select options based on the provided category name.
+ * If the category is found, it maps the formats to an array of objects containing
+ * the label and value for each format.
+ */
+export const getCategorySelectOptionByName = (
+	name?: CategoryNames | string,
+): DefaultOptionType[] =>
+	dataTypeCategories
+		.find((category) => category.name === name)
+		?.formats.map((format) => ({
+			label: format.name,
+			value: format.id,
+		})) || [];
+
+/**
+ * Generates unit options based on the provided column unit.
+ * It first retrieves the category name associated with the column unit.
+ * If the category is empty, it maps all supported categories to their respective
+ * select options. If a valid category is found, it filters the supported categories
+ * to return only the options for the matched category.
+ */
+export const unitOptions = (columnUnit: string): DefaultOptionType[] => {
+	const category = getCategoryName(columnUnit);
+	if (isEmpty(category)) {
+		return categoryToSupport.map((category) => ({
+			label: category,
+			options: getCategorySelectOptionByName(category),
+		}));
+	}
+	return categoryToSupport
+		.filter((supportedCategory) => supportedCategory === category)
+		.map((filteredCategory) => ({
+			label: filteredCategory,
+			options: getCategorySelectOptionByName(filteredCategory),
+		}));
+};
+
+export const placeWidgetAtBottom = (
+	widgetId: string,
+	layout: Layout[],
+	widgetWidth?: number,
+	widgetHeight?: number,
+): Layout => {
+	if (layout.length === 0) {
+		return { i: widgetId, x: 0, y: 0, w: widgetWidth || 6, h: widgetHeight || 6 };
+	}
+
+	// Find the maximum Y coordinate and height
+	const { maxY } = layout.reduce(
+		(acc, curr) => ({
+			maxY: Math.max(acc.maxY, curr.y + curr.h),
+		}),
+		{ maxY: 0 },
+	);
+
+	// Check for available space in the last row
+	const lastRowWidgets = layout.filter((item) => item.y + item.h === maxY);
+	const occupiedXInLastRow = lastRowWidgets.reduce(
+		(acc, widget) => acc + widget.w,
+		0,
+	);
+
+	// If there's space in the last row (total width < 12)
+	if (occupiedXInLastRow < 12) {
+		// Find the rightmost X coordinate in the last row
+		const maxXInLastRow = lastRowWidgets.reduce(
+			(acc, widget) => Math.max(acc, widget.x + widget.w),
+			0,
+		);
+
+		// If there's enough space for a 6-width widget
+		if (maxXInLastRow + defaultTo(widgetWidth, 6) <= 12) {
+			return {
+				i: widgetId,
+				x: maxXInLastRow,
+				y: maxY - (widgetHeight || 6), // Align with the last row
+				w: widgetWidth || 6,
+				h: widgetHeight || 6,
+			};
+		}
+	}
+
+	// If no space in last row, place at the bottom
+	return {
+		i: widgetId,
+		x: 0,
+		y: maxY,
+		w: widgetWidth || 6,
+		h: widgetHeight || 6,
+	};
+};
+
+export const placeWidgetBetweenRows = (
+	widgetId: string,
+	layout: Layout[],
+	_currentRowId: string,
+	nextRowId?: string | null,
+	widgetWidth?: number,
+	widgetHeight?: number,
+): Layout[] => {
+	if (layout.length === 0) {
+		return [
+			{
+				i: widgetId,
+				x: 0,
+				y: 0,
+				w: widgetWidth || 6,
+				h: widgetHeight || 6,
+			},
+		];
+	}
+
+	const nextRowIndex = nextRowId
+		? layout.findIndex((item) => item.i === nextRowId)
+		: -1;
+
+	// slice the layout from current row to next row
+	const sectionWidgets =
+		nextRowIndex === -1 ? layout : layout.slice(0, nextRowIndex);
+
+	const newWidgetLayout = placeWidgetAtBottom(
+		widgetId,
+		sectionWidgets,
+		widgetWidth,
+		widgetHeight,
+	);
+	const remainingWidgets = nextRowIndex === -1 ? [] : layout.slice(nextRowIndex);
+
+	// add new layout in between the sectionWidgets and the rest of the layout
+	return [...sectionWidgets, newWidgetLayout, ...remainingWidgets];
+};

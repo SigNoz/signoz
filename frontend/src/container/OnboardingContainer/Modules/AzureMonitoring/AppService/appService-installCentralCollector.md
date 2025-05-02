@@ -22,6 +22,7 @@ receivers:
   azureeventhub:
     connection: <Primary Connection String>
     format: "azure"
+    apply_semantic_conventions: true
   azuremonitor:
     subscription_id: "<Subscription ID>"
     tenant_id: "<AD Tenant ID>"
@@ -37,7 +38,7 @@ exporters:
     tls:
       insecure: false
     headers:
-      "signoz-access-token": "{{SIGNOZ_INGESTION_KEY}}"
+      "signoz-ingestion-key": "{{SIGNOZ_INGESTION_KEY}}"
 service:
   pipelines:
     metrics/am:

@@ -2,8 +2,8 @@ package postprocess
 
 import (
 	"github.com/SigNoz/govaluate"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 func StepIntervalForFunction(params *v3.QueryRangeParamsV3, query string) int64 {

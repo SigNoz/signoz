@@ -1,38 +1,28 @@
 import { Button, Form, Input } from 'antd';
 import editOrg from 'api/user/editOrg';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
+import { IUser } from 'providers/App/types';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { UPDATE_ORG_NAME } from 'types/actions/app';
-import AppReducer, { User } from 'types/reducer/app';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
-function DisplayName({
-	index,
-	id: orgId,
-	isAnonymous,
-}: DisplayNameProps): JSX.Element {
+function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
-	const orgName = Form.useWatch('name', form);
+	const orgName = Form.useWatch('displayName', form);
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
-	const { name } = (org || [])[index];
+	const { org, updateOrg } = useAppContext();
+	const { displayName } = (org || [])[index];
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const { notifications } = useNotifications();
 
 	const onSubmit = async (values: FormValues): Promise<void> => {
 		try {
 			setIsLoading(true);
-			const { name } = values;
+			const { displayName } = values;
 			const { statusCode, error } = await editOrg({
-				isAnonymous,
-				name,
+				displayName,
 				orgId,
 			});
 			if (statusCode === 200) {
@@ -41,13 +31,7 @@ function DisplayName({
 						ns: 'common',
 					}),
 				});
-				dispatch({
-					type: UPDATE_ORG_NAME,
-					payload: {
-						orgId,
-						name,
-					},
-				});
+				updateOrg(orgId, displayName);
 			} else {
 				notifications.error({
 					message:
@@ -72,18 +56,18 @@ function DisplayName({
 		return <div />;
 	}
 
-	const isDisabled = isLoading || orgName === name || !orgName;
+	const isDisabled = isLoading || orgName === displayName || !orgName;
 
 	return (
 		<Form
-			initialValues={{ name }}
+			initialValues={{ displayName }}
 			form={form}
 			layout="vertical"
 			onFinish={onSubmit}
 			autoComplete="off"
 		>
 			<Form.Item
-				name="name"
+				name="displayName"
 				label="Display name"
 				rules={[{ required: true, message: requireErrorMessage('Display name') }]}
 			>
@@ -105,12 +89,11 @@ function DisplayName({
 
 interface DisplayNameProps {
 	index: number;
-	id: User['userId'];
-	isAnonymous: boolean;
+	id: IUser['id'];
 }
 
 interface FormValues {
-	name: string;
+	displayName: string;
 }
 
 export default DisplayName;

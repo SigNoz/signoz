@@ -25,6 +25,8 @@ export const getQueryBuilderQueries = ({
 	aggregateOperator,
 	dataSource,
 	queryNameAndExpression,
+	timeAggregateOperators,
+	spaceAggregateOperators,
 }: BuilderQueriesProps): QueryBuilderData => ({
 	queryFormulas: [],
 	queryData: autocompleteData.map((item, index) => {
@@ -50,6 +52,8 @@ export const getQueryBuilderQueries = ({
 				op: 'AND',
 			},
 			reduceTo: 'avg',
+			spaceAggregation: spaceAggregateOperators[index],
+			timeAggregation: timeAggregateOperators[index],
 			dataSource,
 		};
 

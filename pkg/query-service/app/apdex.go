@@ -1,21 +1,27 @@
 package app
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
 func (aH *APIHandler) setApdexSettings(w http.ResponseWriter, r *http.Request) {
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
 	req, err := parseSetApdexScoreRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	if err := dao.DB().SetApdexSettings(context.Background(), req); err != nil {
+	if err := dao.DB().SetApdexSettings(r.Context(), claims.OrgID, req); err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return
 	}
@@ -25,7 +31,12 @@ func (aH *APIHandler) setApdexSettings(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getApdexSettings(w http.ResponseWriter, r *http.Request) {
 	services := r.URL.Query().Get("services")
-	apdexSet, err := dao.DB().GetApdexSettings(context.Background(), strings.Split(strings.TrimSpace(services), ","))
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+	apdexSet, err := dao.DB().GetApdexSettings(r.Context(), claims.OrgID, strings.Split(strings.TrimSpace(services), ","))
 	if err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return

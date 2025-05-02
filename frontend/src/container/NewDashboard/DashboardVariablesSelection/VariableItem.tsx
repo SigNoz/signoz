@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -25,17 +26,18 @@ import { debounce, isArray, isString } from 'lodash-es';
 import map from 'lodash-es/map';
 import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle } from './styles';
-import { areArraysEqual } from './util';
+import { areArraysEqual, checkAPIInvocation, IDependencyData } from './util';
 
 const ALL_SELECT_VALUE = '__ALL__';
-
-const variableRegexPattern = /\{\{\s*?\.([^\s}]+)\s*?\}\}/g;
 
 enum ToggleTagValue {
 	Only = 'Only',
@@ -53,19 +55,20 @@ interface VariableItemProps {
 	) => void;
 	variablesToGetUpdated: string[];
 	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
+	dependencyData: IDependencyData | null;
 }
 
 const getSelectValue = (
 	selectedValue: IDashboardVariable['selectedValue'],
 	variableData: IDashboardVariable,
-): string | string[] => {
+): string | string[] | undefined => {
 	if (Array.isArray(selectedValue)) {
 		if (!variableData.multiSelect && selectedValue.length === 1) {
-			return selectedValue[0]?.toString() || '';
+			return selectedValue[0]?.toString();
 		}
 		return selectedValue.map((item) => item.toString());
 	}
-	return selectedValue?.toString() || '';
+	return selectedValue?.toString();
 };
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -75,44 +78,29 @@ function VariableItem({
 	onValueUpdate,
 	variablesToGetUpdated,
 	setVariablesToGetUpdated,
+	dependencyData,
 }: VariableItemProps): JSX.Element {
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
 	);
 
-	const [errorMessage, setErrorMessage] = useState<null | string>(null);
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
-	const getDependentVariables = (queryValue: string): string[] => {
-		const matches = queryValue.match(variableRegexPattern);
+	const validVariableUpdate = (): boolean => {
+		if (!variableData.name) {
+			return false;
+		}
 
-		// Extract variable names from the matches array without {{ . }}
-		return matches
-			? matches.map((match) => match.replace(variableRegexPattern, '$1'))
-			: [];
-	};
-
-	const getQueryKey = (variableData: IDashboardVariable): string[] => {
-		let dependentVariablesStr = '';
-
-		const dependentVariables = getDependentVariables(
-			variableData.queryValue || '',
+		// variableData.name is present as the top element or next in the queue - variablesToGetUpdated
+		return Boolean(
+			variablesToGetUpdated.length &&
+				variablesToGetUpdated[0] === variableData.name,
 		);
-
-		const variableName = variableData.name || '';
-
-		dependentVariables?.forEach((element) => {
-			const [, variable] =
-				Object.entries(existingVariables).find(
-					([, value]) => value.name === element,
-				) || [];
-
-			dependentVariablesStr += `${element}${variable?.selectedValue}`;
-		});
-
-		const variableKey = dependentVariablesStr.replace(/\s/g, '');
-
-		return [REACT_QUERY_KEY.DASHBOARD_BY_ID, variableName, variableKey];
 	};
+
+	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const getOptions = (variablesRes: VariableResponseProps | null): void => {
@@ -151,20 +139,31 @@ function VariableItem({
 								valueNotInList = true;
 							}
 						}
+						// variablesData.allSelected is added for the case where on change of options we need to update the
+						// local storage
 						if (
 							variableData.type === 'QUERY' &&
 							variableData.name &&
-							(variablesToGetUpdated.includes(variableData.name) || valueNotInList)
+							(validVariableUpdate() || valueNotInList || variableData.allSelected)
 						) {
 							let value = variableData.selectedValue;
 							let allSelected = false;
 							// The default value for multi-select is ALL and first value for
 							// single select
-							if (variableData.multiSelect) {
-								value = newOptionsData;
-								allSelected = true;
-							} else {
-								[value] = newOptionsData;
+							if (valueNotInList) {
+								if (variableData.multiSelect) {
+									value = newOptionsData;
+									allSelected = true;
+								} else {
+									[value] = newOptionsData;
+								}
+							} else if (variableData.multiSelect) {
+								const { selectedValue } = variableData;
+								allSelected =
+									newOptionsData.length > 0 &&
+									Array.isArray(selectedValue) &&
+									selectedValue.length === newOptionsData.length &&
+									newOptionsData.every((option) => selectedValue.includes(option));
 							}
 
 							if (variableData && variableData?.name && variableData?.id) {
@@ -192,41 +191,72 @@ function VariableItem({
 		}
 	};
 
-	const { isLoading } = useQuery(getQueryKey(variableData), {
-		enabled: variableData && variableData.type === 'QUERY',
-		queryFn: () =>
-			dashboardVariablesQuery({
-				query: variableData.queryValue || '',
-				variables: variablePropsToPayloadVariables(existingVariables),
-			}),
-		refetchOnWindowFocus: false,
-		onSuccess: (response) => {
-			getOptions(response.payload);
-		},
-		onError: (error: {
-			details: {
-				error: string;
-			};
-		}) => {
-			const { details } = error;
+	const { isLoading } = useQuery(
+		[
+			REACT_QUERY_KEY.DASHBOARD_BY_ID,
+			variableData.name || '',
+			`${minTime}`,
+			`${maxTime}`,
+			JSON.stringify(dependencyData?.order),
+		],
+		{
+			enabled:
+				variableData &&
+				variableData.type === 'QUERY' &&
+				checkAPIInvocation(
+					variablesToGetUpdated,
+					variableData,
+					dependencyData?.parentDependencyGraph,
+				),
+			queryFn: () =>
+				dashboardVariablesQuery({
+					query: variableData.queryValue || '',
+					variables: variablePropsToPayloadVariables(existingVariables),
+				}),
+			refetchOnWindowFocus: false,
+			onSuccess: (response) => {
+				getOptions(response.payload);
+				setVariablesToGetUpdated((prev) =>
+					prev.filter((v) => v !== variableData.name),
+				);
+			},
+			onError: (error: {
+				details: {
+					error: string;
+				};
+			}) => {
+				const { details } = error;
 
-			if (details.error) {
-				let message = details.error;
-				if (details.error.includes('Syntax error:')) {
-					message =
-						'Please make sure query is valid and dependent variables are selected';
+				if (details.error) {
+					let message = details.error;
+					if (details.error.includes('Syntax error:')) {
+						message =
+							'Please make sure query is valid and dependent variables are selected';
+					}
+					setErrorMessage(message);
 				}
-				setErrorMessage(message);
-			}
+				setVariablesToGetUpdated((prev) =>
+					prev.filter((v) => v !== variableData.name),
+				);
+			},
 		},
-	});
+	);
 
-	const handleChange = (value: string | string[]): void => {
+	const handleChange = (inputValue: string | string[]): void => {
+		const value = variableData.multiSelect && !inputValue ? [] : inputValue;
+
+		if (
+			value === variableData.selectedValue ||
+			(Array.isArray(value) &&
+				Array.isArray(variableData.selectedValue) &&
+				areArraysEqual(value, variableData.selectedValue))
+		) {
+			return;
+		}
 		if (variableData.name) {
 			if (
 				value === ALL_SELECT_VALUE ||
-				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
-				(Array.isArray(value) && value.length === 0)
+				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
 			) {
 				onValueUpdate(variableData.name, variableData.id, optionsData, true);
 			} else {
@@ -268,7 +298,7 @@ function VariableItem({
 		e.stopPropagation();
 		e.preventDefault();
 		const isChecked =
-			variableData.allSelected || selectValue.includes(ALL_SELECT_VALUE);
+			variableData.allSelected || selectValue?.includes(ALL_SELECT_VALUE);
 
 		if (isChecked) {
 			handleChange([]);
@@ -292,10 +322,6 @@ function VariableItem({
 			Array.isArray(selectedValueStringified) &&
 			selectedValueStringified.includes(option.toString())
 		) {
-			if (newSelectedValue.length === 0) {
-				handleChange(ALL_SELECT_VALUE);
-				return;
-			}
 			if (newSelectedValue.length === 1) {
 				handleChange(newSelectedValue[0].toString());
 				return;
@@ -338,8 +364,8 @@ function VariableItem({
 			(Array.isArray(selectValue) && selectValue?.includes(option.toString()));
 
 		if (isChecked) {
-			if (mode === ToggleTagValue.Only) {
-				handleChange(option.toString());
+			if (mode === ToggleTagValue.Only && variableData.multiSelect) {
+				handleChange([option.toString()]);
 			} else if (!variableData.multiSelect) {
 				handleChange(option.toString());
 			} else {
@@ -430,6 +456,7 @@ function VariableItem({
 									<span>+ {omittedValues.length} </span>
 								</Tooltip>
 							)}
+							allowClear
 						>
 							{enableSelectAll && (
 								<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
@@ -468,11 +495,17 @@ function VariableItem({
 											{...retProps(option as string)}
 											onClick={(e): void => handleToggle(e as any, option as string)}
 										>
-											<Tooltip title={option.toString()} placement="bottomRight">
-												<Typography.Text ellipsis className="option-text">
-													{option.toString()}
-												</Typography.Text>
-											</Tooltip>
+											<Typography.Text
+												ellipsis={{
+													tooltip: {
+														placement: variableData.multiSelect ? 'top' : 'right',
+														autoAdjustOverflow: true,
+													},
+												}}
+												className="option-text"
+											>
+												{option.toString()}
+											</Typography.Text>
 
 											{variableData.multiSelect &&
 												optionState.tag === option.toString() &&

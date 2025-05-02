@@ -12,8 +12,6 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
-import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
-import { dashboardHelpMessage } from 'components/LaunchChatSupport/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -23,8 +21,8 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import {
 	Check,
@@ -38,17 +36,19 @@ import {
 	PenLine,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
-import { AppState } from 'store/reducers';
-import { Dashboard, DashboardData } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
+import {
+	Dashboard,
+	DashboardData,
+	IDashboardVariable,
+} from 'types/api/dashboard/getAll';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
@@ -63,8 +63,33 @@ interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
 }
 
+export function sanitizeDashboardData(
+	selectedData: DashboardData,
+): Omit<DashboardData, 'uuid'> {
+	if (!selectedData?.variables) {
+		const { uuid, ...rest } = selectedData;
+		return rest;
+	}
+
+	const updatedVariables = Object.entries(selectedData.variables).reduce(
+		(acc, [key, value]) => {
+			const { selectedValue, ...rest } = value;
+			acc[key] = rest;
+			return acc;
+		},
+		{} as Record<string, IDashboardVariable>,
+	);
+
+	const { uuid, ...restData } = selectedData;
+	return {
+		...restData,
+		variables: updatedVariables,
+	};
+}
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const { handle } = props;
 	const {
 		selectedDashboard,
@@ -76,6 +101,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		listSortOrder,
 		setSelectedDashboard,
 		handleToggleDashboardSlider,
+		setSelectedRowWidgetId,
 		handleDashboardLockToggle,
 	} = useDashboard();
 
@@ -97,10 +123,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const urlQuery = useUrlQuery();
 
-	const { featureResponse, user, role } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
-	const [editDashboard] = useComponentPermission(['edit_dashboard'], role);
+	const { user } = useAppContext();
+	const [editDashboard] = useComponentPermission(['edit_dashboard'], user.role);
 	const [isDashboardSettingsOpen, setIsDashbordSettingsOpen] = useState<boolean>(
 		false,
 	);
@@ -116,7 +140,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	let isAuthor = false;
 
 	if (selectedDashboard && user && user.email) {
-		isAuthor = selectedDashboard?.created_by === user?.email;
+		isAuthor = selectedDashboard?.createdBy === user?.email;
 	}
 
 	let permissions: ComponentTypes[] = ['add_panel'];
@@ -128,13 +152,14 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const { notifications } = useNotifications();
 
 	const userRole: ROLES | null =
-		selectedDashboard?.created_by === user?.email
+		selectedDashboard?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
-			: role;
+			: user.role;
 
 	const [addPanelPermission] = useComponentPermission(permissions, userRole);
 
 	const onEmptyWidgetHandler = useCallback(() => {
+		setSelectedRowWidgetId(null);
 		handleToggleDashboardSlider(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
 			dashboardId: selectedDashboard?.uuid,
@@ -181,6 +206,15 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const [state, setCopy] = useCopyToClipboard();
 
 	const { t } = useTranslation(['dashboard', 'common']);
+
+	// used to set the initial value for the updatedTitle
+	// the context value is sometimes not available during the initial render
+	// due to which the updatedTitle is set to some previous value
+	useEffect(() => {
+		if (selectedDashboard) {
+			setUpdatedTitle(selectedDashboard.data.title);
+		}
+	}, [selectedDashboard]);
 
 	useEffect(() => {
 		if (state.error) {
@@ -258,7 +292,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
 				}
 
-				featureResponse.refetch();
 				setIsPanelNameModalOpen(false);
 				setSectionName(DEFAULT_ROW_NAME);
 			},
@@ -279,7 +312,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		urlQuery.delete(QueryParams.relativeTime);
 
 		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlQuery.toString()}`;
-		history.replace(generatedUrl);
+		safeNavigate(generatedUrl);
 	}
 
 	return (
@@ -306,34 +339,19 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 			</div>
 			<section className="dashboard-details">
 				<div className="left-section">
+					<img src={image} alt="dashboard-img" className="dashboard-img" />
 					<Tooltip title={title.length > 30 ? title : ''}>
 						<Typography.Text
 							className="dashboard-title"
 							data-testid="dashboard-title"
 						>
-							<img
-								src={image}
-								alt="dashboard-img"
-								style={{ width: '16px', height: '16px' }}
-							/>{' '}
+							{' '}
 							{title}
 						</Typography.Text>
 					</Tooltip>
 					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
-					<LaunchChatSupport
-						attributes={{
-							uuid: selectedDashboard?.uuid,
-							title: updatedTitle,
-							screen: 'Dashboard Details',
-						}}
-						eventName="Dashboard: Facing Issues in dashboard"
-						message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
-						buttonText="Need help with this dashboard?"
-						onHoverText="Click here to get help with dashboard"
-						intercomMessageDisabled
-					/>
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					<Popover
 						open={isDashboardSettingsOpen}
@@ -343,17 +361,17 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						content={
 							<div className="menu-content">
 								<section className="section-1">
-									{(isAuthor || role === USER_ROLES.ADMIN) && (
+									{(isAuthor || user.role === USER_ROLES.ADMIN) && (
 										<Tooltip
 											title={
-												selectedDashboard?.created_by === 'integration' &&
+												selectedDashboard?.createdBy === 'integration' &&
 												'Dashboards created by integrations cannot be unlocked'
 											}
 										>
 											<Button
 												type="text"
 												icon={<LockKeyhole size={14} />}
-												disabled={selectedDashboard?.created_by === 'integration'}
+												disabled={selectedDashboard?.createdBy === 'integration'}
 												onClick={handleLockDashboardToggle}
 												data-testid="lock-unlock-dashboard"
 											>
@@ -401,7 +419,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										type="text"
 										icon={<FileJson size={14} />}
 										onClick={(): void => {
-											downloadObjectAsJson(selectedData, selectedData.title);
+											downloadObjectAsJson(
+												sanitizeDashboardData(selectedData),
+												selectedData.title,
+											);
 											setIsDashbordSettingsOpen(false);
 										}}
 									>
@@ -411,7 +432,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										type="text"
 										icon={<ClipboardCopy size={14} />}
 										onClick={(): void => {
-											setCopy(JSON.stringify(selectedData, null, 2));
+											setCopy(
+												JSON.stringify(sanitizeDashboardData(selectedData), null, 2),
+											);
 											setIsDashbordSettingsOpen(false);
 										}}
 									>
@@ -420,7 +443,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 								</section>
 								<section className="delete-dashboard">
 									<DeleteButton
-										createdBy={selectedDashboard?.created_by || ''}
+										createdBy={selectedDashboard?.createdBy || ''}
 										name={selectedDashboard?.data.title || ''}
 										id={String(selectedDashboard?.uuid) || ''}
 										isLocked={isDashboardLocked}

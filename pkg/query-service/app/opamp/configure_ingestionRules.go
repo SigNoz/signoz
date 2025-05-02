@@ -5,12 +5,12 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig"
+	coreModel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"go.opentelemetry.io/collector/confmap"
-	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-	"go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig"
-	coreModel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 

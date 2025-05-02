@@ -9,6 +9,8 @@ exports[`Table panel wrappper tests table should render fine with the query resp
   width: 0.625rem;
   height: 100%;
   cursor: col-resize;
+  margin-left: 4px;
+  margin-right: 4px;
 }
 
 .c0 {
@@ -47,7 +49,6 @@ exports[`Table panel wrappper tests table should render fine with the query resp
 }
 
 <div>
-   
   <div
     class="c0"
   >
@@ -55,7 +56,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
       class="query-table"
     >
       <div
-        class="ant-table-wrapper css-dev-only-do-not-override-2i2tap"
+        class="ant-table-wrapper resize-main-table css-dev-only-do-not-override-2i2tap"
       >
         <div
           class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
@@ -83,7 +84,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                       <tr>
                         <th
                           aria-label="service_name"
-                          class="ant-table-cell ant-table-column-has-sorters react-resizable"
+                          class="resizable-header react-resizable"
                           scope="col"
                           tabindex="0"
                         >
@@ -144,12 +145,12 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             </span>
                           </div>
                           <span
-                            class="c1 react-resizable-handle"
+                            class="c1 resize-handle"
                           />
                         </th>
                         <th
                           aria-label="latency-per-service"
-                          class="ant-table-cell ant-table-column-has-sorters react-resizable"
+                          class="resizable-header react-resizable"
                           scope="col"
                           tabindex="0"
                         >
@@ -210,7 +211,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             </span>
                           </div>
                           <span
-                            class="c1 react-resizable-handle"
+                            class="c1 resize-handle"
                           />
                         </th>
                       </tr>
@@ -222,7 +223,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                   style="overflow-x: auto; overflow-y: hidden;"
                 >
                   <table
-                    style="width: auto; min-width: 100%; table-layout: fixed;"
+                    style="min-width: 100%; table-layout: fixed;"
                   >
                     <colgroup>
                       <col
@@ -266,32 +267,22 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           class="ant-table-cell"
                         >
                           <div>
-                            demo-app
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              demo-app
+                            </div>
                           </div>
                         </td>
                         <td
                           class="ant-table-cell"
                         >
                           <div>
-                            4.35 s
-                          </div>
-                        </td>
-                      </tr>
-                      <tr
-                        class="ant-table-row ant-table-row-level-0"
-                      >
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            customer
-                          </div>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            431 ms
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              4.35 s
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -302,32 +293,22 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           class="ant-table-cell"
                         >
                           <div>
-                            mysql
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              customer
+                            </div>
                           </div>
                         </td>
                         <td
                           class="ant-table-cell"
                         >
                           <div>
-                            431 ms
-                          </div>
-                        </td>
-                      </tr>
-                      <tr
-                        class="ant-table-row ant-table-row-level-0"
-                      >
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            frontend
-                          </div>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            287 ms
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              431 ms
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -338,32 +319,22 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           class="ant-table-cell"
                         >
                           <div>
-                            driver
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              mysql
+                            </div>
                           </div>
                         </td>
                         <td
                           class="ant-table-cell"
                         >
                           <div>
-                            230 ms
-                          </div>
-                        </td>
-                      </tr>
-                      <tr
-                        class="ant-table-row ant-table-row-level-0"
-                      >
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            route
-                          </div>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <div>
-                            66.4 ms
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              431 ms
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -374,14 +345,100 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                           class="ant-table-cell"
                         >
                           <div>
-                            redis
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              frontend
+                            </div>
                           </div>
                         </td>
                         <td
                           class="ant-table-cell"
                         >
                           <div>
-                            31.3 ms
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              287 ms
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              driver
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              230 ms
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              route
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              66.4 ms
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        class="ant-table-row ant-table-row-level-0"
+                      >
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              redis
+                            </div>
+                          </div>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <div>
+                            <div
+                              class="line-clamped-wrapper__text"
+                            >
+                              31.3 ms
+                            </div>
                           </div>
                         </td>
                       </tr>

@@ -2,7 +2,7 @@
 import type { SelectProps } from 'antd';
 import { Tag, Tooltip } from 'antd';
 import { BaseOptionType } from 'antd/es/select';
-import { Dispatch, SetStateAction, useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Container, Select } from './styles';
@@ -31,8 +31,8 @@ function TextOverflowTooltip({
 }
 
 function Filter({
-	setSelectedFilter,
-	setSelectedGroup,
+	onSelectedFilterChange,
+	onSelectedGroupChange,
 	allAlerts,
 	selectedGroup,
 	selectedFilter,
@@ -40,27 +40,27 @@ function Filter({
 	const onChangeSelectGroupHandler = useCallback(
 		(value: unknown) => {
 			if (typeof value === 'object' && Array.isArray(value)) {
-				setSelectedGroup(
+				onSelectedGroupChange(
 					value.map((e) => ({
 						value: e,
 					})),
 				);
 			}
 		},
-		[setSelectedGroup],
+		[onSelectedGroupChange],
 	);
 
 	const onChangeSelectedFilterHandler = useCallback(
 		(value: unknown) => {
 			if (typeof value === 'object' && Array.isArray(value)) {
-				setSelectedFilter(
+				onSelectedFilterChange(
 					value.map((e) => ({
 						value: e,
 					})),
 				);
 			}
 		},
-		[setSelectedFilter],
+		[onSelectedFilterChange],
 	);
 
 	const uniqueLabels: Array<string> = useMemo(() => {
@@ -122,8 +122,8 @@ function Filter({
 }
 
 interface FilterProps {
-	setSelectedFilter: Dispatch<SetStateAction<Array<Value>>>;
-	setSelectedGroup: Dispatch<SetStateAction<Array<Value>>>;
+	onSelectedFilterChange: (value: Array<Value>) => void;
+	onSelectedGroupChange: (value: Array<Value>) => void;
 	allAlerts: Alerts[];
 	selectedGroup: Array<Value>;
 	selectedFilter: Array<Value>;

@@ -1,11 +1,10 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { Input, Typography } from 'antd';
+import { Flex, Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
 import DropDown from 'components/DropDown/DropDown';
-import { listAlertMessage } from 'components/LaunchChatSupport/util';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
@@ -24,22 +23,15 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { GettableAlert } from 'types/api/alerts/get';
-import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
-import {
-	Button,
-	ButtonContainer,
-	ColumnButton,
-	SearchContainer,
-} from './styles';
+import { Button, ColumnButton, SearchContainer } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
 import { alertActionLogEvent, filterAlerts } from './utils';
@@ -48,12 +40,11 @@ const { Search } = Input;
 
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const { t } = useTranslation('common');
-	const { role, featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const { user } = useAppContext();
+	// TODO[vikrantgupta25]: check with sagar on cleanup
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
-		role,
+		user.role,
 	);
 
 	const [editLoader, setEditLoader] = useState<boolean>(false);
@@ -111,38 +102,23 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		logEvent('Alert: New alert button clicked', {
 			number: allAlertRules?.length,
 		});
-		featureResponse
-			.refetch()
-			.then(() => {
-				history.push(ROUTES.ALERTS_NEW);
-			})
-			.catch(handleError);
+		history.push(ROUTES.ALERTS_NEW);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [featureResponse, handleError]);
+	}, []);
 
 	const onEditHandler = (record: GettableAlert) => (): void => {
-		setEditLoader(true);
-		featureResponse
-			.refetch()
-			.then(() => {
-				const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
-				params.set(
-					QueryParams.compositeQuery,
-					encodeURIComponent(JSON.stringify(compositeQuery)),
-				);
+		const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
+		params.set(
+			QueryParams.compositeQuery,
+			encodeURIComponent(JSON.stringify(compositeQuery)),
+		);
 
-				params.set(
-					QueryParams.panelTypes,
-					record.condition.compositeQuery.panelType,
-				);
+		params.set(QueryParams.panelTypes, record.condition.compositeQuery.panelType);
 
-				params.set(QueryParams.ruleId, record.id.toString());
+		params.set(QueryParams.ruleId, record.id.toString());
 
-				setEditLoader(false);
-				history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
-			})
-			.catch(handleError)
-			.finally(() => setEditLoader(false));
+		setEditLoader(false);
+		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 	};
 
 	const onCloneHandler = (
@@ -373,21 +349,25 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					onChange={handleSearch}
 					defaultValue={searchString}
 				/>
-				<ButtonContainer>
+				<Flex gap={12}>
+					{addNewAlert && (
+						<Button
+							type="primary"
+							onClick={onClickNewAlertHandler}
+							icon={<PlusOutlined />}
+						>
+							New Alert
+						</Button>
+					)}
 					<TextToolTip
 						{...{
 							text: `More details on how to create alerts`,
 							url:
 								'https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts',
+							urlText: 'Learn More',
 						}}
 					/>
-
-					{addNewAlert && (
-						<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
-							New Alert
-						</Button>
-					)}
-				</ButtonContainer>
+				</Flex>
 			</SearchContainer>
 			<DynamicColumnTable
 				tablesource={TableDataSource.Alert}
@@ -398,15 +378,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				dynamicColumns={dynamicColumns}
 				onChange={handleChange}
 				pagination={paginationConfig}
-				facingIssueBtn={{
-					attributes: {
-						screen: 'Alert list page',
-					},
-					eventName: 'Alert: Facing Issues in alert',
-					buttonText: 'Facing issues with alerts?',
-					message: listAlertMessage,
-					onHoverText: 'Click here to get help with alerts',
-				}}
 			/>
 		</>
 	);

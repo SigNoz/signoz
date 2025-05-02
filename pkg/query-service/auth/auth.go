@@ -8,24 +8,23 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/query-service/utils"
-	smtpservice "go.signoz.io/signoz/pkg/query-service/utils/smtpService"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	smtpservice "github.com/SigNoz/signoz/pkg/query-service/utils/smtpService"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type JwtContextKeyType string
-
-const AccessJwtKey JwtContextKeyType = "accessJwt"
-const RefreshJwtKey JwtContextKeyType = "refreshJwt"
 
 const (
 	opaqueTokenSize       = 16
@@ -33,7 +32,11 @@ const (
 )
 
 var (
-	ErrorInvalidCreds = fmt.Errorf("invalid credentials")
+	ErrorInvalidCreds       = fmt.Errorf("invalid credentials")
+	ErrorEmptyRequest       = errors.New("Empty request")
+	ErrorInvalidRole        = errors.New("Invalid role")
+	ErrorInvalidInviteToken = errors.New("Invalid invite token")
+	ErrorAskAdmin           = errors.New("An invitation is needed to create an account. Please ask your admin (the person who has first installed SIgNoz) to send an invite.")
 )
 
 type InviteEmailData struct {
@@ -45,7 +48,10 @@ type InviteEmailData struct {
 
 // The root user should be able to invite people to create account on SigNoz cluster.
 func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
-	zap.L().Debug("Got an invite request for email", zap.String("email", req.Email))
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
@@ -60,32 +66,39 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 	if user != nil {
 		return nil, errors.New("User already exists with the same email")
 	}
-
-	if err := validateInviteRequest(req); err != nil {
-		return nil, errors.Wrap(err, "invalid invite request")
+	// Check if an invite already exists
+	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, req.Email)
+	if apiErr != nil {
+		return nil, errors.Wrap(apiErr.Err, "Failed to check existing invite")
 	}
 
-	jwtAdmin, ok := ExtractJwtFromContext(ctx)
-	if !ok {
-		return nil, errors.Wrap(err, "failed to extract admin jwt token")
+	if invite != nil {
+		return nil, errors.New("An invite already exists for this email")
 	}
 
-	adminUser, err := validateUser(jwtAdmin)
+	role, err := authtypes.NewRole(req.Role)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to validate admin jwt token")
+		return nil, err
 	}
 
-	au, apiErr := dao.DB().GetUser(ctx, adminUser.Id)
+	au, apiErr := dao.DB().GetUser(ctx, claims.UserID)
 	if apiErr != nil {
 		return nil, errors.Wrap(err, "failed to query admin user from the DB")
 	}
-	inv := &model.InvitationObject{
-		Name:      req.Name,
-		Email:     req.Email,
-		Token:     token,
-		CreatedAt: time.Now().Unix(),
-		Role:      req.Role,
-		OrgId:     au.OrgId,
+
+	inv := &types.Invite{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Name:  req.Name,
+		Email: req.Email,
+		Token: token,
+		Role:  role.String(),
+		OrgID: au.OrgID,
 	}
 
 	if err := dao.DB().CreateInviteEntry(ctx, inv); err != nil {
@@ -104,7 +117,115 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 	return &model.InviteResponse{Email: inv.Email, InviteToken: inv.Token}, nil
 }
 
-func inviteEmail(req *model.InviteRequest, au *model.UserPayload, token string) {
+func InviteUsers(ctx context.Context, req *model.BulkInviteRequest) (*model.BulkInviteResponse, error) {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &model.BulkInviteResponse{
+		Status:            "success",
+		Summary:           model.InviteSummary{TotalInvites: len(req.Users)},
+		SuccessfulInvites: []model.SuccessfulInvite{},
+		FailedInvites:     []model.FailedInvite{},
+	}
+
+	au, apiErr := dao.DB().GetUser(ctx, claims.UserID)
+	if apiErr != nil {
+		return nil, errors.Wrap(apiErr.Err, "failed to query admin user from the DB")
+	}
+
+	for _, inviteReq := range req.Users {
+		inviteResp, err := inviteUser(ctx, &inviteReq, au)
+		if err != nil {
+			response.FailedInvites = append(response.FailedInvites, model.FailedInvite{
+				Email: inviteReq.Email,
+				Error: err.Error(),
+			})
+			response.Summary.FailedInvites++
+		} else {
+			response.SuccessfulInvites = append(response.SuccessfulInvites, model.SuccessfulInvite{
+				Email:      inviteResp.Email,
+				InviteLink: fmt.Sprintf("%s/signup?token=%s", inviteReq.FrontendBaseUrl, inviteResp.InviteToken),
+				Status:     "sent",
+			})
+			response.Summary.SuccessfulInvites++
+		}
+	}
+
+	// Update the status based on the results
+	if response.Summary.FailedInvites == response.Summary.TotalInvites {
+		response.Status = "failure"
+	} else if response.Summary.FailedInvites > 0 {
+		response.Status = "partial_success"
+	}
+
+	return response, nil
+}
+
+// Helper function to handle individual invites
+func inviteUser(ctx context.Context, req *model.InviteRequest, au *types.GettableUser) (*model.InviteResponse, error) {
+	token, err := utils.RandomHex(opaqueTokenSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to generate invite token")
+	}
+
+	user, apiErr := dao.DB().GetUserByEmail(ctx, req.Email)
+	if apiErr != nil {
+		return nil, errors.Wrap(apiErr.Err, "Failed to check already existing user")
+	}
+
+	if user != nil {
+		return nil, errors.New("User already exists with the same email")
+	}
+
+	// Check if an invite already exists
+	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, req.Email)
+	if apiErr != nil {
+		return nil, errors.Wrap(apiErr.Err, "Failed to check existing invite")
+	}
+
+	if invite != nil {
+		return nil, errors.New("An invite already exists for this email")
+	}
+
+	role, err := authtypes.NewRole(req.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	inv := &types.Invite{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Name:  req.Name,
+		Email: req.Email,
+		Token: token,
+		Role:  role.String(),
+		OrgID: au.OrgID,
+	}
+
+	if err := dao.DB().CreateInviteEntry(ctx, inv); err != nil {
+		return nil, errors.Wrap(err.Err, "failed to write to DB")
+	}
+
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_SENT, map[string]interface{}{
+		"invited user email": req.Email,
+	}, au.Email, true, false)
+
+	// send email if SMTP is enabled
+	if os.Getenv("SMTP_ENABLED") == "true" && req.FrontendBaseUrl != "" {
+		inviteEmail(req, au, token)
+	}
+
+	return &model.InviteResponse{Email: inv.Email, InviteToken: inv.Token}, nil
+}
+
+func inviteEmail(req *model.InviteRequest, au *types.GettableUser, token string) {
 	smtp := smtpservice.GetInstance()
 	data := InviteEmailData{
 		CustomerName: req.Name,
@@ -138,20 +259,19 @@ func inviteEmail(req *model.InviteRequest, au *model.UserPayload, token string) 
 
 // RevokeInvite is used to revoke the invitation for the given email.
 func RevokeInvite(ctx context.Context, email string) error {
-	zap.L().Debug("RevokeInvite method invoked for email", zap.String("email", email))
-
-	if !isValidEmail(email) {
-		return ErrorInvalidInviteToken
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
 	}
 
-	if err := dao.DB().DeleteInvitation(ctx, email); err != nil {
+	if err := dao.DB().DeleteInvitation(ctx, claims.OrgID, email); err != nil {
 		return errors.Wrap(err.Err, "failed to write to DB")
 	}
 	return nil
 }
 
 // GetInvite returns an invitation object for the given token.
-func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObject, error) {
+func GetInvite(ctx context.Context, token string, organizationModule organization.Module) (*model.InvitationResponseObject, error) {
 	zap.L().Debug("GetInvite method invoked for token", zap.String("token", token))
 
 	inv, apiErr := dao.DB().GetInviteFromToken(ctx, token)
@@ -163,23 +283,25 @@ func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObje
 		return nil, errors.New("user is not invited")
 	}
 
-	// TODO(Ahsan): This is not the best way to add org name in the invite response. We should
-	// either include org name in the invite table or do a join query.
-	org, apiErr := dao.DB().GetOrg(ctx, inv.OrgId)
-	if apiErr != nil {
-		return nil, errors.Wrap(apiErr.Err, "failed to query the DB")
+	orgID, err := valuer.NewUUID(inv.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	org, err := organizationModule.Get(ctx, orgID)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to query the DB")
 	}
 	return &model.InvitationResponseObject{
 		Name:         inv.Name,
 		Email:        inv.Email,
 		Token:        inv.Token,
-		CreatedAt:    inv.CreatedAt,
+		CreatedAt:    inv.CreatedAt.Unix(),
 		Role:         inv.Role,
-		Organization: org.Name,
+		Organization: org.DisplayName,
 	}, nil
 }
 
-func ValidateInvite(ctx context.Context, req *RegisterRequest) (*model.InvitationObject, error) {
+func ValidateInvite(ctx context.Context, req *RegisterRequest) (*types.Invite, error) {
 	invitation, err := dao.DB().GetInviteFromEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.Wrap(err.Err, "Failed to read from DB")
@@ -196,14 +318,17 @@ func ValidateInvite(ctx context.Context, req *RegisterRequest) (*model.Invitatio
 	return invitation, nil
 }
 
-func CreateResetPasswordToken(ctx context.Context, userId string) (*model.ResetPasswordEntry, error) {
+func CreateResetPasswordToken(ctx context.Context, userId string) (*types.ResetPasswordRequest, error) {
 	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate reset password token")
 	}
 
-	req := &model.ResetPasswordEntry{
-		UserId: userId,
+	req := &types.ResetPasswordRequest{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		UserID: userId,
 		Token:  token,
 	}
 	if apiErr := dao.DB().CreateResetPasswordEntry(ctx, req); err != nil {
@@ -227,7 +352,7 @@ func ResetPassword(ctx context.Context, req *model.ResetPasswordRequest) error {
 		return errors.Wrap(err, "Failed to generate password hash")
 	}
 
-	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, entry.UserId); apiErr != nil {
+	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, entry.UserID); apiErr != nil {
 		return apiErr.Err
 	}
 
@@ -253,7 +378,7 @@ func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) *mode
 		return model.InternalError(errors.New("Failed to generate password hash"))
 	}
 
-	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, user.Id); apiErr != nil {
+	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, user.ID); apiErr != nil {
 		return apiErr
 	}
 
@@ -261,18 +386,19 @@ func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) *mode
 }
 
 type RegisterRequest struct {
-	Name        string `json:"name"`
-	OrgName     string `json:"orgName"`
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	InviteToken string `json:"token"`
+	Name           string `json:"name"`
+	OrgID          string `json:"orgId"`
+	OrgDisplayName string `json:"orgDisplayName"`
+	OrgName        string `json:"orgName"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	InviteToken    string `json:"token"`
 
 	// reference URL to track where the register request is coming from
 	SourceUrl string `json:"sourceUrl"`
 }
 
-func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, *model.ApiError) {
-
+func RegisterFirstUser(ctx context.Context, req *RegisterRequest, organizationModule organization.Module) (*types.User, *model.ApiError) {
 	if req.Email == "" {
 		return nil, model.BadRequest(model.ErrEmailRequired{})
 	}
@@ -281,46 +407,37 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 		return nil, model.BadRequest(model.ErrPasswordRequired{})
 	}
 
-	groupName := constants.AdminGroup
-
-	org, apierr := dao.DB().CreateOrg(ctx,
-		&model.Organization{Name: req.OrgName})
-	if apierr != nil {
-		zap.L().Error("CreateOrg failed", zap.Error(apierr.ToError()))
-		return nil, apierr
-	}
-
-	group, apiErr := dao.DB().GetGroupByName(ctx, groupName)
-	if apiErr != nil {
-		zap.L().Error("GetGroupByName failed", zap.Error(apiErr.Err))
-		return nil, apiErr
+	organization := types.NewOrganization(req.OrgDisplayName)
+	err := organizationModule.Create(ctx, organization)
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
 
 	var hash string
-	var err error
-
 	hash, err = PasswordHash(req.Password)
 	if err != nil {
 		zap.L().Error("failed to generate password hash when registering a user", zap.Error(err))
 		return nil, model.InternalError(model.ErrSignupFailed{})
 	}
 
-	user := &model.User{
-		Id:                uuid.NewString(),
-		Name:              req.Name,
-		Email:             req.Email,
-		Password:          hash,
-		CreatedAt:         time.Now().Unix(),
+	user := &types.User{
+		ID:       uuid.New().String(),
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: hash,
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+		},
 		ProfilePictureURL: "", // Currently unused
-		GroupId:           group.Id,
-		OrgId:             org.Id,
+		Role:              authtypes.RoleAdmin.String(),
+		OrgID:             organization.ID.StringValue(),
 	}
 
 	return dao.DB().CreateUser(ctx, user, true)
 }
 
 // RegisterInvitedUser handles registering a invited user
-func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword bool) (*model.User, *model.ApiError) {
+func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword bool) (*types.User, *model.ApiError) {
 
 	if req.InviteToken == "" {
 		return nil, model.BadRequest(ErrorAskAdmin)
@@ -350,20 +467,14 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 		return &userPayload.User, nil
 	}
 
-	if invite.OrgId == "" {
+	if invite.OrgID == "" {
 		zap.L().Error("failed to find org in the invite")
 		return nil, model.InternalError(fmt.Errorf("invalid invite, org not found"))
 	}
 
 	if invite.Role == "" {
 		// if role is not provided, default to viewer
-		invite.Role = constants.ViewerGroup
-	}
-
-	group, apiErr := dao.DB().GetGroupByName(ctx, invite.Role)
-	if apiErr != nil {
-		zap.L().Error("GetGroupByName failed", zap.Error(apiErr.Err))
-		return nil, model.InternalError(model.ErrSignupFailed{})
+		invite.Role = authtypes.RoleViewer.String()
 	}
 
 	var hash string
@@ -383,25 +494,27 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 		}
 	}
 
-	user := &model.User{
-		Id:                uuid.NewString(),
-		Name:              req.Name,
-		Email:             req.Email,
-		Password:          hash,
-		CreatedAt:         time.Now().Unix(),
+	user := &types.User{
+		ID:       uuid.New().String(),
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: hash,
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+		},
 		ProfilePictureURL: "", // Currently unused
-		GroupId:           group.Id,
-		OrgId:             invite.OrgId,
+		Role:              invite.Role,
+		OrgID:             invite.OrgID,
 	}
 
 	// TODO(Ahsan): Ideally create user and delete invitation should happen in a txn.
-	user, apiErr = dao.DB().CreateUser(ctx, user, false)
+	user, apiErr := dao.DB().CreateUser(ctx, user, false)
 	if apiErr != nil {
 		zap.L().Error("CreateUser failed", zap.Error(apiErr.Err))
 		return nil, apiErr
 	}
 
-	apiErr = dao.DB().DeleteInvitation(ctx, user.Email)
+	apiErr = dao.DB().DeleteInvitation(ctx, user.OrgID, user.Email)
 	if apiErr != nil {
 		zap.L().Error("delete invitation failed", zap.Error(apiErr.Err))
 		return nil, apiErr
@@ -416,7 +529,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 // Register registers a new user. For the first register request, it doesn't need an invite token
 // and also the first registration is an enforced ADMIN registration. Every subsequent request will
 // need an invite token to go through.
-func Register(ctx context.Context, req *RegisterRequest) (*model.User, *model.ApiError) {
+func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanager.Alertmanager, organizationModule organization.Module) (*types.User, *model.ApiError) {
 	users, err := dao.DB().GetUsers(ctx)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf("failed to get user count"))
@@ -424,23 +537,30 @@ func Register(ctx context.Context, req *RegisterRequest) (*model.User, *model.Ap
 
 	switch len(users) {
 	case 0:
-		return RegisterFirstUser(ctx, req)
+		user, err := RegisterFirstUser(ctx, req, organizationModule)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := alertmanager.SetDefaultConfig(ctx, user.OrgID); err != nil {
+			return nil, model.InternalError(err)
+		}
+
+		return user, nil
 	default:
 		return RegisterInvitedUser(ctx, req, false)
 	}
 }
 
 // Login method returns access and refresh tokens on successful login, else it errors out.
-func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginResponse, error) {
-	zap.L().Debug("Login method called for user", zap.String("email", request.Email))
-
-	user, err := authenticateLogin(ctx, request)
+func Login(ctx context.Context, request *model.LoginRequest, jwt *authtypes.JWT) (*model.LoginResponse, error) {
+	user, err := authenticateLogin(ctx, request, jwt)
 	if err != nil {
 		zap.L().Error("Failed to authenticate login request", zap.Error(err))
 		return nil, err
 	}
 
-	userjwt, err := GenerateJWTForUser(&user.User)
+	userjwt, err := GenerateJWTForUser(&user.User, jwt)
 	if err != nil {
 		zap.L().Error("Failed to generate JWT against login creds", zap.Error(err))
 		return nil, err
@@ -453,24 +573,28 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 
 	return &model.LoginResponse{
 		UserJwtObject: userjwt,
-		UserId:        user.User.Id,
+		UserId:        user.User.ID,
 	}, nil
 }
 
 // authenticateLogin is responsible for querying the DB and validating the credentials.
-func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.UserPayload, error) {
-
+func authenticateLogin(ctx context.Context, req *model.LoginRequest, jwt *authtypes.JWT) (*types.GettableUser, error) {
 	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {
-		user, err := validateUser(req.RefreshToken)
+		// parse the refresh token
+		claims, err := jwt.Claims(req.RefreshToken)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to validate refresh token")
+			return nil, errors.Wrap(err, "failed to parse refresh token")
 		}
 
-		if user.OrgId == "" {
-			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
+		user := &types.GettableUser{
+			User: types.User{
+				ID:    claims.UserID,
+				Role:  claims.Role.String(),
+				Email: claims.Email,
+				OrgID: claims.OrgID,
+			},
 		}
-
 		return user, nil
 	}
 
@@ -499,36 +623,33 @@ func passwordMatch(hash, password string) bool {
 	return err == nil
 }
 
-func GenerateJWTForUser(user *model.User) (model.UserJwtObject, error) {
-	j := model.UserJwtObject{}
-	var err error
-	j.AccessJwtExpiry = time.Now().Add(JwtExpiry).Unix()
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.Id,
-		"gid":   user.GroupId,
-		"email": user.Email,
-		"exp":   j.AccessJwtExpiry,
-		"orgId": user.OrgId,
-	})
-
-	j.AccessJwt, err = token.SignedString([]byte(JwtSecret))
+func GenerateJWTForUser(user *types.User, jwt *authtypes.JWT) (model.UserJwtObject, error) {
+	role, err := authtypes.NewRole(user.Role)
 	if err != nil {
-		return j, errors.Errorf("failed to encode jwt: %v", err)
+		return model.UserJwtObject{}, err
 	}
 
-	j.RefreshJwtExpiry = time.Now().Add(JwtRefresh).Unix()
-	token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.Id,
-		"gid":   user.GroupId,
-		"email": user.Email,
-		"exp":   j.RefreshJwtExpiry,
-		"orgId": user.OrgId,
-	})
-
-	j.RefreshJwt, err = token.SignedString([]byte(JwtSecret))
+	accessJwt, accessClaims, err := jwt.AccessToken(user.OrgID, user.ID, user.Email, role)
 	if err != nil {
-		return j, errors.Errorf("failed to encode jwt: %v", err)
+		return model.UserJwtObject{}, err
 	}
-	return j, nil
+
+	refreshJwt, refreshClaims, err := jwt.RefreshToken(user.OrgID, user.ID, user.Email, role)
+	if err != nil {
+		return model.UserJwtObject{}, err
+	}
+
+	return model.UserJwtObject{
+		AccessJwt:        accessJwt,
+		RefreshJwt:       refreshJwt,
+		AccessJwtExpiry:  accessClaims.ExpiresAt.Unix(),
+		RefreshJwtExpiry: refreshClaims.ExpiresAt.Unix(),
+	}, nil
+}
+
+func ValidatePassword(password string) error {
+	if len(password) < minimumPasswordLength {
+		return errors.Errorf("Password should be atleast %d characters.", minimumPasswordLength)
+	}
+	return nil
 }

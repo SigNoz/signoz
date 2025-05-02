@@ -46,6 +46,7 @@ export const useOptions = (
 				value: item.key,
 				dataType: item.dataType,
 				isIndexed: item?.isIndexed,
+				type: item?.type || '',
 			})),
 		[getLabel],
 	);

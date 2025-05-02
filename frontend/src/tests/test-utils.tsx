@@ -1,12 +1,26 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
+import { AppContext } from 'providers/App/App';
+import { IAppContext } from 'providers/App/types';
+import { QueryBuilderProvider } from 'providers/QueryBuilder';
+import TimezoneProvider from 'providers/Timezone';
 import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
 import store from 'store';
+import {
+	LicenseEvent,
+	LicensePlatform,
+	LicenseState,
+	LicenseStatus,
+} from 'types/api/licensesV3/getActive';
+import { ROLES } from 'types/roles';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -26,8 +40,7 @@ afterEach(() => {
 	jest.useRealTimers();
 });
 
-const mockStore = configureStore([]);
-
+const mockStore = configureStore([thunk]);
 const mockStored = (role?: string): any =>
 	mockStore({
 		...store.getState(),
@@ -76,23 +89,192 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
+jest.mock('react-router-dom-v5-compat', () => ({
+	...jest.requireActual('react-router-dom-v5-compat'),
+	useNavigationType: (): any => 'PUSH',
+}));
+
+export function getAppContextMock(
+	role: string,
+	appContextOverrides?: Partial<IAppContext>,
+): IAppContext {
+	return {
+		activeLicenseV3: {
+			event_queue: {
+				created_at: '0',
+				event: LicenseEvent.NO_EVENT,
+				scheduled_at: '0',
+				status: '',
+				updated_at: '0',
+			},
+			state: LicenseState.ACTIVE,
+			status: LicenseStatus.VALID,
+			platform: LicensePlatform.CLOUD,
+			created_at: '0',
+			plan: {
+				created_at: '0',
+				description: '',
+				is_active: true,
+				name: '',
+				updated_at: '0',
+			},
+			plan_id: '0',
+			free_until: '0',
+			updated_at: '0',
+			valid_from: 0,
+			valid_until: 0,
+		},
+		trialInfo: {
+			trialStart: -1,
+			trialEnd: -1,
+			onTrial: false,
+			workSpaceBlock: false,
+			trialConvertedToSubscription: false,
+			gracePeriodEnd: -1,
+		},
+		isFetchingActiveLicenseV3: false,
+		activeLicenseV3FetchError: null,
+		user: {
+			accessJwt: 'some-token',
+			refreshJwt: 'some-refresh-token',
+			id: 'some-user-id',
+			email: 'does-not-matter@signoz.io',
+			name: 'John Doe',
+			profilePictureURL: '',
+			createdAt: 1732544623,
+			organization: 'Nightswatch',
+			orgId: 'does-not-matter-id',
+			role: role as ROLES,
+		},
+		org: [
+			{
+				createdAt: 0,
+				id: 'does-not-matter-id',
+				displayName: 'Pentagon',
+			},
+		],
+		isFetchingUser: false,
+		userFetchError: null,
+		licenses: {
+			licenses: [
+				{
+					key: 'does-not-matter',
+					isCurrent: true,
+					planKey: 'ENTERPRISE_PLAN',
+					ValidFrom: new Date(),
+					ValidUntil: new Date(),
+					status: 'VALID',
+				},
+			],
+		},
+		isFetchingLicenses: false,
+		licensesFetchError: null,
+		featureFlags: [
+			{
+				name: FeatureKeys.SSO,
+				active: true,
+				usage: 0,
+				usage_limit: -1,
+				route: '',
+			},
+			{
+				name: FeatureKeys.USE_SPAN_METRICS,
+				active: false,
+				usage: 0,
+				usage_limit: -1,
+				route: '',
+			},
+			{
+				name: FeatureKeys.GATEWAY,
+				active: true,
+				usage: 0,
+				usage_limit: -1,
+				route: '',
+			},
+			{
+				name: FeatureKeys.PREMIUM_SUPPORT,
+				active: true,
+				usage: 0,
+				usage_limit: -1,
+				route: '',
+			},
+			{
+				name: FeatureKeys.ANOMALY_DETECTION,
+				active: true,
+				usage: 0,
+				usage_limit: -1,
+				route: '',
+			},
+			{
+				name: FeatureKeys.ONBOARDING,
+				active: true,
+				usage: 0,
+				usage_limit: -1,
+				route: '',
+			},
+			{
+				name: FeatureKeys.CHAT_SUPPORT,
+				active: true,
+				usage: 0,
+				usage_limit: -1,
+				route: '',
+			},
+		],
+		isFetchingFeatureFlags: false,
+		featureFlagsFetchError: null,
+		orgPreferences: [
+			{
+				key: 'ORG_ONBOARDING',
+				name: 'Organisation Onboarding',
+				description: 'Organisation Onboarding',
+				valueType: 'boolean',
+				defaultValue: false,
+				allowedValues: [true, false],
+				isDiscreteValues: true,
+				allowedScopes: ['org'],
+				value: false,
+			},
+		],
+		isFetchingOrgPreferences: false,
+		orgPreferencesFetchError: null,
+		isLoggedIn: true,
+		updateUser: jest.fn(),
+		updateOrg: jest.fn(),
+		updateOrgPreferences: jest.fn(),
+		licensesRefetch: jest.fn(),
+		...appContextOverrides,
+	};
+}
 function AllTheProviders({
 	children,
 	role, // Accept the role as a prop
+	appContextOverrides,
 }: {
 	children: React.ReactNode;
 	role: string; // Define the role prop
+	appContextOverrides: Partial<IAppContext>;
 }): ReactElement {
 	return (
-		<ResourceProvider>
-			<QueryClientProvider client={queryClient}>
+		<QueryClientProvider client={queryClient}>
+			<ResourceProvider>
 				<Provider store={mockStored(role)}>
-					{' '}
-					{/* Use the mock store with the provided role */}
-					<BrowserRouter>{children}</BrowserRouter>
+					<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
+						<BrowserRouter>
+							{/* Use the mock store with the provided role */}
+							<TimezoneProvider>
+								<QueryBuilderProvider>{children}</QueryBuilderProvider>
+							</TimezoneProvider>
+						</BrowserRouter>
+					</AppContext.Provider>
 				</Provider>
-			</QueryClientProvider>
-		</ResourceProvider>
+			</ResourceProvider>
+		</QueryClientProvider>
 	);
 }
 
@@ -100,9 +282,14 @@ const customRender = (
 	ui: ReactElement,
 	options?: Omit<RenderOptions, 'wrapper'>,
 	role = 'ADMIN', // Set a default role
+	appContextOverrides?: Partial<IAppContext>,
 ): RenderResult =>
 	render(ui, {
-		wrapper: () => <AllTheProviders role={role}>{ui}</AllTheProviders>,
+		wrapper: () => (
+			<AllTheProviders role={role} appContextOverrides={appContextOverrides || {}}>
+				{ui}
+			</AllTheProviders>
+		),
 		...options,
 	});
 

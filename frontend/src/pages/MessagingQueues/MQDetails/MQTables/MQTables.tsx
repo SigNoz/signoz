@@ -1,9 +1,16 @@
+/* eslint-disable no-nested-ternary */
+/* eslint-disable react/require-default-props */
 import './MQTables.styles.scss';
 
 import { Skeleton, Table, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import {
+	MessagingQueueServicePayload,
+	MessagingQueuesPayloadProps,
+} from 'api/messagingQueues/getConsumerLagDetails';
 import axios from 'axios';
 import { isNumber } from 'chart.js/helpers';
+import cx from 'classnames';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -13,36 +20,46 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
 import {
 	ConsumerLagDetailTitle,
-	ConsumerLagDetailType,
 	convertToTitleCase,
+	MessagingQueueServiceDetailType,
+	MessagingQueuesViewType,
+	MessagingQueuesViewTypeOptions,
+	ProducerLatencyOptions,
 	RowData,
 	SelectedTimelineQuery,
+	setConfigDetail,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 
-import {
-	ConsumerLagPayload,
-	getConsumerLagDetails,
-	MessagingQueuesPayloadProps,
-} from './getConsumerLagDetails';
+import { getTableDataForProducerLatencyOverview } from './MQTableUtils';
+
+const INITIAL_PAGE_SIZE = 10;
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function getColumns(
 	data: MessagingQueuesPayloadProps['payload'],
 	history: History<unknown>,
+	isProducerOverview?: boolean,
 ): RowData[] {
-	console.log(data);
 	if (data?.result?.length === 0) {
 		return [];
 	}
+
+	const mergedColumns = isProducerOverview
+		? [
+				...(data?.result?.[0]?.table?.columns || []),
+				{ name: 'byte_rate', queryName: 'byte_rate' },
+		  ]
+		: data?.result?.[0]?.table?.columns;
 
 	const columns: {
 		title: string;
 		dataIndex: string;
 		key: string;
-	}[] = data?.result?.[0]?.table?.columns.map((column) => ({
+	}[] = mergedColumns.map((column) => ({
 		title: convertToTitleCase(column.name),
 		dataIndex: column.name,
 		key: column.name,
@@ -52,6 +69,8 @@ export function getColumns(
 			'throughput',
 			'avg_msg_size',
 			'error_percentage',
+			'ingestion_rate',
+			'byte_rate',
 		].includes(column.name)
 			? (value: number | string): string => {
 					if (!isNumber(value)) return value.toString();
@@ -105,10 +124,27 @@ const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 	</>
 );
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function MessagingQueuesTable({
 	currentTab,
+	selectedView,
+	tableApiPayload,
+	tableApi,
+	validConfigPresent = false,
+	type = 'Detail',
+	option = ProducerLatencyOptions.Producers,
 }: {
-	currentTab: ConsumerLagDetailType;
+	currentTab?: MessagingQueueServiceDetailType;
+	selectedView: MessagingQueuesViewTypeOptions;
+	tableApiPayload?: MessagingQueueServicePayload;
+	tableApi: (
+		props: MessagingQueueServicePayload,
+	) => Promise<
+		SuccessResponse<MessagingQueuesPayloadProps['payload']> | ErrorResponse
+	>;
+	validConfigPresent?: boolean;
+	type?: 'Detail' | 'Overview';
+	option?: ProducerLatencyOptions;
 }): JSX.Element {
 	const [columns, setColumns] = useState<any[]>([]);
 	const [tableData, setTableData] = useState<any[]>([]);
@@ -118,34 +154,31 @@ function MessagingQueuesTable({
 	const timelineQuery = decodeURIComponent(
 		urlQuery.get(QueryParams.selectedTimelineQuery) || '',
 	);
+
 	const timelineQueryData: SelectedTimelineQuery = useMemo(
 		() => (timelineQuery ? JSON.parse(timelineQuery) : {}),
 		[timelineQuery],
 	);
 
+	const configDetails = decodeURIComponent(
+		urlQuery.get(QueryParams.configDetail) || '',
+	);
+
+	const configDetailQueryData: {
+		[key: string]: string;
+	} = useMemo(() => (configDetails ? JSON.parse(configDetails) : {}), [
+		configDetails,
+	]);
+
 	const paginationConfig = useMemo(
 		() =>
-			tableData?.length > 20 && {
-				pageSize: 20,
+			tableData?.length > INITIAL_PAGE_SIZE && {
+				pageSize: INITIAL_PAGE_SIZE,
 				showTotal: showPaginationItem,
 				showSizeChanger: false,
 				hideOnSinglePage: true,
 			},
 		[tableData],
-	);
-
-	const props: ConsumerLagPayload = useMemo(
-		() => ({
-			start: (timelineQueryData?.start || 0) * 1e9,
-			end: (timelineQueryData?.end || 0) * 1e9,
-			variables: {
-				partition: timelineQueryData?.partition,
-				topic: timelineQueryData?.topic,
-				consumer_group: timelineQueryData?.group,
-			},
-			detailType: currentTab,
-		}),
-		[currentTab, timelineQueryData],
 	);
 
 	const handleConsumerDetailsOnError = (error: Error): void => {
@@ -154,70 +187,168 @@ function MessagingQueuesTable({
 		});
 	};
 
-	const { mutate: getConsumerDetails, isLoading } = useMutation(
-		getConsumerLagDetails,
+	const isProducerOverview = useMemo(
+		() =>
+			type === 'Overview' &&
+			selectedView === MessagingQueuesViewType.producerLatency.value &&
+			tableApiPayload?.detailType === 'producer',
+		[type, selectedView, tableApiPayload],
+	);
+
+	const { mutate: getViewDetails, isLoading, error, isError } = useMutation(
+		tableApi,
 		{
 			onSuccess: (data) => {
 				if (data.payload) {
-					setColumns(getColumns(data?.payload, history));
-					setTableData(getTableData(data?.payload));
+					setColumns(getColumns(data?.payload, history, isProducerOverview));
+					setTableData(
+						isProducerOverview
+							? getTableDataForProducerLatencyOverview(data?.payload)
+							: getTableData(data?.payload),
+					);
 				}
 			},
 			onError: handleConsumerDetailsOnError,
 		},
 	);
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(() => getConsumerDetails(props), [currentTab, props]);
+	useEffect(
+		() => {
+			if (validConfigPresent && tableApiPayload) {
+				getViewDetails(tableApiPayload);
+			}
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[currentTab, selectedView, tableApiPayload],
+	);
 
-	const isLogEventCalled = useRef<boolean>(false);
+	const [selectedRowKey, setSelectedRowKey] = useState<React.Key>();
+	const [, setSelectedRows] = useState<any>();
+	const location = useLocation();
 
-	const isEmptyDetails = (timelineQueryData: SelectedTimelineQuery): boolean => {
-		const isEmptyDetail =
-			isEmpty(timelineQueryData) ||
-			(!timelineQueryData?.group &&
-				!timelineQueryData?.topic &&
-				!timelineQueryData?.partition);
-
-		if (!isEmptyDetail && !isLogEventCalled.current) {
-			logEvent('Messaging Queues: More details viewed', {
-				'tab-option': ConsumerLagDetailTitle[currentTab],
-				variables: {
-					group: timelineQueryData?.group,
-					topic: timelineQueryData?.topic,
-					partition: timelineQueryData?.partition,
-				},
-			});
-			isLogEventCalled.current = true;
+	const selectedRowKeyGenerator = (record: {
+		[key: string]: string;
+	}): React.Key => {
+		if (!isEmpty(tableApiPayload?.detailType)) {
+			return `${record.key}_${selectedView}_${tableApiPayload?.detailType}`;
 		}
-		return isEmptyDetail;
+		return `${record.key}_${selectedView}`;
 	};
+
+	useEffect(() => {
+		if (isEmpty(configDetailQueryData)) {
+			setSelectedRowKey(undefined);
+			setSelectedRows({});
+		}
+	}, [configDetailQueryData]);
+
+	const onRowClick = (record: { [key: string]: string }): void => {
+		if (selectedRowKeyGenerator(record) === selectedRowKey) {
+			setSelectedRowKey(undefined);
+			setSelectedRows({});
+			setConfigDetail(urlQuery, location, history, {});
+		} else {
+			setSelectedRowKey(selectedRowKeyGenerator(record));
+			setSelectedRows(record);
+
+			if (!isEmpty(record)) {
+				setConfigDetail(urlQuery, location, history, record);
+			}
+		}
+	};
+
+	const subtitle =
+		selectedView === MessagingQueuesViewType.consumerLag.value
+			? `${timelineQueryData?.group || ''} ${timelineQueryData?.topic || ''} ${
+					timelineQueryData?.partition || ''
+			  }`
+			: `${configDetailQueryData?.service_name || ''} ${
+					configDetailQueryData?.topic || ''
+			  } ${configDetailQueryData?.partition || ''}`;
+
+	const prevTableDataRef = useRef<string>();
+
+	useEffect(() => {
+		if (tableData.length > 0 && type === 'Overview') {
+			const currentTableData = JSON.stringify(tableData);
+
+			if (currentTableData !== prevTableDataRef.current) {
+				logEvent(`MQ Kafka: ${MessagingQueuesViewType[selectedView].label}`, {
+					dataRender: tableData.length,
+				});
+				prevTableDataRef.current = currentTableData;
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [option, JSON.stringify(tableData), selectedView]);
+
+	useEffect(() => {
+		if (tableData.length > 0 && type === 'Detail') {
+			const currentTableData = JSON.stringify(tableData);
+
+			if (currentTableData !== prevTableDataRef.current) {
+				logEvent(
+					`MQ Kafka: ${MessagingQueuesViewType[selectedView].label} - details`,
+					{
+						dataRender: tableData.length,
+						activeTab: currentTab,
+						topic: configDetailQueryData?.topic,
+						partition: configDetailQueryData?.partition,
+						serviceName: configDetailQueryData?.service_name,
+					},
+				);
+				prevTableDataRef.current = currentTableData;
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [currentTab, JSON.stringify(tableData), selectedView]);
 
 	return (
 		<div className="mq-tables-container">
-			{isEmptyDetails(timelineQueryData) ? (
+			{!validConfigPresent ? (
 				<div className="no-data-style">
 					<Typography.Text>
-						Click on a co-ordinate above to see the details
+						{selectedView === MessagingQueuesViewType.consumerLag.value
+							? 'Click on a co-ordinate above to see the details'
+							: 'Click on a row above to see the details'}
 					</Typography.Text>
 					<Skeleton />
 				</div>
+			) : isError ? (
+				<div className="no-data-style">
+					<Typography.Text>{error?.message || SOMETHING_WENT_WRONG}</Typography.Text>
+				</div>
 			) : (
 				<>
-					<div className="mq-table-title">
-						{ConsumerLagDetailTitle[currentTab]}
-						<div className="mq-table-subtitle">{`${timelineQueryData?.group || ''} ${
-							timelineQueryData?.topic || ''
-						} ${timelineQueryData?.partition || ''}`}</div>
-					</div>
+					{currentTab && (
+						<div className="mq-table-title">
+							{ConsumerLagDetailTitle[currentTab]}
+							<div className="mq-table-subtitle">{subtitle}</div>
+						</div>
+					)}
 					<Table
-						className="mq-table"
+						className={cx(
+							'mq-table',
+							type !== 'Detail' ? 'mq-overview-row-clickable' : 'pagination-left',
+						)}
 						pagination={paginationConfig}
 						size="middle"
 						columns={columns}
 						dataSource={tableData}
 						bordered={false}
 						loading={isLoading}
+						onRow={(record): any =>
+							type !== 'Detail'
+								? {
+										onClick: (): void => onRowClick(record),
+								  }
+								: {}
+						}
+						rowClassName={(record): any =>
+							selectedRowKeyGenerator(record) === selectedRowKey
+								? 'ant-table-row-selected'
+								: ''
+						}
 					/>
 				</>
 			)}

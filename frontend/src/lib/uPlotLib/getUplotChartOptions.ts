@@ -54,6 +54,12 @@ export interface GetUPlotChartOptions {
 		}>
 	>;
 	customTooltipElement?: HTMLDivElement;
+	verticalLineTimestamp?: number;
+	tzDate?: (timestamp: number) => Date;
+	timezone?: string;
+	customSeries?: (data: QueryData[]) => uPlot.Series[];
+	isLogScale?: boolean;
+	colorMapping?: Record<string, string>;
 }
 
 /** the function converts series A , series B , series C to
@@ -156,10 +162,19 @@ export const getUPlotChartOptions = ({
 	hiddenGraph,
 	setHiddenGraph,
 	customTooltipElement,
+	verticalLineTimestamp,
+	tzDate,
+	timezone,
+	customSeries,
+	isLogScale,
+	colorMapping,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
 	const stackBarChart = stackChart && isUndefined(hiddenGraph);
+
+	const isAnomalyRule =
+		apiResponse?.data?.newResult?.data?.result[0]?.isAnomaly || false;
 
 	const series = getStackedSeries(apiResponse?.data?.result || []);
 
@@ -191,6 +206,7 @@ export const getUPlotChartOptions = ({
 				fill: (): string => '#fff',
 			},
 		},
+		tzDate,
 		padding: [16, 16, 8, 8],
 		bands,
 		scales: {
@@ -208,29 +224,58 @@ export const getUPlotChartOptions = ({
 					softMax,
 					softMin,
 				}),
+				distr: isLogScale ? 3 : 1,
 			},
 		},
 		plugins: [
 			tooltipPlugin({
 				apiResponse,
 				yAxisUnit,
-				stackBarChart,
 				isDarkMode,
+				stackBarChart,
+				timezone,
+				colorMapping,
 				customTooltipElement,
 			}),
 			onClickPlugin({
 				onClick: onClickHandler,
 				apiResponse,
 			}),
+			{
+				hooks: {
+					draw: [
+						(u): void => {
+							if (verticalLineTimestamp) {
+								const { ctx } = u;
+								ctx.save();
+								ctx.setLineDash([4, 2]);
+								ctx.strokeStyle = 'white';
+								ctx.lineWidth = 1;
+								const x = u.valToPos(verticalLineTimestamp, 'x', true);
+
+								ctx.beginPath();
+								ctx.moveTo(x, u.bbox.top);
+								ctx.lineTo(x, u.bbox.top + u.bbox.height);
+								ctx.stroke();
+								ctx.setLineDash([]);
+								ctx.restore();
+							}
+						},
+					],
+				},
+			},
 		],
 		hooks: {
 			draw: [
 				(u): void => {
+					if (isAnomalyRule) {
+						return;
+					}
+
 					thresholds?.forEach((threshold) => {
 						if (threshold.thresholdValue !== undefined) {
 							const { ctx } = u;
 							ctx.save();
-
 							const yPos = u.valToPos(
 								convertValue(
 									threshold.thresholdValue,
@@ -240,30 +285,22 @@ export const getUPlotChartOptions = ({
 								'y',
 								true,
 							);
-
 							ctx.strokeStyle = threshold.thresholdColor || 'red';
 							ctx.lineWidth = 2;
 							ctx.setLineDash([10, 5]);
-
 							ctx.beginPath();
-
 							const plotLeft = u.bbox.left; // left edge of the plot area
 							const plotRight = plotLeft + u.bbox.width; // right edge of the plot area
-
 							ctx.moveTo(plotLeft, yPos);
 							ctx.lineTo(plotRight, yPos);
-
 							ctx.stroke();
-
 							// Text configuration
 							if (threshold.thresholdLabel) {
 								const text = threshold.thresholdLabel;
 								const textX = plotRight - ctx.measureText(text).width - 20;
-
 								const canvasHeight = ctx.canvas.height;
 								const yposHeight = canvasHeight - yPos;
 								const isHeightGreaterThan90Percent = canvasHeight * 0.9 < yposHeight;
-
 								// Adjust textY based on the condition
 								let textY;
 								if (isHeightGreaterThan90Percent) {
@@ -274,7 +311,6 @@ export const getUPlotChartOptions = ({
 								ctx.fillStyle = threshold.thresholdColor || 'red';
 								ctx.fillText(text, textX, textY);
 							}
-
 							ctx.restore();
 						}
 					});
@@ -342,19 +378,21 @@ export const getUPlotChartOptions = ({
 				},
 			],
 		},
-		series: getSeries({
-			series:
-				stackBarChart && isUndefined(hiddenGraph)
-					? series
-					: apiResponse?.data?.result,
-			widgetMetaData: apiResponse?.data.result,
-			graphsVisibilityStates,
-			panelType,
-			currentQuery,
-			stackBarChart,
-			hiddenGraph,
-			isDarkMode,
-		}),
-		axes: getAxes(isDarkMode, yAxisUnit),
+		series: customSeries
+			? customSeries(apiResponse?.data?.result || [])
+			: getSeries({
+					series:
+						stackBarChart && isUndefined(hiddenGraph)
+							? series || []
+							: apiResponse?.data?.result || [],
+					widgetMetaData: apiResponse?.data?.result || [],
+					graphsVisibilityStates,
+					panelType,
+					currentQuery,
+					stackBarChart,
+					hiddenGraph,
+					isDarkMode,
+			  }),
+		axes: getAxes({ isDarkMode, yAxisUnit, panelType, isLogScale }),
 	};
 };

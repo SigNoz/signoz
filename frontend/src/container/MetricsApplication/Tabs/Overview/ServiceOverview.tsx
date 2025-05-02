@@ -10,22 +10,24 @@ import {
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import { useAppContext } from 'providers/App/App';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { Button } from '../styles';
 import { IServiceName } from '../types';
 import {
 	handleNonInQueryRange,
 	onViewTracePopupClick,
+	useGetAPMToLogsQueries,
 	useGetAPMToTracesQueries,
 } from '../util';
+import GraphControlsPanel from './GraphControlsPanel/GraphControlsPanel';
 
 function ServiceOverview({
 	onDragSelect,
@@ -34,12 +36,15 @@ function ServiceOverview({
 	selectedTimeStamp,
 	topLevelOperationsRoute,
 	topLevelOperationsIsLoading,
+	stepInterval,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
 
-	const isSpanMetricEnable = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
-		?.active;
+	const { featureFlags } = useAppContext();
+	const isSpanMetricEnable =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
+			?.active || false;
 
 	const { queries } = useResourceAttribute();
 
@@ -51,45 +56,60 @@ function ServiceOverview({
 		[isSpanMetricEnable, queries],
 	);
 
-	const latencyWidget = getWidgetQueryBuilder({
-		query: {
-			queryType: EQueryType.QUERY_BUILDER,
-			promql: [],
-			builder: latency({
-				servicename,
-				tagFilterItems,
-				isSpanMetricEnable,
-				topLevelOperationsRoute,
+	const latencyWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: latency({
+						servicename,
+						tagFilterItems,
+						isSpanMetricEnable,
+						topLevelOperationsRoute,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.LATENCY,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ns',
+				id: SERVICE_CHART_ID.latency,
 			}),
-			clickhouse_sql: [],
-			id: uuid(),
-		},
-		title: GraphTitle.LATENCY,
-		panelTypes: PANEL_TYPES.TIME_SERIES,
-		yAxisUnit: 'ns',
-		id: SERVICE_CHART_ID.latency,
-	});
+		[isSpanMetricEnable, servicename, tagFilterItems, topLevelOperationsRoute],
+	);
 
 	const isQueryEnabled =
 		!topLevelOperationsIsLoading && topLevelOperationsRoute.length > 0;
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
 
+	const apmToLogQuery = useGetAPMToLogsQueries({ servicename });
+
+	const { safeNavigate } = useSafeNavigate();
+
 	return (
 		<>
-			<Button
-				type="default"
-				size="small"
+			<GraphControlsPanel
 				id="Service_button"
-				onClick={onViewTracePopupClick({
+				onViewLogsClick={onViewTracePopupClick({
+					servicename,
+					selectedTraceTags,
+					timestamp: selectedTimeStamp,
+					apmToTraceQuery: apmToLogQuery,
+					isViewLogsClicked: true,
+					stepInterval,
+					safeNavigate,
+				})}
+				onViewTracesClick={onViewTracePopupClick({
 					servicename,
 					selectedTraceTags,
 					timestamp: selectedTimeStamp,
 					apmToTraceQuery,
+					stepInterval,
+					safeNavigate,
 				})}
-			>
-				View Traces
-			</Button>
+			/>
 			<Card data-testid="service_latency">
 				<GraphContainer>
 					{topLevelOperationsIsLoading && (
@@ -114,8 +134,8 @@ function ServiceOverview({
 		</>
 	);
 }
-
 interface ServiceOverviewProps {
+	stepInterval: number;
 	selectedTimeStamp: number;
 	selectedTraceTags: string;
 	onDragSelect: (start: number, end: number) => void;

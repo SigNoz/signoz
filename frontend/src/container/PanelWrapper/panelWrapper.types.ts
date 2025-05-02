@@ -7,6 +7,7 @@ import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { QueryData } from 'types/api/widgets/getQuery';
 
 export type PanelWrapperProps = {
 	queryResponse: UseQueryResult<
@@ -23,7 +24,12 @@ export type PanelWrapperProps = {
 	onDragSelect: (start: number, end: number) => void;
 	selectedGraph?: PANEL_TYPES;
 	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
+	searchTerm?: string;
 	customTooltipElement?: HTMLDivElement;
+	openTracesButton?: boolean;
+	onOpenTraceBtnClick?: (record: RowData) => void;
+	customOnRowClick?: (record: RowData) => void;
+	customSeries?: (data: QueryData[]) => uPlot.Series[];
 };
 
 export type TooltipData = {

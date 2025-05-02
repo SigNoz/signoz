@@ -1,0 +1,17 @@
+.infra-monitoring-container {
+	.namespaces-list-table {
+		.expanded-table-container {
+			padding-left: 80px;
+		}
+
+		.ant-table-cell {
+			min-width: 223px !important;
+			max-width: 223px !important;
+		}
+
+		.ant-table-row-expand-icon-cell {
+			min-width: 30px !important;
+			max-width: 30px !important;
+		}
+	}
+}

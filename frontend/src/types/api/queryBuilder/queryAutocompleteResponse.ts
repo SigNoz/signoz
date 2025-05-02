@@ -16,8 +16,8 @@ export type AutocompleteType = 'tag' | 'resource' | '';
 
 export interface BaseAutocompleteData {
 	id?: string;
-	dataType: DataTypes;
-	isColumn: boolean;
+	dataType?: DataTypes;
+	isColumn?: boolean;
 	key: string;
 	type: AutocompleteType | string | null;
 	isJSON?: boolean;

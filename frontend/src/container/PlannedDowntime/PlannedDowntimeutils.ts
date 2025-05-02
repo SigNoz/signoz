@@ -11,6 +11,7 @@ import updateDowntimeSchedule, {
 	PayloadProps,
 } from 'api/plannedDowntime/updateDowntimeSchedule';
 import { showErrorNotification } from 'components/ExplorerCard/utils';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { isEmpty, isEqual } from 'lodash-es';
 import { UseMutateAsyncFunction } from 'react-query';
@@ -44,7 +45,9 @@ export const formatDateTime = (dateTimeString?: string | null): string => {
 		return 'N/A';
 	}
 
-	return dayjs(dateTimeString.slice(0, 19)).format('MMM DD, YYYY h:mm A');
+	return dayjs(dateTimeString.slice(0, 19)).format(
+		DATE_TIME_FORMATS.MONTH_DATETIME,
+	);
 };
 
 export const getAlertOptionsFromIds = (
@@ -135,7 +138,7 @@ export const deleteDowntimeHandler = ({
 export const createEditDowntimeSchedule = async (
 	props: DowntimeScheduleUpdatePayload,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
-	if (props.id && props.id > 0) {
+	if (props.id) {
 		return updateDowntimeSchedule({ ...props });
 	}
 	return createDowntimeSchedule({ ...props.data });
@@ -253,7 +256,7 @@ export function formatWithTimezone(
 ): string {
 	const parsedDate =
 		typeof dateValue === 'string' ? dateValue : dateValue?.format();
-	console.log('dateValue', parsedDate, 'timezone', timezone);
+
 	// Get the target timezone offset
 	const targetOffset = convertUtcOffsetToTimezoneOffset(
 		dayjs(dateValue).tz(timezone).utcOffset(),

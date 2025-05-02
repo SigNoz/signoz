@@ -5,15 +5,20 @@ import (
 	"slices"
 	"testing"
 
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/google/uuid"
 )
 
-func NewTestIntegrationsManager(t *testing.T) *Manager {
+func NewTestIntegrationsManager(t *testing.T) (*Manager, sqlstore.SQLStore) {
 	testDB := utils.NewQueryServiceDBForTests(t)
 
 	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB)
@@ -24,7 +29,31 @@ func NewTestIntegrationsManager(t *testing.T) *Manager {
 	return &Manager{
 		availableIntegrationsRepo: &TestAvailableIntegrationsRepo{},
 		installedIntegrationsRepo: installedIntegrationsRepo,
+	}, testDB
+}
+
+func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
+	// Create a test user for auth
+	ctx := context.Background()
+	organization := types.NewOrganization("test")
+	err := organizationModule.Create(ctx, organization)
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
+
+	userId := uuid.NewString()
+	return dao.DB().CreateUser(
+		ctx,
+		&types.User{
+			ID:       userId,
+			Name:     "test",
+			Email:    userId[:8] + "test@test.com",
+			Password: "test",
+			OrgID:    organization.ID.StringValue(),
+			Role:     authtypes.RoleAdmin.String(),
+		},
+		true,
+	)
 }
 
 type TestAvailableIntegrationsRepo struct{}
@@ -59,7 +88,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 			},
 			Assets: IntegrationAssets{
 				Logs: LogsAssets{
-					Pipelines: []logparsingpipeline.PostablePipeline{
+					Pipelines: []pipelinetypes.PostablePipeline{
 						{
 							Name:    "pipeline1",
 							Alias:   "pipeline1",
@@ -78,7 +107,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 									},
 								},
 							},
-							Config: []logparsingpipeline.PipelineOperator{
+							Config: []pipelinetypes.PipelineOperator{
 								{
 									OrderId: 1,
 									ID:      "add",
@@ -92,8 +121,8 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []dashboards.Data{},
-				Alerts:     []rules.PostableRule{},
+				Dashboards: []types.DashboardData{},
+				Alerts:     []ruletypes.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
 				Logs: &LogsConnectionTest{
@@ -127,7 +156,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 			},
 			Assets: IntegrationAssets{
 				Logs: LogsAssets{
-					Pipelines: []logparsingpipeline.PostablePipeline{
+					Pipelines: []pipelinetypes.PostablePipeline{
 						{
 							Name:    "pipeline2",
 							Alias:   "pipeline2",
@@ -146,7 +175,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 									},
 								},
 							},
-							Config: []logparsingpipeline.PipelineOperator{
+							Config: []pipelinetypes.PipelineOperator{
 								{
 									OrderId: 1,
 									ID:      "add",
@@ -160,8 +189,8 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []dashboards.Data{},
-				Alerts:     []rules.PostableRule{},
+				Dashboards: []types.DashboardData{},
+				Alerts:     []ruletypes.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
 				Logs: &LogsConnectionTest{

@@ -4,12 +4,13 @@ import './QueryBuilderSearchV2.styles.scss';
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import cx from 'classnames';
 import {
+	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
+	OperatorConfigKeys,
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 	QUERY_BUILDER_SEARCH_VALUES,
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
-import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
@@ -40,7 +41,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -63,7 +63,9 @@ import {
 	getTagToken,
 	isInNInOperator,
 } from '../QueryBuilderSearch/utils';
+import { filterByOperatorConfig } from '../utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
+import SpanScopeSelector from './SpanScopeSelector';
 import Suggestions from './Suggestions';
 
 export interface ITag {
@@ -88,6 +90,8 @@ interface QueryBuilderSearchV2Props {
 	placeholder?: string;
 	className?: string;
 	suffixIcon?: React.ReactNode;
+	hardcodedAttributeKeys?: BaseAutocompleteData[];
+	operatorConfigKey?: OperatorConfigKeys;
 }
 
 export interface Option {
@@ -120,6 +124,8 @@ function QueryBuilderSearchV2(
 		className,
 		suffixIcon,
 		whereClauseConfig,
+		hardcodedAttributeKeys,
+		operatorConfigKey,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -147,9 +153,8 @@ function QueryBuilderSearchV2(
 
 	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 
-	const { pathname } = useLocation();
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
+	const isLogsDataSource = useMemo(() => query.dataSource === DataSource.LOGS, [
+		query.dataSource,
 	]);
 
 	const memoizedSearchParams = useMemo(
@@ -227,7 +232,7 @@ function QueryBuilderSearchV2(
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
-			searchText: searchValue,
+			searchText: searchValue?.split(' ')[0],
 			dataSource: query.dataSource,
 			aggregateOperator: query.aggregateOperator,
 			aggregateAttribute: query.aggregateAttribute.key,
@@ -235,7 +240,7 @@ function QueryBuilderSearchV2(
 		},
 		{
 			queryKey: [searchParams],
-			enabled: isQueryEnabled && !isLogsExplorerPage,
+			enabled: isQueryEnabled && !isLogsDataSource && !hardcodedAttributeKeys,
 		},
 	);
 
@@ -244,13 +249,13 @@ function QueryBuilderSearchV2(
 		isFetching: isFetchingSuggestions,
 	} = useGetAttributeSuggestions(
 		{
-			searchText: searchValue.split(' ')[0],
+			searchText: searchValue?.split(' ')[0],
 			dataSource: query.dataSource,
 			filters: query.filters,
 		},
 		{
 			queryKey: [suggestionsParams],
-			enabled: isQueryEnabled && isLogsExplorerPage,
+			enabled: isQueryEnabled && isLogsDataSource,
 		},
 	);
 
@@ -286,16 +291,63 @@ function QueryBuilderSearchV2(
 				parsedValue = value;
 			}
 			if (currentState === DropdownState.ATTRIBUTE_KEY) {
-				setCurrentFilterItem((prev) => ({
-					...prev,
-					key: parsedValue as BaseAutocompleteData,
-					op: '',
-					value: '',
-				}));
-				setCurrentState(DropdownState.OPERATOR);
-				setSearchValue((parsedValue as BaseAutocompleteData)?.key);
+				// Case - convert abc def ghi type attribute keys directly to body contains abc def ghi
+				if (
+					isObject(parsedValue) &&
+					parsedValue?.key &&
+					parsedValue?.key?.split(' ').length > 1 &&
+					isLogsDataSource
+				) {
+					setTags((prev) => [
+						...prev,
+						{
+							key: {
+								key: 'body',
+								dataType: DataTypes.String,
+								type: '',
+								isColumn: true,
+								isJSON: false,
+								// eslint-disable-next-line sonarjs/no-duplicate-string
+								id: 'body--string----true',
+							},
+							op: OPERATORS.CONTAINS,
+							value: (parsedValue as BaseAutocompleteData)?.key,
+						},
+					]);
+					setCurrentFilterItem(undefined);
+					setSearchValue('');
+					setCurrentState(DropdownState.ATTRIBUTE_KEY);
+				} else {
+					setCurrentFilterItem((prev) => ({
+						...prev,
+						key: parsedValue as BaseAutocompleteData,
+						op: '',
+						value: '',
+					}));
+					setCurrentState(DropdownState.OPERATOR);
+					setSearchValue(`${(parsedValue as BaseAutocompleteData)?.key} `);
+				}
 			} else if (currentState === DropdownState.OPERATOR) {
-				if (value === OPERATORS.EXISTS || value === OPERATORS.NOT_EXISTS) {
+				if (isEmpty(value) && currentFilterItem?.key?.key) {
+					setTags((prev) => [
+						...prev,
+						{
+							key: {
+								key: 'body',
+								dataType: DataTypes.String,
+								type: '',
+								isColumn: true,
+								isJSON: false,
+								id: 'body--string----true',
+							},
+							op: OPERATORS.CONTAINS,
+							value: currentFilterItem?.key?.key,
+						},
+					]);
+					setCurrentFilterItem(undefined);
+					setSearchValue('');
+					setCurrentState(DropdownState.ATTRIBUTE_KEY);
+				} else if (value === OPERATORS.EXISTS || value === OPERATORS.NOT_EXISTS) {
 					setTags((prev) => [
 						...prev,
 						{
@@ -314,7 +366,7 @@ function QueryBuilderSearchV2(
 						value: '',
 					}));
 					setCurrentState(DropdownState.ATTRIBUTE_VALUE);
-					setSearchValue(`${currentFilterItem?.key?.key} ${value}`);
+					setSearchValue(`${currentFilterItem?.key?.key} ${value} `);
 				}
 			} else if (currentState === DropdownState.ATTRIBUTE_VALUE) {
 				const operatorType =
@@ -359,7 +411,13 @@ function QueryBuilderSearchV2(
 				}
 			}
 		},
-		[currentFilterItem?.key, currentFilterItem?.op, currentState, searchValue],
+		[
+			currentFilterItem?.key,
+			currentFilterItem?.op,
+			currentState,
+			isLogsDataSource,
+			searchValue,
+		],
 	);
 
 	const handleSearch = useCallback((value: string) => {
@@ -399,6 +457,7 @@ function QueryBuilderSearchV2(
 				whereClauseConfig?.customKey === 'body' &&
 				whereClauseConfig?.customOp === OPERATORS.CONTAINS
 			) {
+				// eslint-disable-next-line sonarjs/no-identical-functions
 				setTags((prev) => [
 					...prev,
 					{
@@ -465,11 +524,6 @@ function QueryBuilderSearchV2(
 
 	// this useEffect takes care of tokenisation based on the search state
 	useEffect(() => {
-		// if we are still fetching the suggestions then return as we won't know the type / data-type etc for the attribute key
-		if (isFetchingSuggestions) {
-			return;
-		}
-
 		// if there is no search value reset to the default state
 		if (!searchValue) {
 			setCurrentFilterItem(undefined);
@@ -519,19 +573,20 @@ function QueryBuilderSearchV2(
 					setCurrentState(DropdownState.OPERATOR);
 				}
 			}
-			if (suggestionsData?.payload?.attributes?.length === 0) {
+			// again let's not auto select anything for the user
+			if (tagOperator) {
 				setCurrentFilterItem({
 					key: {
-						key: tagKey.split(' ')[0],
+						key: tagKey,
 						dataType: DataTypes.EMPTY,
 						type: '',
 						isColumn: false,
 						isJSON: false,
 					},
-					op: '',
+					op: tagOperator,
 					value: '',
 				});
-				setCurrentState(DropdownState.OPERATOR);
+				setCurrentState(DropdownState.ATTRIBUTE_VALUE);
 			}
 		} else if (
 			// Case 2 - if key is defined but the search text doesn't match with the set key,
@@ -607,24 +662,72 @@ function QueryBuilderSearchV2(
 	// the useEffect takes care of setting the dropdown values correctly on change of the current state
 	useEffect(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
-			if (isLogsExplorerPage) {
-				setDropdownOptions(
-					suggestionsData?.payload?.attributes?.map((key) => ({
+			const { tagKey } = getTagToken(searchValue);
+			if (isLogsDataSource) {
+				// add the user typed option in the dropdown to select that and move ahead irrespective of the matches and all
+				setDropdownOptions([
+					...(!isEmpty(tagKey) &&
+					!suggestionsData?.payload?.attributes?.some((val) =>
+						isEqual(val.key, tagKey),
+					)
+						? [
+								{
+									label: tagKey,
+									value: {
+										key: tagKey,
+										dataType: DataTypes.EMPTY,
+										type: '',
+										isColumn: false,
+										isJSON: false,
+									},
+								},
+						  ]
+						: []),
+					...(suggestionsData?.payload?.attributes?.map((key) => ({
 						label: key.key,
 						value: key,
-					})) || [],
+					})) || []),
+				]);
+			} else if (hardcodedAttributeKeys) {
+				const filteredKeys = hardcodedAttributeKeys.filter((key) =>
+					key.key
+						.toLowerCase()
+						.includes((searchValue?.split(' ')[0] || '').toLowerCase()),
+				);
+				setDropdownOptions(
+					filteredKeys.map((key) => ({
+						label: key.key,
+						value: key,
+					})),
 				);
 			} else {
-				setDropdownOptions(
-					data?.payload?.attributeKeys?.map((key) => ({
+				setDropdownOptions([
+					// Add user typed option if it doesn't exist in the payload
+					...(tagKey.trim().length > 0 &&
+					!data?.payload?.attributeKeys?.some((val) => val.key === tagKey)
+						? [
+								{
+									label: tagKey,
+									value: {
+										key: tagKey,
+										dataType: DataTypes.EMPTY,
+										type: '',
+										isColumn: false,
+										isJSON: false,
+									},
+								},
+						  ]
+						: []),
+					// Map existing attribute keys from payload
+					...(data?.payload?.attributeKeys?.map((key) => ({
 						label: key.key,
 						value: key,
-					})) || [],
-				);
+					})) || []),
+				]);
 			}
 		}
 		if (currentState === DropdownState.OPERATOR) {
-			const keyOperator = searchValue.split(' ');
+			const keyOperator = searchValue?.split(' ');
 			const partialOperator = keyOperator?.[1];
 			const strippedKey = keyOperator?.[0];
 
@@ -643,13 +746,11 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
-				setDropdownOptions(operatorOptions);
 			} else if (strippedKey.endsWith('[*]') && strippedKey.startsWith('body.')) {
 				operatorOptions = [OPERATORS.HAS, OPERATORS.NHAS].map((operator) => ({
 					label: operator,
 					value: operator,
 				}));
-				setDropdownOptions(operatorOptions);
 			} else {
 				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES.universal.map(
 					(operator) => ({
@@ -663,8 +764,12 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
-				setDropdownOptions(operatorOptions);
 			}
+			const filterOperatorOptions = filterByOperatorConfig(
+				operatorOptions,
+				operatorConfigKey,
+			);
+			setDropdownOptions([{ label: '', value: '' }, ...filterOperatorOptions]);
 		}
 
 		if (currentState === DropdownState.ATTRIBUTE_VALUE) {
@@ -675,9 +780,11 @@ function QueryBuilderSearchV2(
 					values.push(tagValue[tagValue.length - 1]);
 			} else if (!isEmpty(tagValue)) values.push(tagValue);
 
-			values.push(
-				...(Object.values(attributeValues?.payload || {}).find((el) => !!el) || []),
-			);
+			if (attributeValues?.payload) {
+				const dataType = currentFilterItem?.key?.dataType || DataTypes.String;
+				const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+				values.push(...(attributeValues?.payload?.[key] || []));
+			}
 
 			setDropdownOptions(
 				values.map((val) => ({
@@ -687,15 +794,18 @@ function QueryBuilderSearchV2(
 			);
 		}
 	}, [
+		hardcodedAttributeKeys,
 		attributeValues?.payload,
 		currentFilterItem?.key?.dataType,
 		currentState,
 		data?.payload?.attributeKeys,
-		isLogsExplorerPage,
+		isLogsDataSource,
 		searchValue,
 		suggestionsData?.payload?.attributes,
+		operatorConfigKey,
 	]);
 
+	// keep the query in sync with the selected tags in logs explorer page
 	useEffect(() => {
 		const filterTags: IBuilderQuery['filters'] = {
 			op: 'AND',
@@ -718,18 +828,17 @@ function QueryBuilderSearchV2(
 
 		if (!isEqual(query.filters, filterTags)) {
 			onChange(filterTags);
-			setTags(
-				filterTags.items.map((tag) => ({
-					...tag,
-					op: getOperatorFromValue(tag.op),
-				})) as ITag[],
-			);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [tags]);
 
+	// keep the use effects pure!
+	// if the tags lacks the ID then the above use effect will add it to query
+	// and then the below use effect will take care of adding it to the tags.
+	// keep the tags in sycn with current query.
 	useEffect(() => {
-		if (!isEqual(query.filters.items, tags)) {
+		// convert the query and tags to same format before comparison
+		if (!isEqual(getInitTags(query), tags)) {
 			setTags(getInitTags(query));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -769,7 +878,7 @@ function QueryBuilderSearchV2(
 	);
 
 	const queryTags = useMemo(
-		() => tags.map((tag) => `${tag.key.key} ${tag.op} ${tag.value}`),
+		() => tags.map((tag) => `${tag.key?.key} ${tag.op} ${tag.value}`),
 		[tags],
 	);
 
@@ -827,17 +936,24 @@ function QueryBuilderSearchV2(
 		);
 	};
 
+	const isTracesDataSource = useMemo(
+		() => query.dataSource === DataSource.TRACES,
+		[query.dataSource],
+	);
+
 	return (
 		<div className="query-builder-search-v2">
 			<Select
 				ref={selectRef}
 				getPopupContainer={popupContainer}
+				key={queryTags.join('.')}
 				virtual={false}
 				showSearch
 				tagRender={onTagRender}
 				transitionName=""
 				choiceTransitionName=""
 				filterOption={false}
+				autoFocus={isOpen}
 				open={isOpen}
 				suffixIcon={
 					// eslint-disable-next-line no-nested-ternary
@@ -882,6 +998,7 @@ function QueryBuilderSearchV2(
 						exampleQueries={suggestionsData?.payload?.example_queries || []}
 						tags={tags}
 						currentFilterItem={currentFilterItem}
+						isLogsDataSource={isLogsDataSource}
 					/>
 				)}
 			>
@@ -908,6 +1025,7 @@ function QueryBuilderSearchV2(
 					);
 				})}
 			</Select>
+			{isTracesDataSource && <SpanScopeSelector queryName={query.queryName} />}
 		</div>
 	);
 }
@@ -917,6 +1035,8 @@ QueryBuilderSearchV2.defaultProps = {
 	className: '',
 	suffixIcon: null,
 	whereClauseConfig: {},
+	hardcodedAttributeKeys: undefined,
+	operatorConfigKey: undefined,
 };
 
 export default QueryBuilderSearchV2;

@@ -5,10 +5,10 @@ export const dashboardSuccessResponse = {
 		{
 			id: 1,
 			uuid: '1',
-			created_at: '2022-11-16T13:29:47.064874419Z',
-			created_by: null,
-			updated_at: '2024-05-21T06:41:30.546630961Z',
-			updated_by: 'thor@avengers.io',
+			createdAt: '2022-11-16T13:29:47.064874419Z',
+			createdBy: null,
+			updatedAt: '2024-05-21T06:41:30.546630961Z',
+			updatedBy: 'thor@avengers.io',
 			isLocked: 0,
 			data: {
 				collapsableRowsMigrated: true,
@@ -25,10 +25,10 @@ export const dashboardSuccessResponse = {
 		{
 			id: 2,
 			uuid: '2',
-			created_at: '2022-11-16T13:20:47.064874419Z',
-			created_by: null,
-			updated_at: '2024-05-21T06:42:30.546630961Z',
-			updated_by: 'captain-america@avengers.io',
+			createdAt: '2022-11-16T13:20:47.064874419Z',
+			createdBy: null,
+			updatedAt: '2024-05-21T06:42:30.546630961Z',
+			updatedBy: 'captain-america@avengers.io',
 			isLocked: 0,
 			data: {
 				collapsableRowsMigrated: true,
@@ -55,10 +55,10 @@ export const getDashboardById = {
 	data: {
 		id: 1,
 		uuid: '1',
-		created_at: '2022-11-16T13:29:47.064874419Z',
-		created_by: 'integration',
-		updated_at: '2024-05-21T06:41:30.546630961Z',
-		updated_by: 'thor@avengers.io',
+		createdAt: '2022-11-16T13:29:47.064874419Z',
+		createdBy: 'integration',
+		updatedAt: '2024-05-21T06:41:30.546630961Z',
+		updatedBy: 'thor@avengers.io',
 		isLocked: true,
 		data: {
 			collapsableRowsMigrated: true,
@@ -80,10 +80,10 @@ export const getNonIntegrationDashboardById = {
 	data: {
 		id: 1,
 		uuid: '1',
-		created_at: '2022-11-16T13:29:47.064874419Z',
-		created_by: 'thor',
-		updated_at: '2024-05-21T06:41:30.546630961Z',
-		updated_by: 'thor@avengers.io',
+		createdAt: '2022-11-16T13:29:47.064874419Z',
+		createdBy: 'thor',
+		updatedAt: '2024-05-21T06:41:30.546630961Z',
+		updatedBy: 'thor@avengers.io',
 		isLocked: true,
 		data: {
 			collapsableRowsMigrated: true,

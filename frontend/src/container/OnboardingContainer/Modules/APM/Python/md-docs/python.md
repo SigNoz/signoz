@@ -33,7 +33,7 @@ Step 3. Run your application
 ```bash
 OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \
 OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.{{REGION}}.signoz.cloud:443" \
-OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" \
+OTEL_EXPORTER_OTLP_HEADERS="signoz-ingestion-key={{SIGNOZ_INGESTION_KEY}}" \
 opentelemetry-instrument <your_run_command>
 ```
 - *`<your_run_command>`* can be `python3 app.py` or `flask run`

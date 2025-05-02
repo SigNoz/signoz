@@ -1,10 +1,17 @@
 import { Color } from '@signozhq/design-tokens';
 import Uplot from 'components/Uplot';
+import { QueryParams } from 'constants/query';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import useUrlQuery from 'hooks/useUrlQuery';
+import history from 'lib/history';
 import heatmapPlugin from 'lib/uPlotLib/plugins/heatmapPlugin';
 import timelinePlugin from 'lib/uPlotLib/plugins/timelinePlugin';
+import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
+import { useTimezone } from 'providers/Timezone';
 import { useMemo, useRef } from 'react';
+import { useDispatch } from 'react-redux';
+import { UpdateTimeInterval } from 'store/actions';
 import { AlertRuleTimelineGraphResponse } from 'types/api/alerts/def';
 import uPlot, { AlignedData } from 'uplot';
 
@@ -41,16 +48,20 @@ function HorizontalTimelineGraph({
 		return [timestamps, states];
 	}, [data]);
 
+	const urlQuery = useUrlQuery();
+	const dispatch = useDispatch();
+	const { timezone } = useTimezone();
+
 	const options: uPlot.Options = useMemo(
 		() => ({
 			width,
 			height: 85,
-			cursor: { show: false },
 
 			axes: [
 				{
 					gap: 10,
 					stroke: isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400,
+					values: uPlotXAxisValuesFormat,
 				},
 				{ show: false },
 			],
@@ -66,6 +77,40 @@ function HorizontalTimelineGraph({
 					label: 'States',
 				},
 			],
+			hooks: {
+				setSelect: [
+					(self): void => {
+						const selection = self.select;
+						if (selection) {
+							const startTime = self.posToVal(selection.left, 'x');
+							const endTime = self.posToVal(selection.left + selection.width, 'x');
+
+							const diff = endTime - startTime;
+
+							if (diff > 0) {
+								if (urlQuery.has(QueryParams.relativeTime)) {
+									urlQuery.delete(QueryParams.relativeTime);
+								}
+
+								const startTimestamp = Math.floor(startTime * 1000);
+								const endTimestamp = Math.floor(endTime * 1000);
+
+								if (startTimestamp !== endTimestamp) {
+									dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+								}
+
+								urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+								urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+
+								history.push({
+									search: urlQuery.toString(),
+								});
+							}
+						}
+					},
+				],
+			},
+
 			plugins:
 				transformedData?.length > 1
 					? [
@@ -75,8 +120,18 @@ function HorizontalTimelineGraph({
 							}),
 					  ]
 					: [],
+
+			tzDate: (timestamp: number): Date =>
+				uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 		}),
-		[width, isDarkMode, transformedData],
+		[
+			width,
+			isDarkMode,
+			transformedData.length,
+			urlQuery,
+			dispatch,
+			timezone.value,
+		],
 	);
 	return <Uplot data={transformedData} options={options} />;
 }

@@ -2,8 +2,7 @@ package queryprogress
 
 import (
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 type QueryProgressTracker interface {
@@ -19,7 +18,7 @@ type QueryProgressTracker interface {
 	// The returned channel will produce `QueryProgress` instances representing
 	// the latest state of query progress stats. Also returns a function that
 	// can be called to unsubscribe before the query finishes, if needed.
-	SubscribeToQueryProgress(queryId string) (ch <-chan v3.QueryProgress, unsubscribe func(), err *model.ApiError)
+	SubscribeToQueryProgress(queryId string) (ch <-chan model.QueryProgress, unsubscribe func(), err *model.ApiError)
 }
 
 func NewQueryProgressTracker() QueryProgressTracker {

@@ -4,6 +4,7 @@ import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import NewDashboard from 'container/NewDashboard';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useEffect } from 'react';
 import { ErrorType } from 'types/common';
 
 function DashboardPage(): JSX.Element {
@@ -16,6 +17,11 @@ function DashboardPage(): JSX.Element {
 		  // @ts-ignore
 		  (dashboardResponse?.error as AxiosError)?.response?.data?.errorType
 		: 'Something went wrong';
+
+	useEffect(() => {
+		const dashboardTitle = dashboardResponse.data?.data.title;
+		document.title = dashboardTitle || document.title;
+	}, [dashboardResponse.data?.data.title, isFetching]);
 
 	if (isError && !isFetching && errorMessage === ErrorType.NotFound) {
 		return <NotFound />;

@@ -15,7 +15,6 @@
 				font-style: normal;
 				line-height: 28px; /* 155.556% */
 				letter-spacing: -0.09px;
-				font-family: Inter;
 				font-weight: 500;
 			}
 
@@ -25,7 +24,6 @@
 				font-style: normal;
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
-				font-family: Inter;
 				font-weight: 400;
 			}
 
@@ -129,18 +127,29 @@
 
 					.heading {
 						color: var(--bg-vanilla-100);
-						font-family: Inter;
 						font-size: 14px;
 						font-style: normal;
 						font-weight: 500;
 						line-height: 20px; /* 142.857% */
 						letter-spacing: -0.07px;
 						margin-bottom: 8px;
+						display: flex;
+						align-items: center;
+						gap: 10px;
+						&__new-tag {
+							color: var(--bg-forest-400);
+							font-size: 12px;
+							font-weight: 500;
+							letter-spacing: 0.54px;
+							border-radius: 2px;
+							border: 1px solid rgba(37, 225, 146, 0.1);
+							background: rgba(37, 225, 146, 0.1);
+							padding: 2px 8px;
+						}
 					}
 
 					.description {
 						color: var(--bg-vanilla-400);
-						font-family: Inter;
 						font-size: 12px;
 						font-style: normal;
 						font-weight: 400;
@@ -163,7 +172,6 @@
 					background: var(--bg-ink-200);
 					box-shadow: none;
 					color: var(--bg-vanilla-400);
-					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
 					font-weight: 400;

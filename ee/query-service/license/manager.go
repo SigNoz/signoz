@@ -2,7 +2,6 @@ package license
 
 import (
 	"context"
-	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -10,13 +9,15 @@ import (
 
 	"sync"
 
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
+	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/zeus"
 
-	validate "go.signoz.io/signoz/ee/query-service/integrations/signozio"
-	"go.signoz.io/signoz/ee/query-service/model"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	validate "github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"go.uber.org/zap"
 )
 
@@ -26,57 +27,45 @@ var LM *Manager
 var validationFrequency = 24 * 60 * time.Minute
 
 type Manager struct {
-	repo  *Repo
-	mutex sync.Mutex
-
+	repo             *Repo
+	zeus             zeus.Zeus
+	mutex            sync.Mutex
 	validatorRunning bool
-
 	// end the license validation, this is important to gracefully
 	// stopping validation and protect in-consistent updates
 	done chan struct{}
-
 	// terminated waits for the validate go routine to end
 	terminated chan struct{}
-
 	// last time the license was validated
 	lastValidated int64
-
 	// keep track of validation failure attempts
 	failedAttempts uint64
-
 	// keep track of active license and features
-	activeLicense  *model.License
-	activeFeatures basemodel.FeatureSet
+	activeLicenseV3 *model.LicenseV3
+	activeFeatures  basemodel.FeatureSet
 }
 
-func StartManager(dbType string, db *sqlx.DB, features ...basemodel.Feature) (*Manager, error) {
+func StartManager(db *sqlx.DB, store sqlstore.SQLStore, zeus zeus.Zeus, features ...basemodel.Feature) (*Manager, error) {
 	if LM != nil {
 		return LM, nil
 	}
 
-	repo := NewLicenseRepo(db)
-	err := repo.InitDB(dbType)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to initiate license repo: %v", err)
-	}
-
+	repo := NewLicenseRepo(db, store)
 	m := &Manager{
 		repo: &repo,
+		zeus: zeus,
 	}
-
 	if err := m.start(features...); err != nil {
 		return m, err
 	}
+
 	LM = m
 	return m, nil
 }
 
 // start loads active license in memory and initiates validator
 func (lm *Manager) start(features ...basemodel.Feature) error {
-	err := lm.LoadActiveLicense(features...)
-
-	return err
+	return lm.LoadActiveLicenseV3(features...)
 }
 
 func (lm *Manager) Stop() {
@@ -84,7 +73,7 @@ func (lm *Manager) Stop() {
 	<-lm.terminated
 }
 
-func (lm *Manager) SetActive(l *model.License, features ...basemodel.Feature) {
+func (lm *Manager) SetActiveV3(l *model.LicenseV3, features ...basemodel.Feature) {
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
@@ -92,8 +81,8 @@ func (lm *Manager) SetActive(l *model.License, features ...basemodel.Feature) {
 		return
 	}
 
-	lm.activeLicense = l
-	lm.activeFeatures = append(l.FeatureSet, features...)
+	lm.activeLicenseV3 = l
+	lm.activeFeatures = append(l.Features, features...)
 	// set default features
 	setDefaultFeatures(lm)
 
@@ -105,7 +94,7 @@ func (lm *Manager) SetActive(l *model.License, features ...basemodel.Feature) {
 		// we want to make sure only one validator runs,
 		// we already have lock() so good to go
 		lm.validatorRunning = true
-		go lm.Validator(context.Background())
+		go lm.ValidatorV3(context.Background())
 	}
 
 }
@@ -114,14 +103,14 @@ func setDefaultFeatures(lm *Manager) {
 	lm.activeFeatures = append(lm.activeFeatures, baseconstants.DEFAULT_FEATURE_SET...)
 }
 
-// LoadActiveLicense loads the most recent active license
-func (lm *Manager) LoadActiveLicense(features ...basemodel.Feature) error {
-	active, err := lm.repo.GetActiveLicense(context.Background())
+func (lm *Manager) LoadActiveLicenseV3(features ...basemodel.Feature) error {
+	active, err := lm.repo.GetActiveLicenseV3(context.Background())
 	if err != nil {
 		return err
 	}
+
 	if active != nil {
-		lm.SetActive(active, features...)
+		lm.SetActiveV3(active, features...)
 	} else {
 		zap.L().Info("No active license found, defaulting to basic plan")
 		// if no active license is found, we default to basic(free) plan with all default features
@@ -137,40 +126,37 @@ func (lm *Manager) LoadActiveLicense(features ...basemodel.Feature) error {
 	return nil
 }
 
-func (lm *Manager) GetLicenses(ctx context.Context) (response []model.License, apiError *model.ApiError) {
+func (lm *Manager) GetLicensesV3(ctx context.Context) (response []*model.LicenseV3, apiError *model.ApiError) {
 
-	licenses, err := lm.repo.GetLicenses(ctx)
+	licenses, err := lm.repo.GetLicensesV3(ctx)
 	if err != nil {
 		return nil, model.InternalError(err)
 	}
 
 	for _, l := range licenses {
-		l.ParsePlan()
-
-		if lm.activeLicense != nil && l.Key == lm.activeLicense.Key {
+		if lm.activeLicenseV3 != nil && l.Key == lm.activeLicenseV3.Key {
 			l.IsCurrent = true
 		}
-
 		if l.ValidUntil == -1 {
 			// for subscriptions, there is no end-date as such
 			// but for showing user some validity we default one year timespan
 			l.ValidUntil = l.ValidFrom + 31556926
 		}
-
 		response = append(response, l)
 	}
 
-	return
+	return response, nil
 }
 
 // Validator validates license after an epoch of time
-func (lm *Manager) Validator(ctx context.Context) {
+func (lm *Manager) ValidatorV3(ctx context.Context) {
+	zap.L().Info("ValidatorV3 started!")
 	defer close(lm.terminated)
+
 	tick := time.NewTicker(validationFrequency)
 	defer tick.Stop()
 
-	lm.Validate(ctx)
-
+	_ = lm.ValidateV3(ctx)
 	for {
 		select {
 		case <-lm.done:
@@ -180,17 +166,30 @@ func (lm *Manager) Validator(ctx context.Context) {
 			case <-lm.done:
 				return
 			case <-tick.C:
-				lm.Validate(ctx)
+				_ = lm.ValidateV3(ctx)
 			}
 		}
 
 	}
 }
 
-// Validate validates the current active license
-func (lm *Manager) Validate(ctx context.Context) (reterr error) {
-	zap.L().Info("License validation started")
-	if lm.activeLicense == nil {
+func (lm *Manager) RefreshLicense(ctx context.Context) error {
+	license, err := validate.ValidateLicenseV3(ctx, lm.activeLicenseV3.Key, lm.zeus)
+	if err != nil {
+		return err
+	}
+
+	err = lm.repo.UpdateLicenseV3(ctx, license)
+	if err != nil {
+		return err
+	}
+	lm.SetActiveV3(license)
+
+	return nil
+}
+
+func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
+	if lm.activeLicenseV3 == nil {
 		return nil
 	}
 
@@ -200,102 +199,61 @@ func (lm *Manager) Validate(ctx context.Context) (reterr error) {
 		lm.lastValidated = time.Now().Unix()
 		if reterr != nil {
 			zap.L().Error("License validation completed with error", zap.Error(reterr))
+
 			atomic.AddUint64(&lm.failedAttempts, 1)
+			// default to basic plan if validation fails for three consecutive times
+			if atomic.LoadUint64(&lm.failedAttempts) > 3 {
+				zap.L().Error("License validation completed with error for three consecutive times, defaulting to basic plan", zap.String("license_id", lm.activeLicenseV3.ID), zap.Bool("license_validation", false))
+				lm.activeLicenseV3 = nil
+				lm.activeFeatures = model.BasicPlan
+				setDefaultFeatures(lm)
+				err := lm.InitFeatures(lm.activeFeatures)
+				if err != nil {
+					zap.L().Error("Couldn't initialize features", zap.Error(err))
+				}
+				lm.done <- struct{}{}
+				lm.validatorRunning = false
+			}
+
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_CHECK_FAILED,
 				map[string]interface{}{"err": reterr.Error()}, "", true, false)
 		} else {
+			// reset the failed attempts counter
+			atomic.StoreUint64(&lm.failedAttempts, 0)
 			zap.L().Info("License validation completed with no errors")
 		}
 
 		lm.mutex.Unlock()
 	}()
 
-	response, apiError := validate.ValidateLicense(lm.activeLicense.ActivationId)
-	if apiError != nil {
-		zap.L().Error("failed to validate license", zap.Error(apiError.Err))
-		return apiError.Err
+	err := lm.RefreshLicense(ctx)
+
+	if err != nil {
+		return err
 	}
-
-	if response.PlanDetails == lm.activeLicense.PlanDetails {
-		// license plan hasnt changed, nothing to do
-		return nil
-	}
-
-	if response.PlanDetails != "" {
-
-		// copy and replace the active license record
-		l := model.License{
-			Key:               lm.activeLicense.Key,
-			CreatedAt:         lm.activeLicense.CreatedAt,
-			PlanDetails:       response.PlanDetails,
-			ValidationMessage: lm.activeLicense.ValidationMessage,
-			ActivationId:      lm.activeLicense.ActivationId,
-		}
-
-		if err := l.ParsePlan(); err != nil {
-			zap.L().Error("failed to parse updated license", zap.Error(err))
-			return err
-		}
-
-		// updated plan is parsable, check if plan has changed
-		if lm.activeLicense.PlanDetails != response.PlanDetails {
-			err := lm.repo.UpdatePlanDetails(ctx, lm.activeLicense.Key, response.PlanDetails)
-			if err != nil {
-				// unexpected db write issue but we can let the user continue
-				// and wait for update to work in next cycle.
-				zap.L().Error("failed to validate license", zap.Error(err))
-			}
-		}
-
-		// activate the update license plan
-		lm.SetActive(&l)
-	}
-
 	return nil
 }
 
-// Activate activates a license key with signoz server
-func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *model.License, errResponse *model.ApiError) {
-	defer func() {
-		if errResponse != nil {
-			userEmail, err := auth.GetEmailFromJwt(ctx)
-			if err == nil {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_ACT_FAILED,
-					map[string]interface{}{"err": errResponse.Err.Error()}, userEmail, true, false)
-			}
-		}
-	}()
-
-	response, apiError := validate.ActivateLicense(key, "")
-	if apiError != nil {
-		zap.L().Error("failed to activate license", zap.Error(apiError.Err))
-		return nil, apiError
-	}
-
-	l := &model.License{
-		Key:          key,
-		ActivationId: response.ActivationId,
-		PlanDetails:  response.PlanDetails,
-	}
-
-	// parse validity and features from the plan details
-	err := l.ParsePlan()
-
+func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (*model.LicenseV3, error) {
+	license, err := validate.ValidateLicenseV3(ctx, licenseKey, lm.zeus)
 	if err != nil {
-		zap.L().Error("failed to activate license", zap.Error(err))
-		return nil, model.InternalError(err)
+		return nil, err
 	}
 
-	// store the license before activating it
-	err = lm.repo.InsertLicense(ctx, l)
-	if err != nil {
-		zap.L().Error("failed to activate license", zap.Error(err))
-		return nil, model.InternalError(err)
+	// insert the new license to the sqlite db
+	modelErr := lm.repo.InsertLicenseV3(ctx, license)
+	if modelErr != nil {
+		zap.L().Error("failed to activate license", zap.Error(modelErr))
+		return nil, modelErr
 	}
 
 	// license is valid, activate it
-	lm.SetActive(l)
-	return l, nil
+	lm.SetActiveV3(license)
+	return license, nil
+}
+
+func (lm *Manager) GetActiveLicense() *model.LicenseV3 {
+	return lm.activeLicenseV3
 }
 
 // CheckFeature will be internally used by backend routines
@@ -317,15 +275,41 @@ func (lm *Manager) GetFeatureFlags() (basemodel.FeatureSet, error) {
 }
 
 func (lm *Manager) InitFeatures(features basemodel.FeatureSet) error {
-	return lm.repo.InitFeatures(features)
+	featureStatus := make([]types.FeatureStatus, len(features))
+	for i, f := range features {
+		featureStatus[i] = types.FeatureStatus{
+			Name:       f.Name,
+			Active:     f.Active,
+			Usage:      int(f.Usage),
+			UsageLimit: int(f.UsageLimit),
+			Route:      f.Route,
+		}
+	}
+	return lm.repo.InitFeatures(featureStatus)
 }
 
 func (lm *Manager) UpdateFeatureFlag(feature basemodel.Feature) error {
-	return lm.repo.UpdateFeature(feature)
+	return lm.repo.UpdateFeature(types.FeatureStatus{
+		Name:       feature.Name,
+		Active:     feature.Active,
+		Usage:      int(feature.Usage),
+		UsageLimit: int(feature.UsageLimit),
+		Route:      feature.Route,
+	})
 }
 
 func (lm *Manager) GetFeatureFlag(key string) (basemodel.Feature, error) {
-	return lm.repo.GetFeature(key)
+	featureStatus, err := lm.repo.GetFeature(key)
+	if err != nil {
+		return basemodel.Feature{}, err
+	}
+	return basemodel.Feature{
+		Name:       featureStatus.Name,
+		Active:     featureStatus.Active,
+		Usage:      int64(featureStatus.Usage),
+		UsageLimit: int64(featureStatus.UsageLimit),
+		Route:      featureStatus.Route,
+	}, nil
 }
 
 // GetRepo return the license repo

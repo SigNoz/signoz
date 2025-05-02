@@ -15,11 +15,14 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
+import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
@@ -32,9 +35,9 @@ import { Button } from './styles';
 import { IServiceName } from './types';
 import {
 	handleNonInQueryRange,
-	onGraphClickHandler,
 	onViewTracePopupClick,
 	useGetAPMToTracesQueries,
+	useGraphClickHandler,
 } from './util';
 
 function External(): JSX.Element {
@@ -141,6 +144,15 @@ function External(): JSX.Element {
 		],
 	});
 
+	const stepInterval = useMemo(
+		() =>
+			getStep({
+				end: store.getState().globalTime.maxTime,
+				inputFormat: 'ns',
+				start: store.getState().globalTime.minTime,
+			}),
+		[],
+	);
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
@@ -209,6 +221,10 @@ function External(): JSX.Element {
 		isExternalCall: true,
 	});
 
+	const { safeNavigate } = useSafeNavigate();
+
+	const onGraphClickHandler = useGraphClickHandler(setSelectedTimeStamp);
+
 	return (
 		<>
 			<Row gutter={24}>
@@ -222,6 +238,8 @@ function External(): JSX.Element {
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery: errorApmToTraceQuery,
+							stepInterval,
+							safeNavigate,
 						})}
 					>
 						View Traces
@@ -232,7 +250,7 @@ function External(): JSX.Element {
 								headerMenuList={MENU_ITEMS}
 								widget={externalCallErrorWidget}
 								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
-									onGraphClickHandler(setSelectedTimeStamp)(
+									onGraphClickHandler(
 										xValue,
 										yValue,
 										mouseX,
@@ -257,6 +275,8 @@ function External(): JSX.Element {
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
+							stepInterval,
+							safeNavigate,
 						})}
 					>
 						View Traces
@@ -268,7 +288,7 @@ function External(): JSX.Element {
 								headerMenuList={MENU_ITEMS}
 								widget={externalCallDurationWidget}
 								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
-									onGraphClickHandler(setSelectedTimeStamp)(
+									onGraphClickHandler(
 										xValue,
 										yValue,
 										mouseX,
@@ -295,6 +315,8 @@ function External(): JSX.Element {
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
+							stepInterval,
+							safeNavigate,
 						})}
 					>
 						View Traces
@@ -305,7 +327,7 @@ function External(): JSX.Element {
 								widget={externalCallRPSWidget}
 								headerMenuList={MENU_ITEMS}
 								onClickHandler={(xValue, yValue, mouseX, mouseY): Promise<void> =>
-									onGraphClickHandler(setSelectedTimeStamp)(
+									onGraphClickHandler(
 										xValue,
 										yValue,
 										mouseX,
@@ -330,6 +352,8 @@ function External(): JSX.Element {
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
+							stepInterval,
+							safeNavigate,
 						})}
 					>
 						View Traces
@@ -341,7 +365,7 @@ function External(): JSX.Element {
 								widget={externalCallDurationAddressWidget}
 								headerMenuList={MENU_ITEMS}
 								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
-									onGraphClickHandler(setSelectedTimeStamp)(
+									onGraphClickHandler(
 										xValue,
 										yValue,
 										mouseX,

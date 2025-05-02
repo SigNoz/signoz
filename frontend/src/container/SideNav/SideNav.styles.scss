@@ -3,10 +3,6 @@
 	height: 100%;
 	position: relative;
 	z-index: 1;
-
-	&.docked {
-		width: 240px;
-	}
 }
 
 .sideNav {
@@ -73,6 +69,12 @@
 				opacity: 1;
 				transition: all 0.2s;
 			}
+
+			&.community-enterprise-user {
+				color: var(--bg-sakura-500);
+				background: rgba(255, 113, 113, 0.1);
+				border: 1px solid var(--bg-sakura-500);
+			}
 		}
 
 		.dockBtn {
@@ -108,9 +110,16 @@
 	}
 	.nav-wrapper {
 		height: calc(100% - 52px);
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
 
 		.primary-nav-items {
-			max-height: 65%;
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-height: 0;
+			max-height: 100%;
 			overflow-y: auto;
 			overflow-x: hidden;
 
@@ -119,15 +128,14 @@
 			}
 		}
 		.secondary-nav-items {
-			max-height: 35%;
+			display: flex;
+			flex-direction: column;
+			flex-shrink: 0;
 			overflow-y: auto;
 			overflow-x: hidden;
 			border-top: 1px solid var(--bg-slate-400);
 			padding: 8px 0;
 			max-width: 100%;
-			position: fixed;
-			bottom: 0;
-			left: 0;
 			width: 64px;
 
 			transition: all 0.2s, background 0s, border 0s;
@@ -188,8 +196,14 @@
 		display: none;
 	}
 
-	.nav-item-beta {
+	.nav-item-beta,
+	.nav-item-new {
 		display: none;
+	}
+
+	.sidenav-new-tag {
+		background-color: rgba(37, 225, 146, 0.1);
+		color: var(--text-forest-500);
 	}
 
 	&:hover {
@@ -225,40 +239,8 @@
 			display: block;
 		}
 
-		.nav-item-beta {
-			display: block;
-		}
-	}
-
-	&.docked {
-		flex: 0 0 240px;
-		max-width: 240px;
-		min-width: 240px;
-		width: 240px;
-
-		.secondary-nav-items {
-			width: 240px;
-		}
-
-		.brand {
-			justify-content: space-between;
-		}
-
-		.get-started-nav-items {
-			.get-started-btn {
-				justify-content: flex-start;
-			}
-		}
-
-		.collapse-expand-handlers {
-			display: block;
-		}
-
-		.nav-item-label {
-			display: block;
-		}
-
-		.nav-item-beta {
+		.nav-item-beta,
+		.nav-item-new {
 			display: block;
 		}
 	}

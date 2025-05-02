@@ -32,4 +32,5 @@ function CustomerStoryCard({
 		</a>
 	);
 }
+
 export default CustomerStoryCard;

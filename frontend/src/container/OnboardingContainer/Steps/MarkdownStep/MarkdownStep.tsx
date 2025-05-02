@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { QueryParams } from 'constants/query';
 import { ApmDocFilePaths } from 'container/OnboardingContainer/constants/apmDocFilePaths';
 import { AwsMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/awsMonitoringDocFilePaths';
 import { AzureMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/azureMonitoringDocFilePaths';
@@ -10,6 +11,7 @@ import {
 	useOnboardingContext,
 } from 'container/OnboardingContainer/context/OnboardingContext';
 import { ModulesMap } from 'container/OnboardingContainer/OnboardingContainer';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { useEffect, useState } from 'react';
 
 export interface IngestionInfoProps {
@@ -30,6 +32,12 @@ export default function MarkdownStep(): JSX.Element {
 	} = useOnboardingContext();
 
 	const [markdownContent, setMarkdownContent] = useState('');
+
+	const urlQuery = useUrlQuery();
+	const getStartedSource = urlQuery.get(QueryParams.getStartedSource);
+	const getStartedSourceService = urlQuery.get(
+		QueryParams.getStartedSourceService,
+	);
 
 	const { step } = activeStep;
 
@@ -54,6 +62,12 @@ export default function MarkdownStep(): JSX.Element {
 
 		path += `_${step?.id}`;
 
+		if (
+			getStartedSource === 'kafka' &&
+			path === 'APM_java_springBoot_kubernetes_recommendedSteps_runApplication' // todo: Sagar - Make this generic logic in followup PRs
+		) {
+			path += `_${getStartedSourceService}`;
+		}
 		return path;
 	};
 

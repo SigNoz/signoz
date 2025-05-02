@@ -13,11 +13,14 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
+import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -31,9 +34,9 @@ import { IServiceName } from './types';
 import {
 	dbSystemTags,
 	handleNonInQueryRange,
-	onGraphClickHandler,
 	onViewTracePopupClick,
 	useGetAPMToTracesQueries,
+	useGraphClickHandler,
 } from './util';
 
 function DBCall(): JSX.Element {
@@ -123,6 +126,16 @@ function DBCall(): JSX.Element {
 		[servicename, tagFilterItems],
 	);
 
+	const stepInterval = useMemo(
+		() =>
+			getStep({
+				end: store.getState().globalTime.maxTime,
+				inputFormat: 'ns',
+				start: store.getState().globalTime.minTime,
+			}),
+		[],
+	);
+
 	const logEventCalledRef = useRef(false);
 
 	useEffect(() => {
@@ -145,6 +158,9 @@ function DBCall(): JSX.Element {
 		servicename,
 		isDBCall: true,
 	});
+	const { safeNavigate } = useSafeNavigate();
+
+	const onGraphClickHandler = useGraphClickHandler(setSelectedTimeStamp);
 
 	return (
 		<Row gutter={24}>
@@ -158,6 +174,8 @@ function DBCall(): JSX.Element {
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
 						apmToTraceQuery,
+						stepInterval,
+						safeNavigate,
 					})}
 				>
 					View Traces
@@ -167,7 +185,7 @@ function DBCall(): JSX.Element {
 						<Graph
 							widget={databaseCallsRPSWidget}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
-								onGraphClickHandler(setSelectedTimeStamp)(
+								onGraphClickHandler(
 									xValue,
 									yValue,
 									mouseX,
@@ -192,6 +210,8 @@ function DBCall(): JSX.Element {
 						selectedTraceTags,
 						timestamp: selectedTimeStamp,
 						apmToTraceQuery,
+						stepInterval,
+						safeNavigate,
 					})}
 				>
 					View Traces
@@ -203,7 +223,7 @@ function DBCall(): JSX.Element {
 							widget={databaseCallsAverageDurationWidget}
 							headerMenuList={MENU_ITEMS}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
-								onGraphClickHandler(setSelectedTimeStamp)(
+								onGraphClickHandler(
 									xValue,
 									yValue,
 									mouseX,

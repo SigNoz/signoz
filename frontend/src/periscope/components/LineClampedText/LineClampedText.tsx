@@ -1,14 +1,17 @@
 import './LineClampedText.styles.scss';
 
-import { Tooltip } from 'antd';
+import { Tooltip, TooltipProps } from 'antd';
+import { isBoolean } from 'lodash-es';
 import { useEffect, useRef, useState } from 'react';
 
 function LineClampedText({
 	text,
 	lines,
+	tooltipProps,
 }: {
-	text: string;
+	text: string | boolean;
 	lines?: number;
+	tooltipProps?: TooltipProps;
 }): JSX.Element {
 	const [isOverflowing, setIsOverflowing] = useState(false);
 	const textRef = useRef<HTMLDivElement>(null);
@@ -33,20 +36,33 @@ function LineClampedText({
 	const content = (
 		<div
 			ref={textRef}
-			className="line-clamped-text"
+			className="line-clamped-wrapper__text"
 			style={{
 				WebkitLineClamp: lines,
 			}}
 		>
-			{text}
+			{isBoolean(text) ? String(text) : text}
 		</div>
 	);
 
-	return isOverflowing ? <Tooltip title={text}>{content}</Tooltip> : content;
+	return isOverflowing ? (
+		<Tooltip
+			// eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+			title={<div onClick={(e): void => e.stopPropagation()}>{text}</div>}
+			overlayClassName="line-clamped-wrapper"
+			// eslint-disable-next-line react/jsx-props-no-spreading
+			{...tooltipProps}
+		>
+			{content}
+		</Tooltip>
+	) : (
+		content
+	);
 }
 
 LineClampedText.defaultProps = {
 	lines: 1,
+	tooltipProps: {},
 };
 
 export default LineClampedText;

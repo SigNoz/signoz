@@ -31,11 +31,8 @@ jest.mock('hooks/useNotifications', () => ({
 	})),
 }));
 
-jest.mock('hooks/useFeatureFlag', () => ({
-	__esModule: true,
-	default: jest.fn().mockImplementation(() => ({
-		active: true,
-	})),
+jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+	MarkdownRenderer: jest.fn(() => <div>Mocked MarkdownRenderer</div>),
 }));
 
 describe('Create Alert Channel', () => {
@@ -362,7 +359,7 @@ describe('Create Alert Channel', () => {
 				expect(priorityTextArea).toHaveValue(opsGeniePriorityDefaultValue);
 			});
 		});
-		describe('Opsgenie', () => {
+		describe('Email', () => {
 			beforeEach(() => {
 				render(<CreateAlertChannels preType={ChannelType.Email} />);
 			});
@@ -385,7 +382,7 @@ describe('Create Alert Channel', () => {
 			});
 
 			it('Should check if the selected item in the type dropdown has text "msteams"', () => {
-				expect(screen.getByText('msteams')).toBeInTheDocument();
+				expect(screen.getByText('Microsoft Teams')).toBeInTheDocument();
 			});
 
 			it('Should check if Webhook URL label and input are displayed properly ', () => {

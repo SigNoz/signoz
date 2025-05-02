@@ -1,3 +1,3 @@
-import MessagingQueues from './MessagingQueues';
+import MessagingQueuesMainPage from './MessagingQueuesMainPage';
 
-export default MessagingQueues;
+export default MessagingQueuesMainPage;

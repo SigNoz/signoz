@@ -1,10 +1,8 @@
 import { Button, Divider, Form, Modal } from 'antd';
+import { useAppContext } from 'providers/App/App';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { ActionMode, ActionType, PipelineData } from 'types/api/pipeline/def';
-import AppReducer from 'types/reducer/app';
 import { v4 } from 'uuid';
 
 import { ModalButtonWrapper, ModalTitle } from '../styles';
@@ -21,7 +19,7 @@ function AddNewPipeline({
 }: AddNewPipelineProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const isEdit = isActionType === 'edit-pipeline';
 	const isAdd = isActionType === 'add-pipeline';

@@ -1,4 +1,5 @@
 import getLocalStorage from 'api/browser/localstorage/get';
+import { FeatureKeys } from 'constants/features';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 
 export const isOnboardingSkipped = (): boolean =>
@@ -12,18 +13,6 @@ export function extractDomain(email: string): string {
 	return emailParts[1];
 }
 
-export const isCloudUser = (): boolean => {
-	const { hostname } = window.location;
-
-	return hostname?.endsWith('signoz.cloud');
-};
-
-export const isEECloudUser = (): boolean => {
-	const { hostname } = window.location;
-
-	return hostname?.endsWith('signoz.io');
-};
-
 export const checkVersionState = (
 	currentVersion: string,
 	latestVersion: string,
@@ -34,3 +23,6 @@ export const checkVersionState = (
 
 // list of forbidden tags to remove in dompurify
 export const FORBID_DOM_PURIFY_TAGS = ['img', 'form'];
+
+export const isFeatureKeys = (key: string): key is keyof typeof FeatureKeys =>
+	Object.keys(FeatureKeys).includes(key);

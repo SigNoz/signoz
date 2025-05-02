@@ -12,8 +12,7 @@ const manageCreditCardApi = async (
 ): Promise<SuccessResponse<CheckoutSuccessPayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.post('/portal', {
-			licenseKey: props.licenseKey,
-			returnURL: props.successURL,
+			url: props.url,
 		});
 
 		return {

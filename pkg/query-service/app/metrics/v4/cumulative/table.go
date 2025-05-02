@@ -3,8 +3,8 @@ package cumulative
 import (
 	"fmt"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 // PrepareMetricQueryCumulativeTable prepares the query to be used for fetching metrics
@@ -20,11 +20,16 @@ func PrepareMetricQueryCumulativeTable(start, end, step int64, mq *v3.BuilderQue
 	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
 	selectLabels := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
 
+	valueFilter := " WHERE isNaN(per_series_value) = 0"
+	if mq.MetricValueFilter != nil {
+		valueFilter += fmt.Sprintf(" AND per_series_value = %f", mq.MetricValueFilter.Value)
+	}
+
 	queryTmpl :=
 		"SELECT %s," +
 			" %s as value" +
 			" FROM (%s)" +
-			" WHERE isNaN(per_series_value) = 0" +
+			valueFilter +
 			" GROUP BY %s" +
 			" ORDER BY %s"
 

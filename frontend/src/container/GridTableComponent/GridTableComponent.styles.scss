@@ -1,0 +1,16 @@
+.long-text-tooltip {
+	max-width: 500px;
+	max-height: 500px;
+	overflow-y: auto;
+}
+
+.open-traces-button {
+	font-size: 11px;
+	border-radius: 4px;
+	border: none;
+	padding: 6px 8px;
+	cursor: pointer;
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}

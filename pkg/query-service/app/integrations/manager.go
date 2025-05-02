@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"time"
 
-	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type IntegrationAuthor struct {
@@ -32,14 +31,14 @@ type IntegrationSummary struct {
 }
 
 type IntegrationAssets struct {
-	Logs       LogsAssets        `json:"logs"`
-	Dashboards []dashboards.Data `json:"dashboards"`
+	Logs       LogsAssets            `json:"logs"`
+	Dashboards []types.DashboardData `json:"dashboards"`
 
-	Alerts []rules.PostableRule `json:"alerts"`
+	Alerts []ruletypes.PostableRule `json:"alerts"`
 }
 
 type LogsAssets struct {
-	Pipelines []logparsingpipeline.PostablePipeline `json:"pipelines"`
+	Pipelines []pipelinetypes.PostablePipeline `json:"pipelines"`
 }
 
 type IntegrationConfigStep struct {
@@ -105,16 +104,9 @@ type IntegrationsListItem struct {
 	IsInstalled bool `json:"is_installed"`
 }
 
-type InstalledIntegration struct {
-	IntegrationId string                     `json:"integration_id" db:"integration_id"`
-	Config        InstalledIntegrationConfig `json:"config_json" db:"config_json"`
-	InstalledAt   time.Time                  `json:"installed_at" db:"installed_at"`
-}
-type InstalledIntegrationConfig map[string]interface{}
-
 type Integration struct {
 	IntegrationDetails
-	Installation *InstalledIntegration `json:"installation"`
+	Installation *types.InstalledIntegration `json:"installation"`
 }
 
 type Manager struct {
@@ -122,8 +114,8 @@ type Manager struct {
 	installedIntegrationsRepo InstalledIntegrationsRepo
 }
 
-func NewManager(db *sqlx.DB) (*Manager, error) {
-	iiRepo, err := NewInstalledIntegrationsSqliteRepo(db)
+func NewManager(store sqlstore.SQLStore) (*Manager, error) {
+	iiRepo, err := NewInstalledIntegrationsSqliteRepo(store)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"could not init sqlite DB for installed integrations: %w", err,
@@ -142,6 +134,7 @@ type IntegrationsFilter struct {
 
 func (m *Manager) ListIntegrations(
 	ctx context.Context,
+	orgId string,
 	filter *IntegrationsFilter,
 	// Expected to have pagination over time.
 ) ([]IntegrationsListItem, *model.ApiError) {
@@ -152,22 +145,22 @@ func (m *Manager) ListIntegrations(
 		)
 	}
 
-	installed, apiErr := m.installedIntegrationsRepo.list(ctx)
+	installed, apiErr := m.installedIntegrationsRepo.list(ctx, orgId)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
 			apiErr, "could not fetch installed integrations",
 		)
 	}
-	installedIds := []string{}
+	installedTypes := []string{}
 	for _, ii := range installed {
-		installedIds = append(installedIds, ii.IntegrationId)
+		installedTypes = append(installedTypes, ii.Type)
 	}
 
 	result := []IntegrationsListItem{}
 	for _, ai := range available {
 		result = append(result, IntegrationsListItem{
 			IntegrationSummary: ai.IntegrationSummary,
-			IsInstalled:        slices.Contains(installedIds, ai.Id),
+			IsInstalled:        slices.Contains(installedTypes, ai.Id),
 		})
 	}
 
@@ -188,6 +181,7 @@ func (m *Manager) ListIntegrations(
 
 func (m *Manager) GetIntegration(
 	ctx context.Context,
+	orgId string,
 	integrationId string,
 ) (*Integration, *model.ApiError) {
 	integrationDetails, apiErr := m.getIntegrationDetails(
@@ -198,7 +192,7 @@ func (m *Manager) GetIntegration(
 	}
 
 	installation, apiErr := m.getInstalledIntegration(
-		ctx, integrationId,
+		ctx, orgId, integrationId,
 	)
 	if apiErr != nil {
 		return nil, apiErr
@@ -212,6 +206,7 @@ func (m *Manager) GetIntegration(
 
 func (m *Manager) GetIntegrationConnectionTests(
 	ctx context.Context,
+	orgId string,
 	integrationId string,
 ) (*IntegrationConnectionTests, *model.ApiError) {
 	integrationDetails, apiErr := m.getIntegrationDetails(
@@ -225,8 +220,9 @@ func (m *Manager) GetIntegrationConnectionTests(
 
 func (m *Manager) InstallIntegration(
 	ctx context.Context,
+	orgId string,
 	integrationId string,
-	config InstalledIntegrationConfig,
+	config types.InstalledIntegrationConfig,
 ) (*IntegrationsListItem, *model.ApiError) {
 	integrationDetails, apiErr := m.getIntegrationDetails(ctx, integrationId)
 	if apiErr != nil {
@@ -234,7 +230,7 @@ func (m *Manager) InstallIntegration(
 	}
 
 	_, apiErr = m.installedIntegrationsRepo.upsert(
-		ctx, integrationId, config,
+		ctx, orgId, integrationId, config,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
@@ -250,40 +246,45 @@ func (m *Manager) InstallIntegration(
 
 func (m *Manager) UninstallIntegration(
 	ctx context.Context,
+	orgId string,
 	integrationId string,
 ) *model.ApiError {
-	return m.installedIntegrationsRepo.delete(ctx, integrationId)
+	return m.installedIntegrationsRepo.delete(ctx, orgId, integrationId)
 }
 
 func (m *Manager) GetPipelinesForInstalledIntegrations(
 	ctx context.Context,
-) ([]logparsingpipeline.Pipeline, *model.ApiError) {
-	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx)
+	orgId string,
+) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
+	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx, orgId)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	pipelines := []logparsingpipeline.Pipeline{}
+	gettablePipelines := []pipelinetypes.GettablePipeline{}
 	for _, ii := range installedIntegrations {
 		for _, p := range ii.Assets.Logs.Pipelines {
-			pp := logparsingpipeline.Pipeline{
+			gettablePipelines = append(gettablePipelines, pipelinetypes.GettablePipeline{
 				// Alias is used for identifying integration pipelines. Id can't be used for this
 				// since versioning while saving pipelines requires a new id for each version
 				// to avoid altering history when pipelines are edited/reordered etc
-				Alias:       AliasForIntegrationPipeline(ii.Id, p.Alias),
-				Id:          uuid.NewString(),
-				OrderId:     p.OrderId,
-				Enabled:     p.Enabled,
-				Name:        p.Name,
-				Description: &p.Description,
-				Filter:      p.Filter,
-				Config:      p.Config,
-			}
-			pipelines = append(pipelines, pp)
+				StoreablePipeline: pipelinetypes.StoreablePipeline{
+					Alias: AliasForIntegrationPipeline(ii.Id, p.Alias),
+					Identifiable: types.Identifiable{
+						ID: valuer.GenerateUUID(),
+					},
+					OrderID:     p.OrderID,
+					Enabled:     p.Enabled,
+					Name:        p.Name,
+					Description: p.Description,
+				},
+				Filter: p.Filter,
+				Config: p.Config,
+			})
 		}
 	}
 
-	return pipelines, nil
+	return gettablePipelines, nil
 }
 
 func (m *Manager) dashboardUuid(integrationId string, dashboardId string) string {
@@ -305,14 +306,15 @@ func (m *Manager) parseDashboardUuid(dashboardUuid string) (
 
 func (m *Manager) GetInstalledIntegrationDashboardById(
 	ctx context.Context,
+	orgId string,
 	dashboardUuid string,
-) (*dashboards.Dashboard, *model.ApiError) {
+) (*types.Dashboard, *model.ApiError) {
 	integrationId, dashboardId, apiErr := m.parseDashboardUuid(dashboardUuid)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	integration, apiErr := m.GetIntegration(ctx, integrationId)
+	integration, apiErr := m.GetIntegration(ctx, orgId, integrationId)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -328,14 +330,18 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 			if id, ok := dId.(string); ok && id == dashboardId {
 				isLocked := 1
 				author := "integration"
-				return &dashboards.Dashboard{
-					Uuid:      m.dashboardUuid(integrationId, string(dashboardId)),
-					Locked:    &isLocked,
-					Data:      dd,
-					CreatedAt: integration.Installation.InstalledAt,
-					CreateBy:  &author,
-					UpdatedAt: integration.Installation.InstalledAt,
-					UpdateBy:  &author,
+				return &types.Dashboard{
+					UUID:   m.dashboardUuid(integrationId, string(dashboardId)),
+					Locked: &isLocked,
+					Data:   dd,
+					TimeAuditable: types.TimeAuditable{
+						CreatedAt: integration.Installation.InstalledAt,
+						UpdatedAt: integration.Installation.InstalledAt,
+					},
+					UserAuditable: types.UserAuditable{
+						CreatedBy: author,
+						UpdatedBy: author,
+					},
 				}, nil
 			}
 		}
@@ -348,13 +354,14 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 
 func (m *Manager) GetDashboardsForInstalledIntegrations(
 	ctx context.Context,
-) ([]dashboards.Dashboard, *model.ApiError) {
-	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx)
+	orgId string,
+) ([]types.Dashboard, *model.ApiError) {
+	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx, orgId)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	result := []dashboards.Dashboard{}
+	result := []types.Dashboard{}
 
 	for _, ii := range installedIntegrations {
 		for _, dd := range ii.Assets.Dashboards {
@@ -362,14 +369,18 @@ func (m *Manager) GetDashboardsForInstalledIntegrations(
 				if dashboardId, ok := dId.(string); ok {
 					isLocked := 1
 					author := "integration"
-					result = append(result, dashboards.Dashboard{
-						Uuid:      m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
-						Locked:    &isLocked,
-						Data:      dd,
-						CreatedAt: ii.Installation.InstalledAt,
-						CreateBy:  &author,
-						UpdatedAt: ii.Installation.InstalledAt,
-						UpdateBy:  &author,
+					result = append(result, types.Dashboard{
+						UUID:   m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
+						Locked: &isLocked,
+						Data:   dd,
+						TimeAuditable: types.TimeAuditable{
+							CreatedAt: ii.Installation.InstalledAt,
+							UpdatedAt: ii.Installation.InstalledAt,
+						},
+						UserAuditable: types.UserAuditable{
+							CreatedBy: author,
+							UpdatedBy: author,
+						},
 					})
 				}
 			}
@@ -410,10 +421,11 @@ func (m *Manager) getIntegrationDetails(
 
 func (m *Manager) getInstalledIntegration(
 	ctx context.Context,
+	orgId string,
 	integrationId string,
-) (*InstalledIntegration, *model.ApiError) {
+) (*types.InstalledIntegration, *model.ApiError) {
 	iis, apiErr := m.installedIntegrationsRepo.get(
-		ctx, []string{integrationId},
+		ctx, orgId, []string{integrationId},
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
@@ -430,32 +442,33 @@ func (m *Manager) getInstalledIntegration(
 
 func (m *Manager) getInstalledIntegrations(
 	ctx context.Context,
+	orgId string,
 ) (
 	map[string]Integration, *model.ApiError,
 ) {
-	installations, apiErr := m.installedIntegrationsRepo.list(ctx)
+	installations, apiErr := m.installedIntegrationsRepo.list(ctx, orgId)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	installedIds := utils.MapSlice(installations, func(i InstalledIntegration) string {
-		return i.IntegrationId
+	installedTypes := utils.MapSlice(installations, func(i types.InstalledIntegration) string {
+		return i.Type
 	})
-	integrationDetails, apiErr := m.availableIntegrationsRepo.get(ctx, installedIds)
+	integrationDetails, apiErr := m.availableIntegrationsRepo.get(ctx, installedTypes)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
 	result := map[string]Integration{}
 	for _, ii := range installations {
-		iDetails, exists := integrationDetails[ii.IntegrationId]
+		iDetails, exists := integrationDetails[ii.Type]
 		if !exists {
 			return nil, model.InternalError(fmt.Errorf(
-				"couldn't find integration details for %s", ii.IntegrationId,
+				"couldn't find integration details for %s", ii.Type,
 			))
 		}
 
-		result[ii.IntegrationId] = Integration{
+		result[ii.Type] = Integration{
 			Installation:       &ii,
 			IntegrationDetails: iDetails,
 		}

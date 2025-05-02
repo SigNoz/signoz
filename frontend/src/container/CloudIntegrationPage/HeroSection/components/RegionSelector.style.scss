@@ -1,0 +1,21 @@
+.select-all {
+	margin-bottom: 20px;
+}
+
+.regions-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+	gap: 8px;
+}
+
+.region-group {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.region-group label {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}

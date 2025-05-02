@@ -1,9 +1,11 @@
 import '../GantChart.styles.scss';
 
 import { Popover, Typography } from 'antd';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useTimezone } from 'providers/Timezone';
 import { useEffect } from 'react';
 import { toFixed } from 'utils/toFixed';
 
@@ -32,13 +34,17 @@ function Span(props: SpanLengthProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { time, timeUnitName } = convertTimeToRelevantUnit(inMsCount);
 
+	const { timezone } = useTimezone();
+
 	useEffect(() => {
 		document.documentElement.scrollTop = document.documentElement.clientHeight;
 		document.documentElement.scrollLeft = document.documentElement.clientWidth;
 	}, []);
 
 	const getContent = (): JSX.Element => {
-		const timeStamp = dayjs(startTime).format('h:mm:ss:SSS A');
+		const timeStamp = dayjs(startTime)
+			.tz(timezone.value)
+			.format(DATE_TIME_FORMATS.TIME_UTC_MS);
 		const startTimeInMs = startTime - globalStart;
 		return (
 			<div>

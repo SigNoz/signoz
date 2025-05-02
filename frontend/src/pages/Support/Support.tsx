@@ -5,25 +5,21 @@ import updateCreditCardApi from 'api/billing/checkout';
 import logEvent from 'api/common/logEvent';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
-import useFeatureFlags from 'hooks/useFeatureFlag';
-import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import {
 	Book,
-	Cable,
-	Calendar,
 	CreditCard,
 	Github,
 	MessageSquare,
 	Slack,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
-import { License } from 'types/api/licenses/def';
 
 const { Title, Text } = Typography;
 
@@ -78,29 +74,12 @@ const supportChannels = [
 		url: '',
 		btnText: 'Launch chat',
 	},
-	{
-		key: 'schedule_call',
-		name: 'Schedule a call',
-		icon: <Calendar />,
-		title: 'Schedule a call with the founders.',
-		url: 'https://calendly.com/pranay-signoz/signoz-intro-calls',
-		btnText: 'Schedule call',
-	},
-	{
-		key: 'slack_connect',
-		name: 'Slack Connect',
-		icon: <Cable />,
-		title: 'Get a dedicated support channel for your team.',
-		url: '',
-		btnText: 'Request Slack connect',
-	},
 ];
 
 export default function Support(): JSX.Element {
 	const history = useHistory();
 	const { notifications } = useNotifications();
-	const { data: licenseData, isFetching } = useLicense();
-	const [activeLicense, setActiveLicense] = useState<License | null>(null);
+	const { trialInfo, featureFlags } = useAppContext();
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
 		false,
 	);
@@ -122,35 +101,12 @@ export default function Support(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const handleSlackConnectRequest = (): void => {
-		const recipient = 'support@signoz.io';
-		const subject = 'Slack Connect Request';
-		const body = `I'd like to request a dedicated Slack Connect channel for me and my team. Users (emails) to include besides mine:`;
-
-		// Create the mailto link
-		const mailtoLink = `mailto:${recipient}?subject=${encodeURIComponent(
-			subject,
-		)}&body=${encodeURIComponent(body)}`;
-
-		// Open the default email client
-		window.location.href = mailtoLink;
-	};
-
 	const isPremiumChatSupportEnabled =
-		useFeatureFlags(FeatureKeys.PREMIUM_SUPPORT)?.active || false;
+		featureFlags?.find((flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT)
+			?.active || false;
 
 	const showAddCreditCardModal =
-		!isPremiumChatSupportEnabled &&
-		!licenseData?.payload?.trialConvertedToSubscription;
-
-	useEffect(() => {
-		const activeValidLicense =
-			licenseData?.payload?.licenses?.find(
-				(license) => license.isCurrent === true,
-			) || null;
-
-		setActiveLicense(activeValidLicense);
-	}, [licenseData, isFetching]);
+		!isPremiumChatSupportEnabled && !trialInfo?.trialConvertedToSubscription;
 
 	const handleBillingOnSuccess = (
 		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
@@ -187,9 +143,7 @@ export default function Support(): JSX.Element {
 		});
 
 		updateCreditCard({
-			licenseKey: activeLicense?.key || '',
-			successURL: window.location.href,
-			cancelURL: window.location.href,
+			url: window.location.origin,
 		});
 	};
 
@@ -214,14 +168,10 @@ export default function Support(): JSX.Element {
 			case channelsMap.documentation:
 			case channelsMap.github:
 			case channelsMap.slack_community:
-			case channelsMap.schedule_call:
 				handleChannelWithRedirects(channel.url);
 				break;
 			case channelsMap.chat:
 				handleChat();
-				break;
-			case channelsMap.slack_connect:
-				handleSlackConnectRequest();
 				break;
 			default:
 				handleChannelWithRedirects('https://signoz.io/slack');

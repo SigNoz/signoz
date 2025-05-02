@@ -21,6 +21,7 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
+	defaultLogsSelectedColumns,
 	defaultOptionsQuery,
 	defaultTraceSelectedColumns,
 	URL_OPTIONS,
@@ -169,6 +170,15 @@ const useOptionsMenu = ({
 
 	const searchedAttributeKeys = useMemo(() => {
 		if (searchedAttributesData?.payload?.attributeKeys?.length) {
+			if (dataSource === DataSource.LOGS) {
+				// add timestamp and body to the list of attributes
+				return [
+					...defaultLogsSelectedColumns,
+					...searchedAttributesData.payload.attributeKeys.filter(
+						(attribute) => attribute.key !== 'body',
+					),
+				];
+			}
 			return searchedAttributesData.payload.attributeKeys;
 		}
 		if (dataSource === DataSource.TRACES) {
@@ -198,12 +208,17 @@ const useOptionsMenu = ({
 	);
 
 	const optionsFromAttributeKeys = useMemo(() => {
-		const filteredAttributeKeys = searchedAttributeKeys.filter(
-			(item) => item.key !== 'body',
-		);
+		const filteredAttributeKeys = searchedAttributeKeys.filter((item) => {
+			// For other data sources, only filter out 'body' if it exists
+			if (dataSource !== DataSource.LOGS) {
+				return item.key !== 'body';
+			}
+			// For LOGS, keep all keys
+			return true;
+		});
 
 		return getOptionsFromKeys(filteredAttributeKeys, selectedColumnKeys);
-	}, [searchedAttributeKeys, selectedColumnKeys]);
+	}, [dataSource, searchedAttributeKeys, selectedColumnKeys]);
 
 	const handleRedirectWithOptionsData = useCallback(
 		(newQueryData: OptionsQuery) => {

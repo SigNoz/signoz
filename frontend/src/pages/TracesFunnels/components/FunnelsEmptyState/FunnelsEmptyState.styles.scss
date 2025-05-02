@@ -1,0 +1,82 @@
+.funnels-empty {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 24px;
+		padding: 105px 172px;
+		border-radius: 6px;
+		border: 1px dashed var(--bg-slate-500);
+	}
+
+	&__header {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		line-height: 18px;
+	}
+	&__icon {
+		height: 32px;
+		width: 32px;
+	}
+
+	&__title {
+		color: var(--bg-vanilla-100);
+		font-size: 14px;
+		font-weight: 500;
+		letter-spacing: -0.07px;
+	}
+
+	&__subtitle {
+		color: var(--bg-vanilla-400);
+		font-size: 14px;
+		font-weight: 400;
+		letter-spacing: -0.07px;
+	}
+
+	&__actions {
+		display: flex;
+		gap: 24px;
+		align-items: center;
+		width: 100%;
+	}
+
+	&__new-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		background: var(--bg-robin-500);
+		border: none;
+		width: 153px;
+		height: 32px;
+
+		&:hover {
+			background: var(--bg-robin-600);
+		}
+	}
+}
+
+.lightMode {
+	.funnels-empty {
+		&__content {
+			border: 1px dashed var(--bg-vanilla-400);
+		}
+
+		&__icon {
+			color: var(--bg-ink-500);
+		}
+
+		&__title {
+			color: var(--bg-ink-500);
+		}
+
+		&__subtitle {
+			color: var(--bg-ink-400);
+		}
+	}
+}

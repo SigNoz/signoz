@@ -5,13 +5,14 @@ import logEvent from 'api/common/logEvent';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
 import { ResizeTable } from 'components/ResizeTable';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getNanoSeconds } from 'container/AllError/utils';
-import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { urlKey } from 'pages/ErrorDetails/utils';
+import { useTimezone } from 'providers/Timezone';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -103,8 +104,6 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		}
 	};
 
-	const timeStamp = dayjs(errorDetail.timestamp);
-
 	const data: { key: string; value: string }[] = Object.keys(errorDetail)
 		.filter((e) => !keyToExclude.includes(e))
 		.map((key) => ({
@@ -136,6 +135,8 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
 	return (
 		<>
 			<Typography>{errorDetail.exceptionType}</Typography>
@@ -145,7 +146,12 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			<EventContainer>
 				<div>
 					<Typography>Event {errorDetail.errorId}</Typography>
-					<Typography>{timeStamp.format('MMM DD YYYY hh:mm:ss A')}</Typography>
+					<Typography>
+						{formatTimezoneAdjustedTimestamp(
+							errorDetail.timestamp,
+							DATE_TIME_FORMATS.UTC_FULL,
+						)}
+					</Typography>
 				</div>
 				<div>
 					<Space align="end" direction="horizontal">

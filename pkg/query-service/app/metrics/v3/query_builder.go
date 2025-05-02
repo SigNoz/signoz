@@ -5,17 +5,16 @@ import (
 	"strings"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
-type Options struct {
-	PreferRPM bool
-}
+type Options struct{}
 
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
 	v3.AggregateOperatorP05:         0.05,
@@ -61,7 +60,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string, erro
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli < %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name IN %s AND unix_milli >= %d AND unix_milli < %d", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -216,6 +215,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string, erro
 // groupingSets returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
 func groupingSets(tags ...string) string {
+	tags = utils.AddBackTickToFormatTags(tags...)
 	withTs := append(tags, "ts")
 	return strings.Join(withTs, ", ")
 }
@@ -223,12 +223,14 @@ func groupingSets(tags ...string) string {
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
 func groupBy(tags ...string) string {
+	tags = utils.AddBackTickToFormatTags(tags...)
 	tags = append(tags, "ts")
 	return strings.Join(tags, ",")
 }
 
 // groupSelect returns a string of comma separated tags for select clause
 func groupSelect(tags ...string) string {
+	tags = utils.AddBackTickToFormatTags(tags...)
 	groupTags := strings.Join(tags, ",")
 	if len(tags) != 0 {
 		groupTags += ", "
@@ -269,11 +271,13 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 		for _, item := range items {
 			if item.ColumnName == tag {
 				found = true
+				item.ColumnName = utils.AddBackTickToFormatTag(item.ColumnName)
 				orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
 				break
 			}
 		}
 		if !found {
+			tag = utils.AddBackTickToFormatTag(tag)
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
 		}
 	}
@@ -335,6 +339,10 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 
 	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, *mq)
 
+	if valFilter := metrics.AddMetricValueFilter(mq); valFilter != nil {
+		mq.MetricValueFilter = valFilter
+	}
+
 	// if the aggregate operator is a histogram quantile, and user has not forgotten
 	// the le tag in the group by then add the le tag to the group by
 	if mq.AggregateOperator == v3.AggregateOperatorHistQuant50 ||
@@ -377,27 +385,8 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 			query, err = buildMetricQuery(start, end, mq.StepInterval, mq)
 		}
 	}
-
 	if err != nil {
 		return "", err
-	}
-
-	if options.PreferRPM && (mq.AggregateOperator == v3.AggregateOperatorRate ||
-		mq.AggregateOperator == v3.AggregateOperatorSumRate ||
-		mq.AggregateOperator == v3.AggregateOperatorAvgRate ||
-		mq.AggregateOperator == v3.AggregateOperatorMaxRate ||
-		mq.AggregateOperator == v3.AggregateOperatorMinRate ||
-		mq.AggregateOperator == v3.AggregateOperatorRateSum ||
-		mq.AggregateOperator == v3.AggregateOperatorRateAvg ||
-		mq.AggregateOperator == v3.AggregateOperatorRateMax ||
-		mq.AggregateOperator == v3.AggregateOperatorRateMin) {
-		var selectLabels string
-		if mq.AggregateOperator == v3.AggregateOperatorRate {
-			selectLabels = "fullLabels,"
-		} else {
-			selectLabels = groupSelectAttributeKeyTags(mq.GroupBy...)
-		}
-		query = `SELECT ` + selectLabels + ` ts, ceil(value * 60) as value FROM (` + query + `)`
 	}
 
 	if having(mq.Having) != "" {

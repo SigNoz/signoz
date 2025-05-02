@@ -1,10 +1,14 @@
-import { Typography } from 'antd';
+import './TraceDetail.styles.scss';
+
+import { Button, Typography } from 'antd';
 import getTraceItem from 'api/trace/getTraceItem';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import TraceDetailContainer from 'container/TraceDetail';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo } from 'react';
+import { Undo } from 'lucide-react';
+import TraceDetailsPage from 'pages/TraceDetailV2';
+import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
 import { Props as TraceDetailProps } from 'types/api/trace/getTraceItem';
@@ -13,6 +17,7 @@ import { noEventMessage } from './constants';
 
 function TraceDetail(): JSX.Element {
 	const { id } = useParams<TraceDetailProps>();
+	const [showNewTraceDetails, setShowNewTraceDetails] = useState<boolean>(false);
 	const urlQuery = useUrlQuery();
 	const { spanId, levelUp, levelDown } = useMemo(
 		() => ({
@@ -31,6 +36,10 @@ function TraceDetail(): JSX.Element {
 		},
 	);
 
+	if (showNewTraceDetails) {
+		return <TraceDetailsPage />;
+	}
+
 	if (traceDetailResponse?.error || error || isError) {
 		return (
 			<Typography>
@@ -47,7 +56,21 @@ function TraceDetail(): JSX.Element {
 		return <NotFound text={noEventMessage} />;
 	}
 
-	return <TraceDetailContainer response={traceDetailResponse.payload} />;
+	return (
+		<div className="old-trace-container">
+			<div className="top-header">
+				<Button
+					onClick={(): void => setShowNewTraceDetails(true)}
+					icon={<Undo size={14} />}
+					type="text"
+					className="new-cta-btn"
+				>
+					New Trace Detail
+				</Button>
+			</div>
+			<TraceDetailContainer response={traceDetailResponse.payload} />;
+		</div>
+	);
 }
 
 export default TraceDetail;

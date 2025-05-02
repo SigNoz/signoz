@@ -251,6 +251,9 @@ func (agent *Agent) processStatusUpdate(
 	if agentDescrChanged {
 		// Agent description is changed.
 
+		//Get the default org ID
+		// agent.
+
 		// We need to recalculate the config.
 		configChanged = agent.updateRemoteConfig(configProvider)
 	}
@@ -359,5 +362,5 @@ func (agent *Agent) SendToAgent(msg *protobufs.ServerToAgent) {
 	agent.connMutex.Lock()
 	defer agent.connMutex.Unlock()
 
-	agent.conn.Send(context.Background(), msg)
+	_ = agent.conn.Send(context.Background(), msg)
 }

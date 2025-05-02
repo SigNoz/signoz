@@ -5,7 +5,6 @@ import { baseAutoCompleteIdKeysOrder } from 'constants/queryBuilder';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import createQueryParams from 'lib/createQueryParams';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-// ** Types
 import { IGetAttributeKeysPayload } from 'types/api/queryBuilder/getAttributeKeys';
 import {
 	BaseAutocompleteData,

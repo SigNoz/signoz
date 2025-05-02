@@ -8,14 +8,14 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { SaveNewViewHandlerProps } from './types';
 
-export const getRandomColor = (): Color => {
+export const getRandomColor = (): string => {
 	const colorKeys = Object.keys(Color) as (keyof typeof Color)[];
 	const randomKey = colorKeys[Math.floor(Math.random() * colorKeys.length)];
 	return Color[randomKey];
 };
 
 export const DATASOURCE_VS_ROUTES: Record<DataSource, string> = {
-	[DataSource.METRICS]: '',
+	[DataSource.METRICS]: ROUTES.METRICS_EXPLORER,
 	[DataSource.TRACES]: ROUTES.TRACES_EXPLORER,
 	[DataSource.LOGS]: ROUTES.LOGS_EXPLORER,
 };

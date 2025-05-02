@@ -33,7 +33,7 @@ export const loginApi = async (page: Page): Promise<void> => {
 				body: JSON.stringify(loginApiResponse),
 			}),
 		),
-		page.route(`**/org/${userLoginResponse.orgId}`, (route) =>
+		page.route(`**/orgs/me`, (route) =>
 			route.fulfill({
 				status: 200,
 				body: JSON.stringify(updateOrgResponse),
