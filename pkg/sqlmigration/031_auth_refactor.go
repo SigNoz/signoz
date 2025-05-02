@@ -56,7 +56,7 @@ type newUser31 struct {
 	Email             string `bun:"email,type:text,notnull,unique:org_email" json:"email"`
 	ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
 	Role              string `bun:"role,type:text,notnull" json:"role"`
-	OrgID             string `bun:"org_id,type:text,notnull,unique:org_email" json:"orgId"`
+	OrgID             string `bun:"org_id,type:text,notnull,unique:org_email,references:org(id),on_delete:CASCADE" json:"orgId"`
 }
 
 type FactorPassword31 struct {
@@ -66,7 +66,7 @@ type FactorPassword31 struct {
 	types.TimeAuditable
 	Password  string `bun:"password,type:text,notnull" json:"password"`
 	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
-	UserID    string `bun:"user_id,type:text,notnull,unique" json:"userId"`
+	UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id),on_delete:CASCADE" json:"userId"`
 }
 
 type existingResetPasswordRequest31 struct {

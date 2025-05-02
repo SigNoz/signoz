@@ -104,6 +104,7 @@ func (s *store) CreateUserWithPassword(ctx context.Context, user *types.User, pa
 		return nil, s.sqlstore.WrapAlreadyExistsErrf(err, types.ErrUserAlreadyExists, "user with email: %s already exists in org: %s", user.Email, user.OrgID)
 	}
 
+	password.UserID = user.ID.StringValue()
 	if _, err := tx.NewInsert().
 		Model(password).
 		Exec(ctx); err != nil {
@@ -248,6 +249,9 @@ func (s *store) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, u
 	}()
 
 	factorPassword := &types.FactorPassword{
+		Identifiable: types.Identifiable{
+			ID: valuer.MustNewUUID(userID),
+		},
 		UserID:   userID,
 		Password: password,
 	}
