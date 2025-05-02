@@ -2,7 +2,6 @@ package memorycache
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -48,7 +47,7 @@ func (c *provider) Get(_ context.Context, orgID valuer.UUID, cacheKey string, de
 	// check if the destination value is settable
 	dstv := reflect.ValueOf(dest)
 	if !dstv.Elem().CanSet() {
-		return fmt.Errorf("destination value is not settable, %s", dstv.Elem())
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "destination value is not settable, %s", dstv.Elem())
 	}
 
 	data, found := c.cc.Get(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
@@ -59,7 +58,7 @@ func (c *provider) Get(_ context.Context, orgID valuer.UUID, cacheKey string, de
 	// check the type compatbility between the src and dest
 	srcv := reflect.ValueOf(data)
 	if !srcv.Type().AssignableTo(dstv.Type()) {
-		return fmt.Errorf("src type is not assignable to dst type")
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "src type is not assignable to dst type")
 	}
 
 	// set the value to from src to dest
