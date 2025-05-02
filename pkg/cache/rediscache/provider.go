@@ -9,7 +9,9 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/cache"
+	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
@@ -42,19 +44,19 @@ func WithClient(client *redis.Client) *provider {
 	return &provider{client: client}
 }
 
-func (c *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data cache.CacheableEntity, ttl time.Duration) error {
+func (c *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) error {
 	return c.client.Set(ctx, strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), data, ttl).Err()
 }
 
-func (c *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cache.CacheableEntity, allowExpired bool) (cache.RetrieveStatus, error) {
+func (c *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable, allowExpired bool) error {
 	err := c.client.Get(ctx, strings.Join([]string{orgID.StringValue(), cacheKey}, "::")).Scan(dest)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return cache.RetrieveStatusKeyMiss, nil
+			return errorsV2.Newf(errorsV2.TypeNotFound, errorsV2.CodeNotFound, "key miss")
 		}
-		return cache.RetrieveStatusError, err
+		return err
 	}
-	return cache.RetrieveStatusHit, nil
+	return nil
 }
 
 func (c *provider) Delete(ctx context.Context, orgID valuer.UUID, cacheKey string) {

@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	_cache "github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/go-redis/redismock/v8"
 	"github.com/stretchr/testify/assert"
@@ -63,17 +62,12 @@ func TestGet(t *testing.T) {
 	assert.NoError(t, err)
 
 	mock.ExpectGet(strings.Join([]string{orgID.StringValue(), "key"}, "::")).SetVal(string(data))
-	retrieveStatus, err := cache.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
+	err = cache.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	if retrieveStatus != _cache.RetrieveStatusHit {
-		t.Errorf("expected status %d, got %d", _cache.RetrieveStatusHit, retrieveStatus)
-	}
-
 	assert.Equal(t, storeCacheableEntity, retrieveCacheableEntity)
-
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}

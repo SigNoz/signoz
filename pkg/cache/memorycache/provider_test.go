@@ -112,9 +112,8 @@ func TestRetrieveWithNilPointer(t *testing.T) {
 
 	var retrieveCacheableEntity *CacheableEntity
 
-	retrieveStatus, err := c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
+	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
 	assert.Error(t, err)
-	assert.Equal(t, retrieveStatus, cache.RetrieveStatusError)
 }
 
 func TestRetrieveWitNonPointer(t *testing.T) {
@@ -134,9 +133,8 @@ func TestRetrieveWitNonPointer(t *testing.T) {
 
 	var retrieveCacheableEntity CacheableEntity
 
-	retrieveStatus, err := c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
+	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
 	assert.Error(t, err)
-	assert.Equal(t, retrieveStatus, cache.RetrieveStatusError)
 }
 
 func TestRetrieveWithDifferentTypes(t *testing.T) {
@@ -155,9 +153,8 @@ func TestRetrieveWithDifferentTypes(t *testing.T) {
 	assert.NoError(t, c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second))
 
 	retrieveCacheableEntity := new(DCacheableEntity)
-	retrieveStatus, err := c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
+	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
 	assert.Error(t, err)
-	assert.Equal(t, retrieveStatus, cache.RetrieveStatusError)
 }
 
 func TestRetrieveWithSameTypes(t *testing.T) {
@@ -176,9 +173,8 @@ func TestRetrieveWithSameTypes(t *testing.T) {
 	assert.NoError(t, c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second))
 
 	retrieveCacheableEntity := new(CacheableEntity)
-	retrieveStatus, err := c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
+	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, cache.RetrieveStatusHit)
 	assert.Equal(t, storeCacheableEntity, retrieveCacheableEntity)
 }
 
@@ -200,9 +196,8 @@ func TestRemove(t *testing.T) {
 	assert.NoError(t, c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second))
 	c.Delete(context.Background(), orgID, "key")
 
-	retrieveStatus, err := c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
+	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, cache.RetrieveStatusKeyMiss)
 	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
 }
 
@@ -225,14 +220,12 @@ func TestBulkRemove(t *testing.T) {
 	assert.NoError(t, c.Set(context.Background(), orgID, "key2", storeCacheableEntity, 10*time.Second))
 	c.DeleteMany(context.Background(), orgID, []string{"key1", "key2"})
 
-	retrieveStatus, err := c.Get(context.Background(), orgID, "key1", retrieveCacheableEntity, false)
+	err = c.Get(context.Background(), orgID, "key1", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, cache.RetrieveStatusKeyMiss)
 	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
 
-	retrieveStatus, err = c.Get(context.Background(), orgID, "key2", retrieveCacheableEntity, false)
+	err = c.Get(context.Background(), orgID, "key2", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, cache.RetrieveStatusKeyMiss)
 	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
 }
 
@@ -252,9 +245,8 @@ func TestCache(t *testing.T) {
 	}
 	retrieveCacheableEntity := new(CacheableEntity)
 	assert.NoError(t, c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second))
-	retrieveStatus, err := c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
+	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, cache.RetrieveStatusHit)
 	assert.Equal(t, storeCacheableEntity, retrieveCacheableEntity)
 	c.Delete(context.Background(), orgID, "key")
 }

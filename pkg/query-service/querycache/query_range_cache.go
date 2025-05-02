@@ -232,7 +232,7 @@ func (q *queryCache) FindMissingTimeRanges(orgID valuer.UUID, start, end, step i
 
 func (q *queryCache) getCachedSeriesData(orgID valuer.UUID, cacheKey string) []*CachedSeriesData {
 	cacheableSeriesData := new(CacheableSeriesData)
-	_, err := q.cache.Get(context.TODO(), orgID, cacheKey, cacheableSeriesData, true)
+	err := q.cache.Get(context.TODO(), orgID, cacheKey, cacheableSeriesData, true)
 	if err != nil {
 		return nil
 	}
@@ -297,7 +297,7 @@ func (q *queryCache) MergeWithCachedSeriesDataV2(orgID valuer.UUID, cacheKey str
 	}
 
 	cacheableSeriesData := new(CacheableSeriesData)
-	_, err := q.cache.Get(context.TODO(), orgID, cacheKey, cacheableSeriesData, true)
+	err := q.cache.Get(context.TODO(), orgID, cacheKey, cacheableSeriesData, true)
 	if err != nil {
 		return nil
 	}
