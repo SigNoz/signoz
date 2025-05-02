@@ -34,6 +34,7 @@ var (
 	SignalTraces        = Signal{valuer.NewString("traces")}
 	SignalLogs          = Signal{valuer.NewString("logs")}
 	SignalApiMonitoring = Signal{valuer.NewString("api_monitoring")}
+	SignalExceptions    = Signal{valuer.NewString("exceptions")}
 )
 
 // NewSignal creates a Signal from a string
@@ -45,6 +46,8 @@ func NewSignal(s string) (Signal, error) {
 		return SignalLogs, nil
 	case "api_monitoring":
 		return SignalApiMonitoring, nil
+	case "exceptions":
+		return SignalExceptions, nil
 	default:
 		return Signal{}, errors.New(errors.TypeInternal, errors.CodeInternal, "invalid signal: "+s)
 	}
@@ -134,6 +137,7 @@ func NewSignalFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFi
 // NewDefaultQuickFilter generates default filters for all supported signals
 func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 	tracesFilters := []map[string]interface{}{
+		{"key": "duration_nano", "dataType": "float64", "type": "tag"},
 		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
 		{"key": "hasError", "dataType": "bool", "type": "tag"},
 		{"key": "serviceName", "dataType": "string", "type": "tag"},
@@ -164,6 +168,16 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 		{"key": "rpcMethod", "dataType": "string", "type": "tag"},
 	}
 
+	exceptionsFilters := []map[string]interface{}{
+		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
+		{"key": "serviceName", "dataType": "string", "type": "tag"},
+		{"key": "host.name", "dataType": "string", "type": "resource"},
+		{"key": "k8s.cluster.name", "dataType": "string", "type": "tag"},
+		{"key": "k8s.deployment.name", "dataType": "string", "type": "resource"},
+		{"key": "k8s.namespace.name", "dataType": "string", "type": "tag"},
+		{"key": "k8s.pod.name", "dataType": "string", "type": "tag"},
+	}
+
 	tracesJSON, err := json.Marshal(tracesFilters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal traces filters: %w", err)
@@ -177,6 +191,10 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 	apiMonitoringJSON, err := json.Marshal(apiMonitoringFilters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal API monitoring filters: %w", err)
+	}
+	exceptionsJSON, err := json.Marshal(exceptionsFilters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal exceptions filters: %w", err)
 	}
 
 	return []*StorableQuickFilter{
@@ -203,6 +221,14 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			OrgID:  orgID,
 			Filter: string(apiMonitoringJSON),
 			Signal: SignalApiMonitoring,
+		},
+		{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			OrgID:  orgID,
+			Filter: string(exceptionsJSON),
+			Signal: SignalExceptions,
 		},
 	}, nil
 }
