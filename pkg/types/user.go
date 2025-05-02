@@ -45,7 +45,7 @@ type UserStore interface {
 }
 
 type User struct {
-	bun.BaseModel `bun:"table:users"`
+	bun.BaseModel `bun:"table:user"`
 
 	Identifiable
 	TimeAuditable

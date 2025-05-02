@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"runtime/debug"
 	"testing"
 	"time"
@@ -34,7 +35,7 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-var jwt = authtypes.NewJWT("secret", 1*time.Hour, 2*time.Hour)
+var jwt = authtypes.NewJWT(os.Getenv("SIGNOZ_JWT_SECRET"), 1*time.Hour, 2*time.Hour)
 
 func NewMockClickhouseReader(t *testing.T, testDB sqlstore.SQLStore) (*clickhouseReader.ClickHouseReader, mockhouse.ClickConnMockCommon) {
 	require.NotNil(t, testDB)

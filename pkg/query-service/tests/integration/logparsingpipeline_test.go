@@ -506,6 +506,7 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		testUser:     user,
 		apiHandler:   apiHandler,
 		agentConfMgr: agentConfMgr,
+		userModule:   userModule,
 	}
 }
 
