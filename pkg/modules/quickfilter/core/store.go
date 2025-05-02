@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"database/sql"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/quickfiltertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -50,7 +51,7 @@ func (s *store) GetBySignal(ctx context.Context, orgID valuer.UUID, signal strin
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, s.store.WrapNotFoundErrf(err, errors.CodeNotFound, "No rows found for org_id: "+orgID.StringValue()+" signal: "+signal)
 		}
 		return nil, err
 	}

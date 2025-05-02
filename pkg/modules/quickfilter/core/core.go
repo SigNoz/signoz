@@ -86,14 +86,22 @@ func (u *usecase) UpdateQuickFilters(ctx context.Context, orgID valuer.UUID, sig
 
 	var filter *quickfiltertypes.StorableQuickFilter
 	if existingFilter != nil {
-		filter = quickfiltertypes.UpdateExistingFilter(existingFilter, filterJSON)
+		// Update in place
+		if err := existingFilter.Update(filterJSON); err != nil {
+			return errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "error updating existing filter")
+		}
+		filter = existingFilter
 	} else {
-		filter = quickfiltertypes.CreateNewFilter(orgID, signal, filterJSON)
+		// Create new
+		filter, err = quickfiltertypes.NewStorableQuickFilter(orgID, signal, filterJSON)
+		if err != nil {
+			return errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "error creating new filter")
+		}
 	}
 
-	err = u.store.Upsert(ctx, filter)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error updating filters for signal: %s", signal.StringValue()))
+	// Persist filter
+	if err := u.store.Upsert(ctx, filter); err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error upserting filter for signal: %s", signal.StringValue()))
 	}
 
 	return nil
