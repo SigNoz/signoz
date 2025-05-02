@@ -50,17 +50,19 @@ function MetricsTable({
 
 	return (
 		<div className="metrics-table-container">
-			<div className="metrics-table-title">
-				<Typography.Title level={4} className="metrics-table-title">
-					List View
-				</Typography.Title>
-				<Tooltip
-					title="The table displays all metrics in the selected time range. Each row represents a unique metric, and its metric name, and metadata like description, type, unit, and samples/timeseries cardinality observed in the selected time range."
-					placement="right"
-				>
-					<Info size={16} />
-				</Tooltip>
-			</div>
+			{!isError && !isLoading && (
+				<div className="metrics-table-title">
+					<Typography.Title level={4} className="metrics-table-title">
+						List View
+					</Typography.Title>
+					<Tooltip
+						title="The table displays all metrics in the selected time range. Each row represents a unique metric, and its metric name, and metadata like description, type, unit, and samples/timeseries cardinality observed in the selected time range."
+						placement="right"
+					>
+						<Info size={16} />
+					</Tooltip>
+				</div>
+			)}
 			<Table
 				loading={{
 					spinning: isLoading,
