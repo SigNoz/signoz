@@ -570,8 +570,10 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		t.Fatalf("could not create cloud integrations controller: %v", err)
 	}
 
-	modules := signoz.NewModules(testDB)
-	handlers := signoz.NewHandlers(modules)
+	userModule := impluser.NewModule(impluser.NewStore(testDB))
+	userHandler := impluser.NewHandler(userModule)
+	modules := signoz.NewModules(testDB, userModule)
+	handlers := signoz.NewHandlers(modules, userHandler)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,
@@ -596,7 +598,6 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	apiHandler.RegisterIntegrationRoutes(router, am)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
-	userModule := impluser.NewModule(impluser.NewStore(testDB))
 	user, apiErr := createTestUser(organizationModule, userModule)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)

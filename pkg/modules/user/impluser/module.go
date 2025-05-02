@@ -14,7 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type module struct {
+type Module struct {
 	store types.UserStore
 	JWT   *authtypes.JWT
 }
@@ -22,10 +22,10 @@ type module struct {
 func NewModule(store types.UserStore) user.Module {
 	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
 	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)
-	return &module{store: store, JWT: jwt}
+	return &Module{store: store, JWT: jwt}
 }
 
-func (m *module) SendUserTelemetry(user *types.User, firstRegistration bool) {
+func (m *Module) SendUserTelemetry(user *types.User, firstRegistration bool) {
 	data := map[string]interface{}{
 		"name":              user.HName,
 		"email":             user.Email,
@@ -37,27 +37,27 @@ func (m *module) SendUserTelemetry(user *types.User, firstRegistration bool) {
 }
 
 // CreateBulk implements invite.Module.
-func (module *module) CreateBulkInvite(ctx context.Context, invites []*types.Invite) error {
-	return module.store.CreateBulkInvite(ctx, invites)
+func (m *Module) CreateBulkInvite(ctx context.Context, invites []*types.Invite) error {
+	return m.store.CreateBulkInvite(ctx, invites)
 }
 
-func (module *module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
-	return module.store.ListInvite(ctx, orgID)
+func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
+	return m.store.ListInvite(ctx, orgID)
 }
 
-func (module *module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error {
-	return module.store.DeleteInvite(ctx, orgID, id)
+func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error {
+	return m.store.DeleteInvite(ctx, orgID, id)
 }
 
-func (module *module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
-	return module.store.GetInviteByToken(ctx, token)
+func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
+	return m.store.GetInviteByToken(ctx, token)
 }
 
-func (module *module) GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*types.Invite, error) {
-	return module.store.GetInviteByEmailInOrg(ctx, orgID, email)
+func (m *Module) GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*types.Invite, error) {
+	return m.store.GetInviteByEmailInOrg(ctx, orgID, email)
 }
 
-func (m *module) CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error) {
+func (m *Module) CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error) {
 
 	user, err := m.store.CreateUserWithPassword(ctx, user, password)
 	if err != nil {
@@ -67,31 +67,31 @@ func (m *module) CreateUserWithPassword(ctx context.Context, user *types.User, p
 	return user, nil
 }
 
-func (m *module) CreateUser(ctx context.Context, user *types.User) error {
+func (m *Module) CreateUser(ctx context.Context, user *types.User) error {
 	return m.store.CreateUser(ctx, user)
 }
 
-func (m *module) GetUserByID(ctx context.Context, orgID string, id string) (*types.User, error) {
+func (m *Module) GetUserByID(ctx context.Context, orgID string, id string) (*types.User, error) {
 	return m.store.GetUserByID(ctx, orgID, id)
 }
 
-func (m *module) GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.User, error) {
+func (m *Module) GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.User, error) {
 	return m.store.GetUserByEmailInOrg(ctx, orgID, email)
 }
 
-func (m *module) GetUsersByEmail(ctx context.Context, email string) ([]*types.User, error) {
+func (m *Module) GetUsersByEmail(ctx context.Context, email string) ([]*types.User, error) {
 	return m.store.GetUsersByEmail(ctx, email)
 }
 
-func (m *module) ListUsers(ctx context.Context, orgID string) ([]*types.User, error) {
+func (m *Module) ListUsers(ctx context.Context, orgID string) ([]*types.User, error) {
 	return m.store.ListUsers(ctx, orgID)
 }
 
-func (m *module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error) {
+func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error) {
 	return m.store.UpdateUser(ctx, orgID, id, user)
 }
 
-func (m *module) DeleteUser(ctx context.Context, orgID string, id string) error {
+func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error {
 	user, err := m.store.GetUserByID(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func (m *module) DeleteUser(ctx context.Context, orgID string, id string) error 
 	return m.store.DeleteUser(ctx, orgID, user.ID.StringValue())
 }
 
-func (m *module) CreateResetPasswordToken(ctx context.Context, userID string) (*types.FactorResetPasswordRequest, error) {
+func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*types.FactorResetPasswordRequest, error) {
 	password, err := m.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -123,15 +123,15 @@ func (m *module) CreateResetPasswordToken(ctx context.Context, userID string) (*
 	return resetPasswordRequest, nil
 }
 
-func (m *module) GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error) {
+func (m *Module) GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error) {
 	return m.store.GetPasswordByUserID(ctx, id)
 }
 
-func (m *module) GetFactorResetPassword(ctx context.Context, token string) (*types.FactorResetPasswordRequest, error) {
+func (m *Module) GetFactorResetPassword(ctx context.Context, token string) (*types.FactorResetPasswordRequest, error) {
 	return m.store.GetFactorResetPassword(ctx, token)
 }
 
-func (m *module) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error {
+func (m *Module) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error {
 	hashedPassword, err := types.HashPassword(password)
 	if err != nil {
 		return err
@@ -140,7 +140,7 @@ func (m *module) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, 
 	return m.store.UpdatePasswordAndDeleteResetPasswordEntry(ctx, userID, hashedPassword)
 }
 
-func (m *module) UpdatePassword(ctx context.Context, userID string, password string) error {
+func (m *Module) UpdatePassword(ctx context.Context, userID string, password string) error {
 	hashedPassword, err := types.HashPassword(password)
 	if err != nil {
 		return err
@@ -148,7 +148,7 @@ func (m *module) UpdatePassword(ctx context.Context, userID string, password str
 	return m.store.UpdatePassword(ctx, userID, hashedPassword)
 }
 
-func (m *module) GetAuthenticatedUser(ctx context.Context, orgID, email, password, refreshToken string) (*types.User, error) {
+func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, password, refreshToken string) (*types.User, error) {
 	if refreshToken != "" {
 		// parse the refresh token
 		claims, err := m.JWT.Claims(refreshToken)
@@ -194,7 +194,7 @@ func (m *module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 	return dbUser, nil
 }
 
-func (m *module) GetJWTForUser(ctx context.Context, user *types.User) (types.GettableUserJwt, error) {
+func (m *Module) GetJWTForUser(ctx context.Context, user *types.User) (types.GettableUserJwt, error) {
 	role, err := types.NewRole(user.Role)
 	if err != nil {
 		return types.GettableUserJwt{}, err
@@ -216,4 +216,8 @@ func (m *module) GetJWTForUser(ctx context.Context, user *types.User) (types.Get
 		AccessJwtExpiry:  accessClaims.ExpiresAt.Unix(),
 		RefreshJwtExpiry: refreshClaims.ExpiresAt.Unix(),
 	}, nil
+}
+
+func (m *Module) CreateUserForSAMLRequest(ctx context.Context, email string) (*types.User, error) {
+	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SAML login is not supported")
 }

@@ -301,7 +301,9 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
-	modules := signoz.NewModules(testDB)
+	userModule := impluser.NewModule(impluser.NewStore(testDB))
+	userHandler := impluser.NewHandler(userModule)
+	modules := signoz.NewModules(testDB, userModule)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:       reader,
@@ -310,7 +312,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 		JWT:          jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
-			Handlers: signoz.NewHandlers(modules),
+			Handlers: signoz.NewHandlers(modules, userHandler),
 		},
 	})
 	if err != nil {
@@ -325,7 +327,6 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	apiHandler.RegisterQueryRangeV3Routes(router, am)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
-	userModule := impluser.NewModule(impluser.NewStore(testDB))
 	user, apiErr := createTestUser(organizationModule, userModule)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)

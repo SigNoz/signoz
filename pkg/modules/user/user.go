@@ -29,6 +29,7 @@ type Module interface {
 	// login
 	GetAuthenticatedUser(ctx context.Context, orgID, email, password, refreshToken string) (*types.User, error)
 	GetJWTForUser(ctx context.Context, user *types.User) (types.GettableUserJwt, error)
+	CreateUserForSAMLRequest(ctx context.Context, email string) (*types.User, error)
 
 	// remove this later
 	SendUserTelemetry(user *types.User, firstRegistration bool)

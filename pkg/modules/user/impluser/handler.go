@@ -386,16 +386,6 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusNoContent, nil)
 }
 
-type PrecheckResponse struct {
-	SSO             bool     `json:"sso"`
-	SsoUrl          string   `json:"ssoUrl"`
-	CanSelfRegister bool     `json:"canSelfRegister"`
-	IsUser          bool     `json:"isUser"`
-	SsoError        string   `json:"ssoError"`
-	SelectOrg       bool     `json:"selectOrg"`
-	Orgs            []string `json:"orgs"`
-}
-
 func (h *handler) LoginPrecheck(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -404,23 +394,23 @@ func (h *handler) LoginPrecheck(w http.ResponseWriter, r *http.Request) {
 	_ = r.URL.Query().Get("ref")
 
 	// assume user is valid unless proven otherwise and assign default values for rest of the fields
-	resp := &PrecheckResponse{IsUser: true, CanSelfRegister: false, SSO: false, SsoUrl: "", SsoError: ""}
+	resp := &types.GettableLoginPrecheck{IsUser: true, CanSelfRegister: false, SSO: false, SsoUrl: "", SsoError: ""}
 
 	// check if email is a valid user
-	userPayload, baseApiErr := h.module.GetUsersByEmail(ctx, email)
-	if baseApiErr != nil {
-		render.Error(w, baseApiErr)
+	users, err := h.module.GetUsersByEmail(ctx, email)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
-	if userPayload == nil {
+	if len(users) == 0 {
 		resp.IsUser = false
 	}
 
-	if len(userPayload) > 1 {
+	if len(users) > 1 {
 		resp.SelectOrg = true
-		resp.Orgs = make([]string, len(userPayload))
-		for i, user := range userPayload {
+		resp.Orgs = make([]string, len(users))
+		for i, user := range users {
 			resp.Orgs[i] = user.OrgID
 		}
 	}

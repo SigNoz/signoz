@@ -117,42 +117,20 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// routes available only in ee version
 
-	router.HandleFunc("/api/v1/featureFlags",
-		am.OpenAccess(ah.getFeatureFlags)).
-		Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/loginPrecheck",
-		am.OpenAccess(ah.precheckLogin)).
-		Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(ah.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
 
 	// paid plans specific routes
-	router.HandleFunc("/api/v1/complete/saml",
-		am.OpenAccess(ah.receiveSAML)).
-		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/complete/saml", am.OpenAccess(ah.receiveSAML)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/complete/google", am.OpenAccess(ah.receiveGoogleAuth)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/{orgId}/domains", am.AdminAccess(ah.listDomainsByOrg)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/complete/google",
-		am.OpenAccess(ah.receiveGoogleAuth)).
-		Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/orgs/{orgId}/domains",
-		am.AdminAccess(ah.listDomainsByOrg)).
-		Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/domains",
-		am.AdminAccess(ah.postDomain)).
-		Methods(http.MethodPost)
-
-	router.HandleFunc("/api/v1/domains/{id}",
-		am.AdminAccess(ah.putDomain)).
-		Methods(http.MethodPut)
-
-	router.HandleFunc("/api/v1/domains/{id}",
-		am.AdminAccess(ah.deleteDomain)).
-		Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/domains", am.AdminAccess(ah.postDomain)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(ah.putDomain)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(ah.deleteDomain)).Methods(http.MethodDelete)
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", am.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/register", am.OpenAccess(ah.registerUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", am.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
 
@@ -198,9 +176,8 @@ func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *mi
 
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	versionResponse := basemodel.GetVersionResponse{
-		Version:        version.Info.Version(),
-		EE:             "Y",
-		SetupCompleted: ah.SetupCompleted,
+		Version: version.Info.Version(),
+		EE:      "Y",
 	}
 
 	ah.WriteJSON(w, r, versionResponse)

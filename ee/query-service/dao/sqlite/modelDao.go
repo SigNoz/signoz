@@ -3,6 +3,8 @@ package sqlite
 import (
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	basedao "github.com/SigNoz/signoz/pkg/query-service/dao"
 	basedsql "github.com/SigNoz/signoz/pkg/query-service/dao/sqlite"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -12,7 +14,8 @@ import (
 
 type modelDao struct {
 	*basedsql.ModelDaoSqlite
-	flags baseint.FeatureLookup
+	flags      baseint.FeatureLookup
+	userModule user.Module
 }
 
 // SetFlagProvider sets the feature lookup provider
@@ -37,7 +40,8 @@ func InitDB(sqlStore sqlstore.SQLStore) (*modelDao, error) {
 	}
 	// set package variable so dependent base methods (e.g. AuthCache)  will work
 	basedao.SetDB(dao)
-	m := &modelDao{ModelDaoSqlite: dao}
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore))
+	m := &modelDao{ModelDaoSqlite: dao, userModule: userModule}
 	return m, nil
 }
 

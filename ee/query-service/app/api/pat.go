@@ -56,7 +56,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 }
 
 func validatePATRequest(req eeTypes.GettablePAT) error {
-	_, err := authtypes.NewRole(req.Role)
+	_, err := types.NewRole(req.Role)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the user
-	createdByUser, usererr := ah.AppDao().GetUser(r.Context(), existingPAT.UserID)
+	createdByUser, usererr := ah.Signoz.Modules.User.GetUserByID(r.Context(), claims.OrgID, existingPAT.UserID)
 	if usererr != nil {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, usererr.Error()))
 		return
@@ -167,7 +167,7 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the user
-	createdByUser, usererr := ah.AppDao().GetUser(r.Context(), existingPAT.UserID)
+	createdByUser, usererr := ah.Signoz.Modules.User.GetUserByID(r.Context(), claims.OrgID, existingPAT.UserID)
 	if usererr != nil {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, usererr.Error()))
 		return

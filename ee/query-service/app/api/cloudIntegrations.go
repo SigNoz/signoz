@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	eeTypes "github.com/SigNoz/signoz/ee/types"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -135,8 +134,8 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 
 	newPAT := eeTypes.NewGettablePAT(
 		integrationPATName,
-		authtypes.RoleViewer.String(),
-		integrationUser.ID,
+		types.RoleViewer.String(),
+		integrationUser.ID.String(),
 		0,
 	)
 	integrationPAT, err := ah.AppDao().CreatePAT(ctx, orgId, newPAT)
@@ -154,14 +153,13 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	cloudIntegrationUser := fmt.Sprintf("%s-integration", cloudProvider)
 	email := fmt.Sprintf("%s@signoz.io", cloudIntegrationUser)
 
-	// TODO(nitya): there should be orgId here
-	integrationUserResult, apiErr := ah.AppDao().GetUserByEmail(ctx, email)
-	if apiErr != nil {
-		return nil, basemodel.WrapApiError(apiErr, "couldn't look for integration user")
+	integrationUserResult, err := ah.Signoz.Modules.User.GetUserByEmailInOrg(ctx, orgId, email)
+	if err != nil {
+		return nil, basemodel.NotFoundError(fmt.Errorf("couldn't look for integration user: %w", err))
 	}
 
 	if integrationUserResult != nil {
-		return &integrationUserResult.User, nil
+		return integrationUserResult, nil
 	}
 
 	zap.L().Info(
@@ -169,29 +167,18 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 		zap.String("cloudProvider", cloudProvider),
 	)
 
-	newUser := &types.User{
-		ID:    uuid.New().String(),
-		Name:  cloudIntegrationUser,
-		Email: email,
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-		},
-		OrgID: orgId,
-	}
-
-	newUser.Role = authtypes.RoleViewer.String()
-
-	passwordHash, err := auth.PasswordHash(uuid.NewString())
+	newUser, err := types.NewUser(cloudIntegrationUser, email, types.RoleViewer.String(), orgId)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf(
-			"couldn't hash random password for cloud integration user: %w", err,
+			"couldn't create cloud integration user: %w", err,
 		))
 	}
-	newUser.Password = passwordHash
 
-	integrationUser, apiErr := ah.AppDao().CreateUser(ctx, newUser, false)
-	if apiErr != nil {
-		return nil, basemodel.WrapApiError(apiErr, "couldn't create cloud integration user")
+	password, err := types.NewFactorPassword(uuid.NewString())
+
+	integrationUser, err := ah.Signoz.Modules.User.CreateUserWithPassword(ctx, newUser, password)
+	if err != nil {
+		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration user: %w", err))
 	}
 
 	return integrationUser, nil

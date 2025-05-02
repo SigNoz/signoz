@@ -6,7 +6,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 )
@@ -17,10 +16,10 @@ type Modules struct {
 	User         user.Module
 }
 
-func NewModules(sqlstore sqlstore.SQLStore) Modules {
+func NewModules(sqlstore sqlstore.SQLStore, user user.Module) Modules {
 	return Modules{
 		Organization: implorganization.NewModule(implorganization.NewStore(sqlstore)),
 		Preference:   implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewDefaultPreferenceMap()),
-		User:         impluser.NewModule(impluser.NewStore(sqlstore)),
+		User:         user,
 	}
 }

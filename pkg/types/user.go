@@ -125,6 +125,10 @@ type FactorPassword struct {
 
 func NewFactorPassword(password string) (*FactorPassword, error) {
 
+	if password == "" && len(password) < 8 {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password must be at least 8 characters long")
+	}
+
 	hashedPassword, err := HashPassword(password)
 	if err != nil {
 		return nil, err
@@ -187,4 +191,14 @@ type GettableUserJwt struct {
 	AccessJwtExpiry  int64  `json:"accessJwtExpiry"`
 	RefreshJwt       string `json:"refreshJwt"`
 	RefreshJwtExpiry int64  `json:"refreshJwtExpiry"`
+}
+
+type GettableLoginPrecheck struct {
+	SSO             bool     `json:"sso"`
+	SsoUrl          string   `json:"ssoUrl"`
+	CanSelfRegister bool     `json:"canSelfRegister"`
+	IsUser          bool     `json:"isUser"`
+	SsoError        string   `json:"ssoError"`
+	SelectOrg       bool     `json:"selectOrg"`
+	Orgs            []string `json:"orgs"`
 }

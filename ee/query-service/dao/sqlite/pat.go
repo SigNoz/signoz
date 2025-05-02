@@ -25,7 +25,7 @@ func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p types.Gettable
 		return types.GettablePAT{}, model.InternalError(fmt.Errorf("PAT insertion failed"))
 	}
 
-	createdByUser, _ := m.GetUser(ctx, p.UserID)
+	createdByUser, _ := m.userModule.GetUserByID(ctx, orgID, p.UserID)
 	if createdByUser == nil {
 		p.CreatedByUser = types.PatUser{
 			NotFound: true,
@@ -33,8 +33,10 @@ func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p types.Gettable
 	} else {
 		p.CreatedByUser = types.PatUser{
 			User: ossTypes.User{
-				ID:    createdByUser.ID,
-				Name:  createdByUser.Name,
+				Identifiable: ossTypes.Identifiable{
+					ID: createdByUser.ID,
+				},
+				HName: createdByUser.HName,
 				Email: createdByUser.Email,
 				TimeAuditable: ossTypes.TimeAuditable{
 					CreatedAt: createdByUser.CreatedAt,
@@ -82,7 +84,7 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 			StorablePersonalAccessToken: pats[i],
 		}
 
-		createdByUser, _ := m.GetUser(ctx, pats[i].UserID)
+		createdByUser, _ := m.userModule.GetUserByID(ctx, orgID, pats[i].UserID)
 		if createdByUser == nil {
 			patWithUser.CreatedByUser = types.PatUser{
 				NotFound: true,
@@ -90,8 +92,10 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 		} else {
 			patWithUser.CreatedByUser = types.PatUser{
 				User: ossTypes.User{
-					ID:    createdByUser.ID,
-					Name:  createdByUser.Name,
+					Identifiable: ossTypes.Identifiable{
+						ID: createdByUser.ID,
+					},
+					HName: createdByUser.HName,
 					Email: createdByUser.Email,
 					TimeAuditable: ossTypes.TimeAuditable{
 						CreatedAt: createdByUser.CreatedAt,
@@ -103,7 +107,7 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 			}
 		}
 
-		updatedByUser, _ := m.GetUser(ctx, pats[i].UpdatedByUserID)
+		updatedByUser, _ := m.userModule.GetUserByID(ctx, orgID, pats[i].UpdatedByUserID)
 		if updatedByUser == nil {
 			patWithUser.UpdatedByUser = types.PatUser{
 				NotFound: true,
@@ -111,8 +115,10 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 		} else {
 			patWithUser.UpdatedByUser = types.PatUser{
 				User: ossTypes.User{
-					ID:    updatedByUser.ID,
-					Name:  updatedByUser.Name,
+					Identifiable: ossTypes.Identifiable{
+						ID: updatedByUser.ID,
+					},
+					HName: updatedByUser.HName,
 					Email: updatedByUser.Email,
 					TimeAuditable: ossTypes.TimeAuditable{
 						CreatedAt: updatedByUser.CreatedAt,

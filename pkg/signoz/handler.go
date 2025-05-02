@@ -6,7 +6,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 )
 
 type Handlers struct {
@@ -15,10 +14,10 @@ type Handlers struct {
 	User         user.Handler
 }
 
-func NewHandlers(modules Modules) Handlers {
+func NewHandlers(modules Modules, user user.Handler) Handlers {
 	return Handlers{
 		Organization: implorganization.NewHandler(modules.Organization),
 		Preference:   implpreference.NewHandler(modules.Preference),
-		User:         impluser.NewHandler(modules.User),
+		User:         user,
 	}
 }
