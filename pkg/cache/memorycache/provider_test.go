@@ -197,8 +197,7 @@ func TestRemove(t *testing.T) {
 	c.Delete(context.Background(), orgID, "key")
 
 	err = c.Get(context.Background(), orgID, "key", retrieveCacheableEntity, false)
-	assert.NoError(t, err)
-	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
+	assert.Error(t, err)
 }
 
 // TestBulkRemove tests the BulkRemove function
@@ -221,12 +220,10 @@ func TestBulkRemove(t *testing.T) {
 	c.DeleteMany(context.Background(), orgID, []string{"key1", "key2"})
 
 	err = c.Get(context.Background(), orgID, "key1", retrieveCacheableEntity, false)
-	assert.NoError(t, err)
-	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
+	assert.Error(t, err)
 
 	err = c.Get(context.Background(), orgID, "key2", retrieveCacheableEntity, false)
-	assert.NoError(t, err)
-	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
+	assert.Error(t, err)
 }
 
 // TestCache tests the cache

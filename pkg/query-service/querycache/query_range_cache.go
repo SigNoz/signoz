@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -233,7 +234,7 @@ func (q *queryCache) FindMissingTimeRanges(orgID valuer.UUID, start, end, step i
 func (q *queryCache) getCachedSeriesData(orgID valuer.UUID, cacheKey string) []*CachedSeriesData {
 	cacheableSeriesData := new(CacheableSeriesData)
 	err := q.cache.Get(context.TODO(), orgID, cacheKey, cacheableSeriesData, true)
-	if err != nil {
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil
 	}
 	cachedSeriesData := make([]*CachedSeriesData, 0)
@@ -298,7 +299,7 @@ func (q *queryCache) MergeWithCachedSeriesDataV2(orgID valuer.UUID, cacheKey str
 
 	cacheableSeriesData := new(CacheableSeriesData)
 	err := q.cache.Get(context.TODO(), orgID, cacheKey, cacheableSeriesData, true)
-	if err != nil {
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil
 	}
 	allData := append(cacheableSeriesData.Series, newData...)
