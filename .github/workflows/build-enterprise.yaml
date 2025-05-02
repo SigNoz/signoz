@@ -69,6 +69,7 @@ jobs:
           echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
           echo 'CUSTOMERIO_ID="${{ secrets.CUSTOMERIO_ID }}"' >> frontend/.env
           echo 'CUSTOMERIO_SITE_ID="${{ secrets.CUSTOMERIO_SITE_ID }}"' >> frontend/.env
+          echo 'USERPILOT_KEY="${{ secrets.USERPILOT_KEY }}"' >> frontend/.env
       - name: cache-dotenv
         uses: actions/cache@v4
         with:

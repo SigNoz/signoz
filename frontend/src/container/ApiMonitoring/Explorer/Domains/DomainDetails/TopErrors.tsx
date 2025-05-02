@@ -1,5 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { Spin, Table, Tooltip, Typography } from 'antd';
+import { Spin, Switch, Table, Tooltip, Typography } from 'antd';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V4 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -41,44 +41,61 @@ function TopErrors({
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
 	const [endPointName, setSelectedEndPointName] = useState<string>('');
+	const [showStatusCodeErrors, setShowStatusCodeErrors] = useState<boolean>(
+		true,
+	);
 
 	const queryPayloads = useMemo(
 		() =>
-			getTopErrorsQueryPayload(domainName, minTime, maxTime, {
-				items: endPointName
-					? [
-							{
-								id: '92b8a1c1',
-								key: {
-									dataType: DataTypes.String,
-									isColumn: false,
-									isJSON: false,
-									key: SPAN_ATTRIBUTES.URL_PATH,
-									type: 'tag',
+			getTopErrorsQueryPayload(
+				domainName,
+				minTime,
+				maxTime,
+				{
+					items: endPointName
+						? [
+								{
+									id: '92b8a1c1',
+									key: {
+										dataType: DataTypes.String,
+										isColumn: false,
+										isJSON: false,
+										key: SPAN_ATTRIBUTES.URL_PATH,
+										type: 'tag',
+									},
+									op: '=',
+									value: endPointName,
 								},
-								op: '=',
-								value: endPointName,
-							},
-							...initialFilters.items,
-					  ]
-					: [...initialFilters.items],
-				op: 'AND',
-			}),
-		[domainName, endPointName, minTime, maxTime, initialFilters],
+								...initialFilters.items,
+						  ]
+						: [...initialFilters.items],
+					op: 'AND',
+				},
+				showStatusCodeErrors,
+			),
+		[
+			domainName,
+			endPointName,
+			minTime,
+			maxTime,
+			initialFilters,
+			showStatusCodeErrors,
+		],
 	);
 
-	// Since only one query here
 	const topErrorsDataQueries = useQueries(
 		queryPayloads.map((payload) => ({
 			queryKey: [
 				REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
 				payload,
 				DEFAULT_ENTITY_VERSION,
+				showStatusCodeErrors,
 			],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, DEFAULT_ENTITY_VERSION),
 			enabled: !!payload,
-			staleTime: 60 * 1000, // 1 minute stale time : optimize this part
+			staleTime: 0,
+			cacheTime: 0,
 		})),
 	);
 
@@ -121,7 +138,7 @@ function TopErrors({
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,
-			staleTime: 60 * 1000, // 1 minute stale time : optimize this part
+			staleTime: 60 * 1000,
 		})),
 	);
 
@@ -151,15 +168,31 @@ function TopErrors({
 						parentContainerDiv=".endpoint-details-filters-container"
 					/>
 				</div>
-				<Tooltip title="Optionally select a specific endpoint to see status message if present">
-					<Info size={16} color="white" />
-				</Tooltip>
+				<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+					<Switch
+						checked={showStatusCodeErrors}
+						onChange={setShowStatusCodeErrors}
+						size="small"
+					/>
+					<span style={{ color: 'white', fontSize: '14px' }}>
+						Status Message Exists
+					</span>
+					<Tooltip title="When enabled, shows errors that have a status message. When disabled, shows all errors regardless of status message">
+						<Info size={16} color="white" />
+					</Tooltip>
+				</div>
 			</div>
 
 			<div className="endpoints-table-container">
 				<div className="endpoints-table-header">
-					Top Errors{' '}
-					<Tooltip title="Shows top 10 errors only when status message is propagated">
+					{showStatusCodeErrors ? 'Errors with Status Message' : 'All Errors'}{' '}
+					<Tooltip
+						title={
+							showStatusCodeErrors
+								? 'Shows errors that have a status message'
+								: 'Shows all errors regardless of status message'
+						}
+					>
 						<Info size={16} color="white" />
 					</Tooltip>
 				</div>

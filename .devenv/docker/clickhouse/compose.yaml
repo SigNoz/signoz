@@ -1,5 +1,4 @@
 services:
-
   clickhouse:
     image: clickhouse/clickhouse-server:24.1.2-alpine
     container_name: clickhouse
@@ -24,7 +23,6 @@ services:
       retries: 3
     depends_on:
       - zookeeper
-
   zookeeper:
     image: bitnami/zookeeper:3.7.1
     container_name: zookeeper
@@ -41,9 +39,8 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-
   schema-migrator-sync:
-    image: signoz/signoz-schema-migrator:0.111.29
+    image: signoz/signoz-schema-migrator:v0.111.40
     container_name: schema-migrator-sync
     command:
       - sync
@@ -55,9 +52,8 @@ services:
       clickhouse:
         condition: service_healthy
     restart: on-failure
-
   schema-migrator-async:
-    image: signoz/signoz-schema-migrator:0.111.29
+    image: signoz/signoz-schema-migrator:v0.111.40
     container_name: schema-migrator-async
     command:
       - async

@@ -903,6 +903,7 @@ export const getTopErrorsQueryPayload = (
 	start: number,
 	end: number,
 	filters: IBuilderQuery['filters'],
+	showStatusCodeErrors = true,
 ): GetQueryResultsProps[] => [
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -952,18 +953,22 @@ export const getTopErrorsQueryPayload = (
 									op: 'exists',
 									value: '',
 								},
-								{
-									id: '75d65388',
-									key: {
-										key: 'status_message',
-										dataType: DataTypes.String,
-										type: '',
-										isColumn: true,
-										isJSON: false,
-									},
-									op: 'exists',
-									value: '',
-								},
+								...(showStatusCodeErrors
+									? [
+											{
+												id: '75d65388',
+												key: {
+													key: 'status_message',
+													dataType: DataTypes.String,
+													type: '',
+													isColumn: true,
+													isJSON: false,
+												},
+												op: 'exists',
+												value: '',
+											},
+									  ]
+									: []),
 								{
 									id: '4872bf91',
 									key: {
