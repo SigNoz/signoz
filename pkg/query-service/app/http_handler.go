@@ -23,6 +23,7 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -141,6 +142,10 @@ type APIHandler struct {
 	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
+
+	QuickFilters quickfilter.API
+
+	QuickFilterModule quickfilter.Usecase
 }
 
 type APIHandlerOpts struct {
@@ -181,6 +186,10 @@ type APIHandlerOpts struct {
 	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
+
+	QuickFilters quickfilter.API
+
+	QuickFilterModule quickfilter.Usecase
 }
 
 // NewAPIHandler returns an APIHandler
@@ -214,6 +223,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
 	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
+	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -243,6 +253,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
+		QuickFilters:                  opts.QuickFilters,
+		QuickFilterModule:             opts.QuickFilterModule,
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -564,6 +576,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.Signoz.Handlers.Preference.GetOrg)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.Signoz.Handlers.Preference.UpdateOrg)).Methods(http.MethodPut)
 
+	// Quick Filters
+	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.QuickFilters.GetQuickFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.AdminAccess(aH.QuickFilters.GetSignalFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.QuickFilters.UpdateQuickFilters)).Methods(http.MethodPut)
+
+	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/invite/bulk", am.AdminAccess(aH.inviteUsers)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.getInvite)).Methods(http.MethodGet)
@@ -2082,7 +2100,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager, aH.Signoz.Modules.Organization)
+	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager, aH.Signoz.Modules.Organization, aH.QuickFilterModule)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
