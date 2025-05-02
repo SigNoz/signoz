@@ -6,8 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
@@ -41,10 +41,15 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	dashboard, err := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
+	// dashboard, err := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
+	// if err != nil {
+	// 	render.Error(w, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get dashboard"))
+	// 	return
+	// }
+
+	dashboard, err := ah.Signoz.Modules.Dashboard.Get(r.Context(), valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(uuid))
 	if err != nil {
-		render.Error(w, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get dashboard"))
-		return
+		render.Error(w, err)
 	}
 
 	if err := claims.IsAdmin(); err != nil && (dashboard.CreatedBy != claims.Email) {
@@ -52,12 +57,17 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Lock/Unlock the dashboard
-	err = dashboards.LockUnlockDashboard(r.Context(), claims.OrgID, uuid, lock)
-	if err != nil {
-		render.Error(w, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to lock/unlock dashboard"))
+	if err := ah.Signoz.Modules.Dashboard.Update(r.Context(), nil); err != nil {
+		render.Error(w, err)
 		return
 	}
+
+	// Lock/Unlock the dashboard
+	// err = dashboards.LockUnlockDashboard(r.Context(), claims.OrgID, uuid, lock)
+	// if err != nil {
+	// 	render.Error(w, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to lock/unlock dashboard"))
+	// 	return
+	// }
 
 	ah.Respond(w, "Dashboard updated successfully")
 }

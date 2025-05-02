@@ -58,6 +58,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
@@ -511,11 +512,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", am.ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v2/orgs/me/dashboards", am.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/orgs/me/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/orgs/me/dashboards/{id}", am.ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/orgs/me/dashboards/{id}", am.EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v2/orgs/me/dashboards/{uuid}", am.EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.getSavedViews)).Methods(http.MethodGet)
@@ -1074,9 +1075,10 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errv2)
 		return
 	}
-	allDashboards, err := dashboards.GetDashboards(r.Context(), claims.OrgID)
-	if err != nil {
-		RespondError(w, err, nil)
+
+	allDashboards, err := aH.Signoz.Modules.Dashboard.List(r.Context(), valuer.MustNewUUID(claims.OrgID))
+	if errv2 != nil {
+		render.Error(w, errv2)
 		return
 	}
 
@@ -1128,7 +1130,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 		inter = Intersection(inter, tags2Dash[tag])
 	}
 
-	filteredDashboards := []types.Dashboard{}
+	filteredDashboards := []*dashboardtypes.Dashboard{}
 	for _, val := range inter {
 		dash := (allDashboards)[val]
 		filteredDashboards = append(filteredDashboards, dash)
@@ -1138,21 +1140,18 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 }
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
-	uuid := mux.Vars(r)["uuid"]
 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
 	if errv2 != nil {
 		render.Error(w, errv2)
 		return
 	}
-	err := dashboards.DeleteDashboard(r.Context(), claims.OrgID, uuid)
-
-	if err != nil {
-		RespondError(w, err, nil)
+	uuid := mux.Vars(r)["uuid"]
+	if err := aH.Signoz.Modules.Dashboard.Delete(r.Context(), valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(uuid)); err != nil {
+		render.Error(w, err)
 		return
 	}
 
 	aH.Respond(w, nil)
-
 }
 
 func prepareQuery(r *http.Request) (string, error) {
