@@ -36,9 +36,9 @@ var (
 
 > 💡 **Note**: Error codes must match the regex `^[a-z_]+$` otherwise the code will panic.
 
-### Show me some examples
+## Show me some examples
 
-#### Using the error
+### Using the error
 A basic example of using the error:
 
 ```go
@@ -62,7 +62,7 @@ func CreateThing(id string) error {
 }
 ```
 
-#### Changing the error
+### Changing the error
 Sometimes you may want to change the error while preserving the message:
 
 ```go
