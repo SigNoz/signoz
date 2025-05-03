@@ -75,9 +75,8 @@ func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	for _, filter := range storableQuickFilters {
-		filter_ := *filter
 		_, err = tx.NewInsert().
-			Model(&filter_).
+			Model(filter).
 			Exec(ctx)
 
 		if err != nil {
