@@ -1,14 +1,18 @@
 package querycache
 
 import (
+	"context"
 	"encoding/json"
 	"math"
 	"sort"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
@@ -25,6 +29,19 @@ type CachedSeriesData struct {
 	Start int64        `json:"start"`
 	End   int64        `json:"end"`
 	Data  []*v3.Series `json:"data"`
+}
+
+var _ cachetypes.Cacheable = (*CacheableSeriesData)(nil)
+
+type CacheableSeriesData struct {
+	Series []CachedSeriesData
+}
+
+func (c *CacheableSeriesData) MarshalBinary() (data []byte, err error) {
+	return json.Marshal(c)
+}
+func (c *CacheableSeriesData) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, c)
 }
 
 type QueryCacheOption func(q *queryCache)
@@ -51,7 +68,7 @@ func WithFluxInterval(fluxInterval time.Duration) QueryCacheOption {
 
 // FindMissingTimeRangesV2 is a new correct implementation of FindMissingTimeRanges
 // It takes care of any timestamps that were not queried due to rounding in the first version.
-func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cacheKey string) []MissInterval {
+func (q *queryCache) FindMissingTimeRangesV2(orgID valuer.UUID, start, end int64, step int64, cacheKey string) []MissInterval {
 	if q.cache == nil || cacheKey == "" {
 		return []MissInterval{{Start: start, End: end}}
 	}
@@ -63,7 +80,7 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 		return []MissInterval{{Start: start, End: end}}
 	}
 
-	cachedSeriesDataList := q.getCachedSeriesData(cacheKey)
+	cachedSeriesDataList := q.getCachedSeriesData(orgID, cacheKey)
 
 	// Sort the cached data by start time
 	sort.Slice(cachedSeriesDataList, func(i, j int) bool {
@@ -151,12 +168,12 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 	return merged
 }
 
-func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey string) []MissInterval {
+func (q *queryCache) FindMissingTimeRanges(orgID valuer.UUID, start, end, step int64, cacheKey string) []MissInterval {
 	if q.cache == nil || cacheKey == "" {
 		return []MissInterval{{Start: start, End: end}}
 	}
 
-	cachedSeriesDataList := q.getCachedSeriesData(cacheKey)
+	cachedSeriesDataList := q.getCachedSeriesData(orgID, cacheKey)
 
 	// Sort the cached data by start time
 	sort.Slice(cachedSeriesDataList, func(i, j int) bool {
@@ -217,13 +234,17 @@ func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey stri
 	return missingRanges
 }
 
-func (q *queryCache) getCachedSeriesData(cacheKey string) []*CachedSeriesData {
-	cachedData, _, _ := q.cache.Retrieve(cacheKey, true)
-	var cachedSeriesDataList []*CachedSeriesData
-	if err := json.Unmarshal(cachedData, &cachedSeriesDataList); err != nil {
+func (q *queryCache) getCachedSeriesData(orgID valuer.UUID, cacheKey string) []*CachedSeriesData {
+	cacheableSeriesData := new(CacheableSeriesData)
+	err := q.cache.Get(context.TODO(), orgID, cacheKey, cacheableSeriesData, true)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil
 	}
-	return cachedSeriesDataList
+	cachedSeriesData := make([]*CachedSeriesData, 0)
+	for _, cachedSeries := range cacheableSeriesData.Series {
+		cachedSeriesData = append(cachedSeriesData, &cachedSeries)
+	}
+	return cachedSeriesData
 }
 
 func (q *queryCache) mergeSeries(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
@@ -263,34 +284,28 @@ func (q *queryCache) mergeSeries(cachedSeries, missedSeries []*v3.Series) []*v3.
 	return mergedSeries
 }
 
-func (q *queryCache) storeMergedData(cacheKey string, mergedData []CachedSeriesData) {
+func (q *queryCache) storeMergedData(orgID valuer.UUID, cacheKey string, mergedData []CachedSeriesData) {
 	if q.cache == nil {
 		return
 	}
-	mergedDataJSON, err := json.Marshal(mergedData)
-	if err != nil {
-		zap.L().Error("error marshalling merged data", zap.Error(err))
-		return
-	}
-	err = q.cache.Store(cacheKey, mergedDataJSON, 0)
+	cacheableSeriesData := CacheableSeriesData{Series: mergedData}
+	err := q.cache.Set(context.TODO(), orgID, cacheKey, &cacheableSeriesData, 0)
 	if err != nil {
 		zap.L().Error("error storing merged data", zap.Error(err))
 	}
 }
 
-func (q *queryCache) MergeWithCachedSeriesDataV2(cacheKey string, newData []CachedSeriesData) []CachedSeriesData {
+func (q *queryCache) MergeWithCachedSeriesDataV2(orgID valuer.UUID, cacheKey string, newData []CachedSeriesData) []CachedSeriesData {
 	if q.cache == nil {
 		return newData
 	}
 
-	cachedData, _, _ := q.cache.Retrieve(cacheKey, true)
-	var existingData []CachedSeriesData
-	if err := json.Unmarshal(cachedData, &existingData); err != nil {
-		zap.L().Error("error unmarshalling existing data", zap.Error(err))
-		return newData
+	cacheableSeriesData := new(CacheableSeriesData)
+	err := q.cache.Get(context.TODO(), orgID, cacheKey, cacheableSeriesData, true)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil
 	}
-
-	allData := append(existingData, newData...)
+	allData := append(cacheableSeriesData.Series, newData...)
 
 	sort.Slice(allData, func(i, j int) bool {
 		return allData[i].Start < allData[j].Start
@@ -334,13 +349,13 @@ func (q *queryCache) MergeWithCachedSeriesDataV2(cacheKey string, newData []Cach
 	return mergedData
 }
 
-func (q *queryCache) MergeWithCachedSeriesData(cacheKey string, newData []CachedSeriesData) []CachedSeriesData {
+func (q *queryCache) MergeWithCachedSeriesData(orgID valuer.UUID, cacheKey string, newData []CachedSeriesData) []CachedSeriesData {
 
-	mergedData := q.MergeWithCachedSeriesDataV2(cacheKey, newData)
-	q.storeMergedData(cacheKey, mergedData)
+	mergedData := q.MergeWithCachedSeriesDataV2(orgID, cacheKey, newData)
+	q.storeMergedData(orgID, cacheKey, mergedData)
 	return mergedData
 }
 
-func (q *queryCache) StoreSeriesInCache(cacheKey string, series []CachedSeriesData) {
-	q.storeMergedData(cacheKey, series)
+func (q *queryCache) StoreSeriesInCache(orgID valuer.UUID, cacheKey string, series []CachedSeriesData) {
+	q.storeMergedData(orgID, cacheKey, series)
 }

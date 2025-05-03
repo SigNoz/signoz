@@ -19,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
@@ -40,7 +39,6 @@ type APIHandlerOptions struct {
 	IntegrationsController        *integrations.Controller
 	CloudIntegrationsController   *cloudintegrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
-	Cache                         cache.Cache
 	Gateway                       *httputil.ReverseProxy
 	GatewayUrl                    string
 	// Querier Influx Interval
@@ -68,7 +66,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		IntegrationsController:        opts.IntegrationsController,
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
-		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore),
