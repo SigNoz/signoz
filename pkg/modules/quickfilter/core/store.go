@@ -70,7 +70,10 @@ func (s *store) Upsert(ctx context.Context, filter *quickfiltertypes.StorableQui
 		Set("updated_at = EXCLUDED.updated_at").
 		Exec(ctx)
 
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *store) Create(ctx context.Context, filters []*quickfiltertypes.StorableQuickFilter) error {
@@ -82,5 +85,8 @@ func (s *store) Create(ctx context.Context, filters []*quickfiltertypes.Storable
 		On("CONFLICT (org_id, signal) DO NOTHING").
 		Exec(ctx)
 
-	return err
+	if err != nil {
+		return s.store.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "Quick Filter can not be created")
+	}
+	return nil
 }
