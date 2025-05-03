@@ -100,4 +100,4 @@ Although there might be cases where this might seem too verbose, it makes the co
 - Think about error handling as you write your code, not as an afterthought.
 - Always use the [errors](/pkg/errors/errors.go) package instead of the standard library's `errors.New()` or `fmt.Errorf()`.
 - Always assign appropriate codes to errors when creating them instead of using the "catch all" error codes defined in [pkg/errors/code.go](/pkg/errors/code.go).
-- Use `errors.Wrapf()` to add context to errors while preserving the original interface when appropriate.
+- Use `errors.Wrapf()` to add context to errors while preserving the original when appropriate.
