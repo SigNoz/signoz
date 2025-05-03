@@ -1,10 +1,10 @@
-# Error
+# Errors
 
 SigNoz includes its own structured [errors](/pkg/errors/errors.go) package. It's built on top of Go's `error` interface, extending it to add additional context that helps provide more meaningful error messages throughout the application.
 
 ## How to use it?
 
-To use the SigNoz structurederror, use these functions instead of the standard library alternatives:
+To use the SigNoz structured errors package, use these functions instead of the standard library alternatives:
 
 ```go
 // Instead of errors.New()
