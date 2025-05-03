@@ -3,6 +3,7 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -74,14 +75,20 @@ func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	for _, filter := range storableQuickFilters {
-		_, err = tx.NewInsert().
-			Model(filter).
-			Exec(ctx)
+	// Insert all filters at once
+	_, err = tx.NewInsert().
+		Model(&storableQuickFilters).
+		Exec(ctx)
 
-		if err != nil {
-			return err
+	if err != nil {
+		if errors.Ast(m.store.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "Quick Filter already exists"), errors.TypeAlreadyExists) {
+			err := tx.Commit()
+			if err != nil {
+				return err
+			}
+			return nil
 		}
+		return err
 	}
 
 	// Commit the transaction

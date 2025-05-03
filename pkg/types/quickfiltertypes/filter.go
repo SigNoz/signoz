@@ -2,7 +2,6 @@ package quickfiltertypes
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -49,7 +48,7 @@ func NewSignal(s string) (Signal, error) {
 	case "exceptions":
 		return SignalExceptions, nil
 	default:
-		return Signal{}, errors.New(errors.TypeInternal, errors.CodeInternal, "invalid signal: "+s)
+		return Signal{}, errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid signal: "+s)
 	}
 }
 
@@ -75,7 +74,7 @@ type UpdatableQuickFilters struct {
 // NewStorableQuickFilter creates a new StorableQuickFilter after validation
 func NewStorableQuickFilter(orgID valuer.UUID, signal Signal, filterJSON []byte) (*StorableQuickFilter, error) {
 	if orgID.StringValue() == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is required")
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is required")
 	}
 
 	if _, err := NewSignal(signal.StringValue()); err != nil {
@@ -180,21 +179,21 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 
 	tracesJSON, err := json.Marshal(tracesFilters)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal traces filters: %w", err)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal traces filters")
 	}
 
 	logsJSON, err := json.Marshal(logsFilters)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal logs filters: %w", err)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal logs filters")
 	}
 
 	apiMonitoringJSON, err := json.Marshal(apiMonitoringFilters)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal API monitoring filters: %w", err)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal Api Monitoring filters")
 	}
 	exceptionsJSON, err := json.Marshal(exceptionsFilters)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal exceptions filters: %w", err)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal Exceptions filters")
 	}
 
 	return []*StorableQuickFilter{
@@ -205,6 +204,10 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			OrgID:  orgID,
 			Filter: string(tracesJSON),
 			Signal: SignalTraces,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
 		},
 		{
 			Identifiable: types.Identifiable{
@@ -213,6 +216,10 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			OrgID:  orgID,
 			Filter: string(logsJSON),
 			Signal: SignalLogs,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
 		},
 		{
 			Identifiable: types.Identifiable{
@@ -221,6 +228,10 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			OrgID:  orgID,
 			Filter: string(apiMonitoringJSON),
 			Signal: SignalApiMonitoring,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
 		},
 		{
 			Identifiable: types.Identifiable{
@@ -229,6 +240,10 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			OrgID:  orgID,
 			Filter: string(exceptionsJSON),
 			Signal: SignalExceptions,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
 		},
 	}, nil
 }
