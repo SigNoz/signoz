@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -15,6 +16,10 @@ import (
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+type AuthDomainStore interface {
+	GetDomainByName(ctx context.Context, email string) (*StorableOrgDomain, error)
+}
 
 type StorableOrgDomain struct {
 	bun.BaseModel `bun:"table:org_domains"`

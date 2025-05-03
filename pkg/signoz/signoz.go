@@ -3,6 +3,7 @@ package signoz
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/ee/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -42,8 +43,8 @@ func New(
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
-	userModuleFactory func(sqlstore.SQLStore) user.Module,
-	userHandlerFactory func(user.Module) user.Handler,
+	diModules func(sqlstore.SQLStore) (user.Module, authdomain.Module),
+	diHandlers func(user.Module, authdomain.Module) user.Handler,
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -156,8 +157,8 @@ func New(
 		return nil, err
 	}
 
-	userModule := userModuleFactory(sqlstore)
-	userHandler := userHandlerFactory(userModule)
+	userModule, authdomain := diModules(sqlstore)
+	userHandler := diHandlers(userModule, authdomain)
 
 	// Initialize all modules
 	modules := NewModules(sqlstore, userModule)

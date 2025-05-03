@@ -110,6 +110,11 @@ type APIHandler struct {
 
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
+	// SetupCompleted indicates if SigNoz is ready for general use.
+	// at the moment, we mark the app ready when the first user
+	// is registers.
+	SetupCompleted bool
+
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
 
@@ -249,6 +254,22 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		BuildLogQuery:    logsQueryBuilder,
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
+
+	// TODO(nitya): remote this in later for multitenancy.
+	orgs, err := opts.Signoz.Modules.Organization.GetAll(context.Background())
+	if err != nil {
+		zap.L().Warn("unexpected error while fetching orgs  while initializing base api handler", zap.Error(err))
+	}
+	// if the first org with the first user is created then the setup is complete.
+	if len(orgs) == 1 {
+		users, err := opts.Signoz.Modules.User.ListUsers(context.Background(), orgs[0].ID.String())
+		if err != nil {
+			zap.L().Warn("unexpected error while fetch user count while initializing base api handler", zap.Error(err))
+		}
+		if len(users) > 0 {
+			aH.SetupCompleted = true
+		}
+	}
 
 	aH.Upgrader = &websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -1962,11 +1983,11 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if !aH.SetupCompleted {
-	// 	// since the first user is now created, we can disable self-registration as
-	// 	// from here onwards, we expect admin (owner) to invite other users.
-	// 	aH.SetupCompleted = true
-	// }
+	if !aH.SetupCompleted {
+		// since the first user is now created, we can disable self-registration as
+		// from here onwards, we expect admin (owner) to invite other users.
+		aH.SetupCompleted = true
+	}
 
 	aH.Respond(w, nil)
 }

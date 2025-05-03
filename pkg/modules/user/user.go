@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -30,6 +31,10 @@ type Module interface {
 	GetAuthenticatedUser(ctx context.Context, orgID, email, password, refreshToken string) (*types.User, error)
 	GetJWTForUser(ctx context.Context, user *types.User) (types.GettableUserJwt, error)
 	CreateUserForSAMLRequest(ctx context.Context, email string) (*types.User, error)
+
+	// sso
+	PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (string, error)
+	CanUsePassword(ctx context.Context, email string) (bool, error)
 
 	// remove this later
 	SendUserTelemetry(user *types.User, firstRegistration bool)

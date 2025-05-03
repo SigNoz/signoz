@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
@@ -110,10 +111,10 @@ func main() {
 		signoz.NewWebProviderFactories(),
 		signoz.NewSQLStoreProviderFactories(),
 		signoz.NewTelemetryStoreProviderFactories(),
-		func(sqlstore sqlstore.SQLStore) user.Module {
-			return impluser.NewModule(impluser.NewStore(sqlstore))
+		func(sqlstore sqlstore.SQLStore) (user.Module, authdomain.Module) {
+			return impluser.NewModule(impluser.NewStore(sqlstore)), nil
 		},
-		func(userModule user.Module) user.Handler {
+		func(userModule user.Module, authDomainModule authdomain.Module) user.Handler {
 			return impluser.NewHandler(userModule)
 		},
 	)

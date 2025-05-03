@@ -176,8 +176,9 @@ func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *mi
 
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	versionResponse := basemodel.GetVersionResponse{
-		Version: version.Info.Version(),
-		EE:      "Y",
+		Version:        version.Info.Version(),
+		EE:             "Y",
+		SetupCompleted: ah.SetupCompleted,
 	}
 
 	ah.WriteJSON(w, r, versionResponse)

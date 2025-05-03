@@ -220,3 +220,11 @@ func (m *Module) GetJWTForUser(ctx context.Context, user *types.User) (types.Get
 func (m *Module) CreateUserForSAMLRequest(ctx context.Context, email string) (*types.User, error) {
 	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SAML login is not supported")
 }
+
+func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (string, error) {
+	return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SSO is not supported")
+}
+
+func (m *Module) CanUsePassword(ctx context.Context, email string) (bool, error) {
+	return false, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SSO is not supported")
+}

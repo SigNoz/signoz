@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/modules/authdomain"
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	eeTypes "github.com/SigNoz/signoz/ee/types"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -18,15 +19,17 @@ import (
 
 // EnterpriseHandler embeds the base handler implementation
 type Handler struct {
-	user.Handler // Embed the base handler interface
-	module       user.Module
+	user.Handler     // Embed the base handler interface
+	module           user.Module
+	authDomainModule authdomain.Module
 }
 
-func NewHandler(module user.Module) user.Handler {
+func NewHandler(module user.Module, authdomain authdomain.Module) user.Handler {
 	baseHandler := impluser.NewHandler(module)
 	return &Handler{
-		Handler: baseHandler,
-		module:  module,
+		Handler:          baseHandler,
+		module:           module,
+		authDomainModule: authdomain,
 	}
 }
 
@@ -102,12 +105,12 @@ func (h *Handler) LoginPrecheck(w http.ResponseWriter, r *http.Request) {
 
 		orgDomain := &eeTypes.GettableOrgDomain{}
 
-		// find domain from email
-		// orgDomain, apierr := h.module.GetDomainByEmail(ctx, email)
-		// if apierr != nil {
-		// 	zap.L().Error("failed to get org domain from email", zap.String("email", email), zap.Error(apierr.ToError()))
-		// 	return resp, apierr
-		// }
+		// TODO(Nitya): in multitenancy this should use orgId as well.
+		orgDomain, err := h.authDomainModule.GetAuthDomainByEmail(ctx, email)
+		if err != nil {
+			zap.L().Error("failed to get org domain from email", zap.String("email", email), zap.Error(err))
+			render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to get domain for sso auth"))
+		}
 
 		if orgDomain != nil && orgDomain.SsoEnabled {
 			// saml is enabled for this domain, lets prepare sso url

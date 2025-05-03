@@ -8,7 +8,6 @@ import (
 	basedao "github.com/SigNoz/signoz/pkg/query-service/dao"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -23,8 +22,6 @@ type ModelDao interface {
 	DB() *bun.DB
 
 	// auth methods
-	CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError)
-	PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (redirectURL string, apierr basemodel.BaseApiError)
 	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*types.GettableOrgDomain, error)
 
 	// org domain (auth domains) CRUD ops
