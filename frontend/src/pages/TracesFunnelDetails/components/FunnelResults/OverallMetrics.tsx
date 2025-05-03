@@ -14,7 +14,7 @@ function OverallMetrics(): JSX.Element {
 			title="Overall Funnel Metrics"
 			subtitle={{
 				label: 'Conversion rate',
-				value: `${conversionRate.toFixed(2)}%`,
+				value: `${(conversionRate || 0).toFixed(2)}%`,
 			}}
 			isLoading={isLoading}
 			isError={isError}

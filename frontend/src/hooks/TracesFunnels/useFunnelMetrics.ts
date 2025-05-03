@@ -1,4 +1,3 @@
-import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { MetricItem } from 'pages/TracesFunnelDetails/components/FunnelResults/FunnelMetricsTable';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo } from 'react';
@@ -10,6 +9,77 @@ interface FunnelMetricsParams {
 	stepStart?: number;
 	stepEnd?: number;
 }
+
+interface SourceData {
+	avg_rate?: number;
+	errors?: number;
+	avg_duration?: number;
+	p99_latency?: number;
+	conversion_rate?: number | null;
+}
+
+const DURATION_UNITS = [
+	{ threshold: 1000000000, divisor: 1000000000, unit: 's' },
+	{ threshold: 1000000, divisor: 1000000, unit: 'ms' },
+	{ threshold: 1000, divisor: 1000, unit: 'µs' },
+	{ threshold: 0, divisor: 1, unit: 'ns' },
+] as const;
+
+const getDurationUnit = (value: number): typeof DURATION_UNITS[number] =>
+	DURATION_UNITS.find((u) => value >= u.threshold) ||
+	DURATION_UNITS[DURATION_UNITS.length - 1];
+
+const formatDuration = (value: number | undefined | null): string => {
+	if (value === undefined || value === null) return '0 ns';
+	try {
+		const unit = getDurationUnit(value);
+		const convertedValue = value / unit.divisor;
+		return `${convertedValue.toFixed(2)} ${unit.unit}`;
+	} catch (error) {
+		console.error('Error formatting duration:', error);
+		return '0 ns';
+	}
+};
+
+const formatValue = (value: number | undefined | null): string => {
+	if (value === undefined || value === null) return '0';
+	try {
+		return value.toString();
+	} catch (error) {
+		console.error('Error formatting value:', error);
+		return '0';
+	}
+};
+
+const formatRate = (value: number | undefined | null): string => {
+	const rate = value || 0;
+	return `${Number(rate.toFixed(2))} req/s`;
+};
+
+const createMetricsData = (
+	sourceData: SourceData | undefined,
+): MetricItem[] => {
+	if (!sourceData) return [];
+
+	return [
+		{
+			title: 'Avg. Rate',
+			value: formatRate(sourceData.avg_rate),
+		},
+		{
+			title: 'Errors',
+			value: formatValue(sourceData.errors),
+		},
+		{
+			title: 'Avg. Duration',
+			value: formatDuration(sourceData.avg_duration),
+		},
+		{
+			title: 'P99 Latency',
+			value: formatDuration(sourceData.p99_latency),
+		},
+	];
+};
 
 export function useFunnelMetrics({
 	funnelId,
@@ -38,27 +108,19 @@ export function useFunnelMetrics({
 
 	const metricsData = useMemo(() => {
 		const sourceData = overviewData?.payload?.data?.[0]?.data;
-		if (!sourceData) return [];
+		console.log('Source data:', sourceData);
 
-		return [
-			{
-				title: 'Avg. Rate',
-				value: `${Number(sourceData.avg_rate.toFixed(2))} req/s`,
-			},
-			{ title: 'Errors', value: sourceData.errors },
-			{
-				title: 'Avg. Duration',
-				value: getYAxisFormattedValue(sourceData.avg_duration.toString(), 'ns'),
-			},
-			{
-				title: 'P99 Latency',
-				value: getYAxisFormattedValue(sourceData.p99_latency.toString(), 'ns'),
-			},
-		];
+		try {
+			return createMetricsData(sourceData);
+		} catch (error) {
+			console.error('Error processing metrics data:', error);
+			return [];
+		}
 	}, [overviewData]);
 
-	const conversionRate =
-		overviewData?.payload?.data?.[0]?.data?.conversion_rate ?? 0;
+	const conversionRate = Number(
+		overviewData?.payload?.data?.[0]?.data?.conversion_rate || 0,
+	);
 
 	return {
 		isLoading: isLoading || isFetching,
