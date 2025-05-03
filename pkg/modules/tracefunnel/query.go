@@ -8,529 +8,1172 @@ import (
 	tracefunnel "github.com/SigNoz/signoz/pkg/types/tracefunnel"
 )
 
-// GetStepAnalytics builds a ClickHouse query to get analytics for each step
-func GetStepAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange) (*v3.ClickHouseQuery, error) {
-	if len(funnel.Steps) == 0 {
-		return nil, fmt.Errorf("funnel has no steps")
-	}
+func BuildTwoStepFunnelValidationQuery(
+	containsErrorT1 int,
+	containsErrorT2 int,
+	startTs int64,
+	endTs int64,
+	serviceNameT1 string,
+	spanNameT1 string,
+	serviceNameT2 string,
+	spanNameT2 string,
+	clauseStep1 string,
+	clauseStep2 string,
+) string {
+	queryTemplate := `
+WITH
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2,
 
-	// Build funnel steps array
-	var steps []string
-	for _, step := range funnel.Steps {
-		steps = append(steps, fmt.Sprintf("('%s', '%s')",
-			escapeString(step.ServiceName), escapeString(step.SpanName)))
-	}
-	stepsArray := fmt.Sprintf("array(%s)", strings.Join(steps, ","))
+    toDateTime64(%[3]d / 1000000000, 9) AS start_ts,
+    toDateTime64(%[4]d / 1000000000, 9) AS end_ts,
 
-	// Build step CTEs
-	var stepCTEs []string
-	for i, step := range funnel.Steps {
-		filterStr := ""
-		if step.Filters != nil && len(step.Filters.Items) > 0 {
-			// ToDO: need to implement where clause filtering with minimal code duplication
-			filterStr = "/* Custom filters would be applied here */"
-		}
+    '%[5]s' AS service_name_t1,
+    '%[6]s' AS span_name_t1,
+    '%[7]s' AS service_name_t2,
+    '%[8]s' AS span_name_t2
 
-		cte := fmt.Sprintf(`
-		step%d_traces AS (
-			SELECT DISTINCT trace_id
-			FROM %s
-			WHERE resource_string_service$$name = '%s'
-			  AND name = '%s'
-			  AND timestamp BETWEEN toString(start_time) AND toString(end_time)
-			  AND ts_bucket_start BETWEEN tsBucketStart AND tsBucketEnd
-			  %s
-		)`,
-			i+1,
-			TracesTable,
-			escapeString(step.ServiceName),
-			escapeString(step.SpanName),
-			filterStr,
-		)
-		stepCTEs = append(stepCTEs, cte)
-	}
-
-	// Build intersecting traces CTE
-	var intersections []string
-	for i := 1; i <= len(funnel.Steps); i++ {
-		intersections = append(intersections, fmt.Sprintf("SELECT trace_id FROM step%d_traces", i))
-	}
-	intersectingTracesCTE := fmt.Sprintf(`
-	intersecting_traces AS (
-		%s
-	)`,
-		strings.Join(intersections, "\nINTERSECT\n"),
-	)
-
-	// Build CASE expressions for each step
-	var caseExpressions []string
-	for i, step := range funnel.Steps {
-		totalSpansExpr := fmt.Sprintf(`
-		COUNT(CASE WHEN resource_string_service$$name = '%s'
-					   AND name = '%s'
-				   THEN trace_id END) AS total_s%d_spans`,
-			escapeString(step.ServiceName), escapeString(step.SpanName), i+1)
-
-		erroredSpansExpr := fmt.Sprintf(`
-		COUNT(CASE WHEN resource_string_service$$name = '%s'
-					   AND name = '%s'
-					   AND has_error = true
-				   THEN trace_id END) AS total_s%d_errored_spans`,
-			escapeString(step.ServiceName), escapeString(step.SpanName), i+1)
-
-		caseExpressions = append(caseExpressions, totalSpansExpr, erroredSpansExpr)
-	}
-
-	query := fmt.Sprintf(`
-	WITH
-		toUInt64(%d) AS start_time,
-		toUInt64(%d) AS end_time,
-		toString(intDiv(start_time, 1000000000) - 1800) AS tsBucketStart,
-		toString(intDiv(end_time, 1000000000)) AS tsBucketEnd,
-		%s AS funnel_steps,
-		%s,
-		%s
-	SELECT
-		%s
-	FROM %s
-	WHERE trace_id IN (SELECT trace_id FROM intersecting_traces)
-	  AND timestamp BETWEEN toString(start_time) AND toString(end_time)
-	  AND ts_bucket_start BETWEEN tsBucketStart AND tsBucketEnd`,
-		timeRange.StartTime,
-		timeRange.EndTime,
-		stepsArray,
-		strings.Join(stepCTEs, ",\n"),
-		intersectingTracesCTE,
-		strings.Join(caseExpressions, ",\n    "),
-		TracesTable,
-	)
-
-	return &v3.ClickHouseQuery{
-		Query: query,
-	}, nil
-}
-
-// ValidateTracesWithLatency builds a ClickHouse query to validate traces with latency information
-func ValidateTracesWithLatency(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange) (*v3.ClickHouseQuery, error) {
-	filters, err := buildFunnelFiltersWithLatency(funnel)
-	if err != nil {
-		return nil, fmt.Errorf("error building funnel filters with latency: %w", err)
-	}
-
-	query := generateFunnelSQLWithLatency(timeRange.StartTime, timeRange.EndTime, filters)
-
-	return &v3.ClickHouseQuery{
-		Query: query,
-	}, nil
-}
-
-func generateFunnelSQLWithLatency(start, end int64, filters []tracefunnel.FunnelStepFilter) string {
-	var expressions []string
-
-	// Convert timestamps to nanoseconds
-	startTime := fmt.Sprintf("toUInt64(%d)", start)
-	endTime := fmt.Sprintf("toUInt64(%d)", end)
-
-	expressions = append(expressions, fmt.Sprintf("%s AS start_time", startTime))
-	expressions = append(expressions, fmt.Sprintf("%s AS end_time", endTime))
-	expressions = append(expressions, "toString(intDiv(start_time, 1000000000) - 1800) AS tsBucketStart")
-	expressions = append(expressions, "toString(intDiv(end_time, 1000000000)) AS tsBucketEnd")
-	expressions = append(expressions, "(end_time - start_time) / 1e9 AS total_time_seconds")
-
-	// Define step configurations dynamically
-	for _, f := range filters {
-		expressions = append(expressions, fmt.Sprintf("('%s', '%s') AS s%d_config",
-			escapeString(f.ServiceName),
-			escapeString(f.SpanName),
-			f.StepNumber))
-	}
-
-	withClause := "WITH \n" + strings.Join(expressions, ",\n") + "\n"
-
-	// Build step raw expressions and cumulative logic
-	var stepRaws []string
-	var cumulativeLogic []string
-	var filterConditions []string
-
-	stepCount := len(filters)
-
-	// Build raw step detection
-	for i := 1; i <= stepCount; i++ {
-		stepRaws = append(stepRaws, fmt.Sprintf(
-			"MAX(CASE WHEN (resource_string_service$$name, name) = s%d_config THEN 1 ELSE 0 END) AS has_s%d_raw", i, i))
-		filterConditions = append(filterConditions, fmt.Sprintf("s%d_config", i))
-	}
-
-	// Build cumulative IF logic
-	for i := 1; i <= stepCount; i++ {
-		if i == 1 {
-			cumulativeLogic = append(cumulativeLogic, fmt.Sprintf(`
-        IF(MAX(CASE WHEN (resource_string_service$$name, name) = s1_config THEN 1 ELSE 0 END) = 1, 1, 0) AS has_s1`))
-		} else {
-			innerIf := "IF(MAX(CASE WHEN (resource_string_service$$name, name) = s1_config THEN 1 ELSE 0 END) = 1, 1, 0)"
-			for j := 2; j < i; j++ {
-				innerIf = fmt.Sprintf(`IF(%s = 1 AND MAX(CASE WHEN (resource_string_service$$name, name) = s%d_config THEN 1 ELSE 0 END) = 1, 1, 0)`, innerIf, j)
-			}
-			cumulativeLogic = append(cumulativeLogic, fmt.Sprintf(`
-        IF(
-            %s = 1 AND MAX(CASE WHEN (resource_string_service$$name, name) = s%d_config THEN 1 ELSE 0 END) = 1,
-            1, 0
-        ) AS has_s%d`, innerIf, i, i))
-		}
-	}
-
-	// Final SELECT counts using FILTER clauses
-	var stepCounts []string
-	for i := 1; i <= stepCount; i++ {
-		stepCounts = append(stepCounts, fmt.Sprintf("COUNT(DISTINCT trace_id) FILTER (WHERE has_s%d = 1) AS step%d_count", i, i))
-	}
-
-	// Final query assembly
-	lastStep := fmt.Sprint(stepCount)
-	query := withClause + `
-SELECT 
-    ` + strings.Join(stepCounts, ",\n    ") + `,
-    IF(total_time_seconds = 0 OR COUNT(DISTINCT trace_id) FILTER (WHERE has_s` + lastStep + ` = 1) = 0, 0,
-        COUNT(DISTINCT trace_id) FILTER (WHERE has_s` + lastStep + ` = 1) / total_time_seconds
-    ) AS avg_rate,
-    COUNT(DISTINCT trace_id) FILTER (WHERE has_s` + lastStep + ` = 1 AND has_error = true) AS errors,
-    IF(COUNT(*) = 0, 0, avg(trace_duration)) AS avg_duration,
-    IF(COUNT(*) = 0, 0, quantile(0.99)(trace_duration)) AS p99_latency,
-    IF(COUNT(DISTINCT trace_id) FILTER (WHERE has_s1 = 1) = 0, 0,
-        100.0 * COUNT(DISTINCT trace_id) FILTER (WHERE has_s` + lastStep + ` = 1) /
-        COUNT(DISTINCT trace_id) FILTER (WHERE has_s1 = 1)
-    ) AS conversion_rate
-FROM (
-    SELECT 
+-- Step 1: first span
+, step1 AS (
+    SELECT
         trace_id,
-        MAX(has_error) AS has_error,
-        ` + strings.Join(stepRaws, ",\n        ") + `,
-        MAX(toUnixTimestamp64Nano(timestamp) + duration_nano) - MIN(toUnixTimestamp64Nano(timestamp)) AS trace_duration,
-        ` + strings.Join(cumulativeLogic, ",\n        ") + `
-    FROM ` + TracesTable + `
-    WHERE 
-        timestamp BETWEEN toString(start_time) AND toString(end_time)
-        AND ts_bucket_start BETWEEN tsBucketStart AND tsBucketEnd
-        AND (resource_string_service$$name, name) IN (` + strings.Join(filterConditions, ", ") + `)
+        argMin(timestamp, timestamp) AS first_time
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t1
+        AND name = span_name_t1
+        AND (contains_error_t1 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
     GROUP BY trace_id
-) AS funnel_data;`
+)
+
+-- Step 2: first span
+, step2 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t2
+        AND name = span_name_t2
+        AND (contains_error_t2 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Join steps to validate funnel ordering
+, joined AS (
+    SELECT
+        s1.trace_id,
+        s1.first_time AS t1_time,
+        s2.first_time AS t2_time
+    FROM step1 s1
+    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    WHERE s2.first_time > s1.first_time
+)
+
+SELECT trace_id
+FROM joined
+ORDER BY t1_time
+LIMIT 5;`
+
+	// Fill in the top variables
+	query := fmt.Sprintf(queryTemplate,
+		containsErrorT1,
+		containsErrorT2,
+		startTs,
+		endTs,
+		serviceNameT1,
+		spanNameT1,
+		serviceNameT2,
+		spanNameT2,
+	)
+
+	// Inject clauseStep1
+	if clauseStep1 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	// Inject clauseStep2
+	if clauseStep2 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
+	}
 
 	return query
 }
 
-func buildFunnelFiltersWithLatency(funnel *tracefunnel.Funnel) ([]tracefunnel.FunnelStepFilter, error) {
-	if funnel == nil {
-		return nil, fmt.Errorf("funnel cannot be nil")
-	}
+func BuildThreeStepFunnelValidationQuery(
+	containsErrorT1 int,
+	containsErrorT2 int,
+	containsErrorT3 int,
+	startTs int64,
+	endTs int64,
+	serviceNameT1 string,
+	spanNameT1 string,
+	serviceNameT2 string,
+	spanNameT2 string,
+	serviceNameT3 string,
+	spanNameT3 string,
+	clauseStep1 string,
+	clauseStep2 string,
+	clauseStep3 string,
+) string {
+	queryTemplate := `
+WITH
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2,
+    %[3]d AS contains_error_t3,
 
-	if len(funnel.Steps) == 0 {
-		return nil, fmt.Errorf("funnel must have at least one step")
-	}
+    toDateTime64(%[4]d / 1000000000, 9) AS start_ts,
+    toDateTime64(%[5]d / 1000000000, 9) AS end_ts,
 
-	filters := make([]tracefunnel.FunnelStepFilter, len(funnel.Steps))
+    '%[6]s' AS service_name_t1,
+    '%[7]s' AS span_name_t1,
+    '%[8]s' AS service_name_t2,
+    '%[9]s' AS span_name_t2,
+    '%[10]s' AS service_name_t3,
+    '%[11]s' AS span_name_t3
 
-	for i, step := range funnel.Steps {
-		latencyPointer := "start" // Default value
-		if step.LatencyPointer != "" {
-			latencyPointer = step.LatencyPointer
-		}
-
-		filters[i] = tracefunnel.FunnelStepFilter{
-			StepNumber:     i + 1,
-			ServiceName:    step.ServiceName,
-			SpanName:       step.SpanName,
-			LatencyPointer: latencyPointer,
-			CustomFilters:  step.Filters,
-		}
-	}
-
-	return filters, nil
-}
-
-func buildFunnelFilters(funnel *tracefunnel.Funnel) ([]tracefunnel.FunnelStepFilter, error) {
-	if funnel == nil {
-		return nil, fmt.Errorf("funnel cannot be nil")
-	}
-
-	if len(funnel.Steps) == 0 {
-		return nil, fmt.Errorf("funnel must have at least one step")
-	}
-
-	filters := make([]tracefunnel.FunnelStepFilter, len(funnel.Steps))
-
-	for i, step := range funnel.Steps {
-		filters[i] = tracefunnel.FunnelStepFilter{
-			StepNumber:    i + 1,
-			ServiceName:   step.ServiceName,
-			SpanName:      step.SpanName,
-			CustomFilters: step.Filters,
-		}
-	}
-
-	return filters, nil
-}
-
-func escapeString(s string) string {
-	// Replace single quotes with double single quotes to escape them in SQL
-	return strings.ReplaceAll(s, "'", "''")
-}
-
-const TracesTable = "signoz_traces.signoz_index_v3"
-
-func generateFunnelSQL(start, end int64, filters []tracefunnel.FunnelStepFilter) string {
-	var expressions []string
-
-	// Basic time expressions.
-	expressions = append(expressions, fmt.Sprintf("toUInt64(%d) AS start_time", start))
-	expressions = append(expressions, fmt.Sprintf("toUInt64(%d) AS end_time", end))
-	expressions = append(expressions, "toString(intDiv(start_time, 1000000000) - 1800) AS tsBucketStart")
-	expressions = append(expressions, "toString(intDiv(end_time, 1000000000)) AS tsBucketEnd")
-
-	// Add service and span alias definitions from each filter.
-	for _, f := range filters {
-		expressions = append(expressions, fmt.Sprintf("'%s' AS service_%d", escapeString(f.ServiceName), f.StepNumber))
-		expressions = append(expressions, fmt.Sprintf("'%s' AS span_%d", escapeString(f.SpanName), f.StepNumber))
-	}
-
-	// Add the CTE for each step.
-	for _, f := range filters {
-		cte := fmt.Sprintf(`step%d_traces AS (
-    SELECT DISTINCT trace_id
-    FROM %s
-    WHERE serviceName = service_%d
-      AND name = span_%d
-      AND timestamp BETWEEN toString(start_time) AND toString(end_time)
-      AND ts_bucket_start BETWEEN tsBucketStart AND tsBucketEnd
-)`, f.StepNumber, TracesTable, f.StepNumber, f.StepNumber)
-		expressions = append(expressions, cte)
-	}
-
-	withClause := "WITH \n" + strings.Join(expressions, ",\n") + "\n"
-
-	// Build the intersect clause for each step.
-	var intersectQueries []string
-	for _, f := range filters {
-		intersectQueries = append(intersectQueries, fmt.Sprintf("SELECT trace_id FROM step%d_traces", f.StepNumber))
-	}
-	intersectClause := strings.Join(intersectQueries, "\nINTERSECT\n")
-
-	query := withClause + `
-SELECT trace_id
-FROM ` + TracesTable + `
-WHERE trace_id IN (
-    ` + intersectClause + `
+-- Step 1
+, step1 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t1
+        AND name = span_name_t1
+        AND (contains_error_t1 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
 )
-  AND timestamp BETWEEN toString(start_time) AND toString(end_time)
-  AND ts_bucket_start BETWEEN tsBucketStart AND tsBucketEnd
-GROUP BY trace_id
-LIMIT 5
-`
+
+-- Step 2
+, step2 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t2
+        AND name = span_name_t2
+        AND (contains_error_t2 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Step 3
+, step3 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t3
+        AND name = span_name_t3
+        AND (contains_error_t3 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Join steps to validate funnel ordering
+, joined AS (
+    SELECT
+        s1.trace_id,
+        s1.first_time AS t1_time,
+        s2.first_time AS t2_time,
+        s3.first_time AS t3_time
+    FROM step1 s1
+    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    INNER JOIN step3 s3 ON s1.trace_id = s3.trace_id
+    WHERE s2.first_time > s1.first_time
+      AND s3.first_time > s2.first_time
+)
+
+SELECT trace_id
+FROM joined
+ORDER BY t1_time
+LIMIT 5;`
+
+	query := fmt.Sprintf(queryTemplate,
+		containsErrorT1,
+		containsErrorT2,
+		containsErrorT3,
+		startTs,
+		endTs,
+		serviceNameT1,
+		spanNameT1,
+		serviceNameT2,
+		spanNameT2,
+		serviceNameT3,
+		spanNameT3,
+	)
+
+	if clauseStep1 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	if clauseStep2 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	if clauseStep3 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "AND "+clauseStep3, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
 	return query
 }
 
 // ValidateTraces builds a ClickHouse query to validate traces in a funnel
 func ValidateTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange) (*v3.ClickHouseQuery, error) {
-	filters, err := buildFunnelFilters(funnel)
-	if err != nil {
-		return nil, fmt.Errorf("error building funnel filters: %w", err)
-	}
+	//filters, err := buildFunnelFilters(funnel)
+	//if err != nil {
+	//	return nil, fmt.Errorf("error building funnel filters: %w", err)
+	//}
+	//
+	//query := generateFunnelSQL(timeRange.StartTime, timeRange.EndTime, filters)
 
-	query := generateFunnelSQL(timeRange.StartTime, timeRange.EndTime, filters)
+	var query string
+
+	if len(funnel.Steps) > 2 {
+		//query = BuildThreeStepFunnelValidationQuery()
+	} else {
+		query = BuildTwoStepFunnelValidationQuery(
+			0,                   // containsErrorT1
+			0,                   // containsErrorT2
+			1746227399043000000, // startTs
+			1746229199043000000, // endTs
+			"load-generator",    // serviceNameT1
+			"GET",               // spanNameT1
+			"frontend-proxy",    // serviceNameT2
+			"ingress",           // spanNameT2
+			"",
+			"",
+			//"http_method = 'POST'",         // clauseStep1
+			//"response_status_code = '500'", // clauseStep2
+		)
+	}
 
 	return &v3.ClickHouseQuery{
 		Query: query,
 	}, nil
 }
 
-// Helper to build WHERE clause for a funnel step
-func buildStepFilterSQL(step *tracefunnel.FunnelStep) string {
-	if step == nil {
-		return ""
-	}
-	var filters []string
-	filters = append(filters, fmt.Sprintf("serviceName = '%s'", escapeString(step.ServiceName)))
-	filters = append(filters, fmt.Sprintf("name = '%s'", escapeString(step.SpanName)))
-	if step.Filters != nil && len(step.Filters.Items) > 0 {
-		for _, filter := range step.Filters.Items {
-			val := fmt.Sprintf("%v", filter.Value)
-			switch filter.Operator {
-			case "=":
-				filters = append(filters, fmt.Sprintf("%s = '%s'", filter.Key.Key, escapeString(val)))
-			case "!=":
-				filters = append(filters, fmt.Sprintf("%s != '%s'", filter.Key.Key, escapeString(val)))
-			case ">":
-				filters = append(filters, fmt.Sprintf("%s > '%s'", filter.Key.Key, escapeString(val)))
-			case "<":
-				filters = append(filters, fmt.Sprintf("%s < '%s'", filter.Key.Key, escapeString(val)))
-			case ">=":
-				filters = append(filters, fmt.Sprintf("%s >= '%s'", filter.Key.Key, escapeString(val)))
-			case "<=":
-				filters = append(filters, fmt.Sprintf("%s <= '%s'", filter.Key.Key, escapeString(val)))
-			case "contains":
-				filters = append(filters, fmt.Sprintf("%s LIKE '%%%s%%'", filter.Key.Key, escapeString(val)))
-			case "not_contains":
-				filters = append(filters, fmt.Sprintf("%s NOT LIKE '%%%s%%'", filter.Key.Key, escapeString(val)))
-			}
-		}
-	}
-	if step.HasErrors {
-		filters = append(filters, "has_error = 1")
-	}
-	return strings.Join(filters, " AND ")
-}
-
-// Helper to build CTE for a step
-func buildStepCTE(step *tracefunnel.FunnelStep, idx int, timeRange tracefunnel.TimeRange) string {
-	var timeExpr string
-	if step.LatencyPointer == "end" {
-		timeExpr = fmt.Sprintf("min(timestamp + duration_nano) AS step%d_time", idx)
-	} else {
-		timeExpr = fmt.Sprintf("min(timestamp) AS step%d_time", idx)
-	}
-	return fmt.Sprintf(`
-step%d AS (
-  SELECT
-    trace_id,
-    %s,
-    max(has_error) AS step%d_error
-  FROM %s
-  WHERE
-    timestamp BETWEEN toDateTime64(%d, 9) AND toDateTime64(%d, 9)
-    AND %s
-  GROUP BY trace_id
-)`,
-		idx, timeExpr, idx, TracesTable, timeRange.StartTime, timeRange.EndTime, buildStepFilterSQL(step))
-}
-
-// Main funnel analytics query builder (2 or 3 steps)
-func buildFunnelQuery(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange) string {
-	steps := funnel.Steps
-	if len(steps) < 2 || len(steps) > 3 {
-		return "-- Only 2 or 3 step funnels are supported"
-	}
-
-	ctes := []string{
-		buildStepCTE(&steps[0], 1, timeRange),
-		buildStepCTE(&steps[1], 2, timeRange),
-	}
-	joinClause := "s1.trace_id = s2.trace_id"
-	selectFields := "s1.trace_id, s1.step1_time, s2.step2_time, s1.step1_error, s2.step2_error, (s2.step2_time - s1.step1_time) AS duration"
-	whereClause := "s2.step2_time > s1.step1_time"
-	if len(steps) == 3 {
-		ctes = append(ctes, buildStepCTE(&steps[2], 3, timeRange))
-		joinClause += " AND s1.trace_id = s3.trace_id AND s2.trace_id = s3.trace_id"
-		selectFields = "s1.trace_id, s1.step1_time, s2.step2_time, s3.step3_time, s1.step1_error, s2.step2_error, s3.step3_error, (s3.step3_time - s1.step1_time) AS duration"
-		whereClause = "s2.step2_time > s1.step1_time AND s3.step3_time > s2.step2_time"
-	}
-
-	return fmt.Sprintf(`
+func BuildTwoStepFunnelOverviewQuery(
+	containsErrorT1 int,
+	containsErrorT2 int,
+	latencyPointerT1 string,
+	latencyPointerT2 string,
+	startTs int64,
+	endTs int64,
+	serviceNameT1 string,
+	spanNameT1 string,
+	serviceNameT2 string,
+	spanNameT2 string,
+	clauseStep1 string,
+	clauseStep2 string,
+) string {
+	queryTemplate := `
 WITH
-%s
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2,
+    '%[3]s' AS latency_pointer_t1,
+    '%[4]s' AS latency_pointer_t2,
+    toDateTime64(%[5]d / 1000000000, 9) AS start_ts,
+    toDateTime64(%[6]d / 1000000000, 9) AS end_ts,
+    (%[6]d - %[5]d) / 1000000000 AS time_window_sec,
+    '%[7]s' AS service_name_t1,
+    '%[8]s' AS span_name_t1,
+    '%[9]s' AS service_name_t2,
+    '%[10]s' AS span_name_t2
+
+-- Step 1
+, step1 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t1
+        AND name = span_name_t1
+        AND (contains_error_t1 = 0 OR has_error = true)
+        -- <<< INJECT clause_step1 HERE IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Step 2
+, step2 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t2
+        AND name = span_name_t2
+        AND (contains_error_t2 = 0 OR has_error = true)
+        -- <<< INJECT clause_step2 HERE IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Join steps
+, joined AS (
+    SELECT
+        s1.trace_id,
+        s1.first_time AS t1_time,
+        s2.first_time AS t2_time,
+        s1.has_error_flag AS t1_has_error,
+        s2.has_error_flag AS t2_has_error
+    FROM step1 s1
+    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    WHERE s2.first_time > s1.first_time
+)
+
+-- Final metrics
+, final AS (
+    SELECT
+        trace_id,
+        abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) AS duration_nanos,
+        t1_has_error,
+        t2_has_error
+    FROM joined
+)
 SELECT
-  %s
-FROM step1 s1
-INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
-%s
-WHERE %s
-`,
-		strings.Join(ctes, ",\n"),
-		selectFields,
-		func() string {
-			if len(steps) == 3 {
-				return "INNER JOIN step3 s3 ON s1.trace_id = s3.trace_id"
-			}
-			return ""
-		}(),
-		whereClause,
+    round(count() / (SELECT count() FROM step1) * 100, 2) AS conversion_rate,
+    count() / time_window_sec AS avg_rate,
+    countIf(t1_has_error OR t2_has_error) AS errors,
+    avg(duration_nanos * 1000) AS avg_duration,
+    quantile(0.99)(duration_nanos * 1000) AS p99_duration
+FROM final;`
+
+	query := fmt.Sprintf(queryTemplate,
+		containsErrorT1,
+		containsErrorT2,
+		latencyPointerT1,
+		latencyPointerT2,
+		startTs,
+		endTs,
+		serviceNameT1,
+		spanNameT1,
+		serviceNameT2,
+		spanNameT2,
 	)
+
+	if clauseStep1 != "" {
+		query = strings.Replace(query, "-- <<< INJECT clause_step1 HERE IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT clause_step1 HERE IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	if clauseStep2 != "" {
+		query = strings.Replace(query, "-- <<< INJECT clause_step2 HERE IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT clause_step2 HERE IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	return query
 }
 
-// GetFunnelAnalytics generates a SQL query for funnel analytics.
-// Example SQL generated for a 2-step funnel:
-// WITH
-// step1 AS (
-//
-//	SELECT trace_id, min(timestamp) AS step1_time, max(has_error) AS step1_error
-//	FROM signoz_traces.signoz_index_v3
-//	WHERE timestamp BETWEEN toDateTime64(START, 9) AND toDateTime64(END, 9)
-//	  AND serviceName = 'svc1' AND name = 'span1'
-//	GROUP BY trace_id
-//
-// ),
-// step2 AS (
-//
-//	SELECT trace_id, min(timestamp) AS step2_time, max(has_error) AS step2_error
-//	FROM signoz_traces.signoz_index_v3
-//	WHERE timestamp BETWEEN toDateTime64(START, 9) AND toDateTime64(END, 9)
-//	  AND serviceName = 'svc2' AND name = 'span2'
-//	GROUP BY trace_id
-//
-// )
-// SELECT
-//
-//	s1.trace_id, s1.step1_time, s2.step2_time, s1.step1_error, s2.step2_error, (s2.step2_time - s1.step1_time) AS duration
-//
-// FROM step1 s1
-// INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
-// WHERE s2.step2_time > s1.step1_time
+func BuildThreeStepFunnelOverviewQuery(
+	containsErrorT1 int,
+	containsErrorT2 int,
+	containsErrorT3 int,
+	latencyPointerT1 string,
+	latencyPointerT2 string,
+	latencyPointerT3 string,
+	startTs int64,
+	endTs int64,
+	serviceNameT1 string,
+	spanNameT1 string,
+	serviceNameT2 string,
+	spanNameT2 string,
+	serviceNameT3 string,
+	spanNameT3 string,
+	clauseStep1 string,
+	clauseStep2 string,
+	clauseStep3 string,
+) string {
+	queryTemplate := `
+WITH
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2,
+    %[3]d AS contains_error_t3,
+
+    '%[4]s' AS latency_pointer_t1,
+    '%[5]s' AS latency_pointer_t2,
+    '%[6]s' AS latency_pointer_t3,
+
+    toDateTime64(%[7]d / 1000000000, 9) AS start_ts,
+    toDateTime64(%[8]d / 1000000000, 9) AS end_ts,
+    (%[8]d - %[7]d) / 1000000000 AS time_window_sec,
+
+    '%[9]s' AS service_name_t1,
+    '%[10]s' AS span_name_t1,
+    '%[11]s' AS service_name_t2,
+    '%[12]s' AS span_name_t2,
+    '%[13]s' AS service_name_t3,
+    '%[14]s' AS span_name_t3
+
+-- Step 1
+, step1 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t1
+        AND name = span_name_t1
+        AND (contains_error_t1 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Step 2
+, step2 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t2
+        AND name = span_name_t2
+        AND (contains_error_t2 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Step 3
+, step3 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t3
+        AND name = span_name_t3
+        AND (contains_error_t3 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Join steps and apply ordering
+, joined AS (
+    SELECT
+        s1.trace_id,
+        s1.first_time AS t1_time,
+        s2.first_time AS t2_time,
+        s3.first_time AS t3_time,
+        s1.has_error_flag AS t1_has_error,
+        s2.has_error_flag AS t2_has_error,
+        s3.has_error_flag AS t3_has_error
+    FROM step1 s1
+    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    INNER JOIN step3 s3 ON s1.trace_id = s3.trace_id
+    WHERE s2.first_time > s1.first_time AND s3.first_time > s2.first_time
+)
+
+-- Final metrics
+SELECT
+    round(count() / (SELECT count() FROM step1) * 100, 2) AS conversion_rate,
+    count() / time_window_sec AS avg_rate,
+    countIf(t1_has_error OR t2_has_error OR t3_has_error) AS errors,
+    avg(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration_ms,
+    quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS p99_latency_ms
+FROM joined;`
+
+	query := fmt.Sprintf(queryTemplate,
+		containsErrorT1,
+		containsErrorT2,
+		containsErrorT3,
+		latencyPointerT1,
+		latencyPointerT2,
+		latencyPointerT3,
+		startTs,
+		endTs,
+		serviceNameT1,
+		spanNameT1,
+		serviceNameT2,
+		spanNameT2,
+		serviceNameT3,
+		spanNameT3,
+	)
+
+	if clauseStep1 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	if clauseStep2 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	if clauseStep3 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "AND "+clauseStep3, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	return query
+}
+
 func GetFunnelAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange) (*v3.ClickHouseQuery, error) {
-	query := buildFunnelQuery(funnel, timeRange)
+	var query string
+
+	if len(funnel.Steps) > 2 {
+		query = BuildThreeStepFunnelOverviewQuery(
+			0,                   // containsErrorT1
+			0,                   // containsErrorT2
+			0,                   // containsErrorT3
+			"start",             // latencyPointerT1
+			"start",             // latencyPointerT2
+			"start",             // latencyPointerT3
+			1746227399043000000, // startTs
+			1746229199043000000, // endTs
+			"load-generator",    // serviceNameT1
+			"GET",               // spanNameT1
+			"frontend-proxy",    // serviceNameT2
+			"ingress",           // spanNameT2
+			"frontend",          // serviceNameT3
+			"GET",               // spanNameT3
+			"",
+			"",
+			"",
+			//"http_method = 'POST'",         // clauseStep1
+			//"response_status_code = '500'", // clauseStep2
+			//"db_operation = 'SELECT'",      // clauseStep3
+		)
+	} else {
+		query = BuildTwoStepFunnelOverviewQuery(
+			0,                   // containsErrorT1
+			0,                   // containsErrorT2
+			"start",             // latencyPointerT1
+			"start",             // latencyPointerT2
+			1746227399043000000, // startTs
+			1746229199043000000, // endTs
+			"load-generator",    // serviceNameT1
+			"GET",               // spanNameT1
+			"frontend-proxy",    // serviceNameT2
+			"ingress",           // spanNameT2
+			"",
+			"",
+			//"http_method = 'POST'",         // clauseStep1
+			//"response_status_code = '500'", // clauseStep2
+		)
+	}
 	return &v3.ClickHouseQuery{Query: query}, nil
 }
 
-// GetSlowestTraces returns the slowest N traces for a funnel.
-// Example SQL for slowest traces in a 2-step funnel:
-// WITH funnel_data AS (
-//
-//	... (see GetFunnelAnalytics sample above) ...
-//
-// )
-// SELECT trace_id, duration
-// FROM funnel_data
-// ORDER BY duration DESC
-// LIMIT N
+func BuildTwoStepFunnelCountQuery(
+	containsErrorT1 int,
+	containsErrorT2 int,
+	startTs int64,
+	endTs int64,
+	serviceNameT1 string,
+	spanNameT1 string,
+	serviceNameT2 string,
+	spanNameT2 string,
+	clauseStep1 string,
+	clauseStep2 string,
+) string {
+	queryTemplate := `
+WITH
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2,
+
+    toDateTime64(%[3]d / 1000000000, 9) AS start_ts,
+    toDateTime64(%[4]d / 1000000000, 9) AS end_ts,
+
+    '%[5]s' AS service_name_t1,
+    '%[6]s' AS span_name_t1,
+    '%[7]s' AS service_name_t2,
+    '%[8]s' AS span_name_t2
+
+-- Step 1
+, step1 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t1
+        AND name = span_name_t1
+        AND (contains_error_t1 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Step 2
+, step2 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t2
+        AND name = span_name_t2
+        AND (contains_error_t2 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Join T1 and T2 and apply ordering
+, joined AS (
+    SELECT
+        s1.trace_id,
+        s1.first_time AS t1_time,
+        s2.first_time AS t2_time,
+        s1.has_error_flag AS t1_has_error,
+        s2.has_error_flag AS t2_has_error
+    FROM step1 s1
+    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    WHERE s2.first_time > s1.first_time
+)
+
+-- Final counts
+SELECT
+    (SELECT count() FROM step1) AS total_s1_spans,
+    (SELECT countIf(has_error_flag) FROM step1) AS total_s1_errored_spans,
+    count() AS total_s2_spans,
+    countIf(t2_has_error) AS total_s2_errored_spans
+FROM joined;`
+
+	query := fmt.Sprintf(queryTemplate,
+		containsErrorT1,
+		containsErrorT2,
+		startTs,
+		endTs,
+		serviceNameT1,
+		spanNameT1,
+		serviceNameT2,
+		spanNameT2,
+	)
+
+	if clauseStep1 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	if clauseStep2 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	return query
+}
+
+func BuildThreeStepFunnelCountQuery(
+	containsErrorT1 int,
+	containsErrorT2 int,
+	containsErrorT3 int,
+	startTs int64,
+	endTs int64,
+	serviceNameT1 string,
+	spanNameT1 string,
+	serviceNameT2 string,
+	spanNameT2 string,
+	serviceNameT3 string,
+	spanNameT3 string,
+	clauseStep1 string,
+	clauseStep2 string,
+	clauseStep3 string,
+) string {
+	queryTemplate := `
+WITH
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2,
+    %[3]d AS contains_error_t3,
+
+    toDateTime64(%[4]d / 1000000000, 9) AS start_ts,
+    toDateTime64(%[5]d / 1000000000, 9) AS end_ts,
+
+    '%[6]s' AS service_name_t1,
+    '%[7]s' AS span_name_t1,
+    '%[8]s' AS service_name_t2,
+    '%[9]s' AS span_name_t2,
+    '%[10]s' AS service_name_t3,
+    '%[11]s' AS span_name_t3
+
+-- Step 1
+, step1 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t1
+        AND name = span_name_t1
+        AND (contains_error_t1 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Step 2
+, step2 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t2
+        AND name = span_name_t2
+        AND (contains_error_t2 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Step 3
+, step3 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t3
+        AND name = span_name_t3
+        AND (contains_error_t3 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+)
+
+-- Join T1 and T2
+, joined_t2 AS (
+    SELECT
+        s1.trace_id,
+        s1.first_time AS t1_time,
+        s2.first_time AS t2_time,
+        s1.has_error_flag AS t1_has_error,
+        s2.has_error_flag AS t2_has_error
+    FROM step1 s1
+    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    WHERE s2.first_time > s1.first_time
+)
+
+-- Join T2 and T3
+, joined_t3 AS (
+    SELECT
+        j2.trace_id,
+        j2.t1_time,
+        j2.t2_time,
+        s3.first_time AS t3_time,
+        j2.t1_has_error,
+        j2.t2_has_error,
+        s3.has_error_flag AS t3_has_error
+    FROM joined_t2 j2
+    INNER JOIN step3 s3 ON j2.trace_id = s3.trace_id
+    WHERE s3.first_time > j2.t2_time
+)
+
+-- Final counts
+SELECT
+    (SELECT count() FROM step1) AS total_s1_spans,
+    (SELECT countIf(has_error_flag) FROM step1) AS total_s1_errored_spans,
+    (SELECT count() FROM joined_t2) AS total_s2_spans,
+    (SELECT countIf(t2_has_error) FROM joined_t2) AS total_s2_errored_spans,
+    count() AS total_s3_spans,
+    countIf(t3_has_error) AS total_s3_errored_spans
+FROM joined_t3;`
+
+	query := fmt.Sprintf(queryTemplate,
+		containsErrorT1,
+		containsErrorT2,
+		containsErrorT3,
+		startTs,
+		endTs,
+		serviceNameT1,
+		spanNameT1,
+		serviceNameT2,
+		spanNameT2,
+		serviceNameT3,
+		spanNameT3,
+	)
+
+	if clauseStep1 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	if clauseStep2 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	if clauseStep3 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "AND "+clauseStep3, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	return query
+}
+
+// GetStepAnalytics builds a ClickHouse query to get analytics for each step
+func GetStepAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange) (*v3.ClickHouseQuery, error) {
+
+	var query string
+
+	if len(funnel.Steps) > 2 {
+		query = BuildThreeStepFunnelCountQuery(
+			0,                   // containsErrorT1
+			0,                   // containsErrorT2
+			0,                   // containsErrorT3
+			1746227399043000000, // startTs
+			1746229199043000000, // endTs
+			"load-generator",    // serviceNameT1
+			"GET",               // spanNameT1
+			"frontend-proxy",    // serviceNameT2
+			"ingress",           // spanNameT2
+			"frontend",          // serviceNameT3
+			"GET",               // spanNameT3
+			"",
+			"",
+			"",
+			//"http_method = 'POST'",    // clauseStep1
+			//"response_status_code = '500'", // clauseStep2
+			//"db_operation = 'SELECT'",      // clauseStep3
+		)
+	} else {
+		query = BuildTwoStepFunnelCountQuery(
+			0,                   // containsErrorT1
+			0,                   // containsErrorT2
+			1746227399043000000, // startTs
+			1746229199043000000, // endTs
+			"load-generator",    // serviceNameT1
+			"GET",               // spanNameT1
+			"frontend-proxy",    // serviceNameT2
+			"ingress",           // spanNameT2
+			"",
+			"",
+			//"http_method = 'POST'",    // clauseStep1
+			//"response_status_code = '500'", // clauseStep2
+		)
+	}
+
+	return &v3.ClickHouseQuery{
+		Query: query,
+	}, nil
+}
+
+func BuildTwoStepFunnelTopSlowTracesQuery(
+	containsErrorT1 int,
+	containsErrorT2 int,
+	startTs int64,
+	endTs int64,
+	serviceNameT1 string,
+	spanNameT1 string,
+	serviceNameT2 string,
+	spanNameT2 string,
+	clauseStep1 string,
+	clauseStep2 string,
+) string {
+	queryTemplate := `
+WITH
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2,
+
+    toDateTime64(%[3]d / 1000000000, 9) AS start_ts,
+    toDateTime64(%[4]d / 1000000000, 9) AS end_ts,
+
+    '%[5]s' AS service_name_t1,
+    '%[6]s' AS span_name_t1,
+    '%[7]s' AS service_name_t2,
+    '%[8]s' AS span_name_t2
+
+-- Step 1: first span
+, step1_first AS (
+    SELECT trace_id, min(timestamp) AS first_time
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t1
+        AND name = span_name_t1
+        AND (contains_error_t1 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+), step1 AS (
+    SELECT s1.trace_id, s1.timestamp AS first_time
+    FROM signoz_traces.signoz_index_v3 s1
+    INNER JOIN step1_first f1 ON s1.trace_id = f1.trace_id AND s1.timestamp = f1.first_time
+)
+
+-- Step 2: first span
+, step2_first AS (
+    SELECT trace_id, min(timestamp) AS first_time
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t2
+        AND name = span_name_t2
+        AND (contains_error_t2 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+), step2 AS (
+    SELECT s2.trace_id, s2.timestamp AS first_time
+    FROM signoz_traces.signoz_index_v3 s2
+    INNER JOIN step2_first f2 ON s2.trace_id = f2.trace_id AND s2.timestamp = f2.first_time
+)
+
+-- Join T1 and T2
+, joined AS (
+    SELECT
+        s1.trace_id,
+        s1.first_time AS t1_time,
+        s2.first_time AS t2_time
+    FROM step1 s1
+    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    WHERE s2.first_time > s1.first_time
+)
+
+-- Calculate duration in milliseconds
+, final AS (
+    SELECT
+        trace_id,
+        abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000 AS duration_ms
+    FROM joined
+)
+
+-- Count spans per trace
+, span_counts AS (
+    SELECT trace_id, count() AS span_count
+    FROM signoz_traces.signoz_index_v3
+    WHERE timestamp BETWEEN start_ts AND end_ts
+    GROUP BY trace_id
+)
+
+-- Final selection: top 5 slowest traces
+SELECT
+    f.trace_id,
+    f.duration_ms,
+    s.span_count
+FROM final f
+INNER JOIN span_counts s ON f.trace_id = s.trace_id
+ORDER BY f.duration_ms DESC
+LIMIT 5;`
+
+	query := fmt.Sprintf(queryTemplate,
+		containsErrorT1,
+		containsErrorT2,
+		startTs,
+		endTs,
+		serviceNameT1,
+		spanNameT1,
+		serviceNameT2,
+		spanNameT2,
+	)
+
+	if clauseStep1 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	if clauseStep2 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	return query
+}
 func GetSlowestTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange, limit int) (*v3.ClickHouseQuery, error) {
-	baseQuery := buildFunnelQuery(funnel, timeRange)
-	query := fmt.Sprintf(`
-WITH funnel_data AS (%s)
-SELECT trace_id, duration
-FROM funnel_data
-ORDER BY duration DESC
-LIMIT %d
-`, baseQuery, limit)
+	query := BuildTwoStepFunnelTopSlowTracesQuery(
+		0,                   // containsErrorT1
+		0,                   // containsErrorT2
+		1746227399043000000, // startTs
+		1746229199043000000, // endTs
+		"load-generator",    // serviceNameT1
+		"GET",               // spanNameT1
+		"frontend-proxy",    // serviceNameT2
+		"ingress",           // spanNameT2
+		"",
+		"",
+		//"http_method = 'POST'",         // clauseStep1
+		//"response_status_code = '500'", // clauseStep2
+	)
 	return &v3.ClickHouseQuery{Query: query}, nil
 }
 
-// GetErroredTraces returns the slowest N errored traces for a funnel.
-// Example SQL for errored traces in a 2-step funnel:
-// WITH funnel_data AS (
-//
-//	... (see GetFunnelAnalytics sample above) ...
-//
-// )
-// SELECT trace_id, duration
-// FROM funnel_data
-// WHERE step1_error = 1 OR step2_error = 1
-// ORDER BY duration DESC
-// LIMIT N
+func BuildTwoStepFunnelTopSlowErrorTracesQuery(
+	containsErrorT1 int,
+	containsErrorT2 int,
+	startTs int64,
+	endTs int64,
+	serviceNameT1 string,
+	spanNameT1 string,
+	serviceNameT2 string,
+	spanNameT2 string,
+	clauseStep1 string,
+	clauseStep2 string,
+) string {
+	queryTemplate := `
+WITH
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2,
+
+    toDateTime64(%[3]d / 1000000000, 9) AS start_ts,
+    toDateTime64(%[4]d / 1000000000, 9) AS end_ts,
+
+    '%[5]s' AS service_name_t1,
+    '%[6]s' AS span_name_t1,
+    '%[7]s' AS service_name_t2,
+    '%[8]s' AS span_name_t2
+
+-- Step 1: first span
+, step1_first AS (
+    SELECT trace_id, min(timestamp) AS first_time
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t1
+        AND name = span_name_t1
+        AND (contains_error_t1 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+), step1 AS (
+    SELECT s1.trace_id, s1.timestamp AS first_time, s1.has_error AS has_error_flag
+    FROM signoz_traces.signoz_index_v3 s1
+    INNER JOIN step1_first f1 ON s1.trace_id = f1.trace_id AND s1.timestamp = f1.first_time
+)
+
+-- Step 2: first span
+, step2_first AS (
+    SELECT trace_id, min(timestamp) AS first_time
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t2
+        AND name = span_name_t2
+        AND (contains_error_t2 = 0 OR has_error = true)
+        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+    GROUP BY trace_id
+), step2 AS (
+    SELECT s2.trace_id, s2.timestamp AS first_time, s2.has_error AS has_error_flag
+    FROM signoz_traces.signoz_index_v3 s2
+    INNER JOIN step2_first f2 ON s2.trace_id = f2.trace_id AND s2.timestamp = f2.first_time
+)
+
+-- Join T1 and T2
+, joined AS (
+    SELECT
+        s1.trace_id,
+        s1.first_time AS t1_time,
+        s2.first_time AS t2_time,
+        s1.has_error_flag AS t1_has_error,
+        s2.has_error_flag AS t2_has_error
+    FROM step1 s1
+    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    WHERE s2.first_time > s1.first_time
+)
+
+-- Calculate duration in milliseconds and filter error traces
+, final AS (
+    SELECT
+        trace_id,
+        abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000 AS duration_ms,
+        t1_has_error,
+        t2_has_error
+    FROM joined
+    WHERE t1_has_error OR t2_has_error
+)
+
+-- Count spans per trace
+, span_counts AS (
+    SELECT trace_id, count() AS span_count
+    FROM signoz_traces.signoz_index_v3
+    WHERE timestamp BETWEEN start_ts AND end_ts
+    GROUP BY trace_id
+)
+
+-- Final selection: top 5 slowest error traces
+SELECT
+    f.trace_id,
+    f.duration_ms,
+    s.span_count
+FROM final f
+INNER JOIN span_counts s ON f.trace_id = s.trace_id
+ORDER BY f.duration_ms DESC
+LIMIT 5;`
+
+	query := fmt.Sprintf(queryTemplate,
+		containsErrorT1,
+		containsErrorT2,
+		startTs,
+		endTs,
+		serviceNameT1,
+		spanNameT1,
+		serviceNameT2,
+		spanNameT2,
+	)
+
+	if clauseStep1 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	if clauseStep2 != "" {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
+	} else {
+		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
+	}
+
+	return query
+}
+
 func GetErroredTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange, limit int) (*v3.ClickHouseQuery, error) {
-	baseQuery := buildFunnelQuery(funnel, timeRange)
-	query := fmt.Sprintf(`
-WITH funnel_data AS (%s)
-SELECT trace_id, duration
-FROM funnel_data
-WHERE step1_error = 1 OR step2_error = 1%s
-ORDER BY duration DESC
-LIMIT %d
-`,
-		baseQuery,
-		func() string {
-			if len(funnel.Steps) == 3 {
-				return " OR step3_error = 1"
-			}
-			return ""
-		}(),
-		limit,
+	query := BuildTwoStepFunnelTopSlowErrorTracesQuery(
+		0,                   // containsErrorT1
+		0,                   // containsErrorT2
+		1746227399043000000, // startTs
+		1746229199043000000, // endTs
+		"load-generator",    // serviceNameT1
+		"GET",               // spanNameT1
+		"frontend-proxy",    // serviceNameT2
+		"ingress",           // spanNameT2
+		"",
+		"",
+		//"http_method = 'POST'",     // clauseStep1
+		//"response_status_code = '500'", // clauseStep2
 	)
 	return &v3.ClickHouseQuery{Query: query}, nil
 }
