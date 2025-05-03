@@ -36,13 +36,12 @@ func CreateThing(ctx context.Context, thing *Thing) error {
 }
 ```
 
-> 💡 **Note**: Always use consistent formatting with appropriate line breaks to enhance code readability. Always use the `new` function to create new instances of structs.
+> 💡 **Note**: Always use line breaks while working with SQL queries to enhance code readability. 
+> 💡 **Note**: Always use the `new` function to create new instances of structs.
 
-
-## How to use hooks?
+## What are hooks?
 
 Hooks are user-defined functions that execute before and/or after specific database operations. These hooks are particularly useful for generating telemetry data such as logs, traces, and metrics, providing visibility into database interactions. Hooks are defined in the [SQLStoreHook](/pkg/sqlstore/sqlstore.go) interface.
-
 
 ## How is the schema designed?
 
@@ -55,36 +54,39 @@ erDiagram
         timestamp created_at
         timestamp updated_at
     }
-    TABLE_A {
+    ENTITY_A {
         string id PK
         timestamp created_at
         timestamp updated_at
         string org_id FK
     }
-    TABLE_B {
+    ENTITY_B {
         string id PK
         timestamp created_at
         timestamp updated_at
         string org_id FK
     }
     
-    ORGANIZATIONS ||--o{ TABLE_A : contains
-    ORGANIZATIONS ||--o{ TABLE_B : contains
+    ORGANIZATIONS ||--o{ ENTITY_A : contains
+    ORGANIZATIONS ||--o{ ENTITY_B : contains
 ```
 
+> 💡 **Note**: There are rare exceptions to the above star schema design. Consult with the maintainers before deviating from the above design.
 
 All tables follow a consistent primary key pattern using a `id` column (referenced by the `types.Identifiable` struct) and include `created_at` and `updated_at` columns (referenced by the `types.TimeAuditable` struct) for audit purposes.
 
 ## How to write migrations?
 
-For schema migrations, use the `sqlmigration` package. When creating migrations, adhere to these guidelines:
+For schema migrations, use the [SQLMigration](/pkg/sqlmigration/sqlmigration.go) interface and write the migration in the same package. When creating migrations, adhere to these guidelines:
 
-- Do not implement ON CASCADE foreign key constraints. Deletion operations should be handled explicitly in application logic rather than delegated to the database.
-- Do not import types from the types package in the sqlmigration package. Instead, define the required types within the migration package itself. This practice ensures migration stability as the core types evolve over time.
-- We currently do not implement Down migrations. As the codebase matures, we may introduce this capability, but for now, the Down function should remain empty.
+- Do not implement **`ON CASCADE` foreign key constraints**. Deletion operations should be handled explicitly in application logic rather than delegated to the database.
+- Do not **import types from the types package** in the `sqlmigration` package. Instead, define the required types within the migration package itself. This practice ensures migration stability as the core types evolve over time.
+- Do not implement **`Down` migrations**. As the codebase matures, we may introduce this capability, but for now, the `Down` function should remain empty.
+- Always write **idempotent** migrations. This means that if the migration is run multiple times, it should not cause an error.
+- A migration which is **dependent on the underlying dialect** (sqlite, postgres, etc) should be written as part of the [SQLDialect](/pkg/sqlstore/sqlstore.go) interface. The implementation needs to go in the dialect specific package of the respective database.
 
 ## What should I remember?
 
-- Always pass `context.Context` to all functions that interact with the database.
+- While designing new tables, ensure the consistency of `id`, `created_at`, `updated_at` and an `org_id` column with a foreign key constraint to the `organizations` table (unless the table serves as a transitive entity not directly associated with an organization but indirectly associated with one).
 - Implement deletion logic in the application rather than relying on cascading deletes in the database.
-- Ensure all new tables include an `org_id` column with a foreign key constraint to the `organizations` table, unless the table serves as a transitive entity not directly associated with an organization.
+- While writing migrations, adhere to the guidelines mentioned above.
