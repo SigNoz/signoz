@@ -74,27 +74,14 @@ func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// For SQLite, insert each filter individually with proper conflict handling
 	for _, filter := range storableQuickFilters {
-		// Check if the record already exists
-		exists, err := tx.NewSelect().
-			Model((*quickFilter)(nil)).
-			Where("org_id = ? AND signal = ?", filter.OrgID, filter.Signal).
-			Exists(ctx)
+		filter_ := *filter
+		_, err = tx.NewInsert().
+			Model(&filter_).
+			Exec(ctx)
+
 		if err != nil {
 			return err
-		}
-
-		// Only insert if it doesn't exist
-		if !exists {
-			filter_ := *filter
-			_, err = tx.NewInsert().
-				Model(&filter_).
-				Exec(ctx)
-
-			if err != nil {
-				return err
-			}
 		}
 	}
 
