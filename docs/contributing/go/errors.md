@@ -20,7 +20,7 @@ The Typ (read as Type, defined as `typ`) is used to categorize errors across the
 - `TypeInvalidInput` - Indicates invalid input was provided
 - `TypeNotFound` - Indicates a resource was not found
 
-By design, `typ` is unexported and cannot be declared outside of [errors](/pkg/errors/errors.go) package. This ensures that the it is consistent across the codebase and is used in a way that is meaningful.
+By design, `typ` is unexported and cannot be declared outside of [errors](/pkg/errors/errors.go) package. This ensures that it is consistent across the codebase and is used in a way that is meaningful.
 
 ### Code
 Codes are used to provide more granular categorization within types. For instance, a type of `TypeInvalidInput` might have codes like `CodeInvalidEmail` or `CodeInvalidPassword`.
