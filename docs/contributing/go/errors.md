@@ -90,7 +90,7 @@ In a large codebase like SigNoz, error handling is critical for maintaining reli
 The caller (which can be a another function or a HTTP/gRPC handler or something else entirely), can then choose to use this error to take appropriate actions such as:
 
 - A function can branch into different paths based on the context
-- An HTTP/gRPC handler can derive the correct status code from the error type and send it to the client
+- An HTTP/gRPC handler can derive the correct status code and message from the error and send it to the client
 - Logging systems can capture structured error information for better diagnostics
 
 Although there might be cases where this might seem too verbose, it makes the code more maintainable and consistent. A little verbose code is better than clever code that doesn't provide enough context.
