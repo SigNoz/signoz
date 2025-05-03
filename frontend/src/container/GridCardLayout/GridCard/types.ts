@@ -40,6 +40,7 @@ export interface WidgetGraphComponentProps {
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
 	customErrorMessage?: string;
 	customOnRowClick?: (record: RowData) => void;
+	isTenMinutesTracesTimeRange?: boolean;
 }
 
 export interface GridCardGraphProps {
@@ -67,6 +68,7 @@ export interface GridCardGraphProps {
 		endTime: number;
 	};
 	customOnRowClick?: (record: RowData) => void;
+	isTenMinutesTracesTimeRange?: boolean;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {
