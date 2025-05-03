@@ -87,7 +87,7 @@ In a large codebase like SigNoz, error handling is critical for maintaining reli
 - Callers can make informed decisions based on the additional context
 - Error context is preserved and enhanced as it moves up the call stack
 
-The caller (which can be a another function or a HTTP/gRPC handler or something else entirely), can then choose to use this error to take appropriate actions such as:
+The caller (which can be another function or a HTTP/gRPC handler or something else entirely), can then choose to use this error to take appropriate actions such as:
 
 - A function can branch into different paths based on the context
 - An HTTP/gRPC handler can derive the correct status code and message from the error and send it to the client
