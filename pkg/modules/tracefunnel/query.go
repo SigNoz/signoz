@@ -251,7 +251,25 @@ func ValidateTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange)
 	var query string
 
 	if len(funnel.Steps) > 2 {
-		//query = BuildThreeStepFunnelValidationQuery()
+		query = BuildThreeStepFunnelValidationQuery(
+			0,                   // containsErrorT1
+			0,                   // containsErrorT2
+			0,                   // containsErrorT3
+			1746227399043000000, // startTs
+			1746229199043000000, // endTs
+			"load-generator",    // serviceNameT1
+			"GET",               // spanNameT1
+			"frontend-proxy",    // serviceNameT2
+			"ingress",           // spanNameT2
+			"frontend",          // serviceNameT3
+			"GET",               // spanNameT3
+			"",
+			"",
+			"",
+			//"http_method = 'POST'", // clauseStep1
+			//"response_status_code = '500'", // clauseStep2
+			//"db_operation = 'SELECT'", // clauseStep3
+		)
 	} else {
 		query = BuildTwoStepFunnelValidationQuery(
 			0,                   // containsErrorT1
