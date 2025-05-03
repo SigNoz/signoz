@@ -45,6 +45,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		// create a threshold rule
 		rule, err = NewThresholdRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Reader,
 			WithSendAlways(),
@@ -53,7 +54,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new threshold rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new threshold rule for test", zap.Error(err))
 			return 0, model.BadRequest(err)
 		}
 
@@ -62,6 +63,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		// create promql rule
 		rule, err = NewPromRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Logger,
 			opts.Reader,
@@ -72,7 +74,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new promql rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new promql rule for test", zap.Error(err))
 			return 0, model.BadRequest(err)
 		}
 	} else {

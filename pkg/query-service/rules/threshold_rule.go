@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
@@ -55,6 +56,7 @@ type ThresholdRule struct {
 
 func NewThresholdRule(
 	id string,
+	orgID valuer.UUID,
 	p *ruletypes.PostableRule,
 	reader interfaces.Reader,
 	opts ...RuleOption,
@@ -62,7 +64,7 @@ func NewThresholdRule(
 
 	zap.L().Info("creating new ThresholdRule", zap.String("id", id), zap.Any("opts", opts))
 
-	baseRule, err := NewBaseRule(id, p, reader, opts...)
+	baseRule, err := NewBaseRule(id, orgID, p, reader, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -249,13 +251,13 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 	return r.ruleCondition.GetSelectedQueryName()
 }
 
-func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
+func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
 
 	params, err := r.prepareQueryRange(ts)
 	if err != nil {
 		return nil, err
 	}
-	err = r.PopulateTemporality(ctx, params)
+	err = r.PopulateTemporality(ctx, orgID, params)
 	if err != nil {
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}
@@ -299,9 +301,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (rul
 	var queryErrors map[string]error
 
 	if r.version == "v4" {
-		results, queryErrors, err = r.querierV2.QueryRange(ctx, params)
+		results, queryErrors, err = r.querierV2.QueryRange(ctx, orgID, params)
 	} else {
-		results, queryErrors, err = r.querier.QueryRange(ctx, params)
+		results, queryErrors, err = r.querier.QueryRange(ctx, orgID, params)
 	}
 
 	if err != nil {
@@ -361,7 +363,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	prevState := r.State()
 
 	valueFormatter := formatter.FromUnit(r.Unit())
-	res, err := r.buildAndRunQuery(ctx, ts)
+	res, err := r.buildAndRunQuery(ctx, r.orgID, ts)
 
 	if err != nil {
 		return nil, err

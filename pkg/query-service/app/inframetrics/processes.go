@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
@@ -142,7 +143,7 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 	return processAttrs, nil
 }
 
-func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, req model.ProcessListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, orgID valuer.UUID, req model.ProcessListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopProcesses(req)
 
 	queryNames := queryNamesForTopProcesses[req.OrderBy.ColumnName]
@@ -170,7 +171,7 @@ func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, req model.Proce
 		topProcessGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, topProcessGroupsQueryRangeParams)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topProcessGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -209,7 +210,7 @@ func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, req model.Proce
 	return topProcessGroups, allProcessGroups, nil
 }
 
-func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessListRequest) (model.ProcessListResponse, error) {
+func (p *ProcessesRepo) GetProcessList(ctx context.Context, orgID valuer.UUID, req model.ProcessListRequest) (model.ProcessListResponse, error) {
 	resp := model.ProcessListResponse{}
 	if req.Limit == 0 {
 		req.Limit = 10
@@ -249,7 +250,7 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 		return resp, err
 	}
 
-	topProcessGroups, allProcessGroups, err := p.getTopProcessGroups(ctx, req, query)
+	topProcessGroups, allProcessGroups, err := p.getTopProcessGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -283,7 +284,7 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 		}
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}
