@@ -195,6 +195,7 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal Exceptions filters")
 	}
+	timeRightNow := time.Now()
 
 	return []*StorableQuickFilter{
 		{
@@ -205,8 +206,8 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			Filter: string(tracesJSON),
 			Signal: SignalTraces,
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
+				CreatedAt: timeRightNow,
+				UpdatedAt: timeRightNow,
 			},
 		},
 		{
@@ -217,8 +218,8 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			Filter: string(logsJSON),
 			Signal: SignalLogs,
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
+				CreatedAt: timeRightNow,
+				UpdatedAt: timeRightNow,
 			},
 		},
 		{
@@ -229,8 +230,8 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			Filter: string(apiMonitoringJSON),
 			Signal: SignalApiMonitoring,
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
+				CreatedAt: timeRightNow,
+				UpdatedAt: timeRightNow,
 			},
 		},
 		{
@@ -241,8 +242,8 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 			Filter: string(exceptionsJSON),
 			Signal: SignalExceptions,
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
+				CreatedAt: timeRightNow,
+				UpdatedAt: timeRightNow,
 			},
 		},
 	}, nil
