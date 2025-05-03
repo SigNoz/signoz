@@ -36,7 +36,8 @@ func CreateThing(ctx context.Context, thing *Thing) error {
 }
 ```
 
-> 💡 **Note**: Always use line breaks while working with SQL queries to enhance code readability. 
+> 💡 **Note**: Always use line breaks while working with SQL queries to enhance code readability.
+
 > 💡 **Note**: Always use the `new` function to create new instances of structs.
 
 ## What are hooks?
@@ -45,7 +46,7 @@ Hooks are user-defined functions that execute before and/or after specific datab
 
 ## How is the schema designed?
 
-SigNoz implements a star schema design with the organizations table as the central entity. All other tables link to the organizations table via foreign key constraints on the org_id column. This design ensures that every entity within the system is either directly or indirectly associated with an organization.
+SigNoz implements a star schema design with the organizations table as the central entity. All other tables link to the organizations table via foreign key constraints on the `org_id` column. This design ensures that every entity within the system is either directly or indirectly associated with an organization.
 
 ```mermaid
 erDiagram
