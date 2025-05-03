@@ -88,6 +88,7 @@ For schema migrations, use the [SQLMigration](/pkg/sqlmigration/sqlmigration.go)
 
 ## What should I remember?
 
+- Use `BunDBCtx` and `RunInTxCtx` to access the database instance and execute transactions respectively.
 - While designing new tables, ensure the consistency of `id`, `created_at`, `updated_at` and an `org_id` column with a foreign key constraint to the `organizations` table (unless the table serves as a transitive entity not directly associated with an organization but indirectly associated with one).
 - Implement deletion logic in the application rather than relying on cascading deletes in the database.
 - While writing migrations, adhere to the guidelines mentioned above.
