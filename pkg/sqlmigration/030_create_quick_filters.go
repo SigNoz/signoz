@@ -87,8 +87,9 @@ func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 
 		// Only insert if it doesn't exist
 		if !exists {
+			filter_ := *filter
 			_, err = tx.NewInsert().
-				Model(&filter).
+				Model(&filter_).
 				Exec(ctx)
 
 			if err != nil {
