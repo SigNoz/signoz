@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/jmoiron/sqlx"
@@ -132,7 +133,7 @@ func (r *rule) ListOrgs(ctx context.Context) ([]valuer.UUID, error) {
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
-		Table("organizations").
+		Model(new(types.Organization)).
 		Column("id").
 		Scan(ctx, &orgIDStrs)
 	if err != nil {
