@@ -129,15 +129,24 @@ func (r *rule) GetRuleUUID(ctx context.Context, ruleID int) (*ruletypes.RuleHist
 }
 
 func (r *rule) ListOrgs(ctx context.Context) ([]valuer.UUID, error) {
-	orgIDs := make([]valuer.UUID, 0)
+	orgIDStrs := make([]string, 0)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
-		ColumnExpr("id").
 		Model(new(types.Organization)).
-		Scan(ctx, &orgIDs)
+		Column("id").
+		Scan(ctx, &orgIDStrs)
 	if err != nil {
-		return orgIDs, err
+		return nil, err
+	}
+
+	orgIDs := make([]valuer.UUID, len(orgIDStrs))
+	for idx, orgIDStr := range orgIDStrs {
+		orgID, err := valuer.NewUUID(orgIDStr)
+		if err != nil {
+			return nil, err
+		}
+		orgIDs[idx] = orgID
 	}
 
 	return orgIDs, nil
