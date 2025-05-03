@@ -79,6 +79,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	const optionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 	const [visibleOptions, setVisibleOptions] = useState<OptionData[]>([]);
 	const isClickInsideDropdownRef = useRef(false);
+	const justOpenedRef = useRef<boolean>(false);
 
 	// Convert single string value to array for consistency
 	const selectedValues = useMemo(
@@ -511,11 +512,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			}
 
 			// Normal single value handling
-			setSearchText(value.trim());
+			const trimmedValue = value.trim();
+			setSearchText(trimmedValue);
 			if (!isOpen) {
 				setIsOpen(true);
+				justOpenedRef.current = true;
 			}
-			if (onSearch) onSearch(value.trim());
+
+			// Reset active index when search changes if dropdown is open
+			if (isOpen && trimmedValue) {
+				setActiveIndex(0);
+			}
+
+			if (onSearch) onSearch(trimmedValue);
 		},
 		[onSearch, isOpen, selectedValues, onChange],
 	);
@@ -790,6 +799,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			};
 
 			const flatOptions = getFlatOptions();
+
+			// If we just opened the dropdown and have options, set first option as active
+			if (justOpenedRef.current && flatOptions.length > 0) {
+				setActiveIndex(0);
+				justOpenedRef.current = false;
+			}
+
+			// If no option is active but we have options and dropdown is open, activate the first one
+			if (isOpen && activeIndex === -1 && flatOptions.length > 0) {
+				setActiveIndex(0);
+			}
 
 			// Get the active input element to check cursor position
 			const activeElement = document.activeElement as HTMLInputElement;
@@ -1225,7 +1245,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						e.stopPropagation();
 						e.preventDefault();
 						setIsOpen(true);
-						setActiveIndex(0);
+						justOpenedRef.current = true; // Set flag to initialize active option on next render
 						setActiveChipIndex(-1);
 						break;
 
@@ -1540,6 +1560,15 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	const handleDropdownVisibleChange = useCallback(
 		(visible: boolean): void => {
 			setIsOpen(visible);
+			if (visible) {
+				justOpenedRef.current = true;
+				setActiveIndex(0);
+				setActiveChipIndex(-1);
+			} else {
+				setSearchText('');
+				setActiveIndex(-1);
+				// Don't clear activeChipIndex when dropdown closes to maintain tag focus
+			}
 			// Pass through to the parent component's handler if provided
 			if (onDropdownVisibleChange) {
 				onDropdownVisibleChange(visible);
