@@ -89,7 +89,7 @@ In a large codebase like SigNoz, error handling is critical for maintaining reli
 
 The caller (which can be a another function or a HTTP/gRPC handler or something else entirely), can then choose to use this error to take appropriate actions such as:
 
-- A function can wrap this error and add more context to it or branch into different paths based on the context
+- A function can branch into different paths based on the context
 - An HTTP/gRPC handler can derive the correct status code from the error type and send it to the client
 - Logging systems can capture structured error information for better diagnostics
 
