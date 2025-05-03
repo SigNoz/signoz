@@ -18,6 +18,15 @@ interface SourceData {
 	conversion_rate?: number | null;
 }
 
+type RawData = {
+	avg_rate?: number;
+	errors?: number;
+	avg_duration?: number | string;
+	avg_duration_ms?: number | string;
+	p99_duration?: number | string;
+	conversion_rate?: number | null;
+};
+
 const DURATION_UNITS = [
 	{ threshold: 1000000000, divisor: 1000000000, unit: 's' },
 	{ threshold: 1000000, divisor: 1000000, unit: 'ms' },
@@ -107,8 +116,27 @@ export function useFunnelMetrics({
 	} = useFunnelOverview(funnelId, payload);
 
 	const metricsData = useMemo(() => {
-		const sourceData = overviewData?.payload?.data?.[0]?.data;
-		console.log('Source data:', sourceData);
+		const rawData = overviewData?.payload?.data?.[0]?.data as RawData | undefined;
+		console.log('Raw data:', rawData);
+
+		if (!rawData) return [];
+
+		const avgDurationMs = rawData.avg_duration ?? rawData.avg_duration_ms;
+		const p99Ms = rawData.p99_duration;
+
+		const sourceData: SourceData = {
+			avg_rate: rawData.avg_rate,
+			errors: rawData.errors,
+			avg_duration:
+				avgDurationMs !== undefined
+					? Number(avgDurationMs) * 1_000_000 // ms to ns
+					: undefined,
+			p99_latency:
+				p99Ms !== undefined
+					? Number(p99Ms) * 1_000_000 // ms to ns
+					: undefined,
+			conversion_rate: rawData.conversion_rate,
+		};
 
 		try {
 			return createMetricsData(sourceData);
