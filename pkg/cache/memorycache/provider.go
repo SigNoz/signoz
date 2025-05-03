@@ -28,7 +28,7 @@ func New(ctx context.Context, settings factory.ProviderSettings, config cache.Co
 
 func (c *provider) Set(_ context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) error {
 	// check if the data being passed is a pointer and is not nil
-	err := cachetypes.ValidatePointer(data)
+	err := cachetypes.ValidatePointer(data, "inmemory")
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (c *provider) Set(_ context.Context, orgID valuer.UUID, cacheKey string, da
 
 func (c *provider) Get(_ context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable, allowExpired bool) error {
 	// check if the destination being passed is a pointer and is not nil
-	err := cachetypes.ValidatePointer(dest)
+	err := cachetypes.ValidatePointer(dest, "inmemory")
 	if err != nil {
 		return err
 	}

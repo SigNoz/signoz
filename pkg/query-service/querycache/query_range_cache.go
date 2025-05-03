@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
@@ -29,6 +30,8 @@ type CachedSeriesData struct {
 	End   int64        `json:"end"`
 	Data  []*v3.Series `json:"data"`
 }
+
+var _ cachetypes.Cacheable = (*CacheableSeriesData)(nil)
 
 type CacheableSeriesData struct {
 	Series []CachedSeriesData

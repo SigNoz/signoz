@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/cache/memorycache"
-	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -21,7 +20,7 @@ func TestFindMissingTimeRanges(t *testing.T) {
 		TTL:             5 * time.Minute,
 		CleanupInterval: 10 * time.Minute,
 	}
-	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 
 	// Create a queryCache instance with the mock cache and a fluxInterval
@@ -247,7 +246,7 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 		TTL:             5 * time.Minute,
 		CleanupInterval: 10 * time.Minute,
 	}
-	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 
 	// Create a queryCache instance with the mock cache and a fluxInterval
@@ -594,7 +593,7 @@ func TestMergeWithCachedSeriesData(t *testing.T) {
 		TTL:             5 * time.Minute,
 		CleanupInterval: 10 * time.Minute,
 	}
-	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 
 	// Create a queryCache instance with the mock cache and a fluxInterval

@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/cache/memorycache"
-	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
@@ -1243,7 +1242,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		readerCache, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
+		readerCache, err := cachetest.New(cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
 		require.NoError(t, err)
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), readerCache)
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader)
@@ -1339,7 +1338,8 @@ func TestThresholdRuleNoData(t *testing.T) {
 			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
-		readerCache, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
+		readerCache, err := cachetest.New(cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
+		assert.NoError(t, err)
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", time.Duration(time.Second), readerCache)
 

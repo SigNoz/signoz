@@ -10,8 +10,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/cache/memorycache"
-	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
@@ -240,7 +239,7 @@ func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 		TTL:             5 * time.Minute,
 		CleanupInterval: 10 * time.Minute,
 	}
-	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	qc := querycache.NewQueryCache(querycache.WithCache(c))
 
@@ -460,7 +459,7 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 		TTL:             5 * time.Minute,
 		CleanupInterval: 10 * time.Minute,
 	}
-	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	qc := querycache.NewQueryCache(querycache.WithCache(c))
 
@@ -640,7 +639,7 @@ func TestV2QueryRangePanelGraph(t *testing.T) {
 		TTL:             5 * time.Minute,
 		CleanupInterval: 10 * time.Minute,
 	}
-	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheOpts})
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
 	require.NoError(t, err)
 	opts := QuerierOptions{
 		Cache:        c,
@@ -795,7 +794,7 @@ func TestV2QueryRangeValueType(t *testing.T) {
 		TTL:             5 * time.Minute,
 		CleanupInterval: 10 * time.Minute,
 	}
-	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheOpts})
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
 	require.NoError(t, err)
 	opts := QuerierOptions{
 		Cache:        c,
@@ -962,7 +961,7 @@ func TestV2QueryRangeTimeShiftWithCache(t *testing.T) {
 		TTL:             5 * time.Minute,
 		CleanupInterval: 10 * time.Minute,
 	}
-	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheOpts})
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
 	require.NoError(t, err)
 	opts := QuerierOptions{
 		Cache:        c,
@@ -1070,7 +1069,7 @@ func TestV2QueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 		TTL:             5 * time.Minute,
 		CleanupInterval: 10 * time.Minute,
 	}
-	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheOpts})
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
 	require.NoError(t, err)
 	opts := QuerierOptions{
 		Cache:        c,
@@ -1149,7 +1148,7 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 		TTL:             5 * time.Minute,
 		CleanupInterval: 10 * time.Minute,
 	}
-	c, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cacheOpts})
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
 	require.NoError(t, err)
 	opts := QuerierOptions{
 		Cache:        c,
