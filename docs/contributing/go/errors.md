@@ -1,6 +1,6 @@
 # Error
 
-SigNoz includes its own [errors](/pkg/errors/errors.go) package. It's built on top of Go's error interface, extending it to add additional context that helps provide more meaningful error messages throughout the application.
+SigNoz includes its own [errors](/pkg/errors/errors.go) package. It's built on top of Go's `error` interface, extending it to add additional context that helps provide more meaningful error messages throughout the application.
 
 ## How to use it?
 
