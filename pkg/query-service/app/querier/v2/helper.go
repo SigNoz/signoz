@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
@@ -75,6 +76,7 @@ func prepareLogsQuery(
 
 func (q *querier) runBuilderQuery(
 	ctx context.Context,
+	orgID valuer.UUID,
 	builderQuery *v3.BuilderQuery,
 	params *v3.QueryRangeParamsV3,
 	cacheKeys map[string]string,
@@ -106,7 +108,7 @@ func (q *querier) runBuilderQuery(
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
 			return
 		}
-		misses := q.queryCache.FindMissingTimeRangesV2(start, end, builderQuery.StepInterval, cacheKeys[queryName])
+		misses := q.queryCache.FindMissingTimeRangesV2(orgID, start, end, builderQuery.StepInterval, cacheKeys[queryName])
 		zap.L().Info("cache misses for logs query", zap.Any("misses", misses))
 		missedSeries := make([]querycache.CachedSeriesData, 0)
 		filteredMissedSeries := make([]querycache.CachedSeriesData, 0)
@@ -147,10 +149,10 @@ func (q *querier) runBuilderQuery(
 			})
 		}
 
-		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], filteredMissedSeries)
-		q.queryCache.StoreSeriesInCache(cacheKeys[queryName], filteredMergedSeries)
+		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(orgID, cacheKeys[queryName], filteredMissedSeries)
+		q.queryCache.StoreSeriesInCache(orgID, cacheKeys[queryName], filteredMergedSeries)
 
-		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], missedSeries)
+		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(orgID, cacheKeys[queryName], missedSeries)
 
 		resultSeries := common.GetSeriesFromCachedDataV2(mergedSeries, start, end, builderQuery.StepInterval)
 
@@ -213,7 +215,7 @@ func (q *querier) runBuilderQuery(
 	}
 
 	if builderQuery.DataSource == v3.DataSourceMetrics && !q.testingMode {
-		metadata, apiError := q.reader.GetUpdatedMetricsMetadata(ctx, builderQuery.AggregateAttribute.Key)
+		metadata, apiError := q.reader.GetUpdatedMetricsMetadata(ctx, orgID, builderQuery.AggregateAttribute.Key)
 		if apiError != nil {
 			zap.L().Error("Error in getting metrics cached metadata", zap.Error(apiError))
 		}
@@ -238,7 +240,7 @@ func (q *querier) runBuilderQuery(
 		return
 	}
 
-	misses := q.queryCache.FindMissingTimeRanges(start, end, builderQuery.StepInterval, cacheKeys[queryName])
+	misses := q.queryCache.FindMissingTimeRanges(orgID, start, end, builderQuery.StepInterval, cacheKeys[queryName])
 	zap.L().Info("cache misses for metrics query", zap.Any("misses", misses))
 	missedSeries := make([]querycache.CachedSeriesData, 0)
 	for _, miss := range misses {
@@ -275,7 +277,7 @@ func (q *querier) runBuilderQuery(
 			End:   miss.End,
 		})
 	}
-	mergedSeries := q.queryCache.MergeWithCachedSeriesData(cacheKeys[queryName], missedSeries)
+	mergedSeries := q.queryCache.MergeWithCachedSeriesData(orgID, cacheKeys[queryName], missedSeries)
 
 	resultSeries := common.GetSeriesFromCachedData(mergedSeries, start, end)
 

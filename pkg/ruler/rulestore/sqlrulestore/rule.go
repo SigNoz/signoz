@@ -128,8 +128,8 @@ func (r *rule) GetRuleUUID(ctx context.Context, ruleID int) (*ruletypes.RuleHist
 	return ruleHistory, nil
 }
 
-func (r *rule) ListOrgs(ctx context.Context) ([]string, error) {
-	orgIDs := []string{}
+func (r *rule) ListOrgs(ctx context.Context) ([]valuer.UUID, error) {
+	orgIDs := make([]valuer.UUID, 0)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().

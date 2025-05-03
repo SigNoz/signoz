@@ -33,5 +33,5 @@ type RuleStore interface {
 	GetStoredRule(context.Context, valuer.UUID) (*Rule, error)
 	GetRuleUUID(context.Context, int) (*RuleHistory, error)
 	GetAlertsInfo(context.Context) (*model.AlertsInfo, error)
-	ListOrgs(context.Context) ([]string, error)
+	ListOrgs(context.Context) ([]valuer.UUID, error)
 }

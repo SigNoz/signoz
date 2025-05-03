@@ -35,6 +35,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
@@ -53,7 +54,6 @@ import (
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
@@ -670,7 +670,7 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 }
 
 // populateTemporality adds the temporality to the query if it is not present
-func (aH *APIHandler) PopulateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+func (aH *APIHandler) PopulateTemporality(ctx context.Context, orgID valuer.UUID, qp *v3.QueryRangeParamsV3) error {
 
 	aH.temporalityMux.Lock()
 	defer aH.temporalityMux.Unlock()
@@ -701,7 +701,7 @@ func (aH *APIHandler) PopulateTemporality(ctx context.Context, qp *v3.QueryRange
 		}
 	}
 
-	nameToTemporality, err := aH.reader.FetchTemporality(ctx, missingTemporality)
+	nameToTemporality, err := aH.reader.FetchTemporality(ctx, orgID, missingTemporality)
 	if err != nil {
 		return err
 	}
@@ -1338,7 +1338,16 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
-
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -1350,7 +1359,7 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	alertCount, apiRrr := aH.ruleManager.TestNotification(ctx, string(body))
+	alertCount, apiRrr := aH.ruleManager.TestNotification(ctx, orgID, string(body))
 	if apiRrr != nil {
 		RespondError(w, apiRrr, nil)
 		return
@@ -1756,6 +1765,16 @@ func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 	traceID := mux.Vars(r)["traceId"]
 	if traceID == "" {
 		RespondError(w, model.BadRequest(errors.New("traceID is required")), nil)
@@ -1763,13 +1782,13 @@ func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWrite
 	}
 
 	req := new(model.GetWaterfallSpansForTraceWithMetadataParams)
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	result, apiErr := aH.reader.GetWaterfallSpansForTraceWithMetadata(r.Context(), traceID, req)
+	result, apiErr := aH.reader.GetWaterfallSpansForTraceWithMetadata(r.Context(), orgID, traceID, req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -1779,6 +1798,17 @@ func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWrite
 }
 
 func (aH *APIHandler) GetFlamegraphSpansForTrace(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	traceID := mux.Vars(r)["traceId"]
 	if traceID == "" {
 		RespondError(w, model.BadRequest(errors.New("traceID is required")), nil)
@@ -1786,13 +1816,13 @@ func (aH *APIHandler) GetFlamegraphSpansForTrace(w http.ResponseWriter, r *http.
 	}
 
 	req := new(model.GetFlamegraphSpansForTraceParams)
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	result, apiErr := aH.reader.GetFlamegraphSpansForTrace(r.Context(), traceID, req)
+	result, apiErr := aH.reader.GetFlamegraphSpansForTrace(r.Context(), orgID, traceID, req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -2764,11 +2794,18 @@ func (aH *APIHandler) onboardConsumers(
 	aH.Respond(w, entries)
 }
 
-func (aH *APIHandler) onboardKafka(
+func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	w http.ResponseWriter, r *http.Request,
-
-) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -2784,7 +2821,7 @@ func (aH *APIHandler) onboardKafka(
 		return
 	}
 
-	results, errQueriesByName, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	results, errQueriesByName, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2851,9 +2888,18 @@ func (aH *APIHandler) onboardKafka(
 	aH.Respond(w, entries)
 }
 
-func (aH *APIHandler) getNetworkData(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getNetworkData(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	attributeCache := &kafka.Clients{
 		Hash: make(map[string]struct{}),
 	}
@@ -2880,7 +2926,7 @@ func (aH *APIHandler) getNetworkData(
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2916,7 +2962,7 @@ func (aH *APIHandler) getNetworkData(
 		return
 	}
 
-	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
@@ -2950,9 +2996,18 @@ func (aH *APIHandler) getNetworkData(
 	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) getProducerData(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	// parse the query params to retrieve the messaging queue struct
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
@@ -2978,7 +3033,7 @@ func (aH *APIHandler) getProducerData(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -2992,9 +3047,18 @@ func (aH *APIHandler) getProducerData(
 	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) getConsumerData(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3019,7 +3083,7 @@ func (aH *APIHandler) getConsumerData(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3034,9 +3098,18 @@ func (aH *APIHandler) getConsumerData(
 }
 
 // s1
-func (aH *APIHandler) getPartitionOverviewLatencyData(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3061,7 +3134,7 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3076,9 +3149,18 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(
 }
 
 // s1
-func (aH *APIHandler) getConsumerPartitionLatencyData(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3103,7 +3185,7 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3121,11 +3203,19 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(
 // fetch traces
 // cache attributes
 // fetch byte rate metrics
-func (aH *APIHandler) getProducerThroughputOverview(
-	w http.ResponseWriter, r *http.Request,
-) {
-	messagingQueue, apiErr := ParseKafkaQueueBody(r)
+func (aH *APIHandler) getProducerThroughputOverview(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
 		RespondError(w, apiErr, nil)
@@ -3152,7 +3242,7 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), producerQueryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, producerQueryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3186,7 +3276,7 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		return
 	}
 
-	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
@@ -3224,9 +3314,18 @@ func (aH *APIHandler) getProducerThroughputOverview(
 }
 
 // s3 p details
-func (aH *APIHandler) getProducerThroughputDetails(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3251,7 +3350,7 @@ func (aH *APIHandler) getProducerThroughputDetails(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3266,9 +3365,18 @@ func (aH *APIHandler) getProducerThroughputDetails(
 }
 
 // s3 c overview
-func (aH *APIHandler) getConsumerThroughputOverview(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3293,7 +3401,7 @@ func (aH *APIHandler) getConsumerThroughputOverview(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3308,9 +3416,18 @@ func (aH *APIHandler) getConsumerThroughputOverview(
 }
 
 // s3 c details
-func (aH *APIHandler) getConsumerThroughputDetails(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3335,7 +3452,7 @@ func (aH *APIHandler) getConsumerThroughputDetails(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3353,9 +3470,18 @@ func (aH *APIHandler) getConsumerThroughputDetails(
 // needs logic to parse duration
 // needs logic to get the percentage
 // show 10 traces
-func (aH *APIHandler) getProducerConsumerEval(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3380,7 +3506,7 @@ func (aH *APIHandler) getProducerConsumerEval(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3462,9 +3588,18 @@ func (aH *APIHandler) GetIntegration(
 	aH.Respond(w, integration)
 }
 
-func (aH *APIHandler) GetIntegrationConnectionStatus(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) GetIntegrationConnectionStatus(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	integrationId := mux.Vars(r)["integrationId"]
 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
 	if errv2 != nil {
@@ -3500,7 +3635,7 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(
 	}
 
 	connectionStatus, apiErr := aH.calculateConnectionStatus(
-		r.Context(), connectionTests, lookbackSeconds,
+		r.Context(), orgID, connectionTests, lookbackSeconds,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to calculate integration connection status")
@@ -3512,6 +3647,7 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(
 
 func (aH *APIHandler) calculateConnectionStatus(
 	ctx context.Context,
+	orgID valuer.UUID,
 	connectionTests *integrations.IntegrationConnectionTests,
 	lookbackSeconds int64,
 ) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
@@ -3528,9 +3664,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 	go func() {
 		defer wg.Done()
 
-		logsConnStatus, apiErr := aH.calculateLogsConnectionStatus(
-			ctx, connectionTests.Logs, lookbackSeconds,
-		)
+		logsConnStatus, apiErr := aH.calculateLogsConnectionStatus(ctx, orgID, connectionTests.Logs, lookbackSeconds)
 
 		resultLock.Lock()
 		defer resultLock.Unlock()
@@ -3595,11 +3729,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 	return result, nil
 }
 
-func (aH *APIHandler) calculateLogsConnectionStatus(
-	ctx context.Context,
-	logsConnectionTest *integrations.LogsConnectionTest,
-	lookbackSeconds int64,
-) (*integrations.SignalConnectionStatus, *model.ApiError) {
+func (aH *APIHandler) calculateLogsConnectionStatus(ctx context.Context, orgID valuer.UUID, logsConnectionTest *integrations.LogsConnectionTest, lookbackSeconds int64) (*integrations.SignalConnectionStatus, *model.ApiError) {
 	if logsConnectionTest == nil {
 		return nil, nil
 	}
@@ -3637,9 +3767,7 @@ func (aH *APIHandler) calculateLogsConnectionStatus(
 			},
 		},
 	}
-	queryRes, _, err := aH.querier.QueryRange(
-		ctx, qrParams,
-	)
+	queryRes, _, err := aH.querier.QueryRange(ctx, orgID, qrParams)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"could not query for integration connection status: %w", err,
@@ -3674,9 +3802,7 @@ func (aH *APIHandler) calculateLogsConnectionStatus(
 	return nil, nil
 }
 
-func (aH *APIHandler) InstallIntegration(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request) {
 	req := integrations.InstallIntegrationRequest{}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -3702,9 +3828,7 @@ func (aH *APIHandler) InstallIntegration(
 	aH.Respond(w, integration)
 }
 
-func (aH *APIHandler) UninstallIntegration(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) UninstallIntegration(w http.ResponseWriter, r *http.Request) {
 	req := integrations.UninstallIntegrationRequest{}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -3959,6 +4083,17 @@ func (aH *APIHandler) CloudIntegrationsListServices(
 func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 	w http.ResponseWriter, r *http.Request,
 ) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	serviceId := mux.Vars(r)["serviceId"]
 
@@ -3986,7 +4121,7 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 	// Add connection status for the 2 signals.
 	if cloudAccountId != nil {
 		connStatus, apiErr := aH.calculateCloudIntegrationServiceConnectionStatus(
-			r.Context(), cloudProvider, *cloudAccountId, resp,
+			r.Context(), orgID, cloudProvider, *cloudAccountId, resp,
 		)
 		if apiErr != nil {
 			RespondError(w, apiErr, nil)
@@ -4000,6 +4135,7 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 
 func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 	ctx context.Context,
+	orgID valuer.UUID,
 	cloudProvider string,
 	cloudAccountId string,
 	svcDetails *cloudintegrations.CloudServiceDetails,
@@ -4052,7 +4188,7 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 			defer wg.Done()
 
 			logsConnStatus, apiErr := aH.calculateAWSIntegrationSvcLogsConnectionStatus(
-				ctx, cloudAccountId, telemetryCollectionStrategy.AWSLogs,
+				ctx, orgID, cloudAccountId, telemetryCollectionStrategy.AWSLogs,
 			)
 
 			resultLock.Lock()
@@ -4126,6 +4262,7 @@ func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 
 func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 	ctx context.Context,
+	orgID valuer.UUID,
 	cloudAccountId string,
 	strategy *cloudintegrations.AWSLogsCollectionStrategy,
 ) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
@@ -4184,7 +4321,7 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 		},
 	}
 	queryRes, _, err := aH.querier.QueryRange(
-		ctx, qrParams,
+		ctx, orgID, qrParams,
 	)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
@@ -4639,6 +4776,17 @@ func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	var response *v3.AggregateAttributeResponse
 	req, err := parseAggregateAttributeRequest(r)
 
@@ -4649,7 +4797,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, true, false)
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), orgID, req, true, false)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -4811,9 +4959,18 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 }
 
 func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	var result []*v3.Result
-	var err error
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
@@ -4878,7 +5035,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams)
+	result, errQuriesByName, err = aH.querier.QueryRange(ctx, orgID, queryRangeParams)
 
 	if err != nil {
 		queryErrors := map[string]string{}
@@ -5022,6 +5179,17 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 }
 
 func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
@@ -5031,7 +5199,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add temporality for each metric
-	temporalityErr := aH.PopulateTemporality(r.Context(), queryRangeParams)
+	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
 		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
@@ -5199,9 +5367,20 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	metricName := r.URL.Query().Get("metricName")
 	serviceName := r.URL.Query().Get("serviceName")
-	metricMetadata, err := aH.reader.GetMetricMetadata(r.Context(), metricName, serviceName)
+	metricMetadata, err := aH.reader.GetMetricMetadata(r.Context(), orgID, metricName, serviceName)
 	if err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return
@@ -5211,9 +5390,18 @@ func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) 
 }
 
 func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	var result []*v3.Result
-	var err error
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
@@ -5255,7 +5443,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 
 	if err != nil {
 		queryErrors := map[string]string{}
@@ -5288,6 +5476,17 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 }
 
 func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
@@ -5298,7 +5497,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams.Version = "v4"
 
 	// add temporality for each metric
-	temporalityErr := aH.PopulateTemporality(r.Context(), queryRangeParams)
+	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
 		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
@@ -5364,6 +5563,17 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -5381,7 +5591,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -5406,8 +5616,18 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
-	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
+	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
 		RespondError(w, apiErr, nil)
@@ -5425,7 +5645,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
