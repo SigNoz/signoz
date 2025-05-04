@@ -1,4 +1,8 @@
-import { ErrorTraceData, SlowTraceData } from 'api/traceFunnels';
+import {
+	ErrorTraceData,
+	FunnelOverviewPayload,
+	SlowTraceData,
+} from 'api/traceFunnels';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -15,12 +19,7 @@ interface FunnelTopTracesTableProps {
 	tooltip: string;
 	useQueryHook: (
 		funnelId: string,
-		payload: {
-			start_time: number;
-			end_time: number;
-			step_a_order: number;
-			step_b_order: number;
-		},
+		payload: FunnelOverviewPayload,
 	) => UseQueryResult<
 		SuccessResponse<SlowTraceData | ErrorTraceData> | ErrorResponse,
 		Error
@@ -40,8 +39,8 @@ function FunnelTopTracesTable({
 		() => ({
 			start_time: startTime,
 			end_time: endTime,
-			step_a_order: stepAOrder,
-			step_b_order: stepBOrder,
+			step_start: stepAOrder,
+			step_end: stepBOrder,
 		}),
 		[startTime, endTime, stepAOrder, stepBOrder],
 	);
