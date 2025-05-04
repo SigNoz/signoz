@@ -153,7 +153,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, registerError := baseauth.Register(ctx, req, ah.Signoz.Alertmanager, ah.Signoz.Modules.Organization, ah.Signoz.Modules.User)
+		_, registerError := baseauth.Register(ctx, req, ah.Signoz.Alertmanager, ah.Signoz.Modules.Organization, ah.Signoz.Modules.User, ah.QuickFilterModule)
 		if !registerError.IsNil() {
 			RespondError(w, apierr, nil)
 			return

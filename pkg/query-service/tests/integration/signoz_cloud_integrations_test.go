@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
+
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -368,6 +371,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	userHandler := impluser.NewHandler(userModule)
 	modules := signoz.NewModules(testDB, userModule)
 	handlers := signoz.NewHandlers(modules, userHandler)
+	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,
@@ -379,6 +383,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 			Modules:  modules,
 			Handlers: handlers,
 		},
+		QuickFilters: quickFilterModule,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)

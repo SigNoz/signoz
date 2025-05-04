@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
@@ -300,7 +301,7 @@ func (p *PodsRepo) getMetadataAttributes(ctx context.Context, req model.PodListR
 	return podAttrs, nil
 }
 
-func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (p *PodsRepo) getTopPodGroups(ctx context.Context, orgID valuer.UUID, req model.PodListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopPods(req)
 
 	queryNames := queryNamesForPods[req.OrderBy.ColumnName]
@@ -331,7 +332,7 @@ func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest
 		topPodGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, topPodGroupsQueryRangeParams)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topPodGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -370,7 +371,7 @@ func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest
 	return topPodGroups, allPodGroups, nil
 }
 
-func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (model.PodListResponse, error) {
+func (p *PodsRepo) GetPodList(ctx context.Context, orgID valuer.UUID, req model.PodListRequest) (model.PodListResponse, error) {
 	resp := model.PodListResponse{}
 
 	if req.Limit == 0 {
@@ -412,7 +413,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 		return resp, err
 	}
 
-	topPodGroups, allPodGroups, err := p.getTopPodGroups(ctx, req, query)
+	topPodGroups, allPodGroups, err := p.getTopPodGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -446,7 +447,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 		}
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}

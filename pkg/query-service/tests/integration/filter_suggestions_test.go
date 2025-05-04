@@ -9,6 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
+
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
@@ -304,6 +307,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	userModule := impluser.NewModule(impluser.NewStore(testDB))
 	userHandler := impluser.NewHandler(userModule)
 	modules := signoz.NewModules(testDB, userModule)
+	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:       reader,
@@ -314,6 +318,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 			Modules:  modules,
 			Handlers: signoz.NewHandlers(modules, userHandler),
 		},
+		QuickFilters: quickFilterModule,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)

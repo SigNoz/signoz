@@ -50,7 +50,7 @@ cache:
     # Time-to-live for cache entries in memory. Specify the duration in ns
     ttl: 60000000000
     # The interval at which the cache will be cleaned up
-    cleanupInterval: 1m
+    cleanup_interval: 1m
   # redis: Uses Redis as the caching backend.
   redis:
     # The hostname or IP address of the Redis server.

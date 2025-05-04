@@ -5,7 +5,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -47,13 +49,17 @@ func RegisterFirstUser(ctx context.Context, req *types.PostableRegisterOrgAndAdm
 }
 
 // First user registration
-func Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin, alertmanager alertmanager.Alertmanager, organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
+func Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin, alertmanager alertmanager.Alertmanager, organizationModule organization.Module, userModule user.Module, quickfiltermodule quickfilter.Usecase) (*types.User, *model.ApiError) {
 	user, err := RegisterFirstUser(ctx, req, organizationModule, userModule)
 	if err != nil {
 		return nil, err
 	}
 
 	if err := alertmanager.SetDefaultConfig(ctx, user.OrgID); err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	if err := quickfiltermodule.SetDefaultConfig(ctx, valuer.MustNewUUID(user.OrgID)); err != nil {
 		return nil, model.InternalError(err)
 	}
 

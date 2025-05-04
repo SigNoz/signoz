@@ -78,6 +78,7 @@ func main() {
 	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection.)")
 	// Deprecated
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", baseconst.AlertHelpPage, "(host address used to build rule link in alert messages)")
+	// Deprecated
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
 	flag.StringVar(&fluxIntervalForTraceDetail, "flux-interval-trace-detail", "2m", "(the interval to exclude data from being cached to avoid incorrect cache for trace data in motion)")
@@ -151,7 +152,6 @@ func main() {
 		HTTPHostPort:               baseconst.HTTPHostPort,
 		PreferSpanMetrics:          preferSpanMetrics,
 		PrivateHostPort:            baseconst.PrivateHostPort,
-		CacheConfigPath:            cacheConfigPath,
 		FluxInterval:               fluxInterval,
 		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
 		Cluster:                    cluster,
