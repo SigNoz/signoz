@@ -1,3 +1,5 @@
+/* eslint-disable sonarjs/cognitive-complexity */
+/* eslint-disable no-nested-ternary */
 import './DashboardVariableSelection.styles.scss';
 
 import { Tooltip, Typography } from 'antd';
@@ -7,12 +9,13 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useDebounce from 'hooks/useDebounce';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, isUndefined } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import { ALL_SELECT_VALUE } from '../utils';
 import { SelectItemStyle } from './styles';
 import { areArraysEqual } from './util';
 import { getSelectValue } from './VariableItem';
@@ -25,10 +28,9 @@ interface DynamicVariableSelectionProps {
 		id: string,
 		arg1: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
+		haveCustomValuesSelected?: boolean,
 	) => void;
 }
-
-const ALL_SELECT_VALUE = '__all__';
 
 function DynamicVariableSelection({
 	variableData,
@@ -128,7 +130,14 @@ function DynamicVariableSelection({
 				) {
 					onValueUpdate(variableData.name, variableData.id, optionsData, true);
 				} else {
-					onValueUpdate(variableData.name, variableData.id, value, false);
+					onValueUpdate(
+						variableData.name,
+						variableData.id,
+						value,
+						optionsData.every((v) => value.includes(v.toString())),
+						Array.isArray(value) &&
+							!value.every((v) => optionsData.includes(v.toString())),
+					);
 				}
 			}
 		},
@@ -181,7 +190,7 @@ function DynamicVariableSelection({
 
 	const selectValue =
 		variableData.allSelected && enableSelectAll
-			? 'ALL'
+			? ALL_SELECT_VALUE
 			: selectedValueStringified;
 
 	// Add a handler for tracking temporary selection changes
@@ -195,7 +204,22 @@ function DynamicVariableSelection({
 	const handleDropdownVisibleChange = (visible: boolean): void => {
 		// Initialize temp selection when opening dropdown
 		if (visible) {
-			setTempSelection(getSelectValue(variableData.selectedValue, variableData));
+			if (isUndefined(tempSelection) && selectValue === ALL_SELECT_VALUE) {
+				// set all options from the optionsData and the selectedValue, make sure to remove duplicates
+				const allOptions = [
+					...new Set([
+						...optionsData.map((option) => option.toString()),
+						...(variableData.selectedValue
+							? Array.isArray(variableData.selectedValue)
+								? variableData.selectedValue.map((v) => v.toString())
+								: [variableData.selectedValue.toString()]
+							: []),
+					]),
+				];
+				setTempSelection(allOptions);
+			} else {
+				setTempSelection(getSelectValue(variableData.selectedValue, variableData));
+			}
 		}
 		// Apply changes when closing dropdown
 		else if (!visible && tempSelection !== undefined) {
@@ -285,9 +309,13 @@ function DynamicVariableSelection({
 						data-testid="variable-select"
 						className="variable-select"
 						popupClassName="dropdown-styles"
-						maxTagCount={4}
+						maxTagCount={2}
 						getPopupContainer={popupContainer}
-						value={tempSelection || selectValue}
+						value={
+							(tempSelection || selectValue) === ALL_SELECT_VALUE
+								? 'ALL'
+								: tempSelection || selectValue
+						}
 						onDropdownVisibleChange={handleDropdownVisibleChange}
 						errorMessage={errorMessage}
 						// eslint-disable-next-line react/no-unstable-nested-components
