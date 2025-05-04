@@ -2,7 +2,7 @@ import { MetricItem } from 'pages/TracesFunnelDetails/components/FunnelResults/F
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo } from 'react';
 
-import { useFunnelOverview } from './useFunnels';
+import { useFunnelOverview, useFunnelStepsOverview } from './useFunnels';
 
 interface FunnelMetricsParams {
 	funnelId: string;
@@ -107,12 +107,17 @@ export function useFunnelMetrics({
 		...(stepEnd !== undefined && { step_end: stepEnd }),
 	};
 
-	const {
-		data: overviewData,
-		isLoading,
-		isFetching,
-		isError,
-	} = useFunnelOverview(funnelId, payload);
+	// Always call both hooks to satisfy the rules of hooks
+	const stepsOverviewResult = useFunnelStepsOverview(funnelId, payload);
+	const overviewResult = useFunnelOverview(funnelId, payload);
+
+	// Select which result to use
+	const queryResult =
+		stepStart !== undefined && stepEnd !== undefined
+			? stepsOverviewResult
+			: overviewResult;
+
+	const { data: overviewData, isLoading, isFetching, isError } = queryResult;
 
 	const metricsData = useMemo(() => {
 		const rawData = overviewData?.payload?.data?.[0]?.data as RawData | undefined;
