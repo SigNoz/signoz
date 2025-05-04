@@ -5698,6 +5698,7 @@ func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middlew
 	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", aH.handleValidateTraces).Methods("POST")
 	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", aH.handleFunnelAnalytics).Methods("POST")
 	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", aH.handleStepAnalytics).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps/overview", aH.handleFunnelStepAnalytics).Methods("POST")
 	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", aH.handleFunnelSlowTraces).Methods("POST")
 	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", aH.handleFunnelErrorTraces).Methods("POST")
 
@@ -5755,6 +5756,36 @@ func (aH *APIHandler) handleFunnelAnalytics(w http.ResponseWriter, r *http.Reque
 	}
 
 	chq, err := tracefunnels.GetFunnelAnalytics(funnel, stepTransition.TimeRange, stepTransition.StepAOrder, stepTransition.StepBOrder)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
+		return
+	}
+	aH.Respond(w, results)
+}
+
+func (aH *APIHandler) handleFunnelStepAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.Signoz.Modules.TraceFunnel.Get(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	var stepTransition traceFunnels.StepTransitionRequest
+	if err := json.NewDecoder(r.Body).Decode(&stepTransition); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
+		return
+	}
+
+	chq, err := tracefunnels.GetFunnelStepAnalytics(funnel, stepTransition.TimeRange, stepTransition.StepAOrder, stepTransition.StepBOrder)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
