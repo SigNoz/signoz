@@ -22,8 +22,7 @@ type RawData = {
 	avg_rate?: number;
 	errors?: number;
 	avg_duration?: number | string;
-	avg_duration_ms?: number | string;
-	p99_duration?: number | string;
+	p99_latency?: number | string;
 	conversion_rate?: number | null;
 };
 
@@ -121,8 +120,8 @@ export function useFunnelMetrics({
 
 		if (!rawData) return [];
 
-		const avgDurationMs = rawData.avg_duration ?? rawData.avg_duration_ms;
-		const p99Ms = rawData.p99_duration;
+		const avgDurationMs = rawData.avg_duration;
+		const p99Ms = rawData.p99_latency;
 
 		const sourceData: SourceData = {
 			avg_rate: rawData.avg_rate,
