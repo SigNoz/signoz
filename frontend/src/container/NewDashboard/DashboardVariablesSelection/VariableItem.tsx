@@ -24,11 +24,9 @@ import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { variablePropsToPayloadVariables } from '../utils';
+import { ALL_SELECT_VALUE, variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle } from './styles';
 import { areArraysEqual, checkAPIInvocation, IDependencyData } from './util';
-
-const ALL_SELECT_VALUE = '__ALL__';
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;

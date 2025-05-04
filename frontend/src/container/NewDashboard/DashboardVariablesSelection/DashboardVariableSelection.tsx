@@ -101,7 +101,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 		id: string,
 		value: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
-		// isMountedCall?: boolean,
+		haveCustomValuesSelected?: boolean,
 		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
 		if (id) {
@@ -118,6 +118,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 								...oldVariables[id],
 								selectedValue: value,
 								allSelected,
+								haveCustomValuesSelected,
 							};
 						}
 						if (oldVariables[name]) {
@@ -125,6 +126,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 								...oldVariables[name],
 								selectedValue: value,
 								allSelected,
+								haveCustomValuesSelected,
 							};
 						}
 						return {
