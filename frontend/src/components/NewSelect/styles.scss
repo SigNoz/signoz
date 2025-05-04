@@ -313,6 +313,10 @@ $custom-border-color: #2c3044;
 		font-size: 12px;
 	}
 
+	.navigation-text-incomplete {
+		color: var(--bg-amber-600) !important;
+	}
+
 	.navigation-error {
 		.navigation-text,
 		.navigation-icons {

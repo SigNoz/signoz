@@ -344,6 +344,7 @@ function DynamicVariableSelection({
 						onRetry={(): void => {
 							refetch();
 						}}
+						showIncompleteDataMessage={!isComplete && filteredOptionsData.length > 0}
 					/>
 				) : (
 					<CustomSelect
@@ -373,6 +374,7 @@ function DynamicVariableSelection({
 						onRetry={(): void => {
 							refetch();
 						}}
+						showIncompleteDataMessage={!isComplete && filteredOptionsData.length > 0}
 					/>
 				)}
 			</div>

@@ -63,6 +63,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	onRetry,
 	maxTagTextLength,
 	onDropdownVisibleChange,
+	showIncompleteDataMessage = false,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -80,6 +81,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	const [visibleOptions, setVisibleOptions] = useState<OptionData[]>([]);
 	const isClickInsideDropdownRef = useRef(false);
 	const justOpenedRef = useRef<boolean>(false);
+	const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
 
 	// Convert single string value to array for consistency
 	const selectedValues = useMemo(
@@ -1381,6 +1383,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		setIsOpen(false);
 	}, []);
 
+	// Add a scroll handler for the dropdown
+	const handleDropdownScroll = useCallback(
+		(e: React.UIEvent<HTMLDivElement>): void => {
+			const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+			// Consider "scrolled to bottom" when within 20px of the bottom or at the bottom
+			const isAtBottom = scrollHeight - scrollTop - clientHeight < 20;
+			setIsScrolledToBottom(isAtBottom);
+		},
+		[],
+	);
+
 	// Custom dropdown render with sections support
 	const customDropdownRender = useCallback((): React.ReactElement => {
 		// Process options based on current search
@@ -1457,6 +1470,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				onMouseDown={handleDropdownMouseDown}
 				onClick={handleDropdownClick}
 				onKeyDown={handleKeyDown}
+				onScroll={handleDropdownScroll}
 				onBlur={handleBlur}
 				role="listbox"
 				aria-multiselectable="true"
@@ -1535,15 +1549,18 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 				{/* Navigation help footer */}
 				<div className="navigation-footer" role="note">
-					{!loading && !errorMessage && !noDataMessage && (
-						<section className="navigate">
-							<ArrowDown size={8} className="icons" />
-							<ArrowUp size={8} className="icons" />
-							<ArrowLeft size={8} className="icons" />
-							<ArrowRight size={8} className="icons" />
-							<span className="keyboard-text">to navigate</span>
-						</section>
-					)}
+					{!loading &&
+						!errorMessage &&
+						!noDataMessage &&
+						!(showIncompleteDataMessage && isScrolledToBottom) && (
+							<section className="navigate">
+								<ArrowDown size={8} className="icons" />
+								<ArrowUp size={8} className="icons" />
+								<ArrowLeft size={8} className="icons" />
+								<ArrowRight size={8} className="icons" />
+								<span className="keyboard-text">to navigate</span>
+							</section>
+						)}
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
@@ -1569,9 +1586,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						</div>
 					)}
 
-					{noDataMessage && !loading && (
-						<div className="navigation-text">{noDataMessage}</div>
-					)}
+					{showIncompleteDataMessage &&
+						isScrolledToBottom &&
+						!loading &&
+						!errorMessage && (
+							<div className="navigation-text-incomplete">
+								Use search for more options
+							</div>
+						)}
+
+					{noDataMessage &&
+						!loading &&
+						!(showIncompleteDataMessage && isScrolledToBottom) &&
+						!errorMessage && <div className="navigation-text">{noDataMessage}</div>}
 				</div>
 			</div>
 		);
@@ -1588,6 +1615,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		handleDropdownMouseDown,
 		handleDropdownClick,
 		handleKeyDown,
+		handleDropdownScroll,
 		handleBlur,
 		activeIndex,
 		loading,
@@ -1597,6 +1625,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		renderOptionWithIndex,
 		handleSelectAll,
 		onRetry,
+		showIncompleteDataMessage,
+		isScrolledToBottom,
 	]);
 
 	// Custom handler for dropdown visibility changes
