@@ -23,12 +23,15 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import {
 	IDashboardVariable,
 	TSortVariableValuesType,
 	TVariableQueryType,
 	VariableSortTypeArr,
 } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
 import { variablePropsToPayloadVariables } from '../../../utils';
@@ -112,6 +115,10 @@ function VariableItem({
 	const [errorName, setErrorName] = useState<boolean>(false);
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
 
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const { data: fieldValues } = useGetFieldValues({
 		signal:
 			dynamicVariablesSelectedValue?.value === 'All Sources'
@@ -124,6 +131,8 @@ function VariableItem({
 		enabled:
 			!!dynamicVariablesSelectedValue?.name &&
 			!!dynamicVariablesSelectedValue?.value,
+		startUnixMilli: minTime,
+		endUnixMilli: maxTime,
 	});
 
 	useEffect(() => {

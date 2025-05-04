@@ -12,7 +12,10 @@ import useDebounce from 'hooks/useDebounce';
 import { isEmpty, isUndefined } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ALL_SELECT_VALUE } from '../utils';
@@ -71,11 +74,17 @@ function DynamicVariableSelection({
 
 	const debouncedApiSearchText = useDebounce(apiSearchText, DEBOUNCE_DELAY);
 
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const { isLoading, refetch } = useQuery(
 		[
 			REACT_QUERY_KEY.DASHBOARD_BY_ID,
 			variableData.name || `variable_${variableData.id}`,
 			dynamicVariablesKey,
+			minTime,
+			maxTime,
 		],
 		{
 			enabled: variableData.type === 'DYNAMIC',
@@ -89,6 +98,8 @@ function DynamicVariableSelection({
 								| 'metrics'),
 					variableData.dynamicVariablesAttribute,
 					debouncedApiSearchText,
+					minTime,
+					maxTime,
 				),
 			onSuccess: (data) => {
 				setOptionsData(data.payload?.values?.stringValues || []);
