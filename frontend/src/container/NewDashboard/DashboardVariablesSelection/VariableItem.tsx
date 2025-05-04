@@ -15,7 +15,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { debounce, isArray, isEmpty, isString } from 'lodash-es';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -232,28 +232,38 @@ function VariableItem({
 		},
 	);
 
-	const handleChange = (inputValue: string | string[]): void => {
-		const value = variableData.multiSelect && !inputValue ? [] : inputValue;
+	const handleChange = useCallback(
+		(inputValue: string | string[]): void => {
+			const value = variableData.multiSelect && !inputValue ? [] : inputValue;
 
-		if (
-			value === variableData.selectedValue ||
-			(Array.isArray(value) &&
-				Array.isArray(variableData.selectedValue) &&
-				areArraysEqual(value, variableData.selectedValue))
-		) {
-			return;
-		}
-		if (variableData.name) {
 			if (
-				value === ALL_SELECT_VALUE ||
-				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
+				value === variableData.selectedValue ||
+				(Array.isArray(value) &&
+					Array.isArray(variableData.selectedValue) &&
+					areArraysEqual(value, variableData.selectedValue))
 			) {
-				onValueUpdate(variableData.name, variableData.id, optionsData, true);
-			} else {
-				onValueUpdate(variableData.name, variableData.id, value, false);
+				return;
 			}
-		}
-	};
+			if (variableData.name) {
+				if (
+					value === ALL_SELECT_VALUE ||
+					(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
+				) {
+					onValueUpdate(variableData.name, variableData.id, optionsData, true);
+				} else {
+					onValueUpdate(variableData.name, variableData.id, value, false);
+				}
+			}
+		},
+		[
+			variableData.multiSelect,
+			variableData.selectedValue,
+			variableData.name,
+			variableData.id,
+			onValueUpdate,
+			optionsData,
+		],
+	);
 
 	// Add a handler for tracking temporary selection changes
 	const handleTempChange = (inputValue: string | string[]): void => {
@@ -293,28 +303,57 @@ function VariableItem({
 			: selectedValueStringified;
 
 	// Apply default value on first render if no selection exists
-	useEffect(() => {
-		// Only for multi-select and when there's no selection but a default value exists
-		if (
-			variableData.multiSelect &&
-			variableData.defaultValue &&
-			(isEmpty(variableData.selectedValue) ||
-				(Array.isArray(variableData.selectedValue) &&
-					variableData.selectedValue.length === 0)) &&
-			variableData.name &&
-			optionsData.length > 0 && // Ensure options are loaded
-			!isLoading
-		) {
-			// Apply the default value
-			onValueUpdate(
-				variableData.name,
-				variableData.id,
-				variableData.defaultValue,
-				false,
-			);
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const finalSelectedValues = useMemo(() => {
+		if (variableData.multiSelect) {
+			let value = tempSelection || selectedValue;
+			if (isEmpty(value)) {
+				if (variableData.showALLOption) {
+					if (variableData.defaultValue) {
+						value = variableData.defaultValue;
+					} else {
+						value = optionsData;
+					}
+				} else if (variableData.defaultValue) {
+					value = variableData.defaultValue;
+				} else {
+					value = optionsData?.[0];
+				}
+			}
+
+			return value;
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [optionsData.length, isLoading]);
+		if (isEmpty(selectedValue)) {
+			if (variableData.defaultValue) {
+				return variableData.defaultValue;
+			}
+			return optionsData[0]?.toString();
+		}
+
+		return selectedValue;
+	}, [
+		variableData.multiSelect,
+		variableData.showALLOption,
+		variableData.defaultValue,
+		selectedValue,
+		tempSelection,
+		optionsData,
+	]);
+
+	useEffect(() => {
+		if (
+			(variableData.multiSelect && !(tempSelection || selectValue)) ||
+			isEmpty(selectValue)
+		) {
+			handleChange(finalSelectedValues as string[] | string);
+		}
+	}, [
+		finalSelectedValues,
+		handleChange,
+		selectValue,
+		tempSelection,
+		variableData.multiSelect,
+	]);
 
 	useEffect(() => {
 		// Fetch options for CUSTOM Type
