@@ -324,3 +324,37 @@ export const getFunnelSteps = async (
 		payload: response.data,
 	};
 };
+
+export interface FunnelStepsOverviewPayload {
+	start_time: number;
+	end_time: number;
+	step_start?: number;
+	step_end?: number;
+}
+
+export interface FunnelStepsOverviewResponse {
+	status: string;
+	data: Array<{
+		timestamp: string;
+		data: Record<string, unknown>;
+	}>;
+}
+
+export const getFunnelStepsOverview = async (
+	funnelId: string,
+	payload: FunnelStepsOverviewPayload,
+	signal?: AbortSignal,
+): Promise<SuccessResponse<FunnelStepsOverviewResponse> | ErrorResponse> => {
+	const response = await axios.post(
+		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/steps/overview`,
+		payload,
+		{ signal },
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: '',
+		payload: response.data,
+	};
+};

@@ -5,6 +5,8 @@ import {
 	ErrorTraceData,
 	FunnelOverviewPayload,
 	FunnelOverviewResponse,
+	FunnelStepsOverviewPayload,
+	FunnelStepsOverviewResponse,
 	FunnelStepsResponse,
 	getFunnelById,
 	getFunnelErrorTraces,
@@ -12,6 +14,7 @@ import {
 	getFunnelsList,
 	getFunnelSlowTraces,
 	getFunnelSteps,
+	getFunnelStepsOverview,
 	renameFunnel,
 	RenameFunnelPayload,
 	saveFunnelDescription,
@@ -230,3 +233,24 @@ export function useFunnelStepsGraphData(
 		enabled: !!funnelId && validTracesCount > 0,
 	});
 }
+
+export const useFunnelStepsOverview = (
+	funnelId: string,
+	payload: FunnelStepsOverviewPayload,
+): UseQueryResult<
+	SuccessResponse<FunnelStepsOverviewResponse> | ErrorResponse,
+	Error
+> => {
+	const { selectedTime, validTracesCount } = useFunnelContext();
+	return useQuery({
+		queryFn: ({ signal }) => getFunnelStepsOverview(funnelId, payload, signal),
+		queryKey: [
+			REACT_QUERY_KEY.GET_FUNNEL_STEPS_OVERVIEW,
+			funnelId,
+			selectedTime,
+			payload.step_start ?? '',
+			payload.step_end ?? '',
+		],
+		enabled: !!funnelId && validTracesCount > 0,
+	});
+};
