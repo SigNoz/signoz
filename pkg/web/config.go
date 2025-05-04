@@ -23,7 +23,7 @@ func newConfig() factory.Config {
 	return &Config{
 		Enabled:   true,
 		Prefix:    "/",
-		Directory: "/etc/signoz/web",
+		Directory: "/Users/s/oss/sig/signoz/frontend/build",
 	}
 }
 
