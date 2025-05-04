@@ -379,7 +379,7 @@ SELECT
     count() / time_window_sec AS avg_rate,
     countIf(t1_has_error OR t2_has_error) AS errors,
     avg(duration_nanos * 1000) AS avg_duration,
-    quantile(0.99)(duration_nanos * 1000) AS p99_duration
+    quantile(0.99)(duration_nanos * 1000) AS p99_latency
 FROM final;`
 
 	query := fmt.Sprintf(queryTemplate,
