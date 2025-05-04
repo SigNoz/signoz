@@ -57,12 +57,14 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	errorMessage,
 	allowClear = false,
 	onRetry,
+	showIncompleteDataMessage = false,
 	...rest
 }) => {
 	// ===== State & Refs =====
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchText, setSearchText] = useState('');
 	const [activeOptionIndex, setActiveOptionIndex] = useState<number>(-1);
+	const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
 
 	// Refs for element access and scroll behavior
 	const selectRef = useRef<BaseSelectRef>(null);
@@ -70,6 +72,17 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	const optionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 	// Flag to track if dropdown just opened
 	const justOpenedRef = useRef<boolean>(false);
+
+	// Add a scroll handler for the dropdown
+	const handleDropdownScroll = useCallback(
+		(e: React.UIEvent<HTMLDivElement>): void => {
+			const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+			// Consider "scrolled to bottom" when within 20px of the bottom or at the bottom
+			const isAtBottom = scrollHeight - scrollTop - clientHeight < 20;
+			setIsScrolledToBottom(isAtBottom);
+		},
+		[],
+	);
 
 	// ===== Option Filtering & Processing Utilities =====
 
@@ -493,6 +506,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 				className="custom-select-dropdown"
 				onClick={handleDropdownClick}
 				onKeyDown={handleKeyDown}
+				onScroll={handleDropdownScroll}
 				role="listbox"
 				tabIndex={-1}
 				aria-activedescendant={
@@ -520,13 +534,16 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
 				{/* Navigation help footer */}
 				<div className="navigation-footer" role="note">
-					{!loading && !errorMessage && !noDataMessage && (
-						<section className="navigate">
-							<ArrowDown size={8} className="icons" />
-							<ArrowUp size={8} className="icons" />
-							<span className="keyboard-text">to navigate</span>
-						</section>
-					)}
+					{!loading &&
+						!errorMessage &&
+						!noDataMessage &&
+						!(showIncompleteDataMessage && isScrolledToBottom) && (
+							<section className="navigate">
+								<ArrowDown size={8} className="icons" />
+								<ArrowUp size={8} className="icons" />
+								<span className="keyboard-text">to navigate</span>
+							</section>
+						)}
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
@@ -552,9 +569,19 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						</div>
 					)}
 
-					{noDataMessage && !loading && (
-						<div className="navigation-text">{noDataMessage}</div>
-					)}
+					{showIncompleteDataMessage &&
+						isScrolledToBottom &&
+						!loading &&
+						!errorMessage && (
+							<div className="navigation-text-incomplete">
+								Use search for more options
+							</div>
+						)}
+
+					{noDataMessage &&
+						!loading &&
+						!(showIncompleteDataMessage && isScrolledToBottom) &&
+						!errorMessage && <div className="navigation-text">{noDataMessage}</div>}
 				</div>
 			</div>
 		);
@@ -568,6 +595,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		isLabelPresent,
 		handleDropdownClick,
 		handleKeyDown,
+		handleDropdownScroll,
 		activeOptionIndex,
 		loading,
 		errorMessage,
@@ -575,6 +603,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		dropdownRender,
 		renderOptionWithIndex,
 		onRetry,
+		showIncompleteDataMessage,
+		isScrolledToBottom,
 	]);
 
 	// Handle dropdown visibility changes
