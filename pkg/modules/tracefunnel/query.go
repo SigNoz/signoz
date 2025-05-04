@@ -519,8 +519,8 @@ SELECT
     round(count() / (SELECT count() FROM step1) * 100, 2) AS conversion_rate,
     count() / time_window_sec AS avg_rate,
     countIf(t1_has_error OR t2_has_error OR t3_has_error) AS errors,
-    avg(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration_ms,
-    quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS p99_latency_ms
+    avg(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration,
+    quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS p99_latency
 FROM joined;`
 
 	query := fmt.Sprintf(queryTemplate,
