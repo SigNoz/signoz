@@ -16,13 +16,13 @@ func ValidateTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange)
 
 	// (todo) prepare funnel step wise whereclause
 
-	if len(funnel.Steps) == 2 && funnelSteps[0].HasErrors {
+	if funnelSteps[0].HasErrors {
 		containsErrorT1 = 1
 	}
-	if len(funnel.Steps) == 2 && funnelSteps[1].HasErrors {
+	if funnelSteps[1].HasErrors {
 		containsErrorT2 = 1
 	}
-	if len(funnel.Steps) > 2 && funnelSteps[2].HasErrors {
+	if funnelSteps[2].HasErrors {
 		containsErrorT3 = 1
 	}
 
@@ -82,9 +82,10 @@ func GetFunnelAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRa
 	if funnelSteps[1].HasErrors {
 		containsErrorT2 = 1
 	}
-	if len(funnel.Steps) > 2 && funnelSteps[2].HasErrors {
+	if funnelSteps[2].HasErrors {
 		containsErrorT3 = 1
 	}
+
 	if funnelSteps[0].LatencyPointer != "" {
 		latencyPointerT1 = "end"
 	}
@@ -147,6 +148,56 @@ func GetFunnelAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRa
 	return &v3.ClickHouseQuery{Query: query}, nil
 }
 
+func GetFunnelStepAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange, stepStart, stepEnd int64) (*v3.ClickHouseQuery, error) {
+	var query string
+
+	funnelSteps := funnel.Steps
+	containsErrorT1 := 0
+	containsErrorT2 := 0
+	latencyPointerT1 := "start"
+	latencyPointerT2 := "start"
+	stepStartOrder := 0
+	stepEndOrder := 1
+
+	if stepStart != stepEnd {
+		stepStartOrder = int(stepStart) - 1
+		stepEndOrder = int(stepEnd) - 1
+		if funnelSteps[stepStartOrder].HasErrors {
+			containsErrorT1 = 1
+		}
+		if funnelSteps[stepEndOrder].HasErrors {
+			containsErrorT2 = 1
+		}
+		if funnelSteps[stepStartOrder].HasErrors {
+			containsErrorT1 = 1
+		}
+		if funnelSteps[stepEndOrder].HasErrors {
+			containsErrorT2 = 1
+		}
+		if funnelSteps[stepStartOrder].LatencyPointer != "" {
+			latencyPointerT1 = "end"
+		}
+		if funnelSteps[stepEndOrder].LatencyPointer != "" {
+			latencyPointerT1 = "end"
+		}
+	}
+	query = BuildTwoStepFunnelOverviewQuery(
+		containsErrorT1, // containsErrorT1
+		containsErrorT2, // containsErrorT2
+		latencyPointerT1,
+		latencyPointerT2,
+		timeRange.StartTime,                     // startTs
+		timeRange.EndTime,                       // endTs
+		funnelSteps[stepStartOrder].ServiceName, // serviceNameT1
+		funnelSteps[stepStartOrder].SpanName,    // spanNameT1
+		funnelSteps[stepEndOrder].ServiceName,   // serviceNameT1
+		funnelSteps[stepEndOrder].SpanName,      // spanNameT2
+		"",
+		"",
+	)
+	return &v3.ClickHouseQuery{Query: query}, nil
+}
+
 func GetStepAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange) (*v3.ClickHouseQuery, error) {
 
 	var query string
@@ -156,10 +207,10 @@ func GetStepAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRang
 	containsErrorT2 := 0
 	containsErrorT3 := 0
 
-	if len(funnel.Steps) == 2 && funnelSteps[0].HasErrors {
+	if funnelSteps[0].HasErrors {
 		containsErrorT1 = 1
 	}
-	if len(funnel.Steps) == 2 && funnelSteps[1].HasErrors {
+	if funnelSteps[1].HasErrors {
 		containsErrorT2 = 1
 	}
 	if len(funnel.Steps) > 2 && funnelSteps[2].HasErrors {
