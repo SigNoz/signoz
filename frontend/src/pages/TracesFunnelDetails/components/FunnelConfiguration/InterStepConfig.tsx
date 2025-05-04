@@ -1,5 +1,7 @@
 import './InterStepConfig.styles.scss';
 
+// COMMENTED OUT: Latency type (P99/P95/P90) UI between funnel steps
+/*
 import { Divider } from 'antd';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
@@ -38,6 +40,12 @@ function InterStepConfig({
 			</div>
 		</div>
 	);
+}
+*/
+
+// Dummy export to avoid import errors
+function InterStepConfig(): null {
+	return null;
 }
 
 export default InterStepConfig;
