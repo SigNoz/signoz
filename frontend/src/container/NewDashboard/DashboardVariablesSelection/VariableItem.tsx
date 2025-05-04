@@ -368,7 +368,7 @@ function VariableItem({
 							data-testid="variable-select"
 							className="variable-select"
 							popupClassName="dropdown-styles"
-							maxTagCount={4}
+							maxTagCount={2}
 							getPopupContainer={popupContainer}
 							allowClear
 							value={tempSelection || selectValue}
