@@ -50,6 +50,12 @@ interface UseFunnelGraphProps {
 	hoveredBar?: { index: number; type: 'total' | 'error' } | null;
 }
 
+interface StepGraphData {
+	successSteps: number[];
+	errorSteps: number[];
+	totalSteps: number;
+}
+
 interface UseFunnelGraph {
 	successSteps: number[];
 	errorSteps: number[];
@@ -87,12 +93,9 @@ function useFunnelGraph({
 		[],
 	);
 
-	interface StepGraphData {
-		successSteps: number[];
-		errorSteps: number[];
-		totalSteps: number;
-	}
-	const getStepGraphData = useCallback((): StepGraphData => {
+	function extractStepGraphData(
+		data: FunnelStepGraphMetrics | undefined,
+	): StepGraphData {
 		const successSteps: number[] = [];
 		const errorSteps: number[] = [];
 		let stepCount = 1;
@@ -117,7 +120,38 @@ function useFunnelGraph({
 			errorSteps,
 			totalSteps: stepCount - 1,
 		};
-	}, [data]);
+	}
+
+	function getSuccessBarColor(
+		localHoveredBar: { index: number; type: 'total' | 'error' } | null,
+		i: number,
+	): string {
+		if (localHoveredBar && localHoveredBar.index === i) {
+			if (localHoveredBar.type === 'error') {
+				return 'rgba(38, 85, 255, 0.2)'; // faded blue
+			}
+			if (localHoveredBar.type === 'total') {
+				return '#2655ff';
+			}
+		}
+		return Color.BG_ROBIN_500;
+	}
+
+	function getErrorBarColor(
+		localHoveredBar: { index: number; type: 'total' | 'error' } | null,
+		i: number,
+	): string {
+		return localHoveredBar &&
+			localHoveredBar.index === i &&
+			localHoveredBar.type === 'error'
+			? '#ff1018'
+			: Color.BG_CHERRY_500;
+	}
+
+	const getStepGraphData = useCallback(
+		(): StepGraphData => extractStepGraphData(data),
+		[data],
+	);
 
 	useEffect(() => {
 		if (!canvasRef.current) return;
@@ -171,22 +205,12 @@ function useFunnelGraph({
 		const { successSteps, errorSteps } = getStepGraphData();
 
 		if (chart.data.datasets && chart.data.datasets.length >= 2) {
-			chart.data.datasets[0].backgroundColor = successSteps.map((_, i) =>
-				localHoveredBar &&
-				localHoveredBar.index === i &&
-				localHoveredBar.type === 'total'
-					? '#2655ff'
-					: Color.BG_ROBIN_500,
+			chart.data.datasets[0].backgroundColor = successSteps.map(
+				(_: number, i: number) => getSuccessBarColor(localHoveredBar, i),
 			);
-
-			chart.data.datasets[1].backgroundColor = errorSteps.map((_, i) =>
-				localHoveredBar &&
-				localHoveredBar.index === i &&
-				localHoveredBar.type === 'error'
-					? '#ff1018'
-					: Color.BG_CHERRY_500,
+			chart.data.datasets[1].backgroundColor = errorSteps.map(
+				(_: number, i: number) => getErrorBarColor(localHoveredBar, i),
 			);
-
 			chart.update();
 		}
 	}, [localHoveredBar, getStepGraphData]);

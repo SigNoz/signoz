@@ -222,13 +222,6 @@ export const getFunnelOverview = async (
 	};
 };
 
-export interface SlowTracesPayload {
-	start_time: number;
-	end_time: number;
-	step_a_order: number;
-	step_b_order: number;
-}
-
 export interface SlowTraceData {
 	status: string;
 	data: Array<{
@@ -243,7 +236,7 @@ export interface SlowTraceData {
 
 export const getFunnelSlowTraces = async (
 	funnelId: string,
-	payload: SlowTracesPayload,
+	payload: FunnelOverviewPayload,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<SlowTraceData> | ErrorResponse> => {
 	const response = await axios.post(
@@ -261,12 +254,6 @@ export const getFunnelSlowTraces = async (
 		payload: response.data,
 	};
 };
-export interface ErrorTracesPayload {
-	start_time: number;
-	end_time: number;
-	step_a_order: number;
-	step_b_order: number;
-}
 
 export interface ErrorTraceData {
 	status: string;
@@ -282,10 +269,10 @@ export interface ErrorTraceData {
 
 export const getFunnelErrorTraces = async (
 	funnelId: string,
-	payload: ErrorTracesPayload,
+	payload: FunnelOverviewPayload,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<ErrorTraceData> | ErrorResponse> => {
-	const response: AxiosResponse = await axios.post(
+	const response = await axios.post(
 		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/error-traces`,
 		payload,
 		{
