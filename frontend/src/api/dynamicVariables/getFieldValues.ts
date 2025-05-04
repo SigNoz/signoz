@@ -12,6 +12,8 @@ export const getFieldValues = async (
 	signal?: 'traces' | 'logs' | 'metrics',
 	name?: string,
 	value?: string,
+	startUnixMilli?: number,
+	endUnixMilli?: number,
 ): Promise<SuccessResponse<FieldValueResponse> | ErrorResponse> => {
 	const params: Record<string, string> = {};
 
@@ -25,6 +27,14 @@ export const getFieldValues = async (
 
 	if (value) {
 		params.value = value;
+	}
+
+	if (startUnixMilli) {
+		params.startUnixMilli = Math.floor(startUnixMilli / 1000000).toString();
+	}
+
+	if (endUnixMilli) {
+		params.endUnixMilli = Math.floor(endUnixMilli / 1000000).toString();
 	}
 
 	const response = await ApiBaseInstance.get('/fields/values', { params });
