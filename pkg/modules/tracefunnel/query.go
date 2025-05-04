@@ -76,25 +76,19 @@ func GetFunnelAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRa
 	stepStartOrder := 0
 	stepEndOrder := 1
 
-	// (todo): check the logic
-	if stepStart != stepEnd {
-		stepStartOrder = int(stepStart) - 1
-		stepEndOrder = int(stepEnd) - 1
-	}
-
-	if len(funnel.Steps) == 2 && funnelSteps[0].HasErrors {
+	if funnelSteps[0].HasErrors {
 		containsErrorT1 = 1
 	}
-	if len(funnel.Steps) == 2 && funnelSteps[1].HasErrors {
+	if funnelSteps[1].HasErrors {
 		containsErrorT2 = 1
 	}
 	if len(funnel.Steps) > 2 && funnelSteps[2].HasErrors {
 		containsErrorT3 = 1
 	}
-	if len(funnel.Steps) == 2 && funnelSteps[0].LatencyPointer != "" {
+	if funnelSteps[0].LatencyPointer != "" {
 		latencyPointerT1 = "end"
 	}
-	if len(funnel.Steps) == 2 && funnelSteps[1].LatencyPointer != "" {
+	if funnelSteps[1].LatencyPointer != "" {
 		latencyPointerT1 = "end"
 	}
 	if len(funnel.Steps) > 2 && funnelSteps[2].LatencyPointer != "" {
@@ -125,6 +119,16 @@ func GetFunnelAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRa
 			//"db_operation = 'SELECT'",      // clauseStep3
 		)
 	} else {
+		if stepStart != stepEnd {
+			stepStartOrder = int(stepStart) - 1
+			stepEndOrder = int(stepEnd) - 1
+			if funnelSteps[stepStartOrder].HasErrors {
+				containsErrorT1 = 1
+			}
+			if funnelSteps[stepEndOrder].HasErrors {
+				containsErrorT2 = 1
+			}
+		}
 		query = BuildTwoStepFunnelOverviewQuery(
 			containsErrorT1, // containsErrorT1
 			containsErrorT2, // containsErrorT2
@@ -207,17 +211,15 @@ func GetSlowestTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRang
 	stepStartOrder := 0
 	stepEndOrder := 1
 
-	if len(funnel.Steps) == 2 && funnelSteps[0].HasErrors {
-		containsErrorT1 = 1
-	}
-	if len(funnel.Steps) == 2 && funnelSteps[1].HasErrors {
-		containsErrorT2 = 1
-	}
-
-	// (todo): check the logic
 	if stepStart != stepEnd {
 		stepStartOrder = int(stepStart) - 1
 		stepEndOrder = int(stepEnd) - 1
+		if funnelSteps[stepStartOrder].HasErrors {
+			containsErrorT1 = 1
+		}
+		if funnelSteps[stepEndOrder].HasErrors {
+			containsErrorT2 = 1
+		}
 	}
 
 	query := BuildTwoStepFunnelTopSlowTracesQuery(
@@ -243,17 +245,16 @@ func GetErroredTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRang
 	stepStartOrder := 0
 	stepEndOrder := 1
 
-	if len(funnel.Steps) == 2 && funnelSteps[0].HasErrors {
-		containsErrorT1 = 1
-	}
-	if len(funnel.Steps) == 2 && funnelSteps[1].HasErrors {
-		containsErrorT2 = 1
-	}
-
 	// (todo): check the logic
 	if stepStart != stepEnd {
 		stepStartOrder = int(stepStart) - 1
 		stepEndOrder = int(stepEnd) - 1
+		if funnelSteps[stepStartOrder].HasErrors {
+			containsErrorT1 = 1
+		}
+		if funnelSteps[stepEndOrder].HasErrors {
+			containsErrorT2 = 1
+		}
 	}
 
 	query := BuildTwoStepFunnelTopSlowErrorTracesQuery(
