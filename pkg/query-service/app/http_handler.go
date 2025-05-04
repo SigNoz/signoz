@@ -5210,13 +5210,13 @@ func (aH *APIHandler) handleFunnelAnalytics(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var timeRange traceFunnels.TimeRange
-	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+	var stepTransition traceFunnels.StepTransitionRequest
+	if err := json.NewDecoder(r.Body).Decode(&stepTransition); err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
 		return
 	}
 
-	chq, err := tracefunnels.GetFunnelAnalytics(funnel, timeRange)
+	chq, err := tracefunnels.GetFunnelAnalytics(funnel, stepTransition.TimeRange, stepTransition.StepAOrder, stepTransition.StepBOrder)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
@@ -5276,14 +5276,7 @@ func (aH *APIHandler) handleFunnelSlowTraces(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	limit := 10 // default limit
-	if l, ok := r.URL.Query()["limit"]; ok && len(l) > 0 {
-		if parsed, err := strconv.Atoi(l[0]); err == nil && parsed > 0 {
-			limit = parsed
-		}
-	}
-
-	chq, err := tracefunnels.GetSlowestTraces(funnel, req.TimeRange, limit)
+	chq, err := tracefunnels.GetSlowestTraces(funnel, req.TimeRange, req.StepAOrder, req.StepBOrder)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
@@ -5313,14 +5306,7 @@ func (aH *APIHandler) handleFunnelErrorTraces(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	limit := 10 // default limit
-	if l, ok := r.URL.Query()["limit"]; ok && len(l) > 0 {
-		if parsed, err := strconv.Atoi(l[0]); err == nil && parsed > 0 {
-			limit = parsed
-		}
-	}
-
-	chq, err := tracefunnels.GetErroredTraces(funnel, req.TimeRange, limit)
+	chq, err := tracefunnels.GetErroredTraces(funnel, req.TimeRange, req.StepAOrder, req.StepBOrder)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
