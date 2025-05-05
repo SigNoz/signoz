@@ -307,6 +307,68 @@
 			}
 		}
 	}
+
+	// Context indicator styles
+	.context-indicator {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		padding: 8px 12px;
+		margin-bottom: 8px;
+		border-radius: 4px;
+		font-size: 13px;
+		background-color: #f5f5f5;
+		border-left: 4px solid #1890ff;
+
+		.triplet-info {
+			margin-left: 16px;
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
+		}
+
+		.query-pair-info {
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
+			border-left: 1px solid rgba(0, 0, 0, 0.1);
+			padding-left: 8px;
+			background-color: rgba(0, 0, 0, 0.03);
+			padding: 4px 8px;
+			border-radius: 4px;
+		}
+
+		// Color variations based on context
+		&.context-indicator-key {
+			border-left-color: #1890ff; // blue
+			background-color: rgba(24, 144, 255, 0.1);
+		}
+
+		&.context-indicator-operator {
+			border-left-color: #722ed1; // purple
+			background-color: rgba(114, 46, 209, 0.1);
+		}
+
+		&.context-indicator-value {
+			border-left-color: #52c41a; // green
+			background-color: rgba(82, 196, 26, 0.1);
+		}
+
+		&.context-indicator-conjunction {
+			border-left-color: #fa8c16; // orange
+			background-color: rgba(250, 140, 22, 0.1);
+		}
+
+		&.context-indicator-function {
+			border-left-color: #13c2c2; // cyan
+			background-color: rgba(19, 194, 194, 0.1);
+		}
+
+		&.context-indicator-parenthesis {
+			border-left-color: #eb2f96; // magenta
+			background-color: rgba(235, 47, 150, 0.1);
+		}
+	}
 }
 
 /* Dark mode support */
@@ -368,6 +430,16 @@
 				.query-example-description {
 					color: var(--bg-vanilla-100);
 				}
+			}
+		}
+
+		.context-indicator {
+			background-color: var(--bg-ink-300);
+			color: var(--bg-vanilla-100);
+
+			.query-pair-info {
+				border-left: 1px solid rgba(255, 255, 255, 0.1);
+				background-color: rgba(255, 255, 255, 0.05);
 			}
 		}
 	}
