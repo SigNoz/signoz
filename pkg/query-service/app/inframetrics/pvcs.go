@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
@@ -158,7 +159,7 @@ func (p *PvcsRepo) getMetadataAttributes(ctx context.Context, req model.VolumeLi
 	return volumeAttrs, nil
 }
 
-func (p *PvcsRepo) getTopVolumeGroups(ctx context.Context, req model.VolumeListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (p *PvcsRepo) getTopVolumeGroups(ctx context.Context, orgID valuer.UUID, req model.VolumeListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopVolumes(req)
 
 	queryNames := queryNamesForVolumes[req.OrderBy.ColumnName]
@@ -189,7 +190,7 @@ func (p *PvcsRepo) getTopVolumeGroups(ctx context.Context, req model.VolumeListR
 		topVolumeGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, topVolumeGroupsQueryRangeParams)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topVolumeGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -228,7 +229,7 @@ func (p *PvcsRepo) getTopVolumeGroups(ctx context.Context, req model.VolumeListR
 	return topVolumeGroups, allVolumeGroups, nil
 }
 
-func (p *PvcsRepo) GetPvcList(ctx context.Context, req model.VolumeListRequest) (model.VolumeListResponse, error) {
+func (p *PvcsRepo) GetPvcList(ctx context.Context, orgID valuer.UUID, req model.VolumeListRequest) (model.VolumeListResponse, error) {
 	resp := model.VolumeListResponse{}
 
 	if req.Limit == 0 {
@@ -270,7 +271,7 @@ func (p *PvcsRepo) GetPvcList(ctx context.Context, req model.VolumeListRequest) 
 		return resp, err
 	}
 
-	topVolumeGroups, allVolumeGroups, err := p.getTopVolumeGroups(ctx, req, query)
+	topVolumeGroups, allVolumeGroups, err := p.getTopVolumeGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -304,7 +305,7 @@ func (p *PvcsRepo) GetPvcList(ctx context.Context, req model.VolumeListRequest) 
 		}
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}

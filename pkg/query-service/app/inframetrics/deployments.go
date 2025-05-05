@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
@@ -198,7 +199,7 @@ func (d *DeploymentsRepo) getMetadataAttributes(ctx context.Context, req model.D
 	return deploymentAttrs, nil
 }
 
-func (d *DeploymentsRepo) getTopDeploymentGroups(ctx context.Context, req model.DeploymentListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (d *DeploymentsRepo) getTopDeploymentGroups(ctx context.Context, orgID valuer.UUID, req model.DeploymentListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopDeployments(req)
 
 	queryNames := queryNamesForDeployments[req.OrderBy.ColumnName]
@@ -229,7 +230,7 @@ func (d *DeploymentsRepo) getTopDeploymentGroups(ctx context.Context, req model.
 		topDeploymentGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := d.querierV2.QueryRange(ctx, topDeploymentGroupsQueryRangeParams)
+	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, topDeploymentGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -268,7 +269,7 @@ func (d *DeploymentsRepo) getTopDeploymentGroups(ctx context.Context, req model.
 	return topDeploymentGroups, allDeploymentGroups, nil
 }
 
-func (d *DeploymentsRepo) GetDeploymentList(ctx context.Context, req model.DeploymentListRequest) (model.DeploymentListResponse, error) {
+func (d *DeploymentsRepo) GetDeploymentList(ctx context.Context, orgID valuer.UUID, req model.DeploymentListRequest) (model.DeploymentListResponse, error) {
 	resp := model.DeploymentListResponse{}
 
 	if req.Limit == 0 {
@@ -320,7 +321,7 @@ func (d *DeploymentsRepo) GetDeploymentList(ctx context.Context, req model.Deplo
 		return resp, err
 	}
 
-	topDeploymentGroups, allDeploymentGroups, err := d.getTopDeploymentGroups(ctx, req, query)
+	topDeploymentGroups, allDeploymentGroups, err := d.getTopDeploymentGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -354,7 +355,7 @@ func (d *DeploymentsRepo) GetDeploymentList(ctx context.Context, req model.Deplo
 		}
 	}
 
-	queryResponse, _, err := d.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}

@@ -795,16 +795,12 @@ func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string,
 	return searchScanResponses, nil
 }
 
-func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadataCache(ctx context.Context, traceID string) (*model.GetWaterfallSpansForTraceWithMetadataCache, error) {
+func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadataCache(ctx context.Context, orgID valuer.UUID, traceID string) (*model.GetWaterfallSpansForTraceWithMetadataCache, error) {
 	cachedTraceData := new(model.GetWaterfallSpansForTraceWithMetadataCache)
-	cacheStatus, err := r.cache.Retrieve(ctx, fmt.Sprintf("getWaterfallSpansForTraceWithMetadata-%v", traceID), cachedTraceData, false)
+	err := r.cache.Get(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), cachedTraceData, false)
 	if err != nil {
 		zap.L().Debug("error in retrieving getWaterfallSpansForTraceWithMetadata cache", zap.Error(err), zap.String("traceID", traceID))
 		return nil, err
-	}
-
-	if cacheStatus != cache.RetrieveStatusHit {
-		return nil, errors.Errorf("cache status for getWaterfallSpansForTraceWithMetadata : %s, traceID: %s", cacheStatus, traceID)
 	}
 
 	if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxIntervalForTraceDetail {
@@ -816,7 +812,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadataCache(ctx contex
 	return cachedTraceData, nil
 }
 
-func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Context, traceID string, req *model.GetWaterfallSpansForTraceWithMetadataParams) (*model.GetWaterfallSpansForTraceWithMetadataResponse, *model.ApiError) {
+func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Context, orgID valuer.UUID, traceID string, req *model.GetWaterfallSpansForTraceWithMetadataParams) (*model.GetWaterfallSpansForTraceWithMetadataResponse, *model.ApiError) {
 	response := new(model.GetWaterfallSpansForTraceWithMetadataResponse)
 	var startTime, endTime, durationNano, totalErrorSpans, totalSpans uint64
 	var spanIdToSpanNodeMap = map[string]*model.Span{}
@@ -826,7 +822,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	var hasMissingSpans bool
 
 	claims, errv2 := authtypes.ClaimsFromContext(ctx)
-	cachedTraceData, err := r.GetWaterfallSpansForTraceWithMetadataCache(ctx, traceID)
+	cachedTraceData, err := r.GetWaterfallSpansForTraceWithMetadataCache(ctx, orgID, traceID)
 	if err == nil {
 		startTime = cachedTraceData.StartTime
 		endTime = cachedTraceData.EndTime
@@ -984,7 +980,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		}
 
 		zap.L().Info("getWaterfallSpansForTraceWithMetadata: processing pre cache", zap.Duration("duration", time.Since(processingBeforeCache)), zap.String("traceID", traceID))
-		cacheErr := r.cache.Store(ctx, fmt.Sprintf("getWaterfallSpansForTraceWithMetadata-%v", traceID), &traceCache, time.Minute*5)
+		cacheErr := r.cache.Set(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), &traceCache, time.Minute*5)
 		if cacheErr != nil {
 			zap.L().Debug("failed to store cache for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID), zap.Error(err))
 		}
@@ -1007,16 +1003,12 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	return response, nil
 }
 
-func (r *ClickHouseReader) GetFlamegraphSpansForTraceCache(ctx context.Context, traceID string) (*model.GetFlamegraphSpansForTraceCache, error) {
+func (r *ClickHouseReader) GetFlamegraphSpansForTraceCache(ctx context.Context, orgID valuer.UUID, traceID string) (*model.GetFlamegraphSpansForTraceCache, error) {
 	cachedTraceData := new(model.GetFlamegraphSpansForTraceCache)
-	cacheStatus, err := r.cache.Retrieve(ctx, fmt.Sprintf("getFlamegraphSpansForTrace-%v", traceID), cachedTraceData, false)
+	err := r.cache.Get(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), cachedTraceData, false)
 	if err != nil {
 		zap.L().Debug("error in retrieving getFlamegraphSpansForTrace cache", zap.Error(err), zap.String("traceID", traceID))
 		return nil, err
-	}
-
-	if cacheStatus != cache.RetrieveStatusHit {
-		return nil, errors.Errorf("cache status for getFlamegraphSpansForTrace : %s, traceID: %s", cacheStatus, traceID)
 	}
 
 	if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxIntervalForTraceDetail {
@@ -1028,7 +1020,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTraceCache(ctx context.Context, 
 	return cachedTraceData, nil
 }
 
-func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, traceID string, req *model.GetFlamegraphSpansForTraceParams) (*model.GetFlamegraphSpansForTraceResponse, *model.ApiError) {
+func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID valuer.UUID, traceID string, req *model.GetFlamegraphSpansForTraceParams) (*model.GetFlamegraphSpansForTraceResponse, *model.ApiError) {
 	trace := new(model.GetFlamegraphSpansForTraceResponse)
 	var startTime, endTime, durationNano uint64
 	var spanIdToSpanNodeMap = map[string]*model.FlamegraphSpan{}
@@ -1037,7 +1029,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 	var traceRoots []*model.FlamegraphSpan
 
 	// get the trace tree from cache!
-	cachedTraceData, err := r.GetFlamegraphSpansForTraceCache(ctx, traceID)
+	cachedTraceData, err := r.GetFlamegraphSpansForTraceCache(ctx, orgID, traceID)
 
 	if err == nil {
 		startTime = cachedTraceData.StartTime
@@ -1136,7 +1128,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 		}
 
 		zap.L().Info("getFlamegraphSpansForTrace: processing pre cache", zap.Duration("duration", time.Since(processingBeforeCache)), zap.String("traceID", traceID))
-		cacheErr := r.cache.Store(ctx, fmt.Sprintf("getFlamegraphSpansForTrace-%v", traceID), &traceCache, time.Minute*5)
+		cacheErr := r.cache.Set(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), &traceCache, time.Minute*5)
 		if cacheErr != nil {
 			zap.L().Debug("failed to store cache for getFlamegraphSpansForTrace", zap.String("traceID", traceID), zap.Error(err))
 		}
@@ -2266,11 +2258,11 @@ func (r *ClickHouseReader) GetTotalLogs(ctx context.Context) (uint64, error) {
 	return totalLogs, nil
 }
 
-func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
+func (r *ClickHouseReader) FetchTemporality(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 	var metricNamesToQuery []string
 	for _, metricName := range metricNames {
-		updatedMetadata, cacheErr := r.GetUpdatedMetricsMetadata(ctx, metricName)
+		updatedMetadata, cacheErr := r.GetUpdatedMetricsMetadata(ctx, orgID, metricName)
 		if cacheErr != nil {
 			zap.L().Info("Error in getting metrics cached metadata", zap.Error(cacheErr))
 		}
@@ -2956,7 +2948,7 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 	return &result, nil
 }
 
-func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest, skipDotNames bool, skipSignozMetrics bool) (*v3.AggregateAttributeResponse, error) {
+func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest, skipDotNames bool, skipSignozMetrics bool) (*v3.AggregateAttributeResponse, error) {
 
 	var query string
 	var err error
@@ -2991,7 +2983,7 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 			continue
 		}
 
-		metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, metricName)
+		metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, orgID, metricName)
 		if apiError != nil {
 			zap.L().Error("Error in getting metrics cached metadata", zap.Error(apiError))
 		}
@@ -3096,7 +3088,7 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	return &attributeValues, nil
 }
 
-func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, serviceName string) (*v3.MetricMetadataResponse, error) {
+func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.UUID, metricName, serviceName string) (*v3.MetricMetadataResponse, error) {
 
 	unixMilli := common.PastDayRoundOff()
 
@@ -3121,7 +3113,7 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 			deltaExists = true
 		}
 	}
-	metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, metricName)
+	metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, orgID, metricName)
 	if apiError != nil {
 		zap.L().Error("Error in getting metric cached metadata", zap.Error(apiError))
 	}
@@ -5187,7 +5179,7 @@ func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context,
 	return timeSeries, nil
 }
 
-func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
+func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.UUID, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
 	var args []interface{}
 
 	// Build filter conditions (if any)
@@ -5365,7 +5357,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	}
 
 	//get updated metrics data
-	batch, apiError := r.GetUpdatedMetricsMetadata(ctx, metricNames...)
+	batch, apiError := r.GetUpdatedMetricsMetadata(ctx, orgID, metricNames...)
 	if apiError != nil {
 		zap.L().Error("Error in getting metrics cached metadata", zap.Error(apiError))
 	}
@@ -6022,18 +6014,18 @@ LIMIT 40`, // added rand to get diff value every time we run this query
 	return fingerprints, nil
 }
 
-func (r *ClickHouseReader) DeleteMetricsMetadata(ctx context.Context, metricName string) *model.ApiError {
+func (r *ClickHouseReader) DeleteMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricName string) *model.ApiError {
 	delQuery := fmt.Sprintf(`ALTER TABLE %s.%s DELETE WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataLocalTable)
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	err := r.db.Exec(valueCtx, delQuery, metricName)
 	if err != nil {
 		return &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
-	r.cache.Remove(ctx, constants.UpdatedMetricsMetadataCachePrefix+metricName)
+	r.cache.Delete(ctx, orgID, constants.UpdatedMetricsMetadataCachePrefix+metricName)
 	return nil
 }
 
-func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, req *model.UpdateMetricsMetadata) *model.ApiError {
+func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *model.UpdateMetricsMetadata) *model.ApiError {
 	if req.MetricType == v3.MetricTypeHistogram {
 		labels := []string{"le"}
 		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, req.MetricName, labels)
@@ -6062,7 +6054,7 @@ func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, req *model
 		}
 	}
 
-	apiErr := r.DeleteMetricsMetadata(ctx, req.MetricName)
+	apiErr := r.DeleteMetricsMetadata(ctx, orgID, req.MetricName)
 	if apiErr != nil {
 		return apiErr
 	}
@@ -6073,7 +6065,7 @@ VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadat
 	if err != nil {
 		return &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
-	err = r.cache.Store(ctx, constants.UpdatedMetricsMetadataCachePrefix+req.MetricName, req, -1)
+	err = r.cache.Set(ctx, orgID, constants.UpdatedMetricsMetadataCachePrefix+req.MetricName, req, -1)
 	if err != nil {
 		return &model.ApiError{Typ: "CachingErr", Err: err}
 	}
@@ -6114,7 +6106,7 @@ func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricNam
 	return hasLE, nil
 }
 
-func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context) []error {
+func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context, orgID valuer.UUID) []error {
 	var allMetricsMetadata []model.UpdateMetricsMetadata
 	var errorList []error
 	// Fetch all rows from ClickHouse
@@ -6127,7 +6119,7 @@ func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context) []error {
 		return errorList
 	}
 	for _, m := range allMetricsMetadata {
-		err := r.cache.Store(ctx, constants.UpdatedMetricsMetadataCachePrefix+m.MetricName, &m, -1)
+		err := r.cache.Set(ctx, orgID, constants.UpdatedMetricsMetadataCachePrefix+m.MetricName, &m, -1)
 		if err != nil {
 			errorList = append(errorList, err)
 		}
@@ -6136,7 +6128,7 @@ func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context) []error {
 	return errorList
 }
 
-func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metricNames ...string) (map[string]*model.UpdateMetricsMetadata, *model.ApiError) {
+func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]*model.UpdateMetricsMetadata, *model.ApiError) {
 	cachedMetadata := make(map[string]*model.UpdateMetricsMetadata)
 	var missingMetrics []string
 
@@ -6144,8 +6136,8 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metric
 	for _, metricName := range metricNames {
 		metadata := new(model.UpdateMetricsMetadata)
 		cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metricName
-		retrieveStatus, err := r.cache.Retrieve(ctx, cacheKey, metadata, true)
-		if err == nil && retrieveStatus == cache.RetrieveStatusHit {
+		err := r.cache.Get(ctx, orgID, cacheKey, metadata, true)
+		if err == nil {
 			cachedMetadata[metricName] = metadata
 		} else {
 			if err != nil {
@@ -6185,7 +6177,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metric
 
 			// Cache the result for future requests.
 			cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metadata.MetricName
-			if cacheErr := r.cache.Store(ctx, cacheKey, metadata, -1); cacheErr != nil {
+			if cacheErr := r.cache.Set(ctx, orgID, cacheKey, metadata, -1); cacheErr != nil {
 				zap.L().Error("Failed to store metrics metadata in cache", zap.String("metric_name", metadata.MetricName), zap.Error(cacheErr))
 			}
 			cachedMetadata[metadata.MetricName] = metadata

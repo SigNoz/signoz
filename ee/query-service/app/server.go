@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 	"github.com/SigNoz/signoz/ee/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -41,7 +42,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -57,7 +57,6 @@ type ServerOptions struct {
 	HTTPHostPort               string
 	PrivateHostPort            string
 	PreferSpanMetrics          bool
-	CacheConfigPath            string
 	FluxInterval               string
 	FluxIntervalForTraceDetail string
 	Cluster                    string
@@ -134,19 +133,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.SigNoz.Cache,
 	)
 
-	var c cache.Cache
-	if serverOptions.CacheConfigPath != "" {
-		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		c = cache.NewCache(cacheOpts)
-	}
-
 	rm, err := makeRulesManager(
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
-		c,
+		serverOptions.SigNoz.Cache,
 		serverOptions.SigNoz.Alertmanager,
 		serverOptions.SigNoz.SQLStore,
 		serverOptions.SigNoz.TelemetryStore,
@@ -223,7 +213,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		IntegrationsController:        integrationsController,
 		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
-		Cache:                         c,
 		FluxInterval:                  fluxInterval,
 		Gateway:                       gatewayProxy,
 		GatewayUrl:                    serverOptions.GatewayUrl,
@@ -261,9 +250,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
-	errorList := reader.PreloadMetricsMetadata(context.Background())
-	for _, er := range errorList {
-		zap.L().Error("failed to preload metrics metadata", zap.Error(er))
+	orgs, err := apiHandler.Signoz.Modules.Organization.GetAll(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	for _, org := range orgs {
+		errorList := reader.PreloadMetricsMetadata(context.Background(), org.ID)
+		for _, er := range errorList {
+			zap.L().Error("failed to preload metrics metadata", zap.Error(er))
+		}
 	}
 
 	return s, nil

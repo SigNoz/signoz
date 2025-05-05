@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	"net/http"
 	"slices"
 	"strings"
@@ -299,6 +301,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	mockClickhouse.MatchExpectationsInOrder(false)
 
 	modules := signoz.NewModules(testDB)
+	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:       reader,
@@ -309,6 +312,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 			Modules:  modules,
 			Handlers: signoz.NewHandlers(modules),
 		},
+		QuickFilters: quickFilterModule,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
