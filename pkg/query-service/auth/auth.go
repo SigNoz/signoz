@@ -13,7 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 )
 
-func RegisterFirstUser(ctx context.Context, req *types.PostableRegisterOrgAndAdmin, organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
+func RegisterOrgAndFirstUser(ctx context.Context, req *types.PostableRegisterOrgAndAdmin, organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
 	if req.Email == "" {
 		return nil, model.BadRequest(model.ErrEmailRequired{})
 	}
@@ -50,7 +50,7 @@ func RegisterFirstUser(ctx context.Context, req *types.PostableRegisterOrgAndAdm
 
 // First user registration
 func Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin, alertmanager alertmanager.Alertmanager, organizationModule organization.Module, userModule user.Module, quickfiltermodule quickfilter.Usecase) (*types.User, *model.ApiError) {
-	user, err := RegisterFirstUser(ctx, req, organizationModule, userModule)
+	user, err := RegisterOrgAndFirstUser(ctx, req, organizationModule, userModule)
 	if err != nil {
 		return nil, err
 	}

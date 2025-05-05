@@ -1964,8 +1964,9 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	versionResponse := model.GetVersionResponse{
-		Version: version.Info.Version(),
-		EE:      "Y",
+		Version:        version.Info.Version(),
+		EE:             "Y",
+		SetupCompleted: aH.SetupCompleted,
 	}
 
 	aH.WriteJSON(w, r, versionResponse)
@@ -2013,11 +2014,6 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, map[string]string{"status": "ok"})
 }
 
-// Register extends registerUser for non-internal packages
-func (aH *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
-	aH.registerUser(w, r)
-}
-
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	var req types.PostableRegisterOrgAndAdmin
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -2031,11 +2027,9 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !aH.SetupCompleted {
-		// since the first user is now created, we can disable self-registration as
-		// from here onwards, we expect admin (owner) to invite other users.
-		aH.SetupCompleted = true
-	}
+	// since the first user is now created, we can disable self-registration as
+	// from here onwards, we expect admin (owner) to invite other users.
+	aH.SetupCompleted = true
 
 	aH.Respond(w, nil)
 }
