@@ -66,6 +66,8 @@ export interface MetricNameSearchProps {
 export interface MetricFiltersProps {
 	searchQuery: IBuilderQuery;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
+	metricName: string | null;
+	metricType: MetricType | null;
 }
 
 export interface MetricTimeAggregationProps {

@@ -120,7 +120,7 @@ function Summary(): JSX.Element {
 		isFetching: isMetricsFetching,
 		isError: isMetricsError,
 	} = useGetMetricsList(metricsListQuery, {
-		enabled: !!metricsListQuery,
+		enabled: !!metricsListQuery && !isInspectModalOpen,
 	});
 
 	const {
@@ -129,7 +129,7 @@ function Summary(): JSX.Element {
 		isFetching: isTreeMapFetching,
 		isError: isTreeMapError,
 	} = useGetMetricsTreeMap(metricsTreemapQuery, {
-		enabled: !!metricsTreemapQuery,
+		enabled: !!metricsTreemapQuery && !isInspectModalOpen,
 	});
 
 	const handleFilterChange = useCallback(

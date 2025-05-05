@@ -12,7 +12,10 @@ function TableView({
 	setExpandedViewOptions,
 }: TableViewProps): JSX.Element {
 	const labelKeys = useMemo(
-		() => inspectMetricsTimeSeries.length > 0 ? Object.keys(inspectMetricsTimeSeries[0].labels) : [],
+		() =>
+			inspectMetricsTimeSeries.length > 0
+				? Object.keys(inspectMetricsTimeSeries[0].labels)
+				: [],
 		[inspectMetricsTimeSeries],
 	);
 
