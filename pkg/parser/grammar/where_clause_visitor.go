@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
@@ -19,25 +18,33 @@ import (
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type WhereClauseVisitor struct {
 	conditionBuilder qbtypes.ConditionBuilder
+	fieldMapper      qbtypes.FieldMapper
 	warnings         []error
 	fieldKeys        map[string][]*telemetrytypes.TelemetryFieldKey
 	errors           []error
 	builder          *sqlbuilder.SelectBuilder
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
+	jsonBodyPrefix   string
+	jsonKeyToKey     func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any)
 }
 
 // NewWhereClauseVisitor creates a new WhereClauseVisitor
 func NewWhereClauseVisitor(
 	conditionBuilder qbtypes.ConditionBuilder,
+	fieldMapper qbtypes.FieldMapper,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	builder *sqlbuilder.SelectBuilder,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	jsonBodyPrefix string,
+	jsonKeyToKey func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any),
 ) *WhereClauseVisitor {
 	return &WhereClauseVisitor{
 		conditionBuilder: conditionBuilder,
 		fieldKeys:        fieldKeys,
 		builder:          builder,
 		fullTextColumn:   fullTextColumn,
+		jsonBodyPrefix:   jsonBodyPrefix,
+		jsonKeyToKey:     jsonKeyToKey,
 	}
 }
 
@@ -73,8 +80,11 @@ func (l *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol
 func PrepareWhereClause(
 	query string,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	jsonBodyPrefix string,
+	jsonKeyToKey func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any),
 ) (*sqlbuilder.WhereClause, []error, error) {
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
@@ -82,7 +92,7 @@ func PrepareWhereClause(
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	visitor := NewWhereClauseVisitor(conditionBuilder, fieldKeys, sb, fullTextColumn)
+	visitor := NewWhereClauseVisitor(conditionBuilder, fieldMapper, fieldKeys, sb, fullTextColumn, jsonBodyPrefix, jsonKeyToKey)
 
 	// Set up error handling
 	lexerErrorListener := NewErrorListener()
@@ -458,10 +468,10 @@ func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
 	for _, key := range keys {
 		var fieldName string
 
-		if strings.HasPrefix(key.Name, telemetrylogs.BodyJSONStringSearchPrefix) {
-			fieldName, _ = telemetrylogs.GetBodyJSONKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
+		if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
+			fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
 		} else {
-			fieldName, _ = v.conditionBuilder.GetTableFieldName(context.Background(), key)
+			fieldName, _ = v.fieldMapper.GetTableFieldName(context.Background(), key)
 		}
 
 		var cond string
@@ -548,7 +558,7 @@ func (v *WhereClauseVisitor) VisitKey(ctx *KeyContext) any {
 
 	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(ctx.KEY().GetText())
 
-	keyName := strings.TrimPrefix(fieldKey.Name, telemetrylogs.BodyJSONStringSearchPrefix)
+	keyName := strings.TrimPrefix(fieldKey.Name, v.jsonBodyPrefix)
 
 	fieldKeysForName := v.fieldKeys[keyName]
 
@@ -556,7 +566,7 @@ func (v *WhereClauseVisitor) VisitKey(ctx *KeyContext) any {
 	// if there is a field with the same name as attribute/resource attribute
 	// Since it will ORed with the fieldKeysForName, it will not result empty
 	// when either of them have values
-	if strings.HasPrefix(fieldKey.Name, telemetrylogs.BodyJSONStringSearchPrefix) {
+	if strings.HasPrefix(fieldKey.Name, v.jsonBodyPrefix) && v.jsonBodyPrefix != "" {
 		fieldKeysForName = append(fieldKeysForName, &fieldKey)
 	}
 
