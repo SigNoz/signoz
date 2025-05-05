@@ -5217,7 +5217,7 @@ func (aH *APIHandler) handleFunnelAnalytics(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	chq, err := tracefunnels.GetFunnelAnalytics(funnel, stepTransition.TimeRange, stepTransition.StepAOrder, stepTransition.StepBOrder)
+	chq, err := tracefunnels.GetFunnelAnalytics(funnel, stepTransition.TimeRange)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
