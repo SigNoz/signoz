@@ -5121,7 +5121,14 @@ WHERE metric_name = ?;`, signozMetricDBName, signozTSTableNameV41Week)
 	return timeSeriesCount, nil
 }
 
-func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metricName string, start, end *int64) (*[]metrics_explorer.Attribute, *model.ApiError) {
+func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metricName string, start, end *int64, filters *v3.FilterSet) (*[]metrics_explorer.Attribute, *model.ApiError) {
+	whereClause := ""
+	if filters != nil {
+		conditions, _ := utils.BuildFilterConditions(filters, "t")
+		if conditions != nil {
+			whereClause = "AND " + strings.Join(conditions, " AND ")
+		}
+	}
 	const baseQueryTemplate = `
 SELECT 
     kv.1 AS key,
@@ -5129,7 +5136,7 @@ SELECT
     length(groupUniqArray(10000)(kv.2)) AS valueCount
 FROM %s.%s
 ARRAY JOIN arrayFilter(x -> NOT startsWith(x.1, '__'), JSONExtractKeysAndValuesRaw(labels)) AS kv
-WHERE metric_name = ? AND __normalized=true`
+WHERE metric_name = ? AND __normalized=true %s`
 
 	var args []interface{}
 	args = append(args, metricName)
@@ -5143,7 +5150,7 @@ WHERE metric_name = ? AND __normalized=true`
 		tableName = signozTSTableNameV41Week
 	}
 
-	query := fmt.Sprintf(baseQueryTemplate, signozMetricDBName, tableName)
+	query := fmt.Sprintf(baseQueryTemplate, signozMetricDBName, tableName, whereClause)
 
 	if start != nil && end != nil {
 		query += " AND unix_milli BETWEEN ? AND ?"
@@ -5966,6 +5973,13 @@ func (r *ClickHouseReader) GetInspectMetricsFingerprints(ctx context.Context, at
 		jsonExtracts = append(jsonExtracts, fmt.Sprintf("JSONExtractString(labels, '%s') AS %s", attr, keyAlias))
 		groupBys = append(groupBys, keyAlias)
 	}
+
+	conditions, _ := utils.BuildFilterConditions(&req.Filters, "")
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = "AND " + strings.Join(conditions, " AND ")
+	}
+
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 	query := fmt.Sprintf(`
         SELECT 
@@ -5978,12 +5992,14 @@ FROM
     FROM %s.%s
     WHERE metric_name = ?
       AND unix_milli BETWEEN ? AND ?
+    %s
 )
 GROUP BY %s
 ORDER BY length(fingerprints) DESC, rand()
 LIMIT 40`, // added rand to get diff value every time we run this query
 		strings.Join(jsonExtracts, ", "),
 		signozMetricDBName, tsTable,
+		whereClause,
 		strings.Join(groupBys, ", "))
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	rows, err := r.db.Query(valueCtx, query,
