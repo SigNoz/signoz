@@ -31,10 +31,12 @@ import { v4 as uuid } from 'uuid';
 import { GraphTitle, legend, MENU_ITEMS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
+import GraphControlsPanel from './Overview/GraphControlsPanel/GraphControlsPanel';
 import { Button } from './styles';
 import { IServiceName } from './types';
 import {
 	handleNonInQueryRange,
+	onViewAPIMonitoringPopupClick,
 	onViewTracePopupClick,
 	useGetAPMToTracesQueries,
 	useGraphClickHandler,
@@ -42,7 +44,7 @@ import {
 
 function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-
+	const [selectedData, setSelectedData] = useState<any>(undefined);
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -223,17 +225,18 @@ function External(): JSX.Element {
 
 	const { safeNavigate } = useSafeNavigate();
 
-	const onGraphClickHandler = useGraphClickHandler(setSelectedTimeStamp);
+	const onGraphClickHandler = useGraphClickHandler(
+		setSelectedTimeStamp,
+		setSelectedData,
+	);
 
 	return (
 		<>
 			<Row gutter={24}>
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
+					<GraphControlsPanel
 						id="external_call_error_percentage_button"
-						onClick={onViewTracePopupClick({
+						onViewTracesClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
@@ -241,21 +244,28 @@ function External(): JSX.Element {
 							stepInterval,
 							safeNavigate,
 						})}
-					>
-						View Traces
-					</Button>
+						onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
+							servicename,
+							timestamp: selectedTimeStamp,
+							domainName: selectedData?.address,
+							isError: true,
+							stepInterval: 60,
+							safeNavigate,
+						})}
+					/>
 					<Card data-testid="external_call_error_percentage">
 						<GraphContainer>
 							<Graph
 								headerMenuList={MENU_ITEMS}
 								widget={externalCallErrorWidget}
-								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
+								onClickHandler={(xValue, yValue, mouseX, mouseY, data): void => {
 									onGraphClickHandler(
 										xValue,
 										yValue,
 										mouseX,
 										mouseY,
 										'external_call_error_percentage',
+										data,
 									);
 								}}
 								onDragSelect={onDragSelect}
