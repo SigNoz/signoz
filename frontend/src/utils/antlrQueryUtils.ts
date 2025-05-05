@@ -185,7 +185,7 @@ export const validateQuery = (query: string): IValidationResult => {
 };
 
 // Helper function to find key-operator-value triplets in token stream
-function findKeyOperatorValueTriplet(
+export function findKeyOperatorValueTriplet(
 	allTokens: IToken[],
 	currentToken: IToken,
 	isInKey: boolean,
