@@ -3,9 +3,11 @@ package impluser
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/SigNoz/signoz/ee/modules/authdomain"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -118,4 +120,91 @@ func (m *Module) CanUsePassword(ctx context.Context, email string) (bool, error)
 	}
 
 	return true, nil
+}
+
+func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl string) (*types.GettableLoginPrecheck, error) {
+	resp := &types.GettableLoginPrecheck{IsUser: true, CanSelfRegister: false}
+
+	// check if email is a valid user
+	users, err := m.GetUsersByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(users) == 0 {
+		resp.IsUser = false
+		return resp, err
+	}
+
+	// give them an option to select an org
+	if orgID == "" && len(users) > 1 {
+		resp.SelectOrg = true
+		resp.Orgs = make([]string, len(users))
+		for i, user := range users {
+			resp.Orgs[i] = user.OrgID
+		}
+		return resp, nil
+	}
+
+	// user := users[0]
+	// select the user with the corresponding orgID
+	if len(users) > 1 {
+		found := false
+		for _, tuser := range users {
+			if tuser.OrgID == orgID {
+				// user = tuser
+				found = true
+				break
+			}
+		}
+		if !found {
+			resp.IsUser = false
+			return resp, nil
+		}
+	}
+
+	// the EE handler wrapper passes the feature flag value in context
+	ssoAvailable, ok := ctx.Value("ssoAvailable").(bool)
+	if !ok {
+		zap.L().Error("failed to retrieve ssoAvailable from context")
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to retrieve SSO availability")
+	}
+
+	if ssoAvailable {
+		// TODO(Nitya): in multitenancy this should use orgId as well.
+		orgDomain, err := m.authDomainModule.GetAuthDomainByEmail(ctx, email)
+		if err != nil {
+			zap.L().Error("failed to get org domain from email", zap.String("email", email), zap.Error(err))
+			return nil, err
+		}
+
+		if orgDomain != nil && orgDomain.SsoEnabled {
+			// saml is enabled for this domain, lets prepare sso url
+
+			if sourceUrl == "" {
+				sourceUrl = constants.GetDefaultSiteURL()
+			}
+
+			// parse source url that generated the login request
+			var err error
+			escapedUrl, _ := url.QueryUnescape(sourceUrl)
+			siteUrl, err := url.Parse(escapedUrl)
+			if err != nil {
+				zap.L().Error("failed to parse referer", zap.Error(err))
+				return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse referer")
+			}
+
+			// build Idp URL that will authenticat the user
+			// the front-end will redirect user to this url
+			resp.SsoUrl, err = orgDomain.BuildSsoUrl(siteUrl)
+			if err != nil {
+				zap.L().Error("failed to prepare saml request for domain", zap.String("domain", orgDomain.Name), zap.Error(err))
+				return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to prepare saml request for domain")
+			}
+
+			// set SSO to true, as the url is generated correctly
+			resp.SSO = true
+		}
+	}
+	return resp, nil
 }

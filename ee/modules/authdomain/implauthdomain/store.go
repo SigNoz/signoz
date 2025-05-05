@@ -33,15 +33,3 @@ func (s *store) GetDomainByName(ctx context.Context, name string) (*types.Storab
 	}
 	return domain, nil
 }
-
-// CreateBulkInvite implements types.InviteStore.
-// func (s *store) CreateBulkInvite(ctx context.Context, invites []*types.Invite) error {
-// 	_, err := s.sqlstore.BunDB().NewInsert().
-// 		Model(invites).
-// 		Exec(ctx)
-
-// 	if err != nil {
-// 		return s.sqlstore.WrapAlreadyExistsErrf(err, types.ErrInviteAlreadyExists, "invite with email: %s already exists in org: %s", invites[0].Email, invites[0].OrgID)
-// 	}
-// 	return nil
-// }

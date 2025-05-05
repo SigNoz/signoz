@@ -391,28 +391,13 @@ func (h *handler) LoginPrecheck(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	email := r.URL.Query().Get("email")
-	_ = r.URL.Query().Get("ref")
+	sourceUrl := r.URL.Query().Get("ref")
+	orgID := r.URL.Query().Get("orgID")
 
-	// assume user is valid unless proven otherwise and assign default values for rest of the fields
-	resp := &types.GettableLoginPrecheck{IsUser: true, CanSelfRegister: false, SSO: false, SsoUrl: "", SsoError: ""}
-
-	// check if email is a valid user
-	users, err := h.module.GetUsersByEmail(ctx, email)
+	resp, err := h.module.LoginPrecheck(ctx, orgID, email, sourceUrl)
 	if err != nil {
 		render.Error(w, err)
 		return
-	}
-
-	if len(users) == 0 {
-		resp.IsUser = false
-	}
-
-	if len(users) > 1 {
-		resp.SelectOrg = true
-		resp.Orgs = make([]string, len(users))
-		for i, user := range users {
-			resp.Orgs[i] = user.OrgID
-		}
 	}
 
 	render.Success(w, http.StatusOK, resp)

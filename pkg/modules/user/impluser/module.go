@@ -193,6 +193,31 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 	return dbUser, nil
 }
 
+func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl string) (*types.GettableLoginPrecheck, error) {
+	// assume user is valid unless proven otherwise and assign default values for rest of the fields
+	resp := &types.GettableLoginPrecheck{IsUser: true, CanSelfRegister: false, SSO: false, SsoUrl: "", SsoError: ""}
+
+	// check if email is a valid user
+	users, err := m.GetUsersByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(users) == 0 {
+		resp.IsUser = false
+	}
+
+	if len(users) > 1 {
+		resp.SelectOrg = true
+		resp.Orgs = make([]string, len(users))
+		for i, user := range users {
+			resp.Orgs[i] = user.OrgID
+		}
+	}
+
+	return resp, nil
+}
+
 func (m *Module) GetJWTForUser(ctx context.Context, user *types.User) (types.GettableUserJwt, error) {
 	role, err := types.NewRole(user.Role)
 	if err != nil {

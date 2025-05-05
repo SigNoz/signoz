@@ -14,8 +14,6 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	baseauth "github.com/SigNoz/signoz/pkg/query-service/auth"
-	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 )
 
@@ -70,116 +68,6 @@ func (ah *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 
 	ah.WriteJSON(w, r, jwt)
 }
-
-// registerUser registers a user and responds with a precheck
-// so the front-end can decide the login method
-func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
-
-	if !ah.CheckFeature(model.SSO) {
-		ah.APIHandler.Register(w, r)
-		return
-	}
-
-	ctx := context.Background()
-	var req *types.PostableRegisterOrgAndAdmin
-
-	defer r.Body.Close()
-	requestBody, err := io.ReadAll(r.Body)
-	if err != nil {
-		zap.L().Error("received no input in api", zap.Error(err))
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	err = json.Unmarshal(requestBody, &req)
-
-	if err != nil {
-		zap.L().Error("received invalid user registration request", zap.Error(err))
-		RespondError(w, model.BadRequest(fmt.Errorf("failed to register user")), nil)
-		return
-	}
-
-	// get invite object
-	invite, err := ah.Signoz.Modules.User.GetInviteByToken(ctx, req.InviteToken)
-	if err != nil {
-		zap.L().Error("failed to validate invite token", zap.Error(err))
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	if invite == nil {
-		zap.L().Error("failed to validate invite token: it is either empty or invalid", zap.Error(err))
-		RespondError(w, model.BadRequest(basemodel.ErrSignupFailed{}), nil)
-		return
-	}
-
-	// get auth domain from email domain
-	domain, apierr := ah.AppDao().GetDomainByEmail(ctx, invite.Email)
-	if apierr != nil {
-		zap.L().Error("failed to get domain from email", zap.Error(apierr))
-		RespondError(w, model.InternalError(basemodel.ErrSignupFailed{}), nil)
-	}
-
-	precheckResp := &types.GettableLoginPrecheck{
-		SSO:    false,
-		IsUser: false,
-	}
-
-	if domain != nil && domain.SsoEnabled {
-		// sso is enabled, create user and respond precheck data
-		// user, apierr := baseauth.RegisterInvitedUser(ctx, req, true)
-		// if apierr != nil {
-		// 	RespondError(w, apierr, nil)
-		// 	return
-		// }
-
-		// var precheckError basemodel.BaseApiError
-
-		// precheckResp, precheckError = ah.AppDao().PrecheckLogin(ctx, user.Email, req.SourceUrl)
-		// if precheckError != nil {
-		// 	RespondError(w, precheckError, precheckResp)
-		// }
-
-	} else {
-		// no-sso, validate password
-		// if err := types.ComparePassword(req.Password); err != nil {
-		// 	RespondError(w, model.InternalError(fmt.Errorf("password is not in a valid format")), nil)
-		// 	return
-		// }
-
-		_, err := types.NewFactorPassword(req.Password)
-		if err != nil {
-			RespondError(w, model.InternalError(fmt.Errorf("password is not in a valid format")), nil)
-			return
-		}
-
-		_, registerError := baseauth.Register(ctx, req, ah.Signoz.Alertmanager, ah.Signoz.Modules.Organization, ah.Signoz.Modules.User, ah.QuickFilterModule)
-		if !registerError.IsNil() {
-			RespondError(w, apierr, nil)
-			return
-		}
-
-		precheckResp.IsUser = true
-	}
-
-	ah.Respond(w, precheckResp)
-}
-
-// getInvite returns the invite object details for the given invite token. We do not need to
-// protect this API because invite token itself is meant to be private.
-// func (ah *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
-// 	token := mux.Vars(r)["token"]
-// 	inviteObject, err := ah.Signoz.Modules.User.GetInviteByToken(r.Context(), token)
-// 	if err != nil {
-// 		RespondError(w, model.BadRequest(err), nil)
-// 		return
-// 	}
-
-// 	resp := model.GettableInvitation{
-// 		InvitationResponseObject: inviteObject,
-// 	}
-// 	ah.WriteJSON(w, r, resp)
-// }
 
 func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
 	ssoError := []byte("Login failed. Please contact your system administrator")
