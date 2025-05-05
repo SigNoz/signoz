@@ -35,6 +35,9 @@ func (m *module) GetAuthDomainByEmail(ctx context.Context, email string) (*types
 	if err != nil {
 		return nil, err
 	}
+	if domain == nil {
+		return nil, nil
+	}
 
 	gettableDomain := &types.GettableOrgDomain{StorableOrgDomain: *domain}
 	if err := gettableDomain.LoadConfig(domain.Data); err != nil {

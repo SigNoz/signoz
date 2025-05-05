@@ -12,7 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/types"
-	"go.uber.org/zap"
 )
 
 // EnterpriseHandler embeds the base handler implementation
@@ -71,8 +70,8 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 
 	orgDomain, err := h.authDomainModule.GetAuthDomainByEmail(ctx, invite.Email)
 	if err != nil {
-		zap.L().Error("failed to get org domain from email", zap.String("email", invite.Email), zap.Error(err))
-		render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to get domain for sso auth"))
+		render.Error(w, err)
+		return
 	}
 
 	precheckResp := &types.GettableLoginPrecheck{
