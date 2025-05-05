@@ -4,11 +4,7 @@ import { useGetInspectMetricsDetails } from 'hooks/metricsExplorer/useGetInspect
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { convertNanoToMilliseconds } from '../Summary/utils';
 import { INITIAL_INSPECT_METRICS_OPTIONS } from './constants';
 import {
 	GraphPopoverData,
@@ -65,9 +61,14 @@ export function useInspectMetrics(
 	metricName: string | null,
 ): UseInspectMetricsReturnData {
 	// Inspect Metrics API Call and data formatting
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { start, end } = useMemo(() => {
+		const now = Date.now();
+		return {
+			start: now - 30 * 60 * 1000, // 30 minutes ago
+			end: now, // now
+		};
+	}, []);
+
 	const {
 		data: inspectMetricsData,
 		isLoading: isInspectMetricsLoading,
@@ -76,8 +77,8 @@ export function useInspectMetrics(
 	} = useGetInspectMetricsDetails(
 		{
 			metricName: metricName ?? '',
-			start: convertNanoToMilliseconds(minTime),
-			end: convertNanoToMilliseconds(maxTime),
+			start,
+			end,
 		},
 		{
 			enabled: !!metricName,
@@ -156,7 +157,7 @@ export function useInspectMetrics(
 
 		// Apply time aggregation once required options are set
 		if (
-			inspectionStep === InspectionStep.SPACE_AGGREGATION &&
+			inspectionStep >= InspectionStep.SPACE_AGGREGATION &&
 			metricInspectionOptions.timeAggregationOption &&
 			metricInspectionOptions.timeAggregationInterval
 		) {
@@ -171,7 +172,7 @@ export function useInspectMetrics(
 		// Apply space aggregation
 		if (inspectionStep === InspectionStep.COMPLETED) {
 			const { aggregatedSeries, spaceAggregatedSeriesMap } = applySpaceAggregation(
-				inspectMetricsTimeSeries,
+				timeSeries,
 				metricInspectionOptions,
 			);
 			timeSeries = aggregatedSeries;

@@ -147,7 +147,7 @@ function ExpandedView({
 								{formatTimestampToFullDateTime(options?.timestamp ?? 0)}
 							</Typography.Text>
 							<Typography.Text strong>
-								{`${Number(absoluteValue).toFixed(0)} is the ${
+								{`${absoluteValue} is the ${
 									SPACE_AGGREGATION_OPTIONS[
 										metricInspectionOptions.spaceAggregationOption ??
 											SpaceAggregationOptions.SUM_BY
@@ -215,11 +215,9 @@ function ExpandedView({
 								</Typography.Text>
 							)}
 							<Typography.Text strong>
-								{Number(
-									selectedTimeSeries?.values.find(
-										(value) => value?.timestamp >= (options?.timestamp || 0),
-									)?.value ?? options?.value,
-								).toFixed(0)}
+								{selectedTimeSeries?.values.find(
+									(value) => value?.timestamp >= (options?.timestamp || 0),
+								)?.value ?? options?.value}
 							</Typography.Text>
 						</div>
 
@@ -270,7 +268,7 @@ function ExpandedView({
 								{formatTimestampToFullDateTime(options?.timestamp ?? 0)}
 							</Typography.Text>
 							<Typography.Text strong>
-								{`${Number(absoluteValue).toFixed(0)} is the ${
+								{`${absoluteValue} is the ${
 									TIME_AGGREGATION_OPTIONS[
 										metricInspectionOptions.timeAggregationOption ??
 											TimeAggregationOptions.SUM

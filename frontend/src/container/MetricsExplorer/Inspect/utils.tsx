@@ -1,6 +1,8 @@
+/* eslint-disable no-nested-ternary */
 import { InfoCircleFilled } from '@ant-design/icons';
 import { Card, Input, Select, Typography } from 'antd';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
+import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import classNames from 'classnames';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
@@ -14,8 +16,6 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
-	GRAPH_CLICK_PIXEL_TOLERANCE,
-	INSPECT_FEATURE_FLAG_KEY,
 	SPACE_AGGREGATION_OPTIONS,
 	TIME_AGGREGATION_OPTIONS,
 } from './constants';
@@ -37,9 +37,8 @@ import {
  * returns true if the feature flag is enabled, false otherwise
  * Show the inspect button in  metrics explorer if the feature flag is enabled
  */
-export function isInspectEnabled(): boolean {
-	const featureFlag = localStorage.getItem(INSPECT_FEATURE_FLAG_KEY);
-	return featureFlag === 'true';
+export function isInspectEnabled(metricType: MetricType | undefined): boolean {
+	return metricType === MetricType.GAUGE;
 }
 
 export function getAllTimestampsOfMetrics(
@@ -529,10 +528,7 @@ export function getSeriesIndexFromPixel(
 			const seriesYPx = u.valToPos(seriesValue, 'y');
 			const pixelDiff = Math.abs(seriesYPx - top);
 
-			if (
-				pixelDiff < GRAPH_CLICK_PIXEL_TOLERANCE &&
-				pixelDiff < closestPixelDiff
-			) {
+			if (pixelDiff < closestPixelDiff) {
 				closestPixelDiff = pixelDiff;
 				seriesIndex = i;
 			}
@@ -721,9 +717,11 @@ export function getTimeSeriesLabel(
 export function HoverPopover({
 	options,
 	step,
+	metricInspectionOptions,
 }: {
 	options: GraphPopoverOptions;
 	step: InspectionStep;
+	metricInspectionOptions: MetricInspectionOptions;
 }): JSX.Element {
 	const closestTimestamp = useMemo(() => {
 		if (!options.timeSeries) {
@@ -748,6 +746,25 @@ export function HoverPopover({
 			: null;
 	}, [options.timeSeries, closestTimestamp, options.value]);
 
+	const title = useMemo(() => {
+		if (
+			step === InspectionStep.COMPLETED &&
+			metricInspectionOptions.spaceAggregationLabels.length === 0
+		) {
+			return undefined;
+		}
+		if (step === InspectionStep.COMPLETED && options.timeSeries?.title) {
+			return options.timeSeries.title;
+		}
+		if (!options.timeSeries) {
+			return undefined;
+		}
+		return getTimeSeriesLabel(
+			options.timeSeries,
+			options.timeSeries?.strokeColor,
+		);
+	}, [step, options.timeSeries, metricInspectionOptions]);
+
 	return (
 		<Card
 			className="hover-popover-card"
@@ -769,9 +786,7 @@ export function HoverPopover({
 						fontWeight: 200,
 					}}
 				>
-					{step === InspectionStep.COMPLETED && options.timeSeries.title
-						? options.timeSeries.title
-						: getTimeSeriesLabel(options.timeSeries, options.timeSeries?.strokeColor)}
+					{title}
 				</Typography.Text>
 			)}
 		</Card>

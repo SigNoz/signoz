@@ -27,6 +27,7 @@ function GraphView({
 	popoverOptions,
 	setShowExpandedView,
 	setExpandedViewOptions,
+	metricInspectionOptions,
 }: GraphViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -235,7 +236,11 @@ function GraphView({
 				/>
 			)}
 			{showHoverPopover && !showGraphPopover && hoverPopoverOptions && (
-				<HoverPopover options={hoverPopoverOptions} step={inspectionStep} />
+				<HoverPopover
+					options={hoverPopoverOptions}
+					step={inspectionStep}
+					metricInspectionOptions={metricInspectionOptions}
+				/>
 			)}
 		</div>
 	);

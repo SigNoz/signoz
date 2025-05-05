@@ -36,6 +36,7 @@
 			gap: 16px;
 			padding-right: 24px;
 			border-right: 1px solid var(--bg-slate-400);
+			width: 60%;
 
 			.inspect-metrics-graph-view {
 				display: flex;
@@ -72,6 +73,8 @@
 					min-height: 520px;
 
 					.inspect-metrics-table-view {
+						max-width: 100%;
+
 						.ant-spin-nested-loading {
 							.ant-spin-container {
 								.ant-table {
@@ -91,6 +94,23 @@
 							-webkit-overflow-scrolling: touch;
 							scrollbar-width: thin;
 							scrollbar-color: #ccc transparent;
+
+							.ant-card {
+								cursor: pointer;
+								width: 100px;
+								max-width: 100px;
+								white-space: nowrap;
+								text-overflow: ellipsis;
+								overflow: hidden;
+
+								.ant-card-body {
+									padding: 6px 8px;
+								}
+
+								&:hover {
+									opacity: 0.8;
+								}
+							}
 						}
 					}
 				}

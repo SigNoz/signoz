@@ -40,6 +40,7 @@ export interface GraphViewProps {
 	showExpandedView: boolean;
 	setShowExpandedView: (showExpandedView: boolean) => void;
 	setExpandedViewOptions: (options: GraphPopoverOptions | null) => void;
+	metricInspectionOptions: MetricInspectionOptions;
 }
 
 export interface QueryBuilderProps {
