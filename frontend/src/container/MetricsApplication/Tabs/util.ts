@@ -14,7 +14,11 @@ import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { Tags } from 'types/reducer/trace';
 import { secondsToMilliseconds } from 'utils/timeUtils';
@@ -37,6 +41,16 @@ interface OnViewTracePopupClickProps {
 	apmToTraceQuery: Query;
 	isViewLogsClicked?: boolean;
 	stepInterval?: number;
+	safeNavigate: (url: string) => void;
+}
+
+interface OnViewAPIMonitoringPopupClickProps {
+	servicename: string;
+	timestamp: number;
+	stepInterval?: number;
+	domainName: string;
+	isError: boolean;
+
 	safeNavigate: (url: string) => void;
 }
 
@@ -107,14 +121,94 @@ export function onViewTracePopupClick({
 	};
 }
 
+const generateAPIMonitoringPath = (
+	domainName: string,
+	startTime: number,
+	endTime: number,
+	filters: IBuilderQuery['filters'],
+): string => {
+	const basePath = ROUTES.API_MONITORING;
+	const newPath = `${basePath}?apiMonitoringParams=${encodeURIComponent(
+		JSON.stringify({
+			selectedDomain: domainName,
+			selectedView: 'endpoint_stats',
+			modalTimeRange: {
+				startTime,
+				endTime,
+			},
+			selectedInterval: 'custom',
+			endPointDetailsLocalFilters: filters,
+		}),
+	)}`;
+	console.log('uncaught newPath', { domainName, newPath });
+	return newPath;
+};
+export function onViewAPIMonitoringPopupClick({
+	servicename,
+	timestamp,
+	domainName,
+	isError,
+	stepInterval,
+	safeNavigate,
+}: OnViewAPIMonitoringPopupClickProps): VoidFunction {
+	return (): void => {
+		const endTime = secondsToMilliseconds(timestamp);
+		const startTime = secondsToMilliseconds(timestamp - (stepInterval || 60));
+		const filters = {
+			items: [
+				...(isError
+					? [
+							{
+								id: uuid().slice(0, 8),
+								key: {
+									key: 'hasError',
+									dataType: DataTypes.bool,
+									type: 'tag',
+									isColumn: true,
+									isJSON: false,
+									id: 'hasError--bool--tag--true',
+								},
+								op: 'in',
+								value: ['true'],
+							},
+					  ]
+					: []),
+				{
+					id: 'service-filter',
+					key: {
+						key: 'service.name',
+						dataType: DataTypes.String,
+						type: 'tag',
+						isColumn: false,
+						isJSON: false,
+					},
+					op: '=',
+					value: servicename,
+				},
+			],
+			op: 'AND',
+		};
+		const newPath = generateAPIMonitoringPath(
+			domainName,
+			startTime,
+			endTime,
+			filters,
+		);
+
+		safeNavigate(newPath);
+	};
+}
+
 export function useGraphClickHandler(
 	setSelectedTimeStamp: (n: number) => void | Dispatch<SetStateAction<number>>,
+	setSelectedData?: (data: any) => void | Dispatch<SetStateAction<any>>,
 ): (
 	xValue: number,
 	yValue: number,
 	mouseX: number,
 	mouseY: number,
 	type: string,
+	data?: any,
 ) => Promise<void> {
 	const buttonRef = useRef<HTMLElement | null>(null);
 
@@ -134,6 +228,7 @@ export function useGraphClickHandler(
 		mouseX: number,
 		mouseY: number,
 		type: string,
+		data?: any,
 	): Promise<void> => {
 		const id = `${type}_button`;
 		const buttonElement = document.getElementById(id);
@@ -145,6 +240,9 @@ export function useGraphClickHandler(
 				buttonElement.style.left = `${mouseX}px`;
 				buttonElement.style.top = `${mouseY}px`;
 				setSelectedTimeStamp(Math.floor(xValue));
+				if (setSelectedData && data) {
+					setSelectedData(data);
+				}
 			}
 		} else if (buttonElement && buttonElement.style.display === 'block') {
 			buttonElement.style.display = 'none';
