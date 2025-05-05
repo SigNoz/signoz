@@ -39,6 +39,19 @@ export const getFieldValues = async (
 
 	const response = await ApiBaseInstance.get('/fields/values', { params });
 
+	// Normalize values from different types (stringValues, boolValues, etc.)
+	if (response.data?.data?.values) {
+		const allValues: string[] = [];
+		Object.values(response.data.data.values).forEach((valueArray: any) => {
+			if (Array.isArray(valueArray)) {
+				allValues.push(...valueArray.map(String));
+			}
+		});
+
+		// Add a normalized values array to the response
+		response.data.data.normalizedValues = allValues;
+	}
+
 	return {
 		statusCode: 200,
 		error: null,

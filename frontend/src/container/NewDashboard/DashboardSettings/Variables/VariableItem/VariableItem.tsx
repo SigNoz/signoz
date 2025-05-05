@@ -164,7 +164,7 @@ function VariableItem({
 		) {
 			setPreviewValues(
 				sortValues(
-					fieldValues.payload?.values?.stringValues || [],
+					fieldValues.payload?.normalizedValues || [],
 					variableSortType,
 				) as never,
 			);
