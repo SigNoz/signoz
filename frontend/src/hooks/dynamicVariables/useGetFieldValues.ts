@@ -38,7 +38,7 @@ export const useGetFieldValues = ({
 	SuccessResponse<FieldValueResponse> | ErrorResponse
 > =>
 	useQuery<SuccessResponse<FieldValueResponse> | ErrorResponse>({
-		queryKey: ['fieldValues', signal, name, value],
+		queryKey: ['fieldValues', signal, name, value, startUnixMilli, endUnixMilli],
 		queryFn: () =>
 			getFieldValues(signal, name, value, startUnixMilli, endUnixMilli),
 		enabled,

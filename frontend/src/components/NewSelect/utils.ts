@@ -133,3 +133,15 @@ export const filterOptionsBySearch = (
 		})
 		.filter(Boolean) as OptionData[];
 };
+
+/**
+ * Utility function to handle dropdown scroll and detect when scrolled to bottom
+ * Returns true when scrolled to within 20px of the bottom
+ */
+export const handleScrollToBottom = (
+	e: React.UIEvent<HTMLDivElement>,
+): boolean => {
+	const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+	// Consider "scrolled to bottom" when within 20px of the bottom or at the bottom
+	return scrollHeight - scrollTop - clientHeight < 20;
+};

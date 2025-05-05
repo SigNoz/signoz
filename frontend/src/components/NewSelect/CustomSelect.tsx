@@ -29,6 +29,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import { CustomSelectProps, OptionData } from './types';
 import {
 	filterOptionsBySearch,
+	handleScrollToBottom,
 	prioritizeOrAddOptionForSingleSelect,
 	SPACEKEY,
 } from './utils';
@@ -76,10 +77,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	// Add a scroll handler for the dropdown
 	const handleDropdownScroll = useCallback(
 		(e: React.UIEvent<HTMLDivElement>): void => {
-			const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-			// Consider "scrolled to bottom" when within 20px of the bottom or at the bottom
-			const isAtBottom = scrollHeight - scrollTop - clientHeight < 20;
-			setIsScrolledToBottom(isAtBottom);
+			setIsScrolledToBottom(handleScrollToBottom(e));
 		},
 		[],
 	);
