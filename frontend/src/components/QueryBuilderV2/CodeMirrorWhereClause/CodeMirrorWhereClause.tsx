@@ -1,3 +1,5 @@
+/* eslint-disable class-methods-use-this */
+/* eslint-disable max-classes-per-file */
 /* eslint-disable sonarjs/no-collapsible-if */
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable import/no-extraneous-dependencies */
@@ -13,6 +15,7 @@ import {
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
+import { ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, { EditorView } from '@uiw/react-codemirror';
 import { Card, Collapse, Space, Typography } from 'antd';
@@ -127,6 +130,29 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
+// Custom extension to analyze the context at the cursor position
+const contextAwarePlugin = (
+	analyzeContext: (view: EditorView, pos: number) => void,
+): ViewPlugin<{ update: (update: ViewUpdate) => void }> =>
+	ViewPlugin.fromClass(
+		class {
+			constructor(view: EditorView) {
+				this.analyze(view);
+			}
+
+			update(update: ViewUpdate): void {
+				if (update.selectionSet && !update.docChanged) {
+					this.analyze(update.view);
+				}
+			}
+
+			analyze(view: EditorView): void {
+				const pos = view.state.selection.main.head;
+				analyzeContext(view, pos);
+			}
+		},
+	);
+
 function CodeMirrorWhereClause(): JSX.Element {
 	const [query, setQuery] = useState<string>('');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
@@ -207,6 +233,38 @@ function CodeMirrorWhereClause(): JSX.Element {
 		}
 
 		return value;
+	};
+
+	const analyzeContext = (view: EditorView, pos: number): void => {
+		const word = view.state.wordAt(pos);
+		const token = word ? view.state.sliceDoc(word.from, word.to) : '';
+
+		// Get the query context at the cursor position
+		const queryContext = getQueryContextAtCursor(view.state.doc.toString(), pos);
+
+		let contextType = 'Unknown';
+		if (queryContext.isInKey) {
+			contextType = 'Key';
+		} else if (queryContext.isInOperator) {
+			contextType = 'Operator';
+		} else if (queryContext.isInValue) {
+			contextType = 'Value';
+		} else if (queryContext.isInFunction) {
+			contextType = 'Function';
+		} else if (queryContext.isInConjunction) {
+			contextType = 'Conjunction';
+		} else if (queryContext.isInParenthesis) {
+			contextType = 'Parenthesis';
+		}
+
+		console.log(
+			'Cursor is at',
+			pos,
+			'Token under cursor:',
+			token,
+			'Context:',
+			contextType,
+		);
 	};
 
 	// Use callback to prevent dependency changes on each render
@@ -376,35 +434,6 @@ function CodeMirrorWhereClause(): JSX.Element {
 		setQuery(newQuery);
 		handleQueryChange(newQuery);
 	};
-
-	// const renderContextBadge = (): JSX.Element | null => {
-	// 	if (!queryContext) return null;
-
-	// 	let color = 'black';
-	// 	let text = 'Unknown';
-
-	// 	if (queryContext.isInKey) {
-	// 		color = 'blue';
-	// 		text = 'Key';
-	// 	} else if (queryContext.isInOperator) {
-	// 		color = 'purple';
-	// 		text = 'Operator';
-	// 	} else if (queryContext.isInValue) {
-	// 		color = 'green';
-	// 		text = 'Value';
-	// 	} else if (queryContext.isInFunction) {
-	// 		color = 'orange';
-	// 		text = 'Function';
-	// 	} else if (queryContext.isInConjunction) {
-	// 		color = 'magenta';
-	// 		text = 'Conjunction';
-	// 	} else if (queryContext.isInParenthesis) {
-	// 		color = 'grey';
-	// 		text = 'Parenthesis';
-	// 	}
-
-	// 	return <Badge color={color} text={text} />;
-	// };
 
 	function myCompletions(context: CompletionContext): CompletionResult | null {
 		const word = context.matchBefore(/[.\w]*/);
@@ -627,6 +656,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 					javascript({ jsx: false, typescript: false }),
 					EditorView.lineWrapping,
 					stopEventsExtension,
+					contextAwarePlugin(analyzeContext),
 					// customTheme,
 				]}
 				basicSetup={{
