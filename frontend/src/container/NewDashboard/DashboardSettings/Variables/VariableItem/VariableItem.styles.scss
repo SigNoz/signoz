@@ -201,6 +201,16 @@
 		.default-value-section {
 			display: grid;
 			grid-template-columns: max-content 1fr;
+
+			.default-value-description {
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 11px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 18px;
+				letter-spacing: -0.06px;
+			}
 		}
 
 		.variable-textbox-section {

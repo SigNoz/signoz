@@ -64,7 +64,7 @@ function VariableItem({
 		variableData.description || '',
 	);
 	const [queryType, setQueryType] = useState<TVariableQueryType>(
-		variableData.type || 'QUERY',
+		variableData.type || 'DYNAMIC',
 	);
 	const [variableQueryValue, setVariableQueryValue] = useState<string>(
 		variableData.queryValue || '',
@@ -545,6 +545,11 @@ function VariableItem({
 							<VariableItemRow className="default-value-section">
 								<LabelContainer>
 									<Typography className="typography-variables">Default Value</Typography>
+									<Typography className="default-value-description">
+										{queryType === 'QUERY'
+											? 'Click Test Run Query to see the values or add custom value'
+											: 'Select a value from the preview values or add custom value'}
+									</Typography>
 								</LabelContainer>
 								<CustomSelect
 									placeholder="Select a default value"
