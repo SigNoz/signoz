@@ -144,7 +144,7 @@ func getZerosForEpochNano(epoch int64) int64 {
 	return int64(math.Pow(10, float64(19-count)))
 }
 
-func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
+func BuildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 	var conditions []string
 
 	if fs != nil && len(fs.Items) != 0 {
@@ -228,14 +228,14 @@ func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey) (string, error) {
 			Operator: "AND",
 			Items:    filterItems,
 		}
-		return buildTracesFilterQuery(&filterSet)
+		return BuildTracesFilterQuery(&filterSet)
 	}
 	return "", nil
 }
 
 func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, panelType v3.PanelType, options v3.QBOptions) (string, error) {
 
-	filterSubQuery, err := buildTracesFilterQuery(mq.Filters)
+	filterSubQuery, err := BuildTracesFilterQuery(mq.Filters)
 	if err != nil {
 		return "", err
 	}
