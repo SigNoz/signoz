@@ -17,8 +17,8 @@ import {
 import { javascript } from '@codemirror/lang-javascript';
 import { ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { copilot } from '@uiw/codemirror-theme-copilot';
-import CodeMirror, { EditorView } from '@uiw/react-codemirror';
-import { Card, Collapse, Space, Typography } from 'antd';
+import CodeMirror, { EditorView, Extension } from '@uiw/react-codemirror';
+import { Card, Collapse, Space, Tag, Typography } from 'antd';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -28,11 +28,8 @@ import {
 	IValidationResult,
 } from 'types/antlrQueryTypes';
 import { QueryKeySuggestionsProps } from 'types/api/querySuggestions/types';
-import {
-	getQueryContextAtCursor,
-	queryOperatorSuggestions,
-	validateQuery,
-} from 'utils/antlrQueryUtils';
+import { queryOperatorSuggestions, validateQuery } from 'utils/antlrQueryUtils';
+import { getQueryContextAtCursor } from 'utils/queryContextUtils';
 
 const { Text } = Typography;
 const { Panel } = Collapse;
@@ -153,6 +150,18 @@ const contextAwarePlugin = (
 		},
 	);
 
+const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
+	(view, from, to, text) => {
+		const currentLine = view.state.doc.lineAt(from);
+		const before = currentLine.text.slice(0, from - currentLine.from);
+		const after = currentLine.text.slice(to - currentLine.from);
+
+		const newText = before + text + after;
+
+		return /\s{2,}/.test(newText);
+	},
+);
+
 function CodeMirrorWhereClause(): JSX.Element {
 	const [query, setQuery] = useState<string>('');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
@@ -178,10 +187,22 @@ function CodeMirrorWhereClause(): JSX.Element {
 	// Reference to the editor view for programmatic autocompletion
 	const editorRef = useRef<EditorView | null>(null);
 	const lastKeyRef = useRef<string>('');
+	const isMountedRef = useRef<boolean>(true);
 
 	const { data: queryKeySuggestions } = useGetQueryKeySuggestions({
 		signal: 'traces',
 	});
+
+	// Add a state for tracking editing mode
+	const [editingMode, setEditingMode] = useState<
+		| 'key'
+		| 'operator'
+		| 'value'
+		| 'conjunction'
+		| 'function'
+		| 'parenthesis'
+		| null
+	>(null);
 
 	// Helper function to wrap string values in quotes if they aren't already quoted
 	const wrapStringValueInQuotes = (value: string): string => {
@@ -235,47 +256,98 @@ function CodeMirrorWhereClause(): JSX.Element {
 		return value;
 	};
 
-	const analyzeContext = (view: EditorView, pos: number): void => {
-		const word = view.state.wordAt(pos);
-		const token = word ? view.state.sliceDoc(word.from, word.to) : '';
+	const analyzeContext = useCallback((view: EditorView, pos: number): void => {
+		// Skip if component unmounted
+		if (!isMountedRef.current) return;
 
-		// Get the query context at the cursor position
-		const queryContext = getQueryContextAtCursor(view.state.doc.toString(), pos);
+		const doc = view.state.doc.toString();
 
-		let contextType = 'Unknown';
-		if (queryContext.isInKey) {
-			contextType = 'Key';
-		} else if (queryContext.isInOperator) {
-			contextType = 'Operator';
-		} else if (queryContext.isInValue) {
-			contextType = 'Value';
-		} else if (queryContext.isInFunction) {
-			contextType = 'Function';
-		} else if (queryContext.isInConjunction) {
-			contextType = 'Conjunction';
-		} else if (queryContext.isInParenthesis) {
-			contextType = 'Parenthesis';
-		}
+		// Check for spaces around the cursor position for debugging
+		const isCursorAtSpace = pos < doc.length && doc[pos] === ' ';
+		const isCursorAfterSpace = pos > 0 && doc[pos - 1] === ' ';
+		const isCursorAfterToken =
+			pos > 0 && doc[pos - 1] !== ' ' && doc[pos - 1] !== undefined;
+		const isCursorBeforeToken =
+			pos < doc.length && doc[pos] !== ' ' && doc[pos] !== undefined;
 
-		console.log(
-			'Cursor is at',
-			pos,
-			'Token under cursor:',
-			token,
-			'Context:',
-			contextType,
-		);
-	};
+		// Check if cursor is at transition point (right after a token at the beginning of a space)
+		const isTransitionPoint = isCursorAtSpace && isCursorAfterToken;
+
+		// Get a slice of the text around cursor for context
+		const sliceStart = Math.max(0, pos - 10);
+		const sliceEnd = Math.min(doc.length, pos + 10);
+		const textSlice = doc.substring(sliceStart, sliceEnd);
+		const cursorPosInSlice = pos - sliceStart;
+
+		// Create a visual cursor indicator
+		const beforeCursor = textSlice.substring(0, cursorPosInSlice);
+		const afterCursor = textSlice.substring(cursorPosInSlice);
+		const visualCursor = `${beforeCursor}|${afterCursor}`;
+
+		const context = getQueryContextAtCursor(doc, pos);
+
+		// Enhanced debug logging with space and pair detection
+		console.log('Context at cursor:', {
+			position: pos,
+			visualCursor,
+			cursorAtSpace: isCursorAtSpace,
+			cursorAfterSpace: isCursorAfterSpace,
+			cursorAfterToken: isCursorAfterToken,
+			cursorBeforeToken: isCursorBeforeToken,
+			isTransitionPoint,
+			contextType: context.isInKey
+				? 'Key'
+				: context.isInOperator
+				? 'Operator'
+				: context.isInValue
+				? 'Value'
+				: context.isInConjunction
+				? 'Conjunction'
+				: context.isInFunction
+				? 'Function'
+				: context.isInParenthesis
+				? 'Parenthesis'
+				: 'Unknown',
+			keyToken: context.keyToken,
+			operatorToken: context.operatorToken,
+			valueToken: context.valueToken,
+			queryPairs: context.queryPairs?.length || 0,
+			currentPair: context.currentPair
+				? {
+						key: context.currentPair.key,
+						operator: context.currentPair.operator,
+						value: context.currentPair.value,
+						isComplete: context.currentPair.isComplete,
+				  }
+				: null,
+		});
+	}, []);
+
+	// Add cleanup effect to prevent component updates after unmount
+	useEffect(
+		(): (() => void) => (): void => {
+			// Mark component as unmounted to prevent state updates
+			isMountedRef.current = false;
+		},
+		[],
+	);
 
 	// Use callback to prevent dependency changes on each render
 	const fetchValueSuggestions = useCallback(
 		async (key: string): Promise<void> => {
-			if (!key || (key === activeKey && !isLoadingSuggestions)) return;
+			if (
+				!key ||
+				(key === activeKey && !isLoadingSuggestions) ||
+				!isMountedRef.current
+			)
+				return;
 
 			// Set loading state and store the key we're fetching for
 			setIsLoadingSuggestions(true);
 			lastKeyRef.current = key;
 			setActiveKey(key);
+
+			console.log('fetching suggestions for key:', key);
 
 			// Replace current suggestions with loading indicator
 			setValueSuggestions([
@@ -293,9 +365,9 @@ function CodeMirrorWhereClause(): JSX.Element {
 					signal: 'traces',
 				});
 
-				// Verify we're still on the same key (user hasn't moved on)
-				if (lastKeyRef.current !== key) {
-					return; // Skip updating if key has changed
+				// Skip updates if component unmounted or key changed
+				if (!isMountedRef.current || lastKeyRef.current !== key) {
+					return; // Skip updating if key has changed or component unmounted
 				}
 
 				// Process the response data
@@ -337,7 +409,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 				);
 
 				// Only if we're still on the same key
-				if (lastKeyRef.current === key) {
+				if (lastKeyRef.current === key && isMountedRef.current) {
 					if (allOptions.length > 0) {
 						setValueSuggestions(allOptions);
 					} else {
@@ -354,14 +426,16 @@ function CodeMirrorWhereClause(): JSX.Element {
 					// Force reopen the completion if editor is available
 					if (editorRef.current) {
 						setTimeout(() => {
-							startCompletion(editorRef.current!);
+							if (isMountedRef.current && editorRef.current) {
+								startCompletion(editorRef.current);
+							}
 						}, 10);
 					}
 					setIsLoadingSuggestions(false);
 				}
 			} catch (error) {
 				console.error('Error fetching suggestions:', error);
-				if (lastKeyRef.current === key) {
+				if (lastKeyRef.current === key && isMountedRef.current) {
 					setValueSuggestions([
 						{
 							label: 'Error loading suggestions',
@@ -377,29 +451,101 @@ function CodeMirrorWhereClause(): JSX.Element {
 		[activeKey, isLoadingSuggestions],
 	);
 
-	const handleUpdate = (viewUpdate: { view: EditorView }): void => {
-		// Store editor reference
-		if (!editorRef.current) {
-			editorRef.current = viewUpdate.view;
-		}
+	// Enhanced update handler to track context changes
+	const handleUpdate = useCallback(
+		(viewUpdate: { view: EditorView }): void => {
+			// Skip updates if component is unmounted
+			if (!isMountedRef.current) return;
 
-		const selection = viewUpdate.view.state.selection.main;
-		const pos = selection.head;
+			// Store editor reference
+			if (!editorRef.current) {
+				editorRef.current = viewUpdate.view;
+			}
 
-		const lineInfo = viewUpdate.view.state.doc.lineAt(pos);
-		const newPos = {
-			line: lineInfo.number,
-			ch: pos - lineInfo.from,
-		};
+			const selection = viewUpdate.view.state.selection.main;
+			const pos = selection.head;
+			const doc = viewUpdate.view.state.doc.toString();
 
-		const lastPos = lastPosRef.current;
+			const lineInfo = viewUpdate.view.state.doc.lineAt(pos);
+			const newPos = {
+				line: lineInfo.number,
+				ch: pos - lineInfo.from,
+			};
 
-		// Only update if cursor position actually changed
-		if (newPos.line !== lastPos.line || newPos.ch !== lastPos.ch) {
-			setCursorPos(newPos);
-			lastPosRef.current = newPos;
-		}
-	};
+			const lastPos = lastPosRef.current;
+
+			// Only update if cursor position actually changed
+			if (newPos.line !== lastPos.line || newPos.ch !== lastPos.ch) {
+				setCursorPos(newPos);
+				lastPosRef.current = newPos;
+
+				// Detect if cursor is at a space or after a token
+				const isAtSpace = pos < doc.length && doc[pos] === ' ';
+				const isAfterToken =
+					pos > 0 && doc[pos - 1] !== ' ' && doc[pos - 1] !== undefined;
+				const isTransitionPoint = isAtSpace && isAfterToken;
+
+				// Get context immediately when cursor position changes
+				if (doc) {
+					const context = getQueryContextAtCursor(doc, pos);
+
+					// Only update context and mode if they've actually changed
+					// This prevents unnecessary re-renders
+					const previousContextType = queryContext?.isInKey
+						? 'key'
+						: queryContext?.isInOperator
+						? 'operator'
+						: queryContext?.isInValue
+						? 'value'
+						: queryContext?.isInConjunction
+						? 'conjunction'
+						: queryContext?.isInFunction
+						? 'function'
+						: queryContext?.isInParenthesis
+						? 'parenthesis'
+						: null;
+
+					const newContextType = context.isInKey
+						? 'key'
+						: context.isInOperator
+						? 'operator'
+						: context.isInValue
+						? 'value'
+						: context.isInConjunction
+						? 'conjunction'
+						: context.isInFunction
+						? 'function'
+						: context.isInParenthesis
+						? 'parenthesis'
+						: null;
+
+					// Log context changes for debugging
+					if (previousContextType !== newContextType) {
+						console.log(
+							`Context changed: ${previousContextType || 'none'} -> ${
+								newContextType || 'none'
+							}`,
+							{
+								position: pos,
+								isAtSpace,
+								isAfterToken,
+								isTransitionPoint,
+								keyToken: context.keyToken,
+								operatorToken: context.operatorToken,
+								valueToken: context.valueToken,
+							},
+						);
+					}
+
+					setQueryContext(context);
+
+					// Update editing mode based on context
+					setEditingMode(newContextType);
+				}
+			}
+		},
+		[queryContext],
+	);
 
 	const handleQueryChange = useCallback(async (newQuery: string) => {
 		setQuery(newQuery);
@@ -416,13 +562,6 @@ function CodeMirrorWhereClause(): JSX.Element {
 		}
 	}, []);
 
-	useEffect(() => {
-		if (query) {
-			const context = getQueryContextAtCursor(query, cursorPos.ch);
-			setQueryContext(context as IQueryContext);
-		}
-	}, [query, cursorPos]);
-
 	const handleChange = (value: string): void => {
 		setQuery(value);
 		handleQueryChange(value);
@@ -435,12 +574,37 @@ function CodeMirrorWhereClause(): JSX.Element {
 		handleQueryChange(newQuery);
 	};
 
+	// Helper function to render a badge for the current context mode
+	const renderContextBadge = (): JSX.Element => {
+		if (!editingMode) return <Tag>Unknown</Tag>;
+
+		switch (editingMode) {
+			case 'key':
+				return <Tag color="blue">Key</Tag>;
+			case 'operator':
+				return <Tag color="purple">Operator</Tag>;
+			case 'value':
+				return <Tag color="green">Value</Tag>;
+			case 'conjunction':
+				return <Tag color="orange">Conjunction</Tag>;
+			case 'function':
+				return <Tag color="cyan">Function</Tag>;
+			case 'parenthesis':
+				return <Tag color="magenta">Parenthesis</Tag>;
+			default:
+				return <Tag>Unknown</Tag>;
+		}
+	};
+
+	// Enhanced myCompletions function to better use context including query pairs
 	function myCompletions(context: CompletionContext): CompletionResult | null {
 		const word = context.matchBefore(/[.\w]*/);
 		if (word?.from === word?.to && !context.explicit) return null;
 
 		// Get the query context at the cursor position
 		const queryContext = getQueryContextAtCursor(query, cursorPos.ch);
+
+		console.log('queryContext', queryContext);
 
 		// Define autocomplete options based on the context
 		let options: {
@@ -449,6 +613,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 			info?: string;
 			apply?: string;
 			detail?: string;
+			boost?: number;
 		}[] = [];
 
 		if (queryContext.isInKey) {
@@ -458,6 +623,28 @@ function CodeMirrorWhereClause(): JSX.Element {
 				option.label.toLowerCase().includes(searchText),
 			);
 
+			// If we have previous pairs, we can prioritize keys that haven't been used yet
+			if (queryContext.queryPairs && queryContext.queryPairs.length > 0) {
+				const usedKeys = queryContext.queryPairs.map((pair) => pair.key);
+
+				// Add boost to unused keys to prioritize them
+				options = options.map((option) => ({
+					...option,
+					boost: usedKeys.includes(option.label) ? -10 : 10,
+					info: usedKeys.includes(option.label)
+						? `${option.info || ''} (already used in query)`
+						: option.info,
+				}));
+			}
+
+			// Add boost to exact matches
+			options = options.map((option) => ({
+				...option,
+				boost:
+					(option.boost || 0) +
+					(option.label.toLowerCase() === searchText ? 100 : 0),
+			}));
+
 			return {
 				from: word?.from ?? 0,
 				to: word?.to ?? cursorPos.ch,
@@ -466,8 +653,51 @@ function CodeMirrorWhereClause(): JSX.Element {
 		}
 
 		if (queryContext.isInOperator) {
-			options = [];
 			options = queryOperatorSuggestions;
+
+			// Get key information from context or current pair
+			const keyName = queryContext.keyToken || queryContext.currentPair?.key;
+
+			// If we have a key context, add that info to the operator suggestions
+			if (keyName) {
+				// Find the key details from suggestions
+				const keyDetails = (keySuggestions || []).find((k) => k.label === keyName);
+				const keyType = keyDetails?.type || '';
+
+				// Filter operators based on key type
+				if (keyType) {
+					if (keyType === 'number') {
+						// Prioritize numeric operators
+						options = options.map((op) => ({
+							...op,
+							boost: ['>', '<', '>=', '<=', '=', '!=', 'BETWEEN'].includes(op.label)
+								? 100
+								: 0,
+						}));
+					} else if (keyType === 'string' || keyType === 'keyword') {
+						// Prioritize string operators
+						options = options.map((op) => ({
+							...op,
+							boost: ['=', '!=', 'LIKE', 'ILIKE', 'CONTAINS', 'IN'].includes(op.label)
+								? 100
+								: 0,
+						}));
+					} else if (keyType === 'boolean') {
+						// Prioritize boolean operators
+						options = options.map((op) => ({
+							...op,
+							boost: ['=', '!='].includes(op.label) ? 100 : 0,
+						}));
+					}
+				}
+
+				// Add key info to all operators
+				options = options.map((op) => ({
+					...op,
+					info: `${op.info || ''} (for ${keyName})`,
+				}));
+			}
+
 			return {
 				from: word?.from ?? 0,
 				to: word?.to ?? cursorPos.ch,
@@ -476,15 +706,20 @@ function CodeMirrorWhereClause(): JSX.Element {
 		}
 
 		if (queryContext.isInValue) {
-			// Fetch values based on the key - use the keyToken if available
-			const { keyToken, currentToken, operatorToken } = queryContext;
-			const key = keyToken || currentToken;
+			// Fetch values based on the key - use available context
+			const keyName = queryContext.keyToken || queryContext.currentPair?.key || '';
+			const operatorName =
+				queryContext.operatorToken || queryContext.currentPair?.operator || '';
 
-			// Trigger fetch only if key is different from activeKey or if we're still loading
-			if (key && (key !== activeKey || isLoadingSuggestions)) {
+			if (!keyName) {
+				return null;
+			}
+
+			// Trigger fetch only if needed
+			if (keyName && (keyName !== activeKey || isLoadingSuggestions)) {
 				// Don't trigger a new fetch if we're already loading for this key
-				if (!(isLoadingSuggestions && lastKeyRef.current === key)) {
-					fetchValueSuggestions(key);
+				if (!(isLoadingSuggestions && lastKeyRef.current === keyName)) {
+					fetchValueSuggestions(keyName);
 				}
 			}
 
@@ -503,22 +738,42 @@ function CodeMirrorWhereClause(): JSX.Element {
 					// String values get quoted
 					processedOption.apply = formatValueForOperator(
 						option.label,
-						operatorToken,
+						operatorName,
 						option.type,
 					);
+
+					// Add context info to the suggestion
+					if (keyName && operatorName) {
+						processedOption.info = `Value for ${keyName} ${operatorName}`;
+					}
 				} else if (option.type === 'number') {
 					// Numbers don't get quoted but may need brackets for IN operators
-					if (isListOperator(operatorToken)) {
+					if (isListOperator(operatorName)) {
 						processedOption.apply = `[${option.label}]`;
 					} else {
 						processedOption.apply = option.label;
 					}
+
+					// Add context info to the suggestion
+					if (keyName && operatorName) {
+						processedOption.info = `Numeric value for ${keyName} ${operatorName}`;
+					}
 				} else if (option.type === 'boolean') {
 					// Boolean values don't get quoted
 					processedOption.apply = option.label;
+
+					// Add context info
+					if (keyName && operatorName) {
+						processedOption.info = `Boolean value for ${keyName} ${operatorName}`;
+					}
 				} else if (option.type === 'array') {
 					// Arrays are already formatted as arrays
 					processedOption.apply = option.label;
+
+					// Add context info
+					if (keyName && operatorName) {
+						processedOption.info = `Array value for ${keyName} ${operatorName}`;
+					}
 				}
 
 				return processedOption;
@@ -594,9 +849,15 @@ function CodeMirrorWhereClause(): JSX.Element {
 			}
 		}
 
+		// If no specific context is detected, provide general suggestions
 		return {
 			from: word?.from ?? 0,
-			options: [],
+			options: [
+				...(keySuggestions || []),
+				{ label: 'AND', type: 'conjunction', boost: -10 },
+				{ label: 'OR', type: 'conjunction', boost: -10 },
+				{ label: '(', type: 'parenthesis', info: 'Open group', boost: -20 },
+			],
 		};
 	}
 
@@ -620,24 +881,60 @@ function CodeMirrorWhereClause(): JSX.Element {
 
 	// Update state when query context changes to trigger suggestion refresh
 	useEffect(() => {
-		if (queryContext?.isInValue) {
-			const { keyToken, currentToken } = queryContext;
-			const key = keyToken || currentToken;
+		// Skip if we don't have a value context or it hasn't changed
+		if (!queryContext?.isInValue) return;
 
-			if (key && (key !== activeKey || isLoadingSuggestions)) {
-				// Don't trigger a new fetch if we're already loading for this key
-				if (!(isLoadingSuggestions && lastKeyRef.current === key)) {
-					fetchValueSuggestions(key);
-				}
-			}
+		const { keyToken, currentToken } = queryContext;
+		const key = keyToken || currentToken;
 
-			// We're no longer automatically adding quotes here - they will be added
-			// only when a specific value is selected from the dropdown
+		// Only fetch if needed and if we have a valid key
+		if (key && key !== activeKey && !isLoadingSuggestions) {
+			fetchValueSuggestions(key);
 		}
-	}, [queryContext, activeKey, fetchValueSuggestions, isLoadingSuggestions]);
+		// Use only the specific properties of queryContext we need to avoid unnecessary renders
+	}, [queryContext, activeKey, isLoadingSuggestions, fetchValueSuggestions]);
 
 	return (
 		<div className="code-mirror-where-clause">
+			{/* Add a context indicator banner */}
+			{editingMode && (
+				<div className={`context-indicator context-indicator-${editingMode}`}>
+					Currently editing: {renderContextBadge()}
+					{queryContext?.keyToken && (
+						<span className="triplet-info">
+							Key: <Tag>{queryContext.keyToken}</Tag>
+						</span>
+					)}
+					{queryContext?.operatorToken && (
+						<span className="triplet-info">
+							Operator: <Tag>{queryContext.operatorToken}</Tag>
+						</span>
+					)}
+					{queryContext?.valueToken && (
+						<span className="triplet-info">
+							Value: <Tag>{queryContext.valueToken}</Tag>
+						</span>
+					)}
+					{queryContext?.currentPair && (
+						<span className="triplet-info query-pair-info">
+							Current pair: <Tag color="blue">{queryContext.currentPair.key}</Tag>
+							<Tag color="purple">{queryContext.currentPair.operator}</Tag>
+							{queryContext.currentPair.value && (
+								<Tag color="green">{queryContext.currentPair.value}</Tag>
+							)}
+							<Tag color={queryContext.currentPair.isComplete ? 'success' : 'warning'}>
+								{queryContext.currentPair.isComplete ? 'Complete' : 'Incomplete'}
+							</Tag>
+						</span>
+					)}
+					{queryContext?.queryPairs && queryContext.queryPairs.length > 0 && (
+						<span className="triplet-info">
+							Total pairs: <Tag color="blue">{queryContext.queryPairs.length}</Tag>
+						</span>
+					)}
+				</div>
+			)}
+
 			<CodeMirror
 				value={query}
 				theme={copilot}
@@ -657,6 +954,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 					EditorView.lineWrapping,
 					stopEventsExtension,
 					contextAwarePlugin(analyzeContext),
+					disallowMultipleSpaces,
 					// customTheme,
 				]}
 				basicSetup={{

@@ -12,6 +12,21 @@ export interface IToken {
 	channel?: number;
 }
 
+export interface IQueryPair {
+	key: string;
+	operator: string;
+	value?: string;
+	position: {
+		keyStart: number;
+		keyEnd: number;
+		operatorStart: number;
+		operatorEnd: number;
+		valueStart?: number;
+		valueEnd?: number;
+	};
+	isComplete: boolean; // true if the pair has all three components
+}
+
 export interface IQueryContext {
 	tokenType: number;
 	text: string;
@@ -27,6 +42,8 @@ export interface IQueryContext {
 	keyToken?: string;
 	operatorToken?: string;
 	valueToken?: string;
+	queryPairs?: IQueryPair[];
+	currentPair?: IQueryPair | null;
 }
 
 export interface IDetailedError {
