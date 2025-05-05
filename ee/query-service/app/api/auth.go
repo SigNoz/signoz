@@ -66,7 +66,12 @@ func (ah *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ah.WriteJSON(w, r, jwt)
+	resp := types.LoginResponse{
+		GettableUserJwt: jwt,
+		User:            user,
+	}
+
+	ah.WriteJSON(w, r, resp)
 }
 
 func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {

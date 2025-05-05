@@ -509,5 +509,10 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, jwt)
+	resp := types.LoginResponse{
+		GettableUserJwt: jwt,
+		User:            user,
+	}
+
+	render.Success(w, http.StatusOK, resp)
 }
