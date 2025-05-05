@@ -102,9 +102,9 @@ function DynamicVariableSelection({
 					maxTime,
 				),
 			onSuccess: (data) => {
-				setOptionsData(data.payload?.values?.stringValues || []);
+				setOptionsData(data.payload?.normalizedValues || []);
 				setIsComplete(data.payload?.complete || false);
-				setFilteredOptionsData(data.payload?.values?.stringValues || []);
+				setFilteredOptionsData(data.payload?.normalizedValues || []);
 			},
 			onError: (error: any) => {
 				if (error) {
