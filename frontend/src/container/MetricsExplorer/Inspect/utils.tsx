@@ -7,6 +7,7 @@ import classNames from 'classnames';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
+import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { HardHat } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -96,25 +97,14 @@ export function MetricNameSearch({
 }
 
 export function MetricFilters({
-	metricName,
-	metricType,
 	dispatchMetricInspectionOptions,
+	searchQuery,
 }: MetricFiltersProps): JSX.Element {
-	const query = useMemo(() => {
-		const initialQuery =
-			initialQueriesMap[DataSource.METRICS].builder.queryData[0];
-		return {
-			...initialQuery,
-			aggregateAttribute: {
-				...initialQuery.aggregateAttribute,
-				key: metricName ?? '',
-				id: metricName ?? '',
-				isColumn: true,
-				isJSON: false,
-				type: metricType ?? '',
-			},
-		};
-	}, [metricName, metricType]);
+	const { handleChangeQueryData } = useQueryOperations({
+		index: 0,
+		query: searchQuery,
+		entityVersion: '',
+	});
 
 	return (
 		<div
@@ -123,8 +113,9 @@ export function MetricFilters({
 		>
 			<Typography.Text>Where</Typography.Text>
 			<QueryBuilderSearch
-				query={query}
+				query={searchQuery}
 				onChange={(value): void => {
+					handleChangeQueryData('filters', value);
 					dispatchMetricInspectionOptions({
 						type: 'SET_FILTERS',
 						payload: value,
@@ -132,6 +123,7 @@ export function MetricFilters({
 				}}
 				suffixIcon={<HardHat size={16} />}
 				isMetricsExplorer
+				disableNavigationShortcuts
 			/>
 		</div>
 	);

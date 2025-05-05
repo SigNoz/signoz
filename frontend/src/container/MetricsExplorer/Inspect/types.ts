@@ -1,6 +1,9 @@
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { AlignedData } from 'uplot';
 
 export type InspectProps = {
@@ -52,6 +55,7 @@ export interface QueryBuilderProps {
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
 	inspectMetricsTimeSeries: InspectMetricsSeries[];
+	searchQuery: IBuilderQuery;
 }
 
 export interface MetricNameSearchProps {
@@ -60,11 +64,8 @@ export interface MetricNameSearchProps {
 }
 
 export interface MetricFiltersProps {
-	metricName: string | null;
-	metricType: MetricType | undefined;
-	metricInspectionOptions: MetricInspectionOptions;
+	searchQuery: IBuilderQuery;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
-	spaceAggregationLabels: string[];
 }
 
 export interface MetricTimeAggregationProps {

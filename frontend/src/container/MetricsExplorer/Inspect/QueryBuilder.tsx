@@ -15,9 +15,9 @@ function QueryBuilder({
 	spaceAggregationLabels,
 	metricInspectionOptions,
 	dispatchMetricInspectionOptions,
-	metricType,
 	inspectionStep,
 	inspectMetricsTimeSeries,
+	searchQuery,
 }: QueryBuilderProps): JSX.Element {
 	return (
 		<div className="inspect-metrics-query-builder">
@@ -34,11 +34,8 @@ function QueryBuilder({
 			<Card className="inspect-metrics-query-builder-content">
 				<MetricNameSearch metricName={metricName} setMetricName={setMetricName} />
 				<MetricFilters
-					metricName={metricName}
-					metricType={metricType}
-					metricInspectionOptions={metricInspectionOptions}
 					dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
-					spaceAggregationLabels={spaceAggregationLabels}
+					searchQuery={searchQuery}
 				/>
 				<MetricTimeAggregation
 					inspectionStep={inspectionStep}

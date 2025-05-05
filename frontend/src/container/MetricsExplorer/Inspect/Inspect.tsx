@@ -4,6 +4,8 @@ import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Drawer, Empty, Skeleton, Typography } from 'antd';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -36,6 +38,42 @@ function Inspect({
 	const { data: metricDetailsData } = useGetMetricDetails(metricName ?? '', {
 		enabled: !!metricName,
 	});
+
+	const { currentQuery } = useQueryBuilder();
+	const { handleChangeQueryData } = useQueryOperations({
+		index: 0,
+		query: currentQuery.builder.queryData[0],
+		entityVersion: '',
+	});
+
+	const updatedCurrentQuery = useMemo(
+		() => ({
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: [
+					{
+						...currentQuery.builder.queryData[0],
+						aggregateOperator: 'noop',
+						aggregateAttribute: {
+							...currentQuery.builder.queryData[0].aggregateAttribute,
+						},
+					},
+				],
+			},
+		}),
+		[currentQuery],
+	);
+
+	const searchQuery = updatedCurrentQuery?.builder?.queryData[0] || null;
+
+	useEffect(() => {
+		handleChangeQueryData('filters', {
+			op: 'AND',
+			items: [],
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const {
 		inspectMetricsTimeSeries,
@@ -150,6 +188,7 @@ function Inspect({
 						dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
 						inspectionStep={inspectionStep}
 						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
+						searchQuery={searchQuery}
 					/>
 				</div>
 				<div className="inspect-metrics-content-second-col">
@@ -185,9 +224,10 @@ function Inspect({
 		inspectionStep,
 		showExpandedView,
 		popoverOptions,
-		spaceAggregationLabels,
 		metricInspectionOptions,
+		spaceAggregationLabels,
 		dispatchMetricInspectionOptions,
+		searchQuery,
 		expandedViewOptions,
 		timeAggregatedSeriesMap,
 	]);
