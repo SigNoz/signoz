@@ -210,6 +210,10 @@ function AllEndPoints({
 			setParams({
 				selectedEndPointName: props[SPAN_ATTRIBUTES.URL_PATH] as string,
 				selectedView: VIEWS.ENDPOINT_STATS,
+				endPointDetailsLocalFilters: {
+					items: initialItems,
+					op: 'AND',
+				},
 			});
 		},
 		[
