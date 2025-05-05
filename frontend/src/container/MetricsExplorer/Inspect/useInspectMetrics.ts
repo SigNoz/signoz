@@ -14,7 +14,6 @@ import {
 	UseInspectMetricsReturnData,
 } from './types';
 import {
-	applyFilters,
 	applySpaceAggregation,
 	applyTimeAggregation,
 	getAllTimestampsOfMetrics,
@@ -69,6 +68,12 @@ export function useInspectMetrics(
 		};
 	}, []);
 
+	// Inspect metrics data selection
+	const [metricInspectionOptions, dispatchMetricInspectionOptions] = useReducer(
+		metricInspectionReducer,
+		INITIAL_INSPECT_METRICS_OPTIONS,
+	);
+
 	const {
 		data: inspectMetricsData,
 		isLoading: isInspectMetricsLoading,
@@ -79,6 +84,7 @@ export function useInspectMetrics(
 			metricName: metricName ?? '',
 			start,
 			end,
+			filters: metricInspectionOptions.filters,
 		},
 		{
 			enabled: !!metricName,
@@ -108,12 +114,6 @@ export function useInspectMetrics(
 	const inspectMetricsStatusCode = useMemo(
 		() => inspectMetricsData?.statusCode || 200,
 		[inspectMetricsData],
-	);
-
-	// Inspect metrics data selection
-	const [metricInspectionOptions, dispatchMetricInspectionOptions] = useReducer(
-		metricInspectionReducer,
-		INITIAL_INSPECT_METRICS_OPTIONS,
 	);
 
 	// Evaluate inspection step
@@ -146,14 +146,6 @@ export function useInspectMetrics(
 
 	const formattedInspectMetricsTimeSeries = useMemo(() => {
 		let timeSeries: InspectMetricsSeries[] = [...inspectMetricsTimeSeries];
-
-		// Apply filters
-		if (metricInspectionOptions.filters.items.length > 0) {
-			timeSeries = applyFilters(
-				inspectMetricsTimeSeries,
-				metricInspectionOptions.filters,
-			);
-		}
 
 		// Apply time aggregation once required options are set
 		if (

@@ -2,11 +2,13 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface InspectMetricsRequest {
 	metricName: string;
 	start: number;
 	end: number;
+	filters: TagFilter;
 }
 
 export interface InspectMetricsResponse {

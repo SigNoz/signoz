@@ -6,12 +6,10 @@ import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import classNames from 'classnames';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
-import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
+import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
+import { HardHat } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -101,7 +99,6 @@ export function MetricFilters({
 	metricName,
 	metricType,
 	dispatchMetricInspectionOptions,
-	spaceAggregationLabels,
 }: MetricFiltersProps): JSX.Element {
 	const query = useMemo(() => {
 		const initialQuery =
@@ -119,35 +116,22 @@ export function MetricFilters({
 		};
 	}, [metricName, metricType]);
 
-	const hardcodedAttributeKeys = useMemo(
-		() =>
-			spaceAggregationLabels.map((label) => ({
-				key: label,
-				id: label,
-				isColumn: true,
-				isJSON: false,
-				type: 'resource',
-				dataType: DataTypes.String,
-			})),
-		[spaceAggregationLabels],
-	);
-
 	return (
 		<div
 			data-testid="metric-filters"
 			className="inspect-metrics-input-group metric-filters"
 		>
 			<Typography.Text>Where</Typography.Text>
-			<QueryBuilderSearchV2
+			<QueryBuilderSearch
+				query={query}
 				onChange={(value): void => {
 					dispatchMetricInspectionOptions({
 						type: 'SET_FILTERS',
 						payload: value,
 					});
 				}}
-				query={query}
-				hardcodedAttributeKeys={hardcodedAttributeKeys}
-				triggerOnChangeOnClose
+				suffixIcon={<HardHat size={16} />}
+				isMetricsExplorer
 			/>
 		</div>
 	);

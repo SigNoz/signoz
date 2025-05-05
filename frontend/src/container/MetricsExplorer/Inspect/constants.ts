@@ -68,7 +68,7 @@ export const INITIAL_INSPECT_METRICS_OPTIONS: MetricInspectionOptions = {
 	spaceAggregationLabels: [],
 	filters: {
 		items: [],
-		op: 'and',
+		op: 'AND',
 	},
 };
 

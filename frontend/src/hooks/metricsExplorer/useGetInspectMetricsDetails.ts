@@ -39,6 +39,7 @@ export const useGetInspectMetricsDetails: UseGetInspectMetricsDetails = (
 			requestData.metricName,
 			requestData.start,
 			requestData.end,
+			requestData.filters,
 		];
 	}, [options?.queryKey, requestData]);
 
