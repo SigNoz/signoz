@@ -9,6 +9,7 @@ export interface ApiMonitoringParams {
 	selectedEndPointName?: string;
 	groupBy?: string[];
 	allEndpointsLocalFilters?: any;
+	endPointDetailsLocalFilters?: any;
 	modalTimeRange?: { startTime: number; endTime: number };
 	selectedInterval?: string;
 	// Add more params as needed
@@ -21,6 +22,7 @@ export const DEFAULT_PARAMS: ApiMonitoringParams = {
 	selectedEndPointName: '',
 	groupBy: [],
 	allEndpointsLocalFilters: undefined,
+	endPointDetailsLocalFilters: undefined,
 	modalTimeRange: undefined,
 	selectedInterval: undefined,
 };

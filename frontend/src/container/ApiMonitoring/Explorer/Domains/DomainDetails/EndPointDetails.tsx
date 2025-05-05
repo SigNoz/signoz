@@ -1,5 +1,6 @@
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
 	extractPortAndEndpoint,
@@ -59,13 +60,16 @@ function EndPointDetails({
 	) => void;
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
+	const [params, setParams] = useApiMonitoringParams();
 
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
 
 	// Local state for filters, combining endpoint filter and search filters
 	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
 		// Initialize filters based on the initial endPointName prop
-		const initialItems = [...initialFilters.items];
+		const initialItems = params.endPointDetailsLocalFilters
+			? [...params.endPointDetailsLocalFilters.items]
+			: [...initialFilters.items];
 		if (endPointName) {
 			initialItems.push({
 				id: '92b8a1c1',
@@ -95,6 +99,7 @@ function EndPointDetails({
 				(item) => item.key?.key !== httpUrlKey.key,
 			);
 			const newItems = [...otherFilters];
+			setParams({ endPointDetailsLocalFilters: { op: 'AND', items: newItems } });
 			if (endPointName) {
 				newItems.push({
 					id: '92b8a1c1',
@@ -105,13 +110,19 @@ function EndPointDetails({
 			}
 			return { op: 'AND', items: newItems };
 		});
-	}, [endPointName]);
+	}, [endPointName, setParams]);
 
 	// Handler for changes from the QueryBuilderSearchV2 component
 	const handleFilterChange = useCallback(
 		(newFilters: IBuilderQuery['filters']): void => {
 			// 1. Update local filters state immediately
 			setFilters(newFilters);
+			// Filter out http.url filter before saving to params
+			const filteredNewFilters = {
+				op: 'AND',
+				items: newFilters.items.filter((item) => item.key?.key !== httpUrlKey.key),
+			};
+			setParams({ endPointDetailsLocalFilters: filteredNewFilters });
 
 			// 2. Derive the endpoint name from the *new* filters state
 			const httpUrlFilter = newFilters.items.find(
@@ -126,7 +137,7 @@ function EndPointDetails({
 				setSelectedEndPointName(derivedEndPointName);
 			}
 		},
-		[endPointName, setSelectedEndPointName], // Dependencies for the callback
+		[endPointName, setSelectedEndPointName, setParams], // Dependencies for the callback
 	);
 
 	const updatedCurrentQuery = useMemo(
