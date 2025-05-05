@@ -184,7 +184,9 @@ export const formatDataForMetricsTable = (
 		),
 		description: (
 			<ValidateRowValueWrapper value={metric.description}>
-				<Tooltip title={metric.description}>{metric.description}</Tooltip>
+				<Tooltip className="description-tooltip" title={metric.description}>
+					{metric.description}
+				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
 		metric_type: <MetricTypeRenderer type={metric.type} />,
