@@ -201,6 +201,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 		| 'conjunction'
 		| 'function'
 		| 'parenthesis'
+		| 'bracketList'
 		| null
 	>(null);
 
@@ -245,11 +246,9 @@ function CodeMirrorWhereClause(): JSX.Element {
 			return `[${value}]`;
 		}
 
-		// For regular string values with regular operators
-		if (
-			(type === 'value' || type === 'keyword') &&
-			!isListOperator(operatorToken)
-		) {
+		// If we're already inside bracket list for IN operator and it's a string value
+		// just wrap in quotes but not brackets (we're already in brackets)
+		if (type === 'value' || type === 'keyword') {
 			return wrapStringValueInQuotes(value);
 		}
 
@@ -269,6 +268,16 @@ function CodeMirrorWhereClause(): JSX.Element {
 			pos > 0 && doc[pos - 1] !== ' ' && doc[pos - 1] !== undefined;
 		const isCursorBeforeToken =
 			pos < doc.length && doc[pos] !== ' ' && doc[pos] !== undefined;
+
+		// Check brackets around cursor
+		const isCursorAtOpenBracket =
+			pos < doc.length && (doc[pos] === '[' || doc[pos] === '(');
+		const isCursorAfterOpenBracket =
+			pos > 0 && (doc[pos - 1] === '[' || doc[pos - 1] === '(');
+		const isCursorAtCloseBracket =
+			pos < doc.length && (doc[pos] === ']' || doc[pos] === ')');
+		const isCursorAfterCloseBracket =
+			pos > 0 && (doc[pos - 1] === ']' || doc[pos - 1] === ')');
 
 		// Check if cursor is at transition point (right after a token at the beginning of a space)
 		const isTransitionPoint = isCursorAtSpace && isCursorAfterToken;
@@ -295,6 +304,13 @@ function CodeMirrorWhereClause(): JSX.Element {
 			cursorAfterToken: isCursorAfterToken,
 			cursorBeforeToken: isCursorBeforeToken,
 			isTransitionPoint,
+			bracketInfo: {
+				cursorAtOpenBracket: isCursorAtOpenBracket,
+				cursorAfterOpenBracket: isCursorAfterOpenBracket,
+				cursorAtCloseBracket: isCursorAtCloseBracket,
+				cursorAfterCloseBracket: isCursorAfterCloseBracket,
+				isInBracketList: context.isInBracketList,
+			},
 			contextType: context.isInKey
 				? 'Key'
 				: context.isInOperator
@@ -307,6 +323,8 @@ function CodeMirrorWhereClause(): JSX.Element {
 				? 'Function'
 				: context.isInParenthesis
 				? 'Parenthesis'
+				: context.isInBracketList
+				? 'BracketList'
 				: 'Unknown',
 			keyToken: context.keyToken,
 			operatorToken: context.operatorToken,
@@ -451,7 +469,7 @@ function CodeMirrorWhereClause(): JSX.Element {
 		[activeKey, isLoadingSuggestions],
 	);
 
-	// Enhanced update handler to track context changes
+	// Enhanced update handler to track context changes, including bracket contexts
 	const handleUpdate = useCallback(
 		(viewUpdate: { view: EditorView }): void => {
 			// Skip updates if component is unmounted
@@ -485,6 +503,16 @@ function CodeMirrorWhereClause(): JSX.Element {
 					pos > 0 && doc[pos - 1] !== ' ' && doc[pos - 1] !== undefined;
 				const isTransitionPoint = isAtSpace && isAfterToken;
 
+				// Detect brackets around cursor
+				const isAtOpenBracket =
+					pos < doc.length && (doc[pos] === '[' || doc[pos] === '(');
+				const isAfterOpenBracket =
+					pos > 0 && (doc[pos - 1] === '[' || doc[pos - 1] === '(');
+				const isAtCloseBracket =
+					pos < doc.length && (doc[pos] === ']' || doc[pos] === ')');
+				const isAfterCloseBracket =
+					pos > 0 && (doc[pos - 1] === ']' || doc[pos - 1] === ')');
+
 				// Get context immediately when cursor position changes
 				if (doc) {
 					const context = getQueryContextAtCursor(doc, pos);
@@ -503,6 +531,8 @@ function CodeMirrorWhereClause(): JSX.Element {
 						? 'function'
 						: queryContext?.isInParenthesis
 						? 'parenthesis'
+						: queryContext?.isInBracketList
+						? 'bracketList'
 						: null;
 
 					const newContextType = context.isInKey
@@ -517,6 +547,8 @@ function CodeMirrorWhereClause(): JSX.Element {
 						? 'function'
 						: context.isInParenthesis
 						? 'parenthesis'
+						: context.isInBracketList
+						? 'bracketList'
 						: null;
 
 					// Log context changes for debugging
@@ -530,6 +562,13 @@ function CodeMirrorWhereClause(): JSX.Element {
 								isAtSpace,
 								isAfterToken,
 								isTransitionPoint,
+								bracketInfo: {
+									isAtOpenBracket,
+									isAfterOpenBracket,
+									isAtCloseBracket,
+									isAfterCloseBracket,
+									isInBracketList: context.isInBracketList,
+								},
 								keyToken: context.keyToken,
 								operatorToken: context.operatorToken,
 								valueToken: context.valueToken,
@@ -591,6 +630,8 @@ function CodeMirrorWhereClause(): JSX.Element {
 				return <Tag color="cyan">Function</Tag>;
 			case 'parenthesis':
 				return <Tag color="magenta">Parenthesis</Tag>;
+			case 'bracketList':
+				return <Tag color="red">Bracket List</Tag>;
 			default:
 				return <Tag>Unknown</Tag>;
 		}
@@ -615,6 +656,53 @@ function CodeMirrorWhereClause(): JSX.Element {
 			detail?: string;
 			boost?: number;
 		}[] = [];
+
+		// Special handling for bracket list context (for IN operator)
+		if (queryContext.isInBracketList) {
+			// If we're inside brackets for an IN operator, we want to show value suggestions
+			// but format them differently (just add quotes, don't wrap in brackets)
+			const keyName = queryContext.keyToken || queryContext.currentPair?.key || '';
+
+			if (!keyName) {
+				return null;
+			}
+
+			// Trigger fetch only if needed
+			if (keyName && (keyName !== activeKey || isLoadingSuggestions)) {
+				// Don't trigger a new fetch if we're already loading for this key
+				if (!(isLoadingSuggestions && lastKeyRef.current === keyName)) {
+					fetchValueSuggestions(keyName);
+				}
+			}
+
+			// For values in bracket list, just add quotes without enclosing in brackets
+			const processedOptions = valueSuggestions.map((option) => {
+				// Clone the option to avoid modifying the original
+				const processedOption = { ...option };
+
+				// Skip processing for non-selectable items
+				if (option.apply === false || typeof option.apply === 'function') {
+					return option;
+				}
+
+				// For strings, just wrap in quotes (no brackets needed)
+				if (option.type === 'value' || option.type === 'keyword') {
+					processedOption.apply = wrapStringValueInQuotes(option.label);
+					processedOption.info = `Value for ${keyName} IN list`;
+				} else {
+					processedOption.apply = option.label;
+					processedOption.info = `Value for ${keyName} IN list`;
+				}
+
+				return processedOption;
+			});
+
+			// Return current value suggestions without comma
+			return {
+				from: word?.from ?? 0,
+				options: processedOptions,
+			};
+		}
 
 		if (queryContext.isInKey) {
 			const searchText = word?.text.toLowerCase() ?? '';
