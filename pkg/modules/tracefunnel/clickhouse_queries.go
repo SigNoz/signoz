@@ -4,6 +4,14 @@ import (
 	"fmt"
 )
 
+// Helper function to format clause with AND if not empty
+func formatClause(clause string) string {
+	if clause == "" {
+		return ""
+	}
+	return fmt.Sprintf("AND %s", clause)
+}
+
 func BuildTwoStepFunnelValidationQuery(
 	containsErrorT1 int,
 	containsErrorT2 int,
@@ -87,8 +95,8 @@ LIMIT 5;`
 		spanNameT1,
 		serviceNameT2,
 		spanNameT2,
-		clauseStep1,
-		clauseStep2,
+		formatClause(clauseStep1),
+		formatClause(clauseStep2),
 	)
 
 	return query
@@ -205,9 +213,9 @@ LIMIT 5;`
 		spanNameT2,
 		serviceNameT3,
 		spanNameT3,
-		clauseStep1,
-		clauseStep2,
-		clauseStep3,
+		formatClause(clauseStep1),
+		formatClause(clauseStep2),
+		formatClause(clauseStep3),
 	)
 
 	return query
@@ -307,8 +315,8 @@ FROM joined;`
 		spanNameT1,
 		serviceNameT2,
 		spanNameT2,
-		clauseStep1,
-		clauseStep2,
+		formatClause(clauseStep1),
+		formatClause(clauseStep2),
 	)
 
 	return query
@@ -456,9 +464,9 @@ FROM joined_t3;`
 		spanNameT2,
 		serviceNameT3,
 		spanNameT3,
-		clauseStep1,
-		clauseStep2,
-		clauseStep3,
+		formatClause(clauseStep1),
+		formatClause(clauseStep2),
+		formatClause(clauseStep3),
 	)
 
 	return query
@@ -603,9 +611,9 @@ FROM joined_t3;`
 		spanNameT2,
 		serviceNameT3,
 		spanNameT3,
-		clauseStep1,
-		clauseStep2,
-		clauseStep3,
+		formatClause(clauseStep1),
+		formatClause(clauseStep2),
+		formatClause(clauseStep3),
 	)
 
 	return query
@@ -700,8 +708,8 @@ FROM joined;`
 		spanNameT1,
 		serviceNameT2,
 		spanNameT2,
-		clauseStep1,
-		clauseStep2,
+		formatClause(clauseStep1),
+		formatClause(clauseStep2),
 	)
 
 	return query
@@ -840,9 +848,9 @@ FROM joined_t3;`
 		spanNameT2,
 		serviceNameT3,
 		spanNameT3,
-		clauseStep1,
-		clauseStep2,
-		clauseStep3,
+		formatClause(clauseStep1),
+		formatClause(clauseStep2),
+		formatClause(clauseStep3),
 	)
 
 	return query
@@ -955,8 +963,8 @@ LIMIT 5;`
 		spanNameT1,
 		serviceNameT2,
 		spanNameT2,
-		clauseStep1,
-		clauseStep2,
+		formatClause(clauseStep1),
+		formatClause(clauseStep2),
 	)
 
 	return query
@@ -1074,8 +1082,8 @@ LIMIT 5;`
 		spanNameT1,
 		serviceNameT2,
 		spanNameT2,
-		clauseStep1,
-		clauseStep2,
+		formatClause(clauseStep1),
+		formatClause(clauseStep2),
 	)
 
 	return query
