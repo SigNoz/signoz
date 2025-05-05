@@ -3,6 +3,8 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	"net/http"
 	"strings"
 	"testing"
@@ -363,6 +365,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 
 	modules := signoz.NewModules(testDB)
 	handlers := signoz.NewHandlers(modules)
+	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,
@@ -374,6 +377,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 			Modules:  modules,
 			Handlers: handlers,
 		},
+		QuickFilters: quickFilterModule,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)

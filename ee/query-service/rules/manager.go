@@ -9,6 +9,7 @@ import (
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -23,6 +24,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		// create a threshold rule
 		tr, err := baserules.NewThresholdRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
 			opts.Reader,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
@@ -43,6 +45,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		// create promql rule
 		pr, err := baserules.NewPromRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
 			opts.Logger,
 			opts.Reader,
@@ -63,6 +66,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		// create anomaly rule
 		ar, err := NewAnomalyRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
 			opts.Reader,
 			opts.Cache,
@@ -119,6 +123,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		// create a threshold rule
 		rule, err = baserules.NewThresholdRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Reader,
 			baserules.WithSendAlways(),
@@ -136,6 +141,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		// create promql rule
 		rule, err = baserules.NewPromRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Logger,
 			opts.Reader,
@@ -153,6 +159,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		// create anomaly rule
 		rule, err = NewAnomalyRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Reader,
 			opts.Cache,
@@ -187,7 +194,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 
 // newTask returns an appropriate group for
 // rule type
-func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID string) baserules.Task {
+func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) baserules.Task {
 	if taskType == baserules.TaskTypeCh {
 		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify, maintenanceStore, orgID)
 	}
