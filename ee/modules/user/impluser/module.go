@@ -196,7 +196,7 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 
 			// build Idp URL that will authenticat the user
 			// the front-end will redirect user to this url
-			resp.SsoUrl, err = orgDomain.BuildSsoUrl(siteUrl)
+			resp.SSOUrl, err = orgDomain.BuildSsoUrl(siteUrl)
 			if err != nil {
 				zap.L().Error("failed to prepare saml request for domain", zap.String("domain", orgDomain.Name), zap.Error(err))
 				return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to prepare saml request for domain")

@@ -98,7 +98,7 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error 
 	}
 
 	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email)) {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "integration user cannot be updated")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "integration user cannot be deleted")
 	}
 
 	return m.store.DeleteUser(ctx, orgID, user.ID.StringValue())
@@ -195,7 +195,7 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 
 func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl string) (*types.GettableLoginPrecheck, error) {
 	// assume user is valid unless proven otherwise and assign default values for rest of the fields
-	resp := &types.GettableLoginPrecheck{IsUser: true, CanSelfRegister: false, SSO: false, SsoUrl: "", SsoError: ""}
+	resp := &types.GettableLoginPrecheck{IsUser: true, CanSelfRegister: false, SSO: false, SSOUrl: "", SSOError: ""}
 
 	// check if email is a valid user
 	users, err := m.GetUsersByEmail(ctx, email)
