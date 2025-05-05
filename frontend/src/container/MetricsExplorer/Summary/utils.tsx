@@ -44,9 +44,7 @@ export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 		dataIndex: 'description',
 		width: 400,
 		render: (value: string): React.ReactNode => (
-			<Tooltip title={value}>
-				<div className="metric-description-column-value">{value}</div>
-			</Tooltip>
+			<div className="metric-description-column-value">{value}</div>
 		),
 	},
 	{
