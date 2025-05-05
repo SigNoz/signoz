@@ -2,7 +2,6 @@ package tracefunnel
 
 import (
 	"fmt"
-	"strings"
 )
 
 func BuildTwoStepFunnelValidationQuery(
@@ -41,7 +40,7 @@ WITH
         AND serviceName = service_name_t1
         AND name = span_name_t1
         AND (contains_error_t1 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+        %[9]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -57,7 +56,7 @@ WITH
         AND serviceName = service_name_t2
         AND name = span_name_t2
         AND (contains_error_t2 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+        %[10]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -88,21 +87,9 @@ LIMIT 5;`
 		spanNameT1,
 		serviceNameT2,
 		spanNameT2,
+		clauseStep1,
+		clauseStep2,
 	)
-
-	// Inject clauseStep1
-	if clauseStep1 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	// Inject clauseStep2
-	if clauseStep2 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
-	}
 
 	return query
 }
@@ -150,7 +137,7 @@ WITH
         AND serviceName = service_name_t1
         AND name = span_name_t1
         AND (contains_error_t1 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+        %[12]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -166,7 +153,7 @@ WITH
         AND serviceName = service_name_t2
         AND name = span_name_t2
         AND (contains_error_t2 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+        %[13]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -182,7 +169,7 @@ WITH
         AND serviceName = service_name_t3
         AND name = span_name_t3
         AND (contains_error_t3 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>
+        %[14]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -218,25 +205,10 @@ LIMIT 5;`
 		spanNameT2,
 		serviceNameT3,
 		spanNameT3,
+		clauseStep1,
+		clauseStep2,
+		clauseStep3,
 	)
-
-	if clauseStep1 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep2 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep3 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "AND "+clauseStep3, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "", 1)
-	}
 
 	return query
 }
@@ -281,7 +253,7 @@ WITH
         AND serviceName = service_name_t1
         AND name = span_name_t1
         AND (contains_error_t1 = 0 OR has_error = true)
-        -- <<< INJECT clause_step1 HERE IN GO IF NOT EMPTY >>>
+        %[11]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -298,7 +270,7 @@ WITH
         AND serviceName = service_name_t2
         AND name = span_name_t2
         AND (contains_error_t2 = 0 OR has_error = true)
-        -- <<< INJECT clause_step2 HERE IN GO IF NOT EMPTY >>>
+        %[12]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -335,19 +307,9 @@ FROM joined;`
 		spanNameT1,
 		serviceNameT2,
 		spanNameT2,
+		clauseStep1,
+		clauseStep2,
 	)
-
-	if clauseStep1 != "" {
-		query = strings.Replace(query, "-- <<< INJECT clause_step1 HERE IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT clause_step1 HERE IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep2 != "" {
-		query = strings.Replace(query, "-- <<< INJECT clause_step2 HERE IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT clause_step2 HERE IN GO IF NOT EMPTY >>>", "", 1)
-	}
 
 	return query
 }
@@ -404,7 +366,7 @@ WITH
         AND serviceName = service_name_t1
         AND name = span_name_t1
         AND (contains_error_t1 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+        %[15]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -421,7 +383,7 @@ WITH
         AND serviceName = service_name_t2
         AND name = span_name_t2
         AND (contains_error_t2 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+        %[16]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -438,7 +400,7 @@ WITH
         AND serviceName = service_name_t3
         AND name = span_name_t3
         AND (contains_error_t3 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>
+        %[17]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -494,25 +456,10 @@ FROM joined_t3;`
 		spanNameT2,
 		serviceNameT3,
 		spanNameT3,
+		clauseStep1,
+		clauseStep2,
+		clauseStep3,
 	)
-
-	if clauseStep1 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep2 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep3 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "AND "+clauseStep3, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "", 1)
-	}
 
 	return query
 }
@@ -569,7 +516,7 @@ WITH
         AND serviceName = service_name_t1
         AND name = span_name_t1
         AND (contains_error_t1 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+        %[15]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -586,7 +533,7 @@ WITH
         AND serviceName = service_name_t2
         AND name = span_name_t2
         AND (contains_error_t2 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+        %[16]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -603,7 +550,7 @@ WITH
         AND serviceName = service_name_t3
         AND name = span_name_t3
         AND (contains_error_t3 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>
+        %[17]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -656,25 +603,10 @@ FROM joined_t3;`
 		spanNameT2,
 		serviceNameT3,
 		spanNameT3,
+		clauseStep1,
+		clauseStep2,
+		clauseStep3,
 	)
-
-	if clauseStep1 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep2 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep3 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "AND "+clauseStep3, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "", 1)
-	}
 
 	return query
 }
@@ -716,7 +648,7 @@ WITH
         AND serviceName = service_name_t1
         AND name = span_name_t1
         AND (contains_error_t1 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+        %[9]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -733,7 +665,7 @@ WITH
         AND serviceName = service_name_t2
         AND name = span_name_t2
         AND (contains_error_t2 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+        %[10]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -768,19 +700,9 @@ FROM joined;`
 		spanNameT1,
 		serviceNameT2,
 		spanNameT2,
+		clauseStep1,
+		clauseStep2,
 	)
-
-	if clauseStep1 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep2 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
-	}
 
 	return query
 }
@@ -829,7 +751,7 @@ WITH
         AND serviceName = service_name_t1
         AND name = span_name_t1
         AND (contains_error_t1 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+        %[12]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -846,7 +768,7 @@ WITH
         AND serviceName = service_name_t2
         AND name = span_name_t2
         AND (contains_error_t2 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+        %[13]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -863,7 +785,7 @@ WITH
         AND serviceName = service_name_t3
         AND name = span_name_t3
         AND (contains_error_t3 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>
+        %[14]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -918,25 +840,10 @@ FROM joined_t3;`
 		spanNameT2,
 		serviceNameT3,
 		spanNameT3,
+		clauseStep1,
+		clauseStep2,
+		clauseStep3,
 	)
-
-	if clauseStep1 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep2 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep3 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "AND "+clauseStep3, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step3 IN GO IF NOT EMPTY >>>", "", 1)
-	}
 
 	return query
 }
@@ -975,7 +882,7 @@ WITH
         AND serviceName = service_name_t1
         AND name = span_name_t1
         AND (contains_error_t1 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+        %[9]s
     GROUP BY trace_id
     LIMIT 100000
 ), step1 AS (
@@ -993,7 +900,7 @@ WITH
         AND serviceName = service_name_t2
         AND name = span_name_t2
         AND (contains_error_t2 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+        %[10]s
     GROUP BY trace_id
     LIMIT 100000
 ), step2 AS (
@@ -1048,19 +955,9 @@ LIMIT 5;`
 		spanNameT1,
 		serviceNameT2,
 		spanNameT2,
+		clauseStep1,
+		clauseStep2,
 	)
-
-	if clauseStep1 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep2 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
-	}
 
 	return query
 }
@@ -1099,7 +996,7 @@ WITH
         AND serviceName = service_name_t1
         AND name = span_name_t1
         AND (contains_error_t1 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>
+        %[9]s
     GROUP BY trace_id
     LIMIT 100000
 ), step1 AS (
@@ -1117,7 +1014,7 @@ WITH
         AND serviceName = service_name_t2
         AND name = span_name_t2
         AND (contains_error_t2 = 0 OR has_error = true)
-        -- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>
+        %[10]s
     GROUP BY trace_id
     LIMIT 100000
 ), step2 AS (
@@ -1177,19 +1074,9 @@ LIMIT 5;`
 		spanNameT1,
 		serviceNameT2,
 		spanNameT2,
+		clauseStep1,
+		clauseStep2,
 	)
-
-	if clauseStep1 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "AND "+clauseStep1, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step1 IN GO IF NOT EMPTY >>>", "", 1)
-	}
-
-	if clauseStep2 != "" {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "AND "+clauseStep2, 1)
-	} else {
-		query = strings.Replace(query, "-- <<< INJECT AND clause_step2 IN GO IF NOT EMPTY >>>", "", 1)
-	}
 
 	return query
 }
