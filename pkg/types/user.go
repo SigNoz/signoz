@@ -107,7 +107,7 @@ func (p *PostableAcceptInvite) Validate() error {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite token is required")
 	}
 
-	if p.Password != "" || len(p.Password) < 8 {
+	if p.Password == "" || len(p.Password) < 8 {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password must be at least 8 characters long")
 	}
 
