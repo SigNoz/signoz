@@ -7,13 +7,18 @@ import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import i18n from 'ReactI18';
-import { act, render, RenderResult, screen, waitFor } from 'tests/test-utils';
+import {
+	act,
+	fireEvent,
+	render,
+	RenderResult,
+	screen,
+	waitFor,
+} from 'tests/test-utils';
 import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 // Constants
-const ITEM_HEIGHT = 100;
-const PAGE_SIZE = 100;
 const API_ENDPOINT = 'http://localhost/api/v3/query_range';
 
 jest.mock('uplot', () => {
@@ -113,17 +118,6 @@ const setupServer = (capturedPayloads: QueryRangePayload[]): void => {
 	);
 };
 
-const renderLogsExplorer = (totalHeight: number): RenderResult =>
-	render(
-		<VirtuosoMockContext.Provider
-			value={{ viewportHeight: totalHeight * 2, itemHeight: ITEM_HEIGHT }}
-		>
-			<I18nextProvider i18n={i18n}>
-				<LogsExplorer />
-			</I18nextProvider>
-		</VirtuosoMockContext.Provider>,
-	);
-
 const verifyPayload = (
 	payload: QueryRangePayload,
 	expectedOffset: number,
@@ -149,40 +143,60 @@ describe('LogsExplorerViews Pagination', () => {
 		setupServer(capturedPayloads);
 	});
 
-	it('should fetch pages with correct offsets, constant time range, and match snapshot after third request', async () => {
-		const initialItemCount = logsPaginationQueryRangeSuccessResponse(0).data
+	it('should fetch next page with correct offset when scrolled to end', async () => {
+		let renderResult: RenderResult;
+		const itemHeight = 100;
+		const viewportHeight = 500;
+		const initialItemCount = logsPaginationQueryRangeSuccessResponse().data
 			.result[0].list.length;
-		const totalHeight = initialItemCount * ITEM_HEIGHT;
+
+		// Calculate the total height of the rendered items
+		const totalHeight = initialItemCount * itemHeight;
+		const targetScrollTop = totalHeight - viewportHeight;
+		let scrollableElement: HTMLElement;
 
 		act(() => {
-			renderLogsExplorer(totalHeight);
+			renderResult = render(
+				<VirtuosoMockContext.Provider value={{ viewportHeight, itemHeight }}>
+					<I18nextProvider i18n={i18n}>
+						<LogsExplorer />
+					</I18nextProvider>
+				</VirtuosoMockContext.Provider>,
+			);
 		});
 
-		// Verify first request
 		await waitFor(() => {
-			expect(capturedPayloads.length).toBeGreaterThanOrEqual(1);
 			expect(
 				screen.queryByText('pending_data_placeholder'),
 			).not.toBeInTheDocument();
 		});
 
+		expect(capturedPayloads.length).toBe(1);
 		const firstPayload = capturedPayloads[0];
 		verifyPayload(firstPayload, 0);
-		const initialTimeRange = { start: firstPayload.start, end: firstPayload.end };
 
-		// Verify second request
-		await waitFor(() => {
-			expect(capturedPayloads.length).toBeGreaterThanOrEqual(2);
+		await act(async () => {
+			// this element is not directly accessible, therefore using querySelector
+			scrollableElement = renderResult.container.querySelector(
+				'[data-test-id="virtuoso-scroller"]',
+			) as HTMLElement;
+
+			// Set the scrollTop property to simulate scrolling
+			scrollableElement.scrollTop = targetScrollTop;
+
+			// Dispatch a scroll event to trigger the endReached callback
+			fireEvent.scroll(scrollableElement);
 		});
 
+		// Verify second page request
+		expect(capturedPayloads.length).toBe(2);
+		const initialTimeRange = {
+			start: firstPayload.start,
+			end: firstPayload.end,
+		};
 		const secondPayload = capturedPayloads[1];
-		const secondQueryData = verifyPayload(
-			secondPayload,
-			PAGE_SIZE,
-			initialTimeRange,
-		);
+		const secondQueryData = verifyPayload(secondPayload, 100, initialTimeRange);
 
-		// Verify filters and ordering
 		const idFilter = secondQueryData.filters?.items?.find(
 			(item) => item?.key?.key === 'id',
 		);
@@ -199,5 +213,33 @@ describe('LogsExplorerViews Pagination', () => {
 			expect(orderById).toBeDefined();
 			expect(orderById?.order).toBe(orderByTimestamp.order);
 		}
+
+		await act(async () => {
+			// this element is not directly accessible, therefore using querySelector
+			scrollableElement = renderResult.container.querySelector(
+				'[data-test-id="virtuoso-scroller"]',
+			) as HTMLElement;
+
+			// Calculate the total height after the second page is loaded
+			const totalHeightAfterSecondLoad = 2 * initialItemCount * itemHeight;
+			// Calculate the scroll position needed to reach the end of the new total height
+			const targetScrollTopAfterSecondLoad =
+				totalHeightAfterSecondLoad - viewportHeight;
+
+			// Set the scrollTop property to simulate scrolling to the new end
+			scrollableElement.scrollTop = targetScrollTopAfterSecondLoad;
+
+			// Dispatch a scroll event to trigger the endReached callback
+			fireEvent.scroll(scrollableElement);
+		});
+
+		// Verify third page request
+		expect(capturedPayloads.length).toBe(3);
+		const thirdPayload = capturedPayloads[2];
+		verifyPayload(thirdPayload, 200, initialTimeRange);
+
+		await waitFor(() => {
+			expect(renderResult.container).toMatchSnapshot();
+		});
 	});
 });
