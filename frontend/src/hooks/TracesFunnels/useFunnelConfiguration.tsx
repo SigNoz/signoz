@@ -5,6 +5,7 @@ import { isEqual } from 'lodash-es';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 
 import { useUpdateFunnelSteps } from './useFunnels';
@@ -25,7 +26,23 @@ const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
 			...step.filters,
 			items: step.filters.items.map((item) => ({
 				id: '',
-				key: item.key,
+				key: item.key
+					? {
+							key: item.key.key,
+							dataType: item.key.dataType,
+							type: item.key.type,
+							isColumn: item.key.isColumn,
+							isJSON: item.key.isJSON,
+							isIndexed: item.key.isIndexed,
+					  }
+					: {
+							key: '',
+							dataType: DataTypes.EMPTY,
+							type: '',
+							isColumn: false,
+							isJSON: false,
+							isIndexed: false,
+					  },
 				value: item.value,
 				op: item.op,
 			})),
