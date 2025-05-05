@@ -6015,19 +6015,25 @@ LIMIT 40`, // added rand to get diff value every time we run this query
 	var fingerprints []string
 	for rows.Next() {
 		// Create dynamic scanning based on number of attributes
-		var fingerprintsList []string
+		var batch []string
 
-		if err := rows.Scan(&fingerprintsList); err != nil {
+		if err := rows.Scan(&batch); err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 		}
 
-		if len(fingerprints) == 0 || len(fingerprints)+len(fingerprintsList) < 40 {
-			fingerprints = append(fingerprints, fingerprintsList...)
-		}
-
-		if len(fingerprints) > 40 {
+		remaining := 40 - len(fingerprints)
+		if remaining <= 0 {
 			break
 		}
+
+		// if this batch would overshoot, only take as many as we need
+		if len(batch) > remaining {
+			fingerprints = append(fingerprints, batch[:remaining]...)
+			break
+		}
+
+		// otherwise take the whole batch and keep going
+		fingerprints = append(fingerprints, batch...)
 
 	}
 
