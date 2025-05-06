@@ -13,14 +13,16 @@ interface AddFunnelDescriptionProps {
 	isOpen: boolean;
 	onClose: () => void;
 	funnelId: string;
+	funnelDescription: string;
 }
 
 function AddFunnelDescriptionModal({
 	isOpen,
 	onClose,
 	funnelId,
+	funnelDescription,
 }: AddFunnelDescriptionProps): JSX.Element {
-	const [description, setDescription] = useState<string>('');
+	const [description, setDescription] = useState<string>(funnelDescription);
 	const { notifications } = useNotifications();
 	const queryClient = useQueryClient();
 

@@ -36,6 +36,7 @@ function FunnelDetailsView({
 			<FunnelListItem
 				funnel={funnel}
 				shouldRedirectToTracesListOnDeleteSuccess={false}
+				isSpanDetailsPage
 			/>
 			<FunnelConfiguration funnel={funnel} isTraceDetailsPage span={span} />
 		</div>

@@ -1,12 +1,12 @@
 import './FunnelStep.styles.scss';
 
-import { Dropdown, Form, Space, Switch } from 'antd';
+import { Button, Divider, Dropdown, Form, Space, Switch, Tooltip } from 'antd';
 import { MenuProps } from 'antd/lib';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
-import { ChevronDown, GripVertical, HardHat } from 'lucide-react';
+import { ChevronDown, GripVertical, HardHat, PencilLine } from 'lucide-react';
 import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo, useState } from 'react';
@@ -32,6 +32,10 @@ function FunnelStep({
 	} = useFunnelContext();
 	const [form] = Form.useForm();
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
+	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
+	const [isAddDetailsModalOpen, setIsAddDetailsModalOpen] = useState<boolean>(
+		false,
+	);
 
 	const latencyPointerItems: MenuProps['items'] = LatencyPointers.map(
 		(option) => ({
@@ -43,8 +47,6 @@ function FunnelStep({
 					: {},
 		}),
 	);
-
-	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
 	const updatedCurrentQuery = useMemo(
 		() => ({
@@ -73,8 +75,10 @@ function FunnelStep({
 			<Form form={form}>
 				<div className="funnel-step__header">
 					<div className="funnel-step-details">
-						{!!stepData.title && (
+						{stepData.title ? (
 							<div className="funnel-step-details__title">{stepData.title}</div>
+						) : (
+							<div className="funnel-step-details__title">Step {index + 1}</div>
 						)}
 						{!!stepData.description && (
 							<div className="funnel-step-details__description">
@@ -83,12 +87,24 @@ function FunnelStep({
 						)}
 					</div>
 					<div className="funnel-step-actions">
+						<Tooltip title="Add details to step">
+							<Button
+								type="text"
+								className="funnel-item__action-btn"
+								icon={<PencilLine size={14} />}
+								onClick={(): void => setIsAddDetailsModalOpen(true)}
+							/>
+						</Tooltip>
+
+						<Divider type="vertical" />
 						<FunnelStepPopover
 							isPopoverOpen={isPopoverOpen}
 							setIsPopoverOpen={setIsPopoverOpen}
 							stepOrder={stepData.step_order}
 							onStepRemove={(): void => onStepRemove(index)}
 							stepsCount={stepsCount}
+							isAddDetailsModalOpen={isAddDetailsModalOpen}
+							setIsAddDetailsModalOpen={setIsAddDetailsModalOpen}
 						/>
 					</div>
 				</div>

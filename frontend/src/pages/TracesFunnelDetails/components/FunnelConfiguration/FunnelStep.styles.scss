@@ -46,6 +46,23 @@
 				letter-spacing: -0.06px;
 			}
 		}
+		.funnel-step-actions {
+			&,
+			& > div {
+				display: flex;
+				align-items: center;
+			}
+			.ant-divider-vertical {
+				margin: 0 12px;
+			}
+			.funnel-item__action-btn {
+				border: none;
+				padding: 4px;
+				width: 24px;
+				height: 24px;
+				justify-content: center;
+			}
+		}
 	}
 	&__content {
 		display: flex;

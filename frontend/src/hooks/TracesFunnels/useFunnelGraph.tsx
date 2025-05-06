@@ -2,7 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { FunnelStepGraphMetrics } from 'api/traceFunnels';
 import { Chart, ChartConfiguration } from 'chart.js';
 import ChangePercentagePill from 'components/ChangePercentagePill/ChangePercentagePill';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const CHART_CONFIG: Partial<ChartConfiguration> = {
 	type: 'bar',
@@ -47,6 +47,7 @@ const CHART_CONFIG: Partial<ChartConfiguration> = {
 
 interface UseFunnelGraphProps {
 	data: FunnelStepGraphMetrics | undefined;
+	hoveredBar?: { index: number; type: 'total' | 'error' } | null;
 }
 
 interface UseFunnelGraph {
@@ -59,12 +60,24 @@ interface UseFunnelGraph {
 		successSpans: number,
 		errorSpans: number,
 		prevTotalSpans: number,
+		legendHoverHandlers?: {
+			onTotalHover: () => void;
+			onErrorHover: () => void;
+			onLegendLeave: () => void;
+		},
 	) => JSX.Element;
 }
 
-function useFunnelGraph({ data }: UseFunnelGraphProps): UseFunnelGraph {
+function useFunnelGraph({
+	data,
+	hoveredBar,
+}: UseFunnelGraphProps): UseFunnelGraph {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const chartRef = useRef<Chart | null>(null);
+	const [localHoveredBar, setLocalHoveredBar] = useState<{
+		index: number;
+		type: 'total' | 'error';
+	} | null>(null);
 
 	const getPercentageChange = useCallback(
 		(current: number, previous: number): number => {
@@ -126,7 +139,7 @@ function useFunnelGraph({ data }: UseFunnelGraphProps): UseFunnelGraph {
 					{
 						label: 'Success spans',
 						data: successSteps,
-						backgroundColor: Color.BG_ROBIN_500,
+						backgroundColor: successSteps.map(() => Color.BG_ROBIN_500),
 						stack: 'Stack 0',
 						borderRadius: 2,
 						borderSkipped: false,
@@ -134,7 +147,7 @@ function useFunnelGraph({ data }: UseFunnelGraphProps): UseFunnelGraph {
 					{
 						label: 'Error spans',
 						data: errorSteps,
-						backgroundColor: Color.BG_CHERRY_500,
+						backgroundColor: errorSteps.map(() => Color.BG_CHERRY_500),
 						stack: 'Stack 0',
 						borderRadius: 2,
 						borderSkipped: false,
@@ -148,9 +161,39 @@ function useFunnelGraph({ data }: UseFunnelGraphProps): UseFunnelGraph {
 			},
 			options: CHART_CONFIG.options,
 		} as ChartConfiguration);
-	}, [data, getStepGraphData]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data]);
 
-	// Log the widths when they change
+	useEffect(() => {
+		const chart = chartRef.current;
+		if (!chart) return;
+
+		const { successSteps, errorSteps } = getStepGraphData();
+
+		if (chart.data.datasets && chart.data.datasets.length >= 2) {
+			chart.data.datasets[0].backgroundColor = successSteps.map((_, i) =>
+				localHoveredBar &&
+				localHoveredBar.index === i &&
+				localHoveredBar.type === 'total'
+					? '#2655ff'
+					: Color.BG_ROBIN_500,
+			);
+
+			chart.data.datasets[1].backgroundColor = errorSteps.map((_, i) =>
+				localHoveredBar &&
+				localHoveredBar.index === i &&
+				localHoveredBar.type === 'error'
+					? '#ff1018'
+					: Color.BG_CHERRY_500,
+			);
+
+			chart.update();
+		}
+	}, [localHoveredBar, getStepGraphData]);
+
+	useEffect(() => {
+		setLocalHoveredBar(hoveredBar ?? null);
+	}, [hoveredBar]);
 
 	const renderLegendItem = useCallback(
 		(
@@ -158,12 +201,21 @@ function useFunnelGraph({ data }: UseFunnelGraphProps): UseFunnelGraph {
 			successSpans: number,
 			errorSpans: number,
 			prevTotalSpans: number,
+			legendHoverHandlers?: {
+				onTotalHover: () => void;
+				onErrorHover: () => void;
+				onLegendLeave: () => void;
+			},
 		): JSX.Element => {
 			const totalSpans = successSpans + errorSpans;
 
 			return (
 				<div key={step} className="funnel-graph__legend-column">
-					<div className="legend-item">
+					<div
+						className="legend-item"
+						onMouseEnter={legendHoverHandlers?.onTotalHover}
+						onMouseLeave={legendHoverHandlers?.onLegendLeave}
+					>
 						<div className="legend-item__left">
 							<span className="legend-item__dot legend-item--total" />
 							<span className="legend-item__label">Total spans</span>
@@ -178,7 +230,11 @@ function useFunnelGraph({ data }: UseFunnelGraphProps): UseFunnelGraph {
 							)}
 						</div>
 					</div>
-					<div className="legend-item">
+					<div
+						className="legend-item"
+						onMouseEnter={legendHoverHandlers?.onErrorHover}
+						onMouseLeave={legendHoverHandlers?.onLegendLeave}
+					>
 						<div className="legend-item__left">
 							<span className="legend-item__dot legend-item--error" />
 							<span className="legend-item__label">Error spans</span>
