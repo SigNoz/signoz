@@ -157,6 +157,13 @@ func (a AggregateOperator) IsRateOperator() bool {
 	}
 }
 
+type TraceOrdering string
+
+const (
+	TraceOrderingBySpanCount     TraceOrdering = "span_count"
+	TraceOrderingByTraceDuration TraceOrdering = "trace_duration"
+)
+
 type ReduceToOperator string
 
 const (
@@ -898,6 +905,7 @@ type BuilderQuery struct {
 	Offset               uint64               `json:"offset"`
 	PageSize             uint64               `json:"pageSize"`
 	OrderBy              []OrderBy            `json:"orderBy,omitempty"`
+	TraceOrdering        TraceOrdering        `json:"traceOrdering,omitempty"`
 	ReduceTo             ReduceToOperator     `json:"reduceTo,omitempty"`
 	SelectColumns        []AttributeKey       `json:"selectColumns,omitempty"`
 	TimeAggregation      TimeAggregation      `json:"timeAggregation,omitempty"`

@@ -292,12 +292,22 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	if mq.AggregateOperator == v3.AggregateOperatorNoOp {
 		var query string
 		if panelType == v3.PanelTypeTrace {
-			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME, timeFilter)
-			afterSubQuery := tracesV3.AddLimitToQuery(constants.TracesExplorerViewSQLSelectAfterSubQuery, mq.Limit)
-			if mq.Offset != 0 {
-				afterSubQuery = tracesV3.AddOffsetToQuery(afterSubQuery, mq.Offset)
+			if mq.TraceOrdering == v3.TraceOrderingByTraceDuration || mq.TraceOrdering == "" {
+				withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME, timeFilter)
+				afterSubQuery := tracesV3.AddLimitToQuery(constants.TracesExplorerViewSQLSelectAfterSubQuery, mq.Limit)
+				if mq.Offset != 0 {
+					afterSubQuery = tracesV3.AddOffsetToQuery(afterSubQuery, mq.Offset)
+				}
+				query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3) + withSubQuery + ") " + fmt.Sprintf(afterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter, filterSubQuery)
+			} else if mq.TraceOrdering == v3.TraceOrderingBySpanCount {
+				withSubQueryWithLimits := tracesV3.AddLimitToQuery(constants.TracesExplorerSpanCountWithSubQuery, mq.Limit)
+				withSubQuery := fmt.Sprintf(withSubQueryWithLimits, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME, timeFilter, filterSubQuery)
+				afterSubQuery := tracesV3.AddLimitToQuery(constants.TraceExplorerSpanCountAfterSubQuery, mq.Limit)
+				if mq.Offset != 0 {
+					afterSubQuery = tracesV3.AddOffsetToQuery(afterSubQuery, mq.Offset)
+				}
+				query = fmt.Sprintf(constants.TraceExplorerSpanCountBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3) + withSubQuery + ") " + fmt.Sprintf(afterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter)
 			}
-			query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3) + withSubQuery + ") " + fmt.Sprintf(afterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter, filterSubQuery)
 			// adding this to avoid the distributed product mode error which doesn't allow global in
 			query += " settings distributed_product_mode='allow', max_memory_usage=10000000000"
 		} else if panelType == v3.PanelTypeList {

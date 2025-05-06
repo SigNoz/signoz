@@ -256,6 +256,9 @@ const (
 	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
 		"span_count, subQuery.durationNano, traceID FROM %s.%s GLOBAL INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
 		"BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;"
+	TracesExplorerSpanCountWithSubQuery  = "SELECT trace_id, count() as span_count, FROM %s.%s WHERE %s %s GROUP BY trace_id ORDER BY span_count DESC LIMIT 1 BY trace_id"
+	TraceExplorerSpanCountBeforeSubQuery = "SELECT serviceName, name, subquery.span_count as span_count, durationNano, trace_id as traceID from %s.%s GLOBAL INNER JOIN ( SELECT * FROM "
+	TraceExplorerSpanCountAfterSubQuery  = "AS inner_subquery ) AS subQuery ON %s.%s.trace_id = subQuery.trace_id WHERE parent_span_id = '' AND %s ORDER BY subquery.span_count DESC"
 )
 
 // ReservedColumnTargetAliases identifies result value from a user
