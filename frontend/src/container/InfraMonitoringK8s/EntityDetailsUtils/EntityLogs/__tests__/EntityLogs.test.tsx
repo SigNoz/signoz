@@ -48,7 +48,7 @@ jest.mock(
 );
 
 describe('EntityLogs', () => {
-	const capturedQueryRangePayloads: QueryRangePayload[] = [];
+	let capturedQueryRangePayloads: QueryRangePayload[] = [];
 	const itemHeight = 100;
 
 	beforeEach(() => {
@@ -72,6 +72,7 @@ describe('EntityLogs', () => {
 				},
 			),
 		);
+		capturedQueryRangePayloads = [];
 	});
 	it('should check if k8s logs pagination flows work properly', async () => {
 		let renderResult: RenderResult;

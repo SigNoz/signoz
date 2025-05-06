@@ -46,7 +46,7 @@ jest.mock(
 );
 
 describe('HostMetricsLogs', () => {
-	const capturedQueryRangePayloads: QueryRangePayload[] = [];
+	let capturedQueryRangePayloads: QueryRangePayload[] = [];
 	const itemHeight = 100;
 	beforeEach(() => {
 		server.use(
@@ -70,6 +70,7 @@ describe('HostMetricsLogs', () => {
 				},
 			),
 		);
+		capturedQueryRangePayloads = [];
 	});
 	it('should check if host logs pagination flows work properly', async () => {
 		let renderResult: RenderResult;
