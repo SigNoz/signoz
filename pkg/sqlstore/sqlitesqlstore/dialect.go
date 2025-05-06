@@ -486,7 +486,7 @@ func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, 
 	return nil
 }
 
-func (dialect *dialect) ToggleForeignKeys(ctx context.Context, bun *bun.DB, enable bool) error {
+func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error {
 	if enable {
 		_, err := bun.ExecContext(ctx, "PRAGMA foreign_keys = ON")
 		return err

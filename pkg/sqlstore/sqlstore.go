@@ -86,7 +86,7 @@ type SQLDialect interface {
 	// Checks if a table exists.
 	TableExists(ctx context.Context, bun bun.IDB, table interface{}) (bool, error)
 
-	// Toggles foreign keys for the given database. This makes sense only for sqlite. This cannot take a transaction as an argument and needs to take the db
+	// Toggles foreign key constraint for the given database. This makes sense only for sqlite. This cannot take a transaction as an argument and needs to take the db
 	// as an argument.
-	ToggleForeignKeys(ctx context.Context, bun *bun.DB, enable bool) error
+	ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error
 }

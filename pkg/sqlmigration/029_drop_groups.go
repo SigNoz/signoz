@@ -34,7 +34,7 @@ func (migration *dropGroups) Register(migrations *migrate.Migrations) error {
 
 func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 	// Disable foreign keys temporarily
-	if err := migration.sqlstore.Dialect().ToggleForeignKeys(ctx, db, false); err != nil {
+	if err := migration.sqlstore.Dialect().ToggleForeignKeyConstraint(ctx, db, false); err != nil {
 		return err
 	}
 
@@ -148,7 +148,7 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	// Enable foreign keys
-	if err := migration.sqlstore.Dialect().ToggleForeignKeys(ctx, db, true); err != nil {
+	if err := migration.sqlstore.Dialect().ToggleForeignKeyConstraint(ctx, db, true); err != nil {
 		return err
 	}
 
