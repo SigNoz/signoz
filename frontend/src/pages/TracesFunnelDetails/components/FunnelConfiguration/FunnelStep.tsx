@@ -75,8 +75,8 @@ function FunnelStep({
 			<Form form={form}>
 				<div className="funnel-step__header">
 					<div className="funnel-step-details">
-						{stepData.title ? (
-							<div className="funnel-step-details__title">{stepData.title}</div>
+						{stepData.name ? (
+							<div className="funnel-step-details__title">{stepData.name}</div>
 						) : (
 							<div className="funnel-step-details__title">Step {index + 1}</div>
 						)}
@@ -100,11 +100,15 @@ function FunnelStep({
 						<FunnelStepPopover
 							isPopoverOpen={isPopoverOpen}
 							setIsPopoverOpen={setIsPopoverOpen}
-							stepOrder={stepData.step_order}
 							onStepRemove={(): void => onStepRemove(index)}
 							stepsCount={stepsCount}
 							isAddDetailsModalOpen={isAddDetailsModalOpen}
 							setIsAddDetailsModalOpen={setIsAddDetailsModalOpen}
+							stepData={{
+								step_order: stepData.step_order,
+								name: stepData.name,
+								description: stepData.description,
+							}}
 						/>
 					</div>
 				</div>

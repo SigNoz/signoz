@@ -2,15 +2,20 @@ import { Button, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Ellipsis, PencilLine, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { FunnelStepData } from 'types/api/traceFunnels';
 
 import AddFunnelStepDetailsModal from './AddFunnelStepDetailsModal';
 import DeleteFunnelStep from './DeleteFunnelStep';
 
-interface FunnelStepPopoverProps {
+export interface FunnelStepPopoverProps {
 	isPopoverOpen: boolean;
 	setIsPopoverOpen: (isOpen: boolean) => void;
 	className?: string;
-	stepOrder: number;
+	stepData: {
+		step_order: FunnelStepData['step_order'];
+		name?: FunnelStepData['name'];
+		description?: FunnelStepData['description'];
+	};
 	stepsCount: number;
 	onStepRemove: () => void;
 	isAddDetailsModalOpen: boolean;
@@ -67,7 +72,7 @@ function FunnelStepActions({
 function FunnelStepPopover({
 	isPopoverOpen,
 	setIsPopoverOpen,
-	stepOrder,
+	stepData,
 	className,
 	onStepRemove,
 	stepsCount,
@@ -99,6 +104,7 @@ function FunnelStepPopover({
 				}
 				placement="bottomRight"
 				arrow={false}
+				destroyTooltipOnHide
 			>
 				<Ellipsis
 					className={cx('funnel-item__action-icon', className, {
@@ -117,7 +123,7 @@ function FunnelStepPopover({
 			<AddFunnelStepDetailsModal
 				isOpen={isAddDetailsModalOpen}
 				onClose={(): void => setIsAddDetailsModalOpen(false)}
-				stepOrder={stepOrder}
+				stepData={stepData}
 			/>
 		</div>
 	);
