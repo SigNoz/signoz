@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/SigNoz/signoz/ee/modules/authdomain"
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -20,21 +19,20 @@ import (
 // EnterpriseModule embeds the base module implementation
 type Module struct {
 	*baseimpl.Module // Embed the base module implementation
-
-	authDomainModule authdomain.Module
+	store            types.UserStore
 }
 
-func NewModule(store types.UserStore, authDomainModule authdomain.Module) user.Module {
+func NewModule(store types.UserStore) user.Module {
 	baseModule := baseimpl.NewModule(store).(*baseimpl.Module)
 	return &Module{
-		Module:           baseModule,
-		authDomainModule: authDomainModule,
+		Module: baseModule,
+		store:  store,
 	}
 }
 
 func (m *Module) createUserForSAMLRequest(ctx context.Context, email string) (*types.User, error) {
 	// get auth domain from email domain
-	_, apierr := m.authDomainModule.GetAuthDomainByEmail(ctx, email)
+	_, apierr := m.GetAuthDomainByEmail(ctx, email)
 	if apierr != nil {
 		zap.L().Error("failed to get domain from email", zap.Error(apierr))
 		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to get domain from email")
@@ -96,7 +94,7 @@ func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email stri
 }
 
 func (m *Module) CanUsePassword(ctx context.Context, email string) (bool, error) {
-	domain, err := m.authDomainModule.GetAuthDomainByEmail(ctx, email)
+	domain, err := m.GetAuthDomainByEmail(ctx, email)
 	if err != nil {
 		return false, err
 	}
@@ -172,7 +170,7 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 
 	if ssoAvailable {
 		// TODO(Nitya): in multitenancy this should use orgId as well.
-		orgDomain, err := m.authDomainModule.GetAuthDomainByEmail(ctx, email)
+		orgDomain, err := m.GetAuthDomainByEmail(ctx, email)
 		if err != nil {
 			zap.L().Error("failed to get org domain from email", zap.String("email", email), zap.Error(err))
 			return nil, err
@@ -207,4 +205,30 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 		}
 	}
 	return resp, nil
+}
+
+func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error) {
+
+	if email == "" {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
+	}
+
+	components := strings.Split(email, "@")
+	if len(components) < 2 {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to start transaction")
+	}
+
+	domain, err := m.store.GetDomainByName(ctx, components[1])
+	if err != nil {
+		return nil, err
+	}
+	if domain == nil {
+		return nil, nil
+	}
+
+	gettableDomain := &types.GettableOrgDomain{StorableOrgDomain: *domain}
+	if err := gettableDomain.LoadConfig(domain.Data); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to load domain config")
+	}
+	return gettableDomain, nil
 }

@@ -6,8 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/SigNoz/signoz/ee/modules/authdomain"
-	"github.com/SigNoz/signoz/ee/modules/authdomain/implauthdomain"
 	eeuserimpl "github.com/SigNoz/signoz/ee/modules/user/impluser"
 	"github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
@@ -124,12 +122,11 @@ func main() {
 		signoz.NewWebProviderFactories(),
 		sqlStoreFactories,
 		signoz.NewTelemetryStoreProviderFactories(),
-		func(sqlstore sqlstore.SQLStore) (user.Module, authdomain.Module) {
-			authDomainModule := implauthdomain.NewModule(implauthdomain.NewStore(sqlstore))
-			return eeuserimpl.NewModule(impluser.NewStore(sqlstore), authDomainModule), authDomainModule
+		func(sqlstore sqlstore.SQLStore) user.Module {
+			return eeuserimpl.NewModule(impluser.NewStore(sqlstore))
 		},
-		func(userModule user.Module, authdomainModule authdomain.Module) user.Handler {
-			return eeuserimpl.NewHandler(userModule, authdomainModule)
+		func(userModule user.Module) user.Handler {
+			return eeuserimpl.NewHandler(userModule)
 		},
 	)
 	if err != nil {

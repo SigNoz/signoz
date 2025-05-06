@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/ee/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -16,17 +15,15 @@ import (
 
 // EnterpriseHandler embeds the base handler implementation
 type Handler struct {
-	user.Handler     // Embed the base handler interface
-	module           user.Module
-	authDomainModule authdomain.Module
+	user.Handler // Embed the base handler interface
+	module       user.Module
 }
 
-func NewHandler(module user.Module, authdomain authdomain.Module) user.Handler {
+func NewHandler(module user.Module) user.Handler {
 	baseHandler := impluser.NewHandler(module)
 	return &Handler{
-		Handler:          baseHandler,
-		module:           module,
-		authDomainModule: authdomain,
+		Handler: baseHandler,
+		module:  module,
 	}
 }
 
@@ -68,7 +65,7 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgDomain, err := h.authDomainModule.GetAuthDomainByEmail(ctx, invite.Email)
+	orgDomain, err := h.module.GetAuthDomainByEmail(ctx, invite.Email)
 	if err != nil {
 		render.Error(w, err)
 		return

@@ -253,3 +253,7 @@ func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email stri
 func (m *Module) CanUsePassword(ctx context.Context, email string) (bool, error) {
 	return false, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SSO is not supported")
 }
+
+func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error) {
+	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SSO is not supported")
+}

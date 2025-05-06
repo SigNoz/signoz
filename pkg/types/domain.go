@@ -1,7 +1,6 @@
 package types
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -9,7 +8,6 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/sso"
 	"github.com/SigNoz/signoz/ee/query-service/sso/saml"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	saml2 "github.com/russellhaering/gosaml2"
@@ -17,14 +15,10 @@ import (
 	"go.uber.org/zap"
 )
 
-type AuthDomainStore interface {
-	GetDomainByName(ctx context.Context, email string) (*StorableOrgDomain, error)
-}
-
 type StorableOrgDomain struct {
 	bun.BaseModel `bun:"table:org_domains"`
 
-	types.TimeAuditable
+	TimeAuditable
 	ID    uuid.UUID `json:"id" bun:"id,pk,type:text"`
 	OrgID string    `json:"orgId" bun:"org_id,type:text,notnull"`
 	Name  string    `json:"name" bun:"name,type:varchar(50),notnull,unique"`
@@ -48,7 +42,7 @@ type GettableOrgDomain struct {
 	SamlConfig       *SamlConfig        `json:"samlConfig"`
 	GoogleAuthConfig *GoogleOAuthConfig `json:"googleAuthConfig"`
 
-	Org *types.Organization
+	Org *Organization
 }
 
 func (od *GettableOrgDomain) String() string {

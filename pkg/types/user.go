@@ -43,6 +43,9 @@ type UserStore interface {
 	GetFactorResetPassword(ctx context.Context, token string) (*FactorResetPasswordRequest, error)
 	UpdatePassword(ctx context.Context, userID string, password string) error
 	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error
+
+	// Auth Domain
+	GetDomainByName(ctx context.Context, name string) (*StorableOrgDomain, error)
 }
 
 type User struct {
