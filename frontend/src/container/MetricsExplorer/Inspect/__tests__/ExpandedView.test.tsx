@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 
 import {
-	SPACE_AGGREGATION_OPTIONS,
+	SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW,
 	TIME_AGGREGATION_OPTIONS,
 } from '../constants';
 import ExpandedView from '../ExpandedView';
@@ -86,7 +86,7 @@ describe('ExpandedView', () => {
 		const graphPopoverCells = screen.getAllByTestId('graph-popover-cell');
 		expect(graphPopoverCells).toHaveLength(mockTimeSeries.values.length * 2);
 		expect(screen.getByText('Jan 1, 2023 ⎯ 07:00:00')).toBeInTheDocument();
-		expect(screen.getByText('42.123')).toBeInTheDocument();
+		expect(screen.getAllByText('42.123')).toHaveLength(2);
 	});
 
 	it('renders correct split data for a time aggregation inspection', () => {
@@ -110,7 +110,7 @@ describe('ExpandedView', () => {
 		expect(screen.getByText('Jan 1, 2023 ⎯ 07:00:00')).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				`42 is the ${
+				`42.123 is the ${
 					TIME_AGGREGATION_OPTIONS[
 						mockMetricInspectionOptions.timeAggregationOption as TimeAggregationOptions
 					]
@@ -139,8 +139,8 @@ describe('ExpandedView', () => {
 		);
 		expect(
 			screen.getByText(
-				`42 is the ${
-					SPACE_AGGREGATION_OPTIONS[
+				`42.123 is the ${
+					SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW[
 						mockMetricInspectionOptions.spaceAggregationOption as SpaceAggregationOptions
 					]
 				} of`,

@@ -44,6 +44,7 @@ export interface GraphViewProps {
 	setShowExpandedView: (showExpandedView: boolean) => void;
 	setExpandedViewOptions: (options: GraphPopoverOptions | null) => void;
 	metricInspectionOptions: MetricInspectionOptions;
+	isInspectMetricsRefetching: boolean;
 }
 
 export interface QueryBuilderProps {
@@ -164,6 +165,8 @@ export interface TableViewProps {
 	inspectMetricsTimeSeries: InspectMetricsSeries[];
 	setShowExpandedView: (showExpandedView: boolean) => void;
 	setExpandedViewOptions: (options: GraphPopoverOptions | null) => void;
+	metricInspectionOptions: MetricInspectionOptions;
+	isInspectMetricsRefetching: boolean;
 }
 
 export interface TableViewDataItem {

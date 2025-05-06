@@ -61,6 +61,16 @@ export const SPACE_AGGREGATION_OPTIONS: Record<
 	[SpaceAggregationOptions.AVG_BY]: 'Avg by',
 };
 
+export const SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW: Record<
+	SpaceAggregationOptions,
+	string
+> = {
+	[SpaceAggregationOptions.SUM_BY]: 'Sum',
+	[SpaceAggregationOptions.MIN_BY]: 'Min',
+	[SpaceAggregationOptions.MAX_BY]: 'Max',
+	[SpaceAggregationOptions.AVG_BY]: 'Avg',
+};
+
 export const INITIAL_INSPECT_METRICS_OPTIONS: MetricInspectionOptions = {
 	timeAggregationOption: undefined,
 	timeAggregationInterval: undefined,

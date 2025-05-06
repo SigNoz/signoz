@@ -188,6 +188,10 @@ function Summary(): JSX.Element {
 	};
 
 	const closeInspectModal = (): void => {
+		handleChangeQueryData('filters', {
+			items: [],
+			op: 'AND',
+		});
 		setIsInspectModalOpen(false);
 		setSelectedMetricName(null);
 	};

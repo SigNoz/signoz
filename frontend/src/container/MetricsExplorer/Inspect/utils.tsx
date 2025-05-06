@@ -1,5 +1,4 @@
 /* eslint-disable no-nested-ternary */
-import { InfoCircleFilled } from '@ant-design/icons';
 import { Card, Input, Select, Typography } from 'antd';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
@@ -165,7 +164,6 @@ export function MetricTimeAggregation({
 				})}
 			>
 				<Typography.Text>AGGREGATE BY TIME</Typography.Text>
-				<InfoCircleFilled />
 			</div>
 			<div className="metric-time-aggregation-content">
 				<div className="inspect-metrics-input-group">
@@ -236,7 +234,6 @@ export function MetricSpaceAggregation({
 				})}
 			>
 				<Typography.Text>AGGREGATE BY LABELS</Typography.Text>
-				<InfoCircleFilled />
 			</div>
 			<div className="metric-space-aggregation-content">
 				<div className="metric-space-aggregation-content-left">

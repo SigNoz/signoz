@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import store from 'store';
 
+import ROUTES from '../../../../constants/routes';
 import Inspect from '../Inspect';
 import { InspectionStep } from '../types';
 
@@ -54,6 +55,13 @@ jest.mock('uplot', () =>
 		destroy: jest.fn(),
 	})),
 );
+
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { pathname: string } => ({
+		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
+	}),
+}));
 
 const mockResizeObserver = jest.fn();
 mockResizeObserver.mockImplementation(() => ({

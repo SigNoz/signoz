@@ -59,7 +59,7 @@ function GraphPopover({
 				</div>
 				<div className="inspect-graph-popover-button-row">
 					<Button size="small" type="primary" onClick={openInExpandedView}>
-						<Typography.Text>Click to see more</Typography.Text>
+						<Typography.Text>View details</Typography.Text>
 						<ArrowRight size={10} />
 					</Button>
 				</div>

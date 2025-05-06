@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button, Switch, Typography } from 'antd';
+import { Button, Skeleton, Switch, Typography } from 'antd';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -28,6 +28,7 @@ function GraphView({
 	setShowExpandedView,
 	setExpandedViewOptions,
 	metricInspectionOptions,
+	isInspectMetricsRefetching,
 }: GraphViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -210,15 +211,21 @@ function GraphView({
 				</div>
 			</div>
 			<div className="graph-view-container">
-				{viewType === 'graph' && (
-					<Uplot data={formattedInspectMetricsTimeSeries} options={options} />
-				)}
+				{viewType === 'graph' &&
+					(isInspectMetricsRefetching ? (
+						<Skeleton active />
+					) : (
+						<Uplot data={formattedInspectMetricsTimeSeries} options={options} />
+					))}
+
 				{viewType === 'table' && (
 					<TableView
 						inspectionStep={inspectionStep}
 						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
 						setShowExpandedView={setShowExpandedView}
 						setExpandedViewOptions={setExpandedViewOptions}
+						metricInspectionOptions={metricInspectionOptions}
+						isInspectMetricsRefetching={isInspectMetricsRefetching}
 					/>
 				)}
 			</div>

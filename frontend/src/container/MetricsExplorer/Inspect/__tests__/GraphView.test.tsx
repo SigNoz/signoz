@@ -9,7 +9,11 @@ import store from 'store';
 import { AlignedData } from 'uplot';
 
 import GraphView from '../GraphView';
-import { InspectionStep } from '../types';
+import {
+	InspectionStep,
+	SpaceAggregationOptions,
+	TimeAggregationOptions,
+} from '../types';
 
 jest.mock('uplot', () =>
 	jest.fn().mockImplementation(() => ({
@@ -56,6 +60,17 @@ describe('GraphView', () => {
 		setExpandedViewOptions: jest.fn(),
 		resetInspection: jest.fn(),
 		showExpandedView: false,
+		metricInspectionOptions: {
+			timeAggregationInterval: 60,
+			spaceAggregationOption: SpaceAggregationOptions.MAX_BY,
+			spaceAggregationLabels: ['host_name'],
+			timeAggregationOption: TimeAggregationOptions.MAX,
+			filters: {
+				items: [],
+				op: 'AND',
+			},
+		},
+		isInspectMetricsRefetching: false,
 	};
 
 	beforeEach(() => {

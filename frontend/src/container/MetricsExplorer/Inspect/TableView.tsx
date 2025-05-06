@@ -10,14 +10,24 @@ function TableView({
 	inspectMetricsTimeSeries,
 	setShowExpandedView,
 	setExpandedViewOptions,
+	isInspectMetricsRefetching,
+	metricInspectionOptions,
 }: TableViewProps): JSX.Element {
-	const labelKeys = useMemo(
+	const isSpaceAggregatedWithoutLabel = useMemo(
 		() =>
-			inspectMetricsTimeSeries.length > 0
-				? Object.keys(inspectMetricsTimeSeries[0].labels)
-				: [],
-		[inspectMetricsTimeSeries],
+			!!metricInspectionOptions.spaceAggregationOption &&
+			metricInspectionOptions.spaceAggregationLabels.length === 0,
+		[metricInspectionOptions],
 	);
+	const labelKeys = useMemo(() => {
+		if (isSpaceAggregatedWithoutLabel) {
+			return [];
+		}
+		if (inspectMetricsTimeSeries.length > 0) {
+			return Object.keys(inspectMetricsTimeSeries[0].labels);
+		}
+		return [];
+	}, [inspectMetricsTimeSeries, isSpaceAggregatedWithoutLabel]);
 
 	const getDynamicColumnStyle = (strokeColor?: string): React.CSSProperties => {
 		const style: React.CSSProperties = {
@@ -118,6 +128,7 @@ function TableView({
 				}>
 			}
 			scroll={{ x: '100%' }}
+			loading={isInspectMetricsRefetching}
 		/>
 	);
 }

@@ -5,12 +5,20 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import store from 'store';
 
+import ROUTES from '../../../../constants/routes';
 import QueryBuilder from '../QueryBuilder';
 import {
 	InspectionStep,
 	SpaceAggregationOptions,
 	TimeAggregationOptions,
 } from '../types';
+
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { pathname: string } => ({
+		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
+	}),
+}));
 
 const queryClient = new QueryClient();
 
@@ -33,6 +41,12 @@ describe('QueryBuilder', () => {
 		metricType: MetricType.SUM,
 		inspectionStep: InspectionStep.TIME_AGGREGATION,
 		inspectMetricsTimeSeries: [],
+		searchQuery: {
+			filters: {
+				items: [],
+				op: 'and',
+			},
+		} as any,
 	};
 
 	beforeEach(() => {

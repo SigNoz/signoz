@@ -12,7 +12,7 @@ import { ArrowDownCircle, ArrowRightCircle, Focus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
-	SPACE_AGGREGATION_OPTIONS,
+	SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW,
 	TIME_AGGREGATION_OPTIONS,
 } from './constants';
 import {
@@ -86,7 +86,8 @@ function ExpandedView({
 			timeAggregatedSeriesMap
 				.get(options?.timestamp)
 				?.filter(
-					(popoverData) => popoverData.title === options.timeSeries?.title,
+					(popoverData) =>
+						popoverData.title && popoverData.title === options.timeSeries?.title,
 				) ?? []
 		);
 	}, [
@@ -148,7 +149,7 @@ function ExpandedView({
 							</Typography.Text>
 							<Typography.Text strong>
 								{`${absoluteValue} is the ${
-									SPACE_AGGREGATION_OPTIONS[
+									SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW[
 										metricInspectionOptions.spaceAggregationOption ??
 											SpaceAggregationOptions.SUM_BY
 									]
@@ -163,8 +164,8 @@ function ExpandedView({
 									VALUES
 								</Typography.Text>
 								<div className="graph-popover-inner-row">
-									{spaceAggregatedData?.map(({ value }) => (
-										<Tooltip key={value} title={value}>
+									{spaceAggregatedData?.map(({ value, title, timestamp }) => (
+										<Tooltip key={`${title}-${timestamp}-${value}`} title={value}>
 											<div className="graph-popover-cell" data-testid="graph-popover-cell">
 												{value}
 											</div>
@@ -215,9 +216,20 @@ function ExpandedView({
 								</Typography.Text>
 							)}
 							<Typography.Text strong>
-								{selectedTimeSeries?.values.find(
-									(value) => value?.timestamp >= (options?.timestamp || 0),
-								)?.value ?? options?.value}
+								{step === InspectionStep.COMPLETED
+									? `${
+											selectedTimeSeries?.values.find(
+												(value) => value?.timestamp >= (options?.timestamp || 0),
+											)?.value ?? options?.value
+									  } is the ${
+											TIME_AGGREGATION_OPTIONS[
+												metricInspectionOptions.timeAggregationOption ??
+													TimeAggregationOptions.SUM
+											]
+									  } of`
+									: selectedTimeSeries?.values.find(
+											(value) => value?.timestamp >= (options?.timestamp || 0),
+									  )?.value ?? options?.value}
 							</Typography.Text>
 						</div>
 
@@ -228,8 +240,8 @@ function ExpandedView({
 									RAW VALUES
 								</Typography.Text>
 								<div className="graph-popover-inner-row">
-									{rawData?.map(({ value: rawValue }) => (
-										<Tooltip key={rawValue} title={rawValue}>
+									{rawData?.map(({ value: rawValue, timestamp, title }) => (
+										<Tooltip key={`${title}-${timestamp}-${rawValue}`} title={rawValue}>
 											<div className="graph-popover-cell" data-testid="graph-popover-cell">
 												{rawValue}
 											</div>
@@ -284,8 +296,8 @@ function ExpandedView({
 									RAW VALUES
 								</Typography.Text>
 								<div className="graph-popover-inner-row">
-									{timeAggregatedData?.map(({ value }) => (
-										<Tooltip key={value} title={value}>
+									{timeAggregatedData?.map(({ value, title, timestamp }) => (
+										<Tooltip key={`${title}-${timestamp}-${value}`} title={value}>
 											<div className="graph-popover-cell" data-testid="graph-popover-cell">
 												{value}
 											</div>

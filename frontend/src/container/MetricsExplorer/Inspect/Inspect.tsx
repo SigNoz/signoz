@@ -178,6 +178,7 @@ function Inspect({
 						setExpandedViewOptions={setExpandedViewOptions}
 						popoverOptions={popoverOptions}
 						metricInspectionOptions={metricInspectionOptions}
+						isInspectMetricsRefetching={isInspectMetricsRefetching}
 					/>
 					<QueryBuilder
 						metricName={metricName}
