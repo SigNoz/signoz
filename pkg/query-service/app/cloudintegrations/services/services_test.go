@@ -20,15 +20,15 @@ func TestAvailableServices(t *testing.T) {
 	require.Greater(len(awsSvcs), 0)
 
 	// should be able to get details of a service
-	_, apiErr = GetServiceDefinition(
+	_, err := GetServiceDefinition(
 		"aws", "bad-service-id",
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 	require.Equal(model.ErrorNotFound, apiErr.Type())
 
-	svc, apiErr := GetServiceDefinition(
+	svc, err := GetServiceDefinition(
 		"aws", awsSvcs[0].Id,
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 	require.Equal(*svc, awsSvcs[0])
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -199,7 +200,7 @@ type IntegrationConfigForAgent struct {
 
 func (c *Controller) CheckInAsAgent(
 	ctx context.Context, orgId string, cloudProvider string, req AgentCheckInRequest,
-) (*AgentCheckInResponse, *model.ApiError) {
+) (*AgentCheckInResponse, error) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -249,9 +250,9 @@ func (c *Controller) CheckInAsAgent(
 		agentConfig.EnabledRegions = account.Config.EnabledRegions
 	}
 
-	services, apiErr := services.Map(cloudProvider)
-	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
+	services, err := services.Map(cloudProvider)
+	if err != nil {
+		return nil, err
 	}
 
 	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
@@ -276,8 +277,7 @@ func (c *Controller) CheckInAsAgent(
 
 		err := AddServiceStrategy(compliedStrategy, definition.Strategy, config)
 		if err != nil {
-			return nil, model.InternalError(
-				fmt.Errorf("couldn't add service telemetry collection strategy: %s", err))
+			return nil, err
 		}
 	}
 
@@ -397,15 +397,14 @@ func (c *Controller) GetServiceDetails(
 	cloudProvider string,
 	serviceId string,
 	cloudAccountId *string,
-) (*ServiceDetails, *model.ApiError) {
-
+) (*ServiceDetails, error) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
 
-	definition, apiErr := services.GetServiceDefinition(cloudProvider, serviceId)
-	if apiErr != nil {
-		return nil, apiErr
+	definition, err := services.GetServiceDefinition(cloudProvider, serviceId)
+	if err != nil {
+		return nil, err
 	}
 
 	details := ServiceDetails{
@@ -443,6 +442,8 @@ func (c *Controller) GetServiceDetails(
 				)
 				if enabled {
 					definition.Assets.Dashboards[i].Url = fmt.Sprintf("/dashboard/%s", dashboardUuid)
+				} else {
+					definition.Assets.Dashboards[i].Url = "" // to unset the in-memory URL if enabled once and disabled afterwards
 				}
 			}
 		}
@@ -458,7 +459,7 @@ type UpdateServiceConfigRequest struct {
 
 func (u *UpdateServiceConfigRequest) Validate(def *services.Definition) error {
 	if def.Id != services.S3Sync && u.Config.Logs != nil && u.Config.Logs.S3Buckets != nil {
-		return fmt.Errorf("s3 buckets can only be added to service-type[%s]", services.S3Sync)
+		return errors.Wrapf(nil, errors.TypeForbidden, errors.CodeForbidden, "s3 buckets can only be added to service-type[%s]", services.S3Sync)
 	} else if u.Config.Logs.S3Buckets != nil {
 		// TODO: add validation for aws regions
 	}
@@ -477,23 +478,23 @@ func (c *Controller) UpdateServiceConfig(
 	cloudProvider string,
 	serviceType string,
 	req *UpdateServiceConfigRequest,
-) (*UpdateServiceConfigResponse, *model.ApiError) {
+) (*UpdateServiceConfigResponse, error) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
 
 	// can only update config for a valid service.
-	definition, apiErr := services.GetServiceDefinition(cloudProvider, serviceType)
-	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "unsupported service")
+	definition, err := services.GetServiceDefinition(cloudProvider, serviceType)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := req.Validate(definition); err != nil {
-		return nil, model.BadRequest(err)
+		return nil, err
 	}
 
 	// can only update config for a connected cloud account id
-	_, apiErr = c.accountsRepo.getConnectedCloudAccount(
+	_, apiErr := c.accountsRepo.getConnectedCloudAccount(
 		ctx, orgID, cloudProvider, req.CloudAccountId,
 	)
 	if apiErr != nil {

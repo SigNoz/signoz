@@ -9,6 +9,7 @@ import (
 	"path"
 	"sort"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	koanfJson "github.com/knadh/koanf/parsers/json"
@@ -17,6 +18,11 @@ import (
 
 const (
 	S3Sync = "s3sync"
+)
+
+var (
+	CodeUnsupportedCloudProvider = errors.MustNewCode("unsupported_cloud_provider")
+	CodeUnsupportedServiceType   = errors.MustNewCode("unsupported_service_type")
 )
 
 func List(cloudProvider string) ([]Definition, *model.ApiError) {
@@ -35,32 +41,24 @@ func List(cloudProvider string) ([]Definition, *model.ApiError) {
 	return services, nil
 }
 
-func Map(cloudprovider string) (map[string]Definition, *model.ApiError) {
+func Map(cloudprovider string) (map[string]Definition, error) {
 	cloudServices, found := supportedServices[cloudprovider]
 	if !found || cloudServices == nil {
-		return nil, model.NotFoundError(fmt.Errorf(
-			"unsupported cloud provider: %s", cloudprovider,
-		))
+		return nil, errors.Newf(errors.TypeNotFound, CodeUnsupportedCloudProvider, "unsupported cloud provider: %s", cloudprovider)
 	}
 
 	return cloudServices, nil
 }
 
-func GetServiceDefinition(
-	cloudProvider string, serviceType string,
-) (*Definition, *model.ApiError) {
+func GetServiceDefinition(cloudProvider, serviceType string) (*Definition, error) {
 	cloudServices := supportedServices[cloudProvider]
 	if cloudServices == nil {
-		return nil, model.NotFoundError(fmt.Errorf(
-			"unsupported cloud provider: %s", cloudProvider,
-		))
+		return nil, errors.Newf(errors.TypeNotFound, CodeUnsupportedCloudProvider, "unsupported cloud provider: %s", cloudProvider)
 	}
 
 	svc, exists := cloudServices[serviceType]
 	if !exists {
-		return nil, model.NotFoundError(fmt.Errorf(
-			"%s service not found: %s", cloudProvider, serviceType,
-		))
+		return nil, errors.Newf(errors.TypeNotFound, CodeUnsupportedServiceType, "%s service not found: %s", cloudProvider, serviceType)
 	}
 
 	return &svc, nil

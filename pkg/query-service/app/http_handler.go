@@ -3986,12 +3986,12 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(
 		return
 	}
 
-	result, apiErr := aH.CloudIntegrationsController.CheckInAsAgent(
+	result, err := aH.CloudIntegrationsController.CheckInAsAgent(
 		r.Context(), claims.OrgID, cloudProvider, req,
 	)
 
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -4111,11 +4111,11 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 		return
 	}
 
-	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
+	resp, err := aH.CloudIntegrationsController.GetServiceDetails(
 		r.Context(), claims.OrgID, cloudProvider, serviceId, cloudAccountId,
 	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -4359,12 +4359,12 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 		return
 	}
 
-	result, apiErr := aH.CloudIntegrationsController.UpdateServiceConfig(
+	result, err := aH.CloudIntegrationsController.UpdateServiceConfig(
 		r.Context(), claims.OrgID, cloudProvider, serviceId, &req,
 	)
 
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 

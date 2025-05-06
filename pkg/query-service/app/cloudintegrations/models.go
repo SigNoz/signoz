@@ -66,7 +66,7 @@ func AddServiceStrategy(cs *CompiledCollectionStrategy,
 	definitionStrat *services.CollectionStrategy, config *types.CloudServiceConfig) error {
 	if definitionStrat.Provider != cs.Provider {
 		return fmt.Errorf(
-			"can't add %s service strategy to strategy for %s",
+			"can't add %s service strategy to compiled strategy for %s",
 			definitionStrat.Provider, cs.Provider,
 		)
 	}
