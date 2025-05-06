@@ -215,7 +215,7 @@ func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types
 
 	components := strings.Split(email, "@")
 	if len(components) < 2 {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to start transaction")
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email format")
 	}
 
 	domain, err := m.store.GetDomainByName(ctx, components[1])

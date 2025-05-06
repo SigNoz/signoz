@@ -35,7 +35,7 @@ func (s *store) GetDomainByName(ctx context.Context, name string) (*types.Storab
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get domain from email")
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get domain from name")
 	}
 	return domain, nil
 }
