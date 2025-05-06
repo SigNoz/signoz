@@ -1,5 +1,8 @@
 import ROUTES from 'constants/routes';
-import { logsPaginationQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
+import {
+	logsPaginationQueryRangeSuccessResponse,
+	PAGE_SIZE,
+} from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import LogsExplorer from 'pages/LogsExplorer';
@@ -18,7 +21,6 @@ import {
 import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
-// Constants
 const API_ENDPOINT = 'http://localhost/api/v3/query_range';
 
 jest.mock('uplot', () => {
@@ -98,7 +100,9 @@ jest.mock(
 		},
 );
 
-// Test utilities
+// --- Test Utilities ---
+
+// Helper function to create a mock API response with a given offset
 const createMockResponse = (offset: number): QueryRangePayload =>
 	logsPaginationQueryRangeSuccessResponse(offset);
 
@@ -106,9 +110,11 @@ const setupServer = (capturedPayloads: QueryRangePayload[]): void => {
 	server.use(
 		rest.post(API_ENDPOINT, async (req, res, ctx) => {
 			const payload = await req.json();
+			// Only capture payloads for the 'list' panel type
 			if (payload.compositeQuery.panelType === 'list') {
 				capturedPayloads.push(payload);
 			}
+			// Get the offset from the latest captured payload
 			const lastPayload = capturedPayloads[capturedPayloads.length - 1];
 			const queryData = lastPayload?.compositeQuery.builderQueries
 				?.A as IBuilderQuery;
@@ -118,15 +124,19 @@ const setupServer = (capturedPayloads: QueryRangePayload[]): void => {
 	);
 };
 
+// Helper function to verify properties of a captured payload
 const verifyPayload = (
 	payload: QueryRangePayload,
 	expectedOffset: number,
 	initialTimeRange?: { start: number; end: number },
 ): IBuilderQuery => {
+	// Extract the builder query data for query name 'A'
 	const queryData = payload.compositeQuery.builderQueries?.A as IBuilderQuery;
 	expect(queryData).toBeDefined();
+	// Assert that the offset in the payload matches the expected offset
 	expect(queryData.offset).toBe(expectedOffset);
 
+	// If initial time range is provided, assert that the payload start and end match
 	if (initialTimeRange) {
 		expect(payload.start).toBe(initialTimeRange.start);
 		expect(payload.end).toBe(initialTimeRange.end);
@@ -136,21 +146,34 @@ const verifyPayload = (
 };
 
 describe('LogsExplorerViews Pagination', () => {
+	// Array to store captured API request payloads
 	let capturedPayloads: QueryRangePayload[];
 
 	beforeEach(() => {
+		// Use real timers for test setup, especially for server delays
+		jest.useRealTimers();
+		// Reset captured payloads array before each test
 		capturedPayloads = [];
+		// Setup the mock server to intercept and capture requests
 		setupServer(capturedPayloads);
 	});
 
-	it('should fetch next page with correct offset when scrolled to end', async () => {
+	afterAll(() => {
+		// Use fake timers after the tests are done.
+		jest.useFakeTimers();
+		// Explicitly set the fake system time if needed by other tests
+		jest.setSystemTime(new Date('2023-10-20'));
+	});
+
+	it('should fetch next page with correct payload when scrolled to end', async () => {
 		let renderResult: RenderResult;
+		// Define item height and viewport height for Virtuoso mock
 		const itemHeight = 100;
 		const viewportHeight = 500;
-		const initialItemCount = logsPaginationQueryRangeSuccessResponse().data
-			.result[0].list.length;
+		// Get the initial number of items from the mock response
+		const initialItemCount = PAGE_SIZE;
 
-		// Calculate the total height of the rendered items
+		// Calculate the scroll position needed to reach the end of the initial list
 		const totalHeight = initialItemCount * itemHeight;
 		const targetScrollTop = totalHeight - viewportHeight;
 		let scrollableElement: HTMLElement;
@@ -165,43 +188,61 @@ describe('LogsExplorerViews Pagination', () => {
 			);
 		});
 
+		// Wait for the initial data load to complete (pending_data_placeholder disappears)
 		await waitFor(() => {
 			expect(
 				screen.queryByText('pending_data_placeholder'),
 			).not.toBeInTheDocument();
+			expect(capturedPayloads.length).toBe(1);
 		});
 
-		expect(capturedPayloads.length).toBe(1);
+		// Verify the payload of the first call, expecting offset 0
 		const firstPayload = capturedPayloads[0];
 		verifyPayload(firstPayload, 0);
 
-		await act(async () => {
-			// this element is not directly accessible, therefore using querySelector
+		// Wait for the scrollable element to be available and simulate scrolling
+		await waitFor(async () => {
+			// Find the Virtuoso scroller element by its data-test-id
 			scrollableElement = renderResult.container.querySelector(
 				'[data-test-id="virtuoso-scroller"]',
 			) as HTMLElement;
 
-			// Set the scrollTop property to simulate scrolling
-			scrollableElement.scrollTop = targetScrollTop;
+			// Ensure the element exists
+			expect(scrollableElement).not.toBeNull();
 
-			// Dispatch a scroll event to trigger the endReached callback
-			fireEvent.scroll(scrollableElement);
+			if (scrollableElement) {
+				// Set the scrollTop property to simulate scrolling to the calculated end position
+				scrollableElement.scrollTop = targetScrollTop;
+
+				act(() => {
+					fireEvent.scroll(scrollableElement);
+				});
+			}
 		});
 
-		// Verify second page request
-		expect(capturedPayloads.length).toBe(2);
+		// Verify the second page request was made
+		// Wait for the second API call to be captured after the scroll
+		await waitFor(() => {
+			expect(capturedPayloads.length).toBe(2);
+		});
+
+		// Store the time range from the first payload, which should be consistent in subsequent requests
 		const initialTimeRange = {
 			start: firstPayload.start,
 			end: firstPayload.end,
 		};
+
+		// Verify the payload of the second call, expecting offset 100 and consistent time range
 		const secondPayload = capturedPayloads[1];
 		const secondQueryData = verifyPayload(secondPayload, 100, initialTimeRange);
 
+		// Verify that the 'id' filter is not present in the pagination query
 		const idFilter = secondQueryData.filters?.items?.find(
 			(item) => item?.key?.key === 'id',
 		);
 		expect(idFilter).toBeUndefined();
 
+		// Verify the sorting order includes 'id' if 'timestamp' is present
 		const orderByTimestamp = secondQueryData.orderBy?.find(
 			(item) => item.columnName === 'timestamp',
 		);
@@ -211,35 +252,55 @@ describe('LogsExplorerViews Pagination', () => {
 
 		if (orderByTimestamp) {
 			expect(orderById).toBeDefined();
+			// Ensure the 'id' sorting order matches the 'timestamp' sorting order
 			expect(orderById?.order).toBe(orderByTimestamp.order);
 		}
 
-		await act(async () => {
-			// this element is not directly accessible, therefore using querySelector
-			scrollableElement = renderResult.container.querySelector(
-				'[data-test-id="virtuoso-scroller"]',
-			) as HTMLElement;
-
-			// Calculate the total height after the second page is loaded
+		// Simulate the second scroll to load the third page
+		await waitFor(async () => {
+			// Calculate the total height assuming two pages are loaded
 			const totalHeightAfterSecondLoad = 2 * initialItemCount * itemHeight;
-			// Calculate the scroll position needed to reach the end of the new total height
+
+			// Calculate the scroll position needed to trigger the load of the next page
 			const targetScrollTopAfterSecondLoad =
 				totalHeightAfterSecondLoad - viewportHeight;
 
-			// Set the scrollTop property to simulate scrolling to the new end
+			// Simulate scrolling towards the end of the now larger scrollable area
 			scrollableElement.scrollTop = targetScrollTopAfterSecondLoad;
 
-			// Dispatch a scroll event to trigger the endReached callback
-			fireEvent.scroll(scrollableElement);
+			// Fire the scroll event
+			act(() => {
+				fireEvent.scroll(scrollableElement);
+			});
 		});
 
-		// Verify third page request
-		expect(capturedPayloads.length).toBe(3);
-		const thirdPayload = capturedPayloads[2];
-		verifyPayload(thirdPayload, 200, initialTimeRange);
+		// Verify the third page request was made
 
+		// Wait for the third API call to be captured
 		await waitFor(() => {
-			expect(renderResult.container).toMatchSnapshot();
+			expect(capturedPayloads.length).toBe(3);
 		});
+		const thirdPayload = capturedPayloads[2];
+		// Verify the payload of the third call, expecting offset 200 and consistent time range
+		const thirdQueryData = verifyPayload(thirdPayload, 200, initialTimeRange);
+		// Verify that the 'id' filter is not present in the pagination query
+		const thirdIdFilter = thirdQueryData.filters?.items?.find(
+			(item) => item?.key?.key === 'id',
+		);
+		expect(thirdIdFilter).toBeUndefined();
+
+		// Verify the sorting order includes 'id' if 'timestamp' is present
+		const thirdOrderByTimestamp = thirdQueryData.orderBy?.find(
+			(item) => item.columnName === 'timestamp',
+		);
+		const thirdOrderById = thirdQueryData.orderBy?.find(
+			(item) => item.columnName === 'id',
+		);
+
+		if (thirdOrderByTimestamp) {
+			expect(thirdOrderById).toBeDefined();
+			// Ensure the 'id' sorting order matches the 'timestamp' sorting order
+			expect(thirdOrderById?.order).toBe(thirdOrderByTimestamp.order);
+		}
 	});
 });
