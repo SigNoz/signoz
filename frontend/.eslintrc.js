@@ -110,6 +110,7 @@ module.exports = {
 		// eslint rules need to remove
 		'@typescript-eslint/no-shadow': 'off',
 		'import/no-cycle': 'off',
+		// '@typescript-eslint/no-throw-literal': 'off',
 		'prettier/prettier': [
 			'error',
 			{},

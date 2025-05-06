@@ -12,6 +12,8 @@ const login = async (
 			...props,
 		});
 
+		console.log(response, 'response');
+
 		return {
 			statusCode: 200,
 			error: null,
@@ -19,6 +21,7 @@ const login = async (
 			payload: response.data,
 		};
 	} catch (error) {
+		console.log(error, 'error');
 		return ErrorResponseHandler(error as AxiosError);
 	}
 };
