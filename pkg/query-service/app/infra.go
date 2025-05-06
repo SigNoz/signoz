@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func (aH *APIHandler) getHostAttributeKeys(w http.ResponseWriter, r *http.Request) {
@@ -50,17 +53,27 @@ func (aH *APIHandler) getHostAttributeValues(w http.ResponseWriter, r *http.Requ
 
 func (aH *APIHandler) getHostList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := model.HostListRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
+	req := model.HostListRequest{}
 	// parse request
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
 	// get host list
-	hostList, err := aH.hostsRepo.GetHostList(ctx, req)
+	hostList, err := aH.hostsRepo.GetHostList(ctx, orgID, req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -106,15 +119,25 @@ func (aH *APIHandler) getProcessAttributeValues(w http.ResponseWriter, r *http.R
 
 func (aH *APIHandler) getProcessList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := model.ProcessListRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req := model.ProcessListRequest{}
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	hostList, err := aH.processesRepo.GetProcessList(ctx, req)
+	hostList, err := aH.processesRepo.GetProcessList(ctx, orgID, req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -159,15 +182,25 @@ func (aH *APIHandler) getPodAttributeValues(w http.ResponseWriter, r *http.Reque
 
 func (aH *APIHandler) getPodList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := model.PodListRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req := model.PodListRequest{}
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	podList, err := aH.podsRepo.GetPodList(ctx, req)
+	podList, err := aH.podsRepo.GetPodList(ctx, orgID, req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -212,15 +245,25 @@ func (aH *APIHandler) getNodeAttributeValues(w http.ResponseWriter, r *http.Requ
 
 func (aH *APIHandler) getNodeList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := model.NodeListRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req := model.NodeListRequest{}
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	nodeList, err := aH.nodesRepo.GetNodeList(ctx, req)
+	nodeList, err := aH.nodesRepo.GetNodeList(ctx, orgID, req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -265,15 +308,25 @@ func (aH *APIHandler) getNamespaceAttributeValues(w http.ResponseWriter, r *http
 
 func (aH *APIHandler) getNamespaceList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := model.NamespaceListRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req := model.NamespaceListRequest{}
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	namespaceList, err := aH.namespacesRepo.GetNamespaceList(ctx, req)
+	namespaceList, err := aH.namespacesRepo.GetNamespaceList(ctx, orgID, req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -318,15 +371,25 @@ func (aH *APIHandler) getClusterAttributeValues(w http.ResponseWriter, r *http.R
 
 func (aH *APIHandler) getClusterList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := model.ClusterListRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req := model.ClusterListRequest{}
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	clusterList, err := aH.clustersRepo.GetClusterList(ctx, req)
+	clusterList, err := aH.clustersRepo.GetClusterList(ctx, orgID, req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -371,15 +434,25 @@ func (aH *APIHandler) getDeploymentAttributeValues(w http.ResponseWriter, r *htt
 
 func (aH *APIHandler) getDeploymentList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := model.DeploymentListRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req := model.DeploymentListRequest{}
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	deploymentList, err := aH.deploymentsRepo.GetDeploymentList(ctx, req)
+	deploymentList, err := aH.deploymentsRepo.GetDeploymentList(ctx, orgID, req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -424,15 +497,25 @@ func (aH *APIHandler) getDaemonSetAttributeValues(w http.ResponseWriter, r *http
 
 func (aH *APIHandler) getDaemonSetList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := model.DaemonSetListRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req := model.DaemonSetListRequest{}
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	daemonSetList, err := aH.daemonsetsRepo.GetDaemonSetList(ctx, req)
+	daemonSetList, err := aH.daemonsetsRepo.GetDaemonSetList(ctx, orgID, req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -477,15 +560,25 @@ func (aH *APIHandler) getStatefulSetAttributeValues(w http.ResponseWriter, r *ht
 
 func (aH *APIHandler) getStatefulSetList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := model.StatefulSetListRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req := model.StatefulSetListRequest{}
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	statefulSetList, err := aH.statefulsetsRepo.GetStatefulSetList(ctx, req)
+	statefulSetList, err := aH.statefulsetsRepo.GetStatefulSetList(ctx, orgID, req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -528,15 +621,25 @@ func (aH *APIHandler) getJobAttributeValues(w http.ResponseWriter, r *http.Reque
 
 func (aH *APIHandler) getJobList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := model.JobListRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req := model.JobListRequest{}
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	jobList, err := aH.jobsRepo.GetJobList(ctx, req)
+	jobList, err := aH.jobsRepo.GetJobList(ctx, orgID, req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -547,15 +650,25 @@ func (aH *APIHandler) getJobList(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getPvcList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := model.VolumeListRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req := model.VolumeListRequest{}
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	pvcList, err := aH.pvcsRepo.GetPvcList(ctx, req)
+	pvcList, err := aH.pvcsRepo.GetPvcList(ctx, orgID, req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return

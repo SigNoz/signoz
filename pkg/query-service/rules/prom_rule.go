@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -28,6 +29,7 @@ type PromRule struct {
 
 func NewPromRule(
 	id string,
+	orgID valuer.UUID,
 	postableRule *ruletypes.PostableRule,
 	logger *zap.Logger,
 	reader interfaces.Reader,
@@ -35,7 +37,7 @@ func NewPromRule(
 	opts ...RuleOption,
 ) (*PromRule, error) {
 
-	baseRule, err := NewBaseRule(id, postableRule, reader, opts...)
+	baseRule, err := NewBaseRule(id, orgID, postableRule, reader, opts...)
 	if err != nil {
 		return nil, err
 	}
