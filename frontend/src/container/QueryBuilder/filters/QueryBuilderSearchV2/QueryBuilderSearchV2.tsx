@@ -92,6 +92,7 @@ interface QueryBuilderSearchV2Props {
 	suffixIcon?: React.ReactNode;
 	hardcodedAttributeKeys?: BaseAutocompleteData[];
 	operatorConfigKey?: OperatorConfigKeys;
+	hideSpanScopeSelector?: boolean;
 }
 
 export interface Option {
@@ -126,6 +127,7 @@ function QueryBuilderSearchV2(
 		whereClauseConfig,
 		hardcodedAttributeKeys,
 		operatorConfigKey,
+		hideSpanScopeSelector,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -936,11 +938,6 @@ function QueryBuilderSearchV2(
 		);
 	};
 
-	const isTracesDataSource = useMemo(
-		() => query.dataSource === DataSource.TRACES,
-		[query.dataSource],
-	);
-
 	return (
 		<div className="query-builder-search-v2">
 			<Select
@@ -1025,7 +1022,7 @@ function QueryBuilderSearchV2(
 					);
 				})}
 			</Select>
-			{isTracesDataSource && <SpanScopeSelector queryName={query.queryName} />}
+			{!hideSpanScopeSelector && <SpanScopeSelector queryName={query.queryName} />}
 		</div>
 	);
 }
@@ -1037,6 +1034,7 @@ QueryBuilderSearchV2.defaultProps = {
 	whereClauseConfig: {},
 	hardcodedAttributeKeys: undefined,
 	operatorConfigKey: undefined,
+	hideSpanScopeSelector: true,
 };
 
 export default QueryBuilderSearchV2;
