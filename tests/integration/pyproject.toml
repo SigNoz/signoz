@@ -27,6 +27,10 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 python_files = "src/**/**.py"
+log_cli = true
+log_format = "%(asctime)s [%(levelname)s] (%(filename)s:%(lineno)s) %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+addopts = "-ra"
 
 [tool.pylint.main]
 ignore = [".venv"]

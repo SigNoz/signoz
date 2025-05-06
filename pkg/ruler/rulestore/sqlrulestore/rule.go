@@ -128,16 +128,25 @@ func (r *rule) GetRuleUUID(ctx context.Context, ruleID int) (*ruletypes.RuleHist
 	return ruleHistory, nil
 }
 
-func (r *rule) ListOrgs(ctx context.Context) ([]string, error) {
-	orgIDs := []string{}
+func (r *rule) ListOrgs(ctx context.Context) ([]valuer.UUID, error) {
+	orgIDStrs := make([]string, 0)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
-		ColumnExpr("id").
 		Model(new(types.Organization)).
-		Scan(ctx, &orgIDs)
+		Column("id").
+		Scan(ctx, &orgIDStrs)
 	if err != nil {
-		return orgIDs, err
+		return nil, err
+	}
+
+	orgIDs := make([]valuer.UUID, len(orgIDStrs))
+	for idx, orgIDStr := range orgIDStrs {
+		orgID, err := valuer.NewUUID(orgIDStr)
+		if err != nil {
+			return nil, err
+		}
+		orgIDs[idx] = orgID
 	}
 
 	return orgIDs, nil
@@ -146,7 +155,7 @@ func (r *rule) ListOrgs(ctx context.Context) ([]string, error) {
 func (r *rule) getChannels() (*[]model.ChannelItem, *model.ApiError) {
 	channels := []model.ChannelItem{}
 
-	query := "SELECT id, created_at, updated_at, name, type, data FROM notification_channels"
+	query := "SELECT id, created_at, updated_at, name, type, data FROM notification_channel"
 
 	err := r.Select(&channels, query)
 
@@ -163,7 +172,7 @@ func (r *rule) getChannels() (*[]model.ChannelItem, *model.ApiError) {
 func (r *rule) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 	alertsInfo := model.AlertsInfo{}
 	// fetch alerts from rules db
-	query := "SELECT data FROM rules"
+	query := "SELECT data FROM rule"
 	var alertsData []string
 	var alertNames []string
 	err := r.Select(&alertsData, query)

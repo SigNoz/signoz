@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
@@ -198,7 +199,7 @@ func (d *StatefulSetsRepo) getMetadataAttributes(ctx context.Context, req model.
 	return statefulSetAttrs, nil
 }
 
-func (d *StatefulSetsRepo) getTopStatefulSetGroups(ctx context.Context, req model.StatefulSetListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (d *StatefulSetsRepo) getTopStatefulSetGroups(ctx context.Context, orgID valuer.UUID, req model.StatefulSetListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopStatefulSets(req)
 
 	queryNames := queryNamesForStatefulSets[req.OrderBy.ColumnName]
@@ -229,7 +230,7 @@ func (d *StatefulSetsRepo) getTopStatefulSetGroups(ctx context.Context, req mode
 		topStatefulSetGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := d.querierV2.QueryRange(ctx, topStatefulSetGroupsQueryRangeParams)
+	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, topStatefulSetGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -268,7 +269,7 @@ func (d *StatefulSetsRepo) getTopStatefulSetGroups(ctx context.Context, req mode
 	return topStatefulSetGroups, allStatefulSetGroups, nil
 }
 
-func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.StatefulSetListRequest) (model.StatefulSetListResponse, error) {
+func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, orgID valuer.UUID, req model.StatefulSetListRequest) (model.StatefulSetListResponse, error) {
 	resp := model.StatefulSetListResponse{}
 
 	if req.Limit == 0 {
@@ -320,7 +321,7 @@ func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.Sta
 		return resp, err
 	}
 
-	topStatefulSetGroups, allStatefulSetGroups, err := d.getTopStatefulSetGroups(ctx, req, query)
+	topStatefulSetGroups, allStatefulSetGroups, err := d.getTopStatefulSetGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -354,7 +355,7 @@ func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.Sta
 		}
 	}
 
-	queryResponse, _, err := d.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}

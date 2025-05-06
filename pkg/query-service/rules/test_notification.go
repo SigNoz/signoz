@@ -15,7 +15,6 @@ import (
 // TestNotification prepares a dummy rule for given rule parameters and
 // sends a test notification. returns alert count and error (if any)
 func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError) {
-
 	ctx := context.Background()
 
 	if opts.Rule == nil {
@@ -46,17 +45,16 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		// create a threshold rule
 		rule, err = NewThresholdRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Reader,
-			opts.UseLogsNewSchema,
-			opts.UseTraceNewSchema,
 			WithSendAlways(),
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new threshold rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new threshold rule for test", zap.Error(err))
 			return 0, model.BadRequest(err)
 		}
 
@@ -65,6 +63,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		// create promql rule
 		rule, err = NewPromRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Logger,
 			opts.Reader,
@@ -75,7 +74,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new promql rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new promql rule for test", zap.Error(err))
 			return 0, model.BadRequest(err)
 		}
 	} else {

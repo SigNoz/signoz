@@ -23,7 +23,6 @@ function getUserDefaults(): IUser {
 		organization: '',
 		orgId: '',
 		role: 'VIEWER',
-		groupId: '',
 	};
 }
 

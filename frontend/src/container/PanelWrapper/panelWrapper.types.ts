@@ -28,6 +28,7 @@ export type PanelWrapperProps = {
 	customTooltipElement?: HTMLDivElement;
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
+	customOnRowClick?: (record: RowData) => void;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
 };
 

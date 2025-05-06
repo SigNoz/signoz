@@ -390,7 +390,7 @@ function OnboardingAddDataSource(): JSX.Element {
 		setSetupStepItems([
 			{
 				...setupStepItemsBase[0],
-				description: org?.[0]?.name || '',
+				description: org?.[0]?.displayName || '',
 			},
 			...setupStepItemsBase.slice(1),
 		]);
@@ -403,7 +403,7 @@ function OnboardingAddDataSource(): JSX.Element {
 			setSetupStepItems([
 				{
 					...setupStepItemsBase[0],
-					description: org?.[0]?.name || '',
+					description: org?.[0]?.displayName || '',
 				},
 				{
 					...setupStepItemsBase[1],
@@ -415,7 +415,7 @@ function OnboardingAddDataSource(): JSX.Element {
 			setSetupStepItems([
 				{
 					...setupStepItemsBase[0],
-					description: org?.[0]?.name || '',
+					description: org?.[0]?.displayName || '',
 				},
 				{
 					...setupStepItemsBase[1],
@@ -450,6 +450,9 @@ function OnboardingAddDataSource(): JSX.Element {
 					break;
 				case 'integrations':
 					history.push(ROUTES.INTEGRATIONS);
+					break;
+				case 'home':
+					history.push(ROUTES.HOME);
 					break;
 				default:
 					history.push(ROUTES.APPLICATION);

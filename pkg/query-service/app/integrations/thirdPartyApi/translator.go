@@ -1,8 +1,14 @@
 package thirdPartyApi
 
 import (
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"net"
+
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+)
+
+const (
+	urlPathKey    = "http.url"
+	serverNameKey = "net.peer.name"
 )
 
 var defaultStepInterval int64 = 60
@@ -17,7 +23,7 @@ func FilterResponse(results []*v3.Result) []*v3.Result {
 		filteredRows := make([]*v3.TableRow, 0, len(res.Table.Rows))
 		for _, row := range res.Table.Rows {
 			if row.Data != nil {
-				if domainVal, ok := row.Data["net.peer.name"]; ok {
+				if domainVal, ok := row.Data[serverNameKey]; ok {
 					if domainStr, ok := domainVal.(string); ok {
 						if net.ParseIP(domainStr) != nil {
 							continue
@@ -63,7 +69,7 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		StepInterval:      defaultStepInterval,
 		AggregateOperator: v3.AggregateOperatorCountDistinct,
 		AggregateAttribute: v3.AttributeKey{
-			Key:      "http.url",
+			Key:      urlPathKey,
 			DataType: v3.AttributeKeyDataTypeString,
 			Type:     v3.AttributeKeyTypeTag,
 		},
@@ -74,7 +80,7 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 			Items: getFilterSet([]v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      "http.url",
+						Key:      urlPathKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						IsColumn: false,
 						Type:     v3.AttributeKeyTypeTag,
@@ -82,12 +88,21 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 					Operator: v3.FilterOperatorExists,
 					Value:    "",
 				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "kind_string",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: "=",
+					Value:    "Client",
+				},
 			}, thirdPartyApis.Filters),
 		},
 		Expression: "endpoints",
 		GroupBy: getGroupBy([]v3.AttributeKey{
 			{
-				Key:      "net.peer.name",
+				Key:      serverNameKey,
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
@@ -113,7 +128,7 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 			Items: getFilterSet([]v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      "http.url",
+						Key:      urlPathKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						IsColumn: false,
 						Type:     v3.AttributeKeyTypeTag,
@@ -121,12 +136,21 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 					Operator: v3.FilterOperatorExists,
 					Value:    "",
 				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "kind_string",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: "=",
+					Value:    "Client",
+				},
 			}, thirdPartyApis.Filters),
 		},
 		Expression: "lastseen",
 		GroupBy: getGroupBy([]v3.AttributeKey{
 			{
-				Key:      "net.peer.name",
+				Key:      serverNameKey,
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
@@ -152,7 +176,7 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 			Items: getFilterSet([]v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      "http.url",
+						Key:      urlPathKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						IsColumn: false,
 						Type:     v3.AttributeKeyTypeTag,
@@ -160,12 +184,21 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 					Operator: v3.FilterOperatorExists,
 					Value:    "",
 				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "kind_string",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: "=",
+					Value:    "Client",
+				},
 			}, thirdPartyApis.Filters),
 		},
 		Expression: "rps",
 		GroupBy: getGroupBy([]v3.AttributeKey{
 			{
-				Key:      "net.peer.name",
+				Key:      serverNameKey,
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
@@ -179,13 +212,13 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		QueryName:         "error",
 		DataSource:        v3.DataSourceTraces,
 		StepInterval:      defaultStepInterval,
-		AggregateOperator: v3.AggregateOperatorCountDistinct,
+		AggregateOperator: v3.AggregateOperatorCount,
 		AggregateAttribute: v3.AttributeKey{
 			Key:      "span_id",
 			DataType: v3.AttributeKeyDataTypeString,
 			IsColumn: true,
 		},
-		TimeAggregation:  v3.TimeAggregationCountDistinct,
+		TimeAggregation:  v3.TimeAggregationCount,
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
@@ -201,7 +234,7 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 				},
 				{
 					Key: v3.AttributeKey{
-						Key:      "http.url",
+						Key:      urlPathKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						IsColumn: false,
 						Type:     v3.AttributeKeyTypeTag,
@@ -209,12 +242,21 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 					Operator: v3.FilterOperatorExists,
 					Value:    "",
 				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "kind_string",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: "=",
+					Value:    "Client",
+				},
 			}, thirdPartyApis.Filters),
 		},
 		Expression: "error",
 		GroupBy: getGroupBy([]v3.AttributeKey{
 			{
-				Key:      "net.peer.name",
+				Key:      serverNameKey,
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
@@ -229,13 +271,13 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		QueryName:         "total_span",
 		DataSource:        v3.DataSourceTraces,
 		StepInterval:      defaultStepInterval,
-		AggregateOperator: v3.AggregateOperatorCountDistinct,
+		AggregateOperator: v3.AggregateOperatorCount,
 		AggregateAttribute: v3.AttributeKey{
 			Key:      "span_id",
 			DataType: v3.AttributeKeyDataTypeString,
 			IsColumn: true,
 		},
-		TimeAggregation:  v3.TimeAggregationCountDistinct,
+		TimeAggregation:  v3.TimeAggregationCount,
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
@@ -249,6 +291,15 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 					},
 					Operator: v3.FilterOperatorExists,
 					Value:    "",
+				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "kind_string",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: "=",
+					Value:    "Client",
 				},
 			}, thirdPartyApis.Filters),
 		},
@@ -284,7 +335,7 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 			Items: getFilterSet([]v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      "http.url",
+						Key:      urlPathKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						IsColumn: false,
 						Type:     v3.AttributeKeyTypeTag,
@@ -292,12 +343,21 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 					Operator: v3.FilterOperatorExists,
 					Value:    "",
 				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "kind_string",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: "=",
+					Value:    "Client",
+				},
 			}, thirdPartyApis.Filters),
 		},
 		Expression: "p99",
 		GroupBy: getGroupBy([]v3.AttributeKey{
 			{
-				Key:      "net.peer.name",
+				Key:      serverNameKey,
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
@@ -347,7 +407,7 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		StepInterval:      defaultStepInterval,
 		AggregateOperator: v3.AggregateOperatorCount,
 		AggregateAttribute: v3.AttributeKey{
-			Key:      "http.url",
+			Key:      urlPathKey,
 			DataType: v3.AttributeKeyDataTypeString,
 			Type:     v3.AttributeKeyTypeTag,
 		},
@@ -358,7 +418,7 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 			Items: getFilterSet([]v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      "http.url",
+						Key:      urlPathKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						IsColumn: false,
 						Type:     v3.AttributeKeyTypeTag,
@@ -366,13 +426,22 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 					Operator: v3.FilterOperatorExists,
 					Value:    "",
 				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "kind_string",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: "=",
+					Value:    "Client",
+				},
 			}, thirdPartyApis.Filters),
 		},
 		Expression: "endpoints",
 		Disabled:   false,
 		GroupBy: getGroupBy([]v3.AttributeKey{
 			{
-				Key:      "http.url",
+				Key:      urlPathKey,
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
@@ -398,13 +467,22 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 			Items: getFilterSet([]v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      "http.url",
+						Key:      urlPathKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						IsColumn: false,
 						Type:     v3.AttributeKeyTypeTag,
 					},
 					Operator: v3.FilterOperatorExists,
 					Value:    "",
+				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "kind_string",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: "=",
+					Value:    "Client",
 				},
 			}, thirdPartyApis.Filters),
 		},
@@ -431,13 +509,22 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 			Items: getFilterSet([]v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      "http.url",
+						Key:      urlPathKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						IsColumn: false,
 						Type:     v3.AttributeKeyTypeTag,
 					},
 					Operator: v3.FilterOperatorExists,
 					Value:    "",
+				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "kind_string",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: "=",
+					Value:    "Client",
 				},
 			}, thirdPartyApis.Filters),
 		},
@@ -463,13 +550,22 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 			Items: getFilterSet([]v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      "http.url",
+						Key:      urlPathKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						IsColumn: false,
 						Type:     v3.AttributeKeyTypeTag,
 					},
 					Operator: v3.FilterOperatorExists,
 					Value:    "",
+				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "kind_string",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: "=",
+					Value:    "Client",
 				},
 			}, thirdPartyApis.Filters),
 		},
