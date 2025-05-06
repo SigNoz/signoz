@@ -94,7 +94,6 @@ function AlertDetails(): JSX.Element {
 
 	useEffect(() => {
 		if (alertDetailsResponse?.payload?.data?.id) {
-			console.log('here - 1');
 			const ruleUUID = alertDetailsResponse.payload.data.id;
 			if (ruleId !== ruleUUID) {
 				urlQuery.set(QueryParams.ruleId, ruleUUID);
