@@ -8,7 +8,73 @@
     "logs": true
   },
   "data_collected": {
-    "metrics": []
+    "metrics": [
+      {
+        "name": "aws_ECS_CPUUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_CPUUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_CPUUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_CPUUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Account Id",
+        "path": "resources.cloud.account.id",
+        "type": "string"
+      },
+      {
+        "name": "Log Group Name",
+        "path": "resources.aws.cloudwatch.log_group_name",
+        "type": "string"
+      },
+      {
+        "name": "Log Stream Name",
+        "path": "resources.aws.cloudwatch.log_stream_name",
+        "type": "string"
+      }
+    ]
   },
   "telemetry_collection_strategy": {
     "aws_metrics": {
@@ -28,8 +94,6 @@
     }
   },
   "assets": {
-    "dashboards": [
-      
-    ]
+    "dashboards": []
   }
 }
