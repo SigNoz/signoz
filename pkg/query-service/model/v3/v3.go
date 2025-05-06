@@ -982,6 +982,7 @@ func (b *BuilderQuery) Clone() *BuilderQuery {
 		PageSize:             b.PageSize,
 		OrderBy:              b.OrderBy,
 		ReduceTo:             b.ReduceTo,
+		TraceOrdering:        b.TraceOrdering,
 		SelectColumns:        b.SelectColumns,
 		TimeAggregation:      b.TimeAggregation,
 		SpaceAggregation:     b.SpaceAggregation,
