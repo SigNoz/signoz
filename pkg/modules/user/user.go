@@ -37,9 +37,6 @@ type Module interface {
 	PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (string, error)
 	CanUsePassword(ctx context.Context, email string) (bool, error)
 
-	// remove this later
-	SendUserTelemetry(user *types.User, firstRegistration bool)
-
 	// password
 	CreateResetPasswordToken(ctx context.Context, userID string) (*types.FactorResetPasswordRequest, error)
 	GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error)

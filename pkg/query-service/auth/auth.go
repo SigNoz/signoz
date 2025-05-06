@@ -43,8 +43,6 @@ func RegisterOrgAndFirstUser(ctx context.Context, req *types.PostableRegisterOrg
 		return nil, model.InternalError(err)
 	}
 
-	userModule.SendUserTelemetry(user, true)
-
 	return user, nil
 }
 

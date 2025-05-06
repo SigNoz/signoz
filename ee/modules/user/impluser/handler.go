@@ -109,8 +109,5 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		precheckResp.IsUser = true
 	}
 
-	// send telemetry
-	h.module.SendUserTelemetry(user, false)
-
 	render.Success(w, http.StatusOK, precheckResp)
 }

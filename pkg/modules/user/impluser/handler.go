@@ -71,9 +71,6 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// send telemetry
-	h.module.SendUserTelemetry(user, false)
-
 	render.Success(w, http.StatusCreated, user)
 }
 

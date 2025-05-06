@@ -24,9 +24,7 @@ func InitDB(sqlStore sqlstore.SQLStore) (*ModelDaoSqlite, error) {
 		return nil, err
 	}
 
-	// TODO(Nitya): Check if we can do DI in this
-	// telemetry.GetInstance().SetUserCountCallback(mds.GetUserCount)
-	// telemetry.GetInstance().SetGetUsersCallback(mds.GetUsers)
+	telemetry.GetInstance().SetGetUsersCallback(telemetry.GetUsers)
 
 	return mds, nil
 }

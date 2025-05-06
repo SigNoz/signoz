@@ -8,7 +8,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -23,17 +22,6 @@ func NewModule(store types.UserStore) user.Module {
 	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
 	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)
 	return &Module{store: store, JWT: jwt}
-}
-
-func (m *Module) SendUserTelemetry(user *types.User, firstRegistration bool) {
-	data := map[string]interface{}{
-		"name":              user.DisplayName,
-		"email":             user.Email,
-		"firstRegistration": firstRegistration,
-	}
-
-	// telemetry.GetInstance().IdentifyUser(user)
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data, user.Email, true, false)
 }
 
 // CreateBulk implements invite.Module.
