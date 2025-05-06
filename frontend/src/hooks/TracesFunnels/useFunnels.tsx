@@ -14,6 +14,7 @@ import {
 	getFunnelSlowTraces,
 	getFunnelSteps,
 	renameFunnel,
+	RenameFunnelPayload,
 	saveFunnelDescription,
 	SlowTraceData,
 	SlowTracesPayload,
@@ -69,11 +70,6 @@ export const useCreateFunnel = (): UseMutationResult<
 	useMutation({
 		mutationFn: createFunnel,
 	});
-
-interface RenameFunnelPayload {
-	id: string;
-	funnel_name: string;
-}
 
 export const useRenameFunnel = (): UseMutationResult<
 	SuccessResponse<FunnelData> | ErrorResponse,

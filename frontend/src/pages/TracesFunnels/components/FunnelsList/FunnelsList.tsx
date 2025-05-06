@@ -23,7 +23,7 @@ export function FunnelListItem({
 }: FunnelListItemProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 	const funnelDetailsLink = generatePath(ROUTES.TRACES_FUNNELS_DETAIL, {
-		funnelId: funnel.id,
+		funnelId: funnel.funnel_id,
 	});
 
 	const content = (
@@ -46,19 +46,17 @@ export function FunnelListItem({
 				<div className="funnel-item__created-at">
 					<CalendarClock size={14} />
 					<div>
-						{dayjs(funnel.creation_timestamp).format(
-							DATE_TIME_FORMATS.FUNNELS_LIST_DATE,
-						)}
+						{dayjs(funnel.created_at).format(DATE_TIME_FORMATS.FUNNELS_LIST_DATE)}
 					</div>
 				</div>
 
 				<div className="funnel-item__user">
-					{funnel.user && (
+					{funnel.user_email && (
 						<div className="funnel-item__user-avatar">
-							{funnel.user.substring(0, 1).toUpperCase()}
+							{funnel.user_email.substring(0, 1).toUpperCase()}
 						</div>
 					)}
-					<div>{funnel.user}</div>
+					<div>{funnel.user_email}</div>
 				</div>
 			</div>
 		</>
@@ -99,7 +97,7 @@ function FunnelsList({
 		<div className="funnels-list">
 			{data?.map((funnel) => (
 				<FunnelListItem
-					key={funnel.id}
+					key={funnel.funnel_id}
 					funnel={funnel}
 					onFunnelClick={onFunnelClick}
 					shouldRedirectToTracesListOnDeleteSuccess={

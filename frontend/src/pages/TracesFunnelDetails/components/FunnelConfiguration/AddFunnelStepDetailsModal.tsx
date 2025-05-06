@@ -48,7 +48,7 @@ function AddFunnelStepDetailsModal({
 						description,
 					},
 				],
-				updated_timestamp: Date.now(),
+				updated_at: Date.now(),
 			},
 			{
 				onSuccess: () => {

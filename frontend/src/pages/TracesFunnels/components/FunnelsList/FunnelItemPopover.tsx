@@ -108,13 +108,13 @@ function FunnelItemPopover({
 				}
 				isOpen={isDeleteModalOpen}
 				onClose={(): void => setIsDeleteModalOpen(false)}
-				funnelId={funnel.id}
+				funnelId={funnel.funnel_id}
 			/>
 
 			<RenameFunnel
 				isOpen={isRenameModalOpen}
 				onClose={handleRenameCancel}
-				funnelId={funnel.id}
+				funnelId={funnel.funnel_id}
 				initialName={funnel.funnel_name}
 			/>
 		</div>

@@ -58,7 +58,10 @@ export default function useFunnelConfiguration({
 	);
 
 	// Mutation hooks
-	const updateStepsMutation = useUpdateFunnelSteps(funnel.id, notifications);
+	const updateStepsMutation = useUpdateFunnelSteps(
+		funnel.funnel_id,
+		notifications,
+	);
 
 	// Derived state
 	const lastSavedStepsStateRef = useRef<FunnelStepData[]>(steps);
@@ -88,22 +91,27 @@ export default function useFunnelConfiguration({
 	// Mutation payload preparation
 	const getUpdatePayload = useCallback(
 		() => ({
-			funnel_id: funnel.id,
+			funnel_id: funnel.funnel_id,
 			steps: debouncedSteps,
-			updated_timestamp: Date.now(),
+			timestamp: Date.now(),
 		}),
-		[funnel.id, debouncedSteps],
+		[funnel.funnel_id, debouncedSteps],
 	);
 
 	const queryClient = useQueryClient();
 	const { selectedTime } = useFunnelContext();
 
 	const validateStepsQueryKey = useMemo(
-		() => [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnel.id, selectedTime],
-		[funnel.id, selectedTime],
+		() => [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnel.funnel_id, selectedTime],
+		[funnel.funnel_id, selectedTime],
 	);
 	useEffect(() => {
-		if (hasStepsChanged()) {
+		// Check if all steps have both service_name and span_name defined
+		const shouldUpdate = debouncedSteps.every(
+			(step) => step.service_name !== '' && step.span_name !== '',
+		);
+
+		if (hasStepsChanged() && shouldUpdate) {
 			updateStepsMutation.mutate(getUpdatePayload(), {
 				onSuccess: (data) => {
 					const updatedFunnelSteps = data?.payload?.steps;
@@ -111,7 +119,7 @@ export default function useFunnelConfiguration({
 					if (!updatedFunnelSteps) return;
 
 					queryClient.setQueryData(
-						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.id],
+						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.funnel_id],
 						(oldData: any) => ({
 							...oldData,
 							payload: {
@@ -147,7 +155,7 @@ export default function useFunnelConfiguration({
 				onError: () => {
 					handleRestoreSteps(lastSavedStepsStateRef.current);
 					queryClient.setQueryData(
-						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.id],
+						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.funnel_id],
 						(oldData: any) => ({
 							...oldData,
 							payload: {
