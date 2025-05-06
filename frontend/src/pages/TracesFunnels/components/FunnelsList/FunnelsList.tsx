@@ -1,9 +1,10 @@
 import './FunnelsList.styles.scss';
 
+import { Button } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
-import { CalendarClock } from 'lucide-react';
+import { CalendarClock, DecimalsArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import { generatePath, Link } from 'react-router-dom';
 import { FunnelData } from 'types/api/traceFunnels';
@@ -14,12 +15,14 @@ interface FunnelListItemProps {
 	funnel: FunnelData;
 	onFunnelClick?: (funnel: FunnelData) => void;
 	shouldRedirectToTracesListOnDeleteSuccess?: boolean;
+	isSpanDetailsPage?: boolean;
 }
 
 export function FunnelListItem({
 	funnel,
 	onFunnelClick,
 	shouldRedirectToTracesListOnDeleteSuccess,
+	isSpanDetailsPage,
 }: FunnelListItemProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 	const funnelDetailsLink = generatePath(ROUTES.TRACES_FUNNELS_DETAIL, {
@@ -32,14 +35,25 @@ export function FunnelListItem({
 				<div className="funnel-item__title">
 					<div>{funnel.funnel_name}</div>
 				</div>
-				<FunnelItemPopover
-					isPopoverOpen={isPopoverOpen}
-					setIsPopoverOpen={setIsPopoverOpen}
-					funnel={funnel}
-					shouldRedirectToTracesListOnDeleteSuccess={
-						shouldRedirectToTracesListOnDeleteSuccess
-					}
-				/>
+
+				{isSpanDetailsPage ? (
+					<Button
+						type="default"
+						className="funnel-item__open-button"
+						icon={<DecimalsArrowRight size={12} />}
+					>
+						Open funnel
+					</Button>
+				) : (
+					<FunnelItemPopover
+						isPopoverOpen={isPopoverOpen}
+						setIsPopoverOpen={setIsPopoverOpen}
+						funnel={funnel}
+						shouldRedirectToTracesListOnDeleteSuccess={
+							shouldRedirectToTracesListOnDeleteSuccess
+						}
+					/>
+				)}
 			</div>
 
 			<div className="funnel-item__details">
@@ -80,6 +94,7 @@ export function FunnelListItem({
 FunnelListItem.defaultProps = {
 	onFunnelClick: undefined,
 	shouldRedirectToTracesListOnDeleteSuccess: true,
+	isSpanDetailsPage: false,
 };
 
 interface FunnelsListProps {

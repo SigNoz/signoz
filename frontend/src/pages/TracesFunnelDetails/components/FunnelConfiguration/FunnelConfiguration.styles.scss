@@ -12,6 +12,31 @@
 		justify-content: space-between;
 		padding: 14px 16px;
 		border-bottom: 1px solid var(--bg-slate-400);
+		&-right {
+			&,
+			& > div {
+				display: flex;
+				align-items: center;
+			}
+			gap: 12px;
+			.ant-divider-vertical {
+				margin: 0;
+			}
+			.funnel-configuration__rename-btn {
+				padding: 4px;
+				width: 24px;
+				height: 24px;
+				justify-content: center;
+			}
+			.copy-to-clipboard {
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 18px;
+				letter-spacing: -0.06px;
+				width: 90px;
+			}
+		}
 	}
 
 	&__description {

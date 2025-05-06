@@ -13,6 +13,8 @@ interface FunnelStepPopoverProps {
 	stepOrder: number;
 	stepsCount: number;
 	onStepRemove: () => void;
+	isAddDetailsModalOpen: boolean;
+	setIsAddDetailsModalOpen: (isOpen: boolean) => void;
 }
 
 interface FunnelStepActionsProps {
@@ -69,10 +71,9 @@ function FunnelStepPopover({
 	className,
 	onStepRemove,
 	stepsCount,
+	isAddDetailsModalOpen,
+	setIsAddDetailsModalOpen,
 }: FunnelStepPopoverProps): JSX.Element {
-	const [isAddDetailsModalOpen, setIsAddDetailsModalOpen] = useState<boolean>(
-		false,
-	);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 
 	const preventDefault = (e: React.MouseEvent | React.KeyboardEvent): void => {
