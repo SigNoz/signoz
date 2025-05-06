@@ -50,7 +50,7 @@ export const getFunnelsList = async ({
 		statusCode: 200,
 		error: null,
 		message: '',
-		payload: response.data,
+		payload: response.data.data,
 	};
 };
 
@@ -64,21 +64,22 @@ export const getFunnelById = async (
 		statusCode: 200,
 		error: null,
 		message: '',
-		payload: response.data.funnel,
+		payload: response.data.data,
 	};
 };
 
-interface RenameFunnelPayload {
-	id: string;
+export interface RenameFunnelPayload {
+	funnel_id: string;
 	funnel_name: string;
+	timestamp: number;
 }
 
 export const renameFunnel = async (
 	payload: RenameFunnelPayload,
 ): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
 	const response: AxiosResponse = await axios.put(
-		`${FUNNELS_BASE_PATH}/${payload.id}/update`,
-		{ funnel_name: payload.funnel_name },
+		`${FUNNELS_BASE_PATH}/${payload.funnel_id}`,
+		payload,
 	);
 
 	return {
@@ -111,7 +112,7 @@ export const deleteFunnel = async (
 export interface UpdateFunnelStepsPayload {
 	funnel_id: string;
 	steps: FunnelStepData[];
-	updated_timestamp: number;
+	timestamp: number;
 }
 
 export const updateFunnelSteps = async (
@@ -126,7 +127,7 @@ export const updateFunnelSteps = async (
 		statusCode: 200,
 		error: null,
 		message: 'Funnel steps updated successfully',
-		payload: response.data,
+		payload: response.data.data,
 	};
 };
 
@@ -170,7 +171,7 @@ export interface UpdateFunnelStepDetailsPayload {
 		step_name: string;
 		description: string;
 	}>;
-	updated_timestamp: number;
+	updated_at: number;
 }
 
 export const updateFunnelStepDetails = async ({

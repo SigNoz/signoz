@@ -34,7 +34,7 @@ function CreateFunnel({
 		createFunnelMutation.mutate(
 			{
 				funnel_name: funnelName,
-				creation_timestamp: new Date().getTime(),
+				timestamp: new Date().getTime(),
 			},
 			{
 				onSuccess: (data) => {

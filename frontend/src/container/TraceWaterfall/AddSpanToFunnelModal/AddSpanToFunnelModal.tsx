@@ -75,8 +75,7 @@ function AddSpanToFunnelModal({
 				)
 				.sort(
 					(a, b) =>
-						new Date(b.creation_timestamp).getTime() -
-						new Date(a.creation_timestamp).getTime(),
+						new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
 				),
 		[data?.payload, searchQuery],
 	);
@@ -90,7 +89,7 @@ function AddSpanToFunnelModal({
 	});
 
 	const handleFunnelClick = (funnel: FunnelData): void => {
-		setSelectedFunnelId(funnel.id);
+		setSelectedFunnelId(funnel.funnel_id);
 		setActiveView(ModalView.DETAILS);
 	};
 
