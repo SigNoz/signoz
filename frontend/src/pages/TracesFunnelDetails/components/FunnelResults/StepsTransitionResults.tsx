@@ -16,7 +16,7 @@ export interface StepTransition {
 function generateStepTransitions(stepsCount: number): StepTransition[] {
 	return Array.from({ length: stepsCount - 1 }, (_, index) => ({
 		value: `${index + 1}_to_${index + 2}`,
-		label: `Step ${index + 1} -> Step ${index + 2}`,
+		label: `Step ${index + 1} → Step ${index + 2}`,
 	}));
 }
 

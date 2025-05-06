@@ -18,8 +18,6 @@ import {
 	saveFunnelDescription,
 	SlowTraceData,
 	SlowTracesPayload,
-	updateFunnelStepDetails,
-	UpdateFunnelStepDetailsPayload,
 	updateFunnelSteps,
 	UpdateFunnelStepsPayload,
 	ValidateFunnelResponse,
@@ -40,14 +38,13 @@ import {
 	FunnelData,
 } from 'types/api/traceFunnels';
 
-export const useFunnelsList = ({
-	searchQuery = '',
-}: {
-	searchQuery?: string;
-}): UseQueryResult<SuccessResponse<FunnelData[]> | ErrorResponse, unknown> =>
+export const useFunnelsList = (): UseQueryResult<
+	SuccessResponse<FunnelData[]> | ErrorResponse,
+	unknown
+> =>
 	useQuery({
-		queryKey: [REACT_QUERY_KEY.GET_FUNNELS_LIST, searchQuery],
-		queryFn: () => getFunnelsList({ search: searchQuery }),
+		queryKey: [REACT_QUERY_KEY.GET_FUNNELS_LIST],
+		queryFn: () => getFunnelsList(),
 		refetchOnWindowFocus: true,
 	});
 
@@ -137,20 +134,6 @@ export const useValidateFunnelSteps = ({
 		queryKey: [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId, selectedTime],
 		enabled: !!funnelId && !!selectedTime && !!startTime && !!endTime,
 		staleTime: 1000 * 60 * 5,
-	});
-
-export const useUpdateFunnelStepDetails = ({
-	stepOrder,
-}: {
-	stepOrder: number;
-}): UseMutationResult<
-	SuccessResponse<FunnelData> | ErrorResponse,
-	Error,
-	UpdateFunnelStepDetailsPayload
-> =>
-	useMutation({
-		mutationFn: (payload) => updateFunnelStepDetails({ payload, stepOrder }),
-		mutationKey: [REACT_QUERY_KEY.UPDATE_FUNNEL_STEP_DETAILS, stepOrder],
 	});
 
 interface SaveFunnelDescriptionPayload {

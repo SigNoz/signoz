@@ -16,7 +16,7 @@ export interface FunnelStepData {
 	latency_pointer: 'start' | 'end';
 	latency_type: LatencyOptionsType;
 	has_errors: boolean;
-	title?: string;
+	name?: string;
 	description?: string;
 }
 

@@ -15,6 +15,7 @@ import { TracesFunnelsContentRenderer } from 'pages/TracesFunnels';
 import CreateFunnel from 'pages/TracesFunnels/components/CreateFunnel/CreateFunnel';
 import { FunnelListItem } from 'pages/TracesFunnels/components/FunnelsList/FunnelsList';
 import { FunnelProvider } from 'pages/TracesFunnels/FunnelContext';
+import { filterFunnelsByQuery } from 'pages/TracesFunnels/utils';
 import { ChangeEvent, useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { FunnelData } from 'types/api/traceFunnels';
@@ -64,20 +65,14 @@ function AddSpanToFunnelModal({
 		setSearchQuery(e.target.value);
 	};
 
-	const { data, isLoading, isError, isFetching } = useFunnelsList({
-		searchQuery: '',
-	});
+	const { data, isLoading, isError, isFetching } = useFunnelsList();
 
 	const filteredData = useMemo(
 		() =>
-			data?.payload
-				?.filter((funnel) =>
-					funnel.funnel_name.toLowerCase().includes(searchQuery.toLowerCase()),
-				)
-				.sort(
-					(a, b) =>
-						new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-				),
+			filterFunnelsByQuery(data?.payload || [], searchQuery).sort(
+				(a, b) =>
+					new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+			),
 		[data?.payload, searchQuery],
 	);
 

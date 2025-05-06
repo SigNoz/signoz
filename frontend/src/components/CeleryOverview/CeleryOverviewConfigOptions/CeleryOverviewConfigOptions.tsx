@@ -9,7 +9,7 @@ import { useCeleryFilterOptions } from 'components/CeleryTask/useCeleryFilterOpt
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
 export interface SelectOptionConfig {
@@ -39,15 +39,30 @@ export function FilterSelect({
 	const history = useHistory();
 	const location = useLocation();
 
+	// Add state to track the current search input
+	const [searchValue, setSearchValue] = useState<string>('');
+
 	// Use externally provided `values` if `shouldSetQueryParams` is false, otherwise get from URL params.
 	const selectValue =
 		!shouldSetQueryParams && !!values?.length
 			? values
 			: getValuesFromQueryParams(queryParam, urlQuery) || [];
 
+	// Memoize options to include the typed value if not present
+	const mergedOptions = useMemo(() => {
+		if (
+			!!searchValue.trim().length &&
+			!options.some((opt) => opt.value === searchValue)
+		) {
+			return [{ value: searchValue, label: searchValue }, ...options];
+		}
+		return options;
+	}, [options, searchValue]);
+
 	const handleSelectChange = useCallback(
 		(value: string | string[]): void => {
 			handleSearch('');
+			setSearchValue(''); // Clear search value after selection
 			if (shouldSetQueryParams) {
 				setQueryParamsFromOptions(
 					value as string[],
@@ -70,6 +85,12 @@ export function FilterSelect({
 		],
 	);
 
+	// Update searchValue on user input
+	const handleSearchInput = (input: string): void => {
+		setSearchValue(input);
+		handleSearch(input);
+	};
+
 	return (
 		<Select
 			key={filterType.toString()}
@@ -77,10 +98,10 @@ export function FilterSelect({
 			showSearch
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...(isMultiple ? { mode: 'multiple' } : {})}
-			options={options}
+			options={mergedOptions}
 			loading={isFetching}
 			className="config-select-option"
-			onSearch={handleSearch}
+			onSearch={handleSearchInput}
 			maxTagCount={4}
 			allowClear
 			maxTagPlaceholder={SelectMaxTagPlaceholder}
