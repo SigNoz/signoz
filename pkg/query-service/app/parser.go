@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 
 	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
@@ -27,7 +28,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -492,14 +492,6 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	return &req, nil
 }
 
-func isValidRole(role string) bool {
-	switch role {
-	case constants.AdminGroup, constants.EditorGroup, constants.ViewerGroup:
-		return true
-	}
-	return false
-}
-
 func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) {
 	var req model.BulkInviteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -520,7 +512,9 @@ func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) 
 		if req.Users[i].FrontendBaseUrl == "" {
 			return nil, fmt.Errorf("frontendBaseUrl is required for each user")
 		}
-		if !isValidRole(req.Users[i].Role) {
+
+		_, err := authtypes.NewRole(req.Users[i].Role)
+		if err != nil {
 			return nil, fmt.Errorf("invalid role for user: %s", req.Users[i].Email)
 		}
 	}
@@ -530,14 +524,6 @@ func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) 
 
 func parseSetApdexScoreRequest(r *http.Request) (*types.ApdexSettings, error) {
 	var req types.ApdexSettings
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	return &req, nil
-}
-
-func parseInsertIngestionKeyRequest(r *http.Request) (*model.IngestionKey, error) {
-	var req model.IngestionKey
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -719,6 +705,21 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	tagType := v3.TagType(r.URL.Query().Get("tagType"))
+
+	// empty string is a valid tagType
+	// i.e retrieve all attributes
+	if tagType != "" {
+		// what is happening here?
+		// if tagType is undefined(uh oh javascript) or any invalid value, set it to empty string
+		// instead of failing the request. Ideally, we should fail the request.
+		// but we are not doing that to maintain backward compatibility.
+		if err := tagType.Validate(); err != nil {
+			// if the tagType is invalid, set it to empty string
+			tagType = ""
+		}
+	}
+
 	if err != nil {
 		limit = 50
 	}
@@ -739,6 +740,7 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		AggregateAttribute: aggregateAttribute,
 		Limit:              limit,
 		SearchText:         r.URL.Query().Get("searchText"),
+		TagType:            tagType,
 	}
 	return &req, nil
 }
@@ -861,7 +863,7 @@ func chTransformQuery(query string, variables map[string]interface{}) {
 	transformer := chVariables.NewQueryTransformer(query, varsForTransform)
 	transformedQuery, err := transformer.Transform()
 	if err != nil {
-		zap.L().Warn("failed to transform clickhouse query", zap.Error(err))
+		zap.L().Warn("failed to transform clickhouse query", zap.String("query", query), zap.Error(err))
 	}
 	zap.L().Info("transformed clickhouse query", zap.String("transformedQuery", transformedQuery), zap.String("originalQuery", query))
 }

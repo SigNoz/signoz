@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -20,13 +19,12 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 	"github.com/SigNoz/signoz/ee/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
@@ -44,37 +42,25 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
-	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 
-const AppDbEngine = "sqlite"
-
 type ServerOptions struct {
-	Config            signoz.Config
-	SigNoz            *signoz.SigNoz
-	PromConfigPath    string
-	SkipTopLvlOpsPath string
-	HTTPHostPort      string
-	PrivateHostPort   string
-	// alert specific params
-	DisableRules               bool
-	RuleRepoURL                string
+	Config                     signoz.Config
+	SigNoz                     *signoz.SigNoz
+	HTTPHostPort               string
+	PrivateHostPort            string
 	PreferSpanMetrics          bool
-	CacheConfigPath            string
 	FluxInterval               string
 	FluxIntervalForTraceDetail string
 	Cluster                    string
 	GatewayUrl                 string
-	UseLogsNewSchema           bool
-	UseTraceNewSchema          bool
 	Jwt                        *authtypes.JWT
 }
 
@@ -125,7 +111,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager(serverOptions.SigNoz.SQLStore.SQLxDB(), serverOptions.SigNoz.SQLStore)
+	lm, err := licensepkg.StartManager(serverOptions.SigNoz.SQLStore.SQLxDB(), serverOptions.SigNoz.SQLStore, serverOptions.SigNoz.Zeus)
 	if err != nil {
 		return nil, err
 	}
@@ -143,37 +129,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.SigNoz.TelemetryStore,
 		serverOptions.SigNoz.Prometheus,
 		serverOptions.Cluster,
-		serverOptions.UseLogsNewSchema,
-		serverOptions.UseTraceNewSchema,
 		fluxIntervalForTraceDetail,
 		serverOptions.SigNoz.Cache,
 	)
 
-	skipConfig := &basemodel.SkipConfig{}
-	if serverOptions.SkipTopLvlOpsPath != "" {
-		// read skip config
-		skipConfig, err = basemodel.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
-		if err != nil {
-			return nil, err
-		}
-	}
-	var c cache.Cache
-	if serverOptions.CacheConfigPath != "" {
-		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		c = cache.NewCache(cacheOpts)
-	}
-
 	rm, err := makeRulesManager(
-		serverOptions.RuleRepoURL,
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
-		c,
-		serverOptions.DisableRules,
-		serverOptions.UseLogsNewSchema,
-		serverOptions.UseTraceNewSchema,
+		serverOptions.SigNoz.Cache,
 		serverOptions.SigNoz.Alertmanager,
 		serverOptions.SigNoz.SQLStore,
 		serverOptions.SigNoz.TelemetryStore,
@@ -222,7 +185,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.Config.TelemetryStore.Clickhouse.DSN)
+	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.SigNoz.Zeus)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +204,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
-		SkipConfig:                    skipConfig,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
 		AppDao:                        modelDao,
 		RulesManager:                  rm,
@@ -251,12 +213,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		IntegrationsController:        integrationsController,
 		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
-		Cache:                         c,
 		FluxInterval:                  fluxInterval,
 		Gateway:                       gatewayProxy,
 		GatewayUrl:                    serverOptions.GatewayUrl,
-		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
-		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
 		JWT:                           serverOptions.Jwt,
 	}
 
@@ -266,8 +225,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	s := &Server{
-		// logger: logger,
-		// tracer: tracer,
 		ruleManager:        rm,
 		serverOptions:      serverOptions,
 		unavailableChannel: make(chan healthcheck.Status),
@@ -293,9 +250,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
-	errorList := reader.PreloadMetricsMetadata(context.Background())
-	for _, er := range errorList {
-		zap.L().Error("failed to preload metrics metadata", zap.Error(er))
+	orgs, err := apiHandler.Signoz.Modules.Organization.GetAll(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	for _, org := range orgs {
+		errorList := reader.PreloadMetricsMetadata(context.Background(), org.ID)
+		for _, er := range errorList {
+			zap.L().Error("failed to preload metrics metadata", zap.Error(er))
+		}
 	}
 
 	return s, nil
@@ -334,24 +297,8 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 }
 
 func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*http.Server, error) {
-
 	r := baseapp.NewRouter()
-
-	// add auth middleware
-	getUserFromRequest := func(ctx context.Context) (*types.GettableUser, error) {
-		user, err := auth.GetUserFromReqContext(ctx)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if user.User.OrgID == "" {
-			return nil, basemodel.UnauthorizedError(errors.New("orgId is missing in the claims"))
-		}
-
-		return user, nil
-	}
-	am := baseapp.NewAuthMiddleware(getUserFromRequest)
+	am := middleware.NewAuthZ(s.serverOptions.SigNoz.Instrumentation.Logger())
 
 	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
 	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
@@ -367,6 +314,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
 	apiHandler.RegisterCloudIntegrationsRoutes(r, am)
+	apiHandler.RegisterFieldsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterInfraMetricsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)
@@ -428,14 +376,8 @@ func (s *Server) initListeners() error {
 }
 
 // Start listening on http and private http port concurrently
-func (s *Server) Start() error {
-
-	// initiate rule manager first
-	if !s.serverOptions.DisableRules {
-		s.ruleManager.Start()
-	} else {
-		zap.L().Info("msg: Rules disabled as rules.disable is set to TRUE")
-	}
+func (s *Server) Start(ctx context.Context) error {
+	s.ruleManager.Start(ctx)
 
 	err := s.initListeners()
 	if err != nil {
@@ -516,7 +458,7 @@ func (s *Server) Stop() error {
 	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
-		s.ruleManager.Stop()
+		s.ruleManager.Stop(context.Background())
 	}
 
 	// stop usage manager
@@ -526,13 +468,9 @@ func (s *Server) Stop() error {
 }
 
 func makeRulesManager(
-	ruleRepoURL string,
 	db *sqlx.DB,
 	ch baseint.Reader,
 	cache cache.Cache,
-	disableRules bool,
-	useLogsNewSchema bool,
-	useTraceNewSchema bool,
 	alertmanager alertmanager.Alertmanager,
 	sqlstore sqlstore.SQLStore,
 	telemetryStore telemetrystore.TelemetryStore,
@@ -542,17 +480,13 @@ func makeRulesManager(
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
 		Prometheus:          prometheus,
-		RepoURL:             ruleRepoURL,
 		DBConn:              db,
 		Context:             context.Background(),
 		Logger:              zap.L(),
-		DisableRules:        disableRules,
 		Reader:              ch,
 		Cache:               cache,
 		EvalDelay:           baseconst.GetEvalDelay(),
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
-		UseLogsNewSchema:    useLogsNewSchema,
-		UseTraceNewSchema:   useTraceNewSchema,
 		PrepareTestRuleFunc: rules.TestNotification,
 		Alertmanager:        alertmanager,
 		SQLStore:            sqlstore,

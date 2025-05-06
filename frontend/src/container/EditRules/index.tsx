@@ -22,7 +22,7 @@ function EditRules({ initialValue, ruleId }: EditRulesProps): JSX.Element {
 
 interface EditRulesProps {
 	initialValue: AlertDef;
-	ruleId: number;
+	ruleId: string;
 }
 
 export default EditRules;

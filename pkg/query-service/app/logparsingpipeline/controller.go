@@ -25,12 +25,12 @@ import (
 type LogParsingPipelineController struct {
 	Repo
 
-	GetIntegrationPipelines func(context.Context) ([]pipelinetypes.GettablePipeline, *model.ApiError)
+	GetIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, *model.ApiError)
 }
 
 func NewLogParsingPipelinesController(
 	sqlStore sqlstore.SQLStore,
-	getIntegrationPipelines func(context.Context) ([]pipelinetypes.GettablePipeline, *model.ApiError),
+	getIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, *model.ApiError),
 ) (*LogParsingPipelineController, error) {
 	repo := NewRepo(sqlStore)
 	return &LogParsingPipelineController{
@@ -54,8 +54,8 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	postable []pipelinetypes.PostablePipeline,
 ) (*PipelinesResponse, *model.ApiError) {
 	// get user id from context
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
 		return nil, model.UnauthorizedError(fmt.Errorf("failed to get userId from context"))
 	}
 
@@ -164,7 +164,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 		result = savedPipelines
 	}
 
-	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx)
+	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx, defaultOrgID)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
 			apiErr, "could not get pipelines for installed integrations",

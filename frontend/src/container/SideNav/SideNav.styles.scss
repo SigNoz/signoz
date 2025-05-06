@@ -110,9 +110,16 @@
 	}
 	.nav-wrapper {
 		height: calc(100% - 52px);
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
 
 		.primary-nav-items {
-			max-height: 65%;
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-height: 0;
+			max-height: 100%;
 			overflow-y: auto;
 			overflow-x: hidden;
 
@@ -121,15 +128,14 @@
 			}
 		}
 		.secondary-nav-items {
-			max-height: 35%;
+			display: flex;
+			flex-direction: column;
+			flex-shrink: 0;
 			overflow-y: auto;
 			overflow-x: hidden;
 			border-top: 1px solid var(--bg-slate-400);
 			padding: 8px 0;
 			max-width: 100%;
-			position: fixed;
-			bottom: 0;
-			left: 0;
 			width: 64px;
 
 			transition: all 0.2s, background 0s, border 0s;

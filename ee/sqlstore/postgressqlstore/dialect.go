@@ -17,19 +17,20 @@ var (
 )
 
 var (
-	Org  = "org"
-	User = "user"
+	Org              = "org"
+	User             = "user"
+	CloudIntegration = "cloud_integration"
 )
 
 var (
-	OrgReference  = `("org_id") REFERENCES "organizations" ("id")`
-	UserReference = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	OrgReference              = `("org_id") REFERENCES "organizations" ("id")`
+	UserReference             = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	CloudIntegrationReference = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
 )
 
-type dialect struct {
-}
+type dialect struct{}
 
-func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) IntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
 	columnType, err := dialect.GetColumnType(ctx, bun, table, column)
 	if err != nil {
 		return err
@@ -76,7 +77,15 @@ func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, 
 	return nil
 }
 
-func (dialect *dialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) IntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
+	columnExists, err := dialect.ColumnExists(ctx, bun, table, column)
+	if err != nil {
+		return err
+	}
+	if !columnExists {
+		return nil
+	}
+
 	columnType, err := dialect.GetColumnType(ctx, bun, table, column)
 	if err != nil {
 		return err
@@ -149,6 +158,26 @@ func (dialect *dialect) ColumnExists(ctx context.Context, bun bun.IDB, table str
 	return count > 0, nil
 }
 
+func (dialect *dialect) AddColumn(ctx context.Context, bun bun.IDB, table string, column string, columnExpr string) error {
+	exists, err := dialect.ColumnExists(ctx, bun, table, column)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		_, err = bun.
+			NewAddColumn().
+			Table(table).
+			ColumnExpr(column + " " + columnExpr).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
 func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table string, oldColumnName string, newColumnName string) (bool, error) {
 	oldColumnExists, err := dialect.ColumnExists(ctx, bun, table, oldColumnName)
 	if err != nil {
@@ -160,8 +189,12 @@ func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table str
 		return false, err
 	}
 
-	if !oldColumnExists && newColumnExists {
+	if newColumnExists {
 		return true, nil
+	}
+
+	if !oldColumnExists {
+		return false, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "old column: %s doesn't exist", oldColumnName)
 	}
 
 	_, err = bun.
@@ -170,6 +203,26 @@ func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table str
 		return false, err
 	}
 	return true, nil
+}
+
+func (dialect *dialect) DropColumn(ctx context.Context, bun bun.IDB, table string, column string) error {
+	exists, err := dialect.ColumnExists(ctx, bun, table, column)
+	if err != nil {
+		return err
+	}
+	if exists {
+		_, err = bun.
+			NewDropColumn().
+			Table(table).
+			Column(column).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
 }
 
 func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table interface{}) (bool, error) {
@@ -211,6 +264,8 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 			fkReferences = append(fkReferences, OrgReference)
 		} else if reference == User && !slices.Contains(fkReferences, UserReference) {
 			fkReferences = append(fkReferences, UserReference)
+		} else if reference == CloudIntegration && !slices.Contains(fkReferences, CloudIntegrationReference) {
+			fkReferences = append(fkReferences, CloudIntegrationReference)
 		}
 	}
 
@@ -358,6 +413,29 @@ func (dialect *dialect) AddPrimaryKey(ctx context.Context, bun bun.IDB, oldModel
 
 	_, err = bun.
 		ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s", newTableName, oldTableName))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, bunIDB bun.IDB, model interface{}, column string) error {
+	existingTable := bunIDB.Dialect().Tables().Get(reflect.TypeOf(model))
+	columnExists, err := dialect.ColumnExists(ctx, bunIDB, existingTable.Name, column)
+	if err != nil {
+		return err
+	}
+
+	if !columnExists {
+		return nil
+	}
+
+	_, err = bunIDB.
+		NewDropColumn().
+		Model(model).
+		Column(column).
+		Exec(ctx)
 	if err != nil {
 		return err
 	}

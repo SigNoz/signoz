@@ -11,26 +11,25 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/license"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	"github.com/SigNoz/signoz/pkg/modules/preference"
-	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
+	"github.com/SigNoz/signoz/pkg/apis/fields"
+	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
 )
 
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
-	SkipConfig                    *basemodel.SkipConfig
 	PreferSpanMetrics             bool
 	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
@@ -40,7 +39,6 @@ type APIHandlerOptions struct {
 	IntegrationsController        *integrations.Controller
 	CloudIntegrationsController   *cloudintegrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
-	Cache                         cache.Cache
 	Gateway                       *httputil.ReverseProxy
 	GatewayUrl                    string
 	// Querier Influx Interval
@@ -57,11 +55,10 @@ type APIHandler struct {
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
-	preference := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(signoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
-
+	quickfiltermodule := quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(signoz.SQLStore))
+	quickFilter := quickfilter.NewAPI(quickfiltermodule)
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
-		SkipConfig:                    opts.SkipConfig,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
 		AppDao:                        opts.AppDao,
 		RuleManager:                   opts.RulesManager,
@@ -69,13 +66,12 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		IntegrationsController:        opts.IntegrationsController,
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
-		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
-		UseLogsNewSchema:              opts.UseLogsNewSchema,
-		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
+		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore),
 		Signoz:                        signoz,
-		Preference:                    preference,
+		QuickFilters:                  quickFilter,
+		QuickFilterModule:             quickfiltermodule,
 	})
 
 	if err != nil {
@@ -119,7 +115,7 @@ func (ah *APIHandler) CheckFeature(f string) bool {
 }
 
 // RegisterRoutes registers routes for this handler on the given router
-func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddleware) {
+func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// note: add ee override methods first
 
 	// routes available only in ee version
@@ -192,7 +188,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 
 }
 
-func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *baseapp.AuthMiddleware) {
+func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	ah.APIHandler.RegisterCloudIntegrationsRoutes(router, am)
 

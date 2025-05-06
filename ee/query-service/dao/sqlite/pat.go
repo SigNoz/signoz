@@ -196,27 +196,3 @@ func (m *modelDao) GetPATByID(ctx context.Context, orgID string, id valuer.UUID)
 
 	return &patWithUser, nil
 }
-
-// deprecated
-func (m *modelDao) GetUserByPAT(ctx context.Context, orgID string, token string) (*ossTypes.GettableUser, basemodel.BaseApiError) {
-	users := []ossTypes.GettableUser{}
-
-	if err := m.DB().NewSelect().
-		Model(&users).
-		Column("u.id", "u.name", "u.email", "u.password", "u.created_at", "u.profile_picture_url", "u.org_id", "u.group_id").
-		Join("JOIN personal_access_tokens p ON u.id = p.user_id").
-		Where("p.token = ?", token).
-		Where("p.expires_at >= strftime('%s', 'now')").
-		Where("p.org_id = ?", orgID).
-		Scan(ctx); err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed to fetch user from PAT, err: %v", err))
-	}
-
-	if len(users) != 1 {
-		return nil, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: fmt.Errorf("found zero or multiple users with same PAT token"),
-		}
-	}
-	return &users[0], nil
-}

@@ -3,15 +3,27 @@ import './DomainDetails.styles.scss';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import {
+	CustomTimeType,
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import GetMinMax from 'lib/getMinMax';
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AllEndPoints from './AllEndPoints';
 import DomainMetrics from './components/DomainMetrics';
 import { VIEW_TYPES, VIEWS } from './constants';
-import EndPointDetailsWrapper from './EndPointDetailsWrapper';
+import EndPointDetails from './EndPointDetails';
+import TopErrors from './TopErrors';
+
+const TimeRangeOffset = 1000000000;
 
 function DomainDetails({
 	domainData,
@@ -33,11 +45,57 @@ function DomainDetails({
 	const [endPointsGroupBy, setEndPointsGroupBy] = useState<
 		IBuilderQuery['groupBy']
 	>([]);
+	const [initialFiltersEndPointStats, setInitialFiltersEndPointStats] = useState<
+		IBuilderQuery['filters']
+	>(domainListFilters);
 	const isDarkMode = useIsDarkMode();
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
 	};
+
+	const { maxTime, minTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
+	const startMs = useMemo(() => Math.floor(Number(minTime) / TimeRangeOffset), [
+		minTime,
+	]);
+	const endMs = useMemo(() => Math.floor(Number(maxTime) / TimeRangeOffset), [
+		maxTime,
+	]);
+
+	const [selectedInterval, setSelectedInterval] = useState<Time>(
+		selectedTime as Time,
+	);
+
+	const [modalTimeRange, setModalTimeRange] = useState(() => ({
+		startTime: startMs,
+		endTime: endMs,
+	}));
+
+	const handleTimeChange = useCallback(
+		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
+			setSelectedInterval(interval as Time);
+
+			if (interval === 'custom' && dateTimeRange) {
+				setModalTimeRange({
+					startTime: Math.floor(dateTimeRange[0] / 1000),
+					endTime: Math.floor(dateTimeRange[1] / 1000),
+				});
+			} else {
+				const { maxTime, minTime } = GetMinMax(interval);
+
+				setModalTimeRange({
+					startTime: Math.floor(minTime / TimeRangeOffset),
+					endTime: Math.floor(maxTime / TimeRangeOffset),
+				});
+			}
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
+	);
 
 	return (
 		<Drawer
@@ -50,32 +108,44 @@ function DomainDetails({
 							{domainData.domainName}
 						</Typography.Text>
 					</div>
-					<Button.Group className="domain-details-drawer-header-ctas">
-						<Button
-							className="domain-navigate-cta"
-							onClick={(): void => {
-								setSelectedDomainIndex(selectedDomainIndex - 1);
-								setSelectedEndPointName('');
-								setEndPointsGroupBy([]);
-								setSelectedView(VIEW_TYPES.ALL_ENDPOINTS);
-							}}
-							icon={<ArrowUp size={16} />}
-							disabled={selectedDomainIndex === 0}
-							title="Previous domain"
+					<div className="domain-details-drawer-header-right-container">
+						<DateTimeSelectionV2
+							showAutoRefresh={false}
+							showRefreshText={false}
+							onTimeChange={handleTimeChange}
+							defaultRelativeTime="5m"
+							isModalTimeSelection
+							modalSelectedInterval={selectedInterval}
+							modalInitialStartTime={modalTimeRange.startTime * 1000}
+							modalInitialEndTime={modalTimeRange.endTime * 1000}
 						/>
-						<Button
-							className="domain-navigate-cta"
-							onClick={(): void => {
-								setSelectedDomainIndex(selectedDomainIndex + 1);
-								setSelectedEndPointName('');
-								setEndPointsGroupBy([]);
-								setSelectedView(VIEW_TYPES.ALL_ENDPOINTS);
-							}}
-							icon={<ArrowDown size={16} />}
-							disabled={selectedDomainIndex === domainListLength - 1}
-							title="Next domain"
-						/>
-					</Button.Group>
+						<Button.Group className="domain-details-drawer-header-ctas">
+							<Button
+								className="domain-navigate-cta"
+								onClick={(): void => {
+									setSelectedDomainIndex(selectedDomainIndex - 1);
+									setSelectedEndPointName('');
+									setEndPointsGroupBy([]);
+									setSelectedView(VIEW_TYPES.ALL_ENDPOINTS);
+								}}
+								icon={<ArrowUp size={16} />}
+								disabled={selectedDomainIndex === 0}
+								title="Previous domain"
+							/>
+							<Button
+								className="domain-navigate-cta"
+								onClick={(): void => {
+									setSelectedDomainIndex(selectedDomainIndex + 1);
+									setSelectedEndPointName('');
+									setEndPointsGroupBy([]);
+									setSelectedView(VIEW_TYPES.ALL_ENDPOINTS);
+								}}
+								icon={<ArrowDown size={16} />}
+								disabled={selectedDomainIndex === domainListLength - 1}
+								title="Next domain"
+							/>
+						</Button.Group>
+					</div>
 				</div>
 			}
 			placement="right"
@@ -91,7 +161,11 @@ function DomainDetails({
 		>
 			{domainData && (
 				<>
-					<DomainMetrics domainData={domainData} />
+					<DomainMetrics
+						domainName={domainData.domainName}
+						domainListFilters={domainListFilters}
+						timeRange={modalTimeRange}
+					/>
 					<div className="views-tabs-container">
 						<Radio.Group
 							className="views-tabs"
@@ -109,13 +183,21 @@ function DomainDetails({
 							</Radio.Button>
 							<Radio.Button
 								className={
-									selectedView === VIEW_TYPES.ENDPOINT_DETAILS
+									selectedView === VIEW_TYPES.ENDPOINT_STATS
 										? 'tab selected_view'
 										: 'tab'
 								}
-								value={VIEW_TYPES.ENDPOINT_DETAILS}
+								value={VIEW_TYPES.ENDPOINT_STATS}
 							>
-								<div className="view-title">Endpoint Details</div>
+								<div className="view-title">Endpoint(s) Stats</div>
+							</Radio.Button>
+							<Radio.Button
+								className={
+									selectedView === VIEW_TYPES.TOP_ERRORS ? 'tab selected_view' : 'tab'
+								}
+								value={VIEW_TYPES.TOP_ERRORS}
+							>
+								<div className="view-title">Top 10 Errors</div>
 							</Radio.Button>
 						</Radio.Group>
 					</div>
@@ -126,15 +208,28 @@ function DomainDetails({
 							setSelectedView={setSelectedView}
 							groupBy={endPointsGroupBy}
 							setGroupBy={setEndPointsGroupBy}
+							timeRange={modalTimeRange}
+							initialFilters={domainListFilters}
+							setInitialFiltersEndPointStats={setInitialFiltersEndPointStats}
 						/>
 					)}
 
-					{selectedView === VIEW_TYPES.ENDPOINT_DETAILS && (
-						<EndPointDetailsWrapper
+					{selectedView === VIEW_TYPES.ENDPOINT_STATS && (
+						<EndPointDetails
 							domainName={domainData.domainName}
 							endPointName={selectedEndPointName}
 							setSelectedEndPointName={setSelectedEndPointName}
-							domainListFilters={domainListFilters}
+							initialFilters={initialFiltersEndPointStats}
+							timeRange={modalTimeRange}
+							handleTimeChange={handleTimeChange}
+						/>
+					)}
+
+					{selectedView === VIEW_TYPES.TOP_ERRORS && (
+						<TopErrors
+							domainName={domainData.domainName}
+							timeRange={modalTimeRange}
+							initialFilters={domainListFilters}
 						/>
 					)}
 				</>

@@ -109,7 +109,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 		logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
 
 		updateCreditCard({
-			url: window.location.href,
+			url: window.location.origin,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [updateCreditCard]);

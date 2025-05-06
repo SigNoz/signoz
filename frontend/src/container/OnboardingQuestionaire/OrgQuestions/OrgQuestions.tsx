@@ -13,8 +13,7 @@ import { useTranslation } from 'react-i18next';
 
 export interface OrgData {
 	id: string;
-	isAnonymous: boolean;
-	name: string;
+	displayName: string;
 }
 
 export interface OrgDetails {
@@ -110,15 +109,14 @@ function OrgQuestions({
 		try {
 			setIsLoading(true);
 			const { statusCode, error } = await editOrg({
-				isAnonymous: currentOrgData.isAnonymous,
-				name: organisationName,
+				displayName: organisationName,
 				orgId: currentOrgData.id,
 			});
-			if (statusCode === 200) {
-				updateOrg(currentOrgData?.id, orgDetails.organisationName);
+			if (statusCode === 204) {
+				updateOrg(currentOrgData?.id, organisationName);
 
 				logEvent('Org Onboarding: Org Name Updated', {
-					organisationName: orgDetails.organisationName,
+					organisationName,
 				});
 
 				logEvent('Org Onboarding: Answered', {

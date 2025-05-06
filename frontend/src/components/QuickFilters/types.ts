@@ -40,4 +40,5 @@ export enum QuickFiltersSource {
 	INFRA_MONITORING = 'infra-monitoring',
 	TRACES_EXPLORER = 'traces-explorer',
 	API_MONITORING = 'api-monitoring',
+	EXCEPTIONS = 'exceptions',
 }

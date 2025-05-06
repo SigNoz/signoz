@@ -367,8 +367,15 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin,
 		v3.AggregateOperatorRate:
-
 		rate := float64(step)
+		if panelType == v3.PanelTypeTable {
+			// if the panel type is table the denominator will be the total time range
+			duration := tracesEnd - tracesStart
+			if duration >= 0 {
+				rate = float64(duration) / NANOSECOND
+			}
+		}
+
 		op := fmt.Sprintf("%s(%s)/%f", tracesV3.AggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil

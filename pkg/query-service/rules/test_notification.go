@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -14,7 +15,6 @@ import (
 // TestNotification prepares a dummy rule for given rule parameters and
 // sends a test notification. returns alert count and error (if any)
 func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError) {
-
 	ctx := context.Background()
 
 	if opts.Rule == nil {
@@ -30,12 +30,12 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	}
 
 	// append name to indicate this is test alert
-	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, TestAlertPostFix)
+	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, ruletypes.TestAlertPostFix)
 
 	var rule Rule
 	var err error
 
-	if parsedRule.RuleType == RuleTypeThreshold {
+	if parsedRule.RuleType == ruletypes.RuleTypeThreshold {
 
 		// add special labels for test alerts
 		parsedRule.Annotations[labels.AlertSummaryLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
@@ -45,25 +45,25 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		// create a threshold rule
 		rule, err = NewThresholdRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Reader,
-			opts.UseLogsNewSchema,
-			opts.UseTraceNewSchema,
 			WithSendAlways(),
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new threshold rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new threshold rule for test", zap.Error(err))
 			return 0, model.BadRequest(err)
 		}
 
-	} else if parsedRule.RuleType == RuleTypeProm {
+	} else if parsedRule.RuleType == ruletypes.RuleTypeProm {
 
 		// create promql rule
 		rule, err = NewPromRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
 			opts.Logger,
 			opts.Reader,
@@ -74,7 +74,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new promql rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new promql rule for test", zap.Error(err))
 			return 0, model.BadRequest(err)
 		}
 	} else {
