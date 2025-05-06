@@ -140,7 +140,7 @@ const generateAPIMonitoringPath = (
 			endPointDetailsLocalFilters: filters,
 		}),
 	)}`;
-	console.log('uncaught newPath', { domainName, newPath });
+	console.log('uncaught newPath', { domainName, newPath, startTime, endTime });
 	return newPath;
 };
 export function onViewAPIMonitoringPopupClick({
@@ -152,8 +152,8 @@ export function onViewAPIMonitoringPopupClick({
 	safeNavigate,
 }: OnViewAPIMonitoringPopupClickProps): VoidFunction {
 	return (): void => {
-		const endTime = secondsToMilliseconds(timestamp);
-		const startTime = secondsToMilliseconds(timestamp - (stepInterval || 60));
+		const endTime = timestamp + (stepInterval || 60);
+		const startTime = timestamp - (stepInterval || 60);
 		const filters = {
 			items: [
 				...(isError
@@ -174,11 +174,11 @@ export function onViewAPIMonitoringPopupClick({
 					  ]
 					: []),
 				{
-					id: 'service-filter',
+					id: uuid().slice(0, 8),
 					key: {
 						key: 'service.name',
 						dataType: DataTypes.String,
-						type: 'tag',
+						type: 'resource',
 						isColumn: false,
 						isJSON: false,
 					},
