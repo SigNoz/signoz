@@ -71,15 +71,13 @@ describe('HostMetricsLogs', () => {
 			),
 		);
 	});
-	it('should render the HostMetricsLogs component', async () => {
+	it('should check if host logs pagination flows work properly', async () => {
 		let renderResult: RenderResult;
 		let scrollableElement: HTMLElement;
 
 		await act(async () => {
 			renderResult = render(
-				<VirtuosoMockContext.Provider
-					value={{ viewportHeight: 500, itemHeight: 100 }}
-				>
+				<VirtuosoMockContext.Provider value={{ viewportHeight: 500, itemHeight }}>
 					<HostMetricsLogs
 						timeRange={{ startTime: 0, endTime: 0 }}
 						filters={{ items: [], op: 'AND' }}
