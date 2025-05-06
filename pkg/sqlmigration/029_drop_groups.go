@@ -33,6 +33,11 @@ func (migration *dropGroups) Register(migrations *migrate.Migrations) error {
 }
 
 func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
+	// Disable foreign keys temporarily
+	if err := migration.sqlstore.Dialect().ToggleForeignKeys(ctx, db, false); err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -47,6 +52,15 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 		OrgID string `bun:"org_id,type:text"`
 		ID    string `bun:"id,pk,type:text" json:"id"`
 		Name  string `bun:"name,type:text,notnull,unique" json:"name"`
+	}
+
+	exists, err := migration.sqlstore.Dialect().TableExists(ctx, tx, new(Group))
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return nil
 	}
 
 	type existingUser struct {
@@ -130,6 +144,16 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	// Re-enable foreign keys
+	if _, err := db.ExecContext(ctx, "PRAGMA foreign_keys = ON"); err != nil {
+		return err
+	}
+
+	// Disable foreign keys temporarily
+	if err := migration.sqlstore.Dialect().ToggleForeignKeys(ctx, db, true); err != nil {
 		return err
 	}
 
