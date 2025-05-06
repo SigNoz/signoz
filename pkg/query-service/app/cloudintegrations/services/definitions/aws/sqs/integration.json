@@ -1,0 +1,27 @@
+{
+  "id": "sqs",
+  "title": "SQS",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": false
+  },
+  "data_collected": {
+    "metrics": []
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/SQS"
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      
+    ]
+  }
+}

@@ -60,7 +60,7 @@
     ],
     "logs": [
       {
-        "name": "Account Id",
+        "name": "Account ID",
         "path": "resources.cloud.account.id",
         "type": "string"
       },
