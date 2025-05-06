@@ -2,7 +2,7 @@ import './GraphControlsPanel.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
-import { DraftingCompass, ScrollText } from 'lucide-react';
+import { Binoculars, DraftingCompass, ScrollText } from 'lucide-react';
 
 interface GraphControlsPanelProps {
 	id: string;
@@ -42,7 +42,7 @@ function GraphControlsPanel({
 			{onViewAPIMonitoringClick && (
 				<Button
 					type="link"
-					icon={<ScrollText size={14} />}
+					icon={<Binoculars size={14} />}
 					size="small"
 					onClick={onViewAPIMonitoringClick}
 					style={{ color: Color.BG_VANILLA_100 }}
