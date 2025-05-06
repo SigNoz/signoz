@@ -145,6 +145,26 @@ const verifyPayload = (
 	return queryData;
 };
 
+const verifyFiltersAndOrderBy = (queryData: IBuilderQuery): void => {
+	// Verify that the 'id' filter is not present in the pagination query
+	const thirdIdFilter = queryData.filters?.items?.find(
+		(item) => item?.key?.key === 'id',
+	);
+	expect(thirdIdFilter).toBeUndefined();
+
+	// Verify the sorting order includes 'id' if 'timestamp' is present
+	const OrderByTimestamp = queryData.orderBy?.find(
+		(item) => item.columnName === 'timestamp',
+	);
+	const orderById = queryData.orderBy?.find((item) => item.columnName === 'id');
+
+	if (OrderByTimestamp) {
+		expect(orderById).toBeDefined();
+		// Ensure the 'id' sorting order matches the 'timestamp' sorting order
+		expect(orderById?.order).toBe(OrderByTimestamp.order);
+	}
+};
+
 describe('LogsExplorerViews Pagination', () => {
 	// Array to store captured API request payloads
 	let capturedPayloads: QueryRangePayload[];
@@ -235,26 +255,7 @@ describe('LogsExplorerViews Pagination', () => {
 		// Verify the payload of the second call, expecting offset 100 and consistent time range
 		const secondPayload = capturedPayloads[1];
 		const secondQueryData = verifyPayload(secondPayload, 100, initialTimeRange);
-
-		// Verify that the 'id' filter is not present in the pagination query
-		const idFilter = secondQueryData.filters?.items?.find(
-			(item) => item?.key?.key === 'id',
-		);
-		expect(idFilter).toBeUndefined();
-
-		// Verify the sorting order includes 'id' if 'timestamp' is present
-		const orderByTimestamp = secondQueryData.orderBy?.find(
-			(item) => item.columnName === 'timestamp',
-		);
-		const orderById = secondQueryData.orderBy?.find(
-			(item) => item.columnName === 'id',
-		);
-
-		if (orderByTimestamp) {
-			expect(orderById).toBeDefined();
-			// Ensure the 'id' sorting order matches the 'timestamp' sorting order
-			expect(orderById?.order).toBe(orderByTimestamp.order);
-		}
+		verifyFiltersAndOrderBy(secondQueryData);
 
 		// Simulate the second scroll to load the third page
 		await waitFor(async () => {
@@ -275,7 +276,6 @@ describe('LogsExplorerViews Pagination', () => {
 		});
 
 		// Verify the third page request was made
-
 		// Wait for the third API call to be captured
 		await waitFor(() => {
 			expect(capturedPayloads.length).toBe(3);
@@ -283,24 +283,7 @@ describe('LogsExplorerViews Pagination', () => {
 		const thirdPayload = capturedPayloads[2];
 		// Verify the payload of the third call, expecting offset 200 and consistent time range
 		const thirdQueryData = verifyPayload(thirdPayload, 200, initialTimeRange);
-		// Verify that the 'id' filter is not present in the pagination query
-		const thirdIdFilter = thirdQueryData.filters?.items?.find(
-			(item) => item?.key?.key === 'id',
-		);
-		expect(thirdIdFilter).toBeUndefined();
 
-		// Verify the sorting order includes 'id' if 'timestamp' is present
-		const thirdOrderByTimestamp = thirdQueryData.orderBy?.find(
-			(item) => item.columnName === 'timestamp',
-		);
-		const thirdOrderById = thirdQueryData.orderBy?.find(
-			(item) => item.columnName === 'id',
-		);
-
-		if (thirdOrderByTimestamp) {
-			expect(thirdOrderById).toBeDefined();
-			// Ensure the 'id' sorting order matches the 'timestamp' sorting order
-			expect(thirdOrderById?.order).toBe(thirdOrderByTimestamp.order);
-		}
+		verifyFiltersAndOrderBy(thirdQueryData);
 	});
 });
