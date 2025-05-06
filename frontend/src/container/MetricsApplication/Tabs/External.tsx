@@ -246,7 +246,7 @@ function External(): JSX.Element {
 						onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
 							servicename,
 							timestamp: selectedTimeStamp,
-							domainName: selectedData?.address,
+							domainName: selectedData?.address || '',
 							isError: true,
 							stepInterval: 300,
 							safeNavigate,

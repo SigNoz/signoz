@@ -7,6 +7,7 @@ import {
 import GridCard from 'container/GridCardLayout/GridCard';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { isEqual } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -71,7 +72,7 @@ function AllEndPoints({
 	useEffect(() => {
 		if (
 			params.allEndpointsLocalFilters &&
-			JSON.stringify(params.allEndpointsLocalFilters) !== JSON.stringify(filters)
+			!isEqual(params.allEndpointsLocalFilters, filters)
 		) {
 			setFilters(params.allEndpointsLocalFilters);
 		}

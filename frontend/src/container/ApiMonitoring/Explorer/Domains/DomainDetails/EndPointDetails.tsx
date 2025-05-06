@@ -99,7 +99,6 @@ function EndPointDetails({
 				(item) => item.key?.key !== httpUrlKey.key,
 			);
 			const newItems = [...otherFilters];
-			setParams({ endPointDetailsLocalFilters: { op: 'AND', items: newItems } });
 			if (endPointName) {
 				newItems.push({
 					id: '92b8a1c1',
@@ -110,7 +109,16 @@ function EndPointDetails({
 			}
 			return { op: 'AND', items: newItems };
 		});
-	}, [endPointName, setParams]);
+	}, [endPointName]);
+
+	// Separate effect to update params when filters change
+	useEffect(() => {
+		const filtersWithoutHttpUrl = {
+			op: 'AND',
+			items: filters.items.filter((item) => item.key?.key !== httpUrlKey.key),
+		};
+		setParams({ endPointDetailsLocalFilters: filtersWithoutHttpUrl });
+	}, [filters, setParams]);
 
 	// Handler for changes from the QueryBuilderSearchV2 component
 	const handleFilterChange = useCallback(

@@ -21,7 +21,7 @@ function MetricOverTimeGraph({
 						onDragSelect={onDragSelect}
 						customOnDragSelect={(): void => {}}
 						customTimeRange={timeRange}
-						isTenMinutesTracesTimeRange
+						customTimeRangeWindowForCoRelation="5m"
 					/>
 				</div>
 			</Card>

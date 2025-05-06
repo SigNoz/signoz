@@ -134,7 +134,6 @@ function DomainDetails({
 					startTime: Math.floor(dateTimeRange[0] / 1000),
 					endTime: Math.floor(dateTimeRange[1] / 1000),
 				};
-				console.log('uncaught newRange', newRange);
 				setModalTimeRange(newRange);
 				setParams({ modalTimeRange: newRange });
 			} else {
