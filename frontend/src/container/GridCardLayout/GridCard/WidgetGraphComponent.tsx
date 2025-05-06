@@ -265,7 +265,11 @@ function WidgetGraphComponent({
 		metric?: { [key: string]: string },
 		queryData?: { queryName: string; inFocusOrNot: boolean },
 	): void => {
-		const { start, end } = getStartAndEndTimesInMilliseconds(xValue);
+		const TWO_AND_HALF_MINUTES_IN_MILLISECONDS = 2.5 * 60 * 1000; // 150,000 milliseconds
+		const { start, end } = getStartAndEndTimesInMilliseconds(
+			xValue,
+			TWO_AND_HALF_MINUTES_IN_MILLISECONDS,
+		);
 		handleGraphClick({
 			xValue,
 			yValue,
