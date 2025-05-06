@@ -128,7 +128,7 @@ const generateAPIMonitoringPath = (
 	filters: IBuilderQuery['filters'],
 ): string => {
 	const basePath = ROUTES.API_MONITORING;
-	const newPath = `${basePath}?apiMonitoringParams=${encodeURIComponent(
+	return `${basePath}?apiMonitoringParams=${encodeURIComponent(
 		JSON.stringify({
 			selectedDomain: domainName,
 			selectedView: 'endpoint_stats',
@@ -140,8 +140,6 @@ const generateAPIMonitoringPath = (
 			endPointDetailsLocalFilters: filters,
 		}),
 	)}`;
-	console.log('uncaught newPath', { domainName, newPath, startTime, endTime });
-	return newPath;
 };
 export function onViewAPIMonitoringPopupClick({
 	servicename,
