@@ -1080,3 +1080,12 @@ func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames
 
 	return result, nil
 }
+
+func (m *Manager) GetRuleHistory(ctx context.Context, id int) (*ruletypes.RuleHistory, error) {
+	ruleHistory, err := m.ruleStore.GetRuleUUID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return ruleHistory, nil
+}

@@ -848,31 +848,47 @@ func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 }
 
 func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	ruleID, err := valuer.NewUUID(idStr)
+	if err != nil {
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid rule id"))
+			return
+		}
+		ruleHistory, err := aH.ruleManager.GetRuleHistory(r.Context(), id)
+		if err != nil {
+			render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid rule id"))
+			return
+		}
+
+		ruleID = ruleHistory.RuleUUID
+	}
+
 	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
+	err = json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	totalCurrentTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
+	totalCurrentTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
-	currentTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
+	currentTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	currentAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
+	currentAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
-	currentAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
+	currentAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -887,23 +903,23 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 		params.End -= 86400000
 	}
 
-	totalPastTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
+	totalPastTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
-	pastTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
+	pastTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	pastAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
+	pastAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
-	pastAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
+	pastAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -930,15 +946,31 @@ func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	ruleID, err := valuer.NewUUID(idStr)
+	if err != nil {
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid rule id"))
+			return
+		}
+		ruleHistory, err := aH.ruleManager.GetRuleHistory(r.Context(), id)
+		if err != nil {
+			render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid rule id"))
+			return
+		}
+
+		ruleID = ruleHistory.RuleUUID
+	}
+
 	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
+	err = json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	stateItems, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
+	stateItems, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -990,9 +1022,25 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 }
 
 func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	ruleID, err := valuer.NewUUID(idStr)
+	if err != nil {
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid rule id"))
+			return
+		}
+		ruleHistory, err := aH.ruleManager.GetRuleHistory(r.Context(), id)
+		if err != nil {
+			render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid rule id"))
+			return
+		}
+
+		ruleID = ruleHistory.RuleUUID
+	}
+
 	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
+	err = json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
@@ -1002,13 +1050,13 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), ruleID, &params)
+	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), ruleID.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID.StringValue())
 	if err == nil {
 		for idx := range res.Items {
 			lbls := make(map[string]string)
@@ -1036,21 +1084,37 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 }
 
 func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	ruleID, err := valuer.NewUUID(idStr)
+	if err != nil {
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid rule id"))
+			return
+		}
+		ruleHistory, err := aH.ruleManager.GetRuleHistory(r.Context(), id)
+		if err != nil {
+			render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid rule id"))
+			return
+		}
+
+		ruleID = ruleHistory.RuleUUID
+	}
+
 	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
+	err = json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), ruleID, &params)
+	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), ruleID.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID.StringValue())
 	if err == nil {
 		for idx := range res {
 			lbls := make(map[string]string)
