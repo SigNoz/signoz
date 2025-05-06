@@ -164,6 +164,15 @@ const (
 	TraceOrderingByTraceDuration TraceOrdering = "trace_duration"
 )
 
+func (t TraceOrdering) Validate() error {
+	switch t {
+	case TraceOrderingBySpanCount, TraceOrderingByTraceDuration:
+		return nil
+	default:
+		return fmt.Errorf("invalid Value for Trace Ordering: %s", t)
+	}
+}
+
 type ReduceToOperator string
 
 const (
