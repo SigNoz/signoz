@@ -15,7 +15,10 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
+import {
+	getCustomTimeRangeWindowSweepInMS,
+	getStartAndEndTimesInMilliseconds,
+} from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
@@ -58,7 +61,7 @@ function WidgetGraphComponent({
 	customSeries,
 	customErrorMessage,
 	customOnRowClick,
-	isTenMinutesTracesTimeRange,
+	customTimeRangeWindowForCoRelation,
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -265,10 +268,12 @@ function WidgetGraphComponent({
 		metric?: { [key: string]: string },
 		queryData?: { queryName: string; inFocusOrNot: boolean },
 	): void => {
-		const TWO_AND_HALF_MINUTES_IN_MILLISECONDS = 2.5 * 60 * 1000; // 150,000 milliseconds
+		const customTracesTimeRange = getCustomTimeRangeWindowSweepInMS(
+			customTimeRangeWindowForCoRelation,
+		);
 		const { start, end } = getStartAndEndTimesInMilliseconds(
 			xValue,
-			TWO_AND_HALF_MINUTES_IN_MILLISECONDS,
+			customTracesTimeRange,
 		);
 		handleGraphClick({
 			xValue,
@@ -282,7 +287,7 @@ function WidgetGraphComponent({
 			navigateToExplorer,
 			notifications,
 			graphClick,
-			...(isTenMinutesTracesTimeRange
+			...(customTimeRangeWindowForCoRelation
 				? { customTracesTimeRange: { start, end } }
 				: {}),
 		});
@@ -403,7 +408,7 @@ WidgetGraphComponent.defaultProps = {
 	yAxisUnit: undefined,
 	setLayout: undefined,
 	onClickHandler: undefined,
-	isTenMinutesTracesTimeRange: false,
+	customTimeRangeWindowForCoRelation: undefined,
 };
 
 export default WidgetGraphComponent;
