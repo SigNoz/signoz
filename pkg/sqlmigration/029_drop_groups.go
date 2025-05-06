@@ -147,12 +147,7 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// Re-enable foreign keys
-	if _, err := db.ExecContext(ctx, "PRAGMA foreign_keys = ON"); err != nil {
-		return err
-	}
-
-	// Disable foreign keys temporarily
+	// Enable foreign keys
 	if err := migration.sqlstore.Dialect().ToggleForeignKeys(ctx, db, true); err != nil {
 		return err
 	}
