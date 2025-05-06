@@ -125,11 +125,15 @@ const setupServer = (capturedPayloads: QueryRangePayload[]): void => {
 };
 
 // Helper function to verify properties of a captured payload
-const verifyPayload = (
-	payload: QueryRangePayload,
-	expectedOffset: number,
-	initialTimeRange?: { start: number; end: number },
-): IBuilderQuery => {
+export const verifyPayload = ({
+	payload,
+	expectedOffset,
+	initialTimeRange,
+}: {
+	payload: QueryRangePayload;
+	expectedOffset: number;
+	initialTimeRange?: { start: number; end: number };
+}): IBuilderQuery => {
 	// Extract the builder query data for query name 'A'
 	const queryData = payload.compositeQuery.builderQueries?.A as IBuilderQuery;
 	expect(queryData).toBeDefined();
@@ -145,7 +149,7 @@ const verifyPayload = (
 	return queryData;
 };
 
-const verifyFiltersAndOrderBy = (queryData: IBuilderQuery): void => {
+export const verifyFiltersAndOrderBy = (queryData: IBuilderQuery): void => {
 	// Verify that the 'id' filter is not present in the pagination query
 	const thirdIdFilter = queryData.filters?.items?.find(
 		(item) => item?.key?.key === 'id',
@@ -218,7 +222,7 @@ describe('LogsExplorerViews Pagination', () => {
 
 		// Verify the payload of the first call, expecting offset 0
 		const firstPayload = capturedPayloads[0];
-		verifyPayload(firstPayload, 0);
+		verifyPayload({ payload: firstPayload, expectedOffset: 0 });
 
 		// Wait for the scrollable element to be available and simulate scrolling
 		await waitFor(async () => {
@@ -254,7 +258,11 @@ describe('LogsExplorerViews Pagination', () => {
 
 		// Verify the payload of the second call, expecting offset 100 and consistent time range
 		const secondPayload = capturedPayloads[1];
-		const secondQueryData = verifyPayload(secondPayload, 100, initialTimeRange);
+		const secondQueryData = verifyPayload({
+			payload: secondPayload,
+			expectedOffset: 100,
+			initialTimeRange,
+		});
 		verifyFiltersAndOrderBy(secondQueryData);
 
 		// Simulate the second scroll to load the third page
@@ -282,7 +290,11 @@ describe('LogsExplorerViews Pagination', () => {
 		});
 		const thirdPayload = capturedPayloads[2];
 		// Verify the payload of the third call, expecting offset 200 and consistent time range
-		const thirdQueryData = verifyPayload(thirdPayload, 200, initialTimeRange);
+		const thirdQueryData = verifyPayload({
+			payload: thirdPayload,
+			expectedOffset: 200,
+			initialTimeRange,
+		});
 
 		verifyFiltersAndOrderBy(thirdQueryData);
 	});
