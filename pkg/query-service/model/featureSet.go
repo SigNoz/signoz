@@ -11,7 +11,6 @@ type Feature struct {
 
 const UseSpanMetrics = "USE_SPAN_METRICS"
 const AnomalyDetection = "ANOMALY_DETECTION"
-const TraceFunnels = "TRACE_FUNNELS"
 
 var BasicPlan = FeatureSet{
 	Feature{
@@ -23,13 +22,6 @@ var BasicPlan = FeatureSet{
 	},
 	Feature{
 		Name:       AnomalyDetection,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	Feature{
-		Name:       TraceFunnels,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
