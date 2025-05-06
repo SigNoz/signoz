@@ -347,14 +347,11 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// only HName and ProfilePictureURL can be updated
-	if user.HName == "" {
-		user.HName = existingUser.HName
+	// only displayName can be updated
+	if user.DisplayName == "" {
+		user.DisplayName = existingUser.DisplayName
 	}
 
-	if user.ProfilePictureURL == "" {
-		user.ProfilePictureURL = existingUser.ProfilePictureURL
-	}
 	user.UpdatedAt = time.Now()
 
 	updatedUser, err := h.module.UpdateUser(ctx, claims.OrgID, id, &user)

@@ -53,16 +53,15 @@ type User struct {
 
 	Identifiable
 	TimeAuditable
-	HName             string `bun:"h_name,type:text,notnull" json:"hName"`
-	Email             string `bun:"email,type:text,notnull,unique:org_email" json:"email"`
-	ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
-	Role              string `bun:"role,type:text,notnull" json:"role"`
-	OrgID             string `bun:"org_id,type:text,notnull,unique:org_email,references:org(id),on_delete:CASCADE" json:"orgId"`
+	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
+	Email       string `bun:"email,type:text,notnull,unique:org_email" json:"email"`
+	Role        string `bun:"role,type:text,notnull" json:"role"`
+	OrgID       string `bun:"org_id,type:text,notnull,unique:org_email,references:org(id),on_delete:CASCADE" json:"orgId"`
 }
 
-func NewUser(hName string, email string, role string, orgID string) (*User, error) {
-	if hName == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "hName is required")
+func NewUser(displayName string, email string, role string, orgID string) (*User, error) {
+	if displayName == "" {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "displayName is required")
 	}
 
 	if email == "" {
@@ -81,10 +80,10 @@ func NewUser(hName string, email string, role string, orgID string) (*User, erro
 		Identifiable: Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
-		HName: hName,
-		Email: email,
-		Role:  role,
-		OrgID: orgID,
+		DisplayName: displayName,
+		Email:       email,
+		Role:        role,
+		OrgID:       orgID,
 	}, nil
 }
 

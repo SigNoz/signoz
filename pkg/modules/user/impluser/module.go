@@ -27,7 +27,7 @@ func NewModule(store types.UserStore) user.Module {
 
 func (m *Module) SendUserTelemetry(user *types.User, firstRegistration bool) {
 	data := map[string]interface{}{
-		"name":              user.HName,
+		"name":              user.DisplayName,
 		"email":             user.Email,
 		"firstRegistration": firstRegistration,
 	}

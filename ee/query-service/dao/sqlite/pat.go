@@ -36,13 +36,12 @@ func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p types.Gettable
 				Identifiable: ossTypes.Identifiable{
 					ID: createdByUser.ID,
 				},
-				HName: createdByUser.HName,
-				Email: createdByUser.Email,
+				DisplayName: createdByUser.DisplayName,
+				Email:       createdByUser.Email,
 				TimeAuditable: ossTypes.TimeAuditable{
 					CreatedAt: createdByUser.CreatedAt,
 					UpdatedAt: createdByUser.UpdatedAt,
 				},
-				ProfilePictureURL: createdByUser.ProfilePictureURL,
 			},
 			NotFound: false,
 		}
@@ -95,13 +94,12 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 					Identifiable: ossTypes.Identifiable{
 						ID: createdByUser.ID,
 					},
-					HName: createdByUser.HName,
-					Email: createdByUser.Email,
+					DisplayName: createdByUser.DisplayName,
+					Email:       createdByUser.Email,
 					TimeAuditable: ossTypes.TimeAuditable{
 						CreatedAt: createdByUser.CreatedAt,
 						UpdatedAt: createdByUser.UpdatedAt,
 					},
-					ProfilePictureURL: createdByUser.ProfilePictureURL,
 				},
 				NotFound: false,
 			}
@@ -118,13 +116,12 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 					Identifiable: ossTypes.Identifiable{
 						ID: updatedByUser.ID,
 					},
-					HName: updatedByUser.HName,
-					Email: updatedByUser.Email,
+					DisplayName: updatedByUser.DisplayName,
+					Email:       updatedByUser.Email,
 					TimeAuditable: ossTypes.TimeAuditable{
 						CreatedAt: updatedByUser.CreatedAt,
 						UpdatedAt: updatedByUser.UpdatedAt,
 					},
-					ProfilePictureURL: updatedByUser.ProfilePictureURL,
 				},
 				NotFound: false,
 			}

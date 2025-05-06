@@ -52,7 +52,7 @@ type newUser31 struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	HName             string `bun:"h_name,type:text,notnull" json:"hName"`
+	DisplayName       string `bun:"display_name,type:text,notnull" json:"displayName"`
 	Email             string `bun:"email,type:text,notnull,unique:org_email" json:"email"`
 	ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
 	Role              string `bun:"role,type:text,notnull" json:"role"`
@@ -209,7 +209,7 @@ func (migration *authRefactor) CopyOldUsersToNewUsers31(tx bun.IDB, existingUser
 			Identifiable: types.Identifiable{
 				ID: valuer.MustNewUUID(user.ID),
 			},
-			HName:             user.Name,
+			DisplayName:       user.Name,
 			Email:             user.Email,
 			ProfilePictureURL: user.ProfilePictureURL,
 			Role:              user.Role,
