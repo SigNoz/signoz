@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { ErrorStatusCode, SuccessStatusCode } from 'types/common';
 
 export type ApiResponse<T> = { data: T };
@@ -16,4 +17,25 @@ export interface SuccessResponse<T, P = unknown> {
 	payload: T;
 	error: null;
 	params?: P;
+}
+
+// Standardize SuccessResponse and Error Response
+export interface AdditionalErrors {
+	message: string;
+}
+
+export interface ErrorV2 {
+	code: string;
+	message: string;
+	url: string;
+	errors: AdditionalErrors[];
+}
+export interface ErrorResponseV2 {
+	httpStatusCode: StatusCodes;
+	error: ErrorV2;
+}
+
+export interface SuccessResponseV2<T> {
+	httpStatusCode: StatusCodes;
+	data: T;
 }
