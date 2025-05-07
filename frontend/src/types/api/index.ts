@@ -36,6 +36,6 @@ export interface ErrorResponseV2 {
 }
 
 export interface SuccessResponseV2<T> {
-	statusCode: StatusCodes;
+	httpStatusCode: StatusCodes;
 	data: T;
 }

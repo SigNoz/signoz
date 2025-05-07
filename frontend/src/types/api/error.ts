@@ -1,3 +1,5 @@
+import { StatusCodes } from 'http-status-codes';
+
 import { ErrorResponseV2 } from '.';
 
 class APIError extends Error {
@@ -6,6 +8,10 @@ class APIError extends Error {
 	constructor(error: ErrorResponseV2) {
 		super(error.error.message);
 		this.error = error;
+	}
+
+	getHttpStatusCode(): StatusCodes {
+		return this.error.httpStatusCode;
 	}
 }
 

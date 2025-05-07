@@ -9,7 +9,7 @@ export function ErrorResponseHandlerV2(error: AxiosError<ErrorV2>): never {
 	// that falls out of the range of 2xx
 	if (response) {
 		throw new APIError({
-			httpStatusCode: error.status || 500,
+			httpStatusCode: response.status || 500,
 			error: {
 				code: response.data.code,
 				message: response.data.message,

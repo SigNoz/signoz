@@ -13,7 +13,7 @@ const login = async (
 		});
 
 		return {
-			statusCode: response.status,
+			httpStatusCode: response.status,
 			data: response.data,
 		};
 	} catch (error) {
