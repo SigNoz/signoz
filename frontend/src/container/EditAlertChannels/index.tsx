@@ -453,8 +453,8 @@ function EditAlertChannels({
 				});
 			} catch (error) {
 				notifications.error({
-					message: (error as APIError).error.error.code,
-					description: (error as APIError).error.error.message,
+					message: (error as APIError).getErrorCode(),
+					description: (error as APIError).getErrorMessage(),
 				});
 				logEvent('Alert Channel: Test notification', {
 					type: channelType,

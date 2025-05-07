@@ -25,8 +25,8 @@ function Delete({ notifications, setChannels, id }: DeleteProps): JSX.Element {
 			setLoading(false);
 		} catch (error) {
 			notifications.error({
-				message: (error as APIError).error.error.code,
-				description: (error as APIError).error.error.message,
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 			setLoading(false);
 		}

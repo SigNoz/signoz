@@ -203,8 +203,8 @@ function CreateAlertChannels({
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			notifications.error({
-				message: (error as APIError).error.error.code,
-				description: (error as APIError).error.error.message,
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
@@ -255,8 +255,8 @@ function CreateAlertChannels({
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} catch (error) {
 			notifications.error({
-				message: (error as APIError).error.error.code,
-				description: (error as APIError).error.error.message,
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
@@ -288,8 +288,8 @@ function CreateAlertChannels({
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			notifications.error({
-				message: (error as APIError).error.error.code,
-				description: (error as APIError).error.error.message,
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
@@ -320,13 +320,9 @@ function CreateAlertChannels({
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
-			console.log(
-				(error as APIError).error.error.code,
-				(error as APIError).error.error.message,
-			);
 			notifications.error({
-				message: (error as APIError).error.error.code,
-				description: (error as APIError).error.error.message,
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
@@ -358,8 +354,8 @@ function CreateAlertChannels({
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			notifications.error({
-				message: (error as APIError).error.error.code,
-				description: (error as APIError).error.error.message,
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
@@ -464,8 +460,8 @@ function CreateAlertChannels({
 				});
 			} catch (error) {
 				notifications.error({
-					message: (error as APIError).error.error.code,
-					description: (error as APIError).error.error.message,
+					message: (error as APIError).getErrorCode(),
+					description: (error as APIError).getErrorMessage(),
 				});
 				logEvent('Alert Channel: Test notification', {
 					type: channelType,
