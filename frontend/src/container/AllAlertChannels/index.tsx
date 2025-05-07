@@ -39,7 +39,7 @@ function AlertChannels(): JSX.Element {
 		queryFn: () => getAll(),
 	});
 
-	console.log(data, data?.httpStatusCode);
+	console.log(isLoading, data, error);
 
 	useEffect(() => {
 		if (!isUndefined(data?.data)) {
