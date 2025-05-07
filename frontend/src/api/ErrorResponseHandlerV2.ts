@@ -1,20 +1,21 @@
 import { AxiosError } from 'axios';
-import { ErrorV2 } from 'types/api';
+import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 
 // reference - https://axios-http.com/docs/handling_errors
-export function ErrorResponseHandlerV2(error: AxiosError<ErrorV2>): never {
+export function ErrorResponseHandlerV2(error: AxiosError<ErrorV2Resp>): never {
 	const { response, request } = error;
 	// The request was made and the server responded with a status code
 	// that falls out of the range of 2xx
 	if (response) {
+		console.log(response);
 		throw new APIError({
 			httpStatusCode: response.status || 500,
 			error: {
-				code: response.data.code,
-				message: response.data.message,
-				url: response.data.url,
-				errors: response.data.errors,
+				code: response.data.error.code,
+				message: response.data.error.message,
+				url: response.data.error.url,
+				errors: response.data.error.errors,
 			},
 		});
 	}
