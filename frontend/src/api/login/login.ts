@@ -18,7 +18,6 @@ const login = async (
 			data: response.data,
 		};
 	} catch (error) {
-		console.log(error, 'error');
 		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2>);
 	}
 };
