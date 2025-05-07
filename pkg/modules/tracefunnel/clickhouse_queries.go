@@ -298,7 +298,7 @@ WITH
 
 SELECT
     round((count(DISTINCT trace_id) * 100.0) / (SELECT count(DISTINCT trace_id) FROM step1), 2) AS conversion_rate,
-    count(DISTINCT trace_id) / time_window_sec AS avg_rate,
+    (SELECT count(DISTINCT trace_id) FROM step1) / time_window_sec AS avg_rate,
     greatest(countIf(s1_has_error), countIf(s2_has_error)) AS errors,
     avg(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration,
     quantile(0.99)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS p99_latency
@@ -443,7 +443,7 @@ WITH
 
 SELECT
     round((count(DISTINCT joined_t3.trace_id) * 100.0) / (SELECT count(DISTINCT trace_id) FROM step1), 2) AS conversion_rate,
-    count(DISTINCT joined_t3.trace_id) / time_window_sec AS avg_rate,
+    (SELECT count(DISTINCT trace_id) FROM step1) / time_window_sec AS avg_rate,
     greatest(countIf(s1_has_error), countIf(s2_has_error), countIf(s3_has_error)) AS errors,
     avg(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration,
     quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS p99_latency
@@ -590,7 +590,7 @@ WITH
 
 SELECT
     round((count(DISTINCT joined_t3.trace_id) * 100.0) / (SELECT count(DISTINCT trace_id) FROM joined_t2), 2) AS conversion_rate,
-    count(DISTINCT joined_t3.trace_id) / time_window_sec AS avg_rate,
+    (SELECT count(DISTINCT trace_id) FROM step1) / time_window_sec AS avg_rate,
     greatest(countIf(s2_has_error), countIf(s3_has_error)) AS errors,
     avg(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000) AS avg_duration,
     quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000) AS p99_latency
