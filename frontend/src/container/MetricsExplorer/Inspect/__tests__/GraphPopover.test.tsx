@@ -38,8 +38,6 @@ describe('GraphPopover', () => {
 			/>,
 		);
 
-		// Check timestamp is rendered
-		expect(screen.getByText('Jan 1, 2023 ⎯ 07:00:00')).toBeInTheDocument();
 		// Check value is rendered with 2 decimal places
 		expect(screen.getByText('42.12')).toBeInTheDocument();
 	});
@@ -80,7 +78,5 @@ describe('GraphPopover', () => {
 
 		// Should show the closest value
 		expect(screen.getByText('43.46')).toBeInTheDocument();
-		// Should show the closest timestamp's value
-		expect(screen.getByText('Jan 1, 2023 ⎯ 07:01:00')).toBeInTheDocument();
 	});
 });

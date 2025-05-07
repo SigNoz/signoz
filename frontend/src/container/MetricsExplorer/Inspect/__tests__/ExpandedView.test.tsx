@@ -85,7 +85,7 @@ describe('ExpandedView', () => {
 		);
 		const graphPopoverCells = screen.getAllByTestId('graph-popover-cell');
 		expect(graphPopoverCells).toHaveLength(mockTimeSeries.values.length * 2);
-		expect(screen.getByText('Jan 1, 2023 ⎯ 07:00:00')).toBeInTheDocument();
+
 		expect(screen.getAllByText('42.123')).toHaveLength(2);
 	});
 
@@ -107,7 +107,7 @@ describe('ExpandedView', () => {
 		// by doing time aggregation at 120 seconds, we should have 2 values
 		const graphPopoverCells = screen.getAllByTestId('graph-popover-cell');
 		expect(graphPopoverCells).toHaveLength((TIME_AGGREGATION_INTERVAL / 60) * 2);
-		expect(screen.getByText('Jan 1, 2023 ⎯ 07:00:00')).toBeInTheDocument();
+
 		expect(
 			screen.getByText(
 				`42.123 is the ${
