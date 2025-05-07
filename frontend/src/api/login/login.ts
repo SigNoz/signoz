@@ -12,7 +12,6 @@ const login = async (
 			...props,
 		});
 
-		console.log(response, 'response');
 		return {
 			statusCode: response.status,
 			data: response.data,
