@@ -105,6 +105,10 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, usererr.Error()))
 		return
 	}
+	if createdByUser == nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "user not found"))
+		return
+	}
 
 	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email)) {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "integration user pat cannot be updated"))
@@ -170,6 +174,11 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	createdByUser, usererr := ah.Signoz.Modules.User.GetUserByID(r.Context(), claims.OrgID, existingPAT.UserID)
 	if usererr != nil {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, usererr.Error()))
+		return
+	}
+
+	if createdByUser == nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "user not found"))
 		return
 	}
 

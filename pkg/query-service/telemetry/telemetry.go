@@ -206,7 +206,7 @@ type Telemetry struct {
 	mutex         sync.RWMutex
 
 	alertsInfoCallback     func(ctx context.Context) (*model.AlertsInfo, error)
-	userCountCallback      func(ctx context.Context) (int, error)
+	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
 	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
 	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
 	savedViewsInfoCallback func(ctx context.Context) (*model.SavedViewsInfo, error)
@@ -216,7 +216,7 @@ func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*m
 	a.alertsInfoCallback = callback
 }
 
-func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context) (int, error)) {
+func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (int, error)) {
 	a.userCountCallback = callback
 }
 
@@ -320,7 +320,7 @@ func createTelemetry() {
 		metricsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.MetricsTTL})
 		logsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.LogsTTL})
 
-		userCount, _ := telemetry.userCountCallback(ctx)
+		userCount, _ := telemetry.userCountCallback(ctx, telemetry.reader.GetSQLStore())
 
 		data := map[string]interface{}{
 			"totalSpans":                            totalSpans,

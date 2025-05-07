@@ -64,6 +64,10 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
+	if invite == nil {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite not found"))
+		return
+	}
 
 	orgDomain, err := h.module.GetAuthDomainByEmail(ctx, invite.Email)
 	if err != nil {
@@ -76,7 +80,11 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		IsUser: false,
 	}
 
-	var user *types.User
+	user, err := types.NewUser(invite.Name, invite.Email, invite.Role, invite.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	if orgDomain != nil && orgDomain.SsoEnabled {
 		// sso is enabled, create user and respond precheck data

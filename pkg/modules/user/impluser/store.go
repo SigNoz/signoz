@@ -2,6 +2,7 @@ package impluser
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -20,7 +21,7 @@ func NewStore(sqlstore sqlstore.SQLStore) types.UserStore {
 // CreateBulkInvite implements types.InviteStore.
 func (s *Store) CreateBulkInvite(ctx context.Context, invites []*types.Invite) error {
 	_, err := s.sqlstore.BunDB().NewInsert().
-		Model(invites).
+		Model(&invites).
 		Exec(ctx)
 
 	if err != nil {
@@ -52,6 +53,9 @@ func (s *Store) GetInviteByEmailInOrg(ctx context.Context, orgID string, email s
 		Scan(ctx)
 
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with email: %s does not exist in org: %s", email, orgID)
 	}
 
@@ -66,6 +70,9 @@ func (s *Store) GetInviteByToken(ctx context.Context, token string) (*types.Invi
 		Scan(ctx)
 
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with token: %s does not exist", token)
 	}
 
@@ -132,6 +139,9 @@ func (s *Store) GetUserByID(ctx context.Context, orgID string, id string) (*type
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrUserNotFound, "user with id: %s does not exist in org: %s", id, orgID)
 	}
 	return &user, nil
@@ -145,6 +155,9 @@ func (s *Store) GetUserByEmailInOrg(ctx context.Context, orgID string, email str
 		Where("email = ?", email).
 		Scan(ctx)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrUserNotFound, "user with email: %s does not exist in org: %s", email, orgID)
 	}
 	return &user, nil

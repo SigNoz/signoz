@@ -15,7 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -123,7 +122,7 @@ func main() {
 		sqlStoreFactories,
 		signoz.NewTelemetryStoreProviderFactories(),
 		func(sqlstore sqlstore.SQLStore) user.Module {
-			return eeuserimpl.NewModule(impluser.NewStore(sqlstore))
+			return eeuserimpl.NewModule(eeuserimpl.NewStore(sqlstore))
 		},
 		func(userModule user.Module) user.Handler {
 			return eeuserimpl.NewHandler(userModule)

@@ -52,6 +52,10 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
+	if invite == nil {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite not found"))
+		return
+	}
 
 	user, err := types.NewUser(invite.Name, invite.Email, invite.Role, invite.OrgID)
 	if err != nil {
@@ -137,7 +141,7 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 // Helper function to handle individual invites
 func (h *handler) inviteUsers(ctx context.Context, claims authtypes.Claims, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
 
-	invites := make([]*types.Invite, len(bulkInvites.Invites))
+	invites := make([]*types.Invite, 0, len(bulkInvites.Invites))
 
 	for _, invite := range bulkInvites.Invites {
 		// check if user exists
@@ -297,6 +301,10 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
+	if user == nil {
+		render.Error(w, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found"))
+		return
+	}
 
 	render.Success(w, http.StatusOK, user)
 }
@@ -341,6 +349,10 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	existingUser, err := h.module.GetUserByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(w, err)
+		return
+	}
+	if existingUser == nil {
+		render.Error(w, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found"))
 		return
 	}
 
@@ -410,9 +422,13 @@ func (h *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// check if the id lies in the same org as the claims
-	_, err = h.module.GetUserByID(ctx, claims.OrgID, id)
+	user, err := h.module.GetUserByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(w, err)
+		return
+	}
+	if user == nil {
+		render.Error(w, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found"))
 		return
 	}
 

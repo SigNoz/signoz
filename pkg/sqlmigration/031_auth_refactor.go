@@ -56,7 +56,7 @@ type newUser31 struct {
 	Email             string `bun:"email,type:text,notnull,unique:org_email" json:"email"`
 	ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
 	Role              string `bun:"role,type:text,notnull" json:"role"`
-	OrgID             string `bun:"org_id,type:text,notnull,unique:org_email,references:org(id),on_delete:CASCADE" json:"orgId"`
+	OrgID             string `bun:"org_id,type:text,notnull,unique:org_email,references:org(id)" json:"orgId"`
 }
 
 type FactorPassword31 struct {
@@ -66,7 +66,7 @@ type FactorPassword31 struct {
 	types.TimeAuditable
 	Password  string `bun:"password,type:text,notnull" json:"password"`
 	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
-	UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id),on_delete:CASCADE" json:"userId"`
+	UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id)" json:"userId"`
 }
 
 type existingResetPasswordRequest31 struct {
@@ -87,6 +87,11 @@ type FactorResetPasswordRequest31 struct {
 
 func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 
+	// Disable foreign keys temporarily
+	if err := migration.store.Dialect().ToggleForeignKeyConstraint(ctx, db, false); err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -102,7 +107,7 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 			types.TimeAuditable
 			Password  string `bun:"password,type:text,notnull" json:"password"`
 			Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
-			UserID    string `bun:"user_id,type:text,notnull,unique,references:users(id)" json:"userId"`
+			UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id)" json:"userId"`
 		}{}).
 		IfNotExists().
 		Exec(ctx); err != nil {
@@ -187,10 +192,13 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// reset password requests
-
 	err = tx.Commit()
 	if err != nil {
+		return err
+	}
+
+	// Enable foreign keys
+	if err := migration.store.Dialect().ToggleForeignKeyConstraint(ctx, db, true); err != nil {
 		return err
 	}
 

@@ -84,6 +84,9 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error 
 	if err != nil {
 		return err
 	}
+	if user == nil {
+		return errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found")
+	}
 
 	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email)) {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "integration user cannot be deleted")
@@ -156,6 +159,9 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 			return nil, err
 		}
 		dbUser = user
+		if user == nil {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "user not found")
+		}
 	}
 
 	// when the orgID is not provided we login if the user exists in just one org
