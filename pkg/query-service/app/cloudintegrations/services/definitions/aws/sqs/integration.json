@@ -200,6 +200,30 @@
         "unit": "Count",
         "type": "Gauge",
         "description": ""
+      },
+      {
+        "name": "aws_SQS_SentMessageSize_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_SentMessageSize_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_SentMessageSize_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_SentMessageSize_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
       }
     ]
   },
