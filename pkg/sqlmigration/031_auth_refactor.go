@@ -78,7 +78,7 @@ type existingResetPasswordRequest31 struct {
 }
 
 type FactorResetPasswordRequest31 struct {
-	bun.BaseModel `bun:"table:reset_password_request"`
+	bun.BaseModel `bun:"table:factor_reset_password_request"`
 
 	types.Identifiable
 	Token      string `bun:"token,type:text,notnull" json:"token"`
@@ -159,7 +159,7 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingResetPasswordRequest31), new(FactorResetPasswordRequest31), []string{OrgReference}, func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingResetPasswordRequest31), new(FactorResetPasswordRequest31), []string{FactorPasswordReference}, func(ctx context.Context) error {
 			existingRequests := make([]*existingResetPasswordRequest31, 0)
 			err = tx.
 				NewSelect().

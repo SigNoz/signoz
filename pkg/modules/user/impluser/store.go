@@ -201,14 +201,59 @@ func (s *Store) ListUsers(ctx context.Context, orgID string) ([]*types.User, err
 }
 
 func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
-	_, err := s.sqlstore.BunDB().NewDelete().
-		Model(&types.User{}).
+
+	tx, err := s.sqlstore.BunDB().BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	// get the password id
+
+	var password types.FactorPassword
+	err = tx.NewSelect().
+		Model(&password).
+		Where("user_id = ?", id).
+		Scan(ctx)
+	if err != nil {
+		return s.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with user id: %s does not exist", id)
+	}
+
+	// delete reset password request
+	_, err = tx.NewDelete().
+		Model(new(types.FactorResetPasswordRequest)).
+		Where("password_id = ?", password.ID.String()).
+		Exec(ctx)
+	if err != nil {
+		return s.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token with user id: %s does not exist", id)
+	}
+
+	// delete factor password
+	_, err = tx.NewDelete().
+		Model(new(types.FactorPassword)).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return s.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with user id: %s does not exist", id)
+	}
+
+	// delete user
+	_, err = tx.NewDelete().
+		Model(new(types.User)).
 		Where("org_id = ?", orgID).
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
 		return s.sqlstore.WrapNotFoundErrf(err, types.ErrUserNotFound, "user with id: %s does not exist in org: %s", id, orgID)
 	}
+
 	return nil
 }
 

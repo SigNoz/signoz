@@ -123,7 +123,7 @@ type FactorPassword struct {
 	TimeAuditable
 	Password  string `bun:"password,type:text,notnull" json:"password"`
 	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
-	UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id),on_delete:CASCADE" json:"userId"`
+	UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id)" json:"userId"`
 }
 
 func NewFactorPassword(password string) (*FactorPassword, error) {
@@ -163,11 +163,11 @@ func ComparePassword(hashedPassword, password string) bool {
 }
 
 type FactorResetPasswordRequest struct {
-	bun.BaseModel `bun:"table:reset_password_request"`
+	bun.BaseModel `bun:"table:factor_reset_password_request"`
 
 	Identifiable
 	Token      string `bun:"token,type:text,notnull" json:"token"`
-	PasswordID string `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
+	PasswordID string `bun:"password_id,type:text,notnull,unique,references:factor_password(id)" json:"passwordId"`
 }
 
 func NewFactorResetPasswordRequest(passwordID string) (*FactorResetPasswordRequest, error) {
