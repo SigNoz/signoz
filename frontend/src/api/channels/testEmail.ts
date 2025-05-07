@@ -25,7 +25,7 @@ const testEmail = async (
 			data: response.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 		throw error;
 	}
 };
