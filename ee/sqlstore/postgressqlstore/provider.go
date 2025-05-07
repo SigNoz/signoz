@@ -106,3 +106,7 @@ func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, for
 
 	return err
 }
+
+func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error {
+	return nil
+}
