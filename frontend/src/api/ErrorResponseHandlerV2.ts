@@ -8,7 +8,6 @@ export function ErrorResponseHandlerV2(error: AxiosError<ErrorV2Resp>): never {
 	// The request was made and the server responded with a status code
 	// that falls out of the range of 2xx
 	if (response) {
-		console.log(response);
 		throw new APIError({
 			httpStatusCode: response.status || 500,
 			error: {
