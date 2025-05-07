@@ -376,9 +376,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	useEffect(() => {
 		if (isDarkMode) {
 			document.body.classList.remove('lightMode');
+			document.body.classList.add('dark');
 			document.body.classList.add('darkMode');
 		} else {
 			document.body.classList.add('lightMode');
+			document.body.classList.remove('dark');
 			document.body.classList.remove('darkMode');
 		}
 	}, [isDarkMode]);
@@ -588,7 +590,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	);
 
 	return (
-		<Layout className={cx(isDarkMode ? 'darkMode' : 'lightMode')}>
+		<Layout className={cx(isDarkMode ? 'darkMode dark' : 'lightMode')}>
 			<Helmet>
 				<title>{pageTitle}</title>
 			</Helmet>
@@ -638,7 +640,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				</div>
 			)}
 
-			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
+			<Flex
+				className={cx('app-layout', isDarkMode ? 'darkMode dark' : 'lightMode')}
+			>
 				{isToDisplayLayout && !renderFullScreen && <SideNav />}
 				<div
 					className={cx('app-content', {
