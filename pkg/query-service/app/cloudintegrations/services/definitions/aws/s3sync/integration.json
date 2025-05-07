@@ -11,33 +11,28 @@
     "logs": [
       {
         "name": "Account ID",
-        "path": "resources.aws.account.id",
+        "path": "resources.cloud.account.id",
         "type": "string"
       },
       {
         "name": "Account Region",
-        "path": "resources.aws.account.region",
+        "path": "resources.cloud.account.region",
         "type": "string"
       },
       {
         "name": "Bucket Name",
-        "path": "resources.aws.bucket.name",
+        "path": "resources.cloud.bucket.name",
         "type": "string"
       },
       {
         "name": "Object Key",
-        "path": "attributes.aws.object.key",
+        "path": "attributes.object.key",
         "type": "string"
       },
       {
         "name": "Object S3 Event Time",
-        "path": "attributes.aws.object.event_time",
+        "path": "attributes.object.event_time",
         "type": "string"
-      },
-      {
-        "name": "Log line number in source file",
-        "path": "attributes.log.source.line",
-        "type": "number"
       }
     ]
   },
