@@ -42,10 +42,11 @@
     ]
   },
   "telemetry_collection_strategy": {
-    "aws_metrics": {
-      "cloudwatch_metric_stream_filters": [
+    "aws_logs": {
+      "cloudwatch_logs_subscriptions": [
         {
-          "Namespace": "x/signoz/forwarder"
+          "log_group_name_prefix": "x/signoz/forwarder",
+          "filter_pattern": ""
         }
       ]
     }
