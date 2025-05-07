@@ -39,8 +39,6 @@ function AlertChannels(): JSX.Element {
 		queryFn: () => getAll(),
 	});
 
-	console.log(isLoading, data, error);
-
 	useEffect(() => {
 		if (!isUndefined(data?.data)) {
 			logEvent('Alert Channel: Channel list page visited', {
