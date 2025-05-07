@@ -147,7 +147,7 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, orgID val
 	})
 
 	g.Go(func() error {
-		attributes, err := receiver.reader.GetAttributesForMetricName(ctx, metricName, nil, nil)
+		attributes, err := receiver.reader.GetAttributesForMetricName(ctx, metricName, nil, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -475,7 +475,7 @@ func (receiver *SummaryService) GetInspectMetrics(ctx context.Context, params *m
 
 	// Run the two queries concurrently using the derived context.
 	g.Go(func() error {
-		attrs, apiErr := receiver.reader.GetAttributesForMetricName(egCtx, params.MetricName, &params.Start, &params.End)
+		attrs, apiErr := receiver.reader.GetAttributesForMetricName(egCtx, params.MetricName, &params.Start, &params.End, &params.Filters)
 		if apiErr != nil {
 			return apiErr
 		}

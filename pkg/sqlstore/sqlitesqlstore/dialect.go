@@ -428,6 +428,15 @@ func (dialect *dialect) AddPrimaryKey(ctx context.Context, bun bun.IDB, oldModel
 }
 
 func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, bunIDB bun.IDB, model interface{}, column string) error {
+	var isForeignKeyEnabled bool
+	if err := bunIDB.QueryRowContext(ctx, "PRAGMA foreign_keys").Scan(&isForeignKeyEnabled); err != nil {
+		return err
+	}
+
+	if isForeignKeyEnabled {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "foreign keys are enabled, please disable them before running this migration")
+	}
+
 	existingTable := bunIDB.Dialect().Tables().Get(reflect.TypeOf(model))
 	columnExists, err := dialect.ColumnExists(ctx, bunIDB, existingTable.Name, column)
 	if err != nil {
@@ -455,11 +464,6 @@ func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, 
 		}
 	}
 
-	// Disable foreign keys temporarily
-	if _, err := bunIDB.ExecContext(ctx, "PRAGMA foreign_keys = OFF"); err != nil {
-		return err
-	}
-
 	if _, err = createTableQuery.Exec(ctx); err != nil {
 		return err
 	}
@@ -479,10 +483,15 @@ func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, 
 		return err
 	}
 
-	// Re-enable foreign keys
-	if _, err := bunIDB.ExecContext(ctx, "PRAGMA foreign_keys = ON"); err != nil {
+	return nil
+}
+
+func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error {
+	if enable {
+		_, err := bun.ExecContext(ctx, "PRAGMA foreign_keys = ON")
 		return err
 	}
 
-	return nil
+	_, err := bun.ExecContext(ctx, "PRAGMA foreign_keys = OFF")
+	return err
 }
