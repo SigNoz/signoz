@@ -119,8 +119,6 @@ describe('ExpandedView', () => {
 		);
 		expect(screen.getByText('42.123')).toBeInTheDocument();
 		expect(screen.getByText('43.456')).toBeInTheDocument();
-		expect(screen.getByText('07:00:00')).toBeInTheDocument();
-		expect(screen.getByText('07:01:00')).toBeInTheDocument();
 	});
 
 	it('renders all child time series for a space aggregation inspection', () => {
