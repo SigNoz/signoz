@@ -98,7 +98,7 @@
       {
         "id": "overview",
         "title": "AWS ECS Overview",
-        "description": "Overview of ECS Lambda",
+        "description": "Overview of ECS",
         "image": "file://assets/dashboards/overview.png",
         "definition": "file://assets/dashboards/overview.json"
       }
