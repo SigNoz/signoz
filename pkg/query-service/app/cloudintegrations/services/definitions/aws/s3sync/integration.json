@@ -42,6 +42,13 @@
     ]
   },
   "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "x/signoz/forwarder"
+        }
+      ]
+    }
   },
   "assets": {
     "dashboards": []
