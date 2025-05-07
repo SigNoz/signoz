@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
-	"github.com/SigNoz/signoz/pkg/types"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -36,10 +35,10 @@ func (module *module) Create(ctx context.Context, timestamp int64, name string, 
 	funnel.CreatedAt = time.Unix(0, timestamp*1000000) // Convert to nanoseconds
 	funnel.CreatedBy = userID
 
-	// Set up the user relationship
-	funnel.CreatedByUser = &types.User{
-		ID: userID,
-	}
+	// Remove the user relationship to avoid foreign key constraint issues
+	// funnel.CreatedByUser = &types.User{
+	//     ID: userID,
+	// }
 
 	if err := module.store.Create(ctx, funnel); err != nil {
 		return nil, fmt.Errorf("failed to create funnel: %v", err)
