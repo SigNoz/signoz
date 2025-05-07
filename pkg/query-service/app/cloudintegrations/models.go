@@ -79,7 +79,9 @@ func AddServiceStrategy(cs *CompiledCollectionStrategy,
 					cs.AWSLogs.Subscriptions,
 					definitionStrat.AWSLogs.Subscriptions...,
 				)
-			} else if len(config.Logs.S3Buckets) > 0 { // S3 bucket sync
+			} else if len(config.Logs.S3Buckets) > 0 {
+				// s3sync: S3 bucket sync; No cloudwatch logs are appended for this service type;
+				// Though definition is populated with a custom cloudwatch group that helps in calculating log's connection status
 				cs.S3Buckets = config.Logs.S3Buckets
 			}
 		}
