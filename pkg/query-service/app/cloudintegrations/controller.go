@@ -265,17 +265,17 @@ func (c *Controller) CheckInAsAgent(
 	}
 
 	// accumulate config in a fixed order to ensure same config generated across runs
-	configuredSvcIds := maps.Keys(svcConfigs)
-	slices.Sort(configuredSvcIds)
+	configuredServices := maps.Keys(svcConfigs)
+	slices.Sort(configuredServices)
 
-	for _, svcId := range configuredSvcIds {
-		definition, ok := services[svcId]
+	for _, svcType := range configuredServices {
+		definition, ok := services[svcType]
 		if !ok {
 			continue
 		}
-		config := svcConfigs[svcId]
+		config := svcConfigs[svcType]
 
-		err := AddServiceStrategy(compliedStrategy, definition.Strategy, config)
+		err := AddServiceStrategy(svcType, compliedStrategy, definition.Strategy, config)
 		if err != nil {
 			return nil, err
 		}
