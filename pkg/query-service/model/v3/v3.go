@@ -157,22 +157,6 @@ func (a AggregateOperator) IsRateOperator() bool {
 	}
 }
 
-type TraceOrdering string
-
-const (
-	TraceOrderingBySpanCount     TraceOrdering = "span_count"
-	TraceOrderingByTraceDuration TraceOrdering = "trace_duration"
-)
-
-func (t TraceOrdering) Validate() error {
-	switch t {
-	case TraceOrderingBySpanCount, TraceOrderingByTraceDuration:
-		return nil
-	default:
-		return fmt.Errorf("invalid Value for Trace Ordering: %s", t)
-	}
-}
-
 type ReduceToOperator string
 
 const (
@@ -914,7 +898,6 @@ type BuilderQuery struct {
 	Offset               uint64               `json:"offset"`
 	PageSize             uint64               `json:"pageSize"`
 	OrderBy              []OrderBy            `json:"orderBy,omitempty"`
-	TraceOrdering        TraceOrdering        `json:"traceOrdering,omitempty"`
 	ReduceTo             ReduceToOperator     `json:"reduceTo,omitempty"`
 	SelectColumns        []AttributeKey       `json:"selectColumns,omitempty"`
 	TimeAggregation      TimeAggregation      `json:"timeAggregation,omitempty"`
@@ -982,7 +965,6 @@ func (b *BuilderQuery) Clone() *BuilderQuery {
 		PageSize:             b.PageSize,
 		OrderBy:              b.OrderBy,
 		ReduceTo:             b.ReduceTo,
-		TraceOrdering:        b.TraceOrdering,
 		SelectColumns:        b.SelectColumns,
 		TimeAggregation:      b.TimeAggregation,
 		SpaceAggregation:     b.SpaceAggregation,

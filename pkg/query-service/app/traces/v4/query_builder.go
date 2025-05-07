@@ -292,14 +292,22 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	if mq.AggregateOperator == v3.AggregateOperatorNoOp {
 		var query string
 		if panelType == v3.PanelTypeTrace {
-			if mq.TraceOrdering == v3.TraceOrderingByTraceDuration || mq.TraceOrdering == "" {
+			orderBySpanCount := false
+			// Check if orderBy contains a specific reference to span_count
+			for _, order := range mq.OrderBy {
+				if order.ColumnName == "span_count" {
+					orderBySpanCount = true
+					break
+				}
+			}
+			if !orderBySpanCount {
 				withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME, timeFilter)
 				afterSubQuery := tracesV3.AddLimitToQuery(constants.TracesExplorerViewSQLSelectAfterSubQuery, mq.Limit)
 				if mq.Offset != 0 {
 					afterSubQuery = tracesV3.AddOffsetToQuery(afterSubQuery, mq.Offset)
 				}
 				query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3) + withSubQuery + ") " + fmt.Sprintf(afterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter, filterSubQuery)
-			} else if mq.TraceOrdering == v3.TraceOrderingBySpanCount {
+			} else {
 				withSubQueryWithLimits := tracesV3.AddLimitToQuery(constants.TracesExplorerSpanCountWithSubQuery, mq.Limit)
 				withSubQuery := fmt.Sprintf(withSubQueryWithLimits, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME, timeFilter, filterSubQuery)
 				afterSubQuery := tracesV3.AddLimitToQuery(constants.TraceExplorerSpanCountAfterSubQuery, mq.Limit)

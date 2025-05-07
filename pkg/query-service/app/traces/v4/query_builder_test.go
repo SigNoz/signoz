@@ -663,7 +663,7 @@ func Test_buildTracesQuery(t *testing.T) {
 				end:       1680066458000000000,
 				mq: &v3.BuilderQuery{
 					AggregateOperator: v3.AggregateOperatorNoOp,
-					TraceOrdering:     v3.TraceOrderingBySpanCount,
+					OrderBy:           []v3.OrderBy{{ColumnName: "span_count", Order: "DESC"}},
 					Filters: &v3.FilterSet{
 						Items: []v3.FilterItem{
 							{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
@@ -688,7 +688,7 @@ func Test_buildTracesQuery(t *testing.T) {
 				end:       1680066458000000000,
 				mq: &v3.BuilderQuery{
 					AggregateOperator: v3.AggregateOperatorNoOp,
-					TraceOrdering:     v3.TraceOrderingByTraceDuration,
+					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "DESC"}},
 					Filters: &v3.FilterSet{
 						Items: []v3.FilterItem{
 							{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
