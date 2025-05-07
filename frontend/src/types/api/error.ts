@@ -13,6 +13,14 @@ class APIError extends Error {
 	getHttpStatusCode(): StatusCodes {
 		return this.error.httpStatusCode;
 	}
+
+	getErrorMessage(): string {
+		return this.error.error.message;
+	}
+
+	getErrorCode(): string {
+		return this.error.error.code;
+	}
 }
 
 export default APIError;
