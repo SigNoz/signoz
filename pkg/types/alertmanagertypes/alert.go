@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
 	v2 "github.com/prometheus/alertmanager/api/v2"
@@ -18,7 +19,6 @@ import (
 	"github.com/prometheus/alertmanager/provider"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-	"go.signoz.io/signoz/pkg/errors"
 )
 
 type (

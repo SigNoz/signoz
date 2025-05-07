@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/web"
 )
 
 type provider struct{}

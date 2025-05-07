@@ -106,29 +106,31 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 	};
 
 	return (
-		<div
-			className={classNames({
-				'time-series-container': changeLayoutForOneChartPerQuery,
-			})}
-		>
+		<>
 			<BuilderUnitsFilter onChange={onUnitChangeHandler} yAxisUnit={yAxisUnit} />
-			{responseData.map((datapoint, index) => (
-				<div
-					className="time-series-view"
-					// eslint-disable-next-line react/no-array-index-key
-					key={index}
-				>
-					<TimeSeriesView
-						isFilterApplied={false}
-						isError={queries[index].isError}
-						isLoading={queries[index].isLoading}
-						data={datapoint}
-						yAxisUnit={yAxisUnit}
-						dataSource={DataSource.METRICS}
-					/>
-				</div>
-			))}
-		</div>
+			<div
+				className={classNames({
+					'time-series-container': changeLayoutForOneChartPerQuery,
+				})}
+			>
+				{responseData.map((datapoint, index) => (
+					<div
+						className="time-series-view"
+						// eslint-disable-next-line react/no-array-index-key
+						key={index}
+					>
+						<TimeSeriesView
+							isFilterApplied={false}
+							isError={queries[index].isError}
+							isLoading={queries[index].isLoading}
+							data={datapoint}
+							yAxisUnit={yAxisUnit}
+							dataSource={DataSource.METRICS}
+						/>
+					</div>
+				))}
+			</div>
+		</>
 	);
 }
 

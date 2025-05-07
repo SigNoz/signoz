@@ -3,7 +3,7 @@ package queues
 import (
 	"fmt"
 
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 type QueueListRequest struct {

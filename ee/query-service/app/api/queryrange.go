@@ -6,15 +6,28 @@ import (
 	"io"
 	"net/http"
 
-	"go.signoz.io/signoz/ee/query-service/anomaly"
-	baseapp "go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/ee/query-service/anomaly"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
 func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -29,7 +42,7 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams.Version = "v4"
 
 	// add temporality for each metric
-	temporalityErr := aH.PopulateTemporality(r.Context(), queryRangeParams)
+	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
 		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
@@ -85,34 +98,30 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 		switch seasonality {
 		case anomaly.SeasonalityWeekly:
 			provider = anomaly.NewWeeklyProvider(
-				anomaly.WithCache[*anomaly.WeeklyProvider](aH.opts.Cache),
+				anomaly.WithCache[*anomaly.WeeklyProvider](aH.Signoz.Cache),
 				anomaly.WithKeyGenerator[*anomaly.WeeklyProvider](queryBuilder.NewKeyGenerator()),
 				anomaly.WithReader[*anomaly.WeeklyProvider](aH.opts.DataConnector),
-				anomaly.WithFeatureLookup[*anomaly.WeeklyProvider](aH.opts.FeatureFlags),
 			)
 		case anomaly.SeasonalityDaily:
 			provider = anomaly.NewDailyProvider(
-				anomaly.WithCache[*anomaly.DailyProvider](aH.opts.Cache),
+				anomaly.WithCache[*anomaly.DailyProvider](aH.Signoz.Cache),
 				anomaly.WithKeyGenerator[*anomaly.DailyProvider](queryBuilder.NewKeyGenerator()),
 				anomaly.WithReader[*anomaly.DailyProvider](aH.opts.DataConnector),
-				anomaly.WithFeatureLookup[*anomaly.DailyProvider](aH.opts.FeatureFlags),
 			)
 		case anomaly.SeasonalityHourly:
 			provider = anomaly.NewHourlyProvider(
-				anomaly.WithCache[*anomaly.HourlyProvider](aH.opts.Cache),
+				anomaly.WithCache[*anomaly.HourlyProvider](aH.Signoz.Cache),
 				anomaly.WithKeyGenerator[*anomaly.HourlyProvider](queryBuilder.NewKeyGenerator()),
 				anomaly.WithReader[*anomaly.HourlyProvider](aH.opts.DataConnector),
-				anomaly.WithFeatureLookup[*anomaly.HourlyProvider](aH.opts.FeatureFlags),
 			)
 		default:
 			provider = anomaly.NewDailyProvider(
-				anomaly.WithCache[*anomaly.DailyProvider](aH.opts.Cache),
+				anomaly.WithCache[*anomaly.DailyProvider](aH.Signoz.Cache),
 				anomaly.WithKeyGenerator[*anomaly.DailyProvider](queryBuilder.NewKeyGenerator()),
 				anomaly.WithReader[*anomaly.DailyProvider](aH.opts.DataConnector),
-				anomaly.WithFeatureLookup[*anomaly.DailyProvider](aH.opts.FeatureFlags),
 			)
 		}
-		anomalies, err := provider.GetAnomalies(r.Context(), &anomaly.GetAnomaliesRequest{Params: queryRangeParams})
+		anomalies, err := provider.GetAnomalies(r.Context(), orgID, &anomaly.GetAnomaliesRequest{Params: queryRangeParams})
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 			return

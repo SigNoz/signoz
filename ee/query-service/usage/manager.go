@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -15,11 +14,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/ee/query-service/dao"
-	licenseserver "go.signoz.io/signoz/ee/query-service/integrations/signozio"
-	"go.signoz.io/signoz/ee/query-service/license"
-	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/utils/encryption"
+	"github.com/SigNoz/signoz/ee/query-service/dao"
+	"github.com/SigNoz/signoz/ee/query-service/license"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
+	"github.com/SigNoz/signoz/pkg/zeus"
 )
 
 const (
@@ -42,26 +41,16 @@ type Manager struct {
 
 	modelDao dao.ModelDao
 
-	tenantID string
+	zeus zeus.Zeus
 }
 
-func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, chUrl string) (*Manager, error) {
-	hostNameRegex := regexp.MustCompile(`tcp://(?P<hostname>.*):`)
-	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(chUrl)
-
-	tenantID := ""
-	if len(hostNameRegexMatches) == 2 {
-		tenantID = hostNameRegexMatches[1]
-		tenantID = strings.TrimSuffix(tenantID, "-clickhouse")
-	}
-
+func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, zeus zeus.Zeus) (*Manager, error) {
 	m := &Manager{
-		// repository:     repo,
 		clickhouseConn: clickhouseConn,
 		licenseRepo:    licenseRepo,
 		scheduler:      gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
 		modelDao:       modelDao,
-		tenantID:       tenantID,
+		zeus:           zeus,
 	}
 	return m, nil
 }
@@ -138,15 +127,6 @@ func (lm *Manager) UploadUsage() {
 
 	zap.L().Info("uploading usage data")
 
-	orgName := ""
-	orgNames, orgError := lm.modelDao.GetOrgs(ctx)
-	if orgError != nil {
-		zap.L().Error("failed to get org data: %v", zap.Error(orgError))
-	}
-	if len(orgNames) == 1 {
-		orgName = orgNames[0].Name
-	}
-
 	usagesPayload := []model.Usage{}
 	for _, usage := range usages {
 		usageDataBytes, err := encryption.Decrypt([]byte(usage.ExporterID[:32]), []byte(usage.Data))
@@ -166,8 +146,8 @@ func (lm *Manager) UploadUsage() {
 		usageData.ExporterID = usage.ExporterID
 		usageData.Type = usage.Type
 		usageData.Tenant = "default"
-		usageData.OrgName = orgName
-		usageData.TenantId = lm.tenantID
+		usageData.OrgName = "default"
+		usageData.TenantId = "default"
 		usagesPayload = append(usagesPayload, usageData)
 	}
 
@@ -176,24 +156,18 @@ func (lm *Manager) UploadUsage() {
 		LicenseKey: key,
 		Usage:      usagesPayload,
 	}
-	lm.UploadUsageWithExponentalBackOff(ctx, payload)
-}
 
-func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload model.UsagePayload) {
-	for i := 1; i <= MaxRetries; i++ {
-		apiErr := licenseserver.SendUsage(ctx, payload)
-		if apiErr != nil && i == MaxRetries {
-			zap.L().Error("retries stopped : %v", zap.Error(apiErr))
-			// not returning error here since it is captured in the failed count
-			return
-		} else if apiErr != nil {
-			// sleeping for exponential backoff
-			sleepDuration := RetryInterval * time.Duration(i)
-			zap.L().Error("failed to upload snapshot retrying after %v secs : %v", zap.Duration("sleepDuration", sleepDuration), zap.Error(apiErr.Err))
-			time.Sleep(sleepDuration)
-		} else {
-			break
-		}
+	body, errv2 := json.Marshal(payload)
+	if errv2 != nil {
+		zap.L().Error("error while marshalling usage payload: %v", zap.Error(errv2))
+		return
+	}
+
+	errv2 = lm.zeus.PutMeters(ctx, payload.LicenseKey.String(), body)
+	if errv2 != nil {
+		zap.L().Error("failed to upload usage: %v", zap.Error(errv2))
+		// not returning error here since it is captured in the failed count
+		return
 	}
 }
 

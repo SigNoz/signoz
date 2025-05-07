@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
+	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 )
 
 func (ah *APIHandler) ServeGatewayHTTP(rw http.ResponseWriter, req *http.Request) {

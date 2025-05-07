@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/inhibit"
@@ -18,8 +20,6 @@ import (
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
-	"go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
 var (

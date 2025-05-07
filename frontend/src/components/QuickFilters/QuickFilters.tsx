@@ -6,6 +6,7 @@ import {
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
+import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isFunction } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -63,56 +64,63 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	return (
 		<div className="quick-filters">
-			{source !== QuickFiltersSource.INFRA_MONITORING && (
-				<section className="header">
-					<section className="left-actions">
-						<FilterOutlined />
-						<Typography.Text className="text">Filters for</Typography.Text>
-						<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
-							<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
-						</Tooltip>
-					</section>
+			{source !== QuickFiltersSource.INFRA_MONITORING &&
+				source !== QuickFiltersSource.API_MONITORING && (
+					<section className="header">
+						<section className="left-actions">
+							<FilterOutlined />
+							<Typography.Text className="text">
+								{lastQueryName ? 'Filters for' : 'Filters'}
+							</Typography.Text>
+							{lastQueryName && (
+								<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
+									<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
+								</Tooltip>
+							)}
+						</section>
 
-					<section className="right-actions">
-						<Tooltip title="Reset All">
-							<SyncOutlined className="sync-icon" onClick={handleReset} />
-						</Tooltip>
-						<div className="divider-filter" />
-						<Tooltip title="Collapse Filters">
-							<VerticalAlignTopOutlined
-								rotate={270}
-								onClick={handleFilterVisibilityChange}
-							/>
-						</Tooltip>
+						<section className="right-actions">
+							<Tooltip title="Reset All">
+								<SyncOutlined className="sync-icon" onClick={handleReset} />
+							</Tooltip>
+							<div className="divider-filter" />
+							<Tooltip title="Collapse Filters">
+								<VerticalAlignTopOutlined
+									rotate={270}
+									onClick={handleFilterVisibilityChange}
+								/>
+							</Tooltip>
+						</section>
 					</section>
+				)}
+
+			<TypicalOverlayScrollbar>
+				<section className="filters">
+					{config.map((filter) => {
+						switch (filter.type) {
+							case FiltersType.CHECKBOX:
+								return (
+									<Checkbox
+										source={source}
+										filter={filter}
+										onFilterChange={onFilterChange}
+									/>
+								);
+							case FiltersType.SLIDER:
+								return <Slider filter={filter} />;
+							// eslint-disable-next-line sonarjs/no-duplicated-branches
+							default:
+								return (
+									<Checkbox
+										source={source}
+										filter={filter}
+										onFilterChange={onFilterChange}
+									/>
+								);
+						}
+					})}
 				</section>
-			)}
-
-			<section className="filters">
-				{config.map((filter) => {
-					switch (filter.type) {
-						case FiltersType.CHECKBOX:
-							return (
-								<Checkbox
-									source={source}
-									filter={filter}
-									onFilterChange={onFilterChange}
-								/>
-							);
-						case FiltersType.SLIDER:
-							return <Slider filter={filter} />;
-						// eslint-disable-next-line sonarjs/no-duplicated-branches
-						default:
-							return (
-								<Checkbox
-									source={source}
-									filter={filter}
-									onFilterChange={onFilterChange}
-								/>
-							);
-					}
-				})}
-			</section>
+			</TypicalOverlayScrollbar>
 		</div>
 	);
 }

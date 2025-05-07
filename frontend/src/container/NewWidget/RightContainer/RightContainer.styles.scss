@@ -159,6 +159,14 @@
 			}
 		}
 
+		.log-scale {
+			margin-top: 16px;
+			display: flex;
+			justify-content: space-between;
+			flex-direction: column;
+			gap: 8px;
+		}
+
 		.panel-time-text {
 			margin-top: 16px;
 			color: var(--bg-vanilla-400);

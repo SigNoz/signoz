@@ -3,7 +3,7 @@ package apiserver
 import (
 	"time"
 
-	"go.signoz.io/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/factory"
 )
 
 // Config holds the configuration for config.

@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlmigration/sqlmigrationtest"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/instrumentation/instrumentationtest"
-	"go.signoz.io/signoz/pkg/sqlmigration"
-	"go.signoz.io/signoz/pkg/sqlmigration/sqlmigrationtest"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlstoretest"
 )
 
 func TestMigratorWithSqliteAndNoopMigration(t *testing.T) {

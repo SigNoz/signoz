@@ -68,6 +68,7 @@ function MetricNameSearch(): JSX.Element {
 		(selectedMetricName: string): void => {
 			handleChangeQueryData('filters', {
 				items: [
+					...currentQuery.builder.queryData[0].filters.items,
 					{
 						id: 'metric_name',
 						op: 'CONTAINS',
@@ -83,7 +84,7 @@ function MetricNameSearch(): JSX.Element {
 			});
 			setIsPopoverOpen(false);
 		},
-		[handleChangeQueryData],
+		[currentQuery.builder.queryData, handleChangeQueryData],
 	);
 
 	const metricNameFilterValues = useMemo(

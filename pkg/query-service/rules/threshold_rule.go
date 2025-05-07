@@ -11,26 +11,27 @@ import (
 
 	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/contextlinks"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
-	"go.signoz.io/signoz/pkg/query-service/app/querier"
-	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
-	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
-	"go.signoz.io/signoz/pkg/query-service/utils/times"
-	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
+	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
+	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 
-	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
-	"go.signoz.io/signoz/pkg/query-service/formatter"
+	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
+	"github.com/SigNoz/signoz/pkg/query-service/formatter"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -51,49 +52,38 @@ type ThresholdRule struct {
 	// used for attribute metadata enrichment for logs and traces
 	logsKeys  map[string]v3.AttributeKey
 	spansKeys map[string]v3.AttributeKey
-
-	useTraceNewSchema bool
 }
 
 func NewThresholdRule(
 	id string,
-	p *PostableRule,
-	featureFlags interfaces.FeatureLookup,
+	orgID valuer.UUID,
+	p *ruletypes.PostableRule,
 	reader interfaces.Reader,
-	useLogsNewSchema bool,
-	useTraceNewSchema bool,
 	opts ...RuleOption,
 ) (*ThresholdRule, error) {
 
 	zap.L().Info("creating new ThresholdRule", zap.String("id", id), zap.Any("opts", opts))
 
-	baseRule, err := NewBaseRule(id, p, reader, opts...)
+	baseRule, err := NewBaseRule(id, orgID, p, reader, opts...)
 	if err != nil {
 		return nil, err
 	}
 
 	t := ThresholdRule{
-		BaseRule:          baseRule,
-		version:           p.Version,
-		useTraceNewSchema: useTraceNewSchema,
+		BaseRule: baseRule,
+		version:  p.Version,
 	}
 
 	querierOption := querier.QuerierOptions{
-		Reader:            reader,
-		Cache:             nil,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FeatureLookup:     featureFlags,
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
+		Reader:       reader,
+		Cache:        nil,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:            reader,
-		Cache:             nil,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FeatureLookup:     featureFlags,
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
+		Reader:       reader,
+		Cache:        nil,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
 	}
 
 	t.querier = querier.NewQuerier(querierOption)
@@ -102,8 +92,8 @@ func NewThresholdRule(
 	return &t, nil
 }
 
-func (r *ThresholdRule) Type() RuleType {
-	return RuleTypeThreshold
+func (r *ThresholdRule) Type() ruletypes.RuleType {
+	return ruletypes.RuleTypeThreshold
 }
 
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3, error) {
@@ -261,13 +251,13 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 	return r.ruleCondition.GetSelectedQueryName()
 }
 
-func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vector, error) {
+func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
 
 	params, err := r.prepareQueryRange(ts)
 	if err != nil {
 		return nil, err
 	}
-	err = r.PopulateTemporality(ctx, params)
+	err = r.PopulateTemporality(ctx, orgID, params)
 	if err != nil {
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}
@@ -303,11 +293,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 				return nil, err
 			}
 			r.spansKeys = spanKeys
-			if r.useTraceNewSchema {
-				tracesV4.Enrich(params, spanKeys)
-			} else {
-				tracesV3.Enrich(params, spanKeys)
-			}
+			tracesV4.Enrich(params, spanKeys)
 		}
 	}
 
@@ -315,9 +301,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 	var queryErrors map[string]error
 
 	if r.version == "v4" {
-		results, queryErrors, err = r.querierV2.QueryRange(ctx, params)
+		results, queryErrors, err = r.querierV2.QueryRange(ctx, orgID, params)
 	} else {
-		results, queryErrors, err = r.querier.QueryRange(ctx, params)
+		results, queryErrors, err = r.querier.QueryRange(ctx, orgID, params)
 	}
 
 	if err != nil {
@@ -347,7 +333,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 		r.lastTimestampWithDatapoints = time.Now()
 	}
 
-	var resultVector Vector
+	var resultVector ruletypes.Vector
 
 	// if the data is missing for `For` duration then we should send alert
 	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
@@ -356,7 +342,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 		if !r.lastTimestampWithDatapoints.IsZero() {
 			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
 		}
-		resultVector = append(resultVector, Sample{
+		resultVector = append(resultVector, ruletypes.Sample{
 			Metric:    lbls.Labels(),
 			IsMissing: true,
 		})
@@ -377,7 +363,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	prevState := r.State()
 
 	valueFormatter := formatter.FromUnit(r.Unit())
-	res, err := r.buildAndRunQuery(ctx, ts)
+	res, err := r.buildAndRunQuery(ctx, r.orgID, ts)
 
 	if err != nil {
 		return nil, err
@@ -387,7 +373,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	defer r.mtx.Unlock()
 
 	resultFPs := map[uint64]struct{}{}
-	var alerts = make(map[uint64]*Alert, len(res))
+	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
 	for _, smpl := range res {
 		l := make(map[string]string, len(smpl.Metric))
@@ -399,7 +385,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
 		zap.L().Debug("Alert template data for rule", zap.String("name", r.Name()), zap.String("formatter", valueFormatter.Name()), zap.String("value", value), zap.String("threshold", threshold))
 
-		tmplData := AlertTemplateData(l, value, threshold)
+		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
@@ -407,7 +393,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		// utility function to apply go template on labels and annotations
 		expand := func(text string) string {
 
-			tmpl := NewTemplateExpander(
+			tmpl := ruletypes.NewTemplateExpander(
 				ctx,
 				defs+text,
 				"__alert_"+r.Name(),
@@ -445,13 +431,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		// Links with timestamps should go in annotations since labels
 		// is used alert grouping, and we want to group alerts with the same
 		// label set, but different timestamps, together.
-		if r.typ == AlertTypeTraces {
+		if r.typ == ruletypes.AlertTypeTraces {
 			link := r.prepareLinksToTraces(ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
 				zap.L().Info("adding traces link to annotations", zap.String("link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)))
 				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
 			}
-		} else if r.typ == AlertTypeLogs {
+		} else if r.typ == ruletypes.AlertTypeLogs {
 			link := r.prepareLinksToLogs(ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
 				zap.L().Info("adding logs link to annotations", zap.String("link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)))
@@ -469,7 +455,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 			return nil, err
 		}
 
-		alerts[h] = &Alert{
+		alerts[h] = &ruletypes.Alert{
 			Labels:            lbs,
 			QueryResultLables: resultLabels,
 			Annotations:       annotations,
@@ -510,7 +496,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ResolvedRetention) {
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {
 				delete(r.Active, fp)
 			}
 			if a.State != model.StateInactive {
@@ -561,7 +547,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 	r.RecordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
 
-	r.health = HealthGood
+	r.health = ruletypes.HealthGood
 	r.lastError = err
 
 	return len(r.Active), nil
@@ -569,10 +555,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 func (r *ThresholdRule) String() string {
 
-	ar := PostableRule{
+	ar := ruletypes.PostableRule{
 		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,
-		EvalWindow:        Duration(r.evalWindow),
+		EvalWindow:        ruletypes.Duration(r.evalWindow),
 		Labels:            r.labels.Map(),
 		Annotations:       r.annotations.Map(),
 		PreferredChannels: r.preferredChannels,

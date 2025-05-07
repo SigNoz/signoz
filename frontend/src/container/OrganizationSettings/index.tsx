@@ -13,11 +13,7 @@ function OrganizationSettings(): JSX.Element {
 	const isNotSSO =
 		!featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
 
-	const isNoUpSell =
-		!featureFlags?.find((flag) => flag.name === FeatureKeys.DISABLE_UPSELL)
-			?.active || false;
-
-	const isAuthDomain = !isNoUpSell || (isNoUpSell && !isNotSSO);
+	const isAuthDomain = !isNotSSO;
 
 	if (!org) {
 		return <div />;
@@ -27,12 +23,7 @@ function OrganizationSettings(): JSX.Element {
 		<>
 			<Space direction="vertical">
 				{org.map((e, index) => (
-					<DisplayName
-						isAnonymous={e.isAnonymous}
-						key={e.id}
-						id={e.id}
-						index={index}
-					/>
+					<DisplayName key={e.id} id={e.id} index={index} />
 				))}
 			</Space>
 			<Divider />

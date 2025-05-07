@@ -3,87 +3,33 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
 	"os"
-	"os/signal"
-	"strconv"
 	"time"
 
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-	"go.signoz.io/signoz/ee/query-service/app"
-	"go.signoz.io/signoz/pkg/config"
-	"go.signoz.io/signoz/pkg/config/envprovider"
-	"go.signoz.io/signoz/pkg/config/fileprovider"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/version"
-	"go.signoz.io/signoz/pkg/signoz"
-	"go.signoz.io/signoz/pkg/types/authtypes"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
-	prommodel "github.com/prometheus/common/model"
-
-	zapotlpencoder "github.com/SigNoz/zap_otlp/zap_otlp_encoder"
-	zapotlpsync "github.com/SigNoz/zap_otlp/zap_otlp_sync"
+	"github.com/SigNoz/signoz/ee/query-service/app"
+	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
+	"github.com/SigNoz/signoz/ee/zeus"
+	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
+	"github.com/SigNoz/signoz/pkg/config"
+	"github.com/SigNoz/signoz/pkg/config/envprovider"
+	"github.com/SigNoz/signoz/pkg/config/fileprovider"
+	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/version"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
+// Deprecated: Please use the logger from pkg/instrumentation.
+func initZapLog() *zap.Logger {
 	config := zap.NewProductionConfig()
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-
-	config.EncoderConfig.EncodeDuration = zapcore.MillisDurationEncoder
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-
-	otlpEncoder := zapotlpencoder.NewOTLPEncoder(config.EncoderConfig)
-	consoleEncoder := zapcore.NewJSONEncoder(config.EncoderConfig)
-	defaultLogLevel := zapcore.InfoLevel
-
-	res := resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceNameKey.String("query-service"),
-	)
-
-	core := zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
-	)
-
-	if enableQueryServiceLogOTLPExport {
-		ctx, cancel := context.WithTimeout(ctx, time.Second*30)
-		defer cancel()
-		conn, err := grpc.DialContext(ctx, baseconst.OTLPTarget, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Fatalf("failed to establish connection: %v", err)
-		} else {
-			logExportBatchSizeInt, err := strconv.Atoi(baseconst.LogExportBatchSize)
-			if err != nil {
-				logExportBatchSizeInt = 512
-			}
-			ws := zapcore.AddSync(zapotlpsync.NewOtlpSyncer(conn, zapotlpsync.Options{
-				BatchSize:      logExportBatchSizeInt,
-				ResourceSchema: semconv.SchemaURL,
-				Resource:       res,
-			}))
-			core = zapcore.NewTee(
-				zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
-				zapcore.NewCore(otlpEncoder, zapcore.NewMultiWriteSyncer(ws), defaultLogLevel),
-			)
-		}
-	}
-	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
-
+	logger, _ := config.Build()
 	return logger
-}
-
-func init() {
-	prommodel.NameValidationScheme = prommodel.UTF8Validation
 }
 
 func main() {
@@ -99,7 +45,6 @@ func main() {
 	var useLogsNewSchema bool
 	var useTraceNewSchema bool
 	var cacheConfigPath, fluxInterval, fluxIntervalForTraceDetail string
-	var enableQueryServiceLogOTLPExport bool
 	var preferSpanMetrics bool
 
 	var maxIdleConns int
@@ -108,31 +53,38 @@ func main() {
 	var gatewayUrl string
 	var useLicensesV3 bool
 
+	// Deprecated
 	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
+	// Deprecated
 	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
+	// Deprecated
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	// Deprecated
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
+	// Deprecated
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
 	flag.BoolVar(&preferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
+	// Deprecated
 	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool.)")
+	// Deprecated
 	flag.IntVar(&maxOpenConns, "max-open-conns", 100, "(max connections for use at any time.)")
+	// Deprecated
 	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection.)")
+	// Deprecated
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", baseconst.AlertHelpPage, "(host address used to build rule link in alert messages)")
+	// Deprecated
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
 	flag.StringVar(&fluxIntervalForTraceDetail, "flux-interval-trace-detail", "2m", "(the interval to exclude data from being cached to avoid incorrect cache for trace data in motion)")
-	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	flag.StringVar(&gatewayUrl, "gateway-url", "", "(url to the gateway)")
+	// Deprecated
 	flag.BoolVar(&useLicensesV3, "use-licenses-v3", false, "use licenses_v3 schema for licenses")
 	flag.Parse()
 
-	loggerMgr := initZapLog(enableQueryServiceLogOTLPExport)
-
+	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
-
-	version.PrintVersion()
 
 	config, err := signoz.NewConfig(context.Background(), config.ResolverConfig{
 		Uris: []string{"env:"},
@@ -144,21 +96,31 @@ func main() {
 		MaxIdleConns: maxIdleConns,
 		MaxOpenConns: maxOpenConns,
 		DialTimeout:  dialTimeout,
+		Config:       promConfigPath,
 	})
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
 
+	version.Info.PrettyPrint(config.Version)
+
+	sqlStoreFactories := signoz.NewSQLStoreProviderFactories()
+	if err := sqlStoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory())); err != nil {
+		zap.L().Fatal("Failed to add postgressqlstore factory", zap.Error(err))
+	}
+
 	signoz, err := signoz.New(
 		context.Background(),
 		config,
+		zeus.Config(),
+		httpzeus.NewProviderFactory(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),
-		signoz.NewSQLStoreProviderFactories(),
+		sqlStoreFactories,
 		signoz.NewTelemetryStoreProviderFactories(),
 	)
 	if err != nil {
-		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
+		zap.L().Fatal("Failed to create signoz", zap.Error(err))
 	}
 
 	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
@@ -175,19 +137,12 @@ func main() {
 		Config:                     config,
 		SigNoz:                     signoz,
 		HTTPHostPort:               baseconst.HTTPHostPort,
-		PromConfigPath:             promConfigPath,
-		SkipTopLvlOpsPath:          skipTopLvlOpsPath,
 		PreferSpanMetrics:          preferSpanMetrics,
 		PrivateHostPort:            baseconst.PrivateHostPort,
-		DisableRules:               disableRules,
-		RuleRepoURL:                ruleRepoURL,
-		CacheConfigPath:            cacheConfigPath,
 		FluxInterval:               fluxInterval,
 		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
 		Cluster:                    cluster,
 		GatewayUrl:                 gatewayUrl,
-		UseLogsNewSchema:           useLogsNewSchema,
-		UseTraceNewSchema:          useTraceNewSchema,
 		Jwt:                        jwt,
 	}
 
@@ -196,12 +151,8 @@ func main() {
 		zap.L().Fatal("Failed to create server", zap.Error(err))
 	}
 
-	if err := server.Start(); err != nil {
+	if err := server.Start(context.Background()); err != nil {
 		zap.L().Fatal("Could not start server", zap.Error(err))
-	}
-
-	if err := auth.InitAuthCache(context.Background()); err != nil {
-		zap.L().Fatal("Failed to initialize auth cache", zap.Error(err))
 	}
 
 	signoz.Start(context.Background())

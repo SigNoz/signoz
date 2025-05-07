@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"time"
 
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/pkg/errors"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type License struct {
@@ -157,8 +157,6 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	}
 
 	switch planName {
-	case PlanNameTeams:
-		features = append(features, ProPlan...)
 	case PlanNameEnterprise:
 		features = append(features, EnterprisePlan...)
 	case PlanNameBasic:

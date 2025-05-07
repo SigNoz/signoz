@@ -3,8 +3,8 @@ package v4
 import (
 	"testing"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 func Test_getClickhouseKey(t *testing.T) {
@@ -571,10 +571,12 @@ func Test_orderByAttributeKeyTags(t *testing.T) {
 
 func Test_generateAggregateClause(t *testing.T) {
 	type args struct {
+		panelType   v3.PanelType
+		start       int64
+		end         int64
 		op          v3.AggregateOperator
 		aggKey      string
 		step        int64
-		preferRPM   bool
 		timeFilter  string
 		whereClause string
 		groupBy     string
@@ -591,9 +593,9 @@ func Test_generateAggregateClause(t *testing.T) {
 			name: "test rate",
 			args: args{
 				op:          v3.AggregateOperatorRate,
+				panelType:   v3.PanelTypeGraph,
 				aggKey:      "test",
 				step:        60,
-				preferRPM:   false,
 				timeFilter:  "(timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)",
 				whereClause: " AND attributes_string['service.name'] = 'test'",
 				groupBy:     " group by `user_name`",
@@ -608,9 +610,9 @@ func Test_generateAggregateClause(t *testing.T) {
 			name: "test P10 with all args",
 			args: args{
 				op:          v3.AggregateOperatorRate,
+				panelType:   v3.PanelTypeGraph,
 				aggKey:      "test",
 				step:        60,
-				preferRPM:   false,
 				timeFilter:  "(timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)",
 				whereClause: " AND attributes_string['service.name'] = 'test'",
 				groupBy:     " group by `user_name`",
@@ -621,10 +623,29 @@ func Test_generateAggregateClause(t *testing.T) {
 				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['service.name'] = 'test' group by `user_name` having value > 10 order by " +
 				"`user_name` desc",
 		},
+		{
+			name: "test rate for table panel",
+			args: args{
+				op:          v3.AggregateOperatorRate,
+				panelType:   v3.PanelTypeTable,
+				start:       1745315470000000000,
+				end:         1745319070000000000,
+				aggKey:      "test",
+				step:        60,
+				timeFilter:  "(timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)",
+				whereClause: " AND attributes_string['service.name'] = 'test'",
+				groupBy:     " group by `user_name`",
+				having:      "",
+				orderBy:     " order by `user_name` desc",
+			},
+			want: " count(test)/3600.000000 as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND " +
+				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['service.name'] = 'test' " +
+				"group by `user_name` order by `user_name` desc",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := generateAggregateClause(tt.args.op, tt.args.aggKey, tt.args.step, tt.args.preferRPM, tt.args.timeFilter, tt.args.whereClause, tt.args.groupBy, tt.args.having, tt.args.orderBy)
+			got, err := generateAggregateClause(tt.args.panelType, tt.args.start, tt.args.end, tt.args.op, tt.args.aggKey, tt.args.step, tt.args.timeFilter, tt.args.whereClause, tt.args.groupBy, tt.args.having, tt.args.orderBy)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("generateAggreagteClause() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -644,7 +665,6 @@ func Test_buildLogsQuery(t *testing.T) {
 		step            int64
 		mq              *v3.BuilderQuery
 		graphLimitQtype string
-		preferRPM       bool
 	}
 	tests := []struct {
 		name    string
@@ -789,7 +809,7 @@ func Test_buildLogsQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildLogsQuery(tt.args.panelType, tt.args.start, tt.args.end, tt.args.step, tt.args.mq, tt.args.graphLimitQtype, tt.args.preferRPM)
+			got, err := buildLogsQuery(tt.args.panelType, tt.args.start, tt.args.end, tt.args.step, tt.args.mq, tt.args.graphLimitQtype)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildLogsQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -877,7 +897,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 					Limit:   10,
 					GroupBy: []v3.AttributeKey{{Key: "user", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 				},
-				options: v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
+				options: v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit},
 			},
 			want: "SELECT `user` from (SELECT attributes_string['user'] as `user`, toFloat64(count(distinct(attributes_string['name']))) as value from signoz_logs.distributed_logs_v2 " +
 				"where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['method'] = 'GET' " +

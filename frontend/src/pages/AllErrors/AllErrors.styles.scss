@@ -1,0 +1,26 @@
+.all-errors-page {
+	display: flex;
+	height: 100%;
+	.all-errors-quick-filter-section {
+		width: 0%;
+		flex-shrink: 0;
+	}
+
+	.all-errors-right-section {
+		padding: 0 10px;
+	}
+
+	.ant-tabs {
+		margin: 0 8px;
+	}
+
+	&.filter-visible {
+		.all-errors-quick-filter-section {
+			width: 260px;
+		}
+
+		.all-errors-right-section {
+			width: calc(100% - 260px);
+		}
+	}
+}

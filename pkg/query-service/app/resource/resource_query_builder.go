@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 var resourceLogOperators = map[v3.FilterOperator]string{

@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"regexp"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
@@ -46,8 +46,8 @@ func (a *Analytics) Wrap(next http.Handler) http.Handler {
 		}
 
 		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			claims, ok := authtypes.ClaimsFromContext(r.Context())
-			if ok {
+			claims, err := authtypes.ClaimsFromContext(r.Context())
+			if err == nil {
 				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, claims.Email, true, false)
 			}
 		}
@@ -134,8 +134,8 @@ func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[str
 		data["queryType"] = queryInfoResult.QueryType
 		data["panelType"] = queryInfoResult.PanelType
 
-		claims, ok := authtypes.ClaimsFromContext(r.Context())
-		if ok {
+		claims, err := authtypes.ClaimsFromContext(r.Context())
+		if err == nil {
 			// switch case to set data["screen"] based on the referrer
 			switch {
 			case dashboardMatched:

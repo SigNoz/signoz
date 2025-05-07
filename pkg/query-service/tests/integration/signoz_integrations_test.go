@@ -3,26 +3,30 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	"net/http"
 	"slices"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/http/middleware"
-	"go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/featureManager"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -176,10 +180,10 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 
 	// After saving a user created pipeline, pipelines response should include
 	// both user created pipelines and pipelines for installed integrations.
-	postablePipelines := logparsingpipeline.PostablePipelines{
-		Pipelines: []logparsingpipeline.PostablePipeline{
+	postablePipelines := pipelinetypes.PostablePipelines{
+		Pipelines: []pipelinetypes.PostablePipeline{
 			{
-				OrderId: 1,
+				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
 				Enabled: true,
@@ -197,7 +201,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 						},
 					},
 				},
-				Config: []logparsingpipeline.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -223,7 +227,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	postable := postableFromPipelines(getPipelinesResp.Pipelines)
 	slices.Reverse(postable.Pipelines)
 	for i := range postable.Pipelines {
-		postable.Pipelines[i].OrderId = i + 1
+		postable.Pipelines[i].OrderID = i + 1
 	}
 
 	pipelinesTB.PostPipelinesToQS(postable)
@@ -256,7 +260,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 
 	// should not be able to edit integrations pipeline.
 	require.Greater(len(postable.Pipelines[0].Config), 0)
-	postable.Pipelines[0].Config = []logparsingpipeline.PipelineOperator{}
+	postable.Pipelines[0].Config = []pipelinetypes.PipelineOperator{}
 	pipelinesTB.PostPipelinesToQS(postable)
 
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
@@ -270,7 +274,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require.Greater(len(firstPipeline.Config), 0)
 
 	// should not be able to delete integrations pipeline
-	postable.Pipelines = []logparsingpipeline.PostablePipeline{postable.Pipelines[1]}
+	postable.Pipelines = []pipelinetypes.PostablePipeline{postable.Pipelines[1]}
 	pipelinesTB.PostPipelinesToQS(postable)
 
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
@@ -557,13 +561,17 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	}
 
 	fm := featureManager.StartManager()
-	reader, mockClickhouse := NewMockClickhouseReader(t, testDB.SQLxDB(), fm)
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
 	cloudIntegrationsController, err := cloudintegrations.NewController(testDB)
 	if err != nil {
 		t.Fatalf("could not create cloud integrations controller: %v", err)
 	}
+
+	modules := signoz.NewModules(testDB)
+	handlers := signoz.NewHandlers(modules)
+	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,
@@ -572,6 +580,11 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		FeatureFlags:                fm,
 		JWT:                         jwt,
 		CloudIntegrationsController: cloudIntegrationsController,
+		Signoz: &signoz.SigNoz{
+			Modules:  modules,
+			Handlers: handlers,
+		},
+		QuickFilters: quickFilterModule,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
@@ -579,11 +592,12 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 
 	router := app.NewRouter()
 	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	am := app.NewAuthMiddleware(auth.GetUserFromReqContext)
+	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterIntegrationRoutes(router, am)
 
-	user, apiErr := createTestUser()
+	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
+	user, apiErr := createTestUser(organizationModule)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
@@ -596,21 +610,21 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	}
 }
 
-func postableFromPipelines(pipelines []logparsingpipeline.Pipeline) logparsingpipeline.PostablePipelines {
-	result := logparsingpipeline.PostablePipelines{}
+func postableFromPipelines(gettablePipelines []pipelinetypes.GettablePipeline) pipelinetypes.PostablePipelines {
+	result := pipelinetypes.PostablePipelines{}
 
-	for _, p := range pipelines {
-		postable := logparsingpipeline.PostablePipeline{
-			Id:      p.Id,
-			OrderId: p.OrderId,
+	for _, p := range gettablePipelines {
+		postable := pipelinetypes.PostablePipeline{
+			ID:      p.ID.StringValue(),
+			OrderID: p.OrderID,
 			Name:    p.Name,
 			Alias:   p.Alias,
 			Enabled: p.Enabled,
 			Config:  p.Config,
 		}
 
-		if p.Description != nil {
-			postable.Description = *p.Description
+		if p.Description != "" {
+			postable.Description = p.Description
 		}
 
 		if p.Filter != nil {

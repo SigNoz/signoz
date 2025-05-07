@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/ee/types"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/ee/types"
 )
 
 func (ah *APIHandler) listDomainsByOrg(w http.ResponseWriter, r *http.Request) {

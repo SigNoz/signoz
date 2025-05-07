@@ -6,10 +6,11 @@ import (
 	"fmt"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/jmoiron/sqlx"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
-	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 var _ sqlstore.SQLStore = (*Provider)(nil)
@@ -19,7 +20,7 @@ type Provider struct {
 	mock    sqlmock.Sqlmock
 	bunDB   *bun.DB
 	sqlxDB  *sqlx.DB
-	dialect *TestDialect
+	dialect *dialect
 }
 
 func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
@@ -43,7 +44,7 @@ func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
 		mock:    mock,
 		bunDB:   bunDB,
 		sqlxDB:  sqlxDB,
-		dialect: &TestDialect{},
+		dialect: new(dialect),
 	}
 }
 
@@ -73,4 +74,12 @@ func (provider *Provider) BunDBCtx(ctx context.Context) bun.IDB {
 
 func (provider *Provider) RunInTxCtx(ctx context.Context, opts *sql.TxOptions, cb func(ctx context.Context) error) error {
 	return cb(ctx)
+}
+
+func (provider *Provider) WrapNotFoundErrf(err error, code errors.Code, format string, args ...any) error {
+	return fmt.Errorf(format, args...)
+}
+
+func (provider *Provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
+	return fmt.Errorf(format, args...)
 }

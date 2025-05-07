@@ -3,46 +3,67 @@ package signoz
 import (
 	"context"
 
-	"go.signoz.io/signoz/pkg/alertmanager"
-	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/instrumentation"
-	"go.signoz.io/signoz/pkg/sqlmigration"
-	"go.signoz.io/signoz/pkg/sqlmigrator"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/telemetrystore"
-	"go.signoz.io/signoz/pkg/version"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlmigrator"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/version"
+	"github.com/SigNoz/signoz/pkg/zeus"
 
-	"go.signoz.io/signoz/pkg/web"
+	"github.com/SigNoz/signoz/pkg/web"
 )
 
 type SigNoz struct {
 	*factory.Registry
-	Cache          cache.Cache
-	Web            web.Web
-	SQLStore       sqlstore.SQLStore
-	TelemetryStore telemetrystore.TelemetryStore
-	Alertmanager   alertmanager.Alertmanager
+	Instrumentation instrumentation.Instrumentation
+	Cache           cache.Cache
+	Web             web.Web
+	SQLStore        sqlstore.SQLStore
+	TelemetryStore  telemetrystore.TelemetryStore
+	Prometheus      prometheus.Prometheus
+	Alertmanager    alertmanager.Alertmanager
+	Zeus            zeus.Zeus
+	Modules         Modules
+	Handlers        Handlers
 }
 
 func New(
 	ctx context.Context,
 	config Config,
+	zeusConfig zeus.Config,
+	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
-	instrumentation, err := instrumentation.New(ctx, version.Build{}, config.Instrumentation)
+	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
 	if err != nil {
 		return nil, err
 	}
 
-	instrumentation.Logger().DebugContext(ctx, "starting signoz", "config", config)
+	instrumentation.Logger().InfoContext(ctx, "starting signoz", "version", version.Info.Version(), "variant", version.Info.Variant(), "commit", version.Info.Hash(), "branch", version.Info.Branch(), "go", version.Info.GoVersion(), "time", version.Info.Time())
+	instrumentation.Logger().DebugContext(ctx, "loaded signoz config", "config", config)
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
+
+	// Initialize zeus from the available zeus provider factory. This is not config controlled
+	// and depends on the variant of the build.
+	zeus, err := zeusProviderFactory.New(
+		ctx,
+		providerSettings,
+		zeusConfig,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize cache from the available cache provider factories
 	cache, err := factory.NewProviderFromNamedMap(
@@ -92,6 +113,18 @@ func New(
 		return nil, err
 	}
 
+	// Initialize prometheus from the available prometheus provider factories
+	prometheus, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Prometheus,
+		NewPrometheusProviderFactories(telemetrystore),
+		config.Prometheus.Provider(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Run migrations on the sqlstore
 	sqlmigrations, err := sqlmigration.New(
 		ctx,
@@ -108,6 +141,7 @@ func New(
 		return nil, err
 	}
 
+	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
@@ -119,6 +153,12 @@ func New(
 		return nil, err
 	}
 
+	// Initialize all modules
+	modules := NewModules(sqlstore)
+
+	// Initialize all handlers for the modules
+	handlers := NewHandlers(modules)
+
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
@@ -129,11 +169,16 @@ func New(
 	}
 
 	return &SigNoz{
-		Registry:       registry,
-		Cache:          cache,
-		Web:            web,
-		SQLStore:       sqlstore,
-		TelemetryStore: telemetrystore,
-		Alertmanager:   alertmanager,
+		Registry:        registry,
+		Instrumentation: instrumentation,
+		Cache:           cache,
+		Web:             web,
+		SQLStore:        sqlstore,
+		TelemetryStore:  telemetrystore,
+		Prometheus:      prometheus,
+		Alertmanager:    alertmanager,
+		Zeus:            zeus,
+		Modules:         modules,
+		Handlers:        handlers,
 	}, nil
 }

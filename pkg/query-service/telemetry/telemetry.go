@@ -15,12 +15,12 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/segmentio/analytics-go.v3"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/version"
-	"go.signoz.io/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/version"
 )
 
 const (
@@ -206,7 +206,6 @@ type Telemetry struct {
 
 	alertsInfoCallback     func(ctx context.Context) (*model.AlertsInfo, error)
 	userCountCallback      func(ctx context.Context) (int, error)
-	userRoleCallback       func(ctx context.Context, groupId string) (string, error)
 	getUsersCallback       func(ctx context.Context) ([]types.GettableUser, *model.ApiError)
 	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
 	savedViewsInfoCallback func(ctx context.Context) (*model.SavedViewsInfo, error)
@@ -218,10 +217,6 @@ func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*m
 
 func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context) (int, error)) {
 	a.userCountCallback = callback
-}
-
-func (a *Telemetry) SetUserRoleCallback(callback func(ctx context.Context, groupId string) (string, error)) {
-	a.userRoleCallback = callback
 }
 
 func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context) ([]types.GettableUser, *model.ApiError)) {
@@ -317,9 +312,10 @@ func createTelemetry() {
 
 		getLogsInfoInLastHeartBeatInterval, _ := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
 
-		traceTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.TraceTTL})
-		metricsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.MetricsTTL})
-		logsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.LogsTTL})
+		// TODO update this post bootstrap decision
+		traceTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.TraceTTL})
+		metricsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.MetricsTTL})
+		logsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.LogsTTL})
 
 		userCount, _ := telemetry.userCountCallback(ctx)
 
@@ -554,21 +550,12 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
-	// extract user group from user.groupId
-	role, _ := a.userRoleCallback(context.Background(), user.GroupID)
 
 	if a.saasOperator != nil {
-		if role != "" {
-			_ = a.saasOperator.Enqueue(analytics.Identify{
-				UserId: a.userEmail,
-				Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("role", role),
-			})
-		} else {
-			_ = a.saasOperator.Enqueue(analytics.Identify{
-				UserId: a.userEmail,
-				Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
-			})
-		}
+		_ = a.saasOperator.Enqueue(analytics.Identify{
+			UserId: a.userEmail,
+			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("role", user.Role),
+		})
 
 		_ = a.saasOperator.Enqueue(analytics.Group{
 			UserId:  a.userEmail,
@@ -740,7 +727,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	// zap.L().Info(data)
 	properties := analytics.NewProperties()
-	properties.Set("version", version.GetVersion())
+	properties.Set("version", version.Info.Version())
 	properties.Set("deploymentType", getDeploymentType())
 	properties.Set("companyDomain", a.getCompanyDomain())
 

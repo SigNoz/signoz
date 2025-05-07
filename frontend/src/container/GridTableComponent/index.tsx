@@ -43,6 +43,8 @@ function GridTableComponent({
 	sticky,
 	openTracesButton,
 	onOpenTraceBtnClick,
+	customOnRowClick,
+	widgetId,
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
@@ -213,6 +215,30 @@ function GridTableComponent({
 		[newColumnData],
 	);
 
+	const newColumnsWithRenderColumnCell = useMemo(
+		() =>
+			newColumnData.map((column) => ({
+				...column,
+				...('dataIndex' in column &&
+				props.renderColumnCell?.[column.dataIndex as string]
+					? { render: props.renderColumnCell[column.dataIndex as string] }
+					: {}),
+			})),
+		[newColumnData, props.renderColumnCell],
+	);
+
+	const newColumnsWithCustomColTitles = useMemo(
+		() =>
+			newColumnsWithRenderColumnCell.map((column) => ({
+				...column,
+				...('dataIndex' in column &&
+				props.customColTitles?.[column.dataIndex as string]
+					? { title: props.customColTitles[column.dataIndex as string] }
+					: {}),
+			})),
+		[newColumnsWithRenderColumnCell, props.customColTitles],
+	);
+
 	useEffect(() => {
 		eventEmitter.emit(Events.TABLE_COLUMNS_DATA, {
 			columns: newColumnData,
@@ -226,14 +252,22 @@ function GridTableComponent({
 				query={query}
 				queryTableData={data}
 				loading={false}
-				columns={openTracesButton ? columnDataWithOpenTracesButton : newColumnData}
+				columns={
+					openTracesButton
+						? columnDataWithOpenTracesButton
+						: newColumnsWithCustomColTitles
+				}
 				dataSource={dataSource}
 				sticky={sticky}
+				widgetId={widgetId}
 				onRow={
-					openTracesButton
+					openTracesButton || customOnRowClick
 						? (record): React.HTMLAttributes<HTMLElement> => ({
 								onClick: (): void => {
-									onOpenTraceBtnClick?.(record);
+									if (openTracesButton) {
+										onOpenTraceBtnClick?.(record);
+									}
+									customOnRowClick?.(record);
 								},
 						  })
 						: undefined

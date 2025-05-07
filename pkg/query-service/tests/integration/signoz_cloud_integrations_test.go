@@ -3,23 +3,28 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/signoz"
+
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/http/middleware"
-	"go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/featureManager"
-	"go.signoz.io/signoz/pkg/query-service/utils"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -35,7 +40,7 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	)
 
 	// Should be able to generate a connection url from UI - initializing an integration account
-	testAccountConfig := cloudintegrations.AccountConfig{
+	testAccountConfig := types.AccountConfig{
 		EnabledRegions: []string{"us-east-1", "us-east-2"},
 	}
 	connectionUrlResp := testbed.GenerateConnectionUrlFromQS(
@@ -65,8 +70,8 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	testAWSAccountId := "4563215233"
 	agentCheckInResp := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 	require.Equal(testAccountId, agentCheckInResp.AccountId)
@@ -91,20 +96,20 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	require.Equal(testAWSAccountId, accountsListResp2.Accounts[0].CloudAccountId)
 
 	// Should be able to update account config from UI
-	testAccountConfig2 := cloudintegrations.AccountConfig{
+	testAccountConfig2 := types.AccountConfig{
 		EnabledRegions: []string{"us-east-2", "us-west-1"},
 	}
 	latestAccount := testbed.UpdateAccountConfigWithQS(
 		"aws", testAccountId, testAccountConfig2,
 	)
-	require.Equal(testAccountId, latestAccount.Id)
+	require.Equal(testAccountId, latestAccount.ID.StringValue())
 	require.Equal(testAccountConfig2, *latestAccount.Config)
 
 	// The agent should now receive latest account config.
 	agentCheckInResp1 := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 	require.Equal(testAccountId, agentCheckInResp1.AccountId)
@@ -114,14 +119,14 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	// Should be able to disconnect/remove account from UI.
 	tsBeforeDisconnect := time.Now()
 	latestAccount = testbed.DisconnectAccountWithQS("aws", testAccountId)
-	require.Equal(testAccountId, latestAccount.Id)
+	require.Equal(testAccountId, latestAccount.ID.StringValue())
 	require.LessOrEqual(tsBeforeDisconnect, *latestAccount.RemovedAt)
 
 	// The agent should receive the disconnected status in account config post disconnection
 	agentCheckInResp2 := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 	require.Equal(testAccountId, agentCheckInResp2.AccountId)
@@ -157,13 +162,13 @@ func TestAWSIntegrationServices(t *testing.T) {
 	testAWSAccountId := "389389489489"
 	testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 
-	testSvcConfig := cloudintegrations.CloudServiceConfig{
-		Metrics: &cloudintegrations.CloudServiceMetricsConfig{
+	testSvcConfig := types.CloudServiceConfig{
+		Metrics: &types.CloudServiceMetricsConfig{
 			Enabled: true,
 		},
 	}
@@ -199,7 +204,7 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	testbed := NewCloudIntegrationsTestBed(t, nil)
 
 	// configure a connected account
-	testAccountConfig := cloudintegrations.AccountConfig{
+	testAccountConfig := types.AccountConfig{
 		EnabledRegions: []string{"us-east-1", "us-east-2"},
 	}
 	connectionUrlResp := testbed.GenerateConnectionUrlFromQS(
@@ -218,8 +223,8 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	testAWSAccountId := "389389489489"
 	checkinResp := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 
@@ -237,14 +242,14 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 
 	// helper
 	setServiceConfig := func(svcId string, metricsEnabled bool, logsEnabled bool) {
-		testSvcConfig := cloudintegrations.CloudServiceConfig{}
+		testSvcConfig := types.CloudServiceConfig{}
 		if metricsEnabled {
-			testSvcConfig.Metrics = &cloudintegrations.CloudServiceMetricsConfig{
+			testSvcConfig.Metrics = &types.CloudServiceMetricsConfig{
 				Enabled: metricsEnabled,
 			}
 		}
 		if logsEnabled {
-			testSvcConfig.Logs = &cloudintegrations.CloudServiceLogsConfig{
+			testSvcConfig.Logs = &types.CloudServiceLogsConfig{
 				Enabled: logsEnabled,
 			}
 		}
@@ -262,8 +267,8 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 
 	checkinResp = testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 
@@ -292,13 +297,13 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	require.True(strings.HasPrefix(logGroupPrefixes[0], "/aws/rds"))
 
 	// change regions and update service configs and validate config changes for agent
-	testAccountConfig2 := cloudintegrations.AccountConfig{
+	testAccountConfig2 := types.AccountConfig{
 		EnabledRegions: []string{"us-east-2", "us-west-1"},
 	}
 	latestAccount := testbed.UpdateAccountConfigWithQS(
 		"aws", testAccountId, testAccountConfig2,
 	)
-	require.Equal(testAccountId, latestAccount.Id)
+	require.Equal(testAccountId, latestAccount.ID.StringValue())
 	require.Equal(testAccountConfig2, *latestAccount.Config)
 
 	// disable metrics for one and logs for the other.
@@ -308,8 +313,8 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 
 	checkinResp = testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 	require.Equal(testAccountId, checkinResp.AccountId)
@@ -355,8 +360,12 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	}
 
 	fm := featureManager.StartManager()
-	reader, mockClickhouse := NewMockClickhouseReader(t, testDB.SQLxDB(), fm)
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
+
+	modules := signoz.NewModules(testDB)
+	handlers := signoz.NewHandlers(modules)
+	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,
@@ -364,6 +373,11 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 		CloudIntegrationsController: controller,
 		FeatureFlags:                fm,
 		JWT:                         jwt,
+		Signoz: &signoz.SigNoz{
+			Modules:  modules,
+			Handlers: handlers,
+		},
+		QuickFilters: quickFilterModule,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
@@ -371,11 +385,12 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 
 	router := app.NewRouter()
 	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	am := app.NewAuthMiddleware(auth.GetUserFromReqContext)
+	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterCloudIntegrationsRoutes(router, am)
 
-	user, apiErr := createTestUser()
+	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
+	user, apiErr := createTestUser(organizationModule)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
@@ -453,8 +468,8 @@ func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
 }
 
 func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
-	cloudProvider string, accountId string, newConfig cloudintegrations.AccountConfig,
-) *cloudintegrations.AccountRecord {
+	cloudProvider string, accountId string, newConfig types.AccountConfig,
+) *types.CloudIntegration {
 	respDataJson := tb.RequestQS(
 		fmt.Sprintf(
 			"/api/v1/cloud-integrations/%s/accounts/%s/config",
@@ -464,7 +479,7 @@ func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
 		},
 	)
 
-	var resp cloudintegrations.AccountRecord
+	var resp types.CloudIntegration
 	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into Account")
@@ -475,7 +490,7 @@ func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
 
 func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
 	cloudProvider string, accountId string,
-) *cloudintegrations.AccountRecord {
+) *types.CloudIntegration {
 	respDataJson := tb.RequestQS(
 		fmt.Sprintf(
 			"/api/v1/cloud-integrations/%s/accounts/%s/disconnect",
@@ -483,7 +498,7 @@ func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
 		), map[string]any{},
 	)
 
-	var resp cloudintegrations.AccountRecord
+	var resp types.CloudIntegration
 	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into Account")

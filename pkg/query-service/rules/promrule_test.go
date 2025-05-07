@@ -4,20 +4,22 @@ import (
 	"testing"
 	"time"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	pql "github.com/prometheus/prometheus/promql"
 	"github.com/stretchr/testify/assert"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
 
 func TestPromRuleShouldAlert(t *testing.T) {
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "Test Rule",
-		AlertType:  AlertTypeMetric,
-		RuleType:   RuleTypeProm,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeMetric,
+		RuleType:   ruletypes.RuleTypeProm,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypePromQL,
 				PromQueries: map[string]*v3.PromQuery{
@@ -652,11 +654,11 @@ func TestPromRuleShouldAlert(t *testing.T) {
 	}
 
 	for idx, c := range cases {
-		postableRule.RuleCondition.CompareOp = CompareOp(c.compareOp)
-		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
+		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
+		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewPromRule("69", &postableRule, zap.NewNop(), nil, nil)
+		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, zap.NewNop(), nil, nil)
 		if err != nil {
 			assert.NoError(t, err)
 		}

@@ -3,8 +3,8 @@ package instrumentation
 import (
 	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
-	"go.signoz.io/signoz/pkg/factory"
 )
 
 // Config holds the configuration for all instrumentation components.

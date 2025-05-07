@@ -3,9 +3,10 @@ package sqlite
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/types"
 )
 
 const defaultApdexThreshold = 0.5
@@ -48,6 +49,7 @@ func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, orgID string, s
 func (mds *ModelDaoSqlite) SetApdexSettings(ctx context.Context, orgID string, apdexSettings *types.ApdexSettings) *model.ApiError {
 	// Set the org_id from the parameter since it's required for the foreign key constraint
 	apdexSettings.OrgID = orgID
+	apdexSettings.Identifiable.ID = valuer.GenerateUUID()
 
 	_, err := mds.bundb.NewInsert().
 		Model(apdexSettings).

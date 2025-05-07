@@ -67,6 +67,17 @@
 			background: var(--bg-ink-300);
 		}
 	}
+
+	.ant-modal-footer {
+		.ant-btn {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			&-icon {
+				margin: 0 !important;
+			}
+		}
+	}
 }
 
 .lightMode {

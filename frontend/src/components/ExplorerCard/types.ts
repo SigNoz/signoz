@@ -26,7 +26,7 @@ export type GetViewDetailsUsingViewKey = (
 	| {
 			query: Query;
 			name: string;
-			uuid: string;
+			id: string;
 			panelType: PANEL_TYPES;
 			extraData?: string;
 	  }

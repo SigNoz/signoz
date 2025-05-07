@@ -3,7 +3,7 @@ package model
 import (
 	"fmt"
 
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 type ApiError struct {

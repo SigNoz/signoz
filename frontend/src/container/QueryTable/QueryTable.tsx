@@ -24,6 +24,7 @@ export function QueryTable({
 	dataSource,
 	sticky,
 	searchTerm,
+	widgetId,
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
@@ -95,8 +96,10 @@ export function QueryTable({
 				columns={tableColumns}
 				tableLayout="fixed"
 				dataSource={filterTable === null ? newDataSource : filterTable}
-				scroll={{ x: true }}
+				scroll={{ x: 'max-content' }}
 				pagination={paginationConfig}
+				widgetId={widgetId}
+				shouldPersistColumnWidths
 				sticky={sticky}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}

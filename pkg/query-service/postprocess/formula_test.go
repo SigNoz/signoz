@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/govaluate"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 func TestFindUniqueLabelSets(t *testing.T) {

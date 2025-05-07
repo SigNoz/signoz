@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/config"
 	koanfenv "github.com/knadh/koanf/providers/env"
-	"go.signoz.io/signoz/pkg/config"
 )
 
 const (

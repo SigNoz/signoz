@@ -325,7 +325,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const handleFailedPayment = useCallback((): void => {
 		manageCreditCard({
-			url: window.location.href,
+			url: window.location.origin,
 		});
 	}, [manageCreditCard]);
 
@@ -336,6 +336,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'LOGS_EXPLORER' ||
 		routeKey === 'LOGS_PIPELINES' ||
 		routeKey === 'LOGS_SAVE_VIEWS';
+
+	const isApiMonitoringView = (): boolean => routeKey === 'API_MONITORING';
+
+	const isExceptionsView = (): boolean => routeKey === 'ALL_ERROR';
 
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
@@ -357,6 +361,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isInfraMonitoring = (): boolean =>
 		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS' ||
 		routeKey === 'INFRASTRUCTURE_MONITORING_KUBERNETES';
+	const isTracesFunnels = (): boolean => routeKey === 'TRACES_FUNNELS';
 	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
 
 	const isDashboardView = (): boolean =>
@@ -371,9 +376,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	useEffect(() => {
 		if (isDarkMode) {
 			document.body.classList.remove('lightMode');
+			document.body.classList.add('dark');
 			document.body.classList.add('darkMode');
 		} else {
 			document.body.classList.add('lightMode');
+			document.body.classList.remove('dark');
 			document.body.classList.remove('darkMode');
 		}
 	}, [isDarkMode]);
@@ -583,7 +590,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	);
 
 	return (
-		<Layout className={cx(isDarkMode ? 'darkMode' : 'lightMode')}>
+		<Layout className={cx(isDarkMode ? 'darkMode dark' : 'lightMode')}>
 			<Helmet>
 				<title>{pageTitle}</title>
 			</Helmet>
@@ -633,7 +640,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				</div>
 			)}
 
-			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
+			<Flex
+				className={cx('app-layout', isDarkMode ? 'darkMode dark' : 'lightMode')}
+			>
 				{isToDisplayLayout && !renderFullScreen && <SideNav />}
 				<div
 					className={cx('app-content', {
@@ -657,11 +666,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isAlertOverview() ||
 											isMessagingQueues() ||
 											isCloudIntegrationPage() ||
-											isInfraMonitoring()
+											isInfraMonitoring() ||
+											isApiMonitoringView() ||
+											isExceptionsView()
 												? 0
 												: '0 1rem',
 
-										...(isTraceDetailsView() ? { margin: 0 } : {}),
+										...(isTraceDetailsView() || isTracesFunnels() ? { margin: 0 } : {}),
 									}}
 								>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}

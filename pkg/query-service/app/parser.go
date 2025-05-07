@@ -13,27 +13,29 @@ import (
 	"text/template"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
-	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
+	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 
 	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
+	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
-	"go.signoz.io/signoz/pkg/query-service/utils"
-	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
-	"go.signoz.io/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
+	"github.com/SigNoz/signoz/pkg/types"
+	chVariables "github.com/SigNoz/signoz/pkg/variables/clickhouse"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -490,14 +492,6 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	return &req, nil
 }
 
-func isValidRole(role string) bool {
-	switch role {
-	case constants.AdminGroup, constants.EditorGroup, constants.ViewerGroup:
-		return true
-	}
-	return false
-}
-
 func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) {
 	var req model.BulkInviteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -518,7 +512,9 @@ func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) 
 		if req.Users[i].FrontendBaseUrl == "" {
 			return nil, fmt.Errorf("frontendBaseUrl is required for each user")
 		}
-		if !isValidRole(req.Users[i].Role) {
+
+		_, err := authtypes.NewRole(req.Users[i].Role)
+		if err != nil {
 			return nil, fmt.Errorf("invalid role for user: %s", req.Users[i].Email)
 		}
 	}
@@ -528,14 +524,6 @@ func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) 
 
 func parseSetApdexScoreRequest(r *http.Request) (*types.ApdexSettings, error) {
 	var req types.ApdexSettings
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	return &req, nil
-}
-
-func parseInsertIngestionKeyRequest(r *http.Request) (*model.IngestionKey, error) {
-	var req model.IngestionKey
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -717,6 +705,21 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	tagType := v3.TagType(r.URL.Query().Get("tagType"))
+
+	// empty string is a valid tagType
+	// i.e retrieve all attributes
+	if tagType != "" {
+		// what is happening here?
+		// if tagType is undefined(uh oh javascript) or any invalid value, set it to empty string
+		// instead of failing the request. Ideally, we should fail the request.
+		// but we are not doing that to maintain backward compatibility.
+		if err := tagType.Validate(); err != nil {
+			// if the tagType is invalid, set it to empty string
+			tagType = ""
+		}
+	}
+
 	if err != nil {
 		limit = 50
 	}
@@ -737,6 +740,7 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		AggregateAttribute: aggregateAttribute,
 		Limit:              limit,
 		SearchText:         r.URL.Query().Get("searchText"),
+		TagType:            tagType,
 	}
 	return &req, nil
 }
@@ -839,6 +843,29 @@ func validateExpressions(expressions []string, funcs map[string]govaluate.Expres
 		}
 	}
 	return errs
+}
+
+// chTransformQuery transforms the clickhouse query with the given variables
+// it is used to check what would be the query if variables are selected as __all__.
+// for now, this is just a pass through, but in the future, we will use it to
+// dashboard variables
+// TODO(srikanthccv): version based query replacement
+func chTransformQuery(query string, variables map[string]interface{}) {
+	varsForTransform := make([]chVariables.VariableValue, 0, len(variables))
+	for name := range variables {
+		varsForTransform = append(varsForTransform, chVariables.VariableValue{
+			Name:        name,
+			Values:      []string{"__all__"},
+			IsSelectAll: true,
+			FieldType:   "scalar",
+		})
+	}
+	transformer := chVariables.NewQueryTransformer(query, varsForTransform)
+	transformedQuery, err := transformer.Transform()
+	if err != nil {
+		zap.L().Warn("failed to transform clickhouse query", zap.String("query", query), zap.Error(err))
+	}
+	zap.L().Info("transformed clickhouse query", zap.String("transformedQuery", transformedQuery), zap.String("originalQuery", query))
 }
 
 func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiError) {
@@ -979,6 +1006,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				continue
 			}
 
+			chTransformQuery(chQuery.Query, queryRangeParams.Variables)
 			for name, value := range queryRangeParams.Variables {
 				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
 				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)

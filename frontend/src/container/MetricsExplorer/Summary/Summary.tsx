@@ -1,11 +1,13 @@
 import './Summary.styles.scss';
 
 import * as Sentry from '@sentry/react';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetMetricsTreeMap } from 'hooks/metricsExplorer/useGetMetricsTreeMap';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -14,6 +16,7 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import InspectModal from '../Inspect';
 import MetricDetails from '../MetricDetails';
 import MetricsSearch from './MetricsSearch';
 import MetricsTable from './MetricsTable';
@@ -25,17 +28,20 @@ import {
 	getMetricsListQuery,
 } from './utils';
 
+const DEFAULT_ORDER_BY: OrderByPayload = {
+	columnName: 'samples',
+	order: 'desc',
+};
+
 function Summary(): JSX.Element {
 	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
 	const [currentPage, setCurrentPage] = useState(1);
-	const [orderBy, setOrderBy] = useState<OrderByPayload>({
-		columnName: 'samples',
-		order: 'desc',
-	});
+	const [orderBy, setOrderBy] = useState<OrderByPayload>(DEFAULT_ORDER_BY);
 	const [heatmapView, setHeatmapView] = useState<TreemapViewType>(
 		TreemapViewType.TIMESERIES,
 	);
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
+	const [isInspectModalOpen, setIsInspectModalOpen] = useState(false);
 	const [selectedMetricName, setSelectedMetricName] = useState<string | null>(
 		null,
 	);
@@ -44,7 +50,31 @@ function Summary(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const currentQuery = initialQueriesMap[DataSource.METRICS];
+	const { currentQuery, updateAllQueriesOperators } = useQueryBuilder();
+
+	const defaultQuery = useMemo(() => {
+		const query = updateAllQueriesOperators(
+			initialQueriesMap.metrics,
+			PANEL_TYPES.LIST,
+			DataSource.METRICS,
+		);
+
+		return {
+			...query,
+			builder: {
+				...query.builder,
+				queryData: [
+					{
+						...query.builder.queryData[0],
+						orderBy: [DEFAULT_ORDER_BY],
+					},
+				],
+			},
+		};
+	}, [updateAllQueriesOperators]);
+
+	useShareBuilderUrl(defaultQuery);
+
 	const queryFilters = useMemo(
 		() =>
 			currentQuery?.builder?.queryData[0]?.filters || {
@@ -90,7 +120,7 @@ function Summary(): JSX.Element {
 		isFetching: isMetricsFetching,
 		isError: isMetricsError,
 	} = useGetMetricsList(metricsListQuery, {
-		enabled: !!metricsListQuery,
+		enabled: !!metricsListQuery && !isInspectModalOpen,
 	});
 
 	const {
@@ -99,7 +129,7 @@ function Summary(): JSX.Element {
 		isFetching: isTreeMapFetching,
 		isError: isTreeMapError,
 	} = useGetMetricsTreeMap(metricsTreemapQuery, {
-		enabled: !!metricsTreemapQuery,
+		enabled: !!metricsTreemapQuery && !isInspectModalOpen,
 	});
 
 	const handleFilterChange = useCallback(
@@ -151,6 +181,21 @@ function Summary(): JSX.Element {
 		setIsMetricDetailsOpen(false);
 	};
 
+	const openInspectModal = (metricName: string): void => {
+		setSelectedMetricName(metricName);
+		setIsInspectModalOpen(true);
+		setIsMetricDetailsOpen(false);
+	};
+
+	const closeInspectModal = (): void => {
+		handleChangeQueryData('filters', {
+			items: [],
+			op: 'AND',
+		});
+		setIsInspectModalOpen(false);
+		setSelectedMetricName(null);
+	};
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
@@ -185,6 +230,14 @@ function Summary(): JSX.Element {
 					onClose={closeMetricDetails}
 					metricName={selectedMetricName}
 					isModalTimeSelection={false}
+					openInspectModal={openInspectModal}
+				/>
+			)}
+			{isInspectModalOpen && (
+				<InspectModal
+					isOpen={isInspectModalOpen}
+					onClose={closeInspectModal}
+					metricName={selectedMetricName}
 				/>
 			)}
 		</Sentry.ErrorBoundary>

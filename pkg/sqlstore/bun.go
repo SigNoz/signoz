@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/schema"
-	"go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/factory"
 )
 
 type transactorKey struct{}

@@ -3,8 +3,9 @@ package anomaly
 import (
 	"context"
 
-	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
+	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type WeeklyProvider struct {
@@ -27,17 +28,16 @@ func NewWeeklyProvider(opts ...GenericProviderOption[*WeeklyProvider]) *WeeklyPr
 	}
 
 	wp.querierV2 = querierV2.NewQuerier(querierV2.QuerierOptions{
-		Reader:        wp.reader,
-		Cache:         wp.cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  wp.fluxInterval,
-		FeatureLookup: wp.ff,
+		Reader:       wp.reader,
+		Cache:        wp.cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		FluxInterval: wp.fluxInterval,
 	})
 
 	return wp
 }
 
-func (p *WeeklyProvider) GetAnomalies(ctx context.Context, req *GetAnomaliesRequest) (*GetAnomaliesResponse, error) {
+func (p *WeeklyProvider) GetAnomalies(ctx context.Context, orgID valuer.UUID, req *GetAnomaliesRequest) (*GetAnomaliesResponse, error) {
 	req.Seasonality = SeasonalityWeekly
-	return p.getAnomalies(ctx, req)
+	return p.getAnomalies(ctx, orgID, req)
 }

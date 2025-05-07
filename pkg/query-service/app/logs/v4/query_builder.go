@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	"go.signoz.io/signoz/pkg/query-service/app/resource"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 var logOperators = map[v3.FilterOperator]string{
@@ -282,10 +282,9 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 	return str
 }
 
-func generateAggregateClause(aggOp v3.AggregateOperator,
+func generateAggregateClause(panelType v3.PanelType, start, end int64, aggOp v3.AggregateOperator,
 	aggKey string,
 	step int64,
-	preferRPM bool,
 	timeFilter string,
 	whereClause string,
 	groupBy string,
@@ -297,23 +296,19 @@ func generateAggregateClause(aggOp v3.AggregateOperator,
 		"%s%s" +
 		"%s"
 	switch aggOp {
-	case v3.AggregateOperatorRate:
-		rate := float64(step)
-		if preferRPM {
-			rate = rate / 60.0
-		}
-
-		op := fmt.Sprintf("count(%s)/%f", aggKey, rate)
-		query := fmt.Sprintf(queryTmpl, op, whereClause, groupBy, having, orderBy)
-		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
 		v3.AggregateOperatorRateMax,
 		v3.AggregateOperatorRateAvg,
-		v3.AggregateOperatorRateMin:
+		v3.AggregateOperatorRateMin,
+		v3.AggregateOperatorRate:
 		rate := float64(step)
-		if preferRPM {
-			rate = rate / 60.0
+		if panelType == v3.PanelTypeTable {
+			// if the panel type is table the denominator will be the total time range
+			duration := end - start
+			if duration >= 0 {
+				rate = float64(duration) / NANOSECOND
+			}
 		}
 
 		op := fmt.Sprintf("%s(%s)/%f", logsV3.AggregateOperatorToSQLFunc[aggOp], aggKey, rate)
@@ -349,7 +344,7 @@ func generateAggregateClause(aggOp v3.AggregateOperator,
 	}
 }
 
-func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
+func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string) (string, error) {
 	// timerange will be sent in epoch millisecond
 	logsStart := utils.GetEpochNanoSecs(start)
 	logsEnd := utils.GetEpochNanoSecs(end)
@@ -425,7 +420,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", logsV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "#LIMIT_PLACEHOLDER)"
 	}
 
-	aggClause, err := generateAggregateClause(mq.AggregateOperator, aggregationKey, step, preferRPM, timeFilter, filterSubQuery, groupBy, having, orderBy)
+	aggClause, err := generateAggregateClause(panelType, logsStart, logsEnd, mq.AggregateOperator, aggregationKey, step, timeFilter, filterSubQuery, groupBy, having, orderBy)
 	if err != nil {
 		return "", err
 	}
@@ -505,7 +500,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		return query, nil
 	} else if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group_by names (no values)
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 		if err != nil {
 			return "", err
 		}
@@ -513,14 +508,14 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 
 		return query, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 		if err != nil {
 			return "", err
 		}
 		return query, nil
 	}
 
-	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 	if err != nil {
 		return "", err
 	}

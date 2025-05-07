@@ -2,12 +2,21 @@ import './MetricDetails.styles.scss';
 import '../Summary/Summary.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Divider, Drawer, Empty, Skeleton, Tooltip, Typography } from 'antd';
+import {
+	Button,
+	Divider,
+	Drawer,
+	Empty,
+	Skeleton,
+	Tooltip,
+	Typography,
+} from 'antd';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { X } from 'lucide-react';
+import { Compass, X } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { isInspectEnabled } from '../Inspect/utils';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import AllAttributes from './AllAttributes';
 import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
@@ -22,6 +31,7 @@ function MetricDetails({
 	onClose,
 	isOpen,
 	metricName,
+	openInspectModal,
 }: MetricDetailsProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	// const { safeNavigate } = useSafeNavigate();
@@ -42,6 +52,11 @@ function MetricDetails({
 		if (!metric) return null;
 		return formatTimestampToReadableDate(metric.lastReceived);
 	}, [metric]);
+
+	const showInspectFeature = useMemo(
+		() => isInspectEnabled(metric?.metadata?.metric_type),
+		[metric],
+	);
 
 	const isMetricDetailsLoading = isLoading || isFetching;
 
@@ -92,6 +107,19 @@ function MetricDetails({
 					>
 						Open in Explorer
 					</Button> */}
+					{/* Show the based on the feature flag. Will remove before releasing the feature */}
+					{showInspectFeature && (
+						<Button
+							className="inspect-metrics-button"
+							aria-label="Inspect Metric"
+							icon={<Compass size={18} />}
+							onClick={(): void => {
+								if (metric?.name) {
+									openInspectModal(metric.name);
+								}
+							}}
+						/>
+					)}
 				</div>
 			}
 			placement="right"
@@ -105,7 +133,11 @@ function MetricDetails({
 			destroyOnClose
 			closeIcon={<X size={16} />}
 		>
-			{isMetricDetailsLoading && <Skeleton active />}
+			{isMetricDetailsLoading && (
+				<div data-testid="metric-details-skeleton">
+					<Skeleton active />
+				</div>
+			)}
 			{isMetricDetailsError && !isMetricDetailsLoading && (
 				<Empty description="Error fetching metric details" />
 			)}
@@ -146,7 +178,9 @@ function MetricDetails({
 						metadata={metric.metadata}
 						refetchMetricDetails={refetchMetricDetails}
 					/>
-					<AllAttributes metricName={metric?.name} attributes={metric.attributes} />
+					{metric.attributes && (
+						<AllAttributes metricName={metric?.name} attributes={metric.attributes} />
+					)}
 				</div>
 			)}
 		</Drawer>

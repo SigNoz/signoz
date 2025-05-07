@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/app/resource"
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
+	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 const NANOSECOND = 1000000000
@@ -367,10 +367,13 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin,
 		v3.AggregateOperatorRate:
-
 		rate := float64(step)
-		if options.PreferRPM {
-			rate = rate / 60.0
+		if panelType == v3.PanelTypeTable {
+			// if the panel type is table the denominator will be the total time range
+			duration := tracesEnd - tracesStart
+			if duration >= 0 {
+				rate = float64(duration) / NANOSECOND
+			}
 		}
 
 		op := fmt.Sprintf("%s(%s)/%f", tracesV3.AggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)

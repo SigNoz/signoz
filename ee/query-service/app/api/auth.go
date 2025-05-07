@@ -12,10 +12,10 @@ import (
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/ee/query-service/constants"
-	"go.signoz.io/signoz/ee/query-service/model"
-	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	baseauth "github.com/SigNoz/signoz/pkg/query-service/auth"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 func parseRequest(r *http.Request, req interface{}) error {
@@ -134,7 +134,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, registerError := baseauth.Register(ctx, req, ah.Signoz.Alertmanager)
+		_, registerError := baseauth.Register(ctx, req, ah.Signoz.Alertmanager, ah.Signoz.Modules.Organization, ah.QuickFilterModule)
 		if !registerError.IsNil() {
 			RespondError(w, apierr, nil)
 			return
@@ -151,9 +151,8 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 func (ah *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 	token := mux.Vars(r)["token"]
 	sourceUrl := r.URL.Query().Get("ref")
-	ctx := context.Background()
 
-	inviteObject, err := baseauth.GetInvite(context.Background(), token)
+	inviteObject, err := baseauth.GetInvite(r.Context(), token, ah.Signoz.Modules.Organization)
 	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
@@ -163,7 +162,7 @@ func (ah *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 		InvitationResponseObject: inviteObject,
 	}
 
-	precheck, apierr := ah.AppDao().PrecheckLogin(ctx, inviteObject.Email, sourceUrl)
+	precheck, apierr := ah.AppDao().PrecheckLogin(r.Context(), inviteObject.Email, sourceUrl)
 	resp.Precheck = precheck
 
 	if apierr != nil {

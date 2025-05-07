@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"go.signoz.io/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"go.uber.org/zap"
 )
 

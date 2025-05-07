@@ -50,11 +50,13 @@ function WidgetGraphComponent({
 	setRequestData,
 	onClickHandler,
 	onDragSelect,
+	customOnDragSelect,
 	customTooltipElement,
 	openTracesButton,
 	onOpenTraceBtnClick,
 	customSeries,
 	customErrorMessage,
+	customOnRowClick,
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -327,6 +329,7 @@ function WidgetGraphComponent({
 					onToggleModelHandler={onToggleModelHandler}
 					tableProcessedDataRef={tableProcessedDataRef}
 					onClickHandler={onClickHandler ?? graphClickHandler}
+					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
 				/>
 			</Modal>
@@ -378,6 +381,7 @@ function WidgetGraphComponent({
 						openTracesButton={openTracesButton}
 						onOpenTraceBtnClick={onOpenTraceBtnClick}
 						customSeries={customSeries}
+						customOnRowClick={customOnRowClick}
 					/>
 				</div>
 			)}

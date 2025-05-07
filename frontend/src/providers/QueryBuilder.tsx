@@ -764,10 +764,7 @@ export function QueryBuilderProvider({
 	);
 
 	const { safeNavigate } = useSafeNavigate({
-		preventSameUrlNavigation: !(
-			initialDataSource === DataSource.LOGS ||
-			initialDataSource === DataSource.TRACES
-		),
+		preventSameUrlNavigation: false,
 	});
 
 	const redirectWithQueryBuilderData = useCallback(

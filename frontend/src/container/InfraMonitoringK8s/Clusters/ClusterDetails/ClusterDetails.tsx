@@ -561,6 +561,7 @@ function ClusterDetails({
 							tracesFilters={logsAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="clusterTraces"
+							category={InfraMonitoringEvents.Cluster}
 							queryKeyFilters={[QUERY_KEYS.K8S_CLUSTER_NAME]}
 						/>
 					)}

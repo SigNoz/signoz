@@ -10,7 +10,7 @@ import GraphTypes, {
 } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { ConciergeBell, Plus } from 'lucide-react';
+import { ConciergeBell, LineChart, Plus, Spline } from 'lucide-react';
 import {
 	Dispatch,
 	SetStateAction,
@@ -27,6 +27,7 @@ import {
 	panelTypeVsColumnUnitPreferences,
 	panelTypeVsCreateAlert,
 	panelTypeVsFillSpan,
+	panelTypeVsLogScale,
 	panelTypeVsPanelTimePreferences,
 	panelTypeVsSoftMinMax,
 	panelTypeVsStackingChartPreferences,
@@ -41,6 +42,12 @@ import YAxisUnitSelector from './YAxisUnitSelector';
 const { TextArea } = Input;
 const { Option } = Select;
 
+enum LogScale {
+	LINEAR = 'linear',
+	LOGARITHMIC = 'logarithmic',
+}
+
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function RightContainer({
 	description,
 	setDescription,
@@ -71,6 +78,8 @@ function RightContainer({
 	setSoftMin,
 	columnUnits,
 	setColumnUnits,
+	isLogScale,
+	setIsLogScale,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
@@ -87,6 +96,7 @@ function RightContainer({
 	const allowThreshold = panelTypeVsThreshold[selectedGraph];
 	const allowSoftMinMax = panelTypeVsSoftMinMax[selectedGraph];
 	const allowFillSpans = panelTypeVsFillSpan[selectedGraph];
+	const allowLogScale = panelTypeVsLogScale[selectedGraph];
 	const allowYAxisUnit = panelTypeVsYAxisUnit[selectedGraph];
 	const allowCreateAlerts = panelTypeVsCreateAlert[selectedGraph];
 	const allowBucketConfig = panelTypeVsBucketConfig[selectedGraph];
@@ -293,6 +303,36 @@ function RightContainer({
 						</section>
 					</section>
 				)}
+
+				{allowLogScale && (
+					<section className="log-scale">
+						<Typography.Text className="typography">Y Axis Scale</Typography.Text>
+						<Select
+							onChange={(value): void => setIsLogScale(value === LogScale.LOGARITHMIC)}
+							value={isLogScale ? LogScale.LOGARITHMIC : LogScale.LINEAR}
+							style={{ width: '100%' }}
+							className="panel-type-select"
+							defaultValue={LogScale.LINEAR}
+						>
+							<Option value={LogScale.LINEAR}>
+								<div className="select-option">
+									<div className="icon">
+										<LineChart size={16} />
+									</div>
+									<Typography.Text className="display">Linear</Typography.Text>
+								</div>
+							</Option>
+							<Option value={LogScale.LOGARITHMIC}>
+								<div className="select-option">
+									<div className="icon">
+										<Spline size={16} />
+									</div>
+									<Typography.Text className="display">Logarithmic</Typography.Text>
+								</div>
+							</Option>
+						</Select>
+					</section>
+				)}
 			</section>
 
 			{allowCreateAlerts && (
@@ -356,6 +396,8 @@ interface RightContainerProps {
 	setColumnUnits: Dispatch<SetStateAction<ColumnUnit>>;
 	setSoftMin: Dispatch<SetStateAction<number | null>>;
 	setSoftMax: Dispatch<SetStateAction<number | null>>;
+	isLogScale: boolean;
+	setIsLogScale: Dispatch<SetStateAction<boolean>>;
 }
 
 RightContainer.defaultProps = {

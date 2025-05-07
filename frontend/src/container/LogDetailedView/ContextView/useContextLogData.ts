@@ -134,6 +134,8 @@ export const useContextLogData = ({
 			enabled: !!requestData,
 			onSuccess: handleSuccess,
 		},
+		undefined, // params
+		false, // isDependentOnQB
 	);
 
 	const handleShowNextLines = useCallback(() => {

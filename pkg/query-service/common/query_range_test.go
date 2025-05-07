@@ -3,8 +3,8 @@ package common
 import (
 	"testing"
 
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/querycache"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 )
 
 func TestFilterSeriesPoints(t *testing.T) {

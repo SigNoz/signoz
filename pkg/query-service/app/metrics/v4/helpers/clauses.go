@@ -2,10 +2,10 @@ package helpers
 
 import (
 	"fmt"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"strings"
 
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 // groupingSets returns a string of comma separated tags for group by clause

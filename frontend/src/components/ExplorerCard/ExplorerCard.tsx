@@ -199,12 +199,12 @@ function ExplorerCard({
 											value={viewName || undefined}
 										>
 											{viewsData?.data.data.map((view) => (
-												<Select.Option key={view.uuid} value={view.name}>
+												<Select.Option key={view.id} value={view.name}>
 													<MenuItemGenerator
 														viewName={view.name}
 														viewKey={viewKey}
 														createdBy={view.createdBy}
-														uuid={view.uuid}
+														uuid={view.id}
 														refetchAllView={refetchAllView}
 														viewData={viewsData.data.data}
 														sourcePage={sourcepage}

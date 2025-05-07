@@ -5,7 +5,6 @@ import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueriesMap,
@@ -27,7 +26,6 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
-import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
@@ -74,11 +72,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		setToScrollWidgetId,
 		selectedRowWidgetId,
 		setSelectedRowWidgetId,
+		columnWidths,
 	} = useDashboard();
 
 	const { t } = useTranslation(['dashboard']);
-
-	const { featureFlags } = useAppContext();
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -170,6 +167,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [isFillSpans, setIsFillSpans] = useState<boolean>(
 		selectedWidget?.fillSpans || false,
 	);
+	const [isLogScale, setIsLogScale] = useState<boolean>(
+		selectedWidget?.isLogScale || false,
+	);
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
 
@@ -234,8 +234,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				mergeAllActiveQueries: combineHistogram,
 				selectedLogFields,
 				selectedTracesFields,
+				isLogScale,
+				columnWidths: columnWidths?.[selectedWidget?.id],
 			};
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		columnUnits,
 		currentQuery,
@@ -255,6 +258,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		bucketCount,
 		combineHistogram,
 		stackedBarChart,
+		isLogScale,
+		columnWidths,
 	]);
 
 	const closeModal = (): void => {
@@ -369,6 +374,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
+				isLogScale: selectedWidget.isLogScale || false,
 				formatForWeb:
 					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
@@ -379,6 +385,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		stagedQuery,
 		selectedTime,
 		selectedWidget.fillSpans,
+		selectedWidget.isLogScale,
 		globalSelectedInterval,
 	]);
 
@@ -442,6 +449,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								isLogScale: selectedWidget?.isLogScale || false,
 								bucketWidth: selectedWidget?.bucketWidth || 0,
 								bucketCount: selectedWidget?.bucketCount || 0,
 								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
@@ -468,6 +476,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								isLogScale: selectedWidget?.isLogScale || false,
 								bucketWidth: selectedWidget?.bucketWidth || 0,
 								bucketCount: selectedWidget?.bucketCount || 0,
 								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
@@ -553,12 +562,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const isQueryBuilderActive =
-		!featureFlags?.find((flag) => flag.name === FeatureKeys.QUERY_BUILDER_PANELS)
-			?.active || false;
-
 	const isNewTraceLogsAvailable =
-		isQueryBuilderActive &&
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 		currentQuery.builder.queryData.find(
 			(query) => query.dataSource !== DataSource.METRICS,
@@ -730,6 +734,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							selectedWidget={selectedWidget}
 							isFillSpans={isFillSpans}
 							setIsFillSpans={setIsFillSpans}
+							isLogScale={isLogScale}
+							setIsLogScale={setIsLogScale}
 							softMin={softMin}
 							setSoftMin={setSoftMin}
 							softMax={softMax}

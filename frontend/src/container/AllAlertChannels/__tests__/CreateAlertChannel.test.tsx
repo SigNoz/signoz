@@ -31,6 +31,10 @@ jest.mock('hooks/useNotifications', () => ({
 	})),
 }));
 
+jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+	MarkdownRenderer: jest.fn(() => <div>Mocked MarkdownRenderer</div>),
+}));
+
 describe('Create Alert Channel', () => {
 	afterEach(() => {
 		jest.clearAllMocks();

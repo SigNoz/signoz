@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"go.signoz.io/signoz/ee/query-service/constants"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 

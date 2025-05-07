@@ -8,21 +8,26 @@ import (
 	"reflect"
 	"time"
 
-	"go.signoz.io/signoz/pkg/alertmanager"
-	"go.signoz.io/signoz/pkg/apiserver"
-	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/config"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/instrumentation"
-	"go.signoz.io/signoz/pkg/sqlmigration"
-	"go.signoz.io/signoz/pkg/sqlmigrator"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/telemetrystore"
-	"go.signoz.io/signoz/pkg/web"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/config"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlmigrator"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/version"
+	"github.com/SigNoz/signoz/pkg/web"
 )
 
 // Config defines the entire input configuration of signoz.
 type Config struct {
+	// Version config
+	Version version.Config `mapstructure:"version"`
+
 	// Instrumentation config
 	Instrumentation instrumentation.Config `mapstructure:"instrumentation"`
 
@@ -47,6 +52,9 @@ type Config struct {
 	// TelemetryStore config
 	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
 
+	// Prometheus config
+	Prometheus prometheus.Config `mapstructure:"prometheus"`
+
 	// Alertmanager config
 	Alertmanager alertmanager.Config `mapstructure:"alertmanager" yaml:"alertmanager"`
 }
@@ -57,10 +65,12 @@ type DeprecatedFlags struct {
 	MaxIdleConns int
 	MaxOpenConns int
 	DialTimeout  time.Duration
+	Config       string
 }
 
 func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {
 	configFactories := []factory.ConfigFactory{
+		version.NewConfigFactory(),
 		instrumentation.NewConfigFactory(),
 		web.NewConfigFactory(),
 		cache.NewConfigFactory(),
@@ -68,6 +78,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 		sqlmigrator.NewConfigFactory(),
 		apiserver.NewConfigFactory(),
 		telemetrystore.NewConfigFactory(),
+		prometheus.NewConfigFactory(),
 		alertmanager.NewConfigFactory(),
 	}
 
@@ -140,7 +151,7 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 
 	if os.Getenv("ClickHouseUrl") != "" {
 		fmt.Println("[Deprecated] env ClickHouseUrl is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN instead.")
-		config.TelemetryStore.ClickHouse.DSN = os.Getenv("ClickHouseUrl")
+		config.TelemetryStore.Clickhouse.DSN = os.Getenv("ClickHouseUrl")
 	}
 
 	if deprecatedFlags.MaxIdleConns != 50 {
@@ -170,5 +181,9 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 
 	if os.Getenv("ALERTMANAGER_API_CHANNEL_PATH") != "" {
 		fmt.Println("[Deprecated] env ALERTMANAGER_API_CHANNEL_PATH is deprecated and scheduled for complete removal.")
+	}
+
+	if deprecatedFlags.Config != "" {
+		fmt.Println("[Deprecated] flag --config is deprecated for passing prometheus config. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.")
 	}
 }

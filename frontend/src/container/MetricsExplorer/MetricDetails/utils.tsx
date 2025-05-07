@@ -41,7 +41,7 @@ export function formatNumberToCompactFormat(num: number): string {
 
 export function determineIsMonotonic(
 	metricType: MetricType,
-	temporality: Temporality,
+	temporality?: Temporality,
 ): boolean {
 	if (
 		metricType === MetricType.HISTOGRAM ||

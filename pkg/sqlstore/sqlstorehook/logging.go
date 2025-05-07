@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 type logging struct {
@@ -22,7 +22,7 @@ func NewLoggingFactory() factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore
 
 func NewLogging(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config) (sqlstore.SQLStoreHook, error) {
 	return &logging{
-		logger: factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/sqlstore/sqlstorehook").Logger(),
+		logger: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook").Logger(),
 		level:  slog.LevelDebug,
 	}, nil
 }

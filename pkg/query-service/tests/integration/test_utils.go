@@ -13,49 +13,44 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
+	"github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 	"golang.org/x/exp/maps"
 )
 
 var jwt = authtypes.NewJWT("secret", 1*time.Hour, 2*time.Hour)
 
-func NewMockClickhouseReader(
-	t *testing.T, testDB *sqlx.DB, featureFlags interfaces.FeatureLookup,
-) (
-	*clickhouseReader.ClickHouseReader, mockhouse.ClickConnMockCommon,
-) {
+func NewMockClickhouseReader(t *testing.T, testDB sqlstore.SQLStore) (*clickhouseReader.ClickHouseReader, mockhouse.ClickConnMockCommon) {
 	require.NotNil(t, testDB)
 
-	mockDB, err := mockhouse.NewClickHouseWithQueryMatcher(nil, sqlmock.QueryMatcherRegexp)
-
-	require.Nil(t, err, "could not init mock clickhouse")
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherRegexp)
 	reader := clickhouseReader.NewReaderFromClickhouseConnection(
-		mockDB,
 		clickhouseReader.NewOptions("", ""),
 		testDB,
+		telemetryStore,
+		prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
 		"",
-		featureFlags,
-		"",
-		true,
-		true,
 		time.Duration(time.Second),
 		nil,
 	)
 
-	return reader, mockDB
+	return reader, telemetryStore.Mock()
 }
 
 func addLogsQueryExpectation(
@@ -151,24 +146,17 @@ func makeTestSignozLog(
 	return testLog
 }
 
-func createTestUser() (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
-	org, apiErr := dao.DB().CreateOrg(ctx, &types.Organization{
-		Name: "test",
-	})
-	if apiErr != nil {
-		return nil, apiErr
+	organization := types.NewOrganization("test")
+	err := organizationModule.Create(ctx, organization)
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
-
-	group, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	auth.InitAuthCache(ctx)
 
 	userId := uuid.NewString()
+
 	return dao.DB().CreateUser(
 		ctx,
 		&types.User{
@@ -176,8 +164,8 @@ func createTestUser() (*types.User, *model.ApiError) {
 			Name:     "test",
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
-			OrgID:    org.ID,
-			GroupID:  group.ID,
+			OrgID:    organization.ID.StringValue(),
+			Role:     authtypes.RoleAdmin.String(),
 		},
 		true,
 	)
@@ -207,6 +195,13 @@ func AuthenticatedRequestForTest(
 	}
 
 	req.Header.Add("Authorization", "Bearer "+userJwt.AccessJwt)
+
+	ctx, err := jwt.ContextFromRequest(req.Context(), req.Header.Get("Authorization"))
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+
 	return req, nil
 }
 

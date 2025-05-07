@@ -8,6 +8,7 @@ import {
 	AllAlertChannels,
 	AllErrors,
 	APIKeys,
+	ApiMonitoring,
 	BillingPage,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
@@ -52,6 +53,8 @@ import {
 	TraceDetail,
 	TraceFilter,
 	TracesExplorer,
+	TracesFunnelDetails,
+	TracesFunnels,
 	TracesSaveViews,
 	UnAuthorized,
 	UsageExplorerPage,
@@ -235,6 +238,20 @@ const routes: AppRoutes[] = [
 		component: TracesSaveViews,
 		isPrivate: true,
 		key: 'TRACES_SAVE_VIEWS',
+	},
+	{
+		path: ROUTES.TRACES_FUNNELS,
+		exact: true,
+		component: TracesFunnels,
+		isPrivate: true,
+		key: 'TRACES_FUNNELS',
+	},
+	{
+		path: ROUTES.TRACES_FUNNELS_DETAIL,
+		exact: true,
+		component: TracesFunnelDetails,
+		isPrivate: true,
+		key: 'TRACES_FUNNELS_DETAIL',
 	},
 	{
 		path: ROUTES.CHANNELS_NEW,
@@ -481,6 +498,13 @@ const routes: AppRoutes[] = [
 		key: 'METRICS_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.API_MONITORING,
+		exact: true,
+		component: ApiMonitoring,
+		key: 'API_MONITORING',
+		isPrivate: true,
+	},
 ];
 
 export const SUPPORT_ROUTE: AppRoutes = {
@@ -507,6 +531,7 @@ export const oldRoutes = [
 	'/traces-save-views',
 	'/settings/access-tokens',
 	'/messaging-queues',
+	'/alerts/edit',
 ];
 
 export const oldNewRoutesMapping: Record<string, string> = {
@@ -517,6 +542,7 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/traces-save-views': '/traces/saved-views',
 	'/settings/access-tokens': '/settings/api-keys',
 	'/messaging-queues': '/messaging-queues/overview',
+	'/alerts/edit': '/alerts/overview',
 };
 
 export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [
