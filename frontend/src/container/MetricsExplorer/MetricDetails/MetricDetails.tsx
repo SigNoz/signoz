@@ -53,7 +53,10 @@ function MetricDetails({
 		return formatTimestampToReadableDate(metric.lastReceived);
 	}, [metric]);
 
-	const showInspectFeature = useMemo(() => isInspectEnabled(), []);
+	const showInspectFeature = useMemo(
+		() => isInspectEnabled(metric?.metadata?.metric_type),
+		[metric],
+	);
 
 	const isMetricDetailsLoading = isLoading || isFetching;
 
