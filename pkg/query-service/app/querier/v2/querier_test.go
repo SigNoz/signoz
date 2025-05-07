@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -1218,20 +1217,6 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 			t.Errorf("expected time ranges to be %v, got %v", expectedQueryAndTimeRanges[i].ranges, q.TimeRanges()[i])
 		}
 	}
-}
-
-type regexMatcher struct {
-}
-
-func (m *regexMatcher) Match(expectedSQL, actualSQL string) error {
-	re, err := regexp.Compile(expectedSQL)
-	if err != nil {
-		return err
-	}
-	if !re.MatchString(actualSQL) {
-		return fmt.Errorf("expected query to contain %s, got %s", expectedSQL, actualSQL)
-	}
-	return nil
 }
 
 func Test_querier_Traces_runWindowBasedListQueryDesc(t *testing.T) {
