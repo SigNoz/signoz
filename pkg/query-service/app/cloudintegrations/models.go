@@ -73,16 +73,15 @@ func AddServiceStrategy(serviceType string, cs *CompiledCollectionStrategy,
 
 	if cs.Provider == "aws" {
 		if config.Logs != nil && config.Logs.Enabled {
-			// services that includes a logs subscription
-			if definitionStrat.AWSLogs != nil {
+			if serviceType == services.S3Sync {
+				// S3 bucket sync; No cloudwatch logs are appended for this service type;
+				// Though definition is populated with a custom cloudwatch group that helps in calculating logs connection status
+				cs.S3Buckets = config.Logs.S3Buckets
+			} else if definitionStrat.AWSLogs != nil { // services that includes a logs subscription
 				cs.AWSLogs.Subscriptions = append(
 					cs.AWSLogs.Subscriptions,
 					definitionStrat.AWSLogs.Subscriptions...,
 				)
-			} else if serviceType == services.S3Sync && len(config.Logs.S3Buckets) > 0 {
-				// S3 bucket sync; No cloudwatch logs are appended for this service type;
-				// Though definition is populated with a custom cloudwatch group that helps in calculating logs connection status
-				cs.S3Buckets = config.Logs.S3Buckets
 			}
 		}
 		if config.Metrics != nil && config.Metrics.Enabled && definitionStrat.AWSMetrics != nil {
