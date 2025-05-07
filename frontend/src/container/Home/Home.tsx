@@ -292,12 +292,19 @@ export default function Home(): JSX.Element {
 		}
 	}, [hostData, k8sPodsData, handleUpdateChecklistDoneItem]);
 
-	const { activeLicenseV3 } = useAppContext();
+	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
 
-	const isEnabled =
-		activeLicenseV3 && activeLicenseV3.platform === LicensePlatform.CLOUD;
+	const [isEnabled, setIsEnabled] = useState(false);
 
-	const { data: deploymentsData } = useGetDeploymentsData(isEnabled || false);
+	useEffect(() => {
+		if (isFetchingActiveLicenseV3) {
+			setIsEnabled(false);
+			return;
+		}
+		setIsEnabled(Boolean(activeLicenseV3?.platform === LicensePlatform.CLOUD));
+	}, [activeLicenseV3, isFetchingActiveLicenseV3]);
+
+	const { data: deploymentsData } = useGetDeploymentsData(isEnabled);
 
 	useEffect(() => {
 		logEvent('Homepage: Visited', {});
