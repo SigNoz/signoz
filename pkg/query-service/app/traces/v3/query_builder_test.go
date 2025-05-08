@@ -133,7 +133,7 @@ var buildFilterQueryData = []struct {
 func TestBuildTracesFilterQuery(t *testing.T) {
 	for _, tt := range buildFilterQueryData {
 		Convey("TestBuildTracesFilterQuery", t, func() {
-			query, err := BuildTracesFilterQuery(tt.FilterSet)
+			query, err := buildTracesFilterQuery(tt.FilterSet)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedFilter)
 		})

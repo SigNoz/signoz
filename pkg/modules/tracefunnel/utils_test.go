@@ -8,7 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	tracefunnel "github.com/SigNoz/signoz/pkg/types/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/types/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )

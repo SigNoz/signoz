@@ -211,7 +211,7 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 			want: "",
 		},
 		{
-			name: "Test buildTracesFilterQuery in, nin",
+			name: "Test BuildTracesFilterQuery in, nin",
 			args: args{
 				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 					{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"GET", "POST"}, Operator: v3.FilterOperatorIn},
@@ -226,7 +226,7 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Test buildTracesFilterQuery not eq, neq, gt, lt, gte, lte",
+			name: "Test BuildTracesFilterQuery not eq, neq, gt, lt, gte, lte",
 			args: args{
 				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 102, Operator: v3.FilterOperatorEqual},
@@ -274,13 +274,13 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildTracesFilterQuery(tt.args.fs)
+			got, err := BuildTracesFilterQuery(tt.args.fs)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("buildTracesFilterQuery() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("BuildTracesFilterQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("buildTracesFilterQuery() = %v, want %v", got, tt.want)
+				t.Errorf("BuildTracesFilterQuery() = %v, want %v", got, tt.want)
 			}
 		})
 	}

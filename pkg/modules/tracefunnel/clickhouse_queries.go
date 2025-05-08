@@ -9,7 +9,7 @@ func formatClause(clause string) string {
 	if clause == "" {
 		return ""
 	}
-	return fmt.Sprintf("AND %s", clause)
+	return fmt.Sprintf("%s", clause)
 }
 
 func BuildTwoStepFunnelValidationQuery(
@@ -47,8 +47,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t1
         AND name = span_name_t1
-        AND (contains_error_t1 = 0 OR has_error = true)
-        %[9]s
+        AND (contains_error_t1 = 0 OR has_error = true) %[9]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -63,8 +62,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t2
         AND name = span_name_t2
-        AND (contains_error_t2 = 0 OR has_error = true)
-        %[10]s
+        AND (contains_error_t2 = 0 OR has_error = true) %[10]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -144,8 +142,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t1
         AND name = span_name_t1
-        AND (contains_error_t1 = 0 OR has_error = true)
-        %[12]s
+        AND (contains_error_t1 = 0 OR has_error = true) %[12]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -160,8 +157,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t2
         AND name = span_name_t2
-        AND (contains_error_t2 = 0 OR has_error = true)
-        %[13]s
+        AND (contains_error_t2 = 0 OR has_error = true) %[13]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -176,8 +172,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t3
         AND name = span_name_t3
-        AND (contains_error_t3 = 0 OR has_error = true)
-        %[14]s
+        AND (contains_error_t3 = 0 OR has_error = true) %[14]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -260,8 +255,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t1
         AND name = span_name_t1
-        AND (contains_error_t1 = 0 OR has_error = true)
-        %[11]s
+        AND (contains_error_t1 = 0 OR has_error = true) %[11]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -277,8 +271,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t2
         AND name = span_name_t2
-        AND (contains_error_t2 = 0 OR has_error = true)
-        %[12]s
+        AND (contains_error_t2 = 0 OR has_error = true) %[12]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -296,10 +289,14 @@ WITH
     WHERE s2.first_time > s1.first_time
 )
 
+-- Error counts for each step
+, errors_step1 AS (SELECT countIf(has_error_flag) AS errors FROM step1)
+, errors_step2 AS (SELECT countIf(has_error_flag) AS errors FROM step2)
+
 SELECT
-    round((count(DISTINCT trace_id) * 100.0) / (SELECT count(DISTINCT trace_id) FROM step1), 2) AS conversion_rate,
-    count(DISTINCT trace_id) / time_window_sec AS avg_rate,
-    greatest(countIf(s1_has_error), countIf(s2_has_error)) AS errors,
+    round((count(DISTINCT joined.trace_id) * 100.0) / (SELECT count(DISTINCT joined.trace_id) FROM step1), 2) AS conversion_rate,
+    count(DISTINCT joined.trace_id) / time_window_sec AS avg_rate,
+    greatest((SELECT errors FROM errors_step1), (SELECT errors FROM errors_step2)) AS errors,
     avg(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration,
     quantile(0.99)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS p99_latency
 FROM joined;`
@@ -373,8 +370,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t1
         AND name = span_name_t1
-        AND (contains_error_t1 = 0 OR has_error = true)
-        %[15]s
+        AND (contains_error_t1 = 0 OR has_error = true) %[15]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -390,8 +386,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t2
         AND name = span_name_t2
-        AND (contains_error_t2 = 0 OR has_error = true)
-        %[16]s
+        AND (contains_error_t2 = 0 OR has_error = true) %[16]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -407,8 +402,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t3
         AND name = span_name_t3
-        AND (contains_error_t3 = 0 OR has_error = true)
-        %[17]s
+        AND (contains_error_t3 = 0 OR has_error = true) %[17]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -441,10 +435,15 @@ WITH
     WHERE s3.first_time > j2.t2_time
 )
 
+-- Error counts for each step
+, errors_step1 AS (SELECT countIf(has_error_flag) AS errors FROM step1)
+, errors_step2 AS (SELECT countIf(has_error_flag) AS errors FROM step2)
+, errors_step3 AS (SELECT countIf(has_error_flag) AS errors FROM step3)
+
 SELECT
     round((count(DISTINCT joined_t3.trace_id) * 100.0) / (SELECT count(DISTINCT trace_id) FROM step1), 2) AS conversion_rate,
     count(DISTINCT joined_t3.trace_id) / time_window_sec AS avg_rate,
-    greatest(countIf(s1_has_error), countIf(s2_has_error), countIf(s3_has_error)) AS errors,
+    greatest((SELECT errors FROM errors_step1), (SELECT errors FROM errors_step2), (SELECT errors FROM errors_step3)) AS errors,
     avg(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration,
     quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS p99_latency
 FROM joined_t3;`
@@ -472,7 +471,117 @@ FROM joined_t3;`
 	return query
 }
 
-func BuildFunnelStepFunnelOverviewQuery(
+func BuildTwoStepFunnelStepOverviewQuery(
+	containsErrorT1 int,
+	containsErrorT2 int,
+	latencyPointerT1 string,
+	latencyPointerT2 string,
+	startTs int64,
+	endTs int64,
+	serviceNameT1 string,
+	spanNameT1 string,
+	serviceNameT2 string,
+	spanNameT2 string,
+	clauseStep1 string,
+	clauseStep2 string,
+	latencyTypeT2 string,
+) string {
+	queryTemplate := `
+WITH
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2,
+    '%[3]s' AS latency_pointer_t1,
+    '%[4]s' AS latency_pointer_t2,
+    toDateTime64(%[5]d / 1000000000, 9) AS start_ts,
+    toDateTime64(%[6]d / 1000000000, 9) AS end_ts,
+    (%[6]d - %[5]d) / 1000000000 AS time_window_sec,
+    '%[7]s' AS service_name_t1,
+    '%[8]s' AS span_name_t1,
+    '%[9]s' AS service_name_t2,
+    '%[10]s' AS span_name_t2
+
+-- Step 1
+, step1 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t1
+        AND name = span_name_t1
+        AND (contains_error_t1 = 0 OR has_error = true) %[11]s
+    GROUP BY trace_id
+    LIMIT 100000
+)
+
+-- Step 2
+, step2 AS (
+    SELECT
+        trace_id,
+        argMin(timestamp, timestamp) AS first_time,
+        argMin(has_error, timestamp) AS has_error_flag
+    FROM signoz_traces.signoz_index_v3
+    WHERE
+        timestamp BETWEEN start_ts AND end_ts
+        AND serviceName = service_name_t2
+        AND name = span_name_t2
+        AND (contains_error_t2 = 0 OR has_error = true) %[12]s
+    GROUP BY trace_id
+    LIMIT 100000
+)
+
+-- Join steps
+, joined AS (
+    SELECT
+        s1.trace_id,
+        s1.first_time AS t1_time,
+        s2.first_time AS t2_time,
+        s1.has_error_flag AS s1_has_error,
+        s2.has_error_flag AS s2_has_error
+    FROM step1 s1
+    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    WHERE s2.first_time > s1.first_time
+)
+
+-- Error counts for each step
+, errors_step1 AS (SELECT countIf(has_error_flag) AS errors FROM step1)
+, errors_step2 AS (SELECT countIf(has_error_flag) AS errors FROM step2)
+
+SELECT
+    round((count(DISTINCT joined.trace_id) * 100.0) / (SELECT count(DISTINCT joined.trace_id) FROM step1), 2) AS conversion_rate,
+    count(DISTINCT joined.trace_id) / time_window_sec AS avg_rate,
+    greatest((SELECT errors FROM errors_step1), (SELECT errors FROM errors_step2)) AS errors,
+    avg(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration,
+    CASE 
+        WHEN '%[13]s' = 'p99' THEN quantile(0.99)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
+        WHEN '%[13]s' = 'p95' THEN quantile(0.95)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
+        WHEN '%[13]s' = 'p90' THEN quantile(0.90)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
+        ELSE quantile(0.99)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
+    END AS latency
+FROM joined;`
+
+	query := fmt.Sprintf(queryTemplate,
+		containsErrorT1,
+		containsErrorT2,
+		latencyPointerT1,
+		latencyPointerT2,
+		startTs,
+		endTs,
+		serviceNameT1,
+		spanNameT1,
+		serviceNameT2,
+		spanNameT2,
+		formatClause(clauseStep1),
+		formatClause(clauseStep2),
+		latencyTypeT2,
+	)
+
+	return query
+}
+
+func BuildThreeStepFunnelStepOverviewQuery(
 	containsErrorT1 int,
 	containsErrorT2 int,
 	containsErrorT3 int,
@@ -490,8 +599,13 @@ func BuildFunnelStepFunnelOverviewQuery(
 	clauseStep1 string,
 	clauseStep2 string,
 	clauseStep3 string,
+	stepStart int64,
+	stepEnd int64,
+	latencyTypeT2 string,
+	latencyTypeT3 string,
 ) string {
-	queryTemplate := `
+	// Common WITH and CTEs for all cases
+	baseQuery := `
 WITH
     %[1]d AS contains_error_t1,
     %[2]d AS contains_error_t2,
@@ -523,8 +637,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t1
         AND name = span_name_t1
-        AND (contains_error_t1 = 0 OR has_error = true)
-        %[15]s
+        AND (contains_error_t1 = 0 OR has_error = true) %[15]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -540,8 +653,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t2
         AND name = span_name_t2
-        AND (contains_error_t2 = 0 OR has_error = true)
-        %[16]s
+        AND (contains_error_t2 = 0 OR has_error = true) %[16]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -557,8 +669,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t3
         AND name = span_name_t3
-        AND (contains_error_t3 = 0 OR has_error = true)
-        %[17]s
+        AND (contains_error_t3 = 0 OR has_error = true) %[17]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -569,6 +680,7 @@ WITH
         s1.trace_id,
         s1.first_time AS t1_time,
         s2.first_time AS t2_time,
+        s1.has_error_flag AS s1_has_error,
         s2.has_error_flag AS s2_has_error
     FROM step1 s1
     INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
@@ -579,8 +691,10 @@ WITH
 , joined_t3 AS (
     SELECT
         j2.trace_id,
+        j2.t1_time,
         j2.t2_time,
         s3.first_time AS t3_time,
+        j2.s1_has_error,
         j2.s2_has_error,
         s3.has_error_flag AS s3_has_error
     FROM joined_t2 j2
@@ -588,15 +702,50 @@ WITH
     WHERE s3.first_time > j2.t2_time
 )
 
-SELECT
-    round((count(DISTINCT joined_t3.trace_id) * 100.0) / (SELECT count(DISTINCT trace_id) FROM joined_t2), 2) AS conversion_rate,
-    count(DISTINCT joined_t3.trace_id) / time_window_sec AS avg_rate,
-    greatest(countIf(s2_has_error), countIf(s3_has_error)) AS errors,
-    avg(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000) AS avg_duration,
-    quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000) AS p99_latency
-FROM joined_t3;`
+-- Error counts for each step
+, errors_step1 AS (SELECT countIf(has_error_flag) AS errors FROM step1)
+, errors_step2 AS (SELECT countIf(has_error_flag) AS errors FROM step2)
+, errors_step3 AS (SELECT countIf(has_error_flag) AS errors FROM step3)
+`
 
-	query := fmt.Sprintf(queryTemplate,
+	var selectQuery string
+	// Dynamically select the correct SELECT statement based on stepStart and stepEnd
+	if stepStart == 1 && stepEnd == 2 {
+		// Metrics for step1 -> step2 (joined_t2)
+		selectQuery = `
+SELECT
+    round((count(DISTINCT trace_id) * 100.0) / (SELECT count(DISTINCT trace_id) FROM step1), 2) AS conversion_rate,
+    count(DISTINCT trace_id) / time_window_sec AS avg_rate,
+    greatest((SELECT errors FROM errors_step1), (SELECT errors FROM errors_step2)) AS errors,
+    avg(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration,
+    CASE 
+        WHEN '%[18]s' = 'p99' THEN quantile(0.99)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
+        WHEN '%[18]s' = 'p95' THEN quantile(0.95)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
+        WHEN '%[18]s' = 'p90' THEN quantile(0.90)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
+        ELSE quantile(0.99)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
+    END AS latency
+FROM joined_t2`
+	} else if stepStart == 2 && stepEnd == 3 {
+		// Metrics for step2 -> step3 (joined_t3)
+		selectQuery = `
+SELECT
+    round((count(DISTINCT trace_id) * 100.0) / (SELECT count(DISTINCT trace_id) FROM joined_t2), 2) AS conversion_rate,
+    count(DISTINCT trace_id) / time_window_sec AS avg_rate,
+    greatest((SELECT errors FROM errors_step2), (SELECT errors FROM errors_step3)) AS errors,
+    avg(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000) AS avg_duration,
+    CASE 
+        WHEN '%[19]s' = 'p99' THEN quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000)
+        WHEN '%[19]s' = 'p95' THEN quantile(0.95)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000)
+        WHEN '%[19]s' = 'p90' THEN quantile(0.90)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000)
+        ELSE quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000)
+    END AS latency
+FROM joined_t3;`
+	} else {
+		// Fallback: return empty result
+		selectQuery = `SELECT 0 AS conversion_rate, 0 AS avg_rate, 0 AS errors, 0 AS avg_duration, 0 AS latency;`
+	}
+
+	query := fmt.Sprintf(baseQuery+selectQuery,
 		containsErrorT1,
 		containsErrorT2,
 		containsErrorT3,
@@ -614,6 +763,8 @@ FROM joined_t3;`
 		formatClause(clauseStep1),
 		formatClause(clauseStep2),
 		formatClause(clauseStep3),
+		latencyTypeT2,
+		latencyTypeT3,
 	)
 
 	return query
@@ -655,8 +806,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t1
         AND name = span_name_t1
-        AND (contains_error_t1 = 0 OR has_error = true)
-        %[9]s
+        AND (contains_error_t1 = 0 OR has_error = true) %[9]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -672,8 +822,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t2
         AND name = span_name_t2
-        AND (contains_error_t2 = 0 OR has_error = true)
-        %[10]s
+        AND (contains_error_t2 = 0 OR has_error = true) %[10]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -758,8 +907,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t1
         AND name = span_name_t1
-        AND (contains_error_t1 = 0 OR has_error = true)
-        %[12]s
+        AND (contains_error_t1 = 0 OR has_error = true) %[12]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -775,8 +923,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t2
         AND name = span_name_t2
-        AND (contains_error_t2 = 0 OR has_error = true)
-        %[13]s
+        AND (contains_error_t2 = 0 OR has_error = true) %[13]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -792,8 +939,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t3
         AND name = span_name_t3
-        AND (contains_error_t3 = 0 OR has_error = true)
-        %[14]s
+        AND (contains_error_t3 = 0 OR has_error = true) %[14]s
     GROUP BY trace_id
     LIMIT 100000
 )
@@ -889,8 +1035,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t1
         AND name = span_name_t1
-        AND (contains_error_t1 = 0 OR has_error = true)
-        %[9]s
+        AND (contains_error_t1 = 0 OR has_error = true) %[9]s
     GROUP BY trace_id
     LIMIT 100000
 ), step1 AS (
@@ -907,8 +1052,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t2
         AND name = span_name_t2
-        AND (contains_error_t2 = 0 OR has_error = true)
-        %[10]s
+        AND (contains_error_t2 = 0 OR has_error = true) %[10]s
     GROUP BY trace_id
     LIMIT 100000
 ), step2 AS (
@@ -1003,8 +1147,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t1
         AND name = span_name_t1
-        AND (contains_error_t1 = 0 OR has_error = true)
-        %[9]s
+        AND (contains_error_t1 = 0 OR has_error = true) %[9]s
     GROUP BY trace_id
     LIMIT 100000
 ), step1 AS (
@@ -1021,8 +1164,7 @@ WITH
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName = service_name_t2
         AND name = span_name_t2
-        AND (contains_error_t2 = 0 OR has_error = true)
-        %[10]s
+        AND (contains_error_t2 = 0 OR has_error = true) %[10]s
     GROUP BY trace_id
     LIMIT 100000
 ), step2 AS (
