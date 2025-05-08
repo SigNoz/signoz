@@ -3,6 +3,7 @@
 # that they own.
 
 /frontend/ @YounixM
+/frontend/ @SigNoz/frontend
 /frontend/src/container/MetricsApplication @srikanthccv
 /frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
 /deploy/ @SigNoz/devops
