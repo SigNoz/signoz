@@ -4,7 +4,7 @@ import { Button } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
-import { CalendarClock, DecimalsArrowRight } from 'lucide-react';
+import { ArrowRight, CalendarClock } from 'lucide-react';
 import { useState } from 'react';
 import { generatePath, Link } from 'react-router-dom';
 import { FunnelData } from 'types/api/traceFunnels';
@@ -40,7 +40,7 @@ export function FunnelListItem({
 					<Button
 						type="default"
 						className="funnel-item__open-button"
-						icon={<DecimalsArrowRight size={12} />}
+						icon={<ArrowRight size={12} />}
 					>
 						Open funnel
 					</Button>

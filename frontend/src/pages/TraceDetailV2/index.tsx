@@ -81,6 +81,15 @@ export default function TraceDetailsPage(): JSX.Element {
 		{
 			label: (
 				<div className="tab-item">
+					<Cone className="funnel-icon" size={16} /> Funnels
+				</div>
+			),
+			key: 'funnels',
+			children: <div />,
+		},
+		{
+			label: (
+				<div className="tab-item">
 					<TowerControl size={16} /> Views
 				</div>
 			),
