@@ -1,6 +1,7 @@
 import { Button, Form, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import loginApi from 'api/login/login';
+import acceptInvite from 'api/user/acceptInvite';
 import getInviteDetails from 'api/user/getInviteDetails';
 import signUpApi from 'api/user/signup';
 import afterLogin from 'AppRoutes/utils';
@@ -12,6 +13,9 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
+import { SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
+import { InviteResponse } from 'types/api/user/getInviteDetails';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
 
 import { ButtonContainer, FormContainer, FormWrapper, Label } from './styles';
@@ -33,7 +37,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const { t } = useTranslation(['signup']);
 	const [loading, setLoading] = useState(false);
 
-	const [precheck, setPrecheck] = useState<LoginPrecheckPayloadProps>({
+	const [precheck] = useState<LoginPrecheckPayloadProps>({
 		sso: false,
 		isUser: false,
 	});
@@ -49,7 +53,10 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
 
-	const getInviteDetailsResponse = useQuery({
+	const getInviteDetailsResponse = useQuery<
+		SuccessResponseV2<InviteResponse>,
+		APIError
+	>({
 		queryFn: () =>
 			getInviteDetails({
 				inviteId: token || '',
@@ -64,51 +71,49 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
-			getInviteDetailsResponse.data.payload
+			getInviteDetailsResponse.data.data
 		) {
-			const responseDetails = getInviteDetailsResponse.data.payload;
-			if (responseDetails.precheck) setPrecheck(responseDetails.precheck);
+			const responseDetails = getInviteDetailsResponse.data.data;
 			form.setFieldValue('firstName', responseDetails.name);
 			form.setFieldValue('email', responseDetails.email);
-			form.setFieldValue('organizationName', responseDetails.organization);
+			// TODO update this
+			form.setFieldValue('organizationName', responseDetails.orgId);
 			setIsDetailsDisable(true);
 
 			logEvent('Account Creation Page Visited', {
 				email: responseDetails.email,
 				name: responseDetails.name,
-				company_name: responseDetails.organization,
+				company_name: responseDetails.orgId,
 				source: 'SigNoz Cloud',
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
-		getInviteDetailsResponse.data?.payload,
+		getInviteDetailsResponse.data?.data,
 		form,
 		getInviteDetailsResponse.status,
 	]);
 
 	useEffect(() => {
-		if (
-			getInviteDetailsResponse.status === 'success' &&
-			getInviteDetailsResponse.data?.error
-		) {
-			const { error } = getInviteDetailsResponse.data;
+		if (getInviteDetailsResponse.error) {
 			notifications.error({
-				message: error,
+				message: getInviteDetailsResponse.error.error.error.code,
+				description: getInviteDetailsResponse.error.error.error.message,
 			});
 		}
 	}, [
 		getInviteDetailsResponse.data,
+		getInviteDetailsResponse.error,
 		getInviteDetailsResponse.status,
 		notifications,
 	]);
 
 	const isPreferenceVisible = token === null;
 
-	const commonHandler = async (values: FormValues): Promise<void> => {
+	const registerHandler = async (values: FormValues): Promise<void> => {
 		try {
 			const { organizationName, password, firstName, email } = values;
-			const response = await signUpApi({
+			await signUpApi({
 				email,
 				name: firstName,
 				orgDisplayName: organizationName,
@@ -116,28 +121,42 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				token: params.get('token') || undefined,
 			});
 
-			if (response.statusCode === 200) {
-				const loginResponse = await loginApi({
-					email,
-					password,
-				});
+			const loginResponse = await loginApi({
+				email,
+				password,
+			});
 
-				if (loginResponse.statusCode === 200) {
-					const { payload } = loginResponse;
-					await afterLogin(payload.userId, payload.accessJwt, payload.refreshJwt);
-				} else {
-					notifications.error({
-						message: loginResponse.error || t('unexpected_error'),
-					});
-				}
-			} else {
-				notifications.error({
-					message: response.error || t('unexpected_error'),
-				});
-			}
+			const { data } = loginResponse;
+			await afterLogin(data.user.id, data.accessJwt, data.refreshJwt);
 		} catch (error) {
 			notifications.error({
-				message: t('unexpected_error'),
+				description: (error as APIError).error.error.code,
+				message: (error as APIError).error.error.message,
+			});
+		}
+	};
+
+	const acceptInviteHandler = async (values: FormValues): Promise<void> => {
+		try {
+			const { password, email } = values;
+			await acceptInvite({
+				password,
+				token: params.get('token') || '',
+			});
+
+			const loginResponse = await loginApi({
+				email,
+				password,
+			});
+			await afterLogin(
+				loginResponse.data.user.id,
+				loginResponse.data.accessJwt,
+				loginResponse.data.refreshJwt,
+			);
+		} catch (error) {
+			notifications.error({
+				description: (error as APIError).error.error.code,
+				message: (error as APIError).error.error.message,
 			});
 		}
 	};
@@ -206,14 +225,14 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				}
 
 				if (isPreferenceVisible) {
-					await commonHandler(values);
+					await registerHandler(values);
 				} else {
 					logEvent('Account Created Successfully', {
 						email: values.email,
 						name: values.firstName,
 					});
 
-					await commonHandler(values);
+					await acceptInviteHandler(values);
 				}
 
 				setLoading(false);

@@ -1,12 +1,18 @@
-import { User } from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
 export interface PendingInvite {
-	createdAt: number;
-	email: User['email'];
-	name: User['displayName'];
+	id: string;
+	createdAt: string;
+	email: string;
+	name: string;
+	orgId: string;
 	role: ROLES;
 	token: string;
+	inviteLink: string;
+	updatedAt: string;
 }
 
-export type PayloadProps = PendingInvite[];
+export type PayloadProps = {
+	data: PendingInvite[];
+	status: string;
+};

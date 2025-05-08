@@ -29,7 +29,8 @@ export interface InviteUserModalProps {
 }
 
 interface DataProps {
-	key: number;
+	id: string;
+	key: string;
 	name: string;
 	email: string;
 	accessLevel: ROLES;
@@ -57,8 +58,9 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 	});
 
 	const getParsedInviteData = useCallback(
-		(payload: PayloadProps = []) =>
-			payload?.map((data) => ({
+		(payload: PayloadProps) =>
+			payload?.data?.map((data) => ({
+				id: data?.id,
 				key: data.createdAt,
 				name: data?.name,
 				email: data.email,

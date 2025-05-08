@@ -104,7 +104,8 @@ const interceptorRejected = async (
 		}
 		return await Promise.reject(value);
 	} catch (error) {
-		Logout();
+		// console.log(error);
+		// Logout();
 		return await Promise.reject(error);
 	}
 };

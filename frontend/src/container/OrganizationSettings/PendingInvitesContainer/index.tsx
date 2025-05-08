@@ -66,8 +66,9 @@ function PendingInvitesContainer(): JSX.Element {
 	const { hash } = useLocation();
 
 	const getParsedInviteData = useCallback(
-		(payload: PayloadProps = []) =>
-			payload?.map((data) => ({
+		(payload: PayloadProps) =>
+			payload?.data?.map((data) => ({
+				id: data.id,
 				key: data.createdAt,
 				name: data.name,
 				email: data.email,
@@ -99,14 +100,14 @@ function PendingInvitesContainer(): JSX.Element {
 		getPendingInvitesResponse.status,
 	]);
 
-	const onRevokeHandler = async (email: string): Promise<void> => {
+	const onRevokeHandler = async (id: string): Promise<void> => {
 		try {
 			const response = await deleteInvite({
-				email,
+				id,
 			});
 			if (response.statusCode === 200) {
 				// remove from the client data
-				const index = dataSource.findIndex((e) => e.email === email);
+				const index = dataSource.findIndex((e) => e.id === id);
 
 				if (index !== -1) {
 					setDataSource([
@@ -170,9 +171,7 @@ function PendingInvitesContainer(): JSX.Element {
 			key: 'Action',
 			render: (_, record): JSX.Element => (
 				<Space direction="horizontal">
-					<Typography.Link
-						onClick={(): Promise<void> => onRevokeHandler(record.email)}
-					>
+					<Typography.Link onClick={(): Promise<void> => onRevokeHandler(record.id)}>
 						Revoke
 					</Typography.Link>
 					<Typography.Link
@@ -240,7 +239,8 @@ export interface InviteTeamMembersProps {
 }
 
 interface DataProps {
-	key: number;
+	id: string;
+	key: string;
 	name: string;
 	email: string;
 	accessLevel: ROLES;
