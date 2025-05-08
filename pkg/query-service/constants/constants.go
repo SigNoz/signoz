@@ -46,6 +46,7 @@ const LogsTTL = "logs"
 
 const SpanSearchScopeRoot = "isroot"
 const SpanSearchScopeEntryPoint = "isentrypoint"
+const OrderBySpanCount = "span_count"
 
 var TELEMETRY_HEART_BEAT_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_HEART_BEAT_DURATION_MINUTES", 720)
 

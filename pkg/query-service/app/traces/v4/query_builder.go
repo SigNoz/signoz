@@ -292,13 +292,14 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	if mq.AggregateOperator == v3.AggregateOperatorNoOp {
 		var query string
 		if panelType == v3.PanelTypeTrace {
+			if len(mq.OrderBy) > 1 {
+				return "", fmt.Errorf("multiple orderBy criteria are not supported for trace queries")
+			}
 			orderBySpanCount := false
+
 			// Check if orderBy contains a specific reference to span_count
-			for _, order := range mq.OrderBy {
-				if order.ColumnName == "span_count" {
-					orderBySpanCount = true
-					break
-				}
+			if len(mq.OrderBy) == 1 && mq.OrderBy[0].ColumnName == constants.OrderBySpanCount {
+				orderBySpanCount = true
 			}
 			if !orderBySpanCount {
 				withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME, timeFilter)
