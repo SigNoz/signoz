@@ -117,5 +117,11 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		precheckResp.IsUser = true
 	}
 
+	// delete the invite
+	if err := h.module.DeleteInvite(ctx, invite.OrgID, invite.ID); err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	render.Success(w, http.StatusOK, precheckResp)
 }
