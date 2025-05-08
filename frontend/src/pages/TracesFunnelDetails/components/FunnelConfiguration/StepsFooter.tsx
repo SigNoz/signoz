@@ -52,7 +52,9 @@ function StepsFooter({ stepsCount }: StepsFooterProps): JSX.Element {
 			<div className="steps-footer__left">
 				<Cone className="funnel-icon" size={14} />
 				<span>{stepsCount} steps</span>
+				<span>{stepsCount} steps</span>
 				<span>·</span>
+				<ValidTracesCount />
 				<ValidTracesCount />
 			</div>
 			<div className="steps-footer__right">

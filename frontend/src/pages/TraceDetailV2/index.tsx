@@ -1,6 +1,7 @@
 import './TraceDetailV2.styles.scss';
 
 import { Button, Tabs } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { Compass, Cone, TowerControl, Undo } from 'lucide-react';
@@ -34,6 +35,7 @@ function NewTraceDetail(props: INewTraceDetailProps): JSX.Element {
 						history.push(ROUTES.TRACES_EXPLORER);
 					}
 					if (activeKey === 'funnels') {
+						logEvent('Trace Funnels: visited from trace details page', {});
 						history.push(ROUTES.TRACES_FUNNELS);
 					}
 				}}
@@ -78,6 +80,15 @@ export default function TraceDetailsPage(): JSX.Element {
 					},
 			  ]
 			: []),
+		{
+			label: (
+				<div className="tab-item">
+					<Cone className="funnel-icon" size={16} /> Funnels
+				</div>
+			),
+			key: 'funnels',
+			children: <div />,
+		},
 		{
 			label: (
 				<div className="tab-item">
