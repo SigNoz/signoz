@@ -37,7 +37,7 @@ function StepsTransitionMetrics({
 			title={currentTransition.label}
 			subtitle={{
 				label: 'Conversion rate',
-				value: `${conversionRate.toFixed(2)}%`,
+				value: `${(conversionRate || 0).toFixed(2)}%`,
 			}}
 			isLoading={isLoading}
 			data={metricsData}
