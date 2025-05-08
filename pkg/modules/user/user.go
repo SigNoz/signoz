@@ -58,6 +58,7 @@ type Handler interface {
 	CreateBulkInvite(http.ResponseWriter, *http.Request)
 
 	GetUser(http.ResponseWriter, *http.Request)
+	GetCurrentUserFromJwt(http.ResponseWriter, *http.Request)
 	ListUsers(http.ResponseWriter, *http.Request)
 	UpdateUser(http.ResponseWriter, *http.Request)
 	DeleteUser(http.ResponseWriter, *http.Request)

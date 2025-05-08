@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"text/template"
 	"time"
 
@@ -71,6 +70,12 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 
 	user, err = h.module.CreateUserWithPassword(ctx, user, password)
 	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	// delete the invite
+	if err := h.module.DeleteInvite(ctx, invite.OrgID, invite.ID); err != nil {
 		render.Error(w, err)
 		return
 	}
@@ -183,9 +188,9 @@ func (h *handler) inviteUsers(ctx context.Context, claims authtypes.Claims, bulk
 		}, claims.Email, true, false)
 
 		// send email if SMTP is enabled
-		if os.Getenv("SMTP_ENABLED") == "true" && bulkInvites.Invites[i].FrontendBaseUrl != "" {
-			h.inviteEmail(&bulkInvites.Invites[i], claims.Email, claims.Name, invites[i].Token)
-		}
+		// if os.Getenv("SMTP_ENABLED") == "true" && bulkInvites.Invites[i].FrontendBaseUrl != "" {
+		h.inviteEmail(&bulkInvites.Invites[i], claims.Email, claims.Name, invites[i].Token)
+		// }
 	}
 
 	return invites, nil
@@ -519,10 +524,25 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := types.LoginResponse{
-		GettableUserJwt: jwt,
-		User:            user,
+	render.Success(w, http.StatusOK, jwt)
+}
+
+func (h *handler) GetCurrentUserFromJwt(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
 	}
 
-	render.Success(w, http.StatusOK, resp)
+	user, err := h.module.GetUserByID(ctx, claims.OrgID, claims.UserID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, user)
+
 }

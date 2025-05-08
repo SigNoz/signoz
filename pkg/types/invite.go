@@ -33,9 +33,6 @@ func NewInvite(orgID, role, name, email string) (*Invite, error) {
 	if email == "" {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
-	if name == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is required")
-	}
 	_, err := NewRole(role)
 	if err != nil {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("invalid role for user: %s", email))

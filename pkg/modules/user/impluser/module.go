@@ -218,12 +218,12 @@ func (m *Module) GetJWTForUser(ctx context.Context, user *types.User) (types.Get
 		return types.GettableUserJwt{}, err
 	}
 
-	accessJwt, accessClaims, err := m.JWT.AccessToken(user.OrgID, user.ID.String(), user.Email, role)
+	accessJwt, accessClaims, err := m.JWT.AccessToken(user.OrgID, user.ID.String(), user.DisplayName, user.Email, role)
 	if err != nil {
 		return types.GettableUserJwt{}, err
 	}
 
-	refreshJwt, refreshClaims, err := m.JWT.RefreshToken(user.OrgID, user.ID.String(), user.Email, role)
+	refreshJwt, refreshClaims, err := m.JWT.RefreshToken(user.OrgID, user.ID.String(), user.DisplayName, user.Email, role)
 	if err != nil {
 		return types.GettableUserJwt{}, err
 	}
