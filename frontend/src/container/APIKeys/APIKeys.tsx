@@ -25,6 +25,7 @@ import deleteAPIKeyApi from 'api/APIKeys/deleteAPIKey';
 import updateAPIKeyApi from 'api/APIKeys/updateAPIKey';
 import axios, { AxiosError } from 'axios';
 import cx from 'classnames';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs from 'dayjs';
 import { useGetAllAPIKeys } from 'hooks/APIKeys/useGetAllAPIKeys';
@@ -495,7 +496,8 @@ function APIKeys(): JSX.Element {
 										expiresIn <= 3 ? 'danger' : 'warning',
 									)}
 								>
-									<span className="dot" /> Expires in {expiresIn} Days
+									<span className="dot" /> Expires in{' '}
+									{getYAxisFormattedValue(String(expiresIn * 24 * 60 * 60), 's')}
 								</div>
 							)}
 
