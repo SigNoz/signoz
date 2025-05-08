@@ -527,7 +527,7 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, jwt)
 }
 
-func (h *handler) GetCurrentUserFromJwt(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetCurrentUserFromJWT(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 

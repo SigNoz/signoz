@@ -597,7 +597,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.Signoz.Handlers.User.ListUsers)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/me", am.AdminAccess(aH.Signoz.Handlers.User.GetCurrentUserFromJwt)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/me", am.AdminAccess(aH.Signoz.Handlers.User.GetCurrentUserFromJWT)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.GetUser)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.UpdateUser)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteUser)).Methods(http.MethodDelete)
