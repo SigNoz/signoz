@@ -1,0 +1,58 @@
+
+    .quick-filters-settings {
+        position: absolute;
+        z-index: 999;
+        width: 342px;
+        height: 100%;
+        background: var(--bg-slate-500);
+
+        .qf-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10.5px;
+            border-bottom: 1px solid var(--bg-slate-400);
+
+            .qf-title {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .qf-header-icon {
+                width: 16px;
+                height: 16px;
+                cursor: pointer;
+            }
+        }
+    }
+
+
+// add light theme
+// .light {
+//     .quick-filters-settings {
+//         background: var(--bg-slate-50);
+//     }
+// }
+
+
+//ADDED FILTERS AND OTHER FILTERS COMMON STYLES
+
+.qf-filters {
+    display: flex;
+    flex-direction: column;
+    .qf-filters-header {
+        color: var(--bg-slate-50);
+        border-top: 1px solid var(--bg-slate-400);
+        font-family: Inter;
+        font-size: 11px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 18px;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        margin-top: 12px;
+        padding: 8px 12px;
+    }
+}
+
