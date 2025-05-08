@@ -27,15 +27,16 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := model.CreatePATRequestBody{}
+	req := eeTypes.PostableAPIKey{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	pat := eeTypes.NewGettablePAT(
+	pat := eeTypes.NewGettableAPIKey(
 		req.Name,
 		req.Role,
+		claims.UserID,
 		claims.UserID,
 		req.ExpiresInDays,
 	)
@@ -55,7 +56,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	ah.Respond(w, &pat)
 }
 
-func validatePATRequest(req eeTypes.GettablePAT) error {
+func validatePATRequest(req eeTypes.GettableAPIKey) error {
 	_, err := types.NewRole(req.Role)
 	if err != nil {
 		return err
@@ -79,7 +80,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := eeTypes.GettablePAT{}
+	req := eeTypes.GettableAPIKey{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
@@ -121,7 +122,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.UpdatedByUserID = claims.UserID
+	req.UpdatedBy = claims.UserID
 	req.UpdatedAt = time.Now()
 	zap.L().Info("Got Update PAT request", zap.Any("pat", req))
 	var apierr basemodel.BaseApiError

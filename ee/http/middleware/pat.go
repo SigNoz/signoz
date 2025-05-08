@@ -25,7 +25,7 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var values []string
 		var patToken string
-		var pat eeTypes.StorablePersonalAccessToken
+		var pat eeTypes.StorableAPIKey
 
 		for _, header := range p.headers {
 			values = append(values, r.Header.Get(header))

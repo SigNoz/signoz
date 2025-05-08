@@ -43,7 +43,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), claims.OrgID, cloudProvider)
+	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), claims.OrgID, claims.UserID, cloudProvider)
 	if apiErr != nil {
 		RespondError(w, basemodel.WrapApiError(
 			apiErr, "couldn't provision PAT for cloud integration:",
@@ -105,7 +105,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	ah.Respond(w, result)
 }
 
-func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId string, cloudProvider string) (
+func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId string, createdByUserID string, cloudProvider string) (
 	string, *basemodel.ApiError,
 ) {
 	integrationPATName := fmt.Sprintf("%s integration", cloudProvider)
@@ -115,7 +115,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		return "", apiErr
 	}
 
-	allPats, err := ah.AppDao().ListPATs(ctx, orgId)
+	allPats, err := ah.Signoz.Modules.User.ListAPIKeys(ctx, orgId)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't list PATs: %w", err,
@@ -132,9 +132,10 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		zap.String("cloudProvider", cloudProvider),
 	)
 
-	newPAT := eeTypes.NewGettablePAT(
+	newPAT := eeTypes.NewGettableAPIKey(
 		integrationPATName,
 		types.RoleViewer.String(),
+		createdByUserID,
 		integrationUser.ID.String(),
 		0,
 	)

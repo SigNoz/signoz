@@ -232,3 +232,64 @@ func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types
 	}
 	return gettableDomain, nil
 }
+
+func (m *Module) ListAPIKeys(ctx context.Context, orgID string) ([]*types.GettableAPIKey, error) {
+	apiKeys, err := m.store.ListAPIKeys(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	apiKeysWithUsers := []types.GettableAPIKey{}
+	for i := range apiKeys {
+		apiKeyWithUser := types.GettableAPIKey{
+			StorableAPIKey: *apiKeys[i],
+		}
+
+		createdByUser, _ := m.GetUserByID(ctx, orgID, apiKeys[i].UserID)
+		if createdByUser == nil {
+			apiKeyWithUser.CreatedByUser = types.APIKeyUser{
+				NotFound: true,
+			}
+		} else {
+			apiKeyWithUser.CreatedByUser = types.APIKeyUser{
+				User: types.User{
+					Identifiable: types.Identifiable{
+						ID: createdByUser.ID,
+					},
+					DisplayName: createdByUser.DisplayName,
+					Email:       createdByUser.Email,
+					TimeAuditable: types.TimeAuditable{
+						CreatedAt: createdByUser.CreatedAt,
+						UpdatedAt: createdByUser.UpdatedAt,
+					},
+				},
+				NotFound: false,
+			}
+		}
+
+		updatedByUser, _ := m.GetUserByID(ctx, orgID, apiKeys[i].UpdatedBy)
+		if updatedByUser == nil {
+			apiKeyWithUser.UpdatedByUser = types.APIKeyUser{
+				NotFound: true,
+			}
+		} else {
+			apiKeyWithUser.UpdatedByUser = types.APIKeyUser{
+				User: types.User{
+					Identifiable: types.Identifiable{
+						ID: updatedByUser.ID,
+					},
+					DisplayName: updatedByUser.DisplayName,
+					Email:       updatedByUser.Email,
+					TimeAuditable: types.TimeAuditable{
+						CreatedAt: updatedByUser.CreatedAt,
+						UpdatedAt: updatedByUser.UpdatedAt,
+					},
+				},
+				NotFound: false,
+			}
+		}
+
+		apiKeysWithUsers = append(apiKeysWithUsers, apiKeyWithUser)
+	}
+	return apiKeysWithUsers, nil
+}
