@@ -5,13 +5,12 @@ import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { FunnelStepData, LatencyOptions } from 'types/api/traceFunnels';
 
-function InterStepConfig({
-	index,
-	step,
-}: {
+interface InterStepConfigProps {
 	index: number;
 	step: FunnelStepData;
-}): JSX.Element {
+}
+
+function InterStepConfig({ index, step }: InterStepConfigProps): JSX.Element {
 	const { handleStepChange: onStepChange } = useFunnelContext();
 	const options = Object.entries(LatencyOptions).map(([key, value]) => ({
 		label: key,

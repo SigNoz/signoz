@@ -5,7 +5,11 @@ import {
 	CustomTimeType,
 	Time as TimeV2,
 } from 'container/TopNav/DateTimeSelectionV2/config';
-import { useValidateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
+import {
+	useUpdateFunnelSteps,
+	useValidateFunnelSteps,
+} from 'hooks/TracesFunnels/useFunnels';
+import { useNotifications } from 'hooks/useNotifications';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
 import {
@@ -105,14 +109,34 @@ export function FunnelProvider({
 		[validationResponse],
 	);
 
-	// Step modifications
-	const handleStepUpdate = useCallback(
+	const { notifications } = useNotifications();
+	const updateStepsMutation = useUpdateFunnelSteps(funnelId, notifications);
+
+	const handleStepChange = useCallback(
 		(index: number, newStep: Partial<FunnelStepData>) => {
-			setSteps((prev) =>
-				prev.map((step, i) => (i === index ? { ...step, ...newStep } : step)),
-			);
+			setSteps((prev) => {
+				const updated = prev.map((step, i) =>
+					i === index ? { ...step, ...newStep } : step,
+				);
+				const allHaveNames = updated.every(
+					(step) => step.service_name && step.span_name,
+				);
+				if (allHaveNames) {
+					updateStepsMutation.mutate({
+						funnel_id: funnelId,
+						steps: updated,
+						timestamp: Date.now(),
+					});
+					queryClient.refetchQueries([
+						REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS,
+						funnelId,
+						selectedTime,
+					]);
+				}
+				return updated;
+			});
 		},
-		[],
+		[funnelId, queryClient, selectedTime, updateStepsMutation],
 	);
 
 	const addNewStep = useCallback(() => {
@@ -148,12 +172,12 @@ export function FunnelProvider({
 
 	const handleReplaceStep = useCallback(
 		(index: number, serviceName: string, spanName: string) => {
-			handleStepUpdate(index, {
+			handleStepChange(index, {
 				service_name: serviceName,
 				span_name: spanName,
 			});
 		},
-		[handleStepUpdate],
+		[handleStepChange],
 	);
 	if (!funnelId) {
 		throw new Error('Funnel ID is required');
@@ -193,7 +217,7 @@ export function FunnelProvider({
 			steps,
 			setSteps,
 			initialSteps,
-			handleStepChange: handleStepUpdate,
+			handleStepChange,
 			handleAddStep: addNewStep,
 			handleStepRemoval,
 			handleRunFunnel,
@@ -214,7 +238,7 @@ export function FunnelProvider({
 			selectedTime,
 			steps,
 			initialSteps,
-			handleStepUpdate,
+			handleStepChange,
 			addNewStep,
 			handleStepRemoval,
 			handleRunFunnel,
