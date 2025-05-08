@@ -25,9 +25,9 @@ import deleteAPIKeyApi from 'api/APIKeys/deleteAPIKey';
 import updateAPIKeyApi from 'api/APIKeys/updateAPIKey';
 import axios, { AxiosError } from 'axios';
 import cx from 'classnames';
-import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import { useGetAllAPIKeys } from 'hooks/APIKeys/useGetAllAPIKeys';
 import { useNotifications } from 'hooks/useNotifications';
 import {
@@ -52,6 +52,8 @@ import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { APIKeyProps } from 'types/api/pat/types';
 import { USER_ROLES } from 'types/roles';
+
+dayjs.extend(relativeTime);
 
 export const showErrorNotification = (
 	notifications: NotificationInstance,
@@ -496,8 +498,7 @@ function APIKeys(): JSX.Element {
 										expiresIn <= 3 ? 'danger' : 'warning',
 									)}
 								>
-									<span className="dot" /> Expires in{' '}
-									{getYAxisFormattedValue(String(expiresIn * 24 * 60 * 60), 's')}
+									<span className="dot" /> Expires {dayjs().to(expiresOn)}
 								</div>
 							)}
 
