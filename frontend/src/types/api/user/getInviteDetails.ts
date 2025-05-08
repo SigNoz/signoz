@@ -11,7 +11,7 @@ export interface Props {
 export interface PayloadProps {
 	createdAt: number;
 	email: User['email'];
-	name: User['name'];
+	name: User['displayName'];
 	role: ROLES;
 	token: string;
 	organization: Organization['displayName'];

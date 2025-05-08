@@ -6,5 +6,5 @@ export type PayloadProps = Payload;
 
 export interface Props {
 	userId: User['userId'];
-	name: User['name'];
+	name: User['displayName'];
 }

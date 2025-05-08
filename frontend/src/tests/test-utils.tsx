@@ -145,20 +145,21 @@ export function getAppContextMock(
 			refreshJwt: 'some-refresh-token',
 			id: 'some-user-id',
 			email: 'does-not-matter@signoz.io',
-			name: 'John Doe',
-			profilePictureURL: '',
-			createdAt: 1732544623,
-			organization: 'Nightswatch',
+			displayName: 'John Doe',
+			createdAt: '1732544623',
+			updatedAt: '1732544623',
 			orgId: 'does-not-matter-id',
 			role: role as ROLES,
 		},
-		org: [
-			{
-				createdAt: 0,
-				id: 'does-not-matter-id',
-				displayName: 'Pentagon',
-			},
-		],
+		organization: {
+			createdAt: '',
+			id: 'does-not-matter-id',
+			displayName: 'Pentagon',
+			alias: '',
+			name: '',
+			updatedAt: '',
+		},
+
 		isFetchingUser: false,
 		userFetchError: null,
 		licenses: {

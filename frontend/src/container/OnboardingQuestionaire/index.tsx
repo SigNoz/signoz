@@ -25,7 +25,7 @@ import { OnboardingHeader } from './OnboardingHeader/OnboardingHeader';
 import OptimiseSignozNeeds, {
 	OptimiseSignozDetails,
 } from './OptimiseSignozNeeds/OptimiseSignozNeeds';
-import OrgQuestions, { OrgData, OrgDetails } from './OrgQuestions/OrgQuestions';
+import OrgQuestions, { OrgDetails } from './OrgQuestions/OrgQuestions';
 
 export const showErrorNotification = (
 	notifications: NotificationInstance,
@@ -63,7 +63,7 @@ const ONBOARDING_COMPLETE_EVENT_NAME = 'Org Onboarding: Complete';
 
 function OnboardingQuestionaire(): JSX.Element {
 	const { notifications } = useNotifications();
-	const { org, updateOrgPreferences, featureFlags } = useAppContext();
+	const { organization, updateOrgPreferences, featureFlags } = useAppContext();
 	const isOnboardingV3Enabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
 	)?.active;
@@ -81,28 +81,14 @@ function OnboardingQuestionaire(): JSX.Element {
 		InviteTeamMembersProps[] | null
 	>(null);
 
-	const [currentOrgData, setCurrentOrgData] = useState<OrgData | null>(null);
-
 	const [
 		updatingOrgOnboardingStatus,
 		setUpdatingOrgOnboardingStatus,
 	] = useState<boolean>(false);
 
 	useEffect(() => {
-		if (org) {
-			setCurrentOrgData(org[0]);
-
-			setOrgDetails({
-				...orgDetails,
-				organisationName: org[0].displayName,
-			});
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [org]);
-
-	useEffect(() => {
 		logEvent('Org Onboarding: Started', {
-			org_id: org?.[0]?.id,
+			org_id: organization?.id,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -210,7 +196,7 @@ function OnboardingQuestionaire(): JSX.Element {
 			<div className="onboarding-questionaire-content">
 				{currentStep === 1 && (
 					<OrgQuestions
-						currentOrgData={currentOrgData}
+						currentOrgData={organization}
 						orgDetails={orgDetails}
 						onNext={(orgDetails: OrgDetails): void => {
 							logEvent(NEXT_BUTTON_EVENT_NAME, {

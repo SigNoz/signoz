@@ -1,13 +1,12 @@
 import { PayloadProps as ConfigPayload } from 'types/api/dynamicConfigs/getDynamicConfigs';
-import { PayloadProps as UserPayload } from 'types/api/user/getUser';
+import { UserResponse } from 'types/api/user/getUser';
 
 export interface User {
 	accessJwt: string;
 	refreshJwt: string;
 	userId: string;
-	email: UserPayload['email'];
-	name: UserPayload['name'];
-	profilePictureURL: UserPayload['profilePictureURL'];
+	email: UserResponse['email'];
+	displayName: UserResponse['displayName'];
 }
 
 export interface OrgPreference {

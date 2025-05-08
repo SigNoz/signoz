@@ -2,7 +2,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import loginApi from 'api/user/login';
+import loginApi from 'api/login/login';
 import afterLogin from 'AppRoutes/utils';
 import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { ENVIRONMENT } from 'constants/env';
@@ -74,36 +74,27 @@ const interceptorRejected = async (
 				const response = await loginApi({
 					refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
 				});
+				afterLogin(
+					response.data.user.id,
+					response.data.accessJwt,
+					response.data.refreshJwt,
+					true,
+				);
 
-				if (response.statusCode === 200) {
-					afterLogin(
-						response.payload.userId,
-						response.payload.accessJwt,
-						response.payload.refreshJwt,
-						true,
-					);
-
-					const reResponse = await axios(
-						`${value.config.baseURL}${value.config.url?.substring(1)}`,
-						{
-							method: value.config.method,
-							headers: {
-								...value.config.headers,
-								Authorization: `Bearer ${response.payload.accessJwt}`,
-							},
-							data: {
-								...JSON.parse(value.config.data || '{}'),
-							},
+				const reResponse = await axios(
+					`${value.config.baseURL}${value.config.url?.substring(1)}`,
+					{
+						method: value.config.method,
+						headers: {
+							...value.config.headers,
+							Authorization: `Bearer ${response.data.accessJwt}`,
 						},
-					);
-
-					if (reResponse.status === 200) {
-						return await Promise.resolve(reResponse);
-					}
-					Logout();
-					return await Promise.reject(reResponse);
-				}
-				Logout();
+						data: {
+							...JSON.parse(value.config.data || '{}'),
+						},
+					},
+				);
+				return await Promise.resolve(reResponse);
 			}
 
 			// when refresh token is expired
@@ -113,6 +104,7 @@ const interceptorRejected = async (
 		}
 		return await Promise.reject(value);
 	} catch (error) {
+		Logout();
 		return await Promise.reject(error);
 	}
 };

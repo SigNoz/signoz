@@ -2,13 +2,12 @@ import { Button, Modal, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteUser from 'api/user/deleteUser';
 import editUserApi from 'api/user/editUser';
-import getOrgUser from 'api/user/getOrgUser';
+import listUsers from 'api/user/listUsers';
 import updateRole from 'api/user/updateRole';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
-import { useAppContext } from 'providers/App/App';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -229,29 +228,25 @@ function UserFunction({
 }
 
 function Members(): JSX.Element {
-	const { org } = useAppContext();
 	const { status, data, isLoading } = useQuery({
-		queryFn: () =>
-			getOrgUser({
-				orgId: (org || [])[0].id,
-			}),
-		queryKey: ['getOrgUser', org?.[0].id],
+		queryFn: () => listUsers(),
+		queryKey: ['listUsers'],
 	});
 
 	const [dataSource, setDataSource] = useState<DataType[]>([]);
 
 	useEffect(() => {
-		if (status === 'success' && data?.payload && Array.isArray(data.payload)) {
-			const updatedData: DataType[] = data?.payload?.map((e) => ({
+		if (status === 'success' && data?.data && Array.isArray(data.data)) {
+			const updatedData: DataType[] = data?.data?.map((e) => ({
 				accessLevel: e.role,
 				email: e.email,
 				id: String(e.id),
 				joinedOn: String(e.createdAt),
-				name: e.name,
+				name: e.displayName,
 			}));
 			setDataSource(updatedData);
 		}
-	}, [data?.payload, status]);
+	}, [data?.data, status]);
 
 	const columns: ColumnsType<DataType> = [
 		{

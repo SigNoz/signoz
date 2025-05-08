@@ -1,10 +1,4 @@
-import { User } from 'types/reducer/app';
 import { ROLES } from 'types/roles';
-
-export interface Props {
-	userId: User['userId'];
-	token?: string;
-}
 
 export interface UserResponse {
 	createdAt: string;
@@ -17,6 +11,6 @@ export interface UserResponse {
 }
 
 export interface PayloadProps {
-	data: UserResponse;
+	data: UserResponse[];
 	status: string;
 }

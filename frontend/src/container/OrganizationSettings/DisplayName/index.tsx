@@ -1,5 +1,5 @@
 import { Button, Form, Input } from 'antd';
-import editOrg from 'api/user/editOrg';
+import editOrg from 'api/organizations/editOrg';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
@@ -7,13 +7,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
-function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
+function DisplayName({ id: orgId }: DisplayNameProps): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
 	const orgName = Form.useWatch('displayName', form);
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
-	const { org, updateOrg } = useAppContext();
-	const { displayName } = (org || [])[index];
+	const { organization, updateOrg } = useAppContext();
+	const displayName = organization?.displayName || '';
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { notifications } = useNotifications();
 
@@ -52,7 +52,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 		}
 	};
 
-	if (!org) {
+	if (!organization) {
 		return <div />;
 	}
 
@@ -88,7 +88,6 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 }
 
 interface DisplayNameProps {
-	index: number;
 	id: IUser['id'];
 }
 

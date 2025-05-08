@@ -52,7 +52,7 @@ function App(): JSX.Element {
 		featureFlagsFetchError,
 		isLoggedIn: isLoggedInState,
 		featureFlags,
-		org,
+		organization,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 
@@ -65,18 +65,17 @@ function App(): JSX.Element {
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
 			// wait for the required data to be loaded before doing init for anything!
-			if (!isFetchingActiveLicenseV3 && activeLicenseV3 && org) {
-				const orgName =
-					org && Array.isArray(org) && org.length > 0 ? org[0].displayName : '';
+			if (!isFetchingActiveLicenseV3 && activeLicenseV3 && organization) {
+				const orgName = organization?.displayName;
 
-				const { name, email, role } = user;
+				const { displayName, email, role } = user;
 
 				const domain = extractDomain(email);
 				const hostNameParts = hostname.split('.');
 
 				const identifyPayload = {
 					email,
-					name,
+					name: displayName,
 					company_name: orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -105,7 +104,7 @@ function App(): JSX.Element {
 
 				Userpilot.identify(email, {
 					email,
-					name,
+					name: displayName,
 					orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -117,7 +116,7 @@ function App(): JSX.Element {
 
 				posthog?.identify(email, {
 					email,
-					name,
+					name: displayName,
 					orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -143,7 +142,7 @@ function App(): JSX.Element {
 				) {
 					window.cioanalytics.reset();
 					window.cioanalytics.identify(email, {
-						name: user.name,
+						name: user.displayName,
 						email,
 						role: user.role,
 					});
@@ -154,7 +153,7 @@ function App(): JSX.Element {
 			hostname,
 			isFetchingActiveLicenseV3,
 			activeLicenseV3,
-			org,
+			organization,
 			trialInfo?.trialConvertedToSubscription,
 		],
 	);
@@ -257,7 +256,7 @@ function App(): JSX.Element {
 				window.Intercom('boot', {
 					app_id: process.env.INTERCOM_APP_ID,
 					email: user?.email || '',
-					name: user?.name || '',
+					name: user?.displayName || '',
 				});
 			}
 		}
@@ -331,6 +330,15 @@ function App(): JSX.Element {
 
 	// if the user is in logged in state
 	if (isLoggedInState) {
+		console.log(
+			isFetchingLicenses,
+			isFetchingUser,
+			isFetchingFeatureFlags,
+			licenses,
+			user.email,
+			featureFlags,
+			userFetchError,
+		);
 		// if the setup calls are loading then return a spinner
 		if (isFetchingLicenses || isFetchingUser || isFetchingFeatureFlags) {
 			return <Spinner tip="Loading..." />;

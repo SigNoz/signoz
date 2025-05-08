@@ -40,6 +40,10 @@ export interface ErrorResponseV2 {
 	error: ErrorV2;
 }
 
+export interface ErrorV2Resp {
+	error: ErrorV2;
+}
+
 export interface SuccessResponseV2<T> {
 	httpStatusCode: StatusCodes;
 	data: T;

@@ -3,7 +3,17 @@ export interface PayloadProps {
 	accessJwtExpiry: number;
 	refreshJwt: string;
 	refreshJwtExpiry: number;
-	userId: string;
+	user: User;
+}
+
+export interface User {
+	id: string;
+	createdAt: string;
+	updatedAt: string;
+	displayName: string;
+	email: string;
+	role: string;
+	orgId: string;
 }
 
 export interface Props {

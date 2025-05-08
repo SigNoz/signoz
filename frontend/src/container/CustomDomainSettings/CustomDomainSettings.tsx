@@ -31,7 +31,7 @@ interface CustomDomainSettingsProps {
 }
 
 export default function CustomDomainSettings(): JSX.Element {
-	const { org } = useAppContext();
+	const { organization } = useAppContext();
 	const { notifications } = useNotifications();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isPollingEnabled, setIsPollingEnabled] = useState(false);
@@ -160,7 +160,7 @@ export default function CustomDomainSettings(): JSX.Element {
 				{!isLoadingDeploymentsData && (
 					<Card className="custom-domain-settings-card">
 						<div className="custom-domain-settings-content-header">
-							Team {org?.[0]?.displayName} Information
+							Team {organization?.displayName} Information
 						</div>
 
 						<div className="custom-domain-settings-content-body">

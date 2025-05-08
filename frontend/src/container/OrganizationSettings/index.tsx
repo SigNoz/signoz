@@ -8,23 +8,21 @@ import Members from './Members';
 import PendingInvitesContainer from './PendingInvitesContainer';
 
 function OrganizationSettings(): JSX.Element {
-	const { org, featureFlags } = useAppContext();
+	const { organization, featureFlags } = useAppContext();
 
 	const isNotSSO =
 		!featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
 
 	const isAuthDomain = !isNotSSO;
 
-	if (!org) {
+	if (!organization) {
 		return <div />;
 	}
 
 	return (
 		<>
 			<Space direction="vertical">
-				{org.map((e, index) => (
-					<DisplayName key={e.id} id={e.id} index={index} />
-				))}
+				<DisplayName id={organization?.id || ''} />
 			</Space>
 			<Divider />
 			<PendingInvitesContainer />

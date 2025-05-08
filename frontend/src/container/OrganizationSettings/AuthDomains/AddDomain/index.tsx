@@ -15,7 +15,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isAddDomains, setIsDomain] = useState(false);
 	const [form] = useForm<FormProps>();
-	const { featureFlags, org } = useAppContext();
+	const { featureFlags, organization } = useAppContext();
 	const isSsoFlagEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
 
@@ -25,7 +25,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 		try {
 			const response = await createDomainApi({
 				name: form.getFieldValue('domain'),
-				orgId: (org || [])[0].id,
+				orgId: organization?.id || '',
 			});
 
 			if (response.statusCode === 200) {

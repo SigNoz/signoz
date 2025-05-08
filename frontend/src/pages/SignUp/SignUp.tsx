@@ -1,7 +1,7 @@
 import { Button, Form, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import loginApi from 'api/login/login';
 import getInviteDetails from 'api/user/getInviteDetails';
-import loginApi from 'api/user/login';
 import signUpApi from 'api/user/signup';
 import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';

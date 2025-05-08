@@ -12,15 +12,17 @@ import { useTranslation } from 'react-i18next';
 import { NameInput } from '../styles';
 
 function UserInfo(): JSX.Element {
-	const { user, org, updateUser } = useAppContext();
+	const { user, organization, updateUser } = useAppContext();
 	const { t } = useTranslation();
 
-	const [changedName, setChangedName] = useState<string>(user?.name || '');
+	const [changedName, setChangedName] = useState<string>(
+		user?.displayName || '',
+	);
 	const [loading, setLoading] = useState<boolean>(false);
 
 	const { notifications } = useNotifications();
 
-	if (!user || !org) {
+	if (!user || !organization) {
 		return <div />;
 	}
 
@@ -40,7 +42,7 @@ function UserInfo(): JSX.Element {
 				});
 				updateUser({
 					...user,
-					name: changedName,
+					displayName: changedName,
 				});
 			} else {
 				notifications.error({

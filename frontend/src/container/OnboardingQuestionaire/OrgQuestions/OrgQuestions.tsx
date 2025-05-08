@@ -4,12 +4,13 @@ import '../OnboardingQuestionaire.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import editOrg from 'api/user/editOrg';
+import editOrg from 'api/organizations/editOrg';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { OrganizationResponse } from 'types/api/organizations/get';
 
 export interface OrgData {
 	id: string;
@@ -25,7 +26,7 @@ export interface OrgDetails {
 }
 
 interface OrgQuestionsProps {
-	currentOrgData: OrgData | null;
+	currentOrgData: OrganizationResponse | null;
 	orgDetails: OrgDetails;
 	onNext: (details: OrgDetails) => void;
 }
@@ -198,7 +199,7 @@ function OrgQuestions({
 	return (
 		<div className="questions-container">
 			<Typography.Title level={3} className="title">
-				Welcome, {user?.name}!
+				Welcome, {user?.displayName}!
 			</Typography.Title>
 			<Typography.Paragraph className="sub-title">
 				We&apos;ll help you get the most out of SigNoz, whether you&apos;re new to
