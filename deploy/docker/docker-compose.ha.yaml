@@ -177,12 +177,10 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:${VERSION:-v0.81.0}
+    image: signoz/signoz:${VERSION:-v0.82.0}
     container_name: signoz
     command:
       - --config=/root/config/prometheus.yml
-      - --use-logs-new-schema=true
-      - --use-trace-new-schema=true
     ports:
       - "8080:8080" # signoz port
     #   - "6060:6060"     # pprof port
@@ -212,7 +210,7 @@ services:
   # TODO: support otel-collector multiple replicas. Nginx/Traefik for loadbalancing?
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.111.40}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.111.41}
     container_name: signoz-otel-collector
     command:
       - --config=/etc/otel-collector-config.yaml
@@ -238,7 +236,7 @@ services:
         condition: service_healthy
   schema-migrator-sync:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.111.40}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.111.41}
     container_name: schema-migrator-sync
     command:
       - sync
@@ -249,7 +247,7 @@ services:
         condition: service_healthy
   schema-migrator-async:
     !!merge <<: *db-depend
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.111.40}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.111.41}
     container_name: schema-migrator-async
     command:
       - async
