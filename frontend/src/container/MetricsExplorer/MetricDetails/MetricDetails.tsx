@@ -113,6 +113,7 @@ function MetricDetails({
 							disabled={!metricName}
 							target="_blank"
 							rel="noopener noreferrer"
+							data-testid="open-in-explorer-button"
 						>
 							Open in Explorer
 						</Button>
@@ -127,6 +128,7 @@ function MetricDetails({
 										openInspectModal(metric.name);
 									}
 								}}
+								data-testid="inspect-metric-button"
 							/>
 						)}
 					</div>
