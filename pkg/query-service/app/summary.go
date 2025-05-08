@@ -5,7 +5,10 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 
 	explorer "github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
@@ -13,9 +16,10 @@ import (
 )
 
 func (aH *APIHandler) FilterKeysSuggestion(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-	ctx := r.Context()
 	params, apiError := explorer.ParseFilterKeySuggestions(r)
 	if apiError != nil {
 		zap.L().Error("error parsing summary filter keys request", zap.Error(apiError.Err))
@@ -32,9 +36,20 @@ func (aH *APIHandler) FilterKeysSuggestion(w http.ResponseWriter, r *http.Reques
 }
 
 func (aH *APIHandler) FilterValuesSuggestion(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-	ctx := r.Context()
 	params, apiError := explorer.ParseFilterValueSuggestions(r)
 	if apiError != nil {
 		zap.L().Error("error parsing summary filter values request", zap.Error(apiError.Err))
@@ -42,7 +57,7 @@ func (aH *APIHandler) FilterValuesSuggestion(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	values, apiError := aH.SummaryService.FilterValues(ctx, params)
+	values, apiError := aH.SummaryService.FilterValues(ctx, orgID, params)
 	if apiError != nil {
 		zap.L().Error("error getting filter values", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
@@ -52,9 +67,20 @@ func (aH *APIHandler) FilterValuesSuggestion(w http.ResponseWriter, r *http.Requ
 }
 
 func (aH *APIHandler) GetMetricsDetails(w http.ResponseWriter, r *http.Request) {
-	metricName := mux.Vars(r)["metric_name"]
 	ctx := r.Context()
-	metricsDetail, apiError := aH.SummaryService.GetMetricsSummary(ctx, metricName)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	metricName := mux.Vars(r)["metric_name"]
+	metricsDetail, apiError := aH.SummaryService.GetMetricsSummary(ctx, orgID, metricName)
 	if apiError != nil {
 		zap.L().Error("error getting metrics summary error", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
@@ -64,9 +90,20 @@ func (aH *APIHandler) GetMetricsDetails(w http.ResponseWriter, r *http.Request) 
 }
 
 func (aH *APIHandler) ListMetrics(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-	ctx := r.Context()
 	params, apiErr := explorer.ParseSummaryListMetricsParams(r)
 	if apiErr != nil {
 		zap.L().Error("error parsing metric list metric summary api request", zap.Error(apiErr.Err))
@@ -74,7 +111,7 @@ func (aH *APIHandler) ListMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slmr, apiErr := aH.SummaryService.ListMetricsWithSummary(ctx, params)
+	slmr, apiErr := aH.SummaryService.ListMetricsWithSummary(ctx, orgID, params)
 	if apiErr != nil {
 		zap.L().Error("error in getting list metrics summary", zap.Error(apiErr.Err))
 		RespondError(w, apiErr, nil)
@@ -144,16 +181,27 @@ func (aH *APIHandler) GetInspectMetricsData(w http.ResponseWriter, r *http.Reque
 }
 
 func (aH *APIHandler) UpdateMetricsMetadata(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-	ctx := r.Context()
 	params, apiError := explorer.ParseUpdateMetricsMetadataParams(r)
 	if apiError != nil {
 		zap.L().Error("error parsing update metrics metadata params", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}
-	apiError = aH.SummaryService.UpdateMetricsMetadata(ctx, params)
+	apiError = aH.SummaryService.UpdateMetricsMetadata(ctx, orgID, params)
 	if apiError != nil {
 		zap.L().Error("error updating metrics metadata", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
