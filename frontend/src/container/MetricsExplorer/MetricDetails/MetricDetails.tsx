@@ -111,8 +111,6 @@ function MetricDetails({
 							onClick={goToMetricsExplorerwithSelectedMetric}
 							icon={<Compass size={16} />}
 							disabled={!metricName}
-							target="_blank"
-							rel="noopener noreferrer"
 							data-testid="open-in-explorer-button"
 						>
 							Open in Explorer
