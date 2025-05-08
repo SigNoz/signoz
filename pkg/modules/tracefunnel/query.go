@@ -2,109 +2,15 @@ package tracefunnel
 
 import (
 	"fmt"
-	"strings"
-
+	tracev4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	tracefunnel "github.com/SigNoz/signoz/pkg/types/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/types/tracefunnel"
+	"strings"
 )
-
-func getColumnName(key v3.AttributeKey) string {
-	if key.IsColumn {
-		return key.Key
-	}
-	filterType, filterDataType := getClickhouseTracesColumnDataTypeAndType(key)
-	return fmt.Sprintf("%s%s['%s']", filterDataType, filterType, key.Key)
-}
-
-func getClickhouseTracesColumnDataTypeAndType(key v3.AttributeKey) (v3.AttributeKeyType, string) {
-	filterType := key.Type
-	filterDataType := "string"
-	if key.DataType == v3.AttributeKeyDataTypeFloat64 || key.DataType == v3.AttributeKeyDataTypeInt64 {
-		filterDataType = "number"
-	} else if key.DataType == v3.AttributeKeyDataTypeBool {
-		filterDataType = "bool"
-	}
-	if filterType == v3.AttributeKeyTypeTag {
-		filterType = "TagMap"
-	} else {
-		filterType = "resourceTagsMap"
-		filterDataType = ""
-	}
-	return filterType, filterDataType
-}
-
-// buildFilterClause converts a FilterSet into a SQL WHERE clause string
-func buildFilterClause(filters *v3.FilterSet) string {
-	if filters == nil || len(filters.Items) == 0 {
-		return ""
-	}
-
-	var conditions []string
-	for _, item := range filters.Items {
-		// Get the column name based on the key type
-		columnName := getColumnName(item.Key)
-
-		// Convert operator to lowercase for consistency
-		op := strings.ToLower(string(item.Operator))
-
-		// Format the value based on its type
-		var valueStr string
-		var err error
-		if op != "exists" && op != "nexists" {
-			item.Value, err = utils.ValidateAndCastValue(item.Value, item.Key.DataType)
-			if err != nil {
-				continue // Skip invalid values
-			}
-			valueStr = utils.ClickHouseFormattedValue(item.Value)
-		}
-
-		// Build the condition based on the operator
-		var condition string
-		switch op {
-		case "exists":
-			if item.Key.IsColumn {
-				condition = fmt.Sprintf("%s != ''", columnName)
-			} else {
-				columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(item.Key)
-				condition = fmt.Sprintf("has(%s%s, '%s')", columnDataType, columnType, item.Key.Key)
-			}
-		case "nexists":
-			if item.Key.IsColumn {
-				condition = fmt.Sprintf("%s = ''", columnName)
-			} else {
-				columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(item.Key)
-				condition = fmt.Sprintf("NOT has(%s%s, '%s')", columnDataType, columnType, item.Key.Key)
-			}
-		case "contains", "ncontains":
-			val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
-			operator := "ILIKE"
-			if op == "ncontains" {
-				operator = "NOT ILIKE"
-			}
-			condition = fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, val)
-		case "regex", "nregex":
-			operator := "match"
-			if op == "nregex" {
-				operator = "NOT match"
-			}
-			condition = fmt.Sprintf("%s(%s, %s)", operator, columnName, valueStr)
-		default:
-			condition = fmt.Sprintf("%s %s %s", columnName, strings.ToUpper(op), valueStr)
-		}
-		conditions = append(conditions, condition)
-	}
-
-	// Join conditions with the operator (AND/OR)
-	operator := strings.ToUpper(filters.Operator)
-	if operator == "" {
-		operator = "AND" // Default to AND if not specified
-	}
-	return strings.Join(conditions, fmt.Sprintf(" %s ", operator))
-}
 
 func ValidateTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange) (*v3.ClickHouseQuery, error) {
 	var query string
+	var err error
 
 	funnelSteps := funnel.Steps
 	containsErrorT1 := 0
@@ -122,11 +28,20 @@ func ValidateTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange)
 	}
 
 	// Build filter clauses for each step
-	clauseStep1 := buildFilterClause(funnelSteps[0].Filters)
-	clauseStep2 := buildFilterClause(funnelSteps[1].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters)
+	if err != nil {
+		return nil, err
+	}
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters)
+	if err != nil {
+		return nil, err
+	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3 = buildFilterClause(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if len(funnel.Steps) > 2 {
@@ -168,14 +83,18 @@ func ValidateTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange)
 
 func GetFunnelAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange) (*v3.ClickHouseQuery, error) {
 	var query string
+	var err error
 
 	funnelSteps := funnel.Steps
 	containsErrorT1 := 0
 	containsErrorT2 := 0
 	containsErrorT3 := 0
-	latencyPointerT1 := "start"
-	latencyPointerT2 := "start"
+	latencyPointerT1 := funnelSteps[0].LatencyPointer
+	latencyPointerT2 := funnelSteps[1].LatencyPointer
 	latencyPointerT3 := "start"
+	if len(funnel.Steps) > 2 {
+		latencyPointerT3 = funnelSteps[2].LatencyPointer
+	}
 
 	if funnelSteps[0].HasErrors {
 		containsErrorT1 = 1
@@ -187,22 +106,21 @@ func GetFunnelAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRa
 		containsErrorT3 = 1
 	}
 
-	if funnelSteps[0].LatencyPointer != "" {
-		latencyPointerT1 = "end"
-	}
-	if funnelSteps[1].LatencyPointer != "" {
-		latencyPointerT2 = "end"
-	}
-	if len(funnel.Steps) > 2 && funnelSteps[2].LatencyPointer != "" {
-		latencyPointerT3 = "end"
-	}
-
 	// Build filter clauses for each step
-	clauseStep1 := buildFilterClause(funnelSteps[0].Filters)
-	clauseStep2 := buildFilterClause(funnelSteps[1].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters)
+	if err != nil {
+		return nil, err
+	}
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters)
+	if err != nil {
+		return nil, err
+	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3 = buildFilterClause(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if len(funnel.Steps) > 2 {
@@ -246,79 +164,100 @@ func GetFunnelAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRa
 
 func GetFunnelStepAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRange, stepStart, stepEnd int64) (*v3.ClickHouseQuery, error) {
 	var query string
+	var err error
 
 	funnelSteps := funnel.Steps
 	containsErrorT1 := 0
 	containsErrorT2 := 0
 	containsErrorT3 := 0
-	latencyPointerT1 := "start"
-	latencyPointerT2 := "start"
+	latencyPointerT1 := funnelSteps[0].LatencyPointer
+	latencyPointerT2 := funnelSteps[1].LatencyPointer
 	latencyPointerT3 := "start"
-	stepStartOrder := 0
-	stepEndOrder := 1
+	if len(funnel.Steps) > 2 {
+		latencyPointerT3 = funnelSteps[2].LatencyPointer
+	}
+	latencyTypeT2 := "p99"
+	latencyTypeT3 := "p99"
 
-	if stepStart != stepEnd {
-		stepStartOrder = int(stepStart) - 1
-		stepEndOrder = int(stepEnd) - 1
-		if funnelSteps[stepStartOrder].HasErrors {
-			containsErrorT1 = 1
-		}
-		if funnelSteps[stepEndOrder].HasErrors {
-			containsErrorT2 = 1
-		}
-		if funnelSteps[stepStartOrder].LatencyPointer != "" {
-			latencyPointerT1 = "end"
-		}
-		if funnelSteps[stepEndOrder].LatencyPointer != "" {
-			latencyPointerT2 = "end"
-		}
+	if stepStart == stepEnd {
+		return nil, fmt.Errorf("step start and end cannot be the same for /step/overview")
 	}
 
-	// Build filter clauses for the steps
-	clauseStep1 := buildFilterClause(funnelSteps[stepStartOrder].Filters)
-	clauseStep2 := buildFilterClause(funnelSteps[stepEndOrder].Filters)
+	if funnelSteps[0].HasErrors {
+		containsErrorT1 = 1
+	}
+	if funnelSteps[1].HasErrors {
+		containsErrorT2 = 1
+	}
+	if len(funnel.Steps) > 2 && funnelSteps[2].HasErrors {
+		containsErrorT3 = 1
+	}
+
+	if funnelSteps[1].LatencyType != "" {
+		latencyTypeT2 = strings.ToLower(funnelSteps[1].LatencyType)
+	}
+	if len(funnel.Steps) > 2 && funnelSteps[2].LatencyType != "" {
+		latencyTypeT3 = strings.ToLower(funnelSteps[2].LatencyType)
+	}
+
+	// Build filter clauses for each step
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters)
+	if err != nil {
+		return nil, err
+	}
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters)
+	if err != nil {
+		return nil, err
+	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3 = buildFilterClause(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	if stepStart == 2 {
-		query = BuildFunnelStepFunnelOverviewQuery(
+	if len(funnel.Steps) > 2 {
+		query = BuildThreeStepFunnelStepOverviewQuery(
 			containsErrorT1, // containsErrorT1
 			containsErrorT2, // containsErrorT2
-			containsErrorT3,
+			containsErrorT3, // containsErrorT3
 			latencyPointerT1,
 			latencyPointerT2,
 			latencyPointerT3,
-			timeRange.StartTime, // startTs
-			timeRange.EndTime,   // endTs
-			funnelSteps[0].ServiceName,
-			funnelSteps[0].SpanName,
-			funnelSteps[stepStartOrder].ServiceName, // serviceNameT1
-			funnelSteps[stepStartOrder].SpanName,    // spanNameT1
-			funnelSteps[stepEndOrder].ServiceName,   // serviceNameT1
-			funnelSteps[stepEndOrder].SpanName,      // spanNameT2
+			timeRange.StartTime,        // startTs
+			timeRange.EndTime,          // endTs
+			funnelSteps[0].ServiceName, // serviceNameT1
+			funnelSteps[0].SpanName,    // spanNameT1
+			funnelSteps[1].ServiceName, // serviceNameT1
+			funnelSteps[1].SpanName,    // spanNameT2
+			funnelSteps[2].ServiceName, // serviceNameT1
+			funnelSteps[2].SpanName,    // spanNameT3
 			clauseStep1,
 			clauseStep2,
 			clauseStep3,
+			stepStart,
+			stepEnd,
+			latencyTypeT2,
+			latencyTypeT3,
 		)
 	} else {
-		query = BuildTwoStepFunnelOverviewQuery(
+		query = BuildTwoStepFunnelStepOverviewQuery(
 			containsErrorT1, // containsErrorT1
 			containsErrorT2, // containsErrorT2
 			latencyPointerT1,
 			latencyPointerT2,
-			timeRange.StartTime,                     // startTs
-			timeRange.EndTime,                       // endTs
-			funnelSteps[stepStartOrder].ServiceName, // serviceNameT1
-			funnelSteps[stepStartOrder].SpanName,    // spanNameT1
-			funnelSteps[stepEndOrder].ServiceName,   // serviceNameT1
-			funnelSteps[stepEndOrder].SpanName,      // spanNameT2
+			timeRange.StartTime,        // startTs
+			timeRange.EndTime,          // endTs
+			funnelSteps[0].ServiceName, // serviceNameT1
+			funnelSteps[0].SpanName,    // spanNameT1
+			funnelSteps[1].ServiceName, // serviceNameT1
+			funnelSteps[1].SpanName,    // spanNameT2
 			clauseStep1,
 			clauseStep2,
+			latencyTypeT2,
 		)
 	}
-
 	return &v3.ClickHouseQuery{Query: query}, nil
 }
 
@@ -341,11 +280,20 @@ func GetStepAnalytics(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRang
 	}
 
 	// Build filter clauses for each step
-	clauseStep1 := buildFilterClause(funnelSteps[0].Filters)
-	clauseStep2 := buildFilterClause(funnelSteps[1].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters)
+	if err != nil {
+		return nil, err
+	}
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters)
+	if err != nil {
+		return nil, err
+	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3 = buildFilterClause(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if len(funnel.Steps) > 2 {
@@ -404,8 +352,14 @@ func GetSlowestTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRang
 	}
 
 	// Build filter clauses for the steps
-	clauseStep1 := buildFilterClause(funnelSteps[stepStartOrder].Filters)
-	clauseStep2 := buildFilterClause(funnelSteps[stepEndOrder].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepStartOrder].Filters)
+	if err != nil {
+		return nil, err
+	}
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepEndOrder].Filters)
+	if err != nil {
+		return nil, err
+	}
 
 	query := BuildTwoStepFunnelTopSlowTracesQuery(
 		containsErrorT1,                         // containsErrorT1
@@ -441,8 +395,14 @@ func GetErroredTraces(funnel *tracefunnel.Funnel, timeRange tracefunnel.TimeRang
 	}
 
 	// Build filter clauses for the steps
-	clauseStep1 := buildFilterClause(funnelSteps[stepStartOrder].Filters)
-	clauseStep2 := buildFilterClause(funnelSteps[stepEndOrder].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepStartOrder].Filters)
+	if err != nil {
+		return nil, err
+	}
+	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepEndOrder].Filters)
+	if err != nil {
+		return nil, err
+	}
 
 	query := BuildTwoStepFunnelTopSlowErrorTracesQuery(
 		containsErrorT1,                         // containsErrorT1
