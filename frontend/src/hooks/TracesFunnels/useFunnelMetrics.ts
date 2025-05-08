@@ -100,24 +100,36 @@ export function useFunnelMetrics({
 	conversionRate: number;
 } {
 	const { startTime, endTime } = useFunnelContext();
-	const payload = {
+
+	const isStepTransition = stepStart !== undefined && stepEnd !== undefined;
+
+	// Prepare payloads for each API
+	const overviewPayload = {
 		start_time: startTime,
 		end_time: endTime,
-		...(stepStart !== undefined && { step_start: stepStart }),
-		...(stepEnd !== undefined && { step_end: stepEnd }),
+	};
+	const stepsOverviewPayload = {
+		start_time: startTime,
+		end_time: endTime,
+		step_start: stepStart,
+		step_end: stepEnd,
 	};
 
-	// Always call both hooks to satisfy the rules of hooks
-	const stepsOverviewResult = useFunnelStepsOverview(funnelId, payload);
-	const overviewResult = useFunnelOverview(funnelId, payload);
+	// Only call the relevant hook
+	const stepsOverviewResult = useFunnelStepsOverview(
+		funnelId,
+		stepsOverviewPayload,
+	);
+	const overviewResult = useFunnelOverview(funnelId, overviewPayload);
 
-	// Select which result to use
-	const queryResult =
-		stepStart !== undefined && stepEnd !== undefined
-			? stepsOverviewResult
-			: overviewResult;
+	const queryResult = isStepTransition ? stepsOverviewResult : overviewResult;
 
-	const { data: overviewData, isLoading, isFetching, isError } = queryResult;
+	const { data: overviewData, isLoading, isFetching, isError } = queryResult || {
+		data: undefined,
+		isLoading: false,
+		isFetching: false,
+		isError: false,
+	};
 
 	const metricsData = useMemo(() => {
 		const rawData = overviewData?.payload?.data?.[0]?.data as RawData | undefined;
