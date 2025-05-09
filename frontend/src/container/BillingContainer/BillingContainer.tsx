@@ -480,7 +480,7 @@ export default function BillingContainer(): JSX.Element {
 						ellipsis
 						style={{ fontWeight: '300', color: '#49aa19', fontSize: 12 }}
 					>
-						{t('card_details_recieved_and_billing_info')}
+						{t('card_details_received_and_billing_info')}
 					</Typography.Text>
 				)}
 

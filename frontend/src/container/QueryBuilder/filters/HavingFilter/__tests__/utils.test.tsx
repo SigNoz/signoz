@@ -155,7 +155,7 @@ describe('Having filter behaviour', () => {
 
 		const optionWithValue = screen.getByTitle(optionTestTitle);
 
-		// onChange after complete writting in the input or autocomplete
+		// onChange after complete writing in the input or autocomplete
 		await user.click(optionWithValue);
 
 		expect(onChange).toHaveBeenCalledTimes(1);
