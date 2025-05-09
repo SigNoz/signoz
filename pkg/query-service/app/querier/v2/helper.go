@@ -40,7 +40,7 @@ func prepareLogsQuery(
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
-			v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit},
+			v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, ValuesEscaped: params.ValuesEscaped},
 		)
 		if err != nil {
 			return query, err
@@ -51,7 +51,7 @@ func prepareLogsQuery(
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
-			v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit},
+			v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, ValuesEscaped: params.ValuesEscaped},
 		)
 		if err != nil {
 			return query, err
@@ -66,7 +66,7 @@ func prepareLogsQuery(
 		params.CompositeQuery.QueryType,
 		params.CompositeQuery.PanelType,
 		builderQuery,
-		v3.QBOptions{},
+		v3.QBOptions{ValuesEscaped: params.ValuesEscaped},
 	)
 	if err != nil {
 		return query, err
@@ -177,7 +177,7 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit},
+				v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, ValuesEscaped: params.ValuesEscaped},
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
@@ -188,7 +188,7 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit},
+				v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, ValuesEscaped: params.ValuesEscaped},
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
@@ -201,7 +201,7 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				v3.QBOptions{},
+				v3.QBOptions{ValuesEscaped: params.ValuesEscaped},
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}

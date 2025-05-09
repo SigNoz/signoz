@@ -193,7 +193,8 @@ func Test_getSelectLabels(t *testing.T) {
 
 func Test_buildTracesFilterQuery(t *testing.T) {
 	type args struct {
-		fs *v3.FilterSet
+		fs        *v3.FilterSet
+		isEscaped bool
 	}
 	tests := []struct {
 		name    string
@@ -271,10 +272,32 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 			},
 			want: "mapContains(attributes_string, 'host') AND mapContains(attributes_number, 'duration') AND NOT mapContains(attributes_bool, 'isDone') AND NOT mapContains(attributes_string, 'host1') AND `attribute_string_path` = '' AND http_url = '' AND `attribute_string_http$$route` = ''",
 		},
+		{
+			name: "Test with isEscaped contains",
+			args: args{
+				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: `hello\name_`, Operator: v3.FilterOperatorContains},
+				}},
+				isEscaped: true,
+			},
+			want:    `name ILIKE '%hello\name\_%'`,
+			wantErr: false,
+		},
+		{
+			name: "Test with isEscaped eq",
+			args: args{
+				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: `hello\name_`, Operator: v3.FilterOperatorEqual},
+				}},
+				isEscaped: true,
+			},
+			want:    `name = 'hello\name_'`,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildTracesFilterQuery(tt.args.fs)
+			got, err := buildTracesFilterQuery(tt.args.fs, tt.args.isEscaped)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildTracesFilterQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -315,7 +338,7 @@ func Test_handleEmptyValuesInGroupBy(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := handleEmptyValuesInGroupBy(tt.args.groupBy)
+			got, err := handleEmptyValuesInGroupBy(tt.args.groupBy, false)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("handleEmptyValuesInGroupBy() error = %v, wantErr %v", err, tt.wantErr)
 				return
