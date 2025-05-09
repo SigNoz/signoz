@@ -13,8 +13,8 @@ import { AllAttributesProps, AllAttributesValueProps } from './types';
 import { getMetricDetailsQuery } from './utils';
 
 export function AllAttributesValue({
-	key,
-	value,
+	filterKey,
+	filterValue,
 	goToMetricsExploreWithAppliedAttribute,
 }: AllAttributesValueProps): JSX.Element {
 	const [visibleIndex, setVisibleIndex] = useState(5);
@@ -25,20 +25,20 @@ export function AllAttributesValue({
 
 	return (
 		<div className="all-attributes-value">
-			{value.slice(0, visibleIndex).map((attribute) => (
+			{filterValue.slice(0, visibleIndex).map((attribute) => (
 				<Tooltip key={attribute} title={attribute}>
 					<Button
 						key={attribute}
 						type="text"
 						onClick={(): void => {
-							goToMetricsExploreWithAppliedAttribute(key, attribute);
+							goToMetricsExploreWithAppliedAttribute(filterKey, attribute);
 						}}
 					>
 						<Typography.Text>{attribute}</Typography.Text>
 					</Button>
 				</Tooltip>
 			))}
-			{visibleIndex < value.length && (
+			{visibleIndex < filterValue.length && (
 				<Button type="text" onClick={handleShowMore}>
 					Show More
 				</Button>
@@ -129,8 +129,8 @@ function AllAttributes({
 				className: 'metric-metadata-value',
 				render: (field: { key: string; value: string[] }): JSX.Element => (
 					<AllAttributesValue
-						key={field.key}
-						value={field.value}
+						filterKey={field.key}
+						filterValue={field.value}
 						goToMetricsExploreWithAppliedAttribute={
 							goToMetricsExploreWithAppliedAttribute
 						}
