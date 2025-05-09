@@ -164,7 +164,7 @@ describe('DynamicVariable Component', () => {
 		// Wait for options to appear, then click on service.name
 		await waitFor(() => {
 			// Need to find the option-item containing service.name
-			const serviceNameOption = document.querySelector('.option-content div');
+			const serviceNameOption = screen.getByText('service.name');
 			expect(serviceNameOption).not.toBeNull();
 			expect(serviceNameOption?.textContent).toBe('service.name');
 
@@ -280,15 +280,21 @@ describe('DynamicVariable Component', () => {
 			refetch: mockRefetch,
 		});
 
-		// We'll use a different approach here - since we're testing the effect of typing,
-		// and that's setting apiSearchText which then gets debounced
-
-		render(<DynamicVariable {...DEFAULT_PROPS} />);
+		// Render with Logs as the initial source
+		render(
+			<DynamicVariable
+				{...DEFAULT_PROPS}
+				dynamicVariablesSelectedValue={{
+					name: '',
+					value: 'Logs',
+				}}
+			/>,
+		);
 
 		// Clear any initial calls
 		mockRefetch.mockClear();
 
-		// Open the attribute dropdown
+		// Now test the search functionality
 		const attributeSelectElement = getAttributeSelect();
 		fireEvent.mouseDown(attributeSelectElement);
 
@@ -298,15 +304,19 @@ describe('DynamicVariable Component', () => {
 		);
 
 		if (inputElement) {
-			// Instead of trying to verify the API call directly (which is async and debounced),
-			// we'll verify that typing in the search input correctly updates the component state
+			// Simulate typing in the search input
 			fireEvent.change(inputElement, { target: { value: 'http' } });
 
 			// Verify that the input has the correct value
 			expect((inputElement as HTMLInputElement).value).toBe('http');
 
-			// Success - we've demonstrated that the search input works
-			// The actual API call would happen after debouncing in the real component
+			// Wait for the effect to run and verify refetch was called
+			await waitFor(
+				() => {
+					expect(mockRefetch).toHaveBeenCalled();
+				},
+				{ timeout: 3000 },
+			); // Increase timeout to give more time for the effect to run
 		}
 	});
 
