@@ -40,8 +40,12 @@ function AllAttributes({
 
 	const filteredAttributes = useMemo(
 		() =>
-			attributes.filter((attribute) =>
-				attribute.key.toLowerCase().includes(searchString.toLowerCase()),
+			attributes.filter(
+				(attribute) =>
+					attribute.key.toLowerCase().includes(searchString.toLowerCase()) ||
+					attribute.value.some((value) =>
+						value.toLowerCase().includes(searchString.toLowerCase()),
+					),
 			),
 		[attributes, searchString],
 	);

@@ -79,4 +79,16 @@ describe('AllAttributes', () => {
 		fireEvent.click(screen.getByText('value1'));
 		expect(mockHandleExplorerTabChange).toHaveBeenCalled();
 	});
+
+	it('filters attributes based on search input', () => {
+		render(
+			<AllAttributes metricName={mockMetricName} attributes={mockAttributes} />,
+		);
+		fireEvent.change(screen.getByPlaceholderText('Search'), {
+			target: { value: 'value1' },
+		});
+
+		expect(screen.getByText('attribute1')).toBeInTheDocument();
+		expect(screen.getByText('value1')).toBeInTheDocument();
+	});
 });
