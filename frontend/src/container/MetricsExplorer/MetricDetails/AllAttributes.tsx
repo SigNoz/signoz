@@ -1,5 +1,6 @@
 import { Button, Collapse, Input, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import { Tooltip } from 'antd/lib';
 import { ResizeTable } from 'components/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { Search } from 'lucide-react';
@@ -8,8 +9,43 @@ import { useCallback, useMemo, useState } from 'react';
 import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';
 import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
-import { AllAttributesProps } from './types';
+import { AllAttributesProps, AllAttributesValueProps } from './types';
 import { getMetricDetailsQuery } from './utils';
+
+export function AllAttributesValue({
+	key,
+	value,
+	goToMetricsExploreWithAppliedAttribute,
+}: AllAttributesValueProps): JSX.Element {
+	const [visibleIndex, setVisibleIndex] = useState(5);
+
+	const handleShowMore = (): void => {
+		setVisibleIndex(visibleIndex + 5);
+	};
+
+	return (
+		<div className="all-attributes-value">
+			{value.slice(0, visibleIndex).map((attribute) => (
+				<Tooltip key={attribute} title={attribute}>
+					<Button
+						key={attribute}
+						type="text"
+						onClick={(): void => {
+							goToMetricsExploreWithAppliedAttribute(key, attribute);
+						}}
+					>
+						<Typography.Text>{attribute}</Typography.Text>
+					</Button>
+				</Tooltip>
+			))}
+			{visibleIndex < value.length && (
+				<Button type="text" onClick={handleShowMore}>
+					Show More
+				</Button>
+			)}
+		</div>
+	);
+}
 
 function AllAttributes({
 	metricName,
@@ -92,19 +128,13 @@ function AllAttributes({
 				ellipsis: true,
 				className: 'metric-metadata-value',
 				render: (field: { key: string; value: string[] }): JSX.Element => (
-					<div className="all-attributes-value">
-						{field.value.map((attribute) => (
-							<Button
-								key={attribute}
-								type="text"
-								onClick={(): void => {
-									goToMetricsExploreWithAppliedAttribute(field.key, attribute);
-								}}
-							>
-								<Typography.Text>{attribute}</Typography.Text>
-							</Button>
-						))}
-					</div>
+					<AllAttributesValue
+						key={field.key}
+						value={field.value}
+						goToMetricsExploreWithAppliedAttribute={
+							goToMetricsExploreWithAppliedAttribute
+						}
+					/>
 				),
 			},
 		],

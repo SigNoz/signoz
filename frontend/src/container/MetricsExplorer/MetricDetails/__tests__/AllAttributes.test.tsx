@@ -3,7 +3,7 @@ import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
 
 import { MetricDetailsAttribute } from '../../../../api/metricsExplorer/getMetricDetails';
 import ROUTES from '../../../../constants/routes';
-import AllAttributes from '../AllAttributes';
+import AllAttributes, { AllAttributesValue } from '../AllAttributes';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -90,5 +90,51 @@ describe('AllAttributes', () => {
 
 		expect(screen.getByText('attribute1')).toBeInTheDocument();
 		expect(screen.getByText('value1')).toBeInTheDocument();
+	});
+});
+
+describe('AllAttributesValue', () => {
+	const mockGoToMetricsExploreWithAppliedAttribute = jest.fn();
+
+	it('renders all attribute values', () => {
+		render(
+			<AllAttributesValue
+				key="attribute1"
+				value={['value1', 'value2']}
+				goToMetricsExploreWithAppliedAttribute={
+					mockGoToMetricsExploreWithAppliedAttribute
+				}
+			/>,
+		);
+		expect(screen.getByText('value1')).toBeInTheDocument();
+		expect(screen.getByText('value2')).toBeInTheDocument();
+	});
+
+	it('loads more attributes when show more button is clicked', () => {
+		render(
+			<AllAttributesValue
+				key="attribute1"
+				value={['value1', 'value2', 'value3', 'value4', 'value5', 'value6']}
+				goToMetricsExploreWithAppliedAttribute={
+					mockGoToMetricsExploreWithAppliedAttribute
+				}
+			/>,
+		);
+		expect(screen.queryByText('value6')).not.toBeInTheDocument();
+		fireEvent.click(screen.getByText('Show More'));
+		expect(screen.getByText('value6')).toBeInTheDocument();
+	});
+
+	it('does not render show more button when there are no more attributes to show', () => {
+		render(
+			<AllAttributesValue
+				key="attribute1"
+				value={['value1', 'value2']}
+				goToMetricsExploreWithAppliedAttribute={
+					mockGoToMetricsExploreWithAppliedAttribute
+				}
+			/>,
+		);
+		expect(screen.queryByText('Show More')).not.toBeInTheDocument();
 	});
 });
