@@ -264,9 +264,11 @@ describe('DynamicVariableSelection Component', () => {
 		// Verify the component correctly displays the selected value
 		expect(screen.getByText(`$${customVariable.name}`)).toBeInTheDocument();
 
-		// Find the selection item in the component
-		const selectionItem = screen.getByTitle('backend');
-		expect(selectionItem).toBeInTheDocument();
-		expect(selectionItem.textContent).toBe('backend');
+		// Find the selection item in the component using data-testid
+		const selectElement = screen.getByTestId('variable-select');
+		expect(selectElement).toBeInTheDocument();
+
+		// Check that the selected value is displayed in the select element
+		expect(selectElement).toHaveTextContent('backend');
 	});
 });
