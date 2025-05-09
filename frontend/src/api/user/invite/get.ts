@@ -2,11 +2,7 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import {
-	InviteResponse,
-	PayloadProps,
-	Props,
-} from 'types/api/user/invite/getInviteDetails';
+import { InviteResponse, PayloadProps, Props } from 'types/api/user/invite/get';
 
 const getInviteDetails = async (
 	props: Props,

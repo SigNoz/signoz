@@ -22,7 +22,7 @@ import {
 	FailedInvite,
 	InviteUsersResponse,
 	SuccessfulInvite,
-} from 'types/api/user/invite/inviteUsers';
+} from 'types/api/user/invite/createMany';
 import { v4 as uuid } from 'uuid';
 
 interface TeamMember {

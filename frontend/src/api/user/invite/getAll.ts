@@ -2,7 +2,7 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/user/invite/getPendingInvites';
+import { PayloadProps } from 'types/api/user/invite/getAll';
 
 const getPendingInvites = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse

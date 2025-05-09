@@ -2,10 +2,7 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
-	PayloadProps,
-	Props,
-} from 'types/api/user/factor_password/changeMyPassword';
+import { PayloadProps, Props } from 'types/api/user/factor_password/update';
 
 const changeMyPassword = async (
 	props: Props,

@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { PayloadProps } from 'types/api/user/invite/getPendingInvites';
+import { PayloadProps } from 'types/api/user/invite/getAll';
 import { ROLES } from 'types/roles';
 
 import InviteUserModal from '../InviteUserModal/InviteUserModal';

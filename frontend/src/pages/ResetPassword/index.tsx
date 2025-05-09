@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import getUserVersion from 'api/user/version/getVersion';
+import getUserVersion from 'api/user/version/get';
 import Spinner from 'components/Spinner';
 import ResetPasswordContainer from 'container/ResetPassword';
 import { useAppContext } from 'providers/App/App';

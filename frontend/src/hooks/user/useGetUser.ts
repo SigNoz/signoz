@@ -2,7 +2,7 @@ import getUser from 'api/user/crud/get';
 import { useQuery, UseQueryResult } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
-import { UserResponse } from 'types/api/user/crud/getUser';
+import { UserResponse } from 'types/api/user/crud/get';
 
 const useGetUser = (isLoggedIn: boolean): UseGetUser =>
 	useQuery({

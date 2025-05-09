@@ -2,7 +2,7 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/user/invite/setInvite';
+import { PayloadProps, Props } from 'types/api/user/invite/create';
 
 const sendInvite = async (
 	props: Props,

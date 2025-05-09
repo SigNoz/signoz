@@ -2,9 +2,9 @@ import { ApiV2Instance as axios } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/organizations/editOrg';
+import { PayloadProps, Props } from 'types/api/organizations/update';
 
-const editOrg = async (
+const update = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
@@ -23,4 +23,4 @@ const editOrg = async (
 	}
 };
 
-export default editOrg;
+export default update;

@@ -1,6 +1,6 @@
 import { User } from 'types/reducer/app';
 
-import { PayloadProps as Payload } from './getUser';
+import { PayloadProps as Payload } from './get';
 
 export type PayloadProps = Payload;
 

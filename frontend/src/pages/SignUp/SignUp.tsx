@@ -16,7 +16,7 @@ import { useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { LoginPrecheckResponse as LoginPrecheckPayloadProps } from 'types/api/login/loginPrecheck';
-import { InviteResponse } from 'types/api/user/invite/getInviteDetails';
+import { InviteResponse } from 'types/api/user/invite/get';
 
 import { ButtonContainer, FormContainer, FormWrapper, Label } from './styles';
 import { isPasswordNotValidMessage, isPasswordValid } from './utils';

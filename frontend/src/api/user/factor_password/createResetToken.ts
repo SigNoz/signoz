@@ -5,7 +5,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	PayloadProps,
 	Props,
-} from 'types/api/user/factor_password/getResetPasswordToken';
+} from 'types/api/user/factor_password/createResetToken';
 
 const getResetPasswordToken = async (
 	props: Props,

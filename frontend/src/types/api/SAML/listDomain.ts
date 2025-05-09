@@ -1,4 +1,4 @@
-import { Organization } from '../organizations/getOrganization';
+import { OrganizationResponse } from '../organizations/get';
 
 export interface SAMLConfig {
 	samlEntity: string;
@@ -33,7 +33,7 @@ export const GOOGLE_AUTH = 'GOOGLE_AUTH';
 export interface AuthDomain {
 	id: string;
 	name: string;
-	orgId: Organization['id'];
+	orgId: OrganizationResponse['id'];
 	ssoEnabled: boolean;
 	ssoType: 'SAML' | 'GOOGLE_AUTH';
 	samlConfig?: SAMLConfig;
@@ -41,7 +41,7 @@ export interface AuthDomain {
 }
 
 export interface Props {
-	orgId: Organization['id'];
+	orgId: OrganizationResponse['id'];
 }
 
 export type PayloadProps = AuthDomain[];

@@ -3,7 +3,7 @@ import { SuccessResponse } from 'types/api';
 import {
 	InviteUsersResponse,
 	UsersProps,
-} from 'types/api/user/invite/inviteUsers';
+} from 'types/api/user/invite/createMany';
 
 const inviteUsers = async (
 	users: UsersProps,

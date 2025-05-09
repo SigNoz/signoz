@@ -2,7 +2,7 @@ import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeatures
 import { PayloadProps as LicensesResModel } from 'types/api/licenses/getAll';
 import { LicenseV3ResModel, TrialInfo } from 'types/api/licensesV3/getActive';
 import { OrganizationResponse } from 'types/api/organizations/get';
-import { UserResponse as User } from 'types/api/user/crud/getUser';
+import { UserResponse as User } from 'types/api/user/crud/get';
 import { OrgPreference } from 'types/reducer/app';
 
 export interface IAppContext {

@@ -1,5 +1,5 @@
 import { Button, Form, Input } from 'antd';
-import editOrg from 'api/organizations/editOrg';
+import editOrg from 'api/organizations/update';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';

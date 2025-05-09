@@ -3,7 +3,7 @@ import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import loginApi from 'api/login/login';
 import loginPrecheckApi from 'api/login/loginPrecheck';
-import getUserVersion from 'api/user/version/getVersion';
+import getUserVersion from 'api/user/version/get';
 import afterLogin from 'AppRoutes/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';

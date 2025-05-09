@@ -1,15 +1,15 @@
+import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
+import { getVersion } from 'constants/api';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/user/version/getLatestVersion';
+import { PayloadProps } from 'types/api/user/version/get';
 
-const getLatestVersion = async (): Promise<
+const getVersionApi = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
-		const response = await axios.get(
-			`https://api.github.com/repos/signoz/signoz/releases/latest`,
-		);
+		const response = await axios.get(`/${getVersion}`);
 
 		return {
 			statusCode: 200,
@@ -22,4 +22,4 @@ const getLatestVersion = async (): Promise<
 	}
 };
 
-export default getLatestVersion;
+export default getVersionApi;
