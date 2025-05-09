@@ -99,8 +99,8 @@ describe('AllAttributesValue', () => {
 	it('renders all attribute values', () => {
 		render(
 			<AllAttributesValue
-				key="attribute1"
-				value={['value1', 'value2']}
+				filterKey="attribute1"
+				filterValue={['value1', 'value2']}
 				goToMetricsExploreWithAppliedAttribute={
 					mockGoToMetricsExploreWithAppliedAttribute
 				}
@@ -113,8 +113,8 @@ describe('AllAttributesValue', () => {
 	it('loads more attributes when show more button is clicked', () => {
 		render(
 			<AllAttributesValue
-				key="attribute1"
-				value={['value1', 'value2', 'value3', 'value4', 'value5', 'value6']}
+				filterKey="attribute1"
+				filterValue={['value1', 'value2', 'value3', 'value4', 'value5', 'value6']}
 				goToMetricsExploreWithAppliedAttribute={
 					mockGoToMetricsExploreWithAppliedAttribute
 				}
@@ -128,8 +128,8 @@ describe('AllAttributesValue', () => {
 	it('does not render show more button when there are no more attributes to show', () => {
 		render(
 			<AllAttributesValue
-				key="attribute1"
-				value={['value1', 'value2']}
+				filterKey="attribute1"
+				filterValue={['value1', 'value2']}
 				goToMetricsExploreWithAppliedAttribute={
 					mockGoToMetricsExploreWithAppliedAttribute
 				}

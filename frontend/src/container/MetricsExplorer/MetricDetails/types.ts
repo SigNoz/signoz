@@ -30,8 +30,8 @@ export interface AllAttributesProps {
 }
 
 export interface AllAttributesValueProps {
-	key: string;
-	value: string[];
+	filterKey: string;
+	filterValue: string[];
 	goToMetricsExploreWithAppliedAttribute: (key: string, value: string) => void;
 }
 
