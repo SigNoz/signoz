@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
-import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
+import { LoginPrecheckResponse as PrecheckResultType } from 'types/api/user/loginPrecheck';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
 
@@ -122,26 +122,20 @@ function Login({
 			const response = await loginPrecheckApi({
 				email,
 			});
-
-			if (response.statusCode === 200) {
-				setPrecheckResult({ ...precheckResult, ...response.payload });
-
-				const { isUser } = response.payload;
-				if (isUser) {
-					setPrecheckComplete(true);
-				} else {
-					notifications.error({
-						message: t('invalid_account'),
-					});
-				}
+			setPrecheckResult({ ...precheckResult, ...response.data });
+			const { isUser } = response.data;
+			if (isUser) {
+				setPrecheckComplete(true);
 			} else {
 				notifications.error({
-					message: t('invalid_config'),
+					message: t('invalid_account'),
 				});
 			}
-		} catch (e) {
-			console.log('failed to call precheck Api', e);
-			notifications.error({ message: t('unexpected_error') });
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).error.error.code,
+				description: (error as APIError).error.error.message,
+			});
 		}
 		setPrecheckInProcess(false);
 	};
