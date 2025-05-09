@@ -124,7 +124,7 @@ function Summary(): JSX.Element {
 	});
 
 	const isListViewError = useMemo(
-		() => isMetricsError || (metricsData && metricsData.statusCode !== 200),
+		() => isMetricsError || !!(metricsData && metricsData.statusCode !== 200),
 		[isMetricsError, metricsData],
 	);
 
