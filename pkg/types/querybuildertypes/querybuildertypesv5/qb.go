@@ -3,6 +3,7 @@ package querybuildertypesv5
 import (
 	"context"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -16,15 +17,28 @@ var (
 
 // FieldMapper maps the telemetry field key to the table field name.
 type FieldMapper interface {
-	// GetTableFieldName returns the table field name for the given key.
-	GetTableFieldName(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error)
-	GetTableColumnExpression(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
+	// FieldFor returns the field name for the given key.
+	FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error)
+	// ColumnFor returns the column for the given key.
+	ColumnFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error)
+	// ColumnExpressionFor returns the column expression for the given key.
+	ColumnExpressionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
 }
 
 // ConditionBuilder builds the condition for the filter.
 type ConditionBuilder interface {
-	// GetCondition returns the condition for the given key, operator and value.
-	GetCondition(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+	// ConditionFor returns the condition for the given key, operator and value.
+	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+}
+
+type Compiler interface {
+	// Compile compiles the filter into a sqlbuilder.WhereClause.
+	Compile(ctx context.Context, filter string) (*sqlbuilder.WhereClause, []error, error)
+}
+
+type AggExprRewriter interface {
+	// Rewrite rewrites the aggregation expression.
+	Rewrite(ctx context.Context, expr string) (string, []any, error)
 }
 
 // StatementBuilder builds the query.

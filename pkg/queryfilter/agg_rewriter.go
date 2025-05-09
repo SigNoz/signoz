@@ -1,4 +1,4 @@
-package parser
+package queryfilter
 
 import (
 	"context"
@@ -11,22 +11,28 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-// Rewriter rewrites aggregation expressions using user-provided mappers.
-type aggExprRewriter struct {
+type AggExprRewriterOptions struct {
+	MetadataStore    telemetrytypes.MetadataStore
+	FullTextColumn   *telemetrytypes.TelemetryFieldKey
+	FieldMapper      qbtypes.FieldMapper
+	ConditionBuilder qbtypes.ConditionBuilder
+	JsonBodyPrefix   string
+	JsonKeyToKey     func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any)
 }
 
-var DefaultAggExprRewriter = &aggExprRewriter{}
+// Rewriter rewrites aggregation expressions using user-provided mappers.
+type aggExprRewriter struct {
+	opts AggExprRewriterOptions
+}
+
+func NewAggExprRewriter(opts AggExprRewriterOptions) *aggExprRewriter {
+	return &aggExprRewriter{opts: opts}
+}
 
 // Rewrite parses the given aggregation expression, maps the aggregation field to
 // table column and condition to valid CH condition expression, and returns the rewritten expression.
 func (r *aggExprRewriter) Rewrite(
 	exprSQL string,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
-	jsonBodyPrefix string,
-	jsonKeyToKey func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any),
 ) (string, []any, error) {
 	// Wrap in a SELECT so the parser returns a full AST
 	wrapped := fmt.Sprintf("SELECT %s", exprSQL)
@@ -48,7 +54,23 @@ func (r *aggExprRewriter) Rewrite(
 		return "", nil, fmt.Errorf("no SELECT items for %q", exprSQL)
 	}
 
-	visitor := newExprVisitor(fieldKeys, fullTextColumn, fieldMapper, conditionBuilder, jsonBodyPrefix, jsonKeyToKey)
+	keysSelectors, err := QueryStringToKeysSelectors(exprSQL)
+	if err != nil {
+		return "", nil, fmt.Errorf("error parsing expression %q: %v", exprSQL, err)
+	}
+
+	keys, err := r.opts.MetadataStore.GetKeysMulti(context.Background(), keysSelectors)
+	if err != nil {
+		return "", nil, fmt.Errorf("error getting keys for %q: %v", exprSQL, err)
+	}
+
+	visitor := newExprVisitor(keys,
+		r.opts.FullTextColumn,
+		r.opts.FieldMapper,
+		r.opts.ConditionBuilder,
+		r.opts.JsonBodyPrefix,
+		r.opts.JsonKeyToKey,
+	)
 	// Rewrite the first select item (our expression)
 	if err := sel.SelectItems[0].Accept(visitor); err != nil {
 		return "", nil, fmt.Errorf("error rewriting expression %q: %v", exprSQL, err)
@@ -91,7 +113,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *clickhouse.FunctionExpr) error {
 	if strings.HasSuffix(name, "if") && ((name == "countif" && len(args) == 1) || len(args) >= 2) {
 		// Map the predicate (first argument)
 		origPred := args[0].String()
-		whereClause, _, err := PrepareWhereClause(
+		whereClause, _, err := prepareWhereClause(
 			origPred,
 			v.fieldKeys,
 			v.fieldMapper,
@@ -116,7 +138,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *clickhouse.FunctionExpr) error {
 		// Map each value column argument
 		for i := 1; i < len(args); i++ {
 			origVal := args[i].String()
-			colName, err := v.fieldMapper.GetTableColumnExpression(context.Background(), &telemetrytypes.TelemetryFieldKey{Name: origVal}, v.fieldKeys)
+			colName, err := v.fieldMapper.ColumnExpressionFor(context.Background(), &telemetrytypes.TelemetryFieldKey{Name: origVal}, v.fieldKeys)
 			if err != nil {
 				return fmt.Errorf("failed to get table field name for %q: %v", origVal, err)
 			}
@@ -132,7 +154,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *clickhouse.FunctionExpr) error {
 		// Non-If functions: map every argument as a column/value
 		for i, arg := range args {
 			orig := arg.String()
-			colName, err := v.fieldMapper.GetTableColumnExpression(context.Background(), &telemetrytypes.TelemetryFieldKey{Name: orig}, v.fieldKeys)
+			colName, err := v.fieldMapper.ColumnExpressionFor(context.Background(), &telemetrytypes.TelemetryFieldKey{Name: orig}, v.fieldKeys)
 			if err != nil {
 				return fmt.Errorf("failed to get table field name for %q: %v", orig, err)
 			}
@@ -169,18 +191,12 @@ func parseFragment(sql string) (clickhouse.Expr, error) {
 // RewriteMultiple rewrites a slice of expressions.
 func (r *aggExprRewriter) RewriteMultiple(
 	exprs []string,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
-	jsonBodyPrefix string,
-	jsonKeyToKey func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any),
 ) ([]string, [][]any, error) {
 	out := make([]string, len(exprs))
 	var errs []string
 	var chArgsList [][]any
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(e, fieldKeys, fullTextColumn, fieldMapper, conditionBuilder, jsonBodyPrefix, jsonKeyToKey)
+		w, chArgs, err := r.Rewrite(e)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("%q: %v", e, err))
 			out[i] = e

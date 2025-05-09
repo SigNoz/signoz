@@ -52,11 +52,13 @@ var (
 	}
 )
 
-type defaultFieldMapper struct{}
+type fieldMapper struct{}
 
-var DefaultFieldMapper = &defaultFieldMapper{}
+func NewFieldMapper() qbtypes.FieldMapper {
+	return &fieldMapper{}
+}
 
-func (c *defaultFieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
@@ -93,8 +95,8 @@ func (c *defaultFieldMapper) getColumn(ctx context.Context, key *telemetrytypes.
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (c *defaultFieldMapper) GetTableFieldName(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	column, err := c.getColumn(ctx, key)
+func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	column, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
 	}
@@ -138,13 +140,17 @@ func (c *defaultFieldMapper) GetTableFieldName(ctx context.Context, key *telemet
 	return column.Name, nil
 }
 
-func (m *defaultFieldMapper) GetTableColumnExpression(
+func (m *fieldMapper) ColumnFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+	return m.getColumn(ctx, key)
+}
+
+func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	colName, err := m.GetTableFieldName(context.Background(), field)
+	colName, err := m.FieldFor(context.Background(), field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -154,7 +160,7 @@ func (m *defaultFieldMapper) GetTableColumnExpression(
 			if _, ok := logsV2Columns[field.Name]; ok {
 				// if it is, attach the column name directly
 				field.FieldContext = telemetrytypes.FieldContextSpan
-				colName, _ = m.GetTableFieldName(context.Background(), field)
+				colName, _ = m.FieldFor(context.Background(), field)
 			} else {
 				// - the context is not provided
 				// - there are not keys for the field
@@ -172,12 +178,12 @@ func (m *defaultFieldMapper) GetTableColumnExpression(
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it
-			colName, _ = m.GetTableFieldName(context.Background(), keysForField[0])
+			colName, _ = m.FieldFor(context.Background(), keysForField[0])
 		} else {
 			// select any non-empty value from the keys
 			args := []string{}
 			for _, key := range keysForField {
-				colName, _ = m.GetTableFieldName(context.Background(), key)
+				colName, _ = m.FieldFor(context.Background(), key)
 				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
 			}
 			colName = fmt.Sprintf("multiIf(%s)", strings.Join(args, ", "))

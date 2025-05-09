@@ -1,4 +1,4 @@
-package parser
+package queryfilter
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	grammar "github.com/SigNoz/signoz/pkg/parser/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
@@ -14,9 +15,9 @@ import (
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
-// WhereClauseVisitor implements the FilterQueryVisitor interface
+// whereClauseVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause
-type WhereClauseVisitor struct {
+type whereClauseVisitor struct {
 	conditionBuilder qbtypes.ConditionBuilder
 	fieldMapper      qbtypes.FieldMapper
 	warnings         []error
@@ -28,8 +29,7 @@ type WhereClauseVisitor struct {
 	jsonKeyToKey     func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any)
 }
 
-// NewWhereClauseVisitor creates a new WhereClauseVisitor
-func NewWhereClauseVisitor(
+func newWhereClauseVisitor(
 	conditionBuilder qbtypes.ConditionBuilder,
 	fieldMapper qbtypes.FieldMapper,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
@@ -37,8 +37,8 @@ func NewWhereClauseVisitor(
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonBodyPrefix string,
 	jsonKeyToKey func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any),
-) *WhereClauseVisitor {
-	return &WhereClauseVisitor{
+) *whereClauseVisitor {
+	return &whereClauseVisitor{
 		conditionBuilder: conditionBuilder,
 		fieldKeys:        fieldKeys,
 		builder:          builder,
@@ -76,8 +76,8 @@ func (l *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol
 	l.Errors = append(l.Errors, &SyntaxError{line: line, column: column, msg: msg})
 }
 
-// PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
-func PrepareWhereClause(
+// prepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
+func prepareWhereClause(
 	query string,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	fieldMapper qbtypes.FieldMapper,
@@ -88,11 +88,11 @@ func PrepareWhereClause(
 ) (*sqlbuilder.WhereClause, []error, error) {
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
-	lexer := NewFilterQueryLexer(input)
+	lexer := grammar.NewFilterQueryLexer(input)
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	visitor := NewWhereClauseVisitor(conditionBuilder, fieldMapper, fieldKeys, sb, fullTextColumn, jsonBodyPrefix, jsonKeyToKey)
+	visitor := newWhereClauseVisitor(conditionBuilder, fieldMapper, fieldKeys, sb, fullTextColumn, jsonBodyPrefix, jsonKeyToKey)
 
 	// Set up error handling
 	lexerErrorListener := NewErrorListener()
@@ -101,7 +101,7 @@ func PrepareWhereClause(
 
 	tokens := antlr.NewCommonTokenStream(lexer, 0)
 	parserErrorListener := NewErrorListener()
-	parser := NewFilterQueryParser(tokens)
+	parser := grammar.NewFilterQueryParser(tokens)
 	parser.RemoveErrorListeners()
 	parser.AddErrorListener(parserErrorListener)
 
@@ -141,64 +141,64 @@ func PrepareWhereClause(
 }
 
 // Visit dispatches to the specific visit method based on node type
-func (v *WhereClauseVisitor) Visit(tree antlr.ParseTree) any {
+func (v *whereClauseVisitor) Visit(tree antlr.ParseTree) any {
 	// Handle nil nodes to prevent panic
 	if tree == nil {
 		return ""
 	}
 
 	switch t := tree.(type) {
-	case *QueryContext:
+	case *grammar.QueryContext:
 		return v.VisitQuery(t)
-	case *ExpressionContext:
+	case *grammar.ExpressionContext:
 		return v.VisitExpression(t)
-	case *OrExpressionContext:
+	case *grammar.OrExpressionContext:
 		return v.VisitOrExpression(t)
-	case *AndExpressionContext:
+	case *grammar.AndExpressionContext:
 		return v.VisitAndExpression(t)
-	case *UnaryExpressionContext:
+	case *grammar.UnaryExpressionContext:
 		return v.VisitUnaryExpression(t)
-	case *PrimaryContext:
+	case *grammar.PrimaryContext:
 		return v.VisitPrimary(t)
-	case *ComparisonContext:
+	case *grammar.ComparisonContext:
 		return v.VisitComparison(t)
-	case *InClauseContext:
+	case *grammar.InClauseContext:
 		return v.VisitInClause(t)
-	case *NotInClauseContext:
+	case *grammar.NotInClauseContext:
 		return v.VisitNotInClause(t)
-	case *ValueListContext:
+	case *grammar.ValueListContext:
 		return v.VisitValueList(t)
-	case *FullTextContext:
+	case *grammar.FullTextContext:
 		return v.VisitFullText(t)
-	case *FunctionCallContext:
+	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
-	case *FunctionParamListContext:
+	case *grammar.FunctionParamListContext:
 		return v.VisitFunctionParamList(t)
-	case *FunctionParamContext:
+	case *grammar.FunctionParamContext:
 		return v.VisitFunctionParam(t)
-	case *ArrayContext:
+	case *grammar.ArrayContext:
 		return v.VisitArray(t)
-	case *ValueContext:
+	case *grammar.ValueContext:
 		return v.VisitValue(t)
-	case *KeyContext:
+	case *grammar.KeyContext:
 		return v.VisitKey(t)
 	default:
 		return ""
 	}
 }
 
-func (v *WhereClauseVisitor) VisitQuery(ctx *QueryContext) any {
+func (v *whereClauseVisitor) VisitQuery(ctx *grammar.QueryContext) any {
 
 	return v.Visit(ctx.Expression())
 }
 
 // VisitExpression passes through to the orExpression
-func (v *WhereClauseVisitor) VisitExpression(ctx *ExpressionContext) any {
+func (v *whereClauseVisitor) VisitExpression(ctx *grammar.ExpressionContext) any {
 	return v.Visit(ctx.OrExpression())
 }
 
 // VisitOrExpression handles OR expressions
-func (v *WhereClauseVisitor) VisitOrExpression(ctx *OrExpressionContext) any {
+func (v *whereClauseVisitor) VisitOrExpression(ctx *grammar.OrExpressionContext) any {
 	andExpressions := ctx.AllAndExpression()
 
 	andExpressionConditions := make([]string, len(andExpressions))
@@ -214,7 +214,7 @@ func (v *WhereClauseVisitor) VisitOrExpression(ctx *OrExpressionContext) any {
 }
 
 // VisitAndExpression handles AND expressions
-func (v *WhereClauseVisitor) VisitAndExpression(ctx *AndExpressionContext) any {
+func (v *whereClauseVisitor) VisitAndExpression(ctx *grammar.AndExpressionContext) any {
 	unaryExpressions := ctx.AllUnaryExpression()
 
 	unaryExpressionConditions := make([]string, len(unaryExpressions))
@@ -230,7 +230,7 @@ func (v *WhereClauseVisitor) VisitAndExpression(ctx *AndExpressionContext) any {
 }
 
 // VisitUnaryExpression handles NOT expressions
-func (v *WhereClauseVisitor) VisitUnaryExpression(ctx *UnaryExpressionContext) any {
+func (v *whereClauseVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpressionContext) any {
 	result := v.Visit(ctx.Primary()).(string)
 
 	// Check if this is a NOT expression
@@ -242,7 +242,7 @@ func (v *WhereClauseVisitor) VisitUnaryExpression(ctx *UnaryExpressionContext) a
 }
 
 // VisitPrimary handles grouped expressions, comparisons, function calls, and full-text search
-func (v *WhereClauseVisitor) VisitPrimary(ctx *PrimaryContext) any {
+func (v *whereClauseVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.OrExpression() != nil {
 		// This is a parenthesized expression
 		return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
@@ -257,10 +257,10 @@ func (v *WhereClauseVisitor) VisitPrimary(ctx *PrimaryContext) any {
 	// Handle standalone key as a full text search term
 	if ctx.GetChildCount() == 1 {
 		child := ctx.GetChild(0)
-		if keyCtx, ok := child.(*KeyContext); ok {
+		if keyCtx, ok := child.(*grammar.KeyContext); ok {
 			// create a full text search condition on the body field
 			keyText := keyCtx.GetText()
-			cond, err := v.conditionBuilder.GetCondition(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, keyText, v.builder)
+			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, keyText, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -272,7 +272,7 @@ func (v *WhereClauseVisitor) VisitPrimary(ctx *PrimaryContext) any {
 }
 
 // VisitComparison handles all comparison operators
-func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
+func (v *whereClauseVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	keys := v.Visit(ctx.Key()).([]*telemetrytypes.TelemetryFieldKey)
 
 	// Handle EXISTS specially
@@ -283,7 +283,7 @@ func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.GetCondition(context.Background(), key, op, nil, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -301,7 +301,7 @@ func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.GetCondition(context.Background(), key, op, values, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, values, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -327,7 +327,7 @@ func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.GetCondition(context.Background(), key, op, []any{value1, value2}, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, []any{value1, value2}, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -376,7 +376,7 @@ func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.GetCondition(context.Background(), key, op, value, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, value, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -389,17 +389,17 @@ func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
 }
 
 // VisitInClause handles IN expressions
-func (v *WhereClauseVisitor) VisitInClause(ctx *InClauseContext) any {
+func (v *whereClauseVisitor) VisitInClause(ctx *grammar.InClauseContext) any {
 	return v.Visit(ctx.ValueList())
 }
 
 // VisitNotInClause handles NOT IN expressions
-func (v *WhereClauseVisitor) VisitNotInClause(ctx *NotInClauseContext) any {
+func (v *whereClauseVisitor) VisitNotInClause(ctx *grammar.NotInClauseContext) any {
 	return v.Visit(ctx.ValueList())
 }
 
 // VisitValueList handles comma-separated value lists
-func (v *WhereClauseVisitor) VisitValueList(ctx *ValueListContext) any {
+func (v *whereClauseVisitor) VisitValueList(ctx *grammar.ValueListContext) any {
 	values := ctx.AllValue()
 
 	parts := []any{}
@@ -411,10 +411,10 @@ func (v *WhereClauseVisitor) VisitValueList(ctx *ValueListContext) any {
 }
 
 // VisitFullText handles standalone quoted strings for full-text search
-func (v *WhereClauseVisitor) VisitFullText(ctx *FullTextContext) any {
+func (v *whereClauseVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
 	// remove quotes from the quotedText
 	quotedText := strings.Trim(ctx.QUOTED_TEXT().GetText(), "\"'")
-	cond, err := v.conditionBuilder.GetCondition(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, quotedText, v.builder)
+	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, quotedText, v.builder)
 	if err != nil {
 		return ""
 	}
@@ -422,7 +422,7 @@ func (v *WhereClauseVisitor) VisitFullText(ctx *FullTextContext) any {
 }
 
 // VisitFunctionCall handles function calls like has(), hasAny(), etc.
-func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
+func (v *whereClauseVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
 	// Get function name based on which token is present
 	var functionName string
 	if ctx.HAS() != nil {
@@ -471,7 +471,7 @@ func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
 		if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
 			fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
 		} else {
-			fieldName, _ = v.fieldMapper.GetTableFieldName(context.Background(), key)
+			fieldName, _ = v.fieldMapper.FieldFor(context.Background(), key)
 		}
 
 		var cond string
@@ -491,7 +491,7 @@ func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
 }
 
 // VisitFunctionParamList handles the parameter list for function calls
-func (v *WhereClauseVisitor) VisitFunctionParamList(ctx *FunctionParamListContext) any {
+func (v *whereClauseVisitor) VisitFunctionParamList(ctx *grammar.FunctionParamListContext) any {
 	params := ctx.AllFunctionParam()
 	parts := make([]any, len(params))
 
@@ -503,7 +503,7 @@ func (v *WhereClauseVisitor) VisitFunctionParamList(ctx *FunctionParamListContex
 }
 
 // VisitFunctionParam handles individual parameters in function calls
-func (v *WhereClauseVisitor) VisitFunctionParam(ctx *FunctionParamContext) any {
+func (v *whereClauseVisitor) VisitFunctionParam(ctx *grammar.FunctionParamContext) any {
 	if ctx.Key() != nil {
 		return v.Visit(ctx.Key())
 	} else if ctx.Value() != nil {
@@ -516,12 +516,12 @@ func (v *WhereClauseVisitor) VisitFunctionParam(ctx *FunctionParamContext) any {
 }
 
 // VisitArray handles array literals
-func (v *WhereClauseVisitor) VisitArray(ctx *ArrayContext) any {
+func (v *whereClauseVisitor) VisitArray(ctx *grammar.ArrayContext) any {
 	return v.Visit(ctx.ValueList())
 }
 
 // VisitValue handles literal values: strings, numbers, booleans
-func (v *WhereClauseVisitor) VisitValue(ctx *ValueContext) any {
+func (v *whereClauseVisitor) VisitValue(ctx *grammar.ValueContext) any {
 	if ctx.QUOTED_TEXT() != nil {
 		txt := ctx.QUOTED_TEXT().GetText()
 		// trim quotes and return the value
@@ -554,7 +554,7 @@ func (v *WhereClauseVisitor) VisitValue(ctx *ValueContext) any {
 }
 
 // VisitKey handles field/column references
-func (v *WhereClauseVisitor) VisitKey(ctx *KeyContext) any {
+func (v *whereClauseVisitor) VisitKey(ctx *grammar.KeyContext) any {
 
 	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(ctx.KEY().GetText())
 

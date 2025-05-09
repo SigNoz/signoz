@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	parser "github.com/SigNoz/signoz/pkg/parser/grammar"
+	"github.com/SigNoz/signoz/pkg/queryfilter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 	"go.uber.org/zap"
@@ -32,6 +33,10 @@ type telemetryMetaStore struct {
 	logsV2TblName          string
 	relatedMetadataDBName  string
 	relatedMetadataTblName string
+
+	fm               qbtypes.FieldMapper
+	conditionBuilder qbtypes.ConditionBuilder
+	compiler         qbtypes.Compiler
 }
 
 func NewTelemetryMetaStore(
@@ -47,8 +52,8 @@ func NewTelemetryMetaStore(
 	relatedMetadataDBName string,
 	relatedMetadataTblName string,
 ) telemetrytypes.MetadataStore {
-	return &telemetryMetaStore{
 
+	t := &telemetryMetaStore{
 		telemetrystore:         telemetrystore,
 		tracesDBName:           tracesDBName,
 		tracesFieldsTblName:    tracesFieldsTblName,
@@ -61,6 +66,21 @@ func NewTelemetryMetaStore(
 		relatedMetadataDBName:  relatedMetadataDBName,
 		relatedMetadataTblName: relatedMetadataTblName,
 	}
+
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+
+	compiler := queryfilter.NewCompiler(queryfilter.CompilerOptions{
+		MetadataStore:    t,
+		FieldMapper:      fm,
+		ConditionBuilder: conditionBuilder,
+	})
+
+	t.fm = fm
+	t.conditionBuilder = conditionBuilder
+	t.compiler = compiler
+
+	return t
 }
 
 // tracesTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the traces table
@@ -522,18 +542,18 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		FieldDataType: fieldValueSelector.FieldDataType,
 	}
 
-	selectColumn, err := DefaultFieldMapper.GetTableFieldName(ctx, &key)
+	selectColumn, err := t.fm.FieldFor(ctx, &key)
 
 	if err != nil {
 		// we don't have a explicit column to select from the related metadata table
 		// so we will select either from resource_attributes or attributes table
 		// in that order
-		resourceColumn, _ := DefaultFieldMapper.GetTableFieldName(ctx, &telemetrytypes.TelemetryFieldKey{
+		resourceColumn, _ := t.fm.FieldFor(ctx, &telemetrytypes.TelemetryFieldKey{
 			Name:          key.Name,
 			FieldContext:  telemetrytypes.FieldContextResource,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		})
-		attributeColumn, _ := DefaultFieldMapper.GetTableFieldName(ctx, &telemetrytypes.TelemetryFieldKey{
+		attributeColumn, _ := t.fm.FieldFor(ctx, &telemetrytypes.TelemetryFieldKey{
 			Name:          key.Name,
 			FieldContext:  telemetrytypes.FieldContextAttribute,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
@@ -544,29 +564,11 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 	sb := sqlbuilder.Select("DISTINCT " + selectColumn).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
 
 	if len(fieldValueSelector.ExistingQuery) != 0 {
-		keysSelectors, err := parser.QueryStringToKeysSelectors(fieldValueSelector.ExistingQuery)
-
+		whereClause, _, err := t.compiler.Compile(ctx, fieldValueSelector.ExistingQuery)
 		if err == nil {
-			for idx := range keysSelectors {
-				keysSelectors[idx].Signal = fieldValueSelector.Signal
-			}
-			keys, err := t.GetKeysMulti(ctx, keysSelectors)
-			if err == nil {
-				whereClause, _, err := parser.PrepareWhereClause(
-					fieldValueSelector.ExistingQuery,
-					keys,
-					DefaultFieldMapper,
-					DefaultConditionBuilder,
-					&telemetrytypes.TelemetryFieldKey{},
-					"",
-					nil,
-				)
-				if err == nil {
-					sb.AddWhereClause(whereClause)
-				} else {
-					zap.L().Warn("error parsing existing query for related values", zap.Error(err))
-				}
-			}
+			sb.AddWhereClause(whereClause)
+		} else {
+			zap.L().Warn("error parsing existing query for related values", zap.Error(err))
 		}
 	}
 

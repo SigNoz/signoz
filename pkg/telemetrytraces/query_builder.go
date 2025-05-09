@@ -3,25 +3,44 @@ package telemetrytraces
 import (
 	"context"
 	"fmt"
-	"time"
 
-	parser "github.com/SigNoz/signoz/pkg/parser/grammar"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 )
 
-type traceQueryBuilder struct {
+type TraceQueryBuilderOptions struct {
+	MetadataStore    telemetrytypes.MetadataStore
+	FieldMapper      qbtypes.FieldMapper
+	ConditionBuilder qbtypes.ConditionBuilder
+	Compiler         qbtypes.Compiler
+	AggExprRewriter  qbtypes.AggExprRewriter
 }
 
-var DefaultTraceQueryBuilder = &traceQueryBuilder{}
+type traceQueryBuilder struct {
+	opts            TraceQueryBuilderOptions
+	fm              qbtypes.FieldMapper
+	cb              qbtypes.ConditionBuilder
+	compiler        qbtypes.Compiler
+	aggExprRewriter qbtypes.AggExprRewriter
+}
+
+func NewTraceQueryBuilder(opts TraceQueryBuilderOptions) *traceQueryBuilder {
+	return &traceQueryBuilder{
+		opts:            opts,
+		fm:              opts.FieldMapper,
+		cb:              opts.ConditionBuilder,
+		compiler:        opts.Compiler,
+		aggExprRewriter: opts.AggExprRewriter,
+	}
+}
 
 // BuildQuery builds a SQL query for traces based on the given parameters
 func (b *traceQueryBuilder) BuildQuery(
 	start, end int64,
 	panelType qbv5.PanelType,
 	query *qbv5.QueryBuilderQuery,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
 
 	// Create SQL builder
@@ -29,15 +48,15 @@ func (b *traceQueryBuilder) BuildQuery(
 
 	switch panelType {
 	case qbv5.PanelTypeList:
-		return b.buildListQuery(builder, query, start, end, keys)
+		return b.buildListQuery(builder, query, start, end)
 	case qbv5.PanelTypeLine, qbv5.PanelTypeBar:
-		return b.buildTimeSeriesQuery(builder, query, start, end, query.StepInterval, keys)
+		return b.buildTimeSeriesQuery(builder, query, start, end)
 	case qbv5.PanelTypeTable:
-		return b.buildTableQuery(builder, query, start, end, keys)
+		return b.buildTableQuery(builder, query, start, end)
 	case qbv5.PanelTypeNumber:
-		return b.buildNumberQuery(builder, query, start, end, keys)
+		return b.buildNumberQuery(builder, query, start, end)
 	case qbv5.PanelTypeTrace:
-		return b.buildTraceQuery(builder, query, start, end, keys)
+		return b.buildTraceQuery(builder, query, start, end)
 	default:
 		return "", nil, fmt.Errorf("unsupported panel type: %s", panelType)
 	}
@@ -48,22 +67,23 @@ func (b *traceQueryBuilder) buildListQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query *qbv5.QueryBuilderQuery,
 	start, end int64,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
+
+	keys := map[string][]*telemetrytypes.TelemetryFieldKey{}
 
 	// Select default columns
 	sb.Select(
 		"timestamp",
-		"trace_id AS `Trace ID`",
-		"span_id AS `Span ID`",
-		"name AS `Name`",
-		"resource_string_service$$name AS `Service Name`",
-		"duration_nano/1000000 AS `Duration`",
-		"response_status_code AS `Status Code`",
+		"trace_id",
+		"span_id",
+		"name",
+		"resource_string_service$$name",
+		"duration_nano/1000000",
+		"response_status_code",
 	)
 
 	for _, field := range query.SelectFields {
-		colName, err := DefaultFieldMapper.GetTableColumnExpression(context.Background(), field, keys)
+		colName, err := b.fm.ColumnExpressionFor(context.Background(), field, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -74,7 +94,7 @@ func (b *traceQueryBuilder) buildListQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	err := b.addFilterCondition(sb, start, end, query, keys)
+	err := b.addFilterCondition(sb, start, end, query)
 	if err != nil {
 		return "", nil, err
 	}
@@ -100,18 +120,17 @@ func (b *traceQueryBuilder) buildTimeSeriesQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query *qbv5.QueryBuilderQuery,
 	start, end int64,
-	step time.Duration,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
 
 	allAggChArgs := []any{}
+	keys := map[string][]*telemetrytypes.TelemetryFieldKey{}
 
 	// Select time bucket
-	sb.SelectMore(fmt.Sprintf("toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts", int64(step.Seconds())))
+	sb.SelectMore(fmt.Sprintf("toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts", int64(query.StepInterval.Seconds())))
 
 	// Add group by columns
 	for _, groupBy := range query.GroupBy {
-		colName, err := DefaultFieldMapper.GetTableColumnExpression(context.Background(), &groupBy.TelemetryFieldKey, keys)
+		colName, err := b.fm.ColumnExpressionFor(context.Background(), &groupBy.TelemetryFieldKey, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -120,7 +139,7 @@ func (b *traceQueryBuilder) buildTimeSeriesQuery(
 
 	// Add aggregation
 	for idx, agg := range query.Aggregations {
-		rewritten, chArgs, err := parser.DefaultAggExprRewriter.Rewrite(agg.Expression, keys, nil, DefaultFieldMapper, DefaultConditionBuilder, "", nil)
+		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(context.Background(), agg.Expression)
 		if err != nil {
 			return "", nil, err
 		}
@@ -132,7 +151,7 @@ func (b *traceQueryBuilder) buildTimeSeriesQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	err := b.addFilterCondition(sb, start, end, query, keys)
+	err := b.addFilterCondition(sb, start, end, query)
 	if err != nil {
 		return "", nil, err
 	}
@@ -154,14 +173,14 @@ func (b *traceQueryBuilder) buildTableQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query *qbv5.QueryBuilderQuery,
 	start, end int64,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
 
 	allAggChArgs := []any{}
+	keys := map[string][]*telemetrytypes.TelemetryFieldKey{}
 
 	// Add group by columns
 	for _, groupBy := range query.GroupBy {
-		colName, err := DefaultFieldMapper.GetTableColumnExpression(context.Background(), &groupBy.TelemetryFieldKey, keys)
+		colName, err := b.fm.ColumnExpressionFor(context.Background(), &groupBy.TelemetryFieldKey, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -171,7 +190,7 @@ func (b *traceQueryBuilder) buildTableQuery(
 	// Add aggregation
 	if len(query.Aggregations) > 0 {
 		for idx, agg := range query.Aggregations {
-			rewritten, chArgs, err := parser.DefaultAggExprRewriter.Rewrite(agg.Expression, keys, nil, DefaultFieldMapper, DefaultConditionBuilder, "", nil)
+			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(context.Background(), agg.Expression)
 			if err != nil {
 				return "", nil, err
 			}
@@ -184,7 +203,7 @@ func (b *traceQueryBuilder) buildTableQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	err := b.addFilterCondition(sb, start, end, query, keys)
+	err := b.addFilterCondition(sb, start, end, query)
 	if err != nil {
 		return "", nil, err
 	}
@@ -218,14 +237,13 @@ func (b *traceQueryBuilder) buildNumberQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query *qbv5.QueryBuilderQuery,
 	start, end int64,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
 
 	allAggChArgs := []any{}
 
 	// Add aggregation
 	if len(query.Aggregations) > 0 {
-		rewritten, chArgs, err := parser.DefaultAggExprRewriter.Rewrite(query.Aggregations[0].Expression, keys, nil, DefaultFieldMapper, DefaultConditionBuilder, "", nil)
+		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(context.Background(), query.Aggregations[0].Expression)
 		if err != nil {
 			return "", nil, err
 		}
@@ -237,7 +255,7 @@ func (b *traceQueryBuilder) buildNumberQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	err := b.addFilterCondition(sb, start, end, query, keys)
+	err := b.addFilterCondition(sb, start, end, query)
 	if err != nil {
 		return "", nil, err
 	}
@@ -251,25 +269,17 @@ func (b *traceQueryBuilder) buildTraceQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query *qbv5.QueryBuilderQuery,
 	start, end int64,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
 	return "", nil, nil
 }
 
 // buildFilterCondition builds SQL condition from filter expression
-func (b *traceQueryBuilder) addFilterCondition(sb *sqlbuilder.SelectBuilder, start, end int64, query *qbv5.QueryBuilderQuery, keys map[string][]*telemetrytypes.TelemetryFieldKey) error {
+func (b *traceQueryBuilder) addFilterCondition(sb *sqlbuilder.SelectBuilder, start, end int64, query *qbv5.QueryBuilderQuery) error {
 
 	// add filter expression
 
-	filterWhereClause, warnings, err := parser.PrepareWhereClause(
-		query.Filter.Expression,
-		keys,
-		DefaultFieldMapper,
-		DefaultConditionBuilder,
-		nil,
-		"",
-		nil,
-	)
+	filterWhereClause, warnings, err := b.compiler.Compile(context.Background(), query.Filter.Expression)
+
 	if err != nil {
 		return err
 	}

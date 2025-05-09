@@ -13,24 +13,27 @@ import (
 )
 
 type conditionBuilder struct {
-	fm *defaultFieldMapper
+	fm qbtypes.FieldMapper
 }
 
-var DefaultConditionBuilder = &conditionBuilder{fm: DefaultFieldMapper}
+func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
+	return &conditionBuilder{fm: fm}
+}
 
-func (c *conditionBuilder) GetCondition(
+func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	column, err := c.fm.getColumn(ctx, key)
+
+	column, err := c.fm.ColumnFor(ctx, key)
 	if err != nil {
 		return "", err
 	}
 
-	tblFieldName, err := c.fm.GetTableFieldName(ctx, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, key)
 	if err != nil {
 		return "", err
 	}
