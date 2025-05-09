@@ -6,7 +6,7 @@ import {
 	LoginPrecheckResponse,
 	PayloadProps,
 	Props,
-} from 'types/api/user/loginPrecheck';
+} from 'types/api/login/loginPrecheck';
 
 const precheck = async (
 	props: Props,

@@ -1,7 +1,7 @@
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/user/getLatestVersion';
+import { PayloadProps } from 'types/api/user/version/getLatestVersion';
 
 const getLatestVersion = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse

@@ -2,13 +2,15 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/user/getUserPreference';
+import { PayloadProps, Props } from 'types/api/user/invite/setInvite';
 
-const getPreference = async (): Promise<
-	SuccessResponse<PayloadProps> | ErrorResponse
-> => {
+const sendInvite = async (
+	props: Props,
+): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(`/userPreferences`);
+		const response = await axios.post(`/invite`, {
+			...props,
+		});
 
 		return {
 			statusCode: 200,
@@ -21,4 +23,4 @@ const getPreference = async (): Promise<
 	}
 };
 
-export default getPreference;
+export default sendInvite;

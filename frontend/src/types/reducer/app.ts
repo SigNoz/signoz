@@ -1,5 +1,5 @@
 import { PayloadProps as ConfigPayload } from 'types/api/dynamicConfigs/getDynamicConfigs';
-import { UserResponse } from 'types/api/user/getUser';
+import { UserResponse } from 'types/api/user/crud/getUser';
 
 export interface User {
 	accessJwt: string;

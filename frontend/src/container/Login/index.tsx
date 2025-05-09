@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
-import { LoginPrecheckResponse as PrecheckResultType } from 'types/api/user/loginPrecheck';
+import { LoginPrecheckResponse as PrecheckResultType } from 'types/api/login/loginPrecheck';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
 

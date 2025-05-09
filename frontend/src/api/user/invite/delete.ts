@@ -2,13 +2,13 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/user/getPendingInvites';
+import { PayloadProps, Props } from 'types/api/user/invite/deleteInvite';
 
-const getPendingInvites = async (): Promise<
-	SuccessResponse<PayloadProps> | ErrorResponse
-> => {
+const deleteInvite = async (
+	props: Props,
+): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(`/invite`);
+		const response = await axios.delete(`/invite/${props.id}`);
 
 		return {
 			statusCode: 200,
@@ -21,4 +21,4 @@ const getPendingInvites = async (): Promise<
 	}
 };
 
-export default getPendingInvites;
+export default deleteInvite;

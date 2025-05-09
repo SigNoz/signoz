@@ -1,6 +1,9 @@
 import axios from 'api';
 import { SuccessResponse } from 'types/api';
-import { InviteUsersResponse, UsersProps } from 'types/api/user/inviteUsers';
+import {
+	InviteUsersResponse,
+	UsersProps,
+} from 'types/api/user/invite/inviteUsers';
 
 const inviteUsers = async (
 	users: UsersProps,

@@ -1,8 +1,8 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import deleteInvite from 'api/user/invites/delete';
-import getPendingInvites from 'api/user/invites/getAll';
+import deleteInvite from 'api/user/invite/delete';
+import getPendingInvites from 'api/user/invite/getAll';
 import { ResizeTable } from 'components/ResizeTable';
 import { INVITE_MEMBERS_HASH } from 'constants/app';
 import ROUTES from 'constants/routes';
@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { PayloadProps } from 'types/api/user/getPendingInvites';
+import { PayloadProps } from 'types/api/user/invite/getPendingInvites';
 import { ROLES } from 'types/roles';
 
 import InviteUserModal from '../InviteUserModal/InviteUserModal';

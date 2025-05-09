@@ -3,7 +3,7 @@ import './InviteTeamMembers.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import inviteUsers from 'api/user/invites/createMany';
+import inviteUsers from 'api/user/invite/createMany';
 import { AxiosError } from 'axios';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
 import {
@@ -22,7 +22,7 @@ import {
 	FailedInvite,
 	InviteUsersResponse,
 	SuccessfulInvite,
-} from 'types/api/user/inviteUsers';
+} from 'types/api/user/invite/inviteUsers';
 import { v4 as uuid } from 'uuid';
 
 interface TeamMember {

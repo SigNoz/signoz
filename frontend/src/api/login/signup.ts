@@ -2,8 +2,8 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { LoginPrecheckResponse } from 'types/api/user/loginPrecheck';
-import { Props } from 'types/api/user/signup';
+import { LoginPrecheckResponse } from 'types/api/login/loginPrecheck';
+import { Props } from 'types/api/login/signup';
 
 const signup = async (
 	props: Props,

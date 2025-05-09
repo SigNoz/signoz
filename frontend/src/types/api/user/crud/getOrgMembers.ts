@@ -1,6 +1,6 @@
 import { ROLES } from 'types/roles';
 
-import { Organization } from './getOrganization';
+import { Organization } from '../../organizations/getOrganization';
 
 export interface Props {
 	orgId: Organization['id'];

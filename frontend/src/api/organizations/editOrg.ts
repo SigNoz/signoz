@@ -2,7 +2,7 @@ import { ApiV2Instance as axios } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/user/editOrg';
+import { PayloadProps, Props } from 'types/api/organizations/editOrg';
 
 const editOrg = async (
 	props: Props,

@@ -6,7 +6,7 @@ import {
 	InviteResponse,
 	PayloadProps,
 	Props,
-} from 'types/api/user/getInviteDetails';
+} from 'types/api/user/invite/getInviteDetails';
 
 const getInviteDetails = async (
 	props: Props,

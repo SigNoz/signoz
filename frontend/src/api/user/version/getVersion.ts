@@ -3,7 +3,7 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { getVersion } from 'constants/api';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/user/getVersion';
+import { PayloadProps } from 'types/api/user/version/getVersion';
 
 const getVersionApi = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse

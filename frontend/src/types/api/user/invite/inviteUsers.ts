@@ -1,6 +1,6 @@
 import { User } from 'types/reducer/app';
 
-import { ErrorResponse } from '..';
+import { ErrorResponse } from '../../index';
 
 export interface UserProps {
 	name: User['displayName'];

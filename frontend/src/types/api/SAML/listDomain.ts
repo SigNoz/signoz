@@ -1,4 +1,4 @@
-import { Organization } from '../user/getOrganization';
+import { Organization } from '../organizations/getOrganization';
 
 export interface SAMLConfig {
 	samlEntity: string;

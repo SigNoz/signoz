@@ -2,7 +2,7 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/user/deleteUser';
+import { PayloadProps, Props } from 'types/api/user/crud/deleteUser';
 
 const deleteUser = async (
 	props: Props,
