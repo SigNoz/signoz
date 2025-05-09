@@ -338,7 +338,7 @@ function QueryBuilderSearch({
 
 	const userOs = getUserOperatingSystem();
 
-	// conditional changes here to use a seperate component to render the example queries based on the option group label
+	// conditional changes here to use a separate component to render the example queries based on the option group label
 	const customRendererForLogsExplorer = options.map((option) => (
 		<Select.Option key={option.label} value={option.value}>
 			<OptionRendererForLogs

@@ -228,7 +228,7 @@ function IntegrationDetailHeader(
 						<>
 							<div className="data-info">
 								<Typography.Text className="last-data">
-									Last recieved from
+									Last received from
 								</Typography.Text>
 								<div className="connection-line" />
 								<Tooltip
@@ -243,7 +243,7 @@ function IntegrationDetailHeader(
 							</div>
 							<div className="data-info">
 								<Typography.Text className="last-data">
-									Last recieved at
+									Last received at
 								</Typography.Text>
 								<div className="connection-line" />
 								<Tooltip

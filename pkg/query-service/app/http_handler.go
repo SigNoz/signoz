@@ -4471,7 +4471,7 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 			zap.L().Debug("done!")
 			return
 		case err := <-client.Error:
-			zap.L().Error("error occured", zap.Error(err))
+			zap.L().Error("error occurred", zap.Error(err))
 			return
 		}
 	}

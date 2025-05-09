@@ -269,7 +269,7 @@ export const removeEscapeCharacters = (str: string): string =>
 		.replace(/\\u[0-9A-Fa-f]{4}/g, '')
 		.replace(/\\[btnfrv0'"\\]/g, '');
 
-// we need to remove the escape from the escaped characters as some recievers like file log escape the unicode escape characters.
+// we need to remove the escape from the escaped characters as some receivers like file log escape the unicode escape characters.
 // example: Log [\u001B[32;1mThis is bright green\u001B[0m] is being sent as [\\u001B[32;1mThis is bright green\\u001B[0m]
 //
 // so we need to remove this escapes to render the color properly
