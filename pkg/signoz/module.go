@@ -1,6 +1,7 @@
 package signoz
 
 import (
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -12,11 +13,13 @@ import (
 type Modules struct {
 	Organization organization.Module
 	Preference   preference.Module
+	Dashboard    dashboard.Module
 }
 
 func NewModules(sqlstore sqlstore.SQLStore) Modules {
 	return Modules{
 		Organization: implorganization.NewModule(implorganization.NewStore(sqlstore)),
 		Preference:   implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewDefaultPreferenceMap()),
+		Dashboard:    nil,
 	}
 }

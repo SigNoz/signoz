@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 )
 
 type CloudServiceSummary struct {
@@ -42,7 +43,7 @@ type CloudServiceDashboard struct {
 	Title       string               `json:"title"`
 	Description string               `json:"description"`
 	Image       string               `json:"image"`
-	Definition  *types.DashboardData `json:"definition,omitempty"`
+	Definition  *dashboardtypes.Data `json:"definition,omitempty"`
 }
 
 type SupportedSignals struct {
