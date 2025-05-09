@@ -1,6 +1,5 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
-import { Logout } from 'api/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
 import useGetMeOrg from 'hooks/organizations/UseGetMeOrg';
@@ -58,13 +57,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		null,
 	);
 
-	// if the user.id is not present, for migration older cases then we need to logout only for current logged in users!
-	useEffect(() => {
-		if (!user.id && isLoggedIn) {
-			Logout();
-		}
-	}, [isLoggedIn, user]);
-
 	// fetcher for user
 	// user will only be fetched if the user id and token is present
 	// if logged out and trying to hit any route none of these calls will trigger
@@ -72,7 +64,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		data: userData,
 		isFetching: isFetchingUser,
 		error: userFetchError,
-	} = useGetUser(user.id, isLoggedIn);
+	} = useGetUser(isLoggedIn);
 
 	useEffect(() => {
 		if (!isFetchingUser && userData && userData.data) {
@@ -207,7 +199,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				...prev,
 				accessJwt: event.detail.accessJWT,
 				refreshJwt: event.detail.refreshJWT,
-				id: event.detail.id,
 			}));
 			setIsLoggedIn(true);
 		}

@@ -1,7 +1,7 @@
 import { Button, Form, Modal } from 'antd';
 import { FormInstance } from 'antd/lib';
-import getPendingInvites from 'api/user/getPendingInvites';
-import sendInvite from 'api/user/sendInvite';
+import sendInvite from 'api/user/invites/create';
+import getPendingInvites from 'api/user/invites/getAll';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';

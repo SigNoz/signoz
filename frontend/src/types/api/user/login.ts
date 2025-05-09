@@ -3,7 +3,6 @@ export interface PayloadProps {
 	accessJwtExpiry: number;
 	refreshJwt: string;
 	refreshJwtExpiry: number;
-	user: User;
 }
 
 export interface User {

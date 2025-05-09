@@ -1,9 +1,9 @@
 import { Button, Form, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import loginApi from 'api/login/login';
-import acceptInvite from 'api/user/acceptInvite';
-import getInviteDetails from 'api/user/getInviteDetails';
-import signUpApi from 'api/user/signup';
+import signUpApi from 'api/login/signup';
+import acceptInvite from 'api/user/invites/accept';
+import getInviteDetails from 'api/user/invites/get';
 import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
@@ -127,7 +127,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			});
 
 			const { data } = loginResponse;
-			await afterLogin(data.user.id, data.accessJwt, data.refreshJwt);
+			await afterLogin(data.accessJwt, data.refreshJwt);
 		} catch (error) {
 			notifications.error({
 				description: (error as APIError).error.error.code,
@@ -149,7 +149,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				password,
 			});
 			await afterLogin(
-				loginResponse.data.user.id,
 				loginResponse.data.accessJwt,
 				loginResponse.data.refreshJwt,
 			);

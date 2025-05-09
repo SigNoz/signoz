@@ -83,12 +83,7 @@ export function EventSourceProvider({
 			});
 
 			// Update tokens in local storage
-			afterLogin(
-				response.data.user.id,
-				response.data.accessJwt,
-				response.data.refreshJwt,
-				true,
-			);
+			afterLogin(response.data.accessJwt, response.data.refreshJwt, true);
 
 			// If token refresh was successful, we'll let the component
 			// handle reconnection through the reconnectDueToError state

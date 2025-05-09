@@ -74,12 +74,7 @@ const interceptorRejected = async (
 				const response = await loginApi({
 					refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
 				});
-				afterLogin(
-					response.data.user.id,
-					response.data.accessJwt,
-					response.data.refreshJwt,
-					true,
-				);
+				afterLogin(response.data.accessJwt, response.data.refreshJwt, true);
 
 				const reResponse = await axios(
 					`${value.config.baseURL}${value.config.url?.substring(1)}`,

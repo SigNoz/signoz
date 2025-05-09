@@ -2,8 +2,8 @@ import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import loginApi from 'api/login/login';
-import getUserVersion from 'api/user/getVersion';
-import loginPrecheckApi from 'api/user/loginPrecheck';
+import loginPrecheckApi from 'api/login/loginPrecheck';
+import getUserVersion from 'api/user/version/getVersion';
 import afterLogin from 'AppRoutes/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
@@ -85,7 +85,7 @@ function Login({
 		async function processJwt(): Promise<void> {
 			if (jwt && jwt !== '') {
 				setIsLoading(true);
-				await afterLogin(userId, jwt, refreshjwt);
+				await afterLogin(jwt, refreshjwt);
 				setIsLoading(false);
 				const fromPathname = getLocalStorageApi(
 					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
@@ -165,11 +165,7 @@ function Login({
 				email,
 				password,
 			});
-			afterLogin(
-				response.data.user.id,
-				response.data.accessJwt,
-				response.data.refreshJwt,
-			);
+			afterLogin(response.data.accessJwt, response.data.refreshJwt);
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
