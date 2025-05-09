@@ -5,3 +5,6 @@ public/
 
 # Ignore all MD files:
 **/*.md
+
+# Ignore all JSON files:
+**/*.json
