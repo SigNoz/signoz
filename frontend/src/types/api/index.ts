@@ -30,6 +30,11 @@ export interface ErrorV2 {
 	url: string;
 	errors: AdditionalErrors[];
 }
+
+export interface ErrorV2Resp {
+	error: ErrorV2;
+}
+
 export interface ErrorResponseV2 {
 	httpStatusCode: StatusCodes;
 	error: ErrorV2;
