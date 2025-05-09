@@ -103,6 +103,21 @@
 		}
 
 		.metrics-accordion {
+			.ant-table-body {
+				&::-webkit-scrollbar {
+					width: 2px;
+				}
+
+				&::-webkit-scrollbar-track {
+					background: transparent;
+				}
+
+				&::-webkit-scrollbar-thumb {
+					background: var(--bg-slate-300);
+					border-radius: 1px;
+				}
+			}
+
 			.metrics-accordion-header {
 				display: flex;
 				justify-content: space-between;
@@ -166,8 +181,21 @@
 						display: flex;
 						flex-direction: column;
 						gap: 4px;
-						max-height: 120px;
+						max-height: 220px;
 						overflow-y: scroll;
+						overflow-x: hidden;
+						&::-webkit-scrollbar {
+							width: 2px;
+						}
+
+						&::-webkit-scrollbar-track {
+							background: transparent;
+						}
+
+						&::-webkit-scrollbar-thumb {
+							background: var(--bg-slate-300);
+							border-radius: 1px;
+						}
 						.ant-btn {
 							text-align: left;
 							width: fit-content;
@@ -175,6 +203,7 @@
 							.ant-typography {
 								color: var(--bg-vanilla-400);
 								font-family: 'Geist Mono';
+								text-overflow: ellipsis;
 							}
 							&:hover {
 								background-color: var(--bg-slate-400);
