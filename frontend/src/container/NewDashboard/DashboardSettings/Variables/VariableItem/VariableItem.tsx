@@ -23,12 +23,15 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import {
 	IDashboardVariable,
 	TSortVariableValuesType,
 	TVariableQueryType,
 	VariableSortTypeArr,
 } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
 import { variablePropsToPayloadVariables } from '../../../utils';
@@ -61,7 +64,7 @@ function VariableItem({
 		variableData.description || '',
 	);
 	const [queryType, setQueryType] = useState<TVariableQueryType>(
-		variableData.type || 'QUERY',
+		variableData.type || 'DYNAMIC',
 	);
 	const [variableQueryValue, setVariableQueryValue] = useState<string>(
 		variableData.queryValue || '',
@@ -112,15 +115,24 @@ function VariableItem({
 	const [errorName, setErrorName] = useState<boolean>(false);
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
 
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const { data: fieldValues } = useGetFieldValues({
 		signal:
 			dynamicVariablesSelectedValue?.value === 'All Sources'
 				? undefined
-				: (dynamicVariablesSelectedValue?.value as 'traces' | 'logs' | 'metrics'),
+				: (dynamicVariablesSelectedValue?.value?.toLowerCase() as
+						| 'traces'
+						| 'logs'
+						| 'metrics'),
 		name: dynamicVariablesSelectedValue?.name || '',
 		enabled:
 			!!dynamicVariablesSelectedValue?.name &&
 			!!dynamicVariablesSelectedValue?.value,
+		startUnixMilli: minTime,
+		endUnixMilli: maxTime,
 	});
 
 	useEffect(() => {
@@ -152,7 +164,7 @@ function VariableItem({
 		) {
 			setPreviewValues(
 				sortValues(
-					fieldValues.payload?.values?.stringValues || [],
+					fieldValues.payload?.normalizedValues || [],
 					variableSortType,
 				) as never,
 			);
@@ -533,6 +545,11 @@ function VariableItem({
 							<VariableItemRow className="default-value-section">
 								<LabelContainer>
 									<Typography className="typography-variables">Default Value</Typography>
+									<Typography className="default-value-description">
+										{queryType === 'QUERY'
+											? 'Click Test Run Query to see the values or add custom value'
+											: 'Select a value from the preview values or add custom value'}
+									</Typography>
 								</LabelContainer>
 								<CustomSelect
 									placeholder="Select a default value"
