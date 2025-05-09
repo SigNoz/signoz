@@ -123,6 +123,11 @@ function Summary(): JSX.Element {
 		enabled: !!metricsListQuery && !isInspectModalOpen,
 	});
 
+	const isListViewError = useMemo(
+		() => isMetricsError || (metricsData && metricsData.statusCode !== 200),
+		[isMetricsError, metricsData],
+	);
+
 	const {
 		data: treeMapData,
 		isLoading: isTreeMapLoading,
@@ -131,6 +136,11 @@ function Summary(): JSX.Element {
 	} = useGetMetricsTreeMap(metricsTreemapQuery, {
 		enabled: !!metricsTreemapQuery && !isInspectModalOpen,
 	});
+
+	const isProportionViewError = useMemo(
+		() => isTreeMapError || treeMapData?.statusCode !== 200,
+		[isTreeMapError, treeMapData],
+	);
 
 	const handleFilterChange = useCallback(
 		(value: TagFilter) => {
@@ -208,13 +218,13 @@ function Summary(): JSX.Element {
 				<MetricsTreemap
 					data={treeMapData?.payload}
 					isLoading={isTreeMapLoading || isTreeMapFetching}
-					isError={isTreeMapError}
+					isError={isProportionViewError}
 					viewType={heatmapView}
 					openMetricDetails={openMetricDetails}
 				/>
 				<MetricsTable
 					isLoading={isMetricsLoading || isMetricsFetching}
-					isError={isMetricsError}
+					isError={isListViewError}
 					data={formattedMetricsData}
 					pageSize={pageSize}
 					currentPage={currentPage}

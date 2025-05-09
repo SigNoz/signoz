@@ -2,7 +2,7 @@
 import './Home.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Popover } from 'antd';
+import { Alert, Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
@@ -14,6 +14,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getHostListsQuery } from 'container/InfraMonitoringHosts/utils';
+import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -26,6 +27,7 @@ import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
+import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { DataSource } from 'types/common/queryBuilder';
 import { UserPreference } from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
@@ -289,6 +291,20 @@ export default function Home(): JSX.Element {
 			handleUpdateChecklistDoneItem('SEND_INFRA_METRICS');
 		}
 	}, [hostData, k8sPodsData, handleUpdateChecklistDoneItem]);
+
+	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
+
+	const [isEnabled, setIsEnabled] = useState(false);
+
+	useEffect(() => {
+		if (isFetchingActiveLicenseV3) {
+			setIsEnabled(false);
+			return;
+		}
+		setIsEnabled(Boolean(activeLicenseV3?.platform === LicensePlatform.CLOUD));
+	}, [activeLicenseV3, isFetchingActiveLicenseV3]);
+
+	const { data: deploymentsData } = useGetDeploymentsData(isEnabled);
 
 	useEffect(() => {
 		logEvent('Homepage: Visited', {});
@@ -642,8 +658,34 @@ export default function Home(): JSX.Element {
 						</>
 					)}
 				</div>
-
 				<div className="home-right-content">
+					{deploymentsData?.data?.data?.cluster?.region?.name === 'in' && (
+						<div className="home-notifications-container">
+							<div className="notification">
+								<Alert
+									message={
+										<>
+											We&apos;re updating our metric ingestion processing pipeline.
+											Currently, metric names and labels are normalized to replace dots and
+											other special characters with underscores (_). This restriction will
+											soon be removed. Learn more{' '}
+											<a
+												href="https://signoz.io/guides/metrics-migration-cloud-users"
+												target="_blank"
+												rel="noopener noreferrer"
+											>
+												here
+											</a>
+											.
+										</>
+									}
+									type="warning"
+									showIcon
+								/>
+							</div>
+						</div>
+					)}
+
 					{!isWelcomeChecklistSkipped && !loadingUserPreferences && (
 						<AnimatePresence initial={false}>
 							<Card className="checklist-card">
