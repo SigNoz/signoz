@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
 
-import AllAttributes from '../AllAttributes';
 import { MetricDetailsAttribute } from '../../../../api/metricsExplorer/getMetricDetails';
 import ROUTES from '../../../../constants/routes';
-import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
+import AllAttributes from '../AllAttributes';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
