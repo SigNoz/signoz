@@ -71,12 +71,20 @@ func (m *Module) GetUsersByEmail(ctx context.Context, email string) ([]*types.Us
 	return m.store.GetUsersByEmail(ctx, email)
 }
 
+func (m *Module) GetUsersByRoleInOrg(ctx context.Context, orgID string, role types.Role) ([]*types.User, error) {
+	return m.store.GetUsersByRoleInOrg(ctx, orgID, role)
+}
+
 func (m *Module) ListUsers(ctx context.Context, orgID string) ([]*types.User, error) {
 	return m.store.ListUsers(ctx, orgID)
 }
 
 func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error) {
 	return m.store.UpdateUser(ctx, orgID, id, user)
+}
+
+func (m *Module) UpdateUserRole(ctx context.Context, orgID string, id string, role types.Role) (*types.User, error) {
+	return m.store.UpdateUserRole(ctx, orgID, id, role)
 }
 
 func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error {

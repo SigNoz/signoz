@@ -33,8 +33,10 @@ type UserStore interface {
 	GetUserByID(ctx context.Context, orgID string, id string) (*User, error)
 	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*User, error)
 	GetUsersByEmail(ctx context.Context, email string) ([]*User, error)
+	GetUsersByRoleInOrg(ctx context.Context, orgID string, role Role) ([]*User, error)
 	ListUsers(ctx context.Context, orgID string) ([]*User, error)
 	UpdateUser(ctx context.Context, orgID string, id string, user *User) (*User, error)
+	UpdateUserRole(ctx context.Context, orgID string, id string, role Role) (*User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
 	// password

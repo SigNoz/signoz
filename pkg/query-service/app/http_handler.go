@@ -602,6 +602,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.UpdateUser)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteUser)).Methods(http.MethodDelete)
 
+	router.HandleFunc("/api/v1/rbac/role/{id}", am.AdminAccess(aH.Signoz.Handlers.User.UpdateUserRole)).Methods(http.MethodPut)
+
 	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Get)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Update)).Methods(http.MethodPut)
 
