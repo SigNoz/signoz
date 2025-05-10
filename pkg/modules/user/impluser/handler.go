@@ -546,3 +546,59 @@ func (h *handler) GetCurrentUserFromJWT(w http.ResponseWriter, r *http.Request) 
 	render.Success(w, http.StatusOK, user)
 
 }
+
+func (h *handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	id := mux.Vars(r)["id"]
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	var req types.PostableEditUserRole
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	role, err := types.NewRole(req.GroupName)
+	if err != nil {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid role"))
+		return
+	}
+
+	user, err := h.module.GetUserByID(ctx, claims.OrgID, id)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	if user == nil {
+		render.Error(w, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found"))
+		return
+	}
+
+	// Make sure that the request is not demoting the last admin user.
+	if user.Role == types.RoleAdmin.String() {
+		adminUsers, err := h.module.GetUsersByRoleInOrg(ctx, claims.OrgID, types.RoleAdmin)
+		if err != nil {
+			render.Error(w, err)
+			return
+		}
+
+		if len(adminUsers) == 1 {
+			render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "cannot demote the last admin"))
+			return
+		}
+	}
+
+	_, err = h.module.UpdateUserRole(ctx, claims.OrgID, user.ID.String(), role)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	render.Success(w, http.StatusAccepted, nil)
+}

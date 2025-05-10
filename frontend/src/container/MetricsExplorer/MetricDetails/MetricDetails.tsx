@@ -16,6 +16,9 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass, Crosshair, X } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 
+import { PANEL_TYPES } from '../../../constants/queryBuilder';
+import ROUTES from '../../../constants/routes';
+import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
 import { isInspectEnabled } from '../Inspect/utils';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import AllAttributes from './AllAttributes';
@@ -27,9 +30,6 @@ import {
 	formatTimestampToReadableDate,
 	getMetricDetailsQuery,
 } from './utils';
-import { PANEL_TYPES } from '../../../constants/queryBuilder';
-import ROUTES from '../../../constants/routes';
-import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
 
 function MetricDetails({
 	onClose,

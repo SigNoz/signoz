@@ -480,24 +480,6 @@ func parseSetApdexScoreRequest(r *http.Request) (*types.ApdexSettings, error) {
 	return &req, nil
 }
 
-func parseUserRoleRequest(r *http.Request) (*model.UserRole, error) {
-	var req model.UserRole
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseEditOrgRequest(r *http.Request) (*types.Organization, error) {
-	var req types.Organization
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
 func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequest, error) {
 	var req v3.AggregateAttributeRequest
 
