@@ -118,7 +118,7 @@ describe('BillingContainer', () => {
 		expect(onTrail).toBeInTheDocument();
 
 		const receivedCardDetails = await screen.findByText(
-			/card_details_recieved_and_billing_info/i,
+			/card_details_received_and_billing_info/i,
 		);
 		expect(receivedCardDetails).toBeInTheDocument();
 

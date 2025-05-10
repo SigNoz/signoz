@@ -2,7 +2,7 @@
 
 - Add otel collector binary to your VM by following this [guide](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/).
 
-- Add the filelog reciever to `config.yaml`.
+- Add the filelog receiver to `config.yaml`.
 
   ```yaml {3-15}
   receivers:

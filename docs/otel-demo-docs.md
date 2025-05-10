@@ -16,7 +16,7 @@ __Table of Contents__
   - [Prerequisites](#prerequisites-1)
   - [Install Helm Repo and Charts](#install-helm-repo-and-charts)
   - [Start the OpenTelemetry Demo App](#start-the-opentelemetry-demo-app-1)
-  - [Moniitor with SigNoz (Kubernetes)](#monitor-with-signoz-kubernetes)
+  - [Monitor with SigNoz (Kubernetes)](#monitor-with-signoz-kubernetes)
 - [What's next](#whats-next)
 
 

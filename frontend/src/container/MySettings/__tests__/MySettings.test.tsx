@@ -65,7 +65,7 @@ describe('MySettings Flows', () => {
 			expect(newThemeOption).toBeChecked();
 		});
 
-		it('Should switch the them on clicking Light theme', async () => {
+		it('Should switch the theme on clicking Light theme', async () => {
 			const lightThemeOption = screen.getByRole('radio', {
 				name: /light/i,
 			});

@@ -8,7 +8,7 @@ export const GET_SERVICE_LIST_ERROR = 'GET_SERVICE_LIST_ERROR';
 export const GET_INITIAL_APPLICATION_LOADING =
 	'GET_INITIAL_APPLICATION_LOADING';
 export const GET_INITIAL_APPLICATION_ERROR = 'GET_INITIAL_APPLICATION_ERROR';
-export const GET_INTIAL_APPLICATION_DATA = 'GET_INTIAL_APPLICATION_DATA';
+export const GET_INITIAL_APPLICATION_DATA = 'GET_INITIAL_APPLICATION_DATA';
 export const RESET_INITIAL_APPLICATION_DATA = 'RESET_INITIAL_APPLICATION_DATA';
 
 export interface GetServiceList {
@@ -30,7 +30,7 @@ export interface GetServiceListError {
 }
 
 export interface GetInitialApplicationData {
-	type: typeof GET_INTIAL_APPLICATION_DATA;
+	type: typeof GET_INITIAL_APPLICATION_DATA;
 	payload: {
 		topOperations: TopOperationList[];
 		// dbOverView: DBOverView[];

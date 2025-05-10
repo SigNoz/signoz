@@ -22,7 +22,7 @@ import { PlannedDowntimeDeleteModal } from './PlannedDowntimeDeleteModal';
 import { PlannedDowntimeForm } from './PlannedDowntimeForm';
 import { PlannedDowntimeList } from './PlannedDowntimeList';
 import {
-	defautlInitialValues,
+	defaultInitialValues,
 	deleteDowntimeHandler,
 } from './PlannedDowntimeutils';
 
@@ -39,7 +39,7 @@ export function PlannedDowntime(): JSX.Element {
 
 	const [initialValues, setInitialValues] = useState<
 		Partial<DowntimeSchedules & { editMode: boolean }>
-	>(defautlInitialValues);
+	>(defaultInitialValues);
 
 	const downtimeSchedules = useGetAllDowntimeSchedules();
 	const alertOptions = React.useMemo(
@@ -122,7 +122,7 @@ export function PlannedDowntime(): JSX.Element {
 							icon={<PlusOutlined />}
 							type="primary"
 							onClick={(): void => {
-								setInitialValues({ ...defautlInitialValues, editMode: false });
+								setInitialValues({ ...defaultInitialValues, editMode: false });
 								setIsOpen(true);
 								setEditMode(false);
 								form.resetFields();

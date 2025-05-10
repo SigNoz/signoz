@@ -545,7 +545,7 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/alerts/edit': '/alerts/overview',
 };
 
-export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [
+export const ROUTES_NOT_TO_BE_OVERRIDDEN: string[] = [
 	ROUTES.WORKSPACE_LOCKED,
 	ROUTES.WORKSPACE_SUSPENDED,
 ];
