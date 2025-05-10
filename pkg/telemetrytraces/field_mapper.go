@@ -123,11 +123,12 @@ var (
 
 type defaultFieldMapper struct{}
 
-func NewFieldMapper() qbtypes.FieldMapper {
+var _ qbtypes.FieldMapper = (*defaultFieldMapper)(nil)
+
+func NewFieldMapper() *defaultFieldMapper {
 	return &defaultFieldMapper{}
 }
 
-// getColumn is an unexported helper to look up the raw schema.Column
 func (m *defaultFieldMapper) getColumn(
 	_ context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -164,8 +165,8 @@ func (m *defaultFieldMapper) ColumnFor(
 	return m.getColumn(ctx, key)
 }
 
-// GetTableFieldName implements FieldMapper.
-// It uses getColumn + the column.Type to emit correct SQL reference.
+// FieldFor returns the table field name for the given key if it exists
+// otherwise it returns qbtypes.ErrColumnNotFound
 func (m *defaultFieldMapper) FieldFor(
 	ctx context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -218,6 +219,8 @@ func (m *defaultFieldMapper) FieldFor(
 	return column.Name, nil
 }
 
+// ColumnExpressionFor returns the column expression for the given field
+// if it exists otherwise it returns qbtypes.ErrColumnNotFound
 func (m *defaultFieldMapper) ColumnExpressionFor(
 	ctx context.Context,
 	field *telemetrytypes.TelemetryFieldKey,

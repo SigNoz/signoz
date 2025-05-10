@@ -37,14 +37,14 @@ type Compiler interface {
 }
 
 type AggExprRewriter interface {
-	// Rewrite rewrites the aggregation expression.
+	// Rewrite rewrites the aggregation expression to be used in the query.
 	Rewrite(ctx context.Context, expr string) (string, []any, error)
 }
 
 // StatementBuilder builds the query.
 type StatementBuilder interface {
-	// BuildQuery builds the query.
-	BuildQuery(ctx context.Context, query *QueryBuilderQuery) (string, []any, error)
+	// Build builds the query.
+	Build(ctx context.Context, query any) (string, []any, error)
 }
 
 // QueryBuilder is the interface for building the query.

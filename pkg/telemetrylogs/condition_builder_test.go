@@ -295,10 +295,13 @@ func TestGetCondition(t *testing.T) {
 		},
 	}
 
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := DefaultConditionBuilder.GetCondition(ctx, &tc.key, tc.operator, tc.value, sb)
+			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {
@@ -342,12 +345,15 @@ func TestGetConditionMultiple(t *testing.T) {
 		},
 	}
 
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-				cond, err := DefaultConditionBuilder.GetCondition(ctx, key, tc.operator, tc.value, sb)
+				cond, err := conditionBuilder.ConditionFor(ctx, key, tc.operator, tc.value, sb)
 				sb.Where(cond)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -538,10 +544,13 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 		},
 	}
 
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := DefaultConditionBuilder.GetCondition(ctx, &tc.key, tc.operator, tc.value, sb)
+			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

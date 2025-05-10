@@ -196,10 +196,13 @@ func TestGetCondition(t *testing.T) {
 		},
 	}
 
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := DefaultConditionBuilder.GetCondition(ctx, &tc.key, tc.operator, tc.value, sb)
+			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

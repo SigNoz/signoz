@@ -14,6 +14,8 @@ type conditionBuilder struct {
 	fm qbtypes.FieldMapper
 }
 
+var _ qbtypes.ConditionBuilder = (*conditionBuilder)(nil)
+
 func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 	return &conditionBuilder{fm: fm}
 }

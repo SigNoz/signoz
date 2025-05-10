@@ -4,30 +4,31 @@ import (
 	"context"
 	"fmt"
 
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 )
 
-type TraceQueryBuilderOptions struct {
+type TraceQueryStatementBuilderOptions struct {
 	MetadataStore    telemetrytypes.MetadataStore
-	FieldMapper      qbtypes.FieldMapper
-	ConditionBuilder qbtypes.ConditionBuilder
-	Compiler         qbtypes.Compiler
-	AggExprRewriter  qbtypes.AggExprRewriter
+	FieldMapper      qbv5.FieldMapper
+	ConditionBuilder qbv5.ConditionBuilder
+	Compiler         qbv5.Compiler
+	AggExprRewriter  qbv5.AggExprRewriter
 }
 
-type traceQueryBuilder struct {
-	opts            TraceQueryBuilderOptions
-	fm              qbtypes.FieldMapper
-	cb              qbtypes.ConditionBuilder
-	compiler        qbtypes.Compiler
-	aggExprRewriter qbtypes.AggExprRewriter
+type traceQueryStatementBuilder struct {
+	opts            TraceQueryStatementBuilderOptions
+	fm              qbv5.FieldMapper
+	cb              qbv5.ConditionBuilder
+	compiler        qbv5.Compiler
+	aggExprRewriter qbv5.AggExprRewriter
 }
 
-func NewTraceQueryBuilder(opts TraceQueryBuilderOptions) *traceQueryBuilder {
-	return &traceQueryBuilder{
+var _ qbv5.StatementBuilder = (*traceQueryStatementBuilder)(nil)
+
+func NewTraceQueryStatementBuilder(opts TraceQueryStatementBuilderOptions) *traceQueryStatementBuilder {
+	return &traceQueryStatementBuilder{
 		opts:            opts,
 		fm:              opts.FieldMapper,
 		cb:              opts.ConditionBuilder,
@@ -36,11 +37,10 @@ func NewTraceQueryBuilder(opts TraceQueryBuilderOptions) *traceQueryBuilder {
 	}
 }
 
-// BuildQuery builds a SQL query for traces based on the given parameters
-func (b *traceQueryBuilder) BuildQuery(
-	start, end int64,
-	panelType qbv5.PanelType,
-	query *qbv5.QueryBuilderQuery,
+// Build builds a SQL query for traces based on the given parameters
+func (b *traceQueryStatementBuilder) Build(
+	ctx context.Context,
+	query any,
 ) (string, []any, error) {
 
 	// Create SQL builder
@@ -63,7 +63,7 @@ func (b *traceQueryBuilder) BuildQuery(
 }
 
 // buildListQuery builds a query for list panel type
-func (b *traceQueryBuilder) buildListQuery(
+func (b *traceQueryStatementBuilder) buildListQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query *qbv5.QueryBuilderQuery,
 	start, end int64,
@@ -116,7 +116,7 @@ func (b *traceQueryBuilder) buildListQuery(
 }
 
 // buildTimeSeriesQuery builds a query for time series panel types
-func (b *traceQueryBuilder) buildTimeSeriesQuery(
+func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query *qbv5.QueryBuilderQuery,
 	start, end int64,
@@ -169,7 +169,7 @@ func (b *traceQueryBuilder) buildTimeSeriesQuery(
 }
 
 // buildTableQuery builds a query for table panel type
-func (b *traceQueryBuilder) buildTableQuery(
+func (b *traceQueryStatementBuilder) buildTableQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query *qbv5.QueryBuilderQuery,
 	start, end int64,
@@ -233,7 +233,7 @@ func (b *traceQueryBuilder) buildTableQuery(
 }
 
 // buildNumberQuery builds a query for number panel type
-func (b *traceQueryBuilder) buildNumberQuery(
+func (b *traceQueryStatementBuilder) buildNumberQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query *qbv5.QueryBuilderQuery,
 	start, end int64,
@@ -265,7 +265,7 @@ func (b *traceQueryBuilder) buildNumberQuery(
 }
 
 // buildTraceQuery builds a query for trace panel type
-func (b *traceQueryBuilder) buildTraceQuery(
+func (b *traceQueryStatementBuilder) buildTraceQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query *qbv5.QueryBuilderQuery,
 	start, end int64,
@@ -274,7 +274,7 @@ func (b *traceQueryBuilder) buildTraceQuery(
 }
 
 // buildFilterCondition builds SQL condition from filter expression
-func (b *traceQueryBuilder) addFilterCondition(sb *sqlbuilder.SelectBuilder, start, end int64, query *qbv5.QueryBuilderQuery) error {
+func (b *traceQueryStatementBuilder) addFilterCondition(sb *sqlbuilder.SelectBuilder, start, end int64, query *qbv5.QueryBuilderQuery) error {
 
 	// add filter expression
 
