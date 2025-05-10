@@ -97,6 +97,19 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 
+	const isLogsQuery = currentQuery.builder.queryData.every(
+		(query) => query.dataSource === DataSource.LOGS,
+	);
+
+	const customGlobalSelectedInterval = useMemo(
+		() =>
+			// custom selected time interval for list panel to prevent recalculating the start and end timestamps before fetching next / prev pages
+			selectedGraph === PANEL_TYPES.LIST && isLogsQuery
+				? 'custom'
+				: globalSelectedInterval,
+		[selectedGraph, globalSelectedInterval, isLogsQuery],
+	);
+
 	const { widgets = [] } = selectedDashboard?.data || {};
 
 	const query = useUrlQuery();
@@ -329,7 +342,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					query: updatedQuery,
 					graphType: PANEL_TYPES.LIST,
 					selectedTime: selectedTime.enum || 'GLOBAL_TIME',
-					globalSelectedInterval,
+					globalSelectedInterval: customGlobalSelectedInterval,
 					variables: getDashboardVariables(selectedDashboard?.data.variables),
 					tableParams: {
 						pagination: {
@@ -343,7 +356,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				selectedTime: selectedWidget?.timePreferance,
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery || initialQueriesMap.metrics,
-				globalSelectedInterval,
+				globalSelectedInterval: customGlobalSelectedInterval,
 				formatForWeb:
 					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
@@ -359,7 +372,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			query: updatedQuery,
 			graphType: selectedGraph,
 			selectedTime: selectedTime.enum || 'GLOBAL_TIME',
-			globalSelectedInterval,
+			globalSelectedInterval: customGlobalSelectedInterval,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		};
 	});
@@ -370,7 +383,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			setRequestData((prev) => ({
 				...prev,
 				selectedTime: selectedTime.enum || prev.selectedTime,
-				globalSelectedInterval,
+				globalSelectedInterval: customGlobalSelectedInterval,
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
