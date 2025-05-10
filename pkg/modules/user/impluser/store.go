@@ -192,6 +192,7 @@ func (s *Store) UpdateUser(ctx context.Context, orgID string, id string, user *t
 	_, err := s.sqlstore.BunDB().NewUpdate().
 		Model(user).
 		Column("display_name").
+		Column("role").
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
@@ -199,19 +200,6 @@ func (s *Store) UpdateUser(ctx context.Context, orgID string, id string, user *t
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrUserNotFound, "user with id: %s does not exist in org: %s", id, orgID)
 	}
 	return user, nil
-}
-
-func (s *Store) UpdateUserRole(ctx context.Context, orgID string, id string, role types.Role) (*types.User, error) {
-	_, err := s.sqlstore.BunDB().NewUpdate().
-		Model(new(types.User)).
-		Set("role = ?", role).
-		Where("id = ?", id).
-		Where("org_id = ?", orgID).
-		Exec(ctx)
-	if err != nil {
-		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrUserNotFound, "user with id: %s does not exist in org: %s", id, orgID)
-	}
-	return &types.User{Role: role.String()}, nil
 }
 
 func (s *Store) ListUsers(ctx context.Context, orgID string) ([]*types.User, error) {

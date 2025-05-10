@@ -36,7 +36,6 @@ type UserStore interface {
 	GetUsersByRoleInOrg(ctx context.Context, orgID string, role Role) ([]*User, error)
 	ListUsers(ctx context.Context, orgID string) ([]*User, error)
 	UpdateUser(ctx context.Context, orgID string, id string, user *User) (*User, error)
-	UpdateUserRole(ctx context.Context, orgID string, id string, role Role) (*User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
 	// password
