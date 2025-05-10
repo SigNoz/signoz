@@ -11,7 +11,12 @@ import { BaseAutocompleteData } from '../queryBuilder/queryAutocompleteResponse'
 
 export type PayloadProps = Dashboard[];
 
-export const VariableQueryTypeArr = ['QUERY', 'TEXTBOX', 'CUSTOM'] as const;
+export const VariableQueryTypeArr = [
+	'QUERY',
+	'TEXTBOX',
+	'CUSTOM',
+	'DYNAMIC',
+] as const;
 export type TVariableQueryType = typeof VariableQueryTypeArr[number];
 
 export const VariableSortTypeArr = ['DISABLED', 'ASC', 'DESC'] as const;
@@ -43,6 +48,9 @@ export interface IDashboardVariable {
 	modificationUUID?: string;
 	allSelected?: boolean;
 	change?: boolean;
+	defaultValue?: string;
+	dynamicVariablesAttribute?: string;
+	dynamicVariablesSource?: string;
 }
 export interface Dashboard {
 	id: number;
