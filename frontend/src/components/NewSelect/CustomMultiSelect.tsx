@@ -37,7 +37,7 @@ enum ToggleTagValue {
 	All = 'All',
 }
 
-const ALL_SELECTED_VALUE = '__all__'; // Constant for the special value
+const ALL_SELECTED_VALUE = '__ALL__'; // Constant for the special value
 
 const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	placeholder = 'Search...',
@@ -62,6 +62,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	allowClear = false,
 	onRetry,
 	maxTagTextLength,
+	onDropdownVisibleChange,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -144,7 +145,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				return;
 			}
 
-			// Case 2: "__all__" is selected (means select all actual values)
+			// Case 2: "__ALL__" is selected (means select all actual values)
 			if (currentNewValue.includes(ALL_SELECTED_VALUE)) {
 				const allActualOptions = allAvailableValues.map(
 					(v) => options.flat().find((o) => o.value === v) || { label: v, value: v },
@@ -528,28 +529,34 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		(text: string, searchQuery: string): React.ReactNode => {
 			if (!searchQuery || !highlightSearch) return text;
 
-			const parts = text.split(
-				new RegExp(
-					`(${searchQuery.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')})`,
-					'gi',
-				),
-			);
-			return (
-				<>
-					{parts.map((part, i) => {
-						// Create a unique key that doesn't rely on array index
-						const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
+			try {
+				const parts = text.split(
+					new RegExp(
+						`(${searchQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`,
+						'gi',
+					),
+				);
+				return (
+					<>
+						{parts.map((part, i) => {
+							// Create a unique key that doesn't rely on array index
+							const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
 
-						return part.toLowerCase() === searchQuery.toLowerCase() ? (
-							<span key={uniqueKey} className="highlight-text">
-								{part}
-							</span>
-						) : (
-							part
-						);
-					})}
-				</>
-			);
+							return part.toLowerCase() === searchQuery.toLowerCase() ? (
+								<span key={uniqueKey} className="highlight-text">
+									{part}
+								</span>
+							) : (
+								part
+							);
+						})}
+					</>
+				);
+			} catch (error) {
+				// If regex fails, return the original text without highlighting
+				console.error('Error in text highlighting:', error);
+				return text;
+			}
 		},
 		[highlightSearch],
 	);
@@ -752,7 +759,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				if (hasAll) {
 					flatList.push({
 						label: 'ALL',
-						value: '__all__', // Special value for the ALL option
+						value: ALL_SELECTED_VALUE, // Special value for the ALL option
 						type: 'defined',
 					});
 				}
@@ -1129,7 +1136,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						// If there's an active option in the dropdown, prioritize selecting it
 						if (activeIndex >= 0 && activeIndex < flatOptions.length) {
 							const selectedOption = flatOptions[activeIndex];
-							if (selectedOption.value === '__all__') {
+							if (selectedOption.value === ALL_SELECTED_VALUE) {
 								handleSelectAll();
 							} else if (selectedOption.value && onChange) {
 								const newValues = selectedValues.includes(selectedOption.value)
@@ -1159,6 +1166,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						e.preventDefault();
 						setIsOpen(false);
 						setActiveIndex(-1);
+						// Call onDropdownVisibleChange when Escape is pressed to close dropdown
+						if (onDropdownVisibleChange) {
+							onDropdownVisibleChange(false);
+						}
 						break;
 
 					case SPACEKEY:
@@ -1168,7 +1179,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							const selectedOption = flatOptions[activeIndex];
 
 							// Check if it's the ALL option
-							if (selectedOption.value === '__all__') {
+							if (selectedOption.value === ALL_SELECTED_VALUE) {
 								handleSelectAll();
 							} else if (selectedOption.value && onChange) {
 								const newValues = selectedValues.includes(selectedOption.value)
@@ -1282,6 +1293,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			handleSelectAll,
 			getVisibleChipIndices,
 			getLastVisibleChipIndex,
+			onDropdownVisibleChange,
 		],
 	);
 
@@ -1524,6 +1536,18 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		onRetry,
 	]);
 
+	// Custom handler for dropdown visibility changes
+	const handleDropdownVisibleChange = useCallback(
+		(visible: boolean): void => {
+			setIsOpen(visible);
+			// Pass through to the parent component's handler if provided
+			if (onDropdownVisibleChange) {
+				onDropdownVisibleChange(visible);
+			}
+		},
+		[onDropdownVisibleChange],
+	);
+
 	// ===== Side Effects =====
 
 	// Clear search when dropdown closes
@@ -1739,7 +1763,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			value={displayValue}
 			onChange={handleInternalChange}
 			onClear={(): void => handleInternalChange([])}
-			onDropdownVisibleChange={setIsOpen}
+			onDropdownVisibleChange={handleDropdownVisibleChange}
 			open={isOpen}
 			defaultActiveFirstOption={defaultActiveFirstOption}
 			popupMatchSelectWidth={dropdownMatchSelectWidth}
