@@ -112,13 +112,10 @@ services:
     !!merge <<: *db-depend
     image: signoz/signoz:${VERSION:-v0.82.0}
     container_name: signoz
-    command:
-      - --config=/root/config/prometheus.yml
     ports:
       - "8080:8080" # signoz port
     #   - "6060:6060"     # pprof port
     volumes:
-      - ../common/signoz/prometheus.yml:/root/config/prometheus.yml
       - ../common/dashboards:/root/config/dashboards
       - sqlite:/var/lib/signoz/
     environment:
