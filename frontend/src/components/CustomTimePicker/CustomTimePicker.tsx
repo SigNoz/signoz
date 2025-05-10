@@ -352,6 +352,7 @@ function CustomTimePicker({
 				<Input
 					className="timeSelection-input"
 					type="text"
+					autocomplete="off"
 					status={inputValue && inputStatus === 'error' ? 'error' : ''}
 					placeholder={
 						isInputFocused
