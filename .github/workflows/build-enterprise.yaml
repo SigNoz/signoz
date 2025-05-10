@@ -94,6 +94,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
+      GO_VERSION: 1.23
       GO_INPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
       GO_INPUT_ARTIFACT_PATH: frontend/build
       GO_BUILD_CONTEXT: ./ee/query-service
