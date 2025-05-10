@@ -56,7 +56,8 @@ function Explorer(): JSX.Element {
 
 	const handleToggleShowOneChartPerQuery = (): void => {
 		toggleShowOneChartPerQuery(!showOneChartPerQuery);
-		setSearchParams({ ...Object.fromEntries(searchParams),
+		setSearchParams({
+			...Object.fromEntries(searchParams),
 			[ONE_CHART_PER_QUERY_ENABLED_KEY]: (!showOneChartPerQuery).toString(),
 		});
 	};
