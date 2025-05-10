@@ -1,0 +1,141 @@
+package querybuildertypesv5
+
+import (
+	"time"
+
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+// FilterOperator is the operator for the filter.
+type FilterOperator int
+
+const (
+	FilterOperatorUnknown FilterOperator = iota
+	FilterOperatorEqual
+	FilterOperatorNotEqual
+	FilterOperatorGreaterThan
+	FilterOperatorGreaterThanOrEq
+	FilterOperatorLessThan
+	FilterOperatorLessThanOrEq
+
+	FilterOperatorLike
+	FilterOperatorNotLike
+	FilterOperatorILike
+	FilterOperatorNotILike
+
+	FilterOperatorBetween
+	FilterOperatorNotBetween
+
+	FilterOperatorIn
+	FilterOperatorNotIn
+
+	FilterOperatorExists
+	FilterOperatorNotExists
+
+	FilterOperatorRegexp
+	FilterOperatorNotRegexp
+
+	FilterOperatorContains
+	FilterOperatorNotContains
+)
+
+type OrderDirection struct {
+	valuer.String
+}
+
+var (
+	OrderDirectionAsc  = OrderDirection{valuer.NewString("asc")}
+	OrderDirectionDesc = OrderDirection{valuer.NewString("desc")}
+)
+
+type ReduceTo struct {
+	valuer.String
+}
+
+var (
+	ReduceToUnknown = ReduceTo{valuer.NewString("")}
+	ReduceToSum     = ReduceTo{valuer.NewString("sum")}
+	ReduceToCount   = ReduceTo{valuer.NewString("count")}
+	ReduceToAvg     = ReduceTo{valuer.NewString("avg")}
+	ReduceToMin     = ReduceTo{valuer.NewString("min")}
+	ReduceToMax     = ReduceTo{valuer.NewString("max")}
+	ReduceToLast    = ReduceTo{valuer.NewString("last")}
+	ReduceToMedian  = ReduceTo{valuer.NewString("median")}
+)
+
+type Aggregation struct {
+	// expression is the aggregation expression. exmple: count(), sum(item_price), countIf(day > 10)
+	Expression string `json:"expression"`
+	// if any, it will be used as the alias of the aggregation in the result
+	Alias string `json:"alias,omitempty"`
+}
+
+type MetricAggregation struct {
+	// metric to query
+	MetricName string `json:"metricName"`
+	// temporality to apply to the query
+	Temporality metrictypes.Temporality `json:"temporality"`
+	// time aggregation to apply to the query
+	TimeAggregation metrictypes.TimeAggregation `json:"timeAggregation"`
+	// space aggregation to apply to the query
+	SpaceAggregation metrictypes.SpaceAggregation `json:"spaceAggregation"`
+}
+
+type Filter struct {
+	// expression to filter by following the filter syntax
+	Expression string `json:"expression"`
+}
+
+type GroupByKey struct {
+	telemetrytypes.TelemetryFieldKey
+}
+
+type Having struct {
+	// expression to filter by following the filter syntax
+	Expression string `json:"expression"`
+}
+
+type OrderByKey struct {
+	telemetrytypes.TelemetryFieldKey
+}
+
+// key to order by
+type OrderBy struct {
+	// key to order by
+	Key OrderByKey `json:"key"`
+	// direction to order by
+	Direction OrderDirection `json:"direction"`
+}
+
+type SecondaryAggregation struct {
+	// stepInterval of the query
+	// if not set, it will use the step interval of the primary aggregation
+	StepInterval time.Duration `json:"stepInterval,omitempty"`
+	// expression to aggregate. exmple: count(), sum(item_price), countIf(day > 10)
+	Expression string `json:"expression"`
+	// if any, it will be used as the alias of the aggregation in the result
+	Alias string `json:"alias,omitempty"`
+	// groupBy fields to group by
+	GroupBy []GroupByKey `json:"groupBy,omitempty"`
+	// order by keys and directions
+	Order []OrderBy `json:"order,omitempty"`
+	// limit the maximum number of rows to return
+	Limit int `json:"limit,omitempty"`
+	// limitBy fields to limit by
+	LimitBy []string `json:"limitBy,omitempty"`
+}
+
+type Function struct {
+	// name of the function
+	Name string `json:"name"`
+
+	// args is the arguments to the function
+	Args []struct {
+		// name of the argument
+		Name string `json:"name,omitempty"`
+		// value of the argument
+		Value string `json:"value"`
+	} `json:"args,omitempty"`
+}
