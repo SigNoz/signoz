@@ -2,7 +2,7 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { PayloadProps, Props } from 'types/api/user/login';
+import { PayloadProps, Props } from 'types/api/login/login';
 
 const login = async (
 	props: Props,

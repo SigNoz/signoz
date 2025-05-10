@@ -1,5 +1,5 @@
 import { Button, Form, Input, Typography } from 'antd';
-import resetPasswordApi from 'api/user/resetPassword';
+import resetPasswordApi from 'api/user/factor_password/resetPassword';
 import { Logout } from 'api/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';

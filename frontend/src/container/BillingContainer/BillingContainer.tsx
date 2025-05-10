@@ -136,7 +136,7 @@ export default function BillingContainer(): JSX.Element {
 
 	const {
 		user,
-		org,
+		organization,
 		licenses,
 		trialInfo,
 		isFetchingActiveLicenseV3,
@@ -329,7 +329,7 @@ export default function BillingContainer(): JSX.Element {
 		if (!trialInfo?.trialConvertedToSubscription) {
 			logEvent('Billing : Upgrade Plan', {
 				user: pick(user, ['email', 'userId', 'name']),
-				org,
+				organization,
 			});
 
 			updateCreditCard({
@@ -338,7 +338,7 @@ export default function BillingContainer(): JSX.Element {
 		} else {
 			logEvent('Billing : Manage Billing', {
 				user: pick(user, ['email', 'userId', 'name']),
-				org,
+				organization,
 			});
 
 			manageCreditCard({

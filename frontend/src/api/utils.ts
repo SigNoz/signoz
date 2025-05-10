@@ -4,6 +4,7 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 
 export const Logout = (): void => {
+	console.trace('her');
 	deleteLocalStorageKey(LOCALSTORAGE.AUTH_TOKEN);
 	deleteLocalStorageKey(LOCALSTORAGE.IS_LOGGED_IN);
 	deleteLocalStorageKey(LOCALSTORAGE.IS_IDENTIFIED_USER);

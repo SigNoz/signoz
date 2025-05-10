@@ -1,8 +1,8 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
-import { Logout } from 'api/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
+import useGetMeOrg from 'hooks/organizations/UseGetMeOrg';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
@@ -26,7 +26,7 @@ import {
 	LicenseV3ResModel,
 	TrialInfo,
 } from 'types/api/licensesV3/getActive';
-import { Organization } from 'types/api/user/getOrganization';
+import { OrganizationResponse } from 'types/api/organizations/get';
 import { OrgPreference } from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
@@ -53,14 +53,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	);
-	const [org, setOrg] = useState<Organization[] | null>(null);
-
-	// if the user.id is not present, for migration older cases then we need to logout only for current logged in users!
-	useEffect(() => {
-		if (!user.id && isLoggedIn) {
-			Logout();
-		}
-	}, [isLoggedIn, user]);
+	const [organization, setOrganization] = useState<OrganizationResponse | null>(
+		null,
+	);
 
 	// fetcher for user
 	// user will only be fetched if the user id and token is present
@@ -69,39 +64,27 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		data: userData,
 		isFetching: isFetchingUser,
 		error: userFetchError,
-	} = useGetUser(user.id, isLoggedIn);
+	} = useGetUser(isLoggedIn);
+
 	useEffect(() => {
-		if (!isFetchingUser && userData && userData.payload) {
+		if (!isFetchingUser && userData && userData.data) {
 			setUser((prev) => ({
 				...prev,
-				...userData.payload,
+				...userData.data,
 			}));
-			setOrg((prev) => {
-				if (!prev) {
-					// if no org is present enter a new entry
-					return [
-						{
-							createdAt: 0,
-							id: userData.payload.orgId,
-							displayName: userData.payload.organization,
-						},
-					];
-				}
-				// else mutate the existing entry
-				const orgIndex = prev.findIndex((e) => e.id === userData.payload.orgId);
-				const updatedOrg: Organization[] = [
-					...prev.slice(0, orgIndex),
-					{
-						createdAt: 0,
-						id: userData.payload.orgId,
-						displayName: userData.payload.organization,
-					},
-					...prev.slice(orgIndex + 1, prev.length),
-				];
-				return updatedOrg;
-			});
 		}
 	}, [userData, isFetchingUser]);
+
+	const {
+		data: organizationData,
+		isFetching: isFetchingOrganization,
+	} = useGetMeOrg(isLoggedIn);
+
+	useEffect(() => {
+		if (!isFetchingOrganization && organizationData && organizationData.data) {
+			setOrganization(organizationData.data);
+		}
+	}, [organizationData, isFetchingOrganization]);
 
 	// fetcher for licenses v2
 	// license will be fetched if we are in logged in state
@@ -198,31 +181,15 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}
 
 	const updateOrg = useCallback(
-		(orgId: string, updatedOrgName: string): void => {
-			if (org && org.length > 0) {
-				const orgIndex = org.findIndex((e) => e.id === orgId);
-				const updatedOrg: Organization[] = [
-					...org.slice(0, orgIndex),
-					{
-						createdAt: 0,
-						id: orgId,
-						displayName: updatedOrgName,
-					},
-					...org.slice(orgIndex + 1, org.length),
-				];
-				setOrg(updatedOrg);
-				setUser((prev) => {
-					if (prev.orgId === orgId) {
-						return {
-							...prev,
-							organization: updatedOrgName,
-						};
-					}
-					return prev;
+		(updatedOrgName: string): void => {
+			if (organization) {
+				setOrganization({
+					...organization,
+					displayName: updatedOrgName,
 				});
 			}
 		},
-		[org],
+		[organization],
 	);
 
 	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
@@ -232,7 +199,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				...prev,
 				accessJwt: event.detail.accessJWT,
 				refreshJwt: event.detail.refreshJWT,
-				id: event.detail.id,
 			}));
 			setIsLoggedIn(true);
 		}
@@ -247,7 +213,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		setLicenses(null);
 		setFeatureFlags(null);
 		setOrgPreferences(null);
-		setOrg(null);
+		setOrganization(null);
 	});
 
 	// return value for the context
@@ -260,7 +226,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			trialInfo,
 			orgPreferences,
 			isLoggedIn,
-			org,
+			organization,
 			isFetchingUser,
 			isFetchingLicenses,
 			isFetchingActiveLicenseV3,
@@ -291,7 +257,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			licenses,
 			licensesFetchError,
 			licensesRefetch,
-			org,
+			organization,
 			orgPreferences,
 			orgPreferencesFetchError,
 			updateOrg,

@@ -9,6 +9,7 @@ import TextToolTip from 'components/TextToolTip';
 import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
+import { isNull } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +27,7 @@ import SwitchComponent from './Switch';
 function AuthDomains(): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-	const { org, featureFlags } = useAppContext();
+	const { organization, featureFlags } = useAppContext();
 	const [currentDomain, setCurrentDomain] = useState<AuthDomain>();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -38,7 +39,7 @@ function AuthDomains(): JSX.Element {
 			id: v4(),
 			name: '',
 			ssoEnabled: false,
-			orgId: (org || [])[0].id || '',
+			orgId: organization?.id || '',
 			samlConfig: {
 				samlCert: '',
 				samlEntity: '',
@@ -51,9 +52,9 @@ function AuthDomains(): JSX.Element {
 	const { data, isLoading, refetch } = useQuery(['saml'], {
 		queryFn: () =>
 			listAllDomain({
-				orgId: (org || [])[0].id,
+				orgId: organization?.id || '',
 			}),
-		enabled: org !== null,
+		enabled: !isNull(organization),
 	});
 
 	const { notifications } = useNotifications();

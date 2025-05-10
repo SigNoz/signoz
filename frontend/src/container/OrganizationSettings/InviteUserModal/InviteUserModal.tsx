@@ -1,7 +1,7 @@
 import { Button, Form, Modal } from 'antd';
 import { FormInstance } from 'antd/lib';
-import getPendingInvites from 'api/user/getPendingInvites';
-import sendInvite from 'api/user/sendInvite';
+import sendInvite from 'api/user/invite/create';
+import getPendingInvites from 'api/user/invite/getAll';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
@@ -14,7 +14,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { PayloadProps } from 'types/api/user/getPendingInvites';
+import { PayloadProps } from 'types/api/user/invite/getAll';
 import { ROLES } from 'types/roles';
 
 import InviteTeamMembers from '../InviteTeamMembers';
@@ -29,7 +29,8 @@ export interface InviteUserModalProps {
 }
 
 interface DataProps {
-	key: number;
+	id: string;
+	key: string;
 	name: string;
 	email: string;
 	accessLevel: ROLES;
@@ -57,8 +58,9 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 	});
 
 	const getParsedInviteData = useCallback(
-		(payload: PayloadProps = []) =>
-			payload?.map((data) => ({
+		(payload: PayloadProps) =>
+			payload?.data?.map((data) => ({
+				id: data?.id,
 				key: data.createdAt,
 				name: data?.name,
 				email: data.email,

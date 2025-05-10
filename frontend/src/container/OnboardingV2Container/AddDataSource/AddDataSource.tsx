@@ -112,7 +112,7 @@ function OnboardingAddDataSource(): JSX.Element {
 		[tag: string]: Entity[];
 	}>({});
 
-	const { org } = useAppContext();
+	const { organization } = useAppContext();
 
 	const [setupStepItems, setSetupStepItems] = useState(setupStepItemsBase);
 
@@ -390,11 +390,11 @@ function OnboardingAddDataSource(): JSX.Element {
 		setSetupStepItems([
 			{
 				...setupStepItemsBase[0],
-				description: org?.[0]?.displayName || '',
+				description: organization?.displayName || '',
 			},
 			...setupStepItemsBase.slice(1),
 		]);
-	}, [org]);
+	}, [organization]);
 
 	const handleUpdateCurrentStep = (step: number): void => {
 		setCurrentStep(step);
@@ -403,7 +403,7 @@ function OnboardingAddDataSource(): JSX.Element {
 			setSetupStepItems([
 				{
 					...setupStepItemsBase[0],
-					description: org?.[0]?.displayName || '',
+					description: organization?.displayName || '',
 				},
 				{
 					...setupStepItemsBase[1],
@@ -415,7 +415,7 @@ function OnboardingAddDataSource(): JSX.Element {
 			setSetupStepItems([
 				{
 					...setupStepItemsBase[0],
-					description: org?.[0]?.displayName || '',
+					description: organization?.displayName || '',
 				},
 				{
 					...setupStepItemsBase[1],

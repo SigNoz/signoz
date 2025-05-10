@@ -1,18 +1,16 @@
-import getUser from 'api/user/getUser';
+import getUser from 'api/user/crud/get';
 import { useQuery, UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/user/getUser';
+import { SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
+import { UserResponse } from 'types/api/user/crud/get';
 
-const useGetUser = (userId: string, isLoggedIn: boolean): UseGetUser =>
+const useGetUser = (isLoggedIn: boolean): UseGetUser =>
 	useQuery({
-		queryFn: () => getUser({ userId }),
-		queryKey: [userId],
-		enabled: !!userId && !!isLoggedIn,
+		queryFn: () => getUser(),
+		queryKey: ['getMeUser'],
+		enabled: !!isLoggedIn,
 	});
 
-type UseGetUser = UseQueryResult<
-	SuccessResponse<PayloadProps> | ErrorResponse,
-	unknown
->;
+type UseGetUser = UseQueryResult<SuccessResponseV2<UserResponse>, APIError>;
 
 export default useGetUser;

@@ -1,9 +1,9 @@
 import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import getUserVersion from 'api/user/getVersion';
-import loginApi from 'api/user/login';
-import loginPrecheckApi from 'api/user/loginPrecheck';
+import loginApi from 'api/login/login';
+import loginPrecheckApi from 'api/login/loginPrecheck';
+import getUserVersion from 'api/user/version/get';
 import afterLogin from 'AppRoutes/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
@@ -13,7 +13,8 @@ import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
+import APIError from 'types/api/error';
+import { LoginPrecheckResponse as PrecheckResultType } from 'types/api/login/loginPrecheck';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
 
@@ -84,7 +85,7 @@ function Login({
 		async function processJwt(): Promise<void> {
 			if (jwt && jwt !== '') {
 				setIsLoading(true);
-				await afterLogin(userId, jwt, refreshjwt);
+				await afterLogin(jwt, refreshjwt);
 				setIsLoading(false);
 				const fromPathname = getLocalStorageApi(
 					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
@@ -121,26 +122,20 @@ function Login({
 			const response = await loginPrecheckApi({
 				email,
 			});
-
-			if (response.statusCode === 200) {
-				setPrecheckResult({ ...precheckResult, ...response.payload });
-
-				const { isUser } = response.payload;
-				if (isUser) {
-					setPrecheckComplete(true);
-				} else {
-					notifications.error({
-						message: t('invalid_account'),
-					});
-				}
+			setPrecheckResult({ ...precheckResult, ...response.data });
+			const { isUser } = response.data;
+			if (isUser) {
+				setPrecheckComplete(true);
 			} else {
 				notifications.error({
-					message: t('invalid_config'),
+					message: t('invalid_account'),
 				});
 			}
-		} catch (e) {
-			console.log('failed to call precheck Api', e);
-			notifications.error({ message: t('unexpected_error') });
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).error.error.code,
+				description: (error as APIError).error.error.message,
+			});
 		}
 		setPrecheckInProcess(false);
 	};
@@ -154,34 +149,23 @@ function Login({
 				onNextHandler();
 				return;
 			}
-
 			if (precheckComplete && sso) {
 				window.location.href = precheckResult.ssoUrl || '';
 				return;
 			}
 
 			setIsLoading(true);
-
 			const response = await loginApi({
 				email,
 				password,
 			});
-			if (response.statusCode === 200) {
-				afterLogin(
-					response.payload.userId,
-					response.payload.accessJwt,
-					response.payload.refreshJwt,
-				);
-			} else {
-				notifications.error({
-					message: response.error || t('unexpected_error'),
-				});
-			}
+			afterLogin(response.data.accessJwt, response.data.refreshJwt);
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
 			notifications.error({
-				message: t('unexpected_error'),
+				message: (error as APIError).error.error.code,
+				description: (error as APIError).error.error.message,
 			});
 		}
 	};

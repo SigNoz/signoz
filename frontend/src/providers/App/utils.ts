@@ -17,10 +17,9 @@ function getUserDefaults(): IUser {
 		refreshJwt,
 		id: userId,
 		email: '',
-		name: '',
-		profilePictureURL: '',
-		createdAt: 0,
-		organization: '',
+		displayName: '',
+		createdAt: '',
+		updatedAt: '',
 		orgId: '',
 		role: 'VIEWER',
 	};
