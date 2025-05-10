@@ -16,12 +16,26 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Slider from './FilterRenderers/Slider/Slider';
+import useFilterConfig from './hooks/useFilterConfig';
 import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
 import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
+	const {
+		config,
+		handleFilterVisibilityChange,
+		source,
+		onFilterChange,
+		signal,
+	} = props;
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-	const { config, handleFilterVisibilityChange, source, onFilterChange } = props;
+
+	const {
+		filterConfig,
+		isDynamicFilters,
+		customFilters,
+		setIsStale,
+	} = useFilterConfig({ signal, config });
 
 	const {
 		currentQuery,
@@ -103,27 +117,29 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 										/>
 									</div>
 								</Tooltip>
-								<Tooltip title="Settings">
-									<div
-										className={classNames('right-action-icon-container', {
-											active: isSettingsOpen,
-										})}
-									>
-										<SettingsIcon
-											className="settings-icon"
-											width={14}
-											height={14}
-											onClick={(): void => setIsSettingsOpen(true)}
-										/>
-									</div>
-								</Tooltip>
+								{isDynamicFilters && (
+									<Tooltip title="Settings">
+										<div
+											className={classNames('right-action-icon-container', {
+												active: isSettingsOpen,
+											})}
+										>
+											<SettingsIcon
+												className="settings-icon"
+												width={14}
+												height={14}
+												onClick={(): void => setIsSettingsOpen(true)}
+											/>
+										</div>
+									</Tooltip>
+								)}
 							</section>
 						</section>
 					)}
 
 				<TypicalOverlayScrollbar>
 					<section className="filters">
-						{config.map((filter) => {
+						{filterConfig.map((filter) => {
 							switch (filter.type) {
 								case FiltersType.CHECKBOX:
 									return (
@@ -151,7 +167,12 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			</div>
 			<div className="quick-filters-settings-container">
 				{isSettingsOpen && (
-					<QuickFiltersSettings setIsSettingsOpen={setIsSettingsOpen} />
+					<QuickFiltersSettings
+						signal={signal}
+						setIsSettingsOpen={setIsSettingsOpen}
+						customFilters={customFilters}
+						setIsStale={setIsStale}
+					/>
 				)}
 			</div>
 		</div>

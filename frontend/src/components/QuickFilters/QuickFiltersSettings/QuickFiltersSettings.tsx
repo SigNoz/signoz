@@ -1,21 +1,52 @@
 import './QuickFiltersSettings.styles.scss';
 
-import { TableColumnsSplit, X } from 'lucide-react';
+import Button from 'antd/es/button';
+import { CheckIcon, TableColumnsSplit, XIcon } from 'lucide-react';
+import { useMemo } from 'react';
+import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
+import { SignalType } from '../types';
 import AddedFilters from './AddedFilters';
 import useQuickFilterSettings from './hooks/useQuickFilterSettings';
 import OtherFilters from './OtherFilters';
 
 function QuickFiltersSettings({
+	signal,
 	setIsSettingsOpen,
+	customFilters,
+	setIsStale,
 }: {
+	signal: SignalType | undefined;
 	setIsSettingsOpen: (isSettingsOpen: boolean) => void;
+	customFilters: FilterType[];
+	setIsStale: (isStale: boolean) => void;
 }): JSX.Element {
 	const {
-		customFilters,
-		setCustomFilters,
 		handleSettingsClose,
-	} = useQuickFilterSettings({ setIsSettingsOpen });
+		handleDiscardChanges,
+		addedFilters,
+		setAddedFilters,
+		handleSaveChanges,
+		isUpdatingCustomFilters,
+	} = useQuickFilterSettings({
+		setIsSettingsOpen,
+		customFilters,
+		setIsStale,
+		signal,
+	});
+
+	const hasUnsavedChanges = useMemo(
+		() =>
+			// check if both arrays have the same length and same order of elements
+			!(
+				addedFilters.length === customFilters.length &&
+				addedFilters.every(
+					(filter, index) => filter.key === customFilters[index].key,
+				)
+			),
+		[addedFilters, customFilters],
+	);
+
 	return (
 		<div className="quick-filters-settings">
 			<div className="qf-header">
@@ -23,15 +54,37 @@ function QuickFiltersSettings({
 					<TableColumnsSplit width={16} height={16} />
 					Edit quick filters
 				</div>
-				<X
+				<XIcon
 					className="qf-header-icon"
 					width={16}
 					height={16}
 					onClick={handleSettingsClose}
 				/>
 			</div>
-			<AddedFilters filters={customFilters} setFilters={setCustomFilters} />
+			<AddedFilters
+				addedFilters={addedFilters}
+				setAddedFilters={setAddedFilters}
+			/>
 			<OtherFilters />
+			{hasUnsavedChanges && (
+				<div className="qf-footer">
+					<Button
+						type="default"
+						onClick={handleDiscardChanges}
+						icon={<XIcon width={16} height={16} />}
+					>
+						Discard
+					</Button>
+					<Button
+						type="primary"
+						onClick={handleSaveChanges}
+						icon={<CheckIcon width={16} height={16} />}
+						loading={isUpdatingCustomFilters}
+					>
+						Save changes
+					</Button>
+				</div>
+			)}
 		</div>
 	);
 }

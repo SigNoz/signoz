@@ -25,6 +25,23 @@
                 cursor: pointer;
             }
         }
+
+        .qf-footer {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border-top: 1px solid var(--bg-slate-400);
+            button {
+                display: flex;
+                align-items: center;   
+                justify-content: center;
+                width: 50%;
+                
+                .ant-btn-icon {
+                    margin: 3px !important;
+                }
+            }
+        }
     }
 
 

@@ -16,15 +16,8 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Skeleton } from 'antd';
-import getCustomFilters from 'api/quickFilters/getCustomFilters';
 import { GripVertical } from 'lucide-react';
-import { useQuery } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
-	Filter as FilterType,
-	PayloadProps,
-} from 'types/api/quickFilters/getCustomFilters';
+import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 function SortableFilter({ filter }: { filter: FilterType }): JSX.Element {
 	const {
@@ -57,30 +50,19 @@ function SortableFilter({ filter }: { filter: FilterType }): JSX.Element {
 }
 
 function AddedFilters({
-	filters,
-	setFilters,
+	addedFilters,
+	setAddedFilters,
 }: {
-	filters: FilterType[];
-	setFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
+	addedFilters: FilterType[];
+	setAddedFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
 }): JSX.Element {
-	const { isLoading: addedFiltersLoading } = useQuery<
-		SuccessResponse<PayloadProps> | ErrorResponse,
-		Error
-	>(['addedFilters'], () => getCustomFilters({ signal: 'exceptions' }), {
-		onSuccess: (data) => {
-			if ('payload' in data && data.payload?.filters) {
-				setFilters(data.payload.filters || ([] as FilterType[]));
-			}
-		},
-	});
-
 	const sensors = useSensors(useSensor(PointerSensor));
 
 	const handleDragEnd = (event: DragEndEvent): void => {
 		const { active, over } = event;
 
 		if (over && active.id !== over.id) {
-			setFilters((items) => {
+			setAddedFilters((items) => {
 				const oldIndex = items.findIndex((item) => item.key === active.id);
 				const newIndex = items.findIndex((item) => item.key === over.id);
 
@@ -93,30 +75,20 @@ function AddedFilters({
 		<div className="qf-filters added-filters">
 			<div className="qf-filters-header">ADDED FILTERS</div>
 			<div className="qf-added-filters-list">
-				{addedFiltersLoading ? (
-					[1, 2, 3, 4, 5].map((key) => (
-						<div key={key} className="qf-filter-item">
-							<div className="qf-filter-content">
-								<Skeleton.Input active size="small" style={{ width: '300px' }} />
-							</div>
-						</div>
-					))
-				) : (
-					<DndContext
-						sensors={sensors}
-						collisionDetection={closestCenter}
-						onDragEnd={handleDragEnd}
+				<DndContext
+					sensors={sensors}
+					collisionDetection={closestCenter}
+					onDragEnd={handleDragEnd}
+				>
+					<SortableContext
+						items={addedFilters.map((f) => f.key)}
+						strategy={verticalListSortingStrategy}
 					>
-						<SortableContext
-							items={filters.map((f) => f.key)}
-							strategy={verticalListSortingStrategy}
-						>
-							{filters.map((filter) => (
-								<SortableFilter key={filter.key} filter={filter} />
-							))}
-						</SortableContext>
-					</DndContext>
-				)}
+						{addedFilters.map((filter) => (
+							<SortableFilter key={filter.key} filter={filter} />
+						))}
+					</SortableContext>
+				</DndContext>
 			</div>
 		</div>
 	);
