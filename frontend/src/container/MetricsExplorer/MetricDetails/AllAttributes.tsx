@@ -5,11 +5,11 @@ import { DataType } from 'container/LogDetailedView/TableView';
 import { Search } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { AllAttributesProps } from './types';
-import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
-import { getMetricDetailsQuery } from './utils';
-import ROUTES from '../../../constants/routes';
 import { PANEL_TYPES } from '../../../constants/queryBuilder';
+import ROUTES from '../../../constants/routes';
+import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
+import { AllAttributesProps } from './types';
+import { getMetricDetailsQuery } from './utils';
 
 function AllAttributes({
 	metricName,
