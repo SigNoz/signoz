@@ -76,26 +76,26 @@ func TestAgentCheckIns(t *testing.T) {
 	// if no connection url was requested (no account with agent's account id exists)
 	testAccountId1 := uuid.NewString()
 	testCloudAccountId1 := "546311234"
-	resp1, apiErr := controller.CheckInAsAgent(
+	resp1, err := controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
 			ID:        testAccountId1,
 			AccountID: testCloudAccountId1,
 		},
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 	require.Equal(testAccountId1, resp1.AccountId)
 	require.Equal(testCloudAccountId1, resp1.CloudAccountId)
 
 	// The agent should not be able to check in with a different
 	// cloud account id for the same account.
 	testCloudAccountId2 := "99999999"
-	_, apiErr = controller.CheckInAsAgent(
+	_, err = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
 			ID:        testAccountId1,
 			AccountID: testCloudAccountId2,
 		},
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 
 	// The agent should not be able to check-in with a particular cloud account id
 	// if another connected AccountRecord exists for same cloud account
@@ -110,13 +110,13 @@ func TestAgentCheckIns(t *testing.T) {
 	require.Nil(existingConnected.RemovedAt)
 
 	testAccountId2 := uuid.NewString()
-	_, apiErr = controller.CheckInAsAgent(
+	_, err = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
 			ID:        testAccountId2,
 			AccountID: testCloudAccountId1,
 		},
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 
 	// After disconnecting existing account record, the agent should be able to
 	// connected for a particular cloud account id
@@ -131,22 +131,22 @@ func TestAgentCheckIns(t *testing.T) {
 	require.NotNil(apiErr)
 	require.Equal(model.ErrorNotFound, apiErr.Type())
 
-	_, apiErr = controller.CheckInAsAgent(
+	_, err = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
 			ID:        testAccountId2,
 			AccountID: testCloudAccountId1,
 		},
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 
 	// should be able to keep checking in
-	_, apiErr = controller.CheckInAsAgent(
+	_, err = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
 			ID:        testAccountId2,
 			AccountID: testCloudAccountId1,
 		},
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 }
 
 func TestCantDisconnectNonExistentAccount(t *testing.T) {
@@ -194,10 +194,10 @@ func TestConfigureService(t *testing.T) {
 	testSvcId := svcListResp.Services[0].Id
 	require.Nil(svcListResp.Services[0].Config)
 
-	svcDetails, apiErr := controller.GetServiceDetails(
+	svcDetails, err := controller.GetServiceDetails(
 		context.TODO(), user.OrgID, "aws", testSvcId, &testCloudAccountId,
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 	require.Equal(testSvcId, svcDetails.Id)
 	require.Nil(svcDetails.Config)
 
@@ -207,20 +207,20 @@ func TestConfigureService(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	updateSvcConfigResp, apiErr := controller.UpdateServiceConfig(
-		context.TODO(), user.OrgID, "aws", testSvcId, UpdateServiceConfigRequest{
+	updateSvcConfigResp, err := controller.UpdateServiceConfig(
+		context.TODO(), user.OrgID, "aws", testSvcId, &UpdateServiceConfigRequest{
 			CloudAccountId: testCloudAccountId,
 			Config:         testSvcConfig,
 		},
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 	require.Equal(testSvcId, updateSvcConfigResp.Id)
 	require.Equal(testSvcConfig, updateSvcConfigResp.Config)
 
-	svcDetails, apiErr = controller.GetServiceDetails(
+	svcDetails, err = controller.GetServiceDetails(
 		context.TODO(), user.OrgID, "aws", testSvcId, &testCloudAccountId,
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 	require.Equal(testSvcId, svcDetails.Id)
 	require.Equal(testSvcConfig, *svcDetails.Config)
 
@@ -240,33 +240,33 @@ func TestConfigureService(t *testing.T) {
 	)
 	require.Nil(apiErr)
 
-	_, apiErr = controller.UpdateServiceConfig(
+	_, err = controller.UpdateServiceConfig(
 		context.TODO(), user.OrgID, "aws", testSvcId,
-		UpdateServiceConfigRequest{
+		&UpdateServiceConfigRequest{
 			CloudAccountId: testCloudAccountId,
 			Config:         testSvcConfig,
 		},
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 
 	// should not be able to configure a service for a cloud account id that is not connected yet
-	_, apiErr = controller.UpdateServiceConfig(
+	_, err = controller.UpdateServiceConfig(
 		context.TODO(), user.OrgID, "aws", testSvcId,
-		UpdateServiceConfigRequest{
+		&UpdateServiceConfigRequest{
 			CloudAccountId: "9999999999",
 			Config:         testSvcConfig,
 		},
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 
 	// should not be able to set config for an unsupported service
-	_, apiErr = controller.UpdateServiceConfig(
-		context.TODO(), user.OrgID, "aws", "bad-service", UpdateServiceConfigRequest{
+	_, err = controller.UpdateServiceConfig(
+		context.TODO(), user.OrgID, "aws", "bad-service", &UpdateServiceConfigRequest{
 			CloudAccountId: testCloudAccountId,
 			Config:         testSvcConfig,
 		},
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 
 }
 

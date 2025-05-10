@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type serviceConfigRepository interface {
+type ServiceConfigDatabase interface {
 	get(
 		ctx context.Context,
 		orgID string,
@@ -140,7 +140,6 @@ func (r *serviceConfigSQLRepository) getAllForAccount(
 	orgID string,
 	cloudAccountId string,
 ) (map[string]*types.CloudServiceConfig, *model.ApiError) {
-
 	serviceConfigs := []types.CloudIntegrationService{}
 
 	err := r.store.BunDB().NewSelect().

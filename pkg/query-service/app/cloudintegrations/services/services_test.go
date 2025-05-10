@@ -1,4 +1,4 @@
-package cloudintegrations
+package services
 
 import (
 	"testing"
@@ -11,24 +11,24 @@ func TestAvailableServices(t *testing.T) {
 	require := require.New(t)
 
 	// should be able to list available services.
-	_, apiErr := listCloudProviderServices("bad-cloud-provider")
+	_, apiErr := List("bad-cloud-provider")
 	require.NotNil(apiErr)
 	require.Equal(model.ErrorNotFound, apiErr.Type())
 
-	awsSvcs, apiErr := listCloudProviderServices("aws")
+	awsSvcs, apiErr := List("aws")
 	require.Nil(apiErr)
 	require.Greater(len(awsSvcs), 0)
 
 	// should be able to get details of a service
-	_, apiErr = getCloudProviderService(
+	_, err := GetServiceDefinition(
 		"aws", "bad-service-id",
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 	require.Equal(model.ErrorNotFound, apiErr.Type())
 
-	svc, apiErr := getCloudProviderService(
+	svc, err := GetServiceDefinition(
 		"aws", awsSvcs[0].Id,
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 	require.Equal(*svc, awsSvcs[0])
 }

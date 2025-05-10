@@ -236,9 +236,9 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	telemetryCollectionStrategy := checkinResp.IntegrationConfig.TelemetryCollectionStrategy
 	require.Equal("aws", telemetryCollectionStrategy.Provider)
 	require.NotNil(telemetryCollectionStrategy.AWSMetrics)
-	require.Empty(telemetryCollectionStrategy.AWSMetrics.CloudwatchMetricsStreamFilters)
+	require.Empty(telemetryCollectionStrategy.AWSMetrics.StreamFilters)
 	require.NotNil(telemetryCollectionStrategy.AWSLogs)
-	require.Empty(telemetryCollectionStrategy.AWSLogs.CloudwatchLogsSubscriptions)
+	require.Empty(telemetryCollectionStrategy.AWSLogs.Subscriptions)
 
 	// helper
 	setServiceConfig := func(svcId string, metricsEnabled bool, logsEnabled bool) {
@@ -283,14 +283,14 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	require.Equal("aws", telemetryCollectionStrategy.Provider)
 	require.NotNil(telemetryCollectionStrategy.AWSMetrics)
 	metricStreamNamespaces := []string{}
-	for _, f := range telemetryCollectionStrategy.AWSMetrics.CloudwatchMetricsStreamFilters {
+	for _, f := range telemetryCollectionStrategy.AWSMetrics.StreamFilters {
 		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
 	}
 	require.Equal([]string{"AWS/EC2", "CWAgent", "AWS/RDS"}, metricStreamNamespaces)
 
 	require.NotNil(telemetryCollectionStrategy.AWSLogs)
 	logGroupPrefixes := []string{}
-	for _, f := range telemetryCollectionStrategy.AWSLogs.CloudwatchLogsSubscriptions {
+	for _, f := range telemetryCollectionStrategy.AWSLogs.Subscriptions {
 		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
 	}
 	require.Equal(1, len(logGroupPrefixes))
@@ -327,14 +327,14 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	require.Equal("aws", telemetryCollectionStrategy.Provider)
 	require.NotNil(telemetryCollectionStrategy.AWSMetrics)
 	metricStreamNamespaces = []string{}
-	for _, f := range telemetryCollectionStrategy.AWSMetrics.CloudwatchMetricsStreamFilters {
+	for _, f := range telemetryCollectionStrategy.AWSMetrics.StreamFilters {
 		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
 	}
 	require.Equal([]string{"AWS/RDS"}, metricStreamNamespaces)
 
 	require.NotNil(telemetryCollectionStrategy.AWSLogs)
 	logGroupPrefixes = []string{}
-	for _, f := range telemetryCollectionStrategy.AWSLogs.CloudwatchLogsSubscriptions {
+	for _, f := range telemetryCollectionStrategy.AWSLogs.Subscriptions {
 		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
 	}
 	require.Equal(0, len(logGroupPrefixes))
@@ -522,7 +522,7 @@ func (tb *CloudIntegrationsTestBed) GetServicesFromQS(
 
 func (tb *CloudIntegrationsTestBed) GetServiceDetailFromQS(
 	cloudProvider string, serviceId string, cloudAccountId *string,
-) *cloudintegrations.CloudServiceDetails {
+) *cloudintegrations.ServiceDetails {
 	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services/%s", cloudProvider, serviceId)
 	if cloudAccountId != nil {
 		path = fmt.Sprintf("%s?cloud_account_id=%s", path, *cloudAccountId)
@@ -537,7 +537,7 @@ func (tb *CloudIntegrationsTestBed) GetServiceDetailFromQS(
 		`SELECT.*from.*signoz_metrics.*`,
 	).WillReturnRows(mockhouse.NewRows(metricCols, [][]any{}))
 
-	return RequestQSAndParseResp[cloudintegrations.CloudServiceDetails](
+	return RequestQSAndParseResp[cloudintegrations.ServiceDetails](
 		tb, path, nil,
 	)
 }
