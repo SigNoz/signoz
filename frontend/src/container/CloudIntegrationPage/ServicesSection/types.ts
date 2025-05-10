@@ -34,9 +34,18 @@ interface DataStatus {
 	last_received_from: string;
 }
 
+interface S3BucketsByRegion {
+	[region: string]: string[];
+}
+
+interface LogsConfig extends ConfigStatus {
+	s3_buckets?: S3BucketsByRegion;
+}
+
 interface ServiceConfig {
-	logs: ConfigStatus;
+	logs: LogsConfig;
 	metrics: ConfigStatus;
+	s3_sync?: LogsConfig;
 }
 
 interface IServiceStatus {
@@ -99,6 +108,7 @@ interface UpdateServiceConfigPayload {
 	config: {
 		logs: {
 			enabled: boolean;
+			s3_buckets?: S3BucketsByRegion;
 		};
 		metrics: {
 			enabled: boolean;
@@ -113,6 +123,7 @@ interface UpdateServiceConfigResponse {
 		config: {
 			logs: {
 				enabled: boolean;
+				s3_buckets?: S3BucketsByRegion;
 			};
 			metrics: {
 				enabled: boolean;
@@ -125,6 +136,7 @@ export type {
 	CloudAccount,
 	CloudAccountsData,
 	IServiceStatus,
+	S3BucketsByRegion,
 	Service,
 	ServiceConfig,
 	ServiceData,
