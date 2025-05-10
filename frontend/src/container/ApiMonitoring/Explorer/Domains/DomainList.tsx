@@ -16,7 +16,7 @@ import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQue
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -25,6 +25,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { DEFAULT_PARAMS, useApiMonitoringParams } from '../../queryParams';
 import {
 	columnsConfig,
 	formatDataForTable,
@@ -32,7 +33,9 @@ import {
 } from '../../utils';
 import DomainDetails from './DomainDetails/DomainDetails';
 
-function DomainList({ showIP }: { showIP: boolean }): JSX.Element {
+function DomainList(): JSX.Element {
+	const [params, setParams] = useApiMonitoringParams();
+	const { showIP, selectedDomain } = params;
 	const [selectedDomainIndex, setSelectedDomainIndex] = useState<number>(-1);
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -129,6 +132,16 @@ function DomainList({ showIP }: { showIP: boolean }): JSX.Element {
 		[data],
 	);
 
+	// Open drawer if selectedDomain is set in URL
+	useEffect(() => {
+		if (selectedDomain && formattedDataForTable?.length > 0) {
+			const idx = formattedDataForTable.findIndex(
+				(item) => item.domainName === selectedDomain,
+			);
+			setSelectedDomainIndex(idx);
+		}
+	}, [selectedDomain, formattedDataForTable]);
+
 	return (
 		<section className={cx('api-module-right-section')}>
 			<Toolbar
@@ -179,6 +192,7 @@ function DomainList({ showIP }: { showIP: boolean }): JSX.Element {
 								(item) => item.key === record.key,
 							);
 							setSelectedDomainIndex(dataIndex);
+							setParams({ selectedDomain: record.domainName });
 							logEvent('API Monitoring: Domain name row clicked', {});
 						}
 					},
@@ -196,6 +210,7 @@ function DomainList({ showIP }: { showIP: boolean }): JSX.Element {
 					domainListLength={formattedDataForTable.length}
 					handleClose={(): void => {
 						setSelectedDomainIndex(-1);
+						setParams(DEFAULT_PARAMS);
 					}}
 					domainListFilters={query?.filters}
 				/>

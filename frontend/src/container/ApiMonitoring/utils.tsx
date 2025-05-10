@@ -3796,9 +3796,9 @@ export const getRateOverTimeWidgetData = (
 ): Widgets => {
 	let legend = domainName;
 	if (endPointName) {
-		const { endpoint, port } = extractPortAndEndpoint(endPointName);
+		const { endpoint } = extractPortAndEndpoint(endPointName);
 		// eslint-disable-next-line sonarjs/no-nested-template-literals
-		legend = `${port !== '-' && port !== 'n/a' ? `${port}:` : ''}${endpoint}`;
+		legend = `${endpoint}`;
 	}
 
 	return getWidgetQueryBuilder(
@@ -3861,9 +3861,9 @@ export const getLatencyOverTimeWidgetData = (
 ): Widgets => {
 	let legend = domainName;
 	if (endPointName) {
-		const { endpoint, port } = extractPortAndEndpoint(endPointName);
+		const { endpoint } = extractPortAndEndpoint(endPointName);
 		// eslint-disable-next-line sonarjs/no-nested-template-literals
-		legend = `${port !== '-' && port !== 'n/a' ? `${port}:` : ''}${endpoint}`;
+		legend = `${endpoint}`;
 	}
 
 	return getWidgetQueryBuilder(

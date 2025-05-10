@@ -215,7 +215,9 @@ function TopErrors({
 										/>
 
 										<Typography.Text className="no-filtered-endpoints-message">
-											This query had no results. Edit your query and try again!
+											{showStatusCodeErrors
+												? 'Please disable "Status Message Exists" toggle to see all errors'
+												: 'This query had no results. Edit your query and try again!'}
 										</Typography.Text>
 									</div>
 								</div>
