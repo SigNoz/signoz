@@ -83,10 +83,6 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 	return m.store.UpdateUser(ctx, orgID, id, user)
 }
 
-func (m *Module) UpdateUserRole(ctx context.Context, orgID string, id string, role types.Role) (*types.User, error) {
-	return m.store.UpdateUserRole(ctx, orgID, id, role)
-}
-
 func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error {
 	user, err := m.store.GetUserByID(ctx, orgID, id)
 	if err != nil {

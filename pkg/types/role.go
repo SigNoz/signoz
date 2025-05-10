@@ -50,8 +50,3 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 func (r Role) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r.String())
 }
-
-type PostableEditUserRole struct {
-	UserId    string `json:"user_id"`
-	GroupName string `json:"group_name"`
-}

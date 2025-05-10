@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"text/template"
 	"time"
 
@@ -188,9 +189,9 @@ func (h *handler) inviteUsers(ctx context.Context, claims authtypes.Claims, bulk
 		}, claims.Email, true, false)
 
 		// send email if SMTP is enabled
-		// if os.Getenv("SMTP_ENABLED") == "true" && bulkInvites.Invites[i].FrontendBaseUrl != "" {
-		h.inviteEmail(&bulkInvites.Invites[i], claims.Email, claims.Name, invites[i].Token)
-		// }
+		if os.Getenv("SMTP_ENABLED") == "true" && bulkInvites.Invites[i].FrontendBaseUrl != "" {
+			h.inviteEmail(&bulkInvites.Invites[i], claims.Email, claims.Name, invites[i].Token)
+		}
 	}
 
 	return invites, nil
@@ -361,9 +362,32 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// only displayName can be updated
+	// only displayName, role can be updated
 	if user.DisplayName == "" {
 		user.DisplayName = existingUser.DisplayName
+	}
+
+	if user.Role == "" {
+		user.Role = existingUser.Role
+	}
+
+	// Make sure that the request is not demoting the last admin user.
+	// also an admin user can only change role of their own or other user
+	if claims.Role == types.RoleAdmin &&
+		existingUser.Role == types.RoleAdmin.String() &&
+		user.Role != existingUser.Role {
+		adminUsers, err := h.module.GetUsersByRoleInOrg(ctx, claims.OrgID, types.RoleAdmin)
+		if err != nil {
+			render.Error(w, err)
+			return
+		}
+
+		if len(adminUsers) == 1 {
+			render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "cannot demote the last admin"))
+			return
+		}
+	} else {
+		user.Role = existingUser.Role
 	}
 
 	user.UpdatedAt = time.Now()
@@ -545,60 +569,4 @@ func (h *handler) GetCurrentUserFromJWT(w http.ResponseWriter, r *http.Request) 
 
 	render.Success(w, http.StatusOK, user)
 
-}
-
-func (h *handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	id := mux.Vars(r)["id"]
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	var req types.PostableEditUserRole
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	role, err := types.NewRole(req.GroupName)
-	if err != nil {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid role"))
-		return
-	}
-
-	user, err := h.module.GetUserByID(ctx, claims.OrgID, id)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	if user == nil {
-		render.Error(w, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found"))
-		return
-	}
-
-	// Make sure that the request is not demoting the last admin user.
-	if user.Role == types.RoleAdmin.String() {
-		adminUsers, err := h.module.GetUsersByRoleInOrg(ctx, claims.OrgID, types.RoleAdmin)
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
-
-		if len(adminUsers) == 1 {
-			render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "cannot demote the last admin"))
-			return
-		}
-	}
-
-	_, err = h.module.UpdateUserRole(ctx, claims.OrgID, user.ID.String(), role)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	render.Success(w, http.StatusAccepted, nil)
 }

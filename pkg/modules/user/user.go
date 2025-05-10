@@ -26,7 +26,6 @@ type Module interface {
 	GetUsersByRoleInOrg(ctx context.Context, orgID string, role types.Role) ([]*types.User, error)
 	ListUsers(ctx context.Context, orgID string) ([]*types.User, error)
 	UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error)
-	UpdateUserRole(ctx context.Context, orgID string, id string, role types.Role) (*types.User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
 	// login
@@ -63,7 +62,6 @@ type Handler interface {
 	GetCurrentUserFromJWT(http.ResponseWriter, *http.Request)
 	ListUsers(http.ResponseWriter, *http.Request)
 	UpdateUser(http.ResponseWriter, *http.Request)
-	UpdateUserRole(http.ResponseWriter, *http.Request)
 	DeleteUser(http.ResponseWriter, *http.Request)
 
 	// Login
