@@ -29,6 +29,12 @@ export interface AllAttributesProps {
 	metricName: string;
 }
 
+export interface AllAttributesValueProps {
+	filterKey: string;
+	filterValue: string[];
+	goToMetricsExploreWithAppliedAttribute: (key: string, value: string) => void;
+}
+
 export interface TopAttributesProps {
 	items: Array<{
 		key: string;
