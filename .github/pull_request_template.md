@@ -1,17 +1,74 @@
-### Summary
+## 📄 Summary
 
-<!-- ✍️ A clear and concise description...-->
+<!-- Describe the purpose of the PR in a few sentences. What does it fix/add/update? -->
 
-#### Related Issues / PR's
+---
 
-<!-- ✍️ Add the issues being resolved here and related PR's where applicable  -->
+## ✅ Changes
 
-#### Screenshots
+- [ ] Feature: Brief description
+- [ ] Bug fix: Brief description
 
-NA
+---
 
-<!-- ✍️ Add screenshots of before and after changes where applicable-->
+## 🏷️ Required: Add Relevant Labels
 
-#### Affected Areas and Manually Tested Areas
+> ⚠️ **Manually add appropriate labels in the PR sidebar**  
+Please select one or more labels (as applicable):
 
-<!-- ✍️ Add details of blast radius and dev testing areas where applicable-->
+ex:
+
+- `frontend`
+- `backend`
+- `devops`
+- `bug`
+- `enhancement`
+- `ui`
+- `test`
+
+---
+
+## 👥 Reviewers
+
+> Tag the relevant teams for review:
+
+- [ ] @SigNoz/frontend
+- [ ] @SigNoz/backend
+- [ ] @SigNoz/devops
+
+---
+
+## 🧪 How to Test
+
+<!-- Describe how reviewers can test this PR -->
+1. ...
+2. ...
+3. ...
+
+---
+
+## 🔍 Related Issues
+
+<!-- Reference any related issues (e.g. Fixes #123, Closes #456) -->
+Closes #
+
+---
+
+## 📸 Screenshots / Screen Recording (if applicable / mandatory for UI related changes)
+
+<!-- Add screenshots or GIFs to help visualize changes -->
+
+---
+
+## 📋 Checklist
+
+- [ ] Dev Review
+- [ ] Test cases added (Unit/ Integration / E2E)
+- [ ] Manually tested the changes
+
+
+---
+
+## 👀 Notes for Reviewers
+
+<!-- Anything reviewers should keep in mind while reviewing -->
