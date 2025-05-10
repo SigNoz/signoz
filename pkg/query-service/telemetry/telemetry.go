@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/version"
 )
@@ -205,8 +206,8 @@ type Telemetry struct {
 	mutex         sync.RWMutex
 
 	alertsInfoCallback     func(ctx context.Context) (*model.AlertsInfo, error)
-	userCountCallback      func(ctx context.Context) (int, error)
-	getUsersCallback       func(ctx context.Context) ([]types.GettableUser, *model.ApiError)
+	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
+	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
 	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
 	savedViewsInfoCallback func(ctx context.Context) (*model.SavedViewsInfo, error)
 }
@@ -215,11 +216,11 @@ func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*m
 	a.alertsInfoCallback = callback
 }
 
-func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context) (int, error)) {
+func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (int, error)) {
 	a.userCountCallback = callback
 }
 
-func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context) ([]types.GettableUser, *model.ApiError)) {
+func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)) {
 	a.getUsersCallback = callback
 }
 
@@ -262,8 +263,8 @@ func createTelemetry() {
 	// Create a new scheduler
 	s := gocron.NewScheduler(time.UTC)
 
-	HEART_BEAT_DURATION := time.Duration(constants.TELEMETRY_HEART_BEAT_DURATION_MINUTES) * time.Minute
-	ACTIVE_USER_DURATION := time.Duration(constants.TELEMETRY_ACTIVE_USER_DURATION_MINUTES) * time.Minute
+	HEART_BEAT_DURATION := time.Duration(10) * time.Second
+	ACTIVE_USER_DURATION := time.Duration(10) * time.Second
 
 	rateLimitTicker := time.NewTicker(RATE_LIMIT_CHECK_DURATION)
 
@@ -288,6 +289,8 @@ func createTelemetry() {
 		if len(tagsInfo.Env) != 0 {
 			telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "", true, false)
 		}
+
+		users, apiErr := telemetry.getUsersCallback(ctx, telemetry.reader.GetSQLStore())
 
 		languages := []string{}
 		for language := range tagsInfo.Languages {
@@ -317,7 +320,7 @@ func createTelemetry() {
 		metricsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.MetricsTTL})
 		logsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.LogsTTL})
 
-		userCount, _ := telemetry.userCountCallback(ctx)
+		userCount, _ := telemetry.userCountCallback(ctx, telemetry.reader.GetSQLStore())
 
 		data := map[string]interface{}{
 			"totalSpans":                            totalSpans,
@@ -340,7 +343,7 @@ func createTelemetry() {
 			data[key] = value
 		}
 
-		users, apiErr := telemetry.getUsersCallback(ctx)
+		users, apiErr = telemetry.getUsersCallback(ctx, telemetry.reader.GetSQLStore())
 		if apiErr == nil {
 			for _, user := range users {
 				if user.Email == DEFAULT_CLOUD_EMAIL {
@@ -554,7 +557,7 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	if a.saasOperator != nil {
 		_ = a.saasOperator.Enqueue(analytics.Identify{
 			UserId: a.userEmail,
-			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("role", user.Role),
+			Traits: analytics.NewTraits().SetName(user.DisplayName).SetEmail(user.Email).Set("role", user.Role),
 		})
 
 		_ = a.saasOperator.Enqueue(analytics.Group{
@@ -567,7 +570,7 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	if a.ossOperator != nil {
 		_ = a.ossOperator.Enqueue(analytics.Identify{
 			UserId: a.ipAddress,
-			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
+			Traits: analytics.NewTraits().SetName(user.DisplayName).SetEmail(user.Email).Set("ip", a.ipAddress),
 		})
 		// Updating a groups properties
 		_ = a.ossOperator.Enqueue(analytics.Group{

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"runtime/debug"
 	"testing"
 	"time"
@@ -15,18 +16,18 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
@@ -34,7 +35,7 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-var jwt = authtypes.NewJWT("secret", 1*time.Hour, 2*time.Hour)
+var jwt = authtypes.NewJWT(os.Getenv("SIGNOZ_JWT_SECRET"), 1*time.Hour, 2*time.Hour)
 
 func NewMockClickhouseReader(t *testing.T, testDB sqlstore.SQLStore) (*clickhouseReader.ClickHouseReader, mockhouse.ClickConnMockCommon) {
 	require.NotNil(t, testDB)
@@ -146,7 +147,7 @@ func makeTestSignozLog(
 	return testLog
 }
 
-func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
 	organization := types.NewOrganization("test")
@@ -155,28 +156,28 @@ func createTestUser(organizationModule organization.Module) (*types.User, *model
 		return nil, model.InternalError(err)
 	}
 
-	userId := uuid.NewString()
+	userId := valuer.GenerateUUID()
 
-	return dao.DB().CreateUser(
-		ctx,
-		&types.User{
-			ID:       userId,
-			Name:     "test",
-			Email:    userId[:8] + "test@test.com",
-			Password: "test",
-			OrgID:    organization.ID.StringValue(),
-			Role:     authtypes.RoleAdmin.String(),
-		},
-		true,
-	)
+	user, err := types.NewUser("test", userId.String()+"test@test.com", types.RoleAdmin.String(), organization.ID.StringValue())
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	err = userModule.CreateUser(ctx, user)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	return user, nil
 }
 
 func AuthenticatedRequestForTest(
+	userModule user.Module,
 	user *types.User,
 	path string,
 	postData interface{},
 ) (*http.Request, error) {
-	userJwt, err := auth.GenerateJWTForUser(user, jwt)
+	userJwt, err := userModule.GetJWTForUser(context.Background(), user)
 	if err != nil {
 		return nil, err
 	}

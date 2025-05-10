@@ -158,6 +158,10 @@ type ClickHouseReader struct {
 	metadataTable              string
 }
 
+func (r *ClickHouseReader) GetSQLStore() sqlstore.SQLStore {
+	return r.sqlDB
+}
+
 // NewTraceReader returns a TraceReader for the database
 func NewReader(
 	sqlDB sqlstore.SQLStore,

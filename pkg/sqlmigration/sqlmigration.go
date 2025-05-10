@@ -27,6 +27,7 @@ var (
 var (
 	OrgReference              = "org"
 	UserReference             = "user"
+	FactorPasswordReference   = "factor_password"
 	CloudIntegrationReference = "cloud_integration"
 )
 
