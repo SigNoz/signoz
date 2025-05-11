@@ -75,6 +75,69 @@
 	}
 }
 
+.periscope-input-with-label {
+	display: flex;
+	flex-direction: row;
+	border-radius: 2px 0px 0px 2px;
+
+	.label {
+		min-width: 114px;
+		font-size: 12px;
+
+		color: var(--bg-vanilla-400);
+		font-size: 11px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 18px;
+		letter-spacing: 0.56px;
+		text-transform: uppercase;
+		max-width: 150px;
+		min-width: 120px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		padding: 0px 8px;
+		border-radius: 2px 0px 0px 2px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
+		font-weight: var(--font-weight-light);
+	}
+
+	.input {
+		flex: 1;
+		border-radius: 0px 2px 2px 0px;
+		border: 1px solid var(--bg-slate-400);
+		border-right: none;
+		border-left: none;
+		border-top-right-radius: 0px;
+		border-bottom-right-radius: 0px;
+		border-top-left-radius: 0px;
+		border-bottom-left-radius: 0px;
+
+		background: var(--bg-ink-300);
+
+		.ant-select {
+			border: none;
+			height: 36px;
+		}
+
+		.ant-select-selector {
+			border: none;
+		}
+	}
+
+	.close-btn {
+		border-radius: 0px 2px 2px 0px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+		height: 38px;
+		width: 38px;
+	}
+}
+
 .lightMode {
 	.periscope-btn {
 		border-color: var(--bg-vanilla-300);
