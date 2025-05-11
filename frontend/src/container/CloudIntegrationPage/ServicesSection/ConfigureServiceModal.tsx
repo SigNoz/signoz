@@ -217,7 +217,7 @@ function ConfigureServiceModal({
 								</div>
 							</Form.Item>
 
-							{currentValues.logs && (
+							{currentValues.logs && serviceId === 's3sync' && (
 								<Form.Item name="s3Buckets" noStyle>
 									<S3BucketsSelector
 										initialBucketsByRegion={currentValues.s3Buckets}
