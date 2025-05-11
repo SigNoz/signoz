@@ -55,6 +55,8 @@
 	}
 
 	.explore-content {
+		margin-top: 10px;
+
 		.ant-space {
 			margin-top: 10px;
 			margin-bottom: 20px;
@@ -75,16 +77,14 @@
 		}
 
 		.time-series-container {
-			display: flex;
-			gap: 10px;
+			display: grid;
+			grid-template-columns: repeat(
+				auto-fit,
+				minmax(min(100%, calc(50% - 8px)), 1fr)
+			);
+			gap: 16px;
 			width: 100%;
 			height: fit-content;
-			overflow-y: scroll;
-
-			.time-series-view {
-				min-width: 80%;
-				width: 80%;
-			}
 		}
 
 		.related-metrics-container {

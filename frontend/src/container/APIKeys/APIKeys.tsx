@@ -27,6 +27,7 @@ import axios, { AxiosError } from 'axios';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import { useGetAllAPIKeys } from 'hooks/APIKeys/useGetAllAPIKeys';
 import { useNotifications } from 'hooks/useNotifications';
 import {
@@ -51,6 +52,8 @@ import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { APIKeyProps } from 'types/api/pat/types';
 import { USER_ROLES } from 'types/roles';
+
+dayjs.extend(relativeTime);
 
 export const showErrorNotification = (
 	notifications: NotificationInstance,
@@ -495,7 +498,7 @@ function APIKeys(): JSX.Element {
 										expiresIn <= 3 ? 'danger' : 'warning',
 									)}
 								>
-									<span className="dot" /> Expires in {expiresIn} Days
+									<span className="dot" /> Expires {dayjs().to(expiresOn)}
 								</div>
 							)}
 

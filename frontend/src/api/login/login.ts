@@ -2,23 +2,14 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { PayloadProps, Props } from 'types/api/channels/editSlack';
+import { PayloadProps, Props } from 'types/api/user/login';
 
-const editSlack = async (
+const login = async (
 	props: Props,
 ): Promise<SuccessResponseV2<PayloadProps>> => {
 	try {
-		const response = await axios.put<PayloadProps>(`/channels/${props.id}`, {
-			name: props.name,
-			slack_configs: [
-				{
-					send_resolved: props.send_resolved,
-					api_url: props.api_url,
-					channel: props.channel,
-					title: props.title,
-					text: props.text,
-				},
-			],
+		const response = await axios.post<PayloadProps>(`/login`, {
+			...props,
 		});
 
 		return {
@@ -27,8 +18,9 @@ const editSlack = async (
 		};
 	} catch (error) {
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+		// this line is never reached but ts isn't detecting the never type properly for the ErrorResponseHandlerV2
 		throw error;
 	}
 };
 
-export default editSlack;
+export default login;

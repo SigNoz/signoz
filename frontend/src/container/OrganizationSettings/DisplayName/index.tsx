@@ -25,7 +25,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 				displayName,
 				orgId,
 			});
-			if (statusCode === 200) {
+			if (statusCode === 204) {
 				notifications.success({
 					message: t('success', {
 						ns: 'common',

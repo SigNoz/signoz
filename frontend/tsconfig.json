@@ -42,8 +42,6 @@
 		"./__mocks__",
 		"./conf/default.conf",
 		"./public",
-		"./tests",
-		"./playwright.config.ts",
 		"./commitlint.config.ts",
 		"./webpack.config.js",
 		"./webpack.config.prod.js",

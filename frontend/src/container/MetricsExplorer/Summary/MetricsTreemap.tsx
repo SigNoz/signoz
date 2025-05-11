@@ -54,7 +54,9 @@ function MetricsTreemap({
 
 	if (isLoading) {
 		return (
-			<Skeleton style={{ width: treemapWidth, height: TREEMAP_HEIGHT }} active />
+			<div data-testid="metrics-treemap-loading-state">
+				<Skeleton style={{ width: treemapWidth, height: TREEMAP_HEIGHT }} active />
+			</div>
 		);
 	}
 
@@ -66,6 +68,7 @@ function MetricsTreemap({
 		return (
 			<Empty
 				description="No metrics found"
+				data-testid="metrics-treemap-empty-state"
 				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
 			/>
 		);
@@ -75,13 +78,17 @@ function MetricsTreemap({
 		return (
 			<Empty
 				description="Error fetching metrics. If the problem persists, please contact support."
+				data-testid="metrics-treemap-error-state"
 				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
 			/>
 		);
 	}
 
 	return (
-		<div className="metrics-treemap-container">
+		<div
+			className="metrics-treemap-container"
+			data-testid="metrics-treemap-container"
+		>
 			<div className="metrics-treemap-title">
 				<Typography.Title level={4}>Proportion View</Typography.Title>
 				<Tooltip

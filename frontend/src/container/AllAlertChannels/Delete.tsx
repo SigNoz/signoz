@@ -4,6 +4,7 @@ import deleteChannel from 'api/channels/delete';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Channels } from 'types/api/channels/getAll';
+import APIError from 'types/api/error';
 
 function Delete({ notifications, setChannels, id }: DeleteProps): JSX.Element {
 	const { t } = useTranslation(['channels']);
@@ -12,30 +13,20 @@ function Delete({ notifications, setChannels, id }: DeleteProps): JSX.Element {
 	const onClickHandler = async (): Promise<void> => {
 		try {
 			setLoading(true);
-			const response = await deleteChannel({
+			await deleteChannel({
 				id,
 			});
 
-			if (response.statusCode === 200) {
-				notifications.success({
-					message: 'Success',
-					description: t('channel_delete_success'),
-				});
-				setChannels((preChannels) => preChannels.filter((e) => e.id !== id));
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('channel_delete_unexp_error'),
-				});
-			}
+			notifications.success({
+				message: 'Success',
+				description: t('channel_delete_success'),
+			});
+			setChannels((preChannels) => preChannels.filter((e) => e.id !== id));
 			setLoading(false);
 		} catch (error) {
 			notifications.error({
-				message: 'Error',
-				description:
-					error instanceof Error
-						? error.toString()
-						: t('channel_delete_unexp_error'),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 			setLoading(false);
 		}

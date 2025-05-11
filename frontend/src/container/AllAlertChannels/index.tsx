@@ -6,12 +6,15 @@ import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
-import useFetch from 'hooks/useFetch';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
+import { SuccessResponseV2 } from 'types/api';
+import { Channels } from 'types/api/channels/getAll';
+import APIError from 'types/api/error';
 
 import AlertChannelsComponent from './AlertChannels';
 import { Button, ButtonContainer, RightActionContainer } from './styles';
@@ -29,21 +32,26 @@ function AlertChannels(): JSX.Element {
 		history.push(ROUTES.CHANNELS_NEW);
 	}, []);
 
-	const { loading, payload, error, errorMessage } = useFetch(getAll);
+	const { isLoading, data, error } = useQuery<
+		SuccessResponseV2<Channels[]>,
+		APIError
+	>(['getChannels'], {
+		queryFn: () => getAll(),
+	});
 
 	useEffect(() => {
-		if (!isUndefined(payload)) {
+		if (!isUndefined(data?.data)) {
 			logEvent('Alert Channel: Channel list page visited', {
-				number: payload?.length,
+				number: data?.data?.length,
 			});
 		}
-	}, [payload]);
+	}, [data?.data]);
 
 	if (error) {
-		return <Typography>{errorMessage}</Typography>;
+		return <Typography>{error.getErrorMessage()}</Typography>;
 	}
 
-	if (loading || payload === undefined) {
+	if (isLoading || isUndefined(data?.data)) {
 		return <Spinner tip={t('loading_channels_message')} height="90vh" />;
 	}
 
@@ -78,7 +86,7 @@ function AlertChannels(): JSX.Element {
 				</RightActionContainer>
 			</ButtonContainer>
 
-			<AlertChannelsComponent allChannels={payload} />
+			<AlertChannelsComponent allChannels={data?.data || []} />
 		</>
 	);
 }
