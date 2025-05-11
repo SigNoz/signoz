@@ -309,6 +309,23 @@ function determineContextBoundaries(
 				};
 				break;
 			}
+
+			// Check if cursor is right after the closing bracket (with a space)
+			// We need to handle this case to transition to conjunction context
+			if (
+				matchingOpen &&
+				token.stop + 1 < cursorIndex &&
+				cursorIndex <= token.stop + 2 &&
+				query[token.stop + 1] === ' '
+			) {
+				// We'll set a special flag to indicate we're after a closing bracket
+				bracketContext = {
+					start: matchingOpen.token.start,
+					end: token.stop,
+					isForList: matchingOpen.isForList,
+				};
+				break;
+			}
 		}
 
 		// If we're at the cursor position and not in a closing bracket check
@@ -725,6 +742,14 @@ export function getQueryContextAtCursor(
 			adjustedCursorIndex >= contextBoundaries.bracketContext.start &&
 			adjustedCursorIndex <= contextBoundaries.bracketContext.end + 1;
 
+		// Check if we're right after a closing bracket for a list (IN operator)
+		// This helps transition to conjunction context after a multi-value list
+		const isAfterClosingBracketList =
+			contextBoundaries.bracketContext &&
+			contextBoundaries.bracketContext.isForList &&
+			adjustedCursorIndex === contextBoundaries.bracketContext.end + 2 &&
+			query[contextBoundaries.bracketContext.end + 1] === ' ';
+
 		// If cursor is within a specific context boundary, this takes precedence
 		if (
 			isInKeyBoundary ||
@@ -732,7 +757,8 @@ export function getQueryContextAtCursor(
 			isInValueBoundary ||
 			isInConjunctionBoundary ||
 			isInBracketListBoundary ||
-			isInParenthesisBoundary
+			isInParenthesisBoundary ||
+			isAfterClosingBracketList
 		) {
 			// Extract information from the current pair (if available)
 			const keyToken = currentPair?.key || '';
@@ -747,6 +773,10 @@ export function getQueryContextAtCursor(
 			const finalIsInValue =
 				isInValueBoundary || (isInBracketListBoundary && isForMultiValueOperator);
 
+			// If we're right after a closing bracket for a list, transition to conjunction context
+			const finalIsInConjunction =
+				isInConjunctionBoundary || isAfterClosingBracketList;
+
 			return {
 				tokenType: -1,
 				text: '',
@@ -756,7 +786,7 @@ export function getQueryContextAtCursor(
 				isInKey: isInKeyBoundary || false,
 				isInOperator: isInOperatorBoundary || false,
 				isInValue: finalIsInValue || false,
-				isInConjunction: isInConjunctionBoundary || false,
+				isInConjunction: finalIsInConjunction || false,
 				isInFunction: false,
 				isInParenthesis: isInParenthesisBoundary || false,
 				isInBracketList: isInBracketListBoundary || false,
