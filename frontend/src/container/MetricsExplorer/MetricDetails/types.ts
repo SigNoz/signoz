@@ -4,6 +4,7 @@ import {
 	MetricDetailsAttribute,
 	MetricDetailsDashboard,
 } from 'api/metricsExplorer/getMetricDetails';
+import { MetricType } from 'api/metricsExplorer/getMetricsList';
 
 export interface MetricDetailsProps {
 	onClose: () => void;
@@ -27,6 +28,7 @@ export interface MetadataProps {
 export interface AllAttributesProps {
 	attributes: MetricDetailsAttribute[];
 	metricName: string;
+	metricType: MetricType | undefined;
 }
 
 export interface AllAttributesValueProps {

@@ -1,10 +1,11 @@
-import { Button, Collapse, Input, Typography } from 'antd';
+import { Button, Collapse, Input, Menu, Popover, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import { Tooltip } from 'antd/lib';
 import { ResizeTable } from 'components/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { Search } from 'lucide-react';
+import { useNotifications } from 'hooks/useNotifications';
+import { Compass, Copy, Search } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 
 import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';
@@ -18,25 +19,83 @@ export function AllAttributesValue({
 	goToMetricsExploreWithAppliedAttribute,
 }: AllAttributesValueProps): JSX.Element {
 	const [visibleIndex, setVisibleIndex] = useState(5);
+	const [attributePopoverKey, setAttributePopoverKey] = useState<string | null>(
+		null,
+	);
+	const [, copyToClipboard] = useCopyToClipboard();
+	const { notifications } = useNotifications();
 
 	const handleShowMore = (): void => {
 		setVisibleIndex(visibleIndex + 5);
 	};
 
+	const handleMenuItemClick = useCallback(
+		(key: string, attribute: string): void => {
+			switch (key) {
+				case 'open-in-explorer':
+					goToMetricsExploreWithAppliedAttribute(filterKey, attribute);
+					break;
+				case 'copy-attribute':
+					copyToClipboard(attribute);
+					notifications.success({
+						message: 'Attribute copied!',
+					});
+					break;
+				default:
+					break;
+			}
+			setAttributePopoverKey(null);
+		},
+		[
+			goToMetricsExploreWithAppliedAttribute,
+			filterKey,
+			copyToClipboard,
+			notifications,
+		],
+	);
+
+	const attributePopoverContent = useCallback(
+		(attribute: string) => (
+			<Menu
+				items={[
+					{
+						icon: <Compass size={16} />,
+						label: 'Open in Explorer',
+						key: 'open-in-explorer',
+					},
+					{
+						icon: <Copy size={16} />,
+						label: 'Copy Attribute',
+						key: 'copy-attribute',
+					},
+				]}
+				onClick={(info): void => {
+					handleMenuItemClick(info.key, attribute);
+				}}
+			/>
+		),
+		[handleMenuItemClick],
+	);
 	return (
 		<div className="all-attributes-value">
 			{filterValue.slice(0, visibleIndex).map((attribute) => (
-				<Tooltip key={attribute} title={attribute}>
-					<Button
-						key={attribute}
-						type="text"
-						onClick={(): void => {
-							goToMetricsExploreWithAppliedAttribute(filterKey, attribute);
-						}}
-					>
+				<Popover
+					key={attribute}
+					content={attributePopoverContent(attribute)}
+					trigger="click"
+					open={attributePopoverKey === `${filterKey}-${attribute}`}
+					onOpenChange={(open): void => {
+						if (!open) {
+							setAttributePopoverKey(null);
+						} else {
+							setAttributePopoverKey(`${filterKey}-${attribute}`);
+						}
+					}}
+				>
+					<Button key={attribute} type="text">
 						<Typography.Text>{attribute}</Typography.Text>
 					</Button>
-				</Tooltip>
+				</Popover>
 			))}
 			{visibleIndex < filterValue.length && (
 				<Button type="text" onClick={handleShowMore}>
@@ -50,6 +109,7 @@ export function AllAttributesValue({
 function AllAttributes({
 	metricName,
 	attributes,
+	metricType,
 }: AllAttributesProps): JSX.Element {
 	const [searchString, setSearchString] = useState('');
 	const [activeKey, setActiveKey] = useState<string | string[]>(
@@ -58,9 +118,14 @@ function AllAttributes({
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
-	const goToMetricsExploreWithAppliedAttribute = useCallback(
-		(key: string, value: string) => {
-			const compositeQuery = getMetricDetailsQuery(metricName, { key, value });
+	const goToMetricsExplorerwithAppliedSpaceAggregation = useCallback(
+		(groupBy: string) => {
+			const compositeQuery = getMetricDetailsQuery(
+				metricName,
+				metricType,
+				undefined,
+				groupBy,
+			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
 				{
@@ -71,7 +136,25 @@ function AllAttributes({
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 			);
 		},
-		[metricName, handleExplorerTabChange],
+		[metricName, metricType, handleExplorerTabChange],
+	);
+	const goToMetricsExploreWithAppliedAttribute = useCallback(
+		(key: string, value: string) => {
+			const compositeQuery = getMetricDetailsQuery(metricName, metricType, {
+				key,
+				value,
+			});
+			handleExplorerTabChange(
+				PANEL_TYPES.TIME_SERIES,
+				{
+					query: compositeQuery,
+					name: metricName,
+					id: metricName,
+				},
+				ROUTES.METRICS_EXPLORER_EXPLORER,
+			);
+		},
+		[metricName, metricType, handleExplorerTabChange],
 	);
 
 	const filteredAttributes = useMemo(
@@ -114,8 +197,17 @@ function AllAttributes({
 				className: 'metric-metadata-key',
 				render: (field: { label: string; contribution: number }): JSX.Element => (
 					<div className="all-attributes-key">
-						<Typography.Text>{field.label}</Typography.Text>
-						<Typography.Text>{field.contribution}</Typography.Text>
+						<Button
+							type="text"
+							onClick={(): void =>
+								goToMetricsExplorerwithAppliedSpaceAggregation(field.label)
+							}
+						>
+							<Typography.Text>{field.label}</Typography.Text>
+						</Button>
+						<Typography.Text className="all-attributes-contribution">
+							{field.contribution}
+						</Typography.Text>
 					</div>
 				),
 			},
@@ -138,7 +230,10 @@ function AllAttributes({
 				),
 			},
 		],
-		[goToMetricsExploreWithAppliedAttribute],
+		[
+			goToMetricsExploreWithAppliedAttribute,
+			goToMetricsExplorerwithAppliedSpaceAggregation,
+		],
 	);
 
 	const items = useMemo(

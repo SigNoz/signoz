@@ -157,11 +157,13 @@
 					.all-attributes-key {
 						display: flex;
 						justify-content: space-between;
-						.ant-typography:first-child {
-							font-family: 'Geist Mono';
-							color: var(--bg-robin-400);
+						.ant-btn {
+							.ant-typography:first-child {
+								font-family: 'Geist Mono';
+								color: var(--bg-robin-400);
+							}
 						}
-						.ant-typography:last-child {
+						.all-attributes-contribution {
 							font-family: 'Geist Mono';
 							color: var(--bg-vanilla-400);
 							background-color: rgba(171, 189, 255, 0.1);
