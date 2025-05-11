@@ -13,7 +13,7 @@ export const topTracesTableColumns = [
 		),
 	},
 	{
-		title: 'DURATION',
+		title: 'Step Transition Duration',
 		dataIndex: 'duration_ms',
 		key: 'duration_ms',
 		render: (value: string): string => getYAxisFormattedValue(value, 'ms'),
