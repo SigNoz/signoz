@@ -3,8 +3,8 @@ import './Events.styles.scss';
 import { Collapse, Input, Tooltip, Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Diamond } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Event, Span } from 'types/api/trace/getTraceV2';
+import { useState } from 'react';
+import { Span } from 'types/api/trace/getTraceV2';
 
 import NoData from '../NoData/NoData';
 
@@ -17,14 +17,7 @@ interface IEventsTableProps {
 function EventsTable(props: IEventsTableProps): JSX.Element {
 	const { span, startTime, isSearchVisible } = props;
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
-	const events: Event[] = useMemo(() => {
-		const tempEvents = [];
-		for (let i = 0; i < span.event?.length; i++) {
-			const parsedEvent = JSON.parse(span.event[i]);
-			tempEvents.push(parsedEvent);
-		}
-		return tempEvents;
-	}, [span.event]);
+	const events = span.event;
 
 	return (
 		<div className="events-table">
