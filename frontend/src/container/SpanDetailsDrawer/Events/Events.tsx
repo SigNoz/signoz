@@ -74,7 +74,18 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 															)}
 														</Typography.Text>
 														<Typography.Text className="timestamp-text">
-															after the start
+															since trace start
+														</Typography.Text>
+													</div>
+													<div className="timestamp-container">
+														<Typography.Text className="attribute-value">
+															{getYAxisFormattedValue(
+																`${(event.timeUnixNano || 0) / 1e6 - span.timestamp}`,
+																'ms',
+															)}
+														</Typography.Text>
+														<Typography.Text className="timestamp-text">
+															since span start
 														</Typography.Text>
 													</div>
 												</div>

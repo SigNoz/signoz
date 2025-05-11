@@ -22,9 +22,9 @@
 				.event-dot {
 					position: absolute;
 					top: 50%;
-					transform: translateY(-50%) rotate(45deg);
-					width: 7px;
-					height: 7px;
+					transform: translate(-50%, -50%) rotate(45deg);
+					width: 6px;
+					height: 6px;
 					background-color: var(--bg-robin-500);
 					border: 1px solid var(--bg-robin-600);
 					cursor: pointer;
@@ -36,7 +36,7 @@
 					}
 
 					&:hover {
-						transform: translateY(-50%) rotate(45deg) scale(1.5);
+						transform: translate(-50%, -50%) rotate(45deg) scale(1.5);
 					}
 				}
 			}

@@ -244,18 +244,23 @@ export function SpanDuration({
 				}}
 			>
 				{span.event?.map((event) => {
-					const eventLeftOffset =
-						((event.timeUnixNano / 1e6 - traceMetadata.startTime) * 100) / spread;
+					const eventTimeMs = event.timeUnixNano / 1e6;
+					const eventOffsetPercent =
+						((eventTimeMs - span.timestamp) / (span.durationNano / 1e6)) * 100;
+					const clampedOffset = Math.max(1, Math.min(eventOffsetPercent, 99));
 					const { isError } = event;
+					const { time, timeUnitName } = convertTimeToRelevantUnit(
+						eventTimeMs - span.timestamp,
+					);
 					return (
 						<Tooltip
 							key={`${span.spanId}-event-${event.name}-${event.timeUnixNano}`}
-							title={`${event.name}`}
+							title={`${event.name} @ ${toFixed(time, 2)} ${timeUnitName}`}
 						>
 							<div
 								className={`event-dot ${isError ? 'error' : ''}`}
 								style={{
-									left: `${eventLeftOffset}%`,
+									left: `${clampedOffset}%`,
 								}}
 							/>
 						</Tooltip>
