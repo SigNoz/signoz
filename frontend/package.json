@@ -258,6 +258,7 @@
 		"http-proxy-middleware": "3.0.3",
 		"cross-spawn": "7.0.5",
 		"cookie": "^0.7.1",
-		"serialize-javascript": "6.0.2"
+		"serialize-javascript": "6.0.2",
+		"prismjs": "1.30.0"
 	}
 }
