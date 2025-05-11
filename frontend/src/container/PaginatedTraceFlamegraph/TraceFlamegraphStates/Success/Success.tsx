@@ -91,7 +91,26 @@ function Success(props: ISuccessProps): JSX.Element {
 									searchParams.set('spanId', span.spanId);
 									history.replace({ search: searchParams.toString() });
 								}}
-							/>
+							>
+								{span.event?.map((event) => {
+									const eventLeftOffset =
+										((event.timeUnixNano / 1e6 - traceMetadata.startTime) * 100) / spread;
+									const { isError } = event;
+									return (
+										<Tooltip
+											key={`${span.spanId}-event-${event.name}-${event.timeUnixNano}`}
+											title={`${event.name}`}
+										>
+											<div
+												className={`event-dot ${isError ? 'error' : ''}`}
+												style={{
+													left: `${eventLeftOffset}%`,
+												}}
+											/>
+										</Tooltip>
+									);
+								})}
+							</div>
 						</Tooltip>
 					);
 				})}
