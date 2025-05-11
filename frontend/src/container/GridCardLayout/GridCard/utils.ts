@@ -227,8 +227,10 @@ export const handleGraphClick = async ({
 				navigateToExplorer({
 					filters: [...result[key].filters, ...(customFilters || [])],
 					dataSource: result[key].dataSource as DataSource,
-					startTime: customTracesTimeRange?.start || xValue,
-					endTime: customTracesTimeRange?.end || xValue + (stepInterval ?? 60),
+					startTime: customTracesTimeRange ? customTracesTimeRange?.start : xValue,
+					endTime: customTracesTimeRange
+						? customTracesTimeRange?.end
+						: xValue + (stepInterval ?? 60),
 					shouldResolveQuery: true,
 				}),
 		}));

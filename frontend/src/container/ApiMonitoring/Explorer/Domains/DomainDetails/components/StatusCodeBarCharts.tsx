@@ -170,7 +170,10 @@ function StatusCodeBarCharts({
 				notifications,
 				graphClick,
 				customFilters,
-				customTracesTimeRange: { start, end },
+				customTracesTimeRange: {
+					start,
+					end,
+				},
 			});
 		},
 		[
