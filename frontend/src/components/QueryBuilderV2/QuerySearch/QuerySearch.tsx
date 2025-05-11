@@ -5,7 +5,7 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-nested-ternary */
 
-import './CodeMirrorWhereClause.styles.scss';
+import './QuerySearch.styles.scss';
 
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import {
@@ -162,7 +162,7 @@ const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
 	},
 );
 
-function CodeMirrorWhereClause(): JSX.Element {
+function QuerySearch(): JSX.Element {
 	const [query, setQuery] = useState<string>('');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
 		{ label: 'error', type: 'value' },
@@ -180,6 +180,8 @@ function CodeMirrorWhereClause(): JSX.Element {
 	const [keySuggestions, setKeySuggestions] = useState<
 		QueryKeySuggestionsProps[] | null
 	>(null);
+
+	const [showExamples] = useState(false);
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
@@ -1088,44 +1090,46 @@ function CodeMirrorWhereClause(): JSX.Element {
 				</Card>
 			)}
 
-			<Card size="small" className="query-examples-card">
-				<Collapse
-					ghost
-					size="small"
-					className="query-examples"
-					defaultActiveKey={[]}
-				>
-					<Panel header="Query Examples" key="1">
-						<div className="query-examples-list">
-							{queryExamples.map((example) => (
-								<div
-									className="query-example-content"
-									key={example.label}
-									onClick={(): void => handleExampleClick(example.query)}
-									role="button"
-									tabIndex={0}
-									onKeyDown={(e): void => {
-										if (e.key === 'Enter' || e.key === ' ') {
-											handleExampleClick(example.query);
-										}
-									}}
-								>
-									<CodeMirror
-										value={example.query}
-										theme={copilot}
-										extensions={[
-											javascript({ jsx: false, typescript: false }),
-											EditorView.editable.of(false),
-										]}
-										basicSetup={{ lineNumbers: false }}
-										className="query-example-code-mirror"
-									/>
-								</div>
-							))}
-						</div>
-					</Panel>
-				</Collapse>
-			</Card>
+			{showExamples && (
+				<Card size="small" className="query-examples-card">
+					<Collapse
+						ghost
+						size="small"
+						className="query-examples"
+						defaultActiveKey={[]}
+					>
+						<Panel header="Query Examples" key="1">
+							<div className="query-examples-list">
+								{queryExamples.map((example) => (
+									<div
+										className="query-example-content"
+										key={example.label}
+										onClick={(): void => handleExampleClick(example.query)}
+										role="button"
+										tabIndex={0}
+										onKeyDown={(e): void => {
+											if (e.key === 'Enter' || e.key === ' ') {
+												handleExampleClick(example.query);
+											}
+										}}
+									>
+										<CodeMirror
+											value={example.query}
+											theme={copilot}
+											extensions={[
+												javascript({ jsx: false, typescript: false }),
+												EditorView.editable.of(false),
+											]}
+											basicSetup={{ lineNumbers: false }}
+											className="query-example-code-mirror"
+										/>
+									</div>
+								))}
+							</div>
+						</Panel>
+					</Collapse>
+				</Card>
+			)}
 
 			{/* {queryContext && (
 				<Card size="small" title="Current Context" className="query-context">
@@ -1172,4 +1176,4 @@ function CodeMirrorWhereClause(): JSX.Element {
 	);
 }
 
-export default CodeMirrorWhereClause;
+export default QuerySearch;
