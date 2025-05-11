@@ -30,11 +30,6 @@ const config: Config.InitialOptions = {
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],
 	moduleDirectories: ['node_modules', 'src'],
 	testEnvironment: 'jest-environment-jsdom',
-	testEnvironmentOptions: {
-		'jest-playwright': {
-			browsers: ['chromium', 'firefox', 'webkit'],
-		},
-	},
 	coverageThreshold: {
 		global: {
 			statements: 80,
