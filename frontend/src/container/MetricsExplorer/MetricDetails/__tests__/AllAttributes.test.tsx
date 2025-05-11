@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
 
 import { MetricDetailsAttribute } from '../../../../api/metricsExplorer/getMetricDetails';
@@ -19,6 +20,7 @@ jest
 	});
 
 const mockMetricName = 'test-metric';
+const mockMetricType = MetricType.GAUGE;
 const mockAttributes: MetricDetailsAttribute[] = [
 	{
 		key: 'attribute1',
@@ -35,7 +37,11 @@ const mockAttributes: MetricDetailsAttribute[] = [
 describe('AllAttributes', () => {
 	it('renders attributes section with title', () => {
 		render(
-			<AllAttributes metricName={mockMetricName} attributes={mockAttributes} />,
+			<AllAttributes
+				metricName={mockMetricName}
+				attributes={mockAttributes}
+				metricType={mockMetricType}
+			/>,
 		);
 
 		expect(screen.getByText('All Attributes')).toBeInTheDocument();
@@ -43,7 +49,11 @@ describe('AllAttributes', () => {
 
 	it('renders all attribute keys and values', () => {
 		render(
-			<AllAttributes metricName={mockMetricName} attributes={mockAttributes} />,
+			<AllAttributes
+				metricName={mockMetricName}
+				attributes={mockAttributes}
+				metricType={mockMetricType}
+			/>,
 		);
 
 		// Check attribute keys are rendered
@@ -58,7 +68,11 @@ describe('AllAttributes', () => {
 
 	it('renders value counts correctly', () => {
 		render(
-			<AllAttributes metricName={mockMetricName} attributes={mockAttributes} />,
+			<AllAttributes
+				metricName={mockMetricName}
+				attributes={mockAttributes}
+				metricType={mockMetricType}
+			/>,
 		);
 
 		expect(screen.getByText('2')).toBeInTheDocument(); // For attribute1
@@ -66,23 +80,37 @@ describe('AllAttributes', () => {
 	});
 
 	it('handles empty attributes array', () => {
-		render(<AllAttributes metricName={mockMetricName} attributes={[]} />);
+		render(
+			<AllAttributes
+				metricName={mockMetricName}
+				attributes={[]}
+				metricType={mockMetricType}
+			/>,
+		);
 
 		expect(screen.getByText('All Attributes')).toBeInTheDocument();
 		expect(screen.queryByText('No data')).toBeInTheDocument();
 	});
 
-	it('clicking on an attribute value opens the explorer with the attribute filter applied', () => {
+	it('clicking on an attribute key opens the explorer with the attribute filter applied', () => {
 		render(
-			<AllAttributes metricName={mockMetricName} attributes={mockAttributes} />,
+			<AllAttributes
+				metricName={mockMetricName}
+				attributes={mockAttributes}
+				metricType={mockMetricType}
+			/>,
 		);
-		fireEvent.click(screen.getByText('value1'));
+		fireEvent.click(screen.getByText('attribute1'));
 		expect(mockHandleExplorerTabChange).toHaveBeenCalled();
 	});
 
 	it('filters attributes based on search input', () => {
 		render(
-			<AllAttributes metricName={mockMetricName} attributes={mockAttributes} />,
+			<AllAttributes
+				metricName={mockMetricName}
+				attributes={mockAttributes}
+				metricType={mockMetricType}
+			/>,
 		);
 		fireEvent.change(screen.getByPlaceholderText('Search'), {
 			target: { value: 'value1' },
