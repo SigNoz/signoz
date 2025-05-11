@@ -100,10 +100,13 @@ function S3BucketsSelector({
 								placeholder={`Enter S3 bucket names for ${region}`}
 								value={bucketsByRegion[region] || []}
 								onChange={(value): void => handleRegionBucketsChange(region, value)}
-								style={{ width: '100%' }}
 								tokenSeparators={[',']}
 								allowClear
 								disabled={disabled}
+								suffixIcon={null}
+								notFoundContent={null}
+								filterOption={false}
+								showSearch
 							/>
 						</Form.Item>
 					);
