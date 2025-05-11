@@ -158,20 +158,29 @@
 				border-bottom: 1px solid var(--bg-slate-400) !important;
 			}
 
-			.attributes-tab-btn {
+			.ant-tabs-tab {
+				margin: 0 !important;
+				padding: 0 2px !important;
+				min-width: 36px;
+				height: 36px;
 				display: flex;
 				align-items: center;
-			}
-			.attributes-tab-btn:hover {
-				background: unset;
+				justify-content: center;
 			}
 
-			.events-tab-btn {
+			.attributes-tab-btn,
+			.events-tab-btn,
+			.linked-spans-tab-btn {
 				display: flex;
 				align-items: center;
+				justify-content: center;
+				width: 100%;
+				padding: 4px 8px;
 			}
 
-			.events-tab-btn:hover {
+			.attributes-tab-btn:hover,
+			.events-tab-btn:hover,
+			.linked-spans-tab-btn:hover {
 				background: unset;
 			}
 		}
@@ -260,4 +269,10 @@
 			}
 		}
 	}
+}
+
+.linked-spans-tab-btn {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
 }
