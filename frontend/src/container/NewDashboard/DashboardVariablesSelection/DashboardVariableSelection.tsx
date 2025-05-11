@@ -1,4 +1,6 @@
-import { Row } from 'antd';
+import './DashboardVariableSelection.styles.scss';
+
+import { Alert, Row } from 'antd';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useState } from 'react';
@@ -64,7 +66,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 	useEffect(() => {
 		if (variablesTableData.length > 0) {
 			const depGrp = buildDependencies(variablesTableData);
-			const { order, graph } = buildDependencyGraph(depGrp);
+			const { order, graph, hasCycle, cycleNodes } = buildDependencyGraph(depGrp);
 			const parentDependencyGraph = buildParentDependencyGraph(graph);
 
 			// cleanup order to only include variables that are of type 'QUERY'
@@ -79,6 +81,8 @@ function DashboardVariableSelection(): JSX.Element | null {
 				order: cleanedOrder,
 				graph,
 				parentDependencyGraph,
+				hasCycle,
+				cycleNodes,
 			});
 		}
 	}, [setVariablesToGetUpdated, variables, variablesTableData]);
@@ -166,25 +170,37 @@ function DashboardVariableSelection(): JSX.Element | null {
 	);
 
 	return (
-		<Row style={{ display: 'flex', gap: '12px' }}>
-			{orderBasedSortedVariables &&
-				Array.isArray(orderBasedSortedVariables) &&
-				orderBasedSortedVariables.length > 0 &&
-				orderBasedSortedVariables.map((variable) => (
-					<VariableItem
-						key={`${variable.name}${variable.id}}${variable.order}`}
-						existingVariables={variables}
-						variableData={{
-							name: variable.name,
-							...variable,
-						}}
-						onValueUpdate={onValueUpdate}
-						variablesToGetUpdated={variablesToGetUpdated}
-						setVariablesToGetUpdated={setVariablesToGetUpdated}
-						dependencyData={dependencyData}
-					/>
-				))}
-		</Row>
+		<>
+			{dependencyData?.hasCycle && (
+				<Alert
+					message={`Circular dependency detected: ${dependencyData?.cycleNodes?.join(
+						' → ',
+					)}`}
+					type="error"
+					showIcon
+					className="cycle-error-alert"
+				/>
+			)}
+			<Row style={{ display: 'flex', gap: '12px' }}>
+				{orderBasedSortedVariables &&
+					Array.isArray(orderBasedSortedVariables) &&
+					orderBasedSortedVariables.length > 0 &&
+					orderBasedSortedVariables.map((variable) => (
+						<VariableItem
+							key={`${variable.name}${variable.id}}${variable.order}`}
+							existingVariables={variables}
+							variableData={{
+								name: variable.name,
+								...variable,
+							}}
+							onValueUpdate={onValueUpdate}
+							variablesToGetUpdated={variablesToGetUpdated}
+							setVariablesToGetUpdated={setVariablesToGetUpdated}
+							dependencyData={dependencyData}
+						/>
+					))}
+			</Row>
+		</>
 	);
 }
 

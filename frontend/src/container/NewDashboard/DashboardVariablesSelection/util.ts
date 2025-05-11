@@ -95,69 +95,13 @@ export const buildDependencies = (
 	return graph;
 };
 
-// Function to build the dependency graph
-export const buildDependencyGraph = (
-	dependencies: VariableGraph,
-): { order: string[]; graph: VariableGraph } => {
-	const inDegree: Record<string, number> = {};
-	const adjList: VariableGraph = {};
-
-	// Initialize in-degree and adjacency list
-	Object.keys(dependencies).forEach((node) => {
-		if (!inDegree[node]) inDegree[node] = 0;
-		if (!adjList[node]) adjList[node] = [];
-		dependencies[node]?.forEach((child) => {
-			if (!inDegree[child]) inDegree[child] = 0;
-			inDegree[child]++;
-			adjList[node].push(child);
-		});
-	});
-
-	// Topological sort using Kahn's Algorithm
-	const queue: string[] = Object.keys(inDegree).filter(
-		(node) => inDegree[node] === 0,
-	);
-	const topologicalOrder: string[] = [];
-
-	while (queue.length > 0) {
-		const current = queue.shift();
-		if (current === undefined) {
-			break;
-		}
-		topologicalOrder.push(current);
-
-		adjList[current]?.forEach((neighbor) => {
-			inDegree[neighbor]--;
-			if (inDegree[neighbor] === 0) queue.push(neighbor);
-		});
-	}
-
-	if (topologicalOrder.length !== Object.keys(dependencies)?.length) {
-		console.error('Cycle detected in the dependency graph!');
-	}
-
-	return { order: topologicalOrder, graph: adjList };
-};
-
-export const onUpdateVariableNode = (
-	nodeToUpdate: string,
-	graph: VariableGraph,
-	topologicalOrder: string[],
-	callback: (node: string) => void,
-): void => {
-	const visited = new Set<string>();
-
-	// Start processing from the node to update
-	topologicalOrder.forEach((node) => {
-		if (node === nodeToUpdate || visited.has(node)) {
-			visited.add(node);
-			callback(node);
-			(graph[node] || []).forEach((child) => {
-				visited.add(child);
-			});
-		}
-	});
-};
+export interface IDependencyData {
+	order: string[];
+	graph: VariableGraph;
+	parentDependencyGraph: VariableGraph;
+	hasCycle: boolean;
+	cycleNodes?: string[];
+}
 
 export const buildParentDependencyGraph = (
 	graph: VariableGraph,
@@ -178,6 +122,149 @@ export const buildParentDependencyGraph = (
 	});
 
 	return parentGraph;
+};
+
+const collectCyclePath = (
+	graph: VariableGraph,
+	start: string,
+	end: string,
+): string[] => {
+	const path: string[] = [];
+	let current = start;
+
+	const findParent = (node: string): string | undefined =>
+		Object.keys(graph).find((key) => graph[key]?.includes(node));
+
+	while (current !== end) {
+		const parent = findParent(current);
+		if (!parent) break;
+		path.push(parent);
+		current = parent;
+	}
+
+	return [start, ...path];
+};
+
+const detectCycle = (
+	graph: VariableGraph,
+	node: string,
+	visited: Set<string>,
+	recStack: Set<string>,
+): string[] | null => {
+	if (!visited.has(node)) {
+		visited.add(node);
+		recStack.add(node);
+
+		const neighbors = graph[node] || [];
+		let cycleNodes: string[] | null = null;
+
+		neighbors.some((neighbor) => {
+			if (!visited.has(neighbor)) {
+				const foundCycle = detectCycle(graph, neighbor, visited, recStack);
+				if (foundCycle) {
+					cycleNodes = foundCycle;
+					return true;
+				}
+			} else if (recStack.has(neighbor)) {
+				// Found a cycle, collect the cycle nodes
+				cycleNodes = collectCyclePath(graph, node, neighbor);
+				return true;
+			}
+			return false;
+		});
+
+		if (cycleNodes) {
+			return cycleNodes;
+		}
+	}
+	recStack.delete(node);
+	return null;
+};
+
+export const buildDependencyGraph = (
+	dependencies: VariableGraph,
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+): IDependencyData => {
+	const inDegree: Record<string, number> = {};
+	const adjList: VariableGraph = {};
+
+	// Initialize in-degree and adjacency list
+	Object.keys(dependencies).forEach((node) => {
+		if (!inDegree[node]) inDegree[node] = 0;
+		if (!adjList[node]) adjList[node] = [];
+		dependencies[node]?.forEach((child) => {
+			if (!inDegree[child]) inDegree[child] = 0;
+			inDegree[child]++;
+			adjList[node].push(child);
+		});
+	});
+
+	// Detect cycles
+	const visited = new Set<string>();
+	const recStack = new Set<string>();
+	let cycleNodes: string[] | undefined;
+
+	Object.keys(dependencies).some((node) => {
+		if (!visited.has(node)) {
+			const foundCycle = detectCycle(dependencies, node, visited, recStack);
+			if (foundCycle) {
+				cycleNodes = foundCycle;
+				return true;
+			}
+		}
+		return false;
+	});
+
+	console.log('cycleNodes', cycleNodes, dependencies);
+
+	// Topological sort using Kahn's Algorithm
+	const queue: string[] = Object.keys(inDegree).filter(
+		(node) => inDegree[node] === 0,
+	);
+	const topologicalOrder: string[] = [];
+
+	while (queue.length > 0) {
+		const current = queue.shift();
+		if (current === undefined) {
+			break;
+		}
+		topologicalOrder.push(current);
+
+		adjList[current]?.forEach((neighbor) => {
+			inDegree[neighbor]--;
+			if (inDegree[neighbor] === 0) queue.push(neighbor);
+		});
+	}
+
+	const hasCycle = topologicalOrder.length !== Object.keys(dependencies)?.length;
+
+	return {
+		order: topologicalOrder,
+		graph: adjList,
+		parentDependencyGraph: buildParentDependencyGraph(adjList),
+		hasCycle,
+		cycleNodes,
+	};
+};
+
+export const onUpdateVariableNode = (
+	nodeToUpdate: string,
+	graph: VariableGraph,
+	topologicalOrder: string[],
+	callback: (node: string) => void,
+): void => {
+	const visited = new Set<string>();
+
+	// Start processing from the node to update
+	topologicalOrder.forEach((node) => {
+		if (node === nodeToUpdate || visited.has(node)) {
+			visited.add(node);
+			callback(node);
+			(graph[node] || []).forEach((child) => {
+				visited.add(child);
+			});
+		}
+	});
 };
 
 export const checkAPIInvocation = (
@@ -206,9 +293,3 @@ export const checkAPIInvocation = (
 		variablesToGetUpdated[0] === variableData.name
 	);
 };
-
-export interface IDependencyData {
-	order: string[];
-	graph: VariableGraph;
-	parentDependencyGraph: VariableGraph;
-}
