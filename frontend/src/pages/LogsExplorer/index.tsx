@@ -33,7 +33,7 @@ import { SELECTED_VIEWS } from './utils';
 function LogsExplorer(): JSX.Element {
 	const [showFrequencyChart, setShowFrequencyChart] = useState(true);
 	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
-		SELECTED_VIEWS.SEARCH,
+		SELECTED_VIEWS.QUERY_BUILDER_V2,
 	);
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
