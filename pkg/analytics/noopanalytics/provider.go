@@ -1,4 +1,4 @@
-package segmentanalytics
+package noopanalytics
 
 import (
 	"context"

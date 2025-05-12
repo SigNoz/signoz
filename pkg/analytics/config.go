@@ -12,7 +12,7 @@ var (
 )
 
 type Config struct {
-	Enabled bool   `mapstructure:"bool"`
+	Enabled bool   `mapstructure:"enabled"`
 	Key     string `mapstructure:"key"`
 }
 
