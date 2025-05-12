@@ -3,6 +3,7 @@ package services
 import (
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +25,7 @@ func TestAvailableServices(t *testing.T) {
 		"aws", "bad-service-id",
 	)
 	require.NotNil(err)
-	require.Equal(model.ErrorNotFound, apiErr.Type())
+	require.True(errors.Ast(err, errors.TypeNotFound))
 
 	svc, err := GetServiceDefinition(
 		"aws", awsSvcs[0].Id,
