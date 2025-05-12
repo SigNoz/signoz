@@ -131,7 +131,6 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 
 	if len(users) == 0 {
 		resp.IsUser = false
-		return resp, err
 	}
 
 	// give them an option to select an org
@@ -144,7 +143,6 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 		return resp, nil
 	}
 
-	// user := users[0]
 	// select the user with the corresponding orgID
 	if len(users) > 1 {
 		found := false
@@ -169,6 +167,8 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 	}
 
 	if ssoAvailable {
+		resp.IsUser = true
+
 		// TODO(Nitya): in multitenancy this should use orgId as well.
 		orgDomain, err := m.GetAuthDomainByEmail(ctx, email)
 		if err != nil {

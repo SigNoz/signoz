@@ -263,8 +263,8 @@ func createTelemetry() {
 	// Create a new scheduler
 	s := gocron.NewScheduler(time.UTC)
 
-	HEART_BEAT_DURATION := time.Duration(10) * time.Second
-	ACTIVE_USER_DURATION := time.Duration(10) * time.Second
+	HEART_BEAT_DURATION := time.Duration(constants.TELEMETRY_HEART_BEAT_DURATION_MINUTES) * time.Second
+	ACTIVE_USER_DURATION := time.Duration(constants.TELEMETRY_ACTIVE_USER_DURATION_MINUTES) * time.Second
 
 	rateLimitTicker := time.NewTicker(RATE_LIMIT_CHECK_DURATION)
 
