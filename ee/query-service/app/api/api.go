@@ -129,7 +129,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(ah.loginPrecheck)).Methods(http.MethodGet)
 
 	// invite
-	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.Signoz.Handlers.User.GetInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(ah.acceptInvite)).Methods(http.MethodPost)
 
 	// paid plans specific routes
@@ -209,6 +209,16 @@ func (ah *APIHandler) acceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ah.Signoz.Handlers.User.AcceptInvite(w, r)
+	return
+}
+
+func (ah *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
+	r, err := ah.updateRequestContext(w, r)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	ah.Signoz.Handlers.User.GetInvite(w, r)
 	return
 }
 
