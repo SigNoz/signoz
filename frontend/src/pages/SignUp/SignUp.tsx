@@ -175,6 +175,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			const response = await accept({
 				password: '',
 				token: params.get('token') || '',
+				sourceUrl: encodeURIComponent(window.location.href),
 			});
 
 			if (response.data?.sso) {

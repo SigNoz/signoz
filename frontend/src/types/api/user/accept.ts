@@ -1,6 +1,7 @@
 export interface Props {
 	token: string;
 	password: string;
+	sourceUrl?: string;
 }
 
 export interface LoginPrecheckResponse {
