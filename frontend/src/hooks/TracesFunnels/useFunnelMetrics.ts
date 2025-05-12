@@ -21,7 +21,7 @@ export function useFunnelMetrics({
 	metricsData: MetricItem[];
 	conversionRate: number;
 } {
-	const { startTime, endTime } = useFunnelContext();
+	const { startTime, endTime, steps } = useFunnelContext();
 	const payload = {
 		start_time: startTime,
 		end_time: endTime,
@@ -35,6 +35,11 @@ export function useFunnelMetrics({
 		isFetching,
 		isError,
 	} = useFunnelOverview(funnelId, payload);
+
+	const latencyType = useMemo(
+		() => (stepStart ? steps[stepStart - 1]?.latency_type : 'p99'),
+		[stepStart, steps],
+	);
 
 	const metricsData = useMemo(() => {
 		const sourceData = overviewData?.payload?.data?.[0]?.data;
@@ -51,11 +56,11 @@ export function useFunnelMetrics({
 				value: getYAxisFormattedValue(sourceData.avg_duration.toString(), 'ns'),
 			},
 			{
-				title: 'P99 Latency',
+				title: `${latencyType.toUpperCase()} Latency`,
 				value: getYAxisFormattedValue(sourceData.p99_latency.toString(), 'ns'),
 			},
 		];
-	}, [overviewData]);
+	}, [latencyType, overviewData?.payload?.data]);
 
 	const conversionRate =
 		overviewData?.payload?.data?.[0]?.data?.conversion_rate ?? 0;
