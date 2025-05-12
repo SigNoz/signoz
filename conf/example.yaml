@@ -168,5 +168,5 @@ alertmanager:
 
 ##################### Analytics #####################
 analytics:
-  # Whether to enable the analytics.
+  # Whether to enable analytics.
   enabled: true
