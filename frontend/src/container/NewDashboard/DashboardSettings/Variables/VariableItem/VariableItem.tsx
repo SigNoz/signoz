@@ -142,6 +142,7 @@ function VariableItem({
 					' → ',
 				)}`,
 			);
+			return;
 		}
 
 		onSave(mode, newVariable);
