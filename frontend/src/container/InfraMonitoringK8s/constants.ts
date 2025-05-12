@@ -8,6 +8,8 @@ import { DataSource } from 'types/common/queryBuilder';
 
 export const DEFAULT_PAGE_SIZE = 10;
 
+export const NANOSECONDS_TO_SECONDS = 1000000000;
+
 export enum K8sCategory {
 	HOSTS = 'hosts',
 	PODS = 'pods',

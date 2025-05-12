@@ -13,7 +13,10 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import {
+	K8sCategory,
+	NANOSECONDS_TO_SECONDS,
+} from 'container/InfraMonitoringK8s/constants';
 import EntityEvents from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityEvents';
 import EntityLogs from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityLogs';
 import EntityMetrics from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityMetrics';
@@ -65,12 +68,14 @@ function StatefulSetDetails({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
-		minTime,
-	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
-		maxTime,
-	]);
+	const startMs = useMemo(
+		() => Math.floor(Number(minTime) / NANOSECONDS_TO_SECONDS),
+		[minTime],
+	);
+	const endMs = useMemo(
+		() => Math.floor(Number(maxTime) / NANOSECONDS_TO_SECONDS),
+		[maxTime],
+	);
 
 	const urlQuery = useUrlQuery();
 
@@ -190,8 +195,8 @@ function StatefulSetDetails({
 			const { maxTime, minTime } = GetMinMax(selectedTime);
 
 			setModalTimeRange({
-				startTime: Math.floor(minTime / 1000000000),
-				endTime: Math.floor(maxTime / 1000000000),
+				startTime: Math.floor(minTime / NANOSECONDS_TO_SECONDS),
+				endTime: Math.floor(maxTime / NANOSECONDS_TO_SECONDS),
 			});
 		}
 	}, [selectedTime, minTime, maxTime]);
@@ -212,15 +217,15 @@ function StatefulSetDetails({
 
 			if (interval === 'custom' && dateTimeRange) {
 				setModalTimeRange({
-					startTime: Math.floor(dateTimeRange[0] / 1000),
-					endTime: Math.floor(dateTimeRange[1] / 1000),
+					startTime: Math.floor(dateTimeRange[0] / NANOSECONDS_TO_SECONDS),
+					endTime: Math.floor(dateTimeRange[1] / NANOSECONDS_TO_SECONDS),
 				});
 			} else {
 				const { maxTime, minTime } = GetMinMax(interval);
 
 				setModalTimeRange({
-					startTime: Math.floor(minTime / 1000000000),
-					endTime: Math.floor(maxTime / 1000000000),
+					startTime: Math.floor(minTime / NANOSECONDS_TO_SECONDS),
+					endTime: Math.floor(maxTime / NANOSECONDS_TO_SECONDS),
 				});
 			}
 
@@ -419,8 +424,8 @@ function StatefulSetDetails({
 			const { maxTime, minTime } = GetMinMax(selectedTime);
 
 			setModalTimeRange({
-				startTime: Math.floor(minTime / 1000000000),
-				endTime: Math.floor(maxTime / 1000000000),
+				startTime: Math.floor(minTime / NANOSECONDS_TO_SECONDS),
+				endTime: Math.floor(maxTime / NANOSECONDS_TO_SECONDS),
 			});
 		}
 		setSelectedView(VIEW_TYPES.METRICS);
