@@ -1,6 +1,8 @@
 import updateCustomFiltersAPI from 'api/quickFilters/updateCustomFilters';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { SignalType } from 'components/QuickFilters/types';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { useNotifications } from 'hooks/useNotifications';
 import { useCallback, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
@@ -19,6 +21,8 @@ interface UseQuickFilterSettingsReturn {
 	handleDiscardChanges: () => void;
 	handleSaveChanges: () => void;
 	isUpdatingCustomFilters: boolean;
+	inputValue: string;
+	setInputValue: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const useQuickFilterSettings = ({
@@ -27,22 +31,27 @@ const useQuickFilterSettings = ({
 	setIsStale,
 	signal,
 }: UseQuickFilterSettingsProps): UseQuickFilterSettingsReturn => {
+	const [inputValue, setInputValue] = useState<string>('');
 	const [addedFilters, setAddedFilters] = useState<FilterType[]>(customFilters);
+	const { notifications } = useNotifications();
 
 	const {
 		mutate: updateCustomFilters,
 		isLoading: isUpdatingCustomFilters,
 	} = useMutation(updateCustomFiltersAPI, {
 		onSuccess: () => {
-			// set isStale to true
-			// close settings
+			setIsSettingsOpen(false);
 			setIsStale(true);
-			// display success toast
+			notifications.success({
+				message: 'Quick filters updated successfully',
+				placement: 'bottomRight',
+			});
 		},
 		onError: (error: AxiosError) => {
-			console.error('>>>>error', error);
-			// display error toast
-			// close settings
+			notifications.error({
+				message: axios.isAxiosError(error) ? error.message : SOMETHING_WENT_WRONG,
+				placement: 'bottomRight',
+			});
 		},
 	});
 
@@ -76,6 +85,8 @@ const useQuickFilterSettings = ({
 		setAddedFilters,
 		handleSaveChanges,
 		isUpdatingCustomFilters,
+		inputValue,
+		setInputValue,
 	};
 };
 

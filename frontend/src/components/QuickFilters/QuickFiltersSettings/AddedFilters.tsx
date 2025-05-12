@@ -16,10 +16,17 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import Button from 'antd/es/button';
 import { GripVertical } from 'lucide-react';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
-function SortableFilter({ filter }: { filter: FilterType }): JSX.Element {
+function SortableFilter({
+	filter,
+	onRemove,
+}: {
+	filter: FilterType;
+	onRemove: (filter: FilterType) => void;
+}): JSX.Element {
 	const {
 		attributes,
 		listeners,
@@ -37,13 +44,22 @@ function SortableFilter({ filter }: { filter: FilterType }): JSX.Element {
 		<div
 			ref={setNodeRef}
 			style={style}
-			{...attributes}
-			{...listeners}
 			className="qf-filter-item drag-enabled" // TODO: handle drag disabled when searching
 		>
 			<div className="qf-filter-content">
-				<GripVertical size={16} />
-				{filter.key}
+				<div {...attributes} {...listeners} className="drag-handle">
+					<GripVertical size={16} />
+					{filter.key}
+				</div>
+				<Button
+					className="remove-filter-btn periscope-btn"
+					size="small"
+					onClick={(): void => {
+						onRemove(filter as FilterType);
+					}}
+				>
+					Remove
+				</Button>
 			</div>
 		</div>
 	);
@@ -71,6 +87,10 @@ function AddedFilters({
 		}
 	};
 
+	const handleRemoveFilter = (filter: FilterType): void => {
+		setAddedFilters((prev) => prev.filter((f) => f.key !== filter.key));
+	};
+
 	return (
 		<div className="qf-filters added-filters">
 			<div className="qf-filters-header">ADDED FILTERS</div>
@@ -85,7 +105,11 @@ function AddedFilters({
 						strategy={verticalListSortingStrategy}
 					>
 						{addedFilters.map((filter) => (
-							<SortableFilter key={filter.key} filter={filter} />
+							<SortableFilter
+								key={filter.key}
+								filter={filter}
+								onRemove={handleRemoveFilter}
+							/>
 						))}
 					</SortableContext>
 				</DndContext>

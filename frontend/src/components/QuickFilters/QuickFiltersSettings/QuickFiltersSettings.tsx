@@ -1,6 +1,7 @@
 import './QuickFiltersSettings.styles.scss';
 
 import Button from 'antd/es/button';
+import Input from 'components/Input';
 import { CheckIcon, TableColumnsSplit, XIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
@@ -28,6 +29,8 @@ function QuickFiltersSettings({
 		setAddedFilters,
 		handleSaveChanges,
 		isUpdatingCustomFilters,
+		inputValue,
+		setInputValue,
 	} = useQuickFilterSettings({
 		setIsSettingsOpen,
 		customFilters,
@@ -61,11 +64,26 @@ function QuickFiltersSettings({
 					onClick={handleSettingsClose}
 				/>
 			</div>
+			<section className="search">
+				<Input
+					type="text"
+					value={inputValue}
+					rootClassName="tags-input"
+					placeholder="Search for a filter..."
+					onChangeHandler={(event): void => setInputValue(event.target.value)}
+					// onBlurHandler={handleInputConfirm}
+					// onPressEnterHandler={handleInputConfirm}
+				/>
+			</section>
 			<AddedFilters
 				addedFilters={addedFilters}
 				setAddedFilters={setAddedFilters}
 			/>
-			<OtherFilters />
+			<OtherFilters
+				signal={signal}
+				addedFilters={addedFilters}
+				setAddedFilters={setAddedFilters}
+			/>
 			{hasUnsavedChanges && (
 				<div className="qf-footer">
 					<Button

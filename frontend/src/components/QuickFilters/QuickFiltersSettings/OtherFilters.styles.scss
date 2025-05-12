@@ -1,0 +1,20 @@
+.qf-other-filters-list {
+   height: 300px;
+   overflow-y: auto;
+}
+
+.qf-filter-item {
+    padding: 8px;
+    border-radius: 4px;
+    user-select: none;
+
+    .qf-filter-content{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    &.other-filters-item {
+        padding: 8px 12px;
+        height: 32px;
+    }
+}
