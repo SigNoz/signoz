@@ -13,3 +13,11 @@ var (
 
 // Defines custom error types
 type typ struct{ s string }
+
+func NotFoundWrap(cause error, code Code, format string, args ...interface{}) *base {
+	return Wrapf(cause, TypeNotFound, code, format, args...)
+}
+
+func NotFoundNew(code Code, format string, args ...interface{}) *base {
+	return Newf(TypeNotFound, code, format, args...)
+}

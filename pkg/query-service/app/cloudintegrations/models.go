@@ -3,6 +3,7 @@ package cloudintegrations
 import (
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/types"
 )
@@ -57,8 +58,7 @@ func NewCompiledCollectionStrategy(provider string) (*CompiledCollectionStrategy
 			AWSLogs:    &services.AWSLogsStrategy{},
 		}, nil
 	}
-
-	return nil, fmt.Errorf("unsupported cloud provider: %s", provider)
+	return nil, errors.NotFoundNew(services.CodeUnsupportedCloudProvider, "unsupported cloud provider: %s", provider)
 }
 
 // Helper for accumulating strategies for enabled services.
@@ -94,5 +94,5 @@ func AddServiceStrategy(serviceType string, cs *CompiledCollectionStrategy,
 		return nil
 	}
 
-	return fmt.Errorf("unsupported cloud provider: %s", cs.Provider)
+	return errors.NotFoundNew(services.CodeUnsupportedCloudProvider, "unsupported cloud provider: %s", cs.Provider)
 }
