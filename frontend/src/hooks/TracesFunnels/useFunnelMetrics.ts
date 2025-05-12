@@ -2,6 +2,7 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { MetricItem } from 'pages/TracesFunnelDetails/components/FunnelResults/FunnelMetricsTable';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo } from 'react';
+import { LatencyOptions } from 'types/api/traceFunnels';
 
 import { useFunnelOverview } from './useFunnels';
 
@@ -37,7 +38,10 @@ export function useFunnelMetrics({
 	} = useFunnelOverview(funnelId, payload);
 
 	const latencyType = useMemo(
-		() => (stepStart ? steps[stepStart - 1]?.latency_type : 'p99'),
+		() =>
+			stepStart
+				? steps[stepStart]?.latency_type ?? LatencyOptions.P99
+				: LatencyOptions.P99,
 		[stepStart, steps],
 	);
 
