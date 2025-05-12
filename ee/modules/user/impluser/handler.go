@@ -183,6 +183,7 @@ func (h *Handler) GetInvite(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	token := mux.Vars(r)["token"]
+	sourceUrl := r.URL.Query().Get("ref")
 	invite, err := h.module.GetInviteByToken(ctx, token)
 	if err != nil {
 		render.Error(w, err)
@@ -195,7 +196,7 @@ func (h *Handler) GetInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// precheck the user
-	precheckResp, err := h.module.LoginPrecheck(ctx, invite.OrgID, invite.Email, "")
+	precheckResp, err := h.module.LoginPrecheck(ctx, invite.OrgID, invite.Email, sourceUrl)
 	if err != nil {
 		render.Error(w, err)
 		return
