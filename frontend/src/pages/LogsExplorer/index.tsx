@@ -23,6 +23,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
@@ -35,6 +36,9 @@ function LogsExplorer(): JSX.Element {
 	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
 		SELECTED_VIEWS.SEARCH,
 	);
+	const { preferences, updateFormatting } = usePreferenceContext();
+
+	console.log('uncaught preferences', preferences);
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
 			LOCALSTORAGE.SHOW_LOGS_QUICK_FILTERS,
@@ -222,6 +226,21 @@ function LogsExplorer(): JSX.Element {
 					</section>
 				)}
 				<section className={cx('log-module-right-section')}>
+					{/* dummy button to test the updateFormatting function */}
+					<div>
+						<button
+							type="button"
+							onClick={(): void => updateFormatting({ maxLines: 10 })}
+						>
+							<h1>Update formatting</h1>
+						</button>
+					</div>
+					{preferences && (
+						<div>
+							<h1>Preferences</h1>
+							<pre>{JSON.stringify(preferences, null, 2)}</pre>
+						</div>
+					)}
 					<Toolbar
 						showAutoRefresh={false}
 						leftActions={
