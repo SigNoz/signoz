@@ -71,15 +71,15 @@ const interceptorRejected = async (
 			const { response } = value;
 			// reject the refresh token error
 			if (response.status === 401 && response.config.url !== '/login') {
-				const response = await loginApi({
-					refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
-				});
+				try {
+					const response = await loginApi({
+						refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
+					});
 
-				if (response.statusCode === 200) {
 					afterLogin(
-						response.payload.userId,
-						response.payload.accessJwt,
-						response.payload.refreshJwt,
+						response.data.userId,
+						response.data.accessJwt,
+						response.data.refreshJwt,
 						true,
 					);
 
@@ -89,23 +89,22 @@ const interceptorRejected = async (
 							method: value.config.method,
 							headers: {
 								...value.config.headers,
-								Authorization: `Bearer ${response.payload.accessJwt}`,
+								Authorization: `Bearer ${response.data.accessJwt}`,
 							},
 							data: {
 								...JSON.parse(value.config.data || '{}'),
 							},
 						},
 					);
-
 					if (reResponse.status === 200) {
 						return await Promise.resolve(reResponse);
 					}
 					Logout();
 					return await Promise.reject(reResponse);
+				} catch (error) {
+					Logout();
 				}
-				Logout();
 			}
-
 			// when refresh token is expired
 			if (response.status === 401 && response.config.url === '/login') {
 				Logout();

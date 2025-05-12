@@ -8,6 +8,7 @@ import { PencilIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import APIError from 'types/api/error';
 
 import { NameInput } from '../styles';
 
@@ -15,7 +16,9 @@ function UserInfo(): JSX.Element {
 	const { user, org, updateUser } = useAppContext();
 	const { t } = useTranslation();
 
-	const [changedName, setChangedName] = useState<string>(user?.name || '');
+	const [changedName, setChangedName] = useState<string>(
+		user?.displayName || '',
+	);
 	const [loading, setLoading] = useState<boolean>(false);
 
 	const { notifications } = useNotifications();
@@ -27,34 +30,25 @@ function UserInfo(): JSX.Element {
 	const onClickUpdateHandler = async (): Promise<void> => {
 		try {
 			setLoading(true);
-			const { statusCode } = await editUser({
-				name: changedName,
+			await editUser({
+				displayName: changedName,
 				userId: user.id,
 			});
 
-			if (statusCode === 200) {
-				notifications.success({
-					message: t('success', {
-						ns: 'common',
-					}),
-				});
-				updateUser({
-					...user,
-					name: changedName,
-				});
-			} else {
-				notifications.error({
-					message: t('something_went_wrong', {
-						ns: 'common',
-					}),
-				});
-			}
+			notifications.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
+			updateUser({
+				...user,
+				displayName: changedName,
+			});
 			setLoading(false);
 		} catch (error) {
 			notifications.error({
-				message: t('something_went_wrong', {
-					ns: 'common',
-				}),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 		setLoading(false);

@@ -7,6 +7,6 @@ export type PayloadProps = Payload;
 
 export interface Props {
 	userId: User['userId'];
-	name: User['name'];
+	displayName: User['displayName'];
 	role?: ROLES;
 }

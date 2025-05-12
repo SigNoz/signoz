@@ -124,10 +124,15 @@ function UserFunction({
 			setIsUpdateLoading(true);
 			await update({
 				userId: id,
-				name: updatedName,
+				displayName: updatedName,
 				role,
 			});
 			onUpdateDetailsHandler();
+			notifications.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
 			setIsUpdateLoading(false);
 		} catch (error) {
 			notifications.error({
@@ -223,7 +228,7 @@ function Members(): JSX.Element {
 				email: e.email,
 				id: String(e.id),
 				joinedOn: String(e.createdAt),
-				name: e.name,
+				name: e.displayName,
 			}));
 			setDataSource(updatedData);
 		}

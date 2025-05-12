@@ -1,5 +1,6 @@
 import { Button, Form, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import accept from 'api/v1/invite/id/accept';
 import getInviteDetails from 'api/v1/invite/id/get';
 import loginApi from 'api/v1/login/login';
 import signUpApi from 'api/v1/register/signup';
@@ -12,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
+import APIError from 'types/api/error';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
 
 import { ButtonContainer, FormContainer, FormWrapper, Label } from './styles';
@@ -103,9 +105,9 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		notifications,
 	]);
 
-	const isPreferenceVisible = token === null;
+	const isSignUp = token === null;
 
-	const commonHandler = async (values: FormValues): Promise<void> => {
+	const signUp = async (values: FormValues): Promise<void> => {
 		try {
 			const { organizationName, password, firstName, email } = values;
 			const response = await signUpApi({
@@ -122,22 +124,34 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					password,
 				});
 
-				if (loginResponse.statusCode === 200) {
-					const { payload } = loginResponse;
-					await afterLogin(payload.userId, payload.accessJwt, payload.refreshJwt);
-				} else {
-					notifications.error({
-						message: loginResponse.error || t('unexpected_error'),
-					});
-				}
-			} else {
-				notifications.error({
-					message: response.error || t('unexpected_error'),
-				});
+				const { data } = loginResponse;
+				await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
 			}
 		} catch (error) {
 			notifications.error({
-				message: t('unexpected_error'),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
+			});
+		}
+	};
+
+	const acceptInvite = async (values: FormValues): Promise<void> => {
+		try {
+			const { password, email } = values;
+			await accept({
+				password,
+				token: params.get('token') || '',
+			});
+			const loginResponse = await loginApi({
+				email,
+				password,
+			});
+			const { data } = loginResponse;
+			await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 	};
@@ -205,15 +219,14 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					return;
 				}
 
-				if (isPreferenceVisible) {
-					await commonHandler(values);
-				} else {
+				if (isSignUp) {
+					await signUp(values);
 					logEvent('Account Created Successfully', {
 						email: values.email,
 						name: values.firstName,
 					});
-
-					await commonHandler(values);
+				} else {
+					await acceptInvite(values);
 				}
 
 				setLoading(false);
@@ -227,7 +240,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	};
 
 	const getIsNameVisible = (): boolean =>
-		!(form.getFieldValue('firstName') === 0 && !isPreferenceVisible);
+		!(form.getFieldValue('firstName') === 0 && !isSignUp);
 
 	const isNameVisible = getIsNameVisible();
 
@@ -343,7 +356,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 							)}
 						</div>
 					)}
-					{isPreferenceVisible && (
+					{isSignUp && (
 						<Typography.Paragraph
 							italic
 							style={{
