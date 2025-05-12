@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './RightContainer.styles.scss';
 
+import type { InputRef } from 'antd';
 import {
 	AutoComplete,
 	Input,
@@ -26,6 +27,7 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import { ColumnUnit, Widgets } from 'types/api/dashboard/getAll';
@@ -99,6 +101,9 @@ function RightContainer({
 }: RightContainerProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
+	const [autoCompleteOpen, setAutoCompleteOpen] = useState(false);
+	const [cursorPos, setCursorPos] = useState(0);
+	const inputRef = useRef<InputRef>(null);
 
 	const onChangeHandler = useCallback(
 		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
@@ -140,34 +145,55 @@ function RightContainer({
 		}));
 	}, [selectedDashboard?.data?.variables]);
 
+	const updateCursorAndDropdown = (value: string, pos: number): void => {
+		setCursorPos(pos);
+		const lastDollar = value.lastIndexOf('$', pos - 1);
+		setAutoCompleteOpen(lastDollar !== -1 && pos >= lastDollar + 1);
+	};
+
 	const onInputChange = (value: string): void => {
 		setInputValue(value);
 		onChangeHandler(setTitle, value);
+		setTimeout(() => {
+			const pos = inputRef.current?.input?.selectionStart ?? 0;
+			updateCursorAndDropdown(value, pos);
+		}, 0);
+	};
+
+	const handleInputCursor = (): void => {
+		const pos = inputRef.current?.input?.selectionStart ?? 0;
+		updateCursorAndDropdown(inputValue, pos);
 	};
 
 	const onSelect = (selectedValue: string): void => {
-		// Get the text before the last '$'
-		const lastDollarIndex = inputValue.lastIndexOf('$');
-		const textBeforeDollar = inputValue.substring(0, lastDollarIndex);
-
-		// Create the new value by combining the text before '$' with the selected variable
-		const newValue = `${textBeforeDollar}$${selectedValue}`;
+		const pos = cursorPos;
+		const value = inputValue;
+		const lastDollar = value.lastIndexOf('$', pos - 1);
+		const textBeforeDollar = value.substring(0, lastDollar);
+		const textAfterDollar = value.substring(lastDollar + 1);
+		const match = textAfterDollar.match(/^([a-zA-Z0-9_.]*)/);
+		const rest = textAfterDollar.substring(match ? match[1].length : 0);
+		const newValue = `${textBeforeDollar}$${selectedValue}${rest}`;
 		setInputValue(newValue);
 		onChangeHandler(setTitle, newValue);
+		setAutoCompleteOpen(false);
+		setTimeout(() => {
+			const newCursor = `${textBeforeDollar}$${selectedValue}`.length;
+			inputRef.current?.input?.setSelectionRange(newCursor, newCursor);
+			setCursorPos(newCursor);
+		}, 0);
 	};
 
 	const filterOption = (
 		inputValue: string,
-		option: VariableOption | undefined,
+		option?: VariableOption,
 	): boolean => {
-		// Only show suggestions if the input ends with '$'
-		if (!inputValue.endsWith('$')) return false;
-
-		// If there's text after '$', filter the suggestions
-		const searchText = inputValue
-			.substring(inputValue.lastIndexOf('$') + 1)
-			.toLowerCase();
-		return option?.value.toLowerCase().includes(searchText) || false;
+		const pos = cursorPos;
+		const value = inputValue;
+		const lastDollar = value.lastIndexOf('$', pos - 1);
+		if (lastDollar === -1) return false;
+		const afterDollar = value.substring(lastDollar + 1, pos).toLowerCase();
+		return option?.value.toLowerCase().startsWith(afterDollar) || false;
 	};
 
 	useEffect(() => {
@@ -215,8 +241,15 @@ function RightContainer({
 					style={{ width: '100%' }}
 					getPopupContainer={popupContainer}
 					placeholder="Enter the panel name here..."
+					open={autoCompleteOpen}
 				>
-					<Input rootClassName="name-input" />
+					<Input
+						rootClassName="name-input"
+						ref={inputRef}
+						onSelect={handleInputCursor}
+						onClick={handleInputCursor}
+						onBlur={(): void => setAutoCompleteOpen(false)}
+					/>
 				</AutoComplete>
 				<Typography.Text className="typography">Description</Typography.Text>
 				<TextArea
