@@ -2,7 +2,15 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './RightContainer.styles.scss';
 
-import { Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
+import {
+	AutoComplete,
+	Input,
+	InputNumber,
+	Select,
+	Space,
+	Switch,
+	Typography,
+} from 'antd';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import GraphTypes, {
@@ -11,15 +19,18 @@ import GraphTypes, {
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ConciergeBell, LineChart, Plus, Spline } from 'lucide-react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
 	SetStateAction,
 	useCallback,
 	useEffect,
+	useMemo,
 	useState,
 } from 'react';
 import { ColumnUnit, Widgets } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ColumnUnitSelector } from './ColumnUnitSelector/ColumnUnitSelector';
 import {
@@ -45,6 +56,11 @@ const { Option } = Select;
 enum LogScale {
 	LINEAR = 'linear',
 	LOGARITHMIC = 'logarithmic',
+}
+
+interface VariableOption {
+	value: string;
+	label: string;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -81,6 +97,9 @@ function RightContainer({
 	isLogScale,
 	setIsLogScale,
 }: RightContainerProps): JSX.Element {
+	const { selectedDashboard } = useDashboard();
+	const [inputValue, setInputValue] = useState(title);
+
 	const onChangeHandler = useCallback(
 		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
 			setFunc(value);
@@ -111,6 +130,45 @@ function RightContainer({
 	const { currentQuery } = useQueryBuilder();
 
 	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(GraphTypes);
+
+	// Get dashboard variables
+	const dashboardVariables = useMemo<VariableOption[]>(() => {
+		if (!selectedDashboard?.data?.variables) return [];
+		return Object.entries(selectedDashboard.data.variables).map(([, value]) => ({
+			value: value.name || '',
+			label: value.name || '',
+		}));
+	}, [selectedDashboard?.data?.variables]);
+
+	const onInputChange = (value: string): void => {
+		setInputValue(value);
+		onChangeHandler(setTitle, value);
+	};
+
+	const onSelect = (selectedValue: string): void => {
+		// Get the text before the last '$'
+		const lastDollarIndex = inputValue.lastIndexOf('$');
+		const textBeforeDollar = inputValue.substring(0, lastDollarIndex);
+
+		// Create the new value by combining the text before '$' with the selected variable
+		const newValue = `${textBeforeDollar}$${selectedValue}`;
+		setInputValue(newValue);
+		onChangeHandler(setTitle, newValue);
+	};
+
+	const filterOption = (
+		inputValue: string,
+		option: VariableOption | undefined,
+	): boolean => {
+		// Only show suggestions if the input ends with '$'
+		if (!inputValue.endsWith('$')) return false;
+
+		// If there's text after '$', filter the suggestions
+		const searchText = inputValue
+			.substring(inputValue.lastIndexOf('$') + 1)
+			.toLowerCase();
+		return option?.value.toLowerCase().includes(searchText) || false;
+	};
 
 	useEffect(() => {
 		const queryContainsMetricsDataSource = currentQuery.builder.queryData.some(
@@ -148,12 +206,18 @@ function RightContainer({
 			</section>
 			<section className="name-description">
 				<Typography.Text className="typography">Name</Typography.Text>
-				<Input
+				<AutoComplete
+					options={dashboardVariables}
+					value={inputValue}
+					onChange={onInputChange}
+					onSelect={onSelect}
+					filterOption={filterOption}
+					style={{ width: '100%' }}
+					getPopupContainer={popupContainer}
 					placeholder="Enter the panel name here..."
-					onChange={(event): void => onChangeHandler(setTitle, event.target.value)}
-					value={title}
-					rootClassName="name-input"
-				/>
+				>
+					<Input rootClassName="name-input" />
+				</AutoComplete>
 				<Typography.Text className="typography">Description</Typography.Text>
 				<TextArea
 					placeholder="Enter the panel description here..."
