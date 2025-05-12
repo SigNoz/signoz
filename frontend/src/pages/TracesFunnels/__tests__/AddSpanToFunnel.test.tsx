@@ -12,6 +12,8 @@ import ROUTES from 'constants/routes';
 import Success, {
 	ISuccessProps,
 } from 'container/TraceWaterfall/TraceWaterfallStates/Success/Success';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { act } from 'react-dom/test-utils';
 import { MemoryRouter } from 'react-router-dom';
@@ -126,12 +128,12 @@ jest.mock(
 
 describe('Add span to funnel from trace details page', () => {
 	it('displays add to funnel icon for spans with valid service and span names', async () => {
-		act(() => renderTraceWaterfallSuccess());
+		await act(() => renderTraceWaterfallSuccess());
 		expect(await screen.findByTestId('add-to-funnel-button')).toBeInTheDocument();
 	});
 
 	it("doesn't display add to funnel icon for spans with invalid service and span names", async () => {
-		act(() =>
+		await act(() =>
 			renderTraceWaterfallSuccess({
 				spans: [
 					{
@@ -156,10 +158,17 @@ describe('Add span to funnel from trace details page', () => {
 				isError: false,
 			});
 
-			act(() => renderTraceWaterfallSuccess());
+			server.use(
+				rest.get(
+					`http://localhost/api/v1/trace-funnels/${firstFunnel.funnel_id}`,
+					(_, res, ctx) => res(ctx.status(200), ctx.json({ data: firstFunnel })),
+				),
+			);
+
+			await act(() => renderTraceWaterfallSuccess());
 
 			const addFunnelButton = await screen.findByTestId('add-to-funnel-button');
-			act(() => {
+			await act(() => {
 				fireEvent.click(addFunnelButton);
 			});
 
@@ -203,7 +212,7 @@ describe('Add span to funnel from trace details page', () => {
 			const searchInput = within(addSpanToFunnelModal).getByPlaceholderText(
 				'Search by name, description, or tags...',
 			);
-			act(() =>
+			await act(() =>
 				fireEvent.change(searchInput, {
 					target: { value: firstFunnel.funnel_name },
 				}),
@@ -226,7 +235,7 @@ describe('Add span to funnel from trace details page', () => {
 				const firstFunnelButton = await within(addSpanToFunnelModal).findByText(
 					firstFunnel.funnel_name,
 				);
-				act(() => {
+				await act(() => {
 					fireEvent.click(firstFunnelButton);
 				});
 
@@ -248,13 +257,10 @@ describe('Add span to funnel from trace details page', () => {
 					}),
 				).not.toBeInTheDocument();
 
-				const allFunnelsButton = await within(addSpanToFunnelModal).findByRole(
-					'button',
-					{
-						name: 'All funnels',
-					},
+				const allFunnelsButton = await within(addSpanToFunnelModal).getByText(
+					/all funnels/i,
 				);
-				act(() => {
+				await act(() => {
 					fireEvent.click(allFunnelsButton);
 				});
 
@@ -323,7 +329,7 @@ describe('Add span to funnel from trace details page', () => {
 					addSpanToFunnelModal,
 				).findAllByRole('button', { name: /replace/i });
 				expect(replaceButtons[0]).toBeEnabled();
-				act(() => {
+				await act(() => {
 					fireEvent.click(replaceButtons[0]);
 				});
 
@@ -341,7 +347,7 @@ describe('Add span to funnel from trace details page', () => {
 				const addNewStepButton = await within(
 					addSpanToFunnelModal,
 				).findByRole('button', { name: /add for new step/i });
-				act(() => {
+				await act(() => {
 					fireEvent.click(addNewStepButton);
 				});
 				expect(
