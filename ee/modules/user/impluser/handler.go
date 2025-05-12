@@ -202,8 +202,8 @@ func (h *Handler) GetInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gettableInvite := &types.GettableEEInvite{
-		Invite:   *invite,
-		PreCheck: precheckResp,
+		GettableInvite: *invite,
+		PreCheck:       precheckResp,
 	}
 
 	render.Success(w, http.StatusOK, gettableInvite)

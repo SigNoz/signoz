@@ -37,7 +37,7 @@ func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID)
 	return m.store.DeleteInvite(ctx, orgID, id)
 }
 
-func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
+func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.GettableInvite, error) {
 	return m.store.GetInviteByToken(ctx, token)
 }
 

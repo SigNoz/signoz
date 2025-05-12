@@ -16,8 +16,13 @@ var (
 )
 
 type GettableEEInvite struct {
-	Invite
+	GettableInvite
 	PreCheck *GettableLoginPrecheck `bun:"-" json:"precheck"`
+}
+
+type GettableInvite struct {
+	Invite
+	Organization string `bun:"organization,type:text,notnull" json:"organization"`
 }
 
 type Invite struct {
