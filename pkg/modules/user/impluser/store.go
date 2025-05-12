@@ -303,8 +303,8 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 		Model(&password).
 		Where("user_id = ?", id).
 		Scan(ctx)
-	if err != nil {
-		return s.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with user id: %s does not exist", id)
+	if err != nil && err != sql.ErrNoRows {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete password")
 	}
 
 	// delete reset password request
@@ -313,7 +313,7 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 		Where("password_id = ?", password.ID.String()).
 		Exec(ctx)
 	if err != nil {
-		return s.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token with user id: %s does not exist", id)
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete reset password request")
 	}
 
 	// delete factor password
@@ -322,7 +322,7 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 		Where("user_id = ?", id).
 		Exec(ctx)
 	if err != nil {
-		return s.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with user id: %s does not exist", id)
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete factor password")
 	}
 
 	// delete user
@@ -332,7 +332,7 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
-		return s.sqlstore.WrapNotFoundErrf(err, types.ErrUserNotFound, "user with id: %s does not exist in org: %s", id, orgID)
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user")
 	}
 
 	return nil

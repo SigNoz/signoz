@@ -147,7 +147,7 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// check if sso is enforced for the org
-		precheckResp, err = h.module.LoginPrecheck(ctx, invite.OrgID, user.Email, "")
+		precheckResp, err = h.module.LoginPrecheck(ctx, invite.OrgID, user.Email, req.SourceUrl)
 		if err != nil {
 			render.Error(w, err)
 			return

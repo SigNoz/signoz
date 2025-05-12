@@ -108,6 +108,9 @@ type PostableRegisterOrgAndAdmin struct {
 type PostableAcceptInvite struct {
 	InviteToken string `json:"token"`
 	Password    string `json:"password"`
+
+	// reference URL to track where the register request is coming from
+	SourceUrl string `json:"sourceUrl"`
 }
 
 func (p *PostableAcceptInvite) Validate() error {
