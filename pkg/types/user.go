@@ -30,11 +30,11 @@ type UserStore interface {
 	// user
 	CreateUserWithPassword(ctx context.Context, user *User, password *FactorPassword) (*User, error)
 	CreateUser(ctx context.Context, user *User) error
-	GetUserByID(ctx context.Context, orgID string, id string) (*User, error)
-	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*User, error)
-	GetUsersByEmail(ctx context.Context, email string) ([]*User, error)
-	GetUsersByRoleInOrg(ctx context.Context, orgID string, role Role) ([]*User, error)
-	ListUsers(ctx context.Context, orgID string) ([]*User, error)
+	GetUserByID(ctx context.Context, orgID string, id string) (*GettableUser, error)
+	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*GettableUser, error)
+	GetUsersByEmail(ctx context.Context, email string) ([]*GettableUser, error)
+	GetUsersByRoleInOrg(ctx context.Context, orgID string, role Role) ([]*GettableUser, error)
+	ListUsers(ctx context.Context, orgID string) ([]*GettableUser, error)
 	UpdateUser(ctx context.Context, orgID string, id string, user *User) (*User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
@@ -47,6 +47,11 @@ type UserStore interface {
 
 	// Auth Domain
 	GetDomainByName(ctx context.Context, name string) (*StorableOrgDomain, error)
+}
+
+type GettableUser struct {
+	User
+	Organization string `json:"organization"`
 }
 
 type User struct {
