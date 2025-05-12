@@ -143,7 +143,6 @@ function DomainDetails({
 					startTime: Math.floor(minTime / TimeRangeOffset),
 					endTime: Math.floor(maxTime / TimeRangeOffset),
 				};
-				console.log('uncaught newRange', newRange);
 				setModalTimeRange(newRange);
 				setParams({ modalTimeRange: newRange });
 			}

@@ -16,7 +16,7 @@ import DomainList from './Domains/DomainList';
 
 function Explorer(): JSX.Element {
 	const [params, setParams] = useApiMonitoringParams();
-	const { showIP } = params;
+	const showIP = params.showIP ?? true;
 
 	useEffect(() => {
 		logEvent('API Monitoring: Landing page visited', {});
@@ -41,7 +41,7 @@ function Explorer(): JSX.Element {
 								logEvent('API Monitoring: Show IP addresses clicked', {
 									showIP: !(showIP ?? true),
 								});
-								setParams({ showIP: !(showIP ?? true) });
+								setParams({ showIP });
 							}}
 						/>
 					</div>

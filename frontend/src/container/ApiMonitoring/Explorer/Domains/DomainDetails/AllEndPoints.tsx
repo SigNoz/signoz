@@ -150,7 +150,10 @@ function AllEndPoints({
 		if (
 			params.groupBy &&
 			Array.isArray(params.groupBy) &&
-			JSON.stringify(params.groupBy) !== JSON.stringify(groupBy.map((g) => g.key))
+			!isEqual(
+				params.groupBy,
+				groupBy.map((g) => g.key),
+			)
 		) {
 			// Only update if different
 			const newGroupBy = params.groupBy

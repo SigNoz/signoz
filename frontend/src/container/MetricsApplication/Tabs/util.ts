@@ -7,6 +7,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useClickOutside from 'hooks/useClickOutside';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribute/utils';
+import createQueryParams from 'lib/createQueryParams';
 import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
 import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
 import { Dispatch, SetStateAction, useMemo, useRef } from 'react';
@@ -128,8 +129,8 @@ const generateAPIMonitoringPath = (
 	filters: IBuilderQuery['filters'],
 ): string => {
 	const basePath = ROUTES.API_MONITORING;
-	return `${basePath}?apiMonitoringParams=${encodeURIComponent(
-		JSON.stringify({
+	return `${basePath}?${createQueryParams({
+		apiMonitoringParams: JSON.stringify({
 			selectedDomain: domainName,
 			selectedView: 'endpoint_stats',
 			modalTimeRange: {
@@ -139,7 +140,7 @@ const generateAPIMonitoringPath = (
 			selectedInterval: 'custom',
 			endPointDetailsLocalFilters: filters,
 		}),
-	)}`;
+	})}`;
 };
 export function onViewAPIMonitoringPopupClick({
 	servicename,
