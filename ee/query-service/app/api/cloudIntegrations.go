@@ -159,7 +159,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	}
 
 	if integrationUserResult != nil {
-		return integrationUserResult, nil
+		return &integrationUserResult.User, nil
 	}
 
 	zap.L().Info(

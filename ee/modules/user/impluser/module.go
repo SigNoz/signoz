@@ -77,7 +77,7 @@ func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email stri
 			return "", err
 		}
 	} else {
-		user = userPayload
+		user = &userPayload.User
 	}
 
 	tokenStore, err := m.GetJWTForUser(ctx, user)

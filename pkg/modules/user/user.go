@@ -20,11 +20,11 @@ type Module interface {
 	// user
 	CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error)
 	CreateUser(ctx context.Context, user *types.User) error
-	GetUserByID(ctx context.Context, orgID string, id string) (*types.User, error)
-	GetUsersByEmail(ctx context.Context, email string) ([]*types.User, error) // public function
-	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.User, error)
-	GetUsersByRoleInOrg(ctx context.Context, orgID string, role types.Role) ([]*types.User, error)
-	ListUsers(ctx context.Context, orgID string) ([]*types.User, error)
+	GetUserByID(ctx context.Context, orgID string, id string) (*types.GettableUser, error)
+	GetUsersByEmail(ctx context.Context, email string) ([]*types.GettableUser, error) // public function
+	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.GettableUser, error)
+	GetUsersByRoleInOrg(ctx context.Context, orgID string, role types.Role) ([]*types.GettableUser, error)
+	ListUsers(ctx context.Context, orgID string) ([]*types.GettableUser, error)
 	UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error)
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
