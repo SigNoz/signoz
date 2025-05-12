@@ -14,8 +14,7 @@ function TracesModulePage(): JSX.Element {
 
 	const routes: TabRoutes[] = [
 		tracesExplorer,
-		// TODO(shaheer): remove this check after everything is ready
-		process.env.NODE_ENV === 'development' ? tracesFunnel(pathname) : null,
+		tracesFunnel(pathname),
 		tracesSaveView,
 	].filter(Boolean) as TabRoutes[];
 
