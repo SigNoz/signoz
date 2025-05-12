@@ -4,11 +4,12 @@
 // also have a prop saying max length post that you should truncate the text with "..."
 // return value should be a full text string, and a truncated text string (if max length is provided)
 
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useMemo } from 'react';
 
 interface UseGetResolvedTextProps {
 	text: string;
-	variables: Record<string, string | number | boolean>;
+	variables?: Record<string, string | number | boolean>;
 	maxLength?: number;
 	matcher?: string;
 	maxValues?: number; // Maximum number of values to show before adding +n more
@@ -26,11 +27,32 @@ function useGetResolvedText({
 	matcher = '$',
 	maxValues = 2, // Default to showing 2 values before +n more
 }: UseGetResolvedTextProps): ResolvedTextResult {
+	const { selectedDashboard } = useDashboard();
+
+	const processedDashboardVariables = useMemo(() => {
+		if (variables) return variables;
+		if (!selectedDashboard?.data.variables) return {};
+
+		return Object.entries(selectedDashboard.data.variables).reduce<
+			Record<string, string | number | boolean>
+		>((acc, [, value]) => {
+			if (!value.name) return acc;
+
+			// Handle array values
+			if (Array.isArray(value.selectedValue)) {
+				acc[value.name] = value.selectedValue.join(', ');
+			} else if (value.selectedValue != null) {
+				acc[value.name] = value.selectedValue;
+			}
+			return acc;
+		}, {});
+	}, [variables, selectedDashboard?.data.variables]);
+
 	// Process array values to add +n more notation for truncated text
 	const processedVariables = useMemo(() => {
 		const result: Record<string, string> = {};
 
-		Object.entries(variables).forEach(([key, value]) => {
+		Object.entries(processedDashboardVariables).forEach(([key, value]) => {
 			// If the value contains array data (comma-separated string), format it with +n more
 			if (
 				typeof value === 'string' &&
@@ -54,7 +76,7 @@ function useGetResolvedText({
 		});
 
 		return result;
-	}, [variables, maxValues]);
+	}, [processedDashboardVariables, maxValues]);
 
 	const combinedPattern = useMemo(() => {
 		const escapedMatcher = matcher.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

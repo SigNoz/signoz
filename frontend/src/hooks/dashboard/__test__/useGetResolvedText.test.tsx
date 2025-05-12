@@ -2,21 +2,33 @@ import { renderHook } from '@testing-library/react';
 
 import useGetResolvedText from '../useGetResolvedText';
 
+// Mock the useDashboard hook
+jest.mock('providers/Dashboard/Dashboard', () => ({
+	useDashboard: function useDashboardMock(): any {
+		return {
+			selectedDashboard: null,
+		};
+	},
+}));
+
 describe('useGetResolvedText', () => {
 	const SERVICE_VAR = 'test, app +2-|-test, app, frontend, env';
 	const SEVERITY_VAR = 'DEBUG, INFO-|-DEBUG, INFO';
 	const EXPECTED_FULL_TEXT =
 		'Logs count in test, app, frontend, env in DEBUG, INFO';
+	const TRUNCATED_SERVICE = 'test, app +2';
+	const TEXT_TEMPLATE = 'Logs count in $service.name in $severity';
 
 	const renderHookWithProps = (props: {
 		text: string;
-		variables: Record<string, string | number | boolean>;
+		variables?: Record<string, string | number | boolean>;
+		dashboardVariables?: Record<string, any>;
 		maxLength?: number;
 		matcher?: string;
 	}): any => renderHook(() => useGetResolvedText(props));
 
 	it('should resolve variables with truncated and full text', () => {
-		const text = 'Logs count in $service.name in $severity';
+		const text = TEXT_TEMPLATE;
 		const variables = {
 			'service.name': SERVICE_VAR,
 			severity: SEVERITY_VAR,
@@ -25,13 +37,13 @@ describe('useGetResolvedText', () => {
 		const { result } = renderHookWithProps({ text, variables });
 
 		expect(result.current.truncatedText).toBe(
-			'Logs count in test, app +2 in DEBUG, INFO',
+			`Logs count in ${TRUNCATED_SERVICE} in DEBUG, INFO`,
 		);
 		expect(result.current.fullText).toBe(EXPECTED_FULL_TEXT);
 	});
 
 	it('should handle text with maxLength truncation', () => {
-		const text = 'Logs count in $service.name in $severity';
+		const text = TEXT_TEMPLATE;
 		const variables = {
 			'service.name': SERVICE_VAR,
 			severity: SEVERITY_VAR,

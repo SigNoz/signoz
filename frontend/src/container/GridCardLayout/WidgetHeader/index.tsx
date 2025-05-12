@@ -26,7 +26,6 @@ import { isEmpty } from 'lodash-es';
 import { CircleX, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -88,8 +87,6 @@ function WidgetHeader({
 	}, [safeNavigate, urlQuery, widget.id, widget.panelTypes, widget.query]);
 
 	const onCreateAlertsHandler = useCreateAlerts(widget, 'dashboardView');
-
-	const { selectedDashboard } = useDashboard();
 
 	const onDownloadHandler = useCallback((): void => {
 		const csv = unparse(tableProcessedDataRef.current);
@@ -209,28 +206,8 @@ function WidgetHeader({
 		[updatedMenuList, onMenuItemSelectHandler],
 	);
 
-	const variables = useMemo(() => {
-		if (!selectedDashboard?.data.variables) return {};
-
-		// Convert dashboard variables to name-value pairs
-		return Object.entries(selectedDashboard.data.variables).reduce<
-			Record<string, string | number | boolean>
-		>((acc, [, value]) => {
-			if (!value.name) return acc;
-
-			// Handle array values
-			if (Array.isArray(value.selectedValue)) {
-				acc[value.name] = value.selectedValue.join(', ');
-			} else if (value.selectedValue != null) {
-				acc[value.name] = value.selectedValue;
-			}
-			return acc;
-		}, {});
-	}, [selectedDashboard?.data.variables]);
-
 	const { truncatedText, fullText } = useGetResolvedText({
 		text: widget.title as string,
-		variables,
 		maxLength: 100,
 	});
 
