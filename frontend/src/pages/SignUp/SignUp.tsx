@@ -13,7 +13,9 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
+import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
+import { InviteDetails } from 'types/api/user/getInviteDetails';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
 
 import { ButtonContainer, FormContainer, FormWrapper, Label } from './styles';
@@ -51,7 +53,10 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
 
-	const getInviteDetailsResponse = useQuery({
+	const getInviteDetailsResponse = useQuery<
+		SuccessResponseV2<InviteDetails>,
+		APIError
+	>({
 		queryFn: () =>
 			getInviteDetails({
 				inviteId: token || '',
@@ -66,9 +71,9 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
-			getInviteDetailsResponse.data.payload
+			getInviteDetailsResponse.data.data
 		) {
-			const responseDetails = getInviteDetailsResponse.data.payload;
+			const responseDetails = getInviteDetailsResponse.data.data;
 			if (responseDetails.precheck) setPrecheck(responseDetails.precheck);
 			form.setFieldValue('firstName', responseDetails.name);
 			form.setFieldValue('email', responseDetails.email);
@@ -84,7 +89,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
-		getInviteDetailsResponse.data?.payload,
+		getInviteDetailsResponse.data?.data,
 		form,
 		getInviteDetailsResponse.status,
 	]);
@@ -92,14 +97,16 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
-			getInviteDetailsResponse.data?.error
+			getInviteDetailsResponse?.error
 		) {
-			const { error } = getInviteDetailsResponse.data;
+			const { error } = getInviteDetailsResponse;
 			notifications.error({
-				message: error,
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 	}, [
+		getInviteDetailsResponse,
 		getInviteDetailsResponse.data,
 		getInviteDetailsResponse.status,
 		notifications,
@@ -164,34 +171,22 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			return;
 		}
 		setLoading(true);
-
 		try {
-			const values = form.getFieldsValue();
-			const response = await signUpApi({
-				email: values.email,
-				name: values.firstName,
-				orgDisplayName: values.organizationName,
-				password: values.password,
-				token: params.get('token') || undefined,
-				sourceUrl: encodeURIComponent(window.location.href),
+			const response = await accept({
+				password: '',
+				token: params.get('token') || '',
 			});
 
-			if (response.statusCode === 200) {
-				if (response.payload?.sso) {
-					if (response.payload?.ssoUrl) {
-						window.location.href = response.payload?.ssoUrl;
-					} else {
-						notifications.error({
-							message: t('failed_to_initiate_login'),
-						});
-						// take user to login page as there is nothing to do here
-						history.push(ROUTES.LOGIN);
-					}
+			if (response.data?.sso) {
+				if (response.data?.ssoUrl) {
+					window.location.href = response.data?.ssoUrl;
+				} else {
+					notifications.error({
+						message: t('failed_to_initiate_login'),
+					});
+					// take user to login page as there is nothing to do here
+					history.push(ROUTES.LOGIN);
 				}
-			} else {
-				notifications.error({
-					message: response.error || t('unexpected_error'),
-				});
 			}
 		} catch (error) {
 			notifications.error({
