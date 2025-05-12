@@ -1,4 +1,7 @@
 .traces-module-container {
+	.funnel-icon {
+		transform: rotate(180deg);
+	}
 	.trace-module {
 		.ant-tabs-tab {
 			.tab-item {

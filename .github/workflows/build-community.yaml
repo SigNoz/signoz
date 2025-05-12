@@ -62,6 +62,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
+      GO_VERSION: 1.23
       GO_NAME: signoz-community
       GO_INPUT_ARTIFACT_CACHE_KEY: community-jsbuild-${{ github.sha }}
       GO_INPUT_ARTIFACT_PATH: frontend/build
