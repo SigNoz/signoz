@@ -18,11 +18,11 @@ type updateQuickFilters struct {
 
 func NewUpdateQuickFiltersFactory(store sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("update_quick_filters"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-		return newResetQuickFilters(ctx, ps, c, store)
+		return newUpdateQuickFilters(ctx, ps, c, store)
 	})
 }
 
-func newResetQuickFilters(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
+func newUpdateQuickFilters(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
 	return &updateQuickFilters{
 		store: store,
 	}, nil
