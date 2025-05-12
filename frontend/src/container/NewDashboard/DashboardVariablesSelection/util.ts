@@ -215,8 +215,6 @@ export const buildDependencyGraph = (
 		return false;
 	});
 
-	console.log('cycleNodes', cycleNodes, dependencies);
-
 	// Topological sort using Kahn's Algorithm
 	const queue: string[] = Object.keys(inDegree).filter(
 		(node) => inDegree[node] === 0,
