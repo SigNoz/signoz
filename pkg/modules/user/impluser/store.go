@@ -3,6 +3,7 @@ package impluser
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -246,6 +247,7 @@ func (s *Store) GetUsersByRoleInOrg(ctx context.Context, orgID string, role type
 }
 
 func (s *Store) UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error) {
+	user.UpdatedAt = time.Now()
 	_, err := s.sqlstore.BunDB().NewUpdate().
 		Model(user).
 		Column("display_name").

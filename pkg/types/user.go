@@ -86,6 +86,9 @@ func NewUser(displayName string, email string, role string, orgID string) (*User
 		Identifiable: Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
+		TimeAuditable: TimeAuditable{
+			CreatedAt: time.Now(),
+		},
 		DisplayName: displayName,
 		Email:       email,
 		Role:        role,
@@ -100,9 +103,6 @@ type PostableRegisterOrgAndAdmin struct {
 	OrgDisplayName string `json:"orgDisplayName"`
 	OrgName        string `json:"orgName"`
 	Email          string `json:"email"`
-
-	// reference URL to track where the register request is coming from
-	SourceUrl string `json:"sourceUrl"`
 }
 
 type PostableAcceptInvite struct {
