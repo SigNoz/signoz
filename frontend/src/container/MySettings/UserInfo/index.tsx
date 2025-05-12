@@ -2,7 +2,7 @@ import '../MySettings.styles.scss';
 import './UserInfo.styles.scss';
 
 import { Button, Card, Flex, Input, Space, Typography } from 'antd';
-import editUser from 'api/user/editUser';
+import editUser from 'api/v1/user/id/update';
 import { useNotifications } from 'hooks/useNotifications';
 import { PencilIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';

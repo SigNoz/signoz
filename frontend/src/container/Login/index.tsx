@@ -1,9 +1,9 @@
 import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import getUserVersion from 'api/user/getVersion';
-import loginApi from 'api/user/login';
-import loginPrecheckApi from 'api/user/loginPrecheck';
+import loginPrecheckApi from 'api/v1/login/loginPrecheck';
+import loginApi from 'api/v1/user/login';
+import getUserVersion from 'api/v1/version/getVersion';
 import afterLogin from 'AppRoutes/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
