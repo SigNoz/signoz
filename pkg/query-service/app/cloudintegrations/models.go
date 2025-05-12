@@ -1,8 +1,6 @@
 package cloudintegrations
 
 import (
-	"fmt"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -65,10 +63,8 @@ func NewCompiledCollectionStrategy(provider string) (*CompiledCollectionStrategy
 func AddServiceStrategy(serviceType string, cs *CompiledCollectionStrategy,
 	definitionStrat *services.CollectionStrategy, config *types.CloudServiceConfig) error {
 	if definitionStrat.Provider != cs.Provider {
-		return fmt.Errorf(
-			"can't add %s service strategy to compiled strategy for %s",
-			definitionStrat.Provider, cs.Provider,
-		)
+		return errors.InternalNew(CodeMismatchCloudProvider, "can't add %s service strategy to compiled strategy for %s",
+			definitionStrat.Provider, cs.Provider)
 	}
 
 	if cs.Provider == "aws" {

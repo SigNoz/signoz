@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	CodeInvalidCloudRegion = errors.MustNewCode("invalid_cloud_region")
+	CodeInvalidCloudRegion    = errors.MustNewCode("invalid_cloud_region")
+	CodeMismatchCloudProvider = errors.MustNewCode("cloud_provider_mismatch")
 )
 
 // List of all valid cloud regions on Amazon Web Services
