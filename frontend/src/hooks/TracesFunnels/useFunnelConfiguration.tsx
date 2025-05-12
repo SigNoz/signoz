@@ -74,14 +74,16 @@ export default function useFunnelConfiguration({
 		return !isEqual(normalizedDebouncedSteps, normalizedLastSavedSteps);
 	}, [debouncedSteps]);
 
-	const hasStepServiceOrSpanNameChanged = useCallback(
+	const hasFunnelStepDefinitionsChanged = useCallback(
 		(prevSteps: FunnelStepData[], nextSteps: FunnelStepData[]): boolean => {
 			if (prevSteps.length !== nextSteps.length) return true;
 			return prevSteps.some((step, index) => {
 				const nextStep = nextSteps[index];
 				return (
 					step.service_name !== nextStep.service_name ||
-					step.span_name !== nextStep.span_name
+					step.span_name !== nextStep.span_name ||
+					!isEqual(step.filters, nextStep.filters) ||
+					step.has_errors !== nextStep.has_errors
 				);
 			});
 		},
@@ -145,7 +147,7 @@ export default function useFunnelConfiguration({
 					// Only validate if service_name or span_name changed
 					if (
 						!hasIncompleteStepFields &&
-						hasStepServiceOrSpanNameChanged(lastValidatedSteps, debouncedSteps)
+						hasFunnelStepDefinitionsChanged(lastValidatedSteps, debouncedSteps)
 					) {
 						queryClient.refetchQueries(validateStepsQueryKey);
 						setLastValidatedSteps(debouncedSteps);
@@ -171,7 +173,7 @@ export default function useFunnelConfiguration({
 	}, [
 		debouncedSteps,
 		getUpdatePayload,
-		hasStepServiceOrSpanNameChanged,
+		hasFunnelStepDefinitionsChanged,
 		hasStepsChanged,
 		lastValidatedSteps,
 		queryClient,

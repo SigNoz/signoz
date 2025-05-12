@@ -26,7 +26,7 @@ function InterStepConfig({
 			</div>
 			<div className="inter-step-config__latency-options">
 				<SignozRadioGroup
-					value={step.latency_type}
+					value={step.latency_type ?? LatencyOptions.P99}
 					options={options}
 					onChange={(e): void =>
 						onStepChange(index, {
