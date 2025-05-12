@@ -5,6 +5,7 @@ import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import ShowButton from 'container/LogsContextList/ShowButton';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
@@ -14,7 +15,6 @@ import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/co
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -106,8 +106,6 @@ function ContextLogRenderer({
 
 	const urlQuery = useUrlQuery();
 
-	const { pathname } = useLocation();
-
 	const handleLogClick = useCallback(
 		(logId: string): void => {
 			urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
@@ -117,11 +115,10 @@ function ContextLogRenderer({
 				encodeURIComponent(JSON.stringify(query)),
 			);
 
-			const link = `${pathname}?${urlQuery.toString()}`;
-
+			const link = `${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`;
 			window.open(link, '_blank', 'noopener,noreferrer');
 		},
-		[pathname, query, urlQuery],
+		[query, urlQuery],
 	);
 
 	const getItemContent = useCallback(
@@ -143,7 +140,9 @@ function ContextLogRenderer({
 					linesPerRow={1}
 					fontSize={options.fontSize}
 					selectedFields={convertKeysToColumnFields(
-						options.selectColumns ?? defaultLogsSelectedColumns,
+						options.selectColumns?.length
+							? options.selectColumns
+							: defaultLogsSelectedColumns,
 					)}
 				/>
 			</Button>

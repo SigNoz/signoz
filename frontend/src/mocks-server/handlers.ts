@@ -237,8 +237,8 @@ export const handlers = [
 		(req, res, ctx) => res(ctx.status(200), ctx.json(traceDetailResponse)),
 	),
 
-	rest.post('http://localhost/api/v1//channels', (_, res, ctx) =>
-		res(ctx.status(200), ctx.json(allAlertChannels)),
+	rest.get('http://localhost/api/v1/channels', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json({ data: allAlertChannels, status: 'success' })),
 	),
 	rest.delete('http://localhost/api/v1/channels/:id', (_, res, ctx) =>
 		res(

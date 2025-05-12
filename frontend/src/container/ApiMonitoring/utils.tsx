@@ -1438,12 +1438,12 @@ export const getTopErrorsCoRelationQueryFilters = (
 		{
 			id: 'f6891e27',
 			key: {
-				key: 'status_code',
-				dataType: DataTypes.Float64,
+				key: 'response_status_code',
+				dataType: DataTypes.String,
 				type: '',
 				isColumn: true,
 				isJSON: false,
-				id: 'status_code--float64----true',
+				id: 'response_status_code--string----true',
 			},
 			op: '=',
 			value: statusCode,
