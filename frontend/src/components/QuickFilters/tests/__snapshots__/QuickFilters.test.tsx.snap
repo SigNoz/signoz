@@ -110,6 +110,7 @@ exports[`Quick Filters renders correctly with default props 1`] = `
                 class="left-action"
               >
                 <svg
+                  aria-hidden="true"
                   class="lucide lucide-chevron-down"
                   cursor="pointer"
                   fill="none"
@@ -347,6 +348,7 @@ exports[`Quick Filters renders correctly with default props 1`] = `
                 class="left-action"
               >
                 <svg
+                  aria-hidden="true"
                   class="lucide lucide-chevron-right"
                   cursor="pointer"
                   fill="none"
