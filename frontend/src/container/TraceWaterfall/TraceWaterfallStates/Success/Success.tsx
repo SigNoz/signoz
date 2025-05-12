@@ -149,30 +149,28 @@ function SpanOverview({
 					<Typography.Text className="service-name">
 						{span.serviceName}
 					</Typography.Text>
-					{!!span.serviceName &&
-						!!span.name &&
-						process.env.NODE_ENV === 'development' && (
-							<div className="add-funnel-button">
-								<span className="add-funnel-button__separator">·</span>
-								<Button
-									type="text"
-									size="small"
-									className="add-funnel-button__button"
-									onClick={(e): void => {
-										e.preventDefault();
-										e.stopPropagation();
-										handleAddSpanToFunnel(span);
-									}}
-									icon={
-										<img
-											className="add-funnel-button__icon"
-											src="/Icons/funnel-add.svg"
-											alt="funnel-icon"
-										/>
-									}
-								/>
-							</div>
-						)}
+					{!!span.serviceName && !!span.name && (
+						<div className="add-funnel-button">
+							<span className="add-funnel-button__separator">·</span>
+							<Button
+								type="text"
+								size="small"
+								className="add-funnel-button__button"
+								onClick={(e): void => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleAddSpanToFunnel(span);
+								}}
+								icon={
+									<img
+										className="add-funnel-button__icon"
+										src="/Icons/funnel-add.svg"
+										alt="funnel-icon"
+									/>
+								}
+							/>
+						</div>
+					)}
 				</section>
 			</div>
 		</div>
@@ -475,7 +473,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				virtualiserRef={virtualizerRef}
 				setColumnWidths={setTraceFlamegraphStatsWidth}
 			/>
-			{selectedSpanToAddToFunnel && process.env.NODE_ENV === 'development' && (
+			{selectedSpanToAddToFunnel && (
 				<AddSpanToFunnelModal
 					span={selectedSpanToAddToFunnel}
 					isOpen={isAddSpanToFunnelModalOpen}
