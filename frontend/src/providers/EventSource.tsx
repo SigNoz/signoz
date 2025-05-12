@@ -1,7 +1,7 @@
 import { apiV3 } from 'api/apiV1';
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import loginApi from 'api/user/login';
 import { Logout } from 'api/utils';
+import loginApi from 'api/v1/user/login';
 import afterLogin from 'AppRoutes/utils';
 import { ENVIRONMENT } from 'constants/env';
 import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
