@@ -1,6 +1,6 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, Input, Select, Space, Tooltip } from 'antd';
-import getResetPasswordToken from 'api/user/getResetPasswordToken';
+import getResetPasswordToken from 'api/v1/factor_password/getResetPasswordToken';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import {

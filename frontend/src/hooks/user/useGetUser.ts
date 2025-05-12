@@ -1,4 +1,4 @@
-import getUser from 'api/user/getUser';
+import getUser from 'api/v1/user/id/get';
 import { useQuery, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
