@@ -16,6 +16,7 @@ import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -25,6 +26,7 @@ import { isEmpty } from 'lodash-es';
 import { CircleX, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -86,6 +88,8 @@ function WidgetHeader({
 	}, [safeNavigate, urlQuery, widget.id, widget.panelTypes, widget.query]);
 
 	const onCreateAlertsHandler = useCreateAlerts(widget, 'dashboardView');
+
+	const { selectedDashboard } = useDashboard();
 
 	const onDownloadHandler = useCallback((): void => {
 		const csv = unparse(tableProcessedDataRef.current);
@@ -205,6 +209,31 @@ function WidgetHeader({
 		[updatedMenuList, onMenuItemSelectHandler],
 	);
 
+	const variables = useMemo(() => {
+		if (!selectedDashboard?.data.variables) return {};
+
+		// Convert dashboard variables to name-value pairs
+		return Object.entries(selectedDashboard.data.variables).reduce<
+			Record<string, string | number | boolean>
+		>((acc, [, value]) => {
+			if (!value.name) return acc;
+
+			// Handle array values
+			if (Array.isArray(value.selectedValue)) {
+				acc[value.name] = value.selectedValue.join(', ');
+			} else if (value.selectedValue != null) {
+				acc[value.name] = value.selectedValue;
+			}
+			return acc;
+		}, {});
+	}, [selectedDashboard?.data.variables]);
+
+	const { truncatedText, fullText } = useGetResolvedText({
+		text: widget.title as string,
+		variables,
+		maxLength: 100,
+	});
+
 	if (widget.id === PANEL_TYPES.EMPTY_WIDGET) {
 		return null;
 	}
@@ -237,13 +266,15 @@ function WidgetHeader({
 			) : (
 				<>
 					<div className="widget-header-title-container">
-						<Typography.Text
-							ellipsis
-							data-testid={title}
-							className="widget-header-title"
-						>
-							{title}
-						</Typography.Text>
+						<Tooltip title={fullText} placement="top">
+							<Typography.Text
+								ellipsis
+								data-testid={title}
+								className="widget-header-title"
+							>
+								{truncatedText}
+							</Typography.Text>
+						</Tooltip>
 						{widget.description && (
 							<Tooltip
 								title={widget.description}
