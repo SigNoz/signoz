@@ -166,10 +166,10 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 		if err != nil {
 			return nil, err
 		}
-		dbUser = &user.User
 		if user == nil {
 			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "user not found")
 		}
+		dbUser = &user.User
 	}
 
 	// when the orgID is not provided we login if the user exists in just one org
