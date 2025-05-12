@@ -15,12 +15,17 @@ var (
 	ErrInviteNotFound      = errors.MustNewCode("invite_not_found")
 )
 
+type GettableEEInvite struct {
+	Invite
+	PreCheck *GettableLoginPrecheck `bun:"-" json:"precheck"`
+}
+
 type Invite struct {
 	bun.BaseModel `bun:"table:user_invite"`
 
 	Identifiable
 	TimeAuditable
-	OrgID string `bun:"org_id,type:text,notnull" json:"orgId"`
+	OrgID string `bun:"org_id,type:text,notnull" json:"orgID"`
 	Name  string `bun:"name,type:text,notnull" json:"name"`
 	Email string `bun:"email,type:text,notnull,unique" json:"email"`
 	Token string `bun:"token,type:text,notnull" json:"token"`

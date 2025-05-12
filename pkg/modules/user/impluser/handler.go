@@ -541,6 +541,10 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
+	if user == nil {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email or password"))
+		return
+	}
 
 	jwt, err := h.module.GetJWTForUser(ctx, user)
 	if err != nil {
@@ -548,7 +552,12 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, jwt)
+	gettableLoginResponse := &types.GettableLoginResponse{
+		GettableUserJwt: jwt,
+		UserID:          user.ID.String(),
+	}
+
+	render.Success(w, http.StatusOK, gettableLoginResponse)
 }
 
 func (h *handler) GetCurrentUserFromJWT(w http.ResponseWriter, r *http.Request) {

@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 // EnterpriseHandler embeds the base handler implementation
@@ -25,6 +27,56 @@ func NewHandler(module user.Module) user.Handler {
 		Handler: baseHandler,
 		module:  module,
 	}
+}
+
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	var req types.PostableLoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	// the EE handler wrapper passes the feature flag value in context
+	ssoAvailable, ok := ctx.Value("ssoAvailable").(bool)
+	if !ok {
+		zap.L().Error("failed to retrieve ssoAvailable from context")
+		render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to retrieve SSO availability"))
+		return
+	}
+
+	if ssoAvailable {
+		_, err := h.module.CanUsePassword(ctx, req.Email)
+		if err != nil {
+			render.Error(w, err)
+			return
+		}
+	}
+
+	user, err := h.module.GetAuthenticatedUser(ctx, req.OrgID, req.Email, req.Password, req.RefreshToken)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	if user == nil {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email or password"))
+		return
+	}
+
+	jwt, err := h.module.GetJWTForUser(ctx, user)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	gettableLoginResponse := &types.GettableLoginResponse{
+		GettableUserJwt: jwt,
+		UserID:          user.ID.String(),
+	}
+
+	render.Success(w, http.StatusOK, gettableLoginResponse)
 }
 
 // Override only the methods you need with enterprise-specific implementations
@@ -124,4 +176,36 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, http.StatusOK, precheckResp)
+}
+
+func (h *Handler) GetInvite(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	token := mux.Vars(r)["token"]
+	invite, err := h.module.GetInviteByToken(ctx, token)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	if invite == nil {
+		render.Error(w, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user is not invited"))
+		return
+	}
+
+	// precheck the user
+	precheckResp, err := h.module.LoginPrecheck(ctx, invite.OrgID, invite.Email, "")
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	gettableInvite := &types.GettableEEInvite{
+		Invite:   *invite,
+		PreCheck: precheckResp,
+	}
+
+	render.Success(w, http.StatusOK, gettableInvite)
+	return
 }
