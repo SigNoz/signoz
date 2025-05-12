@@ -12,7 +12,7 @@ export const initialStepsData: FunnelStepData[] = [
 			op: 'and',
 		},
 		latency_pointer: 'start',
-		latency_type: LatencyOptions.P95,
+		latency_type: undefined,
 		has_errors: false,
 		name: '',
 		description: '',
