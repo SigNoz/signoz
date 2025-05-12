@@ -1,9 +1,9 @@
 import { Button, Modal, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import deleteUser from 'api/user/deleteUser';
-import editUserApi from 'api/user/editUser';
-import getOrgUser from 'api/user/getOrgUser';
-import updateRole from 'api/user/updateRole';
+import getOrgUser from 'api/v1/user/getOrgUser';
+import deleteUser from 'api/v1/user/id/delete';
+import editUserApi from 'api/v1/user/id/update';
+import updateRole from 'api/v1/user/id/updateRole';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';

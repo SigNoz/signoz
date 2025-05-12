@@ -1,6 +1,6 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import getOrgUser from 'api/user/getOrgUser';
+import getOrgUser from 'api/v1/user/getOrgUser';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';

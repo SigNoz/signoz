@@ -3,7 +3,7 @@ import './InviteTeamMembers.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import inviteUsers from 'api/user/inviteUsers';
+import inviteUsers from 'api/v1/invite/bulk/create';
 import { AxiosError } from 'axios';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
 import {
