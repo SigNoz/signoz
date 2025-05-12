@@ -129,6 +129,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(ah.loginPrecheck)).Methods(http.MethodGet)
 
 	// invite
+	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.Signoz.Handlers.User.GetInvite)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(ah.acceptInvite)).Methods(http.MethodPost)
 
 	// paid plans specific routes
@@ -174,7 +175,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 }
 
 // TODO(nitya): remove this once we know how to get the FF's
-func (ah *APIHandler) loginPrecheck(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) updateRequestContext(w http.ResponseWriter, r *http.Request) (*http.Request, error) {
 	ssoAvailable := true
 	err := ah.FF().CheckFeature(model.SSO)
 	if err != nil {
@@ -184,35 +185,29 @@ func (ah *APIHandler) loginPrecheck(w http.ResponseWriter, r *http.Request) {
 			ssoAvailable = false
 		default:
 			zap.L().Error("feature check failed", zap.String("featureKey", model.SSO), zap.Error(err))
-			render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "error checking SSO feature"))
+			return r, errors.New(errors.TypeInternal, errors.CodeInternal, "error checking SSO feature")
 		}
 	}
-
 	ctx := context.WithValue(r.Context(), "ssoAvailable", ssoAvailable)
-	r = r.WithContext(ctx)
+	return r.WithContext(ctx), nil
+}
 
+func (ah *APIHandler) loginPrecheck(w http.ResponseWriter, r *http.Request) {
+	r, err := ah.updateRequestContext(w, r)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 	ah.Signoz.Handlers.User.LoginPrecheck(w, r)
 	return
 }
 
-// TODO(nitya): remove this once we know how to get the FF's
 func (ah *APIHandler) acceptInvite(w http.ResponseWriter, r *http.Request) {
-	ssoAvailable := true
-	err := ah.FF().CheckFeature(model.SSO)
+	r, err := ah.updateRequestContext(w, r)
 	if err != nil {
-		switch err.(type) {
-		case basemodel.ErrFeatureUnavailable:
-			// do nothing, just skip sso
-			ssoAvailable = false
-		default:
-			zap.L().Error("feature check failed", zap.String("featureKey", model.SSO), zap.Error(err))
-			render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "error checking SSO feature"))
-		}
+		render.Error(w, err)
+		return
 	}
-
-	ctx := context.WithValue(r.Context(), "ssoAvailable", ssoAvailable)
-	r = r.WithContext(ctx)
-
 	ah.Signoz.Handlers.User.AcceptInvite(w, r)
 	return
 }

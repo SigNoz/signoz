@@ -203,6 +203,11 @@ type GettableUserJwt struct {
 	RefreshJwtExpiry int64  `json:"refreshJwtExpiry"`
 }
 
+type GettableLoginResponse struct {
+	GettableUserJwt
+	UserID string `json:"userId"`
+}
+
 type GettableLoginPrecheck struct {
 	SSO             bool     `json:"sso"`
 	SSOUrl          string   `json:"ssoUrl"`

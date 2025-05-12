@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/types"
 )
 
 func parseRequest(r *http.Request, req interface{}) error {
@@ -30,42 +29,13 @@ func parseRequest(r *http.Request, req interface{}) error {
 
 // loginUser overrides base handler and considers SSO case.
 func (ah *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
-
-	req := types.PostableLoginRequest{}
-	err := parseRequest(r, &req)
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	ctx := context.Background()
-
-	if req.Email != "" && ah.CheckFeature(model.SSO) {
-		_, err = ah.Signoz.Modules.User.CanUsePassword(ctx, req.Email)
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
-	}
-
-	// if all looks good, call auth
-	// resp, err := ah.Signoz.Handlers.User.(ctx, &req, ah.opts.JWT)
-	// if ah.HandleError(w, err, http.StatusUnauthorized) {
-	// 	return
-	// }
-
-	user, err := ah.Signoz.Modules.User.GetAuthenticatedUser(ctx, req.OrgID, req.Email, req.Password, req.RefreshToken)
+	r, err := ah.updateRequestContext(w, r)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
-
-	jwt, err := ah.Signoz.Modules.User.GetJWTForUser(ctx, user)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	ah.WriteJSON(w, r, jwt)
+	ah.Signoz.Handlers.User.Login(w, r)
+	return
 }
 
 func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
