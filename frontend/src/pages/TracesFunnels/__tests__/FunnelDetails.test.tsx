@@ -26,7 +26,7 @@ const mockUseParams = jest.requireMock('react-router-dom')
 
 const renderFunnelDetailsWithAct = async (): Promise<void> => {
 	await act(async () => {
-		renderTraceFunnelRoutes([
+		await renderTraceFunnelRoutes([
 			ROUTES.TRACES_FUNNELS_DETAIL.replace(
 				':funnelId',
 				mockSingleFunnelData.funnel_id,
@@ -54,7 +54,8 @@ describe('Viewing Funnel Details', () => {
 		server.use(
 			rest.get(
 				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}`,
-				(_, res, ctx) => res(ctx.status(200), ctx.json(mockSingleFunnelData)),
+				(_, res, ctx) =>
+					res(ctx.status(200), ctx.json({ data: mockSingleFunnelData })),
 			),
 			// Mock validate endpoint as it might be called on load
 			rest.post(
@@ -78,7 +79,8 @@ describe('Viewing Funnel Details', () => {
 		server.use(
 			rest.get(
 				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}`,
-				(_, res, ctx) => res(ctx.status(200), ctx.json(mockSingleFunnelData)),
+				(_, res, ctx) =>
+					res(ctx.status(200), ctx.json({ data: mockSingleFunnelData })),
 			),
 			rest.post(
 				`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}/analytics/validate`,
@@ -116,7 +118,8 @@ describe('Viewing Funnel Details', () => {
 				),
 				rest.get(
 					`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.funnel_id}`,
-					(_, res, ctx) => res(ctx.status(200), ctx.json(mockSingleFunnelData)),
+					(_, res, ctx) =>
+						res(ctx.status(200), ctx.json({ data: mockSingleFunnelData })),
 				),
 			);
 		});
@@ -177,7 +180,7 @@ describe('Viewing Funnel Details', () => {
 				expect(
 					screen.getByText('There are no traces that match the funnel steps.'),
 				).toBeInTheDocument();
-				expect(screen.getByText('0 valid traces')).toBeInTheDocument();
+				expect(screen.getByText('No valid traces found')).toBeInTheDocument();
 			});
 		});
 
@@ -202,9 +205,9 @@ describe('Viewing Funnel Details', () => {
 				});
 			});
 
-			it('should display the correct count of valid traces and steps', async () => {
+			it('should display the "Valid traces found" and steps', async () => {
 				await waitFor(() => {
-					expect(screen.getByText('1 valid traces')).toBeInTheDocument();
+					expect(screen.getByText('Valid traces found')).toBeInTheDocument();
 					expect(screen.getByText('2 steps')).toBeInTheDocument();
 				});
 			});
@@ -239,7 +242,7 @@ describe('Viewing Funnel Details', () => {
 						'step-transition-metrics',
 					);
 					const expectedTexts = [
-						'Step 1 -> Step 2',
+						'Step 1 → Step 2',
 						'Conversion rate',
 						'⎯',
 						'92.00%',

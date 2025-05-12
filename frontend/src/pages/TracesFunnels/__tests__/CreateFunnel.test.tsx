@@ -60,7 +60,7 @@ jest.mock('hooks/useSafeNavigate', () => ({
 const createdFunnelId = `newly-created-funnel-id`;
 const newFunnelName = 'My Test Funnel';
 export const FUNNELS_LIST_URL = 'http://localhost/api/v1/trace-funnels/list';
-const CREATE_FUNNEL_URL = 'http://localhost/api/v1/trace-funnels/new-funnel';
+const CREATE_FUNNEL_URL = 'http://localhost/api/v1/trace-funnels/new';
 
 // Helper function to encapsulate opening the create funnel modal
 const openCreateFunnelModal = async (
