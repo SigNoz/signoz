@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	"github.com/SigNoz/signoz/ee/types"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types"
 	ossTypes "github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
