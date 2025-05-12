@@ -378,7 +378,7 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Make sure that the request is not demoting the last admin user.
 	// also an admin user can only change role of their own or other user
-	if existingUser.Role == types.RoleAdmin.String() {
+	if user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin.String() {
 		adminUsers, err := h.module.GetUsersByRoleInOrg(ctx, claims.OrgID, types.RoleAdmin)
 		if err != nil {
 			render.Error(w, err)

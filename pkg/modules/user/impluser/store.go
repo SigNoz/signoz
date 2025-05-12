@@ -62,7 +62,7 @@ func (s *Store) GetInviteByEmailInOrg(ctx context.Context, orgID string, email s
 	return &invite, nil
 }
 
-func (s *Store) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
+func (s *Store) GetInviteByToken(ctx context.Context, token string) (*types.GettableInvite, error) {
 	var invite types.Invite
 	err := s.sqlstore.BunDB().NewSelect().
 		Model(&invite).
@@ -76,7 +76,17 @@ func (s *Store) GetInviteByToken(ctx context.Context, token string) (*types.Invi
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with token: %s does not exist", token)
 	}
 
-	return &invite, nil
+	orgName, err := s.getOrgNameByID(ctx, invite.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	gettableInvite := &types.GettableInvite{
+		Invite:       invite,
+		Organization: orgName,
+	}
+
+	return gettableInvite, nil
 }
 
 func (s *Store) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {

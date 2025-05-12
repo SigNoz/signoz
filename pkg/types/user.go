@@ -24,7 +24,7 @@ type UserStore interface {
 	CreateBulkInvite(ctx context.Context, invites []*Invite) error
 	ListInvite(ctx context.Context, orgID string) ([]*Invite, error)
 	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
-	GetInviteByToken(ctx context.Context, token string) (*Invite, error)
+	GetInviteByToken(ctx context.Context, token string) (*GettableInvite, error)
 	GetInviteByEmailInOrg(ctx context.Context, orgID string, email string) (*Invite, error)
 
 	// user
