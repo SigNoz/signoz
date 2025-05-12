@@ -59,23 +59,23 @@ func (m *Module) CreateUser(ctx context.Context, user *types.User) error {
 	return m.store.CreateUser(ctx, user)
 }
 
-func (m *Module) GetUserByID(ctx context.Context, orgID string, id string) (*types.User, error) {
+func (m *Module) GetUserByID(ctx context.Context, orgID string, id string) (*types.GettableUser, error) {
 	return m.store.GetUserByID(ctx, orgID, id)
 }
 
-func (m *Module) GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.User, error) {
+func (m *Module) GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.GettableUser, error) {
 	return m.store.GetUserByEmailInOrg(ctx, orgID, email)
 }
 
-func (m *Module) GetUsersByEmail(ctx context.Context, email string) ([]*types.User, error) {
+func (m *Module) GetUsersByEmail(ctx context.Context, email string) ([]*types.GettableUser, error) {
 	return m.store.GetUsersByEmail(ctx, email)
 }
 
-func (m *Module) GetUsersByRoleInOrg(ctx context.Context, orgID string, role types.Role) ([]*types.User, error) {
+func (m *Module) GetUsersByRoleInOrg(ctx context.Context, orgID string, role types.Role) ([]*types.GettableUser, error) {
 	return m.store.GetUsersByRoleInOrg(ctx, orgID, role)
 }
 
-func (m *Module) ListUsers(ctx context.Context, orgID string) ([]*types.User, error) {
+func (m *Module) ListUsers(ctx context.Context, orgID string) ([]*types.GettableUser, error) {
 	return m.store.ListUsers(ctx, orgID)
 }
 
@@ -151,7 +151,11 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 			return nil, err
 		}
 
-		return m.store.GetUserByID(ctx, claims.OrgID, claims.UserID)
+		user, err := m.store.GetUserByID(ctx, claims.OrgID, claims.UserID)
+		if err != nil {
+			return nil, err
+		}
+		return &user.User, nil
 	}
 
 	var dbUser *types.User
@@ -162,7 +166,7 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 		if err != nil {
 			return nil, err
 		}
-		dbUser = user
+		dbUser = &user.User
 		if user == nil {
 			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "user not found")
 		}
@@ -174,7 +178,7 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 		return nil, err
 	}
 	if len(user) == 1 {
-		dbUser = user[0]
+		dbUser = &user[0].User
 	} else {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "please provide an orgID")
 	}
