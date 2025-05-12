@@ -6,7 +6,11 @@ export interface PendingInvite {
 	email: User['email'];
 	name: User['name'];
 	role: ROLES;
+	id: string;
 	token: string;
 }
 
-export type PayloadProps = PendingInvite[];
+export type PayloadProps = {
+	data: PendingInvite[];
+	status: string;
+};

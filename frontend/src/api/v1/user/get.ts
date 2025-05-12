@@ -2,13 +2,12 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { PayloadProps, Props, UserResponse } from 'types/api/user/getUser';
+import { UserResponse } from 'types/api/user/getUser';
+import { PayloadProps } from 'types/api/user/getUsers';
 
-const getUser = async (
-	props: Props,
-): Promise<SuccessResponseV2<UserResponse>> => {
+const getAll = async (): Promise<SuccessResponseV2<UserResponse[]>> => {
 	try {
-		const response = await axios.get<PayloadProps>(`/user/${props.userId}`);
+		const response = await axios.get<PayloadProps>(`/user`);
 
 		return {
 			httpStatusCode: response.status,
@@ -20,4 +19,4 @@ const getUser = async (
 	}
 };
 
-export default getUser;
+export default getAll;
