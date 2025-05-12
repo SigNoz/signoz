@@ -92,7 +92,10 @@ func (migration *updateQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (migration *updateQuickFilters) Down(ctx context.Context, db *bun.DB) error {
