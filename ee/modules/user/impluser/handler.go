@@ -130,6 +130,10 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		IsUser: false,
 	}
 
+	if invite.Name == "" && req.DisplayName != "" {
+		invite.Name = req.DisplayName
+	}
+
 	user, err := types.NewUser(invite.Name, invite.Email, invite.Role, invite.OrgID)
 	if err != nil {
 		render.Error(w, err)

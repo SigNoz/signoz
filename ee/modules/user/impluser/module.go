@@ -45,7 +45,12 @@ func (m *Module) createUserForSAMLRequest(ctx context.Context, email string) (*t
 	}
 	name := parts[0]
 
-	user, err := types.NewUser(name, email, types.RoleViewer.String(), "orgId from domain")
+	defaultOrgID, err := m.store.GetDefaultOrgID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := types.NewUser(name, email, types.RoleViewer.String(), defaultOrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +59,6 @@ func (m *Module) createUserForSAMLRequest(ctx context.Context, email string) (*t
 	if err != nil {
 		return nil, err
 	}
-	// password is not required for SSO login
 
 	return user, nil
 }
@@ -65,11 +69,9 @@ func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email stri
 		zap.L().Error("failed to get user with email received from auth provider", zap.String("error", err.Error()))
 		return "", err
 	}
-	userPayload := users[0]
-
 	user := &types.User{}
 
-	if userPayload == nil {
+	if len(users) == 0 {
 		newUser, err := m.createUserForSAMLRequest(ctx, email)
 		user = newUser
 		if err != nil {
@@ -77,7 +79,7 @@ func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email stri
 			return "", err
 		}
 	} else {
-		user = &userPayload.User
+		user = &users[0].User
 	}
 
 	tokenStore, err := m.GetJWTForUser(ctx, user)

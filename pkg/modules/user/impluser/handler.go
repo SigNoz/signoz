@@ -57,6 +57,10 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if invite.Name == "" && req.DisplayName != "" {
+		invite.Name = req.DisplayName
+	}
+
 	user, err := types.NewUser(invite.Name, invite.Email, invite.Role, invite.OrgID)
 	if err != nil {
 		render.Error(w, err)
@@ -100,7 +104,7 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invites, err := h.inviteUsers(ctx, claims, &types.PostableBulkInviteRequest{
+	_, err = h.inviteUsers(ctx, claims, &types.PostableBulkInviteRequest{
 		Invites: []types.PostableInvite{req},
 	})
 	if err != nil {
@@ -108,7 +112,7 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, invites[0])
+	render.Success(rw, http.StatusCreated, nil)
 	return
 }
 
@@ -134,13 +138,13 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invites, err := h.inviteUsers(ctx, claims, &req)
+	_, err = h.inviteUsers(ctx, claims, &req)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, invites)
+	render.Success(rw, http.StatusCreated, nil)
 	return
 }
 

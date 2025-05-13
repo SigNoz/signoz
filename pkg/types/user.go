@@ -40,6 +40,7 @@ type UserStore interface {
 
 	// password
 	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *FactorResetPasswordRequest) error
+	GetPasswordByID(ctx context.Context, id string) (*FactorPassword, error)
 	GetPasswordByUserID(ctx context.Context, id string) (*FactorPassword, error)
 	GetFactorResetPassword(ctx context.Context, token string) (*FactorResetPasswordRequest, error)
 	UpdatePassword(ctx context.Context, userID string, password string) error
@@ -47,6 +48,9 @@ type UserStore interface {
 
 	// Auth Domain
 	GetDomainByName(ctx context.Context, name string) (*StorableOrgDomain, error)
+
+	// Temporary func for SSO
+	GetDefaultOrgID(ctx context.Context) (string, error)
 }
 
 type GettableUser struct {
@@ -66,10 +70,6 @@ type User struct {
 }
 
 func NewUser(displayName string, email string, role string, orgID string) (*User, error) {
-	if displayName == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "displayName is required")
-	}
-
 	if email == "" {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
@@ -106,6 +106,7 @@ type PostableRegisterOrgAndAdmin struct {
 }
 
 type PostableAcceptInvite struct {
+	DisplayName string `json:"displayName"`
 	InviteToken string `json:"token"`
 	Password    string `json:"password"`
 
