@@ -196,7 +196,9 @@ export interface FunnelOverviewResponse {
 			avg_rate: number;
 			conversion_rate: number | null;
 			errors: number;
+			// TODO(shaheer): remove p99_latency once we have support for latency
 			p99_latency: number;
+			latency: number;
 		};
 	}>;
 }

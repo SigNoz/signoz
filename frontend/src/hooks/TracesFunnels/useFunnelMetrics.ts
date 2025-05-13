@@ -14,20 +14,16 @@ interface FunnelMetricsParams {
 
 export function useFunnelMetrics({
 	funnelId,
-	stepStart,
-	stepEnd,
 }: FunnelMetricsParams): {
 	isLoading: boolean;
 	isError: boolean;
 	metricsData: MetricItem[];
 	conversionRate: number;
 } {
-	const { startTime, endTime, steps } = useFunnelContext();
+	const { startTime, endTime } = useFunnelContext();
 	const payload = {
 		start_time: startTime,
 		end_time: endTime,
-		...(stepStart !== undefined && { step_start: stepStart }),
-		...(stepEnd !== undefined && { step_end: stepEnd }),
 	};
 
 	const {
@@ -36,14 +32,6 @@ export function useFunnelMetrics({
 		isFetching,
 		isError,
 	} = useFunnelOverview(funnelId, payload);
-
-	const latencyType = useMemo(
-		() =>
-			stepStart
-				? steps[stepStart]?.latency_type ?? LatencyOptions.P99
-				: LatencyOptions.P99,
-		[stepStart, steps],
-	);
 
 	const metricsData = useMemo(() => {
 		const sourceData = overviewData?.payload?.data?.[0]?.data;
@@ -60,11 +48,15 @@ export function useFunnelMetrics({
 				value: getYAxisFormattedValue(sourceData.avg_duration.toString(), 'ms'),
 			},
 			{
-				title: `${latencyType.toUpperCase()} Latency`,
-				value: getYAxisFormattedValue(sourceData.p99_latency.toString(), 'ms'),
+				title: `P99 Latency`,
+				value: getYAxisFormattedValue(
+					// TODO(shaheer): remove p99_latency once we have support for latency
+					(sourceData.latency ?? sourceData.p99_latency).toString(),
+					'ms',
+				),
 			},
 		];
-	}, [latencyType, overviewData?.payload?.data]);
+	}, [overviewData?.payload?.data]);
 
 	const conversionRate =
 		overviewData?.payload?.data?.[0]?.data?.conversion_rate ?? 0;
@@ -86,7 +78,7 @@ export function useFunnelStepsMetrics({
 	metricsData: MetricItem[];
 	conversionRate: number;
 } {
-	const { startTime, endTime } = useFunnelContext();
+	const { startTime, endTime, steps } = useFunnelContext();
 
 	const payload = {
 		start_time: startTime,
@@ -101,6 +93,11 @@ export function useFunnelStepsMetrics({
 		isFetching,
 		isError,
 	} = useFunnelStepsOverview(funnelId, payload);
+
+	const latencyType = useMemo(
+		() => (stepStart ? steps[stepStart].latency_type : LatencyOptions.P99),
+		[stepStart, steps],
+	);
 
 	const metricsData = useMemo(() => {
 		const sourceData = stepsOverviewData?.payload?.data?.[0]?.data;
@@ -120,14 +117,15 @@ export function useFunnelStepsMetrics({
 				),
 			},
 			{
-				title: 'P99 Latency',
+				title: `${latencyType?.toUpperCase()} Latency`,
 				value: getYAxisFormattedValue(
-					(sourceData.p99_latency * 1_000_000).toString(),
+					// TODO(shaheer): remove p99_latency once we have support for latency
+					((sourceData.latency ?? sourceData.p99_latency) * 1_000_000).toString(),
 					'ns',
 				),
 			},
 		];
-	}, [stepsOverviewData]);
+	}, [stepsOverviewData, latencyType]);
 
 	const conversionRate =
 		stepsOverviewData?.payload?.data?.[0]?.data?.conversion_rate ?? 0;
