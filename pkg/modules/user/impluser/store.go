@@ -142,6 +142,18 @@ func (s *Store) CreateUser(ctx context.Context, user *types.User) error {
 	return nil
 }
 
+func (s *Store) GetDefaultOrgID(ctx context.Context) (string, error) {
+	var org types.Organization
+	err := s.sqlstore.BunDB().NewSelect().
+		Model(&org).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		return "", s.sqlstore.WrapNotFoundErrf(err, types.ErrOrganizationNotFound, "default org does not exist")
+	}
+	return org.ID.String(), nil
+}
+
 // this is temporary function, we plan to remove this in the next PR.
 func (s *Store) getOrgNameByID(ctx context.Context, orgID string) (string, error) {
 	var org types.Organization
@@ -351,6 +363,18 @@ func (s *Store) CreateResetPasswordToken(ctx context.Context, resetPasswordReque
 	return nil
 }
 
+func (s *Store) GetPasswordByID(ctx context.Context, id string) (*types.FactorPassword, error) {
+	var password types.FactorPassword
+	err := s.sqlstore.BunDB().NewSelect().
+		Model(&password).
+		Where("id = ?", id).
+		Scan(ctx)
+	if err != nil {
+		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with id: %s does not exist", id)
+	}
+	return &password, nil
+}
+
 func (s *Store) GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error) {
 	var password types.FactorPassword
 	err := s.sqlstore.BunDB().NewSelect().
@@ -390,15 +414,16 @@ func (s *Store) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, u
 	}()
 
 	factorPassword := &types.FactorPassword{
-		Identifiable: types.Identifiable{
-			ID: valuer.MustNewUUID(userID),
-		},
 		UserID:   userID,
 		Password: password,
+		TimeAuditable: types.TimeAuditable{
+			UpdatedAt: time.Now(),
+		},
 	}
 	_, err = tx.NewUpdate().
 		Model(factorPassword).
 		Column("password").
+		Column("updated_at").
 		Where("user_id = ?", userID).
 		Exec(ctx)
 	if err != nil {
@@ -420,10 +445,14 @@ func (s *Store) UpdatePassword(ctx context.Context, userID string, password stri
 	factorPassword := &types.FactorPassword{
 		UserID:   userID,
 		Password: password,
+		TimeAuditable: types.TimeAuditable{
+			UpdatedAt: time.Now(),
+		},
 	}
 	_, err := s.sqlstore.BunDB().NewUpdate().
 		Model(factorPassword).
 		Column("password").
+		Column("updated_at").
 		Where("user_id = ?", userID).
 		Exec(ctx)
 	if err != nil {

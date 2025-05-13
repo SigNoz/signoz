@@ -43,7 +43,7 @@ type Module interface {
 	GetPasswordByUserID(ctx context.Context, id string) (*types.FactorPassword, error)
 	GetFactorResetPassword(ctx context.Context, token string) (*types.FactorResetPasswordRequest, error)
 	UpdatePassword(ctx context.Context, userID string, password string) error
-	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error
+	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, passwordID string, password string) error
 
 	// Auth Domain
 	GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error)

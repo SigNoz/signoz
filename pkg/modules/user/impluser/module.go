@@ -126,13 +126,18 @@ func (m *Module) GetFactorResetPassword(ctx context.Context, token string) (*typ
 	return m.store.GetFactorResetPassword(ctx, token)
 }
 
-func (m *Module) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error {
+func (m *Module) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, passwordID string, password string) error {
 	hashedPassword, err := types.HashPassword(password)
 	if err != nil {
 		return err
 	}
 
-	return m.store.UpdatePasswordAndDeleteResetPasswordEntry(ctx, userID, hashedPassword)
+	existingPassword, err := m.store.GetPasswordByID(ctx, passwordID)
+	if err != nil {
+		return err
+	}
+
+	return m.store.UpdatePasswordAndDeleteResetPasswordEntry(ctx, existingPassword.UserID, hashedPassword)
 }
 
 func (m *Module) UpdatePassword(ctx context.Context, userID string, password string) error {
