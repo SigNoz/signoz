@@ -64,6 +64,7 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 			sqlmigration.NewUpdateIntegrationsFactory(sqlStore),
 			sqlmigration.NewUpdateOrganizationsFactory(sqlStore),
 			sqlmigration.NewDropGroupsFactory(sqlStore),
+			sqlmigration.NewUpdateQuickFiltersFactory(sqlStore),
 			sqlmigration.NewAuthRefactorFactory(sqlStore),
 		),
 	)

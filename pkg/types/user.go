@@ -43,6 +43,7 @@ type UserStore interface {
 	GetPasswordByID(ctx context.Context, id string) (*FactorPassword, error)
 	GetPasswordByUserID(ctx context.Context, id string) (*FactorPassword, error)
 	GetFactorResetPassword(ctx context.Context, token string) (*FactorResetPasswordRequest, error)
+	GetFactorResetPasswordByPasswordID(ctx context.Context, passwordID string) (*FactorResetPasswordRequest, error)
 	UpdatePassword(ctx context.Context, userID string, password string) error
 	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error
 
@@ -59,7 +60,7 @@ type GettableUser struct {
 }
 
 type User struct {
-	bun.BaseModel `bun:"table:user"`
+	bun.BaseModel `bun:"table:users"`
 
 	Identifiable
 	TimeAuditable

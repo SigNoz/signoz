@@ -34,7 +34,7 @@ func (migration *authRefactor) Register(migrations *migrate.Migrations) error {
 	return nil
 }
 
-type existingUser31 struct {
+type existingUser32 struct {
 	bun.BaseModel `bun:"table:users"`
 
 	types.TimeAuditable
@@ -47,19 +47,7 @@ type existingUser31 struct {
 	OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
 }
 
-type newUser31 struct {
-	bun.BaseModel `bun:"table:user"`
-
-	types.Identifiable
-	types.TimeAuditable
-	DisplayName       string `bun:"display_name,type:text,notnull" json:"displayName"`
-	Email             string `bun:"email,type:text,notnull,unique:org_email" json:"email"`
-	ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
-	Role              string `bun:"role,type:text,notnull" json:"role"`
-	OrgID             string `bun:"org_id,type:text,notnull,unique:org_email,references:org(id)" json:"orgId"`
-}
-
-type FactorPassword31 struct {
+type FactorPassword32 struct {
 	bun.BaseModel `bun:"table:factor_password"`
 
 	types.Identifiable
@@ -69,7 +57,7 @@ type FactorPassword31 struct {
 	UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id)" json:"userId"`
 }
 
-type existingResetPasswordRequest31 struct {
+type existingResetPasswordRequest32 struct {
 	bun.BaseModel `bun:"table:reset_password_request"`
 
 	types.Identifiable
@@ -77,7 +65,7 @@ type existingResetPasswordRequest31 struct {
 	UserID string `bun:"user_id,type:text,notnull,unique" json:"userId"`
 }
 
-type FactorResetPasswordRequest31 struct {
+type FactorResetPasswordRequest32 struct {
 	bun.BaseModel `bun:"table:factor_reset_password_request"`
 
 	types.Identifiable
@@ -86,11 +74,6 @@ type FactorResetPasswordRequest31 struct {
 }
 
 func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
-
-	// Disable foreign keys temporarily
-	if err := migration.store.Dialect().ToggleForeignKeyConstraint(ctx, db, false); err != nil {
-		return err
-	}
 
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -114,53 +97,21 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	//  user start
-	err = migration.
-		store.
-		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingUser31), new(newUser31), []string{OrgReference}, func(ctx context.Context) error {
-			existingUsers := make([]*existingUser31, 0)
-			err = tx.
-				NewSelect().
-				Model(&existingUsers).
-				Scan(ctx)
-			if err != nil {
-				if err != sql.ErrNoRows {
-					return err
-				}
-			}
+	// copy passwords from users table to factor_password table
+	migration.CopyOldPasswordToNewPassword(ctx, tx)
 
-			if err == nil && len(existingUsers) > 0 {
-				// copy users and their passwords to new table
-				newUsers, newPasswords := migration.
-					CopyOldUsersToNewUsers31(tx, existingUsers)
-				_, err = tx.
-					NewInsert().
-					Model(&newUsers).
-					Exec(ctx)
-				if err != nil {
-					return err
-				}
-
-				_, err = tx.
-					NewInsert().
-					Model(&newPasswords).
-					Exec(ctx)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-	if err != nil {
-		return err
-	}
+	// delete profile picture url
+	migration.store.Dialect().DropColumn(ctx, tx, "users", "profile_picture_url")
+	// delete password
+	migration.store.Dialect().DropColumn(ctx, tx, "users", "password")
+	// rename name to display name
+	migration.store.Dialect().RenameColumn(ctx, tx, "users", "name", "display_name")
 
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingResetPasswordRequest31), new(FactorResetPasswordRequest31), []string{FactorPasswordReference}, func(ctx context.Context) error {
-			existingRequests := make([]*existingResetPasswordRequest31, 0)
+		RenameTableAndModifyModel(ctx, tx, new(existingResetPasswordRequest32), new(FactorResetPasswordRequest32), []string{FactorPasswordReference}, func(ctx context.Context) error {
+			existingRequests := make([]*existingResetPasswordRequest32, 0)
 			err = tx.
 				NewSelect().
 				Model(&existingRequests).
@@ -209,21 +160,18 @@ func (migration *authRefactor) Down(context.Context, *bun.DB) error {
 	return nil
 }
 
-func (migration *authRefactor) CopyOldUsersToNewUsers31(tx bun.IDB, existingUsers []*existingUser31) ([]*newUser31, []*FactorPassword31) {
-	newUsers := make([]*newUser31, 0)
-	newPasswords := make([]*FactorPassword31, 0)
+func (migration *authRefactor) CopyOldPasswordToNewPassword(ctx context.Context, tx bun.IDB) error {
+
+	// get all users from users table
+	existingUsers := make([]*existingUser32, 0)
+	err := tx.NewSelect().Model(&existingUsers).Scan(ctx)
+	if err != nil {
+		return err
+	}
+
+	newPasswords := make([]*FactorPassword32, 0)
 	for _, user := range existingUsers {
-		newUsers = append(newUsers, &newUser31{
-			Identifiable: types.Identifiable{
-				ID: valuer.MustNewUUID(user.ID),
-			},
-			DisplayName:       user.Name,
-			Email:             user.Email,
-			ProfilePictureURL: user.ProfilePictureURL,
-			Role:              user.Role,
-			OrgID:             user.OrgID,
-		})
-		newPasswords = append(newPasswords, &FactorPassword31{
+		newPasswords = append(newPasswords, &FactorPassword32{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
@@ -232,11 +180,18 @@ func (migration *authRefactor) CopyOldUsersToNewUsers31(tx bun.IDB, existingUser
 			UserID:    user.ID,
 		})
 	}
-	return newUsers, newPasswords
+
+	// insert
+	_, err = tx.NewInsert().Model(&newPasswords).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (migration *authRefactor) CopyOldResetPasswordToNewResetPassword(ctx context.Context, tx bun.IDB, existingRequests []*existingResetPasswordRequest31) ([]*FactorResetPasswordRequest31, error) {
-	newRequests := make([]*FactorResetPasswordRequest31, 0)
+func (migration *authRefactor) CopyOldResetPasswordToNewResetPassword(ctx context.Context, tx bun.IDB, existingRequests []*existingResetPasswordRequest32) ([]*FactorResetPasswordRequest32, error) {
+	newRequests := make([]*FactorResetPasswordRequest32, 0)
 	for _, request := range existingRequests {
 		// get password id from user id
 		var passwordID string
@@ -245,7 +200,7 @@ func (migration *authRefactor) CopyOldResetPasswordToNewResetPassword(ctx contex
 			return nil, err
 		}
 
-		newRequests = append(newRequests, &FactorResetPasswordRequest31{
+		newRequests = append(newRequests, &FactorResetPasswordRequest32{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},

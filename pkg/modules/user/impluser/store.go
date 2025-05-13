@@ -387,6 +387,21 @@ func (s *Store) GetPasswordByUserID(ctx context.Context, id string) (*types.Fact
 	return &password, nil
 }
 
+func (s *Store) GetFactorResetPasswordByPasswordID(ctx context.Context, passwordID string) (*types.FactorResetPasswordRequest, error) {
+	var resetPasswordRequest types.FactorResetPasswordRequest
+	err := s.sqlstore.BunDB().NewSelect().
+		Model(&resetPasswordRequest).
+		Where("password_id = ?", passwordID).
+		Scan(ctx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token with password id: %s does not exist", passwordID)
+	}
+	return &resetPasswordRequest, nil
+}
+
 func (s *Store) GetFactorResetPassword(ctx context.Context, token string) (*types.FactorResetPasswordRequest, error) {
 	var resetPasswordRequest types.FactorResetPasswordRequest
 	err := s.sqlstore.BunDB().NewSelect().
