@@ -1771,7 +1771,7 @@ func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWrite
 		return
 	}
 	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
+	if err == nil {
 		render.Error(w, err)
 		return
 	}
