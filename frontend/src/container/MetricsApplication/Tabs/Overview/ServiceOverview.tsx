@@ -57,7 +57,7 @@ function ServiceOverview({
 	);
 
 	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
 	const latencyWidget = useMemo(
