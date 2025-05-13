@@ -1711,7 +1711,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		"number": len(*result),
 	}
 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
+	if errv2 == nil {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, claims.Email, true, false)
 	}
 
