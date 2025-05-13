@@ -3,8 +3,10 @@
         position: absolute;
         z-index: 999;
         width: 342px;
-        height: 100%;
         background: var(--bg-slate-500);
+
+        display: flex;
+        flex-direction: column;
 
         .qf-header {
             display: flex;
@@ -23,6 +25,12 @@
                 width: 16px;
                 height: 16px;
                 cursor: pointer;
+            }
+        }
+
+        .search {
+            .ant-input {
+                background-color: var(--bg-slate-500);
             }
         }
 
@@ -68,7 +76,6 @@
         line-height: 18px;
         letter-spacing: 0.88px;
         text-transform: uppercase;
-        margin-top: 12px;
         padding: 8px 12px;
     }
 }

@@ -1,7 +1,7 @@
 import './QuickFiltersSettings.styles.scss';
 
+import { Input } from 'antd';
 import Button from 'antd/es/button';
-import Input from 'components/Input';
 import { CheckIcon, TableColumnsSplit, XIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
@@ -68,9 +68,8 @@ function QuickFiltersSettings({
 				<Input
 					type="text"
 					value={inputValue}
-					rootClassName="tags-input"
 					placeholder="Search for a filter..."
-					onChangeHandler={(event): void => setInputValue(event.target.value)}
+					onChange={(event): void => setInputValue(event.target.value)}
 				/>
 			</section>
 			<AddedFilters
