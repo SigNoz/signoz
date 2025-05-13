@@ -465,7 +465,7 @@ jest.mock('hooks/useHandleExplorerTabChange', () => ({
 describe('TracesExplorer - ', () => {
 	it('should render the traces explorer page', async () => {
 		server.use(
-			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
+			rest.post('http://localhost/api/v4/query_range', (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(queryRangeForTimeSeries)),
 			),
 		);
@@ -513,7 +513,7 @@ describe('TracesExplorer - ', () => {
 
 	it('trace explorer - list view', async () => {
 		server.use(
-			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
+			rest.post('http://localhost/api/v4/query_range', (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(queryRangeForListView)),
 			),
 		);
@@ -536,7 +536,7 @@ describe('TracesExplorer - ', () => {
 
 	it('trace explorer - table view', async () => {
 		server.use(
-			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
+			rest.post('http://localhost/api/v4/query_range', (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(queryRangeForTableView)),
 			),
 		);
@@ -554,7 +554,7 @@ describe('TracesExplorer - ', () => {
 
 	it('trace explorer - trace view', async () => {
 		server.use(
-			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
+			rest.post('http://localhost/api/v4/query_range', (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(queryRangeForTraceView)),
 			),
 		);
