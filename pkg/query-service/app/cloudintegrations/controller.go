@@ -234,7 +234,7 @@ func (c *Controller) CheckInAsAgent(
 	}
 
 	// prepare and return integration config to be consumed by agent
-	compliedStrategy, err := NewCompiledCollectionStrategy(cloudProvider)
+	compiledStrategy, err := NewCompiledCollectionStrategy(cloudProvider)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"couldn't init telemetry collection strategy: %w", err,
@@ -243,7 +243,7 @@ func (c *Controller) CheckInAsAgent(
 
 	agentConfig := IntegrationConfigForAgent{
 		EnabledRegions:              []string{},
-		TelemetryCollectionStrategy: compliedStrategy,
+		TelemetryCollectionStrategy: compiledStrategy,
 	}
 
 	if account.Config != nil && account.Config.EnabledRegions != nil {
@@ -275,7 +275,7 @@ func (c *Controller) CheckInAsAgent(
 		}
 		config := svcConfigs[svcType]
 
-		err := AddServiceStrategy(svcType, compliedStrategy, definition.Strategy, config)
+		err := AddServiceStrategy(svcType, compiledStrategy, definition.Strategy, config)
 		if err != nil {
 			return nil, err
 		}

@@ -41,10 +41,10 @@ func List(cloudProvider string) ([]Definition, *model.ApiError) {
 	return services, nil
 }
 
-func Map(cloudprovider string) (map[string]Definition, error) {
-	cloudServices, found := supportedServices[cloudprovider]
+func Map(cloudProvider string) (map[string]Definition, error) {
+	cloudServices, found := supportedServices[cloudProvider]
 	if !found || cloudServices == nil {
-		return nil, errors.Newf(errors.TypeNotFound, CodeUnsupportedCloudProvider, "unsupported cloud provider: %s", cloudprovider)
+		return nil, errors.Newf(errors.TypeNotFound, CodeUnsupportedCloudProvider, "unsupported cloud provider: %s", cloudProvider)
 	}
 
 	return cloudServices, nil
