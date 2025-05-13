@@ -145,6 +145,17 @@
 					background: var(--bg-ink-100) !important;
 					opacity: 0.5 !important;
 				}
+
+				.cm-function {
+					color: var(--bg-robin-500) !important;
+				}
+
+				.chip-decorator {
+					background: rgba(36, 40, 52, 1) !important;
+					color: var(--bg-vanilla-100) !important;
+					border-radius: 4px;
+					padding: 2px 8px;
+				}
 			}
 
 			.cm-selectionBackground {
