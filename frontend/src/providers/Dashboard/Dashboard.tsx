@@ -295,15 +295,17 @@ export function DashboardProvider({
 			onSuccess: (data) => {
 				// if the url variable is not set for any variable, set it to the default value
 				const variables = data?.data?.variables;
-				Object.keys(variables).forEach((key) => {
-					if (!getUrlVariables()[key]) {
-						updateUrlVariable(
-							key,
-							variables[key].selectedValue,
-							variables[key].allSelected || false,
-						); // TODO:Sagar to add the default value here
-					}
-				});
+				if (variables) {
+					Object.keys(variables).forEach((key) => {
+						if (!getUrlVariables()[key]) {
+							updateUrlVariable(
+								key,
+								variables[key].selectedValue,
+								variables[key].allSelected || false,
+							); // TODO:Sagar to add the default value here
+						}
+					});
+				}
 
 				const updatedDashboardData = transformDashboardVariables(data);
 				const updatedDate = dayjs(updatedDashboardData.updatedAt);
