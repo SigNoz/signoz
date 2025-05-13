@@ -49,21 +49,19 @@ function SortableFilter({
 			style={style}
 			className={`qf-filter-item ${allowDrag ? 'drag-enabled' : 'drag-disabled'}`}
 		>
-			<div className="qf-filter-content">
-				<div {...attributes} {...listeners} className="drag-handle">
-					{allowDrag && <GripVertical size={16} />}
-					{filter.key}
-				</div>
-				<Button
-					className="remove-filter-btn periscope-btn"
-					size="small"
-					onClick={(): void => {
-						onRemove(filter as FilterType);
-					}}
-				>
-					Remove
-				</Button>
+			<div {...attributes} {...listeners} className="drag-handle">
+				{allowDrag && <GripVertical size={16} />}
+				{filter.key}
 			</div>
+			<Button
+				className="remove-filter-btn periscope-btn"
+				size="small"
+				onClick={(): void => {
+					onRemove(filter as FilterType);
+				}}
+			>
+				Remove
+			</Button>
 		</div>
 	);
 }

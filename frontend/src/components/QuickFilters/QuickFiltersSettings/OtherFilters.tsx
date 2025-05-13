@@ -61,16 +61,14 @@ function OtherFilters({
 			<div className="qf-other-filters-list">
 				{otherFilters?.map((filter) => (
 					<div key={filter.key} className="qf-filter-item other-filters-item">
-						<div className="qf-filter-content">
-							<div className="qf-filter-key">{filter.key}</div>
-							<Button
-								className="add-filter-btn periscope-btn"
-								size="small"
-								onClick={(): void => handleAddFilter(filter as FilterType)}
-							>
-								Add
-							</Button>
-						</div>
+						<div className="qf-filter-key">{filter.key}</div>
+						<Button
+							className="add-filter-btn periscope-btn"
+							size="small"
+							onClick={(): void => handleAddFilter(filter as FilterType)}
+						>
+							Add
+						</Button>
 					</div>
 				))}
 			</div>
