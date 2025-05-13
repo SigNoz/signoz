@@ -3,7 +3,7 @@ import './QueryBuilderV2.styles.scss';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 import QueryAddOns from './QueryAddOns/QueryAddOns';
-import QueryAggregationOptions from './QueryAggregationOptions/QueryAggregationOptions';
+import QueryAggregation from './QueryAggregation/QueryAggregation';
 import QuerySearch from './QuerySearch/QuerySearch';
 
 function QueryBuilderV2(): JSX.Element {
@@ -12,7 +12,7 @@ function QueryBuilderV2(): JSX.Element {
 	return (
 		<div className="query-builder-v2">
 			<QuerySearch />
-			<QueryAggregationOptions />
+			<QueryAggregation />
 			<QueryAddOns
 				query={currentQuery.builder.queryData[0]}
 				version="v3"
