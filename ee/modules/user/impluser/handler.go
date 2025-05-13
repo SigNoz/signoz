@@ -58,10 +58,6 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
-	if user == nil {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email or password"))
-		return
-	}
 
 	jwt, err := h.module.GetJWTForUser(ctx, user)
 	if err != nil {
@@ -116,7 +112,7 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	orgDomain, err := h.module.GetAuthDomainByEmail(ctx, invite.Email)
-	if err != nil {
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		render.Error(w, err)
 		return
 	}

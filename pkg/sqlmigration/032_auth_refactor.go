@@ -80,7 +80,11 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
 
 	if _, err := tx.NewCreateTable().
 		Model(new(FactorPassword32)).
@@ -91,14 +95,27 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	// copy passwords from users table to factor_password table
-	migration.CopyOldPasswordToNewPassword(ctx, tx)
+	err = migration.CopyOldPasswordToNewPassword(ctx, tx)
+	if err != nil {
+		return err
+	}
 
 	// delete profile picture url
-	migration.store.Dialect().DropColumn(ctx, tx, "users", "profile_picture_url")
+	err = migration.store.Dialect().DropColumn(ctx, tx, "users", "profile_picture_url")
+	if err != nil {
+		return err
+	}
 	// delete password
-	migration.store.Dialect().DropColumn(ctx, tx, "users", "password")
+	err = migration.store.Dialect().DropColumn(ctx, tx, "users", "password")
+	if err != nil {
+		return err
+	}
+
 	// rename name to display name
-	migration.store.Dialect().RenameColumn(ctx, tx, "users", "name", "display_name")
+	_, err = migration.store.Dialect().RenameColumn(ctx, tx, "users", "name", "display_name")
+	if err != nil {
+		return err
+	}
 
 	err = migration.
 		store.
@@ -140,12 +157,6 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
-
-	// Enable foreign keys
-	if err := migration.store.Dialect().ToggleForeignKeyConstraint(ctx, db, true); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -154,10 +165,20 @@ func (migration *authRefactor) Down(context.Context, *bun.DB) error {
 }
 
 func (migration *authRefactor) CopyOldPasswordToNewPassword(ctx context.Context, tx bun.IDB) error {
+	// check if data already in factor_password table
+	var count int64
+	err := tx.NewSelect().Model(new(FactorPassword32)).ColumnExpr("COUNT(*)").Scan(ctx, &count)
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return nil
+	}
 
 	// get all users from users table
 	existingUsers := make([]*existingUser32, 0)
-	err := tx.NewSelect().Model(&existingUsers).Scan(ctx)
+	err = tx.NewSelect().Model(&existingUsers).Scan(ctx)
 	if err != nil {
 		return err
 	}

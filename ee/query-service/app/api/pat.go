@@ -167,8 +167,8 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the user
-	createdByUser, usererr := ah.Signoz.Modules.User.GetUserByID(r.Context(), claims.OrgID, existingPAT.UserID)
-	if usererr != nil {
+	createdByUser, err := ah.Signoz.Modules.User.GetUserByID(r.Context(), claims.OrgID, existingPAT.UserID)
+	if err != nil {
 		render.Error(w, err)
 		return
 	}
