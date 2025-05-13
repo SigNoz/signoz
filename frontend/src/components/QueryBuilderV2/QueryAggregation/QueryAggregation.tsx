@@ -1,15 +1,19 @@
-import './QueryAggregationOptions.styles.scss';
+import './QueryAggregation.styles.scss';
 
-import { Input } from 'antd';
+// import { Input } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
+
+import QueryAggregationSelect from './QueryAggregationSelect';
 
 function QueryAggregationOptions(): JSX.Element {
 	return (
 		<div className="query-aggregation-container">
-			<Input
+			{/* <Input
 				placeholder="Search aggregation options..."
 				className="query-aggregation-options-input"
-			/>
+			/> */}
+
+			<QueryAggregationSelect />
 
 			<div className="query-aggregation-interval">
 				<div className="query-aggregation-interval-label">every</div>
