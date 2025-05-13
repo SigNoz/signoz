@@ -80,38 +80,37 @@ function S3BucketsSelector({
 	return (
 		<div className="s3-buckets-selector">
 			<Title level={5}>Select S3 Buckets by Region</Title>
-			<Form layout="vertical">
-				{allRegions.map((region) => {
-					const disabled = isRegionDisabled(region);
 
-					return (
-						<Form.Item
-							key={region}
-							label={region}
-							// eslint-disable-next-line react/jsx-props-no-spreading
-							{...(disabled && {
-								help:
-									'Region disabled in account settings; S3 buckets here will not be synced.',
-								validateStatus: 'warning',
-							})}
-						>
-							<Select
-								mode="tags"
-								placeholder={`Enter S3 bucket names for ${region}`}
-								value={bucketsByRegion[region] || []}
-								onChange={(value): void => handleRegionBucketsChange(region, value)}
-								tokenSeparators={[',']}
-								allowClear
-								disabled={disabled}
-								suffixIcon={null}
-								notFoundContent={null}
-								filterOption={false}
-								showSearch
-							/>
-						</Form.Item>
-					);
-				})}
-			</Form>
+			{allRegions.map((region) => {
+				const disabled = isRegionDisabled(region);
+
+				return (
+					<Form.Item
+						key={region}
+						label={region}
+						// eslint-disable-next-line react/jsx-props-no-spreading
+						{...(disabled && {
+							help:
+								'Region disabled in account settings; S3 buckets here will not be synced.',
+							validateStatus: 'warning',
+						})}
+					>
+						<Select
+							mode="tags"
+							placeholder={`Enter S3 bucket names for ${region}`}
+							value={bucketsByRegion[region] || []}
+							onChange={(value): void => handleRegionBucketsChange(region, value)}
+							tokenSeparators={[',']}
+							allowClear
+							disabled={disabled}
+							suffixIcon={null}
+							notFoundContent={null}
+							filterOption={false}
+							showSearch
+						/>
+					</Form.Item>
+				);
+			})}
 		</div>
 	);
 }

@@ -15,7 +15,7 @@ import { useQueryClient } from 'react-query';
 import logEvent from '../../../api/common/logEvent';
 import S3BucketsSelector from './S3BucketsSelector';
 
-interface IConfigureServiceModalProps {
+export interface IConfigureServiceModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	serviceName: string;
