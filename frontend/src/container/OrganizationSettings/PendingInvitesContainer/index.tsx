@@ -1,8 +1,8 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import deleteInvite from 'api/user/deleteInvite';
-import getPendingInvites from 'api/user/getPendingInvites';
+import getPendingInvites from 'api/v1/invite/getPendingInvites';
+import deleteInvite from 'api/v1/invite/id/delete';
 import { ResizeTable } from 'components/ResizeTable';
 import { INVITE_MEMBERS_HASH } from 'constants/app';
 import ROUTES from 'constants/routes';

@@ -411,7 +411,7 @@ describe('API Monitoring Utils', () => {
 			const statusFilter = result.items.find(
 				(item) =>
 					item.key &&
-					item.key.key === SPAN_ATTRIBUTES.STATUS_CODE &&
+					item.key.key === SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE &&
 					item.value === statusCode,
 			);
 			expect(statusFilter).toBeDefined();

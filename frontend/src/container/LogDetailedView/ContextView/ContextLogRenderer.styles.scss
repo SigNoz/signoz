@@ -1,31 +1,31 @@
 .context-log-renderer {
-    .virtuoso-list {
-        overflow-y: hidden !important;
+	.virtuoso-list {
+		overflow-y: hidden !important;
 		&::-webkit-scrollbar {
 			width: 0.3rem;
 			height: 0.3rem;
 		}
 
-        &::-webkit-scrollbar-track {
-            background: transparent;
-        }
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
 
-        &::-webkit-scrollbar-thumb {
-            background: var(--bg-slate-300);
-        }
+		&::-webkit-scrollbar-thumb {
+			background: var(--bg-slate-300);
+		}
 
-        &::-webkit-scrollbar-thumb:hover {
-            background: var(--bg-slate-200);
-        }
-        
-        .ant-row {
-            width: fit-content;
-        }
+		&::-webkit-scrollbar-thumb:hover {
+			background: var(--bg-slate-200);
+		}
+
+		.ant-row {
+			width: fit-content;
+		}
 	}
-    &__item {
-        width: 100%;
-        .raw-log-content {
-            cursor: pointer;
-        }
-    }
+	&__item {
+		width: 100%;
+		.raw-log-content {
+			cursor: pointer;
+		}
+	}
 }

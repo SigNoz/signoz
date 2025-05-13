@@ -1,14 +1,14 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorResponse, ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import { PayloadProps, Props } from 'types/api/channels/editOpsgenie';
 
 const editOpsgenie = async (
 	props: Props,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+): Promise<SuccessResponseV2<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.put(`/channels/${props.id}`, {
+		const response = await axios.put<PayloadProps>(`/channels/${props.id}`, {
 			name: props.name,
 			opsgenie_configs: [
 				{
@@ -25,13 +25,12 @@ const editOpsgenie = async (
 		});
 
 		return {
-			statusCode: 200,
-			error: null,
-			message: 'Success',
-			payload: response.data.data,
+			httpStatusCode: response.status,
+			data: response.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+		throw error;
 	}
 };
 

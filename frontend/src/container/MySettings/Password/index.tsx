@@ -1,5 +1,5 @@
 import { Button, Card, Space, Typography } from 'antd';
-import changeMyPassword from 'api/user/changeMyPassword';
+import changeMyPassword from 'api/v1/factor_password/changeMyPassword';
 import { useNotifications } from 'hooks/useNotifications';
 import { Save } from 'lucide-react';
 import { isPasswordNotValidMessage, isPasswordValid } from 'pages/SignUp/utils';
