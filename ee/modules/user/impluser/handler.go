@@ -12,7 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 // EnterpriseHandler embeds the base handler implementation
@@ -42,7 +41,6 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	// the EE handler wrapper passes the feature flag value in context
 	ssoAvailable, ok := ctx.Value("ssoAvailable").(bool)
 	if !ok {
-		zap.L().Error("failed to retrieve ssoAvailable from context")
 		render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to retrieve SSO availability"))
 		return
 	}
