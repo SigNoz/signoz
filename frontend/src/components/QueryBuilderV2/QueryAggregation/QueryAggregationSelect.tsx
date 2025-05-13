@@ -157,10 +157,21 @@ function QueryAggregationSelect(): JSX.Element {
 						);
 						const lastOpenParen = currentText.lastIndexOf('(');
 						const endPos = view.state.selection.main.from;
-						const startPos = lastOpenParen !== -1 ? lastOpenParen + 1 : endPos;
+						// Find the last comma before the cursor, but after the last open paren
+						const lastComma = currentText.lastIndexOf(',', endPos - 1);
+						const startPos =
+							lastComma > lastOpenParen ? lastComma + 1 : lastOpenParen + 1;
+						const before = view.state.sliceDoc(startPos, endPos).trim();
+						let insertText = '';
+						if (before.length > 0) {
+							// If there's already an argument, insert ", arg"
+							insertText = `, ${completion.label}`;
+						} else {
+							insertText = completion.label;
+						}
 						view.dispatch({
-							changes: { from: startPos, to: endPos, insert: completion.label },
-							selection: { anchor: startPos + completion.label.length },
+							changes: { from: endPos, insert: insertText },
+							selection: { anchor: endPos + insertText.length },
 						});
 					},
 				}),
