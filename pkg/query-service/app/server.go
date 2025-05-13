@@ -166,7 +166,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore),
 		Signoz:                        serverOptions.SigNoz,
 		QuickFilters:                  quickFilter,
-		//QuickFilterModule:             quickfiltermodule,
+		QuickFilterModule:             quickfiltermodule,
 	})
 	if err != nil {
 		return nil, err
