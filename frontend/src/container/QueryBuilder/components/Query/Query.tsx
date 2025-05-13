@@ -458,6 +458,7 @@ export const Query = memo(function Query({
 												query={query}
 												onChange={handleChangeTagFilters}
 												whereClauseConfig={filterConfigs?.filters}
+												hideSpanScopeSelector={query.dataSource !== DataSource.TRACES}
 											/>
 										) : (
 											<QueryBuilderSearch

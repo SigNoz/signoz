@@ -60,8 +60,42 @@ export function determineIsMonotonic(
 
 export function getMetricDetailsQuery(
 	metricName: string,
+	metricType: MetricType | undefined,
 	filter?: { key: string; value: string },
+	groupBy?: string,
 ): Query {
+	let timeAggregation;
+	let spaceAggregation;
+	let aggregateOperator;
+	switch (metricType) {
+		case MetricType.SUM:
+			timeAggregation = 'rate';
+			spaceAggregation = 'sum';
+			aggregateOperator = 'rate';
+			break;
+		case MetricType.GAUGE:
+			timeAggregation = 'avg';
+			spaceAggregation = 'avg';
+			aggregateOperator = 'avg';
+			break;
+		case MetricType.SUMMARY:
+			timeAggregation = 'noop';
+			spaceAggregation = 'sum';
+			aggregateOperator = 'noop';
+			break;
+		case MetricType.HISTOGRAM:
+		case MetricType.EXPONENTIAL_HISTOGRAM:
+			timeAggregation = 'noop';
+			spaceAggregation = 'p90';
+			aggregateOperator = 'noop';
+			break;
+		default:
+			timeAggregation = 'noop';
+			spaceAggregation = 'noop';
+			aggregateOperator = 'noop';
+			break;
+	}
+
 	return {
 		...initialQueriesMap[DataSource.METRICS],
 		builder: {
@@ -70,11 +104,14 @@ export function getMetricDetailsQuery(
 					...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
 					aggregateAttribute: {
 						key: metricName,
-						type: '',
-						id: `${metricName}----string--`,
+						type: metricType ?? '',
+						id: `${metricName}----${metricType}---string--`,
+						isColumn: true,
+						isJSON: false,
 					},
-					timeAggregation: 'rate',
-					spaceAggregation: 'sum',
+					aggregateOperator,
+					timeAggregation,
+					spaceAggregation,
 					filters: {
 						op: 'AND',
 						items: filter
@@ -91,6 +128,18 @@ export function getMetricDetailsQuery(
 							  ]
 							: [],
 					},
+					groupBy: groupBy
+						? [
+								{
+									key: groupBy,
+									dataType: DataTypes.String,
+									type: 'tag',
+									isColumn: false,
+									isJSON: false,
+									id: `${groupBy}--string--tag--false`,
+								},
+						  ]
+						: [],
 				},
 			],
 			queryFormulas: [],

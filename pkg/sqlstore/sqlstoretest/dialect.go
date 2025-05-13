@@ -60,3 +60,11 @@ func (dialect *dialect) IndexExists(ctx context.Context, bun bun.IDB, table stri
 func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, bun bun.IDB, model interface{}, column string) error {
 	return nil
 }
+
+func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table interface{}) (bool, error) {
+	return true, nil
+}
+
+func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error {
+	return nil
+}
