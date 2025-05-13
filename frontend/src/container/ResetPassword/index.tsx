@@ -123,7 +123,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 						<Form.Item
 							name="password"
 							validateTrigger="onBlur"
-							rules={[{ required: true, message: 'Please enter  password!', len: 8 }]}
+							rules={[{ required: true, message: 'Please enter  password!' }]}
 						>
 							<Input.Password
 								tabIndex={0}
@@ -139,9 +139,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							name="confirmPassword"
 							// validateTrigger="onChange"
 							validateTrigger="onBlur"
-							rules={[
-								{ required: true, message: 'Please enter confirm password!', len: 8 },
-							]}
+							rules={[{ required: true, message: 'Please enter confirm password!' }]}
 						>
 							<Input.Password
 								onChange={handleValuesChange}

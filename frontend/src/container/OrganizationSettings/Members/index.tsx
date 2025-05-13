@@ -86,35 +86,22 @@ function UserFunction({
 	const onDeleteHandler = async (): Promise<void> => {
 		try {
 			setIsDeleteLoading(true);
-			const response = await deleteUser({
+			await deleteUser({
 				userId: id,
 			});
-
-			if (response.statusCode === 200) {
-				onDelete();
-				notifications.success({
-					message: t('success', {
-						ns: 'common',
-					}),
-				});
-				setIsDeleteModalVisible(false);
-			} else {
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
+			onDelete();
+			notifications.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
+			setIsDeleteModalVisible(false);
 			setIsDeleteLoading(false);
 		} catch (error) {
 			setIsDeleteLoading(false);
-
 			notifications.error({
-				message: t('something_went_wrong', {
-					ns: 'common',
-				}),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 	};
