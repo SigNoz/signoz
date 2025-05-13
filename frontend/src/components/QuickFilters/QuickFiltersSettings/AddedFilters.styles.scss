@@ -5,6 +5,7 @@
     padding: 8px;
     border-radius: 4px;
     user-select: none;
+    transition: background-color 0.2s ease-in-out;
 
     .drag-handle {
         display: flex;
@@ -37,6 +38,7 @@
     }
 
     &:hover {
+        background-color: var(--bg-slate-400);
         .remove-filter-btn {
             opacity: 1;
         }
