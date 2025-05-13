@@ -10,10 +10,12 @@ import { DataSource } from 'types/common/queryBuilder';
 
 function OtherFilters({
 	signal,
+	inputValue,
 	addedFilters,
 	setAddedFilters,
 }: {
 	signal: SignalType | undefined;
+	inputValue: string;
 	addedFilters: FilterType[];
 	setAddedFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
 }): JSX.Element {
@@ -22,12 +24,12 @@ function OtherFilters({
 		// isFetching: isFetchingSuggestions,
 	} = useGetAttributeSuggestions(
 		{
-			searchText: '',
-			dataSource: DataSource.LOGS,
+			searchText: inputValue,
+			dataSource: DataSource.LOGS, // TODO: config map for signals
 			filters: {} as TagFilter,
 		},
 		{
-			queryKey: ['other-filters'],
+			queryKey: ['other-filters', inputValue],
 			enabled: !!signal,
 		},
 	);

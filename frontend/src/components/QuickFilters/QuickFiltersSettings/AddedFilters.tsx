@@ -18,14 +18,17 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import Button from 'antd/es/button';
 import { GripVertical } from 'lucide-react';
+import { useMemo } from 'react';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 function SortableFilter({
 	filter,
 	onRemove,
+	allowDrag,
 }: {
 	filter: FilterType;
 	onRemove: (filter: FilterType) => void;
+	allowDrag: boolean;
 }): JSX.Element {
 	const {
 		attributes,
@@ -44,11 +47,11 @@ function SortableFilter({
 		<div
 			ref={setNodeRef}
 			style={style}
-			className="qf-filter-item drag-enabled" // TODO: handle drag disabled when searching
+			className={`qf-filter-item ${allowDrag ? 'drag-enabled' : 'drag-disabled'}`}
 		>
 			<div className="qf-filter-content">
 				<div {...attributes} {...listeners} className="drag-handle">
-					<GripVertical size={16} />
+					{allowDrag && <GripVertical size={16} />}
 					{filter.key}
 				</div>
 				<Button
@@ -66,9 +69,11 @@ function SortableFilter({
 }
 
 function AddedFilters({
+	inputValue,
 	addedFilters,
 	setAddedFilters,
 }: {
+	inputValue: string;
 	addedFilters: FilterType[];
 	setAddedFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
 }): JSX.Element {
@@ -87,9 +92,19 @@ function AddedFilters({
 		}
 	};
 
+	const filteredAddedFilters = useMemo(
+		() =>
+			addedFilters.filter((filter) =>
+				filter.key.toLowerCase().includes(inputValue.toLowerCase()),
+			),
+		[addedFilters, inputValue],
+	);
+
 	const handleRemoveFilter = (filter: FilterType): void => {
 		setAddedFilters((prev) => prev.filter((f) => f.key !== filter.key));
 	};
+
+	const allowDrag = inputValue.length === 0;
 
 	return (
 		<div className="qf-filters added-filters">
@@ -103,12 +118,14 @@ function AddedFilters({
 					<SortableContext
 						items={addedFilters.map((f) => f.key)}
 						strategy={verticalListSortingStrategy}
+						disabled={!allowDrag}
 					>
-						{addedFilters.map((filter) => (
+						{filteredAddedFilters.map((filter) => (
 							<SortableFilter
 								key={filter.key}
 								filter={filter}
 								onRemove={handleRemoveFilter}
+								allowDrag={allowDrag}
 							/>
 						))}
 					</SortableContext>

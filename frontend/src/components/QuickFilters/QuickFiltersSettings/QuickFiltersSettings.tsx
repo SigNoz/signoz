@@ -71,16 +71,16 @@ function QuickFiltersSettings({
 					rootClassName="tags-input"
 					placeholder="Search for a filter..."
 					onChangeHandler={(event): void => setInputValue(event.target.value)}
-					// onBlurHandler={handleInputConfirm}
-					// onPressEnterHandler={handleInputConfirm}
 				/>
 			</section>
 			<AddedFilters
+				inputValue={inputValue}
 				addedFilters={addedFilters}
 				setAddedFilters={setAddedFilters}
 			/>
 			<OtherFilters
 				signal={signal}
+				inputValue={inputValue}
 				addedFilters={addedFilters}
 				setAddedFilters={setAddedFilters}
 			/>
