@@ -1,6 +1,7 @@
-package parser
+package queryfilter
 
 import (
+	grammar "github.com/SigNoz/signoz/pkg/parser/grammar"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
 )
@@ -24,18 +25,18 @@ import (
 //			FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 //		},
 //	}
-func QueryStringToKeysSelectors(query string) ([]*telemetrytypes.FieldKeySelector, error) {
-	lexer := NewFilterQueryLexer(antlr.NewInputStream(query))
-	keys := []*telemetrytypes.FieldKeySelector{}
+func QueryStringToKeysSelectors(query string) ([]telemetrytypes.FieldKeySelector, error) {
+	lexer := grammar.NewFilterQueryLexer(antlr.NewInputStream(query))
+	keys := []telemetrytypes.FieldKeySelector{}
 	for {
 		tok := lexer.NextToken()
 		if tok.GetTokenType() == antlr.TokenEOF {
 			break
 		}
 
-		if tok.GetTokenType() == FilterQueryLexerKEY {
+		if tok.GetTokenType() == grammar.FilterQueryLexerKEY {
 			key := telemetrytypes.GetFieldKeyFromKeyText(tok.GetText())
-			keys = append(keys, &telemetrytypes.FieldKeySelector{
+			keys = append(keys, telemetrytypes.FieldKeySelector{
 				Name:          key.Name,
 				Signal:        key.Signal,
 				FieldContext:  key.FieldContext,
