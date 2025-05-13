@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	baseimpl "github.com/SigNoz/signoz/pkg/modules/user/impluser"
@@ -105,16 +104,15 @@ func (m *Module) CanUsePassword(ctx context.Context, email string) (bool, error)
 		// sso is enabled, check if the user has admin role
 		users, err := m.GetUsersByEmail(ctx, email)
 		if err != nil {
-			return false, model.BadRequest(fmt.Errorf("failed to get user by email"))
-		}
-		userPayload := users[0]
-
-		if userPayload == nil {
-			return false, model.BadRequest(fmt.Errorf("auth method not supported"))
+			return false, err
 		}
 
-		if userPayload.Role != types.RoleAdmin.String() {
-			return false, model.BadRequest(fmt.Errorf("auth method not supported"))
+		if len(users) == 0 {
+			return false, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found")
+		}
+
+		if users[0].Role != types.RoleAdmin.String() {
+			return false, errors.New(errors.TypeForbidden, errors.CodeForbidden, "auth method not supported")
 		}
 
 	}
@@ -223,9 +221,6 @@ func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types
 	domain, err := m.store.GetDomainByName(ctx, components[1])
 	if err != nil {
 		return nil, err
-	}
-	if domain == nil {
-		return nil, nil
 	}
 
 	gettableDomain := &types.GettableOrgDomain{StorableOrgDomain: *domain}

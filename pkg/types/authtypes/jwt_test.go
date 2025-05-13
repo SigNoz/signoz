@@ -12,7 +12,7 @@ import (
 
 func TestJwtAccessToken(t *testing.T) {
 	jwtService := NewJWT("secret", time.Minute, time.Hour)
-	token, _, err := jwtService.AccessToken("orgId", "userId", "name", "email@example.com", types.RoleAdmin)
+	token, _, err := jwtService.AccessToken("orgId", "userId", "email@example.com", types.RoleAdmin)
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
@@ -20,7 +20,7 @@ func TestJwtAccessToken(t *testing.T) {
 
 func TestJwtRefreshToken(t *testing.T) {
 	jwtService := NewJWT("secret", time.Minute, time.Hour)
-	token, _, err := jwtService.RefreshToken("orgId", "userId", "name", "email@example.com", types.RoleAdmin)
+	token, _, err := jwtService.RefreshToken("orgId", "userId", "email@example.com", types.RoleAdmin)
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)

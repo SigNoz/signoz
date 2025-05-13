@@ -14,7 +14,6 @@ var _ jwt.ClaimsValidator = (*Claims)(nil)
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string     `json:"id"`
-	Name   string     `json:"name"`
 	Email  string     `json:"email"`
 	Role   types.Role `json:"role"`
 	OrgID  string     `json:"orgId"`
@@ -45,7 +44,6 @@ func (c *Claims) LogValue() slog.Value {
 		slog.String("role", c.Role.String()),
 		slog.String("orgId", c.OrgID),
 		slog.Time("exp", c.ExpiresAt.Time),
-		slog.String("name", c.Name),
 	)
 }
 

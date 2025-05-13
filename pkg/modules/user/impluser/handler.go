@@ -44,10 +44,6 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
-	if invite == nil {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite not found"))
-		return
-	}
 
 	if invite.Name == "" && req.DisplayName != "" {
 		invite.Name = req.DisplayName
@@ -96,7 +92,7 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.module.CreateBulkInvite(ctx, claims.OrgID, claims.Email, claims.Name, &types.PostableBulkInviteRequest{
+	_, err = h.module.CreateBulkInvite(ctx, claims.OrgID, claims.UserID, &types.PostableBulkInviteRequest{
 		Invites: []types.PostableInvite{req},
 	})
 	if err != nil {
@@ -130,7 +126,7 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.module.CreateBulkInvite(ctx, claims.OrgID, claims.Email, claims.Name, &req)
+	_, err = h.module.CreateBulkInvite(ctx, claims.OrgID, claims.UserID, &req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -148,11 +144,6 @@ func (h *handler) GetInvite(w http.ResponseWriter, r *http.Request) {
 	invite, err := h.module.GetInviteByToken(ctx, token)
 	if err != nil {
 		render.Error(w, err)
-		return
-	}
-
-	if invite == nil {
-		render.Error(w, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user is not invited"))
 		return
 	}
 
@@ -218,10 +209,6 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
-	if user == nil {
-		render.Error(w, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found"))
-		return
-	}
 
 	render.Success(w, http.StatusOK, user)
 }
@@ -266,10 +253,6 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	existingUser, err := h.module.GetUserByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(w, err)
-		return
-	}
-	if existingUser == nil {
-		render.Error(w, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found"))
 		return
 	}
 
@@ -363,13 +346,9 @@ func (h *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// check if the id lies in the same org as the claims
-	user, err := h.module.GetUserByID(ctx, claims.OrgID, id)
+	_, err = h.module.GetUserByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(w, err)
-		return
-	}
-	if user == nil {
-		render.Error(w, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found"))
 		return
 	}
 

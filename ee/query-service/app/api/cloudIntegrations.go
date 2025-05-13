@@ -12,6 +12,7 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	eeTypes "github.com/SigNoz/signoz/ee/types"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -154,7 +155,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	email := fmt.Sprintf("%s@signoz.io", cloudIntegrationUser)
 
 	integrationUserResult, err := ah.Signoz.Modules.User.GetUserByEmailInOrg(ctx, orgId, email)
-	if err != nil {
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, basemodel.NotFoundError(fmt.Errorf("couldn't look for integration user: %w", err))
 	}
 

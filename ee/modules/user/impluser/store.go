@@ -2,7 +2,6 @@ package impluser
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	baseimpl "github.com/SigNoz/signoz/pkg/modules/user/impluser"
@@ -32,10 +31,7 @@ func (s *store) GetDomainByName(ctx context.Context, name string) (*types.Storab
 		Scan(ctx)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get domain from name")
+		return nil, errors.Wrapf(err, errors.TypeNotFound, errors.CodeNotFound, "failed to get domain from name")
 	}
 	return domain, nil
 }
