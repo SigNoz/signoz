@@ -144,10 +144,11 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	const acceptInvite = async (values: FormValues): Promise<void> => {
 		try {
-			const { password, email } = values;
+			const { password, email, firstName } = values;
 			await accept({
 				password,
 				token: params.get('token') || '',
+				displayName: firstName,
 			});
 			const loginResponse = await loginApi({
 				email,
