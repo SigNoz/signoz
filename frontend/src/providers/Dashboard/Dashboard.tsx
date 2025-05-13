@@ -8,6 +8,7 @@ import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
+import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import useAxiosError from 'hooks/useAxiosError';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
@@ -192,6 +193,8 @@ export function DashboardProvider({
 		updateLocalStorageDashboardVariables,
 	} = useDashboardVariablesFromLocalStorage(dashboardId);
 
+	const { getUrlVariables, updateUrlVariable } = useVariablesFromUrl();
+
 	const updatedTimeRef = useRef<Dayjs | null>(null); // Using ref to store the updated time
 	const modalRef = useRef<any>(null);
 
@@ -211,10 +214,22 @@ export function DashboardProvider({
 			const updatedVariables = data.data.variables;
 			Object.keys(data.data.variables).forEach((variable) => {
 				const variableData = data.data.variables[variable];
-				const updatedVariable = {
+
+				// values from url
+				const urlVariable = getUrlVariables()[variableData.id];
+
+				let updatedVariable = {
 					...data.data.variables[variable],
 					...localStorageVariables[variableData.name as any],
 				};
+
+				// respect the url variable if it is set, override the others
+				if (urlVariable) {
+					updatedVariable = {
+						...updatedVariable,
+						...urlVariable,
+					};
+				}
 
 				updatedVariables[variable] = updatedVariable;
 			});
@@ -278,6 +293,18 @@ export function DashboardProvider({
 			},
 			refetchOnWindowFocus: false,
 			onSuccess: (data) => {
+				// if the url variable is not set for any variable, set it to the default value
+				const variables = data?.data?.variables;
+				Object.keys(variables).forEach((key) => {
+					if (!getUrlVariables()[key]) {
+						updateUrlVariable(
+							key,
+							variables[key].selectedValue,
+							variables[key].allSelected || false,
+						); // TODO:Sagar to add the default value here
+					}
+				});
+
 				const updatedDashboardData = transformDashboardVariables(data);
 				const updatedDate = dayjs(updatedDashboardData.updatedAt);
 
