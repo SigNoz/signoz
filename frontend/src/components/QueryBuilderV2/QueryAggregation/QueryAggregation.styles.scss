@@ -1,7 +1,7 @@
 .query-aggregation-container {
 	display: flex;
 	flex-direction: row;
-	align-items: center;
+	align-items: flex-start;
 	gap: 8px;
 
 	.query-aggregation-options-input {
