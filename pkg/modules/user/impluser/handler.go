@@ -443,7 +443,7 @@ func (h *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	id := r.URL.Query().Get("id")
+	id := mux.Vars(r)["id"]
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {

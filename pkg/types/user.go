@@ -181,6 +181,9 @@ type FactorResetPasswordRequest struct {
 
 func NewFactorResetPasswordRequest(passwordID string) (*FactorResetPasswordRequest, error) {
 	return &FactorResetPasswordRequest{
+		Identifiable: Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
 		Token:      valuer.GenerateUUID().String(),
 		PasswordID: passwordID,
 	}, nil
