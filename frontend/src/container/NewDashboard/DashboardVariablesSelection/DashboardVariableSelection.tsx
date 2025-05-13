@@ -1,8 +1,8 @@
 import { Row } from 'antd';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
-import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { memo, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -64,18 +64,8 @@ function DashboardVariableSelection(): JSX.Element | null {
 
 			setVariablesTableData(tableRowData);
 
-			// if the url variable is not set for any variable, set it to the default value
-			Object.keys(variables).forEach((key) => {
-				if (!getUrlVariables()?.[key]) {
-					updateUrlVariable(
-						variables[key].id,
-						variables[key].type === 'CUSTOM'
-							? commaValuesParser(variables[key]?.customValue || '')
-							: variables[key]?.selectedValue || variables[key]?.defaultValue,
-						variables[key].allSelected || false,
-					);
-				}
-			});
+			// Initialize variables with default values if not in URL
+			initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
 		}
 	}, [getUrlVariables, updateUrlVariable, variables]);
 
