@@ -1,12 +1,12 @@
 import './OtherFilters.styles.scss';
 
 import Button from 'antd/es/button';
+import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
 import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSuggestions';
 import { useMemo } from 'react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
-import { DataSource } from 'types/common/queryBuilder';
 
 function OtherFilters({
 	signal,
@@ -25,7 +25,7 @@ function OtherFilters({
 	} = useGetAttributeSuggestions(
 		{
 			searchText: inputValue,
-			dataSource: DataSource.LOGS, // TODO: config map for signals
+			dataSource: SIGNAL_DATA_SOURCE_MAP[signal as SignalType],
 			filters: {} as TagFilter,
 		},
 		{
