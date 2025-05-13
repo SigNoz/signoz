@@ -114,10 +114,6 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
-	if invite == nil {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite not found"))
-		return
-	}
 
 	orgDomain, err := h.module.GetAuthDomainByEmail(ctx, invite.Email)
 	if err != nil {
@@ -189,11 +185,6 @@ func (h *Handler) GetInvite(w http.ResponseWriter, r *http.Request) {
 	invite, err := h.module.GetInviteByToken(ctx, token)
 	if err != nil {
 		render.Error(w, err)
-		return
-	}
-
-	if invite == nil {
-		render.Error(w, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user is not invited"))
 		return
 	}
 

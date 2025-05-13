@@ -32,22 +32,30 @@ func NewModule(store types.UserStore) user.Module {
 }
 
 // CreateBulk implements invite.Module.
-func (m *Module) CreateBulkInvite(ctx context.Context, orgID, creatorEmail, creatorName string, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
+func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
+	creator, err := m.GetUserByID(ctx, orgID, userID)
+	if err != nil {
+		return nil, err
+	}
 
 	invites := make([]*types.Invite, 0, len(bulkInvites.Invites))
 
 	for _, invite := range bulkInvites.Invites {
 		// check if user exists
-		if user, err := m.GetUserByEmailInOrg(ctx, orgID, invite.Email); err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check already existing user")
-		} else if user != nil {
+		existingUser, err := m.GetUserByEmailInOrg(ctx, orgID, invite.Email)
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return nil, err
+		}
+		if existingUser != nil {
 			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
 		}
 
 		// Check if an invite already exists
-		if invite, err := m.GetInviteByEmailInOrg(ctx, orgID, invite.Email); err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check existing invite")
-		} else if invite != nil {
+		existingInvite, err := m.GetInviteByEmailInOrg(ctx, orgID, invite.Email)
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return nil, err
+		}
+		if existingInvite != nil {
 			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email")
 		}
 
@@ -64,7 +72,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, creatorEmail, crea
 		invites = append(invites, newInvite)
 	}
 
-	err := m.store.CreateBulkInvite(ctx, invites)
+	err = m.store.CreateBulkInvite(ctx, invites)
 	if err != nil {
 		return nil, err
 	}
@@ -73,11 +81,11 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, creatorEmail, crea
 	for i := 0; i < len(invites); i++ {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_SENT, map[string]interface{}{
 			"invited user email": invites[i].Email,
-		}, creatorEmail, true, false)
+		}, creator.Email, true, false)
 
 		// send email if SMTP is enabled
 		if os.Getenv("SMTP_ENABLED") == "true" && bulkInvites.Invites[i].FrontendBaseUrl != "" {
-			m.inviteEmail(&bulkInvites.Invites[i], creatorEmail, creatorName, invites[i].Token)
+			m.inviteEmail(&bulkInvites.Invites[i], creator.Email, creator.DisplayName, invites[i].Token)
 		}
 	}
 
@@ -175,9 +183,6 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error 
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		return errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found")
-	}
 
 	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email)) {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
@@ -227,7 +232,7 @@ func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*
 
 	// check if a reset password token already exists for this user
 	existingRequest, err := m.store.GetFactorResetPasswordByPasswordID(ctx, resetPasswordRequest.PasswordID)
-	if err != nil {
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
 
@@ -296,9 +301,6 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 		if err != nil {
 			return nil, err
 		}
-		if user == nil {
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "user not found")
-		}
 		dbUser = &user.User
 	}
 
@@ -356,12 +358,12 @@ func (m *Module) GetJWTForUser(ctx context.Context, user *types.User) (types.Get
 		return types.GettableUserJwt{}, err
 	}
 
-	accessJwt, accessClaims, err := m.JWT.AccessToken(user.OrgID, user.ID.String(), user.DisplayName, user.Email, role)
+	accessJwt, accessClaims, err := m.JWT.AccessToken(user.OrgID, user.ID.String(), user.Email, role)
 	if err != nil {
 		return types.GettableUserJwt{}, err
 	}
 
-	refreshJwt, refreshClaims, err := m.JWT.RefreshToken(user.OrgID, user.ID.String(), user.DisplayName, user.Email, role)
+	refreshJwt, refreshClaims, err := m.JWT.RefreshToken(user.OrgID, user.ID.String(), user.Email, role)
 	if err != nil {
 		return types.GettableUserJwt{}, err
 	}

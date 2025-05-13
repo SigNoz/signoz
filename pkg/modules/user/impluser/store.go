@@ -54,9 +54,6 @@ func (s *Store) GetInviteByEmailInOrg(ctx context.Context, orgID string, email s
 		Scan(ctx)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with email: %s does not exist in org: %s", email, orgID)
 	}
 
@@ -71,9 +68,6 @@ func (s *Store) GetInviteByToken(ctx context.Context, token string) (*types.Gett
 		Scan(ctx)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with token: %s does not exist", token)
 	}
 
@@ -187,9 +181,6 @@ func (s *Store) GetUserByID(ctx context.Context, orgID string, id string) (*type
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrUserNotFound, "user with id: %s does not exist in org: %s", id, orgID)
 	}
 
@@ -210,9 +201,6 @@ func (s *Store) GetUserByEmailInOrg(ctx context.Context, orgID string, email str
 		Where("email = ?", email).
 		Scan(ctx)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrUserNotFound, "user with email: %s does not exist in org: %s", email, orgID)
 	}
 
@@ -406,9 +394,6 @@ func (s *Store) GetFactorResetPasswordByPasswordID(ctx context.Context, password
 		Where("password_id = ?", passwordID).
 		Scan(ctx)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token with password id: %s does not exist", passwordID)
 	}
 	return &resetPasswordRequest, nil

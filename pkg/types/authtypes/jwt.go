@@ -82,13 +82,12 @@ func (j *JWT) signToken(claims Claims) (string, error) {
 }
 
 // AccessToken creates an access token with the provided claims
-func (j *JWT) AccessToken(orgId, userId, name, email string, role types.Role) (string, Claims, error) {
+func (j *JWT) AccessToken(orgId, userId, email string, role types.Role) (string, Claims, error) {
 	claims := Claims{
 		UserID: userId,
 		Role:   role,
 		Email:  email,
 		OrgID:  orgId,
-		Name:   name,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.JwtExpiry)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -104,13 +103,12 @@ func (j *JWT) AccessToken(orgId, userId, name, email string, role types.Role) (s
 }
 
 // RefreshToken creates a refresh token with the provided claims
-func (j *JWT) RefreshToken(orgId, userId, name, email string, role types.Role) (string, Claims, error) {
+func (j *JWT) RefreshToken(orgId, userId, email string, role types.Role) (string, Claims, error) {
 	claims := Claims{
 		UserID: userId,
 		Role:   role,
 		Email:  email,
 		OrgID:  orgId,
-		Name:   name,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.JwtRefresh)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
