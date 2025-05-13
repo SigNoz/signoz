@@ -249,7 +249,8 @@ WITH
     SELECT
         trace_id,
         argMin(timestamp, timestamp) AS first_time,
-        argMin(has_error, timestamp) AS has_error_flag
+        argMin(has_error, timestamp) AS has_error_flag,
+        argMin(durationNano, timestamp) AS duration_nano
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
@@ -265,7 +266,8 @@ WITH
     SELECT
         trace_id,
         argMin(timestamp, timestamp) AS first_time,
-        argMin(has_error, timestamp) AS has_error_flag
+        argMin(has_error, timestamp) AS has_error_flag,
+        argMin(durationNano, timestamp) AS duration_nano
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
@@ -283,7 +285,9 @@ WITH
         s1.first_time AS t1_time,
         s2.first_time AS t2_time,
         s1.has_error_flag AS s1_has_error,
-        s2.has_error_flag AS s2_has_error
+        s2.has_error_flag AS s2_has_error,
+        s1.duration_nano AS t1_duration_nano,
+        s2.duration_nano AS t2_duration_nano
     FROM step1 s1
     INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
@@ -297,8 +301,48 @@ SELECT
     round((count(DISTINCT joined.trace_id) * 100.0) / (SELECT count(DISTINCT joined.trace_id) FROM step1), 2) AS conversion_rate,
     count(DISTINCT joined.trace_id) / time_window_sec AS avg_rate,
     greatest((SELECT errors FROM errors_step1), (SELECT errors FROM errors_step2)) AS errors,
-    avg(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration,
-    quantile(0.99)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS p99_latency
+    avg(
+        CASE 
+            WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+            WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+            WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+        END / 1000000
+    ) AS avg_duration,
+    CASE 
+        WHEN '%[13]s' = 'p99' THEN quantile(0.99)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
+        WHEN '%[13]s' = 'p95' THEN quantile(0.95)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
+        WHEN '%[13]s' = 'p90' THEN quantile(0.90)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
+        ELSE quantile(0.99)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
+    END AS latency
 FROM joined;`
 
 	query := fmt.Sprintf(queryTemplate,
@@ -364,7 +408,8 @@ WITH
     SELECT
         trace_id,
         argMin(timestamp, timestamp) AS first_time,
-        argMin(has_error, timestamp) AS has_error_flag
+        argMin(has_error, timestamp) AS has_error_flag,
+        argMin(durationNano, timestamp) AS duration_nano
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
@@ -380,7 +425,8 @@ WITH
     SELECT
         trace_id,
         argMin(timestamp, timestamp) AS first_time,
-        argMin(has_error, timestamp) AS has_error_flag
+        argMin(has_error, timestamp) AS has_error_flag,
+        argMin(durationNano, timestamp) AS duration_nano
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
@@ -396,7 +442,8 @@ WITH
     SELECT
         trace_id,
         argMin(timestamp, timestamp) AS first_time,
-        argMin(has_error, timestamp) AS has_error_flag
+        argMin(has_error, timestamp) AS has_error_flag,
+        argMin(durationNano, timestamp) AS duration_nano
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
@@ -414,7 +461,9 @@ WITH
         s1.first_time AS t1_time,
         s2.first_time AS t2_time,
         s1.has_error_flag AS s1_has_error,
-        s2.has_error_flag AS s2_has_error
+        s2.has_error_flag AS s2_has_error,
+        s1.duration_nano AS t1_duration_nano,
+        s2.duration_nano AS t2_duration_nano
     FROM step1 s1
     INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
@@ -429,7 +478,10 @@ WITH
         s3.first_time AS t3_time,
         j2.s1_has_error,
         j2.s2_has_error,
-        s3.has_error_flag AS s3_has_error
+        s3.has_error_flag AS s3_has_error,
+        j2.t1_duration_nano,
+        j2.t2_duration_nano,
+        s3.duration_nano AS t3_duration_nano
     FROM joined_t2 j2
     INNER JOIN step3 s3 ON j2.trace_id = s3.trace_id
     WHERE s3.first_time > j2.t2_time
@@ -444,8 +496,22 @@ SELECT
     round((count(DISTINCT joined_t3.trace_id) * 100.0) / (SELECT count(DISTINCT trace_id) FROM step1), 2) AS conversion_rate,
     count(DISTINCT joined_t3.trace_id) / time_window_sec AS avg_rate,
     greatest((SELECT errors FROM errors_step1), (SELECT errors FROM errors_step2), (SELECT errors FROM errors_step3)) AS errors,
-    avg(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration,
-    quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS p99_latency
+    avg(
+        CASE 
+            WHEN latency_pointer_t1 = 'start' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9)))
+            WHEN latency_pointer_t1 = 'start' AND latency_pointer_t3 = 'end' THEN abs(CAST(t3_time AS Decimal(20, 9)) + (CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000) - CAST(t1_time AS Decimal(20, 9)))
+            WHEN latency_pointer_t1 = 'end' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - (CAST(t1_time AS Decimal(20, 9)) + (CAST(t1_duration_nano AS Decimal(20, 9)) / 1000000000)))
+            WHEN latency_pointer_t1 = 'end' AND latency_pointer_t3 = 'end' THEN abs((CAST(t3_time AS Decimal(20, 9)) + (CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000)) - (CAST(t1_time AS Decimal(20, 9)) + (CAST(t1_duration_nano AS Decimal(20, 9)) / 1000000000)))
+        END * 1000
+    ) AS avg_duration,
+    quantile(0.99)(
+        CASE 
+            WHEN latency_pointer_t1 = 'start' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9)))
+            WHEN latency_pointer_t1 = 'start' AND latency_pointer_t3 = 'end' THEN abs(CAST(t3_time AS Decimal(20, 9)) + (CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000) - CAST(t1_time AS Decimal(20, 9)))
+            WHEN latency_pointer_t1 = 'end' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - (CAST(t1_time AS Decimal(20, 9)) + (CAST(t1_duration_nano AS Decimal(20, 9)) / 1000000000)))
+            WHEN latency_pointer_t1 = 'end' AND latency_pointer_t3 = 'end' THEN abs((CAST(t3_time AS Decimal(20, 9)) + (CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000)) - (CAST(t1_time AS Decimal(20, 9)) + (CAST(t1_duration_nano AS Decimal(20, 9)) / 1000000000)))
+        END * 1000
+    ) AS p99_latency
 FROM joined_t3;`
 
 	query := fmt.Sprintf(queryTemplate,
@@ -505,7 +571,8 @@ WITH
     SELECT
         trace_id,
         argMin(timestamp, timestamp) AS first_time,
-        argMin(has_error, timestamp) AS has_error_flag
+        argMin(has_error, timestamp) AS has_error_flag,
+        argMin(durationNano, timestamp) AS duration_nano
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
@@ -521,7 +588,8 @@ WITH
     SELECT
         trace_id,
         argMin(timestamp, timestamp) AS first_time,
-        argMin(has_error, timestamp) AS has_error_flag
+        argMin(has_error, timestamp) AS has_error_flag,
+        argMin(durationNano, timestamp) AS duration_nano
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
@@ -539,7 +607,9 @@ WITH
         s1.first_time AS t1_time,
         s2.first_time AS t2_time,
         s1.has_error_flag AS s1_has_error,
-        s2.has_error_flag AS s2_has_error
+        s2.has_error_flag AS s2_has_error,
+        s1.duration_nano AS t1_duration_nano,
+        s2.duration_nano AS t2_duration_nano
     FROM step1 s1
     INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
@@ -553,12 +623,47 @@ SELECT
     round((count(DISTINCT joined.trace_id) * 100.0) / (SELECT count(DISTINCT joined.trace_id) FROM step1), 2) AS conversion_rate,
     count(DISTINCT joined.trace_id) / time_window_sec AS avg_rate,
     greatest((SELECT errors FROM errors_step1), (SELECT errors FROM errors_step2)) AS errors,
-    avg(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration,
+    avg(
+        CASE 
+            WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+            WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+            WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+        END / 1000000
+    ) AS avg_duration,
     CASE 
-        WHEN '%[13]s' = 'p99' THEN quantile(0.99)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
-        WHEN '%[13]s' = 'p95' THEN quantile(0.95)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
-        WHEN '%[13]s' = 'p90' THEN quantile(0.90)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
-        ELSE quantile(0.99)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
+        WHEN '%[13]s' = 'p99' THEN quantile(0.99)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
+        WHEN '%[13]s' = 'p95' THEN quantile(0.95)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
+        WHEN '%[13]s' = 'p90' THEN quantile(0.90)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
+        ELSE quantile(0.99)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
     END AS latency
 FROM joined;`
 
@@ -717,12 +822,47 @@ SELECT
     round((count(DISTINCT trace_id) * 100.0) / (SELECT count(DISTINCT trace_id) FROM step1), 2) AS conversion_rate,
     count(DISTINCT trace_id) / time_window_sec AS avg_rate,
     greatest((SELECT errors FROM errors_step1), (SELECT errors FROM errors_step2)) AS errors,
-    avg(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000) AS avg_duration,
+    avg(
+        CASE 
+            WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+            WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+            WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+        END / 1000000
+    ) AS avg_duration,
     CASE 
-        WHEN '%[18]s' = 'p99' THEN quantile(0.99)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
-        WHEN '%[18]s' = 'p95' THEN quantile(0.95)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
-        WHEN '%[18]s' = 'p90' THEN quantile(0.90)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
-        ELSE quantile(0.99)(abs(CAST(t2_time AS Decimal(20, 9)) - CAST(t1_time AS Decimal(20, 9))) * 1000)
+        WHEN '%[18]s' = 'p99' THEN quantile(0.99)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
+        WHEN '%[18]s' = 'p95' THEN quantile(0.95)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
+        WHEN '%[18]s' = 'p90' THEN quantile(0.90)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
+        ELSE quantile(0.99)(
+            CASE 
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'start' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - toUnixTimestamp64Nano(t1_time))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'start' THEN abs(toUnixTimestamp64Nano(t2_time) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+                WHEN latency_pointer_t1 = 'end' AND latency_pointer_t2 = 'end' THEN abs((toUnixTimestamp64Nano(t2_time) + t2_duration_nano) - (toUnixTimestamp64Nano(t1_time) + t1_duration_nano))
+            END / 1000000
+        )
     END AS latency
 FROM joined_t2`
 	} else if stepStart == 2 && stepEnd == 3 {
@@ -732,12 +872,47 @@ SELECT
     round((count(DISTINCT trace_id) * 100.0) / (SELECT count(DISTINCT trace_id) FROM joined_t2), 2) AS conversion_rate,
     count(DISTINCT trace_id) / time_window_sec AS avg_rate,
     greatest((SELECT errors FROM errors_step2), (SELECT errors FROM errors_step3)) AS errors,
-    avg(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000) AS avg_duration,
+    avg(
+        CASE 
+            WHEN latency_pointer_t2 = 'start' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9)))
+            WHEN latency_pointer_t2 = 'start' AND latency_pointer_t3 = 'end' THEN abs(CAST(t3_time AS Decimal(20, 9)) + CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000 - CAST(t2_time AS Decimal(20, 9)))
+            WHEN latency_pointer_t2 = 'end' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - (CAST(t2_time AS Decimal(20, 9)) + CAST(t2_duration_nano AS Decimal(20, 9)) / 1000000000))
+            WHEN latency_pointer_t2 = 'end' AND latency_pointer_t3 = 'end' THEN abs((CAST(t3_time AS Decimal(20, 9)) + CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000) - (CAST(t2_time AS Decimal(20, 9)) + CAST(t2_duration_nano AS Decimal(20, 9)) / 1000000000))
+        END * 1000
+    ) AS avg_duration,
     CASE 
-        WHEN '%[19]s' = 'p99' THEN quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000)
-        WHEN '%[19]s' = 'p95' THEN quantile(0.95)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000)
-        WHEN '%[19]s' = 'p90' THEN quantile(0.90)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000)
-        ELSE quantile(0.99)(abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9))) * 1000)
+        WHEN '%[19]s' = 'p99' THEN quantile(0.99)(
+            CASE 
+                WHEN latency_pointer_t2 = 'start' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9)))
+                WHEN latency_pointer_t2 = 'start' AND latency_pointer_t3 = 'end' THEN abs(CAST(t3_time AS Decimal(20, 9)) + CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000 - CAST(t2_time AS Decimal(20, 9)))
+                WHEN latency_pointer_t2 = 'end' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - (CAST(t2_time AS Decimal(20, 9)) + CAST(t2_duration_nano AS Decimal(20, 9)) / 1000000000))
+                WHEN latency_pointer_t2 = 'end' AND latency_pointer_t3 = 'end' THEN abs((CAST(t3_time AS Decimal(20, 9)) + CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000) - (CAST(t2_time AS Decimal(20, 9)) + CAST(t2_duration_nano AS Decimal(20, 9)) / 1000000000))
+            END * 1000
+        )
+        WHEN '%[19]s' = 'p95' THEN quantile(0.95)(
+            CASE 
+                WHEN latency_pointer_t2 = 'start' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9)))
+                WHEN latency_pointer_t2 = 'start' AND latency_pointer_t3 = 'end' THEN abs(CAST(t3_time AS Decimal(20, 9)) + CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000 - CAST(t2_time AS Decimal(20, 9)))
+                WHEN latency_pointer_t2 = 'end' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - (CAST(t2_time AS Decimal(20, 9)) + CAST(t2_duration_nano AS Decimal(20, 9)) / 1000000000))
+                WHEN latency_pointer_t2 = 'end' AND latency_pointer_t3 = 'end' THEN abs((CAST(t3_time AS Decimal(20, 9)) + CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000) - (CAST(t2_time AS Decimal(20, 9)) + CAST(t2_duration_nano AS Decimal(20, 9)) / 1000000000))
+            END * 1000
+        )
+        WHEN '%[19]s' = 'p90' THEN quantile(0.90)(
+            CASE 
+                WHEN latency_pointer_t2 = 'start' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9)))
+                WHEN latency_pointer_t2 = 'start' AND latency_pointer_t3 = 'end' THEN abs(CAST(t3_time AS Decimal(20, 9)) + CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000 - CAST(t2_time AS Decimal(20, 9)))
+                WHEN latency_pointer_t2 = 'end' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - (CAST(t2_time AS Decimal(20, 9)) + CAST(t2_duration_nano AS Decimal(20, 9)) / 1000000000))
+                WHEN latency_pointer_t2 = 'end' AND latency_pointer_t3 = 'end' THEN abs((CAST(t3_time AS Decimal(20, 9)) + CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000) - (CAST(t2_time AS Decimal(20, 9)) + CAST(t2_duration_nano AS Decimal(20, 9)) / 1000000000))
+            END * 1000
+        )
+        ELSE quantile(0.99)(
+            CASE 
+                WHEN latency_pointer_t2 = 'start' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - CAST(t2_time AS Decimal(20, 9)))
+                WHEN latency_pointer_t2 = 'start' AND latency_pointer_t3 = 'end' THEN abs(CAST(t3_time AS Decimal(20, 9)) + CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000 - CAST(t2_time AS Decimal(20, 9)))
+                WHEN latency_pointer_t2 = 'end' AND latency_pointer_t3 = 'start' THEN abs(CAST(t3_time AS Decimal(20, 9)) - (CAST(t2_time AS Decimal(20, 9)) + CAST(t2_duration_nano AS Decimal(20, 9)) / 1000000000))
+                WHEN latency_pointer_t2 = 'end' AND latency_pointer_t3 = 'end' THEN abs((CAST(t3_time AS Decimal(20, 9)) + CAST(t3_duration_nano AS Decimal(20, 9)) / 1000000000) - (CAST(t2_time AS Decimal(20, 9)) + CAST(t2_duration_nano AS Decimal(20, 9)) / 1000000000))
+            END * 1000
+        )
     END AS latency
 FROM joined_t3;`
 	} else {
