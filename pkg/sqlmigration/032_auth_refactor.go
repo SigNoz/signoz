@@ -82,7 +82,7 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 
 	defer tx.Rollback()
 
-	if _, err := db.NewCreateTable().
+	if _, err := tx.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel `bun:"table:factor_password"`
 
@@ -195,7 +195,7 @@ func (migration *authRefactor) CopyOldResetPasswordToNewResetPassword(ctx contex
 	for _, request := range existingRequests {
 		// get password id from user id
 		var passwordID string
-		err := tx.NewSelect().Table("factor_password").Where("user_id = ?", request.UserID).Scan(ctx, &passwordID)
+		err := tx.NewSelect().Table("factor_password").Column("id").Where("user_id = ?", request.UserID).Scan(ctx, &passwordID)
 		if err != nil {
 			return nil, err
 		}
