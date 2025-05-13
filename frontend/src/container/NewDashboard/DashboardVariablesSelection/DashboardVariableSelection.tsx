@@ -1,4 +1,5 @@
 import { Row } from 'antd';
+import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useState } from 'react';
@@ -25,6 +26,8 @@ function DashboardVariableSelection(): JSX.Element | null {
 		variablesToGetUpdated,
 		setVariablesToGetUpdated,
 	} = useDashboard();
+
+	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
 
 	const { data } = selectedDashboard || {};
 
@@ -60,7 +63,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 
 			setVariablesTableData(tableRowData);
 		}
-	}, [variables]);
+	}, [getUrlVariables, updateUrlVariable, variables]);
 
 	useEffect(() => {
 		if (variablesTableData.length > 0) {
@@ -106,6 +109,8 @@ function DashboardVariableSelection(): JSX.Element | null {
 	): void => {
 		if (id) {
 			updateLocalStorageDashboardVariables(name, value, allSelected);
+
+			updateUrlVariable(id, value, allSelected);
 
 			if (selectedDashboard) {
 				setSelectedDashboard((prev) => {
