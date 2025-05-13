@@ -102,6 +102,18 @@ func (s *Store) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, 
 	return invites, nil
 }
 
+func (s *Store) CreatePassword(ctx context.Context, password *types.FactorPassword) (*types.FactorPassword, error) {
+	_, err := s.sqlstore.BunDB().NewInsert().
+		Model(password).
+		Exec(ctx)
+
+	if err != nil {
+		return nil, s.sqlstore.WrapAlreadyExistsErrf(err, types.ErrPasswordAlreadyExists, "password with user id: %s already exists", password.UserID)
+	}
+
+	return password, nil
+}
+
 func (s *Store) CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error) {
 	tx, err := s.sqlstore.BunDB().Begin()
 	if err != nil {

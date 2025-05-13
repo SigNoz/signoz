@@ -93,7 +93,7 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error 
 	}
 
 	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email)) {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "integration user cannot be deleted")
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
 	}
 
 	// don't allow to delete the last admin user
@@ -103,7 +103,7 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error 
 	}
 
 	if len(adminUsers) == 1 && user.Role == types.RoleAdmin.String() {
-		return errors.New(errors.TypeInternal, errors.CodeInternal, "cannot delete the last admin")
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 
 	return m.store.DeleteUser(ctx, orgID, user.ID.StringValue())
@@ -112,7 +112,25 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error 
 func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*types.FactorResetPasswordRequest, error) {
 	password, err := m.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
-		return nil, err
+		// if the user does not have a password, we need to create a new one
+		// this will happen for SSO users
+		if errors.Ast(err, errors.TypeNotFound) {
+			password, err = m.store.CreatePassword(ctx, &types.FactorPassword{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+				},
+				Password: "",
+				UserID:   userID,
+			})
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	resetPasswordRequest, err := types.NewFactorResetPasswordRequest(password.ID.StringValue())

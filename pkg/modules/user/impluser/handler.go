@@ -376,7 +376,7 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user.Role != existingUser.Role && claims.Role != types.RoleAdmin {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "only admins can change roles"))
+		render.Error(w, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles"))
 		return
 	}
 
@@ -390,7 +390,7 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if len(adminUsers) == 1 {
-			render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "cannot demote the last admin"))
+			render.Error(w, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot demote the last admin"))
 			return
 		}
 	}

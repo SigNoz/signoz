@@ -39,6 +39,7 @@ type UserStore interface {
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
 	// password
+	CreatePassword(ctx context.Context, password *FactorPassword) (*FactorPassword, error)
 	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *FactorResetPasswordRequest) error
 	GetPasswordByID(ctx context.Context, id string) (*FactorPassword, error)
 	GetPasswordByUserID(ctx context.Context, id string) (*FactorPassword, error)
