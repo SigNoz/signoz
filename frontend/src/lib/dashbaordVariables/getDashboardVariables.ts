@@ -26,6 +26,8 @@ export const getDashboardVariables = (
 				variablesTuple[value.name] =
 					value?.type === 'DYNAMIC' &&
 					value?.allSelected &&
+					value?.showALLOption &&
+					value?.multiSelect &&
 					!value?.haveCustomValuesSelected
 						? '__all__'
 						: value?.selectedValue;
