@@ -20,17 +20,12 @@ function UserpilotRouteTracker(): null {
 			if (typeof Userpilot !== 'undefined' && Userpilot.reload) {
 				setTimeout(() => {
 					Userpilot.reload();
-
-					console.log(
-						'[Userpilot] Reloaded on route/query change:',
-						location.pathname + location.search,
-					);
 				}, 100);
 			}
 		} catch (error) {
 			console.error('[Userpilot] Error reloading on route change:', error);
 		}
-	}, [location.pathname, location.search]);
+	}, []);
 
 	// Handle first render
 	useEffect(() => {

@@ -5,7 +5,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
-import UserpilotRouteTracker from 'components/UserpilotRouteTracker';
+import UserpilotRouteTracker from 'components/UserpilotRouteTracker/UserpilotRouteTracker';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
