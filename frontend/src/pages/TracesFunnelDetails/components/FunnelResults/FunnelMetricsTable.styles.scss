@@ -1,0 +1,122 @@
+.funnel-metrics {
+	background: var(--bg-ink-500);
+	border-radius: 6px;
+	box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.1);
+	border: 1px solid var(--bg-slate-500);
+	&--loading-state,
+	&--empty-state {
+		padding: 16px;
+	}
+
+	&__header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 14px 16px;
+		border-bottom: 1px solid var(--bg-slate-500);
+	}
+
+	&__title {
+		color: var(--bg-vanilla-400);
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 22px;
+		letter-spacing: 0.48px;
+		text-transform: uppercase;
+	}
+
+	&__subtitle {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+
+		&-label {
+			color: var(--bg-vanilla-400);
+			font-family: Inter;
+			font-size: 14px;
+			line-height: 22px; /* 157.143% */
+			letter-spacing: -0.07px;
+		}
+
+		&-value {
+			color: var(--bg-vanilla-100);
+			font-family: 'Geist Mono';
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 22px; /* 157.143% */
+			letter-spacing: -0.07px;
+		}
+	}
+
+	&__grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	}
+
+	&__item {
+		display: flex;
+		flex-direction: column;
+		gap: 26px;
+		padding: 14px 16px;
+		&:not(:last-child) {
+			border-right: 1px solid var(--bg-slate-500);
+		}
+		&-title {
+			color: var(--bg-vanilla-100);
+			font-size: 14px;
+			line-height: 22px; /* 157.143% */
+			letter-spacing: -0.07px;
+		}
+
+		&-value,
+		&-unit {
+			color: var(--bg-vanilla-400);
+			font-family: 'Geist Mono';
+			font-size: 14px;
+			line-height: 22px; /* 157.143% */
+			letter-spacing: -0.07px;
+		}
+	}
+}
+
+.lightMode {
+	.funnel-metrics {
+		background: var(--bg-vanilla-100);
+		border: 1px solid var(--bg-vanilla-300);
+		box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.05);
+
+		&__header {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+		}
+
+		&__title {
+			color: var(--text-ink-300);
+		}
+
+		&__subtitle {
+			&-label {
+				color: var(--text-ink-300);
+			}
+
+			&-value {
+				color: var(--text-ink-500);
+			}
+		}
+
+		&__item {
+			&:not(:last-child) {
+				border-right: 1px solid var(--bg-vanilla-300);
+			}
+
+			&-title {
+				color: var(--text-ink-500);
+			}
+
+			&-value,
+			&-unit {
+				color: var(--text-ink-300);
+			}
+		}
+	}
+}

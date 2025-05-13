@@ -2,17 +2,20 @@ import './FormAlertRules.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Select, Switch, Tooltip } from 'antd';
-import getChannels from 'api/channels/getAll';
+import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
-import useFetch from 'hooks/useFetch';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
+import { SuccessResponseV2 } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef, Labels } from 'types/api/alerts/def';
+import { Channels } from 'types/api/channels/getAll';
+import APIError from 'types/api/error';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -42,7 +45,13 @@ function BasicInfo({
 }: BasicInfoProps): JSX.Element {
 	const { t } = useTranslation('alerts');
 
-	const channels = useFetch(getChannels);
+	const { isLoading, data, error, isError, refetch } = useQuery<
+		SuccessResponseV2<Channels[]>,
+		APIError
+	>(['getChannels'], {
+		queryFn: () => getAll(),
+	});
+
 	const { user } = useAppContext();
 	const [addNewChannelPermission] = useComponentPermission(
 		['add_new_channel'],
@@ -72,7 +81,7 @@ function BasicInfo({
 		});
 	};
 
-	const noChannels = channels.payload?.length === 0;
+	const noChannels = data?.data?.length === 0;
 	const handleCreateNewChannels = useCallback(() => {
 		logEvent('Alert: Create notification channel button clicked', {
 			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
@@ -84,18 +93,18 @@ function BasicInfo({
 	const hasLoggedEvent = useRef(false);
 
 	useEffect(() => {
-		if (!channels.loading && isNewRule && !hasLoggedEvent.current) {
+		if (!isLoading && isNewRule && !hasLoggedEvent.current) {
 			logEvent('Alert: New alert creation page visited', {
 				dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
-				numberOfChannels: channels?.payload?.length,
+				numberOfChannels: data?.data?.length,
 			});
 			hasLoggedEvent.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [channels.loading]);
+	}, [isLoading]);
 
 	const refetchChannels = async (): Promise<void> => {
-		await channels.refetch();
+		await refetch();
 	};
 
 	return (
@@ -192,7 +201,7 @@ function BasicInfo({
 						<Switch
 							checked={shouldBroadCastToAllChannels}
 							onChange={handleBroadcastToAllChannels}
-							disabled={noChannels || !!channels.loading}
+							disabled={noChannels || !!isLoading}
 							data-testid="alert-broadcast-to-all-channels"
 						/>
 					</Tooltip>
@@ -220,7 +229,10 @@ function BasicInfo({
 								disabled={shouldBroadCastToAllChannels}
 								currentValue={alertDef.preferredChannels}
 								handleCreateNewChannels={handleCreateNewChannels}
-								channels={channels}
+								channels={data?.data || []}
+								isLoading={isLoading}
+								hasError={isError}
+								error={error as APIError}
 								onSelectChannels={(preferredChannels): void => {
 									setAlertDef({
 										...alertDef,

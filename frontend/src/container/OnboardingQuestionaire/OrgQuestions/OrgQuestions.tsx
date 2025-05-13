@@ -4,7 +4,7 @@ import '../OnboardingQuestionaire.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import editOrg from 'api/user/editOrg';
+import editOrg from 'api/organization/editOrg';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';

@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
+	analytics "github.com/segmentio/analytics-go/v3"
 	"go.uber.org/zap"
-	"gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
