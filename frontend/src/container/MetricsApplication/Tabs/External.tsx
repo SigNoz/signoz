@@ -28,6 +28,8 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
 import { GraphTitle, legend, MENU_ITEMS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
@@ -74,6 +76,10 @@ function External(): JSX.Element {
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
 	);
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
 
 	const externalCallErrorWidget = useMemo(
 		() =>
@@ -85,6 +91,7 @@ function External(): JSX.Element {
 						servicename,
 						legend: legend.address,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -94,7 +101,7 @@ function External(): JSX.Element {
 				yAxisUnit: '%',
 				id: GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled],
 	);
 
 	const selectedTraceTags = useMemo(
@@ -111,6 +118,7 @@ function External(): JSX.Element {
 					builder: externalCallDuration({
 						servicename,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -121,7 +129,7 @@ function External(): JSX.Element {
 				id: GraphTitle.EXTERNAL_CALL_DURATION,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled],
 	);
 
 	const errorApmToTraceQuery = useGetAPMToTracesQueries({
@@ -180,6 +188,7 @@ function External(): JSX.Element {
 						servicename,
 						legend: legend.address,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -190,7 +199,7 @@ function External(): JSX.Element {
 				id: GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled],
 	);
 
 	const externalCallDurationAddressWidget = useMemo(
@@ -203,6 +212,7 @@ function External(): JSX.Element {
 						servicename,
 						legend: legend.address,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -213,7 +223,7 @@ function External(): JSX.Element {
 				id: GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled],
 	);
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({

@@ -30,6 +30,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
 
+import { FeatureKeys } from '../../../constants/features';
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
 
@@ -210,6 +211,11 @@ function ServiceMetrics({
 
 	const topLevelOperations = useMemo(() => Object.entries(data || {}), [data]);
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const queryRangeRequestData = useMemo(
 		() =>
 			getQueryRangeRequestData({
@@ -217,12 +223,14 @@ function ServiceMetrics({
 				minTime: timeRange.startTime * 1e6,
 				maxTime: timeRange.endTime * 1e6,
 				globalSelectedInterval,
+				dotMetricsEnabled,
 			}),
 		[
 			globalSelectedInterval,
 			timeRange.endTime,
 			timeRange.startTime,
 			topLevelOperations,
+			dotMetricsEnabled,
 		],
 	);
 
