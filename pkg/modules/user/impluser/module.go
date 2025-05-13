@@ -96,6 +96,16 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error 
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "integration user cannot be deleted")
 	}
 
+	// don't allow to delete the last admin user
+	adminUsers, err := m.GetUsersByRoleInOrg(ctx, orgID, types.RoleAdmin)
+	if err != nil {
+		return err
+	}
+
+	if len(adminUsers) == 1 && user.Role == types.RoleAdmin.String() {
+		return errors.New(errors.TypeInternal, errors.CodeInternal, "cannot delete the last admin")
+	}
+
 	return m.store.DeleteUser(ctx, orgID, user.ID.StringValue())
 }
 
