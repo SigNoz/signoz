@@ -61,7 +61,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	const [orgData, setOrgData] = useState<Organization | undefined>(undefined);
 
-	const { data: orgUsers, isFetching: isFetchingOrgUsers } = useQuery<
+	const { data: usersData, isFetching: isFetchingUsers } = useQuery<
 		SuccessResponseV2<UserResponse[]> | undefined,
 		APIError
 	>({
@@ -76,23 +76,23 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	});
 
 	const checkFirstTimeUser = useCallback((): boolean => {
-		const users = orgUsers?.data || [];
+		const users = usersData?.data || [];
 
 		const remainingUsers = users.filter(
 			(user) => user.email !== 'admin@signoz.cloud',
 		);
 
 		return remainingUsers.length === 1;
-	}, [orgUsers?.data]);
+	}, [usersData?.data]);
 
 	useEffect(() => {
 		if (
 			isCloudUserVal &&
 			!isFetchingOrgPreferences &&
 			orgPreferences &&
-			!isFetchingOrgUsers &&
-			orgUsers &&
-			orgUsers.data
+			!isFetchingUsers &&
+			usersData &&
+			usersData.data
 		) {
 			const isOnboardingComplete = orgPreferences?.find(
 				(preference: Record<string, any>) => preference.key === 'ORG_ONBOARDING',
@@ -112,9 +112,9 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		checkFirstTimeUser,
 		isCloudUserVal,
 		isFetchingOrgPreferences,
-		isFetchingOrgUsers,
+		isFetchingUsers,
 		orgPreferences,
-		orgUsers,
+		usersData,
 		pathname,
 	]);
 

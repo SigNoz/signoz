@@ -15,7 +15,6 @@ const getAll = async (): Promise<SuccessResponseV2<UserResponse[]>> => {
 		};
 	} catch (error) {
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-		throw error;
 	}
 };
 

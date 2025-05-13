@@ -22,7 +22,6 @@ const getInviteDetails = async (
 		};
 	} catch (error) {
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-		throw error;
 	}
 };
 

@@ -343,7 +343,6 @@ function App(): JSX.Element {
 			history.replace(ROUTES.SOMETHING_WENT_WRONG);
 		}
 
-		console.log(licenses, user.email, featureFlags, userFetchError);
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
 		if ((!licenses || !user.email || !featureFlags) && !userFetchError) {
 			return <Spinner tip="Loading..." />;

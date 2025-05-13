@@ -13,7 +13,6 @@ const get = async (): Promise<SuccessResponseV2<PendingInvite[]>> => {
 		};
 	} catch (error) {
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-		throw error;
 	}
 };
 

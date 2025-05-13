@@ -18,8 +18,6 @@ const login = async (
 		};
 	} catch (error) {
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-		// this line is never reached but ts isn't detecting the never type properly for the ErrorResponseHandlerV2
-		throw error;
 	}
 };
 
