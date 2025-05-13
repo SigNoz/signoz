@@ -54,7 +54,7 @@ type FactorPassword32 struct {
 	types.TimeAuditable
 	Password  string `bun:"password,type:text,notnull" json:"password"`
 	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
-	UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id)" json:"userId"`
+	UserID    string `bun:"user_id,type:text,notnull" json:"userID"`
 }
 
 type existingResetPasswordRequest32 struct {
@@ -70,7 +70,7 @@ type FactorResetPasswordRequest32 struct {
 
 	types.Identifiable
 	Token      string `bun:"token,type:text,notnull" json:"token"`
-	PasswordID string `bun:"password_id,type:text,notnull,unique,references:factor_password(id)" json:"passwordId"`
+	PasswordID string `bun:"password_id,type:text,notnull" json:"passwordID"`
 }
 
 func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
@@ -83,15 +83,8 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 	defer tx.Rollback()
 
 	if _, err := tx.NewCreateTable().
-		Model(&struct {
-			bun.BaseModel `bun:"table:factor_password"`
-
-			types.Identifiable
-			types.TimeAuditable
-			Password  string `bun:"password,type:text,notnull" json:"password"`
-			Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
-			UserID    string `bun:"user_id,type:text,notnull,unique,references:user(id)" json:"userId"`
-		}{}).
+		Model(new(FactorPassword32)).
+		ForeignKey(`("user_id") REFERENCES "users" ("id")`).
 		IfNotExists().
 		Exec(ctx); err != nil {
 		return err
