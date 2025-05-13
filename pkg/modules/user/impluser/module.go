@@ -120,6 +120,16 @@ func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*
 		return nil, err
 	}
 
+	// check if a reset password token already exists for this user
+	existingRequest, err := m.store.GetFactorResetPasswordByPasswordID(ctx, resetPasswordRequest.PasswordID)
+	if err != nil {
+		return nil, err
+	}
+
+	if existingRequest != nil {
+		return existingRequest, nil
+	}
+
 	err = m.store.CreateResetPasswordToken(ctx, resetPasswordRequest)
 	if err != nil {
 		return nil, err
