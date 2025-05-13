@@ -5,11 +5,18 @@ import {
 	autocompletion,
 	Completion,
 	CompletionContext,
+	CompletionResult,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, { EditorView } from '@uiw/react-codemirror';
+import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
+import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
 const operatorArgMeta: Record<
@@ -42,166 +49,190 @@ const operatorArgMeta: Record<
 	[TracesAggregatorOperator.RATE_MAX]: { acceptsArgs: true, multiple: false },
 };
 
-const fieldSuggestions: Completion[] = [
-	{ label: 'duration', type: 'variable' },
-	{ label: 'status_code', type: 'variable' },
-	{ label: 'service_name', type: 'variable' },
-	{ label: 'trace_id', type: 'variable' },
-];
-
-const mapToFunctionCompletions = (
-	operators: typeof tracesAggregateOperatorOptions,
-): Completion[] =>
-	operators.map((op) => ({
-		label: `${op.value}()`,
-		type: 'function',
-		apply: `${op.value}()`,
-	}));
-
-const applyFieldSuggestion = (
-	view: EditorView,
-	suggestion: Completion,
-): void => {
-	const currentText = view.state.sliceDoc(0, view.state.selection.main.from);
-	const endPos = view.state.selection.main.from;
-
-	// Find the last opening parenthesis before the cursor
-	const lastOpenParen = currentText.lastIndexOf('(');
-	if (lastOpenParen === -1) return;
-
-	// Find the last comma after the opening parenthesis
-	const textAfterParen = currentText.slice(lastOpenParen);
-	const lastComma = textAfterParen.lastIndexOf(',');
-
-	// Calculate the start position for insertion
-	const startPos =
-		lastComma === -1 ? lastOpenParen + 1 : lastOpenParen + lastComma + 1;
-
-	// Insert the suggestion
-	view.dispatch({
-		changes: { from: startPos, to: endPos, insert: suggestion.label },
-		selection: { anchor: startPos + suggestion.label.length },
-	});
-};
-
-const applyOperatorSuggestion = (
-	view: EditorView,
-	from: number,
-	label: string,
-): void => {
-	view.dispatch({
-		changes: { from, insert: label },
-		selection: { anchor: from + label.length },
-	});
-};
-
-const getOperatorSuggestions = (
-	from: number,
-	operators: typeof tracesAggregateOperatorOptions,
-): Completion[] =>
-	mapToFunctionCompletions(operators).map((op) => ({
-		...op,
-		apply: (view: EditorView): void =>
-			applyOperatorSuggestion(view, from, op.label),
-	}));
-
-const aggregatorAutocomplete = autocompletion({
-	override: [
-		(context: CompletionContext): any => {
-			const word = context.matchBefore(/[\w\d_\s]*(\()?[^)]*$/);
-			if (!word || (word.from === word.to && !context.explicit)) return null;
-
-			const textBeforeCursor = context.state.sliceDoc(0, context.pos);
-			const functionMatch = textBeforeCursor.match(/(\w+)\(([^)]*)$/);
-			const funcName = functionMatch?.[1]?.toLowerCase();
-
-			// Handle argument suggestions when cursor is inside parentheses
-			if (funcName && operatorArgMeta[funcName]) {
-				const { acceptsArgs, multiple } = operatorArgMeta[funcName];
-
-				if (!acceptsArgs) return null;
-
-				// Get all arguments for the current function
-				const argsMatch = functionMatch?.[2];
-				const argsSoFar =
-					argsMatch
-						?.split(',')
-						.map((arg) => arg.trim())
-						.filter(Boolean) || [];
-
-				if (!multiple && argsSoFar.length >= 1) return null;
-
-				return {
-					from: context.pos,
-					options: fieldSuggestions.map((suggestion) => ({
-						...suggestion,
-						apply: (view: EditorView): void => {
-							applyFieldSuggestion(view, suggestion);
-							// For count_distinct, add a comma after the field
-							if (funcName === TracesAggregatorOperator.COUNT_DISTINCT.toLowerCase()) {
-								const currentPos = view.state.selection.main.from;
-								view.dispatch({
-									changes: { from: currentPos, insert: ', ' },
-									selection: { anchor: currentPos + 2 },
-								});
-							}
-						},
-					})),
-				};
+function getFunctionContextAtCursor(
+	text: string,
+	cursorPos: number,
+): string | null {
+	// Find the nearest function name to the left of the nearest unmatched '('
+	let openParenIndex = -1;
+	let funcName: string | null = null;
+	let parenStack = 0;
+	for (let i = cursorPos - 1; i >= 0; i--) {
+		if (text[i] === ')') parenStack++;
+		else if (text[i] === '(') {
+			if (parenStack === 0) {
+				openParenIndex = i;
+				const before = text.slice(0, i);
+				const match = before.match(/(\w+)\s*$/);
+				if (match) funcName = match[1].toLowerCase();
+				break;
 			}
-
-			// Handle operator suggestions
-			const isAfterCompleteFunction = textBeforeCursor.match(/\w+\([^)]*\)\s*$/);
-			if (isAfterCompleteFunction) {
-				return {
-					from: context.pos,
-					options: getOperatorSuggestions(
-						context.pos,
-						tracesAggregateOperatorOptions,
-					),
-				};
-			}
-
-			// Regular word-based suggestions
-			const wordBeforeCursor = word.text.trim();
-			if (wordBeforeCursor) {
-				const filteredOperators = tracesAggregateOperatorOptions.filter((op) =>
-					op.value.toLowerCase().startsWith(wordBeforeCursor.toLowerCase()),
-				);
-				return {
-					from: word.from,
-					options: getOperatorSuggestions(word.from, filteredOperators),
-				};
-			}
-
-			// Show all options if no word before cursor
-			return {
-				from: word.from,
-				options: getOperatorSuggestions(word.from, tracesAggregateOperatorOptions),
-			};
-		},
-	],
-});
+			parenStack--;
+		}
+	}
+	if (openParenIndex === -1 || !funcName) return null;
+	// Scan forwards to find the matching closing parenthesis
+	let closeParenIndex = -1;
+	let depth = 1;
+	for (let j = openParenIndex + 1; j < text.length; j++) {
+		if (text[j] === '(') depth++;
+		else if (text[j] === ')') depth--;
+		if (depth === 0) {
+			closeParenIndex = j;
+			break;
+		}
+	}
+	if (
+		cursorPos > openParenIndex &&
+		(closeParenIndex === -1 || cursorPos <= closeParenIndex)
+	) {
+		return funcName;
+	}
+	return null;
+}
 
 function QueryAggregationSelect(): JSX.Element {
+	const { currentQuery } = useQueryBuilder();
+	const queryData = currentQuery.builder.queryData[0];
+	const [input, setInput] = useState('');
+	const [cursorPos, setCursorPos] = useState(0);
+	const editorRef = useRef<EditorView | null>(null);
+
+	// Update cursor position on every editor update
+	const handleUpdate = (update: { view: EditorView }): void => {
+		const pos = update.view.state.selection.main.from;
+		setCursorPos(pos);
+	};
+
+	// Find function context for fetching suggestions
+	const functionContextForFetch = getFunctionContextAtCursor(input, cursorPos);
+
+	const { data: aggregateAttributeData, isLoading: isLoadingFields } = useQuery(
+		[
+			QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
+			functionContextForFetch,
+			queryData.dataSource,
+		],
+		() =>
+			getAggregateAttribute({
+				searchText: '',
+				aggregateOperator: functionContextForFetch as string,
+				dataSource: queryData.dataSource,
+			}),
+		{
+			enabled:
+				!!functionContextForFetch &&
+				!!operatorArgMeta[functionContextForFetch]?.acceptsArgs,
+		},
+	);
+
+	const operatorCompletions: Completion[] = tracesAggregateOperatorOptions.map(
+		(op) => ({
+			label: op.value,
+			type: 'function',
+			info: op.label,
+			apply: (view: EditorView): void => {
+				const insertText = `${op.value}()`;
+				const cursorPos = view.state.selection.main.from + op.value.length + 1; // after '('
+				view.dispatch({
+					changes: { from: view.state.selection.main.from, insert: insertText },
+					selection: { anchor: cursorPos },
+				});
+			},
+		}),
+	);
+
+	// Memoize field suggestions from API
+	const fieldSuggestions = useMemo(
+		() =>
+			aggregateAttributeData?.payload?.attributeKeys?.map(
+				(attributeKey: BaseAutocompleteData) => ({
+					label: attributeKey.key,
+					type: 'variable',
+					info: attributeKey.dataType,
+					apply: (view: EditorView, completion: Completion): void => {
+						const currentText = view.state.sliceDoc(
+							0,
+							view.state.selection.main.from,
+						);
+						const lastOpenParen = currentText.lastIndexOf('(');
+						const endPos = view.state.selection.main.from;
+						const startPos = lastOpenParen !== -1 ? lastOpenParen + 1 : endPos;
+						view.dispatch({
+							changes: { from: startPos, to: endPos, insert: completion.label },
+							selection: { anchor: startPos + completion.label.length },
+						});
+					},
+				}),
+			) || [],
+		[aggregateAttributeData],
+	);
+
+	const aggregatorAutocomplete = useMemo(
+		() =>
+			autocompletion({
+				override: [
+					(context: CompletionContext): CompletionResult | null => {
+						const text = context.state.sliceDoc(0, context.state.doc.length);
+						const cursorPos = context.pos;
+						const funcName = getFunctionContextAtCursor(text, cursorPos);
+
+						// If inside a function that accepts args, show field suggestions
+						if (funcName && operatorArgMeta[funcName]?.acceptsArgs) {
+							if (isLoadingFields) {
+								return {
+									from: cursorPos,
+									options: [
+										{
+											label: 'Loading suggestions...',
+											type: 'text',
+											apply: (): void => {},
+										},
+									],
+								};
+							}
+							return {
+								from: cursorPos,
+								options: fieldSuggestions,
+							};
+						}
+
+						// Otherwise, always show function suggestions
+						const word = context.matchBefore(/[\w\d_]+/);
+						return {
+							from: word ? word.from : context.pos,
+							options: operatorCompletions,
+						};
+					},
+				],
+				defaultKeymap: true,
+				closeOnBlur: false,
+				maxRenderedOptions: 50,
+				activateOnTyping: true,
+			}),
+		[operatorCompletions, isLoadingFields, fieldSuggestions],
+	);
+
 	return (
 		<div className="query-aggregation-select-container">
 			<CodeMirror
+				value={input}
+				onChange={setInput}
 				className="query-aggregation-select-editor"
 				width="100%"
 				theme={copilot}
 				extensions={[
 					aggregatorAutocomplete,
-					javascript({ jsx: false, typescript: true }),
+					javascript({ jsx: false, typescript: false }),
 				]}
 				placeholder="Type aggregator functions like sum(), count_distinct(...), etc."
 				basicSetup={{
 					lineNumbers: false,
-					closeBrackets: true,
 					autocompletion: true,
 					completionKeymap: true,
 				}}
-				lang="sql"
+				onUpdate={handleUpdate}
+				ref={editorRef}
 			/>
 		</div>
 	);
