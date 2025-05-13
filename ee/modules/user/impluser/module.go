@@ -31,10 +31,9 @@ func NewModule(store types.UserStore) user.Module {
 
 func (m *Module) createUserForSAMLRequest(ctx context.Context, email string) (*types.User, error) {
 	// get auth domain from email domain
-	_, apierr := m.GetAuthDomainByEmail(ctx, email)
-	if apierr != nil {
-		zap.L().Error("failed to get domain from email", zap.Error(apierr))
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to get domain from email")
+	_, err := m.GetAuthDomainByEmail(ctx, email)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
 	}
 
 	// get name from email
@@ -96,7 +95,7 @@ func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email stri
 
 func (m *Module) CanUsePassword(ctx context.Context, email string) (bool, error) {
 	domain, err := m.GetAuthDomainByEmail(ctx, email)
-	if err != nil {
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return false, err
 	}
 
@@ -171,8 +170,7 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 
 		// TODO(Nitya): in multitenancy this should use orgId as well.
 		orgDomain, err := m.GetAuthDomainByEmail(ctx, email)
-		if err != nil {
-			zap.L().Error("failed to get org domain from email", zap.String("email", email), zap.Error(err))
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
 
