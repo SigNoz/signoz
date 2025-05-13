@@ -134,7 +134,7 @@ export const useValidateFunnelSteps = ({
 			),
 		queryKey: [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId, selectedTime],
 		enabled: !!funnelId && !!selectedTime && !!startTime && !!endTime,
-		staleTime: 1000 * 60 * 5,
+		staleTime: 0,
 	});
 
 interface SaveFunnelDescriptionPayload {
