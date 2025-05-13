@@ -13,6 +13,7 @@ import useAxiosError from 'hooks/useAxiosError';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
@@ -292,17 +293,21 @@ export function DashboardProvider({
 				}
 			},
 			refetchOnWindowFocus: false,
+			// eslint-disable-next-line sonarjs/cognitive-complexity
 			onSuccess: (data) => {
 				// if the url variable is not set for any variable, set it to the default value
 				const variables = data?.data?.variables;
 				if (variables) {
 					Object.keys(variables).forEach((key) => {
-						if (!getUrlVariables()[key]) {
+						if (!getUrlVariables()?.[key]) {
+							const varData = variables[key];
 							updateUrlVariable(
-								key,
-								variables[key].selectedValue,
-								variables[key].allSelected || false,
-							); // TODO:Sagar to add the default value here
+								variables[key].id,
+								varData.type === 'CUSTOM'
+									? commaValuesParser(varData?.customValue || '')
+									: varData?.selectedValue || varData?.defaultValue,
+								varData?.allSelected || false,
+							); // TODO: Sagar to add the default value here
 						}
 					});
 				}
