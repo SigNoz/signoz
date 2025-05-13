@@ -459,11 +459,11 @@ type UpdateServiceConfigRequest struct {
 
 func (u *UpdateServiceConfigRequest) Validate(def *services.Definition) error {
 	if def.Id != services.S3Sync && u.Config.Logs != nil && u.Config.Logs.S3Buckets != nil {
-		return errors.Wrapf(nil, errors.TypeForbidden, errors.CodeForbidden, "s3 buckets can only be added to service-type[%s]", services.S3Sync)
+		return errors.InvalidInputNew(errors.CodeInvalidInput, "s3 buckets can only be added to service-type[%s]", services.S3Sync)
 	} else if def.Id == services.S3Sync && u.Config.Logs != nil && u.Config.Logs.S3Buckets != nil {
 		for region := range u.Config.Logs.S3Buckets {
 			if _, found := ValidAWSRegions[region]; !found {
-				return errors.NotFoundNew(CodeInvalidCloudRegion, "invalid cloud region: %s", region)
+				return errors.InvalidInputNew(CodeInvalidCloudRegion, "invalid cloud region: %s", region)
 			}
 		}
 	}
