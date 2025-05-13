@@ -68,11 +68,12 @@ export const useOptions = (
 		(key: string, results: string[], searchValue: string) => {
 			const hasAllResults = results.every((value) => result.includes(value));
 
+			let newResults = results;
 			if (!isEmpty(variableAsValue)) {
-				results.unshift(variableAsValue);
+				newResults = [variableAsValue, ...newResults];
 			}
 
-			const values = getKeyOpValue(results);
+			const values = getKeyOpValue(newResults);
 
 			return hasAllResults
 				? [
