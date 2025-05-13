@@ -21,7 +21,6 @@ import CodeMirror, { EditorView, Extension } from '@uiw/react-codemirror';
 import { Card, Collapse, Space, Tag, Typography } from 'antd';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	IDetailedError,
@@ -30,7 +29,6 @@ import {
 } from 'types/antlrQueryTypes';
 import { QueryKeySuggestionsProps } from 'types/api/querySuggestions/types';
 import { queryOperatorSuggestions, validateQuery } from 'utils/antlrQueryUtils';
-import { detectContext } from 'utils/antlrQueryUtils2';
 import { getQueryContextAtCursor } from 'utils/queryContextUtils';
 
 const { Text } = Typography;
@@ -649,12 +647,6 @@ function QuerySearch(): JSX.Element {
 		// Get the query context at the cursor position
 		const queryContext = getQueryContextAtCursor(query, cursorPos.ch);
 
-		// Get the query context at the cursor position
-		const queryContext2 = detectContext(query, cursorPos.ch);
-
-		console.log('queryContext', queryContext);
-		console.log('queryContext2', cloneDeep(queryContext2));
-
 		// Define autocomplete options based on the context
 		let options: {
 			label: string;
@@ -1043,7 +1035,7 @@ function QuerySearch(): JSX.Element {
 						override: [myCompletions],
 						defaultKeymap: true,
 						closeOnBlur: false,
-						// activateOnTyping: true,
+						activateOnTyping: true,
 						maxRenderedOptions: 50,
 					}),
 					javascript({ jsx: false, typescript: false }),
