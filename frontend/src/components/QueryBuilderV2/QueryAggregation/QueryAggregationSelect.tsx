@@ -1,3 +1,8 @@
+/* eslint-disable import/no-extraneous-dependencies */
+/* eslint-disable no-cond-assign */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable react/no-this-in-sfc */
 /* eslint-disable sonarjs/cognitive-complexity */
 import './QueryAggregation.styles.scss';
 
@@ -8,8 +13,14 @@ import {
 	CompletionResult,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
+import { RangeSetBuilder } from '@codemirror/state';
 import { copilot } from '@uiw/codemirror-theme-copilot';
-import CodeMirror, { EditorView } from '@uiw/react-codemirror';
+import CodeMirror, {
+	Decoration,
+	EditorView,
+	ViewPlugin,
+	ViewUpdate,
+} from '@uiw/react-codemirror';
 import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
@@ -18,6 +29,10 @@ import { useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
+
+const chipDecoration = Decoration.mark({
+	class: 'chip-decorator',
+});
 
 const operatorArgMeta: Record<
 	string,
@@ -91,6 +106,7 @@ function getFunctionContextAtCursor(
 	return null;
 }
 
+// eslint-disable-next-line react/no-this-in-sfc
 function QueryAggregationSelect(): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const queryData = currentQuery.builder.queryData[0];
@@ -126,16 +142,76 @@ function QueryAggregationSelect(): JSX.Element {
 		},
 	);
 
+	// Get valid function names (lowercase)
+	const validFunctions = useMemo(
+		() => tracesAggregateOperatorOptions.map((op) => op.value.toLowerCase()),
+		[],
+	);
+
+	// Memoized chipPlugin that highlights valid function calls like count(), max(arg), min(arg)
+	const chipPlugin = useMemo(
+		() =>
+			ViewPlugin.fromClass(
+				class {
+					decorations: import('@codemirror/view').DecorationSet;
+
+					constructor(view: EditorView) {
+						this.decorations = this.buildDecorations(view);
+					}
+
+					update(update: ViewUpdate): void {
+						if (update.docChanged || update.viewportChanged) {
+							this.decorations = this.buildDecorations(update.view);
+						}
+					}
+
+					buildDecorations(
+						view: EditorView,
+					): import('@codemirror/view').DecorationSet {
+						const builder = new RangeSetBuilder<Decoration>();
+						for (const { from, to } of view.visibleRanges) {
+							const text = view.state.doc.sliceString(from, to);
+
+							const regex = /\b([a-zA-Z_][\w]*)\s*\(([^)]*)\)/g;
+							let match;
+
+							while ((match = regex.exec(text)) !== null) {
+								const func = match[1].toLowerCase();
+
+								if (validFunctions.includes(func)) {
+									const start = from + match.index;
+									const end = start + match[0].length;
+
+									builder.add(start, end, chipDecoration);
+								}
+							}
+						}
+						return builder.finish();
+					}
+				},
+				{
+					decorations: (v: any): import('@codemirror/view').DecorationSet =>
+						v.decorations,
+				},
+			),
+		[validFunctions],
+	) as any;
+
 	const operatorCompletions: Completion[] = tracesAggregateOperatorOptions.map(
 		(op) => ({
 			label: op.value,
 			type: 'function',
 			info: op.label,
-			apply: (view: EditorView): void => {
+			apply: (
+				view: EditorView,
+				completion: Completion,
+				from: number,
+				to: number,
+			): void => {
 				const insertText = `${op.value}()`;
-				const cursorPos = view.state.selection.main.from + op.value.length + 1; // after '('
+				const cursorPos = from + op.value.length + 1; // after '('
 				view.dispatch({
-					changes: { from: view.state.selection.main.from, insert: insertText },
+					changes: { from, to, insert: insertText },
 					selection: { anchor: cursorPos },
 				});
 			},
@@ -150,13 +226,15 @@ function QueryAggregationSelect(): JSX.Element {
 					label: attributeKey.key,
 					type: 'variable',
 					info: attributeKey.dataType,
-					apply: (view: EditorView, completion: Completion): void => {
-						const currentText = view.state.sliceDoc(
-							0,
-							view.state.selection.main.from,
-						);
+					apply: (
+						view: EditorView,
+						completion: Completion,
+						from: number,
+						to: number,
+					): void => {
+						const currentText = view.state.sliceDoc(0, from);
 						const lastOpenParen = currentText.lastIndexOf('(');
-						const endPos = view.state.selection.main.from;
+						const endPos = from;
 						// Find the last comma before the cursor, but after the last open paren
 						const lastComma = currentText.lastIndexOf(',', endPos - 1);
 						const startPos =
@@ -170,7 +248,7 @@ function QueryAggregationSelect(): JSX.Element {
 							insertText = completion.label;
 						}
 						view.dispatch({
-							changes: { from: endPos, insert: insertText },
+							changes: { from: endPos, to, insert: insertText },
 							selection: { anchor: endPos + insertText.length },
 						});
 					},
@@ -187,6 +265,15 @@ function QueryAggregationSelect(): JSX.Element {
 						const text = context.state.sliceDoc(0, context.state.doc.length);
 						const cursorPos = context.pos;
 						const funcName = getFunctionContextAtCursor(text, cursorPos);
+
+						// Do not show suggestions if inside count()
+						if (
+							funcName === TracesAggregatorOperator.COUNT &&
+							cursorPos > 0 &&
+							text[cursorPos - 1] !== ')'
+						) {
+							return null;
+						}
 
 						// If inside a function that accepts args, show field suggestions
 						if (funcName && operatorArgMeta[funcName]?.acceptsArgs) {
@@ -233,6 +320,7 @@ function QueryAggregationSelect(): JSX.Element {
 				width="100%"
 				theme={copilot}
 				extensions={[
+					chipPlugin,
 					aggregatorAutocomplete,
 					javascript({ jsx: false, typescript: false }),
 				]}
