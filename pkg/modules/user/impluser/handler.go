@@ -1,26 +1,18 @@
 package impluser
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"os"
-	"text/template"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
-	smtpservice "github.com/SigNoz/signoz/pkg/query-service/utils/smtpService"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 type handler struct {
@@ -104,7 +96,7 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.inviteUsers(ctx, claims, &types.PostableBulkInviteRequest{
+	_, err = h.module.CreateBulkInvite(ctx, claims.OrgID, claims.Email, claims.Name, &types.PostableBulkInviteRequest{
 		Invites: []types.PostableInvite{req},
 	})
 	if err != nil {
@@ -138,7 +130,7 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.inviteUsers(ctx, claims, &req)
+	_, err = h.module.CreateBulkInvite(ctx, claims.OrgID, claims.Email, claims.Name, &req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -146,91 +138,6 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 
 	render.Success(rw, http.StatusCreated, nil)
 	return
-}
-
-// Helper function to handle individual invites
-func (h *handler) inviteUsers(ctx context.Context, claims authtypes.Claims, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
-
-	invites := make([]*types.Invite, 0, len(bulkInvites.Invites))
-
-	for _, invite := range bulkInvites.Invites {
-		// check if user exists
-		if user, err := h.module.GetUserByEmailInOrg(ctx, claims.OrgID, invite.Email); err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check already existing user")
-		} else if user != nil {
-			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
-		}
-
-		// Check if an invite already exists
-		if invite, err := h.module.GetInviteByEmailInOrg(ctx, claims.OrgID, invite.Email); err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check existing invite")
-		} else if invite != nil {
-			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email")
-		}
-
-		role, err := types.NewRole(invite.Role.String())
-		if err != nil {
-			return nil, err
-		}
-
-		newInvite, err := types.NewInvite(claims.OrgID, role.String(), invite.Name, invite.Email)
-		if err != nil {
-			return nil, err
-		}
-		newInvite.InviteLink = fmt.Sprintf("%s/signup?token=%s", invite.FrontendBaseUrl, newInvite.Token)
-		invites = append(invites, newInvite)
-	}
-
-	err := h.module.CreateBulkInvite(ctx, invites)
-	if err != nil {
-		return nil, err
-	}
-
-	// send telemetry event
-	for i := 0; i < len(invites); i++ {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_SENT, map[string]interface{}{
-			"invited user email": invites[i].Email,
-		}, claims.Email, true, false)
-
-		// send email if SMTP is enabled
-		if os.Getenv("SMTP_ENABLED") == "true" && bulkInvites.Invites[i].FrontendBaseUrl != "" {
-			h.inviteEmail(&bulkInvites.Invites[i], claims.Email, claims.Name, invites[i].Token)
-		}
-	}
-
-	return invites, nil
-}
-
-func (h *handler) inviteEmail(req *types.PostableInvite, creatorEmail, creatorName, token string) {
-	smtp := smtpservice.GetInstance()
-	data := types.InviteEmailData{
-		CustomerName: req.Name,
-		InviterName:  creatorName,
-		InviterEmail: creatorEmail,
-		Link:         fmt.Sprintf("%s/signup?token=%s", req.FrontendBaseUrl, token),
-	}
-
-	tmpl, err := template.ParseFiles(constants.InviteEmailTemplate)
-	if err != nil {
-		zap.L().Error("failed to send email", zap.Error(err))
-		return
-	}
-
-	var body bytes.Buffer
-	if err := tmpl.Execute(&body, data); err != nil {
-		zap.L().Error("failed to send email", zap.Error(err))
-		return
-	}
-
-	err = smtp.SendEmail(
-		req.Email,
-		creatorName+" has invited you to their team in SigNoz",
-		body.String(),
-	)
-	if err != nil {
-		zap.L().Error("failed to send email", zap.Error(err))
-		return
-	}
 }
 
 func (h *handler) GetInvite(w http.ResponseWriter, r *http.Request) {

@@ -1,16 +1,23 @@
 package impluser
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"slices"
+	"text/template"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	smtpservice "github.com/SigNoz/signoz/pkg/query-service/utils/smtpService"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"go.uber.org/zap"
 )
 
 type Module struct {
@@ -25,8 +32,88 @@ func NewModule(store types.UserStore) user.Module {
 }
 
 // CreateBulk implements invite.Module.
-func (m *Module) CreateBulkInvite(ctx context.Context, invites []*types.Invite) error {
-	return m.store.CreateBulkInvite(ctx, invites)
+func (m *Module) CreateBulkInvite(ctx context.Context, orgID, creatorEmail, creatorName string, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
+
+	invites := make([]*types.Invite, 0, len(bulkInvites.Invites))
+
+	for _, invite := range bulkInvites.Invites {
+		// check if user exists
+		if user, err := m.GetUserByEmailInOrg(ctx, orgID, invite.Email); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check already existing user")
+		} else if user != nil {
+			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
+		}
+
+		// Check if an invite already exists
+		if invite, err := m.GetInviteByEmailInOrg(ctx, orgID, invite.Email); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check existing invite")
+		} else if invite != nil {
+			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email")
+		}
+
+		role, err := types.NewRole(invite.Role.String())
+		if err != nil {
+			return nil, err
+		}
+
+		newInvite, err := types.NewInvite(orgID, role.String(), invite.Name, invite.Email)
+		if err != nil {
+			return nil, err
+		}
+		newInvite.InviteLink = fmt.Sprintf("%s/signup?token=%s", invite.FrontendBaseUrl, newInvite.Token)
+		invites = append(invites, newInvite)
+	}
+
+	err := m.store.CreateBulkInvite(ctx, invites)
+	if err != nil {
+		return nil, err
+	}
+
+	// send telemetry event
+	for i := 0; i < len(invites); i++ {
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_SENT, map[string]interface{}{
+			"invited user email": invites[i].Email,
+		}, creatorEmail, true, false)
+
+		// send email if SMTP is enabled
+		if os.Getenv("SMTP_ENABLED") == "true" && bulkInvites.Invites[i].FrontendBaseUrl != "" {
+			m.inviteEmail(&bulkInvites.Invites[i], creatorEmail, creatorName, invites[i].Token)
+		}
+	}
+
+	return invites, nil
+}
+
+func (m *Module) inviteEmail(req *types.PostableInvite, creatorEmail, creatorName, token string) {
+	smtp := smtpservice.GetInstance()
+	data := types.InviteEmailData{
+		CustomerName: req.Name,
+		InviterName:  creatorName,
+		InviterEmail: creatorEmail,
+		Link:         fmt.Sprintf("%s/signup?token=%s", req.FrontendBaseUrl, token),
+	}
+
+	tmpl, err := template.ParseFiles(constants.InviteEmailTemplate)
+	if err != nil {
+		zap.L().Error("failed to send email", zap.Error(err))
+		return
+	}
+
+	var body bytes.Buffer
+	if err := tmpl.Execute(&body, data); err != nil {
+		zap.L().Error("failed to send email", zap.Error(err))
+		return
+	}
+
+	err = smtp.SendEmail(
+		req.Email,
+		creatorName+" has invited you to their team in SigNoz",
+		body.String(),
+	)
+	if err != nil {
+		zap.L().Error("failed to send email", zap.Error(err))
+		return
+	}
 }
 
 func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
@@ -122,7 +209,7 @@ func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*
 				TimeAuditable: types.TimeAuditable{
 					CreatedAt: time.Now(),
 				},
-				Password: "",
+				Password: valuer.GenerateUUID().String(),
 				UserID:   userID,
 			})
 			if err != nil {
