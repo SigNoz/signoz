@@ -11,7 +11,7 @@ import (
 
 type Module interface {
 	// invite
-	CreateBulkInvite(ctx context.Context, invites []*types.Invite) error
+	CreateBulkInvite(ctx context.Context, orgID, creatorEmail, creatorName string, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
 	ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error)
 	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
 	GetInviteByToken(ctx context.Context, token string) (*types.GettableInvite, error)
