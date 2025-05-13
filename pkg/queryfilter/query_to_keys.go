@@ -25,9 +25,9 @@ import (
 //			FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 //		},
 //	}
-func QueryStringToKeysSelectors(query string) ([]*telemetrytypes.FieldKeySelector, error) {
+func QueryStringToKeysSelectors(query string) ([]telemetrytypes.FieldKeySelector, error) {
 	lexer := grammar.NewFilterQueryLexer(antlr.NewInputStream(query))
-	keys := []*telemetrytypes.FieldKeySelector{}
+	keys := []telemetrytypes.FieldKeySelector{}
 	for {
 		tok := lexer.NextToken()
 		if tok.GetTokenType() == antlr.TokenEOF {
@@ -36,7 +36,7 @@ func QueryStringToKeysSelectors(query string) ([]*telemetrytypes.FieldKeySelecto
 
 		if tok.GetTokenType() == grammar.FilterQueryLexerKEY {
 			key := telemetrytypes.GetFieldKeyFromKeyText(tok.GetText())
-			keys = append(keys, &telemetrytypes.FieldKeySelector{
+			keys = append(keys, telemetrytypes.FieldKeySelector{
 				Name:          key.Name,
 				Signal:        key.Signal,
 				FieldContext:  key.FieldContext,

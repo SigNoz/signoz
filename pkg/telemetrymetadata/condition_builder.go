@@ -20,7 +20,7 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
-	key *telemetrytypes.TelemetryFieldKey,
+	key telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,

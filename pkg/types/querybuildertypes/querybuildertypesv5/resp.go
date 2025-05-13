@@ -8,24 +8,30 @@ import (
 )
 
 type QueryRangeResponse struct {
-	Type string `json:"type"`
-	Data any    `json:"data"`
+	Type RequestType `json:"type"`
+	Data any         `json:"data"`
+	Meta ExecStats   `json:"meta"`
 }
 
 type TimeSeriesData struct {
-	QueryName  string          `json:"queryName"`
-	TimeSeries [][]*TimeSeries `json:"timeSeries"`
+	QueryName    string              `json:"queryName"`
+	Aggregations []AggregationBucket `json:"aggregations"`
+}
+
+type AggregationBucket struct {
+	Index  int          `json:"index"` // or string Alias
+	Alias  string       `json:"alias"`
+	Series []TimeSeries `json:"series"` // no extra nesting
+}
+
+type TimeSeries struct {
+	Labels []Label           `json:"labels,omitempty"`
+	Values []TimeSeriesValue `json:"values"`
 }
 
 type Label struct {
 	Key   telemetrytypes.TelemetryFieldKey `json:"key"`
 	Value any                              `json:"value"`
-}
-
-type TimeSeries struct {
-	AggregationIndex int64              `json:"aggregationIndex"`
-	Labels           []*Label           `json:"labels,omitempty"`
-	Values           []*TimeSeriesValue `json:"values"`
 }
 
 type TimeSeriesValue struct {
@@ -54,8 +60,8 @@ type TableRow struct {
 }
 
 type TableData struct {
-	Columns []*TableColumn `json:"columns"`
-	Rows    []*TableRow    `json:"rows"`
+	Columns []TableColumn `json:"columns"`
+	Rows    []TableRow    `json:"rows"`
 }
 
 type NumberData struct {
@@ -64,8 +70,8 @@ type NumberData struct {
 }
 
 type ListData struct {
-	QueryName string     `json:"queryName"`
-	Rows      []*ListRow `json:"rows"`
+	QueryName string    `json:"queryName"`
+	Rows      []ListRow `json:"rows"`
 }
 
 type ListRow struct {

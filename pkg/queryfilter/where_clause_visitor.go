@@ -20,26 +20,27 @@ import (
 type whereClauseVisitor struct {
 	conditionBuilder qbtypes.ConditionBuilder
 	fieldMapper      qbtypes.FieldMapper
-	warnings         []error
-	fieldKeys        map[string][]*telemetrytypes.TelemetryFieldKey
+	warnings         []string
+	fieldKeys        map[string][]telemetrytypes.TelemetryFieldKey
 	errors           []error
 	builder          *sqlbuilder.SelectBuilder
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
 	jsonBodyPrefix   string
-	jsonKeyToKey     func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any)
+	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 }
 
 func newWhereClauseVisitor(
 	conditionBuilder qbtypes.ConditionBuilder,
 	fieldMapper qbtypes.FieldMapper,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]telemetrytypes.TelemetryFieldKey,
 	builder *sqlbuilder.SelectBuilder,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonBodyPrefix string,
-	jsonKeyToKey func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any),
+	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *whereClauseVisitor {
 	return &whereClauseVisitor{
 		conditionBuilder: conditionBuilder,
+		fieldMapper:      fieldMapper,
 		fieldKeys:        fieldKeys,
 		builder:          builder,
 		fullTextColumn:   fullTextColumn,
@@ -79,13 +80,13 @@ func (l *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol
 // prepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
 func prepareWhereClause(
 	query string,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]telemetrytypes.TelemetryFieldKey,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonBodyPrefix string,
-	jsonKeyToKey func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any),
-) (*sqlbuilder.WhereClause, []error, error) {
+	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+) (*sqlbuilder.WhereClause, []string, error) {
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
 	lexer := grammar.NewFilterQueryLexer(input)
@@ -256,11 +257,12 @@ func (v *whereClauseVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 
 	// Handle standalone key as a full text search term
 	if ctx.GetChildCount() == 1 {
+		// TODO(srikanthccv): check for the existance of fullTextColumn
 		child := ctx.GetChild(0)
 		if keyCtx, ok := child.(*grammar.KeyContext); ok {
 			// create a full text search condition on the body field
 			keyText := keyCtx.GetText()
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, keyText, v.builder)
+			cond, err := v.conditionBuilder.ConditionFor(context.Background(), *v.fullTextColumn, qbtypes.FilterOperatorRegexp, keyText, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -273,7 +275,7 @@ func (v *whereClauseVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 
 // VisitComparison handles all comparison operators
 func (v *whereClauseVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
-	keys := v.Visit(ctx.Key()).([]*telemetrytypes.TelemetryFieldKey)
+	keys := v.Visit(ctx.Key()).([]telemetrytypes.TelemetryFieldKey)
 
 	// Handle EXISTS specially
 	if ctx.EXISTS() != nil {
@@ -413,8 +415,9 @@ func (v *whereClauseVisitor) VisitValueList(ctx *grammar.ValueListContext) any {
 // VisitFullText handles standalone quoted strings for full-text search
 func (v *whereClauseVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
 	// remove quotes from the quotedText
+	// TODO(srikanthccv): check for the existance of fullTextColumn
 	quotedText := strings.Trim(ctx.QUOTED_TEXT().GetText(), "\"'")
-	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, quotedText, v.builder)
+	cond, err := v.conditionBuilder.ConditionFor(context.Background(), *v.fullTextColumn, qbtypes.FilterOperatorRegexp, quotedText, v.builder)
 	if err != nil {
 		return ""
 	}
@@ -453,7 +456,7 @@ func (v *whereClauseVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext)
 		return ""
 	}
 
-	keys, ok := params[0].([]*telemetrytypes.TelemetryFieldKey)
+	keys, ok := params[0].([]telemetrytypes.TelemetryFieldKey)
 	if !ok {
 		v.errors = append(v.errors, errors.Newf(
 			errors.TypeInvalidInput,
@@ -567,7 +570,7 @@ func (v *whereClauseVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	// Since it will ORed with the fieldKeysForName, it will not result empty
 	// when either of them have values
 	if strings.HasPrefix(fieldKey.Name, v.jsonBodyPrefix) && v.jsonBodyPrefix != "" {
-		fieldKeysForName = append(fieldKeysForName, &fieldKey)
+		fieldKeysForName = append(fieldKeysForName, fieldKey)
 	}
 
 	// TODO(srikanthccv): do we want to return an error here?
@@ -583,9 +586,7 @@ func (v *whereClauseVisitor) VisitKey(ctx *grammar.KeyContext) any {
 
 	if len(fieldKeysForName) > 1 {
 		// this is warning state, we must have a unambiguous key
-		v.warnings = append(v.warnings, errors.Newf(
-			errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
+		v.warnings = append(v.warnings, fmt.Sprintf(
 			"key `%s` is ambiguous, found %d different combinations of field context and data type: %v",
 			fieldKey.Name,
 			len(fieldKeysForName),

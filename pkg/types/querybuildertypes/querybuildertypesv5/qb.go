@@ -15,25 +15,27 @@ var (
 	ErrInValues       = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) in operator requires a list of values")
 )
 
+type JsonKeyToFieldFunc func(context.Context, telemetrytypes.TelemetryFieldKey, FilterOperator, any) (string, any)
+
 // FieldMapper maps the telemetry field key to the table field name.
 type FieldMapper interface {
 	// FieldFor returns the field name for the given key.
-	FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error)
+	FieldFor(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (string, error)
 	// ColumnFor returns the column for the given key.
-	ColumnFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error)
+	ColumnFor(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (*schema.Column, error)
 	// ColumnExpressionFor returns the column expression for the given key.
-	ColumnExpressionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
+	ColumnExpressionFor(ctx context.Context, key telemetrytypes.TelemetryFieldKey, keys map[string][]telemetrytypes.TelemetryFieldKey) (string, error)
 }
 
 // ConditionBuilder builds the condition for the filter.
 type ConditionBuilder interface {
 	// ConditionFor returns the condition for the given key, operator and value.
-	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+	ConditionFor(ctx context.Context, key telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
 }
 
 type Compiler interface {
 	// Compile compiles the filter into a sqlbuilder.WhereClause.
-	Compile(ctx context.Context, filter string) (*sqlbuilder.WhereClause, []error, error)
+	Compile(ctx context.Context, filter string) (*sqlbuilder.WhereClause, []string, error)
 }
 
 type AggExprRewriter interface {
@@ -44,12 +46,5 @@ type AggExprRewriter interface {
 // StatementBuilder builds the query.
 type StatementBuilder interface {
 	// Build builds the query.
-	Build(ctx context.Context, query any) (string, []any, error)
-}
-
-// QueryBuilder is the interface for building the query.
-type QueryBuilder interface {
-	FieldMapper
-	ConditionBuilder
-	StatementBuilder
+	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery) (string, []any, error)
 }

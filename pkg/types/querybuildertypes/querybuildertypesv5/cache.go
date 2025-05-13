@@ -1,4 +1,4 @@
-package queryenginetypes
+package querybuildertypesv5
 
 // BucketCache is the only thing orchestrator cares about.
 type BucketCache interface {

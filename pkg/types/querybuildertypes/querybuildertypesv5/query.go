@@ -1,23 +1,29 @@
-package queryenginetypes
+package querybuildertypesv5
 
-import "context"
+import (
+	"context"
+)
 
 type Query interface {
 	// Fingerprint must return a deterministic key that uniquely identifies
 	//   (query-text, params, step, etc..) but *not* the time range.
 	Fingerprint() string
 	// Window returns [from, to) in epoch‑ms so cache can slice/merge.
-	Window() (startMS, endMS int64)
+	Window() (startMS, endMS uint64)
 	// Execute runs the query; implementors must be side‑effect‑free.
 	Execute(ctx context.Context) (Result, error)
 }
 
 type Result struct {
-	Shape ResultShape // neutral data shape
-	Value any         // concrete Go value (see table below)
+	Type  RequestType
+	Value any // concrete Go value (see table below)
 	Stats ExecStats
 }
 
-type ExecStats struct{}
+type ExecStats struct {
+	RowsScanned  int64 `json:"rowsScanned"`
+	BytesScanned int64 `json:"bytesScanned"`
+	DurationMS   int64 `json:"durationMS"`
+}
 
-type TimeRange struct{ From, To int64 } // ms since epoch
+type TimeRange struct{ From, To uint64 } // ms since epoch

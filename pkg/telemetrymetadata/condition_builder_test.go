@@ -13,7 +13,7 @@ import (
 
 func TestGetCondition(t *testing.T) {
 	ctx := context.Background()
-	conditionBuilder := NewConditionBuilder()
+	conditionBuilder := NewConditionBuilder(NewFieldMapper())
 
 	testCases := []struct {
 		name          string
@@ -53,7 +53,7 @@ func TestGetCondition(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.GetCondition(ctx, &tc.key, tc.operator, tc.value, sb)
+			cond, err := conditionBuilder.ConditionFor(ctx, tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

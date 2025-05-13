@@ -14,7 +14,7 @@ type CompilerOptions struct {
 	ConditionBuilder qbtypes.ConditionBuilder
 	FullTextColumn   *telemetrytypes.TelemetryFieldKey
 	JsonBodyPrefix   string
-	JsonKeyToKey     func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any)
+	JsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 }
 
 func NewCompiler(opts CompilerOptions) qbtypes.Compiler {
@@ -34,10 +34,10 @@ type compiler struct {
 	conditionBuilder qbtypes.ConditionBuilder
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
 	jsonBodyPrefix   string
-	jsonKeyToKey     func(context.Context, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) (string, any)
+	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 }
 
-func (c *compiler) Compile(ctx context.Context, query string) (*sqlbuilder.WhereClause, []error, error) {
+func (c *compiler) Compile(ctx context.Context, query string) (*sqlbuilder.WhereClause, []string, error) {
 	keysSelectors, err := QueryStringToKeysSelectors(query)
 	if err != nil {
 		return nil, nil, err

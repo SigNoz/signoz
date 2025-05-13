@@ -1,12 +1,44 @@
 package querybuildertypesv5
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+type Step struct{ time.Duration }
+
+func (s *Step) UnmarshalJSON(b []byte) error {
+	if len(b) == 0 {
+		return nil
+	}
+	if b[0] == '"' { // "15s", "1m", ISO‑8601
+		var str string
+		if err := json.Unmarshal(b, &str); err != nil {
+			return err
+		}
+		d, err := time.ParseDuration(str)
+		if err != nil {
+			return err
+		}
+		s.Duration = d
+		return nil
+	}
+	var sec float64 // 30 → 30 s ; 0.5 → 500 ms
+	if err := json.Unmarshal(b, &sec); err != nil {
+		return err
+	}
+	s.Duration = time.Duration(sec * float64(time.Second))
+	return nil
+}
+
+func (s Step) MarshalJSON() ([]byte, error) {
+	// Emit human‑friendly string → "30s" not 30000000000
+	return json.Marshal(s.Duration.String())
+}
 
 // FilterOperator is the operator for the filter.
 type FilterOperator int
@@ -112,7 +144,7 @@ type OrderBy struct {
 type SecondaryAggregation struct {
 	// stepInterval of the query
 	// if not set, it will use the step interval of the primary aggregation
-	StepInterval time.Duration `json:"stepInterval,omitempty"`
+	StepInterval Step `json:"stepInterval,omitempty"`
 	// expression to aggregate. exmple: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
 	// if any, it will be used as the alias of the aggregation in the result

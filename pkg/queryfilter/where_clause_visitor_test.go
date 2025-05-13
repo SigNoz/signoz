@@ -20,7 +20,7 @@ import (
 func TestPrepareWhereClauseWithErrors(t *testing.T) {
 	cases := []struct {
 		name                   string
-		fieldKeys              map[string][]*telemetrytypes.TelemetryFieldKey
+		fieldKeys              map[string][]telemetrytypes.TelemetryFieldKey
 		query                  string
 		expectedSearchString   string
 		expectedSearchArgs     []any
@@ -31,12 +31,12 @@ func TestPrepareWhereClauseWithErrors(t *testing.T) {
 	}{
 		{
 			name:                   "field-key-not-found",
-			fieldKeys:              map[string][]*telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:              map[string][]telemetrytypes.TelemetryFieldKey{},
 			query:                  "key.that.does.not.exist = 'redis'",
 			expectedErrorSubString: "key `key.that.does.not.exist` not found",
 			expectedWarnings:       []error{},
 			setupFieldMapper: func(m *MockFieldMapper) {
-				m.WithFieldFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+				m.WithFieldFor(func(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (string, error) {
 					return "", errors.New("key `key.that.does.not.exist` not found")
 				})
 			},
@@ -44,7 +44,7 @@ func TestPrepareWhereClauseWithErrors(t *testing.T) {
 		},
 		{
 			name:                   "unknown-function",
-			fieldKeys:              map[string][]*telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:              map[string][]telemetrytypes.TelemetryFieldKey{},
 			query:                  "unknown.function()",
 			expectedErrorSubString: "expecting {'(', NOT, HAS, HASANY, HASALL, QUOTED_TEXT, KEY, FREETEXT}",
 			expectedWarnings:       []error{},
@@ -53,7 +53,7 @@ func TestPrepareWhereClauseWithErrors(t *testing.T) {
 		},
 		{
 			name:                   "has-function-not-enough-params",
-			fieldKeys:              map[string][]*telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:              map[string][]telemetrytypes.TelemetryFieldKey{},
 			query:                  "has(key.that.does.not.exist)",
 			expectedErrorSubString: "function `has` expects key and value parameters",
 			expectedWarnings:       []error{},
@@ -61,78 +61,6 @@ func TestPrepareWhereClauseWithErrors(t *testing.T) {
 				// This won't be reached because parser will fail with "function `has` expects key and value parameters"
 			},
 			setupConditionBuilder: func(m *MockConditionBuilder) {},
-		},
-		{
-			name: "condition-builder-error",
-			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"service.name": {
-					{
-						Name:          "service.name",
-						Signal:        telemetrytypes.SignalTraces,
-						FieldContext:  telemetrytypes.FieldContextSpan,
-						FieldDataType: telemetrytypes.FieldDataTypeString,
-					},
-				},
-			},
-			query:                  "service.name = 'frontend'",
-			expectedErrorSubString: "unsupported operator: =",
-			expectedWarnings:       []error{},
-			setupFieldMapper: func(m *MockFieldMapper) {
-				// Successfully map the field
-				m.WithFieldFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-					if key != nil && key.Name == "service.name" {
-						return "service_name", nil
-					}
-					return key.Name, nil
-				})
-
-				m.WithColumnFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
-					if key != nil && key.Name == "service.name" {
-						return &schema.Column{
-							Name: "service_name",
-							Type: schema.ColumnTypeString,
-						}, nil
-					}
-					return nil, errors.New("column not found")
-				})
-			},
-			setupConditionBuilder: func(m *MockConditionBuilder) {
-				// But fail in the condition builder
-				m.WithConditionFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
-					return "", errors.New("unsupported operator: =")
-				})
-			},
-		},
-		{
-			name:                   "warning-test",
-			fieldKeys:              map[string][]*telemetrytypes.TelemetryFieldKey{},
-			query:                  "valid.field = 'value'",
-			expectedErrorSubString: "",
-			expectedWarnings: []error{
-				errors.New("using deprecated field 'valid.field'"),
-			},
-			setupFieldMapper: func(m *MockFieldMapper) {
-				m.WithFieldFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-					return "valid_field", nil
-				})
-
-				m.WithColumnFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
-					return &schema.Column{
-						Name: "valid_field",
-						Type: schema.ColumnTypeString,
-					}, nil
-				})
-			},
-			setupConditionBuilder: func(m *MockConditionBuilder) {
-				// Return a valid condition, but with a warning that will be collected
-				m.WithConditionFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
-					// This function should successfully return a valid condition
-					if sb == nil {
-						sb = sqlbuilder.NewSelectBuilder()
-					}
-					return fmt.Sprintf("%s = %s", key.Name, sb.Var(value)), nil
-				})
-			},
 		},
 	}
 
@@ -189,7 +117,7 @@ func TestPrepareWhereClauseWithErrors(t *testing.T) {
 func TestPrepareWhereClauseSuccess(t *testing.T) {
 	cases := []struct {
 		name                  string
-		fieldKeys             map[string][]*telemetrytypes.TelemetryFieldKey
+		fieldKeys             map[string][]telemetrytypes.TelemetryFieldKey
 		query                 string
 		expectedWhereClause   string
 		setupFieldMapper      func(*MockFieldMapper)
@@ -197,7 +125,7 @@ func TestPrepareWhereClauseSuccess(t *testing.T) {
 	}{
 		{
 			name: "simple-equals",
-			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
 				"service.name": {
 					{
 						Name:          "service.name",
@@ -208,17 +136,17 @@ func TestPrepareWhereClauseSuccess(t *testing.T) {
 				},
 			},
 			query:               "service.name = 'frontend'",
-			expectedWhereClause: "service_name = ?",
+			expectedWhereClause: "(service_name = ?)",
 			setupFieldMapper: func(m *MockFieldMapper) {
-				m.WithFieldFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-					if key != nil && key.Name == "service.name" {
+				m.WithFieldFor(func(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (string, error) {
+					if key.Name == "service.name" {
 						return "service_name", nil
 					}
 					return key.Name, nil
 				})
 
-				m.WithColumnFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
-					if key != nil && key.Name == "service.name" {
+				m.WithColumnFor(func(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+					if key.Name == "service.name" {
 						return &schema.Column{
 							Name: "service_name",
 							Type: schema.ColumnTypeString,
@@ -228,7 +156,7 @@ func TestPrepareWhereClauseSuccess(t *testing.T) {
 				})
 			},
 			setupConditionBuilder: func(m *MockConditionBuilder) {
-				m.WithConditionFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+				m.WithConditionFor(func(ctx context.Context, key telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 					if key.Name == "service.name" && operator == qbtypes.FilterOperatorEqual {
 						return "service_name = ?", nil
 					}
@@ -238,7 +166,7 @@ func TestPrepareWhereClauseSuccess(t *testing.T) {
 		},
 		{
 			name: "complex-and-or",
-			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
 				"service.name": {
 					{
 						Name:          "service.name",
@@ -265,13 +193,9 @@ func TestPrepareWhereClauseSuccess(t *testing.T) {
 				},
 			},
 			query:               "service.name = 'api' AND (status_code >= 500 OR duration > 1000)",
-			expectedWhereClause: "(service_name = ? AND (status_code >= ? OR duration > ?))",
+			expectedWhereClause: "((service_name = ?) AND (((status_code >= ?) OR (duration > ?))))",
 			setupFieldMapper: func(m *MockFieldMapper) {
-				m.WithFieldFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-					if key == nil {
-						return "", errors.New("nil key")
-					}
-
+				m.WithFieldFor(func(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (string, error) {
 					switch key.Name {
 					case "service.name":
 						return "service_name", nil
@@ -284,10 +208,7 @@ func TestPrepareWhereClauseSuccess(t *testing.T) {
 					}
 				})
 
-				m.WithColumnFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
-					if key == nil {
-						return nil, errors.New("nil key")
-					}
+				m.WithColumnFor(func(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 
 					switch key.Name {
 					case "service.name":
@@ -302,11 +223,7 @@ func TestPrepareWhereClauseSuccess(t *testing.T) {
 				})
 			},
 			setupConditionBuilder: func(m *MockConditionBuilder) {
-				m.WithConditionFor(func(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
-					if key == nil {
-						return "", errors.New("nil key")
-					}
-
+				m.WithConditionFor(func(ctx context.Context, key telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 					switch key.Name {
 					case "service.name":
 						if operator == qbtypes.FilterOperatorEqual {

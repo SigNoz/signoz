@@ -1,8 +1,6 @@
 package querybuildertypesv5
 
 import (
-	"time"
-
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -15,30 +13,30 @@ type QueryBuilderQuery struct {
 	Name string `json:"name"`
 
 	// stepInterval of the query
-	StepInterval time.Duration `json:"stepInterval,omitempty"`
+	StepInterval Step `json:"stepInterval,omitempty"`
 
 	// signal to query
 	Signal telemetrytypes.Signal `json:"signal,omitempty"`
 
 	// we want to support multiple aggregations
-	Aggregations []*Aggregation `json:"aggregations,omitempty"`
+	Aggregations []Aggregation `json:"aggregations,omitempty"`
 
 	// disabled if true, the query will not be executed
 	Disabled bool `json:"disabled,omitempty"`
 
-	MetricAggregations []*MetricAggregation `json:"metricAggregations,omitempty"`
+	MetricAggregations []MetricAggregation `json:"metricAggregations,omitempty"`
 
 	// search query is simple string
 	Filter *Filter `json:"filter,omitempty"`
 
 	// group by keys to group by
-	GroupBy []*GroupByKey `json:"groupBy,omitempty"`
+	GroupBy []GroupByKey `json:"groupBy,omitempty"`
 
 	// order by keys and directions
-	Order []*OrderBy `json:"order,omitempty"`
+	Order []OrderBy `json:"order,omitempty"`
 
 	// select columns to select
-	SelectFields []*telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
 
 	// limit the maximum number of rows to return
 	Limit int `json:"limit,omitempty"`
@@ -58,9 +56,9 @@ type QueryBuilderQuery struct {
 
 	// secondary aggregation to apply to the query
 	// on top of the primary aggregation
-	SecondaryAggregations []*SecondaryAggregation `json:"secondaryAggregations,omitempty"`
+	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitempty"`
 
-	Functions []*Function `json:"functions,omitempty"`
+	Functions []Function `json:"functions,omitempty"`
 
 	Legend string `json:"legend,omitempty"`
 }

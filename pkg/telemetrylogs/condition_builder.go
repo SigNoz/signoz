@@ -22,7 +22,7 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
-	key *telemetrytypes.TelemetryFieldKey,
+	key telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -116,7 +116,6 @@ func (c *conditionBuilder) ConditionFor(
 		return sb.NotIn(tblFieldName, values...), nil
 
 	// exists and not exists
-	// but how could you live and have no story to tell
 	// in the UI based query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:

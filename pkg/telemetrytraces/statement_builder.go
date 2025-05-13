@@ -9,7 +9,7 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-type TraceQueryStatementBuilderOptions struct {
+type TraceQueryStatementBuilderOpts struct {
 	MetadataStore    telemetrytypes.MetadataStore
 	FieldMapper      qbv5.FieldMapper
 	ConditionBuilder qbv5.ConditionBuilder
@@ -18,7 +18,7 @@ type TraceQueryStatementBuilderOptions struct {
 }
 
 type traceQueryStatementBuilder struct {
-	opts            TraceQueryStatementBuilderOptions
+	opts            TraceQueryStatementBuilderOpts
 	fm              qbv5.FieldMapper
 	cb              qbv5.ConditionBuilder
 	compiler        qbv5.Compiler
@@ -27,7 +27,7 @@ type traceQueryStatementBuilder struct {
 
 var _ qbv5.StatementBuilder = (*traceQueryStatementBuilder)(nil)
 
-func NewTraceQueryStatementBuilder(opts TraceQueryStatementBuilderOptions) *traceQueryStatementBuilder {
+func NewTraceQueryStatementBuilder(opts TraceQueryStatementBuilderOpts) *traceQueryStatementBuilder {
 	return &traceQueryStatementBuilder{
 		opts:            opts,
 		fm:              opts.FieldMapper,
@@ -40,36 +40,35 @@ func NewTraceQueryStatementBuilder(opts TraceQueryStatementBuilderOptions) *trac
 // Build builds a SQL query for traces based on the given parameters
 func (b *traceQueryStatementBuilder) Build(
 	ctx context.Context,
-	query any,
+	start uint64,
+	end uint64,
+	requestType qbv5.RequestType,
+	query qbv5.QueryBuilderQuery,
 ) (string, []any, error) {
 
 	// Create SQL builder
-	builder := sqlbuilder.ClickHouse.NewSelectBuilder()
+	q := sqlbuilder.ClickHouse.NewSelectBuilder()
 
-	switch panelType {
-	case qbv5.PanelTypeList:
-		return b.buildListQuery(builder, query, start, end)
-	case qbv5.PanelTypeLine, qbv5.PanelTypeBar:
-		return b.buildTimeSeriesQuery(builder, query, start, end)
-	case qbv5.PanelTypeTable:
-		return b.buildTableQuery(builder, query, start, end)
-	case qbv5.PanelTypeNumber:
-		return b.buildNumberQuery(builder, query, start, end)
-	case qbv5.PanelTypeTrace:
-		return b.buildTraceQuery(builder, query, start, end)
-	default:
-		return "", nil, fmt.Errorf("unsupported panel type: %s", panelType)
+	switch requestType {
+	case qbv5.RequestTypeEvents:
+		return b.buildListQuery(q, query, start, end)
+	case qbv5.RequestTypeTimeSeries:
+		return b.buildTimeSeriesQuery(q, query, start, end)
+	case qbv5.RequestTypeScalar:
+		return b.buildScalarQuery(q, query, start, end)
 	}
+
+	return "", nil, fmt.Errorf("unsupported request type: %s", requestType)
 }
 
 // buildListQuery builds a query for list panel type
 func (b *traceQueryStatementBuilder) buildListQuery(
 	sb *sqlbuilder.SelectBuilder,
-	query *qbv5.QueryBuilderQuery,
-	start, end int64,
+	query qbv5.QueryBuilderQuery,
+	start, end uint64,
 ) (string, []any, error) {
 
-	keys := map[string][]*telemetrytypes.TelemetryFieldKey{}
+	keys := map[string][]telemetrytypes.TelemetryFieldKey{}
 
 	// Select default columns
 	sb.Select(
@@ -118,19 +117,19 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 // buildTimeSeriesQuery builds a query for time series panel types
 func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	sb *sqlbuilder.SelectBuilder,
-	query *qbv5.QueryBuilderQuery,
-	start, end int64,
+	query qbv5.QueryBuilderQuery,
+	start, end uint64,
 ) (string, []any, error) {
 
 	allAggChArgs := []any{}
-	keys := map[string][]*telemetrytypes.TelemetryFieldKey{}
+	keys := map[string][]telemetrytypes.TelemetryFieldKey{}
 
 	// Select time bucket
 	sb.SelectMore(fmt.Sprintf("toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts", int64(query.StepInterval.Seconds())))
 
 	// Add group by columns
 	for _, groupBy := range query.GroupBy {
-		colName, err := b.fm.ColumnExpressionFor(context.Background(), &groupBy.TelemetryFieldKey, keys)
+		colName, err := b.fm.ColumnExpressionFor(context.Background(), groupBy.TelemetryFieldKey, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -169,18 +168,18 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 }
 
 // buildTableQuery builds a query for table panel type
-func (b *traceQueryStatementBuilder) buildTableQuery(
+func (b *traceQueryStatementBuilder) buildScalarQuery(
 	sb *sqlbuilder.SelectBuilder,
-	query *qbv5.QueryBuilderQuery,
-	start, end int64,
+	query qbv5.QueryBuilderQuery,
+	start, end uint64,
 ) (string, []any, error) {
 
 	allAggChArgs := []any{}
-	keys := map[string][]*telemetrytypes.TelemetryFieldKey{}
+	keys := map[string][]telemetrytypes.TelemetryFieldKey{}
 
 	// Add group by columns
 	for _, groupBy := range query.GroupBy {
-		colName, err := b.fm.ColumnExpressionFor(context.Background(), &groupBy.TelemetryFieldKey, keys)
+		colName, err := b.fm.ColumnExpressionFor(context.Background(), groupBy.TelemetryFieldKey, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -232,49 +231,17 @@ func (b *traceQueryStatementBuilder) buildTableQuery(
 	return sqlQuery, chArgs, nil
 }
 
-// buildNumberQuery builds a query for number panel type
-func (b *traceQueryStatementBuilder) buildNumberQuery(
-	sb *sqlbuilder.SelectBuilder,
-	query *qbv5.QueryBuilderQuery,
-	start, end int64,
-) (string, []any, error) {
-
-	allAggChArgs := []any{}
-
-	// Add aggregation
-	if len(query.Aggregations) > 0 {
-		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(context.Background(), query.Aggregations[0].Expression)
-		if err != nil {
-			return "", nil, err
-		}
-		allAggChArgs = append(allAggChArgs, chArgs...)
-		sb.SelectMore(fmt.Sprintf("%s AS __result_0", rewritten))
-	}
-
-	// From table
-	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
-
-	// Add filter conditions
-	err := b.addFilterCondition(sb, start, end, query)
-	if err != nil {
-		return "", nil, err
-	}
-
-	sqlQuery, chArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
-	return sqlQuery, chArgs, nil
-}
-
 // buildTraceQuery builds a query for trace panel type
 func (b *traceQueryStatementBuilder) buildTraceQuery(
 	sb *sqlbuilder.SelectBuilder,
-	query *qbv5.QueryBuilderQuery,
+	query qbv5.QueryBuilderQuery,
 	start, end int64,
 ) (string, []any, error) {
 	return "", nil, nil
 }
 
 // buildFilterCondition builds SQL condition from filter expression
-func (b *traceQueryStatementBuilder) addFilterCondition(sb *sqlbuilder.SelectBuilder, start, end int64, query *qbv5.QueryBuilderQuery) error {
+func (b *traceQueryStatementBuilder) addFilterCondition(sb *sqlbuilder.SelectBuilder, start, end uint64, query qbv5.QueryBuilderQuery) error {
 
 	// add filter expression
 
