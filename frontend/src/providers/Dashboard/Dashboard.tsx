@@ -13,13 +13,13 @@ import useAxiosError from 'hooks/useAxiosError';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
 import omitBy from 'lodash-es/omitBy';
 import { useAppContext } from 'providers/App/App';
+import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import {
 	createContext,
 	PropsWithChildren,
@@ -194,7 +194,11 @@ export function DashboardProvider({
 		updateLocalStorageDashboardVariables,
 	} = useDashboardVariablesFromLocalStorage(dashboardId);
 
-	const { getUrlVariables, updateUrlVariable } = useVariablesFromUrl();
+	const {
+		getUrlVariables,
+		updateUrlVariable,
+		clearUrlVariables,
+	} = useVariablesFromUrl();
 
 	const updatedTimeRef = useRef<Dayjs | null>(null); // Using ref to store the updated time
 	const modalRef = useRef<any>(null);
@@ -205,6 +209,14 @@ export function DashboardProvider({
 	const dashboardRef = useRef<Dashboard>();
 
 	const [isDashboardFetching, setIsDashboardFetching] = useState<boolean>(false);
+
+	// Clear variable configs when not on dashboard pages
+	useEffect(() => {
+		const isOnDashboardPage = !!isDashboardPage || !!isDashboardWidgetPage;
+		if (!isOnDashboardPage) {
+			clearUrlVariables();
+		}
+	}, [isDashboardPage, isDashboardWidgetPage, clearUrlVariables]);
 
 	const mergeDBWithLocalStorage = (
 		data: Dashboard,
@@ -298,18 +310,7 @@ export function DashboardProvider({
 				// if the url variable is not set for any variable, set it to the default value
 				const variables = data?.data?.variables;
 				if (variables) {
-					Object.keys(variables).forEach((key) => {
-						if (!getUrlVariables()?.[key]) {
-							const varData = variables[key];
-							updateUrlVariable(
-								variables[key].id,
-								varData.type === 'CUSTOM'
-									? commaValuesParser(varData?.customValue || '')
-									: varData?.selectedValue || varData?.defaultValue,
-								varData?.allSelected || false,
-							); // TODO: Sagar to add the default value here
-						}
-					});
+					initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
 				}
 
 				const updatedDashboardData = transformDashboardVariables(data);

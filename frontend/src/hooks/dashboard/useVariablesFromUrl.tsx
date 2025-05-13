@@ -19,6 +19,7 @@ interface UseVariablesFromUrlReturn {
 		selectedValue: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
 	) => void;
+	clearUrlVariables: () => void;
 }
 
 const useVariablesFromUrl = (): UseVariablesFromUrlReturn => {
@@ -62,6 +63,15 @@ const useVariablesFromUrl = (): UseVariablesFromUrlReturn => {
 		[history, urlQuery],
 	);
 
+	const clearUrlVariables = useCallback((): void => {
+		const params = new URLSearchParams(urlQuery.toString());
+		params.delete(QueryParams.variableConfigs);
+
+		history.replace({
+			search: params.toString(),
+		});
+	}, [history, urlQuery]);
+
 	const updateUrlVariable = useCallback(
 		(
 			id: string,
@@ -84,6 +94,7 @@ const useVariablesFromUrl = (): UseVariablesFromUrlReturn => {
 		getUrlVariables,
 		setUrlVariables,
 		updateUrlVariable,
+		clearUrlVariables,
 	};
 };
 
