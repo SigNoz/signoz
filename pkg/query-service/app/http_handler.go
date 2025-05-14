@@ -2017,6 +2017,11 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
+	if aH.SetupCompleted {
+		RespondError(w, &model.ApiError{Err: errors.New("self-registration is disabled"), Typ: model.ErrorBadData}, nil)
+		return
+	}
+
 	var req types.PostableRegisterOrgAndAdmin
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorBadData}, nil)

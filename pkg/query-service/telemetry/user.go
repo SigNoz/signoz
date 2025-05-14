@@ -39,9 +39,8 @@ func GetUsersWithOpts(ctx context.Context, limit int, sqlstore sqlstore.SQLStore
 		query.Limit(limit)
 	}
 	err := query.Scan(ctx, &users)
-
 	if err != nil {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, err.Error())
+		return nil, errors.WrapNotFoundf(err, errors.CodeNotFound, "failed to get users")
 	}
 	return users, nil
 }

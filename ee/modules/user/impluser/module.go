@@ -159,7 +159,7 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 	}
 
 	// the EE handler wrapper passes the feature flag value in context
-	ssoAvailable, ok := ctx.Value("ssoAvailable").(bool)
+	ssoAvailable, ok := ctx.Value(types.SSOAvailable).(bool)
 	if !ok {
 		zap.L().Error("failed to retrieve ssoAvailable from context")
 		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to retrieve SSO availability")

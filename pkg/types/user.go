@@ -2,12 +2,17 @@ package types
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"
+)
+
+const (
+	SSOAvailable = "sso_available"
 )
 
 var (
@@ -113,7 +118,7 @@ type PostableAcceptInvite struct {
 	Password    string `json:"password"`
 
 	// reference URL to track where the register request is coming from
-	SourceUrl string `json:"sourceUrl"`
+	SourceURL string `json:"sourceUrl"`
 }
 
 func (p *PostableAcceptInvite) Validate() error {
@@ -143,6 +148,8 @@ func NewFactorPassword(password string) (*FactorPassword, error) {
 	if password == "" && len(password) < 8 {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password must be at least 8 characters long")
 	}
+
+	password = strings.TrimSpace(password)
 
 	hashedPassword, err := HashPassword(password)
 	if err != nil {

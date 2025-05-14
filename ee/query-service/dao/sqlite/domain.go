@@ -44,7 +44,7 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 		}
 
 		domain, err = m.GetDomain(ctx, domainId)
-		if (err != nil) || domain == nil {
+		if err != nil {
 			zap.L().Error("failed to find domain from domainId received in IdP response", zap.Error(err))
 			return nil, fmt.Errorf("invalid credentials")
 		}
