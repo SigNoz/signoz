@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import {
 	autocompletion,
 	closeCompletion,
@@ -58,17 +59,7 @@ function HavingFilter(): JSX.Element {
 	const { aggregationOptions } = useQueryBuilderV2Context();
 	const [input, setInput] = useState('');
 
-	const [cursorPos, setCursorPos] = useState(0);
-
 	const editorRef = useRef<EditorView | null>(null);
-
-	console.log('cursorPos', cursorPos);
-
-	// Update cursor position on every editor update
-	const handleUpdate = (update: { view: EditorView }): void => {
-		const pos = update.view.state.selection.main.from;
-		setCursorPos(pos);
-	};
 
 	const [options, setOptions] = useState<{ label: string; value: string }[]>([]);
 
@@ -146,6 +137,17 @@ function HavingFilter(): JSX.Element {
 								openCount > closeCount ? [closeBrace, ...conjunctions] : conjunctions,
 						};
 					}
+					// Suggest conjunctions after a closing parenthesis and a space
+					if (
+						tokens.length > 0 &&
+						tokens[tokens.length - 1] === ')' &&
+						text.endsWith(' ')
+					) {
+						return {
+							from: context.pos,
+							options: conjunctions,
+						};
+					}
 					return null;
 				},
 			],
@@ -182,7 +184,6 @@ function HavingFilter(): JSX.Element {
 						autocompletion: true,
 						completionKeymap: true,
 					}}
-					onUpdate={handleUpdate}
 					ref={editorRef}
 				/>
 			</div>
