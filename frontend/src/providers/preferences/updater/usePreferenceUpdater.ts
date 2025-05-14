@@ -9,7 +9,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { DataSource } from 'types/common/queryBuilder';
 
 import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';
-import tracesUpdater from '../configs/tracesUpdaterConfig';
+import getTracesUpdaterConfig from '../configs/tracesUpdaterConfig';
 import { FormattingOptions, Preferences } from '../types';
 
 const metricsUpdater = {
@@ -31,7 +31,10 @@ const getUpdaterConfig = (
 		redirectWithOptionsData,
 		setSavedViewPreferences,
 	),
-	[DataSource.TRACES]: tracesUpdater,
+	[DataSource.TRACES]: getTracesUpdaterConfig(
+		redirectWithOptionsData,
+		setSavedViewPreferences,
+	),
 	[DataSource.METRICS]: metricsUpdater,
 });
 

@@ -29,10 +29,11 @@ const getLogsUpdaterConfig = (
 		}
 
 		if (mode === 'direct') {
-			// redirectWithOptionsData({
-			// 	...defaultOptionsQuery,
-			// 	selectColumns: newColumns,
-			// });
+			// just need to update the columns see for remove props
+			redirectWithOptionsData({
+				...defaultOptionsQuery,
+				selectColumns: newColumns,
+			});
 
 			// Also update local storage
 			const local = JSON.parse(

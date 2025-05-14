@@ -1,4 +1,5 @@
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
+import { defaultSelectedColumns as defaultTracesSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -24,6 +25,7 @@ export function usePreferenceSync({
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
 	const { data: viewsData } = useGetAllViews(dataSource);
+
 	const [
 		savedViewPreferences,
 		setSavedViewPreferences,
@@ -35,6 +37,10 @@ export function usePreferenceSync({
 		)?.extraData;
 
 		const parsedExtraData = JSON.parse(extraData || '{}');
+		console.log('uncaught extraData', {
+			extraData,
+			parsedExtraData,
+		});
 		let columns: BaseAutocompleteData[] = [];
 		let formatting: FormattingOptions | undefined;
 		if (dataSource === DataSource.LOGS) {
@@ -46,6 +52,9 @@ export function usePreferenceSync({
 				version: parsedExtraData?.version ?? 1,
 			};
 		}
+		if (dataSource === DataSource.TRACES) {
+			columns = parsedExtraData?.selectColumns || defaultTracesSelectedColumns;
+		}
 		setSavedViewPreferences({ columns, formatting });
 	}, [viewsData, dataSource, savedViewId, mode]);
 
@@ -53,8 +62,6 @@ export function usePreferenceSync({
 	// and we want to make sure we are always using the latest preferences
 	const [reSync, setReSync] = useState(0);
 	const { preferences, loading, error } = usePreferenceLoader({
-		mode,
-		savedViewId: savedViewId || '',
 		dataSource,
 		reSync,
 	});

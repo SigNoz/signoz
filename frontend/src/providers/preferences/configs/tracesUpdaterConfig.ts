@@ -1,17 +1,41 @@
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
+import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
+import { Dispatch, SetStateAction } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
+import { Preferences } from '../types';
+
 // --- TRACES preferences updater config ---
-const tracesUpdater = {
+const getTracesUpdaterConfig = (
+	redirectWithOptionsData: (options: OptionsQuery) => void,
+	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>,
+): {
+	updateColumns: (newColumns: BaseAutocompleteData[], mode: string) => void;
+	updateFormatting: () => void;
+} => ({
 	updateColumns: (newColumns: BaseAutocompleteData[], mode: string): void => {
-		const url = new URL(window.location.href);
-		const options = JSON.parse(url.searchParams.get('options') || '{}');
-		options.selectColumns = newColumns;
-		url.searchParams.set('options', JSON.stringify(options));
-		window.history.replaceState({}, '', url.toString());
+		// remove the formatting props
+		if (mode === 'savedView') {
+			setSavedViewPreferences({
+				columns: newColumns,
+				formatting: {
+					maxLines: 2,
+					format: 'table',
+					fontSize: 'small' as FontSize,
+					version: 1,
+				},
+			});
+		}
 
 		if (mode === 'direct') {
+			// just need to update the columns see for remove props
+			redirectWithOptionsData({
+				...defaultOptionsQuery,
+				selectColumns: newColumns,
+			});
+
 			const local = JSON.parse(
 				localStorage.getItem(LOCALSTORAGE.TRACES_LIST_OPTIONS) || '{}',
 			);
@@ -20,6 +44,6 @@ const tracesUpdater = {
 		}
 	},
 	updateFormatting: (): void => {}, // no-op for traces
-};
+});
 
-export default tracesUpdater;
+export default getTracesUpdaterConfig;

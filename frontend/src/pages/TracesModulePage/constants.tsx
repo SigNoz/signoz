@@ -4,9 +4,14 @@ import { Compass, Cone, TowerControl } from 'lucide-react';
 import SaveView from 'pages/SaveView';
 import TracesExplorer from 'pages/TracesExplorer';
 import TracesFunnels from 'pages/TracesFunnels';
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 
 export const tracesExplorer: TabRoutes = {
-	Component: TracesExplorer,
+	Component: (): JSX.Element => (
+		<PreferenceContextProvider>
+			<TracesExplorer />
+		</PreferenceContextProvider>
+	),
 	name: (
 		<div className="tab-item">
 			<Compass size={16} /> Explorer
