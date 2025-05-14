@@ -142,6 +142,7 @@ function DynamicVariable({
 		dynamicVariablesSelectedValue?.value,
 	]);
 
+	const errorMessage = (error as any)?.message;
 	return (
 		<div className="dynamic-variable-container">
 			<CustomSelect
@@ -151,14 +152,17 @@ function DynamicVariable({
 					value: key,
 				}))}
 				loading={isLoading}
-				status={error ? 'error' : undefined}
+				status={errorMessage ? 'error' : undefined}
 				onChange={(value): void => {
 					setSelectedAttribute(value);
 				}}
 				showSearch
-				errorMessage={error as any}
+				errorMessage={errorMessage as any}
 				value={selectedAttribute || dynamicVariablesSelectedValue?.name}
 				onSearch={handleSearch}
+				onRetry={(): void => {
+					refetch();
+				}}
 			/>
 			<Typography className="dynamic-variable-from-text">from</Typography>
 			<Select
