@@ -59,8 +59,8 @@ function PasswordContainer(): JSX.Element {
 		} catch (error) {
 			setIsLoading(false);
 			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
+				message: (error as APIError).error.error.code,
+				description: (error as APIError).error.error.message,
 			});
 		}
 	};
