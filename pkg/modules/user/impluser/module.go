@@ -1,4 +1,3 @@
-// this module is a WIP, don't take inspiration from this.
 package impluser
 
 import (
@@ -26,6 +25,7 @@ type Module struct {
 	JWT   *authtypes.JWT
 }
 
+// This module is a WIP, don't take inspiration from this.
 func NewModule(store types.UserStore) user.Module {
 	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
 	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)

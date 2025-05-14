@@ -80,11 +80,7 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
+	defer tx.Rollback()
 
 	if _, err := tx.NewCreateTable().
 		Model(new(factorPassword32)).
@@ -176,6 +172,15 @@ func (migration *authRefactor) CopyOldPasswordToNewPassword(ctx context.Context,
 		return nil
 	}
 
+	// check if password column exist in the users table.
+	exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "users", "password")
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return nil
+	}
+
 	// get all users from users table
 	existingUsers := make([]*existingUser32, 0)
 	err = tx.NewSelect().Model(&existingUsers).Scan(ctx)
@@ -196,9 +201,11 @@ func (migration *authRefactor) CopyOldPasswordToNewPassword(ctx context.Context,
 	}
 
 	// insert
-	_, err = tx.NewInsert().Model(&newPasswords).Exec(ctx)
-	if err != nil {
-		return err
+	if len(newPasswords) > 0 {
+		_, err = tx.NewInsert().Model(&newPasswords).Exec(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

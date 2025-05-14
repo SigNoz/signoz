@@ -109,16 +109,12 @@ func (s *Store) CreatePassword(ctx context.Context, password *types.FactorPasswo
 }
 
 func (s *Store) CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error) {
-	tx, err := s.sqlstore.BunDB().Begin()
+	tx, err := s.sqlstore.BunDB().BeginTx(ctx, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
 	}
 
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
+	defer tx.Rollback()
 
 	if _, err := tx.NewInsert().
 		Model(user).
@@ -306,13 +302,7 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
 	}
 
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		} else {
-			err = tx.Commit()
-		}
-	}()
+	defer tx.Rollback()
 
 	// get the password id
 
@@ -351,6 +341,11 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 		Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to commit transaction")
 	}
 
 	return nil
@@ -416,18 +411,12 @@ func (s *Store) GetFactorResetPassword(ctx context.Context, token string) (*type
 }
 
 func (s *Store) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error {
-	tx, err := s.sqlstore.BunDB().Begin()
+	tx, err := s.sqlstore.BunDB().BeginTx(ctx, nil)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
 	}
 
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		} else {
-			err = tx.Commit()
-		}
-	}()
+	defer tx.Rollback()
 
 	factorPassword := &types.FactorPassword{
 		UserID:   userID,
@@ -452,6 +441,11 @@ func (s *Store) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, u
 		Exec(ctx)
 	if err != nil {
 		return s.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token with password id: %s does not exist", userID)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to commit transaction")
 	}
 
 	return nil
