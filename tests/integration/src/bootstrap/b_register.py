@@ -42,7 +42,7 @@ def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
 
     assert response.status_code == HTTPStatus.OK
 
-    user_response = response.json()
+    user_response = response.json()["data"]
     found_user = next(
         (user for user in user_response if user["email"] == "admin@integration.test"),
         None,
@@ -72,13 +72,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         },
     )
 
-    assert response.status_code == HTTPStatus.OK
-
-    invite_response = response.json()
-    assert "email" in invite_response
-    assert "inviteToken" in invite_response
-
-    assert invite_response["email"] == "editor@integration.test"
+    assert response.status_code == HTTPStatus.CREATED
 
     # Register the editor user using the invite token
     response = requests.post(
@@ -124,7 +118,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
 
     assert response.status_code == HTTPStatus.OK
 
-    user_response = response.json()
+    user_response = response.json()["data"]
     found_user = next(
         (user for user in user_response if user["email"] == "editor@integration.test"),
         None,
@@ -187,7 +181,7 @@ def test_self_access(signoz: types.SigNoz, get_jwt_token) -> None:
 
     assert response.status_code == HTTPStatus.OK
 
-    user_response = response.json()
+    user_response = response.json()["data"]
     found_user = next(
         (user for user in user_response if user["email"] == "editor@integration.test"),
         None,
