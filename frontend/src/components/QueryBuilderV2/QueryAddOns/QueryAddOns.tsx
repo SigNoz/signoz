@@ -48,12 +48,10 @@ function QueryAddOns({
 	query,
 	version,
 	isListViewPanel,
-	selectedAggreateOptions,
 }: {
 	query: IBuilderQuery;
 	version: string;
 	isListViewPanel: boolean;
-	selectedAggreateOptions: { func: string; arg: string }[];
 }): JSX.Element {
 	const [selectedViews, setSelectedViews] = useState<AddOn[]>([]);
 
@@ -123,7 +121,6 @@ function QueryAddOns({
 					{selectedViews.find((view) => view.key === 'having') && (
 						<div className="add-on-content">
 							<HavingFilter
-								selectedAggreateOptions={selectedAggreateOptions}
 								onClose={(): void => {
 									setSelectedViews(
 										selectedViews.filter((view) => view.key !== 'having'),
