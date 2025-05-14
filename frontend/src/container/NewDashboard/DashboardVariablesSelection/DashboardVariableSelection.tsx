@@ -9,6 +9,7 @@ import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import DynamicVariableSelection from './DynamicVariableSelection';
 import {
 	buildDependencies,
 	buildDependencyGraph,
@@ -104,7 +105,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 		id: string,
 		value: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
-		// isMountedCall?: boolean,
+		haveCustomValuesSelected?: boolean,
 		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
 		if (id) {
@@ -121,6 +122,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 								...oldVariables[id],
 								selectedValue: value,
 								allSelected,
+								haveCustomValuesSelected,
 							};
 						}
 						if (oldVariables?.[name]) {
@@ -128,6 +130,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 								...oldVariables[name],
 								selectedValue: value,
 								allSelected,
+								haveCustomValuesSelected,
 							};
 						}
 						return {
@@ -170,22 +173,22 @@ function DashboardVariableSelection(): JSX.Element | null {
 	);
 
 	return (
-		<>
-			{dependencyData?.hasCycle && (
-				<Alert
-					message={`Circular dependency detected: ${dependencyData?.cycleNodes?.join(
-						' → ',
-					)}`}
-					type="error"
-					showIcon
-					className="cycle-error-alert"
-				/>
-			)}
-			<Row style={{ display: 'flex', gap: '12px' }}>
-				{orderBasedSortedVariables &&
-					Array.isArray(orderBasedSortedVariables) &&
-					orderBasedSortedVariables.length > 0 &&
-					orderBasedSortedVariables.map((variable) => (
+		<Row style={{ display: 'flex', gap: '12px' }}>
+			{orderBasedSortedVariables &&
+				Array.isArray(orderBasedSortedVariables) &&
+				orderBasedSortedVariables.length > 0 &&
+				orderBasedSortedVariables.map((variable) =>
+					variable.type === 'DYNAMIC' ? (
+						<DynamicVariableSelection
+							key={`${variable.name}${variable.id}}${variable.order}`}
+							existingVariables={variables}
+							variableData={{
+								name: variable.name,
+								...variable,
+							}}
+							onValueUpdate={onValueUpdate}
+						/>
+					) : (
 						<VariableItem
 							key={`${variable.name}${variable.id}}${variable.order}`}
 							existingVariables={variables}
@@ -198,9 +201,9 @@ function DashboardVariableSelection(): JSX.Element | null {
 							setVariablesToGetUpdated={setVariablesToGetUpdated}
 							dependencyData={dependencyData}
 						/>
-					))}
-			</Row>
-		</>
+					),
+				)}
+		</Row>
 	);
 }
 
