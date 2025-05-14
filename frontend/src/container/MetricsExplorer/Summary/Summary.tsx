@@ -11,6 +11,7 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -33,6 +34,10 @@ const DEFAULT_ORDER_BY: OrderByPayload = {
 	order: 'desc',
 };
 
+const IS_METRIC_DETAILS_OPEN_KEY = 'isMetricDetailsOpen';
+const IS_INSPECT_MODAL_OPEN_KEY = 'isInspectModalOpen';
+const SELECTED_METRIC_NAME_KEY = 'selectedMetricName';
+
 function Summary(): JSX.Element {
 	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
 	const [currentPage, setCurrentPage] = useState(1);
@@ -40,10 +45,16 @@ function Summary(): JSX.Element {
 	const [heatmapView, setHeatmapView] = useState<TreemapViewType>(
 		TreemapViewType.TIMESERIES,
 	);
-	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
-	const [isInspectModalOpen, setIsInspectModalOpen] = useState(false);
-	const [selectedMetricName, setSelectedMetricName] = useState<string | null>(
-		null,
+
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(
+		() => searchParams.get(IS_METRIC_DETAILS_OPEN_KEY) === 'true' || false,
+	);
+	const [isInspectModalOpen, setIsInspectModalOpen] = useState(
+		() => searchParams.get(IS_INSPECT_MODAL_OPEN_KEY) === 'true' || false,
+	);
+	const [selectedMetricName, setSelectedMetricName] = useState(
+		() => searchParams.get(SELECTED_METRIC_NAME_KEY) || null,
 	);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -184,17 +195,29 @@ function Summary(): JSX.Element {
 	const openMetricDetails = (metricName: string): void => {
 		setSelectedMetricName(metricName);
 		setIsMetricDetailsOpen(true);
+		setSearchParams({
+			[IS_METRIC_DETAILS_OPEN_KEY]: 'true',
+			[SELECTED_METRIC_NAME_KEY]: metricName,
+		});
 	};
 
 	const closeMetricDetails = (): void => {
 		setSelectedMetricName(null);
 		setIsMetricDetailsOpen(false);
+		setSearchParams({
+			[IS_METRIC_DETAILS_OPEN_KEY]: 'false',
+			[SELECTED_METRIC_NAME_KEY]: '',
+		});
 	};
 
 	const openInspectModal = (metricName: string): void => {
 		setSelectedMetricName(metricName);
 		setIsInspectModalOpen(true);
 		setIsMetricDetailsOpen(false);
+		setSearchParams({
+			[IS_INSPECT_MODAL_OPEN_KEY]: 'true',
+			[SELECTED_METRIC_NAME_KEY]: metricName,
+		});
 	};
 
 	const closeInspectModal = (): void => {
@@ -204,6 +227,10 @@ function Summary(): JSX.Element {
 		});
 		setIsInspectModalOpen(false);
 		setSelectedMetricName(null);
+		setSearchParams({
+			[IS_INSPECT_MODAL_OPEN_KEY]: 'false',
+			[SELECTED_METRIC_NAME_KEY]: '',
+		});
 	};
 
 	return (
