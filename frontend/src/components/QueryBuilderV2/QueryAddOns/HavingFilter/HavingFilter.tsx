@@ -1,4 +1,5 @@
 import { Button, Select } from 'antd';
+import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { useEffect, useState } from 'react';
 
 const havingOperators = [
@@ -36,24 +37,22 @@ const havingOperators = [
 	},
 ];
 
-function HavingFilter({
-	selectedAggreateOptions,
-	onClose,
-}: {
-	selectedAggreateOptions: { func: string; arg: string }[];
-	onClose: () => void;
-}): JSX.Element {
+function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
+	const { aggregationOptions } = useQueryBuilderV2Context();
+
 	const [selectedHavingOptions, setSelectedHavingOptions] = useState<string[]>(
 		[],
 	);
+
+	console.log('selectedHavingOptions', selectedHavingOptions);
 
 	const [options, setOptions] = useState<{ label: string; value: string }[]>([]);
 
 	useEffect(() => {
 		const options = [];
 
-		for (let i = 0; i < selectedAggreateOptions.length; i++) {
-			const opt = selectedAggreateOptions[i];
+		for (let i = 0; i < aggregationOptions.length; i++) {
+			const opt = aggregationOptions[i];
 
 			for (let j = 0; j < havingOperators.length; j++) {
 				const operator = havingOperators[j];
@@ -65,17 +64,8 @@ function HavingFilter({
 			}
 		}
 
-		console.log('options', options);
-
 		setOptions(options);
-	}, [selectedAggreateOptions]);
-
-	console.log(
-		'selectedHavingOptions',
-		selectedHavingOptions,
-		selectedAggreateOptions,
-		setSelectedHavingOptions,
-	);
+	}, [aggregationOptions]);
 
 	console.log('options', options);
 
