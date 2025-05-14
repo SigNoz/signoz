@@ -100,7 +100,6 @@
 
 			.variable-type-btn-group {
 				display: flex;
-				width: 342px;
 				height: 32px;
 				flex-shrink: 0;
 				border-radius: 2px;
@@ -197,6 +196,11 @@
 				letter-spacing: -0.07px;
 				width: 339px;
 			}
+		}
+
+		.default-value-section {
+			display: grid;
+			grid-template-columns: max-content 1fr;
 		}
 
 		.variable-textbox-section {

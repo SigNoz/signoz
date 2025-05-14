@@ -6,7 +6,9 @@ import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
 import Editor from 'components/Editor';
+import { CustomSelect } from 'components/NewSelect';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { map } from 'lodash-es';
@@ -16,6 +18,7 @@ import {
 	ClipboardType,
 	DatabaseZap,
 	LayoutList,
+	Pyramid,
 	X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -30,6 +33,7 @@ import { v4 as generateUUID } from 'uuid';
 
 import { variablePropsToPayloadVariables } from '../../../utils';
 import { TVariableMode } from '../types';
+import DynamicVariable from './DynamicVariable/DynamicVariable';
 import { LabelContainer, VariableItemRow } from './styles';
 
 const { Option } = Select;
@@ -81,10 +85,43 @@ function VariableItem({
 		variableData.showALLOption || false,
 	);
 	const [previewValues, setPreviewValues] = useState<string[]>([]);
+	const [variableDefaultValue, setVariableDefaultValue] = useState<string>(
+		(variableData.defaultValue as string) || '',
+	);
 
+	const [
+		dynamicVariablesSelectedValue,
+		setDynamicVariablesSelectedValue,
+	] = useState<{ name: string; value: string }>();
+
+	useEffect(() => {
+		if (
+			variableData.dynamicVariablesAttribute &&
+			variableData.dynamicVariablesSource
+		) {
+			setDynamicVariablesSelectedValue({
+				name: variableData.dynamicVariablesAttribute,
+				value: variableData.dynamicVariablesSource,
+			});
+		}
+	}, [
+		variableData.dynamicVariablesAttribute,
+		variableData.dynamicVariablesSource,
+	]);
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
+
+	const { data: fieldValues } = useGetFieldValues({
+		signal:
+			dynamicVariablesSelectedValue?.value === 'All Sources'
+				? undefined
+				: (dynamicVariablesSelectedValue?.value as 'traces' | 'logs' | 'metrics'),
+		name: dynamicVariablesSelectedValue?.name || '',
+		enabled:
+			!!dynamicVariablesSelectedValue?.name &&
+			!!dynamicVariablesSelectedValue?.value,
+	});
 
 	useEffect(() => {
 		if (queryType === 'CUSTOM') {
@@ -106,6 +143,29 @@ function VariableItem({
 		variableSortType,
 	]);
 
+	useEffect(() => {
+		if (
+			queryType === 'DYNAMIC' &&
+			fieldValues &&
+			dynamicVariablesSelectedValue?.name &&
+			dynamicVariablesSelectedValue?.value
+		) {
+			setPreviewValues(
+				sortValues(
+					fieldValues.payload?.values?.stringValues || [],
+					variableSortType,
+				) as never,
+			);
+		}
+	}, [
+		fieldValues,
+		variableSortType,
+		queryType,
+		dynamicVariablesSelectedValue?.name,
+		dynamicVariablesSelectedValue?.value,
+		dynamicVariablesSelectedValue,
+	]);
+
 	const handleSave = (): void => {
 		const variable: IDashboardVariable = {
 			name: variableName,
@@ -121,9 +181,16 @@ function VariableItem({
 				selectedValue: (variableData.selectedValue ||
 					variableTextboxValue) as never,
 			}),
+			...(queryType !== 'TEXTBOX' && {
+				defaultValue: variableDefaultValue as never,
+			}),
 			modificationUUID: generateUUID(),
 			id: variableData.id || generateUUID(),
 			order: variableData.order,
+			...(queryType === 'DYNAMIC' && {
+				dynamicVariablesAttribute: dynamicVariablesSelectedValue?.name,
+				dynamicVariablesSource: dynamicVariablesSelectedValue?.value,
+			}),
 		};
 
 		onSave(mode, variable);
@@ -239,18 +306,18 @@ function VariableItem({
 						<div className="variable-type-btn-group">
 							<Button
 								type="text"
-								icon={<DatabaseZap size={14} />}
+								icon={<Pyramid size={14} />}
 								className={cx(
 									// eslint-disable-next-line sonarjs/no-duplicate-string
 									'variable-type-btn',
-									queryType === 'QUERY' ? 'selected' : '',
+									queryType === 'DYNAMIC' ? 'selected' : '',
 								)}
 								onClick={(): void => {
-									setQueryType('QUERY');
+									setQueryType('DYNAMIC');
 									setPreviewValues([]);
 								}}
 							>
-								Query
+								Dynamic
 							</Button>
 							<Button
 								type="text"
@@ -280,8 +347,31 @@ function VariableItem({
 							>
 								Custom
 							</Button>
+							<Button
+								type="text"
+								icon={<DatabaseZap size={14} />}
+								className={cx(
+									// eslint-disable-next-line sonarjs/no-duplicate-string
+									'variable-type-btn',
+									queryType === 'QUERY' ? 'selected' : '',
+								)}
+								onClick={(): void => {
+									setQueryType('QUERY');
+									setPreviewValues([]);
+								}}
+							>
+								Query
+							</Button>
 						</div>
 					</VariableItemRow>
+					{queryType === 'DYNAMIC' && (
+						<div className="variable-dynamic-section">
+							<DynamicVariable
+								setDynamicVariablesSelectedValue={setDynamicVariablesSelectedValue}
+								dynamicVariablesSelectedValue={dynamicVariablesSelectedValue}
+							/>
+						</div>
+					)}
 					{queryType === 'QUERY' && (
 						<div className="query-container">
 							<LabelContainer>
@@ -369,7 +459,9 @@ function VariableItem({
 							/>
 						</VariableItemRow>
 					)}
-					{(queryType === 'QUERY' || queryType === 'CUSTOM') && (
+					{(queryType === 'QUERY' ||
+						queryType === 'CUSTOM' ||
+						queryType === 'DYNAMIC') && (
 						<>
 							<VariableItemRow className="variables-preview-section">
 								<LabelContainer style={{ width: '100%' }}>
@@ -438,6 +530,20 @@ function VariableItem({
 									/>
 								</VariableItemRow>
 							)}
+							<VariableItemRow className="default-value-section">
+								<LabelContainer>
+									<Typography className="typography-variables">Default Value</Typography>
+								</LabelContainer>
+								<CustomSelect
+									placeholder="Select a default value"
+									value={variableDefaultValue}
+									onChange={(value): void => setVariableDefaultValue(value)}
+									options={previewValues.map((value) => ({
+										label: value,
+										value,
+									}))}
+								/>
+							</VariableItemRow>
 						</>
 					)}
 				</div>
