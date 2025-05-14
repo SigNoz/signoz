@@ -98,24 +98,21 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 				setIsInvitingMembers?.(true);
 				values?.members?.forEach(
 					async (member): Promise<void> => {
-						const { error, statusCode } = await sendInvite({
-							email: member.email,
-							name: member?.name,
-							role: member.role,
-							frontendBaseUrl: window.location.origin,
-						});
-
-						if (statusCode !== 200) {
-							notifications.error({
-								message:
-									error ||
-									t('something_went_wrong', {
-										ns: 'common',
-									}),
+						try {
+							await sendInvite({
+								email: member.email,
+								name: member?.name,
+								role: member.role,
+								frontendBaseUrl: window.location.origin,
 							});
-						} else if (statusCode === 200) {
+
 							notifications.success({
 								message: 'Invite sent successfully',
+							});
+						} catch (error) {
+							notifications.error({
+								message: (error as APIError).getErrorCode(),
+								description: (error as APIError).getErrorMessage(),
 							});
 						}
 					},
