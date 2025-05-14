@@ -181,7 +181,6 @@ function QueryAggregationSelect(): JSX.Element {
 								if (validFunctions.includes(func)) {
 									const start = from + match.index;
 									const end = start + match[0].length;
-
 									builder.add(start, end, chipDecoration);
 								}
 							}
@@ -208,8 +207,11 @@ function QueryAggregationSelect(): JSX.Element {
 				from: number,
 				to: number,
 			): void => {
-				const insertText = `${op.value}()`;
-				const cursorPos = from + op.value.length + 1; // after '('
+				const isCount = op.value === TracesAggregatorOperator.COUNT;
+				const insertText = isCount ? `${op.value}() ` : `${op.value}(`;
+				const cursorPos = isCount
+					? from + op.value.length + 3 // after 'count() '
+					: from + op.value.length + 1; // after 'operator('
 				view.dispatch({
 					changes: { from, to, insert: insertText },
 					selection: { anchor: cursorPos },
@@ -218,7 +220,7 @@ function QueryAggregationSelect(): JSX.Element {
 		}),
 	);
 
-	// Memoize field suggestions from API
+	// Memoize field suggestions from API (no filtering here)
 	const fieldSuggestions = useMemo(
 		() =>
 			aggregateAttributeData?.payload?.attributeKeys?.map(
@@ -232,24 +234,9 @@ function QueryAggregationSelect(): JSX.Element {
 						from: number,
 						to: number,
 					): void => {
-						const currentText = view.state.sliceDoc(0, from);
-						const lastOpenParen = currentText.lastIndexOf('(');
-						const endPos = from;
-						// Find the last comma before the cursor, but after the last open paren
-						const lastComma = currentText.lastIndexOf(',', endPos - 1);
-						const startPos =
-							lastComma > lastOpenParen ? lastComma + 1 : lastOpenParen + 1;
-						const before = view.state.sliceDoc(startPos, endPos).trim();
-						let insertText = '';
-						if (before.length > 0) {
-							// If there's already an argument, insert ", arg"
-							insertText = `, ${completion.label}`;
-						} else {
-							insertText = completion.label;
-						}
 						view.dispatch({
-							changes: { from: endPos, to, insert: insertText },
-							selection: { anchor: endPos + insertText.length },
+							changes: { from, to, insert: completion.label },
+							selection: { anchor: from + completion.label.length },
 						});
 					},
 				}),
@@ -289,9 +276,40 @@ function QueryAggregationSelect(): JSX.Element {
 									],
 								};
 							}
+
+							// Calculate the start of the current argument
+							const doc = context.state.sliceDoc(0, cursorPos);
+							const lastOpenParen = doc.lastIndexOf('(');
+							const lastComma = doc.lastIndexOf(',', cursorPos - 1);
+							const startOfArg =
+								lastComma > lastOpenParen ? lastComma + 1 : lastOpenParen + 1;
+							const inputText = doc.slice(startOfArg, cursorPos).trim();
+
+							// Parse arguments already present in the function call (before the cursor)
+							const usedArgs = new Set<string>();
+							if (lastOpenParen !== -1) {
+								const argsString = doc.slice(lastOpenParen + 1, cursorPos);
+								argsString.split(',').forEach((arg) => {
+									const trimmed = arg.trim();
+									if (trimmed) usedArgs.add(trimmed);
+								});
+							}
+
+							// Now filter out suggestions that are already used
+							const availableSuggestions = fieldSuggestions.filter(
+								(suggestion) => !usedArgs.has(suggestion.label),
+							);
+
+							const filteredSuggestions =
+								inputText === ''
+									? availableSuggestions
+									: availableSuggestions.filter((suggestion) =>
+											suggestion.label.toLowerCase().includes(inputText.toLowerCase()),
+									  );
+
 							return {
-								from: cursorPos,
-								options: fieldSuggestions,
+								from: startOfArg,
+								options: filteredSuggestions,
 							};
 						}
 
