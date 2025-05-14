@@ -208,4 +208,5 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 QuickFilters.defaultProps = {
 	onFilterChange: null,
 	signal: '',
+	config: [],
 };
