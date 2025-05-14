@@ -70,14 +70,14 @@ function App(): JSX.Element {
 				const orgName =
 					org && Array.isArray(org) && org.length > 0 ? org[0].displayName : '';
 
-				const { name, email, role } = user;
+				const { displayName, email, role } = user;
 
 				const domain = extractDomain(email);
 				const hostNameParts = hostname.split('.');
 
 				const identifyPayload = {
 					email,
-					name,
+					name: displayName,
 					company_name: orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -106,7 +106,7 @@ function App(): JSX.Element {
 
 				Userpilot.identify(email, {
 					email,
-					name,
+					name: displayName,
 					orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -118,7 +118,7 @@ function App(): JSX.Element {
 
 				posthog?.identify(email, {
 					email,
-					name,
+					name: displayName,
 					orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -144,7 +144,7 @@ function App(): JSX.Element {
 				) {
 					window.cioanalytics.reset();
 					window.cioanalytics.identify(email, {
-						name: user.name,
+						name: user.displayName,
 						email,
 						role: user.role,
 					});
@@ -258,7 +258,7 @@ function App(): JSX.Element {
 				window.Intercom('boot', {
 					app_id: process.env.INTERCOM_APP_ID,
 					email: user?.email || '',
-					name: user?.name || '',
+					name: user?.displayName || '',
 				});
 			}
 		}

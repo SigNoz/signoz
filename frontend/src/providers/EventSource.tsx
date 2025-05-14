@@ -1,7 +1,7 @@
 import { apiV3 } from 'api/apiV1';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import { Logout } from 'api/utils';
-import loginApi from 'api/v1/user/login';
+import loginApi from 'api/v1/login/login';
 import afterLogin from 'AppRoutes/utils';
 import { ENVIRONMENT } from 'constants/env';
 import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
@@ -18,6 +18,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import APIError from 'types/api/error';
 
 interface IEventSourceContext {
 	eventSourceInstance: EventSourcePolyfill | null;
@@ -80,34 +81,24 @@ export function EventSourceProvider({
 			const response = await loginApi({
 				refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
 			});
-
-			if (response.statusCode === 200) {
-				// Update tokens in local storage
-				afterLogin(
-					response.payload.userId,
-					response.payload.accessJwt,
-					response.payload.refreshJwt,
-					true,
-				);
-
-				// If token refresh was successful, we'll let the component
-				// handle reconnection through the reconnectDueToError state
-				setReconnectDueToError(true);
-				setIsConnectionError(true);
-				return;
-			}
-
-			notifications.error({ message: 'Sorry, something went wrong' });
-			// If token refresh failed, logout the user
-			if (!eventSourceRef.current) return;
-			eventSourceRef.current.close();
+			afterLogin(
+				response.data.userId,
+				response.data.accessJwt,
+				response.data.refreshJwt,
+				true,
+			);
+			// If token refresh was successful, we'll let the component
+			// handle reconnection through the reconnectDueToError state
+			setReconnectDueToError(true);
 			setIsConnectionError(true);
-			Logout();
+			return;
 		} catch (error) {
 			// If there was an error during token refresh, we'll just
 			// let the component handle the error state
-			notifications.error({ message: 'Sorry, something went wrong' });
-			console.error('Error refreshing token:', error);
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
+			});
 			setIsConnectionError(true);
 			if (!eventSourceRef.current) return;
 			eventSourceRef.current.close();

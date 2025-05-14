@@ -2,16 +2,17 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { PayloadProps, Props, UserLoginResponse } from 'types/api/user/login';
+import {
+	LoginPrecheckResponse,
+	PayloadProps,
+	Props,
+} from 'types/api/user/accept';
 
-const login = async (
+const accept = async (
 	props: Props,
-): Promise<SuccessResponseV2<UserLoginResponse>> => {
+): Promise<SuccessResponseV2<LoginPrecheckResponse>> => {
 	try {
-		const response = await axios.post<PayloadProps>(`/login`, {
-			...props,
-		});
-
+		const response = await axios.post<PayloadProps>(`/invite/accept`, props);
 		return {
 			httpStatusCode: response.status,
 			data: response.data.data,
@@ -21,4 +22,4 @@ const login = async (
 	}
 };
 
-export default login;
+export default accept;

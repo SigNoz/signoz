@@ -34,8 +34,8 @@ export const handlers = [
 			res(ctx.status(200), ctx.json(topLevelOperationSuccessResponse)),
 	),
 
-	rest.get('http://localhost/api/v1/orgUsers/*', (req, res, ctx) =>
-		res(ctx.status(200), ctx.json(membersResponse)),
+	rest.get('http://localhost/api/v1/user', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json({ status: '200', data: membersResponse })),
 	),
 	rest.get(
 		'http://localhost/api/v3/autocomplete/attribute_keys',
