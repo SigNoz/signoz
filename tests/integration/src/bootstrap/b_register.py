@@ -74,6 +74,16 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
 
     assert response.status_code == HTTPStatus.CREATED
 
+    response = requests.get(
+        signoz.self.host_config.get("/api/v1/invite"),
+        timeout=2,
+        headers={
+            "Authorization": f"Bearer {get_jwt_token("admin@integration.test", "password")}"  # pylint: disable=line-too-long
+        },
+    )
+
+    invite_response = response.json()["data"][0]
+
     # Register the editor user using the invite token
     response = requests.post(
         signoz.self.host_config.get("/api/v1/invite/accept"),
