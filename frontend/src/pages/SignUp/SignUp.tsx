@@ -134,6 +134,9 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
+				if (response.statusCode === 403) {
+					history.push(ROUTES.LOGIN);
+				}
 			}
 		} catch (error) {
 			notifications.error({
