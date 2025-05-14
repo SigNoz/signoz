@@ -8,8 +8,10 @@ import './QueryAggregation.styles.scss';
 
 import {
 	autocompletion,
+	closeCompletion,
 	Completion,
 	CompletionContext,
+	completionKeymap,
 	CompletionResult,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
@@ -18,6 +20,7 @@ import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, {
 	Decoration,
 	EditorView,
+	keymap,
 	ViewPlugin,
 	ViewUpdate,
 } from '@uiw/react-codemirror';
@@ -313,8 +316,11 @@ function QueryAggregationSelect(): JSX.Element {
 							};
 						}
 
-						// Otherwise, always show function suggestions
+						// Otherwise, show operator suggestions only if a valid word is present or manually triggered
 						const word = context.matchBefore(/[\w\d_]+/);
+						if (!word && !context.explicit) {
+							return null;
+						}
 						return {
 							from: word ? word.from : context.pos,
 							options: operatorCompletions,
@@ -341,6 +347,13 @@ function QueryAggregationSelect(): JSX.Element {
 					chipPlugin,
 					aggregatorAutocomplete,
 					javascript({ jsx: false, typescript: false }),
+					keymap.of([
+						...completionKeymap,
+						{
+							key: 'Escape',
+							run: closeCompletion,
+						},
+					]),
 				]}
 				placeholder="Type aggregator functions like sum(), count_distinct(...), etc."
 				basicSetup={{
