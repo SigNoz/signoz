@@ -29,6 +29,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import { CustomSelectProps, OptionData } from './types';
 import {
 	filterOptionsBySearch,
+	handleScrollToBottom,
 	prioritizeOrAddOptionForSingleSelect,
 	SPACEKEY,
 } from './utils';
@@ -57,17 +58,29 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	errorMessage,
 	allowClear = false,
 	onRetry,
+	showIncompleteDataMessage = false,
 	...rest
 }) => {
 	// ===== State & Refs =====
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchText, setSearchText] = useState('');
 	const [activeOptionIndex, setActiveOptionIndex] = useState<number>(-1);
+	const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
 
 	// Refs for element access and scroll behavior
 	const selectRef = useRef<BaseSelectRef>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const optionRefs = useRef<Record<number, HTMLDivElement | null>>({});
+	// Flag to track if dropdown just opened
+	const justOpenedRef = useRef<boolean>(false);
+
+	// Add a scroll handler for the dropdown
+	const handleDropdownScroll = useCallback(
+		(e: React.UIEvent<HTMLDivElement>): void => {
+			setIsScrolledToBottom(handleScrollToBottom(e));
+		},
+		[],
+	);
 
 	// ===== Option Filtering & Processing Utilities =====
 
@@ -130,23 +143,33 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		(text: string, searchQuery: string): React.ReactNode => {
 			if (!searchQuery || !highlightSearch) return text;
 
-			const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
-			return (
-				<>
-					{parts.map((part, i) => {
-						// Create a deterministic but unique key
-						const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
+			try {
+				const parts = text.split(
+					new RegExp(
+						`(${searchQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`,
+						'gi',
+					),
+				);
+				return (
+					<>
+						{parts.map((part, i) => {
+							// Create a deterministic but unique key
+							const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
 
-						return part.toLowerCase() === searchQuery.toLowerCase() ? (
-							<span key={uniqueKey} className="highlight-text">
-								{part}
-							</span>
-						) : (
-							part
-						);
-					})}
-				</>
-			);
+							return part.toLowerCase() === searchQuery.toLowerCase() ? (
+								<span key={uniqueKey} className="highlight-text">
+									{part}
+								</span>
+							) : (
+								part
+							);
+						})}
+					</>
+				);
+			} catch (error) {
+				console.error('Error in text highlighting:', error);
+				return text;
+			}
 		},
 		[highlightSearch],
 	);
@@ -246,9 +269,14 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			const trimmedValue = value.trim();
 			setSearchText(trimmedValue);
 
+			// Reset active option index when search changes
+			if (isOpen) {
+				setActiveOptionIndex(0);
+			}
+
 			if (onSearch) onSearch(trimmedValue);
 		},
-		[onSearch],
+		[onSearch, isOpen],
 	);
 
 	/**
@@ -272,14 +300,23 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					const flatList: OptionData[] = [];
 
 					// Process options
+					let processedOptions = isEmpty(value)
+						? filteredOptions
+						: prioritizeOrAddOptionForSingleSelect(filteredOptions, value);
+
+					if (!isEmpty(searchText)) {
+						processedOptions = filterOptionsBySearch(processedOptions, searchText);
+					}
+
 					const { sectionOptions, nonSectionOptions } = splitOptions(
-						isEmpty(value)
-							? filteredOptions
-							: prioritizeOrAddOptionForSingleSelect(filteredOptions, value),
+						processedOptions,
 					);
 
 					// Add custom option if needed
-					if (!isEmpty(searchText) && !isLabelPresent(filteredOptions, searchText)) {
+					if (
+						!isEmpty(searchText) &&
+						!isLabelPresent(processedOptions, searchText)
+					) {
 						flatList.push({
 							label: searchText,
 							value: searchText,
@@ -300,33 +337,52 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
 				const options = getFlatOptions();
 
+				// If we just opened the dropdown and have options, set first option as active
+				if (justOpenedRef.current && options.length > 0) {
+					setActiveOptionIndex(0);
+					justOpenedRef.current = false;
+				}
+
+				// If no option is active but we have options, activate the first one
+				if (activeOptionIndex === -1 && options.length > 0) {
+					setActiveOptionIndex(0);
+				}
+
 				switch (e.key) {
 					case 'ArrowDown':
 						e.preventDefault();
-						setActiveOptionIndex((prev) =>
-							prev < options.length - 1 ? prev + 1 : 0,
-						);
+						if (options.length > 0) {
+							setActiveOptionIndex((prev) =>
+								prev < options.length - 1 ? prev + 1 : 0,
+							);
+						}
 						break;
 
 					case 'ArrowUp':
 						e.preventDefault();
-						setActiveOptionIndex((prev) =>
-							prev > 0 ? prev - 1 : options.length - 1,
-						);
+						if (options.length > 0) {
+							setActiveOptionIndex((prev) =>
+								prev > 0 ? prev - 1 : options.length - 1,
+							);
+						}
 						break;
 
 					case 'Tab':
 						// Tab navigation with Shift key support
 						if (e.shiftKey) {
 							e.preventDefault();
-							setActiveOptionIndex((prev) =>
-								prev > 0 ? prev - 1 : options.length - 1,
-							);
+							if (options.length > 0) {
+								setActiveOptionIndex((prev) =>
+									prev > 0 ? prev - 1 : options.length - 1,
+								);
+							}
 						} else {
 							e.preventDefault();
-							setActiveOptionIndex((prev) =>
-								prev < options.length - 1 ? prev + 1 : 0,
-							);
+							if (options.length > 0) {
+								setActiveOptionIndex((prev) =>
+									prev < options.length - 1 ? prev + 1 : 0,
+								);
+							}
 						}
 						break;
 
@@ -339,6 +395,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 								onChange(selectedOption.value, selectedOption);
 								setIsOpen(false);
 								setActiveOptionIndex(-1);
+								setSearchText('');
 							}
 						} else if (!isEmpty(searchText)) {
 							// Add custom value when no option is focused
@@ -351,6 +408,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 								onChange(customOption.value, customOption);
 								setIsOpen(false);
 								setActiveOptionIndex(-1);
+								setSearchText('');
 							}
 						}
 						break;
@@ -359,6 +417,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						e.preventDefault();
 						setIsOpen(false);
 						setActiveOptionIndex(-1);
+						setSearchText('');
 						break;
 
 					case ' ': // Space key
@@ -369,6 +428,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 								onChange(selectedOption.value, selectedOption);
 								setIsOpen(false);
 								setActiveOptionIndex(-1);
+								setSearchText('');
 							}
 						}
 						break;
@@ -379,7 +439,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 				// Open dropdown when Down or Tab is pressed while closed
 				e.preventDefault();
 				setIsOpen(true);
-				setActiveOptionIndex(0);
+				justOpenedRef.current = true; // Set flag to initialize active option on next render
 			}
 		},
 		[
@@ -444,6 +504,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 				className="custom-select-dropdown"
 				onClick={handleDropdownClick}
 				onKeyDown={handleKeyDown}
+				onScroll={handleDropdownScroll}
 				role="listbox"
 				tabIndex={-1}
 				aria-activedescendant={
@@ -454,7 +515,6 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 				<div className="no-section-options">
 					{nonSectionOptions.length > 0 && mapOptions(nonSectionOptions)}
 				</div>
-
 				{/* Section options */}
 				{sectionOptions.length > 0 &&
 					sectionOptions.map((section) =>
@@ -472,13 +532,16 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
 				{/* Navigation help footer */}
 				<div className="navigation-footer" role="note">
-					{!loading && !errorMessage && !noDataMessage && (
-						<section className="navigate">
-							<ArrowDown size={8} className="icons" />
-							<ArrowUp size={8} className="icons" />
-							<span className="keyboard-text">to navigate</span>
-						</section>
-					)}
+					{!loading &&
+						!errorMessage &&
+						!noDataMessage &&
+						!(showIncompleteDataMessage && isScrolledToBottom) && (
+							<section className="navigate">
+								<ArrowDown size={8} className="icons" />
+								<ArrowUp size={8} className="icons" />
+								<span className="keyboard-text">to navigate</span>
+							</section>
+						)}
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
@@ -504,9 +567,19 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						</div>
 					)}
 
-					{noDataMessage && !loading && (
-						<div className="navigation-text">{noDataMessage}</div>
-					)}
+					{showIncompleteDataMessage &&
+						isScrolledToBottom &&
+						!loading &&
+						!errorMessage && (
+							<div className="navigation-text-incomplete">
+								Use search for more options
+							</div>
+						)}
+
+					{noDataMessage &&
+						!loading &&
+						!(showIncompleteDataMessage && isScrolledToBottom) &&
+						!errorMessage && <div className="navigation-text">{noDataMessage}</div>}
 				</div>
 			</div>
 		);
@@ -520,6 +593,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		isLabelPresent,
 		handleDropdownClick,
 		handleKeyDown,
+		handleDropdownScroll,
 		activeOptionIndex,
 		loading,
 		errorMessage,
@@ -527,7 +601,21 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		dropdownRender,
 		renderOptionWithIndex,
 		onRetry,
+		showIncompleteDataMessage,
+		isScrolledToBottom,
 	]);
+
+	// Handle dropdown visibility changes
+	const handleDropdownVisibleChange = useCallback((visible: boolean): void => {
+		setIsOpen(visible);
+		if (visible) {
+			justOpenedRef.current = true;
+			setActiveOptionIndex(0);
+		} else {
+			setSearchText('');
+			setActiveOptionIndex(-1);
+		}
+	}, []);
 
 	// ===== Side Effects =====
 
@@ -582,7 +670,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			onSearch={handleSearch}
 			value={value}
 			onChange={onChange}
-			onDropdownVisibleChange={setIsOpen}
+			onDropdownVisibleChange={handleDropdownVisibleChange}
 			open={isOpen}
 			options={optionsWithHighlight}
 			defaultActiveFirstOption={defaultActiveFirstOption}

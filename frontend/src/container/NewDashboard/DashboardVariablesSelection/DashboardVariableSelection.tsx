@@ -7,6 +7,7 @@ import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import DynamicVariableSelection from './DynamicVariableSelection';
 import {
 	buildDependencies,
 	buildDependencyGraph,
@@ -100,7 +101,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 		id: string,
 		value: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
-		// isMountedCall?: boolean,
+		haveCustomValuesSelected?: boolean,
 		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
 		if (id) {
@@ -117,6 +118,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 								...oldVariables[id],
 								selectedValue: value,
 								allSelected,
+								haveCustomValuesSelected,
 							};
 						}
 						if (oldVariables[name]) {
@@ -124,6 +126,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 								...oldVariables[name],
 								selectedValue: value,
 								allSelected,
+								haveCustomValuesSelected,
 							};
 						}
 						return {
@@ -170,20 +173,32 @@ function DashboardVariableSelection(): JSX.Element | null {
 			{orderBasedSortedVariables &&
 				Array.isArray(orderBasedSortedVariables) &&
 				orderBasedSortedVariables.length > 0 &&
-				orderBasedSortedVariables.map((variable) => (
-					<VariableItem
-						key={`${variable.name}${variable.id}}${variable.order}`}
-						existingVariables={variables}
-						variableData={{
-							name: variable.name,
-							...variable,
-						}}
-						onValueUpdate={onValueUpdate}
-						variablesToGetUpdated={variablesToGetUpdated}
-						setVariablesToGetUpdated={setVariablesToGetUpdated}
-						dependencyData={dependencyData}
-					/>
-				))}
+				orderBasedSortedVariables.map((variable) =>
+					variable.type === 'DYNAMIC' ? (
+						<DynamicVariableSelection
+							key={`${variable.name}${variable.id}}${variable.order}`}
+							existingVariables={variables}
+							variableData={{
+								name: variable.name,
+								...variable,
+							}}
+							onValueUpdate={onValueUpdate}
+						/>
+					) : (
+						<VariableItem
+							key={`${variable.name}${variable.id}}${variable.order}`}
+							existingVariables={variables}
+							variableData={{
+								name: variable.name,
+								...variable,
+							}}
+							onValueUpdate={onValueUpdate}
+							variablesToGetUpdated={variablesToGetUpdated}
+							setVariablesToGetUpdated={setVariablesToGetUpdated}
+							dependencyData={dependencyData}
+						/>
+					),
+				)}
 		</Row>
 	);
 }
