@@ -65,8 +65,8 @@ type existingResetPasswordRequest32 struct {
 	UserID string `bun:"user_id,type:text,notnull,unique" json:"userId"`
 }
 
-type factorResetPasswordRequest32 struct {
-	bun.BaseModel `bun:"table:factor_reset_password_request"`
+type newResetPasswordRequest32 struct {
+	bun.BaseModel `bun:"table:reset_password_token"`
 
 	types.Identifiable
 	Token      string `bun:"token,type:text,notnull" json:"token"`
@@ -116,7 +116,7 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingResetPasswordRequest32), new(factorResetPasswordRequest32), []string{FactorPasswordReference}, func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingResetPasswordRequest32), new(newResetPasswordRequest32), []string{FactorPasswordReference}, func(ctx context.Context) error {
 			existingRequests := make([]*existingResetPasswordRequest32, 0)
 			err = tx.
 				NewSelect().
@@ -211,8 +211,8 @@ func (migration *authRefactor) CopyOldPasswordToNewPassword(ctx context.Context,
 	return nil
 }
 
-func (migration *authRefactor) CopyOldResetPasswordToNewResetPassword(ctx context.Context, tx bun.IDB, existingRequests []*existingResetPasswordRequest32) ([]*factorResetPasswordRequest32, error) {
-	newRequests := make([]*factorResetPasswordRequest32, 0)
+func (migration *authRefactor) CopyOldResetPasswordToNewResetPassword(ctx context.Context, tx bun.IDB, existingRequests []*existingResetPasswordRequest32) ([]*newResetPasswordRequest32, error) {
+	newRequests := make([]*newResetPasswordRequest32, 0)
 	for _, request := range existingRequests {
 		// get password id from user id
 		var passwordID string
@@ -221,7 +221,7 @@ func (migration *authRefactor) CopyOldResetPasswordToNewResetPassword(ctx contex
 			return nil, err
 		}
 
-		newRequests = append(newRequests, &factorResetPasswordRequest32{
+		newRequests = append(newRequests, &newResetPasswordRequest32{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
