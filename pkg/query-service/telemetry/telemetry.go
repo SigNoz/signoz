@@ -197,6 +197,7 @@ type Telemetry struct {
 	isAnonymous   bool
 	distinctId    string
 	reader        interfaces.Reader
+	sqlStore      sqlstore.SQLStore
 	companyDomain string
 	minRandInt    int
 	maxRandInt    int
@@ -290,8 +291,6 @@ func createTelemetry() {
 			telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "", true, false)
 		}
 
-		users, apiErr := telemetry.getUsersCallback(ctx, telemetry.reader.GetSQLStore())
-
 		languages := []string{}
 		for language := range tagsInfo.Languages {
 			languages = append(languages, language)
@@ -320,7 +319,7 @@ func createTelemetry() {
 		metricsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.MetricsTTL})
 		logsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.LogsTTL})
 
-		userCount, _ := telemetry.userCountCallback(ctx, telemetry.reader.GetSQLStore())
+		userCount, _ := telemetry.userCountCallback(ctx, telemetry.sqlStore)
 
 		data := map[string]interface{}{
 			"totalSpans":                            totalSpans,
@@ -343,7 +342,7 @@ func createTelemetry() {
 			data[key] = value
 		}
 
-		users, apiErr = telemetry.getUsersCallback(ctx, telemetry.reader.GetSQLStore())
+		users, apiErr := telemetry.getUsersCallback(ctx, telemetry.sqlStore)
 		if apiErr == nil {
 			for _, user := range users {
 				if user.Email == DEFAULT_CLOUD_EMAIL {
@@ -354,6 +353,9 @@ func createTelemetry() {
 		}
 
 		alertsInfo, err := telemetry.alertsInfoCallback(ctx)
+		if err != nil {
+			telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
+		}
 		if err == nil {
 			dashboardsInfo, err := telemetry.dashboardsInfoCallback(ctx)
 			if err == nil {
@@ -444,9 +446,6 @@ func createTelemetry() {
 					}, "")
 				}
 			}
-		}
-		if err != nil || apiErr != nil {
-			telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
 		}
 
 		if totalLogs > 0 {
@@ -800,6 +799,10 @@ func (a *Telemetry) SetTelemetryEnabled(value bool) {
 
 func (a *Telemetry) SetReader(reader interfaces.Reader) {
 	a.reader = reader
+}
+
+func (a *Telemetry) SetSqlStore(store sqlstore.SQLStore) {
+	a.sqlStore = store
 }
 
 func GetInstance() *Telemetry {
