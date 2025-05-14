@@ -5,7 +5,7 @@ import {
 	SyncOutlined,
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
-import { Tooltip, Typography } from 'antd';
+import { Skeleton, Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -36,6 +36,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		isDynamicFilters,
 		customFilters,
 		setIsStale,
+		isCustomFiltersLoading,
 	} = useFilterConfig({ signal, config });
 
 	const {
@@ -138,33 +139,47 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						</section>
 					)}
 
-				<OverlayScrollbar>
-					<section className="filters">
-						{filterConfig.map((filter) => {
-							switch (filter.type) {
-								case FiltersType.CHECKBOX:
-									return (
-										<Checkbox
-											source={source}
-											filter={filter}
-											onFilterChange={onFilterChange}
-										/>
-									);
-								case FiltersType.SLIDER:
-									return <Slider filter={filter} />;
-								// eslint-disable-next-line sonarjs/no-duplicated-branches
-								default:
-									return (
-										<Checkbox
-											source={source}
-											filter={filter}
-											onFilterChange={onFilterChange}
-										/>
-									);
-							}
-						})}
-					</section>
-				</OverlayScrollbar>
+				{isCustomFiltersLoading ? (
+					<div className="quick-filters-skeleton">
+						{Array.from({ length: 5 }).map((_, index) => (
+							<Skeleton.Input
+								active
+								size="small"
+								style={{ width: '236px', margin: '8px 12px' }}
+								// eslint-disable-next-line react/no-array-index-key
+								key={index}
+							/>
+						))}
+					</div>
+				) : (
+					<OverlayScrollbar>
+						<section className="filters">
+							{filterConfig.map((filter) => {
+								switch (filter.type) {
+									case FiltersType.CHECKBOX:
+										return (
+											<Checkbox
+												source={source}
+												filter={filter}
+												onFilterChange={onFilterChange}
+											/>
+										);
+									case FiltersType.SLIDER:
+										return <Slider filter={filter} />;
+									// eslint-disable-next-line sonarjs/no-duplicated-branches
+									default:
+										return (
+											<Checkbox
+												source={source}
+												filter={filter}
+												onFilterChange={onFilterChange}
+											/>
+										);
+								}
+							})}
+						</section>
+					</OverlayScrollbar>
+				)}
 			</div>
 			<div className="quick-filters-settings-container">
 				<div
@@ -192,4 +207,5 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 QuickFilters.defaultProps = {
 	onFilterChange: null,
+	signal: '',
 };
