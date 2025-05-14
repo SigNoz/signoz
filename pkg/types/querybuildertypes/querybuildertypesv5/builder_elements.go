@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -19,26 +18,18 @@ func (s *Step) UnmarshalJSON(b []byte) error {
 	if b[0] == '"' { // "15s", "1m", ISO‑8601
 		var str string
 		if err := json.Unmarshal(b, &str); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid step")
+			return err
 		}
 		d, err := time.ParseDuration(str)
 		if err != nil {
-			return errors.WrapInvalidInputf(
-				err,
-				errors.CodeInvalidInput,
-				"invalid step, expected a duration string (example: 15s, 1m, 1h), valid time units are ns, u, ms, s, m, h",
-			)
+			return err
 		}
 		s.Duration = d
 		return nil
 	}
 	var sec float64 // 30 → 30 s ; 0.5 → 500 ms
 	if err := json.Unmarshal(b, &sec); err != nil {
-		return errors.WrapInvalidInputf(
-			err,
-			errors.CodeInvalidInput,
-			"invalid step, expected duration in seconds (example: 60 - 1 minute, 240 - 4 minutes, 3600 - 1 hour)",
-		)
+		return err
 	}
 	s.Duration = time.Duration(sec * float64(time.Second))
 	return nil
@@ -107,7 +98,7 @@ var (
 )
 
 type Aggregation struct {
-	// aggregation expression - example: count(), sum(item_price), countIf(day > 10)
+	// aggregation expression - exmple: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
 	// if any, it will be used as the alias of the aggregation in the result
 	Alias string `json:"alias,omitempty"`
@@ -150,12 +141,11 @@ type OrderBy struct {
 	Direction OrderDirection `json:"direction"`
 }
 
-// secondary aggregation to apply to the query
 type SecondaryAggregation struct {
 	// stepInterval of the query
 	// if not set, it will use the step interval of the primary aggregation
 	StepInterval Step `json:"stepInterval,omitempty"`
-	// expression to aggregate. example: count(), sum(item_price), countIf(day > 10)
+	// expression to aggregate. exmple: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
 	// if any, it will be used as the alias of the aggregation in the result
 	Alias string `json:"alias,omitempty"`
@@ -166,7 +156,7 @@ type SecondaryAggregation struct {
 	// limit the maximum number of rows to return
 	Limit int `json:"limit,omitempty"`
 	// limitBy fields to limit by
-	LimitBy LimitBy `json:"limitBy,omitempty"`
+	LimitBy []string `json:"limitBy,omitempty"`
 }
 
 type Function struct {
