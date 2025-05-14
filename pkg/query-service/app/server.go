@@ -149,7 +149,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	telemetry.GetInstance().SetReader(reader)
-	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(serverOptions.SigNoz.SQLStore)))
+	quickfiltermodule := quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(serverOptions.SigNoz.SQLStore))
+	quickFilter := quickfilter.NewAPI(quickfiltermodule)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
@@ -164,7 +165,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
 		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore),
 		Signoz:                        serverOptions.SigNoz,
-		QuickFilters:                  quickFilterModule,
+		QuickFilters:                  quickFilter,
+		QuickFilterModule:             quickfiltermodule,
 	})
 	if err != nil {
 		return nil, err

@@ -56,14 +56,14 @@ func NewCompiledCollectionStrategy(provider string) (*CompiledCollectionStrategy
 			AWSLogs:    &services.AWSLogsStrategy{},
 		}, nil
 	}
-	return nil, errors.NotFoundNew(services.CodeUnsupportedCloudProvider, "unsupported cloud provider: %s", provider)
+	return nil, errors.NewNotFoundf(services.CodeUnsupportedCloudProvider, "unsupported cloud provider: %s", provider)
 }
 
 // Helper for accumulating strategies for enabled services.
 func AddServiceStrategy(serviceType string, cs *CompiledCollectionStrategy,
 	definitionStrat *services.CollectionStrategy, config *types.CloudServiceConfig) error {
 	if definitionStrat.Provider != cs.Provider {
-		return errors.InternalNew(CodeMismatchCloudProvider, "can't add %s service strategy to compiled strategy for %s",
+		return errors.NewInternalf(CodeMismatchCloudProvider, "can't add %s service strategy to compiled strategy for %s",
 			definitionStrat.Provider, cs.Provider)
 	}
 
@@ -90,5 +90,5 @@ func AddServiceStrategy(serviceType string, cs *CompiledCollectionStrategy,
 		return nil
 	}
 
-	return errors.NotFoundNew(services.CodeUnsupportedCloudProvider, "unsupported cloud provider: %s", cs.Provider)
+	return errors.NewNotFoundf(services.CodeUnsupportedCloudProvider, "unsupported cloud provider: %s", cs.Provider)
 }

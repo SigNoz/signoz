@@ -1,6 +1,6 @@
 import logEvent from 'api/common/logEvent';
 import { ResizeTable } from 'components/ResizeTable';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -104,7 +104,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				selectColumns: options?.selectColumns,
 			},
 		},
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V4,
 		{
 			queryKey,
 			enabled:
