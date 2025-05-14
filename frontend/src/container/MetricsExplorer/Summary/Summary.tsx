@@ -19,6 +19,12 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import InspectModal from '../Inspect';
 import MetricDetails from '../MetricDetails';
+import {
+	COMPOSITE_QUERY_KEY,
+	IS_INSPECT_MODAL_OPEN_KEY,
+	IS_METRIC_DETAILS_OPEN_KEY,
+	SELECTED_METRIC_NAME_KEY,
+} from './constants';
 import MetricsSearch from './MetricsSearch';
 import MetricsTable from './MetricsTable';
 import MetricsTreemap from './MetricsTreemap';
@@ -33,10 +39,6 @@ const DEFAULT_ORDER_BY: OrderByPayload = {
 	columnName: 'samples',
 	order: 'desc',
 };
-
-const IS_METRIC_DETAILS_OPEN_KEY = 'isMetricDetailsOpen';
-const IS_INSPECT_MODAL_OPEN_KEY = 'isInspectModalOpen';
-const SELECTED_METRIC_NAME_KEY = 'selectedMetricName';
 
 function Summary(): JSX.Element {
 	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
@@ -86,13 +88,25 @@ function Summary(): JSX.Element {
 
 	useShareBuilderUrl(defaultQuery);
 
+	// This is used to avoid the filters from being serialized with the id
+	const currentQueryFiltersString = useMemo(() => {
+		const filters = currentQuery?.builder?.queryData[0]?.filters;
+		if (!filters) return '';
+		const filtersWithoutId = {
+			...filters,
+			items: filters.items.map(({ id, ...rest }) => rest),
+		};
+		return JSON.stringify(filtersWithoutId);
+	}, [currentQuery]);
+
 	const queryFilters = useMemo(
 		() =>
 			currentQuery?.builder?.queryData[0]?.filters || {
 				items: [],
 				op: 'and',
 			},
-		[currentQuery],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[currentQueryFiltersString],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -156,9 +170,24 @@ function Summary(): JSX.Element {
 	const handleFilterChange = useCallback(
 		(value: TagFilter) => {
 			handleChangeQueryData('filters', value);
+			const compositeQuery = {
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: [
+						{
+							...currentQuery.builder.queryData[0],
+							filters: value,
+						},
+					],
+				},
+			};
+			setSearchParams({
+				[COMPOSITE_QUERY_KEY]: JSON.stringify(compositeQuery),
+			});
 			setCurrentPage(1);
 		},
-		[handleChangeQueryData],
+		[handleChangeQueryData, currentQuery, setSearchParams],
 	);
 
 	const updatedCurrentQuery = useMemo(
