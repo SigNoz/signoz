@@ -85,10 +85,8 @@
 					width: 14px;
 					cursor: pointer;
 				}
-				&:hover {
-					background: var(--bg-slate-500);
-				}
-				&.active {
+				
+				&.active, &:hover {
 					background: var(--bg-slate-500);
 				}
 			}

@@ -113,20 +113,24 @@ function AddedFilters({
 					collisionDetection={closestCenter}
 					onDragEnd={handleDragEnd}
 				>
-					<SortableContext
-						items={addedFilters.map((f) => f.key)}
-						strategy={verticalListSortingStrategy}
-						disabled={!allowDrag}
-					>
-						{filteredAddedFilters.map((filter) => (
-							<SortableFilter
-								key={filter.key}
-								filter={filter}
-								onRemove={handleRemoveFilter}
-								allowDrag={allowDrag}
-							/>
-						))}
-					</SortableContext>
+					{filteredAddedFilters.length === 0 ? (
+						<div className="no-values-found">No values found</div>
+					) : (
+						<SortableContext
+							items={addedFilters.map((f) => f.key)}
+							strategy={verticalListSortingStrategy}
+							disabled={!allowDrag}
+						>
+							{filteredAddedFilters.map((filter) => (
+								<SortableFilter
+									key={filter.key}
+									filter={filter}
+									onRemove={handleRemoveFilter}
+									allowDrag={allowDrag}
+								/>
+							))}
+						</SortableContext>
+					)}
 				</DndContext>
 			</div>
 		</div>
