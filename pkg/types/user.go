@@ -45,11 +45,11 @@ type UserStore interface {
 
 	// password
 	CreatePassword(ctx context.Context, password *FactorPassword) (*FactorPassword, error)
-	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *FactorResetPasswordRequest) error
+	CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *ResetPasswordRequest) error
 	GetPasswordByID(ctx context.Context, id string) (*FactorPassword, error)
 	GetPasswordByUserID(ctx context.Context, id string) (*FactorPassword, error)
-	GetFactorResetPassword(ctx context.Context, token string) (*FactorResetPasswordRequest, error)
-	GetFactorResetPasswordByPasswordID(ctx context.Context, passwordID string) (*FactorResetPasswordRequest, error)
+	GetResetPassword(ctx context.Context, token string) (*ResetPasswordRequest, error)
+	GetResetPasswordByPasswordID(ctx context.Context, passwordID string) (*ResetPasswordRequest, error)
 	UpdatePassword(ctx context.Context, userID string, password string) error
 	UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, userID string, password string) error
 
@@ -181,16 +181,16 @@ func ComparePassword(hashedPassword, password string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) == nil
 }
 
-type FactorResetPasswordRequest struct {
-	bun.BaseModel `bun:"table:factor_reset_password_request"`
+type ResetPasswordRequest struct {
+	bun.BaseModel `bun:"table:reset_password_token"`
 
 	Identifiable
 	Token      string `bun:"token,type:text,notnull" json:"token"`
 	PasswordID string `bun:"password_id,type:text,notnull,unique,references:factor_password(id)" json:"passwordId"`
 }
 
-func NewFactorResetPasswordRequest(passwordID string) (*FactorResetPasswordRequest, error) {
-	return &FactorResetPasswordRequest{
+func NewResetPasswordRequest(passwordID string) (*ResetPasswordRequest, error) {
+	return &ResetPasswordRequest{
 		Identifiable: Identifiable{
 			ID: valuer.GenerateUUID(),
 		},

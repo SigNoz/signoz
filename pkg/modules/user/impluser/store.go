@@ -317,7 +317,7 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 
 	// delete reset password request
 	_, err = tx.NewDelete().
-		Model(new(types.FactorResetPasswordRequest)).
+		Model(new(types.ResetPasswordRequest)).
 		Where("password_id = ?", password.ID.String()).
 		Exec(ctx)
 	if err != nil {
@@ -351,7 +351,7 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 	return nil
 }
 
-func (s *Store) CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *types.FactorResetPasswordRequest) error {
+func (s *Store) CreateResetPasswordToken(ctx context.Context, resetPasswordRequest *types.ResetPasswordRequest) error {
 	_, err := s.sqlstore.BunDB().NewInsert().
 		Model(resetPasswordRequest).
 		Exec(ctx)
@@ -386,8 +386,8 @@ func (s *Store) GetPasswordByUserID(ctx context.Context, id string) (*types.Fact
 	return password, nil
 }
 
-func (s *Store) GetFactorResetPasswordByPasswordID(ctx context.Context, passwordID string) (*types.FactorResetPasswordRequest, error) {
-	resetPasswordRequest := new(types.FactorResetPasswordRequest)
+func (s *Store) GetResetPasswordByPasswordID(ctx context.Context, passwordID string) (*types.ResetPasswordRequest, error) {
+	resetPasswordRequest := new(types.ResetPasswordRequest)
 	err := s.sqlstore.BunDB().NewSelect().
 		Model(resetPasswordRequest).
 		Where("password_id = ?", passwordID).
@@ -398,8 +398,8 @@ func (s *Store) GetFactorResetPasswordByPasswordID(ctx context.Context, password
 	return resetPasswordRequest, nil
 }
 
-func (s *Store) GetFactorResetPassword(ctx context.Context, token string) (*types.FactorResetPasswordRequest, error) {
-	resetPasswordRequest := new(types.FactorResetPasswordRequest)
+func (s *Store) GetResetPassword(ctx context.Context, token string) (*types.ResetPasswordRequest, error) {
+	resetPasswordRequest := new(types.ResetPasswordRequest)
 	err := s.sqlstore.BunDB().NewSelect().
 		Model(resetPasswordRequest).
 		Where("token = ?", token).
@@ -436,7 +436,7 @@ func (s *Store) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, u
 	}
 
 	_, err = tx.NewDelete().
-		Model(&types.FactorResetPasswordRequest{}).
+		Model(&types.ResetPasswordRequest{}).
 		Where("password_id = ?", userID).
 		Exec(ctx)
 	if err != nil {

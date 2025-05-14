@@ -371,7 +371,7 @@ func (h *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entry, err := h.module.GetFactorResetPassword(ctx, req.Token)
+	entry, err := h.module.GetResetPassword(ctx, req.Token)
 	if err != nil {
 		render.Error(w, err)
 		return

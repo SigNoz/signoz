@@ -202,7 +202,7 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error 
 	return m.store.DeleteUser(ctx, orgID, user.ID.StringValue())
 }
 
-func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*types.FactorResetPasswordRequest, error) {
+func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*types.ResetPasswordRequest, error) {
 	password, err := m.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
 		// if the user does not have a password, we need to create a new one
@@ -226,13 +226,13 @@ func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*
 		}
 	}
 
-	resetPasswordRequest, err := types.NewFactorResetPasswordRequest(password.ID.StringValue())
+	resetPasswordRequest, err := types.NewResetPasswordRequest(password.ID.StringValue())
 	if err != nil {
 		return nil, err
 	}
 
 	// check if a reset password token already exists for this user
-	existingRequest, err := m.store.GetFactorResetPasswordByPasswordID(ctx, resetPasswordRequest.PasswordID)
+	existingRequest, err := m.store.GetResetPasswordByPasswordID(ctx, resetPasswordRequest.PasswordID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
@@ -253,8 +253,8 @@ func (m *Module) GetPasswordByUserID(ctx context.Context, id string) (*types.Fac
 	return m.store.GetPasswordByUserID(ctx, id)
 }
 
-func (m *Module) GetFactorResetPassword(ctx context.Context, token string) (*types.FactorResetPasswordRequest, error) {
-	return m.store.GetFactorResetPassword(ctx, token)
+func (m *Module) GetResetPassword(ctx context.Context, token string) (*types.ResetPasswordRequest, error) {
+	return m.store.GetResetPassword(ctx, token)
 }
 
 func (m *Module) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, passwordID string, password string) error {
