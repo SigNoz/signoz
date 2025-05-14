@@ -35,7 +35,7 @@ const useFilterConfig = ({
 	const { isLoading: isCustomFiltersLoading } = useQuery<
 		SuccessResponse<PayloadProps> | ErrorResponse,
 		Error
-	>(['addedFilters'], () => getCustomFilters({ signal: signal || '' }), {
+	>(['addedFilters', signal], () => getCustomFilters({ signal: signal || '' }), {
 		onSuccess: (data) => {
 			if ('payload' in data && data.payload?.filters) {
 				setCustomFilters(data.payload.filters || ([] as FilterType[]));
