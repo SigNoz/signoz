@@ -39,6 +39,6 @@ def get_jwt_token(signoz: types.SigNoz) -> str:
         )
         assert response.status_code == HTTPStatus.OK
 
-        return response.json()["accessJwt"]
+        return response.json()["data"]["accessJwt"]
 
     return _get_jwt_token
