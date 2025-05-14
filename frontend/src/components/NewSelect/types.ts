@@ -60,4 +60,5 @@ export interface CustomMultiSelectProps
 	onRetry?: () => void;
 	maxTagTextLength?: number;
 	showIncompleteDataMessage?: boolean;
+	showLabels?: boolean;
 }
