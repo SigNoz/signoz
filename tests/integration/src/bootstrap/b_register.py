@@ -82,7 +82,11 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         },
     )
 
-    invite_response = response.json()["data"][0]
+    invite_response = response.json()["data"]
+    found_invite = next(
+        (invite for invite in invite_response if invite["email"] == "editor@integration.test"),
+        None,
+    )
 
     # Register the editor user using the invite token
     response = requests.post(
@@ -90,7 +94,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         json={
             "password": "password",
             "displayName": "editor",
-            "token": f"{invite_response["inviteToken"]}",
+            "token": f"{found_invite["inviteToken"]}",
         },
         timeout=2,
     )
@@ -99,7 +103,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
     # Verify that the invite token has been deleted
     response = requests.get(
         signoz.self.host_config.get(
-            f"/api/v1/invite/{invite_response["inviteToken"]}"
+            f"/api/v1/invite/{found_invite["inviteToken"]}"
         ),  # pylint: disable=line-too-long
         timeout=2,
     )
