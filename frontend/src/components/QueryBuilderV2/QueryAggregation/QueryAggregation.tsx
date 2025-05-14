@@ -4,16 +4,10 @@ import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 
 import QueryAggregationSelect from './QueryAggregationSelect';
 
-function QueryAggregationOptions({
-	onAggregationOptionsSelect,
-}: {
-	onAggregationOptionsSelect: (value: { func: string; arg: string }[]) => void;
-}): JSX.Element {
+function QueryAggregationOptions(): JSX.Element {
 	return (
 		<div className="query-aggregation-container">
-			<QueryAggregationSelect
-				onAggregationOptionsSelect={onAggregationOptionsSelect}
-			/>
+			<QueryAggregationSelect />
 
 			<div className="query-aggregation-interval">
 				<div className="query-aggregation-interval-label">every</div>
