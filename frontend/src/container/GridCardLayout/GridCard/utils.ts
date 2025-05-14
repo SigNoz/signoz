@@ -179,6 +179,7 @@ interface HandleGraphClickParams {
 	notifications: NotificationInstance;
 	graphClick: (props: GraphClickProps) => void;
 	customFilters?: TagFilterItem[];
+	customTracesTimeRange?: { start: number; end: number };
 }
 
 export const handleGraphClick = async ({
@@ -194,6 +195,7 @@ export const handleGraphClick = async ({
 	notifications,
 	graphClick,
 	customFilters,
+	customTracesTimeRange,
 }: HandleGraphClickParams): Promise<void> => {
 	const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
 
@@ -225,8 +227,10 @@ export const handleGraphClick = async ({
 				navigateToExplorer({
 					filters: [...result[key].filters, ...(customFilters || [])],
 					dataSource: result[key].dataSource as DataSource,
-					startTime: xValue,
-					endTime: xValue + (stepInterval ?? 60),
+					startTime: customTracesTimeRange ? customTracesTimeRange?.start : xValue,
+					endTime: customTracesTimeRange
+						? customTracesTimeRange?.end
+						: xValue + (stepInterval ?? 60),
 					shouldResolveQuery: true,
 				}),
 		}));
