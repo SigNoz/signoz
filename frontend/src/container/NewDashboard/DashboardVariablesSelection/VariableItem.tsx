@@ -14,8 +14,8 @@ import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { debounce, isArray, isString } from 'lodash-es';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { debounce, isArray, isEmpty, isString } from 'lodash-es';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -24,11 +24,9 @@ import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { variablePropsToPayloadVariables } from '../utils';
+import { ALL_SELECT_VALUE, variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle } from './styles';
 import { areArraysEqual, checkAPIInvocation, IDependencyData } from './util';
-
-const ALL_SELECT_VALUE = '__ALL__';
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
@@ -44,7 +42,7 @@ interface VariableItemProps {
 	dependencyData: IDependencyData | null;
 }
 
-const getSelectValue = (
+export const getSelectValue = (
 	selectedValue: IDashboardVariable['selectedValue'],
 	variableData: IDashboardVariable,
 ): string | string[] | undefined => {
@@ -137,6 +135,17 @@ function VariableItem({
 						) {
 							const value = variableData.selectedValue;
 							let allSelected = false;
+							// The default value for multi-select is ALL and first value for
+							// single select
+							// console.log(valueNotInList);
+							// if (valueNotInList) {
+							// 	if (variableData.multiSelect) {
+							// 		value = newOptionsData;
+							// 		allSelected = true;
+							// 	} else {
+							// 		[value] = newOptionsData;
+							// 	}
+							// } else
 
 							if (variableData.multiSelect) {
 								const { selectedValue } = variableData;
@@ -223,28 +232,38 @@ function VariableItem({
 		},
 	);
 
-	const handleChange = (inputValue: string | string[]): void => {
-		const value = variableData.multiSelect && !inputValue ? [] : inputValue;
+	const handleChange = useCallback(
+		(inputValue: string | string[]): void => {
+			const value = variableData.multiSelect && !inputValue ? [] : inputValue;
 
-		if (
-			value === variableData.selectedValue ||
-			(Array.isArray(value) &&
-				Array.isArray(variableData.selectedValue) &&
-				areArraysEqual(value, variableData.selectedValue))
-		) {
-			return;
-		}
-		if (variableData.name) {
 			if (
-				value === ALL_SELECT_VALUE ||
-				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
+				value === variableData.selectedValue ||
+				(Array.isArray(value) &&
+					Array.isArray(variableData.selectedValue) &&
+					areArraysEqual(value, variableData.selectedValue))
 			) {
-				onValueUpdate(variableData.name, variableData.id, optionsData, true);
-			} else {
-				onValueUpdate(variableData.name, variableData.id, value, false);
+				return;
 			}
-		}
-	};
+			if (variableData.name) {
+				if (
+					value === ALL_SELECT_VALUE ||
+					(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
+				) {
+					onValueUpdate(variableData.name, variableData.id, optionsData, true);
+				} else {
+					onValueUpdate(variableData.name, variableData.id, value, false);
+				}
+			}
+		},
+		[
+			variableData.multiSelect,
+			variableData.selectedValue,
+			variableData.name,
+			variableData.id,
+			onValueUpdate,
+			optionsData,
+		],
+	);
 
 	// Add a handler for tracking temporary selection changes
 	const handleTempChange = (inputValue: string | string[]): void => {
@@ -282,6 +301,59 @@ function VariableItem({
 		variableData.allSelected && enableSelectAll
 			? 'ALL'
 			: selectedValueStringified;
+
+	// Apply default value on first render if no selection exists
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const finalSelectedValues = useMemo(() => {
+		if (variableData.multiSelect) {
+			let value = tempSelection || selectedValue;
+			if (isEmpty(value)) {
+				if (variableData.showALLOption) {
+					if (variableData.defaultValue) {
+						value = variableData.defaultValue;
+					} else {
+						value = optionsData;
+					}
+				} else if (variableData.defaultValue) {
+					value = variableData.defaultValue;
+				} else {
+					value = optionsData?.[0];
+				}
+			}
+
+			return value;
+		}
+		if (isEmpty(selectedValue)) {
+			if (variableData.defaultValue) {
+				return variableData.defaultValue;
+			}
+			return optionsData[0]?.toString();
+		}
+
+		return selectedValue;
+	}, [
+		variableData.multiSelect,
+		variableData.showALLOption,
+		variableData.defaultValue,
+		selectedValue,
+		tempSelection,
+		optionsData,
+	]);
+
+	useEffect(() => {
+		if (
+			(variableData.multiSelect && !(tempSelection || selectValue)) ||
+			isEmpty(selectValue)
+		) {
+			handleChange(finalSelectedValues as string[] | string);
+		}
+	}, [
+		finalSelectedValues,
+		handleChange,
+		selectValue,
+		tempSelection,
+		variableData.multiSelect,
+	]);
 
 	useEffect(() => {
 		// Fetch options for CUSTOM Type
@@ -330,7 +402,7 @@ function VariableItem({
 								label: option.toString(),
 								value: option.toString(),
 							}))}
-							defaultValue={selectValue}
+							defaultValue={variableData.defaultValue || selectValue}
 							onChange={handleTempChange}
 							bordered={false}
 							placeholder="Select value"
@@ -341,9 +413,8 @@ function VariableItem({
 							data-testid="variable-select"
 							className="variable-select"
 							popupClassName="dropdown-styles"
-							maxTagCount={4}
+							maxTagCount={2}
 							getPopupContainer={popupContainer}
-							allowClear
 							value={tempSelection || selectValue}
 							onDropdownVisibleChange={handleDropdownVisibleChange}
 							errorMessage={errorMessage}
@@ -357,6 +428,8 @@ function VariableItem({
 								handleChange([]);
 							}}
 							enableAllSelection={enableSelectAll}
+							maxTagTextLength={30}
+							allowClear={selectValue !== ALL_SELECT_VALUE && selectValue !== 'ALL'}
 						/>
 					) : (
 						<CustomSelect
@@ -365,7 +438,7 @@ function VariableItem({
 									? selectValue.join(' ')
 									: selectValue || variableData.id
 							}
-							defaultValue={selectValue}
+							defaultValue={variableData.defaultValue || selectValue}
 							onChange={handleChange}
 							bordered={false}
 							placeholder="Select value"

@@ -12,6 +12,10 @@ interface UseGetFieldValuesProps {
 	value?: string;
 	/** Whether the query should be enabled */
 	enabled?: boolean;
+	/** Start Unix Milli */
+	startUnixMilli?: number;
+	/** End Unix Milli */
+	endUnixMilli?: number;
 }
 
 /**
@@ -27,12 +31,15 @@ export const useGetFieldValues = ({
 	signal,
 	name,
 	value,
+	startUnixMilli,
+	endUnixMilli,
 	enabled = true,
 }: UseGetFieldValuesProps): UseQueryResult<
 	SuccessResponse<FieldValueResponse> | ErrorResponse
 > =>
 	useQuery<SuccessResponse<FieldValueResponse> | ErrorResponse>({
-		queryKey: ['fieldValues', signal, name, value],
-		queryFn: () => getFieldValues(signal, name, value),
+		queryKey: ['fieldValues', signal, name, value, startUnixMilli, endUnixMilli],
+		queryFn: () =>
+			getFieldValues(signal, name, value, startUnixMilli, endUnixMilli),
 		enabled,
 	});

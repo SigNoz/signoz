@@ -12,6 +12,8 @@ export const getFieldValues = async (
 	signal?: 'traces' | 'logs' | 'metrics',
 	name?: string,
 	value?: string,
+	startUnixMilli?: number,
+	endUnixMilli?: number,
 ): Promise<SuccessResponse<FieldValueResponse> | ErrorResponse> => {
 	const params: Record<string, string> = {};
 
@@ -27,7 +29,28 @@ export const getFieldValues = async (
 		params.value = value;
 	}
 
+	if (startUnixMilli) {
+		params.startUnixMilli = Math.floor(startUnixMilli / 1000000).toString();
+	}
+
+	if (endUnixMilli) {
+		params.endUnixMilli = Math.floor(endUnixMilli / 1000000).toString();
+	}
+
 	const response = await ApiBaseInstance.get('/fields/values', { params });
+
+	// Normalize values from different types (stringValues, boolValues, etc.)
+	if (response.data?.data?.values) {
+		const allValues: string[] = [];
+		Object.values(response.data.data.values).forEach((valueArray: any) => {
+			if (Array.isArray(valueArray)) {
+				allValues.push(...valueArray.map(String));
+			}
+		});
+
+		// Add a normalized values array to the response
+		response.data.data.normalizedValues = allValues;
+	}
 
 	return {
 		statusCode: 200,
