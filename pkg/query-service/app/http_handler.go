@@ -24,10 +24,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	tracefunnels "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 
@@ -5107,4 +5109,227 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		Result: result,
 	}
 	aH.Respond(w, resp)
+}
+
+// RegisterTraceFunnelsRoutes adds trace funnels routes
+func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middleware.AuthZ) {
+	// Main trace funnels router
+	traceFunnelsRouter := router.PathPrefix("/api/v1/trace-funnels").Subrouter()
+
+	// API endpoints
+	traceFunnelsRouter.HandleFunc("/new",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.New)).
+		Methods(http.MethodPost)
+	traceFunnelsRouter.HandleFunc("/list",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.List)).
+		Methods(http.MethodGet)
+	traceFunnelsRouter.HandleFunc("/steps/update",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.UpdateSteps)).
+		Methods(http.MethodPut)
+
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.Get)).
+		Methods(http.MethodGet)
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.Delete)).
+		Methods(http.MethodDelete)
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.UpdateFunnel)).
+		Methods(http.MethodPut)
+	traceFunnelsRouter.HandleFunc("/save",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.Save)).
+		Methods(http.MethodPost)
+	// Analytics endpoints
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", aH.handleValidateTraces).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", aH.handleFunnelAnalytics).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", aH.handleStepAnalytics).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps/overview", aH.handleFunnelStepAnalytics).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", aH.handleFunnelSlowTraces).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", aH.handleFunnelErrorTraces).Methods("POST")
+
+}
+
+func (aH *APIHandler) handleValidateTraces(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.Signoz.Modules.TraceFunnel.Get(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	var timeRange traceFunnels.TimeRange
+	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
+		return
+	}
+
+	if len(funnel.Steps) < 2 {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("funnel must have at least 2 steps")}, nil)
+		return
+	}
+
+	chq, err := tracefunnels.ValidateTraces(funnel, timeRange)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
+		return
+	}
+	aH.Respond(w, results)
+}
+
+func (aH *APIHandler) handleFunnelAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.Signoz.Modules.TraceFunnel.Get(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	var stepTransition traceFunnels.StepTransitionRequest
+	if err := json.NewDecoder(r.Body).Decode(&stepTransition); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
+		return
+	}
+
+	chq, err := tracefunnels.GetFunnelAnalytics(funnel, stepTransition.TimeRange)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
+		return
+	}
+	aH.Respond(w, results)
+}
+
+func (aH *APIHandler) handleFunnelStepAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.Signoz.Modules.TraceFunnel.Get(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	var stepTransition traceFunnels.StepTransitionRequest
+	if err := json.NewDecoder(r.Body).Decode(&stepTransition); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
+		return
+	}
+
+	chq, err := tracefunnels.GetFunnelStepAnalytics(funnel, stepTransition.TimeRange, stepTransition.StepAOrder, stepTransition.StepBOrder)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
+		return
+	}
+	aH.Respond(w, results)
+}
+
+func (aH *APIHandler) handleStepAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.Signoz.Modules.TraceFunnel.Get(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	var timeRange traceFunnels.TimeRange
+	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
+		return
+	}
+
+	chq, err := tracefunnels.GetStepAnalytics(funnel, timeRange)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
+		return
+	}
+	aH.Respond(w, results)
+}
+
+func (aH *APIHandler) handleFunnelSlowTraces(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.Signoz.Modules.TraceFunnel.Get(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	var req traceFunnels.StepTransitionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid request body: %v", err)}, nil)
+		return
+	}
+
+	chq, err := tracefunnels.GetSlowestTraces(funnel, req.TimeRange, req.StepAOrder, req.StepBOrder)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
+		return
+	}
+	aH.Respond(w, results)
+}
+
+func (aH *APIHandler) handleFunnelErrorTraces(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	funnel, err := aH.Signoz.Modules.TraceFunnel.Get(r.Context(), funnelID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
+		return
+	}
+
+	var req traceFunnels.StepTransitionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid request body: %v", err)}, nil)
+		return
+	}
+
+	chq, err := tracefunnels.GetErroredTraces(funnel, req.TimeRange, req.StepAOrder, req.StepBOrder)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
+		return
+	}
+	aH.Respond(w, results)
 }
