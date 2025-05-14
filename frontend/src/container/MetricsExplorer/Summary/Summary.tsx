@@ -236,18 +236,15 @@ function Summary(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
-				<MetricsSearch
-					query={searchQuery}
-					onChange={handleFilterChange}
-					heatmapView={heatmapView}
-					setHeatmapView={setHeatmapView}
-				/>
+				<MetricsSearch query={searchQuery} onChange={handleFilterChange} />
 				<MetricsTreemap
 					data={treeMapData?.payload}
 					isLoading={isTreeMapLoading || isTreeMapFetching}
 					isError={isProportionViewError}
 					viewType={heatmapView}
 					openMetricDetails={openMetricDetails}
+					heatmapView={heatmapView}
+					setHeatmapView={setHeatmapView}
 				/>
 				<MetricsTable
 					isLoading={isMetricsLoading || isMetricsFetching}
