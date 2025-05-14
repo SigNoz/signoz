@@ -23,6 +23,7 @@ export function WidgetSelector({
 			value={selectedWidgets}
 			labelInValue
 			onChange={(value): void => setSelectedWidgets(value as string[])}
+			showLabels
 		/>
 	);
 }
