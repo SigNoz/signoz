@@ -166,7 +166,6 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 	}
 
 	if ssoAvailable {
-		resp.IsUser = true
 
 		// TODO(Nitya): in multitenancy this should use orgId as well.
 		orgDomain, err := m.GetAuthDomainByEmail(ctx, email)
@@ -175,8 +174,10 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 		}
 
 		if orgDomain != nil && orgDomain.SsoEnabled {
-			// saml is enabled for this domain, lets prepare sso url
+			// this is to allow self registration
+			resp.IsUser = true
 
+			// saml is enabled for this domain, lets prepare sso url
 			if sourceUrl == "" {
 				sourceUrl = constants.GetDefaultSiteURL()
 			}
@@ -186,7 +187,6 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 			escapedUrl, _ := url.QueryUnescape(sourceUrl)
 			siteUrl, err := url.Parse(escapedUrl)
 			if err != nil {
-				zap.L().Error("failed to parse referer", zap.Error(err))
 				return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse referer")
 			}
 
