@@ -1,7 +1,17 @@
+.quick-filters-container {
+	display: flex;
+	height: 100%;
+	.quick-filters-settings-container {
+		position: relative;
+	}
+}
+
+
 .quick-filters {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+	width: 100%;
 	border-right: 1px solid var(--bg-slate-400);
 	color: var(--bg-vanilla-100);
 
@@ -52,7 +62,7 @@
 		.right-actions {
 			display: flex;
 			align-items: center;
-			gap: 12px;
+			gap: 10px;
 			width: 100%;
 			justify-content: flex-end;
 
@@ -67,6 +77,22 @@
 				border: 0;
 				box-shadow: none;
 			}
+			.right-action-icon-container {
+				display: flex;
+				padding: 2px;
+				.settings-icon {
+					height: 14px;
+					width: 14px;
+					cursor: pointer;
+				}
+				&:hover {
+					background: var(--bg-slate-500);
+				}
+				&.active {
+					background: var(--bg-slate-500);
+				}
+			}
+			
 		}
 	}
 }

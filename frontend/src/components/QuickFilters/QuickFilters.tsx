@@ -6,16 +6,21 @@ import {
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
+import classNames from 'classnames';
 import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isFunction } from 'lodash-es';
+import { Settings2 as SettingsIcon } from 'lucide-react';
+import { useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Slider from './FilterRenderers/Slider/Slider';
+import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
 import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
+	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const { config, handleFilterVisibilityChange, source, onFilterChange } = props;
 
 	const {
@@ -63,64 +68,92 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
 
 	return (
-		<div className="quick-filters">
-			{source !== QuickFiltersSource.INFRA_MONITORING &&
-				source !== QuickFiltersSource.API_MONITORING && (
-					<section className="header">
-						<section className="left-actions">
-							<FilterOutlined />
-							<Typography.Text className="text">
-								{lastQueryName ? 'Filters for' : 'Filters'}
-							</Typography.Text>
-							{lastQueryName && (
-								<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
-									<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
+		<div className="quick-filters-container">
+			<div className="quick-filters">
+				{source !== QuickFiltersSource.INFRA_MONITORING &&
+					source !== QuickFiltersSource.API_MONITORING && (
+						<section className="header">
+							<section className="left-actions">
+								<FilterOutlined />
+								<Typography.Text className="text">
+									{lastQueryName ? 'Filters for' : 'Filters'}
+								</Typography.Text>
+								{lastQueryName && (
+									<Tooltip
+										title={`Filter currently in sync with query ${lastQueryName}`}
+									>
+										<Typography.Text className="sync-tag">
+											{lastQueryName}
+										</Typography.Text>
+									</Tooltip>
+								)}
+							</section>
+
+							<section className="right-actions">
+								<Tooltip title="Reset All">
+									<div className="right-action-icon-container">
+										<SyncOutlined className="sync-icon" onClick={handleReset} />
+									</div>
 								</Tooltip>
-							)}
+								<Tooltip title="Collapse Filters">
+									<div className="right-action-icon-container">
+										<VerticalAlignTopOutlined
+											rotate={270}
+											onClick={handleFilterVisibilityChange}
+										/>
+									</div>
+								</Tooltip>
+								<Tooltip title="Settings">
+									<div
+										className={classNames('right-action-icon-container', {
+											active: isSettingsOpen,
+										})}
+									>
+										<SettingsIcon
+											className="settings-icon"
+											width={14}
+											height={14}
+											onClick={(): void => setIsSettingsOpen(true)}
+										/>
+									</div>
+								</Tooltip>
+							</section>
 						</section>
+					)}
 
-						<section className="right-actions">
-							<Tooltip title="Reset All">
-								<SyncOutlined className="sync-icon" onClick={handleReset} />
-							</Tooltip>
-							<div className="divider-filter" />
-							<Tooltip title="Collapse Filters">
-								<VerticalAlignTopOutlined
-									rotate={270}
-									onClick={handleFilterVisibilityChange}
-								/>
-							</Tooltip>
-						</section>
+				<TypicalOverlayScrollbar>
+					<section className="filters">
+						{config.map((filter) => {
+							switch (filter.type) {
+								case FiltersType.CHECKBOX:
+									return (
+										<Checkbox
+											source={source}
+											filter={filter}
+											onFilterChange={onFilterChange}
+										/>
+									);
+								case FiltersType.SLIDER:
+									return <Slider filter={filter} />;
+								// eslint-disable-next-line sonarjs/no-duplicated-branches
+								default:
+									return (
+										<Checkbox
+											source={source}
+											filter={filter}
+											onFilterChange={onFilterChange}
+										/>
+									);
+							}
+						})}
 					</section>
+				</TypicalOverlayScrollbar>
+			</div>
+			<div className="quick-filters-settings-container">
+				{isSettingsOpen && (
+					<QuickFiltersSettings setIsSettingsOpen={setIsSettingsOpen} />
 				)}
-
-			<TypicalOverlayScrollbar>
-				<section className="filters">
-					{config.map((filter) => {
-						switch (filter.type) {
-							case FiltersType.CHECKBOX:
-								return (
-									<Checkbox
-										source={source}
-										filter={filter}
-										onFilterChange={onFilterChange}
-									/>
-								);
-							case FiltersType.SLIDER:
-								return <Slider filter={filter} />;
-							// eslint-disable-next-line sonarjs/no-duplicated-branches
-							default:
-								return (
-									<Checkbox
-										source={source}
-										filter={filter}
-										onFilterChange={onFilterChange}
-									/>
-								);
-						}
-					})}
-				</section>
-			</TypicalOverlayScrollbar>
+			</div>
 		</div>
 	);
 }
