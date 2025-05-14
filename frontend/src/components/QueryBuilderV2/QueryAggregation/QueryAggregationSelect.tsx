@@ -33,6 +33,8 @@ import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
+import { useQueryBuilderV2Context } from '../QueryBuilderV2Context';
+
 const chipDecoration = Decoration.mark({
 	class: 'chip-decorator',
 });
@@ -110,12 +112,9 @@ function getFunctionContextAtCursor(
 }
 
 // eslint-disable-next-line react/no-this-in-sfc
-function QueryAggregationSelect({
-	onAggregationOptionsSelect,
-}: {
-	onAggregationOptionsSelect: (value: { func: string; arg: string }[]) => void;
-}): JSX.Element {
+function QueryAggregationSelect(): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
+	const { setAggregationOptions } = useQueryBuilderV2Context();
 	const queryData = currentQuery.builder.queryData[0];
 	const [input, setInput] = useState('');
 	const [cursorPos, setCursorPos] = useState(0);
@@ -146,7 +145,7 @@ function QueryAggregationSelect({
 			});
 		}
 		setFunctionArgPairs(pairs);
-		onAggregationOptionsSelect(pairs);
+		setAggregationOptions(pairs);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [input]);
 
