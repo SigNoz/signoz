@@ -65,6 +65,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	maxTagTextLength,
 	onDropdownVisibleChange,
 	showIncompleteDataMessage = false,
+	showLabels = false,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -1709,7 +1710,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	// Custom Tag Render (needs significant updates)
 	const tagRender = useCallback(
 		(props: CustomTagProps): React.ReactElement => {
-			const { label, value, closable, onClose } = props;
+			const { label: labelProp, value, closable, onClose } = props;
+
+			const label = showLabels
+				? options.find((option) => option.value === value)?.label || labelProp
+				: labelProp;
 
 			// If the display value is the special ALL value, render the ALL tag
 			if (allOptionShown) {
