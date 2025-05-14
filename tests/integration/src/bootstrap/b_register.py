@@ -142,7 +142,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
         },
     )
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
 
     invite_response = response.json()["data"]
     assert "id" in invite_response
