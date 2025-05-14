@@ -186,7 +186,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
         json={
             "password": "password",
             "displayName": "viewer",
-            "token": f"{invite_response["token"]}",
+            "token": f"{found_invite["token"]}",
         },
         timeout=2,
     )
