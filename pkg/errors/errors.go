@@ -141,3 +141,27 @@ func Join(errs ...error) error {
 func As(err error, target any) bool {
 	return errors.As(err, target)
 }
+
+func WrapNotFoundf(cause error, code Code, format string, args ...interface{}) *base {
+	return Wrapf(cause, TypeNotFound, code, format, args...)
+}
+
+func NewNotFoundf(code Code, format string, args ...interface{}) *base {
+	return Newf(TypeNotFound, code, format, args...)
+}
+
+func WrapInternalf(cause error, code Code, format string, args ...interface{}) *base {
+	return Wrapf(cause, TypeInternal, code, format, args...)
+}
+
+func NewInternalf(code Code, format string, args ...interface{}) *base {
+	return Newf(TypeInternal, code, format, args...)
+}
+
+func WrapInvalidInputf(cause error, code Code, format string, args ...interface{}) *base {
+	return Wrapf(cause, TypeInvalidInput, code, format, args...)
+}
+
+func NewInvalidInputf(code Code, format string, args ...interface{}) *base {
+	return Newf(TypeInvalidInput, code, format, args...)
+}
