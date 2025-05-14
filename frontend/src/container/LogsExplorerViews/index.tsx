@@ -6,7 +6,7 @@ import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
 import logEvent from 'api/common/logEvent';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
@@ -247,7 +247,7 @@ function LogsExplorerViews({
 	} = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V4,
 		{
 			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
 		},
@@ -265,7 +265,7 @@ function LogsExplorerViews({
 	} = useGetExplorerQueryRange(
 		requestData,
 		panelType,
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V4,
 		{
 			keepPreviousData: true,
 			enabled: !isLimit && !!requestData,

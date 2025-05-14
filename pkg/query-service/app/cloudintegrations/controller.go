@@ -234,7 +234,7 @@ func (c *Controller) CheckInAsAgent(
 	}
 
 	// prepare and return integration config to be consumed by agent
-	compliedStrategy, err := NewCompiledCollectionStrategy(cloudProvider)
+	compiledStrategy, err := NewCompiledCollectionStrategy(cloudProvider)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"couldn't init telemetry collection strategy: %w", err,
@@ -243,7 +243,7 @@ func (c *Controller) CheckInAsAgent(
 
 	agentConfig := IntegrationConfigForAgent{
 		EnabledRegions:              []string{},
-		TelemetryCollectionStrategy: compliedStrategy,
+		TelemetryCollectionStrategy: compiledStrategy,
 	}
 
 	if account.Config != nil && account.Config.EnabledRegions != nil {
@@ -275,7 +275,7 @@ func (c *Controller) CheckInAsAgent(
 		}
 		config := svcConfigs[svcType]
 
-		err := AddServiceStrategy(svcType, compliedStrategy, definition.Strategy, config)
+		err := AddServiceStrategy(svcType, compiledStrategy, definition.Strategy, config)
 		if err != nil {
 			return nil, err
 		}
@@ -459,11 +459,11 @@ type UpdateServiceConfigRequest struct {
 
 func (u *UpdateServiceConfigRequest) Validate(def *services.Definition) error {
 	if def.Id != services.S3Sync && u.Config.Logs != nil && u.Config.Logs.S3Buckets != nil {
-		return errors.Wrapf(nil, errors.TypeForbidden, errors.CodeForbidden, "s3 buckets can only be added to service-type[%s]", services.S3Sync)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "s3 buckets can only be added to service-type[%s]", services.S3Sync)
 	} else if def.Id == services.S3Sync && u.Config.Logs != nil && u.Config.Logs.S3Buckets != nil {
 		for region := range u.Config.Logs.S3Buckets {
 			if _, found := ValidAWSRegions[region]; !found {
-				return errors.NotFoundNew(CodeInvalidCloudRegion, "invalid cloud region: %s", region)
+				return errors.NewInvalidInputf(CodeInvalidCloudRegion, "invalid cloud region: %s", region)
 			}
 		}
 	}
