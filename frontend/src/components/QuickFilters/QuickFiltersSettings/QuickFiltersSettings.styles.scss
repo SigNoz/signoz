@@ -1,13 +1,16 @@
 .quick-filters-settings {
+    display: flex;
+	flex-direction: column;
     position: absolute;
 	z-index: 999;
 	width: 342px;
 	background: var(--bg-slate-500);
 	transition: width 0.05s ease-in-out;
-	display: flex;
-	flex-direction: column;
-	height: calc(100vh - 45px);
 	overflow: hidden;
+
+    &.qf-logs-explorer {
+	    height: calc(100vh - 45px);
+    }
 
 	&.hidden {
 		width: 0;
@@ -17,7 +20,6 @@
         align-items: center;
         justify-content: space-between;
         padding: 10.5px;
-        border-bottom: 1px solid var(--bg-slate-400);
 
         .qf-title {
             display: flex;
@@ -32,9 +34,23 @@
         }
     }
 
+    .qf-filters {
+        &.added-filters {
+            max-height: 40%;
+        }
+        &.other-filters {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; 
+        }
+    }
+
     .search {
         .ant-input {
             background-color: var(--bg-slate-500);
+            height: 46px;
+            border-radius: 0;
         }
     }
 
@@ -72,7 +88,6 @@
     flex-direction: column;
     .qf-filters-header {
         color: var(--bg-slate-50);
-        border-top: 1px solid var(--bg-slate-400);
         font-family: Inter;
         font-size: 11px;
         font-style: normal;

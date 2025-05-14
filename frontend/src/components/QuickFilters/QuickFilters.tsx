@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
-import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isFunction } from 'lodash-es';
 import { Settings2 as SettingsIcon } from 'lucide-react';
@@ -22,6 +22,7 @@ import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const {
+		className,
 		config,
 		handleFilterVisibilityChange,
 		source,
@@ -137,7 +138,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						</section>
 					)}
 
-				<TypicalOverlayScrollbar>
+				<OverlayScrollbar>
 					<section className="filters">
 						{filterConfig.map((filter) => {
 							switch (filter.type) {
@@ -163,13 +164,17 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 							}
 						})}
 					</section>
-				</TypicalOverlayScrollbar>
+				</OverlayScrollbar>
 			</div>
 			<div className="quick-filters-settings-container">
 				<div
-					className={classNames('quick-filters-settings', {
-						hidden: !isSettingsOpen,
-					})}
+					className={classNames(
+						'quick-filters-settings',
+						{
+							hidden: !isSettingsOpen,
+						},
+						className,
+					)}
 				>
 					{isSettingsOpen && (
 						<QuickFiltersSettings

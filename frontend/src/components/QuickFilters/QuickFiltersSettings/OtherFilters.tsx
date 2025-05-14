@@ -1,12 +1,30 @@
 import './OtherFilters.styles.scss';
 
+import { Skeleton } from 'antd';
 import Button from 'antd/es/button';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
 import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSuggestions';
 import { useMemo } from 'react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
+
+function OtherFiltersSkeleton(): JSX.Element {
+	return (
+		<>
+			{Array.from({ length: 5 }).map((_, index) => (
+				<Skeleton.Input
+					active
+					size="small"
+					style={{ width: '300px', margin: '8px 12px' }}
+					// eslint-disable-next-line react/no-array-index-key
+					key={index}
+				/>
+			))}
+		</>
+	);
+}
 
 function OtherFilters({
 	signal,
@@ -21,7 +39,7 @@ function OtherFilters({
 }): JSX.Element {
 	const {
 		data: suggestionsData,
-		// isFetching: isFetchingSuggestions,
+		isFetching: isFetchingSuggestions,
 	} = useGetAttributeSuggestions(
 		{
 			searchText: inputValue,
@@ -55,26 +73,32 @@ function OtherFilters({
 		]);
 	};
 
+	const renderFilters = (): React.ReactNode => {
+		if (isFetchingSuggestions) return <OtherFiltersSkeleton />;
+		if (!otherFilters?.length)
+			return <div className="no-values-found">No values found</div>;
+
+		return otherFilters.map((filter) => (
+			<div key={filter.key} className="qf-filter-item other-filters-item">
+				<div className="qf-filter-key">{filter.key}</div>
+				<Button
+					className="add-filter-btn periscope-btn"
+					size="small"
+					onClick={(): void => handleAddFilter(filter as FilterType)}
+				>
+					Add
+				</Button>
+			</div>
+		));
+	};
+
 	return (
 		<div className="qf-filters other-filters">
 			<div className="qf-filters-header">OTHER FILTERS</div>
 			<div className="qf-other-filters-list">
-				{otherFilters?.length === 0 ? (
-					<div className="no-values-found">No values found</div>
-				) : (
-					otherFilters?.map((filter) => (
-						<div key={filter.key} className="qf-filter-item other-filters-item">
-							<div className="qf-filter-key">{filter.key}</div>
-							<Button
-								className="add-filter-btn periscope-btn"
-								size="small"
-								onClick={(): void => handleAddFilter(filter as FilterType)}
-							>
-								Add
-							</Button>
-						</div>
-					))
-				)}
+				<OverlayScrollbar>
+					<>{renderFilters()}</>
+				</OverlayScrollbar>
 			</div>
 		</div>
 	);
