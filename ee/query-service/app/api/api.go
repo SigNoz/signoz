@@ -27,6 +27,7 @@ import (
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
@@ -188,7 +189,7 @@ func (ah *APIHandler) updateRequestContext(w http.ResponseWriter, r *http.Reques
 			return r, errors.New(errors.TypeInternal, errors.CodeInternal, "error checking SSO feature")
 		}
 	}
-	ctx := context.WithValue(r.Context(), "ssoAvailable", ssoAvailable)
+	ctx := context.WithValue(r.Context(), types.SSOAvailable, ssoAvailable)
 	return r.WithContext(ctx), nil
 }
 

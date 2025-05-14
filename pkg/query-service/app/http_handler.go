@@ -24,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -1711,7 +1712,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		"number": len(*result),
 	}
 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
+	if errv2 == nil {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, claims.Email, true, false)
 	}
 
@@ -2016,6 +2017,11 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
+	if aH.SetupCompleted {
+		RespondError(w, &model.ApiError{Err: errors.New("self-registration is disabled"), Typ: model.ErrorBadData}, nil)
+		return
+	}
+
 	var req types.PostableRegisterOrgAndAdmin
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorBadData}, nil)
@@ -3560,12 +3566,12 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(
 		return
 	}
 
-	result, apiErr := aH.CloudIntegrationsController.CheckInAsAgent(
+	result, err := aH.CloudIntegrationsController.CheckInAsAgent(
 		r.Context(), claims.OrgID, cloudProvider, req,
 	)
 
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -3685,11 +3691,11 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 		return
 	}
 
-	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
+	resp, err := aH.CloudIntegrationsController.GetServiceDetails(
 		r.Context(), claims.OrgID, cloudProvider, serviceId, cloudAccountId,
 	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -3713,8 +3719,8 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 	orgID valuer.UUID,
 	cloudProvider string,
 	cloudAccountId string,
-	svcDetails *cloudintegrations.CloudServiceDetails,
-) (*cloudintegrations.CloudServiceConnectionStatus, *model.ApiError) {
+	svcDetails *cloudintegrations.ServiceDetails,
+) (*cloudintegrations.ServiceConnectionStatus, *model.ApiError) {
 	if cloudProvider != "aws" {
 		// TODO(Raj): Make connection check generic for all providers in a follow up change
 		return nil, model.BadRequest(
@@ -3722,14 +3728,14 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 		)
 	}
 
-	telemetryCollectionStrategy := svcDetails.TelemetryCollectionStrategy
+	telemetryCollectionStrategy := svcDetails.Strategy
 	if telemetryCollectionStrategy == nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"service doesn't have telemetry collection strategy: %s", svcDetails.Id,
 		))
 	}
 
-	result := &cloudintegrations.CloudServiceConnectionStatus{}
+	result := &cloudintegrations.ServiceConnectionStatus{}
 	errors := []*model.ApiError{}
 	var resultLock sync.Mutex
 
@@ -3789,10 +3795,10 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 	ctx context.Context,
 	cloudAccountId string,
-	strategy *cloudintegrations.AWSMetricsCollectionStrategy,
-	metricsCollectedBySvc []cloudintegrations.CollectedMetric,
+	strategy *services.AWSMetricsStrategy,
+	metricsCollectedBySvc []services.CollectedMetric,
 ) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
-	if strategy == nil || len(strategy.CloudwatchMetricsStreamFilters) < 1 {
+	if strategy == nil || len(strategy.StreamFilters) < 1 {
 		return nil, nil
 	}
 
@@ -3801,7 +3807,7 @@ func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 		"cloud_account_id": cloudAccountId,
 	}
 
-	metricsNamespace := strategy.CloudwatchMetricsStreamFilters[0].Namespace
+	metricsNamespace := strategy.StreamFilters[0].Namespace
 	metricsNamespaceParts := strings.Split(metricsNamespace, "/")
 
 	if len(metricsNamespaceParts) >= 2 {
@@ -3839,13 +3845,13 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 	ctx context.Context,
 	orgID valuer.UUID,
 	cloudAccountId string,
-	strategy *cloudintegrations.AWSLogsCollectionStrategy,
+	strategy *services.AWSLogsStrategy,
 ) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
-	if strategy == nil || len(strategy.CloudwatchLogsSubscriptions) < 1 {
+	if strategy == nil || len(strategy.Subscriptions) < 1 {
 		return nil, nil
 	}
 
-	logGroupNamePrefix := strategy.CloudwatchLogsSubscriptions[0].LogGroupNamePrefix
+	logGroupNamePrefix := strategy.Subscriptions[0].LogGroupNamePrefix
 	if len(logGroupNamePrefix) < 1 {
 		return nil, nil
 	}
@@ -3933,12 +3939,12 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 		return
 	}
 
-	result, apiErr := aH.CloudIntegrationsController.UpdateServiceConfig(
-		r.Context(), claims.OrgID, cloudProvider, serviceId, req,
+	result, err := aH.CloudIntegrationsController.UpdateServiceConfig(
+		r.Context(), claims.OrgID, cloudProvider, serviceId, &req,
 	)
 
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 

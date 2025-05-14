@@ -39,7 +39,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// the EE handler wrapper passes the feature flag value in context
-	ssoAvailable, ok := ctx.Value("ssoAvailable").(bool)
+	ssoAvailable, ok := ctx.Value(types.SSOAvailable).(bool)
 	if !ok {
 		render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to retrieve SSO availability"))
 		return
@@ -141,7 +141,7 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// check if sso is enforced for the org
-		precheckResp, err = h.module.LoginPrecheck(ctx, invite.OrgID, user.Email, req.SourceUrl)
+		precheckResp, err = h.module.LoginPrecheck(ctx, invite.OrgID, user.Email, req.SourceURL)
 		if err != nil {
 			render.Error(w, err)
 			return

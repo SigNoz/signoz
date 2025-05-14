@@ -93,15 +93,15 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//get the pat
-	existingPAT, paterr := ah.AppDao().GetPATByID(r.Context(), claims.OrgID, id)
-	if paterr != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, paterr.Error()))
+	existingPAT, err := ah.AppDao().GetPATByID(r.Context(), claims.OrgID, id)
+	if err != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
 	// get the user
-	createdByUser, usererr := ah.Signoz.Modules.User.GetUserByID(r.Context(), claims.OrgID, existingPAT.UserID)
-	if usererr != nil {
+	createdByUser, err := ah.Signoz.Modules.User.GetUserByID(r.Context(), claims.OrgID, existingPAT.UserID)
+	if err != nil {
 		render.Error(w, err)
 		return
 	}
@@ -119,7 +119,6 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 
 	req.UpdatedByUserID = claims.UserID
 	req.UpdatedAt = time.Now()
-	zap.L().Info("Got Update PAT request", zap.Any("pat", req))
 	var apierr basemodel.BaseApiError
 	if apierr = ah.AppDao().UpdatePAT(r.Context(), claims.OrgID, req, id); apierr != nil {
 		RespondError(w, apierr, nil)
