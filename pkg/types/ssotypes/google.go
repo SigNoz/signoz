@@ -1,34 +1,34 @@
-package sso
+package ssotypes
 
 import (
-	"fmt"
-	"errors"
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
+
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 )
 
 type GoogleOAuthProvider struct {
-	RedirectURI                    string
-	OAuth2Config                   *oauth2.Config
-	Verifier                       *oidc.IDTokenVerifier
-	Cancel                         context.CancelFunc
-	HostedDomain 				   string
+	RedirectURI  string
+	OAuth2Config *oauth2.Config
+	Verifier     *oidc.IDTokenVerifier
+	Cancel       context.CancelFunc
+	HostedDomain string
 }
-
 
 func (g *GoogleOAuthProvider) BuildAuthURL(state string) (string, error) {
 	var opts []oauth2.AuthCodeOption
-	
+
 	// set hosted domain. google supports multiple hosted domains but in our case
-	// we have one config per host domain. 
+	// we have one config per host domain.
 	opts = append(opts, oauth2.SetAuthURLParam("hd", g.HostedDomain))
 
 	return g.OAuth2Config.AuthCodeURL(state, opts...), nil
 }
 
-type oauth2Error struct{
+type oauth2Error struct {
 	error            string
 	errorDescription string
 }
@@ -54,7 +54,6 @@ func (g *GoogleOAuthProvider) HandleCallback(r *http.Request) (identity *SSOIden
 	return g.createIdentity(r.Context(), token)
 }
 
-	
 func (g *GoogleOAuthProvider) createIdentity(ctx context.Context, token *oauth2.Token) (identity *SSOIdentity, err error) {
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
@@ -76,7 +75,7 @@ func (g *GoogleOAuthProvider) createIdentity(ctx context.Context, token *oauth2.
 	}
 
 	if claims.HostedDomain != g.HostedDomain {
-		return identity, fmt.Errorf("oidc: unexpected hd claim %v", claims.HostedDomain)	
+		return identity, fmt.Errorf("oidc: unexpected hd claim %v", claims.HostedDomain)
 	}
 
 	identity = &SSOIdentity{
@@ -89,4 +88,3 @@ func (g *GoogleOAuthProvider) createIdentity(ctx context.Context, token *oauth2.
 
 	return identity, nil
 }
-
