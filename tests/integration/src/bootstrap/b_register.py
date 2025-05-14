@@ -94,7 +94,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
         json={
             "password": "password",
             "displayName": "editor",
-            "token": f"{found_invite['inviteToken']}",
+            "token": f"{found_invite['token']}",
         },
         timeout=2,
     )
@@ -103,7 +103,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
     # Verify that the invite token has been deleted
     response = requests.get(
         signoz.self.host_config.get(
-            f"/api/v1/invite/{found_invite['inviteToken']}"
+            f"/api/v1/invite/{found_invite['token']}"
         ),  # pylint: disable=line-too-long
         timeout=2,
     )
@@ -186,7 +186,7 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
         json={
             "password": "password",
             "displayName": "viewer",
-            "token": f"{invite_response["inviteToken"]}",
+            "token": f"{invite_response["token"]}",
         },
         timeout=2,
     )
