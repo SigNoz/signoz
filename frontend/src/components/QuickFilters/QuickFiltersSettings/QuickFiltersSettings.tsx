@@ -51,7 +51,7 @@ function QuickFiltersSettings({
 	);
 
 	return (
-		<div className="quick-filters-settings">
+		<>
 			<div className="qf-header">
 				<div className="qf-title">
 					<TableColumnsSplit width={16} height={16} />
@@ -102,7 +102,7 @@ function QuickFiltersSettings({
 					</Button>
 				</div>
 			)}
-		</div>
+		</>
 	);
 }
 

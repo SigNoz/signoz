@@ -166,14 +166,20 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				</TypicalOverlayScrollbar>
 			</div>
 			<div className="quick-filters-settings-container">
-				{isSettingsOpen && (
-					<QuickFiltersSettings
-						signal={signal}
-						setIsSettingsOpen={setIsSettingsOpen}
-						customFilters={customFilters}
-						setIsStale={setIsStale}
-					/>
-				)}
+				<div
+					className={classNames('quick-filters-settings', {
+						hidden: !isSettingsOpen,
+					})}
+				>
+					{isSettingsOpen && (
+						<QuickFiltersSettings
+							signal={signal}
+							setIsSettingsOpen={setIsSettingsOpen}
+							customFilters={customFilters}
+							setIsStale={setIsStale}
+						/>
+					)}
+				</div>
 			</div>
 		</div>
 	);
