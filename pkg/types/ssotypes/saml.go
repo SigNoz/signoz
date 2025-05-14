@@ -1,4 +1,4 @@
-package saml
+package ssotypes
 
 import (
 	"crypto/x509"

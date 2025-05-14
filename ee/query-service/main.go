@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	eeuserimpl "github.com/SigNoz/signoz/ee/modules/user/impluser"
 	"github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/ee/zeus"
@@ -13,8 +14,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
@@ -118,6 +121,12 @@ func main() {
 		signoz.NewWebProviderFactories(),
 		sqlStoreFactories,
 		signoz.NewTelemetryStoreProviderFactories(),
+		func(sqlstore sqlstore.SQLStore) user.Module {
+			return eeuserimpl.NewModule(eeuserimpl.NewStore(sqlstore))
+		},
+		func(userModule user.Module) user.Handler {
+			return eeuserimpl.NewHandler(userModule)
+		},
 	)
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz", zap.Error(err))

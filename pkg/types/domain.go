@@ -6,9 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/SigNoz/signoz/ee/query-service/sso"
-	"github.com/SigNoz/signoz/ee/query-service/sso/saml"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/ssotypes"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	saml2 "github.com/russellhaering/gosaml2"
@@ -19,7 +17,7 @@ import (
 type StorableOrgDomain struct {
 	bun.BaseModel `bun:"table:org_domains"`
 
-	types.TimeAuditable
+	TimeAuditable
 	ID    uuid.UUID `json:"id" bun:"id,pk,type:text"`
 	OrgID string    `json:"orgId" bun:"org_id,type:text,notnull"`
 	Name  string    `json:"name" bun:"name,type:varchar(50),notnull,unique"`
@@ -40,10 +38,10 @@ type GettableOrgDomain struct {
 	SsoEnabled bool    `json:"ssoEnabled"`
 	SsoType    SSOType `json:"ssoType"`
 
-	SamlConfig       *SamlConfig        `json:"samlConfig"`
-	GoogleAuthConfig *GoogleOAuthConfig `json:"googleAuthConfig"`
+	SamlConfig       *ssotypes.SamlConfig        `json:"samlConfig"`
+	GoogleAuthConfig *ssotypes.GoogleOAuthConfig `json:"googleAuthConfig"`
 
-	Org *types.Organization
+	Org *Organization
 }
 
 func (od *GettableOrgDomain) String() string {
@@ -112,7 +110,7 @@ func (od *GettableOrgDomain) GetSAMLCert() string {
 
 // PrepareGoogleOAuthProvider creates GoogleProvider that is used in
 // requesting OAuth and also used in processing response from google
-func (od *GettableOrgDomain) PrepareGoogleOAuthProvider(siteUrl *url.URL) (sso.OAuthCallbackProvider, error) {
+func (od *GettableOrgDomain) PrepareGoogleOAuthProvider(siteUrl *url.URL) (ssotypes.OAuthCallbackProvider, error) {
 	if od.GoogleAuthConfig == nil {
 		return nil, fmt.Errorf("GOOGLE OAUTH is not setup correctly for this domain")
 	}
@@ -143,7 +141,7 @@ func (od *GettableOrgDomain) PrepareSamlRequest(siteUrl *url.URL) (*saml2.SAMLSe
 	// currently we default it to host from window.location (received from browser)
 	issuer := siteUrl.Host
 
-	return saml.PrepareRequest(issuer, acs, sourceUrl, od.GetSAMLEntityID(), od.GetSAMLIdpURL(), od.GetSAMLCert())
+	return ssotypes.PrepareRequest(issuer, acs, sourceUrl, od.GetSAMLEntityID(), od.GetSAMLIdpURL(), od.GetSAMLCert())
 }
 
 func (od *GettableOrgDomain) BuildSsoUrl(siteUrl *url.URL) (ssoUrl string, err error) {
