@@ -54,19 +54,20 @@ func (migration *addTraceFunnels) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	// Add unique constraint for org_id and name
-	_, err = tx.NewRaw(`
-		CREATE UNIQUE INDEX IF NOT EXISTS idx_trace_funnel_org_id_name 
-		ON trace_funnel (org_id, name)
-	`).Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create unique constraint: %v", err)
-	}
+	//_, err = tx.NewRaw(`
+	//	CREATE UNIQUE INDEX IF NOT EXISTS idx_trace_funnel_org_id_name
+	//	ON trace_funnel (org_id, name)
+	//`).Exec(ctx)
+	//if err != nil {
+	//	return fmt.Errorf("failed to create unique constraint: %v", err)
+	//}
 
 	// Create indexes
 	_, err = tx.NewCreateIndex().
 		Model((*traceFunnels.Funnel)(nil)).
 		Index("idx_trace_funnel_org_id").
 		Column("org_id").
+		IfNotExists().
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create org_id index: %v", err)
@@ -75,7 +76,9 @@ func (migration *addTraceFunnels) Up(ctx context.Context, db *bun.DB) error {
 	_, err = tx.NewCreateIndex().
 		Model((*traceFunnels.Funnel)(nil)).
 		Index("idx_trace_funnel_created_at").
-		Column("created_at").Exec(ctx)
+		Column("created_at").
+		IfNotExists().
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create created_at index: %v", err)
 	}
@@ -88,24 +91,24 @@ func (migration *addTraceFunnels) Up(ctx context.Context, db *bun.DB) error {
 }
 
 func (migration *addTraceFunnels) Down(ctx context.Context, db *bun.DB) error {
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	// Drop trace_funnel table
-	_, err = tx.NewDropTable().
-		Model((*traceFunnels.Funnel)(nil)).
-		IfExists().
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to drop trace_funnel table: %v", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return err
-	}
+	//tx, err := db.BeginTx(ctx, nil)
+	//if err != nil {
+	//	return err
+	//}
+	//defer tx.Rollback()
+	//
+	//// Drop trace_funnel table
+	//_, err = tx.NewDropTable().
+	//	Model((*traceFunnels.Funnel)(nil)).
+	//	IfExists().
+	//	Exec(ctx)
+	//if err != nil {
+	//	return fmt.Errorf("failed to drop trace_funnel table: %v", err)
+	//}
+	//
+	//if err := tx.Commit(); err != nil {
+	//	return err
+	//}
 
 	return nil
 }
