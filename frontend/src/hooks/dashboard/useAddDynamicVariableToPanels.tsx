@@ -1,57 +1,43 @@
-import { useMemo } from 'react';
-import { Dashboard } from 'types/api/dashboard/getAll';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { getFiltersFromKeyValue } from 'pages/Celery/CeleryOverview/CeleryOverviewUtils';
+import { useCallback } from 'react';
+import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { v4 as uuid } from 'uuid';
 
-import { useAddTagFiltersToDashboard } from './useAddTagFiltersToDashboard';
-
-interface DynamicVariableConfig {
-	variableName: string;
-	tagKey: {
-		key: string;
-		dataType: string;
-		isColumn: boolean;
-		isJSON?: boolean;
-		type: string;
-	};
-	operator: string;
-}
+import { addTagFiltersToDashboard } from '../../container/NewDashboard/DashboardSettings/Variables/addTagFiltersToDashboard';
 
 /**
- * A hook that adds dynamic variables to dashboard panels as tag filters
+ * A hook that returns a function to add dynamic variables to dashboard panels as tag filters.
  *
- * @param dashboard The dashboard configuration
- * @param variableConfig Configuration for the dynamic variable to add
- * @param widgetIds Optional array of widget IDs to target specific widgets
- * @returns Updated dashboard with dynamic variables added as filters
+ * @returns A function that, when given a dashboard and variable config, returns the updated dashboard.
  */
-export const useAddDynamicVariableToPanels = (
+export const useAddDynamicVariableToPanels = (): ((
 	dashboard: Dashboard | undefined,
-	variableConfig: DynamicVariableConfig,
-	widgetIds?: string[],
-): Dashboard | undefined => {
-	// Create the tag filter based on the variable configuration
-	const tagFilters = useMemo((): TagFilterItem[] => {
-		if (!variableConfig) {
-			return [];
-		}
+	variableConfig: IDashboardVariable,
+) => Dashboard | undefined) =>
+	useCallback(
+		(
+			dashboard: Dashboard | undefined,
+			variableConfig: IDashboardVariable,
+		): Dashboard | undefined => {
+			if (!variableConfig) return dashboard;
 
-		const { variableName, tagKey, operator } = variableConfig;
+			const {
+				dynamicVariablesAttribute,
+				name,
+				dynamicVariablesWidgetIds,
+			} = variableConfig;
 
-		// Create a TagFilterItem that uses the variable as the value
-		const filter: TagFilterItem = {
-			id: uuid().slice(0, 8),
-			key: tagKey as BaseAutocompleteData,
-			op: operator,
-			value: `$${variableName}`,
-		};
+			const tagFilters: TagFilterItem[] = [
+				getFiltersFromKeyValue(dynamicVariablesAttribute || '', `$${name}`),
+			];
 
-		return [filter];
-	}, [variableConfig]);
-
-	// Use the existing hook to add these filters to the dashboard
-	return useAddTagFiltersToDashboard(dashboard, tagFilters, widgetIds);
-};
+			return addTagFiltersToDashboard(
+				dashboard,
+				tagFilters,
+				dynamicVariablesWidgetIds,
+			);
+		},
+		[],
+	);
 
 export default useAddDynamicVariableToPanels;

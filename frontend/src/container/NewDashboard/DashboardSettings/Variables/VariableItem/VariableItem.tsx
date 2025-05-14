@@ -38,6 +38,7 @@ import { variablePropsToPayloadVariables } from '../../../utils';
 import { TVariableMode } from '../types';
 import DynamicVariable from './DynamicVariable/DynamicVariable';
 import { LabelContainer, VariableItemRow } from './styles';
+import { WidgetSelector } from './WidgetSelector';
 
 const { Option } = Select;
 
@@ -135,6 +136,14 @@ function VariableItem({
 		endUnixMilli: maxTime,
 	});
 
+	const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
+
+	useEffect(() => {
+		if (queryType === 'DYNAMIC') {
+			setSelectedWidgets(variableData?.dynamicVariablesWidgetIds || []);
+		}
+	}, [queryType, variableData?.dynamicVariablesWidgetIds]);
+
 	useEffect(() => {
 		if (queryType === 'CUSTOM') {
 			setPreviewValues(
@@ -202,6 +211,10 @@ function VariableItem({
 			...(queryType === 'DYNAMIC' && {
 				dynamicVariablesAttribute: dynamicVariablesSelectedValue?.name,
 				dynamicVariablesSource: dynamicVariablesSelectedValue?.value,
+			}),
+			...(queryType === 'DYNAMIC' && {
+				dynamicVariablesWidgetIds:
+					selectedWidgets?.length > 0 ? selectedWidgets : [],
 			}),
 		};
 
@@ -562,6 +575,19 @@ function VariableItem({
 								/>
 							</VariableItemRow>
 						</>
+					)}
+					{queryType === 'DYNAMIC' && (
+						<VariableItemRow className="dynamic-variable-section">
+							<LabelContainer>
+								<Typography className="typography-variables">
+									Select Widgets to apply
+								</Typography>
+							</LabelContainer>
+							<WidgetSelector
+								selectedWidgets={selectedWidgets}
+								setSelectedWidgets={setSelectedWidgets}
+							/>
+						</VariableItemRow>
 					)}
 				</div>
 			</div>
