@@ -76,9 +76,7 @@ go-run-enterprise: ## Runs the enterprise go backend server
 	go run -race \
 		$(GO_BUILD_CONTEXT_ENTERPRISE)/main.go \
 		--config ./conf/prometheus.yml \
-		--cluster cluster \
-		--use-logs-new-schema true \
-		--use-trace-new-schema true
+		--cluster cluster
 
 .PHONY: go-test
 go-test: ## Runs go unit tests
@@ -96,9 +94,7 @@ go-run-community: ## Runs the community go backend server
 	go run -race \
 		$(GO_BUILD_CONTEXT_COMMUNITY)/main.go \
 		--config ./conf/prometheus.yml \
-		--cluster cluster \
-		--use-logs-new-schema true \
-		--use-trace-new-schema true
+		--cluster cluster
 
 .PHONY: go-build-community $(GO_BUILD_ARCHS_COMMUNITY)
 go-build-community: ## Builds the go backend server for community

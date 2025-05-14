@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/SigNoz/govaluate"
+	"github.com/SigNoz/signoz/pkg/cache"
 	metricsV3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"

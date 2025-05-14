@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import getUserVersion from 'api/user/getVersion';
+import getUserVersion from 'api/v1/version/getVersion';
 import Spinner from 'components/Spinner';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import LoginContainer from 'container/Login';

@@ -208,17 +208,16 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		align: 'right',
 		className: `column`,
 		render: (errorRate: number | string): React.ReactNode => {
-			if (errorRate === 'n/a' || errorRate === '-') {
-				return '-';
-			}
+			const errorRateValue =
+				errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate;
 			return (
 				<Progress
 					status="active"
-					percent={Number((errorRate as number).toFixed(1))}
+					percent={Number((errorRateValue as number).toFixed(2))}
 					strokeLinecap="butt"
 					size="small"
 					strokeColor={((): string => {
-						const errorRatePercent = Number((errorRate as number).toFixed(1));
+						const errorRatePercent = Number((errorRateValue as number).toFixed(2));
 						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
 						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
 						return Color.BG_FOREST_500;
@@ -904,6 +903,7 @@ export const getTopErrorsQueryPayload = (
 	start: number,
 	end: number,
 	filters: IBuilderQuery['filters'],
+	showStatusCodeErrors = true,
 ): GetQueryResultsProps[] => [
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -942,18 +942,6 @@ export const getTopErrorsQueryPayload = (
 									value: 'Client',
 								},
 								{
-									id: '75d65388',
-									key: {
-										key: 'status_message',
-										dataType: DataTypes.String,
-										type: '',
-										isColumn: true,
-										isJSON: false,
-									},
-									op: 'exists',
-									value: '',
-								},
-								{
 									id: 'b1af6bdb',
 									key: {
 										key: SPAN_ATTRIBUTES.URL_PATH,
@@ -965,6 +953,22 @@ export const getTopErrorsQueryPayload = (
 									op: 'exists',
 									value: '',
 								},
+								...(showStatusCodeErrors
+									? [
+											{
+												id: '75d65388',
+												key: {
+													key: 'status_message',
+													dataType: DataTypes.String,
+													type: '',
+													isColumn: true,
+													isJSON: false,
+												},
+												op: 'exists',
+												value: '',
+											},
+									  ]
+									: []),
 								{
 									id: '4872bf91',
 									key: {
@@ -976,6 +980,18 @@ export const getTopErrorsQueryPayload = (
 									},
 									op: '=',
 									value: domainName,
+								},
+								{
+									id: 'ab4c885d',
+									key: {
+										key: 'has_error',
+										dataType: DataTypes.bool,
+										type: '',
+										isColumn: true,
+										isJSON: false,
+									},
+									op: '=',
+									value: true,
 								},
 								...filters.items,
 							],
@@ -1000,11 +1016,12 @@ export const getTopErrorsQueryPayload = (
 								isJSON: false,
 							},
 							{
-								key: 'status_code',
-								dataType: DataTypes.Float64,
-								type: '',
+								dataType: DataTypes.String,
 								isColumn: true,
 								isJSON: false,
+								key: 'response_status_code',
+								type: '',
+								id: 'response_status_code--string----true',
 							},
 							{
 								key: 'status_message',
@@ -1327,7 +1344,7 @@ export const formatEndPointsDataForTable = (
 export interface TopErrorsResponseRow {
 	metric: {
 		[SPAN_ATTRIBUTES.URL_PATH]: string;
-		[SPAN_ATTRIBUTES.STATUS_CODE]: string;
+		[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]: string;
 		status_message: string;
 	};
 	values: [number, string][];
@@ -1356,10 +1373,10 @@ export const formatTopErrorsDataForTable = (
 				? '-'
 				: row.metric[SPAN_ATTRIBUTES.URL_PATH],
 		statusCode:
-			row.metric[SPAN_ATTRIBUTES.STATUS_CODE] === 'n/a' ||
-			row.metric[SPAN_ATTRIBUTES.STATUS_CODE] === undefined
+			row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE] === 'n/a' ||
+			row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE] === undefined
 				? '-'
-				: row.metric[SPAN_ATTRIBUTES.STATUS_CODE],
+				: row.metric[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE],
 		statusMessage:
 			row.metric.status_message === 'n/a' ||
 			row.metric.status_message === undefined
@@ -1421,12 +1438,12 @@ export const getTopErrorsCoRelationQueryFilters = (
 		{
 			id: 'f6891e27',
 			key: {
-				key: 'status_code',
-				dataType: DataTypes.Float64,
+				key: 'response_status_code',
+				dataType: DataTypes.String,
 				type: '',
 				isColumn: true,
 				isJSON: false,
-				id: 'status_code--float64----true',
+				id: 'response_status_code--string----true',
 			},
 			op: '=',
 			value: statusCode,
@@ -2005,7 +2022,7 @@ export const getEndPointDetailsQueryPayload = (
 										type: 'tag',
 									},
 									op: '=',
-									value: 'api.github.com',
+									value: domainName,
 								},
 								{
 									id: '212678b9',
@@ -3057,28 +3074,28 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		render: (
 			errorPercentage: number | string,
 			// eslint-disable-next-line sonarjs/no-identical-functions
-		): React.ReactNode => (
-			<Progress
-				status="active"
-				percent={Number(
-					((errorPercentage === 'n/a' || errorPercentage === '-'
-						? 0
-						: errorPercentage) as number).toFixed(1),
-				)}
-				strokeLinecap="butt"
-				size="small"
-				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
-				string => {
-					const errorPercentagePercent = Number(
-						(errorPercentage as number).toFixed(1),
-					);
-					if (errorPercentagePercent >= 90) return Color.BG_SAKURA_500;
-					if (errorPercentagePercent >= 60) return Color.BG_AMBER_500;
-					return Color.BG_FOREST_500;
-				})()}
-				className="progress-bar error-rate"
-			/>
-		),
+		): React.ReactNode => {
+			const errorPercentageValue =
+				errorPercentage === 'n/a' || errorPercentage === '-' ? 0 : errorPercentage;
+			return (
+				<Progress
+					status="active"
+					percent={Number((errorPercentageValue as number).toFixed(2))}
+					strokeLinecap="butt"
+					size="small"
+					strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
+					string => {
+						const errorPercentagePercent = Number(
+							(errorPercentageValue as number).toFixed(2),
+						);
+						if (errorPercentagePercent >= 90) return Color.BG_SAKURA_500;
+						if (errorPercentagePercent >= 60) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
+					className="progress-bar error-rate"
+				/>
+			);
+		},
 		sorter: (a: DependentServicesData, b: DependentServicesData): number => {
 			const errorPercentageA =
 				a.errorPercentage === '-' || a.errorPercentage === 'n/a'
@@ -3658,12 +3675,9 @@ export const getAllEndpointsWidgetData = (
 
 	widget.renderColumnCell = {
 		[SPAN_ATTRIBUTES.URL_PATH]: (url: any): ReactNode => {
-			const { endpoint, port } = extractPortAndEndpoint(url);
+			const { endpoint } = extractPortAndEndpoint(url);
 			return (
-				<span>
-					{port !== '-' && port !== 'n/a' ? `:${port}` : ''}
-					{endpoint === 'n/a' || url === undefined ? '-' : endpoint}
-				</span>
+				<span>{endpoint === 'n/a' || url === undefined ? '-' : endpoint}</span>
 			);
 		},
 		A: (numOfCalls: any): ReactNode => (
@@ -3695,7 +3709,7 @@ export const getAllEndpointsWidgetData = (
 				percent={Number(
 					((errorRate === 'n/a' || errorRate === '-'
 						? 0
-						: errorRate) as number).toFixed(1),
+						: errorRate) as number).toFixed(2),
 				)}
 				strokeLinecap="butt"
 				size="small"
@@ -3704,7 +3718,7 @@ export const getAllEndpointsWidgetData = (
 					const errorRatePercent = Number(
 						((errorRate === 'n/a' || errorRate === '-'
 							? 0
-							: errorRate) as number).toFixed(1),
+							: errorRate) as number).toFixed(2),
 					);
 					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
 					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
