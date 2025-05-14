@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/version"
 )
@@ -196,6 +197,7 @@ type Telemetry struct {
 	isAnonymous   bool
 	distinctId    string
 	reader        interfaces.Reader
+	sqlStore      sqlstore.SQLStore
 	companyDomain string
 	minRandInt    int
 	maxRandInt    int
@@ -205,8 +207,8 @@ type Telemetry struct {
 	mutex         sync.RWMutex
 
 	alertsInfoCallback     func(ctx context.Context) (*model.AlertsInfo, error)
-	userCountCallback      func(ctx context.Context) (int, error)
-	getUsersCallback       func(ctx context.Context) ([]types.GettableUser, *model.ApiError)
+	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
+	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
 	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
 	savedViewsInfoCallback func(ctx context.Context) (*model.SavedViewsInfo, error)
 }
@@ -215,11 +217,11 @@ func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*m
 	a.alertsInfoCallback = callback
 }
 
-func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context) (int, error)) {
+func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (int, error)) {
 	a.userCountCallback = callback
 }
 
-func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context) ([]types.GettableUser, *model.ApiError)) {
+func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)) {
 	a.getUsersCallback = callback
 }
 
@@ -317,7 +319,7 @@ func createTelemetry() {
 		metricsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.MetricsTTL})
 		logsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.LogsTTL})
 
-		userCount, _ := telemetry.userCountCallback(ctx)
+		userCount, _ := telemetry.userCountCallback(ctx, telemetry.sqlStore)
 
 		data := map[string]interface{}{
 			"totalSpans":                            totalSpans,
@@ -340,7 +342,7 @@ func createTelemetry() {
 			data[key] = value
 		}
 
-		users, apiErr := telemetry.getUsersCallback(ctx)
+		users, apiErr := telemetry.getUsersCallback(ctx, telemetry.sqlStore)
 		if apiErr == nil {
 			for _, user := range users {
 				if user.Email == DEFAULT_CLOUD_EMAIL {
@@ -351,6 +353,9 @@ func createTelemetry() {
 		}
 
 		alertsInfo, err := telemetry.alertsInfoCallback(ctx)
+		if err != nil {
+			telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
+		}
 		if err == nil {
 			dashboardsInfo, err := telemetry.dashboardsInfoCallback(ctx)
 			if err == nil {
@@ -441,9 +446,6 @@ func createTelemetry() {
 					}, "")
 				}
 			}
-		}
-		if err != nil || apiErr != nil {
-			telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
 		}
 
 		if totalLogs > 0 {
@@ -554,7 +556,7 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	if a.saasOperator != nil {
 		_ = a.saasOperator.Enqueue(analytics.Identify{
 			UserId: a.userEmail,
-			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("role", user.Role),
+			Traits: analytics.NewTraits().SetName(user.DisplayName).SetEmail(user.Email).Set("role", user.Role),
 		})
 
 		_ = a.saasOperator.Enqueue(analytics.Group{
@@ -567,7 +569,7 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	if a.ossOperator != nil {
 		_ = a.ossOperator.Enqueue(analytics.Identify{
 			UserId: a.ipAddress,
-			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
+			Traits: analytics.NewTraits().SetName(user.DisplayName).SetEmail(user.Email).Set("ip", a.ipAddress),
 		})
 		// Updating a groups properties
 		_ = a.ossOperator.Enqueue(analytics.Group{
@@ -797,6 +799,10 @@ func (a *Telemetry) SetTelemetryEnabled(value bool) {
 
 func (a *Telemetry) SetReader(reader interfaces.Reader) {
 	a.reader = reader
+}
+
+func (a *Telemetry) SetSqlStore(store sqlstore.SQLStore) {
+	a.sqlStore = store
 }
 
 func GetInstance() *Telemetry {

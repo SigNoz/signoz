@@ -55,10 +55,18 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 			sqlmigration.NewDropLicensesSitesFactory(sqlStore),
 			sqlmigration.NewUpdateInvitesFactory(sqlStore),
 			sqlmigration.NewUpdatePatFactory(sqlStore),
+			sqlmigration.NewUpdateAlertmanagerFactory(sqlStore),
+			sqlmigration.NewUpdatePreferencesFactory(sqlStore),
+			sqlmigration.NewUpdateApdexTtlFactory(sqlStore),
+			sqlmigration.NewUpdateResetPasswordFactory(sqlStore),
+			sqlmigration.NewUpdateRulesFactory(sqlStore),
 			sqlmigration.NewAddVirtualFieldsFactory(),
 			sqlmigration.NewUpdateIntegrationsFactory(sqlStore),
 			sqlmigration.NewUpdateOrganizationsFactory(sqlStore),
 			sqlmigration.NewDropGroupsFactory(sqlStore),
+			sqlmigration.NewCreateQuickFiltersFactory(sqlStore),
+			sqlmigration.NewUpdateQuickFiltersFactory(sqlStore),
+			sqlmigration.NewAuthRefactorFactory(sqlStore),
 		),
 	)
 	if err != nil {

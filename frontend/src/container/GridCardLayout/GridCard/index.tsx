@@ -49,6 +49,7 @@ function GridCardGraph({
 	analyticsEvent,
 	customTimeRange,
 	customOnRowClick,
+	customTimeRangeWindowForCoRelation,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -292,6 +293,7 @@ function GridCardGraph({
 					customSeries={customSeries}
 					customErrorMessage={isInternalServerError ? customErrorMessage : undefined}
 					customOnRowClick={customOnRowClick}
+					customTimeRangeWindowForCoRelation={customTimeRangeWindowForCoRelation}
 				/>
 			)}
 		</div>
@@ -306,6 +308,7 @@ GridCardGraph.defaultProps = {
 	headerMenuList: [MenuItemKeys.View],
 	version: 'v3',
 	analyticsEvent: undefined,
+	customTimeRangeWindowForCoRelation: undefined,
 };
 
 export default memo(GridCardGraph);

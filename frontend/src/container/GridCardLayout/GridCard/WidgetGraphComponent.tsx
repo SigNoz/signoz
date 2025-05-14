@@ -15,6 +15,10 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import {
+	getCustomTimeRangeWindowSweepInMS,
+	getStartAndEndTimesInMilliseconds,
+} from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
@@ -57,6 +61,7 @@ function WidgetGraphComponent({
 	customSeries,
 	customErrorMessage,
 	customOnRowClick,
+	customTimeRangeWindowForCoRelation,
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -263,6 +268,13 @@ function WidgetGraphComponent({
 		metric?: { [key: string]: string },
 		queryData?: { queryName: string; inFocusOrNot: boolean },
 	): void => {
+		const customTracesTimeRange = getCustomTimeRangeWindowSweepInMS(
+			customTimeRangeWindowForCoRelation,
+		);
+		const { start, end } = getStartAndEndTimesInMilliseconds(
+			xValue,
+			customTracesTimeRange,
+		);
 		handleGraphClick({
 			xValue,
 			yValue,
@@ -275,6 +287,9 @@ function WidgetGraphComponent({
 			navigateToExplorer,
 			notifications,
 			graphClick,
+			...(customTimeRangeWindowForCoRelation
+				? { customTracesTimeRange: { start, end } }
+				: {}),
 		});
 	};
 
@@ -393,6 +408,7 @@ WidgetGraphComponent.defaultProps = {
 	yAxisUnit: undefined,
 	setLayout: undefined,
 	onClickHandler: undefined,
+	customTimeRangeWindowForCoRelation: undefined,
 };
 
 export default WidgetGraphComponent;
