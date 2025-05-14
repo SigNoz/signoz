@@ -8,6 +8,8 @@ import { useCallback, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import HavingFilter from './HavingFilter/HavingFilter';
+
 interface AddOn {
 	icon: React.ReactNode;
 	label: string;
@@ -46,10 +48,12 @@ function QueryAddOns({
 	query,
 	version,
 	isListViewPanel,
+	selectedAggreateOptions,
 }: {
 	query: IBuilderQuery;
 	version: string;
 	isListViewPanel: boolean;
+	selectedAggreateOptions: { func: string; arg: string }[];
 }): JSX.Element {
 	const [selectedViews, setSelectedViews] = useState<AddOn[]>([]);
 
@@ -118,9 +122,8 @@ function QueryAddOns({
 					)}
 					{selectedViews.find((view) => view.key === 'having') && (
 						<div className="add-on-content">
-							<InputWithLabel
-								label="Having"
-								placeholder="Select a field"
+							<HavingFilter
+								selectedAggreateOptions={selectedAggreateOptions}
 								onClose={(): void => {
 									setSelectedViews(
 										selectedViews.filter((view) => view.key !== 'having'),
@@ -134,7 +137,6 @@ function QueryAddOns({
 							<InputWithLabel
 								label="Limit"
 								placeholder="Select a field"
-								type="number"
 								onClose={(): void => {
 									setSelectedViews(selectedViews.filter((view) => view.key !== 'limit'));
 								}}
