@@ -110,7 +110,11 @@ function getFunctionContextAtCursor(
 }
 
 // eslint-disable-next-line react/no-this-in-sfc
-function QueryAggregationSelect(): JSX.Element {
+function QueryAggregationSelect({
+	onAggregationOptionsSelect,
+}: {
+	onAggregationOptionsSelect: (value: { func: string; arg: string }[]) => void;
+}): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const queryData = currentQuery.builder.queryData[0];
 	const [input, setInput] = useState('');
@@ -142,6 +146,8 @@ function QueryAggregationSelect(): JSX.Element {
 			});
 		}
 		setFunctionArgPairs(pairs);
+		onAggregationOptionsSelect(pairs);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [input]);
 
 	// Find function context for fetching suggestions
