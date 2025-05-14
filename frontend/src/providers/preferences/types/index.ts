@@ -1,3 +1,5 @@
+import { LogViewMode } from 'container/LogsTable';
+import { FontSize } from 'container/OptionsMenu/types';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -16,8 +18,8 @@ export interface PreferenceContextValue {
 
 export interface FormattingOptions {
 	maxLines?: number;
-	format?: 'raw' | 'table';
-	fontSize?: 'small' | 'medium' | 'large';
+	format?: LogViewMode;
+	fontSize?: FontSize;
 	version?: number;
 }
 

@@ -1,41 +1,61 @@
+import {
+	defaultOptionsQuery,
+	URL_OPTIONS,
+} from 'container/OptionsMenu/constants';
+import { OptionsQuery } from 'container/OptionsMenu/types';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import { Dispatch, SetStateAction } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
-import logsUpdater from '../configs/logsUpdaterConfig';
+import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';
 import tracesUpdater from '../configs/tracesUpdaterConfig';
-import { FormattingOptions } from '../types';
+import { FormattingOptions, Preferences } from '../types';
 
 const metricsUpdater = {
 	updateColumns: (): void => {}, // no-op for metrics
 	updateFormatting: (): void => {}, // no-op for metrics
 };
 
-const updaterConfig: Record<
+const getUpdaterConfig = (
+	redirectWithOptionsData: (options: OptionsQuery) => void,
+	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>,
+): Record<
 	DataSource,
 	{
 		updateColumns: (newColumns: BaseAutocompleteData[], mode: string) => void;
 		updateFormatting: (newFormatting: FormattingOptions, mode: string) => void;
 	}
-> = {
-	[DataSource.LOGS]: logsUpdater,
+> => ({
+	[DataSource.LOGS]: getLogsUpdaterConfig(
+		redirectWithOptionsData,
+		setSavedViewPreferences,
+	),
 	[DataSource.TRACES]: tracesUpdater,
 	[DataSource.METRICS]: metricsUpdater,
-};
+});
 
 export function usePreferenceUpdater({
 	dataSource,
 	mode,
 	setReSync,
+	setSavedViewPreferences,
 }: {
 	dataSource: DataSource;
 	mode: string;
 	setReSync: Dispatch<SetStateAction<number>>;
+	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>;
 }): {
 	updateColumns: (newColumns: BaseAutocompleteData[]) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
-	const updater = updaterConfig[dataSource];
+	const {
+		redirectWithQuery: redirectWithOptionsData,
+	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
+	const updater = getUpdaterConfig(
+		redirectWithOptionsData,
+		setSavedViewPreferences,
+	)[dataSource];
 
 	return {
 		updateColumns: (newColumns: BaseAutocompleteData[]): void => {

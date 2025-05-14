@@ -1,20 +1,39 @@
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
+import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
+import { Dispatch, SetStateAction } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { FormattingOptions } from '../types';
+import { FormattingOptions, Preferences } from '../types';
 
 // --- LOGS preferences updater config ---
-const logsUpdater = {
+const getLogsUpdaterConfig = (
+	redirectWithOptionsData: (options: OptionsQuery) => void,
+	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>,
+): {
+	updateColumns: (newColumns: BaseAutocompleteData[], mode: string) => void;
+	updateFormatting: (newFormatting: FormattingOptions, mode: string) => void;
+} => ({
 	updateColumns: (newColumns: BaseAutocompleteData[], mode: string): void => {
-		// Always update URL
-		const url = new URL(window.location.href);
-		const options = JSON.parse(url.searchParams.get('options') || '{}');
-		options.selectColumns = newColumns;
-		url.searchParams.set('options', JSON.stringify(options));
-		window.history.replaceState({}, '', url.toString());
+		if (mode === 'savedView') {
+			setSavedViewPreferences({
+				columns: newColumns,
+				formatting: {
+					maxLines: 2,
+					format: 'table',
+					fontSize: 'small' as FontSize,
+					version: 1,
+				},
+			});
+		}
 
 		if (mode === 'direct') {
+			// redirectWithOptionsData({
+			// 	...defaultOptionsQuery,
+			// 	selectColumns: newColumns,
+			// });
+
 			// Also update local storage
 			const local = JSON.parse(
 				localStorage.getItem(LOCALSTORAGE.LOGS_LIST_OPTIONS) || '{}',
@@ -25,11 +44,10 @@ const logsUpdater = {
 	},
 	updateFormatting: (newFormatting: FormattingOptions, mode: string): void => {
 		// Always update URL
-		const url = new URL(window.location.href);
-		const options = JSON.parse(url.searchParams.get('options') || '{}');
-		Object.assign(options, newFormatting);
-		url.searchParams.set('options', JSON.stringify(options));
-		window.history.replaceState({}, '', url.toString());
+		redirectWithOptionsData({
+			...defaultOptionsQuery,
+			...newFormatting,
+		});
 
 		if (mode === 'direct') {
 			// Also update local storage
@@ -40,6 +58,6 @@ const logsUpdater = {
 			setLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS, JSON.stringify(local));
 		}
 	},
-};
+});
 
-export default logsUpdater;
+export default getLogsUpdaterConfig;

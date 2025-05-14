@@ -2,6 +2,7 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
+import { FontSize } from 'container/OptionsMenu/types';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { FormattingOptions } from '../types';
@@ -56,7 +57,7 @@ const logsLoaders = {
 		formatting: {
 			maxLines: 2,
 			format: 'table',
-			fontSize: 'small',
+			fontSize: 'small' as FontSize,
 			version: 1,
 		},
 	}),

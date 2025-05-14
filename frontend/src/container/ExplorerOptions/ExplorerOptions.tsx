@@ -240,7 +240,6 @@ function ExplorerOptions({
 		dataSource: sourcepage,
 		aggregateOperator: StringOperators.NOOP,
 	});
-	console.log('uncaught options in saved views', options);
 
 	const getUpdatedExtraData = (
 		extraData: string | undefined,
@@ -339,12 +338,6 @@ function ExplorerOptions({
 			backwardCompatibleOptions = omit(options, 'version');
 		}
 
-		console.log('uncaught backwardCompatibleOptions', {
-			backwardCompatibleOptions,
-			esc: extraData?.selectColumns,
-			osc: options.selectColumns,
-		});
-
 		if (extraData.selectColumns?.length) {
 			handleOptionsChange({
 				...backwardCompatibleOptions,
@@ -426,7 +419,6 @@ function ExplorerOptions({
 
 		updatePreservedViewInLocalStorage(option);
 
-		console.log('uncaught options in saved views before call', options);
 		updateOrRestoreSelectColumns(
 			option.key,
 			viewsData?.data?.data,

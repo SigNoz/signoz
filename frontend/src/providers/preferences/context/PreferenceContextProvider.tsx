@@ -23,7 +23,15 @@ export function PreferenceContextProvider({
 	const location = useLocation();
 	const params = new URLSearchParams(location.search);
 
-	const savedViewId = params.get('view');
+	let savedViewId = '';
+	const viewKeyParam = params.get('viewKey');
+	if (viewKeyParam) {
+		try {
+			savedViewId = JSON.parse(viewKeyParam);
+		} catch (e) {
+			console.error(e);
+		}
+	}
 	let dataSource: DataSource = DataSource.LOGS;
 	if (location.pathname.includes('traces')) dataSource = DataSource.TRACES;
 

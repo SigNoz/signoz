@@ -1,12 +1,11 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable no-empty */
-import {
-	defaultLogsSelectedColumns,
-	defaultTraceSelectedColumns,
-} from 'container/OptionsMenu/constants';
+// import {
+// 	defaultLogsSelectedColumns,
+// 	defaultTraceSelectedColumns,
+// } from 'container/OptionsMenu/constants';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -71,11 +70,8 @@ export function usePreferenceLoader({
 	const [preferences, setPreferences] = useState<Preferences | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
-	const location = useLocation();
 
 	const { data: viewsData } = useGetAllViews(dataSource);
-
-	console.log('uncaught viewsData', viewsData);
 
 	useEffect((): void => {
 		async function loadPreferences(): Promise<void> {
@@ -87,25 +83,24 @@ export function usePreferenceLoader({
 					// we can also switch to the URL options params
 					// as we are essentially setting the options in the URL
 					// in ExplorerOptions.tsx#430 (updateOrRestoreSelectColumns)
-					const extraData = viewsData?.data?.data?.find(
-						(view) => view.id === savedViewId,
-					)?.extraData;
-
-					const parsedExtraData = JSON.parse(extraData || '{}');
-					let columns: BaseAutocompleteData[] = [];
-					let formatting: FormattingOptions | undefined;
-					if (dataSource === DataSource.LOGS) {
-						columns = parsedExtraData?.selectColumns || defaultLogsSelectedColumns;
-						formatting = {
-							maxLines: parsedExtraData?.maxLines ?? 2,
-							format: parsedExtraData?.format ?? 'table',
-							fontSize: parsedExtraData?.fontSize ?? 'small',
-							version: parsedExtraData?.version ?? 1,
-						};
-					} else if (dataSource === DataSource.TRACES) {
-						columns = parsedExtraData?.selectColumns || defaultTraceSelectedColumns;
-					}
-					setPreferences({ columns, formatting });
+					// const extraData = viewsData?.data?.data?.find(
+					// 	(view) => view.id === savedViewId,
+					// )?.extraData;
+					// const parsedExtraData = JSON.parse(extraData || '{}');
+					// let columns: BaseAutocompleteData[] = [];
+					// let formatting: FormattingOptions | undefined;
+					// if (dataSource === DataSource.LOGS) {
+					// 	columns = parsedExtraData?.selectColumns || defaultLogsSelectedColumns;
+					// 	formatting = {
+					// 		maxLines: parsedExtraData?.maxLines ?? 2,
+					// 		format: parsedExtraData?.format ?? 'table',
+					// 		fontSize: parsedExtraData?.fontSize ?? 'small',
+					// 		version: parsedExtraData?.version ?? 1,
+					// 	};
+					// } else if (dataSource === DataSource.TRACES) {
+					// 	columns = parsedExtraData?.selectColumns || defaultTraceSelectedColumns;
+					// }
+					// setPreferences(savedViewPreferences);
 				} else {
 					if (dataSource === DataSource.LOGS) {
 						const { columns, formatting } = await logsPreferencesLoader();
@@ -124,7 +119,7 @@ export function usePreferenceLoader({
 			}
 		}
 		loadPreferences();
-	}, [mode, savedViewId, dataSource, location, reSync, viewsData]);
+	}, [mode, savedViewId, dataSource, reSync, viewsData]);
 
 	return { preferences, loading, error };
 }

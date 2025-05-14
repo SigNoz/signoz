@@ -36,9 +36,8 @@ function LogsExplorer(): JSX.Element {
 	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
 		SELECTED_VIEWS.SEARCH,
 	);
-	const { preferences, updateFormatting } = usePreferenceContext();
+	const { preferences } = usePreferenceContext();
 
-	console.log('uncaught preferences', preferences);
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
 			LOCALSTORAGE.SHOW_LOGS_QUICK_FILTERS,
@@ -87,7 +86,6 @@ function LogsExplorer(): JSX.Element {
 	}, [currentQuery.builder.queryData, currentQuery.builder.queryData.length]);
 
 	const {
-		queryData: optionsQueryData,
 		redirectWithQuery: redirectWithOptionsData,
 	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
@@ -168,12 +166,32 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	useEffect(() => {
-		const migratedQuery = migrateOptionsQuery(optionsQueryData);
+		const migratedQuery = migrateOptionsQuery(
+			preferences
+				? {
+						selectColumns: preferences.columns || [],
+						maxLines:
+							preferences.formatting?.maxLines || defaultOptionsQuery.maxLines,
+						format: preferences.formatting?.format || defaultOptionsQuery.format,
+						fontSize:
+							preferences.formatting?.fontSize || defaultOptionsQuery.fontSize,
+						version: preferences.formatting?.version,
+				  }
+				: defaultOptionsQuery,
+		);
 		// Only redirect if the query was actually modified
-		if (!isEqual(migratedQuery, optionsQueryData)) {
+		if (
+			!isEqual(migratedQuery, {
+				selectColumns: preferences?.columns || [],
+				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
+				format: preferences?.formatting?.format || defaultOptionsQuery.format,
+				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
+				version: preferences?.formatting?.version,
+			})
+		) {
 			redirectWithOptionsData(migratedQuery);
 		}
-	}, [migrateOptionsQuery, optionsQueryData, redirectWithOptionsData]);
+	}, [migrateOptionsQuery, preferences, redirectWithOptionsData]);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -226,21 +244,6 @@ function LogsExplorer(): JSX.Element {
 					</section>
 				)}
 				<section className={cx('log-module-right-section')}>
-					{/* dummy button to test the updateFormatting function */}
-					<div>
-						<button
-							type="button"
-							onClick={(): void => updateFormatting({ maxLines: 10 })}
-						>
-							<h1>Update formatting</h1>
-						</button>
-					</div>
-					{preferences && (
-						<div>
-							<h1>Preferences</h1>
-							<pre>{JSON.stringify(preferences, null, 2)}</pre>
-						</div>
-					)}
 					<Toolbar
 						showAutoRefresh={false}
 						leftActions={
