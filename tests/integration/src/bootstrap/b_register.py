@@ -52,13 +52,13 @@ def test_register(signoz: types.SigNoz, get_jwt_token) -> None:
     assert found_user["role"] == "ADMIN"
 
     response = requests.get(
-        signoz.self.host_config.get(f"/api/v1/rbac/role/{found_user["id"]}"),
+        signoz.self.host_config.get(f"/api/v1/user/{found_user["id"]}"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["group_name"] == "ADMIN"
+    assert response.json()["data"]["role"] == "ADMIN"
 
 
 def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
@@ -82,11 +82,10 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
 
     # Register the editor user using the invite token
     response = requests.post(
-        signoz.self.host_config.get("/api/v1/register"),
+        signoz.self.host_config.get("/api/v1/invite/accept"),
         json={
-            "email": "editor@integration.test",
             "password": "password",
-            "name": "editor",
+            "displayName": "editor",
             "token": f"{invite_response["inviteToken"]}",
         },
         timeout=2,
@@ -133,7 +132,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
 
     assert found_user is not None
     assert found_user["role"] == "EDITOR"
-    assert found_user["name"] == "editor"
+    assert found_user["displayName"] == "editor"
     assert found_user["email"] == "editor@integration.test"
 
 
@@ -151,25 +150,24 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
 
     assert response.status_code == HTTPStatus.OK
 
-    invite_response = response.json()
-    assert "email" in invite_response
+    invite_response = response.json()["data"]
+    assert "id" in invite_response
     assert "inviteToken" in invite_response
 
     response = requests.delete(
-        signoz.self.host_config.get(f"/api/v1/invite/{invite_response['email']}"),
+        signoz.self.host_config.get(f"/api/v1/invite/{invite_response['id']}"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Try registering the viewer user with the invite token
     response = requests.post(
-        signoz.self.host_config.get("/api/v1/register"),
+        signoz.self.host_config.get("/api/v1/invite/accept"),
         json={
-            "email": "viewer@integration.test",
             "password": "password",
-            "name": "viewer",
+            "displayName": "viewer",
             "token": f"{invite_response["inviteToken"]}",
         },
         timeout=2,
@@ -196,10 +194,10 @@ def test_self_access(signoz: types.SigNoz, get_jwt_token) -> None:
     )
 
     response = requests.get(
-        signoz.self.host_config.get(f"/api/v1/rbac/role/{found_user['id']}"),
+        signoz.self.host_config.get(f"/api/v1/user/{found_user['id']}"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["group_name"] == "EDITOR"
+    assert response.json()["data"]["role"] == "EDITOR"
