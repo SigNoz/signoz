@@ -11,11 +11,9 @@ RUN apk update && \
 
 
 COPY ./target/${OS}-${TARGETARCH}/signoz /root/signoz
-COPY ./conf/prometheus.yml /root/config/prometheus.yml
 COPY ./templates/email /root/templates
 COPY frontend/build/ /etc/signoz/web/
 
 RUN chmod 755 /root /root/signoz
 
 ENTRYPOINT ["./signoz"]
-CMD ["-config", "/root/config/prometheus.yml"]
