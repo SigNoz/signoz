@@ -28,7 +28,7 @@ import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
@@ -115,6 +115,9 @@ function QueryAggregationSelect(): JSX.Element {
 	const queryData = currentQuery.builder.queryData[0];
 	const [input, setInput] = useState('');
 	const [cursorPos, setCursorPos] = useState(0);
+	const [functionArgPairs, setFunctionArgPairs] = useState<
+		{ func: string; arg: string }[]
+	>([]);
 	const editorRef = useRef<EditorView | null>(null);
 
 	// Update cursor position on every editor update
@@ -122,6 +125,24 @@ function QueryAggregationSelect(): JSX.Element {
 		const pos = update.view.state.selection.main.from;
 		setCursorPos(pos);
 	};
+
+	// Extract all valid function-argument pairs from the input
+	useEffect(() => {
+		const pairs: { func: string; arg: string }[] = [];
+		const regex = /([a-zA-Z_][\w]*)\s*\(([^)]*)\)/g;
+		let match;
+		while ((match = regex.exec(input)) !== null) {
+			const func = match[1].toLowerCase();
+			const args = match[2]
+				.split(',')
+				.map((arg) => arg.trim())
+				.filter((arg) => arg.length > 0);
+			args.forEach((arg) => {
+				pairs.push({ func, arg });
+			});
+		}
+		setFunctionArgPairs(pairs);
+	}, [input]);
 
 	// Find function context for fetching suggestions
 	const functionContextForFetch = getFunctionContextAtCursor(input, cursorPos);
@@ -280,7 +301,6 @@ function QueryAggregationSelect(): JSX.Element {
 								};
 							}
 
-							// Calculate the start of the current argument
 							const doc = context.state.sliceDoc(0, cursorPos);
 							const lastOpenParen = doc.lastIndexOf('(');
 							const lastComma = doc.lastIndexOf(',', cursorPos - 1);
@@ -298,9 +318,17 @@ function QueryAggregationSelect(): JSX.Element {
 								});
 							}
 
-							// Now filter out suggestions that are already used
+							// Exclude arguments already paired with this function elsewhere in the input
+							const globalUsedArgs = new Set(
+								functionArgPairs
+									.filter((pair) => pair.func === funcName)
+									.map((pair) => pair.arg),
+							);
+
 							const availableSuggestions = fieldSuggestions.filter(
-								(suggestion) => !usedArgs.has(suggestion.label),
+								(suggestion) =>
+									!usedArgs.has(suggestion.label) &&
+									!globalUsedArgs.has(suggestion.label),
 							);
 
 							const filteredSuggestions =
@@ -316,15 +344,24 @@ function QueryAggregationSelect(): JSX.Element {
 							};
 						}
 
-						// Otherwise, show operator suggestions only if a valid word is present or manually triggered
-						const word = context.matchBefore(/[\w\d_]+/);
-						if (!word && !context.explicit) {
-							return null;
+						// Before returning operatorCompletions, filter out 'count' if already present in the input (case-insensitive, direct text check)
+						if (!funcName || !operatorArgMeta[funcName]?.acceptsArgs) {
+							// Check if 'count(' is present in the current input (case-insensitive)
+							const hasCount = text.toLowerCase().includes('count(');
+							const availableOperators = hasCount
+								? operatorCompletions.filter((op) => op.label.toLowerCase() !== 'count')
+								: operatorCompletions;
+							const word = context.matchBefore(/[\w\d_]+/);
+							if (!word && !context.explicit) {
+								return null;
+							}
+							return {
+								from: word ? word.from : context.pos,
+								options: availableOperators,
+							};
 						}
-						return {
-							from: word ? word.from : context.pos,
-							options: operatorCompletions,
-						};
+
+						return null;
 					},
 				],
 				defaultKeymap: true,
@@ -332,7 +369,7 @@ function QueryAggregationSelect(): JSX.Element {
 				maxRenderedOptions: 50,
 				activateOnTyping: true,
 			}),
-		[operatorCompletions, isLoadingFields, fieldSuggestions],
+		[operatorCompletions, isLoadingFields, fieldSuggestions, functionArgPairs],
 	);
 
 	return (
