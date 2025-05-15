@@ -1,4 +1,4 @@
-package authtypes
+package types
 
 import (
 	"encoding/json"

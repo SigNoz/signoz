@@ -1,23 +1,27 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/user/getResetPasswordToken';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import {
+	GetResetPasswordToken,
+	PayloadProps,
+	Props,
+} from 'types/api/user/getResetPasswordToken';
 
 const getResetPasswordToken = async (
 	props: Props,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+): Promise<SuccessResponseV2<GetResetPasswordToken>> => {
 	try {
-		const response = await axios.get(`/getResetPasswordToken/${props.userId}`);
+		const response = await axios.get<PayloadProps>(
+			`/getResetPasswordToken/${props.userId}`,
+		);
 
 		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data,
+			httpStatusCode: response.status,
+			data: response.data.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
 
