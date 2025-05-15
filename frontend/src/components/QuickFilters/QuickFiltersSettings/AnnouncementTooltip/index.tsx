@@ -9,18 +9,26 @@ type AnnouncementTooltipProps = {
 	position: { top: number; left: number };
 	title: string;
 	message: string;
+	show?: boolean;
 	className?: string;
+	onClose?: () => void;
 };
 
+// TEMPORARY HACK FOR ANNOUNCEMENTS: To be removed once proper system in place.
 function AnnouncementTooltip({
 	position,
+	show,
 	title,
 	message,
 	className,
+	onClose,
 }: AnnouncementTooltipProps): JSX.Element | null {
-	const [visible, setVisible] = useState(true);
+	const [visible, setVisible] = useState(show);
 
-	const closeTooltip = (): void => setVisible(false);
+	const closeTooltip = (): void => {
+		setVisible(false);
+		onClose?.();
+	};
 
 	return visible ? (
 		<>
@@ -63,7 +71,9 @@ function AnnouncementTooltip({
 }
 
 AnnouncementTooltip.defaultProps = {
+	show: false,
 	className: '',
+	onClose: (): void => {},
 };
 
 export default AnnouncementTooltip;

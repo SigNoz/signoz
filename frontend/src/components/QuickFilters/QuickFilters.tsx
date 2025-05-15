@@ -6,12 +6,15 @@ import {
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
 import { Skeleton, Tooltip, Typography } from 'antd';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import classNames from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isFunction } from 'lodash-es';
+import { cloneDeep, isFunction, isNull } from 'lodash-es';
 import { Settings2 as SettingsIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
@@ -45,6 +48,16 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		lastUsedQuery,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+
+	const showAnnouncementTooltip = useMemo(() => {
+		const localStorageValue = getLocalStorageKey(
+			LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT,
+		);
+		if (!isNull(localStorageValue)) {
+			return !(localStorageValue === 'false');
+		}
+		return true;
+	}, []);
 
 	// clear all the filters for the query which is in sync with filters
 	const handleReset = (): void => {
@@ -134,9 +147,16 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 												onClick={(): void => setIsSettingsOpen(true)}
 											/>
 											<AnnouncementTooltip
+												show={showAnnouncementTooltip}
 												position={{ top: -5, left: 15 }}
-												title="Edit your fast filters"
-												message="You can now customize and re-arrange your fast filters panel. Select the fast filters you’d need and hide away the rest for faster exploration."
+												title="Edit your quick filters"
+												message="You can now customize and re-arrange your quick filters panel. Select the quick filters you’d need and hide away the rest for faster exploration."
+												onClose={(): void => {
+													setLocalStorageKey(
+														LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT,
+														'false',
+													);
+												}}
 											/>
 										</div>
 									</Tooltip>
