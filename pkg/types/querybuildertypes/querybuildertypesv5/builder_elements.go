@@ -98,7 +98,7 @@ var (
 )
 
 type Aggregation struct {
-	// aggregation expression - exmple: count(), sum(item_price), countIf(day > 10)
+	// aggregation expression - example: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
 	// if any, it will be used as the alias of the aggregation in the result
 	Alias string `json:"alias,omitempty"`
@@ -141,11 +141,12 @@ type OrderBy struct {
 	Direction OrderDirection `json:"direction"`
 }
 
+// secondary aggregation to apply to the query
 type SecondaryAggregation struct {
 	// stepInterval of the query
 	// if not set, it will use the step interval of the primary aggregation
 	StepInterval Step `json:"stepInterval,omitempty"`
-	// expression to aggregate. exmple: count(), sum(item_price), countIf(day > 10)
+	// expression to aggregate. example: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
 	// if any, it will be used as the alias of the aggregation in the result
 	Alias string `json:"alias,omitempty"`
@@ -156,7 +157,7 @@ type SecondaryAggregation struct {
 	// limit the maximum number of rows to return
 	Limit int `json:"limit,omitempty"`
 	// limitBy fields to limit by
-	LimitBy []string `json:"limitBy,omitempty"`
+	LimitBy LimitBy `json:"limitBy,omitempty"`
 }
 
 type Function struct {

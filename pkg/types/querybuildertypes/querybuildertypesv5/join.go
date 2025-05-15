@@ -1,6 +1,9 @@
 package querybuildertypesv5
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import (
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
 // JoinType is the SQL‐style join operator.
 type JoinType struct{ valuer.String }
@@ -30,15 +33,17 @@ type QueryBuilderJoin struct {
 	On   string   `json:"on"`
 
 	// primary aggregations: if empty ⇒ raw columns
-	Aggregations       []Aggregation       `json:"aggregations,omitempty"`
-	MetricAggregations []MetricAggregation `json:"metricAggregations,omitempty"`
+	// currently supported: []Aggregation, []MetricAggregation
+	Aggregations []any `json:"aggregations,omitempty"`
+	// select columns to select
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
 
 	// post-join clauses (also used for aggregated joins)
-	Filter               Filter                 `json:"filter,omitempty"`
-	GroupBy              []GroupByKey           `json:"groupBy,omitempty"`
-	Having               Having                 `json:"having,omitempty"`
-	Order                []OrderBy              `json:"order,omitempty"`
-	Limit                int                    `json:"limit,omitempty"`
-	SecondaryAggregation []SecondaryAggregation `json:"secondaryAggregation,omitempty"`
-	Functions            []Function             `json:"functions,omitempty"`
+	Filter                *Filter                `json:"filter,omitempty"`
+	GroupBy               []GroupByKey           `json:"groupBy,omitempty"`
+	Having                *Having                `json:"having,omitempty"`
+	Order                 []OrderBy              `json:"order,omitempty"`
+	Limit                 int                    `json:"limit,omitempty"`
+	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitempty"`
+	Functions             []Function             `json:"functions,omitempty"`
 }
