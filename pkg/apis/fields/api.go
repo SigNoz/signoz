@@ -45,8 +45,8 @@ func NewAPI(telemetryStore telemetrystore.TelemetryStore) *API {
 func (api *API) GetFieldsKeys(w http.ResponseWriter, r *http.Request) {
 
 	type fieldKeysResponse struct {
-		Keys     map[string][]telemetrytypes.TelemetryFieldKey `json:"keys"`
-		Complete bool                                          `json:"complete"`
+		Keys     map[string][]*telemetrytypes.TelemetryFieldKey `json:"keys"`
+		Complete bool                                           `json:"complete"`
 	}
 
 	bodyBytes, _ := io.ReadAll(r.Body)

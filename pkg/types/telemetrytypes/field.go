@@ -98,11 +98,11 @@ func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
 	return fieldKeySelector
 }
 
-func FieldKeyToMaterializedColumnName(key TelemetryFieldKey) string {
+func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
 	return fmt.Sprintf("%s_%s_%s", key.FieldContext.String, fieldDataTypes[key.FieldDataType.StringValue()].StringValue(), strings.ReplaceAll(key.Name, ".", "$$"))
 }
 
-func FieldKeyToMaterializedColumnNameForExists(key TelemetryFieldKey) string {
+func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
 	return fmt.Sprintf("%s_%s_%s_exists", key.FieldContext.String, fieldDataTypes[key.FieldDataType.StringValue()].StringValue(), strings.ReplaceAll(key.Name, ".", "$$"))
 }
 
@@ -136,7 +136,7 @@ type FieldValueSelector struct {
 	Limit         int    `json:"limit"`
 }
 
-func DataTypeCollisionHandledFieldName(key TelemetryFieldKey, value any, tblFieldName string) (string, any) {
+func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFieldName string) (string, any) {
 	// This block of code exists to handle the data type collisions
 	// We don't want to fail the requests when there is a key with more than one data type
 	// Let's take an example of `http.status_code`, and consider user sent a string value and number value

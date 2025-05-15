@@ -128,7 +128,7 @@ func TestGetColumn(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			col, err := fm.ColumnFor(context.Background(), tc.key)
+			col, err := fm.ColumnFor(context.Background(), &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -203,7 +203,7 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := fm.FieldFor(ctx, tc.key)
+			result, err := fm.FieldFor(ctx, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)

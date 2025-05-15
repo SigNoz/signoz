@@ -131,7 +131,7 @@ func NewFieldMapper() *defaultFieldMapper {
 
 func (m *defaultFieldMapper) getColumn(
 	_ context.Context,
-	key telemetrytypes.TelemetryFieldKey,
+	key *telemetrytypes.TelemetryFieldKey,
 ) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
@@ -160,7 +160,7 @@ func (m *defaultFieldMapper) getColumn(
 
 func (m *defaultFieldMapper) ColumnFor(
 	ctx context.Context,
-	key telemetrytypes.TelemetryFieldKey,
+	key *telemetrytypes.TelemetryFieldKey,
 ) (*schema.Column, error) {
 	return m.getColumn(ctx, key)
 }
@@ -169,7 +169,7 @@ func (m *defaultFieldMapper) ColumnFor(
 // otherwise it returns qbtypes.ErrColumnNotFound
 func (m *defaultFieldMapper) FieldFor(
 	ctx context.Context,
-	key telemetrytypes.TelemetryFieldKey,
+	key *telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 	column, err := m.getColumn(ctx, key)
 	if err != nil {
@@ -223,8 +223,8 @@ func (m *defaultFieldMapper) FieldFor(
 // if it exists otherwise it returns qbtypes.ErrColumnNotFound
 func (m *defaultFieldMapper) ColumnExpressionFor(
 	ctx context.Context,
-	field telemetrytypes.TelemetryFieldKey,
-	keys map[string][]telemetrytypes.TelemetryFieldKey,
+	field *telemetrytypes.TelemetryFieldKey,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
 	colName, err := m.FieldFor(context.Background(), field)

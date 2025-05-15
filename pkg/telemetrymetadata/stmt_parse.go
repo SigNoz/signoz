@@ -10,12 +10,12 @@ import (
 // TelemetryFieldVisitor is an AST visitor for extracting telemetry fields
 type TelemetryFieldVisitor struct {
 	parser.DefaultASTVisitor
-	Fields []telemetrytypes.TelemetryFieldKey
+	Fields []*telemetrytypes.TelemetryFieldKey
 }
 
 func NewTelemetryFieldVisitor() *TelemetryFieldVisitor {
 	return &TelemetryFieldVisitor{
-		Fields: make([]telemetrytypes.TelemetryFieldKey, 0),
+		Fields: make([]*telemetrytypes.TelemetryFieldKey, 0),
 	}
 }
 
@@ -99,7 +99,7 @@ func (v *TelemetryFieldVisitor) VisitColumnDef(expr *parser.ColumnDef) error {
 	return nil
 }
 
-func ExtractFieldKeysFromTblStatement(statement string) ([]telemetrytypes.TelemetryFieldKey, error) {
+func ExtractFieldKeysFromTblStatement(statement string) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	// Parse the CREATE TABLE statement using the ClickHouse parser
 	p := parser.NewParser(statement)
 	stmts, err := p.ParseStmts()
