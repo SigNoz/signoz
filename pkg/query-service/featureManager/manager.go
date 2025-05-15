@@ -35,10 +35,10 @@ func (fm *FeatureManager) GetFeatureFlags() (model.FeatureSet, error) {
 	features := constants.DEFAULT_FEATURE_SET
 
 	//dot metrics migration
-	env := constants.GetOrDefaultEnv("DOT_METRICS_ENABLED", "false")
+	env := constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false")
 	if env == "true" {
 		features = append(features, model.Feature{
-			Name:   "DOT_METRICS_MIGRATED",
+			Name:   constants.DotMetricsEnabled,
 			Active: true,
 		})
 	}

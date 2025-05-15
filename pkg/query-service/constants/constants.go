@@ -659,3 +659,5 @@ var MaterializedDataTypeMap = map[string]string{
 }
 
 const InspectMetricsMaxTimeDiff = 1800000
+
+const DotMetricsEnabled = "DOT_METRICS_ENABLED"
