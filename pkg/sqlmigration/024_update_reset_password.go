@@ -3,6 +3,7 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -14,6 +15,11 @@ import (
 
 type updateResetPassword struct {
 	store sqlstore.SQLStore
+}
+
+type timeAuditable24 struct {
+	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
 }
 
 type existingResetPasswordRequest struct {
@@ -32,7 +38,7 @@ type newResetPasswordRequest struct {
 
 type existingPersonalAccessToken struct {
 	bun.BaseModel `bun:"table:personal_access_tokens"`
-	types.TimeAuditable
+	timeAuditable24
 	OrgID           string `json:"orgId" bun:"org_id,type:text,notnull"`
 	ID              int    `json:"id" bun:"id,pk,autoincrement"`
 	Role            string `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
@@ -48,7 +54,7 @@ type existingPersonalAccessToken struct {
 type newPersonalAccessToken struct {
 	bun.BaseModel `bun:"table:personal_access_token"`
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable24
 	OrgID           string `json:"orgId" bun:"org_id,type:text,notnull"`
 	Role            string `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
 	UserID          string `json:"userId" bun:"user_id,type:text,notnull"`
@@ -174,7 +180,7 @@ func (migration *updateResetPassword) CopyExistingPATsToNewPATs(existingPATs []*
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			TimeAuditable: types.TimeAuditable{
+			timeAuditable24: timeAuditable24{
 				CreatedAt: pat.CreatedAt,
 				UpdatedAt: pat.UpdatedAt,
 			},

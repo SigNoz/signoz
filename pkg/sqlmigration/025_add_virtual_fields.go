@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -11,6 +12,11 @@ import (
 )
 
 type addVirtualFields struct{}
+
+type timeAuditable25 struct {
+	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
+}
 
 func NewAddVirtualFieldsFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_virtual_fields"), newAddVirtualFields)
@@ -35,7 +41,7 @@ func (migration *addVirtualFields) Up(ctx context.Context, db *bun.DB) error {
 			bun.BaseModel `bun:"table:virtual_field"`
 
 			types.Identifiable
-			types.TimeAuditable
+			timeAuditable25
 			types.UserAuditable
 
 			Name        string                `bun:"name,type:text,notnull"`

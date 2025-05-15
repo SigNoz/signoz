@@ -2,16 +2,21 @@ package sqlmigration
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 )
 
 type dropGroups struct {
 	sqlstore sqlstore.SQLStore
+}
+
+type timeAuditable29 struct {
+	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
 }
 
 func NewDropGroupsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
@@ -36,7 +41,7 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 	type Group struct {
 		bun.BaseModel `bun:"table:groups"`
 
-		types.TimeAuditable
+		timeAuditable29
 		OrgID string `bun:"org_id,type:text"`
 		ID    string `bun:"id,pk,type:text" json:"id"`
 		Name  string `bun:"name,type:text,notnull,unique" json:"name"`
@@ -66,7 +71,7 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 	type existingUser struct {
 		bun.BaseModel `bun:"table:users"`
 
-		types.TimeAuditable
+		timeAuditable29
 		ID                string `bun:"id,pk,type:text" json:"id"`
 		Name              string `bun:"name,type:text,notnull" json:"name"`
 		Email             string `bun:"email,type:text,notnull,unique" json:"email"`
@@ -105,7 +110,7 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 	if err := migration.sqlstore.Dialect().DropColumnWithForeignKeyConstraint(ctx, tx, new(struct {
 		bun.BaseModel `bun:"table:users"`
 
-		types.TimeAuditable
+		timeAuditable29
 		ID                string `bun:"id,pk,type:text"`
 		Name              string `bun:"name,type:text,notnull"`
 		Email             string `bun:"email,type:text,notnull,unique"`

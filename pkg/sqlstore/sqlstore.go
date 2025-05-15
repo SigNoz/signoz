@@ -89,4 +89,6 @@ type SQLDialect interface {
 	// Toggles foreign key constraint for the given database. This makes sense only for sqlite. This cannot take a transaction as an argument and needs to take the db
 	// as an argument.
 	ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error
+
+	MakeTimeAuditableTZAwareAndNonNullable(context.Context, bun.IDB, string) error
 }

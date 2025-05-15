@@ -19,6 +19,11 @@ type updateApdexTtl struct {
 	store sqlstore.SQLStore
 }
 
+type timeAuditable23 struct {
+	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
+}
+
 type existingApdexSettings struct {
 	bun.BaseModel      `bun:"table:apdex_settings"`
 	OrgID              string  `bun:"org_id,pk,type:text" json:"orgId"`
@@ -51,7 +56,7 @@ type existingTTLStatus struct {
 type newTTLStatus struct {
 	bun.BaseModel `bun:"table:ttl_setting"`
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable23
 	TransactionID  string `bun:"transaction_id,type:text,notnull"`
 	TableName      string `bun:"table_name,type:text,notnull"`
 	TTL            int    `bun:"ttl,notnull,default:0"`
@@ -210,7 +215,7 @@ func (migration *updateApdexTtl) CopyExistingTTLStatusToNewTTLStatus(existingTTL
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			TimeAuditable: types.TimeAuditable{
+			timeAuditable23: timeAuditable23{
 				CreatedAt: ttl.CreatedAt,
 				UpdatedAt: ttl.UpdatedAt,
 			},

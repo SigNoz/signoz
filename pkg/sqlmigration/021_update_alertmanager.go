@@ -17,6 +17,11 @@ type updateAlertmanager struct {
 	store sqlstore.SQLStore
 }
 
+type timeAuditable21 struct {
+	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
+}
+
 type existingChannel struct {
 	bun.BaseModel `bun:"table:notification_channels"`
 	ID            int       `json:"id" bun:"id,pk,autoincrement"`
@@ -31,7 +36,7 @@ type existingChannel struct {
 type newChannel struct {
 	bun.BaseModel `bun:"table:notification_channel"`
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable21
 	Name  string `json:"name" bun:"name"`
 	Type  string `json:"type" bun:"type"`
 	Data  string `json:"data" bun:"data"`
@@ -51,7 +56,7 @@ type existingAlertmanagerConfig struct {
 type newAlertmanagerConfig struct {
 	bun.BaseModel `bun:"table:alertmanager_config_new"`
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable21
 	Config string `bun:"config,notnull,type:text"`
 	Hash   string `bun:"hash,notnull,type:text"`
 	OrgID  string `bun:"org_id,notnull,unique"`
@@ -70,7 +75,7 @@ type existingAlertmanagerState struct {
 type newAlertmanagerState struct {
 	bun.BaseModel `bun:"table:alertmanager_state_new"`
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable21
 	Silences string `bun:"silences,nullzero,type:text"`
 	NFLog    string `bun:"nflog,nullzero,type:text"`
 	OrgID    string `bun:"org_id,notnull,unique"`
@@ -217,7 +222,7 @@ func (migration *updateAlertmanager) CopyOldChannelToNewChannel(existingChannels
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			TimeAuditable: types.TimeAuditable{
+			timeAuditable21: timeAuditable21{
 				CreatedAt: channel.CreatedAt,
 				UpdatedAt: channel.UpdatedAt,
 			},
@@ -238,7 +243,7 @@ func (migration *updateAlertmanager) CopyOldConfigToNewConfig(existingAlertmanag
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			TimeAuditable: types.TimeAuditable{
+			timeAuditable21: timeAuditable21{
 				CreatedAt: config.CreatedAt,
 				UpdatedAt: config.UpdatedAt,
 			},
@@ -258,7 +263,7 @@ func (migration *updateAlertmanager) CopyOldStateToNewState(existingAlertmanager
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			TimeAuditable: types.TimeAuditable{
+			timeAuditable21: timeAuditable21{
 				CreatedAt: state.CreatedAt,
 				UpdatedAt: state.UpdatedAt,
 			},

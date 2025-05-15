@@ -3,6 +3,7 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -14,6 +15,11 @@ import (
 
 type authRefactor struct {
 	store sqlstore.SQLStore
+}
+
+type timeAuditable32 struct {
+	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
 }
 
 func NewAuthRefactorFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
@@ -37,7 +43,7 @@ func (migration *authRefactor) Register(migrations *migrate.Migrations) error {
 type existingUser32 struct {
 	bun.BaseModel `bun:"table:users"`
 
-	types.TimeAuditable
+	timeAuditable32
 	ID                string `bun:"id,pk,type:text" json:"id"`
 	Name              string `bun:"name,type:text,notnull" json:"name"`
 	Email             string `bun:"email,type:text,notnull,unique" json:"email"`
@@ -51,7 +57,7 @@ type factorPassword32 struct {
 	bun.BaseModel `bun:"table:factor_password"`
 
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable32
 	Password  string `bun:"password,type:text,notnull" json:"password"`
 	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
 	UserID    string `bun:"user_id,type:text,notnull" json:"userID"`

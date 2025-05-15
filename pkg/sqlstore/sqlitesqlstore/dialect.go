@@ -6,15 +6,18 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
 const (
-	Identity string = "id"
-	Integer  string = "INTEGER"
-	Text     string = "TEXT"
+	Identity    string = "id"
+	Integer     string = "INTEGER"
+	Text        string = "TEXT"
+	Timestamptz string = "TIMESTAMPTZ"
 )
 
 const (
@@ -498,4 +501,93 @@ func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun
 
 	_, err := bun.ExecContext(ctx, "PRAGMA foreign_keys = OFF")
 	return err
+}
+
+func (dialect *dialect) MakeTimeAuditableTZAwareAndNonNullable(ctx context.Context, bunIDB bun.IDB, tableName string) error {
+	columnType, err := dialect.GetColumnType(ctx, bunIDB, tableName, "created_at")
+	if err != nil {
+		return err
+	}
+	if columnType == Timestamptz {
+		return nil
+	}
+
+	_, err = bunIDB.NewAddColumn().ColumnExpr("created_at_tz TIMESTAMPTZ").Exec(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = bunIDB.NewAddColumn().ColumnExpr("updated_at_tz TIMESTAMPTZ").Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	type timeAuditableWithID struct {
+		ID        valuer.UUID `bun:"id"`
+		CreatedAt time.Time   `bun:"created_at,type:timestamptz,nullzero" json:"createdAt"`
+		UpdatedAt time.Time   `bun:"updated_at,type:timestamptz,nullzero" json:"updatedAt"`
+	}
+
+	timeAuditables := make([]*timeAuditableWithID, 0)
+	err = bunIDB.
+		NewSelect().
+		Table(tableName).
+		Column("created_at").
+		Column("updated_at").
+		Scan(ctx, &timeAuditables)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	for _, record := range timeAuditables {
+		if record.CreatedAt.IsZero() {
+			record.CreatedAt = now
+		}
+		if record.UpdatedAt.IsZero() {
+			record.UpdatedAt = now
+		}
+	}
+
+	if len(timeAuditables) > 0 {
+		_, err = bunIDB.
+			NewUpdate().
+			With("_data", bunIDB.NewValues(&timeAuditables)).
+			Set("created_at_tz = _data.created_at").
+			Set("updated_at_tz = _data.updated_at").
+			Table(tableName).Where("id = _data.id").
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = dialect.DropColumn(ctx, bunIDB, tableName, "created_at")
+	if err != nil {
+		return err
+	}
+	err = dialect.DropColumn(ctx, bunIDB, tableName, "updated_at")
+	if err != nil {
+		return err
+	}
+
+	_, err = dialect.RenameColumn(ctx, bunIDB, tableName, "created_at_tz", "created_at")
+	if err != nil {
+		return err
+	}
+	_, err = dialect.RenameColumn(ctx, bunIDB, tableName, "updated_at_tz", "updated_at")
+	if err != nil {
+		return err
+	}
+
+	_, err = bunIDB.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ALTER COLUMN created_at SET NOT NULL", tableName))
+	if err != nil {
+		return err
+	}
+	_, err = bunIDB.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ALTER COLUMN updated_at SET NOT NULL", tableName))
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }

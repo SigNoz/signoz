@@ -3,6 +3,8 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -17,13 +19,18 @@ type createQuickFilters struct {
 	store sqlstore.SQLStore
 }
 
+type timeAuditable30 struct {
+	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
+}
+
 type quickFilter struct {
 	bun.BaseModel `bun:"table:quick_filter"`
 	types.Identifiable
 	OrgID  string `bun:"org_id,notnull,unique:org_id_signal,type:text"`
 	Filter string `bun:"filter,notnull,type:text"`
 	Signal string `bun:"signal,notnull,unique:org_id_signal,type:text"`
-	types.TimeAuditable
+	timeAuditable30
 	types.UserAuditable
 }
 

@@ -3,8 +3,8 @@ package types
 import "time"
 
 type TimeAuditable struct {
-	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
-	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
+	CreatedAt time.Time `bun:"created_at,type:timestamptz,nullzero" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at,type:timestamptz,nullzero" json:"updatedAt"`
 }
 
 type UserAuditable struct {

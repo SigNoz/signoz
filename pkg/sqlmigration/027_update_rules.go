@@ -21,6 +21,11 @@ type updateRules struct {
 	store sqlstore.SQLStore
 }
 
+type timeAuditable27 struct {
+	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
+}
+
 type AlertIds []string
 
 func (a *AlertIds) Scan(src interface{}) error {
@@ -48,7 +53,7 @@ type existingRule struct {
 type newRule struct {
 	bun.BaseModel `bun:"table:rule"`
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable27
 	types.UserAuditable
 	Deleted int    `bun:"deleted,notnull,default:0"`
 	Data    string `bun:"data,type:text,notnull"`
@@ -71,7 +76,7 @@ type existingMaintenance struct {
 type newMaintenance struct {
 	bun.BaseModel `bun:"table:planned_maintenance_new"`
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable27
 	types.UserAuditable
 	Name        string              `bun:"name,type:text,notnull"`
 	Description string              `bun:"description,type:text"`
@@ -283,7 +288,7 @@ func (migration *updateRules) CopyExistingRulesToNewRules(existingRules []*exist
 			Identifiable: types.Identifiable{
 				ID: uuid,
 			},
-			TimeAuditable: types.TimeAuditable{
+			timeAuditable27: timeAuditable27{
 				CreatedAt: rule.CreatedAt,
 				UpdatedAt: rule.UpdatedAt,
 			},
@@ -310,7 +315,7 @@ func (migration *updateRules) CopyExistingMaintenancesToNewMaintenancesAndRules(
 			Identifiable: types.Identifiable{
 				ID: maintenanceUUID,
 			},
-			TimeAuditable: types.TimeAuditable{
+			timeAuditable27: timeAuditable27{
 				CreatedAt: maintenance.CreatedAt,
 				UpdatedAt: maintenance.UpdatedAt,
 			},

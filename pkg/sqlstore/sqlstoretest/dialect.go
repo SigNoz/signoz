@@ -68,3 +68,7 @@ func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table inte
 func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error {
 	return nil
 }
+
+func (dialect *dialect) MakeTimeAuditableTZAwareAndNonNullable(ctx context.Context, bunIDB bun.IDB, tableName string) error {
+	return nil
+}

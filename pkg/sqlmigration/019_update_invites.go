@@ -17,6 +17,11 @@ type updateInvites struct {
 	store sqlstore.SQLStore
 }
 
+type timeAuditable19 struct {
+	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
+}
+
 type existingInvite struct {
 	bun.BaseModel `bun:"table:invites"`
 
@@ -33,7 +38,7 @@ type newInvite struct {
 	bun.BaseModel `bun:"table:user_invite"`
 
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable19
 	Name  string `bun:"name,type:text,notnull" json:"name"`
 	Email string `bun:"email,type:text,notnull,unique" json:"email"`
 	Token string `bun:"token,type:text,notnull" json:"token"`
@@ -117,7 +122,7 @@ func (migration *updateInvites) CopyOldInvitesToNewInvites(existingInvites []*ex
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			TimeAuditable: types.TimeAuditable{
+			timeAuditable19: timeAuditable19{
 				CreatedAt: invite.CreatedAt,
 				UpdatedAt: time.Now(),
 			},

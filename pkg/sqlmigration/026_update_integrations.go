@@ -19,6 +19,11 @@ type updateIntegrations struct {
 	store sqlstore.SQLStore
 }
 
+type timeAuditable26 struct {
+	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
+}
+
 func NewUpdateIntegrationsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("update_integrations"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 		return newUpdateIntegrations(ctx, ps, c, sqlstore)
@@ -71,7 +76,7 @@ type newCloudIntegration struct {
 	bun.BaseModel `bun:"table:cloud_integration"`
 
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable26
 	Provider        string     `json:"provider" bun:"provider,type:text"`
 	Config          string     `json:"config" bun:"config,type:text"`
 	AccountID       string     `json:"account_id" bun:"account_id,type:text"`
@@ -94,7 +99,7 @@ type newCloudIntegrationService struct {
 	bun.BaseModel `bun:"table:cloud_integration_service,alias:cis"`
 
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable26
 	Type               string `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
 	Config             string `bun:"config,type:text"`
 	CloudIntegrationID string `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type"`
@@ -103,7 +108,7 @@ type newCloudIntegrationService struct {
 type StorablePersonalAccessToken struct {
 	bun.BaseModel `bun:"table:personal_access_token"`
 	types.Identifiable
-	types.TimeAuditable
+	timeAuditable26
 	OrgID           string `json:"orgId" bun:"org_id,type:text,notnull"`
 	Role            string `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
 	UserID          string `json:"userId" bun:"user_id,type:text,notnull"`
@@ -298,7 +303,7 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrati
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			TimeAuditable: types.TimeAuditable{
+			timeAuditable26: timeAuditable26{
 				CreatedAt: integration.CreatedAt,
 				UpdatedAt: integration.CreatedAt,
 			},
@@ -337,7 +342,7 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIn
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			TimeAuditable: types.TimeAuditable{
+			timeAuditable26: timeAuditable26{
 				CreatedAt: service.CreatedAt,
 				UpdatedAt: service.CreatedAt,
 			},
@@ -354,7 +359,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 	type oldUser struct {
 		bun.BaseModel `bun:"table:users"`
 
-		types.TimeAuditable
+		timeAuditable26
 		ID                string `bun:"id,pk,type:text" json:"id"`
 		Name              string `bun:"name,type:text,notnull" json:"name"`
 		Email             string `bun:"email,type:text,notnull,unique" json:"email"`
@@ -381,7 +386,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 	// new user
 	newUser := &oldUser{
 		ID: uuid.New().String(),
-		TimeAuditable: types.TimeAuditable{
+		timeAuditable26: timeAuditable26{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
@@ -410,7 +415,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 	// new pat
 	newPAT := &StorablePersonalAccessToken{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
-		TimeAuditable: types.TimeAuditable{
+		timeAuditable26: timeAuditable26{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
