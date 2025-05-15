@@ -24,11 +24,13 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight, CornerDownRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -136,7 +138,14 @@ function K8sPodsList({
 		order: 'asc' | 'desc';
 	} | null>({ columnName: 'cpu', order: 'desc' });
 
-	const [selectedPodUID, setSelectedPodUID] = useState<string | null>(null);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [selectedPodUID, setSelectedPodUID] = useState<string | null>(() => {
+		const podUID = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID);
+		if (podUID) {
+			return podUID;
+		}
+		return null;
+	});
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.PODS);
 
@@ -366,6 +375,10 @@ function K8sPodsList({
 	const handleRowClick = (record: K8sPodsRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedPodUID(record.podUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID]: record.podUID,
+			});
 			setSelectedRowData(null);
 		} else {
 			handleGroupByRowClick(record);
@@ -380,6 +393,7 @@ function K8sPodsList({
 
 	const handleClosePodDetail = (): void => {
 		setSelectedPodUID(null);
+		setSearchParams({});
 	};
 
 	const handleAddColumn = useCallback(
@@ -459,7 +473,13 @@ function K8sPodsList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setSelectedPodUID(record.podUID),
+							onClick: (): void => {
+								setSelectedPodUID(record.podUID);
+								setSearchParams({
+									...Object.fromEntries(searchParams.entries()),
+									[INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID]: record.podUID,
+								});
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
