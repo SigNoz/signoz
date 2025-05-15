@@ -10,6 +10,7 @@ interface SpaceAggregationOptionsProps {
 	disabled: boolean;
 	onSelect: (value: string) => void;
 	operators: any[];
+	qbVersion?: string;
 }
 
 export default function SpaceAggregationOptions({
@@ -19,8 +20,10 @@ export default function SpaceAggregationOptions({
 	disabled,
 	onSelect,
 	operators,
+	qbVersion,
 }: SpaceAggregationOptionsProps): JSX.Element {
-	const placeHolderText = panelType === PANEL_TYPES.VALUE ? 'Sum' : 'Sum By';
+	const placeHolderText =
+		panelType === PANEL_TYPES.VALUE || qbVersion === 'v3' ? 'Sum' : 'Sum By';
 	const [defaultValue, setDefaultValue] = useState(
 		selectedValue || placeHolderText,
 	);
@@ -58,10 +61,15 @@ export default function SpaceAggregationOptions({
 			>
 				{operators.map((operator) => (
 					<Select.Option key={operator.value} value={operator.value}>
-						{operator.label} {panelType !== PANEL_TYPES.VALUE ? ' By' : ''}
+						{operator.label}{' '}
+						{panelType !== PANEL_TYPES.VALUE && qbVersion === 'v2' ? ' By' : ''}
 					</Select.Option>
 				))}
 			</Select>
 		</div>
 	);
 }
+
+SpaceAggregationOptions.defaultProps = {
+	qbVersion: 'v2',
+};
