@@ -515,7 +515,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				virtualiserRef={virtualizerRef}
 				setColumnWidths={setTraceFlamegraphStatsWidth}
 			/>
-			{selectedSpanToAddToFunnel && (
+			{selectedSpanToAddToFunnel && process.env.NODE_ENV === 'development' && (
 				<AddSpanToFunnelModal
 					span={selectedSpanToAddToFunnel}
 					isOpen={isAddSpanToFunnelModalOpen}
