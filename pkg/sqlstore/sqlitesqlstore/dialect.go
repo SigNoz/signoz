@@ -512,11 +512,11 @@ func (dialect *dialect) MakeTimeAuditableTZAwareAndNonNullable(ctx context.Conte
 		return nil
 	}
 
-	_, err = bunIDB.NewAddColumn().ColumnExpr("created_at_tz TIMESTAMPTZ").Exec(ctx)
+	_, err = bunIDB.NewAddColumn().Table(tableName).ColumnExpr("created_at_tz TIMESTAMPTZ").Exec(ctx)
 	if err != nil {
 		return err
 	}
-	_, err = bunIDB.NewAddColumn().ColumnExpr("updated_at_tz TIMESTAMPTZ").Exec(ctx)
+	_, err = bunIDB.NewAddColumn().Table(tableName).ColumnExpr("updated_at_tz TIMESTAMPTZ").Exec(ctx)
 	if err != nil {
 		return err
 	}
@@ -533,6 +533,7 @@ func (dialect *dialect) MakeTimeAuditableTZAwareAndNonNullable(ctx context.Conte
 		Table(tableName).
 		Column("created_at").
 		Column("updated_at").
+		Column("id").
 		Scan(ctx, &timeAuditables)
 	if err != nil {
 		return err
@@ -551,10 +552,12 @@ func (dialect *dialect) MakeTimeAuditableTZAwareAndNonNullable(ctx context.Conte
 	if len(timeAuditables) > 0 {
 		_, err = bunIDB.
 			NewUpdate().
-			With("_data", bunIDB.NewValues(&timeAuditables)).
-			Set("created_at_tz = _data.created_at").
-			Set("updated_at_tz = _data.updated_at").
-			Table(tableName).Where("id = _data.id").
+			With("updates", bunIDB.NewValues(&timeAuditables)).
+			ModelTableExpr(tableName + " AS t").
+			Table("updates").
+			Set("created_at_tz = updates.created_at").
+			Set("updated_at_tz = updates.updated_at").
+			Where("t.id = updates.id").
 			Exec(ctx)
 		if err != nil {
 			return err
