@@ -10,6 +10,7 @@ import { Label } from 'pages/SignUp/styles';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-use';
+import APIError from 'types/api/error';
 
 import { ButtonContainer, FormContainer, FormWrapper } from './styles';
 
@@ -43,35 +44,24 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			setLoading(true);
 			const { password } = form.getFieldsValue();
 
-			const response = await resetPasswordApi({
+			await resetPasswordApi({
 				password,
 				token: token || '',
 			});
 
-			if (response.statusCode === 200) {
-				notifications.success({
-					message: t('success', {
-						ns: 'common',
-					}),
-				});
-				history.push(ROUTES.LOGIN);
-			} else {
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
+			notifications.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
+			history.push(ROUTES.LOGIN);
 
 			setLoading(false);
 		} catch (error) {
 			setLoading(false);
 			notifications.error({
-				message: t('something_went_wrong', {
-					ns: 'common',
-				}),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 	};

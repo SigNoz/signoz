@@ -1,8 +1,8 @@
 import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import loginApi from 'api/v1/login/login';
 import loginPrecheckApi from 'api/v1/login/loginPrecheck';
-import loginApi from 'api/v1/user/login';
 import getUserVersion from 'api/v1/version/getVersion';
 import afterLogin from 'AppRoutes/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -13,6 +13,7 @@ import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
+import APIError from 'types/api/error';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
@@ -166,22 +167,18 @@ function Login({
 				email,
 				password,
 			});
-			if (response.statusCode === 200) {
-				afterLogin(
-					response.payload.userId,
-					response.payload.accessJwt,
-					response.payload.refreshJwt,
-				);
-			} else {
-				notifications.error({
-					message: response.error || t('unexpected_error'),
-				});
-			}
+
+			afterLogin(
+				response.data.userId,
+				response.data.accessJwt,
+				response.data.refreshJwt,
+			);
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
 			notifications.error({
-				message: t('unexpected_error'),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 	};

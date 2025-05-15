@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import getPendingInvites from 'api/v1/invite/getPendingInvites';
+import get from 'api/v1/invite/get';
 import deleteInvite from 'api/v1/invite/id/delete';
 import { ResizeTable } from 'components/ResizeTable';
 import { INVITE_MEMBERS_HASH } from 'constants/app';
@@ -13,7 +13,9 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { PayloadProps } from 'types/api/user/getPendingInvites';
+import { SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
+import { PendingInvite } from 'types/api/user/getPendingInvites';
 import { ROLES } from 'types/roles';
 
 import InviteUserModal from '../InviteUserModal/InviteUserModal';
@@ -46,8 +48,11 @@ function PendingInvitesContainer(): JSX.Element {
 		}
 	}, [state.error, state.value, t, notifications]);
 
-	const getPendingInvitesResponse = useQuery({
-		queryFn: getPendingInvites,
+	const getPendingInvitesResponse = useQuery<
+		SuccessResponseV2<PendingInvite[]>,
+		APIError
+	>({
+		queryFn: get,
 		queryKey: ['getPendingInvites', user?.accessJwt],
 	});
 
@@ -66,10 +71,11 @@ function PendingInvitesContainer(): JSX.Element {
 	const { hash } = useLocation();
 
 	const getParsedInviteData = useCallback(
-		(payload: PayloadProps = []) =>
+		(payload: PendingInvite[] = []) =>
 			payload?.map((data) => ({
 				key: data.createdAt,
 				name: data.name,
+				id: data.id,
 				email: data.email,
 				accessLevel: data.role,
 				inviteLink: `${window.location.origin}${ROUTES.SIGN_UP}?token=${data.token}`,
@@ -86,53 +92,41 @@ function PendingInvitesContainer(): JSX.Element {
 	useEffect(() => {
 		if (
 			getPendingInvitesResponse.status === 'success' &&
-			getPendingInvitesResponse?.data?.payload
+			getPendingInvitesResponse?.data?.data
 		) {
 			const data = getParsedInviteData(
-				getPendingInvitesResponse?.data?.payload || [],
+				getPendingInvitesResponse?.data?.data || [],
 			);
 			setDataSource(data);
 		}
 	}, [
 		getParsedInviteData,
-		getPendingInvitesResponse?.data?.payload,
+		getPendingInvitesResponse?.data?.data,
 		getPendingInvitesResponse.status,
 	]);
 
-	const onRevokeHandler = async (email: string): Promise<void> => {
+	const onRevokeHandler = async (id: string): Promise<void> => {
 		try {
-			const response = await deleteInvite({
-				email,
+			await deleteInvite({
+				id,
 			});
-			if (response.statusCode === 200) {
-				// remove from the client data
-				const index = dataSource.findIndex((e) => e.email === email);
-
-				if (index !== -1) {
-					setDataSource([
-						...dataSource.slice(0, index),
-						...dataSource.slice(index + 1, dataSource.length),
-					]);
-				}
-				notifications.success({
-					message: t('success', {
-						ns: 'common',
-					}),
-				});
-			} else {
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
+			// remove from the client data
+			const index = dataSource.findIndex((e) => e.id === id);
+			if (index !== -1) {
+				setDataSource([
+					...dataSource.slice(0, index),
+					...dataSource.slice(index + 1, dataSource.length),
+				]);
 			}
-		} catch (error) {
-			notifications.error({
-				message: t('something_went_wrong', {
+			notifications.success({
+				message: t('success', {
 					ns: 'common',
 				}),
+			});
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 	};
@@ -170,9 +164,7 @@ function PendingInvitesContainer(): JSX.Element {
 			key: 'Action',
 			render: (_, record): JSX.Element => (
 				<Space direction="horizontal">
-					<Typography.Link
-						onClick={(): Promise<void> => onRevokeHandler(record.email)}
-					>
+					<Typography.Link onClick={(): Promise<void> => onRevokeHandler(record.id)}>
 						Revoke
 					</Typography.Link>
 					<Typography.Link
@@ -242,6 +234,7 @@ export interface InviteTeamMembersProps {
 interface DataProps {
 	key: number;
 	name: string;
+	id: string;
 	email: string;
 	accessLevel: ROLES;
 	inviteLink: string;

@@ -9,13 +9,11 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	baseauth "github.com/SigNoz/signoz/pkg/query-service/auth"
-	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/http/render"
 )
 
 func parseRequest(r *http.Request, req interface{}) error {
@@ -31,161 +29,13 @@ func parseRequest(r *http.Request, req interface{}) error {
 
 // loginUser overrides base handler and considers SSO case.
 func (ah *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
-
-	req := basemodel.LoginRequest{}
-	err := parseRequest(r, &req)
+	r, err := ah.updateRequestContext(w, r)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		render.Error(w, err)
 		return
 	}
-
-	ctx := context.Background()
-
-	if req.Email != "" && ah.CheckFeature(model.SSO) {
-		var apierr basemodel.BaseApiError
-		_, apierr = ah.AppDao().CanUsePassword(ctx, req.Email)
-		if apierr != nil && !apierr.IsNil() {
-			RespondError(w, apierr, nil)
-		}
-	}
-
-	// if all looks good, call auth
-	resp, err := baseauth.Login(ctx, &req, ah.opts.JWT)
-	if ah.HandleError(w, err, http.StatusUnauthorized) {
-		return
-	}
-
-	ah.WriteJSON(w, r, resp)
-}
-
-// registerUser registers a user and responds with a precheck
-// so the front-end can decide the login method
-func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
-
-	if !ah.CheckFeature(model.SSO) {
-		ah.APIHandler.Register(w, r)
-		return
-	}
-
-	ctx := context.Background()
-	var req *baseauth.RegisterRequest
-
-	defer r.Body.Close()
-	requestBody, err := io.ReadAll(r.Body)
-	if err != nil {
-		zap.L().Error("received no input in api", zap.Error(err))
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	err = json.Unmarshal(requestBody, &req)
-
-	if err != nil {
-		zap.L().Error("received invalid user registration request", zap.Error(err))
-		RespondError(w, model.BadRequest(fmt.Errorf("failed to register user")), nil)
-		return
-	}
-
-	// get invite object
-	invite, err := baseauth.ValidateInvite(ctx, req)
-	if err != nil {
-		zap.L().Error("failed to validate invite token", zap.Error(err))
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	if invite == nil {
-		zap.L().Error("failed to validate invite token: it is either empty or invalid", zap.Error(err))
-		RespondError(w, model.BadRequest(basemodel.ErrSignupFailed{}), nil)
-		return
-	}
-
-	// get auth domain from email domain
-	domain, apierr := ah.AppDao().GetDomainByEmail(ctx, invite.Email)
-	if apierr != nil {
-		zap.L().Error("failed to get domain from email", zap.Error(apierr))
-		RespondError(w, model.InternalError(basemodel.ErrSignupFailed{}), nil)
-	}
-
-	precheckResp := &basemodel.PrecheckResponse{
-		SSO:    false,
-		IsUser: false,
-	}
-
-	if domain != nil && domain.SsoEnabled {
-		// sso is enabled, create user and respond precheck data
-		user, apierr := baseauth.RegisterInvitedUser(ctx, req, true)
-		if apierr != nil {
-			RespondError(w, apierr, nil)
-			return
-		}
-
-		var precheckError basemodel.BaseApiError
-
-		precheckResp, precheckError = ah.AppDao().PrecheckLogin(ctx, user.Email, req.SourceUrl)
-		if precheckError != nil {
-			RespondError(w, precheckError, precheckResp)
-		}
-
-	} else {
-		// no-sso, validate password
-		if err := baseauth.ValidatePassword(req.Password); err != nil {
-			RespondError(w, model.InternalError(fmt.Errorf("password is not in a valid format")), nil)
-			return
-		}
-
-		_, registerError := baseauth.Register(ctx, req, ah.Signoz.Alertmanager, ah.Signoz.Modules.Organization, ah.QuickFilterModule)
-		if !registerError.IsNil() {
-			RespondError(w, apierr, nil)
-			return
-		}
-
-		precheckResp.IsUser = true
-	}
-
-	ah.Respond(w, precheckResp)
-}
-
-// getInvite returns the invite object details for the given invite token. We do not need to
-// protect this API because invite token itself is meant to be private.
-func (ah *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
-	token := mux.Vars(r)["token"]
-	sourceUrl := r.URL.Query().Get("ref")
-
-	inviteObject, err := baseauth.GetInvite(r.Context(), token, ah.Signoz.Modules.Organization)
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	resp := model.GettableInvitation{
-		InvitationResponseObject: inviteObject,
-	}
-
-	precheck, apierr := ah.AppDao().PrecheckLogin(r.Context(), inviteObject.Email, sourceUrl)
-	resp.Precheck = precheck
-
-	if apierr != nil {
-		RespondError(w, apierr, resp)
-	}
-
-	ah.WriteJSON(w, r, resp)
-}
-
-// PrecheckLogin enables browser login page to display appropriate
-// login methods
-func (ah *APIHandler) precheckLogin(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-
-	email := r.URL.Query().Get("email")
-	sourceUrl := r.URL.Query().Get("ref")
-
-	resp, apierr := ah.AppDao().PrecheckLogin(ctx, email, sourceUrl)
-	if apierr != nil {
-		RespondError(w, apierr, resp)
-	}
-
-	ah.Respond(w, resp)
+	ah.Signoz.Handlers.User.Login(w, r)
+	return
 }
 
 func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
@@ -252,7 +102,7 @@ func (ah *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	nextPage, err := ah.AppDao().PrepareSsoRedirect(ctx, redirectUri, identity.Email, ah.opts.JWT)
+	nextPage, err := ah.Signoz.Modules.User.PrepareSsoRedirect(ctx, redirectUri, identity.Email, ah.opts.JWT)
 	if err != nil {
 		zap.L().Error("[receiveGoogleAuth] failed to generate redirect URI after successful login ", zap.String("domain", domain.String()), zap.Error(err))
 		handleSsoError(w, r, redirectUri)
@@ -330,7 +180,7 @@ func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nextPage, err := ah.AppDao().PrepareSsoRedirect(ctx, redirectUri, email, ah.opts.JWT)
+	nextPage, err := ah.Signoz.Modules.User.PrepareSsoRedirect(ctx, redirectUri, email, ah.opts.JWT)
 	if err != nil {
 		zap.L().Error("[receiveSAML] failed to generate redirect URI after successful login ", zap.String("domain", domain.String()), zap.Error(err))
 		handleSsoError(w, r, redirectUri)

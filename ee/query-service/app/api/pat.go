@@ -56,7 +56,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 }
 
 func validatePATRequest(req eeTypes.GettablePAT) error {
-	_, err := authtypes.NewRole(req.Role)
+	_, err := types.NewRole(req.Role)
 	if err != nil {
 		return err
 	}
@@ -93,16 +93,16 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//get the pat
-	existingPAT, paterr := ah.AppDao().GetPATByID(r.Context(), claims.OrgID, id)
-	if paterr != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, paterr.Error()))
+	existingPAT, err := ah.AppDao().GetPATByID(r.Context(), claims.OrgID, id)
+	if err != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
 
 	// get the user
-	createdByUser, usererr := ah.AppDao().GetUser(r.Context(), existingPAT.UserID)
-	if usererr != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, usererr.Error()))
+	createdByUser, err := ah.Signoz.Modules.User.GetUserByID(r.Context(), claims.OrgID, existingPAT.UserID)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -119,7 +119,6 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 
 	req.UpdatedByUserID = claims.UserID
 	req.UpdatedAt = time.Now()
-	zap.L().Info("Got Update PAT request", zap.Any("pat", req))
 	var apierr basemodel.BaseApiError
 	if apierr = ah.AppDao().UpdatePAT(r.Context(), claims.OrgID, req, id); apierr != nil {
 		RespondError(w, apierr, nil)
@@ -167,9 +166,9 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the user
-	createdByUser, usererr := ah.AppDao().GetUser(r.Context(), existingPAT.UserID)
-	if usererr != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, usererr.Error()))
+	createdByUser, err := ah.Signoz.Modules.User.GetUserByID(r.Context(), claims.OrgID, existingPAT.UserID)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
