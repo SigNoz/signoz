@@ -529,4 +529,5 @@ export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	NAMESPACE_UID: 'namespaceUID',
 	NODE_UID: 'nodeUID',
 	POD_UID: 'podUID',
+	STATEFULSET_UID: 'statefulsetUID',
 };
