@@ -457,7 +457,15 @@ function K8sClustersList({
 
 	const handleCloseClusterDetail = (): void => {
 		setselectedClusterName(null);
-		setSearchParams({});
+		setSearchParams({
+			...Object.fromEntries(
+				Array.from(searchParams.entries()).filter(
+					([key]) =>
+						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.CLUSTER_NAME &&
+						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+				),
+			),
+		});
 	};
 
 	const handleGroupByChange = useCallback(

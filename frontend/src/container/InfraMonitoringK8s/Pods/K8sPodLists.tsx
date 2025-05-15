@@ -393,7 +393,15 @@ function K8sPodsList({
 
 	const handleClosePodDetail = (): void => {
 		setSelectedPodUID(null);
-		setSearchParams({});
+		setSearchParams({
+			...Object.fromEntries(
+				Array.from(searchParams.entries()).filter(
+					([key]) =>
+						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID &&
+						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+				),
+			),
+		});
 	};
 
 	const handleAddColumn = useCallback(
