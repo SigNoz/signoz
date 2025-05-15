@@ -19,7 +19,7 @@ import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSea
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { cloneDeep, isArray, isEmpty, isEqual, isFunction } from 'lodash-es';
+import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -82,8 +82,9 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const attributeValues: string[] = useMemo(() => {
 		const dataType = filter.attributeKey.dataType || DataTypes.String;
 		const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
-		return (data?.payload?.[key] || []).filter((val) => (val !== undefined && val !== null));
-
+		return (data?.payload?.[key] || []).filter(
+			(val) => val !== undefined && val !== null,
+		);
 	}, [data?.payload, filter.attributeKey.dataType]);
 
 	const currentAttributeKeys = attributeValues.slice(0, visibleItemsCount);
@@ -172,8 +173,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 						items:
 							idx === lastUsedQuery
 								? item.filters.items.filter(
-									(fil) => !isEqual(fil.key?.key, filter.attributeKey.key),
-								)
+										(fil) => !isEqual(fil.key?.key, filter.attributeKey.key),
+								  )
 								: [...item.filters.items],
 					},
 				})),
