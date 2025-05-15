@@ -45,7 +45,8 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ssoAvailable {
+	// for refresh token we don't need to check if the user can use password
+	if ssoAvailable && req.Email != "" {
 		_, err := h.module.CanUsePassword(ctx, req.Email)
 		if err != nil {
 			render.Error(w, err)
