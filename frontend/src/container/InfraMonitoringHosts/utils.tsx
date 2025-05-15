@@ -41,7 +41,7 @@ export interface HostsListTableProps {
 		| undefined;
 	hostMetricsData: HostData[];
 	filters: TagFilter;
-	setSelectedHostName: Dispatch<SetStateAction<string | null>>;
+	onHostClick: (hostName: string) => void;
 	currentPage: number;
 	setCurrentPage: Dispatch<SetStateAction<number>>;
 	pageSize: number;
