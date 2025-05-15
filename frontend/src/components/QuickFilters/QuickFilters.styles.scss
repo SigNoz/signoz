@@ -73,7 +73,6 @@
 			}
 
 			.sync-icon {
-				background-color: var(--bg-ink-500);
 				border: 0;
 				box-shadow: none;
 			}
@@ -81,6 +80,8 @@
 				position: relative;
 				display: flex;
 				padding: 2px;
+				background-color: var(--bg-ink-500);
+
 				.settings-icon {
 					height: 14px;
 					width: 14px;
@@ -115,8 +116,11 @@
 				}
 			}
 			.right-actions {
-				.sync-icon {
+				.right-action-icon-container {
 					background-color: var(--bg-vanilla-100);
+					&.active, &:hover {
+						background-color: var(--bg-vanilla-200);
+					}
 				}
 			}
 		}
