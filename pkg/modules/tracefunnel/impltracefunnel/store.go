@@ -32,7 +32,7 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.Funnel) err
 
 	// Set created_by if CreatedByUser is present
 	if funnel.CreatedByUser != nil {
-		funnel.CreatedBy = funnel.CreatedByUser.ID
+		funnel.CreatedBy = funnel.CreatedByUser.Identifiable.ID.String()
 	}
 
 	_, err := store.
