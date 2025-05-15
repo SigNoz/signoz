@@ -3,6 +3,7 @@ import './Explorer.styles.scss';
 import * as Sentry from '@sentry/react';
 import { Switch } from 'antd';
 import logEvent from 'api/common/logEvent';
+import QueryBuilderV2 from 'components/QueryBuilderV2/QueryBuilderV2';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
@@ -20,7 +21,7 @@ import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToD
 import { v4 as uuid } from 'uuid';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
-import QuerySection from './QuerySection';
+// import QuerySection from './QuerySection';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
 import { splitQueryIntoOneChartPerQuery } from './utils';
@@ -118,7 +119,11 @@ function Explorer(): JSX.Element {
 						<RightToolbarActions onStageRunQuery={handleRunQuery} />
 					</div>
 				</div>
-				<QuerySection />
+				{/* <QuerySection /> */}
+				<QueryBuilderV2
+					source={DataSource.METRICS}
+					query={currentQuery.builder.queryData[0]}
+				/>
 				{/* TODO: Enable once we have resolved all related metrics issues */}
 				{/* <Button.Group className="explore-tabs">
 					<Button
