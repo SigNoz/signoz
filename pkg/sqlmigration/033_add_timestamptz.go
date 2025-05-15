@@ -28,8 +28,8 @@ type existingTimeAuditable33 struct {
 }
 
 type newTimeAuditable33 struct {
-	CreatedAt time.Time `bun:"created_at,type:timestamptz,nullzero" json:"createdAt"`
-	UpdatedAt time.Time `bun:"updated_at,type:timestamptz,nullzero" json:"updatedAt"`
+	CreatedAt time.Time `bun:"created_at,type:timestamptz,nullzero,notnull" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at,type:timestamptz,nullzero,notnull" json:"updatedAt"`
 }
 
 type existingOrganization33 struct {
