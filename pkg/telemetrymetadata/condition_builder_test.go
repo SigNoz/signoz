@@ -237,7 +237,7 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorILike,
 			value:         "%admin%",
-			expectedSQL:   "WHERE (mapContains(attributes, ?) AND LOWER(attributes['user.id']) LIKE LOWER(?))",
+			expectedSQL:   "WHERE if(mapContains(attributes, ?), LOWER(attributes['user.id']) LIKE LOWER(?), true)",
 			expectedError: nil,
 		},
 		{
@@ -249,7 +249,7 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotILike,
 			value:         "%admin%",
-			expectedSQL:   "WHERE (mapContains(attributes, ?) AND LOWER(attributes['user.id']) NOT LIKE LOWER(?))",
+			expectedSQL:   "WHERE if(mapContains(attributes, ?), LOWER(attributes['user.id']) NOT LIKE LOWER(?), true)",
 			expectedError: nil,
 		},
 	}

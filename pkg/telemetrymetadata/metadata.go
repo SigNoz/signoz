@@ -635,6 +635,12 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeNumber {
 			sb.Where(sb.IsNotNull("number_value"))
 			sb.Where(sb.Like("toString(number_value)", "%"+fieldValueSelector.Value+"%"))
+		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
+			// or b/w string and number
+			sb.Where(sb.Or(
+				sb.Like("string_value", "%"+fieldValueSelector.Value+"%"),
+				sb.Like("toString(number_value)", "%"+fieldValueSelector.Value+"%"),
+			))
 		}
 	}
 
@@ -696,6 +702,12 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeNumber {
 			sb.Where(sb.IsNotNull("number_value"))
 			sb.Where(sb.Like("toString(number_value)", "%"+fieldValueSelector.Value+"%"))
+		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
+			// or b/w string and number
+			sb.Where(sb.Or(
+				sb.Like("string_value", "%"+fieldValueSelector.Value+"%"),
+				sb.Like("toString(number_value)", "%"+fieldValueSelector.Value+"%"),
+			))
 		}
 	}
 
@@ -742,30 +754,30 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 	}
 
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
-		sb.And(sb.E("attr_type", fieldValueSelector.FieldContext.TagType()))
+		sb.Where(sb.E("attr_type", fieldValueSelector.FieldContext.TagType()))
 	}
 
 	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-		sb.And(sb.E("attr_datatype", fieldValueSelector.FieldDataType.TagDataType()))
+		sb.Where(sb.E("attr_datatype", fieldValueSelector.FieldDataType.TagDataType()))
 	}
 
 	if fieldValueSelector.MetricContext != nil {
-		sb.And(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
+		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
 	}
 
 	if fieldValueSelector.StartUnixMilli > 0 {
-		sb.And(sb.GE("last_reported_unix_milli", fieldValueSelector.StartUnixMilli))
+		sb.Where(sb.GE("last_reported_unix_milli", fieldValueSelector.StartUnixMilli))
 	}
 
 	if fieldValueSelector.EndUnixMilli > 0 {
-		sb.And(sb.LE("first_reported_unix_milli", fieldValueSelector.EndUnixMilli))
+		sb.Where(sb.LE("first_reported_unix_milli", fieldValueSelector.EndUnixMilli))
 	}
 
 	if fieldValueSelector.Value != "" {
 		if fieldValueSelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
-			sb.And(sb.E("attr_string_value", fieldValueSelector.Value))
+			sb.Where(sb.E("attr_string_value", fieldValueSelector.Value))
 		} else {
-			sb.And(sb.Like("attr_string_value", "%"+fieldValueSelector.Value+"%"))
+			sb.Where(sb.Like("attr_string_value", "%"+fieldValueSelector.Value+"%"))
 		}
 	}
 
@@ -794,8 +806,30 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 	return values, nil
 }
 
+func populateAllUnspecifiedValues(allUnspecifiedValues *telemetrytypes.TelemetryFieldValues, mapOfValues map[any]bool, mapOfRelatedValues map[any]bool, values *telemetrytypes.TelemetryFieldValues) {
+	for _, value := range values.StringValues {
+		if _, ok := mapOfValues[value]; !ok {
+			mapOfValues[value] = true
+			allUnspecifiedValues.StringValues = append(allUnspecifiedValues.StringValues, value)
+		}
+	}
+	for _, value := range values.NumberValues {
+		if _, ok := mapOfValues[value]; !ok {
+			mapOfValues[value] = true
+			allUnspecifiedValues.NumberValues = append(allUnspecifiedValues.NumberValues, value)
+		}
+	}
+
+	for _, value := range values.RelatedValues {
+		if _, ok := mapOfRelatedValues[value]; !ok {
+			mapOfRelatedValues[value] = true
+			allUnspecifiedValues.RelatedValues = append(allUnspecifiedValues.RelatedValues, value)
+		}
+	}
+}
+
 func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
-	var values *telemetrytypes.TelemetryFieldValues
+	values := &telemetrytypes.TelemetryFieldValues{}
 	var err error
 	switch fieldValueSelector.Signal {
 	case telemetrytypes.SignalTraces:
@@ -804,6 +838,23 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 		values, err = t.getLogFieldValues(ctx, fieldValueSelector)
 	case telemetrytypes.SignalMetrics:
 		values, err = t.getMetricFieldValues(ctx, fieldValueSelector)
+	case telemetrytypes.SignalUnspecified:
+		mapOfValues := make(map[any]bool)
+		mapOfRelatedValues := make(map[any]bool)
+		allUnspecifiedValues := &telemetrytypes.TelemetryFieldValues{}
+		tracesValues, err := t.getSpanFieldValues(ctx, fieldValueSelector)
+		if err == nil {
+			populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, tracesValues)
+		}
+		logsValues, err := t.getLogFieldValues(ctx, fieldValueSelector)
+		if err == nil {
+			populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, logsValues)
+		}
+		metricsValues, err := t.getMetricFieldValues(ctx, fieldValueSelector)
+		if err == nil {
+			populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, metricsValues)
+		}
+		values = allUnspecifiedValues
 	}
 	if err != nil {
 		return nil, err
