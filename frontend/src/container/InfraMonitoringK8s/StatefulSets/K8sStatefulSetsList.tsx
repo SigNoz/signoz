@@ -466,7 +466,15 @@ function K8sStatefulSetsList({
 
 	const handleCloseStatefulSetDetail = (): void => {
 		setselectedStatefulSetUID(null);
-		setSearchParams({});
+		setSearchParams({
+			...Object.fromEntries(
+				Array.from(searchParams.entries()).filter(
+					([key]) =>
+						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.STATEFULSET_UID &&
+						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+				),
+			),
+		});
 	};
 
 	const handleGroupByChange = useCallback(

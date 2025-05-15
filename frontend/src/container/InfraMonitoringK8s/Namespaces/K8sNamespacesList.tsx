@@ -465,7 +465,15 @@ function K8sNamespacesList({
 
 	const handleCloseNamespaceDetail = (): void => {
 		setselectedNamespaceUID(null);
-		setSearchParams({});
+		setSearchParams({
+			...Object.fromEntries(
+				Array.from(searchParams.entries()).filter(
+					([key]) =>
+						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID &&
+						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+				),
+			),
+		});
 	};
 
 	const handleGroupByChange = useCallback(

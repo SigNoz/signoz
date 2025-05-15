@@ -469,7 +469,15 @@ function K8sDeploymentsList({
 
 	const handleCloseDeploymentDetail = (): void => {
 		setselectedDeploymentUID(null);
-		setSearchParams({});
+		setSearchParams({
+			...Object.fromEntries(
+				Array.from(searchParams.entries()).filter(
+					([key]) =>
+						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.DEPLOYMENT_UID &&
+						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+				),
+			),
+		});
 	};
 
 	const handleGroupByChange = useCallback(
