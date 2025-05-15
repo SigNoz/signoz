@@ -30,9 +30,13 @@
 
 .query-aggregation-select-container {
 	width: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
 
 	.query-aggregation-select-editor {
 		border-radius: 2px;
+		flex: 1;
 
 		.cm-content {
 			padding: 0;
@@ -50,6 +54,8 @@
 			.cm-content {
 				border-radius: 2px;
 				border: 1px solid var(--Slate-400, #1d212d);
+				border-top-right-radius: 0px;
+				border-bottom-right-radius: 0px;
 				padding: 0px !important;
 				background-color: #121317 !important;
 
@@ -167,5 +173,17 @@
 				opacity: 0.5 !important;
 			}
 		}
+	}
+
+	.close-btn {
+		border-radius: 0px 2px 2px 0px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+		height: 38px;
+		width: 38px;
+
+		border-left: none;
+		border-top-left-radius: 0px;
+		border-bottom-left-radius: 0px;
 	}
 }

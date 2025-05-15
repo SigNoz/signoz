@@ -1,0 +1,100 @@
+.metrics-aggregate-section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin: 4px 0;
+
+	.metrics-time-aggregation-section {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+
+		.metrics-time-aggregation-section-title {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+
+			color: var(--Slate-50, #62687c);
+			font-family: 'Geist Mono';
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px; /* 150% */
+			letter-spacing: 0.48px;
+		}
+	}
+
+	.metrics-space-aggregation-section {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+
+		.metrics-space-aggregation-section-title {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+
+			color: var(--Slate-50, #62687c);
+			font-family: 'Geist Mono';
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px; /* 150% */
+			letter-spacing: 0.48px;
+		}
+	}
+
+	.metrics-aggregation-section-content {
+		display: flex;
+		flex-direction: row;
+		gap: 8px;
+
+		.metrics-aggregation-section-content-item {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+
+			.metrics-aggregation-section-content-item-label {
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: 'Geist Mono';
+				font-size: 13px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+
+			.metrics-aggregation-section-content-item-value {
+				min-width: 320px;
+
+				.ant-select {
+					width: 100%;
+				}
+
+				.ant-select-selector {
+					border-radius: 2px;
+					border: 1.005px solid var(--Slate-400, #1d212d);
+					background: var(--Ink-300, #16181d);
+				}
+			}
+		}
+
+		.space-aggregation-select {
+			min-width: 480px !important;
+		}
+	}
+}
+
+.metrics-operators-select {
+	border-radius: 2px;
+	border: 1.005px solid var(--Slate-400, #1d212d);
+	background: var(--Ink-300, #16181d);
+
+	color: var(--Vanilla-400, #c0c1c3);
+	font-family: 'Geist Mono';
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px; /* 142.857% */
+	letter-spacing: -0.07px;
+}

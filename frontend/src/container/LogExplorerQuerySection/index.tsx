@@ -109,7 +109,9 @@ function LogExplorerQuerySection({
 				/>
 			)}
 
-			{selectedView === SELECTED_VIEWS.QUERY_BUILDER_V2 && <QueryBuilderV2 />}
+			{selectedView === SELECTED_VIEWS.QUERY_BUILDER_V2 && (
+				<QueryBuilderV2 source={DataSource.LOGS} query={query} />
+			)}
 		</>
 	);
 }

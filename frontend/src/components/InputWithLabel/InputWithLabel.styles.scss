@@ -6,12 +6,11 @@
 
 	.label {
 		color: var(--bg-vanilla-400);
-		font-size: 11px;
+		font-size: 12px;
 		font-style: normal;
 		font-weight: 500;
 		line-height: 18px; /* 128.571% */
 		letter-spacing: 0.56px;
-		text-transform: uppercase;
 
 		max-width: 150px;
 		min-width: 120px;
@@ -61,6 +60,14 @@
 			border-radius: 0px 2px 2px 0px;
 			border: 1px solid var(--bg-slate-400);
 			background: var(--bg-ink-300);
+			border-top-right-radius: 0px;
+			border-bottom-right-radius: 0px;
+		}
+
+		.label {
+			border-left: none;
+			border-top-left-radius: 0px;
+			border-bottom-left-radius: 0px;
 		}
 	}
 }
