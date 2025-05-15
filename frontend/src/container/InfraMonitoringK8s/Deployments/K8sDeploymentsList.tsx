@@ -24,11 +24,13 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -67,9 +69,18 @@ function K8sDeploymentsList({
 		order: 'asc' | 'desc';
 	} | null>(null);
 
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [selectedDeploymentUID, setselectedDeploymentUID] = useState<
 		string | null
-	>(null);
+	>(() => {
+		const deploymentUID = searchParams.get(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.DEPLOYMENT_UID,
+		);
+		if (deploymentUID) {
+			return deploymentUID;
+		}
+		return null;
+	});
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.DEPLOYMENTS);
 
@@ -333,6 +344,10 @@ function K8sDeploymentsList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedDeploymentUID(record.deploymentUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.DEPLOYMENT_UID]: record.deploymentUID,
+			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -383,7 +398,14 @@ function K8sDeploymentsList({
 						}}
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setselectedDeploymentUID(record.deploymentUID),
+							onClick: (): void => {
+								setselectedDeploymentUID(record.deploymentUID);
+								setSearchParams({
+									...Object.fromEntries(searchParams.entries()),
+									[INFRA_MONITORING_K8S_PARAMS_KEYS.DEPLOYMENT_UID]:
+										record.deploymentUID,
+								});
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
@@ -447,6 +469,7 @@ function K8sDeploymentsList({
 
 	const handleCloseDeploymentDetail = (): void => {
 		setselectedDeploymentUID(null);
+		setSearchParams({});
 	};
 
 	const handleGroupByChange = useCallback(
