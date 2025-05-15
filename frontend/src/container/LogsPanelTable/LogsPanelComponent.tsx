@@ -144,6 +144,7 @@ function LogsPanelComponent({
 							dataSource={flattenLogData}
 							columns={columns}
 							onRow={handleRow}
+							rowKey={(record): string => record.id}
 							widgetId={widget.id}
 							shouldPersistColumnWidths
 						/>

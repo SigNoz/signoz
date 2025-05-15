@@ -380,12 +380,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	useEffect(() => {
 		if (stagedQuery) {
 			setIsLoadingPanelData(false);
+			const updatedStagedQuery = cloneDeep(stagedQuery);
+			updatedStagedQuery.builder.queryData[0].pageSize = 10;
 			setRequestData((prev) => ({
 				...prev,
 				selectedTime: selectedTime.enum || prev.selectedTime,
 				globalSelectedInterval: customGlobalSelectedInterval,
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
-				query: stagedQuery,
+				query: updatedStagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
 				isLogScale: selectedWidget.isLogScale || false,
 				formatForWeb:

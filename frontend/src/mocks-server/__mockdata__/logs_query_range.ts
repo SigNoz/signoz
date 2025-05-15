@@ -47,12 +47,18 @@ export const logsQueryRangeSuccessResponse = {
 	},
 };
 
-export const logsPaginationQueryRangeSuccessResponse = (offset = 0): any => {
+export const logsPaginationQueryRangeSuccessResponse = ({
+	offset = 0,
+	pageSize = PAGE_SIZE,
+}: {
+	offset?: number;
+	pageSize?: number;
+}): any => {
 	// Calculate the starting index for this page's items
 	const startIndex = offset;
 	// Determine how many items to generate for *this specific page*
 	// In a real scenario, this might be less than PAGE_SIZE if it's the last page
-	const itemsForThisPage = PAGE_SIZE;
+	const itemsForThisPage = pageSize;
 
 	return {
 		status: 'success',
