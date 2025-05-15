@@ -24,11 +24,13 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -66,8 +68,17 @@ function K8sVolumesList({
 		order: 'asc' | 'desc';
 	} | null>(null);
 
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [selectedVolumeUID, setselectedVolumeUID] = useState<string | null>(
-		null,
+		() => {
+			const volumeUID = searchParams.get(
+				INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID,
+			);
+			if (volumeUID) {
+				return volumeUID;
+			}
+			return null;
+		},
 	);
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.VOLUMES);
@@ -315,6 +326,10 @@ function K8sVolumesList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedVolumeUID(record.volumeUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID]: record.volumeUID,
+			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -365,7 +380,13 @@ function K8sVolumesList({
 						}}
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setselectedVolumeUID(record.volumeUID),
+							onClick: (): void => {
+								setselectedVolumeUID(record.volumeUID);
+								setSearchParams({
+									...Object.fromEntries(searchParams.entries()),
+									[INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID]: record.volumeUID,
+								});
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
@@ -429,6 +450,7 @@ function K8sVolumesList({
 
 	const handleCloseVolumeDetail = (): void => {
 		setselectedVolumeUID(null);
+		setSearchParams({});
 	};
 
 	const handleGroupByChange = useCallback(
