@@ -1,5 +1,3 @@
-import './OtherFilters.styles.scss';
-
 import { Skeleton } from 'antd';
 import Button from 'antd/es/button';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';

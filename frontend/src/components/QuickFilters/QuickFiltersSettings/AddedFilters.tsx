@@ -1,6 +1,4 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import './AddedFilters.styles.scss';
-
 import {
 	closestCenter,
 	DndContext,
