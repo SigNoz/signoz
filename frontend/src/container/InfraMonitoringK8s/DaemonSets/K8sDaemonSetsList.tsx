@@ -24,11 +24,13 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -67,9 +69,18 @@ function K8sDaemonSetsList({
 		order: 'asc' | 'desc';
 	} | null>(null);
 
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [selectedDaemonSetUID, setselectedDaemonSetUID] = useState<
 		string | null
-	>(null);
+	>(() => {
+		const daemonSetUID = searchParams.get(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.DAEMONSET_UID,
+		);
+		if (daemonSetUID) {
+			return daemonSetUID;
+		}
+		return null;
+	});
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.DAEMONSETS);
 
@@ -330,6 +341,10 @@ function K8sDaemonSetsList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedDaemonSetUID(record.daemonsetUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.DAEMONSET_UID]: record.daemonsetUID,
+			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -380,7 +395,13 @@ function K8sDaemonSetsList({
 						}}
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setselectedDaemonSetUID(record.daemonsetUID),
+							onClick: (): void => {
+								setselectedDaemonSetUID(record.daemonsetUID);
+								setSearchParams({
+									...Object.fromEntries(searchParams.entries()),
+									[INFRA_MONITORING_K8S_PARAMS_KEYS.DAEMONSET_UID]: record.daemonsetUID,
+								});
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
@@ -444,6 +465,7 @@ function K8sDaemonSetsList({
 
 	const handleCloseDaemonSetDetail = (): void => {
 		setselectedDaemonSetUID(null);
+		setSearchParams({});
 	};
 
 	const handleGroupByChange = useCallback(
