@@ -208,10 +208,10 @@ func (r *Repo) GetAllFeatures() ([]basemodel.Feature, error) {
 		return feature, err
 	}
 
-	env := constants.GetOrDefaultEnv("DOT_METRICS_MIGRATED", "false")
+	env := constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false")
 	if env == "true" {
 		feature = append(feature, basemodel.Feature{
-			Name:   "DOT_METRICS_ENABLED",
+			Name:   constants.DotMetricsEnabled,
 			Active: true,
 		})
 	}
