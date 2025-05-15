@@ -4,17 +4,12 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
-import { AxiosError } from 'axios';
+import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
 import { ArrowRight, CheckCircle, Plus, TriangleAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { SuccessResponse } from 'types/api';
-import {
-	FailedInvite,
-	InviteUsersResponse,
-	SuccessfulInvite,
-} from 'types/api/user/inviteUsers';
+import APIError from 'types/api/error';
 import { v4 as uuid } from 'uuid';
 
 interface TeamMember {
@@ -55,20 +50,7 @@ function InviteTeamMembers({
 		{},
 	);
 	const [hasInvalidEmails, setHasInvalidEmails] = useState<boolean>(false);
-
-	const [hasErrors, setHasErrors] = useState<boolean>(true);
-
-	const [error, setError] = useState<string | null>(null);
-
-	const [inviteUsersErrorResponse, setInviteUsersErrorResponse] = useState<
-		string[] | null
-	>(null);
-
-	const [inviteUsersSuccessResponse, setInviteUsersSuccessResponse] = useState<
-		string[] | null
-	>(null);
-
-	const [disableNextButton, setDisableNextButton] = useState<boolean>(false);
+	const { notifications } = useNotifications();
 
 	const defaultTeamMember: TeamMember = {
 		email: '',
@@ -122,91 +104,28 @@ function InviteTeamMembers({
 		return isValid;
 	};
 
-	const parseInviteUsersSuccessResponse = (
-		response: SuccessfulInvite[],
-	): string[] => response.map((invite) => `${invite.email} - Invite Sent`);
-
-	const parseInviteUsersErrorResponse = (response: FailedInvite[]): string[] =>
-		response.map((invite) => `${invite.email} - ${invite.error}`);
-
-	const handleError = (error: AxiosError): void => {
-		const errorMessage = error.response?.data as InviteUsersResponse;
-
-		if (errorMessage?.status === 'failure') {
-			setHasErrors(true);
-
-			const failedInvitesErrorResponse = parseInviteUsersErrorResponse(
-				errorMessage.failed_invites,
-			);
-
-			setInviteUsersErrorResponse(failedInvitesErrorResponse);
-		}
-	};
-
-	const handleInviteUsersSuccess = (
-		response: SuccessResponse<InviteUsersResponse>,
-	): void => {
-		const inviteUsersResponse = response.payload as InviteUsersResponse;
-
-		if (inviteUsersResponse?.status === 'success') {
-			const successfulInvites = parseInviteUsersSuccessResponse(
-				inviteUsersResponse.successful_invites,
-			);
-
-			logEvent(
-				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SUCCESS}`,
-				{
-					teamMembers: teamMembersToInvite,
-					successfulInvites,
-					failedInvites: inviteUsersResponse?.failed_invites || [],
-				},
-			);
-
-			setDisableNextButton(true);
-
-			setError(null);
-			setHasErrors(false);
-			setInviteUsersErrorResponse(null);
-
-			setInviteUsersSuccessResponse(successfulInvites);
-
-			setTimeout(() => {
-				setDisableNextButton(false);
-				onNext();
-			}, 1000);
-		} else if (inviteUsersResponse?.status === 'partial_success') {
-			const successfulInvites = parseInviteUsersSuccessResponse(
-				inviteUsersResponse.successful_invites,
-			);
-
-			logEvent(
-				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_PARTIAL_SUCCESS}`,
-				{
-					teamMembers: teamMembersToInvite,
-					successfulInvites,
-					failedInvites: inviteUsersResponse?.failed_invites || [],
-				},
-			);
-
-			setInviteUsersSuccessResponse(successfulInvites);
-
-			if (inviteUsersResponse.failed_invites.length > 0) {
-				setHasErrors(true);
-
-				setInviteUsersErrorResponse(
-					parseInviteUsersErrorResponse(inviteUsersResponse.failed_invites),
-				);
-			}
-		}
+	const handleInviteUsersSuccess = (): void => {
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SUCCESS}`,
+			{
+				teamMembers: teamMembersToInvite,
+			},
+		);
+		setTimeout(() => {
+			onNext();
+		}, 1000);
 	};
 
 	const { mutate: sendInvites, isLoading: isSendingInvites } = useMutation(
 		inviteUsers,
 		{
-			onSuccess: (response: SuccessResponse<InviteUsersResponse>): void => {
-				handleInviteUsersSuccess(response);
+			onSuccess: (): void => {
+				handleInviteUsersSuccess();
+				notifications.success({
+					message: 'Invites sent successfully!',
+				});
 			},
-			onError: (error: AxiosError): void => {
+			onError: (error: APIError): void => {
 				logEvent(
 					`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_FAILED}`,
 					{
@@ -214,8 +133,10 @@ function InviteTeamMembers({
 						error,
 					},
 				);
-
-				handleError(error);
+				notifications.error({
+					message: error.getErrorCode(),
+					description: error.getErrorMessage(),
+				});
 			},
 		},
 	);
@@ -232,13 +153,8 @@ function InviteTeamMembers({
 			);
 
 			setHasInvalidEmails(false);
-			setError(null);
-			setHasErrors(false);
-			setInviteUsersErrorResponse(null);
-			setInviteUsersSuccessResponse(null);
-
 			sendInvites({
-				users: teamMembersToInvite || [],
+				invites: teamMembersToInvite || [],
 			});
 		}
 	};
@@ -347,63 +263,7 @@ function InviteTeamMembers({
 						</Typography.Text>
 					</div>
 				)}
-
-				{error && (
-					<div className="error-message-container">
-						<Typography.Text className="error-message" type="danger">
-							<TriangleAlert size={14} /> {error}
-						</Typography.Text>
-					</div>
-				)}
-
-				{hasErrors && (
-					<>
-						{/* show only when invites are sent successfully & partial error is present */}
-						{inviteUsersSuccessResponse && inviteUsersErrorResponse && (
-							<div className="success-message-container invite-users-success-message-container">
-								{inviteUsersSuccessResponse?.map((success, index) => (
-									<Typography.Text
-										className="success-message"
-										// eslint-disable-next-line react/no-array-index-key
-										key={`${success}-${index}`}
-									>
-										<CheckCircle size={14} /> {success}
-									</Typography.Text>
-								))}
-							</div>
-						)}
-
-						<div className="error-message-container invite-users-error-message-container">
-							{inviteUsersErrorResponse?.map((error, index) => (
-								<Typography.Text
-									className="error-message"
-									type="danger"
-									// eslint-disable-next-line react/no-array-index-key
-									key={`${error}-${index}`}
-								>
-									<TriangleAlert size={14} /> {error}
-								</Typography.Text>
-							))}
-						</div>
-					</>
-				)}
 			</div>
-
-			{/* Partially sent invites */}
-			{inviteUsersSuccessResponse && inviteUsersErrorResponse && (
-				<div className="partially-sent-invites-container">
-					<Typography.Text className="partially-sent-invites-message">
-						<TriangleAlert size={14} />
-						Some invites were sent successfully. Please fix the errors above and
-						resend invites.
-					</Typography.Text>
-
-					<Typography.Text className="partially-sent-invites-message">
-						You can click on I&apos;ll do this later to go to next step.
-					</Typography.Text>
-				</div>
-			)}
-
 			<div className="next-prev-container">
 				<Button
 					type="default"
@@ -418,7 +278,7 @@ function InviteTeamMembers({
 					type="primary"
 					className="next-button periscope-btn primary"
 					onClick={handleNext}
-					loading={isSendingInvites || isLoading || disableNextButton}
+					loading={isSendingInvites || isLoading}
 				>
 					Send Invites
 					<ArrowRight size={14} />

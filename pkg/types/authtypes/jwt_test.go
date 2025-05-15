@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestJwtAccessToken(t *testing.T) {
 	jwtService := NewJWT("secret", time.Minute, time.Hour)
-	token, _, err := jwtService.AccessToken("orgId", "userId", "email@example.com", RoleAdmin)
+	token, _, err := jwtService.AccessToken("orgId", "userId", "email@example.com", types.RoleAdmin)
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
@@ -19,7 +20,7 @@ func TestJwtAccessToken(t *testing.T) {
 
 func TestJwtRefreshToken(t *testing.T) {
 	jwtService := NewJWT("secret", time.Minute, time.Hour)
-	token, _, err := jwtService.RefreshToken("orgId", "userId", "email@example.com", RoleAdmin)
+	token, _, err := jwtService.RefreshToken("orgId", "userId", "email@example.com", types.RoleAdmin)
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
@@ -31,7 +32,7 @@ func TestJwtClaims(t *testing.T) {
 	// Create a valid token
 	claims := Claims{
 		UserID: "userId",
-		Role:   RoleAdmin,
+		Role:   types.RoleAdmin,
 		Email:  "email@example.com",
 		OrgID:  "orgId",
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -65,7 +66,7 @@ func TestJwtClaimsExpiredToken(t *testing.T) {
 	// Create an expired token
 	claims := Claims{
 		UserID: "userId",
-		Role:   RoleAdmin,
+		Role:   types.RoleAdmin,
 		Email:  "email@example.com",
 		OrgID:  "orgId",
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -87,7 +88,7 @@ func TestJwtClaimsInvalidSignature(t *testing.T) {
 	// Create a valid token
 	claims := Claims{
 		UserID: "userId",
-		Role:   RoleAdmin,
+		Role:   types.RoleAdmin,
 		Email:  "email@example.com",
 		OrgID:  "orgId",
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -131,7 +132,7 @@ func TestJwtClaimsMissingUserID(t *testing.T) {
 
 	claims := Claims{
 		UserID: "",
-		Role:   RoleAdmin,
+		Role:   types.RoleAdmin,
 		Email:  "email@example.com",
 		OrgID:  "orgId",
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -171,7 +172,7 @@ func TestJwtClaimsMissingOrgID(t *testing.T) {
 
 	claims := Claims{
 		UserID: "userId",
-		Role:   RoleAdmin,
+		Role:   types.RoleAdmin,
 		Email:  "email@example.com",
 		OrgID:  "",
 		RegisteredClaims: jwt.RegisteredClaims{

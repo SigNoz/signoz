@@ -268,17 +268,20 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
 
-	// check if at least one user is created
-	hasUsers, err := aH.appDao.GetUsersWithOpts(context.Background(), 1)
-	if err.Error() != "" {
-		// raise warning but no panic as this is a recoverable condition
-		zap.L().Warn("unexpected error while fetch user count while initializing base api handler", zap.Error(err))
+	// TODO(nitya): remote this in later for multitenancy.
+	orgs, err := opts.Signoz.Modules.Organization.GetAll(context.Background())
+	if err != nil {
+		zap.L().Warn("unexpected error while fetching orgs  while initializing base api handler", zap.Error(err))
 	}
-	if len(hasUsers) != 0 {
-		// first user is already created, we can mark the app ready for general use.
-		// this means, we disable self-registration and expect new users
-		// to signup signoz through invite link only.
-		aH.SetupCompleted = true
+	// if the first org with the first user is created then the setup is complete.
+	if len(orgs) == 1 {
+		users, err := opts.Signoz.Modules.User.ListUsers(context.Background(), orgs[0].ID.String())
+		if err != nil {
+			zap.L().Warn("unexpected error while fetch user count while initializing base api handler", zap.Error(err))
+		}
+		if len(users) > 0 {
+			aH.SetupCompleted = true
+		}
 	}
 
 	aH.Upgrader = &websocket.Upgrader{
@@ -583,32 +586,29 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.QuickFilters.UpdateQuickFilters)).Methods(http.MethodPut)
 
 	// === Authentication APIs ===
-	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/invite/bulk", am.AdminAccess(aH.inviteUsers)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.getInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/{email}", am.AdminAccess(aH.revokeInvite)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.listPendingInvites)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.Signoz.Handlers.User.CreateInvite)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/bulk", am.AdminAccess(aH.Signoz.Handlers.User.CreateBulkInvite)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.Signoz.Handlers.User.GetInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteInvite)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.Signoz.Handlers.User.ListInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(aH.Signoz.Handlers.User.AcceptInvite)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.loginUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.precheckLogin)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.Signoz.Handlers.User.Login)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.listUsers)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.getUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.editUser)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
-
-	router.HandleFunc("/api/v1/rbac/role/{id}", am.SelfAccess(aH.getRole)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rbac/role/{id}", am.AdminAccess(aH.editRole)).Methods(http.MethodPut)
-
-	router.HandleFunc("/api/v1/orgUsers/{id}", am.AdminAccess(aH.getOrgUsers)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.Signoz.Handlers.User.ListUsers)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/me", am.OpenAccess(aH.Signoz.Handlers.User.GetCurrentUserFromJWT)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.GetUser)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.UpdateUser)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteUser)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Get)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Update)).Methods(http.MethodPut)
 
-	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.changePassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.Signoz.Handlers.User.GetResetPasswordToken)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.Signoz.Handlers.User.ResetPassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.Signoz.Handlers.User.ChangePassword)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v3/licenses", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
 		render.Success(rw, http.StatusOK, []any{})
@@ -2016,450 +2016,30 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, map[string]string{"status": "ok"})
 }
 
-// inviteUser is used to invite a user. It is used by an admin api.
-func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
-	req, err := parseInviteRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	resp, err := auth.Invite(r.Context(), req)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	aH.WriteJSON(w, r, resp)
-}
-
-func (aH *APIHandler) inviteUsers(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	req, err := parseInviteUsersRequest(r)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	response, err := auth.InviteUsers(ctx, req)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	// Check the response status and set the appropriate HTTP status code
-	if response.Status == "failure" {
-		w.WriteHeader(http.StatusBadRequest) // 400 Bad Request for failure
-	} else if response.Status == "partial_success" {
-		w.WriteHeader(http.StatusPartialContent) // 206 Partial Content
-	} else {
-		w.WriteHeader(http.StatusOK) // 200 OK for success
-	}
-
-	aH.WriteJSON(w, r, response)
-}
-
-// getInvite returns the invite object details for the given invite token. We do not need to
-// protect this API because invite token itself is meant to be private.
-func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
-	token := mux.Vars(r)["token"]
-
-	resp, err := auth.GetInvite(context.Background(), token, aH.Signoz.Modules.Organization)
-	if err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorNotFound}, nil)
-		return
-	}
-	aH.WriteJSON(w, r, resp)
-}
-
-// revokeInvite is used to revoke an invite.
-func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
-	email := mux.Vars(r)["email"]
-
-	if err := auth.RevokeInvite(r.Context(), email); err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
-		return
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "invite revoked successfully"})
-}
-
-// listPendingInvites is used to list the pending invites.
-func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	claims, errv2 := authtypes.ClaimsFromContext(ctx)
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-	invites, err := dao.DB().GetInvites(ctx, claims.OrgID)
-	if err != nil {
-		RespondError(w, err, nil)
-		return
-	}
-
-	// TODO(Ahsan): Querying org name based on orgId for each invite is not a good idea. Either
-	// we should include org name field in the invite table, or do a join query.
-	var resp []*model.InvitationResponseObject
-	for _, inv := range invites {
-		orgID, err := valuer.NewUUID(inv.OrgID)
-		if err != nil {
-			render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid org_id in the invite"))
-		}
-		org, err := aH.Signoz.Modules.Organization.Get(ctx, orgID)
-		if err != nil {
-			render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, err.Error()))
-		}
-		resp = append(resp, &model.InvitationResponseObject{
-			Name:         inv.Name,
-			Email:        inv.Email,
-			Token:        inv.Token,
-			CreatedAt:    inv.CreatedAt.Unix(),
-			Role:         inv.Role,
-			Organization: org.Name,
-		})
-	}
-	aH.WriteJSON(w, r, resp)
-}
-
-// Register extends registerUser for non-internal packages
-func (aH *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
-	aH.registerUser(w, r)
-}
-
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
-	req, err := parseRegisterRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
+	if aH.SetupCompleted {
+		RespondError(w, &model.ApiError{Err: errors.New("self-registration is disabled"), Typ: model.ErrorBadData}, nil)
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager, aH.Signoz.Modules.Organization, aH.QuickFilterModule)
+	var req types.PostableRegisterOrgAndAdmin
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorBadData}, nil)
+		return
+	}
+
+	_, apiErr := auth.Register(context.Background(), &req, aH.Signoz.Alertmanager, aH.Signoz.Modules.Organization, aH.Signoz.Modules.User, aH.QuickFilterModule)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	if !aH.SetupCompleted {
-		// since the first user is now created, we can disable self-registration as
-		// from here onwards, we expect admin (owner) to invite other users.
-		aH.SetupCompleted = true
-	}
+	// since the first user is now created, we can disable self-registration as
+	// from here onwards, we expect admin (owner) to invite other users.
+	aH.SetupCompleted = true
 
 	aH.Respond(w, nil)
 }
-
-func (aH *APIHandler) precheckLogin(w http.ResponseWriter, r *http.Request) {
-
-	email := r.URL.Query().Get("email")
-	sourceUrl := r.URL.Query().Get("ref")
-
-	resp, apierr := aH.appDao.PrecheckLogin(context.Background(), email, sourceUrl)
-	if apierr != nil {
-		RespondError(w, apierr, resp)
-		return
-	}
-
-	aH.Respond(w, resp)
-}
-
-func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
-	req, err := parseLoginRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	// c, err := r.Cookie("refresh-token")
-	// if err != nil {
-	// 	if err != http.ErrNoCookie {
-	// 		w.WriteHeader(http.StatusBadRequest)
-	// 		return
-	// 	}
-	// }
-
-	// if c != nil {
-	// 	req.RefreshToken = c.Value
-	// }
-
-	resp, err := auth.Login(context.Background(), req, aH.JWT)
-	if aH.HandleError(w, err, http.StatusUnauthorized) {
-		return
-	}
-
-	// http.SetCookie(w, &http.Cookie{
-	// 	Name:     "refresh-token",
-	// 	Value:    resp.RefreshJwt,
-	// 	Expires:  time.Unix(resp.RefreshJwtExpiry, 0),
-	// 	HttpOnly: true,
-	// })
-
-	aH.WriteJSON(w, r, resp)
-}
-
-func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := dao.DB().GetUsers(context.Background())
-	if err != nil {
-		zap.L().Error("[listUsers] Failed to query list of users", zap.Error(err))
-		RespondError(w, err, nil)
-		return
-	}
-	// mask the password hash
-	for i := range users {
-		users[i].Password = ""
-	}
-	aH.WriteJSON(w, r, users)
-}
-
-func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	ctx := context.Background()
-	user, err := dao.DB().GetUser(ctx, id)
-	if err != nil {
-		zap.L().Error("[getUser] Failed to query user", zap.Error(err))
-		RespondError(w, err, "Failed to get user")
-		return
-	}
-	if user == nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: errors.New("user not found"),
-		}, nil)
-		return
-	}
-
-	// No need to send password hash for the user object.
-	user.Password = ""
-	aH.WriteJSON(w, r, user)
-}
-
-// editUser only changes the user's Name and ProfilePictureURL. It is intentionally designed
-// to not support update of orgId, Password, createdAt for the sucurity reasons.
-func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	update, err := parseUserRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	ctx := context.Background()
-	old, apiErr := dao.DB().GetUser(ctx, id)
-	if apiErr != nil {
-		zap.L().Error("[editUser] Failed to query user", zap.Error(err))
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	if len(update.Name) > 0 {
-		old.Name = update.Name
-	}
-	if len(update.ProfilePictureURL) > 0 {
-		old.ProfilePictureURL = update.ProfilePictureURL
-	}
-
-	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(old.Email)) {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "integration user cannot be updated"))
-		return
-	}
-
-	_, apiErr = dao.DB().EditUser(ctx, &types.User{
-		ID:       old.ID,
-		Name:     old.Name,
-		OrgID:    old.OrgID,
-		Email:    old.Email,
-		Password: old.Password,
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: old.CreatedAt,
-		},
-		ProfilePictureURL: old.ProfilePictureURL,
-	})
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "user updated successfully"})
-}
-
-func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	// Query for the user's group, and the admin's group. If the user belongs to the admin group
-	// and is the last user then don't let the deletion happen. Otherwise, the system will become
-	// admin less and hence inaccessible.
-	ctx := context.Background()
-	user, apiErr := dao.DB().GetUser(ctx, id)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get user's group")
-		return
-	}
-
-	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email)) {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "integration user cannot be updated"))
-		return
-	}
-
-	if user == nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorNotFound,
-			Err: errors.New("no user found"),
-		}, nil)
-		return
-	}
-
-	adminUsers, apiErr := dao.DB().GetUsersByRole(ctx, authtypes.RoleAdmin)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get admin group users")
-		return
-	}
-
-	if user.Role == authtypes.RoleAdmin.String() && len(adminUsers) == 1 {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: errors.New("cannot delete the last admin user")}, nil)
-		return
-	}
-
-	err := dao.DB().DeleteUser(ctx, id)
-	if err != nil {
-		RespondError(w, err, "Failed to delete user")
-		return
-	}
-
-	aH.WriteJSON(w, r, map[string]string{"data": "user deleted successfully"})
-}
-
-func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	user, err := dao.DB().GetUser(context.Background(), id)
-	if err != nil {
-		RespondError(w, err, "Failed to get user's group")
-		return
-	}
-	if user == nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorNotFound,
-			Err: errors.New("no user found"),
-		}, nil)
-		return
-	}
-
-	aH.WriteJSON(w, r, &model.UserRole{UserId: id, GroupName: user.Role})
-}
-
-func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	req, err := parseUserRoleRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	ctx := context.Background()
-	role, err := authtypes.NewRole(req.GroupName)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: errors.New("invalid role")}, nil)
-		return
-	}
-
-	user, apiErr := dao.DB().GetUser(ctx, id)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch user group")
-		return
-	}
-
-	// Make sure that the request is not demoting the last admin user.
-	if user.Role == authtypes.RoleAdmin.String() {
-		adminUsers, apiErr := dao.DB().GetUsersByRole(ctx, authtypes.RoleAdmin)
-		if apiErr != nil {
-			RespondError(w, apiErr, "Failed to fetch adminUsers")
-			return
-		}
-
-		if len(adminUsers) == 1 {
-			RespondError(w, &model.ApiError{
-				Err: errors.New("cannot demote the last admin"),
-				Typ: model.ErrorInternal}, nil)
-			return
-		}
-	}
-
-	apiErr = dao.DB().UpdateUserRole(context.Background(), user.ID, role)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to add user to group")
-		return
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "user group updated successfully"})
-}
-
-func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	users, apiErr := dao.DB().GetUsersByOrg(context.Background(), id)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch org users from the DB")
-		return
-	}
-	// mask the password hash
-	for i := range users {
-		users[i].Password = ""
-	}
-	aH.WriteJSON(w, r, users)
-}
-
-func (aH *APIHandler) getResetPasswordToken(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	resp, err := auth.CreateResetPasswordToken(context.Background(), id)
-	if err != nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: err}, "Failed to create reset token entry in the DB")
-		return
-	}
-	aH.WriteJSON(w, r, resp)
-}
-
-func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
-	req, err := parseResetPasswordRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	if err := auth.ResetPassword(context.Background(), req); err != nil {
-		zap.L().Error("resetPassword failed", zap.Error(err))
-		if aH.HandleError(w, err, http.StatusInternalServerError) {
-			return
-		}
-
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "password reset successfully"})
-}
-
-func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
-	req, err := parseChangePasswordRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	if apiErr := auth.ChangePassword(context.Background(), req); apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "password changed successfully"})
-}
-
-// func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
-// 	// vars := mux.Vars(r)
-
-// 	query, err := parseApplicationPercentileRequest(r)
-// 	if aH.HandleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
-
-// 	result, err := aH.reader.GetApplicationPercentiles(context.Background(), query)
-// 	if aH.HandleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
-// 	aH.WriteJSON(w, r, result)
-// }
 
 func (aH *APIHandler) HandleError(w http.ResponseWriter, err error, statusCode int) bool {
 	if err == nil {

@@ -1,24 +1,20 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/user/deleteInvite';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import { Props } from 'types/api/user/deleteInvite';
 
-const deleteInvite = async (
-	props: Props,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+const del = async (props: Props): Promise<SuccessResponseV2<null>> => {
 	try {
-		const response = await axios.delete(`/invite/${props.email}`);
+		const response = await axios.delete(`/invite/${props.id}`);
 
 		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data,
+			httpStatusCode: response.status,
+			data: null,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
 
-export default deleteInvite;
+export default del;

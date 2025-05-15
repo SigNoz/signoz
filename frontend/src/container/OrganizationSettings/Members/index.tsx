@@ -1,9 +1,8 @@
 import { Button, Modal, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import getOrgUser from 'api/v1/user/getOrgUser';
+import getAll from 'api/v1/user/get';
 import deleteUser from 'api/v1/user/id/delete';
-import editUserApi from 'api/v1/user/id/update';
-import updateRole from 'api/v1/user/id/updateRole';
+import update from 'api/v1/user/id/update';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
@@ -12,6 +11,9 @@ import { useAppContext } from 'providers/App/App';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
+import { SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
+import { UserResponse } from 'types/api/user/getUsers';
 import { ROLES } from 'types/roles';
 
 import DeleteMembersDetails from '../DeleteMembersDetails';
@@ -84,79 +86,45 @@ function UserFunction({
 	const onDeleteHandler = async (): Promise<void> => {
 		try {
 			setIsDeleteLoading(true);
-			const response = await deleteUser({
+			await deleteUser({
 				userId: id,
 			});
-
-			if (response.statusCode === 200) {
-				onDelete();
-				notifications.success({
-					message: t('success', {
-						ns: 'common',
-					}),
-				});
-				setIsDeleteModalVisible(false);
-			} else {
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
+			onDelete();
+			notifications.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
+			setIsDeleteModalVisible(false);
 			setIsDeleteLoading(false);
 		} catch (error) {
 			setIsDeleteLoading(false);
-
 			notifications.error({
-				message: t('something_went_wrong', {
-					ns: 'common',
-				}),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 	};
 
-	const onInviteMemberHandler = async (): Promise<void> => {
+	const onEditMemberDetails = async (): Promise<void> => {
 		try {
 			setIsUpdateLoading(true);
-			const [editUserResponse, updateRoleResponse] = await Promise.all([
-				editUserApi({
-					userId: id,
-					name: updatedName,
+			await update({
+				userId: id,
+				displayName: updatedName,
+				role,
+			});
+			onUpdateDetailsHandler();
+			notifications.success({
+				message: t('success', {
+					ns: 'common',
 				}),
-				updateRole({
-					group_name: role,
-					userId: id,
-				}),
-			]);
-
-			if (
-				editUserResponse.statusCode === 200 &&
-				updateRoleResponse.statusCode === 200
-			) {
-				onUpdateDetailsHandler();
-				notifications.success({
-					message: t('success', {
-						ns: 'common',
-					}),
-				});
-			} else {
-				notifications.error({
-					message:
-						editUserResponse.error ||
-						updateRoleResponse.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
+			});
 			setIsUpdateLoading(false);
 		} catch (error) {
 			notifications.error({
-				message: t('something_went_wrong', {
-					ns: 'common',
-				}),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 			setIsUpdateLoading(false);
 		}
@@ -193,7 +161,7 @@ function UserFunction({
 					</Button>,
 					<Button
 						key="Invite_team_members"
-						onClick={onInviteMemberHandler}
+						onClick={onEditMemberDetails}
 						type="primary"
 						disabled={isUpdateLoading}
 						loading={isUpdateLoading}
@@ -230,28 +198,28 @@ function UserFunction({
 
 function Members(): JSX.Element {
 	const { org } = useAppContext();
-	const { status, data, isLoading } = useQuery({
-		queryFn: () =>
-			getOrgUser({
-				orgId: (org || [])[0].id,
-			}),
+	const { status, data, isLoading } = useQuery<
+		SuccessResponseV2<UserResponse[]>,
+		APIError
+	>({
+		queryFn: () => getAll(),
 		queryKey: ['getOrgUser', org?.[0].id],
 	});
 
 	const [dataSource, setDataSource] = useState<DataType[]>([]);
 
 	useEffect(() => {
-		if (status === 'success' && data?.payload && Array.isArray(data.payload)) {
-			const updatedData: DataType[] = data?.payload?.map((e) => ({
+		if (status === 'success' && data?.data && Array.isArray(data.data)) {
+			const updatedData: DataType[] = data?.data?.map((e) => ({
 				accessLevel: e.role,
 				email: e.email,
 				id: String(e.id),
 				joinedOn: String(e.createdAt),
-				name: e.name,
+				name: e.displayName,
 			}));
 			setDataSource(updatedData);
 		}
-	}, [data?.payload, status]);
+	}, [data?.data, status]);
 
 	const columns: ColumnsType<DataType> = [
 		{
