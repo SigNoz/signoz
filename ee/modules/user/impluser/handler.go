@@ -38,18 +38,20 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// the EE handler wrapper passes the feature flag value in context
-	ssoAvailable, ok := ctx.Value(types.SSOAvailable).(bool)
-	if !ok {
-		render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to retrieve SSO availability"))
-		return
-	}
-
-	if ssoAvailable {
-		_, err := h.module.CanUsePassword(ctx, req.Email)
-		if err != nil {
-			render.Error(w, err)
+	if req.RefreshToken == "" {
+		// the EE handler wrapper passes the feature flag value in context
+		ssoAvailable, ok := ctx.Value(types.SSOAvailable).(bool)
+		if !ok {
+			render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to retrieve SSO availability"))
 			return
+		}
+
+		if ssoAvailable {
+			_, err := h.module.CanUsePassword(ctx, req.Email)
+			if err != nil {
+				render.Error(w, err)
+				return
+			}
 		}
 	}
 
