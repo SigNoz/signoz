@@ -450,7 +450,13 @@ function K8sVolumesList({
 
 	const handleCloseVolumeDetail = (): void => {
 		setselectedVolumeUID(null);
-		setSearchParams({});
+		setSearchParams({
+			...Object.fromEntries(
+				Array.from(searchParams.entries()).filter(
+					([key]) => key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID,
+				),
+			),
+		});
 	};
 
 	const handleGroupByChange = useCallback(
