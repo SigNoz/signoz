@@ -15,7 +15,10 @@ import {
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/commonUtils';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
+	K8sCategory,
+} from 'container/InfraMonitoringK8s/constants';
 import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
 import {
 	CustomTimeType,
@@ -34,6 +37,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -82,7 +86,14 @@ function ClusterDetails({
 		selectedTime as Time,
 	);
 
-	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.METRICS);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [selectedView, setSelectedView] = useState<VIEWS>(() => {
+		const view = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW);
+		if (view) {
+			return view as VIEWS;
+		}
+		return VIEWS.METRICS;
+	});
 	const isDarkMode = useIsDarkMode();
 
 	const initialFilters = useMemo(
@@ -181,6 +192,10 @@ function ClusterDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: e.target.value,
+		});
 		logEvent(InfraMonitoringEvents.TabChanged, {
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.DetailedPage,
