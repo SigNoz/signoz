@@ -272,7 +272,6 @@ function Summary(): JSX.Element {
 					isError={isProportionViewError}
 					viewType={heatmapView}
 					openMetricDetails={openMetricDetails}
-					heatmapView={heatmapView}
 					setHeatmapView={setHeatmapView}
 				/>
 				<MetricsTable

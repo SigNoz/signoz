@@ -25,7 +25,6 @@ function MetricsTreemap({
 	isLoading,
 	isError,
 	openMetricDetails,
-	heatmapView,
 	setHeatmapView,
 }: MetricsTreemapProps): JSX.Element {
 	const { width: windowWidth } = useWindowSize();
@@ -107,7 +106,7 @@ function MetricsTreemap({
 				</div>
 				<Select
 					options={TREEMAP_VIEW_OPTIONS}
-					value={heatmapView}
+					value={viewType}
 					onChange={setHeatmapView}
 				/>
 			</div>

@@ -28,7 +28,6 @@ export interface MetricsTreemapProps {
 	isError: boolean;
 	viewType: TreemapViewType;
 	openMetricDetails: (metricName: string) => void;
-	heatmapView: TreemapViewType;
 	setHeatmapView: (value: TreemapViewType) => void;
 }
 
