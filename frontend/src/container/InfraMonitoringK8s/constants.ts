@@ -525,4 +525,5 @@ export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	CLUSTER_NAME: 'clusterName',
 	DAEMONSET_UID: 'daemonSetUID',
 	DEPLOYMENT_UID: 'deploymentUID',
+	JOB_UID: 'jobUID',
 };
