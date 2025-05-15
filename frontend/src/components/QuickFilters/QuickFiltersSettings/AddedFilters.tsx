@@ -24,10 +24,12 @@ function SortableFilter({
 	filter,
 	onRemove,
 	allowDrag,
+	allowRemove,
 }: {
 	filter: FilterType;
 	onRemove: (filter: FilterType) => void;
 	allowDrag: boolean;
+	allowRemove: boolean;
 }): JSX.Element {
 	const {
 		attributes,
@@ -52,15 +54,17 @@ function SortableFilter({
 				{allowDrag && <GripVertical size={16} />}
 				{filter.key}
 			</div>
-			<Button
-				className="remove-filter-btn periscope-btn"
-				size="small"
-				onClick={(): void => {
-					onRemove(filter as FilterType);
-				}}
-			>
-				Remove
-			</Button>
+			{allowRemove && (
+				<Button
+					className="remove-filter-btn periscope-btn"
+					size="small"
+					onClick={(): void => {
+						onRemove(filter as FilterType);
+					}}
+				>
+					Remove
+				</Button>
+			)}
 		</div>
 	);
 }
@@ -102,6 +106,7 @@ function AddedFilters({
 	};
 
 	const allowDrag = inputValue.length === 0;
+	const allowRemove = addedFilters.length > 1;
 
 	return (
 		<div className="qf-filters added-filters">
@@ -127,6 +132,7 @@ function AddedFilters({
 										filter={filter}
 										onRemove={handleRemoveFilter}
 										allowDrag={allowDrag}
+										allowRemove={allowRemove}
 									/>
 								))}
 							</SortableContext>
