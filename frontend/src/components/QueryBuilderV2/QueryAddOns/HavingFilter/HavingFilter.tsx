@@ -162,7 +162,7 @@ function HavingFilter(): JSX.Element {
 							},
 						]),
 					]}
-					placeholder="Type aggregator functions like sum(), count_distinct(...), etc."
+					placeholder="Type Having query like count() > 10 ..."
 					basicSetup={{
 						lineNumbers: false,
 						autocompletion: true,
