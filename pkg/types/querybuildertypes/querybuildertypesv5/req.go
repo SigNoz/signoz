@@ -1,5 +1,10 @@
 package querybuildertypesv5
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type QueryEnvelope struct {
 	// Name is the unique identifier for the query.
 	Name string `json:"name"`
@@ -9,9 +14,55 @@ type QueryEnvelope struct {
 	Spec any `json:"spec"`
 }
 
+// implement custom json unmarshaler for the QueryEnvelope
+func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
+	// based on the type, unmarshal the spec
+	switch q.Type {
+	case QueryTypeBuilder:
+		var spec QueryBuilderQuery
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return err
+		}
+		q.Spec = spec
+	case QueryTypeFormula:
+		var spec QueryBuilderFormula
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return err
+		}
+		q.Spec = spec
+	case QueryTypeSubQuery:
+		var spec QueryBuilderQuery
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return err
+		}
+		q.Spec = spec
+	case QueryTypeJoin:
+		var spec QueryBuilderJoin
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return err
+		}
+		q.Spec = spec
+	case QueryTypePromQL:
+		var spec PromQuery
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return err
+		}
+		q.Spec = spec
+	case QueryTypeClickHouseSQL:
+		var spec ClickHouseQuery
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return err
+		}
+		q.Spec = spec
+	default:
+		return fmt.Errorf("unknown query type: %s", q.Type)
+	}
+	return nil
+}
+
 type CompositeQuery struct {
 	// Queries is the queries to use for the request.
-	Queries map[string]QueryEnvelope `json:"queries"`
+	Queries []QueryEnvelope `json:"queries"`
 }
 
 type QueryRangeRequest struct {
@@ -27,6 +78,4 @@ type QueryRangeRequest struct {
 	CompositeQuery CompositeQuery `json:"compositeQuery"`
 	// Variables is the variables to use for the request.
 	Variables map[string]any `json:"variables,omitempty"`
-	// FillGaps is the flag to fill gaps in the query.
-	FillGaps bool `json:"fillGaps,omitempty"`
 }
