@@ -24,11 +24,13 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -66,9 +68,18 @@ function K8sStatefulSetsList({
 		order: 'asc' | 'desc';
 	} | null>(null);
 
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [selectedStatefulSetUID, setselectedStatefulSetUID] = useState<
 		string | null
-	>(null);
+	>(() => {
+		const statefulSetUID = searchParams.get(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.STATEFULSET_UID,
+		);
+		if (statefulSetUID) {
+			return statefulSetUID;
+		}
+		return null;
+	});
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.STATEFULSETS);
 
@@ -330,6 +341,10 @@ function K8sStatefulSetsList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedStatefulSetUID(record.statefulsetUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.STATEFULSET_UID]: record.statefulsetUID,
+			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -380,7 +395,14 @@ function K8sStatefulSetsList({
 						}}
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setselectedStatefulSetUID(record.statefulsetUID),
+							onClick: (): void => {
+								setselectedStatefulSetUID(record.statefulsetUID);
+								setSearchParams({
+									...Object.fromEntries(searchParams.entries()),
+									[INFRA_MONITORING_K8S_PARAMS_KEYS.STATEFULSET_UID]:
+										record.statefulsetUID,
+								});
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
@@ -444,6 +466,7 @@ function K8sStatefulSetsList({
 
 	const handleCloseStatefulSetDetail = (): void => {
 		setselectedStatefulSetUID(null);
+		setSearchParams({});
 	};
 
 	const handleGroupByChange = useCallback(
