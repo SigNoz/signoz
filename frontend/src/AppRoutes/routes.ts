@@ -531,6 +531,7 @@ export const oldRoutes = [
 	'/traces-save-views',
 	'/settings/access-tokens',
 	'/messaging-queues',
+	'/alerts/edit',
 ];
 
 export const oldNewRoutesMapping: Record<string, string> = {
@@ -541,6 +542,7 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/traces-save-views': '/traces/saved-views',
 	'/settings/access-tokens': '/settings/api-keys',
 	'/messaging-queues': '/messaging-queues/overview',
+	'/alerts/edit': '/alerts/overview',
 };
 
 export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [

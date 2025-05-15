@@ -82,4 +82,11 @@ type SQLDialect interface {
 
 	// Drops the column and the associated foreign key constraint for the given table and column.
 	DropColumnWithForeignKeyConstraint(context.Context, bun.IDB, interface{}, string) error
+
+	// Checks if a table exists.
+	TableExists(ctx context.Context, bun bun.IDB, table interface{}) (bool, error)
+
+	// Toggles foreign key constraint for the given database. This makes sense only for sqlite. This cannot take a transaction as an argument and needs to take the db
+	// as an argument.
+	ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error
 }

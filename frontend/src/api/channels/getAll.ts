@@ -1,23 +1,20 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/channels/getAll';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import { Channels, PayloadProps } from 'types/api/channels/getAll';
 
-const getAll = async (): Promise<
-	SuccessResponse<PayloadProps> | ErrorResponse
-> => {
+const getAll = async (): Promise<SuccessResponseV2<Channels[]>> => {
 	try {
-		const response = await axios.get('/channels');
+		const response = await axios.get<PayloadProps>('/channels');
 
 		return {
-			statusCode: 200,
-			error: null,
-			message: 'Success',
-			payload: response.data.data,
+			httpStatusCode: response.status,
+			data: response.data.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+		throw error;
 	}
 };
 

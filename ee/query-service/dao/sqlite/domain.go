@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	"github.com/SigNoz/signoz/ee/types"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types"
 	ossTypes "github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -44,7 +44,7 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 		}
 
 		domain, err = m.GetDomain(ctx, domainId)
-		if (err != nil) || domain == nil {
+		if err != nil {
 			zap.L().Error("failed to find domain from domainId received in IdP response", zap.Error(err))
 			return nil, fmt.Errorf("invalid credentials")
 		}
@@ -54,7 +54,7 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 
 		domainFromDB, err := m.GetDomainByName(ctx, domainNameStr)
 		domain = domainFromDB
-		if (err != nil) || domain == nil {
+		if err != nil {
 			zap.L().Error("failed to find domain from domainName received in IdP response", zap.Error(err))
 			return nil, fmt.Errorf("invalid credentials")
 		}

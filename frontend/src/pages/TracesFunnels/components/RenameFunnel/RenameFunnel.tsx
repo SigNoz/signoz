@@ -29,7 +29,11 @@ function RenameFunnel({
 
 	const handleRename = (): void => {
 		renameFunnelMutation.mutate(
-			{ id: funnelId, funnel_name: newFunnelName },
+			{
+				funnel_id: funnelId,
+				funnel_name: newFunnelName,
+				timestamp: new Date().getTime(),
+			},
 			{
 				onSuccess: () => {
 					notifications.success({

@@ -33,3 +33,7 @@ func NewDataConnector(
 		ClickHouseReader: chReader,
 	}
 }
+
+func (r *ClickhouseReader) GetSQLStore() sqlstore.SQLStore {
+	return r.appdb
+}

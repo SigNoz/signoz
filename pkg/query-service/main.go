@@ -9,9 +9,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
+	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -108,6 +111,12 @@ func main() {
 		signoz.NewWebProviderFactories(),
 		signoz.NewSQLStoreProviderFactories(),
 		signoz.NewTelemetryStoreProviderFactories(),
+		func(sqlstore sqlstore.SQLStore) user.Module {
+			return impluser.NewModule(impluser.NewStore(sqlstore))
+		},
+		func(userModule user.Module) user.Handler {
+			return impluser.NewHandler(userModule)
+		},
 	)
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz", zap.Error(err))

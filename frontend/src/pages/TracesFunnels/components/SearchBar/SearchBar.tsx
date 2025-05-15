@@ -33,18 +33,18 @@ function SearchBar({
 						<Button
 							type="text"
 							className="sort-popover-content__button"
-							onClick={(): void => onSort('creation_timestamp')}
+							onClick={(): void => onSort('created_at')}
 						>
 							Last created
-							{sortOrder.columnKey === 'creation_timestamp' && <Check size={14} />}
+							{sortOrder.columnKey === 'created_at' && <Check size={14} />}
 						</Button>
 						<Button
 							type="text"
 							className="sort-popover-content__button"
-							onClick={(): void => onSort('updated_timestamp')}
+							onClick={(): void => onSort('updated_at')}
 						>
 							Last updated
-							{sortOrder.columnKey === 'updated_timestamp' && <Check size={14} />}
+							{sortOrder.columnKey === 'updated_at' && <Check size={14} />}
 						</Button>
 					</div>
 				}

@@ -8,13 +8,15 @@ import cx from 'classnames';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
+import { useApiMonitoringParams } from '../queryParams';
 import { ApiMonitoringQuickFiltersConfig } from '../utils';
 import DomainList from './Domains/DomainList';
 
 function Explorer(): JSX.Element {
-	const [showIP, setShowIP] = useState<boolean>(true);
+	const [params, setParams] = useApiMonitoringParams();
+	const showIP = params.showIP ?? true;
 
 	useEffect(() => {
 		logEvent('API Monitoring: Landing page visited', {});
@@ -34,14 +36,12 @@ function Explorer(): JSX.Element {
 						<Switch
 							size="small"
 							style={{ marginLeft: 'auto' }}
-							checked={showIP}
+							checked={showIP ?? true}
 							onClick={(): void => {
-								setShowIP((showIP): boolean => {
-									logEvent('API Monitoring: Show IP addresses clicked', {
-										showIP: !showIP,
-									});
-									return !showIP;
+								logEvent('API Monitoring: Show IP addresses clicked', {
+									showIP: !(showIP ?? true),
 								});
+								setParams({ showIP });
 							}}
 						/>
 					</div>
@@ -52,7 +52,7 @@ function Explorer(): JSX.Element {
 						handleFilterVisibilityChange={(): void => {}}
 					/>
 				</section>
-				<DomainList showIP={showIP} />
+				<DomainList />
 			</div>
 		</Sentry.ErrorBoundary>
 	);

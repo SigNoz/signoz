@@ -69,7 +69,7 @@ function SideNav(): JSX.Element {
 
 	const userSettingsMenuItem = {
 		key: ROUTES.MY_SETTINGS,
-		label: user?.name || 'User',
+		label: user?.displayName || 'User',
 		icon: <UserCircle size={16} />,
 	};
 

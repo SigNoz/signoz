@@ -41,8 +41,8 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	dashboard, err := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
-	if err != nil {
+	dashboard, apiErr := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
+	if apiErr != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get dashboard"))
 		return
 	}
@@ -53,8 +53,8 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 	}
 
 	// Lock/Unlock the dashboard
-	err = dashboards.LockUnlockDashboard(r.Context(), claims.OrgID, uuid, lock)
-	if err != nil {
+	apiErr = dashboards.LockUnlockDashboard(r.Context(), claims.OrgID, uuid, lock)
+	if apiErr != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to lock/unlock dashboard"))
 		return
 	}

@@ -13,12 +13,18 @@ import EditAlertChannels from 'container/EditAlertChannels';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
+import { SuccessResponseV2 } from 'types/api';
+import { Channels } from 'types/api/channels/getAll';
+import APIError from 'types/api/error';
 
 function ChannelsEdit(): JSX.Element {
 	const { id } = useParams<Params>();
 	const { t } = useTranslation();
 
-	const { isFetching, isError, data } = useQuery(['getChannel', id], {
+	const { isFetching, isError, data, error } = useQuery<
+		SuccessResponseV2<Channels>,
+		APIError
+	>(['getChannel', id], {
 		queryFn: () =>
 			get({
 				id,
@@ -26,14 +32,18 @@ function ChannelsEdit(): JSX.Element {
 	});
 
 	if (isError) {
-		return <Typography>{data?.error || t('something_went_wrong')}</Typography>;
+		return (
+			<Typography>
+				{error?.getErrorMessage() || t('something_went_wrong')}
+			</Typography>
+		);
 	}
 
-	if (isFetching || !data?.payload) {
+	if (isFetching || !data?.data) {
 		return <Spinner tip="Loading Channels..." />;
 	}
 
-	const { data: ChannelData } = data.payload;
+	const { data: ChannelData } = data.data;
 
 	const value = JSON.parse(ChannelData);
 

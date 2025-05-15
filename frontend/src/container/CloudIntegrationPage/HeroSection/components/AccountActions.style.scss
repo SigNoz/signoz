@@ -35,13 +35,13 @@
 		font-weight: 500;
 		line-height: 16px;
 		padding: 8px 17px;
-	
+
 		&.primary {
 			background: var(--bg-robin-500);
 			border: none;
 			color: var(--bg-vanilla-100);
 		}
-	
+
 		&.secondary {
 			display: flex;
 			align-items: center;

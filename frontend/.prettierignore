@@ -1,6 +1,10 @@
 # Ignore artifacts:
 build
 coverage
+public/
 
 # Ignore all MD files:
 **/*.md
+
+# Ignore all JSON files:
+**/*.json

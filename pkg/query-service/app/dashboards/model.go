@@ -105,7 +105,6 @@ func DeleteDashboard(ctx context.Context, orgID, uuid string) *model.ApiError {
 }
 
 func GetDashboard(ctx context.Context, orgID, uuid string) (*types.Dashboard, *model.ApiError) {
-
 	dashboard := types.Dashboard{}
 	err := store.BunDB().NewSelect().Model(&dashboard).Where("org_id = ?", orgID).Where("uuid = ?", uuid).Scan(ctx)
 	if err != nil {

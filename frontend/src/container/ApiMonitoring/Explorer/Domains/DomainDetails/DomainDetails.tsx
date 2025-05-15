@@ -11,12 +11,13 @@ import {
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import GetMinMax from 'lib/getMinMax';
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { useApiMonitoringParams } from '../../../queryParams';
 import AllEndPoints from './AllEndPoints';
 import DomainMetrics from './components/DomainMetrics';
 import { VIEW_TYPES, VIEWS } from './constants';
@@ -40,8 +41,13 @@ function DomainDetails({
 	domainListLength: number;
 	domainListFilters: IBuilderQuery['filters'];
 }): JSX.Element {
-	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.ALL_ENDPOINTS);
-	const [selectedEndPointName, setSelectedEndPointName] = useState<string>('');
+	const [params, setParams] = useApiMonitoringParams();
+	const [selectedView, setSelectedView] = useState<VIEWS>(
+		(params.selectedView as VIEWS) || VIEWS.ALL_ENDPOINTS,
+	);
+	const [selectedEndPointName, setSelectedEndPointName] = useState<string>(
+		params.selectedEndPointName || '',
+	);
 	const [endPointsGroupBy, setEndPointsGroupBy] = useState<
 		IBuilderQuery['groupBy']
 	>([]);
@@ -52,7 +58,26 @@ function DomainDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		setParams({ selectedView: e.target.value });
 	};
+
+	const handleEndPointChange = (name: string): void => {
+		setSelectedEndPointName(name);
+		setParams({ selectedEndPointName: name });
+	};
+
+	useEffect(() => {
+		if (params.selectedView && params.selectedView !== selectedView) {
+			setSelectedView(params.selectedView as VIEWS);
+		}
+		if (
+			params.selectedEndPointName !== undefined &&
+			params.selectedEndPointName !== selectedEndPointName
+		) {
+			setSelectedEndPointName(params.selectedEndPointName);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [params.selectedView, params.selectedEndPointName]);
 
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
@@ -67,34 +92,62 @@ function DomainDetails({
 	]);
 
 	const [selectedInterval, setSelectedInterval] = useState<Time>(
-		selectedTime as Time,
+		(params.selectedInterval as Time) || (selectedTime as Time),
 	);
 
-	const [modalTimeRange, setModalTimeRange] = useState(() => ({
-		startTime: startMs,
-		endTime: endMs,
-	}));
+	// Sync params to local selectedInterval state on param change
+	useEffect(() => {
+		if (params.selectedInterval && params.selectedInterval !== selectedInterval) {
+			setSelectedInterval(params.selectedInterval as Time);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [params.selectedInterval]);
+
+	const [modalTimeRange, setModalTimeRange] = useState(() => {
+		if (params.modalTimeRange) {
+			return params.modalTimeRange;
+		}
+		return {
+			startTime: startMs,
+			endTime: endMs,
+		};
+	});
+
+	// Sync params to local modalTimeRange state on param change
+	useEffect(() => {
+		if (
+			params.modalTimeRange &&
+			JSON.stringify(params.modalTimeRange) !== JSON.stringify(modalTimeRange)
+		) {
+			setModalTimeRange(params.modalTimeRange);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [params.modalTimeRange]);
 
 	const handleTimeChange = useCallback(
 		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
 			setSelectedInterval(interval as Time);
+			setParams({ selectedInterval: interval as string });
 
 			if (interval === 'custom' && dateTimeRange) {
-				setModalTimeRange({
+				const newRange = {
 					startTime: Math.floor(dateTimeRange[0] / 1000),
 					endTime: Math.floor(dateTimeRange[1] / 1000),
-				});
+				};
+				setModalTimeRange(newRange);
+				setParams({ modalTimeRange: newRange });
 			} else {
 				const { maxTime, minTime } = GetMinMax(interval);
 
-				setModalTimeRange({
+				const newRange = {
 					startTime: Math.floor(minTime / TimeRangeOffset),
 					endTime: Math.floor(maxTime / TimeRangeOffset),
-				});
+				};
+				setModalTimeRange(newRange);
+				setParams({ modalTimeRange: newRange });
 			}
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[],
+		[setParams],
 	);
 
 	return (
@@ -174,7 +227,6 @@ function DomainDetails({
 						>
 							<Radio.Button
 								className={
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									selectedView === VIEW_TYPES.ALL_ENDPOINTS ? 'selected_view tab' : 'tab'
 								}
 								value={VIEW_TYPES.ALL_ENDPOINTS}
@@ -204,7 +256,7 @@ function DomainDetails({
 					{selectedView === VIEW_TYPES.ALL_ENDPOINTS && (
 						<AllEndPoints
 							domainName={domainData.domainName}
-							setSelectedEndPointName={setSelectedEndPointName}
+							setSelectedEndPointName={handleEndPointChange}
 							setSelectedView={setSelectedView}
 							groupBy={endPointsGroupBy}
 							setGroupBy={setEndPointsGroupBy}
@@ -218,7 +270,7 @@ function DomainDetails({
 						<EndPointDetails
 							domainName={domainData.domainName}
 							endPointName={selectedEndPointName}
-							setSelectedEndPointName={setSelectedEndPointName}
+							setSelectedEndPointName={handleEndPointChange}
 							initialFilters={initialFiltersEndPointStats}
 							timeRange={modalTimeRange}
 							handleTimeChange={handleTimeChange}

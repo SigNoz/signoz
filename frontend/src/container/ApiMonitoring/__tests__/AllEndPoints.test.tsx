@@ -79,6 +79,24 @@ jest.mock('antd', () => {
 	};
 });
 
+// Mock useApiMonitoringParams hook
+jest.mock('container/ApiMonitoring/queryParams', () => ({
+	useApiMonitoringParams: jest.fn().mockReturnValue([
+		{
+			showIP: true,
+			selectedDomain: '',
+			selectedView: 'all_endpoints',
+			selectedEndPointName: '',
+			groupBy: [],
+			allEndpointsLocalFilters: undefined,
+			endPointDetailsLocalFilters: undefined,
+			modalTimeRange: undefined,
+			selectedInterval: undefined,
+		},
+		jest.fn(),
+	]),
+}));
+
 describe('AllEndPoints', () => {
 	const mockProps = {
 		domainName: 'test-domain',

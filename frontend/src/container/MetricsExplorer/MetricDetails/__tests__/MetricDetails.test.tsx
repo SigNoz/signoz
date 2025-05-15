@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import ROUTES from 'constants/routes';
 import * as useGetMetricDetails from 'hooks/metricsExplorer/useGetMetricDetails';
 import * as useUpdateMetricMetadata from 'hooks/metricsExplorer/useUpdateMetricMetadata';
+import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
 
 import MetricDetailsView from '../MetricDetails';
 
@@ -61,6 +62,13 @@ jest.spyOn(useUpdateMetricMetadata, 'useUpdateMetricMetadata').mockReturnValue({
 	error: null,
 } as any);
 
+const mockHandleExplorerTabChange = jest.fn();
+jest
+	.spyOn(useHandleExplorerTabChange, 'useHandleExplorerTabChange')
+	.mockReturnValue({
+		handleExplorerTabChange: mockHandleExplorerTabChange,
+	});
+
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({
@@ -88,6 +96,41 @@ describe('MetricDetails', () => {
 		expect(screen.getByText(mockMetricName)).toBeInTheDocument();
 		expect(screen.getByText(mockMetricDescription)).toBeInTheDocument();
 		expect(screen.getByText(`${mockMetricData.unit}`)).toBeInTheDocument();
+	});
+
+	it('renders the "open in explorer" and "inspect" buttons', () => {
+		jest.spyOn(useGetMetricDetails, 'useGetMetricDetails').mockReturnValueOnce({
+			...mockUseGetMetricDetailsData,
+			data: {
+				payload: {
+					data: {
+						...mockMetricData,
+						metadata: {
+							...mockMetricData.metadata,
+							metric_type: MetricType.GAUGE,
+						},
+					},
+				},
+			},
+		} as any);
+		render(
+			<MetricDetailsView
+				onClose={mockOnClose}
+				isOpen
+				metricName={mockMetricName}
+				isModalTimeSelection
+				openInspectModal={mockOpenInspectModal}
+			/>,
+		);
+
+		expect(screen.getByTestId('open-in-explorer-button')).toBeInTheDocument();
+		expect(screen.getByTestId('inspect-metric-button')).toBeInTheDocument();
+
+		fireEvent.click(screen.getByTestId('open-in-explorer-button'));
+		expect(mockHandleExplorerTabChange).toHaveBeenCalled();
+
+		fireEvent.click(screen.getByTestId('inspect-metric-button'));
+		expect(mockOpenInspectModal).toHaveBeenCalled();
 	});
 
 	it('should render error state when metric details are not found', () => {

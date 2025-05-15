@@ -4,4 +4,7 @@ export interface Props {
 	id: Channels['id'];
 }
 
-export type PayloadProps = Channels;
+export type PayloadProps = {
+	data: Channels;
+	status: string;
+};

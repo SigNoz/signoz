@@ -25,6 +25,24 @@ jest.mock('react-query', () => ({
 	useQueries: jest.fn(),
 }));
 
+// Mock useApiMonitoringParams hook
+jest.mock('container/ApiMonitoring/queryParams', () => ({
+	useApiMonitoringParams: jest.fn().mockReturnValue([
+		{
+			showIP: true,
+			selectedDomain: '',
+			selectedView: 'all_endpoints',
+			selectedEndPointName: '',
+			groupBy: [],
+			allEndpointsLocalFilters: undefined,
+			endPointDetailsLocalFilters: undefined,
+			modalTimeRange: undefined,
+			selectedInterval: undefined,
+		},
+		jest.fn(),
+	]),
+}));
+
 jest.mock('container/ApiMonitoring/utils', () => ({
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY: [
 		'endPointMetricsData',

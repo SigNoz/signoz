@@ -1,0 +1,52 @@
+{
+  "id": "s3sync",
+  "title": "S3 Sync",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": false,
+    "logs": true
+  },
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Account ID",
+        "path": "resources.cloud.account.id",
+        "type": "string"
+      },
+      {
+        "name": "Account Region",
+        "path": "resources.cloud.account.region",
+        "type": "string"
+      },
+      {
+        "name": "Bucket Name",
+        "path": "resources.cloud.bucket.name",
+        "type": "string"
+      },
+      {
+        "name": "Object Key",
+        "path": "attributes.object.key",
+        "type": "string"
+      },
+      {
+        "name": "Object S3 Event Time",
+        "path": "attributes.object.event_time",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "aws_logs": {
+      "cloudwatch_logs_subscriptions": [
+        {
+          "log_group_name_prefix": "x/signoz/forwarder",
+          "filter_pattern": ""
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": []
+  }
+}

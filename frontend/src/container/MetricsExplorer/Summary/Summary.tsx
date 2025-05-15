@@ -120,8 +120,13 @@ function Summary(): JSX.Element {
 		isFetching: isMetricsFetching,
 		isError: isMetricsError,
 	} = useGetMetricsList(metricsListQuery, {
-		enabled: !!metricsListQuery,
+		enabled: !!metricsListQuery && !isInspectModalOpen,
 	});
+
+	const isListViewError = useMemo(
+		() => isMetricsError || !!(metricsData && metricsData.statusCode !== 200),
+		[isMetricsError, metricsData],
+	);
 
 	const {
 		data: treeMapData,
@@ -129,8 +134,13 @@ function Summary(): JSX.Element {
 		isFetching: isTreeMapFetching,
 		isError: isTreeMapError,
 	} = useGetMetricsTreeMap(metricsTreemapQuery, {
-		enabled: !!metricsTreemapQuery,
+		enabled: !!metricsTreemapQuery && !isInspectModalOpen,
 	});
+
+	const isProportionViewError = useMemo(
+		() => isTreeMapError || treeMapData?.statusCode !== 200,
+		[isTreeMapError, treeMapData],
+	);
 
 	const handleFilterChange = useCallback(
 		(value: TagFilter) => {
@@ -188,6 +198,10 @@ function Summary(): JSX.Element {
 	};
 
 	const closeInspectModal = (): void => {
+		handleChangeQueryData('filters', {
+			items: [],
+			op: 'AND',
+		});
 		setIsInspectModalOpen(false);
 		setSelectedMetricName(null);
 	};
@@ -204,13 +218,13 @@ function Summary(): JSX.Element {
 				<MetricsTreemap
 					data={treeMapData?.payload}
 					isLoading={isTreeMapLoading || isTreeMapFetching}
-					isError={isTreeMapError}
+					isError={isProportionViewError}
 					viewType={heatmapView}
 					openMetricDetails={openMetricDetails}
 				/>
 				<MetricsTable
 					isLoading={isMetricsLoading || isMetricsFetching}
-					isError={isMetricsError}
+					isError={isListViewError}
 					data={formattedMetricsData}
 					pageSize={pageSize}
 					currentPage={currentPage}
