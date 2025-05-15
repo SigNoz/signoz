@@ -52,9 +52,6 @@ const conjunctions = [
 	{ label: 'OR', value: 'OR' },
 ];
 
-const openBrace = { label: '(', value: '(' };
-const closeBrace = { label: ')', value: ')' };
-
 function HavingFilter(): JSX.Element {
 	const { aggregationOptions } = useQueryBuilderV2Context();
 	const [input, setInput] = useState('');
@@ -89,24 +86,12 @@ function HavingFilter(): JSX.Element {
 		const isKeyOperator = (token: string): boolean =>
 			options.some((opt) => token.startsWith(opt.value));
 
-		// Helper to count standalone ( and ) for grouping
-		const countGroupingBraces = (
-			input: string,
-		): { openCount: number; closeCount: number } => {
-			// Remove aggregator function calls (e.g., sum(duration))
-			const withoutFuncs = input.replace(/\w+\([^)]*\)/g, '');
-			const openCount = (withoutFuncs.match(/\(/g) || []).length;
-			const closeCount = (withoutFuncs.match(/\)/g) || []).length;
-			return { openCount, closeCount };
-		};
-
 		return autocompletion({
 			override: [
 				(context: CompletionContext): CompletionResult | null => {
 					const text = context.state.sliceDoc(0, context.pos);
 					const trimmedText = text.trim();
 					const tokens = trimmedText.split(/\s+/).filter(Boolean);
-					const { openCount, closeCount } = countGroupingBraces(text);
 
 					// Suggest key/operator pairs and ( for grouping
 					if (
@@ -116,7 +101,7 @@ function HavingFilter(): JSX.Element {
 					) {
 						return {
 							from: context.pos,
-							options: [openBrace, ...options],
+							options,
 						};
 					}
 					if (isKeyOperator(tokens[tokens.length - 1])) {
@@ -133,8 +118,7 @@ function HavingFilter(): JSX.Element {
 					) {
 						return {
 							from: context.pos,
-							options:
-								openCount > closeCount ? [closeBrace, ...conjunctions] : conjunctions,
+							options: conjunctions,
 						};
 					}
 					// Suggest conjunctions after a closing parenthesis and a space
