@@ -24,11 +24,13 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -67,7 +69,14 @@ function K8sJobsList({
 		order: 'asc' | 'desc';
 	} | null>(null);
 
-	const [selectedJobUID, setselectedJobUID] = useState<string | null>(null);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [selectedJobUID, setselectedJobUID] = useState<string | null>(() => {
+		const jobUID = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.JOB_UID);
+		if (jobUID) {
+			return jobUID;
+		}
+		return null;
+	});
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.JOBS);
 
@@ -306,6 +315,10 @@ function K8sJobsList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedJobUID(record.jobUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.JOB_UID]: record.jobUID,
+			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -356,7 +369,13 @@ function K8sJobsList({
 						}}
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setselectedJobUID(record.jobUID),
+							onClick: (): void => {
+								setselectedJobUID(record.jobUID);
+								setSearchParams({
+									...Object.fromEntries(searchParams.entries()),
+									[INFRA_MONITORING_K8S_PARAMS_KEYS.JOB_UID]: record.jobUID,
+								});
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
@@ -420,6 +439,7 @@ function K8sJobsList({
 
 	const handleCloseJobDetail = (): void => {
 		setselectedJobUID(null);
+		setSearchParams({});
 	};
 
 	const handleGroupByChange = useCallback(
