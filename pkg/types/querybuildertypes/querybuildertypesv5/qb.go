@@ -15,22 +15,22 @@ var (
 	ErrInValues       = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) in operator requires a list of values")
 )
 
-type JsonKeyToFieldFunc func(context.Context, telemetrytypes.TelemetryFieldKey, FilterOperator, any) (string, any)
+type JsonKeyToFieldFunc func(context.Context, *telemetrytypes.TelemetryFieldKey, FilterOperator, any) (string, any)
 
 // FieldMapper maps the telemetry field key to the table field name.
 type FieldMapper interface {
 	// FieldFor returns the field name for the given key.
-	FieldFor(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (string, error)
+	FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error)
 	// ColumnFor returns the column for the given key.
-	ColumnFor(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (*schema.Column, error)
+	ColumnFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error)
 	// ColumnExpressionFor returns the column expression for the given key.
-	ColumnExpressionFor(ctx context.Context, key telemetrytypes.TelemetryFieldKey, keys map[string][]telemetrytypes.TelemetryFieldKey) (string, error)
+	ColumnExpressionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
 }
 
 // ConditionBuilder builds the condition for the filter.
 type ConditionBuilder interface {
 	// ConditionFor returns the condition for the given key, operator and value.
-	ConditionFor(ctx context.Context, key telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
 }
 
 type FilterCompiler interface {
@@ -43,8 +43,14 @@ type AggExprRewriter interface {
 	Rewrite(ctx context.Context, expr string) (string, []any, error)
 }
 
+type Statement struct {
+	Query    string
+	Args     []any
+	Warnings []string
+}
+
 // StatementBuilder builds the query.
 type StatementBuilder interface {
 	// Build builds the query.
-	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery) (string, []any, error)
+	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery) (*Statement, error)
 }

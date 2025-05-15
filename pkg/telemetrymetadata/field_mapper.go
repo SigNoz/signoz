@@ -32,7 +32,7 @@ func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 
-func (m *fieldMapper) getColumn(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return attributeMetadataColumns["resource_attributes"], nil
@@ -42,7 +42,7 @@ func (m *fieldMapper) getColumn(ctx context.Context, key telemetrytypes.Telemetr
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) ColumnFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	column, err := m.getColumn(ctx, key)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, key telemetrytypes.Telemetr
 	return column, nil
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	column, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -68,8 +68,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key telemetrytypes.Telemetry
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
-	field telemetrytypes.TelemetryFieldKey,
-	keys map[string][]telemetrytypes.TelemetryFieldKey,
+	field *telemetrytypes.TelemetryFieldKey,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
 	colName, err := m.FieldFor(context.Background(), field)

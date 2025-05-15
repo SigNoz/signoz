@@ -139,7 +139,7 @@ func TestExtractFieldKeysFromTblStatement(t *testing.T) {
 	}
 
 	for _, key := range expectedKeys {
-		if !slices.ContainsFunc(keys, func(k telemetrytypes.TelemetryFieldKey) bool {
+		if !slices.ContainsFunc(keys, func(k *telemetrytypes.TelemetryFieldKey) bool {
 			return k.Name == key.Name && k.FieldContext == key.FieldContext && k.FieldDataType == key.FieldDataType && k.Materialized == key.Materialized
 		}) {
 			t.Errorf("expected key %v not found", key)

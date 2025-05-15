@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -18,18 +19,26 @@ func (s *Step) UnmarshalJSON(b []byte) error {
 	if b[0] == '"' { // "15s", "1m", ISO‑8601
 		var str string
 		if err := json.Unmarshal(b, &str); err != nil {
-			return err
+			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid step")
 		}
 		d, err := time.ParseDuration(str)
 		if err != nil {
-			return err
+			return errors.WrapInvalidInputf(
+				err,
+				errors.CodeInvalidInput,
+				"invalid step, expected a duration string (example: 15s, 1m, 1h), valid time units are ns, u, ms, s, m, h",
+			)
 		}
 		s.Duration = d
 		return nil
 	}
 	var sec float64 // 30 → 30 s ; 0.5 → 500 ms
 	if err := json.Unmarshal(b, &sec); err != nil {
-		return err
+		return errors.WrapInvalidInputf(
+			err,
+			errors.CodeInvalidInput,
+			"invalid step, expected duration in seconds (example: 60 - 1 minute, 240 - 4 minutes, 3600 - 1 hour)",
+		)
 	}
 	s.Duration = time.Duration(sec * float64(time.Second))
 	return nil
