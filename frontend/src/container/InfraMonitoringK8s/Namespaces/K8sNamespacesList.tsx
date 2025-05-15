@@ -23,11 +23,13 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -66,9 +68,18 @@ function K8sNamespacesList({
 		order: 'asc' | 'desc';
 	} | null>(null);
 
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [selectedNamespaceUID, setselectedNamespaceUID] = useState<
 		string | null
-	>(null);
+	>(() => {
+		const namespaceUID = searchParams.get(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID,
+		);
+		if (namespaceUID) {
+			return namespaceUID;
+		}
+		return null;
+	});
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.NAMESPACES);
 
@@ -330,6 +341,10 @@ function K8sNamespacesList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedNamespaceUID(record.namespaceUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID]: record.namespaceUID,
+			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -380,7 +395,13 @@ function K8sNamespacesList({
 						}}
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setselectedNamespaceUID(record.namespaceUID),
+							onClick: (): void => {
+								setselectedNamespaceUID(record.namespaceUID);
+								setSearchParams({
+									...Object.fromEntries(searchParams.entries()),
+									[INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID]: record.namespaceUID,
+								});
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
@@ -444,6 +465,7 @@ function K8sNamespacesList({
 
 	const handleCloseNamespaceDetail = (): void => {
 		setselectedNamespaceUID(null);
+		setSearchParams({});
 	};
 
 	const handleGroupByChange = useCallback(
