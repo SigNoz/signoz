@@ -15,6 +15,7 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { Filter } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -27,6 +28,7 @@ function HostsList(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [currentPage, setCurrentPage] = useState(1);
 	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
@@ -40,7 +42,15 @@ function HostsList(): JSX.Element {
 		order: 'asc' | 'desc';
 	} | null>(null);
 
-	const [selectedHostName, setSelectedHostName] = useState<string | null>(null);
+	const [selectedHostName, setSelectedHostName] = useState<string | null>(() => {
+		const hostName = searchParams.get('hostName');
+		return hostName || null;
+	});
+
+	const handleHostClick = (hostName: string): void => {
+		setSelectedHostName(hostName);
+		setSearchParams({ ...searchParams, hostName });
+	};
 
 	const { pageSize, setPageSize } = usePageSize('hosts');
 
@@ -172,7 +182,7 @@ function HostsList(): JSX.Element {
 						filters={filters}
 						currentPage={currentPage}
 						setCurrentPage={setCurrentPage}
-						setSelectedHostName={setSelectedHostName}
+						onHostClick={handleHostClick}
 						pageSize={pageSize}
 						setPageSize={setPageSize}
 						setOrderBy={setOrderBy}
