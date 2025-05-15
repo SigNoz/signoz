@@ -104,7 +104,7 @@ jest.mock(
 
 // Helper function to create a mock API response with a given offset
 const createMockResponse = (offset: number): QueryRangePayload =>
-	logsPaginationQueryRangeSuccessResponse(offset);
+	logsPaginationQueryRangeSuccessResponse({ offset });
 
 const setupServer = (capturedPayloads: QueryRangePayload[]): void => {
 	server.use(

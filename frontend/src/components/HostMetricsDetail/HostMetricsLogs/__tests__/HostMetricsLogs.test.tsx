@@ -65,7 +65,7 @@ describe('HostMetricsLogs', () => {
 
 					return res(
 						ctx.status(200),
-						ctx.json(logsPaginationQueryRangeSuccessResponse(offset)),
+						ctx.json(logsPaginationQueryRangeSuccessResponse({ offset })),
 					);
 				},
 			),
