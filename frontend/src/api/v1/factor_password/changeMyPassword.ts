@@ -1,25 +1,26 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import { PayloadProps, Props } from 'types/api/user/changeMyPassword';
 
 const changeMyPassword = async (
 	props: Props,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+): Promise<SuccessResponseV2<PayloadProps>> => {
 	try {
-		const response = await axios.post(`/changePassword/${props.userId}`, {
-			...props,
-		});
+		const response = await axios.post<PayloadProps>(
+			`/changePassword/${props.userId}`,
+			{
+				...props,
+			},
+		);
 
 		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data,
+			httpStatusCode: response.status,
+			data: response.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
 

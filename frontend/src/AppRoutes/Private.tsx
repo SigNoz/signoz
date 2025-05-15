@@ -1,6 +1,6 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import getOrgUser from 'api/v1/user/getOrgUser';
+import getAll from 'api/v1/user/get';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
@@ -11,8 +11,11 @@ import { useAppContext } from 'providers/App/App';
 import { ReactChild, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { matchPath, useLocation } from 'react-router-dom';
+import { SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
+import { UserResponse } from 'types/api/user/getUser';
 import { USER_ROLES } from 'types/roles';
 import { routePermission } from 'utils/permission';
 
@@ -58,12 +61,13 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	const [orgData, setOrgData] = useState<Organization | undefined>(undefined);
 
-	const { data: orgUsers, isFetching: isFetchingOrgUsers } = useQuery({
+	const { data: usersData, isFetching: isFetchingUsers } = useQuery<
+		SuccessResponseV2<UserResponse[]> | undefined,
+		APIError
+	>({
 		queryFn: () => {
 			if (orgData && orgData.id !== undefined) {
-				return getOrgUser({
-					orgId: orgData.id,
-				});
+				return getAll();
 			}
 			return undefined;
 		},
@@ -72,23 +76,23 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	});
 
 	const checkFirstTimeUser = useCallback((): boolean => {
-		const users = orgUsers?.payload || [];
+		const users = usersData?.data || [];
 
 		const remainingUsers = users.filter(
 			(user) => user.email !== 'admin@signoz.cloud',
 		);
 
 		return remainingUsers.length === 1;
-	}, [orgUsers?.payload]);
+	}, [usersData?.data]);
 
 	useEffect(() => {
 		if (
 			isCloudUserVal &&
 			!isFetchingOrgPreferences &&
 			orgPreferences &&
-			!isFetchingOrgUsers &&
-			orgUsers &&
-			orgUsers.payload
+			!isFetchingUsers &&
+			usersData &&
+			usersData.data
 		) {
 			const isOnboardingComplete = orgPreferences?.find(
 				(preference: Record<string, any>) => preference.key === 'ORG_ONBOARDING',
@@ -108,9 +112,9 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		checkFirstTimeUser,
 		isCloudUserVal,
 		isFetchingOrgPreferences,
-		isFetchingOrgUsers,
+		isFetchingUsers,
 		orgPreferences,
-		orgUsers,
+		usersData,
 		pathname,
 	]);
 
