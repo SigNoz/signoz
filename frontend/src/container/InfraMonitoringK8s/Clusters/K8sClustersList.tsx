@@ -23,11 +23,13 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -65,8 +67,17 @@ function K8sClustersList({
 		order: 'asc' | 'desc';
 	} | null>({ columnName: 'cpu', order: 'desc' });
 
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [selectedClusterName, setselectedClusterName] = useState<string | null>(
-		null,
+		() => {
+			const clusterName = searchParams.get(
+				INFRA_MONITORING_K8S_PARAMS_KEYS.CLUSTER_NAME,
+			);
+			if (clusterName) {
+				return clusterName;
+			}
+			return null;
+		},
 	);
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.CLUSTERS);
@@ -322,6 +333,10 @@ function K8sClustersList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedClusterName(record.clusterUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.CLUSTER_NAME]: record.clusterUID,
+			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -372,7 +387,13 @@ function K8sClustersList({
 						}}
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setselectedClusterName(record.clusterUID),
+							onClick: (): void => {
+								setselectedClusterName(record.clusterUID);
+								setSearchParams({
+									...Object.fromEntries(searchParams.entries()),
+									[INFRA_MONITORING_K8S_PARAMS_KEYS.CLUSTER_NAME]: record.clusterUID,
+								});
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
@@ -436,6 +457,7 @@ function K8sClustersList({
 
 	const handleCloseClusterDetail = (): void => {
 		setselectedClusterName(null);
+		setSearchParams({});
 	};
 
 	const handleGroupByChange = useCallback(

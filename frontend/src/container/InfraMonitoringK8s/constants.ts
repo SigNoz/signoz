@@ -521,4 +521,6 @@ export const getInvalidValueTooltipText = (
 
 export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	CATEGORY: 'category',
+	VIEW: 'view',
+	CLUSTER_NAME: 'clusterName',
 };
