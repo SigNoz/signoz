@@ -15,13 +15,11 @@ type QueryBuilderQuery struct {
 	Signal telemetrytypes.Signal `json:"signal,omitempty"`
 
 	// we want to support multiple aggregations
-	Aggregations []Aggregation `json:"aggregations,omitempty"`
+	// currently supported: []Aggregation, []MetricAggregation
+	Aggregations []any `json:"aggregations,omitempty"`
 
 	// disabled if true, the query will not be executed
 	Disabled bool `json:"disabled,omitempty"`
-
-	// metric aggregations to apply to the query, relevant for metrics queries
-	MetricAggregations []MetricAggregation `json:"metricAggregations,omitempty"`
 
 	// search query is simple string
 	Filter *Filter `json:"filter,omitempty"`

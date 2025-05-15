@@ -46,44 +46,35 @@ type Bucket struct {
 	Step float64 `json:"step"`
 }
 
-type TableColumnType struct {
+type ColumnType struct {
 	valuer.String
 }
 
 var (
 	// for the group by part of the query
-	TableColumnTypeGroup = TableColumnType{valuer.NewString("group")}
+	ColumnTypeGroup = ColumnType{valuer.NewString("group")}
 	// for the aggregation part of the query
-	TableColumnTypeAggregation = TableColumnType{valuer.NewString("aggregation")}
+	ColumnTypeAggregation = ColumnType{valuer.NewString("aggregation")}
 )
 
-type TableColumn struct {
+type ColumnDescriptor struct {
 	telemetrytypes.TelemetryFieldKey
-	AggregationIndex int64           `json:"aggregationIndex"`
-	Type             TableColumnType `json:"columnType"`
+	QueryName        string     `json:"queryName"`
+	AggregationIndex int64      `json:"aggregationIndex"`
+	Type             ColumnType `json:"columnType"`
 }
 
-type TableRow struct {
-	Data      map[string]any `json:"data"`
-	QueryName string         `json:"queryName"`
+type ScalarData struct {
+	Columns []ColumnDescriptor `json:"columns"`
+	Data    [][]any            `json:"data"`
 }
 
-type TableData struct {
-	Columns []TableColumn `json:"columns"`
-	Rows    []TableRow    `json:"rows"`
+type RawData struct {
+	QueryName string   `json:"queryName"`
+	Rows      []RawRow `json:"rows"`
 }
 
-type NumberData struct {
-	QueryName string  `json:"queryName"`
-	Value     float64 `json:"value"`
-}
-
-type ListData struct {
-	QueryName string    `json:"queryName"`
-	Rows      []ListRow `json:"rows"`
-}
-
-type ListRow struct {
+type RawRow struct {
 	Timestamp time.Time      `json:"timestamp"`
 	Data      map[string]any `json:"data"`
 }
