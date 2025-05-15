@@ -4,7 +4,13 @@ import { FiltersType, IQuickFiltersConfig } from './types';
 
 const getFilterName = (str: string): string =>
 	// replace . and _ with space
-	str.replace(/\./g, ' ').replace(/_/g, ' ');
+	// capitalize the first letter of each word
+	str
+		.replace(/\./g, ' ')
+		.replace(/_/g, ' ')
+		.split(' ')
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(' ');
 
 export const getFilterConfig = (
 	customFilters?: FilterType[],

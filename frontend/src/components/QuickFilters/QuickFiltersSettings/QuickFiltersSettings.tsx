@@ -1,7 +1,6 @@
 import './QuickFiltersSettings.styles.scss';
 
-import { Input } from 'antd';
-import Button from 'antd/es/button';
+import { Button, Input } from 'antd';
 import { CheckIcon, TableColumnsSplit, XIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';

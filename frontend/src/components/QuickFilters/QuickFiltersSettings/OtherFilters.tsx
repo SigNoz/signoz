@@ -1,5 +1,4 @@
-import { Skeleton } from 'antd';
-import Button from 'antd/es/button';
+import { Button, Skeleton } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
