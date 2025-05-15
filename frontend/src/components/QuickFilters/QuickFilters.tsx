@@ -17,6 +17,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Slider from './FilterRenderers/Slider/Slider';
 import useFilterConfig from './hooks/useFilterConfig';
+import AnnouncementTooltip from './QuickFiltersSettings/AnnouncementTooltip';
 import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
 import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
@@ -131,6 +132,11 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 												width={14}
 												height={14}
 												onClick={(): void => setIsSettingsOpen(true)}
+											/>
+											<AnnouncementTooltip
+												position={{ top: -5, left: 15 }}
+												title="Edit your fast filters"
+												message="You can now customize and re-arrange your fast filters panel. Select the fast filters you’d need and hide away the rest for faster exploration."
 											/>
 										</div>
 									</Tooltip>

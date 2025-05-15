@@ -12,6 +12,10 @@
 	    height: calc(100vh - 45px);
     }
 
+    &.qf-exceptions {
+        height: 100vh;
+    }
+
 	&.hidden {
 		width: 0;
 	}
