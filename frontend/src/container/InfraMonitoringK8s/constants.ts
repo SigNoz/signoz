@@ -518,3 +518,7 @@ export const getInvalidValueTooltipText = (
 	entity: K8sCategory,
 	attribute: string,
 ): string => `Some ${entity} do not have ${attribute}s.`;
+
+export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
+	CATEGORY: 'category',
+};
