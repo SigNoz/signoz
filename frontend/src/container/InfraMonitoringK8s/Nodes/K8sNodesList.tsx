@@ -23,11 +23,13 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -66,7 +68,14 @@ function K8sNodesList({
 		order: 'asc' | 'desc';
 	} | null>({ columnName: 'cpu', order: 'desc' });
 
-	const [selectedNodeUID, setselectedNodeUID] = useState<string | null>(null);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [selectedNodeUID, setselectedNodeUID] = useState<string | null>(() => {
+		const nodeUID = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID);
+		if (nodeUID) {
+			return nodeUID;
+		}
+		return null;
+	});
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.NODES);
 
@@ -308,6 +317,10 @@ function K8sNodesList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedNodeUID(record.nodeUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID]: record.nodeUID,
+			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -359,7 +372,13 @@ function K8sNodesList({
 						}}
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setselectedNodeUID(record.nodeUID),
+							onClick: (): void => {
+								setselectedNodeUID(record.nodeUID);
+								setSearchParams({
+									...Object.fromEntries(searchParams.entries()),
+									[INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID]: record.nodeUID,
+								});
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
@@ -423,6 +442,7 @@ function K8sNodesList({
 
 	const handleCloseNodeDetail = (): void => {
 		setselectedNodeUID(null);
+		setSearchParams({});
 	};
 
 	const handleGroupByChange = useCallback(
