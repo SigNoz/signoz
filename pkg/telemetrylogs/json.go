@@ -40,7 +40,7 @@ func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetryt
 	return valueType, parsedValue
 }
 
-func inferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytypes.TelemetryFieldKey) (telemetrytypes.FieldDataType, any) {
+func inferDataType(value any, operator qbtypes.FilterOperator, key telemetrytypes.TelemetryFieldKey) (telemetrytypes.FieldDataType, any) {
 	// check if the value is a int, float, string, bool
 	valueType := telemetrytypes.FieldDataTypeUnspecified
 	switch v := value.(type) {
@@ -68,7 +68,7 @@ func inferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 	return valueType, value
 }
 
-func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, any) {
+func GetBodyJSONKey(_ context.Context, key telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, any) {
 
 	dataType, value := inferDataType(value, operator, key)
 

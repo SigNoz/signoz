@@ -21,7 +21,7 @@ type WhereClauseVisitor struct {
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
 	warnings         []error
-	fieldKeys        map[string][]*telemetrytypes.TelemetryFieldKey
+	fieldKeys        map[string][]telemetrytypes.TelemetryFieldKey
 	errors           []error
 	builder          *sqlbuilder.SelectBuilder
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
@@ -30,7 +30,7 @@ type WhereClauseVisitor struct {
 // NewWhereClauseVisitor creates a new WhereClauseVisitor
 func NewWhereClauseVisitor(
 	conditionBuilder qbtypes.ConditionBuilder,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]telemetrytypes.TelemetryFieldKey,
 	builder *sqlbuilder.SelectBuilder,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 ) *WhereClauseVisitor {
@@ -73,7 +73,7 @@ func (l *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
 func PrepareWhereClause(
 	query string,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]telemetrytypes.TelemetryFieldKey,
 	conditionBuilder qbtypes.ConditionBuilder,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 ) (*sqlbuilder.WhereClause, []error, error) {
@@ -251,7 +251,7 @@ func (v *WhereClauseVisitor) VisitPrimary(ctx *PrimaryContext) any {
 		if keyCtx, ok := child.(*KeyContext); ok {
 			// create a full text search condition on the body field
 			keyText := keyCtx.GetText()
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, keyText, v.builder)
+			cond, err := v.conditionBuilder.ConditionFor(context.Background(), *v.fullTextColumn, qbtypes.FilterOperatorRegexp, keyText, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -264,7 +264,7 @@ func (v *WhereClauseVisitor) VisitPrimary(ctx *PrimaryContext) any {
 
 // VisitComparison handles all comparison operators
 func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
-	keys := v.Visit(ctx.Key()).([]*telemetrytypes.TelemetryFieldKey)
+	keys := v.Visit(ctx.Key()).([]telemetrytypes.TelemetryFieldKey)
 
 	// Handle EXISTS specially
 	if ctx.EXISTS() != nil {
@@ -405,7 +405,7 @@ func (v *WhereClauseVisitor) VisitValueList(ctx *ValueListContext) any {
 func (v *WhereClauseVisitor) VisitFullText(ctx *FullTextContext) any {
 	// remove quotes from the quotedText
 	quotedText := strings.Trim(ctx.QUOTED_TEXT().GetText(), "\"'")
-	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, quotedText, v.builder)
+	cond, err := v.conditionBuilder.ConditionFor(context.Background(), *v.fullTextColumn, qbtypes.FilterOperatorRegexp, quotedText, v.builder)
 	if err != nil {
 		return ""
 	}
@@ -444,7 +444,7 @@ func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
 		return ""
 	}
 
-	keys, ok := params[0].([]*telemetrytypes.TelemetryFieldKey)
+	keys, ok := params[0].([]telemetrytypes.TelemetryFieldKey)
 	if !ok {
 		v.errors = append(v.errors, errors.Newf(
 			errors.TypeInvalidInput,
@@ -558,7 +558,7 @@ func (v *WhereClauseVisitor) VisitKey(ctx *KeyContext) any {
 	// Since it will ORed with the fieldKeysForName, it will not result empty
 	// when either of them have values
 	if strings.HasPrefix(fieldKey.Name, telemetrylogs.BodyJSONStringSearchPrefix) {
-		fieldKeysForName = append(fieldKeysForName, &fieldKey)
+		fieldKeysForName = append(fieldKeysForName, fieldKey)
 	}
 
 	// TODO(srikanthccv): do we want to return an error here?
