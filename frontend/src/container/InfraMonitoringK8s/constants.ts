@@ -526,4 +526,5 @@ export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	DAEMONSET_UID: 'daemonSetUID',
 	DEPLOYMENT_UID: 'deploymentUID',
 	JOB_UID: 'jobUID',
+	NAMESPACE_UID: 'namespaceUID',
 };
