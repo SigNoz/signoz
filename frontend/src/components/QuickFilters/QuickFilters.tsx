@@ -142,6 +142,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 										>
 											<SettingsIcon
 												className="settings-icon"
+												data-testid="settings-icon"
 												width={14}
 												height={14}
 												onClick={(): void => setIsSettingsOpen(true)}
