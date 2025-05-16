@@ -10,66 +10,28 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-var (
-	attributeMetadataColumns = map[string]*schema.Column{
-		"resource_attributes": {Name: "resource_attributes", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
-		}},
-		"attributes": {Name: "attributes", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
-		}},
-	}
-)
-
 type conditionBuilder struct {
+	fm qbtypes.FieldMapper
 }
 
-func NewConditionBuilder() qbtypes.ConditionBuilder {
-	return &conditionBuilder{}
+func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
+	return &conditionBuilder{fm: fm}
 }
 
-func (c *conditionBuilder) GetColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
-	switch key.FieldContext {
-	case telemetrytypes.FieldContextResource:
-		return attributeMetadataColumns["resource_attributes"], nil
-	case telemetrytypes.FieldContextAttribute:
-		return attributeMetadataColumns["attributes"], nil
-	}
-	return nil, qbtypes.ErrColumnNotFound
-}
-
-func (c *conditionBuilder) GetTableFieldName(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	column, err := c.GetColumn(ctx, key)
-	if err != nil {
-		return "", err
-	}
-
-	switch column.Type {
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
-	}:
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
-	}
-	return column.Name, nil
-}
-
-func (c *conditionBuilder) GetCondition(
+func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	column, err := c.GetColumn(ctx, key)
+	column, err := c.fm.ColumnFor(ctx, key)
 	if err != nil {
 		// if we don't have a column, we can't build a condition for related values
 		return "", nil
 	}
 
-	tblFieldName, err := c.GetTableFieldName(ctx, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, key)
 	if err != nil {
 		// if we don't have a table field name, we can't build a condition for related values
 		return "", nil
