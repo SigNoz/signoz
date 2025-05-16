@@ -397,7 +397,7 @@ func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey)
 	return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
 }
 
-func (m *Module) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updatorID string) error {
+func (m *Module) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updaterID string) error {
 	return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
 }
 

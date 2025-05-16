@@ -63,7 +63,7 @@ type UserStore interface {
 
 	// API KEY
 	CreateAPIKey(ctx context.Context, apiKey *StorableAPIKey) error
-	UpdateAPIKey(ctx context.Context, id string, apiKey *StorableAPIKey, updatorID string) error
+	UpdateAPIKey(ctx context.Context, id string, apiKey *StorableAPIKey, updaterID string) error
 	ListAPIKeys(ctx context.Context, orgID string) ([]*GettableAPIKey, error)
 	RevokeAPIKey(ctx context.Context, id, revokedByUserID string) error
 	GetAPIKey(ctx context.Context, orgID string, id string) (*GettableAPIKey, error)

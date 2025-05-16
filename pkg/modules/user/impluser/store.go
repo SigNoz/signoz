@@ -339,7 +339,7 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 		Where("user_id = ?", id).
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete api keys")
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete API keys")
 	}
 
 	// delete user
@@ -497,8 +497,8 @@ func (s *Store) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) 
 	return nil
 }
 
-func (s *Store) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updatedByUserID string) error {
-	apiKey.UpdatedBy = updatedByUserID
+func (s *Store) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updaterID string) error {
+	apiKey.UpdatedBy = updaterID
 	apiKey.UpdatedAt = time.Now()
 	_, err := s.sqlstore.BunDB().NewUpdate().
 		Model(apiKey).
