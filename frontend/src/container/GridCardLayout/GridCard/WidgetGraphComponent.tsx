@@ -1,6 +1,6 @@
 import '../GridCardLayout.styles.scss';
 
-import { Skeleton, Typography } from 'antd';
+import { Skeleton, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
@@ -9,6 +9,7 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
+import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -293,6 +294,11 @@ function WidgetGraphComponent({
 		});
 	};
 
+	const { truncatedText, fullText } = useGetResolvedText({
+		text: widget.title as string,
+		maxLength: 100,
+	});
+
 	return (
 		<div
 			style={{
@@ -326,7 +332,11 @@ function WidgetGraphComponent({
 			</Modal>
 
 			<Modal
-				title={widget?.title || 'View'}
+				title={
+					<Tooltip title={fullText} placement="top">
+						<span>{truncatedText || fullText || 'View'}</span>
+					</Tooltip>
+				}
 				footer={[]}
 				centered
 				open={isFullViewOpen}

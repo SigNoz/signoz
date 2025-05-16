@@ -18,6 +18,11 @@
 		font-style: normal;
 		font-weight: 400;
 		line-height: 16px; /* 133.333% */
+
+		.info-icon {
+			margin-left: 4px;
+			color: var(--bg-vanilla-400);
+		}
 	}
 
 	.variable-value {
