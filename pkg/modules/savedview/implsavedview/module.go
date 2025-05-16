@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -18,7 +19,7 @@ type module struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func NewModule(sqlstore sqlstore.SQLStore) *module {
+func NewModule(sqlstore sqlstore.SQLStore) savedview.Module {
 	return &module{sqlstore: sqlstore}
 }
 

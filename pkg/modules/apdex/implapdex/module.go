@@ -1,28 +1,43 @@
-package sqlite
+package implapdex
 
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/modules/apdex"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
-const defaultApdexThreshold = 0.5
+const (
+	defaultApdexThreshold float64 = 0.5
+)
 
-func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, orgID string, services []string) ([]types.ApdexSettings, *model.ApiError) {
-	var apdexSettings []types.ApdexSettings
+type module struct {
+	sqlstore sqlstore.SQLStore
+}
 
-	err := mds.bundb.NewSelect().
+func NewModule(sqlstore sqlstore.SQLStore) apdex.Module {
+	return &module{
+		sqlstore: sqlstore,
+	}
+}
+
+func (module *module) Get(ctx context.Context, orgID string, services []string) ([]*types.ApdexSettings, error) {
+	var apdexSettings []*types.ApdexSettings
+
+	err := module.
+		sqlstore.
+		BunDB().
+		NewSelect().
 		Model(&apdexSettings).
 		Where("org_id = ?", orgID).
 		Where("service_name IN (?)", bun.In(services)).
 		Scan(ctx)
 	if err != nil {
-		return nil, &model.ApiError{
-			Err: err,
-		}
+		return nil, module.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "apdex settings not found for services %v", services)
 	}
 
 	// add default apdex settings for services that don't have any
@@ -36,7 +51,7 @@ func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, orgID string, s
 		}
 
 		if !found {
-			apdexSettings = append(apdexSettings, types.ApdexSettings{
+			apdexSettings = append(apdexSettings, &types.ApdexSettings{
 				ServiceName: service,
 				Threshold:   defaultApdexThreshold,
 			})
@@ -46,21 +61,21 @@ func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, orgID string, s
 	return apdexSettings, nil
 }
 
-func (mds *ModelDaoSqlite) SetApdexSettings(ctx context.Context, orgID string, apdexSettings *types.ApdexSettings) *model.ApiError {
-	// Set the org_id from the parameter since it's required for the foreign key constraint
+func (module *module) Set(ctx context.Context, orgID string, apdexSettings *types.ApdexSettings) error {
 	apdexSettings.OrgID = orgID
 	apdexSettings.Identifiable.ID = valuer.GenerateUUID()
 
-	_, err := mds.bundb.NewInsert().
+	_, err := module.
+		sqlstore.
+		BunDB().
+		NewInsert().
 		Model(apdexSettings).
 		On("CONFLICT (org_id, service_name) DO UPDATE").
 		Set("threshold = EXCLUDED.threshold").
 		Set("exclude_status_codes = EXCLUDED.exclude_status_codes").
 		Exec(ctx)
 	if err != nil {
-		return &model.ApiError{
-			Err: err,
-		}
+		return err
 	}
 
 	return nil

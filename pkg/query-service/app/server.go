@@ -35,7 +35,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -84,10 +83,6 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	var err error
-	if err := dao.InitDao(serverOptions.SigNoz.SQLStore); err != nil {
-		return nil, err
-	}
-
 	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
@@ -147,12 +142,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetSqlStore(serverOptions.SigNoz.SQLStore)
 	telemetry.GetInstance().SetSavedViewsInfoCallback(telemetry.GetSavedViewsInfo)
 	telemetry.GetInstance().SetAlertsInfoCallback(telemetry.GetAlertsInfo)
+	telemetry.GetInstance().SetGetUsersCallback(telemetry.GetUsers)
+	telemetry.GetInstance().SetUserCountCallback(telemetry.GetUserCount)
+
 	quickfiltermodule := quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(serverOptions.SigNoz.SQLStore))
 	quickFilter := quickfilter.NewAPI(quickfiltermodule)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
-		AppDao:                        dao.DB(),
 		RuleManager:                   rm,
 		FeatureFlags:                  fm,
 		IntegrationsController:        integrationsController,

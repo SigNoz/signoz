@@ -66,7 +66,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
@@ -90,7 +89,6 @@ func NewRouter() *mux.Router {
 // APIHandler implements the query service public API
 type APIHandler struct {
 	reader            interfaces.Reader
-	appDao            dao.ModelDao
 	ruleManager       *rules.Manager
 	featureFlags      interfaces.FeatureLookup
 	querier           interfaces.Querier
@@ -154,9 +152,6 @@ type APIHandlerOpts struct {
 	Reader interfaces.Reader
 
 	PreferSpanMetrics bool
-
-	// dao layer to perform crud on app objects like dashboard, alerts etc
-	AppDao dao.ModelDao
 
 	// rule manager handles rule crud operations
 	RuleManager *rules.Manager
@@ -227,7 +222,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
-		appDao:                        opts.AppDao,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
@@ -552,8 +546,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.setApdexSettings)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.Signoz.Handlers.Apdex.Set)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.Signoz.Handlers.Apdex.Get)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
