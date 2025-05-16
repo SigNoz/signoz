@@ -333,6 +333,15 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete factor password")
 	}
 
+	// delete api keys
+	_, err = tx.NewDelete().
+		Model(&types.StorableAPIKey{}).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete api keys")
+	}
+
 	// delete user
 	_, err = tx.NewDelete().
 		Model(new(types.User)).
