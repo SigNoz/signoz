@@ -210,7 +210,7 @@ type Telemetry struct {
 	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
 	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
 	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
-	savedViewsInfoCallback func(ctx context.Context) (*model.SavedViewsInfo, error)
+	savedViewsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)
 }
 
 func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*model.AlertsInfo, error)) {
@@ -225,7 +225,7 @@ func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context, store
 	a.getUsersCallback = callback
 }
 
-func (a *Telemetry) SetSavedViewsInfoCallback(callback func(ctx context.Context) (*model.SavedViewsInfo, error)) {
+func (a *Telemetry) SetSavedViewsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)) {
 	a.savedViewsInfoCallback = callback
 }
 
@@ -359,7 +359,7 @@ func createTelemetry() {
 		if err == nil {
 			dashboardsInfo, err := telemetry.dashboardsInfoCallback(ctx)
 			if err == nil {
-				savedViewsInfo, err := telemetry.savedViewsInfoCallback(ctx)
+				savedViewsInfo, err := telemetry.savedViewsInfoCallback(ctx, telemetry.sqlStore)
 				if err == nil {
 					dashboardsAlertsData := map[string]interface{}{
 						"totalDashboards":                 dashboardsInfo.TotalDashboards,

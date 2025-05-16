@@ -37,7 +37,6 @@ import (
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
-	baseexplorer "github.com/SigNoz/signoz/pkg/query-service/app/explorer"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
@@ -94,10 +93,6 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	modelDao, err := dao.InitDao(serverOptions.SigNoz.SQLStore)
 	if err != nil {
-		return nil, err
-	}
-
-	if err := baseexplorer.InitWithDSN(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 
@@ -197,6 +192,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetReader(reader)
 	telemetry.GetInstance().SetSqlStore(serverOptions.SigNoz.SQLStore)
 	telemetry.GetInstance().SetSaasOperator(constants.SaasSegmentKey)
+	telemetry.GetInstance().SetSavedViewsInfoCallback(telemetry.GetSavedViewsInfo)
 
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	if err != nil {
