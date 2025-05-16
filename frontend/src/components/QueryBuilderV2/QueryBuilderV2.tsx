@@ -3,12 +3,10 @@ import './QueryBuilderV2.styles.scss';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import MetricsAggregateSection from './Metrics/MerticsAggregateSection/MetricsAggregateSection';
-import { MetricsSelect } from './Metrics/MetricsSelect/MetricsSelect';
-import QueryAddOns from './QueryAddOns/QueryAddOns';
-import QueryAggregation from './QueryAggregation/QueryAggregation';
+import LogsQB from './Logs/LogsQB';
+import MetricsQB from './Metrics/MetricsQB';
 import { QueryBuilderV2Provider } from './QueryBuilderV2Context';
-import QuerySearch from './QuerySearch/QuerySearch';
+import TracesQB from './Traces/TracesQB';
 
 type QueryBuilderV2Props = {
 	source: DataSource;
@@ -19,23 +17,15 @@ function QueryBuilderV2Main({
 	source,
 	query,
 }: QueryBuilderV2Props): JSX.Element {
-	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
+	const isMetricsDataSource = source === DataSource.METRICS;
+	const isLogsDataSource = source === DataSource.LOGS;
+	const isTracesDataSource = source === DataSource.TRACES;
 
 	return (
 		<div className="query-builder-v2">
-			{isMetricsDataSource && (
-				<MetricsSelect query={query} index={0} version="v4" />
-			)}
-
-			<QuerySearch />
-
-			{isMetricsDataSource ? (
-				<MetricsAggregateSection query={query} index={0} version="v4" />
-			) : (
-				<QueryAggregation source={source} />
-			)}
-
-			<QueryAddOns query={query} version="v3" isListViewPanel={false} />
+			{isMetricsDataSource ? <MetricsQB query={query} /> : null}
+			{isLogsDataSource ? <LogsQB query={query} /> : null}
+			{isTracesDataSource ? <TracesQB query={query} /> : null}
 		</div>
 	);
 }
