@@ -1,4 +1,4 @@
-import './MetricsAggegateSection.styles.scss';
+import './MetricsAggregateSection.styles.scss';
 
 import { Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
