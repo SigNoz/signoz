@@ -130,23 +130,33 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		(text: string, searchQuery: string): React.ReactNode => {
 			if (!searchQuery || !highlightSearch) return text;
 
-			const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
-			return (
-				<>
-					{parts.map((part, i) => {
-						// Create a deterministic but unique key
-						const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
+			try {
+				const parts = text.split(
+					new RegExp(
+						`(${searchQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`,
+						'gi',
+					),
+				);
+				return (
+					<>
+						{parts.map((part, i) => {
+							// Create a deterministic but unique key
+							const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
 
-						return part.toLowerCase() === searchQuery.toLowerCase() ? (
-							<span key={uniqueKey} className="highlight-text">
-								{part}
-							</span>
-						) : (
-							part
-						);
-					})}
-				</>
-			);
+							return part.toLowerCase() === searchQuery.toLowerCase() ? (
+								<span key={uniqueKey} className="highlight-text">
+									{part}
+								</span>
+							) : (
+								part
+							);
+						})}
+					</>
+				);
+			} catch (error) {
+				console.error('Error in text highlighting:', error);
+				return text;
+			}
 		},
 		[highlightSearch],
 	);

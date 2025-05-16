@@ -24,7 +24,7 @@ export interface CustomSelectProps extends Omit<SelectProps, 'options'> {
 	highlightSearch?: boolean;
 	placement?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
 	popupMatchSelectWidth?: boolean;
-	errorMessage?: string;
+	errorMessage?: string | null;
 	allowClear?: SelectProps['allowClear'];
 	onRetry?: () => void;
 }
@@ -51,7 +51,7 @@ export interface CustomMultiSelectProps
 	getPopupContainer?: (triggerNode: HTMLElement) => HTMLElement;
 	dropdownRender?: (menu: React.ReactElement) => React.ReactElement;
 	highlightSearch?: boolean;
-	errorMessage?: string;
+	errorMessage?: string | null;
 	popupClassName?: string;
 	placement?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
 	maxTagCount?: number;
