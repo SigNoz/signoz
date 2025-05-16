@@ -32,7 +32,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
-	"github.com/SigNoz/signoz/pkg/types"
 	chVariables "github.com/SigNoz/signoz/pkg/variables/clickhouse"
 )
 
@@ -470,14 +469,6 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	}
 
 	return &model.GetTTLParams{Type: typeTTL}, nil
-}
-
-func parseSetApdexScoreRequest(r *http.Request) (*types.ApdexSettings, error) {
-	var req types.ApdexSettings
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	return &req, nil
 }
 
 func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequest, error) {

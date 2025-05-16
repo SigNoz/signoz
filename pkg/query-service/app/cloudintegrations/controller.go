@@ -521,9 +521,9 @@ func (c *Controller) UpdateServiceConfig(
 // All dashboards that are available based on cloud integrations configuration
 // across all cloud providers
 func (c *Controller) AvailableDashboards(ctx context.Context, orgId string) (
-	[]types.Dashboard, *model.ApiError,
+	[]*types.Dashboard, *model.ApiError,
 ) {
-	allDashboards := []types.Dashboard{}
+	allDashboards := []*types.Dashboard{}
 
 	for _, provider := range []string{"aws"} {
 		providerDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, orgId, provider)
@@ -541,7 +541,7 @@ func (c *Controller) AvailableDashboards(ctx context.Context, orgId string) (
 
 func (c *Controller) AvailableDashboardsForCloudProvider(
 	ctx context.Context, orgID string, cloudProvider string,
-) ([]types.Dashboard, *model.ApiError) {
+) ([]*types.Dashboard, *model.ApiError) {
 
 	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, orgID, cloudProvider)
 	if apiErr != nil {
@@ -573,14 +573,14 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 		return nil, apiErr
 	}
 
-	svcDashboards := []types.Dashboard{}
+	svcDashboards := []*types.Dashboard{}
 	for _, svc := range allServices {
 		serviceDashboardsCreatedAt := servicesWithAvailableMetrics[svc.Id]
 		if serviceDashboardsCreatedAt != nil {
 			for _, d := range svc.Assets.Dashboards {
 				isLocked := 1
 				author := fmt.Sprintf("%s-integration", cloudProvider)
-				svcDashboards = append(svcDashboards, types.Dashboard{
+				svcDashboards = append(svcDashboards, &types.Dashboard{
 					UUID:   c.dashboardUuid(cloudProvider, svc.Id, d.Id),
 					Locked: &isLocked,
 					Data:   *d.Definition,
@@ -619,7 +619,7 @@ func (c *Controller) GetDashboardById(
 
 	for _, d := range allDashboards {
 		if d.UUID == dashboardUuid {
-			return &d, nil
+			return d, nil
 		}
 	}
 
