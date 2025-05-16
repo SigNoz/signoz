@@ -62,7 +62,7 @@ describe('ConfigureServiceModal for S3 Sync service', () => {
 		const targetCombobox = screen.getAllByRole('combobox')[0];
 		const newBucketName = 'a-newly-added-bucket';
 
-		await act(async () => {
+		act(async () => {
 			fireEvent.change(targetCombobox, { target: { value: newBucketName } });
 			fireEvent.keyDown(targetCombobox, {
 				key: 'Enter',
@@ -114,9 +114,9 @@ describe('ConfigureServiceModal for S3 Sync service', () => {
 		await waitFor(() => {
 			expect(screen.getByLabelText(newBucketName)).toBeInTheDocument();
 			expect(screen.getByRole('button', { name: /save/i })).toBeEnabled();
-		});
-		await act(async () => {
-			fireEvent.click(screen.getByRole('button', { name: /save/i }));
+			act(async () => {
+				fireEvent.click(screen.getByRole('button', { name: /save/i }));
+			});
 		});
 
 		await waitFor(() => {
