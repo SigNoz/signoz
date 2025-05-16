@@ -738,7 +738,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	userId := a.ipAddress
 	if a.isTelemetryAnonymous() || userId == IP_NOT_FOUND_PLACEHOLDER {
-		userId = a.getCompanyDomain()
+		userId = "anonymous"
 	}
 
 	// check if event is part of SAAS_EVENTS_LIST
