@@ -35,7 +35,7 @@ describe('ConfigureServiceModal for S3 Sync service', () => {
 	});
 
 	it('should render with logs collection switch and bucket selectors (no buckets initially selected)', async () => {
-		await act(async () => {
+		act(() => {
 			renderModal({}); // No initial S3 buckets, defaults to 's3sync' serviceId
 		});
 		await assertGenericModalElements(); // Use new generic assertion
@@ -43,7 +43,7 @@ describe('ConfigureServiceModal for S3 Sync service', () => {
 	});
 
 	it('should render with logs collection switch and bucket selectors (some buckets initially selected)', async () => {
-		await act(async () => {
+		act(() => {
 			renderModal(initialBuckets); // Defaults to 's3sync' serviceId
 		});
 		await assertGenericModalElements(); // Use new generic assertion
@@ -51,7 +51,7 @@ describe('ConfigureServiceModal for S3 Sync service', () => {
 	});
 
 	it('should enable save button after adding a new bucket via combobox', async () => {
-		await act(async () => {
+		act(() => {
 			renderModal(initialBuckets); // Defaults to 's3sync' serviceId
 		});
 		await assertGenericModalElements();
@@ -62,7 +62,7 @@ describe('ConfigureServiceModal for S3 Sync service', () => {
 		const targetCombobox = screen.getAllByRole('combobox')[0];
 		const newBucketName = 'a-newly-added-bucket';
 
-		act(async () => {
+		act(() => {
 			fireEvent.change(targetCombobox, { target: { value: newBucketName } });
 			fireEvent.keyDown(targetCombobox, {
 				key: 'Enter',
@@ -89,7 +89,7 @@ describe('ConfigureServiceModal for S3 Sync service', () => {
 				return res(ctx.status(200), ctx.json({ message: 'Config updated' }));
 			}),
 		);
-		await act(async () => {
+		act(() => {
 			renderModal(initialBuckets); // Defaults to 's3sync' serviceId
 		});
 		await assertGenericModalElements();
@@ -102,7 +102,7 @@ describe('ConfigureServiceModal for S3 Sync service', () => {
 		const targetCombobox = screen.getAllByRole('combobox')[0];
 
 		// eslint-disable-next-line sonarjs/no-identical-functions
-		await act(async () => {
+		act(() => {
 			fireEvent.change(targetCombobox, { target: { value: newBucketName } });
 			fireEvent.keyDown(targetCombobox, {
 				key: 'Enter',
@@ -114,7 +114,7 @@ describe('ConfigureServiceModal for S3 Sync service', () => {
 		await waitFor(() => {
 			expect(screen.getByLabelText(newBucketName)).toBeInTheDocument();
 			expect(screen.getByRole('button', { name: /save/i })).toBeEnabled();
-			act(async () => {
+			act(() => {
 				fireEvent.click(screen.getByRole('button', { name: /save/i }));
 			});
 		});
@@ -140,7 +140,7 @@ describe('ConfigureServiceModal for S3 Sync service', () => {
 
 	it('should not render S3 bucket region selector UI for services other than s3sync', async () => {
 		const otherServiceId = 'cloudwatch';
-		await act(async () => {
+		act(() => {
 			renderModal({}, otherServiceId);
 		});
 		await assertGenericModalElements();
