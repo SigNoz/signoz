@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as useGetMetricsListFilterValues from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
+import * as useQueryBuilderOperationsHooks from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
@@ -28,7 +29,23 @@ const mockData: MetricsListItemRowData[] = [
 	},
 ];
 
+jest.mock('react-router-dom-v5-compat', () => {
+	const actual = jest.requireActual('react-router-dom-v5-compat');
+	return {
+		...actual,
+		useSearchParams: jest.fn().mockReturnValue([{}, jest.fn()]),
+		useNavigationType: (): any => 'PUSH',
+	};
+});
 describe('MetricsTable', () => {
+	beforeEach(() => {
+		jest
+			.spyOn(useQueryBuilderOperationsHooks, 'useQueryOperations')
+			.mockReturnValue({
+				handleChangeQueryData: jest.fn(),
+			} as any);
+	});
+
 	jest
 		.spyOn(useGetMetricsListFilterValues, 'useGetMetricsListFilterValues')
 		.mockReturnValue({

@@ -15,7 +15,10 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+
+import { COMPOSITE_QUERY_KEY } from './constants';
 
 function MetricNameSearch(): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
@@ -24,6 +27,7 @@ function MetricNameSearch(): JSX.Element {
 		query: currentQuery.builder.queryData[0],
 		entityVersion: '',
 	});
+	const [, setSearchParams] = useSearchParams();
 
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 	const [searchString, setSearchString] = useState<string>('');
@@ -66,7 +70,7 @@ function MetricNameSearch(): JSX.Element {
 
 	const handleSelect = useCallback(
 		(selectedMetricName: string): void => {
-			handleChangeQueryData('filters', {
+			const newFilter = {
 				items: [
 					...currentQuery.builder.queryData[0].filters.items,
 					{
@@ -81,10 +85,26 @@ function MetricNameSearch(): JSX.Element {
 					},
 				],
 				op: 'AND',
+			};
+			const compositeQuery = {
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: [
+						{
+							...currentQuery.builder.queryData[0],
+							filters: newFilter,
+						},
+					],
+				},
+			};
+			handleChangeQueryData('filters', newFilter);
+			setSearchParams({
+				[COMPOSITE_QUERY_KEY]: JSON.stringify(compositeQuery),
 			});
 			setIsPopoverOpen(false);
 		},
-		[currentQuery.builder.queryData, handleChangeQueryData],
+		[currentQuery, handleChangeQueryData, setSearchParams],
 	);
 
 	const metricNameFilterValues = useMemo(

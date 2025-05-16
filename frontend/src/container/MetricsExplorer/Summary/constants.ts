@@ -32,3 +32,8 @@ export const METRIC_TYPE_VALUES_MAP = {
 	[MetricType.SUMMARY]: 'Summary',
 	[MetricType.EXPONENTIAL_HISTOGRAM]: 'ExponentialHistogram',
 };
+
+export const IS_METRIC_DETAILS_OPEN_KEY = 'isMetricDetailsOpen';
+export const IS_INSPECT_MODAL_OPEN_KEY = 'isInspectModalOpen';
+export const SELECTED_METRIC_NAME_KEY = 'selectedMetricName';
+export const COMPOSITE_QUERY_KEY = 'compositeQuery';

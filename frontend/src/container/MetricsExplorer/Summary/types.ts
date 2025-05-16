@@ -20,8 +20,6 @@ export interface MetricsTableProps {
 export interface MetricsSearchProps {
 	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
-	heatmapView: TreemapViewType;
-	setHeatmapView: (value: TreemapViewType) => void;
 }
 
 export interface MetricsTreemapProps {
@@ -30,6 +28,7 @@ export interface MetricsTreemapProps {
 	isError: boolean;
 	viewType: TreemapViewType;
 	openMetricDetails: (metricName: string) => void;
+	setHeatmapView: (value: TreemapViewType) => void;
 }
 
 export interface OrderByPayload {
