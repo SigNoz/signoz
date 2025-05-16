@@ -18,6 +18,7 @@ import (
 // WhereClauseVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type WhereClauseVisitor struct {
+	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
 	warnings         []error
 	fieldKeys        map[string][]*telemetrytypes.TelemetryFieldKey
@@ -250,7 +251,7 @@ func (v *WhereClauseVisitor) VisitPrimary(ctx *PrimaryContext) any {
 		if keyCtx, ok := child.(*KeyContext); ok {
 			// create a full text search condition on the body field
 			keyText := keyCtx.GetText()
-			cond, err := v.conditionBuilder.GetCondition(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, keyText, v.builder)
+			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, keyText, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -273,7 +274,7 @@ func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.GetCondition(context.Background(), key, op, nil, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -291,7 +292,7 @@ func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.GetCondition(context.Background(), key, op, values, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, values, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -317,7 +318,7 @@ func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.GetCondition(context.Background(), key, op, []any{value1, value2}, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, []any{value1, value2}, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -366,7 +367,7 @@ func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.GetCondition(context.Background(), key, op, value, v.builder)
+			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, value, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -404,7 +405,7 @@ func (v *WhereClauseVisitor) VisitValueList(ctx *ValueListContext) any {
 func (v *WhereClauseVisitor) VisitFullText(ctx *FullTextContext) any {
 	// remove quotes from the quotedText
 	quotedText := strings.Trim(ctx.QUOTED_TEXT().GetText(), "\"'")
-	cond, err := v.conditionBuilder.GetCondition(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, quotedText, v.builder)
+	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, quotedText, v.builder)
 	if err != nil {
 		return ""
 	}
@@ -461,7 +462,7 @@ func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
 		if strings.HasPrefix(key.Name, telemetrylogs.BodyJSONStringSearchPrefix) {
 			fieldName, _ = telemetrylogs.GetBodyJSONKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
 		} else {
-			fieldName, _ = v.conditionBuilder.GetTableFieldName(context.Background(), key)
+			fieldName, _ = v.fieldMapper.FieldFor(context.Background(), key)
 		}
 
 		var cond string
