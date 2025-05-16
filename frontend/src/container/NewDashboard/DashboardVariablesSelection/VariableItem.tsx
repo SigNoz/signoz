@@ -462,7 +462,7 @@ function VariableItem({
 									<span>+ {omittedValues.length} </span>
 								</Tooltip>
 							)}
-							allowClear
+							allowClear={selectValue !== ALL_SELECT_VALUE && selectValue !== 'ALL'}
 						>
 							{enableSelectAll && (
 								<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
