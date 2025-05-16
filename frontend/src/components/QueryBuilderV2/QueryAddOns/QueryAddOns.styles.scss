@@ -27,14 +27,14 @@
 			background: var(--bg-slate-400);
 		}
 
-		.selected_view {
+		.selected-view {
 			color: var(--text-robin-500);
 			border: 1px solid var(--bg-slate-400);
 
 			display: none;
 		}
 
-		.selected_view::before {
+		.selected-view::before {
 			background: var(--bg-slate-400);
 		}
 	}
