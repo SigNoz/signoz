@@ -206,14 +206,14 @@ type Telemetry struct {
 	patTokenUser  bool
 	mutex         sync.RWMutex
 
-	alertsInfoCallback     func(ctx context.Context) (*model.AlertsInfo, error)
+	alertsInfoCallback     func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)
 	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
 	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
 	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
 	savedViewsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)
 }
 
-func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*model.AlertsInfo, error)) {
+func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)) {
 	a.alertsInfoCallback = callback
 }
 
@@ -352,7 +352,7 @@ func createTelemetry() {
 			}
 		}
 
-		alertsInfo, err := telemetry.alertsInfoCallback(ctx)
+		alertsInfo, err := telemetry.alertsInfoCallback(ctx, telemetry.sqlStore)
 		if err != nil {
 			telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
 		}

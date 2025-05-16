@@ -146,6 +146,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetReader(reader)
 	telemetry.GetInstance().SetSqlStore(serverOptions.SigNoz.SQLStore)
 	telemetry.GetInstance().SetSavedViewsInfoCallback(telemetry.GetSavedViewsInfo)
+	telemetry.GetInstance().SetAlertsInfoCallback(telemetry.GetAlertsInfo)
 	quickfiltermodule := quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(serverOptions.SigNoz.SQLStore))
 	quickFilter := quickfilter.NewAPI(quickfiltermodule)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
