@@ -1,3 +1,5 @@
+import './QueryAddOns.styles.scss';
+
 import { Button, Radio, RadioChangeEvent } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
