@@ -147,4 +147,36 @@ describe('useGetResolvedText', () => {
 		expect(result.current.fullText).toBe(reactNodeText);
 		expect(result.current.truncatedText).toBe(reactNodeText);
 	});
+
+	it('should handle number input', () => {
+		const text = 123;
+		const variables = {
+			'service.name': SERVICE_VAR,
+		};
+
+		const { result } = renderHookWithProps({
+			text,
+			variables,
+		});
+
+		// Should return the number unchanged
+		expect(result.current.fullText).toBe(text);
+		expect(result.current.truncatedText).toBe(text);
+	});
+
+	it('should handle boolean input', () => {
+		const text = true;
+		const variables = {
+			'service.name': SERVICE_VAR,
+		};
+
+		const { result } = renderHookWithProps({
+			text,
+			variables,
+		});
+
+		// Should return the boolean unchanged
+		expect(result.current.fullText).toBe(text);
+		expect(result.current.truncatedText).toBe(text);
+	});
 });
