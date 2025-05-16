@@ -1,4 +1,6 @@
 import { Button, Divider, Form, Modal } from 'antd';
+// import { renderPipelineForm } from './utils';
+import { pipelineFields } from 'container/PipelinePage/PipelineListsView/config';
 import { useAppContext } from 'providers/App/App';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +9,6 @@ import { v4 } from 'uuid';
 
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
-import { renderPipelineForm } from './utils';
 
 function AddNewPipeline({
 	isActionType,
@@ -20,18 +21,21 @@ function AddNewPipeline({
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
 	const { user } = useAppContext();
+	const [formValues, setFormValues] = React.useState<PipelineData | null>(null);
 
 	const isEdit = isActionType === 'edit-pipeline';
 	const isAdd = isActionType === 'add-pipeline';
 
 	useEffect(() => {
-		if (isEdit) {
+		if (isEdit && selectedPipelineData) {
+			console.log('setting fields value', selectedPipelineData);
 			form.setFieldsValue(selectedPipelineData);
-		}
-		if (isAdd) {
+			setFormValues(selectedPipelineData);
+		} else if (isAdd && !formValues) {
+			console.log('resetting fields value');
 			form.resetFields();
 		}
-	}, [form, isEdit, isAdd, selectedPipelineData]);
+	}, [form, isEdit, isAdd, selectedPipelineData, formValues]);
 
 	const onFinish = (values: PipelineData): void => {
 		const newPipeLineData: PipelineData = {
@@ -110,9 +114,17 @@ function AddNewPipeline({
 				layout="vertical"
 				onFinish={onFinish}
 				autoComplete="off"
+				onValuesChange={(changedValues, allValues): void => {
+					console.log('changedValues', changedValues);
+					console.log('allValues', allValues);
+					setFormValues(allValues as PipelineData);
+				}}
 				form={form}
 			>
-				{renderPipelineForm()}
+				{pipelineFields.map((field) => {
+					const Component = field.component;
+					return <Component key={field.id} fieldData={field} />;
+				})}
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>
