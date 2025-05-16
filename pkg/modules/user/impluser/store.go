@@ -474,3 +474,82 @@ func (s *Store) UpdatePassword(ctx context.Context, userID string, password stri
 func (s *Store) GetDomainByName(ctx context.Context, name string) (*types.StorableOrgDomain, error) {
 	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "not supported")
 }
+
+// --- API KEY ---
+func (s *Store) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
+	// p.StorableAPIKey.ID = valuer.GenerateUUID()
+	_, err := s.sqlstore.BunDB().NewInsert().
+		Model(apiKey).
+		Exec(ctx)
+	if err != nil {
+		return s.sqlstore.WrapAlreadyExistsErrf(err, types.ErrAPIKeyAlreadyExists, "API key with token: %s already exists", apiKey.Token)
+	}
+
+	return nil
+}
+
+func (s *Store) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updatedByUserID string) error {
+	apiKey.UpdatedBy = updatedByUserID
+	apiKey.UpdatedAt = time.Now()
+	_, err := s.sqlstore.BunDB().NewUpdate().
+		Model(apiKey).
+		Column("role", "name", "updated_at", "updated_by").
+		Where("id = ?", id).
+		Where("revoked = false").
+		Exec(ctx)
+	if err != nil {
+		return s.sqlstore.WrapNotFoundErrf(err, types.ErrAPIKeyNotFound, "API key with id: %s does not exist", id)
+	}
+	return nil
+}
+
+func (s *Store) ListAPIKeys(ctx context.Context, orgID string) ([]*types.GettableAPIKey, error) {
+	apiKeys := new([]*types.GettableAPIKey)
+
+	if err := s.sqlstore.BunDB().NewSelect().
+		Model(apiKeys).
+		Relation("CreatedByUser").
+		Relation("UpdatedByUser").
+		Join("LEFT JOIN users ON users.id = storable_api_key.user_id").
+		Where("users.org_id = ?", orgID).
+		Where("storable_api_key.revoked = false").
+		Order("storable_api_key.updated_at DESC").
+		Scan(ctx); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch API keys")
+	}
+
+	return *apiKeys, nil
+}
+
+func (s *Store) RevokeAPIKey(ctx context.Context, id, revokedByUserID string) error {
+	updatedAt := time.Now().Unix()
+	_, err := s.sqlstore.BunDB().NewUpdate().
+		Model(&types.StorableAPIKey{}).
+		Set("revoked = ?", true).
+		Set("updated_by = ?", revokedByUserID).
+		Set("updated_at = ?", updatedAt).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to revoke API key")
+	}
+	return nil
+}
+
+func (s *Store) GetAPIKey(ctx context.Context, orgID string, id string) (*types.GettableAPIKey, error) {
+	apiKey := new(types.GettableAPIKey)
+
+	if err := s.sqlstore.BunDB().NewSelect().
+		Model(apiKey).
+		Relation("CreatedByUser").
+		Relation("UpdatedByUser").
+		Join("LEFT JOIN users ON users.id = storable_api_key.user_id").
+		Where("users.org_id = ?", orgID).
+		Where("storable_api_key.id = ?", id).
+		Where("storable_api_key.revoked = false").
+		Scan(ctx); err != nil {
+		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrAPIKeyNotFound, "API key with id: %s does not exist", id)
+	}
+
+	return apiKey, nil
+}

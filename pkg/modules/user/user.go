@@ -47,6 +47,13 @@ type Module interface {
 
 	// Auth Domain
 	GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error)
+
+	// API KEY
+	CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error
+	UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updatorID string) error
+	ListAPIKeys(ctx context.Context, orgID string) ([]*types.GettableAPIKey, error)
+	RevokeAPIKey(ctx context.Context, id, removedByUserID string) error
+	GetAPIKey(ctx context.Context, orgID string, id string) (*types.GettableAPIKey, error)
 }
 
 type Handler interface {
@@ -72,4 +79,10 @@ type Handler interface {
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)
 	ResetPassword(http.ResponseWriter, *http.Request)
 	ChangePassword(http.ResponseWriter, *http.Request)
+
+	// API KEY
+	CreateAPIKey(http.ResponseWriter, *http.Request)
+	ListAPIKeys(http.ResponseWriter, *http.Request)
+	UpdateAPIKey(http.ResponseWriter, *http.Request)
+	RevokeAPIKey(http.ResponseWriter, *http.Request)
 }

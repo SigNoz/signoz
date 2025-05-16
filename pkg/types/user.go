@@ -22,6 +22,8 @@ var (
 	ErrResetPasswordTokenAlreadyExists = errors.MustNewCode("reset_password_token_already_exists")
 	ErrPasswordNotFound                = errors.MustNewCode("password_not_found")
 	ErrResetPasswordTokenNotFound      = errors.MustNewCode("reset_password_token_not_found")
+	ErrAPIKeyAlreadyExists             = errors.MustNewCode("api_key_already_exists")
+	ErrAPIKeyNotFound                  = errors.MustNewCode("api_key_not_found")
 )
 
 type UserStore interface {
@@ -58,6 +60,13 @@ type UserStore interface {
 
 	// Temporary func for SSO
 	GetDefaultOrgID(ctx context.Context) (string, error)
+
+	// API KEY
+	CreateAPIKey(ctx context.Context, apiKey *StorableAPIKey) error
+	UpdateAPIKey(ctx context.Context, id string, apiKey *StorableAPIKey, updatorID string) error
+	ListAPIKeys(ctx context.Context, orgID string) ([]*GettableAPIKey, error)
+	RevokeAPIKey(ctx context.Context, id, revokedByUserID string) error
+	GetAPIKey(ctx context.Context, orgID string, id string) (*GettableAPIKey, error)
 }
 
 type GettableUser struct {

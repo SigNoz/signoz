@@ -127,7 +127,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// routes available only in ee version
 
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(ah.loginPrecheck)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(ah.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
 
 	// invite
 	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
@@ -147,10 +147,10 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/login", am.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
 
 	// PAT APIs
-	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.createPAT)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.getPATs)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(ah.updatePAT)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(ah.revokePAT)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.Signoz.Handlers.User.CreateAPIKey)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.Signoz.Handlers.User.ListAPIKeys)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(ah.Signoz.Handlers.User.UpdateAPIKey)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(ah.Signoz.Handlers.User.RevokeAPIKey)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/checkout", am.AdminAccess(ah.checkout)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/billing", am.AdminAccess(ah.getBilling)).Methods(http.MethodGet)

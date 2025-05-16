@@ -392,3 +392,23 @@ func (m *Module) CanUsePassword(ctx context.Context, email string) (bool, error)
 func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error) {
 	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SSO is not supported")
 }
+
+func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
+	return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
+}
+
+func (m *Module) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updatorID string) error {
+	return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
+}
+
+func (m *Module) ListAPIKeys(ctx context.Context, orgID string) ([]*types.GettableAPIKey, error) {
+	return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
+}
+
+func (m *Module) GetAPIKey(ctx context.Context, orgID string, id string) (*types.GettableAPIKey, error) {
+	return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
+}
+
+func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID string) error {
+	return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
+}

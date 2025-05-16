@@ -470,3 +470,23 @@ func (h *handler) GetCurrentUserFromJWT(w http.ResponseWriter, r *http.Request) 
 	render.Success(w, http.StatusOK, user)
 
 }
+
+// CreateAPIKey implements user.Handler.
+func (h *handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
+	render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented"))
+}
+
+// ListAPIKeys implements user.Handler.
+func (h *handler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {
+	render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented"))
+}
+
+// RevokeAPIKey implements user.Handler.
+func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
+	render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented"))
+}
+
+// UpdateAPIKey implements user.Handler.
+func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
+	render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented"))
+}

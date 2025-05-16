@@ -17,12 +17,12 @@ import (
 
 // EnterpriseModule embeds the base module implementation
 type Module struct {
-	*baseimpl.Module // Embed the base module implementation
-	store            types.UserStore
+	user.Module // Embed the base module implementation
+	store       types.UserStore
 }
 
 func NewModule(store types.UserStore) user.Module {
-	baseModule := baseimpl.NewModule(store).(*baseimpl.Module)
+	baseModule := baseimpl.NewModule(store)
 	return &Module{
 		Module: baseModule,
 		store:  store,
@@ -226,4 +226,24 @@ func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to load domain config")
 	}
 	return gettableDomain, nil
+}
+
+func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
+	return m.store.CreateAPIKey(ctx, apiKey)
+}
+
+func (m *Module) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updatorID string) error {
+	return m.store.UpdateAPIKey(ctx, id, apiKey, updatorID)
+}
+
+func (m *Module) ListAPIKeys(ctx context.Context, orgID string) ([]*types.GettableAPIKey, error) {
+	return m.store.ListAPIKeys(ctx, orgID)
+}
+
+func (m *Module) GetAPIKey(ctx context.Context, orgID string, id string) (*types.GettableAPIKey, error) {
+	return m.store.GetAPIKey(ctx, orgID, id)
+}
+
+func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID string) error {
+	return m.store.RevokeAPIKey(ctx, id, removedByUserID)
 }
