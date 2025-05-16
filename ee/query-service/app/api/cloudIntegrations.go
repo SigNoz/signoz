@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	eeTypes "github.com/SigNoz/signoz/ee/types"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
@@ -116,7 +115,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		return "", apiErr
 	}
 
-	allPats, err := ah.AppDao().ListPATs(ctx, orgId)
+	allPats, err := ah.Signoz.Modules.User.ListAPIKeys(ctx, orgId)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't list PATs: %w", err,
@@ -133,19 +132,25 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		zap.String("cloudProvider", cloudProvider),
 	)
 
-	newPAT := eeTypes.NewGettablePAT(
+	newPAT, err := types.NewStorableAPIKey(
 		integrationPATName,
-		types.RoleViewer.String(),
 		integrationUser.ID.String(),
+		types.RoleViewer,
 		0,
 	)
-	integrationPAT, err := ah.AppDao().CreatePAT(ctx, orgId, newPAT)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't create cloud integration PAT: %w", err,
 		))
 	}
-	return integrationPAT.Token, nil
+
+	err = ah.Signoz.Modules.User.CreateAPIKey(ctx, newPAT)
+	if err != nil {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't create cloud integration PAT: %w", err,
+		))
+	}
+	return newPAT.Token, nil
 }
 
 func (ah *APIHandler) getOrCreateCloudIntegrationUser(
