@@ -548,6 +548,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", am.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/entry_point_operations", am.ViewAccess(aH.getEntryPointOps)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", am.ViewAccess(aH.getUsage)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
@@ -1629,6 +1630,21 @@ func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
 
 	aH.WriteJSON(w, r, result)
 
+}
+
+func (aH *APIHandler) getEntryPointOps(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseGetTopOperationsRequest(r)
+	if aH.HandleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, apiErr := aH.reader.GetEntryPointOperations(r.Context(), query)
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
 }
 
 func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {

@@ -679,6 +679,69 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagOperatorPair, " OR ")), args
 }
 
+func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
+	topOps, err := r.GetTopOperations(ctx, queryParams)
+	if err != nil {
+		return nil, err
+	}
+	if topOps == nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("received nil top operations")}
+	}
+
+	namedArgs := []interface{}{
+		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
+		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
+		clickhouse.Named("service", queryParams.ServiceName),
+	}
+
+	// Step 2: Get entry point operation names for the given service
+	entryPointSet := map[string]struct{}{}
+
+	query := fmt.Sprintf(`
+		SELECT 
+			name, 
+			max(timestamp) as ts
+		FROM %s.%s
+		WHERE 
+			timestamp >= @start AND timestamp <= @end
+			AND resource_string_service$$name = @service
+			AND parent_span_id NOT IN (
+				SELECT span_id 
+				FROM %s.%s 
+				WHERE resource_string_service$$name = @service
+			)
+		GROUP BY name
+		ORDER BY ts DESC LIMIT 5000`,
+		r.TraceDB, r.traceTableName, r.TraceDB, r.traceTableName)
+
+	rows, queryErr := r.db.Query(ctx, query, namedArgs...)
+
+	if queryErr != nil {
+		zap.L().Error("Error executing entry point query", zap.Error(queryErr))
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error executing entry point query")}
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name string
+		var ts time.Time
+		if err := rows.Scan(&name, &ts); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error reading entry point data")}
+		}
+		entryPointSet[name] = struct{}{}
+	}
+
+	// Step 3: Filter topOps based on entryPointSet
+	var filtered []model.TopOperationsItem
+	for _, op := range *topOps {
+		if _, ok := entryPointSet[op.Name]; ok {
+			filtered = append(filtered, op)
+		}
+	}
+
+	return &filtered, nil
+}
+
 func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
 
 	namedArgs := []interface{}{
