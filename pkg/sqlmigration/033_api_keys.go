@@ -131,16 +131,6 @@ func (migration *migratePATToFactorAPIKey) CopyOldPatToFactorAPIKey(ctx context.
 	newAPIKeys := make([]*newFactorAPIKey33, 0)
 	for _, apiKey := range existingAPIKeys {
 
-		// get the username from the user id
-		var userName string
-		err := tx.NewSelect().
-			Model(&types.User{}).
-			ColumnExpr("display_name").
-			Where("id = ?", apiKey.UpdatedByUserID).
-			Scan(ctx, &userName)
-		if err != nil {
-			return nil, err
-		}
 		if apiKey.CreatedAt.IsZero() {
 			apiKey.CreatedAt = time.Now()
 		}
@@ -152,8 +142,8 @@ func (migration *migratePATToFactorAPIKey) CopyOldPatToFactorAPIKey(ctx context.
 			Identifiable: apiKey.Identifiable,
 			CreatedAt:    apiKey.CreatedAt,
 			UpdatedAt:    apiKey.UpdatedAt,
-			CreatedBy:    userName,
-			UpdatedBy:    userName,
+			CreatedBy:    apiKey.UserID,
+			UpdatedBy:    apiKey.UpdatedByUserID,
 			Token:        apiKey.Token,
 			Role:         apiKey.Role,
 			Name:         apiKey.Name,
