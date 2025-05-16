@@ -679,13 +679,13 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagOperatorPair, " OR ")), args
 }
 
-func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
+func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, error) {
 	topOps, err := r.GetTopOperations(ctx, queryParams)
 	if err != nil {
 		return nil, err
 	}
 	if topOps == nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("received nil top operations")}
+		return nil, errors.New("no top operations found")
 	}
 
 	namedArgs := []interface{}{
@@ -721,7 +721,7 @@ func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryPar
 
 	if queryErr != nil {
 		zap.L().Error("Error executing entry point query", zap.Error(queryErr))
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error executing entry point query")}
+		return nil, errors.Wrapf(queryErr, "error executing entry point query")
 	}
 	defer rows.Close()
 
@@ -729,7 +729,7 @@ func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryPar
 		var name string
 		var ts time.Time
 		if err := rows.Scan(&name, &ts); err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error reading entry point data")}
+			return nil, errors.Wrapf(err, "error scanning entry point row")
 		}
 		entryPointSet[name] = struct{}{}
 	}

@@ -1640,7 +1640,7 @@ func (aH *APIHandler) getEntryPointOps(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, apiErr := aH.reader.GetEntryPointOperations(r.Context(), query)
-	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr, http.StatusInternalServerError) {
 		return
 	}
 
