@@ -15,7 +15,7 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/app/api"
 	"github.com/SigNoz/signoz/ee/query-service/app/db"
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	"github.com/SigNoz/signoz/ee/query-service/dao"
+	"github.com/SigNoz/signoz/ee/query-service/dao/sqlite"
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 	"github.com/SigNoz/signoz/ee/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -36,8 +36,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
-	baseexplorer "github.com/SigNoz/signoz/pkg/query-service/app/explorer"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
@@ -92,19 +90,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
-	modelDao, err := dao.InitDao(serverOptions.SigNoz.SQLStore)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := baseexplorer.InitWithDSN(serverOptions.SigNoz.SQLStore); err != nil {
-		return nil, err
-	}
-
-	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
-		return nil, err
-	}
-
+	modelDao := sqlite.NewModelDao(serverOptions.SigNoz.SQLStore)
 	gatewayProxy, err := gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
 	if err != nil {
 		return nil, err
@@ -115,9 +101,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// set license manager as feature flag provider in dao
-	modelDao.SetFlagProvider(lm)
 
 	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
 	if err != nil {
@@ -197,6 +180,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetReader(reader)
 	telemetry.GetInstance().SetSqlStore(serverOptions.SigNoz.SQLStore)
 	telemetry.GetInstance().SetSaasOperator(constants.SaasSegmentKey)
+	telemetry.GetInstance().SetSavedViewsInfoCallback(telemetry.GetSavedViewsInfo)
+	telemetry.GetInstance().SetAlertsInfoCallback(telemetry.GetAlertsInfo)
+	telemetry.GetInstance().SetGetUsersCallback(telemetry.GetUsers)
+	telemetry.GetInstance().SetUserCountCallback(telemetry.GetUserCount)
+	telemetry.GetInstance().SetDashboardsInfoCallback(telemetry.GetDashboardsInfo)
 
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	if err != nil {
