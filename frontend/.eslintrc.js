@@ -110,6 +110,8 @@ module.exports = {
 		// eslint rules need to remove
 		'@typescript-eslint/no-shadow': 'off',
 		'import/no-cycle': 'off',
+		// https://typescript-eslint.io/rules/consistent-return/ check the warning for details
+		'consistent-return': 'off',
 		'prettier/prettier': [
 			'error',
 			{},

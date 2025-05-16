@@ -175,16 +175,32 @@ export function getWidgetQuery({
 export const convertToNanoseconds = (timestamp: number): bigint =>
 	BigInt((timestamp * 1e9).toFixed(0));
 
+export const getCustomTimeRangeWindowSweepInMS = (
+	customTimeRangeWindowForCoRelation: string | undefined,
+): number => {
+	switch (customTimeRangeWindowForCoRelation) {
+		case '5m':
+			return 2.5 * 60 * 1000;
+		case '10m':
+			return 5 * 60 * 1000;
+		default:
+			return 5 * 60 * 1000;
+	}
+};
+
 export const getStartAndEndTimesInMilliseconds = (
 	timestamp: number,
+	delta?: number,
 ): { start: number; end: number } => {
 	const FIVE_MINUTES_IN_MILLISECONDS = 5 * 60 * 1000; // 300,000 milliseconds
 
 	const pointInTime = Math.floor(timestamp * 1000);
 
 	// Convert timestamp to milliseconds and floor it
-	const start = Math.floor(pointInTime - FIVE_MINUTES_IN_MILLISECONDS);
-	const end = Math.floor(pointInTime + FIVE_MINUTES_IN_MILLISECONDS);
+	const start = Math.floor(
+		pointInTime - (delta || FIVE_MINUTES_IN_MILLISECONDS),
+	);
+	const end = Math.floor(pointInTime + (delta || FIVE_MINUTES_IN_MILLISECONDS));
 
 	return { start, end };
 };
