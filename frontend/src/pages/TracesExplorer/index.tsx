@@ -6,6 +6,7 @@ import { Button, Card, Tabs, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import QueryBuilderV2 from 'components/QueryBuilderV2/QueryBuilderV2';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -18,6 +19,8 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import QuerySection from 'container/TracesExplorer/QuerySection';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -226,7 +229,11 @@ function TracesExplorer(): JSX.Element {
 						</div>
 					</div>
 					<ExplorerCard sourcepage={DataSource.TRACES}>
-						<QuerySection />
+						{/* <QuerySection /> */}
+						<QueryBuilderV2
+							source={DataSource.TRACES}
+							query={currentQuery.builder.queryData[0]}
+						/>
 					</ExplorerCard>
 
 					<Container className="traces-explorer-views">
