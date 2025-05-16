@@ -162,7 +162,7 @@ describe('VariableItem', () => {
 			</MockQueryClientProvider>,
 		);
 
-		expect(screen.getByTitle('ALL')).toBeInTheDocument();
+		expect(screen.getByText('ALL')).toBeInTheDocument();
 	});
 
 	test('calls useEffect when the component mounts', () => {
