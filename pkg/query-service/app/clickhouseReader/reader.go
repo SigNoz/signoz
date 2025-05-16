@@ -692,6 +692,8 @@ func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryPar
 		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
 		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
 		clickhouse.Named("service", queryParams.ServiceName),
+		clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
+		clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
 	}
 
 	// Step 2: Get entry point operation names for the given service
@@ -704,6 +706,7 @@ func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryPar
 		FROM %s.%s
 		WHERE 
 			timestamp >= @start AND timestamp <= @end
+			AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket
 			AND resource_string_service$$name = @service
 			AND parent_span_id NOT IN (
 				SELECT span_id 
@@ -711,7 +714,7 @@ func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryPar
 				WHERE resource_string_service$$name = @service
 			)
 		GROUP BY name
-		ORDER BY ts DESC LIMIT 5000`,
+		ORDER BY ts DESC`,
 		r.TraceDB, r.traceTableName, r.TraceDB, r.traceTableName)
 
 	rows, queryErr := r.db.Query(ctx, query, namedArgs...)
