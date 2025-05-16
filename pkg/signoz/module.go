@@ -3,6 +3,8 @@ package signoz
 import (
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -20,6 +22,7 @@ type Modules struct {
 	User         user.Module
 	SavedView    savedview.Module
 	Apdex        apdex.Module
+	Dashboard    dashboard.Module
 }
 
 func NewModules(sqlstore sqlstore.SQLStore, user user.Module) Modules {
@@ -29,5 +32,6 @@ func NewModules(sqlstore sqlstore.SQLStore, user user.Module) Modules {
 		User:         user,
 		SavedView:    implsavedview.NewModule(sqlstore),
 		Apdex:        implapdex.NewModule(sqlstore),
+		Dashboard:    impldashboard.NewModule(sqlstore),
 	}
 }

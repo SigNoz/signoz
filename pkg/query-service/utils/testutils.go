@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -82,7 +81,5 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 
 func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
 	sqlStore, _ := NewTestSqliteDB(t)
-	_ = dashboards.InitDB(sqlStore)
-
 	return sqlStore
 }

@@ -39,7 +39,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
 	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
@@ -217,7 +216,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
-	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
+	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager, opts.Signoz.Modules.Dashboard)
 	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
 	aH := &APIHandler{
@@ -1086,9 +1085,10 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errv2)
 		return
 	}
-	allDashboards, err := dashboards.GetDashboards(r.Context(), claims.OrgID)
+
+	allDashboards, err := aH.Signoz.Modules.Dashboard.List(r.Context(), claims.OrgID)
 	if err != nil {
-		RespondError(w, err, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -1140,7 +1140,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 		inter = Intersection(inter, tags2Dash[tag])
 	}
 
-	filteredDashboards := []types.Dashboard{}
+	filteredDashboards := []*types.Dashboard{}
 	for _, val := range inter {
 		dash := (allDashboards)[val]
 		filteredDashboards = append(filteredDashboards, dash)
@@ -1156,10 +1156,10 @@ func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errv2)
 		return
 	}
-	err := dashboards.DeleteDashboard(r.Context(), claims.OrgID, uuid)
 
+	err := aH.Signoz.Modules.Dashboard.Delete(r.Context(), claims.OrgID, uuid)
 	if err != nil {
-		RespondError(w, err, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -1228,6 +1228,12 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 }
 
 func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	uuid := mux.Vars(r)["uuid"]
 
 	var postData map[string]interface{}
@@ -1236,25 +1242,30 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
-	err = dashboards.IsPostDataSane(&postData)
+
+	err = aH.IsDashboardPostDataSane(&postData)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
 
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), claims.OrgID, claims.Email, uuid, postData)
+	dashboard, apiError := aH.Signoz.Modules.Dashboard.Update(r.Context(), claims.OrgID, claims.Email, uuid, postData)
 	if apiError != nil {
-		RespondError(w, apiError, nil)
+		render.Error(w, apiError)
 		return
 	}
 
 	aH.Respond(w, dashboard)
 
+}
+
+func (aH *APIHandler) IsDashboardPostDataSane(data *map[string]interface{}) error {
+	val, ok := (*data)["title"]
+	if !ok || val == nil {
+		return fmt.Errorf("title not found in post data")
+	}
+
+	return nil
 }
 
 func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
@@ -1266,11 +1277,12 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errv2)
 		return
 	}
-	dashboard, apiError := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
+	dashboard, errv2 := aH.Signoz.Modules.Dashboard.Get(r.Context(), claims.OrgID, uuid)
 
-	if apiError != nil {
-		if apiError.Type() != model.ErrorNotFound {
-			RespondError(w, apiError, nil)
+	var apiError *model.ApiError
+	if errv2 != nil {
+		if !errorsV2.Ast(errv2, errorsV2.TypeNotFound) {
+			render.Error(w, errv2)
 			return
 		}
 
@@ -1301,7 +1313,6 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
-
 	var postData map[string]interface{}
 
 	err := json.NewDecoder(r.Body).Decode(&postData)
@@ -1310,7 +1321,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = dashboards.IsPostDataSane(&postData)
+	err = aH.IsDashboardPostDataSane(&postData)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
@@ -1320,10 +1331,10 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errv2)
 		return
 	}
-	dash, apiErr := dashboards.CreateDashboard(r.Context(), claims.OrgID, claims.Email, postData)
 
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	dash, errv2 := aH.Signoz.Modules.Dashboard.Create(r.Context(), claims.OrgID, claims.Email, postData)
+	if errv2 != nil {
+		render.Error(w, errv2)
 		return
 	}
 

@@ -195,7 +195,6 @@ type Telemetry struct {
 	userEmail     string
 	isEnabled     bool
 	isAnonymous   bool
-	distinctId    string
 	reader        interfaces.Reader
 	sqlStore      sqlstore.SQLStore
 	companyDomain string
@@ -209,7 +208,7 @@ type Telemetry struct {
 	alertsInfoCallback     func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)
 	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
 	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
-	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
+	dashboardsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)
 	savedViewsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)
 }
 
@@ -229,7 +228,7 @@ func (a *Telemetry) SetSavedViewsInfoCallback(callback func(ctx context.Context,
 	a.savedViewsInfoCallback = callback
 }
 
-func (a *Telemetry) SetDashboardsInfoCallback(callback func(ctx context.Context) (*model.DashboardsInfo, error)) {
+func (a *Telemetry) SetDashboardsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)) {
 	a.dashboardsInfoCallback = callback
 }
 
@@ -357,7 +356,7 @@ func createTelemetry() {
 			telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
 		}
 		if err == nil {
-			dashboardsInfo, err := telemetry.dashboardsInfoCallback(ctx)
+			dashboardsInfo, err := telemetry.dashboardsInfoCallback(ctx, telemetry.sqlStore)
 			if err == nil {
 				savedViewsInfo, err := telemetry.savedViewsInfoCallback(ctx, telemetry.sqlStore)
 				if err == nil {

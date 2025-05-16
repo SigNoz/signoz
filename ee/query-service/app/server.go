@@ -36,7 +36,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
@@ -93,10 +92,6 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	modelDao, err := dao.InitDao(serverOptions.SigNoz.SQLStore)
 	if err != nil {
-		return nil, err
-	}
-
-	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 
@@ -196,6 +191,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetAlertsInfoCallback(telemetry.GetAlertsInfo)
 	telemetry.GetInstance().SetGetUsersCallback(telemetry.GetUsers)
 	telemetry.GetInstance().SetUserCountCallback(telemetry.GetUserCount)
+	telemetry.GetInstance().SetDashboardsInfoCallback(telemetry.GetDashboardsInfo)
 
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	if err != nil {
