@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import React from 'react';
 
 import useGetResolvedText from '../useGetResolvedText';
 
@@ -20,7 +21,7 @@ describe('useGetResolvedText', () => {
 	const TEXT_TEMPLATE = 'Logs count in $service.name in $severity';
 
 	const renderHookWithProps = (props: {
-		text: string;
+		text: string | React.ReactNode;
 		variables?: Record<string, string | number | boolean>;
 		dashboardVariables?: Record<string, any>;
 		maxLength?: number;
@@ -129,5 +130,53 @@ describe('useGetResolvedText', () => {
 		expect(result.current.fullText).toBe(
 			'Logs count in test, app, frontend, env in $unknown',
 		);
+	});
+
+	it('should handle non-string text input (ReactNode)', () => {
+		const reactNodeText = <div>Test ReactNode</div>;
+		const variables = {
+			'service.name': SERVICE_VAR,
+		};
+
+		const { result } = renderHookWithProps({
+			text: reactNodeText,
+			variables,
+		});
+
+		// Should return the ReactNode unchanged
+		expect(result.current.fullText).toBe(reactNodeText);
+		expect(result.current.truncatedText).toBe(reactNodeText);
+	});
+
+	it('should handle number input', () => {
+		const text = 123;
+		const variables = {
+			'service.name': SERVICE_VAR,
+		};
+
+		const { result } = renderHookWithProps({
+			text,
+			variables,
+		});
+
+		// Should return the number unchanged
+		expect(result.current.fullText).toBe(text);
+		expect(result.current.truncatedText).toBe(text);
+	});
+
+	it('should handle boolean input', () => {
+		const text = true;
+		const variables = {
+			'service.name': SERVICE_VAR,
+		};
+
+		const { result } = renderHookWithProps({
+			text,
+			variables,
+		});
+
+		// Should return the boolean unchanged
+		expect(result.current.fullText).toBe(text);
+		expect(result.current.truncatedText).toBe(text);
 	});
 });

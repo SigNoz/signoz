@@ -5,10 +5,10 @@
 // return value should be a full text string, and a truncated text string (if max length is provided)
 
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useMemo } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
 
 interface UseGetResolvedTextProps {
-	text: string;
+	text: string | ReactNode;
 	variables?: Record<string, string | number | boolean>;
 	maxLength?: number;
 	matcher?: string;
@@ -16,10 +16,11 @@ interface UseGetResolvedTextProps {
 }
 
 interface ResolvedTextResult {
-	fullText: string;
-	truncatedText: string;
+	fullText: string | ReactNode;
+	truncatedText: string | ReactNode;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function useGetResolvedText({
 	text,
 	variables,
@@ -28,6 +29,7 @@ function useGetResolvedText({
 	maxValues = 2, // Default to showing 2 values before +n more
 }: UseGetResolvedTextProps): ResolvedTextResult {
 	const { selectedDashboard } = useDashboard();
+	const isString = typeof text === 'string';
 
 	const processedDashboardVariables = useMemo(() => {
 		if (variables) return variables;
@@ -108,23 +110,25 @@ function useGetResolvedText({
 		[matcher],
 	);
 
-	const fullText = useMemo(
-		() =>
-			text.replace(combinedPattern, (match) => {
-				const varName = extractVarName(match);
-				const value = processedVariables[varName];
+	const fullText = useMemo(() => {
+		if (!isString) return text;
 
-				if (value != null) {
-					const parts = value.split('-|-');
-					return parts.length > 1 ? parts[1] : value;
-				}
-				return match;
-			}),
-		[text, processedVariables, combinedPattern, extractVarName],
-	);
+		return (text as string)?.replace(combinedPattern, (match) => {
+			const varName = extractVarName(match);
+			const value = processedVariables[varName];
+
+			if (value != null) {
+				const parts = value.split('-|-');
+				return parts.length > 1 ? parts[1] : value;
+			}
+			return match;
+		});
+	}, [text, processedVariables, combinedPattern, extractVarName, isString]);
 
 	const truncatedText = useMemo(() => {
-		const result = text.replace(combinedPattern, (match) => {
+		if (!isString) return text;
+
+		const result = (text as string)?.replace(combinedPattern, (match) => {
 			const varName = extractVarName(match);
 			const value = processedVariables[varName];
 
@@ -145,7 +149,14 @@ function useGetResolvedText({
 			return `${result.substring(0, maxLength - 3)}...`;
 		}
 		return result;
-	}, [text, processedVariables, combinedPattern, maxLength, extractVarName]);
+	}, [
+		text,
+		processedVariables,
+		combinedPattern,
+		maxLength,
+		extractVarName,
+		isString,
+	]);
 
 	return {
 		fullText,
