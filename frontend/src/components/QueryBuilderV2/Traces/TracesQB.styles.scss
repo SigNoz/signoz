@@ -1,0 +1,28 @@
+.traces-qb {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	.traces-search-filter-container {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+
+		.ant-select {
+			height: auto;
+		}
+
+		.ant-select-selector {
+			border-radius: 2px;
+			border: 1px solid var(--Slate-400, #1d212d) !important;
+			background: var(--Ink-300, #16181d) !important;
+			height: 34px !important;
+			box-sizing: border-box !important;
+		}
+
+		.ant-select-arrow {
+			color: var(--bg-vanilla-400) !important;
+		}
+	}
+}
