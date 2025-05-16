@@ -5,4 +5,5 @@ export interface Props {
 
 export interface PayloadProps {
 	data: string;
+	status: string;
 }

@@ -75,7 +75,8 @@ func (c *conditionBuilder) GetCondition(
 		return "", nil
 	}
 
-	if key.FieldDataType != telemetrytypes.FieldDataTypeString {
+	if key.FieldDataType != telemetrytypes.FieldDataTypeString &&
+		key.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
 		// if the field data type is not string, we can't build a condition for related values
 		return "", nil
 	}
@@ -83,37 +84,37 @@ func (c *conditionBuilder) GetCondition(
 	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
 
 	// key must exists to apply main filter
-	containsExp := fmt.Sprintf("mapContains(%s, %s)", column.Name, sb.Var(key.Name))
+	expr := `if(mapContains(%s, %s), %s, true)`
+
+	var cond string
 
 	// regular operators
 	switch operator {
 	// regular operators
 	case qbtypes.FilterOperatorEqual:
-		return sb.And(containsExp, sb.E(tblFieldName, value)), nil
+		cond = sb.E(tblFieldName, value)
 	case qbtypes.FilterOperatorNotEqual:
-		return sb.And(containsExp, sb.NE(tblFieldName, value)), nil
+		cond = sb.NE(tblFieldName, value)
 
 	// like and not like
 	case qbtypes.FilterOperatorLike:
-		return sb.And(containsExp, sb.Like(tblFieldName, value)), nil
+		cond = sb.Like(tblFieldName, value)
 	case qbtypes.FilterOperatorNotLike:
-		return sb.And(containsExp, sb.NotLike(tblFieldName, value)), nil
+		cond = sb.NotLike(tblFieldName, value)
 	case qbtypes.FilterOperatorILike:
-		return sb.And(containsExp, sb.ILike(tblFieldName, value)), nil
+		cond = sb.ILike(tblFieldName, value)
 	case qbtypes.FilterOperatorNotILike:
-		return sb.And(containsExp, sb.NotILike(tblFieldName, value)), nil
+		cond = sb.NotILike(tblFieldName, value)
 
 	case qbtypes.FilterOperatorContains:
-		return sb.And(containsExp, sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value))), nil
+		cond = sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value))
 	case qbtypes.FilterOperatorNotContains:
-		return sb.And(containsExp, sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value))), nil
+		cond = sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value))
 
 	case qbtypes.FilterOperatorRegexp:
-		exp := fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value))
-		return sb.And(containsExp, exp), nil
+		cond = fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value))
 	case qbtypes.FilterOperatorNotRegexp:
-		exp := fmt.Sprintf(`not match(%s, %s)`, tblFieldName, sb.Var(value))
-		return sb.And(containsExp, exp), nil
+		cond = fmt.Sprintf(`not match(%s, %s)`, tblFieldName, sb.Var(value))
 
 	// in and not in
 	case qbtypes.FilterOperatorIn:
@@ -121,13 +122,13 @@ func (c *conditionBuilder) GetCondition(
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.And(containsExp, sb.In(tblFieldName, values...)), nil
+		cond = sb.In(tblFieldName, values...)
 	case qbtypes.FilterOperatorNotIn:
 		values, ok := value.([]any)
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.And(containsExp, sb.NotIn(tblFieldName, values...)), nil
+		cond = sb.NotIn(tblFieldName, values...)
 
 	// exists and not exists
 	// in the query builder, `exists` and `not exists` are used for
@@ -140,12 +141,12 @@ func (c *conditionBuilder) GetCondition(
 		}:
 			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
 			if operator == qbtypes.FilterOperatorExists {
-				return sb.E(leftOperand, true), nil
+				cond = sb.E(leftOperand, true)
 			} else {
-				return sb.NE(leftOperand, true), nil
+				cond = sb.NE(leftOperand, true)
 			}
 		}
 	}
 
-	return "", nil
+	return fmt.Sprintf(expr, column.Name, sb.Var(key.Name), cond), nil
 }

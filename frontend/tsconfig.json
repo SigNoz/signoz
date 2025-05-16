@@ -3,6 +3,7 @@
 		"sourceMap": true,
 		"outDir": "./dist/",
 		"noImplicitAny": true,
+		"noImplicitReturns": true,
 		"module": "esnext",
 		"target": "es5",
 		"jsx": "react-jsx",

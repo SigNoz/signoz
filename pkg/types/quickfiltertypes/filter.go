@@ -139,21 +139,21 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 		{"key": "duration_nano", "dataType": "float64", "type": "tag"},
 		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
 		{"key": "hasError", "dataType": "bool", "type": "tag"},
-		{"key": "serviceName", "dataType": "string", "type": "tag"},
-		{"key": "name", "dataType": "string", "type": "resource"},
-		{"key": "rpcMethod", "dataType": "string", "type": "tag"},
-		{"key": "responseStatusCode", "dataType": "string", "type": "resource"},
-		{"key": "httpHost", "dataType": "string", "type": "tag"},
-		{"key": "httpMethod", "dataType": "string", "type": "tag"},
-		{"key": "httpRoute", "dataType": "string", "type": "tag"},
-		{"key": "httpUrl", "dataType": "string", "type": "tag"},
-		{"key": "traceID", "dataType": "string", "type": "tag"},
+		{"key": "service.name", "dataType": "string", "type": "resource"},
+		{"key": "name", "dataType": "string", "type": "tag"},
+		{"key": "rpc.method", "dataType": "string", "type": "tag"},
+		{"key": "response_status_code", "dataType": "string", "type": "tag"},
+		{"key": "http_host", "dataType": "string", "type": "tag"},
+		{"key": "http.method", "dataType": "string", "type": "tag"},
+		{"key": "http.route", "dataType": "string", "type": "tag"},
+		{"key": "http_url", "dataType": "string", "type": "tag"},
+		{"key": "trace_id", "dataType": "string", "type": "tag"},
 	}
 
 	logsFilters := []map[string]interface{}{
 		{"key": "severity_text", "dataType": "string", "type": "resource"},
 		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
-		{"key": "serviceName", "dataType": "string", "type": "tag"},
+		{"key": "service.name", "dataType": "string", "type": "resource"},
 		{"key": "host.name", "dataType": "string", "type": "resource"},
 		{"key": "k8s.cluster.name", "dataType": "string", "type": "resource"},
 		{"key": "k8s.deployment.name", "dataType": "string", "type": "resource"},
@@ -163,18 +163,18 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 
 	apiMonitoringFilters := []map[string]interface{}{
 		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
-		{"key": "serviceName", "dataType": "string", "type": "tag"},
-		{"key": "rpcMethod", "dataType": "string", "type": "tag"},
+		{"key": "service.name", "dataType": "string", "type": "tag"},
+		{"key": "rpc.method", "dataType": "string", "type": "tag"},
 	}
 
 	exceptionsFilters := []map[string]interface{}{
 		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
-		{"key": "serviceName", "dataType": "string", "type": "tag"},
+		{"key": "service.name", "dataType": "string", "type": "resource"},
 		{"key": "host.name", "dataType": "string", "type": "resource"},
-		{"key": "k8s.cluster.name", "dataType": "string", "type": "tag"},
+		{"key": "k8s.cluster.name", "dataType": "string", "type": "resource"},
 		{"key": "k8s.deployment.name", "dataType": "string", "type": "resource"},
-		{"key": "k8s.namespace.name", "dataType": "string", "type": "tag"},
-		{"key": "k8s.pod.name", "dataType": "string", "type": "tag"},
+		{"key": "k8s.namespace.name", "dataType": "string", "type": "resource"},
+		{"key": "k8s.pod.name", "dataType": "string", "type": "resource"},
 	}
 
 	tracesJSON, err := json.Marshal(tracesFilters)

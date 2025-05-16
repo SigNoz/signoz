@@ -82,7 +82,10 @@ function MetricDetails({
 
 	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
 		if (metricName) {
-			const compositeQuery = getMetricDetailsQuery(metricName);
+			const compositeQuery = getMetricDetailsQuery(
+				metricName,
+				metric?.metadata?.metric_type,
+			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
 				{
@@ -93,7 +96,7 @@ function MetricDetails({
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 			);
 		}
-	}, [metricName, handleExplorerTabChange]);
+	}, [metricName, handleExplorerTabChange, metric?.metadata?.metric_type]);
 
 	const isMetricDetailsError = metricDetailsError || !metric;
 
@@ -189,7 +192,11 @@ function MetricDetails({
 						refetchMetricDetails={refetchMetricDetails}
 					/>
 					{metric.attributes && (
-						<AllAttributes metricName={metric?.name} attributes={metric.attributes} />
+						<AllAttributes
+							metricName={metric?.name}
+							attributes={metric.attributes}
+							metricType={metric?.metadata?.metric_type}
+						/>
 					)}
 				</div>
 			)}

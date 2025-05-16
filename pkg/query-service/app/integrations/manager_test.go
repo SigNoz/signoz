@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +17,8 @@ func TestIntegrationLifecycle(t *testing.T) {
 	ctx := context.Background()
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(store))
-	user, apiErr := createTestUser(organizationModule)
+	userModule := impluser.NewModule(impluser.NewStore(store))
+	user, apiErr := createTestUser(organizationModule, userModule)
 	if apiErr != nil {
 		t.Fatalf("could not create test user: %v", apiErr)
 	}

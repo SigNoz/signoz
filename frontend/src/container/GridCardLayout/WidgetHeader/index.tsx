@@ -16,6 +16,7 @@ import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -205,6 +206,11 @@ function WidgetHeader({
 		[updatedMenuList, onMenuItemSelectHandler],
 	);
 
+	const { truncatedText, fullText } = useGetResolvedText({
+		text: widget.title as string,
+		maxLength: 100,
+	});
+
 	if (widget.id === PANEL_TYPES.EMPTY_WIDGET) {
 		return null;
 	}
@@ -237,13 +243,15 @@ function WidgetHeader({
 			) : (
 				<>
 					<div className="widget-header-title-container">
-						<Typography.Text
-							ellipsis
-							data-testid={title}
-							className="widget-header-title"
-						>
-							{title}
-						</Typography.Text>
+						<Tooltip title={fullText} placement="top">
+							<Typography.Text
+								ellipsis
+								data-testid={title}
+								className="widget-header-title"
+							>
+								{truncatedText}
+							</Typography.Text>
+						</Tooltip>
 						{widget.description && (
 							<Tooltip
 								title={widget.description}

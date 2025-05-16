@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -81,7 +82,7 @@ func (j *JWT) signToken(claims Claims) (string, error) {
 }
 
 // AccessToken creates an access token with the provided claims
-func (j *JWT) AccessToken(orgId, userId, email string, role Role) (string, Claims, error) {
+func (j *JWT) AccessToken(orgId, userId, email string, role types.Role) (string, Claims, error) {
 	claims := Claims{
 		UserID: userId,
 		Role:   role,
@@ -102,7 +103,7 @@ func (j *JWT) AccessToken(orgId, userId, email string, role Role) (string, Claim
 }
 
 // RefreshToken creates a refresh token with the provided claims
-func (j *JWT) RefreshToken(orgId, userId, email string, role Role) (string, Claims, error) {
+func (j *JWT) RefreshToken(orgId, userId, email string, role types.Role) (string, Claims, error) {
 	claims := Claims{
 		UserID: userId,
 		Role:   role,

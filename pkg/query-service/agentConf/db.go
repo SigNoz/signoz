@@ -28,7 +28,7 @@ func (r *Repo) GetConfigHistory(
 		element_type, 
 		COALESCE(created_by, -1) as created_by, 
 		created_at,
-		COALESCE((SELECT NAME FROM users 
+		COALESCE((SELECT display_name FROM users 
  		WHERE id = v.created_by), "unknown") created_by_name, 
 		active, 
 		is_valid, 
@@ -67,7 +67,7 @@ func (r *Repo) GetConfigVersion(
 		element_type,
 		COALESCE(created_by, -1) as created_by, 
 		created_at,
-		COALESCE((SELECT NAME FROM users 
+		COALESCE((SELECT display_name FROM users 
 		WHERE id = v.created_by), "unknown") created_by_name,
 		active, 
 		is_valid, 
@@ -100,7 +100,7 @@ func (r *Repo) GetLatestVersion(
 		element_type, 
 		COALESCE(created_by, -1) as created_by, 
 		created_at,
-		COALESCE((SELECT NAME FROM users 
+		COALESCE((SELECT display_name FROM users 
  		WHERE id = v.created_by), "unknown") created_by_name, 
 		active, 
 		is_valid, 

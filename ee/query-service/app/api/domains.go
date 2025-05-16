@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	"github.com/SigNoz/signoz/ee/types"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )

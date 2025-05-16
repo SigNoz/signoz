@@ -1,4 +1,4 @@
-package types
+package querybuildertypesv5
 
 import (
 	"context"
@@ -13,39 +13,6 @@ var (
 	ErrColumnNotFound = errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "column not found")
 	ErrBetweenValues  = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) between operator requires two values")
 	ErrInValues       = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) in operator requires a list of values")
-)
-
-// FilterOperator is the operator for the filter.
-type FilterOperator int
-
-const (
-	FilterOperatorUnknown FilterOperator = iota
-	FilterOperatorEqual
-	FilterOperatorNotEqual
-	FilterOperatorGreaterThan
-	FilterOperatorGreaterThanOrEq
-	FilterOperatorLessThan
-	FilterOperatorLessThanOrEq
-
-	FilterOperatorLike
-	FilterOperatorNotLike
-	FilterOperatorILike
-	FilterOperatorNotILike
-
-	FilterOperatorBetween
-	FilterOperatorNotBetween
-
-	FilterOperatorIn
-	FilterOperatorNotIn
-
-	FilterOperatorExists
-	FilterOperatorNotExists
-
-	FilterOperatorRegexp
-	FilterOperatorNotRegexp
-
-	FilterOperatorContains
-	FilterOperatorNotContains
 )
 
 // ConditionBuilder is the interface for building the condition part of the query.

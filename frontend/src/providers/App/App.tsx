@@ -71,10 +71,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		error: userFetchError,
 	} = useGetUser(user.id, isLoggedIn);
 	useEffect(() => {
-		if (!isFetchingUser && userData && userData.payload) {
+		if (!isFetchingUser && userData && userData.data) {
 			setUser((prev) => ({
 				...prev,
-				...userData.payload,
+				...userData.data,
 			}));
 			setOrg((prev) => {
 				if (!prev) {
@@ -82,19 +82,19 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					return [
 						{
 							createdAt: 0,
-							id: userData.payload.orgId,
-							displayName: userData.payload.organization,
+							id: userData.data.orgId,
+							displayName: userData.data.organization,
 						},
 					];
 				}
 				// else mutate the existing entry
-				const orgIndex = prev.findIndex((e) => e.id === userData.payload.orgId);
+				const orgIndex = prev.findIndex((e) => e.id === userData.data.orgId);
 				const updatedOrg: Organization[] = [
 					...prev.slice(0, orgIndex),
 					{
 						createdAt: 0,
-						id: userData.payload.orgId,
-						displayName: userData.payload.organization,
+						id: userData.data.orgId,
+						displayName: userData.data.organization,
 					},
 					...prev.slice(orgIndex + 1, prev.length),
 				];

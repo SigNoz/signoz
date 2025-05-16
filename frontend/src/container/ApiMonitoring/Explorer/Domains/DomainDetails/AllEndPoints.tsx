@@ -7,10 +7,12 @@ import {
 import GridCard from 'container/GridCardLayout/GridCard';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { isEqual } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { useApiMonitoringParams } from '../../../queryParams';
 import { SPAN_ATTRIBUTES, VIEWS } from './constants';
 
 function AllEndPoints({
@@ -35,6 +37,7 @@ function AllEndPoints({
 	initialFilters: IBuilderQuery['filters'];
 	setInitialFiltersEndPointStats: (filters: IBuilderQuery['filters']) => void;
 }): JSX.Element {
+	const [params, setParams] = useApiMonitoringParams();
 	const [groupBySearchValue, setGroupBySearchValue] = useState<string>('');
 	const [allAvailableGroupByOptions, setAllAvailableGroupByOptions] = useState<{
 		[key: string]: any;
@@ -55,86 +58,37 @@ function AllEndPoints({
 		{ value: string; label: string }[]
 	>([]);
 
-	const handleGroupByChange = useCallback(
-		(value: IBuilderQuery['groupBy']) => {
-			const newGroupBy = [];
-
-			for (let index = 0; index < value.length; index++) {
-				const element = (value[index] as unknown) as string;
-
-				// Check if the key exists in our cached options first
-				if (allAvailableGroupByOptions[element]) {
-					newGroupBy.push(allAvailableGroupByOptions[element]);
-				} else {
-					// If not found in cache, check the current filtered results
-					const key = groupByFiltersData?.payload?.attributeKeys?.find(
-						(key) => key.key === element,
-					);
-
-					if (key) {
-						newGroupBy.push(key);
-					}
-				}
-			}
-
-			setGroupBy(newGroupBy);
-			setGroupBySearchValue('');
-		},
-		[groupByFiltersData, setGroupBy, allAvailableGroupByOptions],
-	);
-
-	useEffect(() => {
-		if (groupByFiltersData?.payload) {
-			// Update dropdown options
-			setGroupByOptions(
-				groupByFiltersData?.payload?.attributeKeys?.map((filter) => ({
-					value: filter.key,
-					label: filter.key,
-				})) || [],
-			);
-
-			// Cache all available options to preserve selected values using functional update
-			// to avoid dependency on allAvailableGroupByOptions
-			setAllAvailableGroupByOptions((prevOptions) => {
-				const newOptions = { ...prevOptions };
-				groupByFiltersData?.payload?.attributeKeys?.forEach((filter) => {
-					newOptions[filter.key] = filter;
-				});
-				return newOptions;
-			});
-		}
-	}, [groupByFiltersData]); // Only depends on groupByFiltersData now
-
-	// Cache existing selected options on component mount
-	useEffect(() => {
-		if (groupBy && groupBy.length > 0) {
-			setAllAvailableGroupByOptions((prevOptions) => {
-				const newOptions = { ...prevOptions };
-				groupBy.forEach((option) => {
-					newOptions[option.key] = option;
-				});
-				return newOptions;
-			});
-		}
-	}, [groupBy]); // Removed allAvailableGroupByOptions from dependencies
-
-	const currentQuery = initialQueriesMap[DataSource.TRACES];
-
-	// Local state for filters, combining endpoint filter and search filters
+	// --- FILTERS STATE SYNC ---
 	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
+		if (params.allEndpointsLocalFilters) {
+			return params.allEndpointsLocalFilters;
+		}
 		// Initialize filters based on the initial endPointName prop
 		const initialItems = [...initialFilters.items];
 		return { op: 'AND', items: initialItems };
 	});
 
+	// Sync params to local filters state on param change
+	useEffect(() => {
+		if (
+			params.allEndpointsLocalFilters &&
+			!isEqual(params.allEndpointsLocalFilters, filters)
+		) {
+			setFilters(params.allEndpointsLocalFilters);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [params.allEndpointsLocalFilters]);
+
 	// Handler for changes from the QueryBuilderSearchV2 component
 	const handleFilterChange = useCallback(
 		(newFilters: IBuilderQuery['filters']): void => {
-			// 1. Update local filters state immediately
 			setFilters(newFilters);
+			setParams({ allEndpointsLocalFilters: newFilters });
 		},
-		[], // Dependencies for the callback
+		[setParams],
 	);
+
+	const currentQuery = initialQueriesMap[DataSource.TRACES];
 
 	const updatedCurrentQuery = useMemo(
 		() => ({
@@ -160,6 +114,91 @@ function AllEndPoints({
 		[groupBy, domainName, filters],
 	);
 
+	// --- GROUP BY STATE SYNC (existing) ---
+	const handleGroupByChange = useCallback(
+		(value: IBuilderQuery['groupBy']) => {
+			const newGroupBy = [];
+
+			for (let index = 0; index < value.length; index++) {
+				const element = (value[index] as unknown) as string;
+
+				// Check if the key exists in our cached options first
+				if (allAvailableGroupByOptions[element]) {
+					newGroupBy.push(allAvailableGroupByOptions[element]);
+				} else {
+					// If not found in cache, check the current filtered results
+					const key = groupByFiltersData?.payload?.attributeKeys?.find(
+						(key) => key.key === element,
+					);
+
+					if (key) {
+						newGroupBy.push(key);
+					}
+				}
+			}
+
+			setGroupBy(newGroupBy);
+			setGroupBySearchValue('');
+			// Update params
+			setParams({ groupBy: newGroupBy.map((g) => g.key) });
+		},
+		[groupByFiltersData, setGroupBy, allAvailableGroupByOptions, setParams],
+	);
+
+	// Sync params to local groupBy state on param change
+	useEffect(() => {
+		if (
+			params.groupBy &&
+			Array.isArray(params.groupBy) &&
+			!isEqual(
+				params.groupBy,
+				groupBy.map((g) => g.key),
+			)
+		) {
+			// Only update if different
+			const newGroupBy = params.groupBy
+				.map((key) => allAvailableGroupByOptions[key])
+				.filter(Boolean);
+			if (newGroupBy.length === params.groupBy.length) {
+				setGroupBy(newGroupBy);
+			}
+		}
+	}, [params.groupBy, allAvailableGroupByOptions, groupBy, setGroupBy]);
+
+	useEffect(() => {
+		if (groupByFiltersData?.payload) {
+			// Update dropdown options
+			setGroupByOptions(
+				groupByFiltersData?.payload?.attributeKeys?.map((filter) => ({
+					value: filter.key,
+					label: filter.key,
+				})) || [],
+			);
+
+			// Cache all available options to preserve selected values using functional update
+			setAllAvailableGroupByOptions((prevOptions) => {
+				const newOptions = { ...prevOptions };
+				groupByFiltersData?.payload?.attributeKeys?.forEach((filter) => {
+					newOptions[filter.key] = filter;
+				});
+				return newOptions;
+			});
+		}
+	}, [groupByFiltersData]); // Only depends on groupByFiltersData now
+
+	// Cache existing selected options on component mount
+	useEffect(() => {
+		if (groupBy && groupBy.length > 0) {
+			setAllAvailableGroupByOptions((prevOptions) => {
+				const newOptions = { ...prevOptions };
+				groupBy.forEach((option) => {
+					newOptions[option.key] = option;
+				});
+				return newOptions;
+			});
+		}
+	}, [groupBy]);
+
 	const onRowClick = useCallback(
 		(props: any): void => {
 			setSelectedEndPointName(props[SPAN_ATTRIBUTES.URL_PATH] as string);
@@ -172,6 +211,14 @@ function AllEndPoints({
 				items: initialItems,
 				op: 'AND',
 			});
+			setParams({
+				selectedEndPointName: props[SPAN_ATTRIBUTES.URL_PATH] as string,
+				selectedView: VIEWS.ENDPOINT_STATS,
+				endPointDetailsLocalFilters: {
+					items: initialItems,
+					op: 'AND',
+				},
+			});
 		},
 		[
 			filters,
@@ -179,6 +226,7 @@ function AllEndPoints({
 			setSelectedEndPointName,
 			setSelectedView,
 			groupBy,
+			setParams,
 		],
 	);
 
