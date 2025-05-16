@@ -523,7 +523,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Delete)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.Signoz.Handlers.SavedView.List)).Methods(http.MethodGet)
@@ -1086,9 +1086,9 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allDashboards, err := aH.Signoz.Modules.Dashboard.List(r.Context(), claims.OrgID)
-	if err != nil {
-		render.Error(w, err)
+	allDashboards, errv2 := aH.Signoz.Modules.Dashboard.List(r.Context(), claims.OrgID)
+	if errv2 != nil {
+		render.Error(w, errv2)
 		return
 	}
 
@@ -1147,23 +1147,6 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.Respond(w, filteredDashboards)
-
-}
-func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
-	uuid := mux.Vars(r)["uuid"]
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	err := aH.Signoz.Modules.Dashboard.Delete(r.Context(), claims.OrgID, uuid)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	aH.Respond(w, nil)
 
 }
 

@@ -3,6 +3,8 @@ package signoz
 import (
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -18,6 +20,7 @@ type Handlers struct {
 	User         user.Handler
 	SavedView    savedview.Handler
 	Apdex        apdex.Handler
+	Dashboard    dashboard.Handler
 }
 
 func NewHandlers(modules Modules, user user.Handler) Handlers {
@@ -27,5 +30,6 @@ func NewHandlers(modules Modules, user user.Handler) Handlers {
 		User:         user,
 		SavedView:    implsavedview.NewHandler(modules.SavedView),
 		Apdex:        implapdex.NewHandler(modules.Apdex),
+		Dashboard:    impldashboard.NewHandler(modules.Dashboard),
 	}
 }

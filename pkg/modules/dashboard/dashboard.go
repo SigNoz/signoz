@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/types"
 )
@@ -22,4 +23,6 @@ type Module interface {
 	LockUnlock(ctx context.Context, orgID, uuid string, lock bool) error
 }
 
-type Handler interface{}
+type Handler interface {
+	Delete(http.ResponseWriter, *http.Request)
+}
