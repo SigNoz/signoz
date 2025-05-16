@@ -66,7 +66,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
-		AppDao:                        opts.AppDao,
 		RuleManager:                   opts.RulesManager,
 		FeatureFlags:                  opts.FeatureFlags,
 		IntegrationsController:        opts.IntegrationsController,

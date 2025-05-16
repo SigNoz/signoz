@@ -21,7 +21,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opampModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -484,7 +483,6 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(sqlStore)))
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		AppDao:                        dao.DB(),
 		LogsParsingPipelineController: controller,
 		JWT:                           jwt,
 		Signoz: &signoz.SigNoz{

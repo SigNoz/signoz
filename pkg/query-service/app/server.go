@@ -20,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
@@ -34,9 +33,7 @@ import (
 	"github.com/soheilhy/cmux"
 
 	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/query-service/app/explorer"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -84,19 +81,6 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
-	var err error
-	if err := dao.InitDao(serverOptions.SigNoz.SQLStore); err != nil {
-		return nil, err
-	}
-
-	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
-		return nil, err
-	}
-
-	if err := explorer.InitWithDSN(serverOptions.SigNoz.SQLStore); err != nil {
-		return nil, err
-	}
-
 	// initiate feature manager
 	fm := featureManager.StartManager()
 
@@ -150,12 +134,17 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 	telemetry.GetInstance().SetSqlStore(serverOptions.SigNoz.SQLStore)
+	telemetry.GetInstance().SetSavedViewsInfoCallback(telemetry.GetSavedViewsInfo)
+	telemetry.GetInstance().SetAlertsInfoCallback(telemetry.GetAlertsInfo)
+	telemetry.GetInstance().SetGetUsersCallback(telemetry.GetUsers)
+	telemetry.GetInstance().SetUserCountCallback(telemetry.GetUserCount)
+	telemetry.GetInstance().SetDashboardsInfoCallback(telemetry.GetDashboardsInfo)
+
 	quickfiltermodule := quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(serverOptions.SigNoz.SQLStore))
 	quickFilter := quickfilter.NewAPI(quickfiltermodule)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
-		AppDao:                        dao.DB(),
 		RuleManager:                   rm,
 		FeatureFlags:                  fm,
 		IntegrationsController:        integrationsController,

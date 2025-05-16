@@ -142,6 +142,10 @@ func As(err error, target any) bool {
 	return errors.As(err, target)
 }
 
+func Is(err error, target error) bool {
+	return errors.Is(err, target)
+}
+
 func WrapNotFoundf(cause error, code Code, format string, args ...interface{}) *base {
 	return Wrapf(cause, TypeNotFound, code, format, args...)
 }

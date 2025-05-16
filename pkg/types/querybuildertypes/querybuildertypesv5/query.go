@@ -23,7 +23,7 @@ type Result struct {
 type ExecStats struct {
 	RowsScanned  int64 `json:"rowsScanned"`
 	BytesScanned int64 `json:"bytesScanned"`
-	DurationMs   int64 `json:"durationMs"`
+	DurationMS   int64 `json:"durationMs"`
 }
 
 type TimeRange struct{ From, To uint64 } // ms since epoch

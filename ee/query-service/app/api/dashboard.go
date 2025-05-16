@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
 )
@@ -41,9 +40,9 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	dashboard, apiErr := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
-	if apiErr != nil {
-		render.Error(w, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get dashboard"))
+	dashboard, err := ah.Signoz.Modules.Dashboard.Get(r.Context(), claims.OrgID, uuid)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -53,9 +52,9 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 	}
 
 	// Lock/Unlock the dashboard
-	apiErr = dashboards.LockUnlockDashboard(r.Context(), claims.OrgID, uuid, lock)
-	if apiErr != nil {
-		render.Error(w, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to lock/unlock dashboard"))
+	err = ah.Signoz.Modules.Dashboard.LockUnlock(r.Context(), claims.OrgID, uuid, lock)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 

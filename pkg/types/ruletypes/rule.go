@@ -3,7 +3,6 @@ package ruletypes
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -32,6 +31,5 @@ type RuleStore interface {
 	GetStoredRules(context.Context, string) ([]*Rule, error)
 	GetStoredRule(context.Context, valuer.UUID) (*Rule, error)
 	GetRuleUUID(context.Context, int) (*RuleHistory, error)
-	GetAlertsInfo(context.Context) (*model.AlertsInfo, error)
 	ListOrgs(context.Context) ([]valuer.UUID, error)
 }

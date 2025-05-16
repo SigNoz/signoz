@@ -5,23 +5,13 @@ import (
 	"net/url"
 
 	eeTypes "github.com/SigNoz/signoz/ee/types"
-	basedao "github.com/SigNoz/signoz/pkg/query-service/dao"
-	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
-	"github.com/uptrace/bun"
 )
 
 type ModelDao interface {
-	basedao.ModelDao
-
-	// SetFlagProvider sets the feature lookup provider
-	SetFlagProvider(flags baseint.FeatureLookup)
-
-	DB() *bun.DB
-
 	// auth methods
 	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*types.GettableOrgDomain, error)
 

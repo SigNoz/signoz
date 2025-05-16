@@ -11,92 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetFieldKeyName(t *testing.T) {
+func TestConditionFor(t *testing.T) {
 	ctx := context.Background()
-	conditionBuilder := &conditionBuilder{}
-
-	testCases := []struct {
-		name           string
-		key            telemetrytypes.TelemetryFieldKey
-		expectedResult string
-		expectedError  error
-	}{
-		{
-			name: "Simple column type - timestamp",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "timestamp",
-				FieldContext: telemetrytypes.FieldContextSpan,
-			},
-			expectedResult: "timestamp",
-			expectedError:  nil,
-		},
-		{
-			name: "Map column type - string attribute",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "user.id",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			},
-			expectedResult: "attributes_string['user.id']",
-			expectedError:  nil,
-		},
-		{
-			name: "Map column type - number attribute",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "request.size",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeNumber,
-			},
-			expectedResult: "attributes_number['request.size']",
-			expectedError:  nil,
-		},
-		{
-			name: "Map column type - bool attribute",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "request.success",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeBool,
-			},
-			expectedResult: "attributes_bool['request.success']",
-			expectedError:  nil,
-		},
-		{
-			name: "Map column type - resource attribute",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "service.name",
-				FieldContext: telemetrytypes.FieldContextResource,
-			},
-			expectedResult: "resources_string['service.name']",
-			expectedError:  nil,
-		},
-		{
-			name: "Non-existent column",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "nonexistent_field",
-				FieldContext: telemetrytypes.FieldContextSpan,
-			},
-			expectedResult: "",
-			expectedError:  qbtypes.ErrColumnNotFound,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := conditionBuilder.GetTableFieldName(ctx, &tc.key)
-
-			if tc.expectedError != nil {
-				assert.Equal(t, tc.expectedError, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedResult, result)
-			}
-		})
-	}
-}
-
-func TestGetCondition(t *testing.T) {
-	ctx := context.Background()
-	conditionBuilder := NewConditionBuilder()
 
 	testCases := []struct {
 		name          string
@@ -280,10 +196,13 @@ func TestGetCondition(t *testing.T) {
 		},
 	}
 
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.GetCondition(ctx, &tc.key, tc.operator, tc.value, sb)
+			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

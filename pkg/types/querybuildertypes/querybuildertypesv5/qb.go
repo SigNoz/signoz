@@ -10,19 +10,47 @@ import (
 )
 
 var (
-	ErrColumnNotFound = errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "column not found")
+	ErrColumnNotFound = errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "field not found")
 	ErrBetweenValues  = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) between operator requires two values")
 	ErrInValues       = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) in operator requires a list of values")
 )
 
-// ConditionBuilder is the interface for building the condition part of the query.
+type JsonKeyToFieldFunc func(context.Context, *telemetrytypes.TelemetryFieldKey, FilterOperator, any) (string, any)
+
+// FieldMapper maps the telemetry field key to the table field name.
+type FieldMapper interface {
+	// FieldFor returns the field name for the given key.
+	FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error)
+	// ColumnFor returns the column for the given key.
+	ColumnFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error)
+	// ColumnExpressionFor returns the column expression for the given key.
+	ColumnExpressionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
+}
+
+// ConditionBuilder builds the condition for the filter.
 type ConditionBuilder interface {
-	// GetColumn returns the column for the given key.
-	GetColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error)
+	// ConditionFor returns the condition for the given key, operator and value.
+	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+}
 
-	// GetTableFieldName returns the table field name for the given key.
-	GetTableFieldName(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error)
+type FilterCompiler interface {
+	// Compile compiles the filter into a sqlbuilder.WhereClause.
+	Compile(ctx context.Context, filter string) (*sqlbuilder.WhereClause, []string, error)
+}
 
-	// GetCondition returns the condition for the given key, operator and value.
-	GetCondition(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+type AggExprRewriter interface {
+	// Rewrite rewrites the aggregation expression to be used in the query.
+	Rewrite(ctx context.Context, expr string) (string, []any, error)
+}
+
+type Statement struct {
+	Query    string
+	Args     []any
+	Warnings []string
+}
+
+// StatementBuilder builds the query.
+type StatementBuilder interface {
+	// Build builds the query.
+	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery) (*Statement, error)
 }

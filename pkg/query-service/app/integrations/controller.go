@@ -129,7 +129,7 @@ func (c *Controller) GetPipelinesForInstalledIntegrations(
 
 func (c *Controller) GetDashboardsForInstalledIntegrations(
 	ctx context.Context, orgId string,
-) ([]types.Dashboard, *model.ApiError) {
+) ([]*types.Dashboard, *model.ApiError) {
 	return c.mgr.GetDashboardsForInstalledIntegrations(ctx, orgId)
 }
 

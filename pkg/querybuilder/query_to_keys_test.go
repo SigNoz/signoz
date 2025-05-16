@@ -1,4 +1,4 @@
-package parser
+package querybuilder
 
 import (
 	"testing"
