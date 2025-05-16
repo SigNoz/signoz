@@ -680,6 +680,7 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 }
 
 func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, error) {
+	// Step 1: Get top operations for the given service
 	topOps, err := r.GetTopOperations(ctx, queryParams)
 	if err != nil {
 		return nil, err
@@ -688,53 +689,40 @@ func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryPar
 		return nil, errors.New("no top operations found")
 	}
 
-	namedArgs := []interface{}{
-		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
-		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
-		clickhouse.Named("service", queryParams.ServiceName),
-		clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
-		clickhouse.Named("end_bucket", strconv.FormatInt(queryParams.End.Unix(), 10)),
+	// Step 2: Get entry point operation names for the given service using GetTopLevelOperations
+	// instead of running a separate query
+	serviceName := []string{queryParams.ServiceName}
+	var startTime, endTime time.Time
+	if queryParams.Start != nil {
+		startTime = *queryParams.Start
+	}
+	if queryParams.End != nil {
+		endTime = *queryParams.End
+	}
+	topLevelOpsResult, apiErr := r.GetTopLevelOperations(ctx, startTime, endTime, serviceName)
+
+	if apiErr != nil {
+		return nil, errors.Wrapf(apiErr.Err, "failed to get top level operations")
 	}
 
-	// Step 2: Get entry point operation names for the given service
+	// Create a set of entry point operations
 	entryPointSet := map[string]struct{}{}
 
-	query := fmt.Sprintf(`
-		SELECT 
-			name, 
-			max(timestamp) as ts
-		FROM %s.%s
-		WHERE 
-			timestamp >= @start AND timestamp <= @end
-			AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket
-			AND resource_string_service$$name = @service
-			AND parent_span_id NOT IN (
-				SELECT span_id 
-				FROM %s.%s 
-				WHERE resource_string_service$$name = @service
-			)
-		GROUP BY name
-		ORDER BY ts DESC`,
-		r.TraceDB, r.traceTableName, r.TraceDB, r.traceTableName)
-
-	rows, queryErr := r.db.Query(ctx, query, namedArgs...)
-
-	if queryErr != nil {
-		zap.L().Error("Error executing entry point query", zap.Error(queryErr))
-		return nil, errors.Wrapf(queryErr, "error executing entry point query")
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var name string
-		var ts time.Time
-		if err := rows.Scan(&name, &ts); err != nil {
-			return nil, errors.Wrapf(err, "error scanning entry point row")
+	// Extract operations for the requested service from topLevelOpsResult
+	if serviceOperations, ok := (*topLevelOpsResult)[queryParams.ServiceName]; ok {
+		// Skip the first "overflow_operation" if present
+		startIdx := 0
+		if len(serviceOperations) > 0 && serviceOperations[0] == "overflow_operation" {
+			startIdx = 1
 		}
-		entryPointSet[name] = struct{}{}
+
+		// Add each operation name to the entry point set
+		for i := startIdx; i < len(serviceOperations); i++ {
+			entryPointSet[serviceOperations[i]] = struct{}{}
+		}
 	}
 
-	// Step 3: Filter topOps based on entryPointSet
+	// Step 3: Filter topOps based on entryPointSet (same as original)
 	var filtered []model.TopOperationsItem
 	for _, op := range *topOps {
 		if _, ok := entryPointSet[op.Name]; ok {
