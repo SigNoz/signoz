@@ -7,7 +7,7 @@
 import './DashboardVariableSelection.styles.scss';
 
 import { orange } from '@ant-design/colors';
-import { WarningOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import {
 	Checkbox,
 	Input,
@@ -405,7 +405,13 @@ function VariableItem({
 		<div className="variable-item">
 			<Typography.Text className="variable-name" ellipsis>
 				${variableData.name}
+				{variableData.description && (
+					<Tooltip title={variableData.description}>
+						<InfoCircleOutlined className="info-icon" />
+					</Tooltip>
+				)}
 			</Typography.Text>
+
 			<div className="variable-value">
 				{variableData.type === 'TEXTBOX' ? (
 					<Input
