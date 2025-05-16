@@ -8,7 +8,19 @@ import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export function RequestIntegrationBtn(): JSX.Element {
+export enum IntegrationType {
+	AWS_SERVICES = 'aws-services',
+}
+
+interface RequestIntegrationBtnProps {
+	type: IntegrationType;
+	message?: string;
+}
+
+export function RequestIntegrationBtn({
+	type,
+	message,
+}: RequestIntegrationBtnProps): JSX.Element {
 	const [
 		isSubmittingRequestForIntegration,
 		setIsSubmittingRequestForIntegration,
@@ -22,8 +34,17 @@ export function RequestIntegrationBtn(): JSX.Element {
 	const handleRequestIntegrationSubmit = async (): Promise<void> => {
 		try {
 			setIsSubmittingRequestForIntegration(true);
-			const response = await logEvent('Integration Requested', {
-				screen: 'Integration list page',
+			const eventName =
+				type === IntegrationType.AWS_SERVICES
+					? 'AWS service integration requested'
+					: 'Integration requested';
+			const screenName =
+				type === IntegrationType.AWS_SERVICES
+					? 'AWS integration details'
+					: 'Integration list page';
+
+			const response = await logEvent(eventName, {
+				screen: screenName,
 				integration: requestedIntegrationName,
 			});
 
@@ -57,9 +78,7 @@ export function RequestIntegrationBtn(): JSX.Element {
 
 	return (
 		<div className="request-entity-container">
-			<Typography.Text>
-				Cannot find what you’re looking for? Request more integrations
-			</Typography.Text>
+			<Typography.Text>{message}</Typography.Text>
 
 			<div className="form-section">
 				<Space.Compact style={{ width: '100%' }}>
@@ -93,3 +112,7 @@ export function RequestIntegrationBtn(): JSX.Element {
 		</div>
 	);
 }
+
+RequestIntegrationBtn.defaultProps = {
+	message: 'Cannot find what you’re looking for? Request more integrations',
+};
