@@ -442,21 +442,21 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 		if err != nil {
 			return nil, err
 		}
-		keys = append(keys, tracesKeys...) //nolint:gocritic
+		keys = append(keys, tracesKeys...)
 
 		// get logs keys
 		logsKeys, err := t.getLogsKeys(ctx, selectors)
 		if err != nil {
 			return nil, err
 		}
-		keys = append(keys, logsKeys...) //nolint:gocritic
+		keys = append(keys, logsKeys...)
 
 		// get metrics keys
 		metricsKeys, err := t.getMetricsKeys(ctx, selectors)
 		if err != nil {
 			return nil, err
 		}
-		keys = append(keys, metricsKeys...) //nolint:gocritic
+		keys = append(keys, metricsKeys...)
 	}
 	if err != nil {
 		return nil, err
