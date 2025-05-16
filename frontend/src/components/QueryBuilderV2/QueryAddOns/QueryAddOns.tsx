@@ -189,7 +189,7 @@ function QueryAddOns({
 							key={addOn.label}
 							className={
 								selectedViews.find((view) => view.key === addOn.key)
-									? 'selected_view tab'
+									? 'selected-view tab'
 									: 'tab'
 							}
 							value={addOn}
