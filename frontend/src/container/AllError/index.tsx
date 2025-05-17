@@ -49,6 +49,7 @@ import {
 	getOffSet,
 	getOrder,
 	getOrderParams,
+	getResourceAttributeString,
 	getUpdatePageSize,
 	urlKey,
 } from './utils';
@@ -60,6 +61,7 @@ type QueryParams = {
 	pageSize: number;
 	exceptionType?: string;
 	serviceName?: string;
+	resourceAttribute?: string;
 };
 
 function AllErrors(): JSX.Element {
@@ -76,6 +78,7 @@ function AllErrors(): JSX.Element {
 		getUpdatedPageSize,
 		getUpdatedExceptionType,
 		getUpdatedServiceName,
+		getResourceAttribute,
 	} = useMemo(
 		() => ({
 			updatedOrder: getOrder(params.get(urlKey.order)),
@@ -84,6 +87,9 @@ function AllErrors(): JSX.Element {
 			getUpdatedPageSize: getUpdatePageSize(params.get(urlKey.pageSize)),
 			getUpdatedExceptionType: getFilterString(params.get(urlKey.exceptionType)),
 			getUpdatedServiceName: getFilterString(params.get(urlKey.serviceName)),
+			getResourceAttribute: getResourceAttributeString(
+				params.get(urlKey.resourceAttribute),
+			),
 		}),
 		[params],
 	);
@@ -97,6 +103,7 @@ function AllErrors(): JSX.Element {
 				pageSize: getUpdatedPageSize,
 				exceptionType: getUpdatedExceptionType,
 				serviceName: getUpdatedServiceName,
+				resourceAttribute: getResourceAttribute,
 			})}`,
 		[
 			pathname,
@@ -106,6 +113,7 @@ function AllErrors(): JSX.Element {
 			getUpdatedPageSize,
 			getUpdatedExceptionType,
 			getUpdatedServiceName,
+			getResourceAttribute,
 		],
 	);
 
@@ -198,6 +206,7 @@ function AllErrors(): JSX.Element {
 				offset: getUpdatedOffset,
 				orderParam: getUpdatedParams,
 				pageSize: getUpdatedPageSize,
+				resourceAttribute: getResourceAttribute,
 			};
 
 			if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
@@ -219,6 +228,7 @@ function AllErrors(): JSX.Element {
 			getUpdatedServiceName,
 			pathname,
 			updatedOrder,
+			getResourceAttribute,
 		],
 	);
 
@@ -428,11 +438,12 @@ function AllErrors(): JSX.Element {
 						pageSize,
 						exceptionType,
 						serviceName,
+						resourceAttribute: getResourceAttribute,
 					})}`,
 				);
 			}
 		},
-		[pathname],
+		[pathname, getResourceAttribute],
 	);
 
 	useEffect(() => {
