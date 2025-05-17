@@ -1,4 +1,4 @@
-import { useFunnelMetrics } from 'hooks/TracesFunnels/useFunnelMetrics';
+import { useFunnelStepsMetrics } from 'hooks/TracesFunnels/useFunnelMetrics';
 import { useParams } from 'react-router-dom';
 
 import FunnelMetricsTable from './FunnelMetricsTable';
@@ -22,7 +22,7 @@ function StepsTransitionMetrics({
 		(transition) => transition.value === selectedTransition,
 	);
 
-	const { isLoading, metricsData, conversionRate } = useFunnelMetrics({
+	const { isLoading, metricsData, conversionRate } = useFunnelStepsMetrics({
 		funnelId: funnelId || '',
 		stepStart: startStep,
 		stepEnd: endStep,
