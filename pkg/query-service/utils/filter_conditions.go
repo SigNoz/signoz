@@ -28,7 +28,7 @@ func BuildFilterConditions(fs *v3.FilterSet, skipKey string) ([]string, error) {
 		if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
 			toFormat = fmt.Sprintf("%%%s%%", toFormat)
 		}
-		fmtVal := ClickHouseFormattedValue(toFormat)
+		fmtVal := ClickHouseFormattedValue(toFormat, false)
 
 		// Determine if the key is a JSON key or a normal column
 		isJSONKey := false
