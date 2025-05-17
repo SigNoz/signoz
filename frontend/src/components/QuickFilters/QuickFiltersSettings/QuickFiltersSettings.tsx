@@ -29,7 +29,8 @@ function QuickFiltersSettings({
 		handleSaveChanges,
 		isUpdatingCustomFilters,
 		inputValue,
-		setInputValue,
+		handleInputChange,
+		debouncedInputValue,
 	} = useQuickFilterSettings({
 		setIsSettingsOpen,
 		customFilters,
@@ -68,7 +69,7 @@ function QuickFiltersSettings({
 					type="text"
 					value={inputValue}
 					placeholder="Search for a filter..."
-					onChange={(event): void => setInputValue(event.target.value)}
+					onChange={handleInputChange}
 				/>
 			</section>
 			<AddedFilters
@@ -78,7 +79,7 @@ function QuickFiltersSettings({
 			/>
 			<OtherFilters
 				signal={signal}
-				inputValue={inputValue}
+				inputValue={debouncedInputValue}
 				addedFilters={addedFilters}
 				setAddedFilters={setAddedFilters}
 			/>
