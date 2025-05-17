@@ -33,10 +33,15 @@ function Header(): JSX.Element {
 				/>
 			</div>
 			<div className="cloud-header__actions">
-				<button className="cloud-header__help" type="button">
+				<a
+					href="https://signoz.io/blog/native-aws-integrations-with-autodiscovery/"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="cloud-header__help"
+				>
 					<LifeBuoy size={12} />
 					Get Help
-				</button>
+				</a>
 			</div>
 		</div>
 	);

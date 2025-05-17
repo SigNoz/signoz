@@ -33,13 +33,16 @@
 		border: 1px solid var(--bg-slate-400);
 		background: var(--bg-ink-300);
 		border-radius: 2px;
-		color: var(--bg-vanilla-400);
 		font-size: 12px;
-		line-height: 10px; /* 83.333% */
+		line-height: 10px;
 		letter-spacing: 0.12px;
 		width: 113px;
 		height: 32px;
 		cursor: pointer;
+		&,
+		&:hover {
+			color: var(--bg-vanilla-400);
+		}
 	}
 }
 
