@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
@@ -41,6 +42,8 @@ func New(
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
+	diModules func(sqlstore.SQLStore) user.Module,
+	diHandlers func(user.Module) user.Handler,
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -153,11 +156,14 @@ func New(
 		return nil, err
 	}
 
+	userModule := diModules(sqlstore)
+	userHandler := diHandlers(userModule)
+
 	// Initialize all modules
-	modules := NewModules(sqlstore)
+	modules := NewModules(sqlstore, userModule)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules)
+	handlers := NewHandlers(modules, userHandler)
 
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),

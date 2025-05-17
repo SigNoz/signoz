@@ -62,6 +62,7 @@ var (
 		"resource":   FieldContextResource,
 		"scope":      FieldContextScope,
 		"tag":        FieldContextAttribute,
+		"point":      FieldContextAttribute,
 		"attribute":  FieldContextAttribute,
 		"event":      FieldContextEvent,
 		"spanfield":  FieldContextSpan,

@@ -12,23 +12,28 @@ import FunnelsEmptyState from './components/FunnelsEmptyState/FunnelsEmptyState'
 import FunnelsList from './components/FunnelsList/FunnelsList';
 import Header from './components/Header/Header';
 import SearchBar from './components/SearchBar/SearchBar';
+import { filterFunnelsByQuery } from './utils';
 
 interface TracesFunnelsContentRendererProps {
 	isLoading: boolean;
 	isError: boolean;
 	data: FunnelData[];
-	onCreateFunnel: () => void;
+	onCreateFunnel?: () => void;
+	onFunnelClick?: (funnel: FunnelData) => void;
+	shouldRedirectToTracesListOnDeleteSuccess?: boolean;
 }
-function TracesFunnelsContentRenderer({
+export function TracesFunnelsContentRenderer({
 	isLoading,
 	isError,
 	data,
 	onCreateFunnel,
+	onFunnelClick,
+	shouldRedirectToTracesListOnDeleteSuccess,
 }: TracesFunnelsContentRendererProps): JSX.Element {
 	if (isLoading) {
 		return (
 			<div className="traces-funnels__loading">
-				{Array(6)
+				{Array(2)
 					.fill(0)
 					.map((item, index) => (
 						<Skeleton.Button
@@ -49,21 +54,37 @@ function TracesFunnelsContentRenderer({
 		return <div>Something went wrong</div>;
 	}
 
-	if (data.length === 0) {
+	if (data.length === 0 && onCreateFunnel) {
 		return <FunnelsEmptyState onCreateFunnel={onCreateFunnel} />;
 	}
 
-	return <FunnelsList data={data} />;
+	return (
+		<FunnelsList
+			data={data}
+			onFunnelClick={onFunnelClick}
+			shouldRedirectToTracesListOnDeleteSuccess={
+				shouldRedirectToTracesListOnDeleteSuccess
+			}
+		/>
+	);
 }
+
+TracesFunnelsContentRenderer.defaultProps = {
+	onCreateFunnel: undefined,
+	onFunnelClick: undefined,
+	shouldRedirectToTracesListOnDeleteSuccess: true,
+};
 
 function TracesFunnels(): JSX.Element {
 	const { searchQuery, handleSearch } = useHandleTraceFunnelsSearch();
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-	const { data, isLoading, isError } = useFunnelsList({ searchQuery });
+	const { data, isLoading, isError } = useFunnelsList();
 
 	const { sortOrder, handleSort, sortedData } = useHandleTraceFunnelsSort({
 		data: data?.payload || [],
 	});
+
+	const filteredData = filterFunnelsByQuery(sortedData, searchQuery);
 
 	const handleCreateFunnel = (): void => {
 		setIsCreateModalOpen(true);
@@ -83,7 +104,7 @@ function TracesFunnels(): JSX.Element {
 				<TracesFunnelsContentRenderer
 					isError={isError}
 					isLoading={isLoading}
-					data={sortedData}
+					data={filteredData}
 					onCreateFunnel={handleCreateFunnel}
 				/>
 				<CreateFunnel

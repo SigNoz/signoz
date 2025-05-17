@@ -22,7 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -197,7 +196,6 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 	ruleStore := sqlrulestore.NewRuleStore(o.DBConn, o.SQLStore)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(o.SQLStore)
 
-	telemetry.GetInstance().SetAlertsInfoCallback(ruleStore.GetAlertsInfo)
 	m := &Manager{
 		tasks:               map[string]Task{},
 		rules:               map[string]Rule{},
