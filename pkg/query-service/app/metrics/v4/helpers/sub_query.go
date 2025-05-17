@@ -428,3 +428,10 @@ func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (stri
 
 	return filterSubQuery, nil
 }
+
+func AddFlagsFilters(samplesTableFilter string, tableName string) string {
+	if tableName == constants.SIGNOZ_SAMPLES_V4_TABLENAME || tableName == constants.SIGNOZ_SAMPLES_V4_LOCAL_TABLENAME || tableName == constants.SIGNOZ_EXP_HISTOGRAM_TABLENAME || tableName == constants.SIGNOZ_EXP_HISTOGRAM_LOCAL_TABLENAME {
+		samplesTableFilter = fmt.Sprintf("%s AND %s", samplesTableFilter, "bitAnd(flags, 1) = 0")
+	}
+	return samplesTableFilter
+}
