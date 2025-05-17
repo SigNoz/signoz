@@ -679,6 +679,60 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagOperatorPair, " OR ")), args
 }
 
+func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, error) {
+	// Step 1: Get top operations for the given service
+	topOps, err := r.GetTopOperations(ctx, queryParams)
+	if err != nil {
+		return nil, err
+	}
+	if topOps == nil {
+		return nil, errors.New("no top operations found")
+	}
+
+	// Step 2: Get entry point operation names for the given service using GetTopLevelOperations
+	// instead of running a separate query
+	serviceName := []string{queryParams.ServiceName}
+	var startTime, endTime time.Time
+	if queryParams.Start != nil {
+		startTime = *queryParams.Start
+	}
+	if queryParams.End != nil {
+		endTime = *queryParams.End
+	}
+	topLevelOpsResult, apiErr := r.GetTopLevelOperations(ctx, startTime, endTime, serviceName)
+
+	if apiErr != nil {
+		return nil, errors.Wrapf(apiErr.Err, "failed to get top level operations")
+	}
+
+	// Create a set of entry point operations
+	entryPointSet := map[string]struct{}{}
+
+	// Extract operations for the requested service from topLevelOpsResult
+	if serviceOperations, ok := (*topLevelOpsResult)[queryParams.ServiceName]; ok {
+		// Skip the first "overflow_operation" if present
+		startIdx := 0
+		if len(serviceOperations) > 0 && serviceOperations[0] == "overflow_operation" {
+			startIdx = 1
+		}
+
+		// Add each operation name to the entry point set
+		for i := startIdx; i < len(serviceOperations); i++ {
+			entryPointSet[serviceOperations[i]] = struct{}{}
+		}
+	}
+
+	// Step 3: Filter topOps based on entryPointSet (same as original)
+	var filtered []model.TopOperationsItem
+	for _, op := range *topOps {
+		if _, ok := entryPointSet[op.Name]; ok {
+			filtered = append(filtered, op)
+		}
+	}
+
+	return &filtered, nil
+}
+
 func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
 
 	namedArgs := []interface{}{
