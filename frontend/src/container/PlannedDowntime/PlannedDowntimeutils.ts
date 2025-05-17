@@ -76,7 +76,7 @@ export const recurrenceInfo = (recurrence?: Recurrence | null): string => {
 	return `Repeats - ${repeatType} ${weeklyRepeatString} from ${formattedStartTime} ${formattedEndTime} ${durationString}`;
 };
 
-export const defautlInitialValues: Partial<
+export const defaultInitialValues: Partial<
 	DowntimeSchedules & { editMode: boolean }
 > = {
 	name: '',

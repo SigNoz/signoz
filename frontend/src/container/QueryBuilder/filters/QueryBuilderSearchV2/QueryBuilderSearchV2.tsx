@@ -402,7 +402,7 @@ function QueryBuilderSearchV2(
 						]);
 						return;
 					}
-					// this is for adding subsequent comma seperated values
+					// this is for adding subsequent comma separated values
 					const newSearch = [...tagValue];
 					newSearch[newSearch.length === 0 ? 0 : newSearch.length - 1] = value;
 					const newSearchValue = newSearch.join(',');
