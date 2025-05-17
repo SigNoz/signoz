@@ -6,7 +6,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource } from 'components/QuickFilters/types';
+import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
@@ -28,7 +28,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WrapperStyled } from './styles';
-import { LogsQuickFiltersConfig, SELECTED_VIEWS } from './utils';
+import { SELECTED_VIEWS } from './utils';
 
 function LogsExplorer(): JSX.Element {
 	const [showFrequencyChart, setShowFrequencyChart] = useState(true);
@@ -215,8 +215,9 @@ function LogsExplorer(): JSX.Element {
 				{showFilters && (
 					<section className={cx('log-quick-filter-left-section')}>
 						<QuickFilters
+							className="qf-logs-explorer"
+							signal={SignalType.LOGS}
 							source={QuickFiltersSource.LOGS_EXPLORER}
-							config={LogsQuickFiltersConfig}
 							handleFilterVisibilityChange={handleFilterVisibilityChange}
 						/>
 					</section>

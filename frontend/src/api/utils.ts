@@ -12,7 +12,7 @@ export const Logout = (): void => {
 	deleteLocalStorageKey(LOCALSTORAGE.LOGGED_IN_USER_NAME);
 	deleteLocalStorageKey(LOCALSTORAGE.CHAT_SUPPORT);
 	deleteLocalStorageKey(LOCALSTORAGE.USER_ID);
-
+	deleteLocalStorageKey(LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT);
 	window.dispatchEvent(new CustomEvent('LOGOUT'));
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
