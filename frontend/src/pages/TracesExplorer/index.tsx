@@ -7,6 +7,7 @@ import logEvent from 'api/common/logEvent';
 import axios from 'axios';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import QueryBuilderV2 from 'components/QueryBuilderV2/QueryBuilderV2';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -16,7 +17,6 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/configs';
-import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
@@ -269,7 +269,11 @@ function TracesExplorer(): JSX.Element {
 						</div>
 					</div>
 					<ExplorerCard sourcepage={DataSource.TRACES}>
-						<QuerySection />
+						{/* <QuerySection /> */}
+						<QueryBuilderV2
+							source={DataSource.TRACES}
+							query={currentQuery.builder.queryData[0]}
+						/>
 					</ExplorerCard>
 
 					<Container className="traces-explorer-views">
