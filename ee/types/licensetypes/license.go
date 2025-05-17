@@ -1,90 +1,48 @@
-package model
+package licensetypes
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
 
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 )
 
-type License struct {
-	Key          string    `json:"key" db:"key"`
-	ActivationId string    `json:"activationId" db:"activationId"`
-	CreatedAt    time.Time `db:"created_at"`
+// validate and update license every 24 hours
+var ValidationFrequency = 24 * 60 * time.Minute
 
-	// PlanDetails contains the encrypted plan info
-	PlanDetails string `json:"planDetails" db:"planDetails"`
+type StorableLicense struct {
+	bun.BaseModel `bun:"table:license"`
 
-	// stores parsed license details
-	LicensePlan
-
-	FeatureSet basemodel.FeatureSet
-
-	// populated in case license has any errors
-	ValidationMessage string `db:"validationMessage"`
-
-	// used only for sending details to front-end
-	IsCurrent bool `json:"isCurrent"`
+	types.Identifiable
+	types.TimeAuditable
+	Key   string `bun:"key,type:text,notnull,unique"`
+	Data  string `bun:"data,type:text"`
+	OrgID string `bun:"org_id,type:text,notnull" json:"orgID"`
 }
 
-func (l *License) MarshalJSON() ([]byte, error) {
-
-	return json.Marshal(&struct {
-		Key               string    `json:"key" db:"key"`
-		ActivationId      string    `json:"activationId" db:"activationId"`
-		ValidationMessage string    `db:"validationMessage"`
-		IsCurrent         bool      `json:"isCurrent"`
-		PlanKey           string    `json:"planKey"`
-		ValidFrom         time.Time `json:"ValidFrom"`
-		ValidUntil        time.Time `json:"ValidUntil"`
-		Status            string    `json:"status"`
-	}{
-		Key:               l.Key,
-		ActivationId:      l.ActivationId,
-		IsCurrent:         l.IsCurrent,
-		PlanKey:           l.PlanKey,
-		ValidFrom:         time.Unix(l.ValidFrom, 0),
-		ValidUntil:        time.Unix(l.ValidUntil, 0),
-		Status:            l.Status,
-		ValidationMessage: l.ValidationMessage,
-	})
+func NewStorableLicense(ID valuer.UUID, key string, data string, organizationID valuer.UUID) *StorableLicense {
+	return &StorableLicense{
+		Identifiable: types.Identifiable{
+			ID: ID,
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Key:   key,
+		Data:  data,
+		OrgID: organizationID.StringValue(),
+	}
 }
 
-type LicensePlan struct {
-	PlanKey    string `json:"planKey"`
-	ValidFrom  int64  `json:"validFrom"`
-	ValidUntil int64  `json:"validUntil"`
-	Status     string `json:"status"`
-}
-
-type Licenses struct {
-	TrialStart                   int64     `json:"trialStart"`
-	TrialEnd                     int64     `json:"trialEnd"`
-	OnTrial                      bool      `json:"onTrial"`
-	WorkSpaceBlock               bool      `json:"workSpaceBlock"`
-	TrialConvertedToSubscription bool      `json:"trialConvertedToSubscription"`
-	GracePeriodEnd               int64     `json:"gracePeriodEnd"`
-	Licenses                     []License `json:"licenses"`
-}
-
-type SubscriptionServerResp struct {
-	Status string   `json:"status"`
-	Data   Licenses `json:"data"`
-}
-
-type Plan struct {
-	Name string `json:"name"`
-}
-
-type LicenseDB struct {
-	ID   string `json:"id"`
-	Key  string `json:"key"`
-	Data string `json:"data"`
-}
-type LicenseV3 struct {
+type GettableLicense struct {
 	ID         string
 	Key        string
 	Data       map[string]interface{}
@@ -107,7 +65,7 @@ func extractKeyFromMapStringInterface[T any](data map[string]interface{}, key st
 	return zeroValue, fmt.Errorf("%s key is missing", key)
 }
 
-func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
+func NewGettableLicense(data map[string]interface{}) (*GettableLicense, error) {
 	var features basemodel.FeatureSet
 
 	// extract id from data
@@ -194,7 +152,7 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	}
 	validUntil := int64(_validUntil)
 
-	return &LicenseV3{
+	return &GettableLicense{
 		ID:         licenseID,
 		Key:        licenseKey,
 		Data:       data,
@@ -207,38 +165,25 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 
 }
 
-func NewLicenseV3WithIDAndKey(id string, key string, data map[string]interface{}) (*LicenseV3, error) {
+func NewGettableLicenseWithIDAndKey(id string, key string, data map[string]interface{}) (*GettableLicense, error) {
 	licenseDataWithIdAndKey := data
 	licenseDataWithIdAndKey["id"] = id
 	licenseDataWithIdAndKey["key"] = key
-	return NewLicenseV3(licenseDataWithIdAndKey)
+	return NewGettableLicense(licenseDataWithIdAndKey)
 }
 
-func ConvertLicenseV3ToLicenseV2(l *LicenseV3) *License {
-	planKeyFromPlanName, ok := MapOldPlanKeyToNewPlanName[l.PlanName]
-	if !ok {
-		planKeyFromPlanName = Basic
-	}
-	return &License{
-		Key:               l.Key,
-		ActivationId:      "",
-		PlanDetails:       "",
-		FeatureSet:        l.Features,
-		ValidationMessage: "",
-		IsCurrent:         l.IsCurrent,
-		LicensePlan: LicensePlan{
-			PlanKey:    planKeyFromPlanName,
-			ValidFrom:  l.ValidFrom,
-			ValidUntil: l.ValidUntil,
-			Status:     l.Status},
-	}
+type Store interface {
+	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
+	GetAll(context.Context, valuer.UUID) ([]*StorableLicense, error)
+	GetActive(context.Context) (*StorableLicense, error)
+	Create(context.Context, *StorableLicense) error
+	Update(context.Context, *StorableLicense) error
+	CreateFeature(context.Context)
+	GetFeature(context.Context)
+	GetAllFeatures(context.Context)
+	UpdateFeature(context.Context)
+	InitFeatures(context.Context)
 
-}
-
-type CheckoutRequest struct {
-	SuccessURL string `json:"url"`
-}
-
-type PortalRequest struct {
-	SuccessURL string `json:"url"`
+	// ListOrgs returns the list of orgs
+	ListOrgs(context.Context) ([]string, error)
 }

@@ -1,4 +1,4 @@
-package model
+package licensetypes
 
 import (
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"

@@ -1,4 +1,4 @@
-package model
+package licensetypes
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ func TestNewLicenseV3(t *testing.T) {
 		name     string
 		data     []byte
 		pass     bool
-		expected *LicenseV3
+		expected *GettableLicense
 		error    error
 	}{
 		{
@@ -76,7 +76,7 @@ func TestNewLicenseV3(t *testing.T) {
 			name: "Parse the entire license properly",
 			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"ENTERPRISE"},"valid_from": 1730899309,"valid_until": -1}`),
 			pass: true,
-			expected: &LicenseV3{
+			expected: &GettableLicense{
 				ID:  "does-not-matter",
 				Key: "does-not-matter-key",
 				Data: map[string]interface{}{
@@ -100,7 +100,7 @@ func TestNewLicenseV3(t *testing.T) {
 			name: "Fallback to basic plan if license status is invalid",
 			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"INVALID","plan":{"name":"ENTERPRISE"},"valid_from": 1730899309,"valid_until": -1}`),
 			pass: true,
-			expected: &LicenseV3{
+			expected: &GettableLicense{
 				ID:  "does-not-matter",
 				Key: "does-not-matter-key",
 				Data: map[string]interface{}{
@@ -124,7 +124,7 @@ func TestNewLicenseV3(t *testing.T) {
 			name: "fallback states for validFrom and validUntil",
 			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"ENTERPRISE"},"valid_from":1234.456,"valid_until":5678.567}`),
 			pass: true,
-			expected: &LicenseV3{
+			expected: &GettableLicense{
 				ID:  "does-not-matter",
 				Key: "does-not-matter-key",
 				Data: map[string]interface{}{
@@ -150,7 +150,7 @@ func TestNewLicenseV3(t *testing.T) {
 		var licensePayload map[string]interface{}
 		err := json.Unmarshal(tc.data, &licensePayload)
 		require.NoError(t, err)
-		license, err := NewLicenseV3(licensePayload)
+		license, err := NewGettableLicense(licensePayload)
 		if license != nil {
 			license.Features = make(model.FeatureSet, 0)
 			delete(license.Data, "features")

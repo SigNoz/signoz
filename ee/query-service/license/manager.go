@@ -16,6 +16,7 @@ import (
 
 	validate "github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
 	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"go.uber.org/zap"
@@ -41,7 +42,7 @@ type Manager struct {
 	// keep track of validation failure attempts
 	failedAttempts uint64
 	// keep track of active license and features
-	activeLicenseV3 *model.LicenseV3
+	activeLicenseV3 *licensetypes.LicenseV3
 	activeFeatures  basemodel.FeatureSet
 }
 
@@ -73,7 +74,7 @@ func (lm *Manager) Stop() {
 	<-lm.terminated
 }
 
-func (lm *Manager) SetActiveV3(l *model.LicenseV3, features ...basemodel.Feature) {
+func (lm *Manager) SetActiveV3(l *licensetypes.LicenseV3, features ...basemodel.Feature) {
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
@@ -114,7 +115,7 @@ func (lm *Manager) LoadActiveLicenseV3(features ...basemodel.Feature) error {
 	} else {
 		zap.L().Info("No active license found, defaulting to basic plan")
 		// if no active license is found, we default to basic(free) plan with all default features
-		lm.activeFeatures = model.BasicPlan
+		lm.activeFeatures = licensetypes.BasicPlan
 		setDefaultFeatures(lm)
 		err := lm.InitFeatures(lm.activeFeatures)
 		if err != nil {
@@ -126,7 +127,7 @@ func (lm *Manager) LoadActiveLicenseV3(features ...basemodel.Feature) error {
 	return nil
 }
 
-func (lm *Manager) GetLicensesV3(ctx context.Context) (response []*model.LicenseV3, apiError *model.ApiError) {
+func (lm *Manager) GetLicensesV3(ctx context.Context) (response []*licensetypes.LicenseV3, apiError *model.ApiError) {
 
 	licenses, err := lm.repo.GetLicensesV3(ctx)
 	if err != nil {
@@ -205,7 +206,7 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 			if atomic.LoadUint64(&lm.failedAttempts) > 3 {
 				zap.L().Error("License validation completed with error for three consecutive times, defaulting to basic plan", zap.String("license_id", lm.activeLicenseV3.ID), zap.Bool("license_validation", false))
 				lm.activeLicenseV3 = nil
-				lm.activeFeatures = model.BasicPlan
+				lm.activeFeatures = licensetypes.BasicPlan
 				setDefaultFeatures(lm)
 				err := lm.InitFeatures(lm.activeFeatures)
 				if err != nil {
@@ -234,7 +235,7 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 	return nil
 }
 
-func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (*model.LicenseV3, error) {
+func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (*licensetypes.LicenseV3, error) {
 	license, err := validate.ValidateLicenseV3(ctx, licenseKey, lm.zeus)
 	if err != nil {
 		return nil, err
@@ -252,7 +253,7 @@ func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (*model.Li
 	return license, nil
 }
 
-func (lm *Manager) GetActiveLicense() *model.LicenseV3 {
+func (lm *Manager) GetActiveLicense() *licensetypes.LicenseV3 {
 	return lm.activeLicenseV3
 }
 
