@@ -6,6 +6,7 @@ import { Tooltip } from 'antd';
 import Color from 'color';
 import TimelineV2 from 'components/TimelineV2/TimelineV2';
 import { themeColors } from 'constants/theme';
+import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
@@ -20,6 +21,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { ListRange, Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 import { Span } from 'types/api/trace/getTraceV2';
+import { toFixed } from 'utils/toFixed';
 
 interface ITraceMetadata {
 	startTime: number;
@@ -91,7 +93,31 @@ function Success(props: ISuccessProps): JSX.Element {
 									searchParams.set('spanId', span.spanId);
 									history.replace({ search: searchParams.toString() });
 								}}
-							/>
+							>
+								{span.event?.map((event) => {
+									const eventTimeMs = event.timeUnixNano / 1e6;
+									const eventOffsetPercent =
+										((eventTimeMs - span.timestamp) / (span.durationNano / 1e6)) * 100;
+									const clampedOffset = Math.max(1, Math.min(eventOffsetPercent, 99));
+									const { isError } = event;
+									const { time, timeUnitName } = convertTimeToRelevantUnit(
+										eventTimeMs - span.timestamp,
+									);
+									return (
+										<Tooltip
+											key={`${span.spanId}-event-${event.name}-${event.timeUnixNano}`}
+											title={`${event.name} @ ${toFixed(time, 2)} ${timeUnitName}`}
+										>
+											<div
+												className={`event-dot ${isError ? 'error' : ''}`}
+												style={{
+													left: `${clampedOffset}%`,
+												}}
+											/>
+										</Tooltip>
+									);
+								})}
+							</div>
 						</Tooltip>
 					);
 				})}
