@@ -58,6 +58,13 @@
         }
     }
 
+    .qf-other-filters-list {
+        .ant-skeleton-input {
+            width: 300px;
+            margin: 8px 12px;
+        }
+    }
+
     .qf-footer {
         display: flex;
         gap: 12px;

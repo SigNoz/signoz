@@ -172,7 +172,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 							<Skeleton.Input
 								active
 								size="small"
-								style={{ width: '236px', margin: '8px 12px' }}
 								// eslint-disable-next-line react/no-array-index-key
 								key={index}
 							/>

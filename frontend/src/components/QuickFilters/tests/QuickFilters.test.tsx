@@ -95,7 +95,6 @@ beforeAll(() => {
 
 afterEach(() => {
 	server.resetHandlers();
-	cleanup();
 });
 
 afterAll(() => {
