@@ -8,12 +8,14 @@ import {
 	SupportedSignals,
 } from 'container/CloudIntegrationPage/ServicesSection/types';
 import { useUpdateServiceConfig } from 'hooks/integration/aws/useUpdateServiceConfig';
+import { isEqual } from 'lodash-es';
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 
 import logEvent from '../../../api/common/logEvent';
+import S3BucketsSelector from './S3BucketsSelector';
 
-interface IConfigureServiceModalProps {
+export interface IConfigureServiceModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	serviceName: string;
@@ -36,18 +38,34 @@ function ConfigureServiceModal({
 	const [isLoading, setIsLoading] = useState(false);
 
 	// Track current form values
-	const initialValues = {
-		metrics: initialConfig?.metrics?.enabled || false,
-		logs: initialConfig?.logs?.enabled || false,
-	};
+	const initialValues = useMemo(
+		() => ({
+			metrics: initialConfig?.metrics?.enabled || false,
+			logs: initialConfig?.logs?.enabled || false,
+			s3Buckets: initialConfig?.logs?.s3_buckets || {},
+		}),
+		[initialConfig],
+	);
 	const [currentValues, setCurrentValues] = useState(initialValues);
 
 	const isSaveDisabled = useMemo(
 		() =>
 			// disable only if current values are same as the initial config
 			currentValues.metrics === initialValues.metrics &&
-			currentValues.logs === initialValues.logs,
-		[currentValues, initialValues.metrics, initialValues.logs],
+			currentValues.logs === initialValues.logs &&
+			isEqual(currentValues.s3Buckets, initialValues.s3Buckets),
+		[currentValues, initialValues],
+	);
+
+	const handleS3BucketsChange = useCallback(
+		(bucketsByRegion: Record<string, string[]>) => {
+			setCurrentValues((prev) => ({
+				...prev,
+				s3Buckets: bucketsByRegion,
+			}));
+			form.setFieldsValue({ s3Buckets: bucketsByRegion });
+		},
+		[form],
 	);
 
 	const {
@@ -70,6 +88,7 @@ function ConfigureServiceModal({
 						config: {
 							logs: {
 								enabled: values.logs,
+								s3_buckets: values.s3Buckets,
 							},
 							metrics: {
 								enabled: values.metrics,
@@ -144,6 +163,7 @@ function ConfigureServiceModal({
 				initialValues={{
 					metrics: initialConfig?.metrics?.enabled || false,
 					logs: initialConfig?.logs?.enabled || false,
+					s3Buckets: initialConfig?.logs?.s3_buckets || {},
 				}}
 			>
 				<div className=" configure-service-modal__body">
@@ -174,27 +194,38 @@ function ConfigureServiceModal({
 					)}
 
 					{supportedSignals.logs && (
-						<Form.Item
-							name="logs"
-							valuePropName="checked"
-							className="configure-service-modal__body-form-item"
-						>
-							<div className="configure-service-modal__body-regions-switch-switch">
-								<Switch
-									checked={currentValues.logs}
-									onChange={(checked): void => {
-										setCurrentValues((prev) => ({ ...prev, logs: checked }));
-										form.setFieldsValue({ logs: checked });
-									}}
-								/>
-								<span className="configure-service-modal__body-regions-switch-switch-label">
-									Log Collection
-								</span>
-							</div>
-							<div className="configure-service-modal__body-switch-description">
-								To ingest logs from your AWS services, you must complete several steps
-							</div>
-						</Form.Item>
+						<>
+							<Form.Item
+								name="logs"
+								valuePropName="checked"
+								className="configure-service-modal__body-form-item"
+							>
+								<div className="configure-service-modal__body-regions-switch-switch">
+									<Switch
+										checked={currentValues.logs}
+										onChange={(checked): void => {
+											setCurrentValues((prev) => ({ ...prev, logs: checked }));
+											form.setFieldsValue({ logs: checked });
+										}}
+									/>
+									<span className="configure-service-modal__body-regions-switch-switch-label">
+										Log Collection
+									</span>
+								</div>
+								<div className="configure-service-modal__body-switch-description">
+									To ingest logs from your AWS services, you must complete several steps
+								</div>
+							</Form.Item>
+
+							{currentValues.logs && serviceId === 's3sync' && (
+								<Form.Item name="s3Buckets" noStyle>
+									<S3BucketsSelector
+										initialBucketsByRegion={currentValues.s3Buckets}
+										onChange={handleS3BucketsChange}
+									/>
+								</Form.Item>
+							)}
+						</>
 					)}
 				</div>
 			</Form>
