@@ -2,8 +2,8 @@ import { SettingOutlined } from '@ant-design/icons';
 import { Popover } from 'antd';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
-import useErrorNotification from 'hooks/useErrorNotification';
-import { useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { Button } from '../styles';
@@ -20,7 +20,16 @@ function ApDexApplication(): JSX.Element {
 		refetch: refetchGetApDexSetting,
 	} = useGetApDexSettings(servicename);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
-	useErrorNotification(error);
+	const { notifications } = useNotifications();
+
+	useEffect(() => {
+		if (error) {
+			notifications.error({
+				message: error.getErrorCode(),
+				description: error.getErrorMessage(),
+			});
+		}
+	}, [error, notifications]);
 
 	const handlePopOverClose = (): void => {
 		setIsOpen(false);
