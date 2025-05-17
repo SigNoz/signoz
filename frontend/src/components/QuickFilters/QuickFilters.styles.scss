@@ -73,22 +73,22 @@
 			}
 
 			.sync-icon {
-				background-color: var(--bg-ink-500);
 				border: 0;
 				box-shadow: none;
 			}
 			.right-action-icon-container {
+				position: relative;
 				display: flex;
 				padding: 2px;
+				background-color: var(--bg-ink-500);
+
 				.settings-icon {
 					height: 14px;
 					width: 14px;
 					cursor: pointer;
 				}
-				&:hover {
-					background: var(--bg-slate-500);
-				}
-				&.active {
+				
+				&.active, &:hover {
 					background: var(--bg-slate-500);
 				}
 			}
@@ -116,8 +116,11 @@
 				}
 			}
 			.right-actions {
-				.sync-icon {
+				.right-action-icon-container {
 					background-color: var(--bg-vanilla-100);
+					&.active, &:hover {
+						background-color: var(--bg-vanilla-200);
+					}
 				}
 			}
 		}

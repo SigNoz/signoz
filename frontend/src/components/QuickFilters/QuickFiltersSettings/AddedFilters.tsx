@@ -1,6 +1,4 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import './AddedFilters.styles.scss';
-
 import {
 	closestCenter,
 	DndContext,
@@ -16,17 +14,23 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Skeleton } from 'antd';
-import getCustomFilters from 'api/quickFilters/getCustomFilters';
+import Button from 'antd/es/button';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical } from 'lucide-react';
-import { useQuery } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
-	Filter as FilterType,
-	PayloadProps,
-} from 'types/api/quickFilters/getCustomFilters';
+import { useMemo } from 'react';
+import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
-function SortableFilter({ filter }: { filter: FilterType }): JSX.Element {
+function SortableFilter({
+	filter,
+	onRemove,
+	allowDrag,
+	allowRemove,
+}: {
+	filter: FilterType;
+	onRemove: (filter: FilterType) => void;
+	allowDrag: boolean;
+	allowRemove: boolean;
+}): JSX.Element {
 	const {
 		attributes,
 		listeners,
@@ -44,43 +48,43 @@ function SortableFilter({ filter }: { filter: FilterType }): JSX.Element {
 		<div
 			ref={setNodeRef}
 			style={style}
-			{...attributes}
-			{...listeners}
-			className="qf-filter-item drag-enabled" // TODO: handle drag disabled when searching
+			className={`qf-filter-item ${allowDrag ? 'drag-enabled' : 'drag-disabled'}`}
 		>
-			<div className="qf-filter-content">
-				<GripVertical size={16} />
+			<div {...attributes} {...listeners} className="drag-handle">
+				{allowDrag && <GripVertical size={16} />}
 				{filter.key}
 			</div>
+			{allowRemove && (
+				<Button
+					className="remove-filter-btn periscope-btn"
+					size="small"
+					onClick={(): void => {
+						onRemove(filter as FilterType);
+					}}
+				>
+					Remove
+				</Button>
+			)}
 		</div>
 	);
 }
 
 function AddedFilters({
-	filters,
-	setFilters,
+	inputValue,
+	addedFilters,
+	setAddedFilters,
 }: {
-	filters: FilterType[];
-	setFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
+	inputValue: string;
+	addedFilters: FilterType[];
+	setAddedFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
 }): JSX.Element {
-	const { isLoading: addedFiltersLoading } = useQuery<
-		SuccessResponse<PayloadProps> | ErrorResponse,
-		Error
-	>(['addedFilters'], () => getCustomFilters({ signal: 'exceptions' }), {
-		onSuccess: (data) => {
-			if ('payload' in data && data.payload?.filters) {
-				setFilters(data.payload.filters || ([] as FilterType[]));
-			}
-		},
-	});
-
 	const sensors = useSensors(useSensor(PointerSensor));
 
 	const handleDragEnd = (event: DragEndEvent): void => {
 		const { active, over } = event;
 
 		if (over && active.id !== over.id) {
-			setFilters((items) => {
+			setAddedFilters((items) => {
 				const oldIndex = items.findIndex((item) => item.key === active.id);
 				const newIndex = items.findIndex((item) => item.key === over.id);
 
@@ -89,34 +93,52 @@ function AddedFilters({
 		}
 	};
 
+	const filteredAddedFilters = useMemo(
+		() =>
+			addedFilters.filter((filter) =>
+				filter.key.toLowerCase().includes(inputValue.toLowerCase()),
+			),
+		[addedFilters, inputValue],
+	);
+
+	const handleRemoveFilter = (filter: FilterType): void => {
+		setAddedFilters((prev) => prev.filter((f) => f.key !== filter.key));
+	};
+
+	const allowDrag = inputValue.length === 0;
+	const allowRemove = addedFilters.length > 1;
+
 	return (
 		<div className="qf-filters added-filters">
 			<div className="qf-filters-header">ADDED FILTERS</div>
 			<div className="qf-added-filters-list">
-				{addedFiltersLoading ? (
-					[1, 2, 3, 4, 5].map((key) => (
-						<div key={key} className="qf-filter-item">
-							<div className="qf-filter-content">
-								<Skeleton.Input active size="small" style={{ width: '300px' }} />
-							</div>
-						</div>
-					))
-				) : (
+				<OverlayScrollbar>
 					<DndContext
 						sensors={sensors}
 						collisionDetection={closestCenter}
 						onDragEnd={handleDragEnd}
 					>
-						<SortableContext
-							items={filters.map((f) => f.key)}
-							strategy={verticalListSortingStrategy}
-						>
-							{filters.map((filter) => (
-								<SortableFilter key={filter.key} filter={filter} />
-							))}
-						</SortableContext>
+						{filteredAddedFilters.length === 0 ? (
+							<div className="no-values-found">No values found</div>
+						) : (
+							<SortableContext
+								items={addedFilters.map((f) => f.key)}
+								strategy={verticalListSortingStrategy}
+								disabled={!allowDrag}
+							>
+								{filteredAddedFilters.map((filter) => (
+									<SortableFilter
+										key={filter.key}
+										filter={filter}
+										onRemove={handleRemoveFilter}
+										allowDrag={allowDrag}
+										allowRemove={allowRemove}
+									/>
+								))}
+							</SortableContext>
+						)}
 					</DndContext>
-				)}
+				</OverlayScrollbar>
 			</div>
 		</div>
 	);

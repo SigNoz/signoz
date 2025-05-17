@@ -5,29 +5,59 @@ import {
 	SyncOutlined,
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
-import { Tooltip, Typography } from 'antd';
+import { Skeleton, Tooltip, Typography } from 'antd';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import classNames from 'classnames';
-import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isFunction } from 'lodash-es';
+import { cloneDeep, isFunction, isNull } from 'lodash-es';
 import { Settings2 as SettingsIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Slider from './FilterRenderers/Slider/Slider';
+import useFilterConfig from './hooks/useFilterConfig';
+import AnnouncementTooltip from './QuickFiltersSettings/AnnouncementTooltip';
 import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
 import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
+	const {
+		className,
+		config,
+		handleFilterVisibilityChange,
+		source,
+		onFilterChange,
+		signal,
+	} = props;
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-	const { config, handleFilterVisibilityChange, source, onFilterChange } = props;
+
+	const {
+		filterConfig,
+		isDynamicFilters,
+		customFilters,
+		setIsStale,
+		isCustomFiltersLoading,
+	} = useFilterConfig({ signal, config });
 
 	const {
 		currentQuery,
 		lastUsedQuery,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+
+	const showAnnouncementTooltip = useMemo(() => {
+		const localStorageValue = getLocalStorageKey(
+			LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT,
+		);
+		if (!isNull(localStorageValue)) {
+			return !(localStorageValue === 'false');
+		}
+		return true;
+	}, []);
 
 	// clear all the filters for the query which is in sync with filters
 	const handleReset = (): void => {
@@ -103,56 +133,99 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 										/>
 									</div>
 								</Tooltip>
-								<Tooltip title="Settings">
-									<div
-										className={classNames('right-action-icon-container', {
-											active: isSettingsOpen,
-										})}
-									>
-										<SettingsIcon
-											className="settings-icon"
-											width={14}
-											height={14}
-											onClick={(): void => setIsSettingsOpen(true)}
-										/>
-									</div>
-								</Tooltip>
+								{isDynamicFilters && (
+									<Tooltip title="Settings">
+										<div
+											className={classNames('right-action-icon-container', {
+												active: isSettingsOpen,
+											})}
+										>
+											<SettingsIcon
+												className="settings-icon"
+												width={14}
+												height={14}
+												onClick={(): void => setIsSettingsOpen(true)}
+											/>
+											<AnnouncementTooltip
+												show={showAnnouncementTooltip}
+												position={{ top: -5, left: 15 }}
+												title="Edit your quick filters"
+												message="You can now customize and re-arrange your quick filters panel. Select the quick filters you’d need and hide away the rest for faster exploration."
+												onClose={(): void => {
+													setLocalStorageKey(
+														LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT,
+														'false',
+													);
+												}}
+											/>
+										</div>
+									</Tooltip>
+								)}
 							</section>
 						</section>
 					)}
 
-				<TypicalOverlayScrollbar>
-					<section className="filters">
-						{config.map((filter) => {
-							switch (filter.type) {
-								case FiltersType.CHECKBOX:
-									return (
-										<Checkbox
-											source={source}
-											filter={filter}
-											onFilterChange={onFilterChange}
-										/>
-									);
-								case FiltersType.SLIDER:
-									return <Slider filter={filter} />;
-								// eslint-disable-next-line sonarjs/no-duplicated-branches
-								default:
-									return (
-										<Checkbox
-											source={source}
-											filter={filter}
-											onFilterChange={onFilterChange}
-										/>
-									);
-							}
-						})}
-					</section>
-				</TypicalOverlayScrollbar>
+				{isCustomFiltersLoading ? (
+					<div className="quick-filters-skeleton">
+						{Array.from({ length: 5 }).map((_, index) => (
+							<Skeleton.Input
+								active
+								size="small"
+								style={{ width: '236px', margin: '8px 12px' }}
+								// eslint-disable-next-line react/no-array-index-key
+								key={index}
+							/>
+						))}
+					</div>
+				) : (
+					<OverlayScrollbar>
+						<section className="filters">
+							{filterConfig.map((filter) => {
+								switch (filter.type) {
+									case FiltersType.CHECKBOX:
+										return (
+											<Checkbox
+												source={source}
+												filter={filter}
+												onFilterChange={onFilterChange}
+											/>
+										);
+									case FiltersType.SLIDER:
+										return <Slider filter={filter} />;
+									// eslint-disable-next-line sonarjs/no-duplicated-branches
+									default:
+										return (
+											<Checkbox
+												source={source}
+												filter={filter}
+												onFilterChange={onFilterChange}
+											/>
+										);
+								}
+							})}
+						</section>
+					</OverlayScrollbar>
+				)}
 			</div>
 			<div className="quick-filters-settings-container">
-				{isSettingsOpen && (
-					<QuickFiltersSettings setIsSettingsOpen={setIsSettingsOpen} />
-				)}
+				<div
+					className={classNames(
+						'quick-filters-settings',
+						{
+							hidden: !isSettingsOpen,
+						},
+						className,
+					)}
+				>
+					{isSettingsOpen && (
+						<QuickFiltersSettings
+							signal={signal}
+							setIsSettingsOpen={setIsSettingsOpen}
+							customFilters={customFilters}
+							setIsStale={setIsStale}
+						/>
+					)}
+				</div>
 			</div>
 		</div>
 	);
@@ -160,4 +233,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 QuickFilters.defaultProps = {
 	onFilterChange: null,
+	signal: '',
+	config: [],
 };
