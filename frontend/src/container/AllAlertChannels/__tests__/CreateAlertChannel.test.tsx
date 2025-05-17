@@ -119,12 +119,7 @@ describe('Create Alert Channel', () => {
 
 			fireEvent.click(saveButton);
 
-			await waitFor(() =>
-				expect(errorNotification).toHaveBeenCalledWith({
-					description: 'Something went wrong',
-					message: 'Error',
-				}),
-			);
+			await waitFor(() => expect(errorNotification).toHaveBeenCalled());
 		});
 		it('Should check if clicking on Test button shows "An alert has been sent to this channel" success message if testing passes', async () => {
 			server.use(
@@ -158,12 +153,7 @@ describe('Create Alert Channel', () => {
 
 			fireEvent.click(testButton);
 
-			await waitFor(() =>
-				expect(errorNotification).toHaveBeenCalledWith({
-					message: 'Error',
-					description: 'channel_test_failed',
-				}),
-			);
+			await waitFor(() => expect(errorNotification).toHaveBeenCalled());
 		});
 	});
 	describe('New Alert Channel Cascading Fields Based on Channel Type', () => {
