@@ -33,6 +33,15 @@ func (fm *FeatureManager) CheckFeature(featureKey string) error {
 // GetFeatureFlags returns current features
 func (fm *FeatureManager) GetFeatureFlags() (model.FeatureSet, error) {
 	features := constants.DEFAULT_FEATURE_SET
+
+	//dot metrics migration
+	env := constants.GetOrDefaultEnv("DOT_METRICS_ENABLED", "false")
+	if env == "true" {
+		features = append(features, model.Feature{
+			Name:   "DOT_METRICS_MIGRATED",
+			Active: true,
+		})
+	}
 	return features, nil
 }
 

@@ -145,6 +145,10 @@ function Application(): JSX.Element {
 		[servicename, topLevelOperations],
 	);
 
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const operationPerSecWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -155,6 +159,7 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -164,7 +169,7 @@ function Application(): JSX.Element {
 				yAxisUnit: 'ops',
 				id: SERVICE_CHART_ID.rps,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
+		[servicename, tagFilterItems, topLevelOperationsRoute, dotMetricsEnabled],
 	);
 
 	const errorPercentageWidget = useMemo(
@@ -177,6 +182,7 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -187,7 +193,7 @@ function Application(): JSX.Element {
 				id: SERVICE_CHART_ID.errorPercentage,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
+		[servicename, tagFilterItems, topLevelOperationsRoute, dotMetricsEnabled],
 	);
 
 	const stepInterval = useMemo(

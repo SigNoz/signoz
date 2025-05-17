@@ -25,10 +25,11 @@ export interface NavigateToTraceProps {
 }
 
 export interface DatabaseCallsRPSProps extends DatabaseCallProps {
-	legend: '{{db_system}}';
+	legend: '{{db.system}}';
 }
 
 export interface DatabaseCallProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
+	dotMetricsEnabled: boolean;
 }
