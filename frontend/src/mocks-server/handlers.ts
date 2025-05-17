@@ -1,5 +1,7 @@
 import { rest } from 'msw';
 
+import commonEnTranslation from '../../public/locales/en/common.json';
+import enTranslation from '../../public/locales/en/translation.json';
 import { allAlertChannels } from './__mockdata__/alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
 import {
@@ -248,5 +250,17 @@ export const handlers = [
 				data: 'notification channel successfully deleted',
 			}),
 		),
+	),
+	rest.get('http://localhost/locales/en/translation.json', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(enTranslation)),
+	),
+	rest.get('http://localhost/locales/en/common.json', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(commonEnTranslation)),
+	),
+	rest.get('http://localhost/locales/en-US/translation.json', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(enTranslation)),
+	),
+	rest.get('http://localhost/locales/en-US/common.json', (_, res, ctx) =>
+		res(ctx.status(200), ctx.json(commonEnTranslation)),
 	),
 ];
