@@ -58,6 +58,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
@@ -89,7 +90,6 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	reader            interfaces.Reader
 	ruleManager       *rules.Manager
-	featureFlags      interfaces.FeatureLookup
 	querier           interfaces.Querier
 	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
@@ -154,9 +154,6 @@ type APIHandlerOpts struct {
 
 	// rule manager handles rule crud operations
 	RuleManager *rules.Manager
-
-	// feature flags querier
-	FeatureFlags interfaces.FeatureLookup
 
 	// Integrations
 	IntegrationsController *integrations.Controller
@@ -224,7 +221,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
-		featureFlags:                  opts.FeatureFlags,
 		IntegrationsController:        opts.IntegrationsController,
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
@@ -1962,15 +1958,14 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet, err := aH.FF().GetFeatureFlags()
+	featureSet, err := aH.Signoz.LicenseManager.GetFeatureFlags(r.Context())
 	if err != nil {
 		aH.HandleError(w, err, http.StatusInternalServerError)
 		return
 	}
 	if aH.preferSpanMetrics {
-		for idx := range featureSet {
-			feature := &featureSet[idx]
-			if feature.Name == model.UseSpanMetrics {
+		for idx, feature := range featureSet {
+			if feature.Name == featuretypes.UseSpanMetrics {
 				featureSet[idx].Active = true
 			}
 		}
@@ -1978,12 +1973,8 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, featureSet)
 }
 
-func (aH *APIHandler) FF() interfaces.FeatureLookup {
-	return aH.featureFlags
-}
-
-func (aH *APIHandler) CheckFeature(f string) bool {
-	err := aH.FF().CheckFeature(f)
+func (aH *APIHandler) CheckFeature(ctx context.Context, key string) bool {
+	err := aH.Signoz.LicenseManager.CheckFeature(ctx, key)
 	return err == nil
 }
 

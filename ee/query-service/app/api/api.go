@@ -22,7 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
-	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -39,7 +38,6 @@ type APIHandlerOptions struct {
 	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
 	UsageManager                  *usage.Manager
-	FeatureFlags                  baseint.FeatureLookup
 	IntegrationsController        *integrations.Controller
 	CloudIntegrationsController   *cloudintegrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
@@ -65,7 +63,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		Reader:                        opts.DataConnector,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
 		RuleManager:                   opts.RulesManager,
-		FeatureFlags:                  opts.FeatureFlags,
 		IntegrationsController:        opts.IntegrationsController,
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
@@ -88,10 +85,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 	return ah, nil
 }
 
-func (ah *APIHandler) FF() baseint.FeatureLookup {
-	return ah.opts.FeatureFlags
-}
-
 func (ah *APIHandler) RM() *rules.Manager {
 	return ah.opts.RulesManager
 }
@@ -108,8 +101,8 @@ func (ah *APIHandler) Gateway() *httputil.ReverseProxy {
 	return ah.opts.Gateway
 }
 
-func (ah *APIHandler) CheckFeature(f string) bool {
-	err := ah.FF().CheckFeature(f)
+func (ah *APIHandler) CheckFeature(ctx context.Context, key string) bool {
+	err := ah.Signoz.LicenseManager.CheckFeature(ctx, key)
 	return err == nil
 }
 
@@ -170,7 +163,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 // TODO(nitya): remove this once we know how to get the FF's
 func (ah *APIHandler) updateRequestContext(w http.ResponseWriter, r *http.Request) (*http.Request, error) {
 	ssoAvailable := true
-	err := ah.FF().CheckFeature(licensetypes.SSO)
+	err := ah.Signoz.LicenseManager.CheckFeature(r.Context(), licensetypes.SSO)
 	if err != nil {
 		switch err.(type) {
 		case basemodel.ErrFeatureUnavailable:
@@ -192,7 +185,6 @@ func (ah *APIHandler) loginPrecheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ah.Signoz.Handlers.User.LoginPrecheck(w, r)
-	return
 }
 
 func (ah *APIHandler) acceptInvite(w http.ResponseWriter, r *http.Request) {
@@ -202,7 +194,6 @@ func (ah *APIHandler) acceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ah.Signoz.Handlers.User.AcceptInvite(w, r)
-	return
 }
 
 func (ah *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
@@ -212,7 +203,7 @@ func (ah *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ah.Signoz.Handlers.User.GetInvite(w, r)
-	return
+
 }
 
 func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *middleware.AuthZ) {

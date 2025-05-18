@@ -52,7 +52,7 @@ func (ah *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 	redirectUri := constants.GetDefaultSiteURL()
 	ctx := context.Background()
 
-	if !ah.CheckFeature(licensetypes.SSO) {
+	if !ah.CheckFeature(r.Context(), licensetypes.SSO) {
 		zap.L().Error("[receiveGoogleAuth] sso requested but feature unavailable in org domain")
 		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "feature unavailable, please upgrade your billing plan to access this feature"), http.StatusMovedPermanently)
 		return
@@ -118,7 +118,7 @@ func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
 	redirectUri := constants.GetDefaultSiteURL()
 	ctx := context.Background()
 
-	if !ah.CheckFeature(licensetypes.SSO) {
+	if !ah.CheckFeature(r.Context(), licensetypes.SSO) {
 		zap.L().Error("[receiveSAML] sso requested but feature unavailable in org domain")
 		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "feature unavailable, please upgrade your billing plan to access this feature"), http.StatusMovedPermanently)
 		return

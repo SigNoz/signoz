@@ -72,6 +72,8 @@ func (s *store) Update(ctx context.Context, storableLicense *licensetypes.Storab
 		BunDB().
 		NewUpdate().
 		Model(storableLicense).
+		Column("data", "last_validated_at").
+		WherePK().
 		Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to update license with ID: %s", storableLicense.ID)

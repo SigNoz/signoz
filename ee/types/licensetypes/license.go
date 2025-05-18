@@ -15,7 +15,7 @@ import (
 )
 
 // validate and update license every 24 hours
-var ValidationFrequency = 24 * 60 * time.Minute
+var ValidationFrequency = 1 * time.Minute
 
 type StorableLicense struct {
 	bun.BaseModel `bun:"table:license"`

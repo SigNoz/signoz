@@ -1,13 +1,13 @@
 package interfaces
 
 import (
-	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 )
 
 type FeatureLookup interface {
 	CheckFeature(f string) error
-	GetFeatureFlags() (model.FeatureSet, error)
-	GetFeatureFlag(f string) (model.Feature, error)
-	UpdateFeatureFlag(features model.Feature) error
-	InitFeatures(features model.FeatureSet) error
+	GetFeatureFlags() (featuretypes.FeatureSet, error)
+	GetFeatureFlag(f string) (featuretypes.GettableFeature, error)
+	UpdateFeatureFlag(features featuretypes.GettableFeature) error
+	InitFeatures(features featuretypes.FeatureSet) error
 }

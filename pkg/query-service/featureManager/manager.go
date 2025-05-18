@@ -3,15 +3,11 @@ package featureManager
 import (
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"go.uber.org/zap"
 )
 
 type FeatureManager struct {
-}
-
-func StartManager() *FeatureManager {
-	fM := &FeatureManager{}
-	return fM
 }
 
 // CheckFeature will be internally used by backend routines
@@ -31,30 +27,30 @@ func (fm *FeatureManager) CheckFeature(featureKey string) error {
 }
 
 // GetFeatureFlags returns current features
-func (fm *FeatureManager) GetFeatureFlags() (model.FeatureSet, error) {
+func (fm *FeatureManager) GetFeatureFlags() ([]*featuretypes.GettableFeature, error) {
 	features := constants.DEFAULT_FEATURE_SET
 	return features, nil
 }
 
-func (fm *FeatureManager) InitFeatures(req model.FeatureSet) error {
+func (fm *FeatureManager) InitFeatures(req []*featuretypes.GettableFeature) error {
 	zap.L().Error("InitFeatures not implemented in OSS")
 	return nil
 }
 
-func (fm *FeatureManager) UpdateFeatureFlag(req model.Feature) error {
+func (fm *FeatureManager) UpdateFeatureFlag(req []*featuretypes.GettableFeature) error {
 	zap.L().Error("UpdateFeatureFlag not implemented in OSS")
 	return nil
 }
 
-func (fm *FeatureManager) GetFeatureFlag(key string) (model.Feature, error) {
+func (fm *FeatureManager) GetFeatureFlag(key string) (*featuretypes.GettableFeature, error) {
 	features, err := fm.GetFeatureFlags()
 	if err != nil {
-		return model.Feature{}, err
+		return nil, err
 	}
 	for _, feature := range features {
 		if feature.Name == key {
 			return feature, nil
 		}
 	}
-	return model.Feature{}, model.ErrFeatureUnavailable{Key: key}
+	return nil, model.ErrFeatureUnavailable{Key: key}
 }

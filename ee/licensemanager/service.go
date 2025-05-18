@@ -2,6 +2,7 @@ package licensemanager
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/SigNoz/signoz/ee/licensemanager/licensemanagerstore"
@@ -52,21 +53,25 @@ func (l *license) Stop(context.Context) error {
 }
 
 func (l *license) Validate(ctx context.Context, organizationID valuer.UUID) error {
+	fmt.Println("::VALIDATOR-RUNNING::")
 	activeLicense, err := l.GetActive(ctx, organizationID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		// log the error here
 		return err
 	}
 
-	if errors.Ast(err, errors.TypeNotFound) {
+	if err != nil && errors.Ast(err, errors.TypeNotFound) {
+		fmt.Println("::GOT-NO-LICENSE::INITIALIZING-BASIC-PLAN")
 		err = l.InitFeatures(ctx, licensetypes.BasicPlan)
 		if err != nil {
 			return err
 		}
 	}
 
+	fmt.Println("::GOT-ACTIVE-LICENSE::", activeLicense.Key)
 	license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, l.zeus)
 	if err != nil {
+		fmt.Println("::COULD-NOT-VALIDATE::", err.Error())
 		license, err := l.store.Get(ctx, organizationID, valuer.MustNewUUID(activeLicense.ID))
 		if err != nil {
 			err = l.InitFeatures(ctx, licensetypes.BasicPlan)
@@ -75,7 +80,7 @@ func (l *license) Validate(ctx context.Context, organizationID valuer.UUID) erro
 			}
 		}
 
-		if time.Since(license.LastValidatedAt) > time.Hour*24*3 {
+		if time.Since(license.LastValidatedAt) > time.Minute*2 {
 			err = l.InitFeatures(ctx, licensetypes.BasicPlan)
 			if err != nil {
 				return err
@@ -84,6 +89,7 @@ func (l *license) Validate(ctx context.Context, organizationID valuer.UUID) erro
 		return err
 	}
 
+	fmt.Println("::VALIDATION-DONE::UPDATING-LICENSE::")
 	err = l.Update(ctx, organizationID, license)
 	if err != nil {
 		return err
@@ -192,21 +198,23 @@ func (l *license) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*li
 }
 
 func (l *license) Refresh(ctx context.Context, organizationID valuer.UUID) error {
+	fmt.Println("::REFRESHING-LICENSE::")
 	activeLicense, err := l.GetActive(ctx, organizationID)
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("::GOT-LICENSE::")
 	license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, l.zeus)
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("::REFRESHED-LICENSE::")
 	updatedLicense := licensetypes.NewStorableLicense(valuer.MustNewUUID(license.ID), license.Key, license.Data, time.Now(), organizationID)
 	err = l.store.Update(ctx, updatedLicense)
 	if err != nil {
 		return err
 	}
+	fmt.Println("::UPDATED-LICENSE::")
 
 	return nil
 }
