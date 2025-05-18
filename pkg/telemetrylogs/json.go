@@ -68,12 +68,22 @@ func inferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 	return valueType, value
 }
 
+func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
+	parts := strings.Split(key.Name, ".")[1:]
+	newParts := []string{}
+	for _, part := range parts {
+		if strings.HasSuffix(part, "[*]") {
+			newParts = append(newParts, fmt.Sprintf(`"%s"[*]`, strings.TrimSuffix(part, "[*]")))
+		} else {
+			newParts = append(newParts, fmt.Sprintf(`"%s"`, part))
+		}
+	}
+	return strings.Join(newParts, ".")
+}
+
 func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, any) {
 
 	dataType, value := inferDataType(value, operator, key)
-
-	// all body json keys are of the form body.
-	path := strings.Join(strings.Split(key.Name, ".")[1:], ".")
 
 	// for array types, we need to extract the value from the JSON_QUERY
 	if dataType == telemetrytypes.FieldDataTypeArrayInt64 ||
@@ -81,9 +91,13 @@ func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, op
 		dataType == telemetrytypes.FieldDataTypeArrayString ||
 		dataType == telemetrytypes.FieldDataTypeArrayBool ||
 		dataType == telemetrytypes.FieldDataTypeArrayNumber {
-		return fmt.Sprintf("JSONExtract(JSON_QUERY(body, '$.%s'), '%s')", path, dataType.CHDataType()), value
+		return fmt.Sprintf("JSONExtract(JSON_QUERY(body, '$.%s'), '%s')", getBodyJSONPath(key), dataType.CHDataType()), value
 	}
 
 	// for all other types, we need to extract the value from the JSON_VALUE
-	return fmt.Sprintf("JSONExtract(JSON_VALUE(body, '$.%s'), '%s')", path, dataType.CHDataType()), value
+	return fmt.Sprintf("JSONExtract(JSON_VALUE(body, '$.%s'), '%s')", getBodyJSONPath(key), dataType.CHDataType()), value
+}
+
+func GetBodyJSONKeyForExists(_ context.Context, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any) string {
+	return fmt.Sprintf("JSON_EXISTS(body, '$.%s')", getBodyJSONPath(key))
 }
