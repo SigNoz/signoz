@@ -47,9 +47,7 @@ interface FunnelContextType {
 		| undefined;
 	isValidateStepsLoading: boolean;
 	hasIncompleteStepFields: boolean;
-	setHasIncompleteStepFields: Dispatch<SetStateAction<boolean>>;
 	hasAllEmptyStepFields: boolean;
-	setHasAllEmptyStepFields: Dispatch<SetStateAction<boolean>>;
 	handleReplaceStep: (
 		index: number,
 		serviceName: string,
@@ -88,11 +86,16 @@ export function FunnelProvider({
 	const funnel = data?.payload;
 	const initialSteps = funnel?.steps?.length ? funnel.steps : initialStepsData;
 	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
-	const [hasIncompleteStepFields, setHasIncompleteStepFields] = useState(
-		steps.some((step) => step.service_name === '' || step.span_name === ''),
-	);
-	const [hasAllEmptyStepFields, setHasAllEmptyStepFields] = useState(
-		steps.every((step) => step.service_name === '' && step.span_name === ''),
+	const { hasIncompleteStepFields, hasAllEmptyStepFields } = useMemo(
+		() => ({
+			hasAllEmptyStepFields: steps.every(
+				(step) => step.service_name === '' && step.span_name === '',
+			),
+			hasIncompleteStepFields: steps.some(
+				(step) => step.service_name === '' || step.span_name === '',
+			),
+		}),
+		[steps],
 	);
 
 	const [unexecutedFunnels, setUnexecutedFunnels] = useLocalStorage<string[]>(
@@ -113,6 +116,12 @@ export function FunnelProvider({
 		selectedTime,
 		startTime,
 		endTime,
+		enabled:
+			!!funnelId &&
+			!!selectedTime &&
+			!!startTime &&
+			!!endTime &&
+			!hasIncompleteStepFields,
 	});
 
 	const validTracesCount = useMemo(
@@ -229,9 +238,7 @@ export function FunnelProvider({
 			validationResponse,
 			isValidateStepsLoading: isValidationLoading || isValidationFetching,
 			hasIncompleteStepFields,
-			setHasIncompleteStepFields,
 			hasAllEmptyStepFields,
-			setHasAllEmptyStepFields,
 			handleReplaceStep,
 			handleRestoreSteps,
 			hasFunnelBeenExecuted,
@@ -253,9 +260,7 @@ export function FunnelProvider({
 			isValidationLoading,
 			isValidationFetching,
 			hasIncompleteStepFields,
-			setHasIncompleteStepFields,
 			hasAllEmptyStepFields,
-			setHasAllEmptyStepFields,
 			handleReplaceStep,
 			handleRestoreSteps,
 			hasFunnelBeenExecuted,
