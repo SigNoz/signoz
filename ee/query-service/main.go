@@ -88,8 +88,9 @@ func main() {
 	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
+	ctx := context.Background()
 
-	config, err := signoz.NewConfig(context.Background(), config.ResolverConfig{
+	config, err := signoz.NewConfig(ctx, config.ResolverConfig{
 		Uris: []string{"env:"},
 		ProviderFactories: []config.ProviderFactory{
 			envprovider.NewFactory(),
@@ -113,7 +114,7 @@ func main() {
 	}
 
 	signoz, err := signoz.New(
-		context.Background(),
+		ctx,
 		config,
 		zeus.Config(),
 		httpzeus.NewProviderFactory(),
@@ -160,22 +161,22 @@ func main() {
 		zap.L().Fatal("Failed to create server", zap.Error(err))
 	}
 
-	if err := server.Start(context.Background()); err != nil {
+	if err := server.Start(ctx); err != nil {
 		zap.L().Fatal("Could not start server", zap.Error(err))
 	}
 
-	signoz.Start(context.Background())
+	signoz.Start(ctx)
 
-	if err := signoz.Wait(context.Background()); err != nil {
+	if err := signoz.Wait(ctx); err != nil {
 		zap.L().Fatal("Failed to start signoz", zap.Error(err))
 	}
 
-	err = server.Stop()
+	err = server.Stop(ctx)
 	if err != nil {
 		zap.L().Fatal("Failed to stop server", zap.Error(err))
 	}
 
-	err = signoz.Stop(context.Background())
+	err = signoz.Stop(ctx)
 	if err != nil {
 		zap.L().Fatal("Failed to stop signoz", zap.Error(err))
 	}

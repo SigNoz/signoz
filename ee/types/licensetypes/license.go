@@ -22,12 +22,13 @@ type StorableLicense struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Key   string         `bun:"key,type:text,notnull,unique"`
-	Data  map[string]any `bun:"data,type:text"`
-	OrgID string         `bun:"org_id,type:text,notnull" json:"orgID"`
+	Key             string         `bun:"key,type:text,notnull,unique"`
+	Data            map[string]any `bun:"data,type:text"`
+	LastValidatedAt time.Time      `bun:"last_validated_at,notnull"`
+	OrgID           string         `bun:"org_id,type:text,notnull" json:"orgID"`
 }
 
-func NewStorableLicense(ID valuer.UUID, key string, data map[string]any, organizationID valuer.UUID) *StorableLicense {
+func NewStorableLicense(ID valuer.UUID, key string, data map[string]any, lastValidatedAt time.Time, organizationID valuer.UUID) *StorableLicense {
 	return &StorableLicense{
 		Identifiable: types.Identifiable{
 			ID: ID,
@@ -36,9 +37,10 @@ func NewStorableLicense(ID valuer.UUID, key string, data map[string]any, organiz
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		Key:   key,
-		Data:  data,
-		OrgID: organizationID.StringValue(),
+		Key:             key,
+		Data:            data,
+		LastValidatedAt: lastValidatedAt,
+		OrgID:           organizationID.StringValue(),
 	}
 }
 
@@ -47,7 +49,7 @@ type GettableLicense struct {
 	Key        string
 	Data       map[string]interface{}
 	PlanName   string
-	Features   []featuretypes.GettableFeature
+	Features   []*featuretypes.GettableFeature
 	Status     string
 	IsCurrent  bool
 	ValidFrom  int64
@@ -66,7 +68,7 @@ func extractKeyFromMapStringInterface[T any](data map[string]interface{}, key st
 }
 
 func NewGettableLicense(data map[string]interface{}) (*GettableLicense, error) {
-	var features []featuretypes.GettableFeature
+	var features []*featuretypes.GettableFeature
 
 	// extract id from data
 	licenseID, err := extractKeyFromMapStringInterface[string](data, "id")
@@ -102,7 +104,7 @@ func NewGettableLicense(data map[string]interface{}) (*GettableLicense, error) {
 		planName = PlanNameBasic
 	}
 
-	featuresFromZeus := make([]featuretypes.GettableFeature, 0)
+	featuresFromZeus := make([]*featuretypes.GettableFeature, 0)
 	if _features, ok := data["features"]; ok {
 		featuresData, err := json.Marshal(_features)
 		if err != nil {
@@ -186,5 +188,5 @@ type Store interface {
 	UpdateFeature(context.Context, *featuretypes.StorableFeature) error
 
 	// ListOrganizations returns the list of orgs
-	ListOrganizations(context.Context) ([]string, error)
+	ListOrganizations(context.Context) ([]valuer.UUID, error)
 }

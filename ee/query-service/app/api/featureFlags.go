@@ -9,12 +9,28 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
+	pkgError "github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/render"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
 func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, pkgError.Newf(pkgError.TypeInvalidInput, pkgError.CodeInvalidInput, "orgId is invalid"))
+		return
+	}
+
 	featureSet, err := ah.FF().GetFeatureFlags()
 	if err != nil {
 		ah.HandleError(w, err, http.StatusInternalServerError)
@@ -23,7 +39,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	if constants.FetchFeatures == "true" {
 		zap.L().Debug("fetching license")
-		license, err := ah.LM().GetRepo().GetActiveLicense(ctx)
+		license, err := ah.Signoz.LicenseManager.GetActive(ctx, orgID)
 		if err != nil {
 			zap.L().Error("failed to fetch license", zap.Error(err))
 		} else if license == nil {

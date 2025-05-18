@@ -14,10 +14,11 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/SigNoz/signoz/ee/licensemanager"
 	"github.com/SigNoz/signoz/ee/query-service/dao"
-	"github.com/SigNoz/signoz/ee/query-service/license"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
 
@@ -35,7 +36,7 @@ var (
 type Manager struct {
 	clickhouseConn clickhouse.Conn
 
-	licenseRepo *license.Repo
+	licenseService licensemanager.License
 
 	scheduler *gocron.Scheduler
 
@@ -44,10 +45,10 @@ type Manager struct {
 	zeus zeus.Zeus
 }
 
-func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, zeus zeus.Zeus) (*Manager, error) {
+func New(modelDao dao.ModelDao, licenseService licensemanager.License, clickhouseConn clickhouse.Conn, zeus zeus.Zeus) (*Manager, error) {
 	m := &Manager{
 		clickhouseConn: clickhouseConn,
-		licenseRepo:    licenseRepo,
+		licenseService: licenseService,
 		scheduler:      gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
 		modelDao:       modelDao,
 		zeus:           zeus,
@@ -56,28 +57,31 @@ func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickh
 }
 
 // start loads collects and exports any exported snapshot and starts the exporter
-func (lm *Manager) Start() error {
+func (lm *Manager) Start(ctx context.Context) error {
 	// compares the locker and stateUnlocked if both are same lock is applied else returns error
 	if !atomic.CompareAndSwapUint32(&locker, stateUnlocked, stateLocked) {
 		return fmt.Errorf("usage exporter is locked")
 	}
 
-	_, err := lm.scheduler.Do(func() { lm.UploadUsage() })
+	// upload usage once when starting the service
+	organizations, err := lm.licenseService.ListOrganizations(ctx)
 	if err != nil {
 		return err
 	}
+	for _, organization := range organizations {
+		_, err := lm.scheduler.Do(func() { lm.UploadUsage(ctx, organization) })
+		if err != nil {
+			return err
+		}
 
-	// upload usage once when starting the service
-	lm.UploadUsage()
-
-	lm.scheduler.StartAsync()
-
+		lm.UploadUsage(ctx, organization)
+		lm.scheduler.StartAsync()
+	}
 	return nil
 }
-func (lm *Manager) UploadUsage() {
-	ctx := context.Background()
+func (lm *Manager) UploadUsage(ctx context.Context, organizationID valuer.UUID) {
 	// check if license is present or not
-	license, err := lm.licenseRepo.GetActiveLicense(ctx)
+	license, err := lm.licenseService.GetActive(ctx, organizationID)
 	if err != nil {
 		zap.L().Error("failed to get active license", zap.Error(err))
 		return
@@ -171,12 +175,18 @@ func (lm *Manager) UploadUsage() {
 	}
 }
 
-func (lm *Manager) Stop() {
+func (lm *Manager) Stop(ctx context.Context) {
 	lm.scheduler.Stop()
 
 	zap.L().Info("sending usage data before shutting down")
 	// send usage before shutting down
-	lm.UploadUsage()
+	organizations, err := lm.licenseService.ListOrganizations(ctx)
+	if err != nil {
+		// log error
+	}
+	for _, organization := range organizations {
+		lm.UploadUsage(ctx, organization)
+	}
 
 	atomic.StoreUint32(&locker, stateUnlocked)
 }

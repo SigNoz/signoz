@@ -9,9 +9,8 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/dao"
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 	"github.com/SigNoz/signoz/ee/query-service/interfaces"
-	"github.com/SigNoz/signoz/ee/query-service/license"
-	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
+	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -41,7 +40,6 @@ type APIHandlerOptions struct {
 	RulesManager                  *rules.Manager
 	UsageManager                  *usage.Manager
 	FeatureFlags                  baseint.FeatureLookup
-	LicenseManager                *license.Manager
 	IntegrationsController        *integrations.Controller
 	CloudIntegrationsController   *cloudintegrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
@@ -96,10 +94,6 @@ func (ah *APIHandler) FF() baseint.FeatureLookup {
 
 func (ah *APIHandler) RM() *rules.Manager {
 	return ah.opts.RulesManager
-}
-
-func (ah *APIHandler) LM() *license.Manager {
-	return ah.opts.LicenseManager
 }
 
 func (ah *APIHandler) UM() *usage.Manager {
@@ -159,7 +153,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/dashboards/{uuid}/unlock", am.EditAccess(ah.unlockDashboard)).Methods(http.MethodPut)
 
 	// v3
-	router.HandleFunc("/api/v3/licenses", am.ViewAccess(ah.listLicensesV3)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.applyLicenseV3)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.refreshLicensesV3)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(ah.getActiveLicenseV3)).Methods(http.MethodGet)
@@ -177,14 +170,14 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 // TODO(nitya): remove this once we know how to get the FF's
 func (ah *APIHandler) updateRequestContext(w http.ResponseWriter, r *http.Request) (*http.Request, error) {
 	ssoAvailable := true
-	err := ah.FF().CheckFeature(model.SSO)
+	err := ah.FF().CheckFeature(licensetypes.SSO)
 	if err != nil {
 		switch err.(type) {
 		case basemodel.ErrFeatureUnavailable:
 			// do nothing, just skip sso
 			ssoAvailable = false
 		default:
-			zap.L().Error("feature check failed", zap.String("featureKey", model.SSO), zap.Error(err))
+			zap.L().Error("feature check failed", zap.String("featureKey", licensetypes.SSO), zap.Error(err))
 			return r, errors.New(errors.TypeInternal, errors.CodeInternal, "error checking SSO feature")
 		}
 	}

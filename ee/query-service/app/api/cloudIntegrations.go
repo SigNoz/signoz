@@ -17,6 +17,7 @@ import (
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -33,6 +34,12 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is invalid"))
 		return
 	}
 
@@ -56,11 +63,9 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		SigNozAPIKey: apiKey,
 	}
 
-	license, apiErr := ah.LM().GetRepo().GetActiveLicense(r.Context())
-	if apiErr != nil {
-		RespondError(w, basemodel.WrapApiError(
-			apiErr, "couldn't look for active license",
-		), nil)
+	license, err := ah.Signoz.LicenseManager.GetActive(r.Context(), orgID)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 

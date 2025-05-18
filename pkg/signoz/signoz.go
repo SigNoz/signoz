@@ -3,6 +3,7 @@ package signoz
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/ee/licensemanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -29,6 +30,8 @@ type SigNoz struct {
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
 	Zeus            zeus.Zeus
+	LicenseManager  licensemanager.License
+	LicenseAPI      licensemanager.API
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -156,6 +159,9 @@ func New(
 		return nil, err
 	}
 
+	licenseManager := licensemanager.New(sqlstore, zeus)
+	licenseAPI := licensemanager.NewLicenseAPI(licenseManager)
+
 	userModule := diModules(sqlstore)
 	userHandler := diHandlers(userModule)
 
@@ -169,6 +175,7 @@ func New(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
+		factory.NewNamedService(factory.MustNewName("license"), licenseManager),
 	)
 	if err != nil {
 		return nil, err
@@ -184,6 +191,8 @@ func New(
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
 		Zeus:            zeus,
+		LicenseManager:  licenseManager,
+		LicenseAPI:      licenseAPI,
 		Modules:         modules,
 		Handlers:        handlers,
 	}, nil

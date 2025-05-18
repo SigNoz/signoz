@@ -33,12 +33,7 @@ func (l *license) Start(ctx context.Context) error {
 	}
 
 	tick := time.NewTicker(licensetypes.ValidationFrequency)
-	for _, organizationIDStr := range organizations {
-		organizationID, err := valuer.NewUUID(organizationIDStr)
-		if err != nil {
-			return err
-		}
-
+	for _, organizationID := range organizations {
 		for {
 			select {
 			case <-l.stopChan:
@@ -63,10 +58,29 @@ func (l *license) Validate(ctx context.Context, organizationID valuer.UUID) erro
 		return err
 	}
 
+	if errors.Ast(err, errors.TypeNotFound) {
+		err = l.InitFeatures(ctx, licensetypes.BasicPlan)
+		if err != nil {
+			return err
+		}
+	}
+
 	license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, l.zeus)
 	if err != nil {
-		// log the error and update the license with increased count for failure
-		// if the failure increases by 3 then remove the active license
+		license, err := l.store.Get(ctx, organizationID, valuer.MustNewUUID(activeLicense.ID))
+		if err != nil {
+			err = l.InitFeatures(ctx, licensetypes.BasicPlan)
+			if err != nil {
+				return err
+			}
+		}
+
+		if time.Since(license.LastValidatedAt) > time.Hour*24*3 {
+			err = l.InitFeatures(ctx, licensetypes.BasicPlan)
+			if err != nil {
+				return err
+			}
+		}
 		return err
 	}
 
@@ -79,8 +93,13 @@ func (l *license) Validate(ctx context.Context, organizationID valuer.UUID) erro
 }
 
 func (l *license) Update(ctx context.Context, organizationID valuer.UUID, license *licensetypes.GettableLicense) error {
-	storableLicense := licensetypes.NewStorableLicense(valuer.MustNewUUID(license.ID), license.Key, license.Data, organizationID)
+	storableLicense := licensetypes.NewStorableLicense(valuer.MustNewUUID(license.ID), license.Key, license.Data, time.Now(), organizationID)
 	err := l.store.Update(ctx, storableLicense)
+	if err != nil {
+		return err
+	}
+
+	err = l.InitFeatures(ctx, license.Features)
 	if err != nil {
 		return err
 	}
@@ -94,8 +113,13 @@ func (l *license) Activate(ctx context.Context, organizationID valuer.UUID, key 
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to validate license data with upstream server")
 	}
 
-	storableLicense := licensetypes.NewStorableLicense(valuer.MustNewUUID(license.ID), license.Key, license.Data, organizationID)
+	storableLicense := licensetypes.NewStorableLicense(valuer.MustNewUUID(license.ID), license.Key, license.Data, time.Now(), organizationID)
 	err = l.store.Create(ctx, storableLicense)
+	if err != nil {
+		return err
+	}
+
+	err = l.InitFeatures(ctx, license.Features)
 	if err != nil {
 		return err
 	}
@@ -178,7 +202,7 @@ func (l *license) Refresh(ctx context.Context, organizationID valuer.UUID) error
 		return err
 	}
 
-	updatedLicense := licensetypes.NewStorableLicense(valuer.MustNewUUID(license.ID), license.Key, license.Data, organizationID)
+	updatedLicense := licensetypes.NewStorableLicense(valuer.MustNewUUID(license.ID), license.Key, license.Data, time.Now(), organizationID)
 	err = l.store.Update(ctx, updatedLicense)
 	if err != nil {
 		return err
@@ -256,4 +280,8 @@ func (l *license) UpdateFeatureFlag(ctx context.Context, feature *featuretypes.G
 		UsageLimit: int(feature.UsageLimit),
 		Route:      feature.Route,
 	})
+}
+
+func (l *license) ListOrganizations(ctx context.Context) ([]valuer.UUID, error) {
+	return l.store.ListOrganizations(ctx)
 }

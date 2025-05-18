@@ -2,7 +2,7 @@ package featuretypes
 
 import "github.com/uptrace/bun"
 
-type FeatureSet []GettableFeature
+type FeatureSet []*GettableFeature
 type GettableFeature struct {
 	Name       string `db:"name" json:"name"`
 	Active     bool   `db:"active" json:"active"`

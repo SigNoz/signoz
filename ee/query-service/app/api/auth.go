@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/http/render"
 )
 
@@ -52,7 +52,7 @@ func (ah *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 	redirectUri := constants.GetDefaultSiteURL()
 	ctx := context.Background()
 
-	if !ah.CheckFeature(model.SSO) {
+	if !ah.CheckFeature(licensetypes.SSO) {
 		zap.L().Error("[receiveGoogleAuth] sso requested but feature unavailable in org domain")
 		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "feature unavailable, please upgrade your billing plan to access this feature"), http.StatusMovedPermanently)
 		return
@@ -118,7 +118,7 @@ func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
 	redirectUri := constants.GetDefaultSiteURL()
 	ctx := context.Background()
 
-	if !ah.CheckFeature(model.SSO) {
+	if !ah.CheckFeature(licensetypes.SSO) {
 		zap.L().Error("[receiveSAML] sso requested but feature unavailable in org domain")
 		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "feature unavailable, please upgrade your billing plan to access this feature"), http.StatusMovedPermanently)
 		return

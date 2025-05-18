@@ -2,6 +2,7 @@ package licensemanager
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -28,7 +29,6 @@ type License interface {
 	Refresh(ctx context.Context, organizationID valuer.UUID) error
 
 	// feature surrogate
-
 	// CheckFeature checks if the feature is active or not
 	CheckFeature(ctx context.Context, key string) error
 	// GetFeatureFlags fetches all the defined feature flags
@@ -39,6 +39,12 @@ type License interface {
 	InitFeatures(ctx context.Context, features []*featuretypes.GettableFeature) error
 	// UpdateFeatureFlag updates the feature flag
 	UpdateFeatureFlag(ctx context.Context, feature *featuretypes.GettableFeature) error
+
+	ListOrganizations(ctx context.Context) ([]valuer.UUID, error)
 }
 
-type API interface{}
+type API interface {
+	Activate(http.ResponseWriter, *http.Request)
+	Refresh(http.ResponseWriter, *http.Request)
+	GetActive(http.ResponseWriter, *http.Request)
+}
