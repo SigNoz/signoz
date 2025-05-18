@@ -2,6 +2,7 @@
 /* eslint-disable no-nested-ternary */
 import './DashboardVariableSelection.styles.scss';
 
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
@@ -296,6 +297,11 @@ function DynamicVariableSelection({
 		<div className="variable-item">
 			<Typography.Text className="variable-name" ellipsis>
 				${variableData.name}
+				{variableData.description && (
+					<Tooltip title={variableData.description}>
+						<InfoCircleOutlined className="info-icon" />
+					</Tooltip>
+				)}
 			</Typography.Text>
 			<div className="variable-value">
 				{variableData.multiSelect ? (

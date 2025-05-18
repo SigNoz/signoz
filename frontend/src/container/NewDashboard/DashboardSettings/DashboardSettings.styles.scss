@@ -70,6 +70,17 @@
 				gap: 3px;
 				color: red;
 			}
+
+			.apply-to-all-button {
+				width: min-content;
+				height: 22px;
+				border-radius: 2px;
+				display: flex;
+				padding: 0px 6px;
+				align-items: center;
+				gap: 3px;
+				background: var(--bg-slate-400);
+			}
 		}
 	}
 
@@ -110,6 +121,10 @@
 		.variable-description-actions {
 			.actions-btns {
 				.edit-variable-button {
+					background: var(--bg-vanilla-300);
+				}
+
+				.apply-to-all-button {
 					background: var(--bg-vanilla-300);
 				}
 			}
