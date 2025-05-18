@@ -85,7 +85,7 @@ function useGetResolvedText({
 		const variablePatterns = [
 			`\\{\\{\\s*?\\.([^\\s}]+)\\s*?\\}\\}`, // {{.var}}
 			`\\{\\{\\s*([^\\s}]+)\\s*\\}\\}`, // {{var}}
-			`${escapedMatcher}([\\w.]+)`, // matcher + var.name
+			`${escapedMatcher}([^\\s]+)`, // matcher + var.name
 			`\\[\\[\\s*([^\\s\\]]+)\\s*\\]\\]`, // [[var]]
 		];
 		return new RegExp(variablePatterns.join('|'), 'g');
