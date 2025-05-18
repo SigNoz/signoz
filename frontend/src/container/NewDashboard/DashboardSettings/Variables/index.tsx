@@ -332,6 +332,7 @@ function VariablesSetting({
 									onVariableSaveHandler(variableViewMode || 'EDIT', variable, true)
 								}
 								className="apply-to-all-button"
+								loading={updateMutation.isLoading}
 							>
 								<Typography.Text>Apply to all</Typography.Text>
 							</Button>
