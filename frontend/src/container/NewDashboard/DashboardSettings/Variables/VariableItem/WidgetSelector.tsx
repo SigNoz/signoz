@@ -11,17 +11,32 @@ export function WidgetSelector({
 }): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 
-	const widgets = selectedDashboard?.data?.widgets || [];
+	// Get layout IDs for cross-referencing
+	const layoutIds = new Set(
+		(selectedDashboard?.data?.layout || []).map((item) => item.i),
+	);
+
+	// Filter and deduplicate widgets by ID, keeping only those with layout entries
+	const widgets = Object.values(
+		(selectedDashboard?.data?.widgets || []).reduce(
+			(acc: Record<string, any>, widget) => {
+				if (widget.id && layoutIds.has(widget.id)) {
+					acc[widget.id] = widget;
+				}
+				return acc;
+			},
+			{},
+		),
+	);
 
 	return (
 		<CustomMultiSelect
-			placeholder="Select Widgets"
+			placeholder="Select Panels"
 			options={widgets.map((widget) => ({
 				label: generateGridTitle(widget.title),
 				value: widget.id,
 			}))}
 			value={selectedWidgets}
-			labelInValue
 			onChange={(value): void => setSelectedWidgets(value as string[])}
 			showLabels
 		/>

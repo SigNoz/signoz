@@ -599,7 +599,7 @@ function VariableItem({
 						<VariableItemRow className="dynamic-variable-section">
 							<LabelContainer>
 								<Typography className="typography-variables">
-									Select Widgets to apply
+									Select Panels to apply this variable
 								</Typography>
 							</LabelContainer>
 							<WidgetSelector
