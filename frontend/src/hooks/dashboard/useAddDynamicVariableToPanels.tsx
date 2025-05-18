@@ -1,9 +1,9 @@
-import { getFiltersFromKeyValue } from 'pages/Celery/CeleryOverview/CeleryOverviewUtils';
+import { addTagFiltersToDashboard } from 'container/NewDashboard/DashboardSettings/Variables/addTagFiltersToDashboard';
 import { useCallback } from 'react';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
-import { addTagFiltersToDashboard } from '../../container/NewDashboard/DashboardSettings/Variables/addTagFiltersToDashboard';
+import { getFiltersFromKeyValue } from './utils';
 
 /**
  * A hook that returns a function to add dynamic variables to dashboard panels as tag filters.
@@ -13,11 +13,13 @@ import { addTagFiltersToDashboard } from '../../container/NewDashboard/Dashboard
 export const useAddDynamicVariableToPanels = (): ((
 	dashboard: Dashboard | undefined,
 	variableConfig: IDashboardVariable,
+	applyToAll?: boolean,
 ) => Dashboard | undefined) =>
 	useCallback(
 		(
 			dashboard: Dashboard | undefined,
 			variableConfig: IDashboardVariable,
+			applyToAll?: boolean,
 		): Dashboard | undefined => {
 			if (!variableConfig) return dashboard;
 
@@ -27,14 +29,18 @@ export const useAddDynamicVariableToPanels = (): ((
 				dynamicVariablesWidgetIds,
 			} = variableConfig;
 
-			const tagFilters: TagFilterItem[] = [
-				getFiltersFromKeyValue(dynamicVariablesAttribute || '', `$${name}`),
-			];
+			const tagFilters: TagFilterItem = getFiltersFromKeyValue(
+				dynamicVariablesAttribute || '',
+				`$${name}`,
+				'',
+				'IN',
+			); // todo - Sagar: make a logic to have correct type and other details
 
 			return addTagFiltersToDashboard(
 				dashboard,
 				tagFilters,
 				dynamicVariablesWidgetIds,
+				applyToAll,
 			);
 		},
 		[],
