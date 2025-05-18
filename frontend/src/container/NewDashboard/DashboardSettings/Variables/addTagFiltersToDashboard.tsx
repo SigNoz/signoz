@@ -1,4 +1,5 @@
-import { cloneDeep } from 'lodash-es';
+/* eslint-disable sonarjs/cognitive-complexity */
+import { cloneDeep, isArray, isEmpty } from 'lodash-es';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import {
 	IBuilderQuery,
@@ -10,24 +11,60 @@ import {
  */
 const updateQueryFilters = (
 	queryData: IBuilderQuery,
-	filters: TagFilterItem[],
-): IBuilderQuery => ({
-	...queryData,
-	filters: {
-		...queryData.filters,
-		items: [...(queryData.filters?.items || []), ...filters],
-		op: queryData.filters?.op || 'AND',
-	},
-});
+	filter: TagFilterItem,
+): IBuilderQuery => {
+	const existingFilters = queryData.filters?.items || [];
+
+	// addition | update
+	const currentFilterKey = filter.key?.key;
+	const valueToAdd = filter.value.toString();
+	const newItems: TagFilterItem[] = [];
+
+	existingFilters.forEach((existingFilter) => {
+		const newFilter = cloneDeep(existingFilter);
+		if (
+			newFilter.key?.key === currentFilterKey &&
+			!(isArray(newFilter.value) && newFilter.value.includes(valueToAdd)) &&
+			newFilter.value !== valueToAdd
+		) {
+			if (isEmpty(newFilter.value)) {
+				newFilter.value = valueToAdd;
+				newFilter.op = 'IN';
+			} else {
+				newFilter.value = (isArray(newFilter.value)
+					? [...newFilter.value, valueToAdd]
+					: [newFilter.value, valueToAdd]) as string[] | string;
+
+				newFilter.op = 'IN';
+			}
+		}
+
+		newItems.push(newFilter);
+	});
+
+	// if yet the filter key doesn't get added then add it
+	if (!newItems.find((item) => item.key?.key === currentFilterKey)) {
+		newItems.push(filter);
+	}
+
+	return {
+		...queryData,
+		filters: {
+			...queryData.filters,
+			items: newItems,
+			op: queryData.filters?.op || 'AND',
+		},
+	};
+};
 
 /**
  * Updates a single widget by adding filters to its query
  */
 const updateSingleWidget = (
 	widget: Widgets,
-	filters: TagFilterItem[],
+	filter: TagFilterItem,
 ): Widgets => {
-	if (!widget.query?.builder?.queryData) {
+	if (!widget.query?.builder?.queryData || isEmpty(filter)) {
 		return widget;
 	}
 
@@ -37,8 +74,65 @@ const updateSingleWidget = (
 			...widget.query,
 			builder: {
 				...widget.query.builder,
-				queryData: widget.query.builder.queryData.map((queryData) =>
-					updateQueryFilters(queryData, filters),
+				queryData: widget.query.builder.queryData.map(
+					(queryData) => updateQueryFilters(queryData, filter), // todo - Sagar: check for multiple query or not
+				),
+			},
+		},
+	};
+};
+
+const removeIfPresent = (
+	queryData: IBuilderQuery,
+	filter: TagFilterItem,
+): IBuilderQuery => {
+	const existingFilters = queryData.filters?.items || [];
+
+	// addition | update
+	const currentFilterKey = filter.key?.key;
+	const valueToAdd = filter.value.toString();
+	const newItems: TagFilterItem[] = [];
+
+	existingFilters.forEach((existingFilter) => {
+		const newFilter = cloneDeep(existingFilter);
+		if (newFilter.key?.key === currentFilterKey) {
+			if (isArray(newFilter.value) && newFilter.value.includes(valueToAdd)) {
+				newFilter.value = newFilter.value.filter((value) => value !== valueToAdd);
+			} else if (newFilter.value === valueToAdd) {
+				return;
+			}
+		}
+
+		newItems.push(newFilter);
+	});
+
+	return {
+		...queryData,
+		filters: {
+			...queryData.filters,
+			items: newItems,
+			op: queryData.filters?.op || 'AND',
+		},
+	};
+};
+
+const updateAfterRemoval = (
+	widget: Widgets,
+	filter: TagFilterItem,
+): Widgets => {
+	if (!widget.query?.builder?.queryData || isEmpty(filter)) {
+		return widget;
+	}
+
+	// remove the filters where the current filter is available as value as this widget is not selected anymore, hence removal
+	return {
+		...widget,
+		query: {
+			...widget.query,
+			builder: {
+				...widget.query.builder,
+				queryData: widget.query.builder.queryData.map(
+					(queryData) => removeIfPresent(queryData, filter), // todo - Sagar: check for multiple query or not
 				),
 			},
 		},
@@ -56,10 +150,11 @@ const updateSingleWidget = (
  */
 export const addTagFiltersToDashboard = (
 	dashboard: Dashboard | undefined,
-	filters: TagFilterItem[],
+	filter: TagFilterItem,
 	widgetIds?: string[],
+	applyToAll?: boolean,
 ): Dashboard | undefined => {
-	if (!dashboard || !filters.length) {
+	if (!dashboard || isEmpty(filter)) {
 		return dashboard;
 	}
 
@@ -73,10 +168,11 @@ export const addTagFiltersToDashboard = (
 				// Only apply to widgets with 'query' property
 				if ('query' in widget) {
 					// If widgetIds is provided, only update widgets with matching IDs
-					if (widgetIds && !widgetIds.includes(widget.id)) {
-						return widget;
+					if (!applyToAll && widgetIds && !widgetIds.includes(widget.id)) {
+						// removal if needed
+						return updateAfterRemoval(widget as Widgets, filter);
 					}
-					return updateSingleWidget(widget as Widgets, filters);
+					return updateSingleWidget(widget as Widgets, filter);
 				}
 				return widget;
 			},
