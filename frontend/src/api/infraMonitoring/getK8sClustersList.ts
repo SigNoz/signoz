@@ -51,11 +51,31 @@ export const getK8sClustersList = async (
 			headers,
 		});
 
+		const payload: K8sClustersListResponse = response.data;
+		payload.data.records = payload.data.records.map((record) => {
+			const rawMeta = record.meta as Record<string, unknown>;
+			const m: K8sClustersData['meta'] = {
+				k8s_cluster_name:
+					typeof rawMeta['k8s.cluster.name'] === 'string'
+						? rawMeta['k8s.cluster.name']
+						: (rawMeta.k8s_cluster_name as string),
+				k8s_cluster_uid:
+					typeof rawMeta['k8s.cluster.uid'] === 'string'
+						? rawMeta['k8s.cluster.uid']
+						: (rawMeta.k8s_cluster_uid as string),
+			};
+
+			return {
+				...record,
+				meta: m,
+			};
+		});
+
 		return {
 			statusCode: 200,
 			error: null,
 			message: 'Success',
-			payload: response.data,
+			payload,
 			params: props,
 		};
 	} catch (error) {

@@ -57,6 +57,25 @@ export const getK8sDaemonSetsList = async (
 			headers,
 		});
 
+		const payload: K8sDaemonSetsListResponse = response.data;
+
+		payload.data.records = payload.data.records.map((record) => {
+			const m = { ...record.meta };
+			if ('k8s.namespace.name' in m) {
+				m.k8s_namespace_name = m['k8s.namespace.name'] as string;
+			}
+			if ('k8s.daemonset.name' in m) {
+				m.k8s_daemonset_name = m['k8s.daemonset.name'] as string;
+			}
+			if ('k8s.cluster.name' in m) {
+				m.k8s_cluster_name = m['k8s.cluster.name'] as string;
+			}
+			return {
+				...record,
+				meta: m,
+			};
+		});
+
 		return {
 			statusCode: 200,
 			error: null,

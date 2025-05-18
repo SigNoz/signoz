@@ -57,11 +57,38 @@ export const getK8sDeploymentsList = async (
 			headers,
 		});
 
+		const payload: K8sDeploymentsListResponse = response.data;
+		payload.data.records = payload.data.records.map((record) => {
+			// loosened map to inspect both dot- and underscore-keys
+			const rawMeta = record.meta as Record<string, unknown>;
+
+			// assemble a fully-typed meta object
+			const m: K8sDeploymentsData['meta'] = {
+				k8s_cluster_name:
+					typeof rawMeta['k8s.cluster.name'] === 'string'
+						? rawMeta['k8s.cluster.name']
+						: (rawMeta.k8s_cluster_name as string),
+				k8s_deployment_name:
+					typeof rawMeta['k8s.deployment.name'] === 'string'
+						? rawMeta['k8s.deployment.name']
+						: (rawMeta.k8s_deployment_name as string),
+				k8s_namespace_name:
+					typeof rawMeta['k8s.namespace.name'] === 'string'
+						? rawMeta['k8s.namespace.name']
+						: (rawMeta.k8s_namespace_name as string),
+			};
+
+			return {
+				...record,
+				meta: m,
+			};
+		});
+
 		return {
 			statusCode: 200,
 			error: null,
 			message: 'Success',
-			payload: response.data,
+			payload,
 			params: props,
 		};
 	} catch (error) {

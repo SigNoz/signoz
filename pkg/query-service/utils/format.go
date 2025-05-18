@@ -232,9 +232,15 @@ func ClickHouseFormattedValue(v interface{}) string {
 }
 
 func ClickHouseFormattedMetricNames(v interface{}) string {
+	normalized := true
+	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+		normalized = false
+	}
+
 	if name, ok := v.(string); ok {
-		if newName, ok := metrics.MetricsUnderTransition[name]; ok {
-			return ClickHouseFormattedValue([]interface{}{name, newName})
+		transitionedMetrics := metrics.GetTransitionedMetrics(name, normalized)
+		if transitionedMetrics != name {
+			return ClickHouseFormattedValue([]interface{}{name, transitionedMetrics})
 		} else {
 			return ClickHouseFormattedValue([]interface{}{name})
 		}

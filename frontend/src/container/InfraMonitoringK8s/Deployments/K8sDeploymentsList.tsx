@@ -28,10 +28,9 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import {
-	K8sCategory,
-	K8sEntityToAggregateAttributeMapping,
-} from '../constants';
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
+import { GetK8sEntityToAggregateAttribute, K8sCategory } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { usePageSize } from '../utils';
@@ -100,6 +99,11 @@ function K8sDeploymentsList({
 		setCurrentPage(1);
 	}, [quickFiltersLastUpdated]);
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const createFiltersForSelectedRowData = (
 		selectedRowData: K8sDeploymentsRowData,
 		groupBy: IBuilderQuery['groupBy'],
@@ -167,8 +171,10 @@ function K8sDeploymentsList({
 	} = useGetAggregateKeys(
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute:
-				K8sEntityToAggregateAttributeMapping[K8sCategory.DEPLOYMENTS],
+			aggregateAttribute: GetK8sEntityToAggregateAttribute(
+				K8sCategory.DEPLOYMENTS,
+				dotMetricsEnabled,
+			),
 			aggregateOperator: 'noop',
 			searchText: '',
 			tagType: '',

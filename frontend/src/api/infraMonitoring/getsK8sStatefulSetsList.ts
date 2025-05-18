@@ -56,11 +56,34 @@ export const getK8sStatefulSetsList = async (
 			headers,
 		});
 
+		const payload: K8sStatefulSetsListResponse = response.data;
+		payload.data.records = payload.data.records.map((record) => {
+			// rawMeta may have either form
+			const rawMeta = record.meta as Record<string, unknown>;
+
+			// construct a fully-typed meta object, preferring dot-notation when present
+			const m: K8sStatefulSetsData['meta'] = {
+				k8s_statefulset_name:
+					typeof rawMeta['k8s.statefulset.name'] === 'string'
+						? rawMeta['k8s.statefulset.name']
+						: (rawMeta.k8s_statefulset_name as string),
+				k8s_namespace_name:
+					typeof rawMeta['k8s.namespace.name'] === 'string'
+						? rawMeta['k8s.namespace.name']
+						: (rawMeta.k8s_namespace_name as string),
+			};
+
+			return {
+				...record,
+				meta: m,
+			};
+		});
+
 		return {
 			statusCode: 200,
 			error: null,
 			message: 'Success',
-			payload: response.data,
+			payload,
 			params: props,
 		};
 	} catch (error) {
