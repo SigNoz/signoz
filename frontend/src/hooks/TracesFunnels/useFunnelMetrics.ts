@@ -95,7 +95,7 @@ export function useFunnelStepsMetrics({
 	} = useFunnelStepsOverview(funnelId, payload);
 
 	const latencyType = useMemo(
-		() => (stepStart ? steps[stepStart].latency_type : LatencyOptions.P99),
+		() => (stepStart ? steps[stepStart]?.latency_type : LatencyOptions.P99),
 		[stepStart, steps],
 	);
 
