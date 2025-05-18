@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/factory"
-	pkgtypes "github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -33,13 +32,13 @@ type License interface {
 	// CheckFeature checks if the feature is active or not
 	CheckFeature(ctx context.Context, key string) error
 	// GetFeatureFlags fetches all the defined feature flags
-	GetFeatureFlag(ctx context.Context, key string) (*featuretypes.Feature, error)
+	GetFeatureFlag(ctx context.Context, key string) (*featuretypes.GettableFeature, error)
 	// GetFeatureFlags fetches all the defined feature flags
-	GetFeatureFlags(ctx context.Context) ([]*pkgtypes.FeatureStatus, error)
+	GetFeatureFlags(ctx context.Context) ([]*featuretypes.GettableFeature, error)
 	// InitFeatures initialises the feature flags
-	InitFeatures(ctx context.Context, features []*featuretypes.Feature) error
+	InitFeatures(ctx context.Context, features []*featuretypes.GettableFeature) error
 	// UpdateFeatureFlag updates the feature flag
-	UpdateFeatureFlag(ctx context.Context, feature *featuretypes.Feature) error
+	UpdateFeatureFlag(ctx context.Context, feature *featuretypes.GettableFeature) error
 }
 
 type API interface{}

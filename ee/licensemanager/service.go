@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -200,12 +199,12 @@ func (l *license) CheckFeature(ctx context.Context, key string) error {
 	return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "feature unavailable: %s", key)
 }
 
-func (l *license) GetFeatureFlag(ctx context.Context, key string) (*featuretypes.Feature, error) {
+func (l *license) GetFeatureFlag(ctx context.Context, key string) (*featuretypes.GettableFeature, error) {
 	featureStatus, err := l.store.GetFeature(ctx, key)
 	if err != nil {
 		return nil, err
 	}
-	return &featuretypes.Feature{
+	return &featuretypes.GettableFeature{
 		Name:       featureStatus.Name,
 		Active:     featureStatus.Active,
 		Usage:      int64(featureStatus.Usage),
@@ -214,14 +213,30 @@ func (l *license) GetFeatureFlag(ctx context.Context, key string) (*featuretypes
 	}, nil
 }
 
-func (l *license) GetFeatureFlags(ctx context.Context) ([]*types.FeatureStatus, error) {
-	return l.store.GetAllFeatures(ctx)
+func (l *license) GetFeatureFlags(ctx context.Context) ([]*featuretypes.GettableFeature, error) {
+	storableFeatures, err := l.store.GetAllFeatures(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	gettableFeatures := make([]*featuretypes.GettableFeature, len(storableFeatures))
+	for idx, gettableFeature := range storableFeatures {
+		gettableFeatures[idx] = &featuretypes.GettableFeature{
+			Name:       gettableFeature.Name,
+			Active:     gettableFeature.Active,
+			Usage:      int64(gettableFeature.Usage),
+			UsageLimit: int64(gettableFeature.UsageLimit),
+			Route:      gettableFeature.Route,
+		}
+	}
+
+	return gettableFeatures, nil
 }
 
-func (l *license) InitFeatures(ctx context.Context, features []*featuretypes.Feature) error {
-	featureStatus := make([]*types.FeatureStatus, len(features))
+func (l *license) InitFeatures(ctx context.Context, features []*featuretypes.GettableFeature) error {
+	featureStatus := make([]*featuretypes.StorableFeature, len(features))
 	for i, f := range features {
-		featureStatus[i] = &types.FeatureStatus{
+		featureStatus[i] = &featuretypes.StorableFeature{
 			Name:       f.Name,
 			Active:     f.Active,
 			Usage:      int(f.Usage),
@@ -229,11 +244,12 @@ func (l *license) InitFeatures(ctx context.Context, features []*featuretypes.Fea
 			Route:      f.Route,
 		}
 	}
+
 	return l.store.InitFeatures(ctx, featureStatus)
 }
 
-func (l *license) UpdateFeatureFlag(ctx context.Context, feature *featuretypes.Feature) error {
-	return l.store.UpdateFeature(ctx, &types.FeatureStatus{
+func (l *license) UpdateFeatureFlag(ctx context.Context, feature *featuretypes.GettableFeature) error {
+	return l.store.UpdateFeature(ctx, &featuretypes.StorableFeature{
 		Name:       feature.Name,
 		Active:     feature.Active,
 		Usage:      int(feature.Usage),

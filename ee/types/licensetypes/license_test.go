@@ -93,7 +93,7 @@ func TestNewLicenseV3(t *testing.T) {
 				ValidUntil: -1,
 				Status:     "ACTIVE",
 				IsCurrent:  false,
-				Features:   make([]featuretypes.Feature, 0),
+				Features:   make([]featuretypes.GettableFeature, 0),
 			},
 		},
 		{
@@ -117,7 +117,7 @@ func TestNewLicenseV3(t *testing.T) {
 				ValidUntil: -1,
 				Status:     "INVALID",
 				IsCurrent:  false,
-				Features:   make([]featuretypes.Feature, 0),
+				Features:   make([]featuretypes.GettableFeature, 0),
 			},
 		},
 		{
@@ -141,7 +141,7 @@ func TestNewLicenseV3(t *testing.T) {
 				ValidUntil: 5678,
 				Status:     "ACTIVE",
 				IsCurrent:  false,
-				Features:   make([]featuretypes.Feature, 0),
+				Features:   make([]featuretypes.GettableFeature, 0),
 			},
 		},
 	}
@@ -152,7 +152,7 @@ func TestNewLicenseV3(t *testing.T) {
 		require.NoError(t, err)
 		license, err := NewGettableLicense(licensePayload)
 		if license != nil {
-			license.Features = make([]featuretypes.Feature, 0)
+			license.Features = make([]featuretypes.GettableFeature, 0)
 			delete(license.Data, "features")
 		}
 

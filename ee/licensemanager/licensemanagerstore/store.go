@@ -5,7 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -37,22 +37,22 @@ func (s *store) ListOrganizations(ctx context.Context) ([]string, error) {
 	panic("unimplemented")
 }
 
-func (s *store) CreateFeature(context.Context, *types.FeatureStatus) error {
+func (s *store) CreateFeature(context.Context, *featuretypes.StorableFeature) error {
 	panic("unimplemented")
 }
 
-func (s *store) GetAllFeatures(context.Context) ([]*types.FeatureStatus, error) {
+func (s *store) GetAllFeatures(context.Context) ([]*featuretypes.StorableFeature, error) {
 	panic("unimplemented")
 }
 
-func (s *store) GetFeature(context.Context, string) (*types.FeatureStatus, error) {
+func (s *store) GetFeature(context.Context, string) (*featuretypes.StorableFeature, error) {
 	panic("unimplemented")
 }
 
-func (s *store) InitFeatures(context.Context, []*types.FeatureStatus) error {
+func (s *store) InitFeatures(context.Context, []*featuretypes.StorableFeature) error {
 	panic("unimplemented")
 }
 
-func (s *store) UpdateFeature(context.Context, *types.FeatureStatus) error {
+func (s *store) UpdateFeature(context.Context, *featuretypes.StorableFeature) error {
 	panic("unimplemented")
 }

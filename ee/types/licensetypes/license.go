@@ -47,7 +47,7 @@ type GettableLicense struct {
 	Key        string
 	Data       map[string]interface{}
 	PlanName   string
-	Features   []featuretypes.Feature
+	Features   []featuretypes.GettableFeature
 	Status     string
 	IsCurrent  bool
 	ValidFrom  int64
@@ -66,7 +66,7 @@ func extractKeyFromMapStringInterface[T any](data map[string]interface{}, key st
 }
 
 func NewGettableLicense(data map[string]interface{}) (*GettableLicense, error) {
-	var features []featuretypes.Feature
+	var features []featuretypes.GettableFeature
 
 	// extract id from data
 	licenseID, err := extractKeyFromMapStringInterface[string](data, "id")
@@ -102,7 +102,7 @@ func NewGettableLicense(data map[string]interface{}) (*GettableLicense, error) {
 		planName = PlanNameBasic
 	}
 
-	featuresFromZeus := make([]featuretypes.Feature, 0)
+	featuresFromZeus := make([]featuretypes.GettableFeature, 0)
 	if _features, ok := data["features"]; ok {
 		featuresData, err := json.Marshal(_features)
 		if err != nil {
@@ -179,11 +179,11 @@ type Store interface {
 	Update(context.Context, *StorableLicense) error
 
 	// feature surrogate
-	InitFeatures(context.Context, []*types.FeatureStatus) error
-	CreateFeature(context.Context, *types.FeatureStatus) error
-	GetFeature(context.Context, string) (*types.FeatureStatus, error)
-	GetAllFeatures(context.Context) ([]*types.FeatureStatus, error)
-	UpdateFeature(context.Context, *types.FeatureStatus) error
+	InitFeatures(context.Context, []*featuretypes.StorableFeature) error
+	CreateFeature(context.Context, *featuretypes.StorableFeature) error
+	GetFeature(context.Context, string) (*featuretypes.StorableFeature, error)
+	GetAllFeatures(context.Context) ([]*featuretypes.StorableFeature, error)
+	UpdateFeature(context.Context, *featuretypes.StorableFeature) error
 
 	// ListOrganizations returns the list of orgs
 	ListOrganizations(context.Context) ([]string, error)
