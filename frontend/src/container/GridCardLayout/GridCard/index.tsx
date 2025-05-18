@@ -3,6 +3,8 @@ import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { useGetDynamicVariables } from 'hooks/dashboard/useGetDynamicVariables';
+import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
@@ -11,7 +13,7 @@ import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -65,6 +67,12 @@ function GridCardGraph({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const { dynamicVariables } = useGetDynamicVariables();
+	const dynamicVariableToWidgetsMap = useMemo(
+		() => createDynamicVariableToWidgetsMap(dynamicVariables, [widget]),
+		[dynamicVariables, widget],
+	);
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -197,20 +205,22 @@ function GridCardGraph({
 				maxTime,
 				minTime,
 				globalSelectedInterval,
-				variables,
 				widget?.query,
 				widget?.panelTypes,
 				widget.timePreferance,
 				widget.fillSpans,
 				requestData,
 				variables
-					? Object.entries(variables).reduce(
-							(acc, [id, variable]) => ({
-								...acc,
-								[id]: variable.selectedValue,
-							}),
-							{},
-					  )
+					? Object.entries(variables).reduce((acc, [id, variable]) => {
+							if (
+								variable.type !== 'DYNAMIC' ||
+								(dynamicVariableToWidgetsMap?.[id] &&
+									dynamicVariableToWidgetsMap?.[id].includes(widget.id))
+							) {
+								return { ...acc, [id]: variable.selectedValue };
+							}
+							return acc;
+					  }, {})
 					: {},
 				...(customTimeRange && customTimeRange.startTime && customTimeRange.endTime
 					? [customTimeRange.startTime, customTimeRange.endTime]
