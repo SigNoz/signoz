@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"time"
 
-	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
@@ -22,12 +22,12 @@ type StorableLicense struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Key   string `bun:"key,type:text,notnull,unique"`
-	Data  string `bun:"data,type:text"`
-	OrgID string `bun:"org_id,type:text,notnull" json:"orgID"`
+	Key   string         `bun:"key,type:text,notnull,unique"`
+	Data  map[string]any `bun:"data,type:text"`
+	OrgID string         `bun:"org_id,type:text,notnull" json:"orgID"`
 }
 
-func NewStorableLicense(ID valuer.UUID, key string, data string, organizationID valuer.UUID) *StorableLicense {
+func NewStorableLicense(ID valuer.UUID, key string, data map[string]any, organizationID valuer.UUID) *StorableLicense {
 	return &StorableLicense{
 		Identifiable: types.Identifiable{
 			ID: ID,
@@ -47,7 +47,7 @@ type GettableLicense struct {
 	Key        string
 	Data       map[string]interface{}
 	PlanName   string
-	Features   basemodel.FeatureSet
+	Features   []featuretypes.Feature
 	Status     string
 	IsCurrent  bool
 	ValidFrom  int64
@@ -66,7 +66,7 @@ func extractKeyFromMapStringInterface[T any](data map[string]interface{}, key st
 }
 
 func NewGettableLicense(data map[string]interface{}) (*GettableLicense, error) {
-	var features basemodel.FeatureSet
+	var features []featuretypes.Feature
 
 	// extract id from data
 	licenseID, err := extractKeyFromMapStringInterface[string](data, "id")
@@ -102,7 +102,7 @@ func NewGettableLicense(data map[string]interface{}) (*GettableLicense, error) {
 		planName = PlanNameBasic
 	}
 
-	featuresFromZeus := basemodel.FeatureSet{}
+	featuresFromZeus := make([]featuretypes.Feature, 0)
 	if _features, ok := data["features"]; ok {
 		featuresData, err := json.Marshal(_features)
 		if err != nil {
@@ -173,17 +173,18 @@ func NewGettableLicenseWithIDAndKey(id string, key string, data map[string]inter
 }
 
 type Store interface {
+	Create(context.Context, *StorableLicense) error
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
 	GetAll(context.Context, valuer.UUID) ([]*StorableLicense, error)
-	GetActive(context.Context) (*StorableLicense, error)
-	Create(context.Context, *StorableLicense) error
 	Update(context.Context, *StorableLicense) error
-	CreateFeature(context.Context)
-	GetFeature(context.Context)
-	GetAllFeatures(context.Context)
-	UpdateFeature(context.Context)
-	InitFeatures(context.Context)
 
-	// ListOrgs returns the list of orgs
-	ListOrgs(context.Context) ([]string, error)
+	// feature surrogate
+	InitFeatures(context.Context, []*types.FeatureStatus) error
+	CreateFeature(context.Context, *types.FeatureStatus) error
+	GetFeature(context.Context, string) (*types.FeatureStatus, error)
+	GetAllFeatures(context.Context) ([]*types.FeatureStatus, error)
+	UpdateFeature(context.Context, *types.FeatureStatus) error
+
+	// ListOrganizations returns the list of orgs
+	ListOrganizations(context.Context) ([]string, error)
 }

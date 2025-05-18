@@ -1,4 +1,4 @@
-package model
+package featuretypes
 
 type FeatureSet []Feature
 type Feature struct {

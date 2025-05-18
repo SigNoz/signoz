@@ -5,6 +5,8 @@ import (
 
 	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type store struct {
@@ -15,42 +17,42 @@ func New(sqlstore sqlstore.SQLStore) licensetypes.Store {
 	return &store{sqlstore}
 }
 
-func (s *store) CreateFeature(context.Context) {
+func (s *store) Create(ctx context.Context, storableLicense *licensetypes.StorableLicense) error {
 	panic("unimplemented")
 }
 
-func (s *store) CreateV3(context.Context, *licensetypes.LicenseV3) error {
+func (s *store) Get(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) (*licensetypes.StorableLicense, error) {
 	panic("unimplemented")
 }
 
-func (s *store) GetActive(context.Context) (*licensetypes.License, error) {
+func (s *store) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.StorableLicense, error) {
 	panic("unimplemented")
 }
 
-func (s *store) GetActiveV3(context.Context) (*licensetypes.LicenseV3, error) {
+func (s *store) Update(ctx context.Context, storableLicense *licensetypes.StorableLicense) error {
 	panic("unimplemented")
 }
 
-func (s *store) GetAllFeatures(context.Context) {
+func (s *store) ListOrganizations(ctx context.Context) ([]string, error) {
 	panic("unimplemented")
 }
 
-func (s *store) GetFeature(context.Context) {
+func (s *store) CreateFeature(context.Context, *types.FeatureStatus) error {
 	panic("unimplemented")
 }
 
-func (s *store) GetV3(context.Context) ([]*licensetypes.LicenseV3, error) {
+func (s *store) GetAllFeatures(context.Context) ([]*types.FeatureStatus, error) {
 	panic("unimplemented")
 }
 
-func (s *store) InitFeatures(context.Context) {
+func (s *store) GetFeature(context.Context, string) (*types.FeatureStatus, error) {
 	panic("unimplemented")
 }
 
-func (s *store) UpdateFeature(context.Context) {
+func (s *store) InitFeatures(context.Context, []*types.FeatureStatus) error {
 	panic("unimplemented")
 }
 
-func (s *store) UpdateV3(context.Context, *licensetypes.LicenseV3) error {
+func (s *store) UpdateFeature(context.Context, *types.FeatureStatus) error {
 	panic("unimplemented")
 }
