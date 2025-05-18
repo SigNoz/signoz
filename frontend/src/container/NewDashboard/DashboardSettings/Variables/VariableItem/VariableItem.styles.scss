@@ -476,6 +476,18 @@
 				}
 			}
 
+			.default-value-section {
+				.default-value-description {
+					color: var(--bg-ink-400);
+				}
+			}
+
+			.dynamic-variable-section {
+				.typography-variables {
+					color: var(--bg-ink-400);
+				}
+			}
+
 			.variable-textbox-section {
 				.typography-variables {
 					color: var(--bg-ink-400);
