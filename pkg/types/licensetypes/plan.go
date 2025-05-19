@@ -127,3 +127,13 @@ var EnterprisePlan = featuretypes.FeatureSet{
 		Route:      "",
 	},
 }
+
+var DefaultFeatureSet = featuretypes.FeatureSet{
+	&featuretypes.GettableFeature{
+		Name:       featuretypes.UseSpanMetrics,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+}
