@@ -166,15 +166,11 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 func (ah *APIHandler) updateRequestContext(w http.ResponseWriter, r *http.Request) (*http.Request, error) {
 	ssoAvailable := true
 	err := ah.Signoz.License.CheckFeature(r.Context(), licensetypes.SSO)
-	if err != nil {
-		switch err.(type) {
-		case basemodel.ErrFeatureUnavailable:
-			// do nothing, just skip sso
-			ssoAvailable = false
-		default:
-			zap.L().Error("feature check failed", zap.String("featureKey", licensetypes.SSO), zap.Error(err))
-			return r, errors.New(errors.TypeInternal, errors.CodeInternal, "error checking SSO feature")
-		}
+	if err != nil && errors.Ast(err, errors.TypeUnsupported) {
+		ssoAvailable = false
+	} else if err != nil {
+		zap.L().Error("feature check failed", zap.String("featureKey", licensetypes.SSO), zap.Error(err))
+		return r, errors.New(errors.TypeInternal, errors.CodeInternal, "error checking SSO feature")
 	}
 	ctx := context.WithValue(r.Context(), types.SSOAvailable, ssoAvailable)
 	return r.WithContext(ctx), nil

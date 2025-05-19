@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	ErrCodeUnsupported = errors.MustNewCode("licensing_unsupported")
+	ErrCodeUnsupported        = errors.MustNewCode("licensing_unsupported")
+	ErrCodeFeatureUnavailable = errors.MustNewCode("feature_unavailable")
 )
 
 type License interface {

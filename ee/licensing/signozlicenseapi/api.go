@@ -75,7 +75,8 @@ func (api *licenseAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, gettableLicense)
+	gettableLicense.Data["key"] = gettableLicense.Key
+	render.Success(rw, http.StatusOK, gettableLicense.Data)
 }
 
 func (api *licenseAPI) Refresh(rw http.ResponseWriter, r *http.Request) {

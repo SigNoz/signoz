@@ -35,7 +35,6 @@ func (ah *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ah.Signoz.Handlers.User.Login(w, r)
-	return
 }
 
 func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {

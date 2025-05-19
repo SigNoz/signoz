@@ -80,6 +80,7 @@ func (provider *license) Validate(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
+			return nil
 		}
 
 		license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, provider.zeus)
@@ -96,12 +97,20 @@ func (provider *license) Validate(ctx context.Context) error {
 				if err != nil {
 					return err
 				}
+				return nil
 			}
 			return err
 		}
 
 		provider.settings.Logger().DebugContext(ctx, "license validation completed successfully", "licenseID", license.ID, "organizationID", organizationID.StringValue())
 		err = provider.Update(ctx, organizationID, license)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(organizations) == 0 {
+		err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 		if err != nil {
 			return err
 		}
@@ -238,7 +247,7 @@ func (provider *license) CheckFeature(ctx context.Context, key string) error {
 	if feature.Active {
 		return nil
 	}
-	return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "feature unavailable: %s", key)
+	return errors.Newf(errors.TypeUnsupported, licensing.ErrCodeFeatureUnavailable, "feature unavailable: %s", key)
 }
 
 func (provider *license) GetFeatureFlag(ctx context.Context, key string) (*featuretypes.GettableFeature, error) {
