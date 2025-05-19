@@ -8,6 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/licensing/nooplicense"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
@@ -20,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
 	"github.com/SigNoz/signoz/pkg/web/routerweb"
+	"github.com/SigNoz/signoz/pkg/zeus"
 )
 
 func NewCacheProviderFactories() factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]] {
@@ -97,5 +100,11 @@ func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 	return factory.MustNewNamedMap(
 		legacyalertmanager.NewFactory(sqlstore),
 		signozalertmanager.NewFactory(sqlstore),
+	)
+}
+
+func NewLicensingProviderFactories(sqlstore sqlstore.SQLStore, zeus zeus.Zeus) factory.NamedMap[factory.ProviderFactory[licensing.License, licensing.Config]] {
+	return factory.MustNewNamedMap(
+		nooplicense.NewFactory(),
 	)
 }

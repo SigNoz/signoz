@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/licensing/nooplicenseapi"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -149,6 +150,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FluxInterval:                  fluxInterval,
 		JWT:                           serverOptions.Jwt,
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
+		LicensingAPI:                  nooplicenseapi.NewLicenseAPI(),
 		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore),
 		Signoz:                        serverOptions.SigNoz,
 		QuickFilters:                  quickFilter,

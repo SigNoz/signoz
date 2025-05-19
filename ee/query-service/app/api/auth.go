@@ -12,8 +12,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 )
 
 func parseRequest(r *http.Request, req interface{}) error {

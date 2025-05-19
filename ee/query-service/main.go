@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/licensing"
+	"github.com/SigNoz/signoz/ee/licensing/signozlicense"
 	eeuserimpl "github.com/SigNoz/signoz/ee/modules/user/impluser"
 	"github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
@@ -14,13 +16,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
+	"github.com/SigNoz/signoz/pkg/factory"
+	pkglicensing "github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/version"
+	pkgzeus "github.com/SigNoz/signoz/pkg/zeus"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -118,6 +124,10 @@ func main() {
 		config,
 		zeus.Config(),
 		httpzeus.NewProviderFactory(),
+		licensing.Config(licensetypes.ValidationFrequency),
+		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus) factory.ProviderFactory[pkglicensing.License, pkglicensing.Config] {
+			return signozlicense.NewProviderFactory(sqlstore, zeus)
+		},
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),
 		sqlStoreFactories,

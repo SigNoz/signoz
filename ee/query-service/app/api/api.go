@@ -6,11 +6,11 @@ import (
 	"net/http/httputil"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/licensing/signozlicenseapi"
 	"github.com/SigNoz/signoz/ee/query-service/dao"
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 	"github.com/SigNoz/signoz/ee/query-service/interfaces"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
-	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -27,6 +27,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -68,6 +69,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		FluxInterval:                  opts.FluxInterval,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
+		LicensingAPI:                  signozlicenseapi.NewLicenseAPI(signoz.License),
 		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuickFilters:                  quickFilter,
@@ -102,7 +104,7 @@ func (ah *APIHandler) Gateway() *httputil.ReverseProxy {
 }
 
 func (ah *APIHandler) CheckFeature(ctx context.Context, key string) bool {
-	err := ah.Signoz.LicenseManager.CheckFeature(ctx, key)
+	err := ah.Signoz.License.CheckFeature(ctx, key)
 	return err == nil
 }
 
@@ -163,7 +165,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 // TODO(nitya): remove this once we know how to get the FF's
 func (ah *APIHandler) updateRequestContext(w http.ResponseWriter, r *http.Request) (*http.Request, error) {
 	ssoAvailable := true
-	err := ah.Signoz.LicenseManager.CheckFeature(r.Context(), licensetypes.SSO)
+	err := ah.Signoz.License.CheckFeature(r.Context(), licensetypes.SSO)
 	if err != nil {
 		switch err.(type) {
 		case basemodel.ErrFeatureUnavailable:

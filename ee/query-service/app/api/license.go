@@ -71,16 +71,16 @@ type ApplyLicenseRequest struct {
 }
 
 func (ah *APIHandler) getActiveLicenseV3(w http.ResponseWriter, r *http.Request) {
-	ah.Signoz.LicenseAPI.GetActive(w, r)
+	ah.LicensingAPI.GetActive(w, r)
 }
 
 // this function is called by zeus when inserting licenses in the query-service
 func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
-	ah.Signoz.LicenseAPI.Activate(w, r)
+	ah.LicensingAPI.Activate(w, r)
 }
 
 func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) {
-	ah.Signoz.LicenseAPI.Refresh(w, r)
+	ah.LicensingAPI.Refresh(w, r)
 }
 
 func getCheckoutPortalResponse(redirectURL string) *Redirect {
@@ -106,7 +106,7 @@ func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	license, err := ah.Signoz.LicenseManager.GetActive(r.Context(), orgID)
+	license, err := ah.Signoz.License.GetActive(r.Context(), orgID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -179,7 +179,7 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	license, err := ah.Signoz.LicenseManager.GetActive(r.Context(), orgID)
+	license, err := ah.Signoz.License.GetActive(r.Context(), orgID)
 	if err != nil {
 		render.Error(w, err)
 		return

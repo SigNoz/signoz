@@ -160,7 +160,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New(modelDao, serverOptions.SigNoz.LicenseManager, serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.SigNoz.Zeus)
+	usageManager, err := usage.New(modelDao, serverOptions.SigNoz.License, serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.SigNoz.Zeus)
 	if err != nil {
 		return nil, err
 	}

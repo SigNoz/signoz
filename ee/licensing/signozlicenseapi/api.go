@@ -1,4 +1,4 @@
-package licensemanager
+package signozlicenseapi
 
 import (
 	"context"
@@ -6,18 +6,19 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type licenseAPI struct {
-	licensemanager License
+	licensemanager licensing.License
 }
 
-func NewLicenseAPI(licensemanager License) API {
+func NewLicenseAPI(licensemanager licensing.License) licensing.API {
 	return &licenseAPI{licensemanager: licensemanager}
 }
 

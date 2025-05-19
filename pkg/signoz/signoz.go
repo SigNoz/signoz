@@ -3,11 +3,11 @@ package signoz
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/ee/licensemanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
@@ -30,8 +30,7 @@ type SigNoz struct {
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
 	Zeus            zeus.Zeus
-	LicenseManager  licensemanager.License
-	LicenseAPI      licensemanager.API
+	License         licensing.License
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -41,6 +40,8 @@ func New(
 	config Config,
 	zeusConfig zeus.Config,
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
+	licenseConfig licensing.Config,
+	licenseProviderFactoryCb func(sqlstore.SQLStore, zeus.Zeus) factory.ProviderFactory[licensing.License, licensing.Config],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
@@ -159,8 +160,15 @@ func New(
 		return nil, err
 	}
 
-	licenseManager := licensemanager.New(sqlstore, zeus)
-	licenseAPI := licensemanager.NewLicenseAPI(licenseManager)
+	licenseProviderFactory := licenseProviderFactoryCb(sqlstore, zeus)
+	license, err := licenseProviderFactory.New(
+		ctx,
+		providerSettings,
+		licenseConfig,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	userModule := diModules(sqlstore)
 	userHandler := diHandlers(userModule)
@@ -175,7 +183,7 @@ func New(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
-		factory.NewNamedService(factory.MustNewName("license"), licenseManager),
+		factory.NewNamedService(factory.MustNewName("license"), license),
 	)
 	if err != nil {
 		return nil, err
@@ -191,8 +199,7 @@ func New(
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
 		Zeus:            zeus,
-		LicenseManager:  licenseManager,
-		LicenseAPI:      licenseAPI,
+		License:         license,
 		Modules:         modules,
 		Handlers:        handlers,
 	}, nil

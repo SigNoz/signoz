@@ -23,6 +23,7 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -136,6 +137,8 @@ type APIHandler struct {
 
 	AlertmanagerAPI *alertmanager.API
 
+	LicensingAPI licensing.API
+
 	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
@@ -173,6 +176,8 @@ type APIHandlerOpts struct {
 	JWT *authtypes.JWT
 
 	AlertmanagerAPI *alertmanager.API
+
+	LicensingAPI licensing.API
 
 	FieldsAPI *fields.API
 
@@ -240,6 +245,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		JWT:                           opts.JWT,
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
+		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
 		QuickFilters:                  opts.QuickFilters,
@@ -602,7 +608,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 		render.Success(rw, http.StatusOK, []any{})
 	})).Methods(http.MethodGet)
 	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
-		render.Error(rw, errorsV2.New(errorsV2.TypeUnsupported, errorsV2.CodeUnsupported, "not implemented"))
+		aH.LicensingAPI.Activate(rw, req)
 	})).Methods(http.MethodGet)
 }
 
@@ -1958,7 +1964,7 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet, err := aH.Signoz.LicenseManager.GetFeatureFlags(r.Context())
+	featureSet, err := aH.Signoz.License.GetFeatureFlags(r.Context())
 	if err != nil {
 		aH.HandleError(w, err, http.StatusInternalServerError)
 		return
@@ -1974,7 +1980,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) CheckFeature(ctx context.Context, key string) bool {
-	err := aH.Signoz.LicenseManager.CheckFeature(ctx, key)
+	err := aH.Signoz.License.CheckFeature(ctx, key)
 	return err == nil
 }
 

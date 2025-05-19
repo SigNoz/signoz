@@ -19,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -299,7 +298,6 @@ func (tb *FilterSuggestionsTestBed) GetQBFilterSuggestionsForLogs(
 func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	testDB := utils.NewQueryServiceDBForTests(t)
 
-	fm := featureManager.StartManager()
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
@@ -309,9 +307,8 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		Reader:       reader,
-		FeatureFlags: fm,
-		JWT:          jwt,
+		Reader: reader,
+		JWT:    jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
 			Handlers: signoz.NewHandlers(modules, userHandler),

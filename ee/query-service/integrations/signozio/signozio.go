@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/ee/types/subscriptiontypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/tidwall/gjson"
 )

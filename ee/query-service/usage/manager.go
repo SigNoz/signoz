@@ -14,9 +14,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/SigNoz/signoz/ee/licensemanager"
 	"github.com/SigNoz/signoz/ee/query-service/dao"
 	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -36,7 +36,7 @@ var (
 type Manager struct {
 	clickhouseConn clickhouse.Conn
 
-	licenseService licensemanager.License
+	licenseService licensing.License
 
 	scheduler *gocron.Scheduler
 
@@ -45,7 +45,7 @@ type Manager struct {
 	zeus zeus.Zeus
 }
 
-func New(modelDao dao.ModelDao, licenseService licensemanager.License, clickhouseConn clickhouse.Conn, zeus zeus.Zeus) (*Manager, error) {
+func New(modelDao dao.ModelDao, licenseService licensing.License, clickhouseConn clickhouse.Conn, zeus zeus.Zeus) (*Manager, error) {
 	m := &Manager{
 		clickhouseConn: clickhouseConn,
 		licenseService: licenseService,

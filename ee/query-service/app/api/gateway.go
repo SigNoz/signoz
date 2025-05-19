@@ -38,7 +38,7 @@ func (ah *APIHandler) ServeGatewayHTTP(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	license, err := ah.Signoz.LicenseManager.GetActive(ctx, orgID)
+	license, err := ah.Signoz.License.GetActive(ctx, orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return

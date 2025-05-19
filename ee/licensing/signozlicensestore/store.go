@@ -1,13 +1,13 @@
-package licensemanagerstore
+package signozlicensestore
 
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 

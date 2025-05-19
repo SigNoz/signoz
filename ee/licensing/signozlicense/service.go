@@ -1,16 +1,18 @@
-package licensemanager
+package signozlicense
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/SigNoz/signoz/ee/licensemanager/licensemanagerstore"
+	"github.com/SigNoz/signoz/ee/licensing/signozlicensestore"
 	validate "github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
-	"github.com/SigNoz/signoz/ee/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -18,13 +20,19 @@ import (
 type license struct {
 	store    licensetypes.Store
 	zeus     zeus.Zeus
+	config   licensing.Config
 	stopChan chan struct{}
 }
 
-func New(sqlstore sqlstore.SQLStore, zeus zeus.Zeus) License {
-	licensestore := licensemanagerstore.New(sqlstore)
+func NewProviderFactory(store sqlstore.SQLStore, zeus zeus.Zeus) factory.ProviderFactory[licensing.License, licensing.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("signoz_license"), func(ctx context.Context, providerSettings factory.ProviderSettings, config licensing.Config) (licensing.License, error) {
+		return New(ctx, providerSettings, config, store, zeus)
+	})
+}
 
-	return &license{store: licensestore, zeus: zeus, stopChan: make(chan struct{})}
+func New(ctx context.Context, _ factory.ProviderSettings, config licensing.Config, sqlstore sqlstore.SQLStore, zeus zeus.Zeus) (licensing.License, error) {
+	licensestore := signozlicensestore.New(sqlstore)
+	return &license{store: licensestore, zeus: zeus, config: config, stopChan: make(chan struct{})}, nil
 }
 
 func (l *license) Start(ctx context.Context) error {
@@ -33,7 +41,7 @@ func (l *license) Start(ctx context.Context) error {
 		return err
 	}
 
-	tick := time.NewTicker(licensetypes.ValidationFrequency)
+	tick := time.NewTicker(l.config.ValidationFrequency)
 	for _, organizationID := range organizations {
 		for {
 			select {
