@@ -214,11 +214,11 @@ export const getBrokerNetworkThroughputWidgetData = (
 						dataType: DataTypes.Float64,
 						// inline ternary based on dotMetricsEnabled
 						key: dotMetricsEnabled
-							? 'kafka.server.brokertopicmetrics.bytesoutpersec.oneminuterate'
+							? 'kafka_server_brokertopicmetrics_total_replicationbytesinpersec_oneminuterate'
 							: 'kafka_server_brokertopicmetrics_bytesoutpersec_oneminuterate',
 						id: `${
 							dotMetricsEnabled
-								? 'kafka.server.brokertopicmetrics.bytesoutpersec.oneminuterate'
+								? 'kafka_server_brokertopicmetrics_total_replicationbytesinpersec_oneminuterate'
 								: 'kafka_server_brokertopicmetrics_bytesoutpersec_oneminuterate'
 						}--float64--Gauge--true`,
 						isColumn: true,
@@ -303,11 +303,11 @@ export const getRequestResponseWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						key: dotMetricsEnabled
-							? 'kafka.producer.request-rate'
+							? 'kafka.producer.request_rate'
 							: 'kafka_producer_request_rate',
 						id: `${
 							dotMetricsEnabled
-								? 'kafka.producer.request-rate'
+								? 'kafka.producer.request_rate'
 								: 'kafka_producer_request_rate'
 						}--float64--Gauge--true`,
 						isColumn: true,
@@ -335,11 +335,11 @@ export const getRequestResponseWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						key: dotMetricsEnabled
-							? 'kafka.producer.response-rate'
+							? 'kafka.producer.response_rate'
 							: 'kafka_producer_response_rate',
 						id: `${
 							dotMetricsEnabled
-								? 'kafka.producer.response-rate'
+								? 'kafka.producer.response_rate'
 								: 'kafka_producer_response_rate'
 						}--float64--Gauge--true`,
 						isColumn: true,
@@ -380,11 +380,11 @@ export const getAverageRequestLatencyWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						key: dotMetricsEnabled
-							? 'kafka.producer.request-latency-avg'
+							? 'kafka.producer.request_latency_avg'
 							: 'kafka_producer_request_latency_avg',
 						id: `${
 							dotMetricsEnabled
-								? 'kafka.producer.request-latency-avg'
+								? 'kafka.producer.request_latency_avg'
 								: 'kafka_producer_request_latency_avg'
 						}--float64--Gauge--true`,
 						isColumn: true,
@@ -425,11 +425,11 @@ export const getKafkaProducerByteRateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						key: dotMetricsEnabled
-							? 'kafka.producer.byte-rate'
+							? 'kafka.producer.byte_rate'
 							: 'kafka_producer_byte_rate',
 						id: `${
 							dotMetricsEnabled
-								? 'kafka.producer.byte-rate'
+								? 'kafka.producer.byte_rate'
 								: 'kafka_producer_byte_rate'
 						}--float64--Gauge--true`,
 						isColumn: true,
@@ -464,7 +464,7 @@ export const getKafkaProducerByteRateWidgetData = (
 				},
 			],
 			title: dotMetricsEnabled
-				? 'kafka.producer.byte-rate'
+				? 'kafka.producer.byte_rate'
 				: 'kafka_producer_byte_rate',
 			description:
 				'Helps measure the data output rate from the producer, indicating the load a producer is placing on Kafka brokers.',
@@ -481,11 +481,11 @@ export const getBytesConsumedWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						key: dotMetricsEnabled
-							? 'kafka.consumer.bytes-consumed-rate'
+							? 'kafka.consumer.bytes_consumed_rate'
 							: 'kafka_consumer_bytes_consumed_rate',
 						id: `${
 							dotMetricsEnabled
-								? 'kafka.consumer.bytes-consumed-rate'
+								? 'kafka.consumer.bytes_consumed_rate'
 								: 'kafka_consumer_bytes_consumed_rate'
 						}--float64--Gauge--true`,
 						isColumn: true,
@@ -720,11 +720,11 @@ export const getConsumerFetchRateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						key: dotMetricsEnabled
-							? 'kafka.consumer.fetch-rate'
+							? 'kafka.consumer.fetch_rate'
 							: 'kafka_consumer_fetch_rate',
 						id: `${
 							dotMetricsEnabled
-								? 'kafka.consumer.fetch-rate'
+								? 'kafka.consumer.fetch_rate'
 								: 'kafka_consumer_fetch_rate'
 						}--float64--Gauge--true`,
 						isColumn: true,
@@ -743,7 +743,7 @@ export const getConsumerFetchRateWidgetData = (
 							id: 'service_name--string--tag--false',
 							isColumn: false,
 							isJSON: false,
-							key: 'service_name',
+							key: dotMetricsEnabled ? 'service.name' : 'service_name',
 							type: 'tag',
 						},
 					],
@@ -774,11 +774,11 @@ export const getMessagesConsumedWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						key: dotMetricsEnabled
-							? 'kafka.consumer.records-consumed-rate'
+							? 'kafka.consumer.records_consumed_rate'
 							: 'kafka_consumer_records_consumed_rate',
 						id: `${
 							dotMetricsEnabled
-								? 'kafka.consumer.records-consumed-rate'
+								? 'kafka.consumer.records_consumed_rate'
 								: 'kafka_consumer_records_consumed_rate'
 						}--float64--Gauge--true`,
 						isColumn: true,
@@ -891,7 +891,9 @@ export const getJvmGcCollectionsElapsedWidgetData = (
 					timeAggregation: 'rate',
 				},
 			],
-			title: 'jvm_gc_collections_elapsed',
+			title: dotMetricsEnabled
+				? 'jvm.gc.collections.elapsed'
+				: 'jvm_gc_collections_elapsed',
 			description:
 				'Measures the total time (usually in milliseconds) spent on garbage collection (GC) events in the Java Virtual Machine (JVM).',
 		}),
