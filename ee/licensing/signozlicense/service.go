@@ -44,6 +44,11 @@ func (provider *license) Start(ctx context.Context) error {
 
 	tick := time.NewTicker(provider.config.ValidationFrequency)
 	for _, organizationID := range organizations {
+		err = provider.Validate(ctx, organizationID)
+		if err != nil {
+			return err
+		}
+
 		for {
 			select {
 			case <-provider.stopChan:

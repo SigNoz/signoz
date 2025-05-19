@@ -158,6 +158,11 @@ func (s *store) InitFeatures(ctx context.Context, storableFeatures []*featuretyp
 		BunDB().
 		NewInsert().
 		Model(&storableFeatures).
+		On("CONFLICT (name) DO UPDATE").
+		Set("active = EXCLUDED.active").
+		Set("usage = EXCLUDED.usage").
+		Set("usage_limit = EXCLUDED.usage_limit").
+		Set("route = EXCLUDED.route").
 		Exec(ctx)
 	if err != nil {
 		return s.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeInternal, "unable to init features")

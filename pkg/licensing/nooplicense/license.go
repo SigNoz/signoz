@@ -11,7 +11,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type noopLicense struct{}
+type noopLicense struct {
+	stopChan chan struct{}
+}
 
 func NewFactory() factory.ProviderFactory[licensing.License, licensing.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("noop"), func(ctx context.Context, providerSettings factory.ProviderSettings, config licensing.Config) (licensing.License, error) {
@@ -20,14 +22,17 @@ func NewFactory() factory.ProviderFactory[licensing.License, licensing.Config] {
 }
 
 func New(_ context.Context, _ factory.ProviderSettings, _ licensing.Config) (licensing.License, error) {
-	return &noopLicense{}, nil
+	return &noopLicense{stopChan: make(chan struct{})}, nil
 }
 
 func (provider *noopLicense) Start(context.Context) error {
+	<-provider.stopChan
 	return nil
+
 }
 
 func (provider *noopLicense) Stop(context.Context) error {
+	close(provider.stopChan)
 	return nil
 }
 
