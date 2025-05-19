@@ -21,7 +21,7 @@ import {
 import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
-const API_ENDPOINT = 'http://localhost/api/v3/query_range';
+const API_ENDPOINT = 'http://localhost/api/v4/query_range';
 
 jest.mock('uplot', () => {
 	const paths = {
