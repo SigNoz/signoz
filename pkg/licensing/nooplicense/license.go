@@ -59,6 +59,7 @@ func (n *noopLicense) GetAll(ctx context.Context, organizationID valuer.UUID) ([
 	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "fetching all licenses is not supported")
 }
 
+// TODO[@vikrantgupta25]: update all the feature APIs to return from constants and block the updates
 func (n *noopLicense) CheckFeature(ctx context.Context, key string) error {
 	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "checking feature is not supported")
 }
