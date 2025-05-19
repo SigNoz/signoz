@@ -531,4 +531,6 @@ export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	POD_UID: 'podUID',
 	STATEFULSET_UID: 'statefulsetUID',
 	VOLUME_UID: 'volumeUID',
+	FILTERS: 'filters',
+	GROUP_BY: 'groupBy',
 };

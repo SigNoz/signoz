@@ -80,7 +80,15 @@ function K8sJobsList({
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.JOBS);
 
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
+	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
+		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
+		if (groupBy) {
+			const decoded = decodeURIComponent(groupBy);
+			const parsed = JSON.parse(decoded);
+			return parsed as IBuilderQuery['groupBy'];
+		}
+		return [];
+	});
 
 	const [selectedRowData, setSelectedRowData] = useState<K8sJobsRowData | null>(
 		null,
@@ -345,6 +353,10 @@ function K8sJobsList({
 		setSelectedRowData(null);
 		setGroupBy([]);
 		setOrderBy(null);
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
+		});
 	};
 
 	const expandedRowRender = (): JSX.Element => (
@@ -469,6 +481,10 @@ function K8sJobsList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
+			});
 
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
 				entity: InfraMonitoringEvents.K8sEntity,
@@ -476,7 +492,7 @@ function K8sJobsList({
 				category: InfraMonitoringEvents.Job,
 			});
 		},
-		[groupByFiltersData],
+		[groupByFiltersData, searchParams, setSearchParams],
 	);
 
 	useEffect(() => {

@@ -61,6 +61,7 @@ function K8sPodsList({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [currentPage, setCurrentPage] = useState(1);
 
@@ -70,7 +71,15 @@ function K8sPodsList({
 		defaultAvailableColumns,
 	);
 
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
+	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
+		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
+		if (groupBy) {
+			const decoded = decodeURIComponent(groupBy);
+			const parsed = JSON.parse(decoded);
+			return parsed as IBuilderQuery['groupBy'];
+		}
+		return [];
+	});
 
 	const [selectedRowData, setSelectedRowData] = useState<K8sPodsRowData | null>(
 		null,
@@ -138,7 +147,6 @@ function K8sPodsList({
 		order: 'asc' | 'desc';
 	} | null>({ columnName: 'cpu', order: 'desc' });
 
-	const [searchParams, setSearchParams] = useSearchParams();
 	const [selectedPodUID, setSelectedPodUID] = useState<string | null>(() => {
 		const podUID = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID);
 		if (podUID) {
@@ -327,6 +335,10 @@ function K8sPodsList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
+			});
 
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
 				entity: InfraMonitoringEvents.K8sEntity,
@@ -334,7 +346,7 @@ function K8sPodsList({
 				category: InfraMonitoringEvents.Pod,
 			});
 		},
-		[groupByFiltersData],
+		[groupByFiltersData, searchParams, setSearchParams],
 	);
 
 	useEffect(() => {
@@ -457,6 +469,10 @@ function K8sPodsList({
 		setSelectedRowData(null);
 		setGroupBy([]);
 		setOrderBy(null);
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
+		});
 	};
 
 	const expandedRowRender = (): JSX.Element => (

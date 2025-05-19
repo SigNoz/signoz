@@ -83,7 +83,15 @@ function K8sVolumesList({
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.VOLUMES);
 
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
+	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
+		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
+		if (groupBy) {
+			const decoded = decodeURIComponent(groupBy);
+			const parsed = JSON.parse(decoded);
+			return parsed as IBuilderQuery['groupBy'];
+		}
+		return [];
+	});
 
 	const [
 		selectedRowData,
@@ -355,6 +363,10 @@ function K8sVolumesList({
 		setCurrentPage(1);
 		setSelectedRowData(null);
 		setGroupBy([]);
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
+		});
 		setOrderBy(null);
 	};
 
@@ -477,6 +489,10 @@ function K8sVolumesList({
 
 			setCurrentPage(1);
 			setGroupBy(groupBy);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
+			});
 			setExpandedRowKeys([]);
 
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
@@ -485,7 +501,7 @@ function K8sVolumesList({
 				category: InfraMonitoringEvents.Volumes,
 			});
 		},
-		[groupByFiltersData],
+		[groupByFiltersData?.payload?.attributeKeys, searchParams, setSearchParams],
 	);
 
 	useEffect(() => {

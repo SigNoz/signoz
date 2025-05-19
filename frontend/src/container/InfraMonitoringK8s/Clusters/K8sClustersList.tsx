@@ -82,7 +82,15 @@ function K8sClustersList({
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.CLUSTERS);
 
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
+	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
+		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
+		if (groupBy) {
+			const decoded = decodeURIComponent(groupBy);
+			const parsed = JSON.parse(decoded);
+			return parsed as IBuilderQuery['groupBy'];
+		}
+		return [];
+	});
 
 	const [
 		selectedRowData,
@@ -362,6 +370,10 @@ function K8sClustersList({
 		setCurrentPage(1);
 		setSelectedRowData(null);
 		setGroupBy([]);
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
+		});
 		setOrderBy(null);
 	};
 
@@ -487,6 +499,10 @@ function K8sClustersList({
 			// Reset pagination on switching to groupBy
 			setCurrentPage(1);
 			setGroupBy(groupBy);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
+			});
 			setExpandedRowKeys([]);
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
 				entity: InfraMonitoringEvents.K8sEntity,
@@ -494,7 +510,7 @@ function K8sClustersList({
 				category: InfraMonitoringEvents.Cluster,
 			});
 		},
-		[groupByFiltersData],
+		[groupByFiltersData, searchParams, setSearchParams],
 	);
 
 	useEffect(() => {
