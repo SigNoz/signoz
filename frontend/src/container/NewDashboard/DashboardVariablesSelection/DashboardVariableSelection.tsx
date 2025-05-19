@@ -1,12 +1,15 @@
 import { Row } from 'antd';
+import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { memo, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import DynamicVariableSelection from './DynamicVariableSelection';
 import {
 	buildDependencies,
 	buildDependencyGraph,
@@ -24,6 +27,8 @@ function DashboardVariableSelection(): JSX.Element | null {
 		variablesToGetUpdated,
 		setVariablesToGetUpdated,
 	} = useDashboard();
+
+	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
 
 	const { data } = selectedDashboard || {};
 
@@ -58,8 +63,11 @@ function DashboardVariableSelection(): JSX.Element | null {
 			tableRowData.sort((a, b) => a.order - b.order);
 
 			setVariablesTableData(tableRowData);
+
+			// Initialize variables with default values if not in URL
+			initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
 		}
-	}, [variables]);
+	}, [getUrlVariables, updateUrlVariable, variables]);
 
 	useEffect(() => {
 		if (variablesTableData.length > 0) {
@@ -100,11 +108,13 @@ function DashboardVariableSelection(): JSX.Element | null {
 		id: string,
 		value: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
-		// isMountedCall?: boolean,
+		haveCustomValuesSelected?: boolean,
 		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
 		if (id) {
 			updateLocalStorageDashboardVariables(name, value, allSelected);
+
+			updateUrlVariable(id, value, allSelected);
 
 			if (selectedDashboard) {
 				setSelectedDashboard((prev) => {
@@ -117,6 +127,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 								...oldVariables[id],
 								selectedValue: value,
 								allSelected,
+								haveCustomValuesSelected,
 							};
 						}
 						if (oldVariables[name]) {
@@ -124,6 +135,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 								...oldVariables[name],
 								selectedValue: value,
 								allSelected,
+								haveCustomValuesSelected,
 							};
 						}
 						return {
@@ -170,20 +182,32 @@ function DashboardVariableSelection(): JSX.Element | null {
 			{orderBasedSortedVariables &&
 				Array.isArray(orderBasedSortedVariables) &&
 				orderBasedSortedVariables.length > 0 &&
-				orderBasedSortedVariables.map((variable) => (
-					<VariableItem
-						key={`${variable.name}${variable.id}}${variable.order}`}
-						existingVariables={variables}
-						variableData={{
-							name: variable.name,
-							...variable,
-						}}
-						onValueUpdate={onValueUpdate}
-						variablesToGetUpdated={variablesToGetUpdated}
-						setVariablesToGetUpdated={setVariablesToGetUpdated}
-						dependencyData={dependencyData}
-					/>
-				))}
+				orderBasedSortedVariables.map((variable) =>
+					variable.type === 'DYNAMIC' ? (
+						<DynamicVariableSelection
+							key={`${variable.name}${variable.id}}${variable.order}`}
+							existingVariables={variables}
+							variableData={{
+								name: variable.name,
+								...variable,
+							}}
+							onValueUpdate={onValueUpdate}
+						/>
+					) : (
+						<VariableItem
+							key={`${variable.name}${variable.id}}${variable.order}`}
+							existingVariables={variables}
+							variableData={{
+								name: variable.name,
+								...variable,
+							}}
+							onValueUpdate={onValueUpdate}
+							variablesToGetUpdated={variablesToGetUpdated}
+							setVariablesToGetUpdated={setVariablesToGetUpdated}
+							dependencyData={dependencyData}
+						/>
+					),
+				)}
 		</Row>
 	);
 }
