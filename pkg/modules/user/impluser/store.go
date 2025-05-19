@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 )
 
 type Store struct {
@@ -511,22 +512,31 @@ func (s *Store) UpdateAPIKey(ctx context.Context, id string, apiKey *types.Stora
 	return nil
 }
 
-func (s *Store) ListAPIKeys(ctx context.Context, orgID string) ([]*types.GettableAPIKey, error) {
-	apiKeys := new([]*types.GettableAPIKey)
+func (s *Store) ListAPIKeys(ctx context.Context, orgID string) ([]*types.StorableAPIKeyUser, error) {
+	orgUserAPIKeys := new(types.OrgUserAPIKey)
 
 	if err := s.sqlstore.BunDB().NewSelect().
-		Model(apiKeys).
-		Relation("CreatedByUser").
-		Relation("UpdatedByUser").
-		Join("LEFT JOIN users ON users.id = storable_api_key.user_id").
-		Where("users.org_id = ?", orgID).
-		Where("storable_api_key.revoked = false").
-		Order("storable_api_key.updated_at DESC").
+		Model(orgUserAPIKeys).
+		Relation("Users").
+		Relation("Users.APIKeys", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("revoked = false").
+				OrderExpr("storable_api_key.updated_at DESC")
+		},
+		).
+		Relation("Users.APIKeys.CreatedByUser").
+		Relation("Users.APIKeys.UpdatedByUser").
+		Where("id = ?", orgID).
 		Scan(ctx); err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch API keys")
 	}
 
-	return *apiKeys, nil
+	// Flatten the API keys from all users
+	var allAPIKeys []*types.StorableAPIKeyUser
+	for _, user := range orgUserAPIKeys.Users {
+		allAPIKeys = append(allAPIKeys, user.APIKeys...)
+	}
+
+	return allAPIKeys, nil
 }
 
 func (s *Store) RevokeAPIKey(ctx context.Context, id, revokedByUserID string) error {
@@ -544,20 +554,21 @@ func (s *Store) RevokeAPIKey(ctx context.Context, id, revokedByUserID string) er
 	return nil
 }
 
-func (s *Store) GetAPIKey(ctx context.Context, orgID string, id string) (*types.GettableAPIKey, error) {
-	apiKey := new(types.GettableAPIKey)
-
+func (s *Store) GetAPIKey(ctx context.Context, orgID string, id string) (*types.StorableAPIKeyUser, error) {
+	apiKey := new(types.OrgUserAPIKey)
 	if err := s.sqlstore.BunDB().NewSelect().
 		Model(apiKey).
-		Relation("CreatedByUser").
-		Relation("UpdatedByUser").
-		Join("LEFT JOIN users ON users.id = storable_api_key.user_id").
-		Where("users.org_id = ?", orgID).
-		Where("storable_api_key.id = ?", id).
-		Where("storable_api_key.revoked = false").
+		Relation("Users").
+		Relation("Users.APIKeys", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("revoked = false").Where("storable_api_key.id = ?", id).
+				OrderExpr("storable_api_key.updated_at DESC").Limit(1)
+		},
+		).
+		Relation("Users.APIKeys.CreatedByUser").
+		Relation("Users.APIKeys.UpdatedByUser").
 		Scan(ctx); err != nil {
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrAPIKeyNotFound, "API key with id: %s does not exist", id)
 	}
 
-	return apiKey, nil
+	return apiKey.Users[0].APIKeys[0], nil
 }

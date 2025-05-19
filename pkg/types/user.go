@@ -64,9 +64,9 @@ type UserStore interface {
 	// API KEY
 	CreateAPIKey(ctx context.Context, apiKey *StorableAPIKey) error
 	UpdateAPIKey(ctx context.Context, id string, apiKey *StorableAPIKey, updaterID string) error
-	ListAPIKeys(ctx context.Context, orgID string) ([]*GettableAPIKey, error)
+	ListAPIKeys(ctx context.Context, orgID string) ([]*StorableAPIKeyUser, error)
 	RevokeAPIKey(ctx context.Context, id, revokedByUserID string) error
-	GetAPIKey(ctx context.Context, orgID string, id string) (*GettableAPIKey, error)
+	GetAPIKey(ctx context.Context, orgID string, id string) (*StorableAPIKeyUser, error)
 }
 
 type GettableUser struct {
@@ -82,7 +82,7 @@ type User struct {
 	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
 	Email       string `bun:"email,type:text,notnull,unique:org_email" json:"email"`
 	Role        string `bun:"role,type:text,notnull" json:"role"`
-	OrgID       string `bun:"org_id,type:text,notnull,unique:org_email,on_delete:CASCADE" json:"orgId"`
+	OrgID       string `bun:"org_id,type:text,notnull,unique:org_email" json:"orgId"`
 }
 
 func NewUser(displayName string, email string, role string, orgID string) (*User, error) {

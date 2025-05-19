@@ -17,25 +17,50 @@ type PostableAPIKey struct {
 }
 
 type GettableAPIKey struct {
+	Identifiable
+	TimeAuditable
+	UserAuditable
+	Token     string `json:"token"`
+	Role      Role   `json:"role"`
+	Name      string `json:"name"`
+	ExpiresAt int64  `json:"expiresAt"`
+	LastUsed  int64  `json:"lastUsed"`
+	Revoked   bool   `json:"revoked"`
+	UserID    string `json:"userId"`
+	CreatedBy *User  `json:"createdBy"`
+	UpdatedBy *User  `json:"updatedBy"`
+}
+
+type OrgUserAPIKey struct {
+	*Organization `bun:",extend"`
+	Users         []*UserWithAPIKey `bun:"rel:has-many,join:id=org_id"`
+}
+
+type UserWithAPIKey struct {
+	*User   `bun:",extend"`
+	APIKeys []*StorableAPIKeyUser `bun:"rel:has-many,join:id=user_id"`
+}
+
+type StorableAPIKeyUser struct {
+	StorableAPIKey `bun:",extend"`
+
 	CreatedByUser *User `json:"createdByUser" bun:"created_by_user,rel:belongs-to,join:created_by=id"`
 	UpdatedByUser *User `json:"updatedByUser" bun:"updated_by_user,rel:belongs-to,join:updated_by=id"`
-
-	StorableAPIKey `bun:",extend"`
 }
 
 type StorableAPIKey struct {
-	bun.BaseModel `bun:"table:factor_api_key,join:users ON users.id = factor_api_key.user_id"`
+	bun.BaseModel `bun:"table:factor_api_key"`
 
 	Identifiable
 	TimeAuditable
 	UserAuditable
-	Token     string `json:"token" bun:"token,type:text,notnull,unique"`
-	Role      Role   `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
-	Name      string `json:"name" bun:"name,type:text,notnull"`
-	ExpiresAt int64  `json:"expiresAt" bun:"expires_at,notnull,default:0"`
-	LastUsed  int64  `json:"lastUsed" bun:"last_used,notnull,default:0"`
-	Revoked   bool   `json:"revoked" bun:"revoked,notnull,default:false"`
-	UserID    string `json:"userId" bun:"user_id,type:text,notnull"`
+	Token     string    `json:"token" bun:"token,type:text,notnull,unique"`
+	Role      Role      `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
+	Name      string    `json:"name" bun:"name,type:text,notnull"`
+	ExpiresAt time.Time `json:"-" bun:"expires_at,notnull,nullzero,type:timestamptz"`
+	LastUsed  time.Time `json:"-" bun:"last_used,notnull,nullzero,type:timestamptz"`
+	Revoked   bool      `json:"revoked" bun:"revoked,notnull,default:false"`
+	UserID    string    `json:"userId" bun:"user_id,type:text,notnull"`
 }
 
 func NewStorableAPIKey(name, userID string, role Role, expiresAt int64) (*StorableAPIKey, error) {
@@ -54,7 +79,8 @@ func NewStorableAPIKey(name, userID string, role Role, expiresAt int64) (*Storab
 
 	now := time.Now()
 	// convert expiresAt to unix timestamp from days
-	expiresAt = now.Unix() + (expiresAt * 24 * 60 * 60)
+	// expiresAt = now.Unix() + (expiresAt * 24 * 60 * 60)
+	expiresAtTime := now.AddDate(0, 0, int(expiresAt))
 
 	// Generate a 32-byte random token.
 	token := make([]byte, 32)
@@ -81,8 +107,29 @@ func NewStorableAPIKey(name, userID string, role Role, expiresAt int64) (*Storab
 		Name:      name,
 		Role:      role,
 		UserID:    userID,
-		ExpiresAt: expiresAt,
-		LastUsed:  0,
+		ExpiresAt: expiresAtTime,
+		LastUsed:  now,
 		Revoked:   false,
 	}, nil
+}
+
+func NewGettableAPIKeyFromStorableAPIKey(storableAPIKey *StorableAPIKeyUser) *GettableAPIKey {
+	lastUsed := storableAPIKey.LastUsed.Unix()
+	if storableAPIKey.LastUsed == storableAPIKey.CreatedAt {
+		lastUsed = 0
+	}
+	return &GettableAPIKey{
+		Identifiable:  storableAPIKey.Identifiable,
+		TimeAuditable: storableAPIKey.TimeAuditable,
+		UserAuditable: storableAPIKey.UserAuditable,
+		Token:         storableAPIKey.Token,
+		Role:          storableAPIKey.Role,
+		Name:          storableAPIKey.Name,
+		ExpiresAt:     storableAPIKey.ExpiresAt.Unix(),
+		LastUsed:      lastUsed,
+		Revoked:       storableAPIKey.Revoked,
+		UserID:        storableAPIKey.UserID,
+		CreatedBy:     storableAPIKey.CreatedByUser,
+		UpdatedBy:     storableAPIKey.UpdatedByUser,
+	}
 }

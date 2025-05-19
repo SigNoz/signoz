@@ -236,11 +236,11 @@ func (m *Module) UpdateAPIKey(ctx context.Context, id string, apiKey *types.Stor
 	return m.store.UpdateAPIKey(ctx, id, apiKey, updaterID)
 }
 
-func (m *Module) ListAPIKeys(ctx context.Context, orgID string) ([]*types.GettableAPIKey, error) {
+func (m *Module) ListAPIKeys(ctx context.Context, orgID string) ([]*types.StorableAPIKeyUser, error) {
 	return m.store.ListAPIKeys(ctx, orgID)
 }
 
-func (m *Module) GetAPIKey(ctx context.Context, orgID string, id string) (*types.GettableAPIKey, error) {
+func (m *Module) GetAPIKey(ctx context.Context, orgID string, id string) (*types.StorableAPIKeyUser, error) {
 	return m.store.GetAPIKey(ctx, orgID, id)
 }
 

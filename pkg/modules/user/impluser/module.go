@@ -401,11 +401,11 @@ func (m *Module) UpdateAPIKey(ctx context.Context, id string, apiKey *types.Stor
 	return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
 }
 
-func (m *Module) ListAPIKeys(ctx context.Context, orgID string) ([]*types.GettableAPIKey, error) {
+func (m *Module) ListAPIKeys(ctx context.Context, orgID string) ([]*types.StorableAPIKeyUser, error) {
 	return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
 }
 
-func (m *Module) GetAPIKey(ctx context.Context, orgID string, id string) (*types.GettableAPIKey, error) {
+func (m *Module) GetAPIKey(ctx context.Context, orgID string, id string) (*types.StorableAPIKeyUser, error) {
 	return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
 }
 

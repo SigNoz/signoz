@@ -66,8 +66,8 @@ type newFactorAPIKey33 struct {
 	Token     string    `json:"token" bun:"token,type:text,notnull,unique"`
 	Role      string    `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
 	Name      string    `json:"name" bun:"name,type:text,notnull"`
-	ExpiresAt int64     `json:"expiresAt" bun:"expires_at,notnull,default:0"`
-	LastUsed  int64     `json:"lastUsed" bun:"last_used,notnull,default:0"`
+	ExpiresAt time.Time `json:"expiresAt" bun:"expires_at,notnull,nullzero,type:timestamptz"`
+	LastUsed  time.Time `json:"lastUsed" bun:"last_used,notnull,nullzero,type:timestamptz"`
 	Revoked   bool      `json:"revoked" bun:"revoked,notnull,default:false"`
 	UserID    string    `json:"userId" bun:"user_id,type:text,notnull"`
 }
@@ -136,6 +136,13 @@ func (migration *migratePATToFactorAPIKey) CopyOldPatToFactorAPIKey(ctx context.
 			apiKey.UpdatedAt = time.Now()
 		}
 
+		// convert expiresAt and lastUsed to time.Time
+		expiresAt := time.Unix(apiKey.ExpiresAt, 0)
+		lastUsed := time.Unix(apiKey.LastUsed, 0)
+		if apiKey.LastUsed == 0 {
+			lastUsed = apiKey.CreatedAt
+		}
+
 		newAPIKeys = append(newAPIKeys, &newFactorAPIKey33{
 			Identifiable: apiKey.Identifiable,
 			CreatedAt:    apiKey.CreatedAt,
@@ -145,8 +152,8 @@ func (migration *migratePATToFactorAPIKey) CopyOldPatToFactorAPIKey(ctx context.
 			Token:        apiKey.Token,
 			Role:         apiKey.Role,
 			Name:         apiKey.Name,
-			ExpiresAt:    apiKey.ExpiresAt,
-			LastUsed:     apiKey.LastUsed,
+			ExpiresAt:    expiresAt,
+			LastUsed:     lastUsed,
 			Revoked:      apiKey.Revoked,
 			UserID:       apiKey.UserID,
 		})

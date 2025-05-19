@@ -333,6 +333,11 @@ func (h *Handler) GetAPIKeys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	result := make([]*types.GettableAPIKey, len(apiKeys))
+	for i, apiKey := range apiKeys {
+		result[i] = types.NewGettableAPIKeyFromStorableAPIKey(apiKey)
+	}
+
 	render.Success(w, http.StatusOK, apiKeys)
 }
 

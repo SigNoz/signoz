@@ -47,7 +47,7 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		if pat.ExpiresAt < time.Now().Unix() && pat.ExpiresAt != 0 {
+		if pat.ExpiresAt.Before(time.Now()) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -73,7 +73,7 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 
-		pat.LastUsed = time.Now().Unix()
+		pat.LastUsed = time.Now()
 		_, err = p.store.BunDB().NewUpdate().Model(&pat).Column("last_used").Where("token = ?", patToken).Where("revoked = false").Exec(r.Context())
 		if err != nil {
 			zap.L().Error("Failed to update PAT last used in db, err: %v", zap.Error(err))
