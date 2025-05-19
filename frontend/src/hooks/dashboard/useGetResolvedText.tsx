@@ -82,11 +82,12 @@ function useGetResolvedText({
 
 	const combinedPattern = useMemo(() => {
 		const escapedMatcher = matcher.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const varNamePattern = '[a-zA-Z_\\-][a-zA-Z0-9_.\\-]*';
 		const variablePatterns = [
-			`\\{\\{\\s*?\\.([^\\s}]+)\\s*?\\}\\}`, // {{.var}}
-			`\\{\\{\\s*([^\\s}]+)\\s*\\}\\}`, // {{var}}
-			`${escapedMatcher}([\\w.]+)`, // matcher + var.name
-			`\\[\\[\\s*([^\\s\\]]+)\\s*\\]\\]`, // [[var]]
+			`\\{\\{\\s*?\\.(${varNamePattern})\\s*?\\}\\}`, // {{.var}}
+			`\\{\\{\\s*(${varNamePattern})\\s*\\}\\}`, // {{var}}
+			`${escapedMatcher}(${varNamePattern})`, // matcher + var.name
+			`\\[\\[\\s*(${varNamePattern})\\s*\\]\\]`, // [[var]]
 		];
 		return new RegExp(variablePatterns.join('|'), 'g');
 	}, [matcher]);
@@ -94,20 +95,38 @@ function useGetResolvedText({
 	const extractVarName = useCallback(
 		(match: string): string => {
 			// Extract variable name from different formats
+			const varNamePattern = '[a-zA-Z_\\-][a-zA-Z0-9_.\\-]*';
 			if (match.startsWith('{{')) {
-				const dotMatch = match.match(/\{\{\s*\.([^}]+)\}\}/);
+				const dotMatch = match.match(
+					new RegExp(`\\{\\{\\s*\\.(${varNamePattern})\\s*\\}\\}`),
+				);
 				if (dotMatch) return dotMatch[1].trim();
-				const normalMatch = match.match(/\{\{\s*([^}]+)\}\}/);
+				const normalMatch = match.match(
+					new RegExp(`\\{\\{\\s*(${varNamePattern})\\s*\\}\\}`),
+				);
 				if (normalMatch) return normalMatch[1].trim();
 			} else if (match.startsWith('[[')) {
-				const bracketMatch = match.match(/\[\[\s*([^\]]+)\]\]/);
+				const bracketMatch = match.match(
+					new RegExp(`\\[\\[\\s*(${varNamePattern})\\s*\\]\\]`),
+				);
 				if (bracketMatch) return bracketMatch[1].trim();
 			} else if (match.startsWith(matcher)) {
-				return match.substring(matcher.length);
+				// For $ variables, we always want to strip the prefix
+				// unless the full match exists in processedVariables
+				const withoutPrefix = match.substring(matcher.length).trim();
+				const fullMatch = match.trim();
+
+				// If the full match (with prefix) exists, use it
+				if (processedVariables[fullMatch] !== undefined) {
+					return fullMatch;
+				}
+
+				// Otherwise return without prefix
+				return withoutPrefix;
 			}
 			return match;
 		},
-		[matcher],
+		[matcher, processedVariables],
 	);
 
 	const fullText = useMemo(() => {

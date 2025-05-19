@@ -73,18 +73,20 @@ describe('useGetResolvedText', () => {
 	});
 
 	it('should handle different variable formats', () => {
-		const text = 'Logs in $service.name, {{service.name}}, [[service.name]]';
+		const text =
+			'Logs in $service.name, {{service.name}}, [[service.name]] - $dyn-service.name';
 		const variables = {
 			'service.name': SERVICE_VAR,
+			'$dyn-service.name': 'dyn-1, dyn-2',
 		};
 
 		const { result } = renderHookWithProps({ text, variables });
 
 		expect(result.current.truncatedText).toBe(
-			'Logs in test, app +2, test, app +2, test, app +2',
+			'Logs in test, app +2, test, app +2, test, app +2 - dyn-1, dyn-2',
 		);
 		expect(result.current.fullText).toBe(
-			'Logs in test, app, frontend, env, test, app, frontend, env, test, app, frontend, env',
+			'Logs in test, app, frontend, env, test, app, frontend, env, test, app, frontend, env - dyn-1, dyn-2',
 		);
 	});
 
