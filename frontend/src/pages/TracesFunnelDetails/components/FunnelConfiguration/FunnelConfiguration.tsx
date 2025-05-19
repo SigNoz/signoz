@@ -1,0 +1,102 @@
+import './FunnelConfiguration.styles.scss';
+
+import { Button, Divider, Tooltip } from 'antd';
+import useFunnelConfiguration from 'hooks/TracesFunnels/useFunnelConfiguration';
+import { PencilLine } from 'lucide-react';
+import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/FunnelItemPopover';
+import CopyToClipboard from 'periscope/components/CopyToClipboard';
+import { memo, useState } from 'react';
+import { Span } from 'types/api/trace/getTraceV2';
+import { FunnelData } from 'types/api/traceFunnels';
+
+import AddFunnelDescriptionModal from './AddFunnelDescriptionModal';
+import FunnelBreadcrumb from './FunnelBreadcrumb';
+import StepsContent from './StepsContent';
+import StepsFooter from './StepsFooter';
+import StepsHeader from './StepsHeader';
+
+interface FunnelConfigurationProps {
+	funnel: FunnelData;
+	isTraceDetailsPage?: boolean;
+	span?: Span;
+}
+
+function FunnelConfiguration({
+	funnel,
+	isTraceDetailsPage,
+	span,
+}: FunnelConfigurationProps): JSX.Element {
+	const { isPopoverOpen, setIsPopoverOpen, steps } = useFunnelConfiguration({
+		funnel,
+	});
+	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState<boolean>(
+		false,
+	);
+
+	const handleDescriptionModalClose = (): void => {
+		setIsDescriptionModalOpen(false);
+	};
+
+	return (
+		<div className="funnel-configuration">
+			{!isTraceDetailsPage && (
+				<>
+					<div className="funnel-configuration__header">
+						<div className="funnel-configuration__header-left">
+							<FunnelBreadcrumb funnelName={funnel.funnel_name} />
+						</div>
+						<div className="funnel-configuration__header-right">
+							<Tooltip
+								title={
+									funnel?.description
+										? 'Edit funnel description'
+										: 'Add funnel description'
+								}
+							>
+								<Button
+									type="text"
+									className="funnel-item__action-btn funnel-configuration__rename-btn"
+									icon={<PencilLine size={14} />}
+									onClick={(): void => setIsDescriptionModalOpen(true)}
+									aria-label="Edit Funnel Description"
+								/>
+							</Tooltip>
+							<CopyToClipboard textToCopy={window.location.href} />
+							<Divider type="vertical" />
+							<FunnelItemPopover
+								isPopoverOpen={isPopoverOpen}
+								setIsPopoverOpen={setIsPopoverOpen}
+								funnel={funnel}
+							/>
+						</div>
+					</div>
+					<div className="funnel-configuration__description">
+						{funnel?.description}
+					</div>
+				</>
+			)}
+			<div className="funnel-configuration__steps-wrapper">
+				<div className="funnel-configuration__steps">
+					{!isTraceDetailsPage && <StepsHeader />}
+					<StepsContent isTraceDetailsPage={isTraceDetailsPage} span={span} />
+				</div>
+				{!isTraceDetailsPage && <StepsFooter stepsCount={steps.length} />}
+			</div>
+			{!isTraceDetailsPage && (
+				<AddFunnelDescriptionModal
+					isOpen={isDescriptionModalOpen}
+					onClose={handleDescriptionModalClose}
+					funnelId={funnel.funnel_id}
+					funnelDescription={funnel?.description || ''}
+				/>
+			)}
+		</div>
+	);
+}
+
+FunnelConfiguration.defaultProps = {
+	isTraceDetailsPage: false,
+	span: undefined,
+};
+
+export default memo(FunnelConfiguration);
