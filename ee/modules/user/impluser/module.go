@@ -232,8 +232,8 @@ func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey)
 	return m.store.CreateAPIKey(ctx, apiKey)
 }
 
-func (m *Module) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updatorID string) error {
-	return m.store.UpdateAPIKey(ctx, id, apiKey, updatorID)
+func (m *Module) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updaterID string) error {
+	return m.store.UpdateAPIKey(ctx, id, apiKey, updaterID)
 }
 
 func (m *Module) ListAPIKeys(ctx context.Context, orgID string) ([]*types.GettableAPIKey, error) {

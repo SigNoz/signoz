@@ -24,15 +24,11 @@ type GettableAPIKey struct {
 }
 
 type StorableAPIKey struct {
-	bun.BaseModel `bun:"table:factor_api_key"`
+	bun.BaseModel `bun:"table:factor_api_key,join:users ON users.id = factor_api_key.user_id"`
 
 	Identifiable
-
-	CreatedAt time.Time `bun:"created_at,notnull,nullzero,type:timestamptz" json:"createdAt"`
-	UpdatedAt time.Time `bun:"updated_at,notnull,nullzero,type:timestamptz" json:"updatedAt"`
-	CreatedBy string    `bun:"created_by,notnull" json:"createdBy"`
-	UpdatedBy string    `bun:"updated_by,notnull" json:"updatedBy"`
-
+	TimeAuditable
+	UserAuditable
 	Token     string `json:"token" bun:"token,type:text,notnull,unique"`
 	Role      Role   `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
 	Name      string `json:"name" bun:"name,type:text,notnull"`
@@ -73,10 +69,14 @@ func NewStorableAPIKey(name, userID string, role Role, expiresAt int64) (*Storab
 		Identifiable: Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
-		CreatedAt: now,
-		UpdatedAt: now,
-		CreatedBy: userID,
-		UpdatedBy: userID,
+		TimeAuditable: TimeAuditable{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+		UserAuditable: UserAuditable{
+			CreatedBy: userID,
+			UpdatedBy: userID,
+		},
 		Token:     encodedToken,
 		Name:      name,
 		Role:      role,

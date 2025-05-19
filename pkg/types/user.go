@@ -82,7 +82,7 @@ type User struct {
 	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
 	Email       string `bun:"email,type:text,notnull,unique:org_email" json:"email"`
 	Role        string `bun:"role,type:text,notnull" json:"role"`
-	OrgID       string `bun:"org_id,type:text,notnull,unique:org_email,references:org(id),on_delete:CASCADE" json:"orgId"`
+	OrgID       string `bun:"org_id,type:text,notnull,unique:org_email,on_delete:CASCADE" json:"orgId"`
 }
 
 func NewUser(displayName string, email string, role string, orgID string) (*User, error) {
@@ -195,7 +195,7 @@ type ResetPasswordRequest struct {
 
 	Identifiable
 	Token      string `bun:"token,type:text,notnull" json:"token"`
-	PasswordID string `bun:"password_id,type:text,notnull,unique,references:factor_password(id)" json:"passwordId"`
+	PasswordID string `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
 }
 
 func NewResetPasswordRequest(passwordID string) (*ResetPasswordRequest, error) {

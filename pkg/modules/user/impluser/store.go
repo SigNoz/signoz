@@ -486,7 +486,6 @@ func (s *Store) GetDomainByName(ctx context.Context, name string) (*types.Storab
 
 // --- API KEY ---
 func (s *Store) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
-	// p.StorableAPIKey.ID = valuer.GenerateUUID()
 	_, err := s.sqlstore.BunDB().NewInsert().
 		Model(apiKey).
 		Exec(ctx)

@@ -205,7 +205,6 @@ func (h *Handler) GetInvite(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// GET PAT's
 func (h *Handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -290,22 +289,22 @@ func (h *Handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//get the pat
-	existingPAT, err := h.module.GetAPIKey(ctx, claims.OrgID, id.String())
+	//get the API Key
+	existingAPIKey, err := h.module.GetAPIKey(ctx, claims.OrgID, id.String())
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
 	// get the user
-	createdByUser, err := h.module.GetUserByID(ctx, claims.OrgID, existingPAT.UserID)
+	createdByUser, err := h.module.GetUserByID(ctx, claims.OrgID, existingAPIKey.UserID)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
 	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email)) {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "integration user pat cannot be updated"))
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "integration user API Key cannot be updated"))
 		return
 	}
 
@@ -315,7 +314,7 @@ func (h *Handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, map[string]string{"data": "pat updated successfully"})
+	render.Success(w, http.StatusOK, map[string]string{"data": "API Key updated successfully"})
 }
 
 func (h *Handler) GetAPIKeys(w http.ResponseWriter, r *http.Request) {
@@ -354,22 +353,22 @@ func (h *Handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//get the pat
-	existingPAT, err := h.module.GetAPIKey(ctx, claims.OrgID, id.String())
+	//get the API Key
+	existingAPIKey, err := h.module.GetAPIKey(ctx, claims.OrgID, id.String())
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
 	// get the user
-	createdByUser, err := h.module.GetUserByID(ctx, claims.OrgID, existingPAT.UserID)
+	createdByUser, err := h.module.GetUserByID(ctx, claims.OrgID, existingAPIKey.UserID)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
 	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email)) {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "integration user pat cannot be updated"))
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "integration user API Key cannot be updated"))
 		return
 	}
 

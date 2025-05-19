@@ -89,10 +89,8 @@ func (migration *migratePATToFactorAPIKey) Up(ctx context.Context, db *bun.DB) e
 				NewSelect().
 				Model(&existingAPIKeys).
 				Scan(ctx)
-			if err != nil {
-				if err != sql.ErrNoRows {
-					return err
-				}
+			if err != nil && err != sql.ErrNoRows {
+				return err
 			}
 
 			if err == nil && len(existingAPIKeys) > 0 {
