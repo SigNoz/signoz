@@ -33,7 +33,7 @@ const useFilterConfig = ({
 	const isDynamicFilters = useMemo(() => customFilters.length > 0, [
 		customFilters,
 	]);
-	const { isLoading: isCustomFiltersLoading } = useQuery<
+	const { isFetching: isCustomFiltersLoading } = useQuery<
 		SuccessResponse<PayloadProps> | ErrorResponse,
 		Error
 	>(

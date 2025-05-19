@@ -42,6 +42,7 @@ export interface IQuickFiltersProps {
 	onFilterChange?: (query: Query) => void;
 	signal?: SignalType;
 	className?: string;
+	showFilterCollapse?: boolean;
 }
 
 export enum QuickFiltersSource {
