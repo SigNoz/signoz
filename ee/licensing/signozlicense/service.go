@@ -2,7 +2,6 @@ package signozlicense
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/SigNoz/signoz/ee/licensing/signozlicensestore"
@@ -21,6 +20,7 @@ type license struct {
 	store    licensetypes.Store
 	zeus     zeus.Zeus
 	config   licensing.Config
+	settings factory.ScopedProviderSettings
 	stopChan chan struct{}
 }
 
@@ -30,25 +30,26 @@ func NewProviderFactory(store sqlstore.SQLStore, zeus zeus.Zeus) factory.Provide
 	})
 }
 
-func New(ctx context.Context, _ factory.ProviderSettings, config licensing.Config, sqlstore sqlstore.SQLStore, zeus zeus.Zeus) (licensing.License, error) {
+func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Config, sqlstore sqlstore.SQLStore, zeus zeus.Zeus) (licensing.License, error) {
+	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/ee/licensing/signozlicense")
 	licensestore := signozlicensestore.New(sqlstore)
-	return &license{store: licensestore, zeus: zeus, config: config, stopChan: make(chan struct{})}, nil
+	return &license{store: licensestore, zeus: zeus, config: config, settings: settings, stopChan: make(chan struct{})}, nil
 }
 
-func (l *license) Start(ctx context.Context) error {
-	organizations, err := l.store.ListOrganizations(ctx)
+func (provider *license) Start(ctx context.Context) error {
+	organizations, err := provider.store.ListOrganizations(ctx)
 	if err != nil {
 		return err
 	}
 
-	tick := time.NewTicker(l.config.ValidationFrequency)
+	tick := time.NewTicker(provider.config.ValidationFrequency)
 	for _, organizationID := range organizations {
 		for {
 			select {
-			case <-l.stopChan:
+			case <-provider.stopChan:
 				return nil
 			case <-tick.C:
-				l.Validate(ctx, organizationID)
+				provider.Validate(ctx, organizationID)
 			}
 		}
 	}
@@ -56,40 +57,38 @@ func (l *license) Start(ctx context.Context) error {
 	return nil
 }
 
-func (l *license) Stop(context.Context) error {
-	panic("unimplemented")
+func (provider *license) Stop(context.Context) error {
+	close(provider.stopChan)
+	return nil
 }
 
-func (l *license) Validate(ctx context.Context, organizationID valuer.UUID) error {
-	fmt.Println("::VALIDATOR-RUNNING::")
-	activeLicense, err := l.GetActive(ctx, organizationID)
+func (provider *license) Validate(ctx context.Context, organizationID valuer.UUID) error {
+	provider.settings.Logger().DebugContext(ctx, "license validation started for organizationID", "organizationID", organizationID.StringValue())
+	activeLicense, err := provider.GetActive(ctx, organizationID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		// log the error here
+		provider.settings.Logger().ErrorContext(ctx, "license validation failed", "organizationID", organizationID.StringValue())
 		return err
 	}
 
 	if err != nil && errors.Ast(err, errors.TypeNotFound) {
-		fmt.Println("::GOT-NO-LICENSE::INITIALIZING-BASIC-PLAN")
-		err = l.InitFeatures(ctx, licensetypes.BasicPlan)
+		provider.settings.Logger().DebugContext(ctx, "no active license found, defaulting to basic plan", "organizationID", organizationID.StringValue())
+		err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 		if err != nil {
 			return err
 		}
 	}
 
-	fmt.Println("::GOT-ACTIVE-LICENSE::", activeLicense.Key)
-	license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, l.zeus)
+	license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, provider.zeus)
 	if err != nil {
-		fmt.Println("::COULD-NOT-VALIDATE::", err.Error())
-		license, err := l.store.Get(ctx, organizationID, valuer.MustNewUUID(activeLicense.ID))
+		provider.settings.Logger().ErrorContext(ctx, "failed to validate the license with upstream server", "licenseID", activeLicense.Key, "organizationID", organizationID.StringValue())
+		license, err := provider.store.Get(ctx, organizationID, valuer.MustNewUUID(activeLicense.ID))
 		if err != nil {
-			err = l.InitFeatures(ctx, licensetypes.BasicPlan)
-			if err != nil {
-				return err
-			}
+			return err
 		}
 
 		if time.Since(license.LastValidatedAt) > time.Minute*2 {
-			err = l.InitFeatures(ctx, licensetypes.BasicPlan)
+			provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive 3 days. defaulting to basic plan", "licenseID", license.ID.StringValue(), "organizationID", organizationID.StringValue())
+			err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 			if err != nil {
 				return err
 			}
@@ -97,8 +96,8 @@ func (l *license) Validate(ctx context.Context, organizationID valuer.UUID) erro
 		return err
 	}
 
-	fmt.Println("::VALIDATION-DONE::UPDATING-LICENSE::")
-	err = l.Update(ctx, organizationID, license)
+	provider.settings.Logger().DebugContext(ctx, "license validation completed successfully", "licenseID", license.ID, "organizationID", organizationID.StringValue())
+	err = provider.Update(ctx, organizationID, license)
 	if err != nil {
 		return err
 	}
@@ -106,14 +105,14 @@ func (l *license) Validate(ctx context.Context, organizationID valuer.UUID) erro
 	return nil
 }
 
-func (l *license) Update(ctx context.Context, organizationID valuer.UUID, license *licensetypes.GettableLicense) error {
+func (provider *license) Update(ctx context.Context, organizationID valuer.UUID, license *licensetypes.GettableLicense) error {
 	storableLicense := licensetypes.NewStorableLicense(valuer.MustNewUUID(license.ID), license.Key, license.Data, time.Now(), organizationID)
-	err := l.store.Update(ctx, storableLicense)
+	err := provider.store.Update(ctx, storableLicense)
 	if err != nil {
 		return err
 	}
 
-	err = l.InitFeatures(ctx, license.Features)
+	err = provider.InitFeatures(ctx, license.Features)
 	if err != nil {
 		return err
 	}
@@ -121,19 +120,19 @@ func (l *license) Update(ctx context.Context, organizationID valuer.UUID, licens
 	return nil
 }
 
-func (l *license) Activate(ctx context.Context, organizationID valuer.UUID, key string) error {
-	license, err := validate.ValidateLicenseV3(ctx, key, l.zeus)
+func (provider *license) Activate(ctx context.Context, organizationID valuer.UUID, key string) error {
+	license, err := validate.ValidateLicenseV3(ctx, key, provider.zeus)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to validate license data with upstream server")
 	}
 
 	storableLicense := licensetypes.NewStorableLicense(valuer.MustNewUUID(license.ID), license.Key, license.Data, time.Now(), organizationID)
-	err = l.store.Create(ctx, storableLicense)
+	err = provider.store.Create(ctx, storableLicense)
 	if err != nil {
 		return err
 	}
 
-	err = l.InitFeatures(ctx, license.Features)
+	err = provider.InitFeatures(ctx, license.Features)
 	if err != nil {
 		return err
 	}
@@ -141,8 +140,8 @@ func (l *license) Activate(ctx context.Context, organizationID valuer.UUID, key 
 	return nil
 }
 
-func (l *license) Get(ctx context.Context, orgID valuer.UUID, ID valuer.UUID) (*licensetypes.GettableLicense, error) {
-	storableLicense, err := l.store.Get(ctx, orgID, ID)
+func (provider *license) Get(ctx context.Context, orgID valuer.UUID, ID valuer.UUID) (*licensetypes.GettableLicense, error) {
+	storableLicense, err := provider.store.Get(ctx, orgID, ID)
 	if err != nil {
 		return nil, err
 	}
@@ -155,8 +154,8 @@ func (l *license) Get(ctx context.Context, orgID valuer.UUID, ID valuer.UUID) (*
 	return gettableLicense, nil
 }
 
-func (l *license) GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.GettableLicense, error) {
-	storableLicenses, err := l.store.GetAll(ctx, organizationID)
+func (provider *license) GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.GettableLicense, error) {
+	storableLicenses, err := provider.store.GetAll(ctx, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -187,8 +186,8 @@ func (l *license) GetActive(ctx context.Context, organizationID valuer.UUID) (*l
 	return activeLicense, nil
 }
 
-func (l *license) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.GettableLicense, error) {
-	storableLicenses, err := l.store.GetAll(ctx, organizationID)
+func (provider *license) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.GettableLicense, error) {
+	storableLicenses, err := provider.store.GetAll(ctx, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -205,31 +204,29 @@ func (l *license) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*li
 	return gettableLicenses, nil
 }
 
-func (l *license) Refresh(ctx context.Context, organizationID valuer.UUID) error {
-	fmt.Println("::REFRESHING-LICENSE::")
-	activeLicense, err := l.GetActive(ctx, organizationID)
+func (provider *license) Refresh(ctx context.Context, organizationID valuer.UUID) error {
+	activeLicense, err := provider.GetActive(ctx, organizationID)
 	if err != nil {
 		return err
 	}
-	fmt.Println("::GOT-LICENSE::")
-	license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, l.zeus)
+
+	license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, provider.zeus)
 	if err != nil {
 		return err
 	}
-	fmt.Println("::REFRESHED-LICENSE::")
+
 	updatedLicense := licensetypes.NewStorableLicense(valuer.MustNewUUID(license.ID), license.Key, license.Data, time.Now(), organizationID)
-	err = l.store.Update(ctx, updatedLicense)
+	err = provider.store.Update(ctx, updatedLicense)
 	if err != nil {
 		return err
 	}
-	fmt.Println("::UPDATED-LICENSE::")
 
 	return nil
 }
 
 // feature surrogate
-func (l *license) CheckFeature(ctx context.Context, key string) error {
-	feature, err := l.store.GetFeature(ctx, key)
+func (provider *license) CheckFeature(ctx context.Context, key string) error {
+	feature, err := provider.store.GetFeature(ctx, key)
 	if err != nil {
 		return err
 	}
@@ -239,8 +236,8 @@ func (l *license) CheckFeature(ctx context.Context, key string) error {
 	return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "feature unavailable: %s", key)
 }
 
-func (l *license) GetFeatureFlag(ctx context.Context, key string) (*featuretypes.GettableFeature, error) {
-	featureStatus, err := l.store.GetFeature(ctx, key)
+func (provider *license) GetFeatureFlag(ctx context.Context, key string) (*featuretypes.GettableFeature, error) {
+	featureStatus, err := provider.store.GetFeature(ctx, key)
 	if err != nil {
 		return nil, err
 	}
@@ -253,8 +250,8 @@ func (l *license) GetFeatureFlag(ctx context.Context, key string) (*featuretypes
 	}, nil
 }
 
-func (l *license) GetFeatureFlags(ctx context.Context) ([]*featuretypes.GettableFeature, error) {
-	storableFeatures, err := l.store.GetAllFeatures(ctx)
+func (provider *license) GetFeatureFlags(ctx context.Context) ([]*featuretypes.GettableFeature, error) {
+	storableFeatures, err := provider.store.GetAllFeatures(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +270,7 @@ func (l *license) GetFeatureFlags(ctx context.Context) ([]*featuretypes.Gettable
 	return gettableFeatures, nil
 }
 
-func (l *license) InitFeatures(ctx context.Context, features []*featuretypes.GettableFeature) error {
+func (provider *license) InitFeatures(ctx context.Context, features []*featuretypes.GettableFeature) error {
 	featureStatus := make([]*featuretypes.StorableFeature, len(features))
 	for i, f := range features {
 		featureStatus[i] = &featuretypes.StorableFeature{
@@ -285,11 +282,11 @@ func (l *license) InitFeatures(ctx context.Context, features []*featuretypes.Get
 		}
 	}
 
-	return l.store.InitFeatures(ctx, featureStatus)
+	return provider.store.InitFeatures(ctx, featureStatus)
 }
 
-func (l *license) UpdateFeatureFlag(ctx context.Context, feature *featuretypes.GettableFeature) error {
-	return l.store.UpdateFeature(ctx, &featuretypes.StorableFeature{
+func (provider *license) UpdateFeatureFlag(ctx context.Context, feature *featuretypes.GettableFeature) error {
+	return provider.store.UpdateFeature(ctx, &featuretypes.StorableFeature{
 		Name:       feature.Name,
 		Active:     feature.Active,
 		Usage:      int(feature.Usage),
@@ -298,6 +295,6 @@ func (l *license) UpdateFeatureFlag(ctx context.Context, feature *featuretypes.G
 	})
 }
 
-func (l *license) ListOrganizations(ctx context.Context) ([]valuer.UUID, error) {
-	return l.store.ListOrganizations(ctx)
+func (provider *license) ListOrganizations(ctx context.Context) ([]valuer.UUID, error) {
+	return provider.store.ListOrganizations(ctx)
 }
