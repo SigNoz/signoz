@@ -37,10 +37,6 @@ export function usePreferenceSync({
 		)?.extraData;
 
 		const parsedExtraData = JSON.parse(extraData || '{}');
-		console.log('uncaught extraData', {
-			extraData,
-			parsedExtraData,
-		});
 		let columns: BaseAutocompleteData[] = [];
 		let formatting: FormattingOptions | undefined;
 		if (dataSource === DataSource.LOGS) {
