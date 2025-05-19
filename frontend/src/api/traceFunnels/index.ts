@@ -22,7 +22,7 @@ export const createFunnel = async (
 		statusCode: 200,
 		error: null,
 		message: 'Funnel created successfully',
-		payload: response.data,
+		payload: response.data.data,
 	};
 };
 

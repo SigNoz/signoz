@@ -3,9 +3,11 @@ import '../RenameFunnel/RenameFunnel.styles.scss';
 import { Input } from 'antd';
 import { AxiosError } from 'axios';
 import SignozModal from 'components/SignozModal/SignozModal';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { useCreateFunnel } from 'hooks/TracesFunnels/useFunnels';
+import { useLocalStorage } from 'hooks/useLocalStorage';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, X } from 'lucide-react';
@@ -30,6 +32,11 @@ function CreateFunnel({
 	const queryClient = useQueryClient();
 	const { safeNavigate } = useSafeNavigate();
 
+	const [unexecutedFunnels, setUnexecutedFunnels] = useLocalStorage<string[]>(
+		LOCALSTORAGE.UNEXECUTED_FUNNELS,
+		[],
+	);
+
 	const handleCreate = (): void => {
 		createFunnelMutation.mutate(
 			{
@@ -43,11 +50,17 @@ function CreateFunnel({
 					});
 					setFunnelName('');
 					queryClient.invalidateQueries([REACT_QUERY_KEY.GET_FUNNELS_LIST]);
-					onClose(data?.payload?.funnel_id);
-					if (data?.payload?.funnel_id && redirectToDetails) {
+
+					const funnelId = data?.payload?.funnel_id;
+					if (funnelId) {
+						setUnexecutedFunnels([...unexecutedFunnels, funnelId]);
+					}
+
+					onClose(funnelId);
+					if (funnelId && redirectToDetails) {
 						safeNavigate(
 							generatePath(ROUTES.TRACES_FUNNELS_DETAIL, {
-								funnelId: data.payload.funnel_id,
+								funnelId,
 							}),
 						);
 					}

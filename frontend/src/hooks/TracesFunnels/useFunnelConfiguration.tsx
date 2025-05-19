@@ -43,8 +43,7 @@ export default function useFunnelConfiguration({
 	const {
 		steps,
 		initialSteps,
-		setHasIncompleteStepFields,
-		setHasAllEmptyStepFields,
+		hasIncompleteStepFields,
 		handleRestoreSteps,
 	} = useFunnelContext();
 
@@ -108,12 +107,7 @@ export default function useFunnelConfiguration({
 		[funnel.funnel_id, selectedTime],
 	);
 	useEffect(() => {
-		// Check if all steps have both service_name and span_name defined
-		const shouldUpdate = debouncedSteps.every(
-			(step) => step.service_name !== '' && step.span_name !== '',
-		);
-
-		if (hasStepsChanged() && shouldUpdate) {
+		if (hasStepsChanged() && !hasIncompleteStepFields) {
 			updateStepsMutation.mutate(getUpdatePayload(), {
 				onSuccess: (data) => {
 					const updatedFunnelSteps = data?.payload?.steps;
@@ -136,13 +130,6 @@ export default function useFunnelConfiguration({
 					const hasIncompleteStepFields = updatedFunnelSteps.some(
 						(step) => step.service_name === '' || step.span_name === '',
 					);
-
-					const hasAllEmptyStepsData = updatedFunnelSteps.every(
-						(step) => step.service_name === '' && step.span_name === '',
-					);
-
-					setHasIncompleteStepFields(hasIncompleteStepFields);
-					setHasAllEmptyStepFields(hasAllEmptyStepsData);
 
 					// Only validate if service_name or span_name changed
 					if (
