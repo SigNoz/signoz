@@ -39,8 +39,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
-	"github.com/SigNoz/signoz/pkg/query-service/app/explorer"
 	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
@@ -67,7 +65,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
@@ -91,7 +88,6 @@ func NewRouter() *mux.Router {
 // APIHandler implements the query service public API
 type APIHandler struct {
 	reader            interfaces.Reader
-	appDao            dao.ModelDao
 	ruleManager       *rules.Manager
 	featureFlags      interfaces.FeatureLookup
 	querier           interfaces.Querier
@@ -155,9 +151,6 @@ type APIHandlerOpts struct {
 	Reader interfaces.Reader
 
 	PreferSpanMetrics bool
-
-	// dao layer to perform crud on app objects like dashboard, alerts etc
-	AppDao dao.ModelDao
 
 	// rule manager handles rule crud operations
 	RuleManager *rules.Manager
@@ -223,12 +216,11 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
-	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
+	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager, opts.Signoz.Modules.Dashboard)
 	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
-		appDao:                        opts.AppDao,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
@@ -531,14 +523,14 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Delete)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.getSavedViews)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views", am.EditAccess(aH.createSavedViews)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.getSavedView)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.updateSavedView)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.Signoz.Handlers.SavedView.List)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/views", am.EditAccess(aH.Signoz.Handlers.SavedView.Create)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.Signoz.Handlers.SavedView.Get)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Update)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Delete)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
@@ -553,8 +545,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.setApdexSettings)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.Signoz.Handlers.Apdex.Set)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.Signoz.Handlers.Apdex.Get)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
@@ -1093,9 +1085,10 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errv2)
 		return
 	}
-	allDashboards, err := dashboards.GetDashboards(r.Context(), claims.OrgID)
-	if err != nil {
-		RespondError(w, err, nil)
+
+	allDashboards, errv2 := aH.Signoz.Modules.Dashboard.List(r.Context(), claims.OrgID)
+	if errv2 != nil {
+		render.Error(w, errv2)
 		return
 	}
 
@@ -1147,30 +1140,13 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 		inter = Intersection(inter, tags2Dash[tag])
 	}
 
-	filteredDashboards := []types.Dashboard{}
+	filteredDashboards := []*types.Dashboard{}
 	for _, val := range inter {
 		dash := (allDashboards)[val]
 		filteredDashboards = append(filteredDashboards, dash)
 	}
 
 	aH.Respond(w, filteredDashboards)
-
-}
-func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
-	uuid := mux.Vars(r)["uuid"]
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-	err := dashboards.DeleteDashboard(r.Context(), claims.OrgID, uuid)
-
-	if err != nil {
-		RespondError(w, err, nil)
-		return
-	}
-
-	aH.Respond(w, nil)
 
 }
 
@@ -1235,6 +1211,12 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 }
 
 func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	uuid := mux.Vars(r)["uuid"]
 
 	var postData map[string]interface{}
@@ -1243,25 +1225,30 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
-	err = dashboards.IsPostDataSane(&postData)
+
+	err = aH.IsDashboardPostDataSane(&postData)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
 
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), claims.OrgID, claims.Email, uuid, postData)
+	dashboard, apiError := aH.Signoz.Modules.Dashboard.Update(r.Context(), claims.OrgID, claims.Email, uuid, postData)
 	if apiError != nil {
-		RespondError(w, apiError, nil)
+		render.Error(w, apiError)
 		return
 	}
 
 	aH.Respond(w, dashboard)
 
+}
+
+func (aH *APIHandler) IsDashboardPostDataSane(data *map[string]interface{}) error {
+	val, ok := (*data)["title"]
+	if !ok || val == nil {
+		return fmt.Errorf("title not found in post data")
+	}
+
+	return nil
 }
 
 func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
@@ -1273,11 +1260,12 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errv2)
 		return
 	}
-	dashboard, apiError := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
+	dashboard, errv2 := aH.Signoz.Modules.Dashboard.Get(r.Context(), claims.OrgID, uuid)
 
-	if apiError != nil {
-		if apiError.Type() != model.ErrorNotFound {
-			RespondError(w, apiError, nil)
+	var apiError *model.ApiError
+	if errv2 != nil {
+		if !errorsV2.Ast(errv2, errorsV2.TypeNotFound) {
+			render.Error(w, errv2)
 			return
 		}
 
@@ -1308,7 +1296,6 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
-
 	var postData map[string]interface{}
 
 	err := json.NewDecoder(r.Body).Decode(&postData)
@@ -1317,7 +1304,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = dashboards.IsPostDataSane(&postData)
+	err = aH.IsDashboardPostDataSane(&postData)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
@@ -1327,10 +1314,10 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errv2)
 		return
 	}
-	dash, apiErr := dashboards.CreateDashboard(r.Context(), claims.OrgID, claims.Email, postData)
 
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	dash, errv2 := aH.Signoz.Modules.Dashboard.Create(r.Context(), claims.OrgID, claims.Email, postData)
+	if errv2 != nil {
+		render.Error(w, errv2)
 		return
 	}
 
@@ -4231,129 +4218,6 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 	}
 
 	aH.Respond(w, res)
-}
-
-func (aH *APIHandler) getSavedViews(w http.ResponseWriter, r *http.Request) {
-	// get sourcePage, name, and category from the query params
-	sourcePage := r.URL.Query().Get("sourcePage")
-	name := r.URL.Query().Get("name")
-	category := r.URL.Query().Get("category")
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	queries, err := explorer.GetViewsForFilters(r.Context(), claims.OrgID, sourcePage, name, category)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	aH.Respond(w, queries)
-}
-
-func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
-	var view v3.SavedView
-	err := json.NewDecoder(r.Body).Decode(&view)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-	// validate the query
-	if err := view.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-	uuid, err := explorer.CreateView(r.Context(), claims.OrgID, view)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, uuid)
-}
-
-func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
-	viewID := mux.Vars(r)["viewId"]
-	viewUUID, err := valuer.NewUUID(viewID)
-	if err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
-		return
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-	view, err := explorer.GetView(r.Context(), claims.OrgID, viewUUID)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, view)
-}
-
-func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
-	viewID := mux.Vars(r)["viewId"]
-	viewUUID, err := valuer.NewUUID(viewID)
-	if err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
-		return
-	}
-	var view v3.SavedView
-	err = json.NewDecoder(r.Body).Decode(&view)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-	// validate the query
-	if err := view.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-	err = explorer.UpdateView(r.Context(), claims.OrgID, viewUUID, view)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, view)
-}
-
-func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
-	viewID := mux.Vars(r)["viewId"]
-	viewUUID, err := valuer.NewUUID(viewID)
-	if err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
-		return
-	}
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-	err = explorer.DeleteView(r.Context(), claims.OrgID, viewUUID)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, nil)
 }
 
 func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *http.Request) {
