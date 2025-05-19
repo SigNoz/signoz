@@ -24,6 +24,7 @@ function Explorer(): JSX.Element {
 						source={QuickFiltersSource.API_MONITORING}
 						config={ApiMonitoringQuickFiltersConfig}
 						showFilterCollapse={false}
+						showQueryName={false}
 						handleFilterVisibilityChange={(): void => {}}
 					/>
 				</section>

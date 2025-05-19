@@ -35,6 +35,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		onFilterChange,
 		signal,
 		showFilterCollapse = true,
+		showQueryName = true,
 	} = props;
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [params, setParams] = useApiMonitoringParams();
@@ -100,6 +101,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	};
 
 	const lastQueryName =
+		showQueryName &&
 		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
 
 	return (
@@ -256,4 +258,5 @@ QuickFilters.defaultProps = {
 	signal: '',
 	config: [],
 	showFilterCollapse: true,
+	showQueryName: true,
 };
