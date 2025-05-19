@@ -1631,7 +1631,7 @@ func (aH *APIHandler) getEntryPointOps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aH.WriteJSON(w, r, result)
+	render.Success(w, http.StatusOK, result)
 }
 
 func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
