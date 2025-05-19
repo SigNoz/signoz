@@ -55,6 +55,7 @@ describe('MetricsTreemap', () => {
 						}}
 						openMetricDetails={jest.fn()}
 						viewType={TreemapViewType.SAMPLES}
+						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -79,6 +80,7 @@ describe('MetricsTreemap', () => {
 						}}
 						openMetricDetails={jest.fn()}
 						viewType={TreemapViewType.SAMPLES}
+						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -105,6 +107,7 @@ describe('MetricsTreemap', () => {
 						}}
 						openMetricDetails={jest.fn()}
 						viewType={TreemapViewType.SAMPLES}
+						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -128,6 +131,7 @@ describe('MetricsTreemap', () => {
 						data={null}
 						openMetricDetails={jest.fn()}
 						viewType={TreemapViewType.SAMPLES}
+						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,

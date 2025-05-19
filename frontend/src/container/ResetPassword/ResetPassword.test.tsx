@@ -4,7 +4,7 @@ import { act } from 'react-dom/test-utils';
 
 import ResetPassword from './index';
 
-jest.mock('api/user/resetPassword', () => ({
+jest.mock('api/v1/factor_password/resetPassword', () => ({
 	__esModule: true,
 	default: jest.fn(),
 }));
