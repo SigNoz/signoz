@@ -18,7 +18,6 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
 
@@ -64,39 +63,42 @@ func (lm *Manager) Start(ctx context.Context) error {
 	}
 
 	// upload usage once when starting the service
-	organizations, err := lm.licenseService.ListOrganizations(ctx)
+
+	_, err := lm.scheduler.Do(func() { lm.UploadUsage(ctx) })
 	if err != nil {
 		return err
 	}
-	for _, organization := range organizations {
-		_, err := lm.scheduler.Do(func() { lm.UploadUsage(ctx, organization) })
-		if err != nil {
-			return err
-		}
 
-		lm.UploadUsage(ctx, organization)
-		lm.scheduler.StartAsync()
-	}
+	lm.UploadUsage(ctx)
+	lm.scheduler.StartAsync()
 	return nil
 }
-func (lm *Manager) UploadUsage(ctx context.Context, organizationID valuer.UUID) {
-	// check if license is present or not
-	license, err := lm.licenseService.GetActive(ctx, organizationID)
+func (lm *Manager) UploadUsage(ctx context.Context) {
+
+	organizations, err := lm.licenseService.ListOrganizations(ctx)
 	if err != nil {
-		zap.L().Error("failed to get active license", zap.Error(err))
-		return
-	}
-	if license == nil {
-		// we will not start the usage reporting if license is not present.
-		zap.L().Info("no license present, skipping usage reporting")
+		zap.L().Error("failed to get organizations", zap.Error(err))
 		return
 	}
 
-	usages := []model.UsageDB{}
+	for _, organizationID := range organizations {
+		// check if license is present or not
+		license, err := lm.licenseService.GetActive(ctx, organizationID)
+		if err != nil {
+			zap.L().Error("failed to get active license", zap.Error(err))
+			return
+		}
+		if license == nil {
+			// we will not start the usage reporting if license is not present.
+			zap.L().Info("no license present, skipping usage reporting")
+			return
+		}
 
-	// get usage from clickhouse
-	dbs := []string{"signoz_logs", "signoz_traces", "signoz_metrics"}
-	query := `
+		usages := []model.UsageDB{}
+
+		// get usage from clickhouse
+		dbs := []string{"signoz_logs", "signoz_traces", "signoz_metrics"}
+		query := `
 		SELECT tenant, collector_id, exporter_id, timestamp, data
 		FROM %s.distributed_usage as u1 
 			GLOBAL INNER JOIN 
@@ -111,67 +113,68 @@ func (lm *Manager) UploadUsage(ctx context.Context, organizationID valuer.UUID) 
 		order by timestamp
 	`
 
-	for _, db := range dbs {
-		dbusages := []model.UsageDB{}
-		err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db, db), time.Now().Add(-(24 * time.Hour)))
-		if err != nil && !strings.Contains(err.Error(), "doesn't exist") {
-			zap.L().Error("failed to get usage from clickhouse: %v", zap.Error(err))
-			return
+		for _, db := range dbs {
+			dbusages := []model.UsageDB{}
+			err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db, db), time.Now().Add(-(24 * time.Hour)))
+			if err != nil && !strings.Contains(err.Error(), "doesn't exist") {
+				zap.L().Error("failed to get usage from clickhouse: %v", zap.Error(err))
+				return
+			}
+			for _, u := range dbusages {
+				u.Type = db
+				usages = append(usages, u)
+			}
 		}
-		for _, u := range dbusages {
-			u.Type = db
-			usages = append(usages, u)
-		}
-	}
 
-	if len(usages) <= 0 {
-		zap.L().Info("no snapshots to upload, skipping.")
-		return
-	}
-
-	zap.L().Info("uploading usage data")
-
-	usagesPayload := []model.Usage{}
-	for _, usage := range usages {
-		usageDataBytes, err := encryption.Decrypt([]byte(usage.ExporterID[:32]), []byte(usage.Data))
-		if err != nil {
-			zap.L().Error("error while decrypting usage data: %v", zap.Error(err))
+		if len(usages) <= 0 {
+			zap.L().Info("no snapshots to upload, skipping.")
 			return
 		}
 
-		usageData := model.Usage{}
-		err = json.Unmarshal(usageDataBytes, &usageData)
-		if err != nil {
-			zap.L().Error("error while unmarshalling usage data: %v", zap.Error(err))
+		zap.L().Info("uploading usage data")
+
+		usagesPayload := []model.Usage{}
+		for _, usage := range usages {
+			usageDataBytes, err := encryption.Decrypt([]byte(usage.ExporterID[:32]), []byte(usage.Data))
+			if err != nil {
+				zap.L().Error("error while decrypting usage data: %v", zap.Error(err))
+				return
+			}
+
+			usageData := model.Usage{}
+			err = json.Unmarshal(usageDataBytes, &usageData)
+			if err != nil {
+				zap.L().Error("error while unmarshalling usage data: %v", zap.Error(err))
+				return
+			}
+
+			usageData.CollectorID = usage.CollectorID
+			usageData.ExporterID = usage.ExporterID
+			usageData.Type = usage.Type
+			usageData.Tenant = "default"
+			usageData.OrgName = "default"
+			usageData.TenantId = "default"
+			usagesPayload = append(usagesPayload, usageData)
+		}
+
+		key, _ := uuid.Parse(license.Key)
+		payload := model.UsagePayload{
+			LicenseKey: key,
+			Usage:      usagesPayload,
+		}
+
+		body, errv2 := json.Marshal(payload)
+		if errv2 != nil {
+			zap.L().Error("error while marshalling usage payload: %v", zap.Error(errv2))
 			return
 		}
 
-		usageData.CollectorID = usage.CollectorID
-		usageData.ExporterID = usage.ExporterID
-		usageData.Type = usage.Type
-		usageData.Tenant = "default"
-		usageData.OrgName = "default"
-		usageData.TenantId = "default"
-		usagesPayload = append(usagesPayload, usageData)
-	}
-
-	key, _ := uuid.Parse(license.Key)
-	payload := model.UsagePayload{
-		LicenseKey: key,
-		Usage:      usagesPayload,
-	}
-
-	body, errv2 := json.Marshal(payload)
-	if errv2 != nil {
-		zap.L().Error("error while marshalling usage payload: %v", zap.Error(errv2))
-		return
-	}
-
-	errv2 = lm.zeus.PutMeters(ctx, payload.LicenseKey.String(), body)
-	if errv2 != nil {
-		zap.L().Error("failed to upload usage: %v", zap.Error(errv2))
-		// not returning error here since it is captured in the failed count
-		return
+		errv2 = lm.zeus.PutMeters(ctx, payload.LicenseKey.String(), body)
+		if errv2 != nil {
+			zap.L().Error("failed to upload usage: %v", zap.Error(errv2))
+			// not returning error here since it is captured in the failed count
+			return
+		}
 	}
 }
 
@@ -180,13 +183,6 @@ func (lm *Manager) Stop(ctx context.Context) {
 
 	zap.L().Info("sending usage data before shutting down")
 	// send usage before shutting down
-	organizations, err := lm.licenseService.ListOrganizations(ctx)
-	if err != nil {
-		// log error
-	}
-	for _, organization := range organizations {
-		lm.UploadUsage(ctx, organization)
-	}
-
+	lm.UploadUsage(ctx)
 	atomic.StoreUint32(&locker, stateUnlocked)
 }

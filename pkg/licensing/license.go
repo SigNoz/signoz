@@ -19,7 +19,7 @@ type License interface {
 	factory.Service
 
 	// Validate validates the license with the upstream server
-	Validate(ctx context.Context, organizationID valuer.UUID) error
+	Validate(ctx context.Context) error
 	// Update updates the license based on ID
 	Update(ctx context.Context, organizationID valuer.UUID, license *licensetypes.GettableLicense) error
 	// Activate validates and enables the license

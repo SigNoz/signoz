@@ -1,18 +1,25 @@
 import { ApiV3Instance as axios } from 'api';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { LicenseV3EventQueueResModel } from 'types/api/licensesV3/getActive';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import { AxiosError } from 'axios';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import {
+	LicenseEventQueueResModel,
+	PayloadProps,
+} from 'types/api/licensesV3/getActive';
 
 const getActive = async (): Promise<
-	SuccessResponse<LicenseV3EventQueueResModel> | ErrorResponse
+	SuccessResponseV2<LicenseEventQueueResModel>
 > => {
-	const response = await axios.get('/licenses/active');
+	try {
+		const response = await axios.get<PayloadProps>('/licenses/active');
 
-	return {
-		statusCode: 200,
-		error: null,
-		message: response.data.status,
-		payload: response.data.data,
-	};
+		return {
+			httpStatusCode: response.status,
+			data: response.data.data,
+		};
+	} catch (error) {
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+	}
 };
 
 export default getActive;

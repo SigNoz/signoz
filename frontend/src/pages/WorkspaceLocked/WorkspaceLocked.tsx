@@ -41,9 +41,9 @@ import {
 export default function WorkspaceBlocked(): JSX.Element {
 	const {
 		user,
-		isFetchingActiveLicenseV3,
+		isFetchingActiveLicense,
 		trialInfo,
-		activeLicenseV3,
+		activeLicense,
 	} = useAppContext();
 	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
@@ -70,20 +70,20 @@ export default function WorkspaceBlocked(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3) {
+		if (!isFetchingActiveLicense) {
 			const shouldBlockWorkspace = trialInfo?.workSpaceBlock;
 
 			if (
 				!shouldBlockWorkspace ||
-				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
+				activeLicense?.platform === LicensePlatform.SELF_HOSTED
 			) {
 				history.push(ROUTES.HOME);
 			}
 		}
 	}, [
-		isFetchingActiveLicenseV3,
+		isFetchingActiveLicense,
 		trialInfo?.workSpaceBlock,
-		activeLicenseV3?.platform,
+		activeLicense?.platform,
 	]);
 
 	const { mutate: updateCreditCard, isLoading } = useMutation(
@@ -320,7 +320,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				width="65%"
 			>
 				<div className="workspace-locked__container">
-					{isFetchingActiveLicenseV3 || !trialInfo ? (
+					{isFetchingActiveLicense || !trialInfo ? (
 						<Skeleton />
 					) : (
 						<>

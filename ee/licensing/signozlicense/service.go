@@ -37,29 +37,22 @@ func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Conf
 }
 
 func (provider *license) Start(ctx context.Context) error {
-	organizations, err := provider.store.ListOrganizations(ctx)
+	tick := time.NewTicker(provider.config.ValidationFrequency)
+	defer tick.Stop()
+
+	err := provider.Validate(ctx)
 	if err != nil {
 		return err
 	}
 
-	tick := time.NewTicker(provider.config.ValidationFrequency)
-	for _, organizationID := range organizations {
-		err = provider.Validate(ctx, organizationID)
-		if err != nil {
-			return err
-		}
-
-		for {
-			select {
-			case <-provider.stopChan:
-				return nil
-			case <-tick.C:
-				provider.Validate(ctx, organizationID)
-			}
+	for {
+		select {
+		case <-provider.stopChan:
+			return nil
+		case <-tick.C:
+			provider.Validate(ctx)
 		}
 	}
-
-	return nil
 }
 
 func (provider *license) Stop(context.Context) error {
@@ -67,44 +60,51 @@ func (provider *license) Stop(context.Context) error {
 	return nil
 }
 
-func (provider *license) Validate(ctx context.Context, organizationID valuer.UUID) error {
-	provider.settings.Logger().DebugContext(ctx, "license validation started for organizationID", "organizationID", organizationID.StringValue())
-	activeLicense, err := provider.GetActive(ctx, organizationID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		provider.settings.Logger().ErrorContext(ctx, "license validation failed", "organizationID", organizationID.StringValue())
+func (provider *license) Validate(ctx context.Context) error {
+	organizations, err := provider.store.ListOrganizations(ctx)
+	if err != nil {
 		return err
 	}
 
-	if err != nil && errors.Ast(err, errors.TypeNotFound) {
-		provider.settings.Logger().DebugContext(ctx, "no active license found, defaulting to basic plan", "organizationID", organizationID.StringValue())
-		err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
-		if err != nil {
-			return err
-		}
-	}
-
-	license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, provider.zeus)
-	if err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to validate the license with upstream server", "licenseID", activeLicense.Key, "organizationID", organizationID.StringValue())
-		license, err := provider.store.Get(ctx, organizationID, valuer.MustNewUUID(activeLicense.ID))
-		if err != nil {
+	for _, organizationID := range organizations {
+		provider.settings.Logger().DebugContext(ctx, "license validation started for organizationID", "organizationID", organizationID.StringValue())
+		activeLicense, err := provider.GetActive(ctx, organizationID)
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			provider.settings.Logger().ErrorContext(ctx, "license validation failed", "organizationID", organizationID.StringValue())
 			return err
 		}
 
-		if time.Since(license.LastValidatedAt) > time.Minute*2 {
-			provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive 3 days. defaulting to basic plan", "licenseID", license.ID.StringValue(), "organizationID", organizationID.StringValue())
+		if err != nil && errors.Ast(err, errors.TypeNotFound) {
+			provider.settings.Logger().DebugContext(ctx, "no active license found, defaulting to basic plan", "organizationID", organizationID.StringValue())
 			err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 			if err != nil {
 				return err
 			}
 		}
-		return err
-	}
 
-	provider.settings.Logger().DebugContext(ctx, "license validation completed successfully", "licenseID", license.ID, "organizationID", organizationID.StringValue())
-	err = provider.Update(ctx, organizationID, license)
-	if err != nil {
-		return err
+		license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, provider.zeus)
+		if err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "failed to validate the license with upstream server", "licenseID", activeLicense.Key, "organizationID", organizationID.StringValue())
+			license, err := provider.store.Get(ctx, organizationID, valuer.MustNewUUID(activeLicense.ID))
+			if err != nil {
+				return err
+			}
+
+			if time.Since(license.LastValidatedAt) > time.Minute*2 {
+				provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive 3 days. defaulting to basic plan", "licenseID", license.ID.StringValue(), "organizationID", organizationID.StringValue())
+				err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
+				if err != nil {
+					return err
+				}
+			}
+			return err
+		}
+
+		provider.settings.Logger().DebugContext(ctx, "license validation completed successfully", "licenseID", license.ID, "organizationID", organizationID.StringValue())
+		err = provider.Update(ctx, organizationID, license)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

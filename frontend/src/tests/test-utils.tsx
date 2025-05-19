@@ -105,7 +105,8 @@ export function getAppContextMock(
 	appContextOverrides?: Partial<IAppContext>,
 ): IAppContext {
 	return {
-		activeLicenseV3: {
+		activeLicense: {
+			key: 'test-key',
 			event_queue: {
 				created_at: '0',
 				event: LicenseEvent.NO_EVENT,
@@ -138,8 +139,8 @@ export function getAppContextMock(
 			trialConvertedToSubscription: false,
 			gracePeriodEnd: -1,
 		},
-		isFetchingActiveLicenseV3: false,
-		activeLicenseV3FetchError: null,
+		isFetchingActiveLicense: false,
+		activeLicenseFetchError: null,
 		user: {
 			accessJwt: 'some-token',
 			refreshJwt: 'some-refresh-token',
@@ -160,20 +161,6 @@ export function getAppContextMock(
 		],
 		isFetchingUser: false,
 		userFetchError: null,
-		licenses: {
-			licenses: [
-				{
-					key: 'does-not-matter',
-					isCurrent: true,
-					planKey: 'ENTERPRISE_PLAN',
-					ValidFrom: new Date(),
-					ValidUntil: new Date(),
-					status: 'VALID',
-				},
-			],
-		},
-		isFetchingLicenses: false,
-		licensesFetchError: null,
 		featureFlags: [
 			{
 				name: FeatureKeys.SSO,
@@ -246,7 +233,7 @@ export function getAppContextMock(
 		updateUser: jest.fn(),
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
-		licensesRefetch: jest.fn(),
+		activeLicenseRefetch: jest.fn(),
 		...appContextOverrides,
 	};
 }

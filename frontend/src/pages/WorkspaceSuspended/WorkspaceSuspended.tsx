@@ -26,7 +26,7 @@ function WorkspaceSuspended(): JSX.Element {
 	const { user } = useAppContext();
 	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
-	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
+	const { activeLicense, isFetchingActiveLicense } = useAppContext();
 
 	const { t } = useTranslation(['failedPayment']);
 
@@ -56,18 +56,18 @@ function WorkspaceSuspended(): JSX.Element {
 	}, [manageCreditCard]);
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3) {
+		if (!isFetchingActiveLicense) {
 			const shouldSuspendWorkspace =
-				activeLicenseV3?.state === LicenseState.DEFAULTED;
+				activeLicense?.state === LicenseState.DEFAULTED;
 
 			if (
 				!shouldSuspendWorkspace ||
-				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
+				activeLicense?.platform === LicensePlatform.SELF_HOSTED
 			) {
 				history.push(ROUTES.HOME);
 			}
 		}
-	}, [isFetchingActiveLicenseV3, activeLicenseV3]);
+	}, [isFetchingActiveLicense, activeLicense]);
 	return (
 		<div>
 			<Modal
@@ -99,7 +99,7 @@ function WorkspaceSuspended(): JSX.Element {
 				width="65%"
 			>
 				<div className="workspace-suspended__container">
-					{isFetchingActiveLicenseV3 || !activeLicenseV3 ? (
+					{isFetchingActiveLicense || !activeLicense ? (
 						<Skeleton />
 					) : (
 						<>
@@ -115,7 +115,7 @@ function WorkspaceSuspended(): JSX.Element {
 											{t('yourDataIsSafe')}{' '}
 											<span className="workspace-suspended__details__highlight">
 												{getFormattedDateWithMinutes(
-													dayjs(activeLicenseV3?.event_queue?.scheduled_at).unix() ||
+													dayjs(activeLicense?.event_queue?.scheduled_at).unix() ||
 														Date.now(),
 												)}
 											</span>{' '}

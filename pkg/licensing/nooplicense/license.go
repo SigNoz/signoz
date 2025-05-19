@@ -40,7 +40,7 @@ func (provider *noopLicense) Activate(ctx context.Context, organizationID valuer
 	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "fetching license is not supported")
 }
 
-func (provider *noopLicense) Validate(ctx context.Context, organizationID valuer.UUID) error {
+func (provider *noopLicense) Validate(ctx context.Context) error {
 	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "validating  license is not supported")
 }
 
