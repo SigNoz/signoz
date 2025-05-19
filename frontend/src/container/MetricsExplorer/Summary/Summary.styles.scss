@@ -21,9 +21,22 @@
 		}
 	}
 
+	.metrics-treemap-title {
+		justify-content: space-between;
+
+		.metrics-treemap-title-left {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.ant-select {
+			width: 140px;
+		}
+	}
+
 	.metrics-search-container {
 		display: flex;
-		flex-direction: column;
 		gap: 16px;
 
 		.metrics-search-options {
@@ -35,6 +48,7 @@
 			display: flex;
 			align-items: center;
 			gap: 8px;
+			flex: 1;
 
 			.lucide-info {
 				cursor: pointer;
