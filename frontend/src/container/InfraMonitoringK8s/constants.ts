@@ -533,4 +533,5 @@ export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	VOLUME_UID: 'volumeUID',
 	FILTERS: 'filters',
 	GROUP_BY: 'groupBy',
+	ORDER_BY: 'orderBy',
 };

@@ -28,6 +28,7 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { getOrderByFromParams } from '../commonUtils';
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
@@ -62,13 +63,13 @@ function K8sNamespacesList({
 	const [currentPage, setCurrentPage] = useState(1);
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
-	} | null>(null);
+	} | null>(() => getOrderByFromParams(searchParams, true));
 
-	const [searchParams, setSearchParams] = useSearchParams();
 	const [selectedNamespaceUID, setselectedNamespaceUID] = useState<
 		string | null
 	>(() => {
@@ -280,15 +281,26 @@ function K8sNamespacesList({
 			}
 
 			if ('field' in sorter && sorter.order) {
-				setOrderBy({
+				const currentOrderBy = {
 					columnName: sorter.field as string,
-					order: sorter.order === 'ascend' ? 'asc' : 'desc',
+					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
+				};
+				setOrderBy(currentOrderBy);
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
+						currentOrderBy,
+					),
 				});
 			} else {
 				setOrderBy(null);
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
+				});
 			}
 		},
-		[],
+		[searchParams, setSearchParams],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -382,6 +394,7 @@ function K8sNamespacesList({
 		setSearchParams({
 			...Object.fromEntries(searchParams.entries()),
 			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
 		});
 	};
 
