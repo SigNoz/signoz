@@ -263,7 +263,13 @@ func (h *Handler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, apiKeys)
+	result := make([]*types.GettableAPIKey, len(apiKeys))
+	for i, apiKey := range apiKeys {
+		result[i] = types.NewGettableAPIKeyFromStorableAPIKey(apiKey)
+	}
+
+	render.Success(w, http.StatusOK, result)
+
 }
 
 func (h *Handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
@@ -304,7 +310,7 @@ func (h *Handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email)) {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "integration user API Key cannot be updated"))
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
 		return
 	}
 
@@ -315,30 +321,6 @@ func (h *Handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, http.StatusOK, map[string]string{"data": "API Key updated successfully"})
-}
-
-func (h *Handler) GetAPIKeys(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	apiKeys, err := h.module.ListAPIKeys(ctx, claims.OrgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	result := make([]*types.GettableAPIKey, len(apiKeys))
-	for i, apiKey := range apiKeys {
-		result[i] = types.NewGettableAPIKeyFromStorableAPIKey(apiKey)
-	}
-
-	render.Success(w, http.StatusOK, apiKeys)
 }
 
 func (h *Handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
