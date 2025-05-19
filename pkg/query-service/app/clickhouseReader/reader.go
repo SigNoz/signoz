@@ -23,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 
+	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
@@ -683,10 +684,10 @@ func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryPar
 	// Step 1: Get top operations for the given service
 	topOps, err := r.GetTopOperations(ctx, queryParams)
 	if err != nil {
-		return nil, err
+		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "Error in getting Top Operations")
 	}
 	if topOps == nil {
-		return nil, errors.New("no top operations found")
+		return nil, errorsV2.Newf(errorsV2.TypeNotFound, errorsV2.CodeNotFound, "no top operations found")
 	}
 
 	// Step 2: Get entry point operation names for the given service using GetTopLevelOperations
@@ -702,7 +703,7 @@ func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryPar
 	topLevelOpsResult, apiErr := r.GetTopLevelOperations(ctx, startTime, endTime, serviceName)
 
 	if apiErr != nil {
-		return nil, errors.Wrapf(apiErr.Err, "failed to get top level operations")
+		return nil, errorsV2.Wrapf(apiErr.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get top level operations")
 	}
 
 	// Create a set of entry point operations
