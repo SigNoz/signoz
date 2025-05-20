@@ -10,10 +10,11 @@ import { useTranslation } from 'react-i18next';
 
 export enum IntegrationType {
 	AWS_SERVICES = 'aws-services',
+	INTEGRATIONS_LIST = 'integrations-list',
 }
 
 interface RequestIntegrationBtnProps {
-	type: IntegrationType;
+	type?: IntegrationType;
 	message?: string;
 }
 
@@ -114,5 +115,6 @@ export function RequestIntegrationBtn({
 }
 
 RequestIntegrationBtn.defaultProps = {
+	type: IntegrationType.INTEGRATIONS_LIST,
 	message: 'Cannot find what you’re looking for? Request more integrations',
 };
