@@ -20,6 +20,7 @@ func TestConditionFor(t *testing.T) {
 		operator      qbtypes.FilterOperator
 		value         any
 		expectedSQL   string
+		expectedArgs  []any
 		expectedError error
 	}{
 		{
@@ -31,6 +32,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "error message",
 			expectedSQL:   "body = ?",
+			expectedArgs:  []any{"error message"},
 			expectedError: nil,
 		},
 		{
@@ -42,6 +44,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotEqual,
 			value:         uint64(1617979338000000000),
 			expectedSQL:   "timestamp <> ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
 			expectedError: nil,
 		},
 		{
@@ -53,7 +56,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorGreaterThan,
 			value:         float64(100),
-			expectedSQL:   "attributes_number['request.duration'] > ?",
+			expectedSQL:   "(attributes_number['request.duration'] > ? AND mapContains(attributes_number, 'request.duration') = ?)",
+			expectedArgs:  []any{float64(100), true},
 			expectedError: nil,
 		},
 		{
@@ -65,7 +69,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLessThan,
 			value:         float64(1024),
-			expectedSQL:   "attributes_number['request.size'] < ?",
+			expectedSQL:   "(attributes_number['request.size'] < ? AND mapContains(attributes_number, 'request.size') = ?)",
+			expectedArgs:  []any{float64(1024), true},
 			expectedError: nil,
 		},
 		{
@@ -77,6 +82,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorGreaterThanOrEq,
 			value:         uint64(1617979338000000000),
 			expectedSQL:   "timestamp >= ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
 			expectedError: nil,
 		},
 		{
@@ -88,6 +94,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorLessThanOrEq,
 			value:         uint64(1617979338000000000),
 			expectedSQL:   "timestamp <= ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
 			expectedError: nil,
 		},
 		{
@@ -98,7 +105,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLike,
 			value:         "%error%",
-			expectedSQL:   "body LIKE ?",
+			expectedSQL:   "LOWER(body) LIKE LOWER(?)",
+			expectedArgs:  []any{"%error%"},
 			expectedError: nil,
 		},
 		{
@@ -109,7 +117,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotLike,
 			value:         "%error%",
-			expectedSQL:   "body NOT LIKE ?",
+			expectedSQL:   "LOWER(body) NOT LIKE LOWER(?)",
+			expectedArgs:  []any{"%error%"},
 			expectedError: nil,
 		},
 		{
@@ -121,7 +130,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorILike,
 			value:         "%admin%",
-			expectedSQL:   "WHERE LOWER(attributes_string['user.id']) LIKE LOWER(?)",
+			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id') = ?)",
+			expectedArgs:  []any{"%admin%", true},
 			expectedError: nil,
 		},
 		{
@@ -134,6 +144,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotILike,
 			value:         "%admin%",
 			expectedSQL:   "WHERE LOWER(attributes_string['user.id']) NOT LIKE LOWER(?)",
+			expectedArgs:  []any{"%admin%"},
 			expectedError: nil,
 		},
 		{
@@ -145,7 +156,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorContains,
 			value:         "admin",
-			expectedSQL:   "WHERE LOWER(attributes_string['user.id']) LIKE LOWER(?)",
+			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id') = ?)",
+			expectedArgs:  []any{"%admin%", true},
 			expectedError: nil,
 		},
 		{
@@ -157,6 +169,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorBetween,
 			value:         []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedSQL:   "timestamp BETWEEN ? AND ?",
+			expectedArgs:  []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedError: nil,
 		},
 		{
@@ -190,6 +203,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotBetween,
 			value:         []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedSQL:   "timestamp NOT BETWEEN ? AND ?",
+			expectedArgs:  []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedError: nil,
 		},
 		{
@@ -200,7 +214,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorIn,
 			value:         []any{"error", "fatal", "critical"},
-			expectedSQL:   "severity_text IN (?, ?, ?)",
+			expectedSQL:   "(severity_text = ? OR severity_text = ? OR severity_text = ?)",
+			expectedArgs:  []any{"error", "fatal", "critical"},
 			expectedError: nil,
 		},
 		{
@@ -222,7 +237,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotIn,
 			value:         []any{"debug", "info", "trace"},
-			expectedSQL:   "severity_text NOT IN (?, ?, ?)",
+			expectedSQL:   "(severity_text <> ? AND severity_text <> ? AND severity_text <> ?)",
+			expectedArgs:  []any{"debug", "info", "trace"},
 			expectedError: nil,
 		},
 		{
@@ -234,6 +250,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
 			expectedSQL:   "body <> ?",
+			expectedArgs:  []any{""},
 			expectedError: nil,
 		},
 		{
@@ -245,6 +262,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
 			expectedSQL:   "body = ?",
+			expectedArgs:  []any{""},
 			expectedError: nil,
 		},
 		{
@@ -256,6 +274,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
 			expectedSQL:   "timestamp <> ?",
+			expectedArgs:  []any{0},
 			expectedError: nil,
 		},
 		{
@@ -268,6 +287,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
 			expectedSQL:   "mapContains(attributes_string, 'user.id') = ?",
+			expectedArgs:  []any{true},
 			expectedError: nil,
 		},
 		{
@@ -280,6 +300,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
 			expectedSQL:   "mapContains(attributes_string, 'user.id') <> ?",
+			expectedArgs:  []any{true},
 			expectedError: nil,
 		},
 		{
@@ -308,8 +329,9 @@ func TestConditionFor(t *testing.T) {
 				assert.Equal(t, tc.expectedError, err)
 			} else {
 				require.NoError(t, err)
-				sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+				sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 				assert.Contains(t, sql, tc.expectedSQL)
+				assert.Equal(t, tc.expectedArgs, args)
 			}
 		})
 	}
@@ -324,6 +346,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		operator      qbtypes.FilterOperator
 		value         any
 		expectedSQL   string
+		expectedArgs  []any
 		expectedError error
 	}{
 		{
@@ -341,6 +364,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "error message",
 			expectedSQL:   "body = ? AND severity_text = ?",
+			expectedArgs:  []any{"error message", "error message"},
 			expectedError: nil,
 		},
 	}
@@ -389,7 +413,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         200,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') = ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ?`,
 			expectedError: nil,
 		},
 		{
@@ -399,7 +423,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         405.5,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.duration_ms'), 'Float64') = ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."duration_ms"'), 'Float64') = ?`,
 			expectedError: nil,
 		},
 		{
@@ -409,7 +433,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "GET",
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.method'), 'String') = ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."method"'), 'String') = ?`,
 			expectedError: nil,
 		},
 		{
@@ -419,7 +443,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         true,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.success'), 'Bool') = ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."success"'), 'Bool') = ?`,
 			expectedError: nil,
 		},
 		{
@@ -429,7 +453,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String') <> ?",
+			expectedSQL:   `JSON_EXISTS(body, '$."http"."status_code"')`,
 			expectedError: nil,
 		},
 		{
@@ -439,7 +463,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String') = ?",
+			expectedSQL:   `NOT JSON_EXISTS(body, '$."http"."status_code"')`,
 			expectedError: nil,
 		},
 		{
@@ -449,7 +473,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorGreaterThan,
 			value:         "200",
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') > ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') > ?`,
 			expectedError: nil,
 		},
 		{
@@ -459,7 +483,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorGreaterThan,
 			value:         200,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') > ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') > ?`,
 			expectedError: nil,
 		},
 		{
@@ -469,7 +493,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLessThan,
 			value:         "300",
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') < ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') < ?`,
 			expectedError: nil,
 		},
 		{
@@ -479,7 +503,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLessThan,
 			value:         300,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') < ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') < ?`,
 			expectedError: nil,
 		},
 		{
@@ -489,7 +513,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorContains,
 			value:         "200",
-			expectedSQL:   "LOWER(JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String')) LIKE LOWER(?)",
+			expectedSQL:   `LOWER(JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'String')) LIKE LOWER(?)`,
 			expectedError: nil,
 		},
 		{
@@ -499,7 +523,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotContains,
 			value:         "200",
-			expectedSQL:   "LOWER(JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String')) NOT LIKE LOWER(?)",
+			expectedSQL:   `LOWER(JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'String')) NOT LIKE LOWER(?)`,
 			expectedError: nil,
 		},
 		{
@@ -509,7 +533,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorBetween,
 			value:         []any{"200", "300"},
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') BETWEEN ? AND ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') BETWEEN ? AND ?`,
 			expectedError: nil,
 		},
 		{
@@ -519,7 +543,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorBetween,
 			value:         []any{400, 500},
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') BETWEEN ? AND ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') BETWEEN ? AND ?`,
 			expectedError: nil,
 		},
 		{
@@ -529,7 +553,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorIn,
 			value:         []any{"200", "300"},
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') IN (?, ?)",
+			expectedSQL:   `(JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ? OR JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ?)`,
 			expectedError: nil,
 		},
 		{
@@ -539,7 +563,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorIn,
 			value:         []any{401, 404, 500},
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') IN (?, ?, ?)",
+			expectedSQL:   `(JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ? OR JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ? OR JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ?)`,
 			expectedError: nil,
 		},
 	}

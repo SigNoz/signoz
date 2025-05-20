@@ -39,6 +39,7 @@ primary
     | functionCall
     | fullText
     | key
+    | value
     ;
 
 /*
@@ -189,9 +190,13 @@ BOOL
     | [Ff][Aa][Ll][Ss][Ee]
     ;
 
-// Numbers (integer or float). Adjust as needed for your domain.
+fragment SIGN : [+-] ;
+
+// Numbers: optional sign, then digits, optional fractional part,
+// optional scientific notation (handy for future use)
 NUMBER
-    : DIGIT+ ( '.' DIGIT+ )?
+    : SIGN? DIGIT+ ('.' DIGIT*)? ([eE] SIGN? DIGIT+)?    //  -10.25  42  +3.14  6.02e23
+    | SIGN? '.' DIGIT+ ([eE] SIGN? DIGIT+)?              //  -.75    .5    -.5e-3
     ;
 
 // Double/single-quoted text, capturing full text search strings, values, etc.
@@ -201,10 +206,12 @@ QUOTED_TEXT
         )
     ;
 
-// Keys can have letters, digits, underscores, dots, and bracket pairs
-// e.g. service.name, service.namespace, db.queries[].query_duration
+fragment SEGMENT      : [a-zA-Z] [a-zA-Z0-9_:\-]* ;
+fragment EMPTY_BRACKS : '[' ']' ;
+fragment OLD_JSON_BRACKS: '[' '*' ']';
+
 KEY
-    : [a-zA-Z0-9_] [a-zA-Z0-9_.*[\]]*
+    : SEGMENT ( '.' SEGMENT | EMPTY_BRACKS | OLD_JSON_BRACKS)*
     ;
 
 // Ignore whitespace
