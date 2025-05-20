@@ -47,7 +47,7 @@ function GraphControlsPanel({
 					onClick={onViewAPIMonitoringClick}
 					style={{ color: Color.BG_VANILLA_100 }}
 				>
-					View Third Party API
+					View External APIs
 				</Button>
 			)}
 		</div>
