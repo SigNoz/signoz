@@ -5,9 +5,9 @@
 /* eslint-disable prefer-destructuring */
 
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip, Typography } from 'antd';
-import Table, { ColumnsType } from 'antd/es/table';
+import { Table, Tooltip, Typography } from 'antd';
 import { Progress } from 'antd/lib';
+import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
