@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
-	smtpservice "github.com/SigNoz/signoz/pkg/query-service/utils/smtpService"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -85,16 +84,16 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 		}, creator.Email, true, false)
 
 		// send email if SMTP is enabled
-		if os.Getenv("SMTP_ENABLED") == "true" && bulkInvites.Invites[i].FrontendBaseUrl != "" {
-			m.inviteEmail(&bulkInvites.Invites[i], creator.Email, creator.DisplayName, invites[i].Token)
-		}
+		// if os.Getenv("SMTP_ENABLED") == "true" && bulkInvites.Invites[i].FrontendBaseUrl != "" {
+		// 	m.inviteEmail(&bulkInvites.Invites[i], creator.Email, creator.DisplayName, invites[i].Token)
+		// }
 	}
 
 	return invites, nil
 }
 
 func (m *Module) inviteEmail(req *types.PostableInvite, creatorEmail, creatorName, token string) {
-	smtp := smtpservice.GetInstance()
+	//smtp := smtpservice.GetInstance()
 	data := types.InviteEmailData{
 		CustomerName: req.Name,
 		InviterName:  creatorName,
@@ -114,15 +113,15 @@ func (m *Module) inviteEmail(req *types.PostableInvite, creatorEmail, creatorNam
 		return
 	}
 
-	err = smtp.SendEmail(
-		req.Email,
-		creatorName+" has invited you to their team in SigNoz",
-		body.String(),
-	)
-	if err != nil {
-		zap.L().Error("failed to send email", zap.Error(err))
-		return
-	}
+	// err = smtp.SendEmail(
+	// 	req.Email,
+	// 	creatorName+" has invited you to their team in SigNoz",
+	// 	body.String(),
+	// )
+	// if err != nil {
+	// 	zap.L().Error("failed to send email", zap.Error(err))
+	// 	return
+	// }
 }
 
 func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {

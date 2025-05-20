@@ -170,3 +170,25 @@ alertmanager:
 analytics:
   # Whether to enable analytics.
   enabled: false
+
+##################### Emailing #####################
+emailing:
+  enabled: false
+  template:
+    pattern: /opt/signoz/conf/templates/email/*.html
+  smtp:
+    address: localhost:25
+    from:
+    hello:
+    headers: {}
+    auth:
+      username:
+      password:
+      secret:
+      identity:
+    tls:
+      enabled: false
+      insecure_skip_verify: false
+      ca_file_path:
+      key_file_path:
+      cert_file_path:
