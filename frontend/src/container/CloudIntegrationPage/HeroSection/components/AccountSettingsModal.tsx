@@ -58,6 +58,23 @@ function AccountSettingsModal({
 		});
 	};
 
+	const handleRegionDeselect = useCallback(
+		(item: string): void => {
+			if (selectedRegions.includes(item)) {
+				setSelectedRegions(selectedRegions.filter((region) => region !== item));
+				if (includeAllRegions) {
+					setIncludeAllRegions(false);
+				}
+			}
+		},
+		[
+			selectedRegions,
+			includeAllRegions,
+			setSelectedRegions,
+			setIncludeAllRegions,
+		],
+	);
+
 	const renderRegionSelector = useCallback(() => {
 		if (isRegionSelectOpen) {
 			return (
@@ -93,17 +110,19 @@ function AccountSettingsModal({
 					maxTagCount={3}
 					value={getRegionPreviewText(selectedRegions)}
 					open={false}
+					onDeselect={handleRegionDeselect}
 				/>
 			</>
 		);
 	}, [
 		isRegionSelectOpen,
-		selectedRegions,
 		includeAllRegions,
 		handleIncludeAllRegionsChange,
-		setIsRegionSelectOpen,
+		selectedRegions,
+		handleRegionDeselect,
 		setSelectedRegions,
 		setIncludeAllRegions,
+		setIsRegionSelectOpen,
 	]);
 
 	const renderAccountDetails = useCallback(
