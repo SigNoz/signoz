@@ -65,7 +65,8 @@ function StepsContent({
 									</div>
 									{/* Display InterStepConfig only between steps */}
 									{index < steps.length - 1 && (
-										<InterStepConfig index={index} step={step} />
+										// the latency type should be sent with the n+1th step
+										<InterStepConfig index={index + 1} step={steps[index + 1]} />
 									)}
 								</div>
 							}

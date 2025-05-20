@@ -40,6 +40,10 @@ function RenameFunnel({
 						message: 'Funnel renamed successfully',
 					});
 					queryClient.invalidateQueries([REACT_QUERY_KEY.GET_FUNNELS_LIST]);
+					queryClient.invalidateQueries([
+						REACT_QUERY_KEY.GET_FUNNEL_DETAILS,
+						funnelId,
+					]);
 					onClose();
 				},
 				onError: () => {

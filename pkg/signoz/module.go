@@ -9,6 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -19,6 +21,7 @@ import (
 type Modules struct {
 	Organization organization.Module
 	Preference   preference.Module
+	TraceFunnel  tracefunnel.Module
 	User         user.Module
 	SavedView    savedview.Module
 	Apdex        apdex.Module
@@ -29,6 +32,7 @@ func NewModules(sqlstore sqlstore.SQLStore, user user.Module) Modules {
 	return Modules{
 		Organization: implorganization.NewModule(implorganization.NewStore(sqlstore)),
 		Preference:   implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewDefaultPreferenceMap()),
+		TraceFunnel:  impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		User:         user,
 		SavedView:    implsavedview.NewModule(sqlstore),
 		Apdex:        implapdex.NewModule(sqlstore),

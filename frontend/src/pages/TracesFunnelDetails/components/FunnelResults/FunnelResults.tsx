@@ -14,6 +14,7 @@ function FunnelResults(): JSX.Element {
 		isValidateStepsLoading,
 		hasIncompleteStepFields,
 		hasAllEmptyStepFields,
+		hasFunnelBeenExecuted,
 	} = useFunnelContext();
 
 	if (isValidateStepsLoading) {
@@ -35,6 +36,14 @@ function FunnelResults(): JSX.Element {
 			<EmptyFunnelResults
 				title="There are no traces that match the funnel steps."
 				description="Check the service / span names in the funnel steps and try again to start seeing analytics here"
+			/>
+		);
+	}
+	if (!hasFunnelBeenExecuted) {
+		return (
+			<EmptyFunnelResults
+				title="Funnel has not been run yet."
+				description="Run the funnel to see the results"
 			/>
 		);
 	}
