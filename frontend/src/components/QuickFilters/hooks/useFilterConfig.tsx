@@ -1,4 +1,5 @@
 import getCustomFilters from 'api/quickFilters/getCustomFilters';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -35,15 +36,19 @@ const useFilterConfig = ({
 	const { isLoading: isCustomFiltersLoading } = useQuery<
 		SuccessResponse<PayloadProps> | ErrorResponse,
 		Error
-	>(['addedFilters', signal], () => getCustomFilters({ signal: signal || '' }), {
-		onSuccess: (data) => {
-			if ('payload' in data && data.payload?.filters) {
-				setCustomFilters(data.payload.filters || ([] as FilterType[]));
-			}
-			setIsStale(false);
+	>(
+		[REACT_QUERY_KEY.GET_CUSTOM_FILTERS, signal],
+		() => getCustomFilters({ signal: signal || '' }),
+		{
+			onSuccess: (data) => {
+				if ('payload' in data && data.payload?.filters) {
+					setCustomFilters(data.payload.filters || ([] as FilterType[]));
+				}
+				setIsStale(false);
+			},
+			enabled: !!signal && isStale,
 		},
-		enabled: !!signal && isStale,
-	});
+	);
 	const filterConfig = useMemo(() => getFilterConfig(customFilters, config), [
 		config,
 		customFilters,

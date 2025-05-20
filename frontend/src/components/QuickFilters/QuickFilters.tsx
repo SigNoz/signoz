@@ -142,6 +142,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 										>
 											<SettingsIcon
 												className="settings-icon"
+												data-testid="settings-icon"
 												width={14}
 												height={14}
 												onClick={(): void => setIsSettingsOpen(true)}
@@ -171,7 +172,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 							<Skeleton.Input
 								active
 								size="small"
-								style={{ width: '236px', margin: '8px 12px' }}
 								// eslint-disable-next-line react/no-array-index-key
 								key={index}
 							/>

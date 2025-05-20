@@ -2,6 +2,7 @@ import updateCustomFiltersAPI from 'api/quickFilters/updateCustomFilters';
 import axios, { AxiosError } from 'axios';
 import { SignalType } from 'components/QuickFilters/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import { useCallback, useState } from 'react';
 import { useMutation } from 'react-query';
@@ -23,6 +24,8 @@ interface UseQuickFilterSettingsReturn {
 	isUpdatingCustomFilters: boolean;
 	inputValue: string;
 	setInputValue: React.Dispatch<React.SetStateAction<string>>;
+	debouncedInputValue: string;
+	handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const useQuickFilterSettings = ({
@@ -32,6 +35,7 @@ const useQuickFilterSettings = ({
 	signal,
 }: UseQuickFilterSettingsProps): UseQuickFilterSettingsReturn => {
 	const [inputValue, setInputValue] = useState<string>('');
+	const [debouncedInputValue, setDebouncedInputValue] = useState<string>('');
 	const [addedFilters, setAddedFilters] = useState<FilterType[]>(customFilters);
 	const { notifications } = useNotifications();
 
@@ -54,6 +58,18 @@ const useQuickFilterSettings = ({
 			});
 		},
 	});
+	const debouncedUpdate = useDebouncedFn((value) => {
+		setDebouncedInputValue(value as string);
+	}, 400);
+
+	const handleInputChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>): void => {
+			const value = e.target.value.trim().toLowerCase();
+			setInputValue(value);
+			debouncedUpdate(value);
+		},
+		[debouncedUpdate],
+	);
 
 	const handleSettingsClose = useCallback((): void => {
 		setIsSettingsOpen(false);
@@ -87,6 +103,8 @@ const useQuickFilterSettings = ({
 		isUpdatingCustomFilters,
 		inputValue,
 		setInputValue,
+		debouncedInputValue,
+		handleInputChange,
 	};
 };
 

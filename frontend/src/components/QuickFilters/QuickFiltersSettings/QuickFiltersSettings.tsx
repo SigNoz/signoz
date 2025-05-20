@@ -1,7 +1,6 @@
 import './QuickFiltersSettings.styles.scss';
 
-import { Input } from 'antd';
-import Button from 'antd/es/button';
+import { Button, Input } from 'antd';
 import { CheckIcon, TableColumnsSplit, XIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
@@ -30,7 +29,8 @@ function QuickFiltersSettings({
 		handleSaveChanges,
 		isUpdatingCustomFilters,
 		inputValue,
-		setInputValue,
+		handleInputChange,
+		debouncedInputValue,
 	} = useQuickFilterSettings({
 		setIsSettingsOpen,
 		customFilters,
@@ -69,7 +69,7 @@ function QuickFiltersSettings({
 					type="text"
 					value={inputValue}
 					placeholder="Search for a filter..."
-					onChange={(event): void => setInputValue(event.target.value)}
+					onChange={handleInputChange}
 				/>
 			</section>
 			<AddedFilters
@@ -79,7 +79,7 @@ function QuickFiltersSettings({
 			/>
 			<OtherFilters
 				signal={signal}
-				inputValue={inputValue}
+				inputValue={debouncedInputValue}
 				addedFilters={addedFilters}
 				setAddedFilters={setAddedFilters}
 			/>

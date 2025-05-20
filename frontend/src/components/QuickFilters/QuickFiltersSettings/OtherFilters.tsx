@@ -1,8 +1,8 @@
-import { Skeleton } from 'antd';
-import Button from 'antd/es/button';
+import { Button, Skeleton } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSuggestions';
 import { useMemo } from 'react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -15,7 +15,6 @@ function OtherFiltersSkeleton(): JSX.Element {
 				<Skeleton.Input
 					active
 					size="small"
-					style={{ width: '300px', margin: '8px 12px' }}
 					// eslint-disable-next-line react/no-array-index-key
 					key={index}
 				/>
@@ -45,7 +44,7 @@ function OtherFilters({
 			filters: {} as TagFilter,
 		},
 		{
-			queryKey: ['other-filters', inputValue],
+			queryKey: [REACT_QUERY_KEY.GET_OTHER_FILTERS, inputValue],
 			enabled: !!signal,
 		},
 	);
