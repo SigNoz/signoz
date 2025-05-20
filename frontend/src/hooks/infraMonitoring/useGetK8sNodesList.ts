@@ -15,6 +15,7 @@ type UseGetK8sNodesList = (
 		Error
 	>,
 	headers?: Record<string, string>,
+	dotMetricsEnabled?: boolean,
 ) => UseQueryResult<
 	SuccessResponse<K8sNodesListResponse> | ErrorResponse,
 	Error
@@ -24,6 +25,7 @@ export const useGetK8sNodesList: UseGetK8sNodesList = (
 	requestData,
 	options,
 	headers,
+	dotMetricsEnabled,
 ) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
@@ -34,11 +36,12 @@ export const useGetK8sNodesList: UseGetK8sNodesList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_NODE_LIST, requestData];
-	}, [options?.queryKey, requestData]);
+		return [REACT_QUERY_KEY.GET_NODE_LIST, requestData, dotMetricsEnabled];
+	}, [options?.queryKey, requestData, dotMetricsEnabled]);
 
 	return useQuery<SuccessResponse<K8sNodesListResponse> | ErrorResponse, Error>({
-		queryFn: ({ signal }) => getK8sNodesList(requestData, signal, headers),
+		queryFn: ({ signal }) =>
+			getK8sNodesList(requestData, signal, headers, dotMetricsEnabled),
 		...options,
 		queryKey,
 	});
