@@ -14,13 +14,13 @@ import (
 )
 
 type AggExprRewriterOptions struct {
-	FieldKeys        map[string][]*telemetrytypes.TelemetryFieldKey
+	MetadataStore    telemetrytypes.MetadataStore
 	FullTextColumn   *telemetrytypes.TelemetryFieldKey
 	FieldMapper      qbtypes.FieldMapper
 	ConditionBuilder qbtypes.ConditionBuilder
+	FilterCompiler   qbtypes.FilterCompiler
 	JsonBodyPrefix   string
 	JsonKeyToKey     qbtypes.JsonKeyToFieldFunc
-	RateInterval     uint64
 }
 
 type aggExprRewriter struct {
@@ -34,7 +34,13 @@ func NewAggExprRewriter(opts AggExprRewriterOptions) *aggExprRewriter {
 // Rewrite parses the given aggregation expression, maps the column, and condition to
 // valid data source column and condition expression, and returns the rewritten expression
 // and the args if the parametric aggregation function is used.
-func (r *aggExprRewriter) Rewrite(expr string) (string, []any, error) {
+func (r *aggExprRewriter) Rewrite(ctx context.Context, expr string, opts ...qbtypes.RewriteOption) (string, []any, error) {
+
+	rctx := &qbtypes.RewriteCtx{}
+	for _, opt := range opts {
+		opt(rctx)
+	}
+
 	wrapped := fmt.Sprintf("SELECT %s", expr)
 	p := chparser.NewParser(wrapped)
 	stmts, err := p.ParseStmts()
@@ -56,7 +62,14 @@ func (r *aggExprRewriter) Rewrite(expr string) (string, []any, error) {
 		return "", nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
 	}
 
-	visitor := newExprVisitor(r.opts.FieldKeys,
+	selectors := QueryStringToKeysSelectors(expr)
+
+	keys, err := r.opts.MetadataStore.GetKeysMulti(ctx, selectors)
+	if err != nil {
+		return "", nil, err
+	}
+
+	visitor := newExprVisitor(keys,
 		r.opts.FullTextColumn,
 		r.opts.FieldMapper,
 		r.opts.ConditionBuilder,
@@ -67,26 +80,28 @@ func (r *aggExprRewriter) Rewrite(expr string) (string, []any, error) {
 	if err := sel.SelectItems[0].Accept(visitor); err != nil {
 		return "", nil, err
 	}
-	// If nothing changed, return original
-	if !visitor.Modified {
-		return expr, nil, nil
-	}
 
 	if visitor.isRate {
-		return fmt.Sprintf("%s/%d", sel.SelectItems[0].String(), r.opts.RateInterval), visitor.chArgs, nil
+		return fmt.Sprintf("%s/%d", sel.SelectItems[0].String(), rctx.RateInterval), visitor.chArgs, nil
 	}
 	return sel.SelectItems[0].String(), visitor.chArgs, nil
 }
 
 // RewriteMultiple rewrites a slice of expressions.
 func (r *aggExprRewriter) RewriteMultiple(
+	ctx context.Context,
 	exprs []string,
+	opts ...qbtypes.RewriteOption,
 ) ([]string, [][]any, error) {
+	rctx := &qbtypes.RewriteCtx{}
+	for _, opt := range opts {
+		opt(rctx)
+	}
 	out := make([]string, len(exprs))
 	var errs []error
 	var chArgsList [][]any
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(e)
+		w, chArgs, err := r.Rewrite(ctx, e, opts...)
 		if err != nil {
 			errs = append(errs, err)
 			out[i] = e

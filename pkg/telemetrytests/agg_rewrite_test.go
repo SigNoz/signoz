@@ -1,12 +1,15 @@
 package telemetrytests
 
 import (
+	"context"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	stubs "github.com/SigNoz/signoz/pkg/types/telemetrytypes/testutil/stubs"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,19 +18,18 @@ func TestAggRewrite(t *testing.T) {
 	fm := telemetrytraces.NewFieldMapper()
 	cb := telemetrytraces.NewConditionBuilder(fm)
 
-	// Define a comprehensive set of field keys to support all test cases
-	keys := buildCompleteFieldKeyMap()
+	mockMetadataStore := stubs.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
 	opts := querybuilder.AggExprRewriterOptions{
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
-		FieldKeys:        keys,
+		MetadataStore:    mockMetadataStore,
 		FullTextColumn: &telemetrytypes.TelemetryFieldKey{
 			Name: "body",
 		},
 		JsonBodyPrefix: "body",
 		JsonKeyToKey:   telemetrylogs.GetBodyJSONKey,
-		RateInterval:   60,
 	}
 
 	testCases := []struct {
@@ -80,7 +82,7 @@ func TestAggRewrite(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(limitString(tc.expr, 50), func(t *testing.T) {
-			expr, args, err := rewriter.Rewrite(tc.expr)
+			expr, args, err := rewriter.Rewrite(context.Background(), tc.expr, qbtypes.WithRateInterval(60))
 			if tc.shouldPass {
 				if err != nil {
 					t.Errorf("Failed to parse query: %s\nError: %v\n", tc.expr, err)

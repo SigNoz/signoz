@@ -32,7 +32,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	// 2. Decode the spec based on the Type.
 	switch shadow.Type {
 	case QueryTypeBuilder, QueryTypeSubQuery:
-		var spec QueryBuilderQuery
+		var spec QueryBuilderQuery[any]
 		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
 			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid builder query spec")
 		}
