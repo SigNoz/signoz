@@ -370,7 +370,9 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 		&filterSet,
 		[]v3.AttributeKey{},
 		v3.AttributeKey{},
-		false)
+		false,
+		false,
+	)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return "", err
@@ -3248,7 +3250,7 @@ func (r *ClickHouseReader) GetLatestReceivedMetric(
 
 	quotedMetricNames := []string{}
 	for _, m := range metricNames {
-		quotedMetricNames = append(quotedMetricNames, utils.ClickHouseFormattedValue(m))
+		quotedMetricNames = append(quotedMetricNames, utils.ClickHouseFormattedValue(m, false))
 	}
 	commaSeparatedMetricNames := strings.Join(quotedMetricNames, ", ")
 
@@ -3508,16 +3510,16 @@ func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.Filte
 			}
 			switch v := item.Value.(type) {
 			case string:
-				fmtVal := utils.ClickHouseFormattedValue(v)
+				fmtVal := utils.ClickHouseFormattedValue(v, false)
 				addCondition(fmtVal)
 			case []string:
 				for _, val := range v {
-					fmtVal := utils.ClickHouseFormattedValue(val)
+					fmtVal := utils.ClickHouseFormattedValue(val, false)
 					addCondition(fmtVal)
 				}
 			case []interface{}:
 				for _, val := range v {
-					fmtVal := utils.ClickHouseFormattedValue(val)
+					fmtVal := utils.ClickHouseFormattedValue(val, false)
 					addCondition(fmtVal)
 				}
 			}
@@ -4569,7 +4571,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 			if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
 				toFormat = fmt.Sprintf("%%%s%%", toFormat)
 			}
-			fmtVal := utils.ClickHouseFormattedValue(toFormat)
+			fmtVal := utils.ClickHouseFormattedValue(toFormat, false)
 			switch op {
 			case v3.FilterOperatorEqual:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
