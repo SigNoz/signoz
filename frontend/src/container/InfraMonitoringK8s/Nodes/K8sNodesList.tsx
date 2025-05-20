@@ -399,10 +399,6 @@ function K8sNodesList({
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
 								setselectedNodeUID(record.nodeUID);
-								setSearchParams({
-									...Object.fromEntries(searchParams.entries()),
-									[INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID]: record.nodeUID,
-								});
 							},
 							className: 'expanded-clickable-row',
 						})}

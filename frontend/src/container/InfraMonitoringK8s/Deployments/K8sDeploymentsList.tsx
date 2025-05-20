@@ -425,11 +425,6 @@ function K8sDeploymentsList({
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
 								setselectedDeploymentUID(record.deploymentUID);
-								setSearchParams({
-									...Object.fromEntries(searchParams.entries()),
-									[INFRA_MONITORING_K8S_PARAMS_KEYS.DEPLOYMENT_UID]:
-										record.deploymentUID,
-								});
 							},
 							className: 'expanded-clickable-row',
 						})}

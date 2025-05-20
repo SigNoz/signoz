@@ -517,10 +517,6 @@ function K8sPodsList({
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
 								setSelectedPodUID(record.podUID);
-								setSearchParams({
-									...Object.fromEntries(searchParams.entries()),
-									[INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID]: record.podUID,
-								});
 							},
 							className: 'expanded-clickable-row',
 						})}

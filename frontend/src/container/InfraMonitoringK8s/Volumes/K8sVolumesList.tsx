@@ -407,10 +407,6 @@ function K8sVolumesList({
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
 								setselectedVolumeUID(record.volumeUID);
-								setSearchParams({
-									...Object.fromEntries(searchParams.entries()),
-									[INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID]: record.volumeUID,
-								});
 							},
 							className: 'expanded-clickable-row',
 						})}

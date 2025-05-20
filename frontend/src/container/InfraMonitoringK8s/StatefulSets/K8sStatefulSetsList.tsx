@@ -422,11 +422,6 @@ function K8sStatefulSetsList({
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
 								setselectedStatefulSetUID(record.statefulsetUID);
-								setSearchParams({
-									...Object.fromEntries(searchParams.entries()),
-									[INFRA_MONITORING_K8S_PARAMS_KEYS.STATEFULSET_UID]:
-										record.statefulsetUID,
-								});
 							},
 							className: 'expanded-clickable-row',
 						})}
