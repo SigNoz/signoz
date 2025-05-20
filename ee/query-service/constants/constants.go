@@ -33,3 +33,5 @@ func GetOrDefaultEnv(key string, fallback string) string {
 func GetDefaultSiteURL() string {
 	return GetOrDefaultEnv("SIGNOZ_SITE_URL", DefaultSiteURL)
 }
+
+const DotMetricsEnabled = "DOT_METRICS_ENABLED"

@@ -27,10 +27,9 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import {
-	K8sCategory,
-	K8sEntityToAggregateAttributeMapping,
-} from '../constants';
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
+import { GetK8sEntityToAggregateAttribute, K8sCategory } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { usePageSize } from '../utils';
@@ -96,6 +95,11 @@ function K8sNodesList({
 		setCurrentPage(1);
 	}, [quickFiltersLastUpdated]);
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const createFiltersForSelectedRowData = (
 		selectedRowData: K8sNodesRowData,
 		groupBy: IBuilderQuery['groupBy'],
@@ -149,10 +153,15 @@ function K8sNodesList({
 		isLoading: isLoadingGroupedByRowData,
 		isError: isErrorGroupedByRowData,
 		refetch: fetchGroupedByRowData,
-	} = useGetK8sNodesList(fetchGroupedByRowDataQuery as K8sNodesListPayload, {
-		queryKey: ['nodeList', fetchGroupedByRowDataQuery],
-		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
-	});
+	} = useGetK8sNodesList(
+		fetchGroupedByRowDataQuery as K8sNodesListPayload,
+		{
+			queryKey: ['nodeList', fetchGroupedByRowDataQuery],
+			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+		},
+		undefined,
+		dotMetricsEnabled,
+	);
 
 	const {
 		data: groupByFiltersData,
@@ -160,7 +169,10 @@ function K8sNodesList({
 	} = useGetAggregateKeys(
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: K8sEntityToAggregateAttributeMapping[K8sCategory.NODES],
+			aggregateAttribute: GetK8sEntityToAggregateAttribute(
+				K8sCategory.NODES,
+				dotMetricsEnabled,
+			),
 			aggregateOperator: 'noop',
 			searchText: '',
 			tagType: '',
@@ -206,6 +218,8 @@ function K8sNodesList({
 			queryKey: ['nodeList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const nodesData = useMemo(() => data?.payload?.data?.records || [], [data]);

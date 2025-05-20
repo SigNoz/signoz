@@ -30,395 +30,415 @@ export const getJobMetricsQueryPayload = (
 	job: K8sJobsData,
 	start: number,
 	end: number,
-): GetQueryResultsProps[] => [
-	{
-		selectedTime: 'GLOBAL_TIME',
-		graphType: PANEL_TYPES.TIME_SERIES,
-		query: {
-			builder: {
-				queryData: [
+	dotMetricsEnabled: boolean,
+): GetQueryResultsProps[] => {
+	const k8sPodCpuUtilizationKey = dotMetricsEnabled
+		? 'k8s.pod.cpu.utilization'
+		: 'k8s_pod_cpu_utilization';
+	const k8sPodMemoryUsageKey = dotMetricsEnabled
+		? 'k8s.pod.memory.usage'
+		: 'k8s_pod_memory_usage';
+	const k8sPodNetworkIoKey = dotMetricsEnabled
+		? 'k8s.pod.network.io'
+		: 'k8s_pod_network_io';
+	const k8sPodNetworkErrorsKey = dotMetricsEnabled
+		? 'k8s.pod.network.errors'
+		: 'k8s_pod_network_errors';
+	const k8sJobNameKey = dotMetricsEnabled ? 'k8s.job.name' : 'k8s_job_name';
+	const k8sNamespaceNameKey = dotMetricsEnabled
+		? 'k8s.namespace.name'
+		: 'k8s_namespace_name';
+
+	return [
+		{
+			selectedTime: 'GLOBAL_TIME',
+			graphType: PANEL_TYPES.TIME_SERIES,
+			query: {
+				builder: {
+					queryData: [
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'k8s_pod_cpu_utilization--float64--Gauge--true',
+								isColumn: true,
+								isJSON: false,
+								key: k8sPodCpuUtilizationKey,
+								type: 'Gauge',
+							},
+							aggregateOperator: 'avg',
+							dataSource: DataSource.METRICS,
+							disabled: false,
+							expression: 'A',
+							filters: {
+								items: [
+									{
+										id: '6b59b690',
+										key: {
+											dataType: DataTypes.String,
+											id: 'k8s_job_name--string--tag--false',
+											isColumn: false,
+											isJSON: false,
+											key: k8sJobNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: job.jobName,
+									},
+									{
+										id: '47b3adae',
+										key: {
+											dataType: DataTypes.String,
+											id: 'k8s_namespace_name--string--tag--false',
+											isColumn: false,
+											isJSON: false,
+											key: k8sNamespaceNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: job.meta.k8s_namespace_name,
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [],
+							having: [],
+							legend: 'usage',
+							limit: null,
+							orderBy: [],
+							queryName: 'A',
+							reduceTo: 'avg',
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'avg',
+						},
+					],
+					queryFormulas: [],
+				},
+				clickhouse_sql: [
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.Float64,
-							id: 'k8s_pod_cpu_utilization--float64--Gauge--true',
-							isColumn: true,
-							isJSON: false,
-							key: 'k8s_pod_cpu_utilization',
-							type: 'Gauge',
-						},
-						aggregateOperator: 'avg',
-						dataSource: DataSource.METRICS,
 						disabled: false,
-						expression: 'A',
-						filters: {
-							items: [
-								{
-									id: '6b59b690',
-									key: {
-										dataType: DataTypes.String,
-										id: 'k8s_job_name--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'k8s_job_name',
-										type: 'tag',
-									},
-									op: '=',
-									value: job.jobName,
-								},
-								{
-									id: '47b3adae',
-									key: {
-										dataType: DataTypes.String,
-										id: 'k8s_namespace_name--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'k8s_namespace_name',
-										type: 'tag',
-									},
-									op: '=',
-									value: job.meta.k8s_namespace_name,
-								},
-							],
-							op: 'AND',
-						},
-						functions: [],
-						groupBy: [],
-						having: [],
-						legend: 'usage',
-						limit: null,
-						orderBy: [],
-						queryName: 'A',
-						reduceTo: 'avg',
-						spaceAggregation: 'sum',
-						stepInterval: 60,
-						timeAggregation: 'avg',
+						legend: '',
+						name: 'A',
+						query: '',
 					},
 				],
-				queryFormulas: [],
-			},
-			clickhouse_sql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			id: v4(),
-			promql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			queryType: EQueryType.QUERY_BUILDER,
-		},
-		variables: {},
-		formatForWeb: false,
-		start,
-		end,
-	},
-	{
-		selectedTime: 'GLOBAL_TIME',
-		graphType: PANEL_TYPES.TIME_SERIES,
-		query: {
-			builder: {
-				queryData: [
+				id: v4(),
+				promql: [
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.Float64,
-							id: 'k8s_pod_memory_usage--float64--Gauge--true',
-							isColumn: true,
-							isJSON: false,
-							key: 'k8s_pod_memory_usage',
-							type: 'Gauge',
-						},
-						aggregateOperator: 'avg',
-						dataSource: DataSource.METRICS,
 						disabled: false,
-						expression: 'A',
-						filters: {
-							items: [
-								{
-									id: '8c217f4d',
-									key: {
-										dataType: DataTypes.String,
-										id: 'k8s_job_name--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'k8s_job_name',
-										type: 'tag',
-									},
-									op: '=',
-									value: job.jobName,
-								},
-								{
-									id: '47b3adae',
-									key: {
-										dataType: DataTypes.String,
-										id: 'k8s_namespace_name--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'k8s_namespace_name',
-										type: 'tag',
-									},
-									op: '=',
-									value: job.meta.k8s_namespace_name,
-								},
-							],
-							op: 'AND',
-						},
-						functions: [],
-						groupBy: [],
-						having: [],
-						legend: 'usage',
-						limit: null,
-						orderBy: [],
-						queryName: 'A',
-						reduceTo: 'avg',
-						spaceAggregation: 'sum',
-						stepInterval: 60,
-						timeAggregation: 'avg',
+						legend: '',
+						name: 'A',
+						query: '',
 					},
 				],
-				queryFormulas: [],
+				queryType: EQueryType.QUERY_BUILDER,
 			},
-			clickhouse_sql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			id: v4(),
-			promql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			queryType: EQueryType.QUERY_BUILDER,
+			variables: {},
+			formatForWeb: false,
+			start,
+			end,
 		},
-		variables: {},
-		formatForWeb: false,
-		start,
-		end,
-	},
-	{
-		selectedTime: 'GLOBAL_TIME',
-		graphType: PANEL_TYPES.TIME_SERIES,
-		query: {
-			builder: {
-				queryData: [
+		{
+			selectedTime: 'GLOBAL_TIME',
+			graphType: PANEL_TYPES.TIME_SERIES,
+			query: {
+				builder: {
+					queryData: [
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'k8s_pod_memory_usage--float64--Gauge--true',
+								isColumn: true,
+								isJSON: false,
+								key: k8sPodMemoryUsageKey,
+								type: 'Gauge',
+							},
+							aggregateOperator: 'avg',
+							dataSource: DataSource.METRICS,
+							disabled: false,
+							expression: 'A',
+							filters: {
+								items: [
+									{
+										id: '8c217f4d',
+										key: {
+											dataType: DataTypes.String,
+											id: 'k8s_job_name--string--tag--false',
+											isColumn: false,
+											isJSON: false,
+											key: k8sJobNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: job.jobName,
+									},
+									{
+										id: '47b3adae',
+										key: {
+											dataType: DataTypes.String,
+											id: 'k8s_namespace_name--string--tag--false',
+											isColumn: false,
+											isJSON: false,
+											key: k8sNamespaceNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: job.meta.k8s_namespace_name,
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [],
+							having: [],
+							legend: 'usage',
+							limit: null,
+							orderBy: [],
+							queryName: 'A',
+							reduceTo: 'avg',
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'avg',
+						},
+					],
+					queryFormulas: [],
+				},
+				clickhouse_sql: [
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.Float64,
-							id: 'k8s_pod_network_io--float64--Sum--true',
-							isColumn: true,
-							isJSON: false,
-							key: 'k8s_pod_network_io',
-							type: 'Sum',
-						},
-						aggregateOperator: 'rate',
-						dataSource: DataSource.METRICS,
 						disabled: false,
-						expression: 'A',
-						filters: {
-							items: [
-								{
-									id: '2bbf9d0c',
-									key: {
-										dataType: DataTypes.String,
-										id: 'k8s_job_name--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'k8s_job_name',
-										type: 'tag',
-									},
-									op: '=',
-									value: job.jobName,
-								},
-								{
-									id: '47b3adae',
-									key: {
-										dataType: DataTypes.String,
-										id: 'k8s_namespace_name--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'k8s_namespace_name',
-										type: 'tag',
-									},
-									op: '=',
-									value: job.meta.k8s_namespace_name,
-								},
-							],
-							op: 'AND',
-						},
-						functions: [],
-						groupBy: [
-							{
-								dataType: DataTypes.String,
-								id: 'direction--string--tag--false',
-								isColumn: false,
-								isJSON: false,
-								key: 'direction',
-								type: 'tag',
-							},
-							{
-								dataType: DataTypes.String,
-								id: 'interface--string--tag--false',
-								isColumn: false,
-								isJSON: false,
-								key: 'interface',
-								type: 'tag',
-							},
-						],
-						having: [],
-						legend: '{{direction}} :: {{interface}}',
-						limit: null,
-						orderBy: [],
-						queryName: 'A',
-						reduceTo: 'avg',
-						spaceAggregation: 'sum',
-						stepInterval: 60,
-						timeAggregation: 'rate',
+						legend: '',
+						name: 'A',
+						query: '',
 					},
 				],
-				queryFormulas: [],
-			},
-			clickhouse_sql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			id: v4(),
-			promql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			queryType: EQueryType.QUERY_BUILDER,
-		},
-		variables: {},
-		formatForWeb: false,
-		start,
-		end,
-	},
-	{
-		selectedTime: 'GLOBAL_TIME',
-		graphType: PANEL_TYPES.TIME_SERIES,
-		query: {
-			builder: {
-				queryData: [
+				id: v4(),
+				promql: [
 					{
-						aggregateAttribute: {
-							dataType: DataTypes.Float64,
-							id: 'k8s_pod_network_errors--float64--Sum--true',
-							isColumn: true,
-							isJSON: false,
-							key: 'k8s_pod_network_errors',
-							type: 'Sum',
-						},
-						aggregateOperator: 'increase',
-						dataSource: DataSource.METRICS,
 						disabled: false,
-						expression: 'A',
-						filters: {
-							items: [
-								{
-									id: '448e6cf7',
-									key: {
-										dataType: DataTypes.String,
-										id: 'k8s_job_name--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'k8s_job_name',
-										type: 'tag',
-									},
-									op: '=',
-									value: job.jobName,
-								},
-								{
-									id: '47b3adae',
-									key: {
-										dataType: DataTypes.String,
-										id: 'k8s_namespace_name--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'k8s_namespace_name',
-										type: 'tag',
-									},
-									op: '=',
-									value: job.meta.k8s_namespace_name,
-								},
-							],
-							op: 'AND',
-						},
-						functions: [],
-						groupBy: [
-							{
-								dataType: DataTypes.String,
-								id: 'direction--string--tag--false',
-								isColumn: false,
-								isJSON: false,
-								key: 'direction',
-								type: 'tag',
-							},
-							{
-								dataType: DataTypes.String,
-								id: 'interface--string--tag--false',
-								isColumn: false,
-								isJSON: false,
-								key: 'interface',
-								type: 'tag',
-							},
-						],
-						having: [],
-						legend: '{{direction}} :: {{interface}}',
-						limit: null,
-						orderBy: [],
-						queryName: 'A',
-						reduceTo: 'avg',
-						spaceAggregation: 'sum',
-						stepInterval: 60,
-						timeAggregation: 'increase',
+						legend: '',
+						name: 'A',
+						query: '',
 					},
 				],
-				queryFormulas: [],
+				queryType: EQueryType.QUERY_BUILDER,
 			},
-			clickhouse_sql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			id: v4(),
-			promql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			queryType: EQueryType.QUERY_BUILDER,
+			variables: {},
+			formatForWeb: false,
+			start,
+			end,
 		},
-		variables: {},
-		formatForWeb: false,
-		start,
-		end,
-	},
-];
+		{
+			selectedTime: 'GLOBAL_TIME',
+			graphType: PANEL_TYPES.TIME_SERIES,
+			query: {
+				builder: {
+					queryData: [
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'k8s_pod_network_io--float64--Sum--true',
+								isColumn: true,
+								isJSON: false,
+								key: k8sPodNetworkIoKey,
+								type: 'Sum',
+							},
+							aggregateOperator: 'rate',
+							dataSource: DataSource.METRICS,
+							disabled: false,
+							expression: 'A',
+							filters: {
+								items: [
+									{
+										id: '2bbf9d0c',
+										key: {
+											dataType: DataTypes.String,
+											id: 'k8s_job_name--string--tag--false',
+											isColumn: false,
+											isJSON: false,
+											key: k8sJobNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: job.jobName,
+									},
+									{
+										id: '47b3adae',
+										key: {
+											dataType: DataTypes.String,
+											id: 'k8s_namespace_name--string--tag--false',
+											isColumn: false,
+											isJSON: false,
+											key: k8sNamespaceNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: job.meta.k8s_namespace_name,
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'direction--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'direction',
+									type: 'tag',
+								},
+								{
+									dataType: DataTypes.String,
+									id: 'interface--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'interface',
+									type: 'tag',
+								},
+							],
+							having: [],
+							legend: '{{direction}} :: {{interface}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'A',
+							reduceTo: 'avg',
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'rate',
+						},
+					],
+					queryFormulas: [],
+				},
+				clickhouse_sql: [
+					{
+						disabled: false,
+						legend: '',
+						name: 'A',
+						query: '',
+					},
+				],
+				id: v4(),
+				promql: [
+					{
+						disabled: false,
+						legend: '',
+						name: 'A',
+						query: '',
+					},
+				],
+				queryType: EQueryType.QUERY_BUILDER,
+			},
+			variables: {},
+			formatForWeb: false,
+			start,
+			end,
+		},
+		{
+			selectedTime: 'GLOBAL_TIME',
+			graphType: PANEL_TYPES.TIME_SERIES,
+			query: {
+				builder: {
+					queryData: [
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'k8s_pod_network_errors--float64--Sum--true',
+								isColumn: true,
+								isJSON: false,
+								key: k8sPodNetworkErrorsKey,
+								type: 'Sum',
+							},
+							aggregateOperator: 'increase',
+							dataSource: DataSource.METRICS,
+							disabled: false,
+							expression: 'A',
+							filters: {
+								items: [
+									{
+										id: '448e6cf7',
+										key: {
+											dataType: DataTypes.String,
+											id: 'k8s_job_name--string--tag--false',
+											isColumn: false,
+											isJSON: false,
+											key: k8sJobNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: job.jobName,
+									},
+									{
+										id: '47b3adae',
+										key: {
+											dataType: DataTypes.String,
+											id: 'k8s_namespace_name--string--tag--false',
+											isColumn: false,
+											isJSON: false,
+											key: k8sNamespaceNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: job.meta.k8s_namespace_name,
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'direction--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'direction',
+									type: 'tag',
+								},
+								{
+									dataType: DataTypes.String,
+									id: 'interface--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'interface',
+									type: 'tag',
+								},
+							],
+							having: [],
+							legend: '{{direction}} :: {{interface}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'A',
+							reduceTo: 'avg',
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'increase',
+						},
+					],
+					queryFormulas: [],
+				},
+				clickhouse_sql: [
+					{
+						disabled: false,
+						legend: '',
+						name: 'A',
+						query: '',
+					},
+				],
+				id: v4(),
+				promql: [
+					{
+						disabled: false,
+						legend: '',
+						name: 'A',
+						query: '',
+					},
+				],
+				queryType: EQueryType.QUERY_BUILDER,
+			},
+			variables: {},
+			formatForWeb: false,
+			start,
+			end,
+		},
+	];
+};
