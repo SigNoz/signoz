@@ -75,6 +75,8 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewUpdateOrganizationsFactory(sqlstore),
 		sqlmigration.NewDropGroupsFactory(sqlstore),
 		sqlmigration.NewCreateQuickFiltersFactory(sqlstore),
+		sqlmigration.NewUpdateQuickFiltersFactory(sqlstore),
+		sqlmigration.NewAuthRefactorFactory(sqlstore),
 	)
 }
 

@@ -53,6 +53,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						hasCycle: false,
 					}}
 				/>
 			</MockQueryClientProvider>,
@@ -74,6 +75,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						hasCycle: false,
 					}}
 				/>
 			</MockQueryClientProvider>,
@@ -94,6 +96,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						hasCycle: false,
 					}}
 				/>
 			</MockQueryClientProvider>,
@@ -128,6 +131,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						hasCycle: false,
 					}}
 				/>
 			</MockQueryClientProvider>,
@@ -157,6 +161,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						hasCycle: false,
 					}}
 				/>
 			</MockQueryClientProvider>,
@@ -178,6 +183,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						hasCycle: false,
 					}}
 				/>
 			</MockQueryClientProvider>,

@@ -164,3 +164,9 @@ alertmanager:
       maintenance_interval: 15m
       # Retention of the notification logs.
       retention: 120h
+
+
+##################### Analytics #####################
+analytics:
+  # Whether to enable analytics.
+  enabled: false

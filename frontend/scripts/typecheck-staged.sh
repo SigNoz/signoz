@@ -9,7 +9,7 @@ done
 # create temporary tsconfig which includes only passed files
 str="{
   \"extends\": \"./tsconfig.json\",
-  \"include\": [ \"src/typings/**/*.ts\",\"src/**/*.d.ts\", \"./babel.config.js\", \"./jest.config.ts\", \"./.eslintrc.js\",\"./__mocks__\",\"./conf/default.conf\",\"./public\",\"./tests\",\"./playwright.config.ts\",\"./commitlint.config.ts\",\"./webpack.config.js\",\"./webpack.config.prod.js\",\"./jest.setup.ts\",\"./**/*.d.ts\",$files]
+  \"include\": [ \"src/typings/**/*.ts\",\"src/**/*.d.ts\", \"./babel.config.js\", \"./jest.config.ts\", \"./.eslintrc.js\",\"./__mocks__\",\"./public\",\"./tests\",\"./commitlint.config.ts\",\"./webpack.config.js\",\"./webpack.config.prod.js\",\"./jest.setup.ts\",\"./**/*.d.ts\",$files]
 }"
 echo $str > tsconfig.tmp
 

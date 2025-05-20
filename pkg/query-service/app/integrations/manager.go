@@ -355,13 +355,13 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 func (m *Manager) GetDashboardsForInstalledIntegrations(
 	ctx context.Context,
 	orgId string,
-) ([]types.Dashboard, *model.ApiError) {
+) ([]*types.Dashboard, *model.ApiError) {
 	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx, orgId)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	result := []types.Dashboard{}
+	result := []*types.Dashboard{}
 
 	for _, ii := range installedIntegrations {
 		for _, dd := range ii.Assets.Dashboards {
@@ -369,7 +369,7 @@ func (m *Manager) GetDashboardsForInstalledIntegrations(
 				if dashboardId, ok := dId.(string); ok {
 					isLocked := 1
 					author := "integration"
-					result = append(result, types.Dashboard{
+					result = append(result, &types.Dashboard{
 						UUID:   m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
 						Locked: &isLocked,
 						Data:   dd,

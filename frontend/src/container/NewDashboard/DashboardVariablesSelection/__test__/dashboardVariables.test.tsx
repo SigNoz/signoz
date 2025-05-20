@@ -191,16 +191,6 @@ describe('dashboardVariables - utilities and processors', () => {
 		describe('buildDependencyGraph', () => {
 			it('should build complete dependency graph with correct structure and order', () => {
 				const expected = {
-					graph: {
-						deployment_environment: ['service_name', 'endpoint'],
-						service_name: ['endpoint'],
-						endpoint: ['http_status_code'],
-						http_status_code: [],
-						k8s_cluster_name: ['k8s_node_name', 'k8s_namespace_name'],
-						k8s_node_name: ['k8s_namespace_name'],
-						k8s_namespace_name: [],
-						environment: [],
-					},
 					order: [
 						'deployment_environment',
 						'k8s_cluster_name',
@@ -211,6 +201,28 @@ describe('dashboardVariables - utilities and processors', () => {
 						'k8s_namespace_name',
 						'http_status_code',
 					],
+					graph: {
+						deployment_environment: ['service_name', 'endpoint'],
+						service_name: ['endpoint'],
+						endpoint: ['http_status_code'],
+						http_status_code: [],
+						k8s_cluster_name: ['k8s_node_name', 'k8s_namespace_name'],
+						k8s_node_name: ['k8s_namespace_name'],
+						k8s_namespace_name: [],
+						environment: [],
+					},
+					parentDependencyGraph: {
+						deployment_environment: [],
+						service_name: ['deployment_environment'],
+						endpoint: ['deployment_environment', 'service_name'],
+						http_status_code: ['endpoint'],
+						k8s_cluster_name: [],
+						k8s_node_name: ['k8s_cluster_name'],
+						k8s_namespace_name: ['k8s_cluster_name', 'k8s_node_name'],
+						environment: [],
+					},
+					hasCycle: false,
+					cycleNodes: undefined,
 				};
 
 				expect(buildDependencyGraph(graph)).toEqual(expected);
