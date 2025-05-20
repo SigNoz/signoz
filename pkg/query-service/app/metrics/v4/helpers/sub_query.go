@@ -263,7 +263,7 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 
 	conditions = append(conditions, fmt.Sprintf("metric_name IN %s", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key)))
 	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
-	if constants.GetOrDefaultEnv("DOT_METRICS_ENABLED", "false") == "true" {
+	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
 		conditions = append(conditions, "__normalized = false")
 	} else {
 		conditions = append(conditions, "__normalized = true")
@@ -355,7 +355,7 @@ func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (stri
 
 	conditions = append(conditions, fmt.Sprintf("metric_name IN %s", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key)))
 	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
-	if constants.GetOrDefaultEnv("DOT_METRICS_ENABLED", "false") == "true" {
+	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
 		conditions = append(conditions, "__normalized = false")
 	} else {
 		conditions = append(conditions, "__normalized = true")
