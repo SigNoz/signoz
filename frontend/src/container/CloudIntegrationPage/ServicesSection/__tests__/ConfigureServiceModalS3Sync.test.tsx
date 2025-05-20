@@ -23,10 +23,9 @@ jest.mock('hooks/useUrlQuery', () => ({
 	})),
 }));
 
-jest.setTimeout(10000);
-
 // --- TEST SUITE ---
 describe('ConfigureServiceModal for S3 Sync service', () => {
+	jest.setTimeout(10000);
 	beforeEach(() => {
 		server.use(
 			rest.get(
