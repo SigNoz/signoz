@@ -396,10 +396,6 @@ function K8sJobsList({
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
 								setselectedJobUID(record.jobUID);
-								setSearchParams({
-									...Object.fromEntries(searchParams.entries()),
-									[INFRA_MONITORING_K8S_PARAMS_KEYS.JOB_UID]: record.jobUID,
-								});
 							},
 							className: 'expanded-clickable-row',
 						})}

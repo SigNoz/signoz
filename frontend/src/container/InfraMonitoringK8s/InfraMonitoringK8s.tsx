@@ -79,6 +79,12 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
 		handleChangeQueryData('filters', query.builder.queryData[0].filters);
 		setQuickFiltersLastUpdated(Date.now());
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS]: JSON.stringify(
+				query.builder.queryData[0].filters,
+			),
+		});
 
 		logEvent(InfraMonitoringEvents.FilterApplied, {
 			entity: InfraMonitoringEvents.K8sEntity,

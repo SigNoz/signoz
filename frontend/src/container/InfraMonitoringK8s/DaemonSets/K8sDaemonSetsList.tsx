@@ -422,10 +422,6 @@ function K8sDaemonSetsList({
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
 								setselectedDaemonSetUID(record.daemonsetUID);
-								setSearchParams({
-									...Object.fromEntries(searchParams.entries()),
-									[INFRA_MONITORING_K8S_PARAMS_KEYS.DAEMONSET_UID]: record.daemonsetUID,
-								});
 							},
 							className: 'expanded-clickable-row',
 						})}

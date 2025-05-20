@@ -422,10 +422,6 @@ function K8sNamespacesList({
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
 								setselectedNamespaceUID(record.namespaceUID);
-								setSearchParams({
-									...Object.fromEntries(searchParams.entries()),
-									[INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID]: record.namespaceUID,
-								});
 							},
 							className: 'expanded-clickable-row',
 						})}

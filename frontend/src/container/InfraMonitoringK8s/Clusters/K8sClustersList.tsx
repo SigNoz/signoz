@@ -414,10 +414,6 @@ function K8sClustersList({
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
 								setselectedClusterName(record.clusterUID);
-								setSearchParams({
-									...Object.fromEntries(searchParams.entries()),
-									[INFRA_MONITORING_K8S_PARAMS_KEYS.CLUSTER_NAME]: record.clusterUID,
-								});
 							},
 							className: 'expanded-clickable-row',
 						})}
