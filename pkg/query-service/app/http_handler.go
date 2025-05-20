@@ -1620,14 +1620,15 @@ func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getEntryPointOps(w http.ResponseWriter, r *http.Request) {
-
 	query, err := parseGetTopOperationsRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
 	result, apiErr := aH.reader.GetEntryPointOperations(r.Context(), query)
-	if apiErr != nil && aH.HandleError(w, apiErr, http.StatusInternalServerError) {
+	if apiErr != nil {
+		render.Error(w, apiErr)
 		return
 	}
 
