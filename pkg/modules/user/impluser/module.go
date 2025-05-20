@@ -394,21 +394,21 @@ func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types
 }
 
 func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
-	return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
+	return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
 }
 
-func (m *Module) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updaterID string) error {
-	return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
+func (m *Module) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
+	return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
 }
 
-func (m *Module) ListAPIKeys(ctx context.Context, orgID string) ([]*types.StorableAPIKeyUser, error) {
-	return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
+func (m *Module) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
+	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
 }
 
-func (m *Module) GetAPIKey(ctx context.Context, orgID string, id string) (*types.StorableAPIKeyUser, error) {
-	return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
+func (m *Module) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
+	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
 }
 
-func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID string) error {
-	return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "not implemented")
+func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error {
+	return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
 }

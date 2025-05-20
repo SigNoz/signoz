@@ -3,6 +3,7 @@ package impluser
 import (
 	"context"
 	"database/sql"
+	"sort"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -497,8 +498,8 @@ func (s *Store) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) 
 	return nil
 }
 
-func (s *Store) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updaterID string) error {
-	apiKey.UpdatedBy = updaterID
+func (s *Store) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
+	apiKey.UpdatedBy = updaterID.String()
 	apiKey.UpdatedAt = time.Now()
 	_, err := s.sqlstore.BunDB().NewUpdate().
 		Model(apiKey).
@@ -512,15 +513,14 @@ func (s *Store) UpdateAPIKey(ctx context.Context, id string, apiKey *types.Stora
 	return nil
 }
 
-func (s *Store) ListAPIKeys(ctx context.Context, orgID string) ([]*types.StorableAPIKeyUser, error) {
+func (s *Store) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
 	orgUserAPIKeys := new(types.OrgUserAPIKey)
 
 	if err := s.sqlstore.BunDB().NewSelect().
 		Model(orgUserAPIKeys).
 		Relation("Users").
 		Relation("Users.APIKeys", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Where("revoked = false").
-				OrderExpr("storable_api_key.updated_at DESC")
+			return q.Where("revoked = false")
 		},
 		).
 		Relation("Users.APIKeys.CreatedByUser").
@@ -536,10 +536,15 @@ func (s *Store) ListAPIKeys(ctx context.Context, orgID string) ([]*types.Storabl
 		allAPIKeys = append(allAPIKeys, user.APIKeys...)
 	}
 
+	// sort the API keys by updated_at
+	sort.Slice(allAPIKeys, func(i, j int) bool {
+		return allAPIKeys[i].UpdatedAt.After(allAPIKeys[j].UpdatedAt)
+	})
+
 	return allAPIKeys, nil
 }
 
-func (s *Store) RevokeAPIKey(ctx context.Context, id, revokedByUserID string) error {
+func (s *Store) RevokeAPIKey(ctx context.Context, id, revokedByUserID valuer.UUID) error {
 	updatedAt := time.Now().Unix()
 	_, err := s.sqlstore.BunDB().NewUpdate().
 		Model(&types.StorableAPIKey{}).
@@ -554,7 +559,7 @@ func (s *Store) RevokeAPIKey(ctx context.Context, id, revokedByUserID string) er
 	return nil
 }
 
-func (s *Store) GetAPIKey(ctx context.Context, orgID string, id string) (*types.StorableAPIKeyUser, error) {
+func (s *Store) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
 	apiKey := new(types.OrgUserAPIKey)
 	if err := s.sqlstore.BunDB().NewSelect().
 		Model(apiKey).

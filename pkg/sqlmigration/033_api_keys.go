@@ -83,7 +83,7 @@ func (migration *migratePATToFactorAPIKey) Up(ctx context.Context, db *bun.DB) e
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingPersonalAccessToken33), new(newFactorAPIKey33), []string{UserReference}, func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingPersonalAccessToken33), new(newFactorAPIKey33), []string{UserReferenceNoCascade}, func(ctx context.Context) error {
 			existingAPIKeys := make([]*existingPersonalAccessToken33, 0)
 			err = tx.
 				NewSelect().

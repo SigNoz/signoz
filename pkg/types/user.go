@@ -63,10 +63,10 @@ type UserStore interface {
 
 	// API KEY
 	CreateAPIKey(ctx context.Context, apiKey *StorableAPIKey) error
-	UpdateAPIKey(ctx context.Context, id string, apiKey *StorableAPIKey, updaterID string) error
-	ListAPIKeys(ctx context.Context, orgID string) ([]*StorableAPIKeyUser, error)
-	RevokeAPIKey(ctx context.Context, id, revokedByUserID string) error
-	GetAPIKey(ctx context.Context, orgID string, id string) (*StorableAPIKeyUser, error)
+	UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *StorableAPIKey, updaterID valuer.UUID) error
+	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*StorableAPIKeyUser, error)
+	RevokeAPIKey(ctx context.Context, id valuer.UUID, revokedByUserID valuer.UUID) error
+	GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*StorableAPIKeyUser, error)
 }
 
 type GettableUser struct {

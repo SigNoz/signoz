@@ -54,27 +54,27 @@ type StorableAPIKey struct {
 	Identifiable
 	TimeAuditable
 	UserAuditable
-	Token     string    `json:"token" bun:"token,type:text,notnull,unique"`
-	Role      Role      `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
-	Name      string    `json:"name" bun:"name,type:text,notnull"`
-	ExpiresAt time.Time `json:"-" bun:"expires_at,notnull,nullzero,type:timestamptz"`
-	LastUsed  time.Time `json:"-" bun:"last_used,notnull,nullzero,type:timestamptz"`
-	Revoked   bool      `json:"revoked" bun:"revoked,notnull,default:false"`
-	UserID    string    `json:"userId" bun:"user_id,type:text,notnull"`
+	Token     string      `json:"token" bun:"token,type:text,notnull,unique"`
+	Role      Role        `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
+	Name      string      `json:"name" bun:"name,type:text,notnull"`
+	ExpiresAt time.Time   `json:"-" bun:"expires_at,notnull,nullzero,type:timestamptz"`
+	LastUsed  time.Time   `json:"-" bun:"last_used,notnull,nullzero,type:timestamptz"`
+	Revoked   bool        `json:"revoked" bun:"revoked,notnull,default:false"`
+	UserID    valuer.UUID `json:"userId" bun:"user_id,type:text,notnull"`
 }
 
-func NewStorableAPIKey(name, userID string, role Role, expiresAt int64) (*StorableAPIKey, error) {
+func NewStorableAPIKey(name string, userID valuer.UUID, role Role, expiresAt int64) (*StorableAPIKey, error) {
 	// validate
-	if expiresAt < 0 {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "valid expiresAt is required")
+	if expiresAt <= 0 {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "expiresAt must be greater than 0")
 	}
 
 	if name == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "valid name is required")
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "name cannot be empty")
 	}
 
 	if role == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "valid role is required")
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "role cannot be empty")
 	}
 
 	now := time.Now()
@@ -100,8 +100,8 @@ func NewStorableAPIKey(name, userID string, role Role, expiresAt int64) (*Storab
 			UpdatedAt: now,
 		},
 		UserAuditable: UserAuditable{
-			CreatedBy: userID,
-			UpdatedBy: userID,
+			CreatedBy: userID.String(),
+			UpdatedBy: userID.String(),
 		},
 		Token:     encodedToken,
 		Name:      name,
@@ -128,7 +128,7 @@ func NewGettableAPIKeyFromStorableAPIKey(storableAPIKey *StorableAPIKeyUser) *Ge
 		ExpiresAt:     storableAPIKey.ExpiresAt.Unix(),
 		LastUsed:      lastUsed,
 		Revoked:       storableAPIKey.Revoked,
-		UserID:        storableAPIKey.UserID,
+		UserID:        storableAPIKey.UserID.String(),
 		CreatedBy:     storableAPIKey.CreatedByUser,
 		UpdatedBy:     storableAPIKey.UpdatedByUser,
 	}

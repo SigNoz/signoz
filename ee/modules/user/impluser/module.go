@@ -12,6 +12,7 @@ import (
 	baseimpl "github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
@@ -232,18 +233,18 @@ func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey)
 	return m.store.CreateAPIKey(ctx, apiKey)
 }
 
-func (m *Module) UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updaterID string) error {
+func (m *Module) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
 	return m.store.UpdateAPIKey(ctx, id, apiKey, updaterID)
 }
 
-func (m *Module) ListAPIKeys(ctx context.Context, orgID string) ([]*types.StorableAPIKeyUser, error) {
+func (m *Module) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
 	return m.store.ListAPIKeys(ctx, orgID)
 }
 
-func (m *Module) GetAPIKey(ctx context.Context, orgID string, id string) (*types.StorableAPIKeyUser, error) {
+func (m *Module) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
 	return m.store.GetAPIKey(ctx, orgID, id)
 }
 
-func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID string) error {
+func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error {
 	return m.store.RevokeAPIKey(ctx, id, removedByUserID)
 }

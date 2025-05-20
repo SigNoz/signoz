@@ -50,10 +50,10 @@ type Module interface {
 
 	// API KEY
 	CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error
-	UpdateAPIKey(ctx context.Context, id string, apiKey *types.StorableAPIKey, updaterID string) error
-	ListAPIKeys(ctx context.Context, orgID string) ([]*types.StorableAPIKeyUser, error)
-	RevokeAPIKey(ctx context.Context, id, removedByUserID string) error
-	GetAPIKey(ctx context.Context, orgID string, id string) (*types.StorableAPIKeyUser, error)
+	UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error
+	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error)
+	RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error
+	GetAPIKey(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.StorableAPIKeyUser, error)
 }
 
 type Handler interface {
