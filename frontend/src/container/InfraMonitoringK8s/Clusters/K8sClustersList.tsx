@@ -161,6 +161,8 @@ function K8sClustersList({
 			queryKey: ['clusterList', fetchGroupedByRowDataQuery],
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const {
@@ -218,6 +220,8 @@ function K8sClustersList({
 			queryKey: ['clusterList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const clustersData = useMemo(() => data?.payload?.data?.records || [], [data]);

@@ -5,6 +5,8 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
+import { UnderscoreToDotMap } from '../utils';
+
 export interface K8sStatefulSetsListPayload {
 	filters: TagFilter;
 	groupBy?: BaseAutocompleteData[];
@@ -45,46 +47,78 @@ export interface K8sStatefulSetsListResponse {
 	};
 }
 
+export const statefulSetsMetaMap = [
+	{ dot: 'k8s.statefulset.name', under: 'k8s_statefulset_name' },
+	{ dot: 'k8s.namespace.name', under: 'k8s_namespace_name' },
+] as const;
+
+export function mapStatefulSetsMeta(
+	raw: Record<string, unknown>,
+): K8sStatefulSetsData['meta'] {
+	const out: Record<string, unknown> = { ...raw };
+	statefulSetsMetaMap.forEach(({ dot, under }) => {
+		if (dot in raw) {
+			const v = raw[dot];
+			out[under] = typeof v === 'string' ? v : raw[under];
+		}
+	});
+	return out as K8sStatefulSetsData['meta'];
+}
+
 export const getK8sStatefulSetsList = async (
 	props: K8sStatefulSetsListPayload,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
+	dotMetricsEnabled = false,
 ): Promise<SuccessResponse<K8sStatefulSetsListResponse> | ErrorResponse> => {
 	try {
-		const response = await axios.post('/statefulsets/list', props, {
+		// Prepare filters
+		const requestProps =
+			dotMetricsEnabled && Array.isArray(props.filters?.items)
+				? {
+						...props,
+						filters: {
+							...props.filters,
+							items: props.filters.items.reduce<typeof props.filters.items>(
+								(acc, item) => {
+									if (item.value === undefined) return acc;
+									if (
+										item.key &&
+										typeof item.key === 'object' &&
+										'key' in item.key &&
+										typeof item.key.key === 'string'
+									) {
+										const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
+										acc.push({ ...item, key: { ...item.key, key: mappedKey } });
+									} else {
+										acc.push(item);
+									}
+									return acc;
+								},
+								[] as typeof props.filters.items,
+							),
+						},
+				  }
+				: props;
+
+		const response = await axios.post('/statefulsets/list', requestProps, {
 			signal,
 			headers,
 		});
-
 		const payload: K8sStatefulSetsListResponse = response.data;
-		payload.data.records = payload.data.records.map((record) => {
-			// rawMeta may have either form
-			const rawMeta = record.meta as Record<string, unknown>;
 
-			// construct a fully-typed meta object, preferring dot-notation when present
-			const m: K8sStatefulSetsData['meta'] = {
-				k8s_statefulset_name:
-					typeof rawMeta['k8s.statefulset.name'] === 'string'
-						? rawMeta['k8s.statefulset.name']
-						: (rawMeta.k8s_statefulset_name as string),
-				k8s_namespace_name:
-					typeof rawMeta['k8s.namespace.name'] === 'string'
-						? rawMeta['k8s.namespace.name']
-						: (rawMeta.k8s_namespace_name as string),
-			};
-
-			return {
-				...record,
-				meta: m,
-			};
-		});
+		// apply our helper
+		payload.data.records = payload.data.records.map((record) => ({
+			...record,
+			meta: mapStatefulSetsMeta(record.meta as Record<string, unknown>),
+		}));
 
 		return {
 			statusCode: 200,
 			error: null,
 			message: 'Success',
 			payload,
-			params: props,
+			params: requestProps,
 		};
 	} catch (error) {
 		return ErrorResponseHandler(error as AxiosError);

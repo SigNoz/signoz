@@ -156,10 +156,15 @@ function K8sVolumesList({
 		isLoading: isLoadingGroupedByRowData,
 		isError: isErrorGroupedByRowData,
 		refetch: fetchGroupedByRowData,
-	} = useGetK8sVolumesList(fetchGroupedByRowDataQuery as K8sVolumesListPayload, {
-		queryKey: ['volumeList', fetchGroupedByRowDataQuery],
-		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
-	});
+	} = useGetK8sVolumesList(
+		fetchGroupedByRowDataQuery as K8sVolumesListPayload,
+		{
+			queryKey: ['volumeList', fetchGroupedByRowDataQuery],
+			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+		},
+		undefined,
+		dotMetricsEnabled,
+	);
 
 	const {
 		data: groupByFiltersData,
@@ -216,6 +221,8 @@ function K8sVolumesList({
 			queryKey: ['volumeList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const volumesData = useMemo(() => data?.payload?.data?.records || [], [data]);

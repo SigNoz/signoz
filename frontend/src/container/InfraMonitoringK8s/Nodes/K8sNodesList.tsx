@@ -153,10 +153,15 @@ function K8sNodesList({
 		isLoading: isLoadingGroupedByRowData,
 		isError: isErrorGroupedByRowData,
 		refetch: fetchGroupedByRowData,
-	} = useGetK8sNodesList(fetchGroupedByRowDataQuery as K8sNodesListPayload, {
-		queryKey: ['nodeList', fetchGroupedByRowDataQuery],
-		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
-	});
+	} = useGetK8sNodesList(
+		fetchGroupedByRowDataQuery as K8sNodesListPayload,
+		{
+			queryKey: ['nodeList', fetchGroupedByRowDataQuery],
+			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+		},
+		undefined,
+		dotMetricsEnabled,
+	);
 
 	const {
 		data: groupByFiltersData,
@@ -213,6 +218,8 @@ function K8sNodesList({
 			queryKey: ['nodeList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const nodesData = useMemo(() => data?.payload?.data?.records || [], [data]);

@@ -173,6 +173,8 @@ function K8sPodsList({
 			queryKey: ['hostList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const createFiltersForSelectedRowData = (
@@ -227,10 +229,15 @@ function K8sPodsList({
 		isLoading: isLoadingGroupedByRowData,
 		isError: isErrorGroupedByRowData,
 		refetch: fetchGroupedByRowData,
-	} = useGetK8sPodsList(fetchGroupedByRowDataQuery as K8sPodsListPayload, {
-		queryKey: ['hostList', fetchGroupedByRowDataQuery],
-		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
-	});
+	} = useGetK8sPodsList(
+		fetchGroupedByRowDataQuery as K8sPodsListPayload,
+		{
+			queryKey: ['hostList', fetchGroupedByRowDataQuery],
+			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+		},
+		undefined,
+		dotMetricsEnabled,
+	);
 
 	const podsData = useMemo(() => data?.payload?.data?.records || [], [data]);
 	const totalCount = data?.payload?.data?.total || 0;

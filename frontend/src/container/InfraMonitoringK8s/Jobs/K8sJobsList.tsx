@@ -154,10 +154,15 @@ function K8sJobsList({
 		isLoading: isLoadingGroupedByRowData,
 		isError: isErrorGroupedByRowData,
 		refetch: fetchGroupedByRowData,
-	} = useGetK8sJobsList(fetchGroupedByRowDataQuery as K8sJobsListPayload, {
-		queryKey: ['jobList', fetchGroupedByRowDataQuery],
-		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
-	});
+	} = useGetK8sJobsList(
+		fetchGroupedByRowDataQuery as K8sJobsListPayload,
+		{
+			queryKey: ['jobList', fetchGroupedByRowDataQuery],
+			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+		},
+		undefined,
+		dotMetricsEnabled,
+	);
 
 	const {
 		data: groupByFiltersData,
@@ -214,6 +219,8 @@ function K8sJobsList({
 			queryKey: ['jobList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const jobsData = useMemo(() => data?.payload?.data?.records || [], [data]);

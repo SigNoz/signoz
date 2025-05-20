@@ -163,6 +163,8 @@ function K8sDaemonSetsList({
 			queryKey: ['daemonSetList', fetchGroupedByRowDataQuery],
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const {
@@ -215,6 +217,8 @@ function K8sDaemonSetsList({
 			queryKey: ['daemonSetList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const daemonSetsData = useMemo(() => data?.payload?.data?.records || [], [

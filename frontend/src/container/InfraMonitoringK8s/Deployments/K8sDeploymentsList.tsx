@@ -163,6 +163,8 @@ function K8sDeploymentsList({
 			queryKey: ['deploymentList', fetchGroupedByRowDataQuery],
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const {
@@ -215,6 +217,8 @@ function K8sDeploymentsList({
 			queryKey: ['deploymentList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const deploymentsData = useMemo(() => data?.payload?.data?.records || [], [

@@ -162,6 +162,8 @@ function K8sStatefulSetsList({
 			queryKey: ['statefulSetList', fetchGroupedByRowDataQuery],
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const {
@@ -219,6 +221,8 @@ function K8sStatefulSetsList({
 			queryKey: ['statefulSetList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const statefulSetsData = useMemo(() => data?.payload?.data?.records || [], [

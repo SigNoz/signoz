@@ -162,6 +162,8 @@ function K8sNamespacesList({
 			queryKey: ['namespaceList', fetchGroupedByRowDataQuery],
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const {
@@ -214,6 +216,8 @@ function K8sNamespacesList({
 			queryKey: ['namespaceList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const namespacesData = useMemo(() => data?.payload?.data?.records || [], [
