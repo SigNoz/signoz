@@ -20,6 +20,7 @@ func TestConditionFor(t *testing.T) {
 		operator      qbtypes.FilterOperator
 		value         any
 		expectedSQL   string
+		expectedArgs  []any
 		expectedError error
 	}{
 		{
@@ -31,6 +32,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotEqual,
 			value:         uint64(1617979338000000000),
 			expectedSQL:   "timestamp <> ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
 			expectedError: nil,
 		},
 		{
@@ -42,7 +44,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorGreaterThan,
 			value:         float64(100),
-			expectedSQL:   "attributes_number['request.duration'] > ?",
+			expectedSQL:   "(attributes_number['request.duration'] > ? AND mapContains(attributes_number, 'request.duration') = ?)",
+			expectedArgs:  []any{float64(100), true},
 			expectedError: nil,
 		},
 		{
@@ -54,7 +57,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLessThan,
 			value:         float64(1024),
-			expectedSQL:   "attributes_number['request.size'] < ?",
+			expectedSQL:   "(attributes_number['request.size'] < ? AND mapContains(attributes_number, 'request.size') = ?)",
+			expectedArgs:  []any{float64(1024), true},
 			expectedError: nil,
 		},
 		{
@@ -66,6 +70,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorGreaterThanOrEq,
 			value:         uint64(1617979338000000000),
 			expectedSQL:   "timestamp >= ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
 			expectedError: nil,
 		},
 		{
@@ -77,6 +82,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorLessThanOrEq,
 			value:         uint64(1617979338000000000),
 			expectedSQL:   "timestamp <= ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
 			expectedError: nil,
 		},
 		{
@@ -88,7 +94,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorILike,
 			value:         "%admin%",
-			expectedSQL:   "WHERE LOWER(attributes_string['user.id']) LIKE LOWER(?)",
+			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id') = ?)",
+			expectedArgs:  []any{"%admin%", true},
 			expectedError: nil,
 		},
 		{
@@ -101,6 +108,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotILike,
 			value:         "%admin%",
 			expectedSQL:   "WHERE LOWER(attributes_string['user.id']) NOT LIKE LOWER(?)",
+			expectedArgs:  []any{"%admin%", true},
 			expectedError: nil,
 		},
 		{
@@ -112,6 +120,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorBetween,
 			value:         []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedSQL:   "timestamp BETWEEN ? AND ?",
+			expectedArgs:  []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedError: nil,
 		},
 		{
@@ -145,6 +154,7 @@ func TestConditionFor(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotBetween,
 			value:         []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedSQL:   "timestamp NOT BETWEEN ? AND ?",
+			expectedArgs:  []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedError: nil,
 		},
 		{
@@ -180,7 +190,34 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorContains,
 			value:         "admin",
-			expectedSQL:   "WHERE LOWER(attributes_string['user.id']) LIKE LOWER(?)",
+			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id') = ?)",
+			expectedArgs:  []any{"%admin%", true},
+			expectedError: nil,
+		},
+		{
+			name: "In operator - map field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorIn,
+			value:         []any{"admin", "user"},
+			expectedSQL:   "((attributes_string['user.id'] = ? OR attributes_string['user.id'] = ?) AND mapContains(attributes_string, 'user.id') = ?)",
+			expectedArgs:  []any{"admin", "user", true},
+			expectedError: nil,
+		},
+		{
+			name: "Not In operator - map field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorNotIn,
+			value:         []any{"admin", "user"},
+			expectedSQL:   "(attributes_string['user.id'] <> ? AND attributes_string['user.id'] <> ?)",
+			expectedArgs:  []any{"admin", "user", true},
 			expectedError: nil,
 		},
 		{
