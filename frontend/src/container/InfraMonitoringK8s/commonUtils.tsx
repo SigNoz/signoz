@@ -12,7 +12,10 @@ import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useMemo } from 'react';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 import {
 	getInvalidValueTooltipText,
@@ -274,4 +277,17 @@ export const getOrderByFromParams = (
 		return null;
 	}
 	return { columnName: 'cpu', order: 'desc' };
+};
+
+export const getFiltersFromParams = (
+	searchParams: URLSearchParams,
+	queryKey: string,
+): IBuilderQuery['filters'] | null => {
+	const filtersFromParams = searchParams.get(queryKey);
+	if (filtersFromParams) {
+		const decoded = decodeURIComponent(filtersFromParams);
+		const parsed = JSON.parse(decoded);
+		return parsed as IBuilderQuery['filters'];
+	}
+	return null;
 };

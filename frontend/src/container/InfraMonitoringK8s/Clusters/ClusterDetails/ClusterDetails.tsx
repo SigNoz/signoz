@@ -14,7 +14,10 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/commonUtils';
+import {
+	filterDuplicateFilters,
+	getFiltersFromParams,
+} from 'container/InfraMonitoringK8s/commonUtils';
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
@@ -96,8 +99,17 @@ function ClusterDetails({
 	});
 	const isDarkMode = useIsDarkMode();
 
-	const initialFilters = useMemo(
-		() => ({
+	const initialFilters = useMemo(() => {
+		const urlView = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW);
+		const queryKey =
+			urlView === VIEW_TYPES.LOGS
+				? INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS
+				: INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS;
+		const filters = getFiltersFromParams(searchParams, queryKey);
+		if (filters) {
+			return filters;
+		}
+		return {
 			op: 'AND',
 			items: [
 				{
@@ -114,12 +126,18 @@ function ClusterDetails({
 					value: cluster?.meta.k8s_cluster_name || '',
 				},
 			],
-		}),
-		[cluster?.meta.k8s_cluster_name],
-	);
+		};
+	}, [cluster?.meta.k8s_cluster_name, searchParams]);
 
-	const initialEventsFilters = useMemo(
-		() => ({
+	const initialEventsFilters = useMemo(() => {
+		const filters = getFiltersFromParams(
+			searchParams,
+			INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
+		);
+		if (filters) {
+			return filters;
+		}
+		return {
 			op: 'AND',
 			items: [
 				{
@@ -149,9 +167,8 @@ function ClusterDetails({
 					value: cluster?.meta.k8s_cluster_name || '',
 				},
 			],
-		}),
-		[cluster?.meta.k8s_cluster_name],
-	);
+		};
+	}, [cluster?.meta.k8s_cluster_name, searchParams]);
 
 	const [logsAndTracesFilters, setLogsAndTracesFilters] = useState<
 		IBuilderQuery['filters']
@@ -195,6 +212,9 @@ function ClusterDetails({
 		setSearchParams({
 			...Object.fromEntries(searchParams.entries()),
 			[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: e.target.value,
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(null),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(null),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS]: JSON.stringify(null),
 		});
 		logEvent(InfraMonitoringEvents.TabChanged, {
 			entity: InfraMonitoringEvents.K8sEntity,
@@ -235,7 +255,7 @@ function ClusterDetails({
 	);
 
 	const handleChangeLogFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogsAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_CLUSTER_NAME].includes(item.key?.key ?? ''),
@@ -255,7 +275,7 @@ function ClusterDetails({
 					});
 				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: filterDuplicateFilters(
 						[
@@ -265,6 +285,16 @@ function ClusterDetails({
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -272,7 +302,7 @@ function ClusterDetails({
 	);
 
 	const handleChangeTracesFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogsAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_CLUSTER_NAME].includes(item.key?.key ?? ''),
@@ -287,7 +317,7 @@ function ClusterDetails({
 					});
 				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: filterDuplicateFilters(
 						[
@@ -298,6 +328,16 @@ function ClusterDetails({
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -305,7 +345,7 @@ function ClusterDetails({
 	);
 
 	const handleChangeEventsFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setEventsFilters((prevFilters) => {
 				const clusterKindFilter = prevFilters.items.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
@@ -323,7 +363,7 @@ function ClusterDetails({
 					});
 				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: filterDuplicateFilters(
 						[
@@ -337,6 +377,16 @@ function ClusterDetails({
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

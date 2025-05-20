@@ -13,6 +13,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { getFiltersFromParams } from 'container/InfraMonitoringK8s/commonUtils';
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
@@ -97,8 +98,17 @@ function DaemonSetDetails({
 	});
 	const isDarkMode = useIsDarkMode();
 
-	const initialFilters = useMemo(
-		() => ({
+	const initialFilters = useMemo(() => {
+		const urlView = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW);
+		const queryKey =
+			urlView === VIEW_TYPES.LOGS
+				? INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS
+				: INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS;
+		const filters = getFiltersFromParams(searchParams, queryKey);
+		if (filters) {
+			return filters;
+		}
+		return {
 			op: 'AND',
 			items: [
 				{
@@ -128,12 +138,22 @@ function DaemonSetDetails({
 					value: daemonSet?.meta.k8s_namespace_name || '',
 				},
 			],
-		}),
-		[daemonSet?.meta.k8s_daemonset_name, daemonSet?.meta.k8s_namespace_name],
-	);
+		};
+	}, [
+		daemonSet?.meta.k8s_daemonset_name,
+		daemonSet?.meta.k8s_namespace_name,
+		searchParams,
+	]);
 
-	const initialEventsFilters = useMemo(
-		() => ({
+	const initialEventsFilters = useMemo(() => {
+		const filters = getFiltersFromParams(
+			searchParams,
+			INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
+		);
+		if (filters) {
+			return filters;
+		}
+		return {
 			op: 'AND',
 			items: [
 				{
@@ -163,9 +183,8 @@ function DaemonSetDetails({
 					value: daemonSet?.meta.k8s_daemonset_name || '',
 				},
 			],
-		}),
-		[daemonSet?.meta.k8s_daemonset_name],
-	);
+		};
+	}, [daemonSet?.meta.k8s_daemonset_name, searchParams]);
 
 	const [logAndTracesFilters, setLogAndTracesFilters] = useState<
 		IBuilderQuery['filters']
@@ -209,6 +228,9 @@ function DaemonSetDetails({
 		setSearchParams({
 			...Object.fromEntries(searchParams.entries()),
 			[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: e.target.value,
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(null),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(null),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS]: JSON.stringify(null),
 		});
 		logEvent(InfraMonitoringEvents.TabChanged, {
 			entity: InfraMonitoringEvents.K8sEntity,
@@ -249,7 +271,7 @@ function DaemonSetDetails({
 	);
 
 	const handleChangeLogFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_DAEMON_SET_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
@@ -272,7 +294,7 @@ function DaemonSetDetails({
 					});
 				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: [
 						...primaryFilters,
@@ -280,6 +302,15 @@ function DaemonSetDetails({
 						...(paginationFilter ? [paginationFilter] : []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -287,7 +318,7 @@ function DaemonSetDetails({
 	);
 
 	const handleChangeTracesFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_DAEMON_SET_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
@@ -304,7 +335,7 @@ function DaemonSetDetails({
 					});
 				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: [
 						...primaryFilters,
@@ -313,6 +344,16 @@ function DaemonSetDetails({
 						),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -320,7 +361,7 @@ function DaemonSetDetails({
 	);
 
 	const handleChangeEventsFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setEventsFilters((prevFilters) => {
 				const daemonSetKindFilter = prevFilters.items.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
@@ -338,7 +379,7 @@ function DaemonSetDetails({
 					});
 				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: [
 						daemonSetKindFilter,
@@ -350,6 +391,16 @@ function DaemonSetDetails({
 						),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

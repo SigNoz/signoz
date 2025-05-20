@@ -494,8 +494,13 @@ function K8sNamespacesList({
 			...Object.fromEntries(
 				Array.from(searchParams.entries()).filter(
 					([key]) =>
-						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID &&
-						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+						![
+							INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS,
+						].includes(key),
 				),
 			),
 		});

@@ -495,8 +495,13 @@ function K8sStatefulSetsList({
 			...Object.fromEntries(
 				Array.from(searchParams.entries()).filter(
 					([key]) =>
-						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.STATEFULSET_UID &&
-						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+						![
+							INFRA_MONITORING_K8S_PARAMS_KEYS.STATEFULSET_UID,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS,
+						].includes(key),
 				),
 			),
 		});
