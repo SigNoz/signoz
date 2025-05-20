@@ -46,7 +46,7 @@ interface ITraceMetadata {
 	endTime: number;
 	hasMissingSpans: boolean;
 }
-interface ISuccessProps {
+export interface ISuccessProps {
 	spans: Span[];
 	traceMetadata: ITraceMetadata;
 	interestedSpanId: IInterestedSpan;
@@ -158,6 +158,7 @@ function SpanOverview({
 									type="text"
 									size="small"
 									className="add-funnel-button__button"
+									data-testid="add-to-funnel-button"
 									onClick={(e): void => {
 										e.preventDefault();
 										e.stopPropagation();
