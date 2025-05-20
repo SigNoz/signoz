@@ -9,7 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	stubs "github.com/SigNoz/signoz/pkg/types/telemetrytypes/testutil/stubs"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +18,7 @@ func TestAggRewrite(t *testing.T) {
 	fm := telemetrytraces.NewFieldMapper()
 	cb := telemetrytraces.NewConditionBuilder(fm)
 
-	mockMetadataStore := stubs.NewMockMetadataStore()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	opts := querybuilder.AggExprRewriterOptions{
 		FieldMapper:      fm,

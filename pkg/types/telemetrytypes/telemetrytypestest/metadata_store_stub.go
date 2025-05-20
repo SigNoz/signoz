@@ -1,4 +1,4 @@
-package telemetrytypes
+package telemetrytypestest
 
 import (
 	"context"
