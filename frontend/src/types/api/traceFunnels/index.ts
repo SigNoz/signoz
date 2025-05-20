@@ -14,7 +14,7 @@ export interface FunnelStepData {
 	span_name: string;
 	filters: TagFilter;
 	latency_pointer: 'start' | 'end';
-	latency_type: LatencyOptionsType;
+	latency_type?: LatencyOptionsType;
 	has_errors: boolean;
 	name?: string;
 	description?: string;

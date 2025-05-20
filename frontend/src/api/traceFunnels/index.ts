@@ -22,7 +22,7 @@ export const createFunnel = async (
 		statusCode: 200,
 		error: null,
 		message: 'Funnel created successfully',
-		payload: response.data,
+		payload: response.data.data,
 	};
 };
 
@@ -196,7 +196,9 @@ export interface FunnelOverviewResponse {
 			avg_rate: number;
 			conversion_rate: number | null;
 			errors: number;
+			// TODO(shaheer): remove p99_latency once we have support for latency
 			p99_latency: number;
+			latency: number;
 		};
 	}>;
 }
@@ -222,13 +224,6 @@ export const getFunnelOverview = async (
 	};
 };
 
-export interface SlowTracesPayload {
-	start_time: number;
-	end_time: number;
-	step_a_order: number;
-	step_b_order: number;
-}
-
 export interface SlowTraceData {
 	status: string;
 	data: Array<{
@@ -243,7 +238,7 @@ export interface SlowTraceData {
 
 export const getFunnelSlowTraces = async (
 	funnelId: string,
-	payload: SlowTracesPayload,
+	payload: FunnelOverviewPayload,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<SlowTraceData> | ErrorResponse> => {
 	const response = await axios.post(
@@ -261,12 +256,6 @@ export const getFunnelSlowTraces = async (
 		payload: response.data,
 	};
 };
-export interface ErrorTracesPayload {
-	start_time: number;
-	end_time: number;
-	step_a_order: number;
-	step_b_order: number;
-}
 
 export interface ErrorTraceData {
 	status: string;
@@ -282,7 +271,7 @@ export interface ErrorTraceData {
 
 export const getFunnelErrorTraces = async (
 	funnelId: string,
-	payload: ErrorTracesPayload,
+	payload: FunnelOverviewPayload,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<ErrorTraceData> | ErrorResponse> => {
 	const response: AxiosResponse = await axios.post(
@@ -326,6 +315,40 @@ export const getFunnelSteps = async (
 ): Promise<SuccessResponse<FunnelStepsResponse> | ErrorResponse> => {
 	const response = await axios.post(
 		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/steps`,
+		payload,
+		{ signal },
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: '',
+		payload: response.data,
+	};
+};
+
+export interface FunnelStepsOverviewPayload {
+	start_time: number;
+	end_time: number;
+	step_start?: number;
+	step_end?: number;
+}
+
+export interface FunnelStepsOverviewResponse {
+	status: string;
+	data: Array<{
+		timestamp: string;
+		data: Record<string, number>;
+	}>;
+}
+
+export const getFunnelStepsOverview = async (
+	funnelId: string,
+	payload: FunnelStepsOverviewPayload,
+	signal?: AbortSignal,
+): Promise<SuccessResponse<FunnelStepsOverviewResponse> | ErrorResponse> => {
+	const response = await axios.post(
+		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/steps/overview`,
 		payload,
 		{ signal },
 	);
