@@ -46,5 +46,5 @@ export enum QueryParams {
 	msgSystem = 'msgSystem',
 	destination = 'destination',
 	kindString = 'kindString',
-	variableConfigs = 'variableConfigs',
+	variables = 'variables',
 }
