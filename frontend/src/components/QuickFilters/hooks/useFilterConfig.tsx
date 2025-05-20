@@ -49,10 +49,10 @@ const useFilterConfig = ({
 			enabled: !!signal && isStale,
 		},
 	);
-	const filterConfig = useMemo(() => getFilterConfig(customFilters, config), [
-		config,
-		customFilters,
-	]);
+	const filterConfig = useMemo(
+		() => getFilterConfig(signal, customFilters, config),
+		[config, customFilters, signal],
+	);
 
 	return {
 		filterConfig,

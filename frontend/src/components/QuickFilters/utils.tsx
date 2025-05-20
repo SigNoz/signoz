@@ -1,6 +1,7 @@
+import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
-import { FiltersType, IQuickFiltersConfig } from './types';
+import { FiltersType, IQuickFiltersConfig, SignalType } from './types';
 
 const getFilterName = (str: string): string =>
 	// replace . and _ with space
@@ -13,10 +14,11 @@ const getFilterName = (str: string): string =>
 		.join(' ');
 
 export const getFilterConfig = (
+	signal?: SignalType,
 	customFilters?: FilterType[],
 	config?: IQuickFiltersConfig[],
 ): IQuickFiltersConfig[] => {
-	if (!customFilters?.length) {
+	if (!customFilters?.length || !signal) {
 		return config || [];
 	}
 
@@ -25,6 +27,7 @@ export const getFilterConfig = (
 			({
 				type: FiltersType.CHECKBOX,
 				title: getFilterName(att.key),
+				dataSource: SIGNAL_DATA_SOURCE_MAP[signal],
 				attributeKey: {
 					id: att.key,
 					key: att.key,
