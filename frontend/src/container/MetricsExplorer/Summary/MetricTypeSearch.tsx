@@ -4,8 +4,13 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Search } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
-import { METRIC_TYPE_LABEL_MAP, METRIC_TYPE_VALUES_MAP } from './constants';
+import {
+	COMPOSITE_QUERY_KEY,
+	METRIC_TYPE_LABEL_MAP,
+	METRIC_TYPE_VALUES_MAP,
+} from './constants';
 
 function MetricTypeSearch(): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
@@ -15,6 +20,7 @@ function MetricTypeSearch(): JSX.Element {
 		entityVersion: '',
 	});
 
+	const [, setSearchParams] = useSearchParams();
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
 	const menuItems = useMemo(
@@ -34,7 +40,7 @@ function MetricTypeSearch(): JSX.Element {
 	const handleSelect = useCallback(
 		(selectedMetricType: string): void => {
 			if (selectedMetricType !== 'all') {
-				handleChangeQueryData('filters', {
+				const newFilter = {
 					items: [
 						...currentQuery.builder.queryData[0].filters.items,
 						{
@@ -49,18 +55,50 @@ function MetricTypeSearch(): JSX.Element {
 						},
 					],
 					op: 'AND',
+				};
+				const compositeQuery = {
+					...currentQuery,
+					builder: {
+						...currentQuery.builder,
+						queryData: [
+							{
+								...currentQuery.builder.queryData[0],
+								filters: newFilter,
+							},
+						],
+					},
+				};
+				handleChangeQueryData('filters', newFilter);
+				setSearchParams({
+					[COMPOSITE_QUERY_KEY]: JSON.stringify(compositeQuery),
 				});
 			} else {
-				handleChangeQueryData('filters', {
+				const newFilter = {
 					items: currentQuery.builder.queryData[0].filters.items.filter(
 						(item) => item.id !== 'metric_type',
 					),
 					op: 'AND',
+				};
+				const compositeQuery = {
+					...currentQuery,
+					builder: {
+						...currentQuery.builder,
+						queryData: [
+							{
+								...currentQuery.builder.queryData[0],
+								filters: newFilter,
+							},
+						],
+					},
+				};
+				handleChangeQueryData('filters', newFilter);
+				setSearchParams({
+					[COMPOSITE_QUERY_KEY]: JSON.stringify(compositeQuery),
 				});
 			}
 			setIsPopoverOpen(false);
 		},
-		[currentQuery.builder.queryData, handleChangeQueryData],
+		[currentQuery, handleChangeQueryData, setSearchParams],
 	);
 
 	const menu = (
