@@ -2,7 +2,11 @@ import { Select } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep } from 'lodash-es';
 import { useEffect, useState } from 'react';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilter,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 enum SpanScope {
@@ -18,6 +22,8 @@ interface SpanFilterConfig {
 
 interface SpanScopeSelectorProps {
 	queryName: string;
+	onChange?: (value: TagFilter) => void;
+	query: IBuilderQuery;
 }
 
 const SPAN_FILTER_CONFIG: Record<SpanScope, SpanFilterConfig | null> = {
@@ -50,7 +56,11 @@ const SELECT_OPTIONS = [
 	{ value: SpanScope.ENTRYPOINT_SPANS, label: 'Entrypoint Spans' },
 ];
 
-function SpanScopeSelector({ queryName }: SpanScopeSelectorProps): JSX.Element {
+function SpanScopeSelector({
+	queryName,
+	onChange,
+	query,
+}: SpanScopeSelectorProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const [selectedScope, setSelectedScope] = useState<SpanScope>(
 		SpanScope.ALL_SPANS,
@@ -71,15 +81,19 @@ function SpanScopeSelector({ queryName }: SpanScopeSelectorProps): JSX.Element {
 		if (hasFilter('isEntryPoint')) return SpanScope.ENTRYPOINT_SPANS;
 		return SpanScope.ALL_SPANS;
 	};
-
 	useEffect(() => {
-		const queryData = (currentQuery?.builder?.queryData || [])?.find(
+		let queryData = (currentQuery?.builder?.queryData || [])?.find(
 			(item) => item.queryName === queryName,
 		);
+
+		if (onChange && query) {
+			queryData = query;
+		}
+
 		const filters = queryData?.filters?.items;
 		const currentScope = getCurrentScopeFromFilters(filters);
 		setSelectedScope(currentScope);
-	}, [currentQuery, queryName]);
+	}, [currentQuery, onChange, query, queryName]);
 
 	const handleScopeChange = (newScope: SpanScope): void => {
 		const newQuery = cloneDeep(currentQuery);
@@ -112,10 +126,21 @@ function SpanScopeSelector({ queryName }: SpanScopeSelectorProps): JSX.Element {
 			},
 		}));
 
-		redirectWithQueryBuilderData(newQuery);
+		if (onChange && query) {
+			onChange({
+				...query.filters,
+				items: getUpdatedFilters(
+					[...query.filters.items, ...newQuery.builder.queryData[0].filters.items],
+					true,
+				),
+			});
+
+			setSelectedScope(newScope);
+		} else {
+			redirectWithQueryBuilderData(newQuery);
+		}
 	};
 
-	//
 	return (
 		<Select
 			value={selectedScope}
@@ -126,5 +151,9 @@ function SpanScopeSelector({ queryName }: SpanScopeSelectorProps): JSX.Element {
 		/>
 	);
 }
+
+SpanScopeSelector.defaultProps = {
+	onChange: undefined,
+};
 
 export default SpanScopeSelector;
