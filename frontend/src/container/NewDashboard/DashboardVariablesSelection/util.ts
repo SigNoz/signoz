@@ -95,10 +95,96 @@ export const buildDependencies = (
 	return graph;
 };
 
-// Function to build the dependency graph
+export interface IDependencyData {
+	order: string[];
+	graph: VariableGraph;
+	parentDependencyGraph: VariableGraph;
+	hasCycle: boolean;
+	cycleNodes?: string[];
+}
+
+export const buildParentDependencyGraph = (
+	graph: VariableGraph,
+): VariableGraph => {
+	const parentGraph: VariableGraph = {};
+
+	// Initialize empty arrays for all nodes
+	Object.keys(graph).forEach((node) => {
+		parentGraph[node] = [];
+	});
+
+	// For each node and its children in the original graph
+	Object.entries(graph).forEach(([node, children]) => {
+		// For each child, add the current node as its parent
+		children.forEach((child) => {
+			parentGraph[child].push(node);
+		});
+	});
+
+	return parentGraph;
+};
+
+const collectCyclePath = (
+	graph: VariableGraph,
+	start: string,
+	end: string,
+): string[] => {
+	const path: string[] = [];
+	let current = start;
+
+	const findParent = (node: string): string | undefined =>
+		Object.keys(graph).find((key) => graph[key]?.includes(node));
+
+	while (current !== end) {
+		const parent = findParent(current);
+		if (!parent) break;
+		path.push(parent);
+		current = parent;
+	}
+
+	return [start, ...path];
+};
+
+const detectCycle = (
+	graph: VariableGraph,
+	node: string,
+	visited: Set<string>,
+	recStack: Set<string>,
+): string[] | null => {
+	if (!visited.has(node)) {
+		visited.add(node);
+		recStack.add(node);
+
+		const neighbors = graph[node] || [];
+		let cycleNodes: string[] | null = null;
+
+		neighbors.some((neighbor) => {
+			if (!visited.has(neighbor)) {
+				const foundCycle = detectCycle(graph, neighbor, visited, recStack);
+				if (foundCycle) {
+					cycleNodes = foundCycle;
+					return true;
+				}
+			} else if (recStack.has(neighbor)) {
+				// Found a cycle, collect the cycle nodes
+				cycleNodes = collectCyclePath(graph, node, neighbor);
+				return true;
+			}
+			return false;
+		});
+
+		if (cycleNodes) {
+			return cycleNodes;
+		}
+	}
+	recStack.delete(node);
+	return null;
+};
+
 export const buildDependencyGraph = (
 	dependencies: VariableGraph,
-): { order: string[]; graph: VariableGraph } => {
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+): IDependencyData => {
 	const inDegree: Record<string, number> = {};
 	const adjList: VariableGraph = {};
 
@@ -111,6 +197,22 @@ export const buildDependencyGraph = (
 			inDegree[child]++;
 			adjList[node].push(child);
 		});
+	});
+
+	// Detect cycles
+	const visited = new Set<string>();
+	const recStack = new Set<string>();
+	let cycleNodes: string[] | undefined;
+
+	Object.keys(dependencies).some((node) => {
+		if (!visited.has(node)) {
+			const foundCycle = detectCycle(dependencies, node, visited, recStack);
+			if (foundCycle) {
+				cycleNodes = foundCycle;
+				return true;
+			}
+		}
+		return false;
 	});
 
 	// Topological sort using Kahn's Algorithm
@@ -132,11 +234,15 @@ export const buildDependencyGraph = (
 		});
 	}
 
-	if (topologicalOrder.length !== Object.keys(dependencies)?.length) {
-		console.error('Cycle detected in the dependency graph!');
-	}
+	const hasCycle = topologicalOrder.length !== Object.keys(dependencies)?.length;
 
-	return { order: topologicalOrder, graph: adjList };
+	return {
+		order: topologicalOrder,
+		graph: adjList,
+		parentDependencyGraph: buildParentDependencyGraph(adjList),
+		hasCycle,
+		cycleNodes,
+	};
 };
 
 export const onUpdateVariableNode = (
@@ -157,27 +263,6 @@ export const onUpdateVariableNode = (
 			});
 		}
 	});
-};
-
-export const buildParentDependencyGraph = (
-	graph: VariableGraph,
-): VariableGraph => {
-	const parentGraph: VariableGraph = {};
-
-	// Initialize empty arrays for all nodes
-	Object.keys(graph).forEach((node) => {
-		parentGraph[node] = [];
-	});
-
-	// For each node and its children in the original graph
-	Object.entries(graph).forEach(([node, children]) => {
-		// For each child, add the current node as its parent
-		children.forEach((child) => {
-			parentGraph[child].push(node);
-		});
-	});
-
-	return parentGraph;
 };
 
 export const checkAPIInvocation = (
@@ -206,9 +291,3 @@ export const checkAPIInvocation = (
 		variablesToGetUpdated[0] === variableData.name
 	);
 };
-
-export interface IDependencyData {
-	order: string[];
-	graph: VariableGraph;
-	parentDependencyGraph: VariableGraph;
-}

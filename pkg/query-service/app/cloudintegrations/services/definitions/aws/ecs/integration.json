@@ -1,0 +1,107 @@
+{
+  "id": "ecs",
+  "title": "ECS",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": true
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "aws_ECS_CPUUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_CPUUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_CPUUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_CPUUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Account ID",
+        "path": "resources.cloud.account.id",
+        "type": "string"
+      },
+      {
+        "name": "Log Group Name",
+        "path": "resources.aws.cloudwatch.log_group_name",
+        "type": "string"
+      },
+      {
+        "name": "Log Stream Name",
+        "path": "resources.aws.cloudwatch.log_stream_name",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/ECS"
+        }
+      ]
+    },
+    "aws_logs": {
+      "cloudwatch_logs_subscriptions": [
+        {
+          "log_group_name_prefix": "/ecs",
+          "filter_pattern": ""
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "AWS ECS Overview",
+        "description": "Overview of ECS",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

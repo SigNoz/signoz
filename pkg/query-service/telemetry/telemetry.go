@@ -195,7 +195,6 @@ type Telemetry struct {
 	userEmail     string
 	isEnabled     bool
 	isAnonymous   bool
-	distinctId    string
 	reader        interfaces.Reader
 	sqlStore      sqlstore.SQLStore
 	companyDomain string
@@ -206,14 +205,14 @@ type Telemetry struct {
 	patTokenUser  bool
 	mutex         sync.RWMutex
 
-	alertsInfoCallback     func(ctx context.Context) (*model.AlertsInfo, error)
+	alertsInfoCallback     func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)
 	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
 	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
-	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
-	savedViewsInfoCallback func(ctx context.Context) (*model.SavedViewsInfo, error)
+	dashboardsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)
+	savedViewsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)
 }
 
-func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*model.AlertsInfo, error)) {
+func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)) {
 	a.alertsInfoCallback = callback
 }
 
@@ -225,11 +224,11 @@ func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context, store
 	a.getUsersCallback = callback
 }
 
-func (a *Telemetry) SetSavedViewsInfoCallback(callback func(ctx context.Context) (*model.SavedViewsInfo, error)) {
+func (a *Telemetry) SetSavedViewsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)) {
 	a.savedViewsInfoCallback = callback
 }
 
-func (a *Telemetry) SetDashboardsInfoCallback(callback func(ctx context.Context) (*model.DashboardsInfo, error)) {
+func (a *Telemetry) SetDashboardsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)) {
 	a.dashboardsInfoCallback = callback
 }
 
@@ -352,14 +351,14 @@ func createTelemetry() {
 			}
 		}
 
-		alertsInfo, err := telemetry.alertsInfoCallback(ctx)
+		alertsInfo, err := telemetry.alertsInfoCallback(ctx, telemetry.sqlStore)
 		if err != nil {
 			telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
 		}
 		if err == nil {
-			dashboardsInfo, err := telemetry.dashboardsInfoCallback(ctx)
+			dashboardsInfo, err := telemetry.dashboardsInfoCallback(ctx, telemetry.sqlStore)
 			if err == nil {
-				savedViewsInfo, err := telemetry.savedViewsInfoCallback(ctx)
+				savedViewsInfo, err := telemetry.savedViewsInfoCallback(ctx, telemetry.sqlStore)
 				if err == nil {
 					dashboardsAlertsData := map[string]interface{}{
 						"totalDashboards":                 dashboardsInfo.TotalDashboards,
@@ -739,7 +738,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	userId := a.ipAddress
 	if a.isTelemetryAnonymous() || userId == IP_NOT_FOUND_PLACEHOLDER {
-		userId = a.GetDistinctId()
+		userId = "anonymous"
 	}
 
 	// check if event is part of SAAS_EVENTS_LIST
@@ -772,13 +771,6 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 			},
 		})
 	}
-}
-
-func (a *Telemetry) GetDistinctId() string {
-	return a.distinctId
-}
-func (a *Telemetry) SetDistinctId(distinctId string) {
-	a.distinctId = distinctId
 }
 
 func (a *Telemetry) isTelemetryAnonymous() bool {

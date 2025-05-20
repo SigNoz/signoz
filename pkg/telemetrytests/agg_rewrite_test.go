@@ -20,7 +20,6 @@ func TestAggRewrite(t *testing.T) {
 
 	mockMetadataStore := stubs.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-
 	opts := querybuilder.AggExprRewriterOptions{
 		FieldMapper:      fm,
 		ConditionBuilder: cb,

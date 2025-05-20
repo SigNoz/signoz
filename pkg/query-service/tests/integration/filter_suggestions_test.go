@@ -19,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -311,7 +310,6 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:       reader,
-		AppDao:       dao.DB(),
 		FeatureFlags: fm,
 		JWT:          jwt,
 		Signoz: &signoz.SigNoz{

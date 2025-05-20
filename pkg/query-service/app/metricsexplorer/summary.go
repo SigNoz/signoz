@@ -10,7 +10,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
@@ -24,10 +24,11 @@ import (
 type SummaryService struct {
 	reader       interfaces.Reader
 	rulesManager *rules.Manager
+	dashboard    dashboard.Module
 }
 
-func NewSummaryService(reader interfaces.Reader, alertManager *rules.Manager) *SummaryService {
-	return &SummaryService{reader: reader, rulesManager: alertManager}
+func NewSummaryService(reader interfaces.Reader, alertManager *rules.Manager, dashboard dashboard.Module) *SummaryService {
+	return &SummaryService{reader: reader, rulesManager: alertManager, dashboard: dashboard}
 }
 
 func (receiver *SummaryService) FilterKeys(ctx context.Context, params *metrics_explorer.FilterKeyRequest) (*metrics_explorer.FilterKeyResponse, *model.ApiError) {
@@ -164,7 +165,7 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, orgID val
 		if errv2 != nil {
 			return &model.ApiError{Typ: model.ErrorInternal, Err: errv2}
 		}
-		data, err := dashboards.GetDashboardsWithMetricNames(ctx, claims.OrgID, metricNames)
+		data, err := receiver.dashboard.GetByMetricNames(ctx, claims.OrgID, metricNames)
 		if err != nil {
 			return err
 		}
@@ -337,9 +338,9 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 		if errv2 != nil {
 			return &model.ApiError{Typ: model.ErrorInternal, Err: errv2}
 		}
-		names, apiError := dashboards.GetDashboardsWithMetricNames(ctx, claims.OrgID, metricNames)
-		if apiError != nil {
-			return apiError
+		names, err := receiver.dashboard.GetByMetricNames(ctx, claims.OrgID, metricNames)
+		if err != nil {
+			return err
 		}
 		if names != nil {
 			jsonData, err := json.Marshal(names)
