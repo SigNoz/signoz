@@ -486,8 +486,13 @@ function K8sClustersList({
 			...Object.fromEntries(
 				Array.from(searchParams.entries()).filter(
 					([key]) =>
-						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.CLUSTER_NAME &&
-						key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+						![
+							INFRA_MONITORING_K8S_PARAMS_KEYS.CLUSTER_NAME,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS,
+						].includes(key),
 				),
 			),
 		});

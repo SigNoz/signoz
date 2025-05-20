@@ -534,4 +534,7 @@ export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	FILTERS: 'filters',
 	GROUP_BY: 'groupBy',
 	ORDER_BY: 'orderBy',
+	LOG_FILTERS: 'logFilters',
+	TRACES_FILTERS: 'tracesFilters',
+	EVENTS_FILTERS: 'eventsFilters',
 };
