@@ -4,6 +4,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+type TraceBuilderQuery = QueryBuilderQuery[Aggregation]
+
+type LogBuilderQuery = QueryBuilderQuery[Aggregation]
+
+type MetricBuilderQuery = QueryBuilderQuery[MetricAggregation]
+
 type QueryBuilderQuery[T any] struct {
 	// name of the query, mainly used when query is used in formula
 	Name string `json:"name"`

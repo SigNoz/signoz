@@ -6,12 +6,31 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 )
+
+func resourceFilterStmtBuilder() (qbtypes.StatementBuilder[qbtypes.Aggregation], error) {
+	fm := resourcefilter.NewFieldMapper()
+	cb := resourcefilter.NewConditionBuilder(fm)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	compiler := resourcefilter.NewFilterCompiler(resourcefilter.FilterCompilerOpts{
+		FieldMapper:      fm,
+		ConditionBuilder: cb,
+		MetadataStore:    mockMetadataStore,
+	})
+
+	return resourcefilter.NewResourceFilterStatementBuilder(resourcefilter.ResourceFilterStatementBuilderOpts{
+		FieldMapper:      fm,
+		ConditionBuilder: cb,
+		Compiler:         compiler,
+	}), nil
+}
 
 func TestStatementBuilder(t *testing.T) {
 	cases := []struct {
@@ -25,6 +44,7 @@ func TestStatementBuilder(t *testing.T) {
 			name:        "test",
 			requestType: qbtypes.RequestTypeScalar,
 			query: qbtypes.QueryBuilderQuery[qbtypes.Aggregation]{
+				Signal:       telemetrytypes.SignalTraces,
 				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
 				Aggregations: []qbtypes.Aggregation{
 					{
@@ -46,6 +66,7 @@ func TestStatementBuilder(t *testing.T) {
 			name:        "test",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.Aggregation]{
+				Signal:       telemetrytypes.SignalTraces,
 				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
 				Aggregations: []qbtypes.Aggregation{
 					{
@@ -67,6 +88,7 @@ func TestStatementBuilder(t *testing.T) {
 			name:        "test",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.Aggregation]{
+				Signal:       telemetrytypes.SignalTraces,
 				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
 				Aggregations: []qbtypes.Aggregation{
 					{
@@ -99,9 +121,10 @@ func TestStatementBuilder(t *testing.T) {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	compiler := telemetrytraces.NewFilterCompiler(telemetrytraces.FilterCompilerOpts{
-		FieldMapper:      fm,
-		ConditionBuilder: cb,
-		MetadataStore:    mockMetadataStore,
+		FieldMapper:        fm,
+		ConditionBuilder:   cb,
+		MetadataStore:      mockMetadataStore,
+		SkipResourceFilter: true,
 	})
 	aggExprRewriter := querybuilder.NewAggExprRewriter(querybuilder.AggExprRewriterOptions{
 		FieldMapper:      fm,
@@ -109,12 +132,16 @@ func TestStatementBuilder(t *testing.T) {
 		MetadataStore:    mockMetadataStore,
 	})
 
+	resourceFilterStmtBuilder, err := resourceFilterStmtBuilder()
+	require.NoError(t, err)
+
 	statementBuilder := telemetrytraces.NewTraceQueryStatementBuilder(telemetrytraces.TraceQueryStatementBuilderOpts{
-		FieldMapper:      fm,
-		ConditionBuilder: cb,
-		Compiler:         compiler,
-		MetadataStore:    mockMetadataStore,
-		AggExprRewriter:  aggExprRewriter,
+		FieldMapper:               fm,
+		ConditionBuilder:          cb,
+		Compiler:                  compiler,
+		MetadataStore:             mockMetadataStore,
+		AggExprRewriter:           aggExprRewriter,
+		ResourceFilterStmtBuilder: resourceFilterStmtBuilder,
 	})
 
 	for _, c := range cases {

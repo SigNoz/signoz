@@ -17,11 +17,12 @@ var (
 )
 
 type TraceQueryStatementBuilderOpts struct {
-	MetadataStore    telemetrytypes.MetadataStore
-	FieldMapper      qbtypes.FieldMapper
-	ConditionBuilder qbtypes.ConditionBuilder
-	Compiler         qbtypes.FilterCompiler
-	AggExprRewriter  qbtypes.AggExprRewriter
+	MetadataStore             telemetrytypes.MetadataStore
+	FieldMapper               qbtypes.FieldMapper
+	ConditionBuilder          qbtypes.ConditionBuilder
+	ResourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.Aggregation]
+	Compiler                  qbtypes.FilterCompiler
+	AggExprRewriter           qbtypes.AggExprRewriter
 }
 
 type traceQueryStatementBuilder struct {
@@ -53,10 +54,7 @@ func (b *traceQueryStatementBuilder) Build(
 	query qbtypes.QueryBuilderQuery[qbtypes.Aggregation],
 ) (*qbtypes.Statement, error) {
 
-	keySelectors, err := getKeySelectors(query)
-	if err != nil {
-		return nil, err
-	}
+	keySelectors := getKeySelectors(query)
 	keys, err := b.opts.MetadataStore.GetKeysMulti(context.Background(), keySelectors)
 	if err != nil {
 		return nil, err
@@ -67,17 +65,17 @@ func (b *traceQueryStatementBuilder) Build(
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
-		return b.buildListQuery(q, query, start, end, keys)
+		return b.buildListQuery(ctx, q, query, start, end, keys)
 	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(q, query, start, end, keys)
+		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys)
 	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(q, query, start, end, keys)
+		return b.buildScalarQuery(ctx, q, query, start, end, keys, false)
 	}
 
 	return nil, fmt.Errorf("unsupported request type: %s", requestType)
 }
 
-func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.Aggregation]) ([]*telemetrytypes.FieldKeySelector, error) {
+func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.Aggregation]) []*telemetrytypes.FieldKeySelector {
 	var keySelectors []*telemetrytypes.FieldKeySelector
 
 	for idx := range query.Aggregations {
@@ -89,16 +87,29 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.Aggregation]) ([]*t
 	whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
 	keySelectors = append(keySelectors, whereClauseSelectors...)
 
-	return keySelectors, nil
+	return keySelectors
 }
 
 // buildListQuery builds a query for list panel type
 func (b *traceQueryStatementBuilder) buildListQuery(
+	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.Aggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (*qbtypes.Statement, error) {
+
+	var (
+		cteFragments []string
+		cteArgs      [][]any
+	)
+
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end); err != nil {
+		return nil, err
+	} else if frag != "" {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+	}
 
 	// Select default columns
 	sb.Select(
@@ -112,11 +123,11 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	)
 
 	for _, field := range query.SelectFields {
-		colName, err := b.fm.ColumnExpressionFor(context.Background(), &field, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(context.Background(), &field, keys)
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(fmt.Sprintf("%s AS `%s`", colName, field.Name))
+		sb.SelectMore(colExpr)
 	}
 
 	// From table
@@ -130,11 +141,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		colName, err := b.fm.ColumnExpressionFor(context.Background(), &orderBy.Key.TelemetryFieldKey, keys)
-		if err != nil {
-			return nil, err
-		}
-		sb.OrderBy(fmt.Sprintf("%s %s", colName, orderBy.Direction))
+		sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction))
 	}
 
 	// Add limit and offset
@@ -146,19 +153,36 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		sb.Offset(query.Offset)
 	}
 
-	sqlQuery, chArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	finalSQL := combineCTEs(cteFragments) + mainSQL
+	finalArgs := prependArgs(cteArgs, mainArgs)
+
 	return &qbtypes.Statement{
-		Query: sqlQuery,
-		Args:  chArgs,
+		Query: finalSQL,
+		Args:  finalArgs,
 	}, nil
 }
 
 func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
+	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.Aggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (*qbtypes.Statement, error) {
+
+	var (
+		cteFragments []string
+		cteArgs      [][]any
+	)
+
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end); err != nil {
+		return nil, err
+	} else if frag != "" {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+	}
 
 	sb.SelectMore(fmt.Sprintf(
 		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
@@ -166,14 +190,14 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	))
 
 	// Keep original column expressions so we can build the tuple
-	colExprs := make([]string, 0, len(query.GroupBy))
+	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
 		colExpr, err := b.fm.ColumnExpressionFor(context.Background(), &gb.TelemetryFieldKey, keys)
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(fmt.Sprintf("%s AS `%s`", colExpr, gb.TelemetryFieldKey.Name))
-		colExprs = append(colExprs, colExpr)
+		sb.SelectMore(colExpr)
+		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
 	}
 
 	// Aggregations
@@ -198,14 +222,17 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	if query.Limit > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.ClickHouse.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(cteSB, query, start, end, keys)
+		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, true)
 		if err != nil {
 			return nil, err
 		}
 
+		cteFragments = append(cteFragments, fmt.Sprintf("__limit_cte AS (%s)", cteStmt.Query))
+		cteArgs = append(cteArgs, cteStmt.Args)
+
 		// Constrain the main query to the rows that appear in the CTE.
-		tuple := fmt.Sprintf("(%s)", strings.Join(colExprs, ", "))
-		sb.Where(fmt.Sprintf("%s IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(colExprs, ", ")))
+		tuple := fmt.Sprintf("(%s)", strings.Join(fieldNames, ", "))
+		sb.Where(fmt.Sprintf("%s IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
 
 		// Group by all dimensions
 		sb.GroupBy("ALL")
@@ -216,8 +243,8 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
-		finalSQL = fmt.Sprintf("WITH __limit_cte AS (%s) %s", cteStmt.Query, mainSQL)
-		finalArgs = append(cteStmt.Args, mainArgs...)
+		finalSQL = combineCTEs(cteFragments) + mainSQL
+		finalArgs = prependArgs(cteArgs, mainArgs)
 
 	} else {
 		sb.GroupBy("ALL")
@@ -225,7 +252,11 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			sb.Having(query.Having.Expression)
 		}
 
-		finalSQL, finalArgs = sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
+		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
+
+		// Stitch it all together:  WITH … SELECT …
+		finalSQL = combineCTEs(cteFragments) + mainSQL
+		finalArgs = prependArgs(cteArgs, mainArgs)
 	}
 
 	return &qbtypes.Statement{
@@ -236,21 +267,35 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 
 // buildScalarQuery builds a query for scalar panel type
 func (b *traceQueryStatementBuilder) buildScalarQuery(
+	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.Aggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	skipResourceCTE bool,
 ) (*qbtypes.Statement, error) {
+
+	var (
+		cteFragments []string
+		cteArgs      [][]any
+	)
+
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end); err != nil {
+		return nil, err
+	} else if frag != "" && !skipResourceCTE {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+	}
 
 	allAggChArgs := []any{}
 
 	// Add group by columns
 	for _, groupBy := range query.GroupBy {
-		colName, err := b.fm.ColumnExpressionFor(context.Background(), &groupBy.TelemetryFieldKey, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(context.Background(), &groupBy.TelemetryFieldKey, keys)
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(fmt.Sprintf("%s AS `%s`", colName, groupBy.TelemetryFieldKey.Name))
+		sb.SelectMore(colExpr)
 	}
 
 	// Add aggregation
@@ -285,11 +330,17 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		colName, err := b.fm.ColumnExpressionFor(context.Background(), &orderBy.Key.TelemetryFieldKey, keys)
-		if err != nil {
-			return nil, err
+		idx, ok := aggOrderBy(orderBy, query)
+		if ok {
+			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction))
+		} else {
+			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction))
 		}
-		sb.OrderBy(fmt.Sprintf("%s %s", colName, orderBy.Direction))
+	}
+
+	// if there is no order by, then use the __result_0 as the order by
+	if len(query.Order) == 0 {
+		sb.OrderBy("__result_0 DESC")
 	}
 
 	// Add limit and offset
@@ -297,10 +348,14 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		sb.Limit(query.Limit)
 	}
 
-	sqlQuery, chArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
+	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
+
+	finalSQL := combineCTEs(cteFragments) + mainSQL
+	finalArgs := prependArgs(cteArgs, mainArgs)
+
 	return &qbtypes.Statement{
-		Query: sqlQuery,
-		Args:  chArgs,
+		Query: finalSQL,
+		Args:  finalArgs,
 	}, nil
 }
 
@@ -340,4 +395,69 @@ func (b *traceQueryStatementBuilder) addFilterCondition(sb *sqlbuilder.SelectBui
 	sb.Where(sb.GE("timestamp", start), sb.LE("timestamp", end), sb.GE("ts_bucket_start", start_bucket), sb.LE("ts_bucket_start", end_bucket))
 
 	return nil
+}
+
+// combineCTEs takes any number of individual CTE fragments like
+//
+//	"__resource_filter AS (...)", "__limit_cte AS (...)"
+//
+// and renders the final `WITH …` clause.
+func combineCTEs(ctes []string) string {
+	if len(ctes) == 0 {
+		return ""
+	}
+	return "WITH " + strings.Join(ctes, ", ") + " "
+}
+
+// prependArgs ensures CTE arguments appear before main-query arguments
+// in the final slice so their ordinal positions match the SQL string.
+func prependArgs(cteArgs [][]any, mainArgs []any) []any {
+	out := make([]any, 0, len(mainArgs)+len(cteArgs))
+	for _, a := range cteArgs { // CTEs first, in declaration order
+		out = append(out, a...)
+	}
+	return append(out, mainArgs...)
+}
+
+func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.Aggregation]) (int, bool) {
+	for i, agg := range q.Aggregations {
+		if k.Key.Name == agg.Alias ||
+			k.Key.Name == agg.Expression ||
+			k.Key.Name == fmt.Sprintf("%d", i) {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
+func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
+	ctx context.Context,
+	sb *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.Aggregation],
+	start, end uint64,
+) (cteSQL string, cteArgs []any, err error) {
+
+	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end)
+	if err != nil {
+		return "", nil, err
+	}
+
+	sb.Where("resource_fingerprint IN (SELECT fingerprint FROM __resource_filter)")
+
+	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, nil
+}
+
+func (b *traceQueryStatementBuilder) buildResourceFilterCTE(
+	ctx context.Context,
+	query qbtypes.QueryBuilderQuery[qbtypes.Aggregation],
+	start, end uint64,
+) (*qbtypes.Statement, error) {
+
+	return b.opts.ResourceFilterStmtBuilder.Build(
+		ctx,
+		start,
+		end,
+		qbtypes.RequestTypeRaw,
+		query,
+	)
 }
