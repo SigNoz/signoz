@@ -36,7 +36,6 @@ var skipExistsFilter = map[v3.FilterOperator]struct{}{
 	v3.FilterOperatorNotContains: {},
 	v3.FilterOperatorNotRegex:    {},
 	v3.FilterOperatorNotIn:       {},
-	v3.FilterOperatorExists:      {},
 	v3.FilterOperatorNotExists:   {},
 }
 
@@ -221,7 +220,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 		// mapContains forces the use of index.
 		// for mat column it's is not required as it will already use the dedicated index.
 		// skip the exists filter for operators such as !=, not like, not contains, not regex, not in
-		if _, ok := skipExistsFilter[op]; !ok && item.Key.IsColumn == false {
+		if _, ok := skipExistsFilter[op]; !ok && item.Key.IsColumn == false && item.Operator != v3.FilterOperatorExists {
 			conditions = append(conditions, getExistsNexistsFilter(v3.FilterOperatorExists, item))
 		}
 	}
