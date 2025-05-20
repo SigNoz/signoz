@@ -4,7 +4,7 @@ import { Button, Skeleton } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { Cone, Play, RefreshCcw } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useIsFetching, useQueryClient } from 'react-query';
 
 const useFunnelResultsLoading = (): boolean => {
@@ -59,12 +59,23 @@ function ValidTracesCount(): JSX.Element {
 		selectedTime,
 	} = useFunnelContext();
 	const queryClient = useQueryClient();
-	const validationQueryKey = [
-		REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS,
-		funnelId,
-		selectedTime,
-	];
+	const validationQueryKey = useMemo(
+		() => [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId, selectedTime],
+		[funnelId, selectedTime],
+	);
 	const validationStatus = queryClient.getQueryData(validationQueryKey);
+
+	useEffect(() => {
+		// Show loading state immediately when fields become valid
+		if (hasIncompleteStepFields && validationStatus !== 'pending') {
+			queryClient.setQueryData(validationQueryKey, 'pending');
+		}
+	}, [
+		hasIncompleteStepFields,
+		queryClient,
+		validationQueryKey,
+		validationStatus,
+	]);
 
 	if (hasAllEmptyStepFields) {
 		return (
@@ -73,10 +84,6 @@ function ValidTracesCount(): JSX.Element {
 	}
 
 	if (hasIncompleteStepFields) {
-		// Show loading state immediately when fields become valid
-		if (validationStatus !== 'pending') {
-			queryClient.setQueryData(validationQueryKey, 'pending');
-		}
 		return (
 			<span className="steps-footer__valid-traces">
 				Missing service / span names
