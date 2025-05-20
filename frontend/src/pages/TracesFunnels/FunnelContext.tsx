@@ -116,12 +116,7 @@ export function FunnelProvider({
 		selectedTime,
 		startTime,
 		endTime,
-		enabled:
-			!!funnelId &&
-			!!selectedTime &&
-			!!startTime &&
-			!!endTime &&
-			!hasIncompleteStepFields,
+		enabled: !!funnelId && !!selectedTime && !!startTime && !!endTime,
 	});
 
 	const validTracesCount = useMemo(
