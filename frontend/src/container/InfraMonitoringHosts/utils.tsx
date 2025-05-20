@@ -45,12 +45,9 @@ export interface HostsListTableProps {
 	currentPage: number;
 	setCurrentPage: Dispatch<SetStateAction<number>>;
 	pageSize: number;
-	setOrderBy: Dispatch<
-		SetStateAction<{
-			columnName: string;
-			order: 'asc' | 'desc';
-		} | null>
-	>;
+	setOrderBy: (
+		orderBy: { columnName: string; order: 'asc' | 'desc' } | null,
+	) => void;
 	setPageSize: (pageSize: number) => void;
 }
 

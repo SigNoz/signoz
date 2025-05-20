@@ -8,6 +8,11 @@ import HostMetricDetail from 'components/HostMetricsDetail';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
+import {
+	getFiltersFromParams,
+	getOrderByFromParams,
+} from 'container/InfraMonitoringK8s/commonUtils';
+import { INFRA_MONITORING_K8S_PARAMS_KEYS } from 'container/InfraMonitoringK8s/constants';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -31,16 +36,39 @@ function HostsList(): JSX.Element {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [currentPage, setCurrentPage] = useState(1);
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
-		items: [],
-		op: 'and',
+	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
+		const filters = getFiltersFromParams(
+			searchParams,
+			INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS,
+		);
+		if (!filters) {
+			return {
+				items: [],
+				op: 'and',
+			};
+		}
+		return filters;
 	});
+	console.log('filters', filters);
 	const [showFilters, setShowFilters] = useState<boolean>(true);
 
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
-	} | null>(null);
+	} | null>(() => getOrderByFromParams(searchParams));
+
+	const handleOrderByChange = (
+		orderBy: {
+			columnName: string;
+			order: 'asc' | 'desc';
+		} | null,
+	): void => {
+		setOrderBy(orderBy);
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(orderBy),
+		});
+	};
 
 	const [selectedHostName, setSelectedHostName] = useState<string | null>(() => {
 		const hostName = searchParams.get('hostName');
@@ -92,6 +120,10 @@ function HostsList(): JSX.Element {
 			const isNewFilterAdded = value.items.length !== filters.items.length;
 			setFilters(value);
 			handleChangeQueryData('filters', value);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS]: JSON.stringify(value),
+			});
 			if (isNewFilterAdded) {
 				setCurrentPage(1);
 
@@ -171,7 +203,10 @@ function HostsList(): JSX.Element {
 								</Button>
 							</div>
 						)}
-						<HostsListControls handleFiltersChange={handleFiltersChange} />
+						<HostsListControls
+							filters={filters}
+							handleFiltersChange={handleFiltersChange}
+						/>
 					</div>
 					<HostsListTable
 						isLoading={isLoading}
@@ -185,7 +220,7 @@ function HostsList(): JSX.Element {
 						onHostClick={handleHostClick}
 						pageSize={pageSize}
 						setPageSize={setPageSize}
-						setOrderBy={setOrderBy}
+						setOrderBy={handleOrderByChange}
 					/>
 				</div>
 			</div>

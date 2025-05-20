@@ -10,8 +10,10 @@ import { DataSource } from 'types/common/queryBuilder';
 
 function HostsListControls({
 	handleFiltersChange,
+	filters,
 }: {
 	handleFiltersChange: (value: IBuilderQuery['filters']) => void;
+	filters: IBuilderQuery['filters'];
 }): JSX.Element {
 	const currentQuery = initialQueriesMap[DataSource.METRICS];
 	const updatedCurrentQuery = useMemo(
@@ -26,11 +28,12 @@ function HostsListControls({
 						aggregateAttribute: {
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
+						filters,
 					},
 				],
 			},
 		}),
-		[currentQuery],
+		[currentQuery, filters],
 	);
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
