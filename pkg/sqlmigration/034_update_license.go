@@ -19,7 +19,7 @@ type updateLicense struct {
 	store sqlstore.SQLStore
 }
 
-type existingLicense33 struct {
+type existingLicense34 struct {
 	bun.BaseModel `bun:"table:licenses_v3"`
 
 	ID   string `bun:"id,pk,type:text"`
@@ -27,7 +27,7 @@ type existingLicense33 struct {
 	Data string `bun:"data,type:text"`
 }
 
-type newLicense33 struct {
+type newLicense34 struct {
 	bun.BaseModel `bun:"table:license"`
 
 	types.Identifiable
@@ -64,8 +64,8 @@ func (migration *updateLicense) Up(ctx context.Context, db *bun.DB) error {
 
 	defer tx.Rollback()
 
-	err = migration.store.Dialect().RenameTableAndModifyModel(ctx, tx, new(existingLicense33), new(newLicense33), []string{OrgReference}, func(ctx context.Context) error {
-		existingLicenses := make([]*existingLicense33, 0)
+	err = migration.store.Dialect().RenameTableAndModifyModel(ctx, tx, new(existingLicense34), new(newLicense34), []string{OrgReference}, func(ctx context.Context) error {
+		existingLicenses := make([]*existingLicense34, 0)
 		err = tx.NewSelect().Model(&existingLicenses).Scan(ctx)
 		if err != nil {
 			if err != sql.ErrNoRows {
@@ -117,8 +117,8 @@ func (migration *updateLicense) Down(context.Context, *bun.DB) error {
 	return nil
 }
 
-func (migration *updateLicense) CopyExistingLicensesToNewLicenses(existingLicenses []*existingLicense33, orgID string) ([]*newLicense33, error) {
-	newLicenses := make([]*newLicense33, len(existingLicenses))
+func (migration *updateLicense) CopyExistingLicensesToNewLicenses(existingLicenses []*existingLicense34, orgID string) ([]*newLicense34, error) {
+	newLicenses := make([]*newLicense34, len(existingLicenses))
 	for idx, existingLicense := range existingLicenses {
 		licenseID, err := valuer.NewUUID(existingLicense.ID)
 		if err != nil {
@@ -129,7 +129,7 @@ func (migration *updateLicense) CopyExistingLicensesToNewLicenses(existingLicens
 		if err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "unable to unmarshal license data in map[string]any")
 		}
-		newLicenses[idx] = &newLicense33{
+		newLicenses[idx] = &newLicense34{
 			Identifiable: types.Identifiable{
 				ID: licenseID,
 			},
