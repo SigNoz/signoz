@@ -6,7 +6,7 @@ import (
 	"net/http/httputil"
 	"time"
 
-	"github.com/SigNoz/signoz/ee/licensing/signozlicenseapi"
+	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	"github.com/SigNoz/signoz/ee/query-service/dao"
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 	"github.com/SigNoz/signoz/ee/query-service/interfaces"
@@ -27,7 +27,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/licensetypes"
+	"github.com/SigNoz/signoz/pkg/types/licensingtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -69,7 +69,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		FluxInterval:                  opts.FluxInterval,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
-		LicensingAPI:                  signozlicenseapi.NewLicenseAPI(signoz.License),
+		LicensingAPI:                  httplicensing.NewLicensingAPI(signoz.License),
 		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuickFilters:                  quickFilter,
@@ -165,11 +165,11 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 // TODO(nitya): remove this once we know how to get the FF's
 func (ah *APIHandler) updateRequestContext(w http.ResponseWriter, r *http.Request) (*http.Request, error) {
 	ssoAvailable := true
-	err := ah.Signoz.License.CheckFeature(r.Context(), licensetypes.SSO)
+	err := ah.Signoz.License.CheckFeature(r.Context(), licensingtypes.SSO)
 	if err != nil && errors.Ast(err, errors.TypeUnsupported) {
 		ssoAvailable = false
 	} else if err != nil {
-		zap.L().Error("feature check failed", zap.String("featureKey", licensetypes.SSO), zap.Error(err))
+		zap.L().Error("feature check failed", zap.String("featureKey", licensingtypes.SSO), zap.Error(err))
 		return r, errors.New(errors.TypeInternal, errors.CodeInternal, "error checking SSO feature")
 	}
 	ctx := context.WithValue(r.Context(), types.SSOAvailable, ssoAvailable)

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/licensing"
-	"github.com/SigNoz/signoz/ee/licensing/signozlicense"
+	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	eeuserimpl "github.com/SigNoz/signoz/ee/modules/user/impluser"
 	"github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
@@ -24,7 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/licensetypes"
+	"github.com/SigNoz/signoz/pkg/types/licensingtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	pkgzeus "github.com/SigNoz/signoz/pkg/zeus"
 
@@ -124,9 +124,9 @@ func main() {
 		config,
 		zeus.Config(),
 		httpzeus.NewProviderFactory(),
-		licensing.Config(licensetypes.ValidationFrequency),
-		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus) factory.ProviderFactory[pkglicensing.License, pkglicensing.Config] {
-			return signozlicense.NewProviderFactory(sqlstore, zeus)
+		licensing.Config(licensingtypes.ValidationFrequency),
+		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus) factory.ProviderFactory[pkglicensing.Licensing, pkglicensing.Config] {
+			return httplicensing.NewProviderFactory(sqlstore, zeus)
 		},
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),

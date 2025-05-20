@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/dao"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -35,22 +36,25 @@ var (
 type Manager struct {
 	clickhouseConn clickhouse.Conn
 
-	licenseService licensing.License
+	licenseService licensing.Licensing
 
 	scheduler *gocron.Scheduler
 
 	modelDao dao.ModelDao
 
 	zeus zeus.Zeus
+
+	organizationModule organization.Module
 }
 
-func New(modelDao dao.ModelDao, licenseService licensing.License, clickhouseConn clickhouse.Conn, zeus zeus.Zeus) (*Manager, error) {
+func New(modelDao dao.ModelDao, licenseService licensing.Licensing, clickhouseConn clickhouse.Conn, zeus zeus.Zeus,organizationModule organization.Module) (*Manager, error) {
 	m := &Manager{
 		clickhouseConn: clickhouseConn,
 		licenseService: licenseService,
 		scheduler:      gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
 		modelDao:       modelDao,
 		zeus:           zeus,
+		organizationModule: organizationModule,
 	}
 	return m, nil
 }
@@ -75,15 +79,14 @@ func (lm *Manager) Start(ctx context.Context) error {
 }
 func (lm *Manager) UploadUsage(ctx context.Context) {
 
-	organizations, err := lm.licenseService.ListOrganizations(ctx)
+	organizations, err := lm.organizationModule.GetAll(context.Background())
 	if err != nil {
 		zap.L().Error("failed to get organizations", zap.Error(err))
 		return
 	}
-
-	for _, organizationID := range organizations {
+	for _, organization := range organizations {
 		// check if license is present or not
-		license, err := lm.licenseService.GetActive(ctx, organizationID)
+		license, err := lm.licenseService.GetActive(ctx, organization.ID)
 		if err != nil {
 			zap.L().Error("failed to get active license", zap.Error(err))
 			return

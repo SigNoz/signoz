@@ -9,7 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
-	"github.com/SigNoz/signoz/pkg/licensing/nooplicense"
+	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
@@ -103,8 +103,8 @@ func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 	)
 }
 
-func NewLicensingProviderFactories(sqlstore sqlstore.SQLStore, zeus zeus.Zeus) factory.NamedMap[factory.ProviderFactory[licensing.License, licensing.Config]] {
+func NewLicensingProviderFactories(sqlstore sqlstore.SQLStore, zeus zeus.Zeus) factory.NamedMap[factory.ProviderFactory[licensing.Licensing, licensing.Config]] {
 	return factory.MustNewNamedMap(
-		nooplicense.NewFactory(),
+		nooplicensing.NewFactory(),
 	)
 }

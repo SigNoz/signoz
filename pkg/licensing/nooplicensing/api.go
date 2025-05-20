@@ -1,4 +1,4 @@
-package nooplicenseapi
+package nooplicensing
 
 import (
 	"net/http"

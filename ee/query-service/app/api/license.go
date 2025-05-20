@@ -8,10 +8,10 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	"github.com/SigNoz/signoz/ee/types/subscriptiontypes"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/licensingtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -100,7 +100,7 @@ func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	checkoutRequest := &subscriptiontypes.CheckoutRequest{}
+	checkoutRequest := &licensingtypes.CheckoutRequest{}
 	if err := json.NewDecoder(r.Body).Decode(checkoutRequest); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
@@ -173,7 +173,7 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	portalRequest := &subscriptiontypes.PortalRequest{}
+	portalRequest := &licensingtypes.PortalRequest{}
 	if err := json.NewDecoder(r.Body).Decode(portalRequest); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return

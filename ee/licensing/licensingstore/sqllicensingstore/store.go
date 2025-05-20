@@ -1,4 +1,4 @@
-package signozlicensestore
+package sqllicensingstore
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	"github.com/SigNoz/signoz/pkg/types/licensetypes"
+	"github.com/SigNoz/signoz/pkg/types/licensingtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -15,11 +15,11 @@ type store struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func New(sqlstore sqlstore.SQLStore) licensetypes.Store {
+func New(sqlstore sqlstore.SQLStore) licensingtypes.Store {
 	return &store{sqlstore}
 }
 
-func (s *store) Create(ctx context.Context, storableLicense *licensetypes.StorableLicense) error {
+func (s *store) Create(ctx context.Context, storableLicense *licensingtypes.StorableLicense) error {
 	_, err := s.
 		sqlstore.
 		BunDB().
@@ -33,8 +33,8 @@ func (s *store) Create(ctx context.Context, storableLicense *licensetypes.Storab
 	return nil
 }
 
-func (s *store) Get(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) (*licensetypes.StorableLicense, error) {
-	storableLicense := new(licensetypes.StorableLicense)
+func (s *store) Get(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) (*licensingtypes.StorableLicense, error) {
+	storableLicense := new(licensingtypes.StorableLicense)
 	err := s.
 		sqlstore.
 		BunDB().
@@ -50,8 +50,8 @@ func (s *store) Get(ctx context.Context, organizationID valuer.UUID, licenseID v
 	return storableLicense, nil
 }
 
-func (s *store) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.StorableLicense, error) {
-	storableLicenses := make([]*licensetypes.StorableLicense, 0)
+func (s *store) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensingtypes.StorableLicense, error) {
+	storableLicenses := make([]*licensingtypes.StorableLicense, 0)
 	err := s.
 		sqlstore.
 		BunDB().
@@ -66,7 +66,7 @@ func (s *store) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*lice
 	return storableLicenses, nil
 }
 
-func (s *store) Update(ctx context.Context, storableLicense *licensetypes.StorableLicense) error {
+func (s *store) Update(ctx context.Context, storableLicense *licensingtypes.StorableLicense) error {
 	_, err := s.
 		sqlstore.
 		BunDB().

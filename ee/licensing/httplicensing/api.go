@@ -1,4 +1,4 @@
-package signozlicenseapi
+package httplicensing
 
 import (
 	"context"
@@ -10,15 +10,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/licensetypes"
+	"github.com/SigNoz/signoz/pkg/types/licensingtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type licenseAPI struct {
-	licensemanager licensing.License
+	licensemanager licensing.Licensing
 }
 
-func NewLicenseAPI(licensemanager licensing.License) licensing.API {
+func NewLicensingAPI(licensemanager licensing.Licensing) licensing.API {
 	return &licenseAPI{licensemanager: licensemanager}
 }
 
@@ -38,7 +38,7 @@ func (api *licenseAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req *licensetypes.ActivateLicense
+	var req *licensingtypes.ActivateLicense
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		render.Error(rw, err)

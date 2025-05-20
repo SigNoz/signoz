@@ -30,7 +30,7 @@ type SigNoz struct {
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
 	Zeus            zeus.Zeus
-	License         licensing.License
+	License         licensing.Licensing
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -41,7 +41,7 @@ func New(
 	zeusConfig zeus.Config,
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	licenseConfig licensing.Config,
-	licenseProviderFactoryCb func(sqlstore.SQLStore, zeus.Zeus) factory.ProviderFactory[licensing.License, licensing.Config],
+	licenseProviderFactoryCb func(sqlstore.SQLStore, zeus.Zeus) factory.ProviderFactory[licensing.Licensing, licensing.Config],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],

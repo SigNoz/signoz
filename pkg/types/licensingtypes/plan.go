@@ -1,4 +1,4 @@
-package licensetypes
+package licensingtypes
 
 import "github.com/SigNoz/signoz/pkg/types/featuretypes"
 
