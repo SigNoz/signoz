@@ -10,66 +10,28 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-var (
-	attributeMetadataColumns = map[string]*schema.Column{
-		"resource_attributes": {Name: "resource_attributes", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
-		}},
-		"attributes": {Name: "attributes", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
-		}},
-	}
-)
-
 type conditionBuilder struct {
+	fm qbtypes.FieldMapper
 }
 
-func NewConditionBuilder() qbtypes.ConditionBuilder {
-	return &conditionBuilder{}
+func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
+	return &conditionBuilder{fm: fm}
 }
 
-func (c *conditionBuilder) GetColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
-	switch key.FieldContext {
-	case telemetrytypes.FieldContextResource:
-		return attributeMetadataColumns["resource_attributes"], nil
-	case telemetrytypes.FieldContextAttribute:
-		return attributeMetadataColumns["attributes"], nil
-	}
-	return nil, qbtypes.ErrColumnNotFound
-}
-
-func (c *conditionBuilder) GetTableFieldName(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	column, err := c.GetColumn(ctx, key)
-	if err != nil {
-		return "", err
-	}
-
-	switch column.Type {
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
-	}:
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
-	}
-	return column.Name, nil
-}
-
-func (c *conditionBuilder) GetCondition(
+func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	column, err := c.GetColumn(ctx, key)
+	column, err := c.fm.ColumnFor(ctx, key)
 	if err != nil {
 		// if we don't have a column, we can't build a condition for related values
 		return "", nil
 	}
 
-	tblFieldName, err := c.GetTableFieldName(ctx, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, key)
 	if err != nil {
 		// if we don't have a table field name, we can't build a condition for related values
 		return "", nil
@@ -114,7 +76,7 @@ func (c *conditionBuilder) GetCondition(
 	case qbtypes.FilterOperatorRegexp:
 		cond = fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value))
 	case qbtypes.FilterOperatorNotRegexp:
-		cond = fmt.Sprintf(`not match(%s, %s)`, tblFieldName, sb.Var(value))
+		cond = fmt.Sprintf(`NOT match(%s, %s)`, tblFieldName, sb.Var(value))
 
 	// in and not in
 	case qbtypes.FilterOperatorIn:
@@ -122,13 +84,23 @@ func (c *conditionBuilder) GetCondition(
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		cond = sb.In(tblFieldName, values...)
+		// instead of using IN, we use `=` + `OR` to make use of index
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.E(tblFieldName, value))
+		}
+		cond = sb.Or(conditions...)
 	case qbtypes.FilterOperatorNotIn:
 		values, ok := value.([]any)
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		cond = sb.NotIn(tblFieldName, values...)
+		// instead of using NOT IN, we use `!=` + `AND` to make use of index
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.NE(tblFieldName, value))
+		}
+		cond = sb.And(conditions...)
 
 	// exists and not exists
 	// in the query builder, `exists` and `not exists` are used for
