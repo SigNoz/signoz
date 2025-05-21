@@ -49,7 +49,6 @@ function HostsList(): JSX.Element {
 		}
 		return filters;
 	});
-	console.log('filters', filters);
 	const [showFilters, setShowFilters] = useState<boolean>(true);
 
 	const [orderBy, setOrderBy] = useState<{
