@@ -3,6 +3,7 @@ package filetemplatestore
 import (
 	"context"
 	"html/template"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
@@ -20,16 +21,14 @@ type store struct {
 	fs map[emailtypes.TemplateName]*template.Template
 }
 
-func NewStore(baseDir string, templates []emailtypes.TemplateName) (emailtypes.TemplateStore, error) {
+func NewStore(baseDir string, templates []emailtypes.TemplateName, logger *slog.Logger) (emailtypes.TemplateStore, error) {
 	fs := make(map[emailtypes.TemplateName]*template.Template)
 	fis, err := os.ReadDir(filepath.Clean(baseDir))
 	if err != nil {
 		return nil, err
 	}
 
-	supportedTemplates := templates
 	foundTemplates := make(map[emailtypes.TemplateName]bool)
-
 	for _, fi := range fis {
 		if fi.IsDir() || filepath.Ext(fi.Name()) != emailTemplateExt {
 			continue
@@ -40,7 +39,7 @@ func NewStore(baseDir string, templates []emailtypes.TemplateName) (emailtypes.T
 			continue
 		}
 
-		if !slices.Contains(supportedTemplates, templateName) {
+		if !slices.Contains(templates, templateName) {
 			continue
 		}
 
@@ -53,19 +52,20 @@ func NewStore(baseDir string, templates []emailtypes.TemplateName) (emailtypes.T
 		foundTemplates[templateName] = true
 	}
 
-	if err := checkMissingTemplates(supportedTemplates, foundTemplates); err != nil {
-		return nil, err
+	if err := checkMissingTemplates(templates, foundTemplates); err != nil {
+		logger.Error("some templates are missing", "error", err)
 	}
 
 	return &store{fs: fs}, nil
+}
 
+func NewEmptyStore() emailtypes.TemplateStore {
+	return &store{fs: make(map[emailtypes.TemplateName]*template.Template)}
 }
 
 func (repository *store) Get(ctx context.Context, name emailtypes.TemplateName) (*template.Template, error) {
 	template, ok := repository.fs[name]
 	if !ok {
-		// This path should never be reached as we have already checked for the existence of the template
-		// in the factory
 		return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "cannot find template with name %q", name.StringValue())
 	}
 

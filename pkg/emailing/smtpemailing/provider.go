@@ -23,9 +23,12 @@ func NewFactory() factory.ProviderFactory[emailing.Emailing, emailing.Config] {
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config emailing.Config) (emailing.Emailing, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/emailing/smtpemailing")
-	store, err := filetemplatestore.NewStore(config.Templates.Directory, emailtypes.Templates)
+
+	// Try to create a template store. If it fails, use an empty store.
+	store, err := filetemplatestore.NewStore(config.Templates.Directory, emailtypes.Templates, settings.Logger())
 	if err != nil {
-		return nil, err
+		settings.Logger().Error("failed to create template store", "error", err)
+		store = filetemplatestore.NewEmptyStore()
 	}
 
 	client, err := client.New(
