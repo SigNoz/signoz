@@ -228,4 +228,22 @@ describe('Logs Explorer Tests', () => {
 		await fireEvent.click(histogramToggle);
 		expect(queryByText(frequencyChartContent)).not.toBeInTheDocument();
 	});
+
+	test('check that auto refresh is present in toolbar', async () => {
+		const { getByRole } = render(<LogsExplorer />);
+
+		await waitFor(() => {
+			expect(
+				getByRole('button', {
+					name: /sync/i,
+				}),
+			).toBeInTheDocument();
+
+			expect(
+				getByRole('button', {
+					name: /caret-down/i,
+				}),
+			).toBeInTheDocument();
+		});
+	});
 });
