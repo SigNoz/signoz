@@ -53,9 +53,13 @@
 			.checkbox-value-section {
 				display: flex;
 				align-items: center;
-				justify-content: space-between;
+				gap: 4px;
 				width: calc(100% - 24px);
 				cursor: pointer;
+
+				.value-string {
+					width: 100%;
+				}
 
 				&.filter-disabled {
 					cursor: not-allowed;
@@ -73,9 +77,6 @@
 						cursor: not-allowed;
 						color: var(--bg-slate-200);
 					}
-				}
-
-				.value-string {
 				}
 
 				.only-btn {
@@ -177,4 +178,18 @@
 			}
 		}
 	}
+}
+
+.label-false{
+	width: 2px;
+	height: 11px;
+	border-radius: 2px;
+	background: var(--bg-cherry-500);
+}
+
+.label-true {
+	width: 2px;
+	height: 11px;
+	border-radius: 2px;
+	background: var(--bg-forest-500);
 }

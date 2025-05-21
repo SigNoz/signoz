@@ -124,33 +124,6 @@
 	}
 	width: 240px;
 
-	.submenu-checkbox {
-		padding-bottom: 8px;
-	}
-
-	.search-input {
-		margin-bottom: 12px;
-	}
-
-	.checkbox-label {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-
-		.hasError-Error {
-			width: 2px;
-			height: 11px;
-			border-radius: 2px;
-			background: var(--bg-cherry-500);
-		}
-
-		.hasError-Ok {
-			width: 2px;
-			height: 11px;
-			border-radius: 2px;
-			background: var(--bg-forest-500);
-		}
-	}
 }
 .lightMode {
 	.collapseContainer {
