@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
@@ -371,7 +372,8 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
-	userModule := impluser.NewModule(impluser.NewStore(testDB), nil, emailing, providerSettings)
+	jwt := authtypes.NewJWT("", 10*time.Minute, 30*time.Minute)
+	userModule := impluser.NewModule(impluser.NewStore(testDB), jwt, emailing, providerSettings)
 	userHandler := impluser.NewHandler(userModule)
 	modules := signoz.NewModules(testDB, userModule)
 	handlers := signoz.NewHandlers(modules, userHandler)

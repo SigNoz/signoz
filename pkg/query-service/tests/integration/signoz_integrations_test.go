@@ -29,6 +29,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
@@ -577,7 +578,8 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
-	userModule := impluser.NewModule(impluser.NewStore(testDB), nil, emailing, providerSettings)
+	jwt := authtypes.NewJWT("", 10*time.Minute, 30*time.Minute)
+	userModule := impluser.NewModule(impluser.NewStore(testDB), jwt, emailing, providerSettings)
 	userHandler := impluser.NewHandler(userModule)
 	modules := signoz.NewModules(testDB, userModule)
 	handlers := signoz.NewHandlers(modules, userHandler)

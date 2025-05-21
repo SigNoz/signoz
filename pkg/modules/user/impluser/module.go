@@ -27,7 +27,12 @@ type Module struct {
 // This module is a WIP, don't take inspiration from this.
 func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings) user.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
-	return &Module{store: store, jwt: jwt, emailing: emailing, settings: settings}
+	return &Module{
+		store:    store,
+		jwt:      jwt,
+		emailing: emailing,
+		settings: settings,
+	}
 }
 
 // CreateBulk implements invite.Module.
