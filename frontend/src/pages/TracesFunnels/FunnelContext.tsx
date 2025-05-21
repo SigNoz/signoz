@@ -1,5 +1,6 @@
 import logEvent from 'api/common/logEvent';
 import { ValidateFunnelResponse } from 'api/traceFunnels';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
@@ -7,6 +8,7 @@ import {
 	Time as TimeV2,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useValidateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
+import { useLocalStorage } from 'hooks/useLocalStorage';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
 import {
@@ -45,15 +47,15 @@ interface FunnelContextType {
 		| undefined;
 	isValidateStepsLoading: boolean;
 	hasIncompleteStepFields: boolean;
-	setHasIncompleteStepFields: Dispatch<SetStateAction<boolean>>;
 	hasAllEmptyStepFields: boolean;
-	setHasAllEmptyStepFields: Dispatch<SetStateAction<boolean>>;
 	handleReplaceStep: (
 		index: number,
 		serviceName: string,
 		spanName: string,
 	) => void;
 	handleRestoreSteps: (oldSteps: FunnelStepData[]) => void;
+	hasFunnelBeenExecuted: boolean;
+	setHasFunnelBeenExecuted: Dispatch<SetStateAction<boolean>>;
 }
 
 const FunnelContext = createContext<FunnelContextType | undefined>(undefined);
@@ -84,12 +86,27 @@ export function FunnelProvider({
 	const funnel = data?.payload;
 	const initialSteps = funnel?.steps?.length ? funnel.steps : initialStepsData;
 	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
-	const [hasIncompleteStepFields, setHasIncompleteStepFields] = useState(
-		steps.some((step) => step.service_name === '' || step.span_name === ''),
+	const { hasIncompleteStepFields, hasAllEmptyStepFields } = useMemo(
+		() => ({
+			hasAllEmptyStepFields: steps.every(
+				(step) => step.service_name === '' && step.span_name === '',
+			),
+			hasIncompleteStepFields: steps.some(
+				(step) => step.service_name === '' || step.span_name === '',
+			),
+		}),
+		[steps],
 	);
-	const [hasAllEmptyStepFields, setHasAllEmptyStepFields] = useState(
-		steps.every((step) => step.service_name === '' && step.span_name === ''),
+
+	const [unexecutedFunnels, setUnexecutedFunnels] = useLocalStorage<string[]>(
+		LOCALSTORAGE.UNEXECUTED_FUNNELS,
+		[],
 	);
+
+	const [hasFunnelBeenExecuted, setHasFunnelBeenExecuted] = useState(
+		!unexecutedFunnels.includes(funnelId),
+	);
+
 	const {
 		data: validationResponse,
 		isLoading: isValidationLoading,
@@ -99,6 +116,7 @@ export function FunnelProvider({
 		selectedTime,
 		startTime,
 		endTime,
+		enabled: !!funnelId && !!selectedTime && !!startTime && !!endTime,
 	});
 
 	const validTracesCount = useMemo(
@@ -163,6 +181,11 @@ export function FunnelProvider({
 
 	const handleRunFunnel = useCallback(async (): Promise<void> => {
 		if (validTracesCount === 0) return;
+		if (!hasFunnelBeenExecuted) {
+			setUnexecutedFunnels(unexecutedFunnels.filter((id) => id !== funnelId));
+
+			setHasFunnelBeenExecuted(true);
+		}
 		queryClient.refetchQueries([
 			REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW,
 			funnelId,
@@ -183,7 +206,15 @@ export function FunnelProvider({
 			funnelId,
 			selectedTime,
 		]);
-	}, [funnelId, queryClient, selectedTime, validTracesCount]);
+	}, [
+		funnelId,
+		hasFunnelBeenExecuted,
+		unexecutedFunnels,
+		queryClient,
+		selectedTime,
+		setUnexecutedFunnels,
+		validTracesCount,
+	]);
 
 	const value = useMemo<FunnelContextType>(
 		() => ({
@@ -202,11 +233,11 @@ export function FunnelProvider({
 			validationResponse,
 			isValidateStepsLoading: isValidationLoading || isValidationFetching,
 			hasIncompleteStepFields,
-			setHasIncompleteStepFields,
 			hasAllEmptyStepFields,
-			setHasAllEmptyStepFields,
 			handleReplaceStep,
 			handleRestoreSteps,
+			hasFunnelBeenExecuted,
+			setHasFunnelBeenExecuted,
 		}),
 		[
 			funnelId,
@@ -224,11 +255,11 @@ export function FunnelProvider({
 			isValidationLoading,
 			isValidationFetching,
 			hasIncompleteStepFields,
-			setHasIncompleteStepFields,
 			hasAllEmptyStepFields,
-			setHasAllEmptyStepFields,
 			handleReplaceStep,
 			handleRestoreSteps,
+			hasFunnelBeenExecuted,
+			setHasFunnelBeenExecuted,
 		],
 	);
 
