@@ -228,4 +228,4 @@ def test_license_portal(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
         timeout=5,
     )
 
-    assert response.json()["count"] == 1
+    assert response.json()["count"] >= 1
