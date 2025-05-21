@@ -44,7 +44,7 @@ func newConfig() factory.Config {
 	return &Config{
 		Enabled: false,
 		Templates: Templates{
-			Directory: "/opt/signoz/conf/templates/email",
+			Directory: "/root/templates",
 		},
 		SMTP: SMTP{
 			Address: "localhost:25",
