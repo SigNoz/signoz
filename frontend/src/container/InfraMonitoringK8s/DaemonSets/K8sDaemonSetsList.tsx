@@ -71,7 +71,7 @@ function K8sDaemonSetsList({
 		order: 'asc' | 'desc';
 	} | null>(() => getOrderByFromParams(searchParams, true));
 
-	const [selectedDaemonSetUID, setselectedDaemonSetUID] = useState<
+	const [selectedDaemonSetUID, setSelectedDaemonSetUID] = useState<
 		string | null
 	>(() => {
 		const daemonSetUID = searchParams.get(
@@ -360,7 +360,7 @@ function K8sDaemonSetsList({
 	const handleRowClick = (record: K8sDaemonSetsRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			setselectedDaemonSetUID(record.daemonsetUID);
+			setSelectedDaemonSetUID(record.daemonsetUID);
 			setSearchParams({
 				...Object.fromEntries(searchParams.entries()),
 				[INFRA_MONITORING_K8S_PARAMS_KEYS.DAEMONSET_UID]: record.daemonsetUID,
@@ -421,7 +421,7 @@ function K8sDaemonSetsList({
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
-								setselectedDaemonSetUID(record.daemonsetUID);
+								setSelectedDaemonSetUID(record.daemonsetUID);
 							},
 							className: 'expanded-clickable-row',
 						})}
@@ -485,7 +485,7 @@ function K8sDaemonSetsList({
 	};
 
 	const handleCloseDaemonSetDetail = (): void => {
-		setselectedDaemonSetUID(null);
+		setSelectedDaemonSetUID(null);
 		setSearchParams({
 			...Object.fromEntries(
 				Array.from(searchParams.entries()).filter(

@@ -70,7 +70,7 @@ function K8sNodesList({
 		order: 'asc' | 'desc';
 	} | null>(() => getOrderByFromParams(searchParams, false));
 
-	const [selectedNodeUID, setselectedNodeUID] = useState<string | null>(() => {
+	const [selectedNodeUID, setSelectedNodeUID] = useState<string | null>(() => {
 		const nodeUID = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID);
 		if (nodeUID) {
 			return nodeUID;
@@ -336,7 +336,7 @@ function K8sNodesList({
 	const handleRowClick = (record: K8sNodesRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			setselectedNodeUID(record.nodeUID);
+			setSelectedNodeUID(record.nodeUID);
 			setSearchParams({
 				...Object.fromEntries(searchParams.entries()),
 				[INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID]: record.nodeUID,
@@ -398,7 +398,7 @@ function K8sNodesList({
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
-								setselectedNodeUID(record.nodeUID);
+								setSelectedNodeUID(record.nodeUID);
 							},
 							className: 'expanded-clickable-row',
 						})}
@@ -462,7 +462,7 @@ function K8sNodesList({
 	};
 
 	const handleCloseNodeDetail = (): void => {
-		setselectedNodeUID(null);
+		setSelectedNodeUID(null);
 		setSearchParams({
 			...Object.fromEntries(
 				Array.from(searchParams.entries()).filter(
