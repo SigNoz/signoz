@@ -19,7 +19,7 @@ func StepIntervalForFunction(params *v3.QueryRangeParamsV3, query string) int64 
 	return q.StepInterval
 }
 
-func fillGap(series *v3.Series, start, end, step int64) *v3.Series {
+func fillGap(series *v3.Series, start, end, step, shiftBy int64) *v3.Series {
 	v := make(map[int64]float64)
 	for _, point := range series.Points {
 		v[point.Timestamp] = point.Value
@@ -27,7 +27,7 @@ func fillGap(series *v3.Series, start, end, step int64) *v3.Series {
 
 	// For all the values from start to end, find the timestamps
 	// that don't have value and add zero point
-	start = start - (start % (step * 1000))
+	start = start - (start % (step * 1000)) + shiftBy
 	for i := start; i <= end; i += step * 1000 {
 		if _, ok := v[i]; !ok {
 			v[i] = 0
@@ -66,7 +66,18 @@ func FillGaps(results []*v3.Result, params *v3.QueryRangeParamsV3) {
 			// The values should be added at the intervals of `step`
 			step := StepIntervalForFunction(params, result.QueryName)
 			for idx := range result.Series {
-				result.Series[idx] = fillGap(result.Series[idx], params.Start, params.End, step)
+				start := params.Start
+				end := params.End
+				var shiftBy int64
+				if params.CompositeQuery != nil &&
+					params.CompositeQuery.BuilderQueries[result.QueryName] != nil &&
+					params.CompositeQuery.BuilderQueries[result.QueryName].ShiftBy != 0 {
+					shiftBy = params.CompositeQuery.BuilderQueries[result.QueryName].ShiftBy * 1000
+					start = start + shiftBy
+					end = end + shiftBy
+				}
+
+				result.Series[idx] = fillGap(result.Series[idx], start, end, step, shiftBy)
 			}
 		}
 	}
