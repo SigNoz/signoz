@@ -3,12 +3,14 @@ package impluser
 import (
 	"context"
 	"database/sql"
+	"sort"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 )
 
 type Store struct {
@@ -333,6 +335,15 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete factor password")
 	}
 
+	// delete api keys
+	_, err = tx.NewDelete().
+		Model(&types.StorableAPIKey{}).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete API keys")
+	}
+
 	// delete user
 	_, err = tx.NewDelete().
 		Model(new(types.User)).
@@ -473,4 +484,109 @@ func (s *Store) UpdatePassword(ctx context.Context, userID string, password stri
 
 func (s *Store) GetDomainByName(ctx context.Context, name string) (*types.StorableOrgDomain, error) {
 	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "not supported")
+}
+
+// --- API KEY ---
+func (s *Store) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
+	_, err := s.sqlstore.BunDB().NewInsert().
+		Model(apiKey).
+		Exec(ctx)
+	if err != nil {
+		return s.sqlstore.WrapAlreadyExistsErrf(err, types.ErrAPIKeyAlreadyExists, "API key with token: %s already exists", apiKey.Token)
+	}
+
+	return nil
+}
+
+func (s *Store) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
+	apiKey.UpdatedBy = updaterID.String()
+	apiKey.UpdatedAt = time.Now()
+	_, err := s.sqlstore.BunDB().NewUpdate().
+		Model(apiKey).
+		Column("role", "name", "updated_at", "updated_by").
+		Where("id = ?", id).
+		Where("revoked = false").
+		Exec(ctx)
+	if err != nil {
+		return s.sqlstore.WrapNotFoundErrf(err, types.ErrAPIKeyNotFound, "API key with id: %s does not exist", id)
+	}
+	return nil
+}
+
+func (s *Store) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
+	orgUserAPIKeys := new(types.OrgUserAPIKey)
+
+	if err := s.sqlstore.BunDB().NewSelect().
+		Model(orgUserAPIKeys).
+		Relation("Users").
+		Relation("Users.APIKeys", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("revoked = false")
+		},
+		).
+		Relation("Users.APIKeys.CreatedByUser").
+		Relation("Users.APIKeys.UpdatedByUser").
+		Where("id = ?", orgID).
+		Scan(ctx); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch API keys")
+	}
+
+	// Flatten the API keys from all users
+	var allAPIKeys []*types.StorableAPIKeyUser
+	for _, user := range orgUserAPIKeys.Users {
+		if user.APIKeys != nil {
+			allAPIKeys = append(allAPIKeys, user.APIKeys...)
+		}
+	}
+
+	// sort the API keys by updated_at
+	sort.Slice(allAPIKeys, func(i, j int) bool {
+		return allAPIKeys[i].UpdatedAt.After(allAPIKeys[j].UpdatedAt)
+	})
+
+	return allAPIKeys, nil
+}
+
+func (s *Store) RevokeAPIKey(ctx context.Context, id, revokedByUserID valuer.UUID) error {
+	updatedAt := time.Now().Unix()
+	_, err := s.sqlstore.BunDB().NewUpdate().
+		Model(&types.StorableAPIKey{}).
+		Set("revoked = ?", true).
+		Set("updated_by = ?", revokedByUserID).
+		Set("updated_at = ?", updatedAt).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to revoke API key")
+	}
+	return nil
+}
+
+func (s *Store) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
+	apiKey := new(types.OrgUserAPIKey)
+	if err := s.sqlstore.BunDB().NewSelect().
+		Model(apiKey).
+		Relation("Users").
+		Relation("Users.APIKeys", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("revoked = false").Where("storable_api_key.id = ?", id).
+				OrderExpr("storable_api_key.updated_at DESC").Limit(1)
+		},
+		).
+		Relation("Users.APIKeys.CreatedByUser").
+		Relation("Users.APIKeys.UpdatedByUser").
+		Scan(ctx); err != nil {
+		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrAPIKeyNotFound, "API key with id: %s does not exist", id)
+	}
+
+	// flatten the API keys
+	flattenedAPIKeys := []*types.StorableAPIKeyUser{}
+	for _, user := range apiKey.Users {
+		if user.APIKeys != nil {
+			flattenedAPIKeys = append(flattenedAPIKeys, user.APIKeys...)
+		}
+	}
+	if len(flattenedAPIKeys) == 0 {
+		return nil, s.sqlstore.WrapNotFoundErrf(errors.New(errors.TypeNotFound, errors.CodeNotFound, "API key with id: %s does not exist"), types.ErrAPIKeyNotFound, "API key with id: %s does not exist", id)
+	}
+
+	return flattenedAPIKeys[0], nil
 }
