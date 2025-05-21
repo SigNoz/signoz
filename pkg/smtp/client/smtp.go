@@ -233,13 +233,11 @@ func (c *Client) Do(ctx context.Context, tos []*mail.Address, subject string, co
 		}
 	}
 
-	if c.tls.Enabled {
-		if ok, _ := smtpClient.Extension("STARTTLS"); !ok {
-			return fmt.Errorf("'require_tls' is true (default) but %q does not advertise the STARTTLS extension", c.address)
-		}
-
-		if err := smtpClient.StartTLS(c.tlsConfig); err != nil {
-			return fmt.Errorf("send STARTTLS command: %w", err)
+	if !c.tls.Enabled {
+		if ok, _ := smtpClient.Extension("STARTTLS"); ok {
+			if err := smtpClient.StartTLS(c.tlsConfig); err != nil {
+				return fmt.Errorf("send STARTTLS command: %w", err)
+			}
 		}
 	}
 
