@@ -20,6 +20,7 @@ const (
 const (
 	Org              string = "org"
 	User             string = "user"
+	UserNoCascade    string = "user_no_cascade"
 	FactorPassword   string = "factor_password"
 	CloudIntegration string = "cloud_integration"
 )
@@ -27,6 +28,7 @@ const (
 const (
 	OrgReference              string = `("org_id") REFERENCES "organizations" ("id")`
 	UserReference             string = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	UserNoCascadeReference    string = `("user_id") REFERENCES "users" ("id")`
 	FactorPasswordReference   string = `("password_id") REFERENCES "factor_password" ("id")`
 	CloudIntegrationReference string = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
 )
@@ -261,6 +263,8 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 			fkReferences = append(fkReferences, OrgReference)
 		} else if reference == User && !slices.Contains(fkReferences, UserReference) {
 			fkReferences = append(fkReferences, UserReference)
+		} else if reference == UserNoCascade && !slices.Contains(fkReferences, UserNoCascadeReference) {
+			fkReferences = append(fkReferences, UserNoCascadeReference)
 		} else if reference == FactorPassword && !slices.Contains(fkReferences, FactorPasswordReference) {
 			fkReferences = append(fkReferences, FactorPasswordReference)
 		} else if reference == CloudIntegration && !slices.Contains(fkReferences, CloudIntegrationReference) {

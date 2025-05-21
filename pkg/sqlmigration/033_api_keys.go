@@ -64,7 +64,7 @@ type newFactorAPIKey33 struct {
 	CreatedBy string    `bun:"created_by,notnull" json:"createdBy"`
 	UpdatedBy string    `bun:"updated_by,notnull" json:"updatedBy"`
 	Token     string    `json:"token" bun:"token,type:text,notnull,unique"`
-	Role      string    `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
+	Role      string    `json:"role" bun:"role,type:text,notnull"`
 	Name      string    `json:"name" bun:"name,type:text,notnull"`
 	ExpiresAt time.Time `json:"expiresAt" bun:"expires_at,notnull,nullzero,type:timestamptz"`
 	LastUsed  time.Time `json:"lastUsed" bun:"last_used,notnull,nullzero,type:timestamptz"`

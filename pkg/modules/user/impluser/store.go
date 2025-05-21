@@ -533,7 +533,9 @@ func (s *Store) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.St
 	// Flatten the API keys from all users
 	var allAPIKeys []*types.StorableAPIKeyUser
 	for _, user := range orgUserAPIKeys.Users {
-		allAPIKeys = append(allAPIKeys, user.APIKeys...)
+		if user.APIKeys != nil {
+			allAPIKeys = append(allAPIKeys, user.APIKeys...)
+		}
 	}
 
 	// sort the API keys by updated_at
@@ -575,5 +577,13 @@ func (s *Store) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.St
 		return nil, s.sqlstore.WrapNotFoundErrf(err, types.ErrAPIKeyNotFound, "API key with id: %s does not exist", id)
 	}
 
-	return apiKey.Users[0].APIKeys[0], nil
+	// flatten the API keys
+	flattenedAPIKeys := []*types.StorableAPIKeyUser{}
+	for _, user := range apiKey.Users {
+		if user.APIKeys != nil {
+			flattenedAPIKeys = append(flattenedAPIKeys, user.APIKeys...)
+		}
+	}
+
+	return flattenedAPIKeys[0], nil
 }
