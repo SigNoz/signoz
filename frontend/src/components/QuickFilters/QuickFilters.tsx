@@ -16,8 +16,10 @@ import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isFunction, isNull } from 'lodash-es';
 import { Settings2 as SettingsIcon } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useMemo, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { USER_ROLES } from 'types/roles';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Duration from './FilterRenderers/Duration/Duration';
@@ -38,7 +40,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		showFilterCollapse = true,
 		showQueryName = true,
 	} = props;
+	const { user } = useAppContext();
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const [params, setParams] = useApiMonitoringParams();
 	const showIP = params.showIP ?? true;
 
@@ -138,7 +142,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 									</div>
 								</Tooltip>
 							)}
-							{isDynamicFilters && (
+							{isDynamicFilters && isAdmin && (
 								<Tooltip title="Settings">
 									<div
 										className={classNames('right-action-icon-container', {
