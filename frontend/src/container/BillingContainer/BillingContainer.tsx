@@ -16,10 +16,10 @@ import {
 	Typography,
 } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import updateCreditCardApi from 'api/billing/checkout';
 import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
-import manageCreditCardApi from 'api/billing/manage';
 import logEvent from 'api/common/logEvent';
+import updateCreditCardApi from 'api/v1/checkout/create';
+import manageCreditCardApi from 'api/v1/portal/create';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -31,7 +31,7 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
@@ -279,11 +279,11 @@ export default function BillingContainer(): JSX.Element {
 	);
 
 	const handleBillingOnSuccess = (
-		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
+		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
 	): void => {
-		if (data?.payload?.redirectURL) {
+		if (data?.data?.redirectURL) {
 			const newTab = document.createElement('a');
-			newTab.href = data.payload.redirectURL;
+			newTab.href = data.data.redirectURL;
 			newTab.target = '_blank';
 			newTab.rel = 'noopener noreferrer';
 			newTab.click();

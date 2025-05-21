@@ -5,16 +5,15 @@ import './AppLayout.styles.scss';
 
 import * as Sentry from '@sentry/react';
 import { Flex } from 'antd';
-import manageCreditCardApi from 'api/billing/manage';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
+import manageCreditCardApi from 'api/v1/portal/create';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import getUserVersion from 'api/v1/version/getVersion';
 import cx from 'classnames';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -51,8 +50,9 @@ import {
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import APIError from 'types/api/error';
 import {
 	LicenseEvent,
 	LicensePlatform,
@@ -93,20 +93,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
 
 	const handleBillingOnSuccess = (
-		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
+		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
 	): void => {
-		if (data?.payload?.redirectURL) {
+		if (data?.data?.redirectURL) {
 			const newTab = document.createElement('a');
-			newTab.href = data.payload.redirectURL;
+			newTab.href = data.data.redirectURL;
 			newTab.target = '_blank';
 			newTab.rel = 'noopener noreferrer';
 			newTab.click();
 		}
 	};
 
-	const handleBillingOnError = (): void => {
+	const handleBillingOnError = (error: APIError): void => {
 		notifications.error({
-			message: SOMETHING_WENT_WRONG,
+			message: error.getErrorCode(),
+			description: error.getErrorMessage(),
 		});
 	};
 

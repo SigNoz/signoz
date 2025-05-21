@@ -16,8 +16,8 @@ import {
 	Tabs,
 	Typography,
 } from 'antd';
-import updateCreditCardApi from 'api/billing/checkout';
 import logEvent from 'api/common/logEvent';
+import updateCreditCardApi from 'api/v1/checkout/create';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -26,6 +26,7 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
+import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { getFormattedDate } from 'utils/timeUtils';
 
@@ -90,17 +91,18 @@ export default function WorkspaceBlocked(): JSX.Element {
 		updateCreditCardApi,
 		{
 			onSuccess: (data) => {
-				if (data.payload?.redirectURL) {
+				if (data.data?.redirectURL) {
 					const newTab = document.createElement('a');
-					newTab.href = data.payload.redirectURL;
+					newTab.href = data.data.redirectURL;
 					newTab.target = '_blank';
 					newTab.rel = 'noopener noreferrer';
 					newTab.click();
 				}
 			},
-			onError: () =>
+			onError: (error: APIError) =>
 				notifications.error({
-					message: t('somethingWentWrong'),
+					message: error.getErrorCode(),
+					description: error.getErrorMessage(),
 				}),
 		},
 	);
