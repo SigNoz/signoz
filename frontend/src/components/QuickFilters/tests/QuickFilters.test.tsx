@@ -8,6 +8,7 @@ import {
 	waitFor,
 } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
+import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	otherFiltersResponse,
@@ -17,6 +18,7 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { USER_ROLES } from 'types/roles';
 
 import QuickFilters from '../QuickFilters';
 import { IQuickFiltersConfig, QuickFiltersSource, SignalType } from '../types';
@@ -24,6 +26,27 @@ import { QuickFiltersConfig } from './constants';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
+}));
+
+const historyReplace = jest.fn();
+
+// eslint-disable-next-line sonarjs/no-duplicate-string
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { pathname: string } => ({
+		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.TRACES_EXPLORER}/`,
+	}),
+	useHistory: (): any => ({
+		...jest.requireActual('react-router-dom').useHistory(),
+		replace: historyReplace,
+	}),
+}));
+
+const userRole = USER_ROLES.ADMIN;
+
+// mock useAppContext
+jest.mock('providers/App/App', () => ({
+	useAppContext: jest.fn(() => ({ user: { role: userRole } })),
 }));
 
 const handleFilterVisibilityChange = jest.fn();
@@ -163,7 +186,9 @@ describe('Quick Filters with custom filters', () => {
 		expect(screen.getByText('Filters for')).toBeInTheDocument();
 		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
 		await screen.findByText(FILTER_SERVICE_NAME);
-		await screen.findByText('otel-demo');
+		const allByText = await screen.findAllByText('otel-demo');
+		// since 2 filter collapse are open, there are 2 filter items visible
+		expect(allByText).toHaveLength(2);
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
 		fireEvent.click(icon);
