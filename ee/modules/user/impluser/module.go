@@ -12,17 +12,18 @@ import (
 	baseimpl "github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
 // EnterpriseModule embeds the base module implementation
 type Module struct {
-	*baseimpl.Module // Embed the base module implementation
-	store            types.UserStore
+	user.Module // Embed the base module implementation
+	store       types.UserStore
 }
 
 func NewModule(store types.UserStore) user.Module {
-	baseModule := baseimpl.NewModule(store).(*baseimpl.Module)
+	baseModule := baseimpl.NewModule(store)
 	return &Module{
 		Module: baseModule,
 		store:  store,
@@ -226,4 +227,24 @@ func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to load domain config")
 	}
 	return gettableDomain, nil
+}
+
+func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
+	return m.store.CreateAPIKey(ctx, apiKey)
+}
+
+func (m *Module) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
+	return m.store.UpdateAPIKey(ctx, id, apiKey, updaterID)
+}
+
+func (m *Module) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
+	return m.store.ListAPIKeys(ctx, orgID)
+}
+
+func (m *Module) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
+	return m.store.GetAPIKey(ctx, orgID, id)
+}
+
+func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error {
+	return m.store.RevokeAPIKey(ctx, id, removedByUserID)
 }
