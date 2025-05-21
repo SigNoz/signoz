@@ -41,16 +41,13 @@ export interface HostsListTableProps {
 		| undefined;
 	hostMetricsData: HostData[];
 	filters: TagFilter;
-	setSelectedHostName: Dispatch<SetStateAction<string | null>>;
+	onHostClick: (hostName: string) => void;
 	currentPage: number;
 	setCurrentPage: Dispatch<SetStateAction<number>>;
 	pageSize: number;
-	setOrderBy: Dispatch<
-		SetStateAction<{
-			columnName: string;
-			order: 'asc' | 'desc';
-		} | null>
-	>;
+	setOrderBy: (
+		orderBy: { columnName: string; order: 'asc' | 'desc' } | null,
+	) => void;
 	setPageSize: (pageSize: number) => void;
 }
 

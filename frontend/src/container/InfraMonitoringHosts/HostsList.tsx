@@ -8,6 +8,11 @@ import HostMetricDetail from 'components/HostMetricsDetail';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
+import {
+	getFiltersFromParams,
+	getOrderByFromParams,
+} from 'container/InfraMonitoringK8s/commonUtils';
+import { INFRA_MONITORING_K8S_PARAMS_KEYS } from 'container/InfraMonitoringK8s/constants';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -15,6 +20,7 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { Filter } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -27,20 +33,51 @@ function HostsList(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [currentPage, setCurrentPage] = useState(1);
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
-		items: [],
-		op: 'and',
+	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
+		const filters = getFiltersFromParams(
+			searchParams,
+			INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS,
+		);
+		if (!filters) {
+			return {
+				items: [],
+				op: 'and',
+			};
+		}
+		return filters;
 	});
 	const [showFilters, setShowFilters] = useState<boolean>(true);
 
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
-	} | null>(null);
+	} | null>(() => getOrderByFromParams(searchParams));
 
-	const [selectedHostName, setSelectedHostName] = useState<string | null>(null);
+	const handleOrderByChange = (
+		orderBy: {
+			columnName: string;
+			order: 'asc' | 'desc';
+		} | null,
+	): void => {
+		setOrderBy(orderBy);
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(orderBy),
+		});
+	};
+
+	const [selectedHostName, setSelectedHostName] = useState<string | null>(() => {
+		const hostName = searchParams.get('hostName');
+		return hostName || null;
+	});
+
+	const handleHostClick = (hostName: string): void => {
+		setSelectedHostName(hostName);
+		setSearchParams({ ...searchParams, hostName });
+	};
 
 	const { pageSize, setPageSize } = usePageSize('hosts');
 
@@ -82,6 +119,10 @@ function HostsList(): JSX.Element {
 			const isNewFilterAdded = value.items.length !== filters.items.length;
 			setFilters(value);
 			handleChangeQueryData('filters', value);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS]: JSON.stringify(value),
+			});
 			if (isNewFilterAdded) {
 				setCurrentPage(1);
 
@@ -161,7 +202,10 @@ function HostsList(): JSX.Element {
 								</Button>
 							</div>
 						)}
-						<HostsListControls handleFiltersChange={handleFiltersChange} />
+						<HostsListControls
+							filters={filters}
+							handleFiltersChange={handleFiltersChange}
+						/>
 					</div>
 					<HostsListTable
 						isLoading={isLoading}
@@ -172,10 +216,10 @@ function HostsList(): JSX.Element {
 						filters={filters}
 						currentPage={currentPage}
 						setCurrentPage={setCurrentPage}
-						setSelectedHostName={setSelectedHostName}
+						onHostClick={handleHostClick}
 						pageSize={pageSize}
 						setPageSize={setPageSize}
-						setOrderBy={setOrderBy}
+						setOrderBy={handleOrderByChange}
 					/>
 				</div>
 			</div>
