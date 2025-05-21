@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
@@ -476,7 +480,9 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		t.Fatalf("could not create a logparsingpipelines controller: %v", err)
 	}
 
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore))
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore), nil, emailing, providerSettings)
 	userHandler := impluser.NewHandler(userModule)
 	modules := signoz.NewModules(sqlStore, userModule)
 	handlers := signoz.NewHandlers(modules, userHandler)

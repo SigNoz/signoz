@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	TemplateNameInvitationEmail = TemplateName{valuer.NewString("invitation_email")}
+	// Templates is a list of all the templates that are supported by the emailing service.
+	// This list should be updated whenever a new template is added.
+	Templates = []TemplateName{TemplateNameInvitationEmail}
 )
 
 var (
-	Templates = []TemplateName{
-		TemplateNameInvitationEmail,
-	}
+	TemplateNameInvitationEmail = TemplateName{valuer.NewString("invitation_email")}
 )
 
 type TemplateName struct{ valuer.String }
