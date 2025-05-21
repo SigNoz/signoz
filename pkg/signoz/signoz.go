@@ -7,12 +7,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/version"
+	"github.com/SigNoz/signoz/pkg/zeus"
 
 	"github.com/SigNoz/signoz/pkg/web"
 )
@@ -26,6 +28,7 @@ type SigNoz struct {
 	TelemetryStore  telemetrystore.TelemetryStore
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
+	Zeus            zeus.Zeus
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -33,10 +36,14 @@ type SigNoz struct {
 func New(
 	ctx context.Context,
 	config Config,
+	zeusConfig zeus.Config,
+	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
+	diModules func(sqlstore.SQLStore) user.Module,
+	diHandlers func(user.Module) user.Handler,
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -49,6 +56,17 @@ func New(
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
+
+	// Initialize zeus from the available zeus provider factory. This is not config controlled
+	// and depends on the variant of the build.
+	zeus, err := zeusProviderFactory.New(
+		ctx,
+		providerSettings,
+		zeusConfig,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize cache from the available cache provider factories
 	cache, err := factory.NewProviderFromNamedMap(
@@ -138,11 +156,14 @@ func New(
 		return nil, err
 	}
 
+	userModule := diModules(sqlstore)
+	userHandler := diHandlers(userModule)
+
 	// Initialize all modules
-	modules := NewModules(sqlstore)
+	modules := NewModules(sqlstore, userModule)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules)
+	handlers := NewHandlers(modules, userHandler)
 
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),
@@ -162,6 +183,7 @@ func New(
 		TelemetryStore:  telemetrystore,
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
+		Zeus:            zeus,
 		Modules:         modules,
 		Handlers:        handlers,
 	}, nil

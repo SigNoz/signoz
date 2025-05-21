@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
@@ -155,7 +156,7 @@ func (p *NodesRepo) getMetadataAttributes(ctx context.Context, req model.NodeLis
 	return nodeAttrs, nil
 }
 
-func (p *NodesRepo) getTopNodeGroups(ctx context.Context, req model.NodeListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (p *NodesRepo) getTopNodeGroups(ctx context.Context, orgID valuer.UUID, req model.NodeListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopNodes(req)
 
 	queryNames := queryNamesForNodes[req.OrderBy.ColumnName]
@@ -186,7 +187,7 @@ func (p *NodesRepo) getTopNodeGroups(ctx context.Context, req model.NodeListRequ
 		topNodeGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, topNodeGroupsQueryRangeParams)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topNodeGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -225,7 +226,7 @@ func (p *NodesRepo) getTopNodeGroups(ctx context.Context, req model.NodeListRequ
 	return topNodeGroups, allNodeGroups, nil
 }
 
-func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) (model.NodeListResponse, error) {
+func (p *NodesRepo) GetNodeList(ctx context.Context, orgID valuer.UUID, req model.NodeListRequest) (model.NodeListResponse, error) {
 	resp := model.NodeListResponse{}
 
 	if req.Limit == 0 {
@@ -267,7 +268,7 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 		return resp, err
 	}
 
-	topNodeGroups, allNodeGroups, err := p.getTopNodeGroups(ctx, req, query)
+	topNodeGroups, allNodeGroups, err := p.getTopNodeGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -301,7 +302,7 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 		}
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}

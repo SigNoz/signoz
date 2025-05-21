@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/http/httputil"
 	"time"
@@ -9,27 +10,32 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 	"github.com/SigNoz/signoz/ee/query-service/interfaces"
 	"github.com/SigNoz/signoz/ee/query-service/license"
+	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
-	SkipConfig                    *basemodel.SkipConfig
 	PreferSpanMetrics             bool
 	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
@@ -39,7 +45,6 @@ type APIHandlerOptions struct {
 	IntegrationsController        *integrations.Controller
 	CloudIntegrationsController   *cloudintegrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
-	Cache                         cache.Cache
 	Gateway                       *httputil.ReverseProxy
 	GatewayUrl                    string
 	// Querier Influx Interval
@@ -56,23 +61,22 @@ type APIHandler struct {
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
+	quickfiltermodule := quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(signoz.SQLStore))
+	quickFilter := quickfilter.NewAPI(quickfiltermodule)
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
-		SkipConfig:                    opts.SkipConfig,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
-		AppDao:                        opts.AppDao,
 		RuleManager:                   opts.RulesManager,
 		FeatureFlags:                  opts.FeatureFlags,
 		IntegrationsController:        opts.IntegrationsController,
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
-		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
-		UseLogsNewSchema:              opts.UseLogsNewSchema,
-		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore),
 		Signoz:                        signoz,
+		QuickFilters:                  quickFilter,
+		QuickFilterModule:             quickfiltermodule,
 	})
 
 	if err != nil {
@@ -121,43 +125,24 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// routes available only in ee version
 
-	router.HandleFunc("/api/v1/featureFlags",
-		am.OpenAccess(ah.getFeatureFlags)).
-		Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(ah.loginPrecheck)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/loginPrecheck",
-		am.OpenAccess(ah.precheckLogin)).
-		Methods(http.MethodGet)
+	// invite
+	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(ah.acceptInvite)).Methods(http.MethodPost)
 
 	// paid plans specific routes
-	router.HandleFunc("/api/v1/complete/saml",
-		am.OpenAccess(ah.receiveSAML)).
-		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/complete/saml", am.OpenAccess(ah.receiveSAML)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/complete/google", am.OpenAccess(ah.receiveGoogleAuth)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/{orgId}/domains", am.AdminAccess(ah.listDomainsByOrg)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/complete/google",
-		am.OpenAccess(ah.receiveGoogleAuth)).
-		Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/orgs/{orgId}/domains",
-		am.AdminAccess(ah.listDomainsByOrg)).
-		Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/domains",
-		am.AdminAccess(ah.postDomain)).
-		Methods(http.MethodPost)
-
-	router.HandleFunc("/api/v1/domains/{id}",
-		am.AdminAccess(ah.putDomain)).
-		Methods(http.MethodPut)
-
-	router.HandleFunc("/api/v1/domains/{id}",
-		am.AdminAccess(ah.deleteDomain)).
-		Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/domains", am.AdminAccess(ah.postDomain)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(ah.putDomain)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(ah.deleteDomain)).Methods(http.MethodDelete)
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", am.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/register", am.OpenAccess(ah.registerUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", am.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
 
 	// PAT APIs
@@ -187,6 +172,54 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	ah.APIHandler.RegisterRoutes(router, am)
 
+}
+
+// TODO(nitya): remove this once we know how to get the FF's
+func (ah *APIHandler) updateRequestContext(w http.ResponseWriter, r *http.Request) (*http.Request, error) {
+	ssoAvailable := true
+	err := ah.FF().CheckFeature(model.SSO)
+	if err != nil {
+		switch err.(type) {
+		case basemodel.ErrFeatureUnavailable:
+			// do nothing, just skip sso
+			ssoAvailable = false
+		default:
+			zap.L().Error("feature check failed", zap.String("featureKey", model.SSO), zap.Error(err))
+			return r, errors.New(errors.TypeInternal, errors.CodeInternal, "error checking SSO feature")
+		}
+	}
+	ctx := context.WithValue(r.Context(), types.SSOAvailable, ssoAvailable)
+	return r.WithContext(ctx), nil
+}
+
+func (ah *APIHandler) loginPrecheck(w http.ResponseWriter, r *http.Request) {
+	r, err := ah.updateRequestContext(w, r)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	ah.Signoz.Handlers.User.LoginPrecheck(w, r)
+	return
+}
+
+func (ah *APIHandler) acceptInvite(w http.ResponseWriter, r *http.Request) {
+	r, err := ah.updateRequestContext(w, r)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	ah.Signoz.Handlers.User.AcceptInvite(w, r)
+	return
+}
+
+func (ah *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
+	r, err := ah.updateRequestContext(w, r)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	ah.Signoz.Handlers.User.GetInvite(w, r)
+	return
 }
 
 func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *middleware.AuthZ) {

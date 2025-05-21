@@ -1,6 +1,8 @@
-from fixtures import types
-import requests
 from http import HTTPStatus
+
+import requests
+
+from fixtures import types
 
 
 def test_api_key(signoz: types.SigNoz, get_jwt_token) -> None:
@@ -31,7 +33,7 @@ def test_api_key(signoz: types.SigNoz, get_jwt_token) -> None:
 
     user_response = response.json()
     found_user = next(
-        (user for user in user_response if user["email"] == "admin@integration.test"),
+        (user for user in user_response["data"] if user["email"] == "admin@integration.test"),
         None,
     )
 

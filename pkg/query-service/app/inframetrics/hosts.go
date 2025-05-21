@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -129,7 +130,7 @@ func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAtt
 	return &v3.FilterAttributeValueResponse{StringAttributeValues: hostNames}, nil
 }
 
-func (h *HostsRepo) getActiveHosts(ctx context.Context, req model.HostListRequest) (map[string]bool, error) {
+func (h *HostsRepo) getActiveHosts(ctx context.Context, orgID valuer.UUID, req model.HostListRequest) (map[string]bool, error) {
 	activeStatus := map[string]bool{}
 	step := common.MinAllowedStepInterval(req.Start, req.End)
 
@@ -172,7 +173,7 @@ func (h *HostsRepo) getActiveHosts(ctx context.Context, req model.HostListReques
 		},
 	}
 
-	queryResponse, _, err := h.querierV2.QueryRange(ctx, &params)
+	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +249,7 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context, req model.HostLis
 	return hostAttrs, nil
 }
 
-func (h *HostsRepo) getTopHostGroups(ctx context.Context, req model.HostListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (h *HostsRepo) getTopHostGroups(ctx context.Context, orgID valuer.UUID, req model.HostListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopHosts(req)
 
 	queryNames := queryNamesForTopHosts[req.OrderBy.ColumnName]
@@ -276,7 +277,7 @@ func (h *HostsRepo) getTopHostGroups(ctx context.Context, req model.HostListRequ
 		topHostGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := h.querierV2.QueryRange(ctx, topHostGroupsQueryRangeParams)
+	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, topHostGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -384,7 +385,7 @@ func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.Host
 	return maps.Keys(clusterNames), maps.Keys(nodeNames), nil
 }
 
-func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) (model.HostListResponse, error) {
+func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req model.HostListRequest) (model.HostListResponse, error) {
 	resp := model.HostListResponse{}
 
 	if req.Limit == 0 {
@@ -439,12 +440,12 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 		return resp, err
 	}
 
-	activeHosts, err := h.getActiveHosts(ctx, req)
+	activeHosts, err := h.getActiveHosts(ctx, orgID, req)
 	if err != nil {
 		return resp, err
 	}
 
-	topHostGroups, allHostGroups, err := h.getTopHostGroups(ctx, req, query)
+	topHostGroups, allHostGroups, err := h.getTopHostGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -477,7 +478,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 		}
 	}
 
-	queryResponse, _, err := h.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}

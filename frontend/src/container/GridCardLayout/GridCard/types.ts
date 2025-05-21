@@ -39,6 +39,8 @@ export interface WidgetGraphComponentProps {
 	onOpenTraceBtnClick?: (record: RowData) => void;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
 	customErrorMessage?: string;
+	customOnRowClick?: (record: RowData) => void;
+	customTimeRangeWindowForCoRelation?: string | undefined;
 }
 
 export interface GridCardGraphProps {
@@ -61,6 +63,12 @@ export interface GridCardGraphProps {
 	start?: number;
 	end?: number;
 	analyticsEvent?: string;
+	customTimeRange?: {
+		startTime: number;
+		endTime: number;
+	};
+	customOnRowClick?: (record: RowData) => void;
+	customTimeRangeWindowForCoRelation?: string | undefined;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

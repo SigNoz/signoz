@@ -23,15 +23,17 @@ func NewDataConnector(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 	cluster string,
-	useLogsNewSchema bool,
-	useTraceNewSchema bool,
 	fluxIntervalForTraceDetail time.Duration,
 	cache cache.Cache,
 ) *ClickhouseReader {
-	chReader := basechr.NewReader(sqlDB, telemetryStore, prometheus, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
+	chReader := basechr.NewReader(sqlDB, telemetryStore, prometheus, cluster, fluxIntervalForTraceDetail, cache)
 	return &ClickhouseReader{
 		conn:             telemetryStore.ClickhouseDB(),
 		appdb:            sqlDB,
 		ClickHouseReader: chReader,
 	}
+}
+
+func (r *ClickhouseReader) GetSQLStore() sqlstore.SQLStore {
+	return r.appdb
 }

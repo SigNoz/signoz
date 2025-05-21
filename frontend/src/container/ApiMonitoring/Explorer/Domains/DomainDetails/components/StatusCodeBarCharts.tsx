@@ -19,14 +19,12 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import { useNotifications } from 'hooks/useNotifications';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { Options } from 'uplot';
 
 import ErrorState from './ErrorState';
@@ -36,8 +34,9 @@ function StatusCodeBarCharts({
 	endPointStatusCodeLatencyBarChartsDataQuery,
 	domainName,
 	endPointName,
-	domainListFilters,
 	filters,
+	timeRange,
+	onDragSelect,
 }: {
 	endPointStatusCodeBarChartsDataQuery: UseQueryResult<
 		SuccessResponse<any>,
@@ -49,8 +48,12 @@ function StatusCodeBarCharts({
 	>;
 	domainName: string;
 	endPointName: string;
-	domainListFilters: IBuilderQuery['filters'];
 	filters: IBuilderQuery['filters'];
+	timeRange: {
+		startTime: number;
+		endTime: number;
+	};
+	onDragSelect: (start: number, end: number) => void;
 }): JSX.Element {
 	// 0 : Status Code Count
 	// 1 : Status Code Latency
@@ -64,9 +67,7 @@ function StatusCodeBarCharts({
 		data: endPointStatusCodeLatencyBarChartsData,
 	} = endPointStatusCodeLatencyBarChartsDataQuery;
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { startTime: minTime, endTime: maxTime } = timeRange;
 
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
@@ -115,25 +116,30 @@ function StatusCodeBarCharts({
 	const navigateToExplorerPages = useNavigateToExplorerPages();
 	const { notifications } = useNotifications();
 
-	const { getCustomSeries } = useGetGraphCustomSeries({
-		isDarkMode,
-		drawStyle: 'bars',
-		colorMapping: {
+	const colorMapping = useMemo(
+		() => ({
 			'200-299': Color.BG_FOREST_500,
 			'300-399': Color.BG_AMBER_400,
 			'400-499': Color.BG_CHERRY_500,
 			'500-599': Color.BG_ROBIN_500,
 			Other: Color.BG_SIENNA_500,
-		},
+		}),
+		[],
+	);
+
+	const { getCustomSeries } = useGetGraphCustomSeries({
+		isDarkMode,
+		drawStyle: 'bars',
+		colorMapping,
 	});
 
 	const widget = useMemo<Widgets>(
 		() =>
 			getStatusCodeBarChartWidgetData(domainName, endPointName, {
-				items: [...domainListFilters.items, ...filters.items],
+				items: [...filters.items],
 				op: filters.op,
 			}),
-		[domainName, endPointName, domainListFilters, filters],
+		[domainName, endPointName, filters],
 	);
 
 	const graphClickHandler = useCallback(
@@ -145,7 +151,12 @@ function StatusCodeBarCharts({
 			metric?: { [key: string]: string },
 			queryData?: { queryName: string; inFocusOrNot: boolean },
 		): void => {
+			const TWO_AND_HALF_MINUTES_IN_MILLISECONDS = 2.5 * 60 * 1000; // 150,000 milliseconds
 			const customFilters = getCustomFiltersForBarChart(metric);
+			const { start, end } = getStartAndEndTimesInMilliseconds(
+				xValue,
+				TWO_AND_HALF_MINUTES_IN_MILLISECONDS,
+			);
 			handleGraphClick({
 				xValue,
 				yValue,
@@ -159,6 +170,10 @@ function StatusCodeBarCharts({
 				notifications,
 				graphClick,
 				customFilters,
+				customTracesTimeRange: {
+					start,
+					end,
+				},
 			});
 		},
 		[
@@ -182,11 +197,13 @@ function StatusCodeBarCharts({
 				yAxisUnit: statusCodeWidgetInfo[currentWidgetInfoIndex].yAxisUnit,
 				softMax: null,
 				softMin: null,
-				minTimeScale: Math.floor(minTime / 1e9),
-				maxTimeScale: Math.floor(maxTime / 1e9),
+				minTimeScale: minTime,
+				maxTimeScale: maxTime,
 				panelType: PANEL_TYPES.BAR,
 				onClickHandler: graphClickHandler,
 				customSeries: getCustomSeries,
+				onDragSelect,
+				colorMapping,
 			}),
 		[
 			minTime,
@@ -198,6 +215,8 @@ function StatusCodeBarCharts({
 			isDarkMode,
 			graphClickHandler,
 			getCustomSeries,
+			onDragSelect,
+			colorMapping,
 		],
 	);
 

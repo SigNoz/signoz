@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	opentracing "github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 )
@@ -34,13 +35,13 @@ type RuleTask struct {
 	notify NotifyFunc
 
 	maintenanceStore ruletypes.MaintenanceStore
-	orgID            string
+	orgID            valuer.UUID
 }
 
 const DefaultFrequency = 1 * time.Minute
 
 // NewRuleTask makes a new RuleTask with the given name, options, and rules.
-func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID string) *RuleTask {
+func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) *RuleTask {
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
@@ -308,7 +309,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	zap.L().Debug("rule task eval started", zap.String("name", g.name), zap.Time("start time", ts))
 
-	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID)
+	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID.StringValue())
 
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))

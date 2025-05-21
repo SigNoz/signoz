@@ -5,6 +5,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
+import UserpilotRouteTracker from 'components/UserpilotRouteTracker/UserpilotRouteTracker';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
@@ -26,6 +27,7 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
+import { Userpilot } from 'userpilot';
 import { extractDomain } from 'utils/app';
 
 import { Home } from './pageComponents';
@@ -59,6 +61,8 @@ function App(): JSX.Element {
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
+	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
+
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
 			// wait for the required data to be loaded before doing init for anything!
@@ -66,14 +70,14 @@ function App(): JSX.Element {
 				const orgName =
 					org && Array.isArray(org) && org.length > 0 ? org[0].displayName : '';
 
-				const { name, email, role } = user;
+				const { displayName, email, role } = user;
 
 				const domain = extractDomain(email);
 				const hostNameParts = hostname.split('.');
 
 				const identifyPayload = {
 					email,
-					name,
+					name: displayName,
 					company_name: orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -100,9 +104,21 @@ function App(): JSX.Element {
 					logEvent('Domain Identified', groupTraits, 'group');
 				}
 
+				Userpilot.identify(email, {
+					email,
+					name: displayName,
+					orgName,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
+					source: 'signoz-ui',
+					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
+				});
+
 				posthog?.identify(email, {
 					email,
-					name,
+					name: displayName,
 					orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -128,7 +144,7 @@ function App(): JSX.Element {
 				) {
 					window.cioanalytics.reset();
 					window.cioanalytics.identify(email, {
-						name: user.name,
+						name: user.displayName,
 						email,
 						role: user.role,
 					});
@@ -242,7 +258,7 @@ function App(): JSX.Element {
 				window.Intercom('boot', {
 					app_id: process.env.INTERCOM_APP_ID,
 					email: user?.email || '',
-					name: user?.name || '',
+					name: user?.displayName || '',
 				});
 			}
 		}
@@ -276,25 +292,33 @@ function App(): JSX.Element {
 				});
 			}
 
-			Sentry.init({
-				dsn: process.env.SENTRY_DSN,
-				tunnel: process.env.TUNNEL_URL,
-				environment: 'production',
-				integrations: [
-					Sentry.browserTracingIntegration(),
-					Sentry.replayIntegration({
-						maskAllText: false,
-						blockAllMedia: false,
-					}),
-				],
-				// Performance Monitoring
-				tracesSampleRate: 1.0, //  Capture 100% of the transactions
-				// Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-				tracePropagationTargets: [],
-				// Session Replay
-				replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-				replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
-			});
+			if (process.env.USERPILOT_KEY) {
+				Userpilot.initialize(process.env.USERPILOT_KEY);
+			}
+
+			if (!isSentryInitialized) {
+				Sentry.init({
+					dsn: process.env.SENTRY_DSN,
+					tunnel: process.env.TUNNEL_URL,
+					environment: 'production',
+					integrations: [
+						Sentry.browserTracingIntegration(),
+						Sentry.replayIntegration({
+							maskAllText: false,
+							blockAllMedia: false,
+						}),
+					],
+					// Performance Monitoring
+					tracesSampleRate: 1.0, //  Capture 100% of the transactions
+					// Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+					tracePropagationTargets: [],
+					// Session Replay
+					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
+					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+				});
+
+				setIsSentryInitialized(true);
+			}
 		} else {
 			posthog.reset();
 			Sentry.close();
@@ -303,6 +327,7 @@ function App(): JSX.Element {
 				window.cioanalytics.reset();
 			}
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);
 
 	// if the user is in logged in state
@@ -330,6 +355,7 @@ function App(): JSX.Element {
 			<ConfigProvider theme={themeConfig}>
 				<Router history={history}>
 					<CompatRouter>
+						<UserpilotRouteTracker />
 						<NotificationProvider>
 							<PrivateRoute>
 								<ResourceProvider>

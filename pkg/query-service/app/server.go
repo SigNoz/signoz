@@ -14,11 +14,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
@@ -31,14 +32,11 @@ import (
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/explorer"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -46,21 +44,14 @@ import (
 )
 
 type ServerOptions struct {
-	Config            signoz.Config
-	PromConfigPath    string
-	SkipTopLvlOpsPath string
-	HTTPHostPort      string
-	PrivateHostPort   string
-	// alert specific params
-	DisableRules               bool
-	RuleRepoURL                string
+	Config                     signoz.Config
+	HTTPHostPort               string
+	PrivateHostPort            string
 	PreferSpanMetrics          bool
 	CacheConfigPath            string
 	FluxInterval               string
 	FluxIntervalForTraceDetail string
 	Cluster                    string
-	UseLogsNewSchema           bool
-	UseTraceNewSchema          bool
 	SigNoz                     *signoz.SigNoz
 	Jwt                        *authtypes.JWT
 }
@@ -90,19 +81,6 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
-	var err error
-	if err := dao.InitDao(serverOptions.SigNoz.SQLStore); err != nil {
-		return nil, err
-	}
-
-	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
-		return nil, err
-	}
-
-	if err := explorer.InitWithDSN(serverOptions.SigNoz.SQLStore); err != nil {
-		return nil, err
-	}
-
 	// initiate feature manager
 	fm := featureManager.StartManager()
 
@@ -116,38 +94,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.SigNoz.TelemetryStore,
 		serverOptions.SigNoz.Prometheus,
 		serverOptions.Cluster,
-		serverOptions.UseLogsNewSchema,
-		serverOptions.UseTraceNewSchema,
 		fluxIntervalForTraceDetail,
 		serverOptions.SigNoz.Cache,
 	)
 
-	skipConfig := &model.SkipConfig{}
-	if serverOptions.SkipTopLvlOpsPath != "" {
-		// read skip config
-		skipConfig, err = model.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var c cache.Cache
-	if serverOptions.CacheConfigPath != "" {
-		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		c = cache.NewCache(cacheOpts)
-	}
-
 	rm, err := makeRulesManager(
-		serverOptions.RuleRepoURL,
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
-		c,
-		serverOptions.DisableRules,
-		serverOptions.UseLogsNewSchema,
-		serverOptions.UseTraceNewSchema,
+		serverOptions.SigNoz.Cache,
 		serverOptions.SigNoz.SQLStore,
 		serverOptions.SigNoz.TelemetryStore,
 		serverOptions.SigNoz.Prometheus,
@@ -179,32 +133,36 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	telemetry.GetInstance().SetReader(reader)
+	telemetry.GetInstance().SetSqlStore(serverOptions.SigNoz.SQLStore)
+	telemetry.GetInstance().SetSavedViewsInfoCallback(telemetry.GetSavedViewsInfo)
+	telemetry.GetInstance().SetAlertsInfoCallback(telemetry.GetAlertsInfo)
+	telemetry.GetInstance().SetGetUsersCallback(telemetry.GetUsers)
+	telemetry.GetInstance().SetUserCountCallback(telemetry.GetUserCount)
+	telemetry.GetInstance().SetDashboardsInfoCallback(telemetry.GetDashboardsInfo)
+
+	quickfiltermodule := quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(serverOptions.SigNoz.SQLStore))
+	quickFilter := quickfilter.NewAPI(quickfiltermodule)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
-		SkipConfig:                    skipConfig,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
-		AppDao:                        dao.DB(),
 		RuleManager:                   rm,
 		FeatureFlags:                  fm,
 		IntegrationsController:        integrationsController,
 		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
-		Cache:                         c,
 		FluxInterval:                  fluxInterval,
-		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
-		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
 		JWT:                           serverOptions.Jwt,
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
 		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore),
 		Signoz:                        serverOptions.SigNoz,
+		QuickFilters:                  quickFilter,
+		QuickFilterModule:             quickfiltermodule,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	s := &Server{
-		// logger: logger,
-		// tracer: tracer,
 		ruleManager:        rm,
 		serverOptions:      serverOptions,
 		unavailableChannel: make(chan healthcheck.Status),
@@ -244,9 +202,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
-	errorList := reader.PreloadMetricsMetadata(context.Background())
-	for _, er := range errorList {
-		zap.L().Error("preload metrics updated metadata failed", zap.Error(er))
+	orgs, err := apiHandler.Signoz.Modules.Organization.GetAll(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	for _, org := range orgs {
+		errorList := reader.PreloadMetricsMetadata(context.Background(), org.ID)
+		for _, er := range errorList {
+			zap.L().Error("failed to preload metrics metadata", zap.Error(er))
+		}
 	}
 
 	return s, nil
@@ -364,13 +328,7 @@ func (s *Server) initListeners() error {
 
 // Start listening on http and private http port concurrently
 func (s *Server) Start(ctx context.Context) error {
-
-	// initiate rule manager first
-	if !s.serverOptions.DisableRules {
-		s.ruleManager.Start(ctx)
-	} else {
-		zap.L().Info("msg: Rules disabled as rules.disable is set to TRUE")
-	}
+	s.ruleManager.Start(ctx)
 
 	err := s.initListeners()
 	if err != nil {
@@ -458,32 +416,24 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func makeRulesManager(
-	ruleRepoURL string,
 	db *sqlx.DB,
 	ch interfaces.Reader,
 	cache cache.Cache,
-	disableRules bool,
-	useLogsNewSchema bool,
-	useTraceNewSchema bool,
 	sqlstore sqlstore.SQLStore,
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 ) (*rules.Manager, error) {
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		TelemetryStore:    telemetryStore,
-		Prometheus:        prometheus,
-		RepoURL:           ruleRepoURL,
-		DBConn:            db,
-		Context:           context.Background(),
-		Logger:            zap.L(),
-		DisableRules:      disableRules,
-		Reader:            ch,
-		Cache:             cache,
-		EvalDelay:         constants.GetEvalDelay(),
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
-		SQLStore:          sqlstore,
+		TelemetryStore: telemetryStore,
+		Prometheus:     prometheus,
+		DBConn:         db,
+		Context:        context.Background(),
+		Logger:         zap.L(),
+		Reader:         ch,
+		Cache:          cache,
+		EvalDelay:      constants.GetEvalDelay(),
+		SQLStore:       sqlstore,
 	}
 
 	// create Manager
