@@ -45,7 +45,8 @@ func NewStore(baseDir string, templates []emailtypes.TemplateName, logger *slog.
 
 		t, err := parseTemplateFile(filepath.Join(baseDir, fi.Name()), templateName)
 		if err != nil {
-			return nil, err
+			logger.Error("failed to parse template file", "template", templateName, "path", filepath.Join(baseDir, fi.Name()), "error", err)
+			continue
 		}
 
 		fs[templateName] = t
