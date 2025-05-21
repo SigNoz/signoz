@@ -28,17 +28,11 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
 
-const historyReplace = jest.fn();
-
 // eslint-disable-next-line sonarjs/no-duplicate-string
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.TRACES_EXPLORER}/`,
-	}),
-	useHistory: (): any => ({
-		...jest.requireActual('react-router-dom').useHistory(),
-		replace: historyReplace,
 	}),
 }));
 
@@ -309,5 +303,67 @@ describe('Quick Filters with custom filters', () => {
 			]),
 		);
 		expect(requestBody.signal).toBe(SIGNAL);
+	});
+
+	// render duration filter
+	it('should render duration slider for duration_nono filter', async () => {
+		const { getByTestId } = render(<TestQuickFilters signal={SIGNAL} />);
+		await screen.findByText(FILTER_SERVICE_NAME);
+		expect(screen.getByText('Duration')).toBeInTheDocument();
+
+		// click to open the duration filter
+		fireEvent.click(screen.getByText('Duration'));
+
+		const minDuration = getByTestId('min-input') as HTMLInputElement;
+		const maxDuration = getByTestId('max-input') as HTMLInputElement;
+		expect(minDuration).toHaveValue(null);
+		expect(minDuration).toHaveProperty('placeholder', '0');
+		expect(maxDuration).toHaveValue(null);
+		expect(maxDuration).toHaveProperty('placeholder', '100000000');
+
+		// set min duration to 10000
+		fireEvent.change(minDuration, { target: { value: '10000' } });
+
+		// set max duration to 20000
+		fireEvent.change(maxDuration, { target: { value: '20000' } });
+
+		// sleep 1.5 seconds to wait for the debounce to finish
+		await new Promise((resolve) => {
+			setTimeout(() => {
+				resolve(undefined);
+			}, 1500);
+		});
+
+		// check if the duration filter is applied
+		await waitFor(() => {
+			expect(redirectWithQueryBuilderData).toHaveBeenCalledWith(
+				expect.objectContaining({
+					builder: {
+						queryData: expect.arrayContaining([
+							expect.objectContaining({
+								filters: expect.objectContaining({
+									items: expect.arrayContaining([
+										expect.objectContaining({
+											key: expect.objectContaining({
+												key: 'durationNano',
+											}),
+											op: '>=',
+											value: 10000000000,
+										}),
+										expect.objectContaining({
+											key: expect.objectContaining({
+												key: 'durationNano',
+											}),
+											op: '<=',
+											value: 20000000000,
+										}),
+									]),
+								}),
+							}),
+						]),
+					},
+				}),
+			);
+		});
 	});
 });
