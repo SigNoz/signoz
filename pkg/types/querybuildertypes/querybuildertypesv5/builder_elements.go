@@ -82,6 +82,35 @@ const (
 	FilterOperatorNotContains
 )
 
+// AddDefaultExistsFilter returns true if addl exists filter should be added to the query
+// For the negative predicates, we don't want to add the exists filter. Why?
+// Say for example, user adds a filter `service.name != "redis"`, we can't interpret it
+// unambiguously i.e do they mean to fetch logs that satisfy
+// service.name != "redis" or do they mean to fetch logs that have `service.name` field and
+// doesn't have value "redis"
+// Since we don't know the intent, we don't add the exists filter. They are expected
+// to add exists filter themselves if exclusion is desired.
+//
+// For the positive predicates, the key existence is implied.
+func (f FilterOperator) AddDefaultExistsFilter() bool {
+	switch f {
+	case
+		FilterOperatorEqual,
+		FilterOperatorGreaterThan,
+		FilterOperatorGreaterThanOrEq,
+		FilterOperatorLessThan,
+		FilterOperatorLessThanOrEq,
+		FilterOperatorLike,
+		FilterOperatorILike,
+		FilterOperatorBetween,
+		FilterOperatorIn,
+		FilterOperatorRegexp,
+		FilterOperatorContains:
+		return true
+	}
+	return false
+}
+
 type OrderDirection struct {
 	valuer.String
 }

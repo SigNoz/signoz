@@ -3,6 +3,7 @@ package telemetrytraces
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -20,7 +21,7 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 	return &conditionBuilder{fm: fm}
 }
 
-func (c *conditionBuilder) ConditionFor(
+func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
@@ -73,11 +74,9 @@ func (c *conditionBuilder) ConditionFor(
 		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
-		exp := fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value))
-		return sb.And(exp), nil
+		return fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
-		exp := fmt.Sprintf(`not match(%s, %s)`, tblFieldName, sb.Var(value))
-		return sb.And(exp), nil
+		return fmt.Sprintf(`NOT match(%s, %s)`, tblFieldName, sb.Var(value)), nil
 
 	// between and not between
 	case qbtypes.FilterOperatorBetween:
@@ -105,13 +104,23 @@ func (c *conditionBuilder) ConditionFor(
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.In(tblFieldName, values...), nil
+		// instead of using IN, we use `=` + `OR` to make use of index
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.E(tblFieldName, value))
+		}
+		return sb.Or(conditions...), nil
 	case qbtypes.FilterOperatorNotIn:
 		values, ok := value.([]any)
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.NotIn(tblFieldName, values...), nil
+		// instead of using NOT IN, we use `!=` + `AND` to make use of index
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.NE(tblFieldName, value))
+		}
+		return sb.And(conditions...), nil
 
 	// exists and not exists
 	// in the query builder, `exists` and `not exists` are used for
@@ -165,4 +174,32 @@ func (c *conditionBuilder) ConditionFor(
 		}
 	}
 	return "", nil
+}
+
+func (c *conditionBuilder) ConditionFor(
+	ctx context.Context,
+	key *telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) (string, error) {
+	condition, err := c.conditionFor(ctx, key, operator, value, sb)
+	if err != nil {
+		return "", err
+	}
+
+	if operator.AddDefaultExistsFilter() {
+		// skip adding exists filter for intrinsic fields
+		field, _ := c.fm.FieldFor(ctx, key)
+		if slices.Contains(IntrinsicFields, field) || slices.Contains(CalculatedFields, field) {
+			return condition, nil
+		}
+
+		existsCondition, err := c.conditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb)
+		if err != nil {
+			return "", err
+		}
+		return sb.And(condition, existsCondition), nil
+	}
+	return condition, nil
 }
