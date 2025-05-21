@@ -392,3 +392,23 @@ func (m *Module) CanUsePassword(ctx context.Context, email string) (bool, error)
 func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error) {
 	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SSO is not supported")
 }
+
+func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
+	return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
+}
+
+func (m *Module) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
+	return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
+}
+
+func (m *Module) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
+	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
+}
+
+func (m *Module) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
+	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
+}
+
+func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error {
+	return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
+}
