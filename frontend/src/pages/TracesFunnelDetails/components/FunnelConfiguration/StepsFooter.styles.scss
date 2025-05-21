@@ -34,12 +34,16 @@
 		border: none;
 		display: flex;
 		align-items: center;
-		gap: 6px;
-		.ant-btn-icon {
-			margin-inline-end: 0 !important;
-		}
-		&--save {
-			background-color: var(--bg-slate-400);
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 10px; /* 83.333% */
+		letter-spacing: 0.12px;
+		border-radius: 2px;
+
+		&--sync {
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-300);
+			color: var(--bg-vanilla-400);
 		}
 		&--run {
 			background-color: var(--bg-robin-500);

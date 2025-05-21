@@ -39,7 +39,7 @@ function AddFunnelStepDetailsModal({
 			setStepName(stepData?.name || '');
 			setDescription(stepData?.description || '');
 		}
-	}, [isOpen, stepData]);
+	}, [isOpen, stepData?.name, stepData?.description]);
 
 	const handleCancel = (): void => {
 		setStepName('');

@@ -80,10 +80,15 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 
 	filters := []string{}
 
-	pathFilter := logsV3.GetPathIndexFilter(item.Key.Key)
-	if pathFilter != "" {
-		filters = append(filters, pathFilter)
+	// don't add path filter for !=, not exists, not in, not like, not contains
+	// it's not compatible with the index filter
+	if _, ok := skipExistsFilter[op]; !ok {
+		pathFilter := logsV3.GetPathIndexFilter(item.Key.Key)
+		if pathFilter != "" {
+			filters = append(filters, pathFilter)
+		}
 	}
+
 	if op == v3.FilterOperatorContains ||
 		op == v3.FilterOperatorEqual ||
 		op == v3.FilterOperatorHas {
@@ -94,7 +99,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 	}
 
 	// add exists check for non array items as default values of int/float/bool will corrupt the results
-	if !isArray && !(item.Operator == v3.FilterOperatorExists || item.Operator == v3.FilterOperatorNotExists) {
+	if _, ok := skipExistsFilter[op]; !ok && !isArray && op != v3.FilterOperatorExists {
 		existsFilter := fmt.Sprintf("JSON_EXISTS(body, '$.%s')", logsV3.GetPath(strings.Split(item.Key.Key, ".")[1:]))
 		filter = fmt.Sprintf("%s AND %s", existsFilter, filter)
 	}
