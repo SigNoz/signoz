@@ -1795,7 +1795,7 @@ func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWrite
 
 	result, apiErr := aH.reader.GetWaterfallSpansForTraceWithMetadata(r.Context(), orgID, traceID, req)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		render.Error(w, apiErr)
 		return
 	}
 
@@ -1829,7 +1829,7 @@ func (aH *APIHandler) GetFlamegraphSpansForTrace(w http.ResponseWriter, r *http.
 
 	result, apiErr := aH.reader.GetFlamegraphSpansForTrace(r.Context(), orgID, traceID, req)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		render.Error(w, apiErr)
 		return
 	}
 
