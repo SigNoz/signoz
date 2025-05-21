@@ -61,7 +61,7 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		role, err := types.NewRole(user.Role)
+		role, err := types.NewRole(pat.Role)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
