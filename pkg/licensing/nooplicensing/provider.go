@@ -52,6 +52,14 @@ func (provider *noopLicensing) Refresh(ctx context.Context, organizationID value
 	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "refreshing license is not supported")
 }
 
+func (provider *noopLicensing) Checkout(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error) {
+	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "refreshing license is not supported")
+}
+
+func (provider *noopLicensing) Portal(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error) {
+	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "refreshing license is not supported")
+}
+
 func (provider *noopLicensing) Get(ctx context.Context, organizationID valuer.UUID, ID valuer.UUID) (*licensetypes.GettableLicense, error) {
 	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "fetching license for ID is not supported")
 }
@@ -74,7 +82,7 @@ func (provider *noopLicensing) CheckFeature(ctx context.Context, key string) err
 		return nil
 	}
 
-	return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "no feature active with given key: %s", key)
+	return errors.Newf(errors.TypeNotFound, licensing.ErrCodeFeatureUnavailable, "feature unavailable: %s", key)
 }
 
 func (provider *noopLicensing) GetFeatureFlag(ctx context.Context, key string) (*featuretypes.GettableFeature, error) {

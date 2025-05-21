@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
@@ -148,9 +149,9 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/dashboards/{uuid}/unlock", am.EditAccess(ah.unlockDashboard)).Methods(http.MethodPut)
 
 	// v3
-	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.applyLicenseV3)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.refreshLicensesV3)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(ah.getActiveLicenseV3)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.activate)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.refresh)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(ah.getActive)).Methods(http.MethodGet)
 
 	// v4
 	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
@@ -163,10 +164,10 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 }
 
 // TODO(nitya): remove this once we know how to get the FF's
-func (ah *APIHandler) updateRequestContext(w http.ResponseWriter, r *http.Request) (*http.Request, error) {
+func (ah *APIHandler) updateRequestContext(_ http.ResponseWriter, r *http.Request) (*http.Request, error) {
 	ssoAvailable := true
 	err := ah.Signoz.Licensing.CheckFeature(r.Context(), licensetypes.SSO)
-	if err != nil && errors.Ast(err, errors.TypeUnsupported) {
+	if err != nil && errors.Asc(err, licensing.ErrCodeFeatureUnavailable) {
 		ssoAvailable = false
 	} else if err != nil {
 		zap.L().Error("feature check failed", zap.String("featureKey", licensetypes.SSO), zap.Error(err))

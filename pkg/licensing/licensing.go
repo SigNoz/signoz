@@ -33,6 +33,10 @@ type Licensing interface {
 	GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.GettableLicense, error)
 	// Refresh refreshes the license state from upstream server
 	Refresh(ctx context.Context, organizationID valuer.UUID) error
+	// Checkout creates a checkout session via upstream server and returns the redirection link
+	Checkout(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error)
+	// Portal creates a portal session via upstream server and return the redirection link
+	Portal(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error)
 
 	// feature surrogate
 	// CheckFeature checks if the feature is active or not
@@ -51,4 +55,7 @@ type API interface {
 	Activate(http.ResponseWriter, *http.Request)
 	Refresh(http.ResponseWriter, *http.Request)
 	GetActive(http.ResponseWriter, *http.Request)
+
+	Checkout(http.ResponseWriter, *http.Request)
+	Portal(http.ResponseWriter, *http.Request)
 }

@@ -146,7 +146,7 @@ func (store *store) GetAllFeatures(ctx context.Context) ([]*featuretypes.Storabl
 		Model(&storableFeatures).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "features does not exists")
+		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "features do not exists")
 	}
 
 	return storableFeatures, nil

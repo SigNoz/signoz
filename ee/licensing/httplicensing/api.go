@@ -38,7 +38,7 @@ func (api *licensingAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req *licensetypes.ActivateLicense
+	req := new(licensetypes.ActivateLicense)
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		render.Error(rw, err)
@@ -102,4 +102,64 @@ func (api *licensingAPI) Refresh(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (api *licensingAPI) Checkout(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is invalid"))
+		return
+	}
+
+	req := new(licensetypes.PostableSubscription)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		render.Error(rw, err)
+	}
+
+	gettableSubscription, err := api.licensing.Checkout(ctx, orgID, req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, gettableSubscription)
+}
+
+func (api *licensingAPI) Portal(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is invalid"))
+		return
+	}
+
+	req := new(licensetypes.PostableSubscription)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		render.Error(rw, err)
+	}
+
+	gettableSubscription, err := api.licensing.Portal(ctx, orgID, req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, gettableSubscription)
 }

@@ -2,10 +2,10 @@ package httplicensing
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/ee/licensing/licensingstore/sqllicensingstore"
-	validate "github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
@@ -14,9 +14,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
+	"github.com/tidwall/gjson"
 )
 
-type httplicensing struct {
+type provider struct {
 	store    licensetypes.Store
 	zeus     zeus.Zeus
 	config   licensing.Config
@@ -33,10 +34,10 @@ func NewProviderFactory(store sqlstore.SQLStore, zeus zeus.Zeus) factory.Provide
 func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Config, sqlstore sqlstore.SQLStore, zeus zeus.Zeus) (licensing.Licensing, error) {
 	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/ee/licensing/httplicensing")
 	licensestore := sqllicensingstore.New(sqlstore)
-	return &httplicensing{store: licensestore, zeus: zeus, config: config, settings: settings, stopChan: make(chan struct{})}, nil
+	return &provider{store: licensestore, zeus: zeus, config: config, settings: settings, stopChan: make(chan struct{})}, nil
 }
 
-func (provider *httplicensing) Start(ctx context.Context) error {
+func (provider *provider) Start(ctx context.Context) error {
 	tick := time.NewTicker(provider.config.ValidationFrequency)
 	defer tick.Stop()
 
@@ -55,12 +56,13 @@ func (provider *httplicensing) Start(ctx context.Context) error {
 	}
 }
 
-func (provider *httplicensing) Stop(context.Context) error {
+func (provider *provider) Stop(ctx context.Context) error {
+	provider.settings.Logger().DebugContext(ctx, "license validation stopped")
 	close(provider.stopChan)
 	return nil
 }
 
-func (provider *httplicensing) Validate(ctx context.Context) error {
+func (provider *provider) Validate(ctx context.Context) error {
 	organizations, err := provider.store.ListOrganizations(ctx)
 	if err != nil {
 		return err
@@ -83,7 +85,7 @@ func (provider *httplicensing) Validate(ctx context.Context) error {
 			return nil
 		}
 
-		license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, provider.zeus)
+		license, err := GettableLicenseFromZeus(ctx, activeLicense.Key, provider.zeus)
 		if err != nil {
 			provider.settings.Logger().ErrorContext(ctx, "failed to validate the license with upstream server", "licenseID", activeLicense.Key, "organizationID", organizationID.StringValue())
 			license, err := provider.store.Get(ctx, organizationID, valuer.MustNewUUID(activeLicense.ID))
@@ -92,7 +94,7 @@ func (provider *httplicensing) Validate(ctx context.Context) error {
 			}
 
 			if time.Since(license.LastValidatedAt) > 3*provider.config.ValidationFrequency {
-				provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive 3 days. defaulting to basic plan", "licenseID", license.ID.StringValue(), "organizationID", organizationID.StringValue())
+				provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive 3 validation cycles. defaulting to basic plan", "licenseID", license.ID.StringValue(), "organizationID", organizationID.StringValue())
 				err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 				if err != nil {
 					return err
@@ -110,6 +112,7 @@ func (provider *httplicensing) Validate(ctx context.Context) error {
 	}
 
 	if len(organizations) == 0 {
+		provider.settings.Logger().DebugContext(ctx, "no organizations found, defaulting to basic plan")
 		err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 		if err != nil {
 			return err
@@ -119,7 +122,7 @@ func (provider *httplicensing) Validate(ctx context.Context) error {
 	return nil
 }
 
-func (provider *httplicensing) Update(ctx context.Context, organizationID valuer.UUID, license *licensetypes.GettableLicense) error {
+func (provider *provider) Update(ctx context.Context, organizationID valuer.UUID, license *licensetypes.GettableLicense) error {
 	storableLicense := licensetypes.NewStorableLicense(valuer.MustNewUUID(license.ID), license.Key, license.Data, time.Now(), organizationID)
 	err := provider.store.Update(ctx, organizationID, storableLicense)
 	if err != nil {
@@ -134,8 +137,8 @@ func (provider *httplicensing) Update(ctx context.Context, organizationID valuer
 	return nil
 }
 
-func (provider *httplicensing) Activate(ctx context.Context, organizationID valuer.UUID, key string) error {
-	license, err := validate.ValidateLicenseV3(ctx, key, provider.zeus)
+func (provider *provider) Activate(ctx context.Context, organizationID valuer.UUID, key string) error {
+	license, err := GettableLicenseFromZeus(ctx, key, provider.zeus)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to validate license data with upstream server")
 	}
@@ -154,7 +157,7 @@ func (provider *httplicensing) Activate(ctx context.Context, organizationID valu
 	return nil
 }
 
-func (provider *httplicensing) Get(ctx context.Context, orgID valuer.UUID, ID valuer.UUID) (*licensetypes.GettableLicense, error) {
+func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, ID valuer.UUID) (*licensetypes.GettableLicense, error) {
 	storableLicense, err := provider.store.Get(ctx, orgID, ID)
 	if err != nil {
 		return nil, err
@@ -168,7 +171,7 @@ func (provider *httplicensing) Get(ctx context.Context, orgID valuer.UUID, ID va
 	return gettableLicense, nil
 }
 
-func (provider *httplicensing) GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.GettableLicense, error) {
+func (provider *provider) GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.GettableLicense, error) {
 	storableLicenses, err := provider.store.GetAll(ctx, organizationID)
 	if err != nil {
 		return nil, err
@@ -200,7 +203,7 @@ func (provider *httplicensing) GetActive(ctx context.Context, organizationID val
 	return activeLicense, nil
 }
 
-func (provider *httplicensing) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.GettableLicense, error) {
+func (provider *provider) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.GettableLicense, error) {
 	storableLicenses, err := provider.store.GetAll(ctx, organizationID)
 	if err != nil {
 		return nil, err
@@ -218,13 +221,13 @@ func (provider *httplicensing) GetAll(ctx context.Context, organizationID valuer
 	return gettableLicenses, nil
 }
 
-func (provider *httplicensing) Refresh(ctx context.Context, organizationID valuer.UUID) error {
+func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUID) error {
 	activeLicense, err := provider.GetActive(ctx, organizationID)
 	if err != nil {
 		return err
 	}
 
-	license, err := validate.ValidateLicenseV3(ctx, activeLicense.Key, provider.zeus)
+	license, err := GettableLicenseFromZeus(ctx, activeLicense.Key, provider.zeus)
 	if err != nil {
 		return err
 	}
@@ -238,8 +241,83 @@ func (provider *httplicensing) Refresh(ctx context.Context, organizationID value
 	return nil
 }
 
+func (provider *provider) Checkout(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error) {
+	activeLicense, err := provider.GetActive(ctx, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	redirectURL, err := GettableCheckoutSessionFromZeus(ctx, postableSubscription, activeLicense.Key, provider.zeus)
+	if err != nil {
+		return nil, err
+	}
+
+	return &licensetypes.GettableSubscription{RedirectURL: redirectURL}, nil
+}
+
+func (provider *provider) Portal(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error) {
+	activeLicense, err := provider.GetActive(ctx, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	redirectURL, err := GettablePortalSessionFromZeus(ctx, postableSubscription, activeLicense.Key, provider.zeus)
+	if err != nil {
+		return nil, err
+	}
+
+	return &licensetypes.GettableSubscription{RedirectURL: redirectURL}, nil
+}
+
+func GettableLicenseFromZeus(ctx context.Context, licenseKey string, zeus zeus.Zeus) (*licensetypes.GettableLicense, error) {
+	data, err := zeus.GetLicense(ctx, licenseKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var m map[string]any
+	if err = json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+
+	license, err := licensetypes.NewGettableLicense(m)
+	if err != nil {
+		return nil, err
+	}
+
+	return license, nil
+}
+
+func GettableCheckoutSessionFromZeus(ctx context.Context, checkoutRequest *licensetypes.PostableSubscription, licenseKey string, zeus zeus.Zeus) (string, error) {
+	body, err := json.Marshal(checkoutRequest)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := zeus.GetCheckoutURL(ctx, licenseKey, body)
+	if err != nil {
+		return "", err
+	}
+
+	return gjson.GetBytes(response, "url").String(), nil
+}
+
+func GettablePortalSessionFromZeus(ctx context.Context, portalRequest *licensetypes.PostableSubscription, licenseKey string, zeus zeus.Zeus) (string, error) {
+	body, err := json.Marshal(portalRequest)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := zeus.GetPortalURL(ctx, licenseKey, body)
+	if err != nil {
+		return "", err
+	}
+
+	return gjson.GetBytes(response, "url").String(), nil
+}
+
 // feature surrogate
-func (provider *httplicensing) CheckFeature(ctx context.Context, key string) error {
+func (provider *provider) CheckFeature(ctx context.Context, key string) error {
 	feature, err := provider.store.GetFeature(ctx, key)
 	if err != nil {
 		return err
@@ -250,7 +328,7 @@ func (provider *httplicensing) CheckFeature(ctx context.Context, key string) err
 	return errors.Newf(errors.TypeUnsupported, licensing.ErrCodeFeatureUnavailable, "feature unavailable: %s", key)
 }
 
-func (provider *httplicensing) GetFeatureFlag(ctx context.Context, key string) (*featuretypes.GettableFeature, error) {
+func (provider *provider) GetFeatureFlag(ctx context.Context, key string) (*featuretypes.GettableFeature, error) {
 	featureStatus, err := provider.store.GetFeature(ctx, key)
 	if err != nil {
 		return nil, err
@@ -264,7 +342,7 @@ func (provider *httplicensing) GetFeatureFlag(ctx context.Context, key string) (
 	}, nil
 }
 
-func (provider *httplicensing) GetFeatureFlags(ctx context.Context) ([]*featuretypes.GettableFeature, error) {
+func (provider *provider) GetFeatureFlags(ctx context.Context) ([]*featuretypes.GettableFeature, error) {
 	storableFeatures, err := provider.store.GetAllFeatures(ctx)
 	if err != nil {
 		return nil, err
@@ -284,7 +362,7 @@ func (provider *httplicensing) GetFeatureFlags(ctx context.Context) ([]*featuret
 	return gettableFeatures, nil
 }
 
-func (provider *httplicensing) InitFeatures(ctx context.Context, features []*featuretypes.GettableFeature) error {
+func (provider *provider) InitFeatures(ctx context.Context, features []*featuretypes.GettableFeature) error {
 	featureStatus := make([]*featuretypes.StorableFeature, len(features))
 	for i, f := range features {
 		featureStatus[i] = &featuretypes.StorableFeature{
@@ -299,7 +377,7 @@ func (provider *httplicensing) InitFeatures(ctx context.Context, features []*fea
 	return provider.store.InitFeatures(ctx, featureStatus)
 }
 
-func (provider *httplicensing) UpdateFeatureFlag(ctx context.Context, feature *featuretypes.GettableFeature) error {
+func (provider *provider) UpdateFeatureFlag(ctx context.Context, feature *featuretypes.GettableFeature) error {
 	return provider.store.UpdateFeature(ctx, &featuretypes.StorableFeature{
 		Name:       feature.Name,
 		Active:     feature.Active,
@@ -309,6 +387,6 @@ func (provider *httplicensing) UpdateFeatureFlag(ctx context.Context, feature *f
 	})
 }
 
-func (provider *httplicensing) ListOrganizations(ctx context.Context) ([]valuer.UUID, error) {
+func (provider *provider) ListOrganizations(ctx context.Context) ([]valuer.UUID, error) {
 	return provider.store.ListOrganizations(ctx)
 }

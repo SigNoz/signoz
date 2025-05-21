@@ -6,13 +6,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	"github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/licensetypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type DayWiseBreakdown struct {
@@ -51,10 +45,6 @@ type details struct {
 	BillTotal float64         `json:"billTotal"`
 }
 
-type Redirect struct {
-	RedirectURL string `json:"redirectURL"`
-}
-
 type billingDetails struct {
 	Status string `json:"status"`
 	Data   struct {
@@ -70,60 +60,24 @@ type ApplyLicenseRequest struct {
 	LicenseKey string `json:"key"`
 }
 
-func (ah *APIHandler) getActiveLicenseV3(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) getActive(w http.ResponseWriter, r *http.Request) {
 	ah.LicensingAPI.GetActive(w, r)
 }
 
-// this function is called by zeus when inserting licenses in the query-service
-func (ah *APIHandler) applyLicenseV3(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) activate(w http.ResponseWriter, r *http.Request) {
 	ah.LicensingAPI.Activate(w, r)
 }
 
-func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) refresh(w http.ResponseWriter, r *http.Request) {
 	ah.LicensingAPI.Refresh(w, r)
 }
 
-func getCheckoutPortalResponse(redirectURL string) *Redirect {
-	return &Redirect{RedirectURL: redirectURL}
+func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
+	ah.LicensingAPI.Checkout(w, r)
 }
 
-func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is invalid"))
-		return
-	}
-
-	checkoutRequest := &licensetypes.CheckoutRequest{}
-	if err := json.NewDecoder(r.Body).Decode(checkoutRequest); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	license, err := ah.Signoz.Licensing.GetActive(r.Context(), orgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	if license == nil {
-		RespondError(w, model.BadRequestStr("cannot proceed with checkout without license key"), nil)
-		return
-	}
-
-	redirectUrl, err := signozio.CheckoutSession(r.Context(), checkoutRequest, license.Key, ah.Signoz.Zeus)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	ah.Respond(w, getCheckoutPortalResponse(redirectUrl))
+func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
+	ah.LicensingAPI.Portal(w, r)
 }
 
 func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
@@ -158,43 +112,4 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 
 	// TODO(srikanthccv):Fetch the current day usage and add it to the response
 	ah.Respond(w, billingResponse.Data)
-}
-
-func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is invalid"))
-		return
-	}
-
-	portalRequest := &licensetypes.PortalRequest{}
-	if err := json.NewDecoder(r.Body).Decode(portalRequest); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	license, err := ah.Signoz.Licensing.GetActive(r.Context(), orgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	if license == nil {
-		RespondError(w, model.BadRequestStr("cannot request the portal session without license key"), nil)
-		return
-	}
-
-	redirectUrl, err := signozio.PortalSession(r.Context(), portalRequest, license.Key, ah.Signoz.Zeus)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	ah.Respond(w, getCheckoutPortalResponse(redirectUrl))
 }
