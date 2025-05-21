@@ -916,7 +916,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			err := json.Unmarshal([]byte(item.References), &ref)
 			if err != nil {
 				zap.L().Error("getWaterfallSpansForTraceWithMetadata: error unmarshalling references", zap.Error(err), zap.String("traceID", traceID))
-				return nil, errorsv2.Newf(errorsv2.TypeInvalidInput, errorsv2.CodeInvalidInput, "getWaterfallSpansForTraceWithMetadata: error unmarshalling references %s", err.Error())
+				return nil, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "getWaterfallSpansForTraceWithMetadata: error unmarshalling references %s", err.Error())
 			}
 
 			// merge attributes_number and attributes_bool to attributes_string
@@ -936,7 +936,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				err = json.Unmarshal([]byte(event), &eventMap)
 				if err != nil {
 					zap.L().Error("Error unmarshalling events", zap.Error(err))
-					return nil, errorsv2.Newf(errorsv2.TypeInternal, errorsv2.CodeInternal, "getWaterfallSpansForTraceWithMetadata: error in unmarshalling events %s", err.Error())
+					return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getWaterfallSpansForTraceWithMetadata: error in unmarshalling events %s", err.Error())
 				}
 				events = append(events, eventMap)
 			}
@@ -1123,7 +1123,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 			err := json.Unmarshal([]byte(item.References), &ref)
 			if err != nil {
 				zap.L().Error("Error unmarshalling references", zap.Error(err))
-				return nil, errorsv2.Newf(errorsv2.TypeInternal, errorsv2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling references %s", err.Error())
+				return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling references %s", err.Error())
 			}
 
 			events := make([]model.Event, 0)
@@ -1132,7 +1132,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 				err = json.Unmarshal([]byte(event), &eventMap)
 				if err != nil {
 					zap.L().Error("Error unmarshalling events", zap.Error(err))
-					return nil, errorsv2.Newf(errorsv2.TypeInternal, errorsv2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling events %s", err.Error())
+					return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling events %s", err.Error())
 				}
 				events = append(events, eventMap)
 			}
