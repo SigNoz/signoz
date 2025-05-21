@@ -53,11 +53,11 @@ func (provider *noopLicensing) Refresh(ctx context.Context, organizationID value
 }
 
 func (provider *noopLicensing) Checkout(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error) {
-	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "refreshing license is not supported")
+	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "checkout session is not supported")
 }
 
 func (provider *noopLicensing) Portal(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error) {
-	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "refreshing license is not supported")
+	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "portal session is not supported")
 }
 
 func (provider *noopLicensing) Get(ctx context.Context, organizationID valuer.UUID, ID valuer.UUID) (*licensetypes.GettableLicense, error) {

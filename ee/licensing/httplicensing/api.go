@@ -42,6 +42,7 @@ func (api *licensingAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		render.Error(rw, err)
+		return
 	}
 
 	err = api.licensing.Activate(r.Context(), orgID, req.Key)
@@ -123,6 +124,7 @@ func (api *licensingAPI) Checkout(rw http.ResponseWriter, r *http.Request) {
 	req := new(licensetypes.PostableSubscription)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		render.Error(rw, err)
+		return
 	}
 
 	gettableSubscription, err := api.licensing.Checkout(ctx, orgID, req)
@@ -153,6 +155,7 @@ func (api *licensingAPI) Portal(rw http.ResponseWriter, r *http.Request) {
 	req := new(licensetypes.PostableSubscription)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		render.Error(rw, err)
+		return
 	}
 
 	gettableSubscription, err := api.licensing.Portal(ctx, orgID, req)
