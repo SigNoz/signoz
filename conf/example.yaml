@@ -197,7 +197,7 @@ emailing:
       # The identity to use for the SMTP server.
       identity:
     tls:
-      # Whether to enable TLS.
+      # Whether to enable TLS. It should be false in most cases since the authentication mechanism should use the STARTTLS extension instead.
       enabled: false
       # Whether to skip TLS verification.
       insecure_skip_verify: false
