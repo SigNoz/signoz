@@ -60,7 +60,7 @@ function SpanScopeSelector({ queryName }: SpanScopeSelectorProps): JSX.Element {
 		filters: TagFilterItem[] = [],
 	): SpanScope => {
 		const hasFilter = (key: string): boolean =>
-			filters.some(
+			filters?.some(
 				(filter) =>
 					filter.key?.type === 'spanSearchScope' &&
 					filter.key.key === key &&
