@@ -25,13 +25,13 @@ type httplicensing struct {
 }
 
 func NewProviderFactory(store sqlstore.SQLStore, zeus zeus.Zeus) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("signoz_license"), func(ctx context.Context, providerSettings factory.ProviderSettings, config licensing.Config) (licensing.Licensing, error) {
+	return factory.NewProviderFactory(factory.MustNewName("http"), func(ctx context.Context, providerSettings factory.ProviderSettings, config licensing.Config) (licensing.Licensing, error) {
 		return New(ctx, providerSettings, config, store, zeus)
 	})
 }
 
 func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Config, sqlstore sqlstore.SQLStore, zeus zeus.Zeus) (licensing.Licensing, error) {
-	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/ee/licensing/signozlicense")
+	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/ee/licensing/httplicensing")
 	licensestore := sqllicensingstore.New(sqlstore)
 	return &httplicensing{store: licensestore, zeus: zeus, config: config, settings: settings, stopChan: make(chan struct{})}, nil
 }
