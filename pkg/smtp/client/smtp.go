@@ -16,7 +16,6 @@ import (
 	"net/mail"
 	"net/smtp"
 	"net/textproto"
-	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -43,7 +42,9 @@ import (
 
 type Client struct {
 	logger    *slog.Logger
-	address   *url.URL
+	address   string
+	host      string
+	port      string
 	from      *mail.Address
 	headers   map[string]string
 	hello     string
@@ -73,7 +74,7 @@ func New(address string, logger *slog.Logger, opts ...Option) (*Client, error) {
 		return nil, fmt.Errorf("parse 'from' address: %w", err)
 	}
 
-	parsedAddressURL, err := url.Parse(address)
+	host, port, err := net.SplitHostPort(address)
 	if err != nil {
 		return nil, fmt.Errorf("parse 'address': %w", err)
 	}
@@ -83,14 +84,16 @@ func New(address string, logger *slog.Logger, opts ...Option) (*Client, error) {
 	}
 	clientOpts.headers["From"] = from.String()
 
-	tls, err := newTLSConfig(clientOpts.tls, parsedAddressURL.Host)
+	tls, err := newTLSConfig(clientOpts.tls, host)
 	if err != nil {
 		return nil, fmt.Errorf("create TLS config: %w", err)
 	}
 
 	return &Client{
 		logger:    logger,
-		address:   parsedAddressURL,
+		address:   address,
+		host:      host,
+		port:      port,
 		from:      from,
 		headers:   clientOpts.headers,
 		hello:     clientOpts.hello,
@@ -128,7 +131,7 @@ func (c *Client) smtpAuth(_ context.Context, mechs string) (smtp.Auth, error) {
 			}
 			identity := c.auth.Identity
 
-			return smtp.PlainAuth(identity, username, password, c.address.Host), nil
+			return smtp.PlainAuth(identity, username, password, c.host), nil
 		case "LOGIN":
 			password := c.auth.Password
 			if password == "" {
@@ -153,8 +156,8 @@ func (c *Client) dial(ctx context.Context) (net.Conn, error) {
 		err  error
 	)
 
-	if c.tls.Enabled || c.address.Port() == "465" {
-		conn, err = tls.Dial("tcp", c.address.String(), c.tlsConfig)
+	if c.tls.Enabled || c.port == "465" {
+		conn, err = tls.Dial("tcp", c.address, c.tlsConfig)
 		if err != nil {
 			return nil, fmt.Errorf("establish TLS connection to server: %w", err)
 		}
@@ -163,7 +166,7 @@ func (c *Client) dial(ctx context.Context) (net.Conn, error) {
 	}
 
 	var d net.Dialer
-	conn, err = d.DialContext(ctx, "tcp", c.address.String())
+	conn, err = d.DialContext(ctx, "tcp", c.address)
 	if err != nil {
 		return nil, fmt.Errorf("establish connection to server: %w", err)
 	}
@@ -213,7 +216,7 @@ func (c *Client) Do(ctx context.Context, tos []*mail.Address, subject string, co
 		return err
 	}
 
-	smtpClient, err = smtp.NewClient(conn, c.address.Host)
+	smtpClient, err = smtp.NewClient(conn, c.host)
 	if err != nil {
 		conn.Close()
 		return fmt.Errorf("create SMTP client: %w", err)
@@ -252,6 +255,10 @@ func (c *Client) Do(ctx context.Context, tos []*mail.Address, subject string, co
 				return fmt.Errorf("%T auth: %w", auth, err)
 			}
 		}
+	}
+
+	if err = smtpClient.Mail(c.from.Address); err != nil {
+		return fmt.Errorf("send MAIL command: %w", err)
 	}
 
 	for _, addr := range tos {
