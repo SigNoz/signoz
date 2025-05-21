@@ -11,7 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/licensingtypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -100,13 +100,13 @@ func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	checkoutRequest := &licensingtypes.CheckoutRequest{}
+	checkoutRequest := &licensetypes.CheckoutRequest{}
 	if err := json.NewDecoder(r.Body).Decode(checkoutRequest); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	license, err := ah.Signoz.License.GetActive(r.Context(), orgID)
+	license, err := ah.Signoz.Licensing.GetActive(r.Context(), orgID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -173,13 +173,13 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	portalRequest := &licensingtypes.PortalRequest{}
+	portalRequest := &licensetypes.PortalRequest{}
 	if err := json.NewDecoder(r.Body).Decode(portalRequest); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	license, err := ah.Signoz.License.GetActive(r.Context(), orgID)
+	license, err := ah.Signoz.Licensing.GetActive(r.Context(), orgID)
 	if err != nil {
 		render.Error(w, err)
 		return

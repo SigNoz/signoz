@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	"github.com/SigNoz/signoz/pkg/types/licensingtypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -15,27 +15,27 @@ type store struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func New(sqlstore sqlstore.SQLStore) licensingtypes.Store {
+func New(sqlstore sqlstore.SQLStore) licensetypes.Store {
 	return &store{sqlstore}
 }
 
-func (s *store) Create(ctx context.Context, storableLicense *licensingtypes.StorableLicense) error {
-	_, err := s.
+func (store *store) Create(ctx context.Context, storableLicense *licensetypes.StorableLicense) error {
+	_, err := store.
 		sqlstore.
 		BunDB().
 		NewInsert().
 		Model(storableLicense).
 		Exec(ctx)
 	if err != nil {
-		return s.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeInternal, "unable to create the license with ID: %s", storableLicense.ID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "license with ID: %s already exists", storableLicense.ID)
 	}
 
 	return nil
 }
 
-func (s *store) Get(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) (*licensingtypes.StorableLicense, error) {
-	storableLicense := new(licensingtypes.StorableLicense)
-	err := s.
+func (store *store) Get(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) (*licensetypes.StorableLicense, error) {
+	storableLicense := new(licensetypes.StorableLicense)
+	err := store.
 		sqlstore.
 		BunDB().
 		NewSelect().
@@ -44,15 +44,15 @@ func (s *store) Get(ctx context.Context, organizationID valuer.UUID, licenseID v
 		Where("id = ?", licenseID).
 		Scan(ctx)
 	if err != nil {
-		return nil, s.sqlstore.WrapNotFoundErrf(err, errors.CodeInternal, "unable to fetch the license with ID: %s", licenseID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "license with ID: %s does not exist", licenseID)
 	}
 
 	return storableLicense, nil
 }
 
-func (s *store) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensingtypes.StorableLicense, error) {
-	storableLicenses := make([]*licensingtypes.StorableLicense, 0)
-	err := s.
+func (store *store) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.StorableLicense, error) {
+	storableLicenses := make([]*licensetypes.StorableLicense, 0)
+	err := store.
 		sqlstore.
 		BunDB().
 		NewSelect().
@@ -60,20 +60,20 @@ func (s *store) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*lice
 		Where("org_id = ?", organizationID).
 		Scan(ctx)
 	if err != nil {
-		return nil, s.sqlstore.WrapNotFoundErrf(err, errors.CodeInternal, "unable to fetch the licenses for organization with ID: %s", organizationID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "licenses for organizationID: %s does not exists", organizationID)
 	}
 
 	return storableLicenses, nil
 }
 
-func (s *store) Update(ctx context.Context, storableLicense *licensingtypes.StorableLicense) error {
-	_, err := s.
+func (store *store) Update(ctx context.Context, organizationID valuer.UUID, storableLicense *licensetypes.StorableLicense) error {
+	_, err := store.
 		sqlstore.
 		BunDB().
 		NewUpdate().
 		Model(storableLicense).
-		Column("data", "last_validated_at").
 		WherePK().
+		Where("org_id = ?", organizationID).
 		Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to update license with ID: %s", storableLicense.ID)
@@ -82,9 +82,9 @@ func (s *store) Update(ctx context.Context, storableLicense *licensingtypes.Stor
 	return nil
 }
 
-func (s *store) ListOrganizations(ctx context.Context) ([]valuer.UUID, error) {
+func (store *store) ListOrganizations(ctx context.Context) ([]valuer.UUID, error) {
 	orgIDStrs := make([]string, 0)
-	err := s.sqlstore.
+	err := store.sqlstore.
 		BunDB().
 		NewSelect().
 		Model(new(types.Organization)).
@@ -107,23 +107,23 @@ func (s *store) ListOrganizations(ctx context.Context) ([]valuer.UUID, error) {
 
 }
 
-func (s *store) CreateFeature(ctx context.Context, storableFeature *featuretypes.StorableFeature) error {
-	_, err := s.
+func (store *store) CreateFeature(ctx context.Context, storableFeature *featuretypes.StorableFeature) error {
+	_, err := store.
 		sqlstore.
 		BunDB().
 		NewInsert().
 		Model(storableFeature).
 		Exec(ctx)
 	if err != nil {
-		return s.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeInternal, "unable to create feature with name: %s", storableFeature.Name)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "feature with name:%s already exists", storableFeature.Name)
 	}
 
 	return nil
 }
 
-func (s *store) GetFeature(ctx context.Context, key string) (*featuretypes.StorableFeature, error) {
+func (store *store) GetFeature(ctx context.Context, key string) (*featuretypes.StorableFeature, error) {
 	storableFeature := new(featuretypes.StorableFeature)
-	err := s.
+	err := store.
 		sqlstore.
 		BunDB().
 		NewSelect().
@@ -131,29 +131,29 @@ func (s *store) GetFeature(ctx context.Context, key string) (*featuretypes.Stora
 		Where("name = ?", key).
 		Scan(ctx)
 	if err != nil {
-		return nil, s.sqlstore.WrapNotFoundErrf(err, errors.CodeInternal, "unable to fetch the feature with key: %s", key)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "feature with name:%s does not exist", key)
 	}
 
 	return storableFeature, nil
 }
 
-func (s *store) GetAllFeatures(ctx context.Context) ([]*featuretypes.StorableFeature, error) {
+func (store *store) GetAllFeatures(ctx context.Context) ([]*featuretypes.StorableFeature, error) {
 	storableFeatures := make([]*featuretypes.StorableFeature, 0)
-	err := s.
+	err := store.
 		sqlstore.
 		BunDB().
 		NewSelect().
 		Model(&storableFeatures).
 		Scan(ctx)
 	if err != nil {
-		return nil, s.sqlstore.WrapNotFoundErrf(err, errors.CodeInternal, "unable to fetch all features")
+		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "features does not exists")
 	}
 
 	return storableFeatures, nil
 }
 
-func (s *store) InitFeatures(ctx context.Context, storableFeatures []*featuretypes.StorableFeature) error {
-	_, err := s.
+func (store *store) InitFeatures(ctx context.Context, storableFeatures []*featuretypes.StorableFeature) error {
+	_, err := store.
 		sqlstore.
 		BunDB().
 		NewInsert().
@@ -165,14 +165,14 @@ func (s *store) InitFeatures(ctx context.Context, storableFeatures []*featuretyp
 		Set("route = EXCLUDED.route").
 		Exec(ctx)
 	if err != nil {
-		return s.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeInternal, "unable to init features")
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to initialise features")
 	}
 
 	return nil
 }
 
-func (s *store) UpdateFeature(ctx context.Context, storableFeature *featuretypes.StorableFeature) error {
-	_, err := s.
+func (store *store) UpdateFeature(ctx context.Context, storableFeature *featuretypes.StorableFeature) error {
+	_, err := store.
 		sqlstore.
 		BunDB().
 		NewUpdate().

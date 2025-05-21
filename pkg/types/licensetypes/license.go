@@ -1,4 +1,4 @@
-package licensingtypes
+package licensetypes
 
 import (
 	"context"
@@ -21,7 +21,6 @@ type StorableLicense struct {
 	bun.BaseModel `bun:"table:license"`
 
 	types.Identifiable
-	types.TimeAuditable
 	Key             string         `bun:"key,type:text,notnull,unique"`
 	Data            map[string]any `bun:"data,type:text"`
 	LastValidatedAt time.Time      `bun:"last_validated_at,notnull"`
@@ -32,10 +31,6 @@ func NewStorableLicense(ID valuer.UUID, key string, data map[string]any, lastVal
 	return &StorableLicense{
 		Identifiable: types.Identifiable{
 			ID: ID,
-		},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
 		},
 		Key:             key,
 		Data:            data,
@@ -178,7 +173,7 @@ type Store interface {
 	Create(context.Context, *StorableLicense) error
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
 	GetAll(context.Context, valuer.UUID) ([]*StorableLicense, error)
-	Update(context.Context, *StorableLicense) error
+	Update(context.Context, valuer.UUID,*StorableLicense) error
 
 	// feature surrogate
 	InitFeatures(context.Context, []*featuretypes.StorableFeature) error

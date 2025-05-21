@@ -1,4 +1,4 @@
-package licensingtypes
+package licensetypes
 
 import (
 	"encoding/json"

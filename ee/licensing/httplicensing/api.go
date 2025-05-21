@@ -10,19 +10,19 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/licensingtypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type licenseAPI struct {
-	licensemanager licensing.Licensing
+type licensingAPI struct {
+	licensing licensing.Licensing
 }
 
-func NewLicensingAPI(licensemanager licensing.Licensing) licensing.API {
-	return &licenseAPI{licensemanager: licensemanager}
+func NewLicensingAPI(licensing licensing.Licensing) licensing.API {
+	return &licensingAPI{licensing: licensing}
 }
 
-func (api *licenseAPI) Activate(rw http.ResponseWriter, r *http.Request) {
+func (api *licensingAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -38,13 +38,13 @@ func (api *licenseAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req *licensingtypes.ActivateLicense
+	var req *licensetypes.ActivateLicense
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		render.Error(rw, err)
 	}
 
-	err = api.licensemanager.Activate(r.Context(), orgID, req.Key)
+	err = api.licensing.Activate(r.Context(), orgID, req.Key)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -53,7 +53,7 @@ func (api *licenseAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *licenseAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
+func (api *licensingAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -69,7 +69,7 @@ func (api *licenseAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gettableLicense, err := api.licensemanager.GetActive(r.Context(), orgID)
+	gettableLicense, err := api.licensing.GetActive(r.Context(), orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -79,7 +79,7 @@ func (api *licenseAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, gettableLicense.Data)
 }
 
-func (api *licenseAPI) Refresh(rw http.ResponseWriter, r *http.Request) {
+func (api *licensingAPI) Refresh(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -95,7 +95,7 @@ func (api *licenseAPI) Refresh(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = api.licensemanager.Refresh(r.Context(), orgID)
+	err = api.licensing.Refresh(r.Context(), orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return

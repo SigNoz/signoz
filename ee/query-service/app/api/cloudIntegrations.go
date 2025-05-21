@@ -63,7 +63,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		SigNozAPIKey: apiKey,
 	}
 
-	license, err := ah.Signoz.License.GetActive(r.Context(), orgID)
+	license, err := ah.Signoz.Licensing.GetActive(r.Context(), orgID)
 	if err != nil {
 		render.Error(w, err)
 		return

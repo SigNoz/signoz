@@ -1981,7 +1981,7 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet, err := aH.Signoz.License.GetFeatureFlags(r.Context())
+	featureSet, err := aH.Signoz.Licensing.GetFeatureFlags(r.Context())
 	if err != nil {
 		aH.HandleError(w, err, http.StatusInternalServerError)
 		return
@@ -1997,7 +1997,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) CheckFeature(ctx context.Context, key string) bool {
-	err := aH.Signoz.License.CheckFeature(ctx, key)
+	err := aH.Signoz.Licensing.CheckFeature(ctx, key)
 	return err == nil
 }
 

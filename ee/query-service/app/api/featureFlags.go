@@ -31,7 +31,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	featureSet, err := ah.Signoz.License.GetFeatureFlags(r.Context())
+	featureSet, err := ah.Signoz.Licensing.GetFeatureFlags(r.Context())
 	if err != nil {
 		ah.HandleError(w, err, http.StatusInternalServerError)
 		return
@@ -39,7 +39,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	if constants.FetchFeatures == "true" {
 		zap.L().Debug("fetching license")
-		license, err := ah.Signoz.License.GetActive(ctx, orgID)
+		license, err := ah.Signoz.Licensing.GetActive(ctx, orgID)
 		if err != nil {
 			zap.L().Error("failed to fetch license", zap.Error(err))
 		} else if license == nil {

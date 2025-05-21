@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	"github.com/SigNoz/signoz/pkg/types/licensingtypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -22,15 +22,15 @@ type Licensing interface {
 	// Validate validates the license with the upstream server
 	Validate(ctx context.Context) error
 	// Update updates the license based on ID
-	Update(ctx context.Context, organizationID valuer.UUID, license *licensingtypes.GettableLicense) error
+	Update(ctx context.Context, organizationID valuer.UUID, license *licensetypes.GettableLicense) error
 	// Activate validates and enables the license
 	Activate(ctx context.Context, organizationID valuer.UUID, key string) error
 	// Get fetches the license based on ID
-	Get(ctx context.Context, organizationID valuer.UUID, ID valuer.UUID) (*licensingtypes.GettableLicense, error)
+	Get(ctx context.Context, organizationID valuer.UUID, ID valuer.UUID) (*licensetypes.GettableLicense, error)
 	// GetAll fetches all the licenses for the org
-	GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensingtypes.GettableLicense, error)
+	GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.GettableLicense, error)
 	// GetActive fetches the current active license in org
-	GetActive(ctx context.Context, organizationID valuer.UUID) (*licensingtypes.GettableLicense, error)
+	GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.GettableLicense, error)
 	// Refresh refreshes the license state from upstream server
 	Refresh(ctx context.Context, organizationID valuer.UUID) error
 

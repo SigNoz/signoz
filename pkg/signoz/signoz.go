@@ -30,7 +30,7 @@ type SigNoz struct {
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
 	Zeus            zeus.Zeus
-	License         licensing.Licensing
+	Licensing       licensing.Licensing
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -160,8 +160,8 @@ func New(
 		return nil, err
 	}
 
-	licenseProviderFactory := licenseProviderFactoryCb(sqlstore, zeus)
-	license, err := licenseProviderFactory.New(
+	licensingProviderFactory := licenseProviderFactoryCb(sqlstore, zeus)
+	licensing, err := licensingProviderFactory.New(
 		ctx,
 		providerSettings,
 		licenseConfig,
@@ -183,7 +183,7 @@ func New(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
-		factory.NewNamedService(factory.MustNewName("license"), license),
+		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 	)
 	if err != nil {
 		return nil, err
@@ -199,7 +199,7 @@ func New(
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
 		Zeus:            zeus,
-		License:         license,
+		Licensing:       licensing,
 		Modules:         modules,
 		Handlers:        handlers,
 	}, nil

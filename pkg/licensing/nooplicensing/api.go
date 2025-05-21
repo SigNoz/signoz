@@ -8,20 +8,20 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 )
 
-type noopLicenseAPI struct{}
+type noopLicensingAPI struct{}
 
 func NewLicenseAPI() licensing.API {
-	return &noopLicenseAPI{}
+	return &noopLicensingAPI{}
 }
 
-func (n *noopLicenseAPI) Activate(rw http.ResponseWriter, r *http.Request) {
+func (api *noopLicensingAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 	render.Error(rw, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "not implemented"))
 }
 
-func (n *noopLicenseAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
+func (api *noopLicensingAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
 	render.Error(rw, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "not implemented"))
 }
 
-func (n *noopLicenseAPI) Refresh(rw http.ResponseWriter, r *http.Request) {
+func (api *noopLicensingAPI) Refresh(rw http.ResponseWriter, r *http.Request) {
 	render.Error(rw, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "not implemented"))
 }

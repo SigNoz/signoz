@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	"github.com/SigNoz/signoz/pkg/types/licensingtypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/tidwall/gjson"
 )
 
-func ValidateLicenseV3(ctx context.Context, licenseKey string, zeus zeus.Zeus) (*licensingtypes.GettableLicense, error) {
+func ValidateLicenseV3(ctx context.Context, licenseKey string, zeus zeus.Zeus) (*licensetypes.GettableLicense, error) {
 	data, err := zeus.GetLicense(ctx, licenseKey)
 	if err != nil {
 		return nil, err
@@ -21,7 +21,7 @@ func ValidateLicenseV3(ctx context.Context, licenseKey string, zeus zeus.Zeus) (
 		return nil, err
 	}
 
-	license, err := licensingtypes.NewGettableLicense(m)
+	license, err := licensetypes.NewGettableLicense(m)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func SendUsage(ctx context.Context, usage model.UsagePayload, zeus zeus.Zeus) er
 	return zeus.PutMeters(ctx, usage.LicenseKey.String(), body)
 }
 
-func CheckoutSession(ctx context.Context, checkoutRequest *licensingtypes.CheckoutRequest, licenseKey string, zeus zeus.Zeus) (string, error) {
+func CheckoutSession(ctx context.Context, checkoutRequest *licensetypes.CheckoutRequest, licenseKey string, zeus zeus.Zeus) (string, error) {
 	body, err := json.Marshal(checkoutRequest)
 	if err != nil {
 		return "", err
@@ -53,7 +53,7 @@ func CheckoutSession(ctx context.Context, checkoutRequest *licensingtypes.Checko
 	return gjson.GetBytes(response, "url").String(), nil
 }
 
-func PortalSession(ctx context.Context, portalRequest *licensingtypes.PortalRequest, licenseKey string, zeus zeus.Zeus) (string, error) {
+func PortalSession(ctx context.Context, portalRequest *licensetypes.PortalRequest, licenseKey string, zeus zeus.Zeus) (string, error) {
 	body, err := json.Marshal(portalRequest)
 	if err != nil {
 		return "", err
