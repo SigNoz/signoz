@@ -7,7 +7,7 @@
 	background: var(--bg-slate-500);
 	transition: width 0.05s ease-in-out;
 	overflow: hidden;
-    color: var(--bg-vanilla-100);
+	color: var(--bg-vanilla-100);
 
 	&.qf-logs-explorer {
 		height: calc(100vh - 45px);
@@ -17,13 +17,13 @@
 		height: 100vh;
 	}
 
-    &.qf-api-monitoring {
-        height: calc(100vh - 45px);
-    }
+	&.qf-api-monitoring {
+		height: calc(100vh - 45px);
+	}
 
-    &.qf-traces-explorer {
-        height: calc(100vh - 45px);
-    }
+	&.qf-traces-explorer {
+		height: calc(100vh - 45px);
+	}
 
 	&.hidden {
 		width: 0;

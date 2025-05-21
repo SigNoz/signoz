@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -307,6 +308,9 @@ describe('Quick Filters with custom filters', () => {
 
 	// render duration filter
 	it('should render duration slider for duration_nono filter', async () => {
+		// Set up fake timers **before rendering**
+		jest.useFakeTimers();
+
 		const { getByTestId } = render(<TestQuickFilters signal={SIGNAL} />);
 		await screen.findByText(FILTER_SERVICE_NAME);
 		expect(screen.getByText('Duration')).toBeInTheDocument();
@@ -321,20 +325,16 @@ describe('Quick Filters with custom filters', () => {
 		expect(maxDuration).toHaveValue(null);
 		expect(maxDuration).toHaveProperty('placeholder', '100000000');
 
-		// set min duration to 10000
+		// set values
 		fireEvent.change(minDuration, { target: { value: '10000' } });
-
-		// set max duration to 20000
 		fireEvent.change(maxDuration, { target: { value: '20000' } });
 
-		// sleep 1.5 seconds to wait for the debounce to finish
-		await new Promise((resolve) => {
-			setTimeout(() => {
-				resolve(undefined);
-			}, 1500);
+		// Advance timers **inside act**
+		await act(async () => {
+			jest.advanceTimersByTime(2000);
 		});
 
-		// check if the duration filter is applied
+		// Then run assertions
 		await waitFor(() => {
 			expect(redirectWithQueryBuilderData).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -344,16 +344,12 @@ describe('Quick Filters with custom filters', () => {
 								filters: expect.objectContaining({
 									items: expect.arrayContaining([
 										expect.objectContaining({
-											key: expect.objectContaining({
-												key: 'durationNano',
-											}),
+											key: expect.objectContaining({ key: 'durationNano' }),
 											op: '>=',
 											value: 10000000000,
 										}),
 										expect.objectContaining({
-											key: expect.objectContaining({
-												key: 'durationNano',
-											}),
+											key: expect.objectContaining({ key: 'durationNano' }),
 											op: '<=',
 											value: 20000000000,
 										}),
@@ -365,5 +361,7 @@ describe('Quick Filters with custom filters', () => {
 				}),
 			);
 		});
+
+		jest.useRealTimers(); // Clean up
 	});
 });

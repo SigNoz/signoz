@@ -1,15 +1,15 @@
 .collapseContainer {
 	background-color: var(--bg-ink-500);
-    border-bottom: 1px solid var(--bg-slate-400);
+	border-bottom: 1px solid var(--bg-slate-400);
 
 	.ant-collapse-header {
 		padding: 12px !important;
 		align-items: center !important;
 	}
 
-    .ant-collapse-expand-icon{
-        padding-right: 9px !important;
-    }
+	.ant-collapse-expand-icon {
+		padding-right: 9px !important;
+	}
 
 	.ant-collapse-header-text {
 		color: var(--bg-vanilla-400);
@@ -123,12 +123,11 @@
 		overflow-y: auto;
 	}
 	width: 240px;
-
 }
 .lightMode {
 	.collapseContainer {
 		background-color: var(--bg-vanilla-100);
-        border-bottom: 1px solid var(--bg-vanilla-300);
+		border-bottom: 1px solid var(--bg-vanilla-300);
 
 		.ant-collapse-header-text {
 			color: var(--bg-slate-100);
