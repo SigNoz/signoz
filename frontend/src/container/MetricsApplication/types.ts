@@ -25,7 +25,7 @@ export interface NavigateToTraceProps {
 }
 
 export interface DatabaseCallsRPSProps extends DatabaseCallProps {
-	legend: '{{db.system}}';
+	legend: string;
 }
 
 export interface DatabaseCallProps {

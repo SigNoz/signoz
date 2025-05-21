@@ -82,11 +82,13 @@ function DBCall(): JSX.Element {
 		[queries],
 	);
 
-	const legend = '{{db.system}}';
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
+
+	const legend = dotMetricsEnabled ? '{{db.system}}' : '{{db_system}}';
+
 	const databaseCallsRPSWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -108,7 +110,7 @@ function DBCall(): JSX.Element {
 				id: SERVICE_CHART_ID.dbCallsRPS,
 				fillSpans: false,
 			}),
-		[servicename, tagFilterItems, dotMetricsEnabled],
+		[servicename, tagFilterItems, dotMetricsEnabled, legend],
 	);
 	const databaseCallsAverageDurationWidget = useMemo(
 		() =>

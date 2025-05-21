@@ -104,7 +104,7 @@ export enum WidgetKeys {
 	Signoz_latency_bucket_norm = 'signoz_latency_bucket',
 	Signoz_latency_bucket = 'signoz_latency.bucket',
 	Db_system = 'db.system',
-	Db_system_norm = 'db.system',
+	Db_system_norm = 'db_system',
 }
 
 export const topOperationMetricsDownloadOptions: DownloadOptions = {
