@@ -13,6 +13,13 @@ const getFilterName = (str: string): string =>
 		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
 		.join(' ');
 
+const getFilterType = (att: FilterType): FiltersType => {
+	if (att.key === 'duration_nano') {
+		return FiltersType.DURATION;
+	}
+	return FiltersType.CHECKBOX;
+};
+
 export const getFilterConfig = (
 	signal?: SignalType,
 	customFilters?: FilterType[],
@@ -25,7 +32,7 @@ export const getFilterConfig = (
 	return customFilters.map(
 		(att, index) =>
 			({
-				type: FiltersType.CHECKBOX,
+				type: getFilterType(att),
 				title: getFilterName(att.key),
 				dataSource: SIGNAL_DATA_SOURCE_MAP[signal],
 				attributeKey: {

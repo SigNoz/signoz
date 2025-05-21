@@ -5,6 +5,7 @@ import { DataSource } from 'types/common/queryBuilder';
 export enum FiltersType {
 	SLIDER = 'SLIDER',
 	CHECKBOX = 'CHECKBOX',
+	DURATION = 'DURATION', // ALIAS FOR DURATION_NANO
 }
 
 export enum MinMax {

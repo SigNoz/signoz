@@ -20,6 +20,7 @@ import { useMemo, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
+import Duration from './FilterRenderers/Duration/Duration';
 import Slider from './FilterRenderers/Slider/Slider';
 import useFilterConfig from './hooks/useFilterConfig';
 import AnnouncementTooltip from './QuickFiltersSettings/AnnouncementTooltip';
@@ -211,6 +212,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 													onFilterChange={onFilterChange}
 												/>
 											);
+										case FiltersType.DURATION:
+											return <Duration filter={filter} onFilterChange={onFilterChange} />;
 										case FiltersType.SLIDER:
 											return <Slider filter={filter} />;
 										// eslint-disable-next-line sonarjs/no-duplicated-branches
