@@ -244,7 +244,8 @@ func (h *Handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusCreated, nil)
+	// just corrected the status code, response is same,
+	render.Success(w, http.StatusCreated, apiKey)
 }
 
 func (h *Handler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {

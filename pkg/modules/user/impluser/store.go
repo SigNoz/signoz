@@ -584,6 +584,9 @@ func (s *Store) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.St
 			flattenedAPIKeys = append(flattenedAPIKeys, user.APIKeys...)
 		}
 	}
+	if len(flattenedAPIKeys) == 0 {
+		return nil, s.sqlstore.WrapNotFoundErrf(errors.New(errors.TypeNotFound, errors.CodeNotFound, "API key with id: %s does not exist"), types.ErrAPIKeyNotFound, "API key with id: %s does not exist", id)
+	}
 
 	return flattenedAPIKeys[0], nil
 }
