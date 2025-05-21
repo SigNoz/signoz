@@ -29,6 +29,7 @@ import history from 'lib/history';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
+import APIError from 'types/api/error';
 
 function EditAlertChannels({
 	initialValue,
@@ -93,9 +94,8 @@ function EditAlertChannels({
 			return { status: 'failed', statusMessage: t('webhook_url_required') };
 		}
 
-		const response = await editSlackApi(prepareSlackRequest());
-
-		if (response.statusCode === 200) {
+		try {
+			await editSlackApi(prepareSlackRequest());
 			notifications.success({
 				message: 'Success',
 				description: t('channel_edit_done'),
@@ -103,16 +103,19 @@ function EditAlertChannels({
 
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
+			});
+			return {
+				status: 'failed',
+				statusMessage:
+					(error as APIError).getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
 		}
-		notifications.error({
-			message: 'Error',
-			description: response.error || t('channel_edit_failed'),
-		});
-		setSavingState(false);
-		return {
-			status: 'failed',
-			statusMessage: response.error || t('channel_edit_failed'),
-		};
 	}, [prepareSlackRequest, t, notifications, selectedConfig]);
 
 	const prepareWebhookRequest = useCallback(() => {
@@ -150,9 +153,8 @@ function EditAlertChannels({
 			return { status: 'failed', statusMessage: t('username_no_password') };
 		}
 
-		const response = await editWebhookApi(prepareWebhookRequest());
-
-		if (response.statusCode === 200) {
+		try {
+			await editWebhookApi(prepareWebhookRequest());
 			notifications.success({
 				message: 'Success',
 				description: t('channel_edit_done'),
@@ -160,14 +162,19 @@ function EditAlertChannels({
 
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
+			});
+			return {
+				status: 'failed',
+				statusMessage:
+					(error as APIError).getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
 		}
-		showError(response.error || t('channel_edit_failed'));
-
-		setSavingState(false);
-		return {
-			status: 'failed',
-			statusMessage: response.error || t('channel_edit_failed'),
-		};
 	}, [prepareWebhookRequest, t, notifications, selectedConfig]);
 
 	const prepareEmailRequest = useCallback(
@@ -185,25 +192,28 @@ function EditAlertChannels({
 	const onEmailEditHandler = useCallback(async () => {
 		setSavingState(true);
 		const request = prepareEmailRequest();
-		const response = await editEmail(request);
-		if (response.statusCode === 200) {
+
+		try {
+			await editEmail(request);
 			notifications.success({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
+			});
+			return {
+				status: 'failed',
+				statusMessage:
+					(error as APIError).getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
 		}
-		notifications.error({
-			message: 'Error',
-			description: response.error || t('channel_edit_failed'),
-		});
-
-		setSavingState(false);
-		return {
-			status: 'failed',
-			statusMessage: response.error || t('channel_edit_failed'),
-		};
 	}, [prepareEmailRequest, t, notifications]);
 
 	const preparePagerRequest = useCallback(
@@ -237,27 +247,28 @@ function EditAlertChannels({
 			setSavingState(false);
 			return { status: 'failed', statusMessage: validationError };
 		}
-		const response = await editPagerApi(preparePagerRequest());
 
-		if (response.statusCode === 200) {
+		try {
+			await editPagerApi(preparePagerRequest());
 			notifications.success({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
+			});
+			return {
+				status: 'failed',
+				statusMessage:
+					(error as APIError).getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
 		}
-		notifications.error({
-			message: 'Error',
-			description: response.error || t('channel_edit_failed'),
-		});
-
-		setSavingState(false);
-		return {
-			status: 'failed',
-			statusMessage: response.error || t('channel_edit_failed'),
-		};
 	}, [preparePagerRequest, notifications, selectedConfig, t]);
 
 	const prepareOpsgenieRequest = useCallback(
@@ -284,28 +295,27 @@ function EditAlertChannels({
 			setSavingState(false);
 			return { status: 'failed', statusMessage: t('api_key_required') };
 		}
-
-		const response = await editOpsgenie(prepareOpsgenieRequest());
-
-		if (response.statusCode === 200) {
+		try {
+			await editOpsgenie(prepareOpsgenieRequest());
 			notifications.success({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
+			});
+			return {
+				status: 'failed',
+				statusMessage:
+					(error as APIError).getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
 		}
-		notifications.error({
-			message: 'Error',
-			description: response.error || t('channel_edit_failed'),
-		});
-
-		setSavingState(false);
-		return {
-			status: 'failed',
-			statusMessage: response.error || t('channel_edit_failed'),
-		};
 	}, [prepareOpsgenieRequest, t, notifications, selectedConfig]);
 
 	const prepareMsTeamsRequest = useCallback(
@@ -332,27 +342,27 @@ function EditAlertChannels({
 			return { status: 'failed', statusMessage: t('webhook_url_required') };
 		}
 
-		const response = await editMsTeamsApi(prepareMsTeamsRequest());
-
-		if (response.statusCode === 200) {
+		try {
+			await editMsTeamsApi(prepareMsTeamsRequest());
 			notifications.success({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			notifications.error({
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
+			});
+			return {
+				status: 'failed',
+				statusMessage:
+					(error as APIError).getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
 		}
-		notifications.error({
-			message: 'Error',
-			description: response.error || t('channel_edit_failed'),
-		});
-
-		setSavingState(false);
-		return {
-			status: 'failed',
-			statusMessage: response.error || t('channel_edit_failed'),
-		};
 	}, [prepareMsTeamsRequest, t, notifications, selectedConfig]);
 
 	const onSaveHandler = useCallback(
@@ -396,31 +406,30 @@ function EditAlertChannels({
 			setTestingState(true);
 			try {
 				let request;
-				let response;
 				switch (channelType) {
 					case ChannelType.Webhook:
 						request = prepareWebhookRequest();
-						response = await testWebhookApi(request);
+						await testWebhookApi(request);
 						break;
 					case ChannelType.Slack:
 						request = prepareSlackRequest();
-						response = await testSlackApi(request);
+						await testSlackApi(request);
 						break;
 					case ChannelType.Pagerduty:
 						request = preparePagerRequest();
-						if (request) response = await testPagerApi(request);
+						if (request) await testPagerApi(request);
 						break;
 					case ChannelType.MsTeams:
 						request = prepareMsTeamsRequest();
-						if (request) response = await testMsTeamsApi(request);
+						if (request) await testMsTeamsApi(request);
 						break;
 					case ChannelType.Opsgenie:
 						request = prepareOpsgenieRequest();
-						if (request) response = await testOpsgenie(request);
+						if (request) await testOpsgenie(request);
 						break;
 					case ChannelType.Email:
 						request = prepareEmailRequest();
-						if (request) response = await testEmail(request);
+						if (request) await testEmail(request);
 						break;
 					default:
 						notifications.error({
@@ -431,29 +440,28 @@ function EditAlertChannels({
 						return;
 				}
 
-				if (response && response.statusCode === 200) {
-					notifications.success({
-						message: 'Success',
-						description: t('channel_test_done'),
-					});
-				} else {
-					notifications.error({
-						message: 'Error',
-						description: t('channel_test_failed'),
-					});
-				}
+				notifications.success({
+					message: 'Success',
+					description: t('channel_test_done'),
+				});
 				logEvent('Alert Channel: Test notification', {
 					type: channelType,
 					sendResolvedAlert: selectedConfig?.send_resolved,
 					name: selectedConfig?.name,
 					new: 'false',
-					status:
-						response && response.statusCode === 200 ? 'Test success' : 'Test failed',
+					status: 'Test success',
 				});
 			} catch (error) {
 				notifications.error({
-					message: 'Error',
-					description: t('channel_test_failed'),
+					message: (error as APIError).getErrorCode(),
+					description: (error as APIError).getErrorMessage(),
+				});
+				logEvent('Alert Channel: Test notification', {
+					type: channelType,
+					sendResolvedAlert: selectedConfig?.send_resolved,
+					name: selectedConfig?.name,
+					new: 'false',
+					status: 'Test failed',
 				});
 			}
 			setTestingState(false);

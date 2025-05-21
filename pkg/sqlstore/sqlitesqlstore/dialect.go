@@ -20,12 +20,16 @@ const (
 const (
 	Org              string = "org"
 	User             string = "user"
+	UserNoCascade    string = "user_no_cascade"
+	FactorPassword   string = "factor_password"
 	CloudIntegration string = "cloud_integration"
 )
 
 const (
 	OrgReference              string = `("org_id") REFERENCES "organizations" ("id")`
 	UserReference             string = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	UserNoCascadeReference    string = `("user_id") REFERENCES "users" ("id")`
+	FactorPasswordReference   string = `("password_id") REFERENCES "factor_password" ("id")`
 	CloudIntegrationReference string = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
 )
 
@@ -259,6 +263,10 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 			fkReferences = append(fkReferences, OrgReference)
 		} else if reference == User && !slices.Contains(fkReferences, UserReference) {
 			fkReferences = append(fkReferences, UserReference)
+		} else if reference == UserNoCascade && !slices.Contains(fkReferences, UserNoCascadeReference) {
+			fkReferences = append(fkReferences, UserNoCascadeReference)
+		} else if reference == FactorPassword && !slices.Contains(fkReferences, FactorPasswordReference) {
+			fkReferences = append(fkReferences, FactorPasswordReference)
 		} else if reference == CloudIntegration && !slices.Contains(fkReferences, CloudIntegrationReference) {
 			fkReferences = append(fkReferences, CloudIntegrationReference)
 		}
@@ -428,6 +436,15 @@ func (dialect *dialect) AddPrimaryKey(ctx context.Context, bun bun.IDB, oldModel
 }
 
 func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, bunIDB bun.IDB, model interface{}, column string) error {
+	var isForeignKeyEnabled bool
+	if err := bunIDB.QueryRowContext(ctx, "PRAGMA foreign_keys").Scan(&isForeignKeyEnabled); err != nil {
+		return err
+	}
+
+	if isForeignKeyEnabled {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "foreign keys are enabled, please disable them before running this migration")
+	}
+
 	existingTable := bunIDB.Dialect().Tables().Get(reflect.TypeOf(model))
 	columnExists, err := dialect.ColumnExists(ctx, bunIDB, existingTable.Name, column)
 	if err != nil {
@@ -455,11 +472,6 @@ func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, 
 		}
 	}
 
-	// Disable foreign keys temporarily
-	if _, err := bunIDB.ExecContext(ctx, "PRAGMA foreign_keys = OFF"); err != nil {
-		return err
-	}
-
 	if _, err = createTableQuery.Exec(ctx); err != nil {
 		return err
 	}
@@ -479,10 +491,15 @@ func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, 
 		return err
 	}
 
-	// Re-enable foreign keys
-	if _, err := bunIDB.ExecContext(ctx, "PRAGMA foreign_keys = ON"); err != nil {
+	return nil
+}
+
+func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error {
+	if enable {
+		_, err := bun.ExecContext(ctx, "PRAGMA foreign_keys = ON")
 		return err
 	}
 
-	return nil
+	_, err := bun.ExecContext(ctx, "PRAGMA foreign_keys = OFF")
+	return err
 }

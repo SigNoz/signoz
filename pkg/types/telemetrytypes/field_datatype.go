@@ -38,6 +38,7 @@ var (
 	fieldDataTypes = map[string]FieldDataType{
 		// String types
 		"string": FieldDataTypeString,
+		"str":    FieldDataTypeString,
 
 		// Boolean types
 		"bool": FieldDataTypeBool,

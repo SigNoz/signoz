@@ -1,4 +1,5 @@
 import { updateServiceConfig } from 'api/integration/aws';
+import { S3BucketsByRegion } from 'container/CloudIntegrationPage/ServicesSection/types';
 import { useMutation, UseMutationResult } from 'react-query';
 
 interface UpdateServiceConfigPayload {
@@ -6,6 +7,7 @@ interface UpdateServiceConfigPayload {
 	config: {
 		logs: {
 			enabled: boolean;
+			s3_buckets?: S3BucketsByRegion;
 		};
 		metrics: {
 			enabled: boolean;

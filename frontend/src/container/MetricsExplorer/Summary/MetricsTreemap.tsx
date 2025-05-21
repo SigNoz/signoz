@@ -1,6 +1,6 @@
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
-import { Empty, Skeleton, Tooltip, Typography } from 'antd';
+import { Empty, Select, Skeleton, Tooltip, Typography } from 'antd';
 import { stratify, treemapBinary } from 'd3-hierarchy';
 import { Info } from 'lucide-react';
 import { useMemo } from 'react';
@@ -10,6 +10,7 @@ import {
 	TREEMAP_HEIGHT,
 	TREEMAP_MARGINS,
 	TREEMAP_SQUARE_PADDING,
+	TREEMAP_VIEW_OPTIONS,
 } from './constants';
 import { MetricsTreemapProps, TreemapTile, TreemapViewType } from './types';
 import {
@@ -24,6 +25,7 @@ function MetricsTreemap({
 	isLoading,
 	isError,
 	openMetricDetails,
+	setHeatmapView,
 }: MetricsTreemapProps): JSX.Element {
 	const { width: windowWidth } = useWindowSize();
 
@@ -54,7 +56,12 @@ function MetricsTreemap({
 
 	if (isLoading) {
 		return (
-			<Skeleton style={{ width: treemapWidth, height: TREEMAP_HEIGHT }} active />
+			<div data-testid="metrics-treemap-loading-state">
+				<Skeleton
+					style={{ width: treemapWidth, height: TREEMAP_HEIGHT + 55 }}
+					active
+				/>
+			</div>
 		);
 	}
 
@@ -66,6 +73,7 @@ function MetricsTreemap({
 		return (
 			<Empty
 				description="No metrics found"
+				data-testid="metrics-treemap-empty-state"
 				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
 			/>
 		);
@@ -75,21 +83,32 @@ function MetricsTreemap({
 		return (
 			<Empty
 				description="Error fetching metrics. If the problem persists, please contact support."
+				data-testid="metrics-treemap-error-state"
 				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
 			/>
 		);
 	}
 
 	return (
-		<div className="metrics-treemap-container">
+		<div
+			className="metrics-treemap-container"
+			data-testid="metrics-treemap-container"
+		>
 			<div className="metrics-treemap-title">
-				<Typography.Title level={4}>Proportion View</Typography.Title>
-				<Tooltip
-					title="The treemap displays the proportion of samples/timeseries in the selected time range. Each tile represents a unique metric, and its size indicates the percentage of samples/timeseries it contributes to the total."
-					placement="right"
-				>
-					<Info size={16} />
-				</Tooltip>
+				<div className="metrics-treemap-title-left">
+					<Typography.Title level={4}>Proportion View</Typography.Title>
+					<Tooltip
+						title="The treemap displays the proportion of samples/timeseries in the selected time range. Each tile represents a unique metric, and its size indicates the percentage of samples/timeseries it contributes to the total."
+						placement="right"
+					>
+						<Info size={16} />
+					</Tooltip>
+				</div>
+				<Select
+					options={TREEMAP_VIEW_OPTIONS}
+					value={viewType}
+					onChange={setHeatmapView}
+				/>
 			</div>
 			<svg
 				width={treemapWidth}

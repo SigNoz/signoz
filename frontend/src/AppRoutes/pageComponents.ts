@@ -47,9 +47,10 @@ export const TracesFunnels = Loadable(
 		import(/* webpackChunkName: "Traces Funnels" */ 'pages/TracesModulePage'),
 );
 export const TracesFunnelDetails = Loadable(
+	// eslint-disable-next-line sonarjs/no-identical-functions
 	() =>
 		import(
-			/* webpackChunkName: "Traces Funnel Details" */ 'pages/TracesFunnelDetails'
+			/* webpackChunkName: "Traces Funnel Details" */ 'pages/TracesModulePage'
 		),
 );
 

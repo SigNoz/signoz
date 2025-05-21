@@ -203,7 +203,8 @@ type CloudIntegrationService struct {
 }
 
 type CloudServiceLogsConfig struct {
-	Enabled bool `json:"enabled"`
+	Enabled   bool                `json:"enabled"`
+	S3Buckets map[string][]string `json:"s3_buckets,omitempty"`
 }
 
 type CloudServiceMetricsConfig struct {
