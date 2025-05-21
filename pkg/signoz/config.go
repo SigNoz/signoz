@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/config"
+	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -57,6 +58,9 @@ type Config struct {
 
 	// Alertmanager config
 	Alertmanager alertmanager.Config `mapstructure:"alertmanager" yaml:"alertmanager"`
+
+	// Emailing config
+	Emailing emailing.Config `mapstructure:"emailing" yaml:"emailing"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
@@ -80,6 +84,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 		telemetrystore.NewConfigFactory(),
 		prometheus.NewConfigFactory(),
 		alertmanager.NewConfigFactory(),
+		emailing.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

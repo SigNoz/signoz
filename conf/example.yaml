@@ -174,8 +174,8 @@ analytics:
 ##################### Emailing #####################
 emailing:
   enabled: false
-  template:
-    pattern: /opt/signoz/conf/templates/email/*.html
+  templates:
+    directory: /opt/signoz/conf/templates/email
   smtp:
     address: localhost:25
     from:

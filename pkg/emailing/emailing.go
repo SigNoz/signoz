@@ -1,7 +1,13 @@
 package emailing
 
+import (
+	"context"
+
+	"github.com/SigNoz/signoz/pkg/types/emailtypes"
+)
+
 type Emailing interface {
-	SendHTML(to string, subject string, body []byte) error
+	SendHTML(context.Context, string, string, emailtypes.TemplateName, map[string]any) error
 }
 
 //import (
