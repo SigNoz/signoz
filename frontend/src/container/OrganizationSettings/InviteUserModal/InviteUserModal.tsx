@@ -1,7 +1,7 @@
 import { Button, Form, Modal } from 'antd';
 import { FormInstance } from 'antd/lib';
 import sendInvite from 'api/v1/invite/create';
-import getPendingInvites from 'api/v1/invite/getPendingInvites';
+import get from 'api/v1/invite/get';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
@@ -14,7 +14,9 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { PayloadProps } from 'types/api/user/getPendingInvites';
+import { SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
+import { PendingInvite } from 'types/api/user/getPendingInvites';
 import { ROLES } from 'types/roles';
 
 import InviteTeamMembers from '../InviteTeamMembers';
@@ -31,6 +33,7 @@ export interface InviteUserModalProps {
 interface DataProps {
 	key: number;
 	name: string;
+	id: string;
 	email: string;
 	accessLevel: ROLES;
 	inviteLink: string;
@@ -50,17 +53,21 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 	const [isInvitingMembers, setIsInvitingMembers] = useState<boolean>(false);
 	const [modalForm] = Form.useForm<InviteMemberFormValues>(form);
 
-	const getPendingInvitesResponse = useQuery({
-		queryFn: getPendingInvites,
+	const getPendingInvitesResponse = useQuery<
+		SuccessResponseV2<PendingInvite[]>,
+		APIError
+	>({
+		queryFn: get,
 		queryKey: ['getPendingInvites', user?.accessJwt],
 		enabled: shouldCallApi,
 	});
 
 	const getParsedInviteData = useCallback(
-		(payload: PayloadProps = []) =>
+		(payload: PendingInvite[] = []) =>
 			payload?.map((data) => ({
 				key: data.createdAt,
 				name: data?.name,
+				id: data.id,
 				email: data.email,
 				accessLevel: data.role,
 				inviteLink: `${window.location.origin}${ROUTES.SIGN_UP}?token=${data.token}`,
@@ -71,16 +78,16 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 	useEffect(() => {
 		if (
 			getPendingInvitesResponse.status === 'success' &&
-			getPendingInvitesResponse?.data?.payload
+			getPendingInvitesResponse?.data?.data
 		) {
 			const data = getParsedInviteData(
-				getPendingInvitesResponse?.data?.payload || [],
+				getPendingInvitesResponse?.data?.data || [],
 			);
 			setDataSource?.(data);
 		}
 	}, [
 		getParsedInviteData,
-		getPendingInvitesResponse?.data?.payload,
+		getPendingInvitesResponse?.data?.data,
 		getPendingInvitesResponse.status,
 		setDataSource,
 	]);
@@ -91,24 +98,21 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 				setIsInvitingMembers?.(true);
 				values?.members?.forEach(
 					async (member): Promise<void> => {
-						const { error, statusCode } = await sendInvite({
-							email: member.email,
-							name: member?.name,
-							role: member.role,
-							frontendBaseUrl: window.location.origin,
-						});
-
-						if (statusCode !== 200) {
-							notifications.error({
-								message:
-									error ||
-									t('something_went_wrong', {
-										ns: 'common',
-									}),
+						try {
+							await sendInvite({
+								email: member.email,
+								name: member?.name,
+								role: member.role,
+								frontendBaseUrl: window.location.origin,
 							});
-						} else if (statusCode === 200) {
+
 							notifications.success({
 								message: 'Invite sent successfully',
+							});
+						} catch (error) {
+							notifications.error({
+								message: (error as APIError).getErrorCode(),
+								description: (error as APIError).getErrorMessage(),
 							});
 						}
 					},
@@ -116,8 +120,8 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 
 				setTimeout(async () => {
 					const { data, status } = await getPendingInvitesResponse.refetch();
-					if (status === 'success' && data.payload) {
-						setDataSource?.(getParsedInviteData(data?.payload || []));
+					if (status === 'success' && data.data) {
+						setDataSource?.(getParsedInviteData(data?.data || []));
 					}
 					setIsInvitingMembers?.(false);
 					toggleModal(false);

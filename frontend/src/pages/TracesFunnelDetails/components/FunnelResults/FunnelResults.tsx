@@ -1,7 +1,9 @@
 import './FunnelResults.styles.scss';
 
 import Spinner from 'components/Spinner';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+import { useQueryClient } from 'react-query';
 
 import EmptyFunnelResults from './EmptyFunnelResults';
 import FunnelGraph from './FunnelGraph';
@@ -14,11 +16,17 @@ function FunnelResults(): JSX.Element {
 		isValidateStepsLoading,
 		hasIncompleteStepFields,
 		hasAllEmptyStepFields,
+		hasFunnelBeenExecuted,
+		funnelId,
+		selectedTime,
 	} = useFunnelContext();
+	const queryClient = useQueryClient();
 
-	if (isValidateStepsLoading) {
-		return <Spinner size="large" />;
-	}
+	const validateQueryData = queryClient.getQueryData([
+		REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS,
+		funnelId,
+		selectedTime,
+	]);
 
 	if (hasAllEmptyStepFields) return <EmptyFunnelResults />;
 
@@ -30,11 +38,23 @@ function FunnelResults(): JSX.Element {
 			/>
 		);
 
+	if (isValidateStepsLoading || validateQueryData === 'pending') {
+		return <Spinner size="large" />;
+	}
+
 	if (validTracesCount === 0) {
 		return (
 			<EmptyFunnelResults
 				title="There are no traces that match the funnel steps."
 				description="Check the service / span names in the funnel steps and try again to start seeing analytics here"
+			/>
+		);
+	}
+	if (!hasFunnelBeenExecuted) {
+		return (
+			<EmptyFunnelResults
+				title="Funnel has not been run yet."
+				description="Run the funnel to see the results"
 			/>
 		);
 	}

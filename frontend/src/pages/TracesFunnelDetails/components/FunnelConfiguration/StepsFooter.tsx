@@ -1,8 +1,49 @@
 import './StepsFooter.styles.scss';
 
 import { Button, Skeleton } from 'antd';
-import { Cone, Play } from 'lucide-react';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { Cone, Play, RefreshCcw } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+import { useEffect, useMemo } from 'react';
+import { useIsFetching, useQueryClient } from 'react-query';
+
+const useFunnelResultsLoading = (): boolean => {
+	const { funnelId } = useFunnelContext();
+
+	const isFetchingFunnelOverview = useIsFetching({
+		queryKey: [REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW, funnelId],
+	});
+
+	const isFetchingStepsGraphData = useIsFetching({
+		queryKey: [REACT_QUERY_KEY.GET_FUNNEL_STEPS_GRAPH_DATA, funnelId],
+	});
+
+	const isFetchingErrorTraces = useIsFetching({
+		queryKey: [REACT_QUERY_KEY.GET_FUNNEL_ERROR_TRACES, funnelId],
+	});
+
+	const isFetchingSlowTraces = useIsFetching({
+		queryKey: [REACT_QUERY_KEY.GET_FUNNEL_SLOW_TRACES, funnelId],
+	});
+
+	return useMemo(() => {
+		if (!funnelId) {
+			return false;
+		}
+		return (
+			!!isFetchingFunnelOverview ||
+			!!isFetchingStepsGraphData ||
+			!!isFetchingErrorTraces ||
+			!!isFetchingSlowTraces
+		);
+	}, [
+		funnelId,
+		isFetchingFunnelOverview,
+		isFetchingStepsGraphData,
+		isFetchingErrorTraces,
+		isFetchingSlowTraces,
+	]);
+};
 
 interface StepsFooterProps {
 	stepsCount: number;
@@ -14,10 +55,27 @@ function ValidTracesCount(): JSX.Element {
 		isValidateStepsLoading,
 		hasIncompleteStepFields,
 		validTracesCount,
+		funnelId,
+		selectedTime,
 	} = useFunnelContext();
-	if (isValidateStepsLoading) {
-		return <Skeleton.Button size="small" />;
-	}
+	const queryClient = useQueryClient();
+	const validationQueryKey = useMemo(
+		() => [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId, selectedTime],
+		[funnelId, selectedTime],
+	);
+	const validationStatus = queryClient.getQueryData(validationQueryKey);
+
+	useEffect(() => {
+		// Show loading state immediately when fields become valid
+		if (hasIncompleteStepFields && validationStatus !== 'pending') {
+			queryClient.setQueryData(validationQueryKey, 'pending');
+		}
+	}, [
+		hasIncompleteStepFields,
+		queryClient,
+		validationQueryKey,
+		validationStatus,
+	]);
 
 	if (hasAllEmptyStepFields) {
 		return (
@@ -33,6 +91,10 @@ function ValidTracesCount(): JSX.Element {
 		);
 	}
 
+	if (isValidateStepsLoading || validationStatus === 'pending') {
+		return <Skeleton.Button size="small" />;
+	}
+
 	if (validTracesCount === 0) {
 		return (
 			<span className="steps-footer__valid-traces steps-footer__valid-traces--none">
@@ -45,7 +107,13 @@ function ValidTracesCount(): JSX.Element {
 }
 
 function StepsFooter({ stepsCount }: StepsFooterProps): JSX.Element {
-	const { validTracesCount, handleRunFunnel } = useFunnelContext();
+	const {
+		validTracesCount,
+		handleRunFunnel,
+		hasFunnelBeenExecuted,
+	} = useFunnelContext();
+
+	const isFunnelResultsLoading = useFunnelResultsLoading();
 
 	return (
 		<div className="steps-footer">
@@ -56,15 +124,28 @@ function StepsFooter({ stepsCount }: StepsFooterProps): JSX.Element {
 				<ValidTracesCount />
 			</div>
 			<div className="steps-footer__right">
-				<Button
-					disabled={validTracesCount === 0}
-					onClick={handleRunFunnel}
-					type="primary"
-					className="steps-footer__button steps-footer__button--run"
-					icon={<Play size={16} />}
-				>
-					Run funnel
-				</Button>
+				{!hasFunnelBeenExecuted ? (
+					<Button
+						disabled={validTracesCount === 0}
+						onClick={handleRunFunnel}
+						type="primary"
+						className="steps-footer__button steps-footer__button--run"
+						icon={<Play size={16} />}
+					>
+						Run funnel
+					</Button>
+				) : (
+					<Button
+						type="text"
+						className="steps-footer__button steps-footer__button--sync"
+						icon={<RefreshCcw size={16} />}
+						onClick={handleRunFunnel}
+						loading={isFunnelResultsLoading}
+						disabled={validTracesCount === 0}
+					>
+						Refresh
+					</Button>
+				)}
 			</div>
 		</div>
 	);

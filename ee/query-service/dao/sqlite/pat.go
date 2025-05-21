@@ -17,7 +17,7 @@ import (
 func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p types.GettablePAT) (types.GettablePAT, basemodel.BaseApiError) {
 	p.StorablePersonalAccessToken.OrgID = orgID
 	p.StorablePersonalAccessToken.ID = valuer.GenerateUUID()
-	_, err := m.DB().NewInsert().
+	_, err := m.sqlStore.BunDB().NewInsert().
 		Model(&p.StorablePersonalAccessToken).
 		Exec(ctx)
 	if err != nil {
@@ -25,7 +25,7 @@ func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p types.Gettable
 		return types.GettablePAT{}, model.InternalError(fmt.Errorf("PAT insertion failed"))
 	}
 
-	createdByUser, _ := m.GetUser(ctx, p.UserID)
+	createdByUser, _ := m.userModule.GetUserByID(ctx, orgID, p.UserID)
 	if createdByUser == nil {
 		p.CreatedByUser = types.PatUser{
 			NotFound: true,
@@ -33,14 +33,15 @@ func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p types.Gettable
 	} else {
 		p.CreatedByUser = types.PatUser{
 			User: ossTypes.User{
-				ID:    createdByUser.ID,
-				Name:  createdByUser.Name,
-				Email: createdByUser.Email,
+				Identifiable: ossTypes.Identifiable{
+					ID: createdByUser.ID,
+				},
+				DisplayName: createdByUser.DisplayName,
+				Email:       createdByUser.Email,
 				TimeAuditable: ossTypes.TimeAuditable{
 					CreatedAt: createdByUser.CreatedAt,
 					UpdatedAt: createdByUser.UpdatedAt,
 				},
-				ProfilePictureURL: createdByUser.ProfilePictureURL,
 			},
 			NotFound: false,
 		}
@@ -49,7 +50,7 @@ func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p types.Gettable
 }
 
 func (m *modelDao) UpdatePAT(ctx context.Context, orgID string, p types.GettablePAT, id valuer.UUID) basemodel.BaseApiError {
-	_, err := m.DB().NewUpdate().
+	_, err := m.sqlStore.BunDB().NewUpdate().
 		Model(&p.StorablePersonalAccessToken).
 		Column("role", "name", "updated_at", "updated_by_user_id").
 		Where("id = ?", id.StringValue()).
@@ -66,7 +67,7 @@ func (m *modelDao) UpdatePAT(ctx context.Context, orgID string, p types.Gettable
 func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.GettablePAT, basemodel.BaseApiError) {
 	pats := []types.StorablePersonalAccessToken{}
 
-	if err := m.DB().NewSelect().
+	if err := m.sqlStore.BunDB().NewSelect().
 		Model(&pats).
 		Where("revoked = false").
 		Where("org_id = ?", orgID).
@@ -82,7 +83,7 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 			StorablePersonalAccessToken: pats[i],
 		}
 
-		createdByUser, _ := m.GetUser(ctx, pats[i].UserID)
+		createdByUser, _ := m.userModule.GetUserByID(ctx, orgID, pats[i].UserID)
 		if createdByUser == nil {
 			patWithUser.CreatedByUser = types.PatUser{
 				NotFound: true,
@@ -90,20 +91,21 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 		} else {
 			patWithUser.CreatedByUser = types.PatUser{
 				User: ossTypes.User{
-					ID:    createdByUser.ID,
-					Name:  createdByUser.Name,
-					Email: createdByUser.Email,
+					Identifiable: ossTypes.Identifiable{
+						ID: createdByUser.ID,
+					},
+					DisplayName: createdByUser.DisplayName,
+					Email:       createdByUser.Email,
 					TimeAuditable: ossTypes.TimeAuditable{
 						CreatedAt: createdByUser.CreatedAt,
 						UpdatedAt: createdByUser.UpdatedAt,
 					},
-					ProfilePictureURL: createdByUser.ProfilePictureURL,
 				},
 				NotFound: false,
 			}
 		}
 
-		updatedByUser, _ := m.GetUser(ctx, pats[i].UpdatedByUserID)
+		updatedByUser, _ := m.userModule.GetUserByID(ctx, orgID, pats[i].UpdatedByUserID)
 		if updatedByUser == nil {
 			patWithUser.UpdatedByUser = types.PatUser{
 				NotFound: true,
@@ -111,14 +113,15 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 		} else {
 			patWithUser.UpdatedByUser = types.PatUser{
 				User: ossTypes.User{
-					ID:    updatedByUser.ID,
-					Name:  updatedByUser.Name,
-					Email: updatedByUser.Email,
+					Identifiable: ossTypes.Identifiable{
+						ID: updatedByUser.ID,
+					},
+					DisplayName: updatedByUser.DisplayName,
+					Email:       updatedByUser.Email,
 					TimeAuditable: ossTypes.TimeAuditable{
 						CreatedAt: updatedByUser.CreatedAt,
 						UpdatedAt: updatedByUser.UpdatedAt,
 					},
-					ProfilePictureURL: updatedByUser.ProfilePictureURL,
 				},
 				NotFound: false,
 			}
@@ -131,7 +134,7 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 
 func (m *modelDao) RevokePAT(ctx context.Context, orgID string, id valuer.UUID, userID string) basemodel.BaseApiError {
 	updatedAt := time.Now().Unix()
-	_, err := m.DB().NewUpdate().
+	_, err := m.sqlStore.BunDB().NewUpdate().
 		Model(&types.StorablePersonalAccessToken{}).
 		Set("revoked = ?", true).
 		Set("updated_by_user_id = ?", userID).
@@ -149,7 +152,7 @@ func (m *modelDao) RevokePAT(ctx context.Context, orgID string, id valuer.UUID, 
 func (m *modelDao) GetPAT(ctx context.Context, token string) (*types.GettablePAT, basemodel.BaseApiError) {
 	pats := []types.StorablePersonalAccessToken{}
 
-	if err := m.DB().NewSelect().
+	if err := m.sqlStore.BunDB().NewSelect().
 		Model(&pats).
 		Where("token = ?", token).
 		Where("revoked = false").
@@ -174,7 +177,7 @@ func (m *modelDao) GetPAT(ctx context.Context, token string) (*types.GettablePAT
 func (m *modelDao) GetPATByID(ctx context.Context, orgID string, id valuer.UUID) (*types.GettablePAT, basemodel.BaseApiError) {
 	pats := []types.StorablePersonalAccessToken{}
 
-	if err := m.DB().NewSelect().
+	if err := m.sqlStore.BunDB().NewSelect().
 		Model(&pats).
 		Where("id = ?", id.StringValue()).
 		Where("org_id = ?", orgID).

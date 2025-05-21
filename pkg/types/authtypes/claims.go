@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -12,10 +13,10 @@ var _ jwt.ClaimsValidator = (*Claims)(nil)
 
 type Claims struct {
 	jwt.RegisteredClaims
-	UserID string `json:"id"`
-	Email  string `json:"email"`
-	Role   Role   `json:"role"`
-	OrgID  string `json:"orgId"`
+	UserID string     `json:"id"`
+	Email  string     `json:"email"`
+	Role   types.Role `json:"role"`
+	OrgID  string     `json:"orgId"`
 }
 
 func (c *Claims) Validate() error {
@@ -47,7 +48,7 @@ func (c *Claims) LogValue() slog.Value {
 }
 
 func (c *Claims) IsViewer() error {
-	if slices.Contains([]Role{RoleViewer, RoleEditor, RoleAdmin}, c.Role) {
+	if slices.Contains([]types.Role{types.RoleViewer, types.RoleEditor, types.RoleAdmin}, c.Role) {
 		return nil
 	}
 
@@ -55,7 +56,7 @@ func (c *Claims) IsViewer() error {
 }
 
 func (c *Claims) IsEditor() error {
-	if slices.Contains([]Role{RoleEditor, RoleAdmin}, c.Role) {
+	if slices.Contains([]types.Role{types.RoleEditor, types.RoleAdmin}, c.Role) {
 		return nil
 	}
 
@@ -63,7 +64,7 @@ func (c *Claims) IsEditor() error {
 }
 
 func (c *Claims) IsAdmin() error {
-	if c.Role == RoleAdmin {
+	if c.Role == types.RoleAdmin {
 		return nil
 	}
 
@@ -75,7 +76,7 @@ func (c *Claims) IsSelfAccess(id string) error {
 		return nil
 	}
 
-	if c.Role == RoleAdmin {
+	if c.Role == types.RoleAdmin {
 		return nil
 	}
 

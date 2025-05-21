@@ -6,13 +6,16 @@ export interface Props {
 	token?: string;
 }
 
-export interface PayloadProps {
+export interface UserResponse {
 	createdAt: number;
 	email: string;
 	id: string;
-	name: string;
+	displayName: string;
 	orgId: string;
-	profilePictureURL: string;
 	organization: string;
 	role: ROLES;
+}
+export interface PayloadProps {
+	data: UserResponse;
+	status: string;
 }
