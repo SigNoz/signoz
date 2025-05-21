@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -20,7 +21,7 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 	return &conditionBuilder{fm: fm}
 }
 
-func (c *conditionBuilder) ConditionFor(
+func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
@@ -43,6 +44,16 @@ func (c *conditionBuilder) ConditionFor(
 	}
 
 	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+
+	// make use of case insensitive index for body
+	if tblFieldName == "body" {
+		switch operator {
+		case qbtypes.FilterOperatorLike:
+			return sb.ILike(tblFieldName, value), nil
+		case qbtypes.FilterOperatorNotLike:
+			return sb.NotILike(tblFieldName, value), nil
+		}
+	}
 
 	// regular operators
 	switch operator {
@@ -76,11 +87,9 @@ func (c *conditionBuilder) ConditionFor(
 		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
-		exp := fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value))
-		return sb.And(exp), nil
+		return fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
-		exp := fmt.Sprintf(`not match(%s, %s)`, tblFieldName, sb.Var(value))
-		return sb.And(exp), nil
+		return fmt.Sprintf(`NOT match(%s, %s)`, tblFieldName, sb.Var(value)), nil
 	// between and not between
 	case qbtypes.FilterOperatorBetween:
 		values, ok := value.([]any)
@@ -107,18 +116,37 @@ func (c *conditionBuilder) ConditionFor(
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.In(tblFieldName, values...), nil
+		// instead of using IN, we use `=` + `OR` to make use of index
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.E(tblFieldName, value))
+		}
+		return sb.Or(conditions...), nil
 	case qbtypes.FilterOperatorNotIn:
 		values, ok := value.([]any)
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.NotIn(tblFieldName, values...), nil
+		// instead of using NOT IN, we use `!=` + `AND` to make use of index
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.NE(tblFieldName, value))
+		}
+		return sb.And(conditions...), nil
 
 	// exists and not exists
 	// in the UI based query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
+
+		if strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+			if operator == qbtypes.FilterOperatorExists {
+				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
+			} else {
+				return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
+			}
+		}
+
 		var value any
 		switch column.Type {
 		case schema.ColumnTypeString, schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}:
@@ -159,4 +187,33 @@ func (c *conditionBuilder) ConditionFor(
 		}
 	}
 	return "", fmt.Errorf("unsupported operator: %v", operator)
+}
+
+func (c *conditionBuilder) ConditionFor(
+	ctx context.Context,
+	key *telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) (string, error) {
+	condition, err := c.conditionFor(ctx, key, operator, value, sb)
+	if err != nil {
+		return "", err
+	}
+
+	if operator.AddDefaultExistsFilter() {
+		// skip adding exists filter for intrinsic fields
+		// with an exception for body json search
+		field, _ := c.fm.FieldFor(ctx, key)
+		if slices.Contains(IntrinsicFields, field) && !strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+			return condition, nil
+		}
+
+		existsCondition, err := c.conditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb)
+		if err != nil {
+			return "", err
+		}
+		return sb.And(condition, existsCondition), nil
+	}
+	return condition, nil
 }

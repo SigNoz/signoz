@@ -76,7 +76,7 @@ func (c *conditionBuilder) ConditionFor(
 	case qbtypes.FilterOperatorRegexp:
 		cond = fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value))
 	case qbtypes.FilterOperatorNotRegexp:
-		cond = fmt.Sprintf(`not match(%s, %s)`, tblFieldName, sb.Var(value))
+		cond = fmt.Sprintf(`NOT match(%s, %s)`, tblFieldName, sb.Var(value))
 
 	// in and not in
 	case qbtypes.FilterOperatorIn:
@@ -84,13 +84,23 @@ func (c *conditionBuilder) ConditionFor(
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		cond = sb.In(tblFieldName, values...)
+		// instead of using IN, we use `=` + `OR` to make use of index
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.E(tblFieldName, value))
+		}
+		cond = sb.Or(conditions...)
 	case qbtypes.FilterOperatorNotIn:
 		values, ok := value.([]any)
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		cond = sb.NotIn(tblFieldName, values...)
+		// instead of using NOT IN, we use `!=` + `AND` to make use of index
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.NE(tblFieldName, value))
+		}
+		cond = sb.And(conditions...)
 
 	// exists and not exists
 	// in the query builder, `exists` and `not exists` are used for

@@ -1,0 +1,56 @@
+.announcement-tooltip {
+	&__dot {
+		position: absolute;
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background-color: var(--bg-robin-500);
+		z-index: 1000;
+	}
+
+	&__title {
+		font-weight: 500;
+		font-size: 15px;
+	}
+
+	&__container {
+		position: absolute;
+		width: 320px;
+		background-color: var(--bg-robin-500);
+		color: var(--text-white);
+		border-radius: 8px;
+		padding: 16px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		z-index: 1000;
+	}
+
+	&__header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	&__close-icon {
+		cursor: pointer;
+		color: var(--text-white);
+	}
+
+	&__message {
+		margin: 12px 0;
+		line-height: 20px;
+	}
+
+	&__footer {
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	&__button {
+		background: var(--bg-vanilla-100);
+		color: var(--bg-robin-500);
+		border: none;
+		padding: 6px 12px;
+		border-radius: 4px;
+		cursor: pointer;
+	}
+}
