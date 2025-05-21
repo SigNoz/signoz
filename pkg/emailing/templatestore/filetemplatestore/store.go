@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	emailTemplateExt = ".html.gotmpl"
+	emailTemplateExt = ".gotmpl"
 )
 
 type store struct {
