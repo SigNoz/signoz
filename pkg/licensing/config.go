@@ -9,7 +9,7 @@ import (
 var _ factory.Config = (*Config)(nil)
 
 type Config struct {
-	ValidationFrequency time.Duration `mapstructure:"validation_frequency"`
+	PollInterval time.Duration `mapstructure:"poll_interval"`
 }
 
 func (c Config) Validate() error {

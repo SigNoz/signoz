@@ -41,7 +41,7 @@ func (provider *noopLicensing) Activate(ctx context.Context, organizationID valu
 }
 
 func (provider *noopLicensing) Validate(ctx context.Context) error {
-	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "validating  license is not supported")
+	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "validating license is not supported")
 }
 
 func (provider *noopLicensing) Update(ctx context.Context, organizationID valuer.UUID, license *licensetypes.GettableLicense) error {

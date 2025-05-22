@@ -56,30 +56,6 @@ type billingDetails struct {
 	} `json:"data"`
 }
 
-type ApplyLicenseRequest struct {
-	LicenseKey string `json:"key"`
-}
-
-func (ah *APIHandler) getActive(w http.ResponseWriter, r *http.Request) {
-	ah.LicensingAPI.GetActive(w, r)
-}
-
-func (ah *APIHandler) activate(w http.ResponseWriter, r *http.Request) {
-	ah.LicensingAPI.Activate(w, r)
-}
-
-func (ah *APIHandler) refresh(w http.ResponseWriter, r *http.Request) {
-	ah.LicensingAPI.Refresh(w, r)
-}
-
-func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
-	ah.LicensingAPI.Checkout(w, r)
-}
-
-func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
-	ah.LicensingAPI.Portal(w, r)
-}
-
 func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 	licenseKey := r.URL.Query().Get("licenseKey")
 

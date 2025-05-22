@@ -38,7 +38,7 @@ func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Conf
 }
 
 func (provider *provider) Start(ctx context.Context) error {
-	tick := time.NewTicker(provider.config.ValidationFrequency)
+	tick := time.NewTicker(provider.config.PollInterval)
 	defer tick.Stop()
 
 	err := provider.Validate(ctx)
@@ -93,7 +93,7 @@ func (provider *provider) Validate(ctx context.Context) error {
 				return err
 			}
 
-			if time.Since(license.LastValidatedAt) > 3*provider.config.ValidationFrequency {
+			if time.Since(license.LastValidatedAt) > 3*provider.config.PollInterval {
 				provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive 3 validation cycles. defaulting to basic plan", "licenseID", license.ID.StringValue(), "organizationID", organizationID.StringValue())
 				err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 				if err != nil {

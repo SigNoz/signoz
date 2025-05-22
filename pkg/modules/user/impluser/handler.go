@@ -100,7 +100,7 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, &types.GettableCreateInviteResponse{InviteToken: invites[0].Token})
+	render.Success(rw, http.StatusCreated, invites[0])
 }
 
 func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
