@@ -44,10 +44,6 @@ func (provider *noopLicensing) Validate(ctx context.Context) error {
 	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "validating license is not supported")
 }
 
-func (provider *noopLicensing) Update(ctx context.Context, organizationID valuer.UUID, license *licensetypes.GettableLicense) error {
-	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "updating license is not supported")
-}
-
 func (provider *noopLicensing) Refresh(ctx context.Context, organizationID valuer.UUID) error {
 	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "refreshing license is not supported")
 }
@@ -60,16 +56,8 @@ func (provider *noopLicensing) Portal(ctx context.Context, organizationID valuer
 	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "portal session is not supported")
 }
 
-func (provider *noopLicensing) Get(ctx context.Context, organizationID valuer.UUID, ID valuer.UUID) (*licensetypes.GettableLicense, error) {
-	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "fetching license for ID is not supported")
-}
-
-func (provider *noopLicensing) GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.GettableLicense, error) {
+func (provider *noopLicensing) GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.License, error) {
 	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "fetching active license is not supported")
-}
-
-func (provider *noopLicensing) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.GettableLicense, error) {
-	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "fetching all licenses is not supported")
 }
 
 func (provider *noopLicensing) CheckFeature(ctx context.Context, key string) error {

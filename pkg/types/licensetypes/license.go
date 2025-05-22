@@ -7,10 +7,10 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 )
 
@@ -18,34 +18,81 @@ type StorableLicense struct {
 	bun.BaseModel `bun:"table:license"`
 
 	types.Identifiable
+	types.TimeAuditable
 	Key             string         `bun:"key,type:text,notnull,unique"`
 	Data            map[string]any `bun:"data,type:text"`
 	LastValidatedAt time.Time      `bun:"last_validated_at,notnull"`
-	OrgID           string         `bun:"org_id,type:text,notnull" json:"orgID"`
+	OrgID           valuer.UUID    `bun:"org_id,type:text,notnull" json:"orgID"`
 }
 
-func NewStorableLicense(ID valuer.UUID, key string, data map[string]any, lastValidatedAt time.Time, organizationID valuer.UUID) *StorableLicense {
+func NewStorableLicense(ID valuer.UUID, key string, data map[string]any, createdAt, updatedAt, lastValidatedAt time.Time, organizationID valuer.UUID) *StorableLicense {
 	return &StorableLicense{
 		Identifiable: types.Identifiable{
 			ID: ID,
 		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: createdAt,
+			UpdatedAt: updatedAt,
+		},
 		Key:             key,
 		Data:            data,
 		LastValidatedAt: lastValidatedAt,
-		OrgID:           organizationID.StringValue(),
+		OrgID:           organizationID,
 	}
 }
 
-type GettableLicense struct {
-	ID         string
-	Key        string
-	Data       map[string]interface{}
-	PlanName   string
-	Features   []*featuretypes.GettableFeature
-	Status     string
-	IsCurrent  bool
-	ValidFrom  int64
-	ValidUntil int64
+func GetActiveLicenseFromStorableLicenses(storableLicenses []*StorableLicense, organizationID valuer.UUID) (*License, error) {
+	var activeLicense *License
+	for _, storableLicense := range storableLicenses {
+		license, err := NewLicenseWithIDAndKey(
+			storableLicense.ID.StringValue(),
+			storableLicense.Key,
+			storableLicense.Data,
+			storableLicense.CreatedAt,
+			storableLicense.UpdatedAt,
+			storableLicense.LastValidatedAt,
+			storableLicense.OrgID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if license.Status != "VALID" {
+			continue
+		}
+		if activeLicense == nil &&
+			(license.ValidFrom != 0) &&
+			(license.ValidUntil == -1 || license.ValidUntil > time.Now().Unix()) {
+			activeLicense = license
+		}
+		if activeLicense != nil &&
+			license.ValidFrom > activeLicense.ValidFrom &&
+			(license.ValidUntil == -1 || license.ValidUntil > time.Now().Unix()) {
+			activeLicense = license
+		}
+	}
+
+	if activeLicense == nil {
+		return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "no active license found for the organization %s", organizationID.StringValue())
+	}
+
+	return activeLicense, nil
+}
+
+// this data excludes ID and Key
+type License struct {
+	ID              valuer.UUID
+	Key             string
+	Data            map[string]interface{}
+	PlanName        string
+	Features        []*featuretypes.GettableFeature
+	Status          string
+	ValidFrom       int64
+	ValidUntil      int64
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	LastValidatedAt time.Time
+	OrganizationID  valuer.UUID
 }
 
 func extractKeyFromMapStringInterface[T any](data map[string]interface{}, key string) (T, error) {
@@ -59,30 +106,40 @@ func extractKeyFromMapStringInterface[T any](data map[string]interface{}, key st
 	return zeroValue, fmt.Errorf("%s key is missing", key)
 }
 
-func NewGettableLicense(data map[string]interface{}) (*GettableLicense, error) {
+func NewLicense(data []byte, createdAt, updatedAt, lastValidatedAt time.Time, organizationID valuer.UUID) (*License, error) {
+	licenseData := map[string]any{}
+	err := json.Unmarshal(data, &licenseData)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to unmarshal license data")
+	}
+
 	var features []*featuretypes.GettableFeature
 
 	// extract id from data
-	licenseID, err := extractKeyFromMapStringInterface[string](data, "id")
+	licenseIDStr, err := extractKeyFromMapStringInterface[string](licenseData, "id")
 	if err != nil {
 		return nil, err
 	}
-	delete(data, "id")
+	licenseID, err := valuer.NewUUID(licenseIDStr)
+	if err != nil {
+		return nil, err
+	}
+	delete(licenseData, "id")
 
 	// extract key from data
-	licenseKey, err := extractKeyFromMapStringInterface[string](data, "key")
+	licenseKey, err := extractKeyFromMapStringInterface[string](licenseData, "key")
 	if err != nil {
 		return nil, err
 	}
-	delete(data, "key")
+	delete(licenseData, "key")
 
 	// extract status from data
-	status, err := extractKeyFromMapStringInterface[string](data, "status")
+	status, err := extractKeyFromMapStringInterface[string](licenseData, "status")
 	if err != nil {
 		return nil, err
 	}
 
-	planMap, err := extractKeyFromMapStringInterface[map[string]any](data, "plan")
+	planMap, err := extractKeyFromMapStringInterface[map[string]any](licenseData, "plan")
 	if err != nil {
 		return nil, err
 	}
@@ -97,14 +154,14 @@ func NewGettableLicense(data map[string]interface{}) (*GettableLicense, error) {
 	}
 
 	featuresFromZeus := make([]*featuretypes.GettableFeature, 0)
-	if _features, ok := data["features"]; ok {
+	if _features, ok := licenseData["features"]; ok {
 		featuresData, err := json.Marshal(_features)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal features data")
+			return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to marshal features data")
 		}
 
 		if err := json.Unmarshal(featuresData, &featuresFromZeus); err != nil {
-			return nil, errors.Wrap(err, "failed to unmarshal features data")
+			return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to unmarshal features data")
 		}
 	}
 
@@ -132,38 +189,47 @@ func NewGettableLicense(data map[string]interface{}) (*GettableLicense, error) {
 			}
 		}
 	}
-	data["features"] = features
+	licenseData["features"] = features
 
-	_validFrom, err := extractKeyFromMapStringInterface[float64](data, "valid_from")
+	_validFrom, err := extractKeyFromMapStringInterface[float64](licenseData, "valid_from")
 	if err != nil {
 		_validFrom = 0
 	}
 	validFrom := int64(_validFrom)
 
-	_validUntil, err := extractKeyFromMapStringInterface[float64](data, "valid_until")
+	_validUntil, err := extractKeyFromMapStringInterface[float64](licenseData, "valid_until")
 	if err != nil {
 		_validUntil = 0
 	}
 	validUntil := int64(_validUntil)
 
-	return &GettableLicense{
-		ID:         licenseID,
-		Key:        licenseKey,
-		Data:       data,
-		PlanName:   planName,
-		Features:   features,
-		ValidFrom:  validFrom,
-		ValidUntil: validUntil,
-		Status:     status,
+	return &License{
+		ID:              licenseID,
+		Key:             licenseKey,
+		Data:            licenseData,
+		PlanName:        planName,
+		Features:        features,
+		ValidFrom:       validFrom,
+		ValidUntil:      validUntil,
+		Status:          status,
+		CreatedAt:       createdAt,
+		UpdatedAt:       updatedAt,
+		LastValidatedAt: lastValidatedAt,
+		OrganizationID:  organizationID,
 	}, nil
 
 }
 
-func NewGettableLicenseWithIDAndKey(id string, key string, data map[string]interface{}) (*GettableLicense, error) {
+func NewLicenseWithIDAndKey(id string, key string, data map[string]interface{}, createdAt, updatedAt, lastValidatedAt time.Time, organizationID valuer.UUID) (*License, error) {
 	licenseDataWithIdAndKey := data
 	licenseDataWithIdAndKey["id"] = id
 	licenseDataWithIdAndKey["key"] = key
-	return NewGettableLicense(licenseDataWithIdAndKey)
+
+	licenseData, err := json.Marshal(licenseDataWithIdAndKey)
+	if err != nil {
+		return nil, err
+	}
+	return NewLicense(licenseData, createdAt, updatedAt, lastValidatedAt, organizationID)
 }
 
 type Store interface {
