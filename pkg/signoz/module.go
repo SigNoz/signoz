@@ -22,10 +22,10 @@ type Modules struct {
 	Organization organization.Module
 	Preference   preference.Module
 	User         user.Module
-	TraceFunnel  tracefunnel.Module
 	SavedView    savedview.Module
 	Apdex        apdex.Module
 	Dashboard    dashboard.Module
+	TraceFunnel  tracefunnel.Module
 }
 
 func NewModules(sqlstore sqlstore.SQLStore, user user.Module) Modules {

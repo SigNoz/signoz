@@ -30,10 +30,10 @@ func NewHandlers(modules Modules, user user.Handler) Handlers {
 	return Handlers{
 		Organization: implorganization.NewHandler(modules.Organization),
 		Preference:   implpreference.NewHandler(modules.Preference),
+		TraceFunnel:  impltracefunnel.NewHandler(modules.TraceFunnel),
 		User:         user,
 		SavedView:    implsavedview.NewHandler(modules.SavedView),
 		Apdex:        implapdex.NewHandler(modules.Apdex),
 		Dashboard:    impldashboard.NewHandler(modules.Dashboard),
-		TraceFunnel:  impltracefunnel.NewHandler(modules.TraceFunnel),
 	}
 }
