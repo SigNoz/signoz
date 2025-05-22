@@ -30,6 +30,15 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotExists:       "not mapContains(%s_%s, '%s')",
 }
 
+var skipExistsFilter = map[v3.FilterOperator]struct{}{
+	v3.FilterOperatorNotEqual:    {},
+	v3.FilterOperatorNotLike:     {},
+	v3.FilterOperatorNotContains: {},
+	v3.FilterOperatorNotRegex:    {},
+	v3.FilterOperatorNotIn:       {},
+	v3.FilterOperatorNotExists:   {},
+}
+
 const (
 	BODY                         = "body"
 	DISTRIBUTED_LOGS_V2          = "distributed_logs_v2"
@@ -204,11 +213,14 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 		}
 		conditions = append(conditions, filter)
 
+		op := v3.FilterOperator(strings.ToLower(string(item.Operator)))
+
 		// add extra condition for map contains
 		// by default clickhouse is not able to utilize indexes for keys with all operators.
 		// mapContains forces the use of index.
-		op := v3.FilterOperator(strings.ToLower(string(item.Operator)))
-		if item.Key.IsColumn == false && op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
+		// for mat column it's is not required as it will already use the dedicated index.
+		// skip the exists filter for operators such as !=, not like, not contains, not regex, not in
+		if _, ok := skipExistsFilter[op]; !ok && item.Key.IsColumn == false && item.Operator != v3.FilterOperatorExists {
 			conditions = append(conditions, getExistsNexistsFilter(v3.FilterOperatorExists, item))
 		}
 	}

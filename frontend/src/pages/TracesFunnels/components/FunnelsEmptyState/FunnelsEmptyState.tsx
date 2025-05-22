@@ -5,7 +5,7 @@ import LearnMore from 'components/LearnMore/LearnMore';
 import { Plus } from 'lucide-react';
 
 interface FunnelsEmptyStateProps {
-	onCreateFunnel: () => void;
+	onCreateFunnel?: () => void;
 }
 
 function FunnelsEmptyState({
@@ -37,11 +37,15 @@ function FunnelsEmptyState({
 					>
 						New funnel
 					</Button>
-					<LearnMore />
+					<LearnMore url="https://signoz.io/blog/tracing-funnels-observability-distributed-systems/" />
 				</div>
 			</div>
 		</div>
 	);
 }
+
+FunnelsEmptyState.defaultProps = {
+	onCreateFunnel: undefined,
+};
 
 export default FunnelsEmptyState;

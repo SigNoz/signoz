@@ -15,8 +15,10 @@ import cx from 'classnames';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
+import { USER_ROLES } from 'types/roles';
 
 import {
 	formatDateTime,
@@ -84,6 +86,8 @@ function HeaderComponent({
 	handleEdit: () => void;
 	handleDelete: () => void;
 }): JSX.Element {
+	const { user } = useAppContext();
+	const isCrudEnabled = user?.role !== USER_ROLES.VIEWER;
 	return (
 		<Flex className="header-content" justify="space-between">
 			<Flex gap={8}>
@@ -91,25 +95,27 @@ function HeaderComponent({
 				<Tag>{duration}</Tag>
 			</Flex>
 
-			<div className="action-btn">
-				<PenLine
-					size={14}
-					onClick={(e): void => {
-						e.preventDefault();
-						e.stopPropagation();
-						handleEdit();
-					}}
-				/>
-				<Trash2
-					size={14}
-					color={Color.BG_CHERRY_500}
-					onClick={(e): void => {
-						e.preventDefault();
-						e.stopPropagation();
-						handleDelete();
-					}}
-				/>
-			</div>
+			{isCrudEnabled && (
+				<div className="action-btn">
+					<PenLine
+						size={14}
+						onClick={(e): void => {
+							e.preventDefault();
+							e.stopPropagation();
+							handleEdit();
+						}}
+					/>
+					<Trash2
+						size={14}
+						color={Color.BG_CHERRY_500}
+						onClick={(e): void => {
+							e.preventDefault();
+							e.stopPropagation();
+							handleDelete();
+						}}
+					/>
+				</div>
+			)}
 		</Flex>
 	);
 }

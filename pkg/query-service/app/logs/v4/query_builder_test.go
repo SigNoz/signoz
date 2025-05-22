@@ -433,6 +433,65 @@ func Test_buildLogsTimeSeriesFilterQuery(t *testing.T) {
 			want: "attributes_string['service.name'] = 'test' AND mapContains(attributes_string, 'service.name') " +
 				"AND mapContains(attributes_string, 'user_name') AND `attribute_string_method_exists`=true AND mapContains(attributes_string, 'test')",
 		},
+		{
+			name: "Shouldn't add exists filter for operators !=, not like, not contains, not regex, not in",
+			args: args{
+				fs: &v3.FilterSet{
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "service.name",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: v3.FilterOperatorNotEqual,
+							Value:    "test",
+						},
+						{
+							Key: v3.AttributeKey{
+								Key:      "service.name",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: v3.FilterOperatorNotLike,
+							Value:    "test%",
+						},
+						{
+							Key: v3.AttributeKey{
+								Key:      "service.name",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: v3.FilterOperatorNotContains,
+							Value:    "test",
+						},
+						{
+							Key: v3.AttributeKey{
+								Key:      "service.name",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: v3.FilterOperatorNotRegex,
+							Value:    "^test",
+						},
+						{
+							Key: v3.AttributeKey{
+								Key:      "service.name",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: v3.FilterOperatorNotIn,
+							Value:    []string{"test"},
+						},
+					},
+				},
+			},
+			want: "attributes_string['service.name'] != 'test' " +
+				"AND attributes_string['service.name'] NOT ILIKE 'test%' " +
+				"AND attributes_string['service.name'] NOT ILIKE '%test%' " +
+				"AND NOT match(attributes_string['service.name'], '^test') " +
+				"AND attributes_string['service.name'] NOT IN ['test']",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -29,13 +29,21 @@ function RenameFunnel({
 
 	const handleRename = (): void => {
 		renameFunnelMutation.mutate(
-			{ id: funnelId, funnel_name: newFunnelName },
+			{
+				funnel_id: funnelId,
+				funnel_name: newFunnelName,
+				timestamp: new Date().getTime(),
+			},
 			{
 				onSuccess: () => {
 					notifications.success({
 						message: 'Funnel renamed successfully',
 					});
 					queryClient.invalidateQueries([REACT_QUERY_KEY.GET_FUNNELS_LIST]);
+					queryClient.invalidateQueries([
+						REACT_QUERY_KEY.GET_FUNNEL_DETAILS,
+						funnelId,
+					]);
 					onClose();
 				},
 				onError: () => {

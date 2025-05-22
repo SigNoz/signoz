@@ -10,72 +10,35 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-var (
-	attributeMetadataColumns = map[string]*schema.Column{
-		"resource_attributes": {Name: "resource_attributes", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
-		}},
-		"attributes": {Name: "attributes", Type: schema.MapColumnType{
-			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-			ValueType: schema.ColumnTypeString,
-		}},
-	}
-)
-
 type conditionBuilder struct {
+	fm qbtypes.FieldMapper
 }
 
-func NewConditionBuilder() qbtypes.ConditionBuilder {
-	return &conditionBuilder{}
+func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
+	return &conditionBuilder{fm: fm}
 }
 
-func (c *conditionBuilder) GetColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
-	switch key.FieldContext {
-	case telemetrytypes.FieldContextResource:
-		return attributeMetadataColumns["resource_attributes"], nil
-	case telemetrytypes.FieldContextAttribute:
-		return attributeMetadataColumns["attributes"], nil
-	}
-	return nil, qbtypes.ErrColumnNotFound
-}
-
-func (c *conditionBuilder) GetTableFieldName(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	column, err := c.GetColumn(ctx, key)
-	if err != nil {
-		return "", err
-	}
-
-	switch column.Type {
-	case schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
-	}:
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
-	}
-	return column.Name, nil
-}
-
-func (c *conditionBuilder) GetCondition(
+func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	column, err := c.GetColumn(ctx, key)
+	column, err := c.fm.ColumnFor(ctx, key)
 	if err != nil {
 		// if we don't have a column, we can't build a condition for related values
 		return "", nil
 	}
 
-	tblFieldName, err := c.GetTableFieldName(ctx, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, key)
 	if err != nil {
 		// if we don't have a table field name, we can't build a condition for related values
 		return "", nil
 	}
 
-	if key.FieldDataType != telemetrytypes.FieldDataTypeString {
+	if key.FieldDataType != telemetrytypes.FieldDataTypeString &&
+		key.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
 		// if the field data type is not string, we can't build a condition for related values
 		return "", nil
 	}
@@ -83,37 +46,37 @@ func (c *conditionBuilder) GetCondition(
 	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
 
 	// key must exists to apply main filter
-	containsExp := fmt.Sprintf("mapContains(%s, %s)", column.Name, sb.Var(key.Name))
+	expr := `if(mapContains(%s, %s), %s, true)`
+
+	var cond string
 
 	// regular operators
 	switch operator {
 	// regular operators
 	case qbtypes.FilterOperatorEqual:
-		return sb.And(containsExp, sb.E(tblFieldName, value)), nil
+		cond = sb.E(tblFieldName, value)
 	case qbtypes.FilterOperatorNotEqual:
-		return sb.And(containsExp, sb.NE(tblFieldName, value)), nil
+		cond = sb.NE(tblFieldName, value)
 
 	// like and not like
 	case qbtypes.FilterOperatorLike:
-		return sb.And(containsExp, sb.Like(tblFieldName, value)), nil
+		cond = sb.Like(tblFieldName, value)
 	case qbtypes.FilterOperatorNotLike:
-		return sb.And(containsExp, sb.NotLike(tblFieldName, value)), nil
+		cond = sb.NotLike(tblFieldName, value)
 	case qbtypes.FilterOperatorILike:
-		return sb.And(containsExp, sb.ILike(tblFieldName, value)), nil
+		cond = sb.ILike(tblFieldName, value)
 	case qbtypes.FilterOperatorNotILike:
-		return sb.And(containsExp, sb.NotILike(tblFieldName, value)), nil
+		cond = sb.NotILike(tblFieldName, value)
 
 	case qbtypes.FilterOperatorContains:
-		return sb.And(containsExp, sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value))), nil
+		cond = sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value))
 	case qbtypes.FilterOperatorNotContains:
-		return sb.And(containsExp, sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value))), nil
+		cond = sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value))
 
 	case qbtypes.FilterOperatorRegexp:
-		exp := fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value))
-		return sb.And(containsExp, exp), nil
+		cond = fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value))
 	case qbtypes.FilterOperatorNotRegexp:
-		exp := fmt.Sprintf(`not match(%s, %s)`, tblFieldName, sb.Var(value))
-		return sb.And(containsExp, exp), nil
+		cond = fmt.Sprintf(`NOT match(%s, %s)`, tblFieldName, sb.Var(value))
 
 	// in and not in
 	case qbtypes.FilterOperatorIn:
@@ -121,13 +84,23 @@ func (c *conditionBuilder) GetCondition(
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.And(containsExp, sb.In(tblFieldName, values...)), nil
+		// instead of using IN, we use `=` + `OR` to make use of index
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.E(tblFieldName, value))
+		}
+		cond = sb.Or(conditions...)
 	case qbtypes.FilterOperatorNotIn:
 		values, ok := value.([]any)
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.And(containsExp, sb.NotIn(tblFieldName, values...)), nil
+		// instead of using NOT IN, we use `!=` + `AND` to make use of index
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.NE(tblFieldName, value))
+		}
+		cond = sb.And(conditions...)
 
 	// exists and not exists
 	// in the query builder, `exists` and `not exists` are used for
@@ -140,12 +113,12 @@ func (c *conditionBuilder) GetCondition(
 		}:
 			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
 			if operator == qbtypes.FilterOperatorExists {
-				return sb.E(leftOperand, true), nil
+				cond = sb.E(leftOperand, true)
 			} else {
-				return sb.NE(leftOperand, true), nil
+				cond = sb.NE(leftOperand, true)
 			}
 		}
 	}
 
-	return "", nil
+	return fmt.Sprintf(expr, column.Name, sb.Var(key.Name), cond), nil
 }
