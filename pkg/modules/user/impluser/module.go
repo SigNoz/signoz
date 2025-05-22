@@ -1,35 +1,38 @@
 package impluser
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"slices"
-	"text/template"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
-	smtpservice "github.com/SigNoz/signoz/pkg/query-service/utils/smtpService"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.uber.org/zap"
 )
 
 type Module struct {
-	store types.UserStore
-	JWT   *authtypes.JWT
+	store    types.UserStore
+	jwt      *authtypes.JWT
+	emailing emailing.Emailing
+	settings factory.ScopedProviderSettings
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore) user.Module {
-	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
-	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)
-	return &Module{store: store, JWT: jwt}
+func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings) user.Module {
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
+	return &Module{
+		store:    store,
+		jwt:      jwt,
+		emailing: emailing,
+		settings: settings,
+	}
 }
 
 // CreateBulk implements invite.Module.
@@ -84,45 +87,18 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 			"invited user email": invites[i].Email,
 		}, creator.Email, true, false)
 
-		// send email if SMTP is enabled
-		if os.Getenv("SMTP_ENABLED") == "true" && bulkInvites.Invites[i].FrontendBaseUrl != "" {
-			m.inviteEmail(&bulkInvites.Invites[i], creator.Email, creator.DisplayName, invites[i].Token)
+		if err := m.emailing.SendHTML(ctx, invites[i].Email, "You are invited to join a team in SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
+			"CustomerName": invites[i].Name,
+			"InviterName":  creator.DisplayName,
+			"InviterEmail": creator.Email,
+			"Link":         fmt.Sprintf("%s/signup?token=%s", bulkInvites.Invites[i].FrontendBaseUrl, invites[i].Token),
+		}); err != nil {
+			m.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
 		}
+
 	}
 
 	return invites, nil
-}
-
-func (m *Module) inviteEmail(req *types.PostableInvite, creatorEmail, creatorName, token string) {
-	smtp := smtpservice.GetInstance()
-	data := types.InviteEmailData{
-		CustomerName: req.Name,
-		InviterName:  creatorName,
-		InviterEmail: creatorEmail,
-		Link:         fmt.Sprintf("%s/signup?token=%s", req.FrontendBaseUrl, token),
-	}
-
-	tmpl, err := template.ParseFiles(constants.InviteEmailTemplate)
-	if err != nil {
-		zap.L().Error("failed to send email", zap.Error(err))
-		return
-	}
-
-	var body bytes.Buffer
-	if err := tmpl.Execute(&body, data); err != nil {
-		zap.L().Error("failed to send email", zap.Error(err))
-		return
-	}
-
-	err = smtp.SendEmail(
-		req.Email,
-		creatorName+" has invited you to their team in SigNoz",
-		body.String(),
-	)
-	if err != nil {
-		zap.L().Error("failed to send email", zap.Error(err))
-		return
-	}
 }
 
 func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
@@ -282,7 +258,7 @@ func (m *Module) UpdatePassword(ctx context.Context, userID string, password str
 func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, password, refreshToken string) (*types.User, error) {
 	if refreshToken != "" {
 		// parse the refresh token
-		claims, err := m.JWT.Claims(refreshToken)
+		claims, err := m.jwt.Claims(refreshToken)
 		if err != nil {
 			return nil, err
 		}
@@ -361,12 +337,12 @@ func (m *Module) GetJWTForUser(ctx context.Context, user *types.User) (types.Get
 		return types.GettableUserJwt{}, err
 	}
 
-	accessJwt, accessClaims, err := m.JWT.AccessToken(user.OrgID, user.ID.String(), user.Email, role)
+	accessJwt, accessClaims, err := m.jwt.AccessToken(user.OrgID, user.ID.String(), user.Email, role)
 	if err != nil {
 		return types.GettableUserJwt{}, err
 	}
 
-	refreshJwt, refreshClaims, err := m.JWT.RefreshToken(user.OrgID, user.ID.String(), user.Email, role)
+	refreshJwt, refreshClaims, err := m.jwt.RefreshToken(user.OrgID, user.ID.String(), user.Email, role)
 	if err != nil {
 		return types.GettableUserJwt{}, err
 	}

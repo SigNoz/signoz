@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	baseimpl "github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -22,8 +24,8 @@ type Module struct {
 	store       types.UserStore
 }
 
-func NewModule(store types.UserStore) user.Module {
-	baseModule := baseimpl.NewModule(store)
+func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings) user.Module {
+	baseModule := baseimpl.NewModule(store, jwt, emailing, providerSettings)
 	return &Module{
 		Module: baseModule,
 		store:  store,
