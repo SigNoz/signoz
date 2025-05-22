@@ -6,7 +6,12 @@ import {
 } from '@testing-library/react';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	Query,
+	TagFilter,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 import SpanScopeSelector from '../SpanScopeSelector';
 
@@ -23,6 +28,13 @@ const createSpanScopeFilter = (key: string): TagFilterItem => ({
 	value: 'true',
 });
 
+const createNonScopeFilter = (key: string, value: string): TagFilterItem => ({
+	id: `non-scope-${key}`,
+	key: { key, isColumn: false, type: 'tag' },
+	op: '=',
+	value,
+});
+
 const defaultQuery = {
 	...initialQueriesMap.traces,
 	builder: {
@@ -34,6 +46,12 @@ const defaultQuery = {
 			},
 		],
 	},
+};
+
+const defaultQueryBuilderQuery: IBuilderQuery = {
+	...initialQueriesMap.traces.builder.queryData[0],
+	queryName: 'A',
+	filters: { items: [], op: 'AND' },
 };
 
 // Helper to create query with filters
@@ -56,6 +74,8 @@ const createQueryWithFilters = (filters: TagFilterItem[]): Query => ({
 const renderWithContext = (
 	queryName = 'A',
 	initialQuery = defaultQuery,
+	onChangeProp?: (value: TagFilter) => void,
+	queryProp?: IBuilderQuery,
 ): RenderResult =>
 	render(
 		<QueryBuilderContext.Provider
@@ -67,9 +87,21 @@ const renderWithContext = (
 				} as any
 			}
 		>
-			<SpanScopeSelector queryName={queryName} />
+			<SpanScopeSelector
+				queryName={queryName}
+				onChange={onChangeProp}
+				query={queryProp}
+			/>
 		</QueryBuilderContext.Provider>,
 	);
+
+const selectOption = async (optionText: string): Promise<void> => {
+	const selector = screen.getByRole('combobox');
+	fireEvent.mouseDown(selector);
+	// Wait for options to be available if they are rendered asynchronously or with transitions
+	const option = await screen.findByText(optionText);
+	fireEvent.click(option);
+};
 
 describe('SpanScopeSelector', () => {
 	beforeEach(() => {
@@ -126,7 +158,8 @@ describe('SpanScopeSelector', () => {
 
 		it('should add isRoot filter when selecting ROOT_SPANS', async () => {
 			renderWithContext();
-			await selectOption('Root Spans');
+			// eslint-disable-next-line sonarjs/no-duplicate-string
+			selectOption('Root Spans');
 
 			expect(mockRedirectWithQueryBuilderData).toHaveBeenCalled();
 			assertFilterAdded(
@@ -137,6 +170,7 @@ describe('SpanScopeSelector', () => {
 
 		it('should add isEntryPoint filter when selecting ENTRYPOINT_SPANS', () => {
 			renderWithContext();
+			// eslint-disable-next-line sonarjs/no-duplicate-string
 			selectOption('Entrypoint Spans');
 
 			expect(mockRedirectWithQueryBuilderData).toHaveBeenCalled();
@@ -161,5 +195,182 @@ describe('SpanScopeSelector', () => {
 				expect(await screen.findByText(expectedText)).toBeInTheDocument();
 			},
 		);
+	});
+
+	describe('when onChange and query props are provided', () => {
+		const mockOnChange = jest.fn();
+		const queryName = 'A';
+
+		const createLocalQuery = (
+			filterItems: TagFilterItem[] = [],
+			op: 'AND' | 'OR' = 'AND',
+		): IBuilderQuery => ({
+			...defaultQueryBuilderQuery,
+			filters: { items: filterItems, op },
+		});
+
+		const assertOnChangePayload = (
+			callNumber: number, // To handle multiple calls if needed, usually 0 for single interaction
+			expectedScopeKey: string | null,
+			expectedNonScopeItems: TagFilterItem[] = [],
+		): void => {
+			expect(mockOnChange).toHaveBeenCalled();
+			const onChangeArg = mockOnChange.mock.calls[callNumber][0] as TagFilter;
+			const { items } = onChangeArg;
+
+			// Check for preservation of specific non-scope items
+			expectedNonScopeItems.forEach((nonScopeItem) => {
+				expect(items).toContainEqual(nonScopeItem);
+			});
+
+			const scopeFiltersInPayload = items.filter(
+				(filter) => filter.key?.type === 'spanSearchScope',
+			);
+
+			if (expectedScopeKey) {
+				expect(scopeFiltersInPayload.length).toBe(1);
+				expect(scopeFiltersInPayload[0].key?.key).toBe(expectedScopeKey);
+				expect(scopeFiltersInPayload[0].value).toBe('true');
+				expect(scopeFiltersInPayload[0].op).toBe('=');
+			} else {
+				expect(scopeFiltersInPayload.length).toBe(0);
+			}
+
+			const expectedTotalFilters =
+				expectedNonScopeItems.length + (expectedScopeKey ? 1 : 0);
+			expect(items.length).toBe(expectedTotalFilters);
+		};
+
+		beforeEach(() => {
+			mockOnChange.mockClear();
+			mockRedirectWithQueryBuilderData.mockClear();
+		});
+
+		it('should initialize with ALL_SPANS if query prop has no scope filters', async () => {
+			const localQuery = createLocalQuery();
+			renderWithContext(queryName, defaultQuery, mockOnChange, localQuery);
+			expect(await screen.findByText('All Spans')).toBeInTheDocument();
+		});
+
+		it('should initialize with ROOT_SPANS if query prop has isRoot filter', async () => {
+			const localQuery = createLocalQuery([createSpanScopeFilter('isRoot')]);
+			renderWithContext(queryName, defaultQuery, mockOnChange, localQuery);
+			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+		});
+
+		it('should initialize with ENTRYPOINT_SPANS if query prop has isEntryPoint filter', async () => {
+			const localQuery = createLocalQuery([createSpanScopeFilter('isEntryPoint')]);
+			renderWithContext(queryName, defaultQuery, mockOnChange, localQuery);
+			expect(await screen.findByText('Entrypoint Spans')).toBeInTheDocument();
+		});
+
+		it('should call onChange and not redirect when selecting ROOT_SPANS (from ALL_SPANS)', async () => {
+			const localQuery = createLocalQuery(); // Initially All Spans
+			const { container } = renderWithContext(
+				queryName,
+				defaultQuery,
+				mockOnChange,
+				localQuery,
+			);
+			expect(await screen.findByText('All Spans')).toBeInTheDocument();
+
+			await selectOption('Root Spans');
+
+			expect(mockRedirectWithQueryBuilderData).not.toHaveBeenCalled();
+			assertOnChangePayload(0, 'isRoot', []);
+			expect(
+				container.querySelector('span[title="Root Spans"]'),
+			).toBeInTheDocument();
+		});
+
+		it('should call onChange with removed scope when selecting ALL_SPANS (from ROOT_SPANS)', async () => {
+			const initialRootFilter = createSpanScopeFilter('isRoot');
+			const localQuery = createLocalQuery([initialRootFilter]);
+			const { container } = renderWithContext(
+				queryName,
+				defaultQuery,
+				mockOnChange,
+				localQuery,
+			);
+			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+
+			await selectOption('All Spans');
+
+			expect(mockRedirectWithQueryBuilderData).not.toHaveBeenCalled();
+			assertOnChangePayload(0, null, []);
+
+			expect(
+				container.querySelector('span[title="All Spans"]'),
+			).toBeInTheDocument();
+		});
+
+		it('should call onChange, replacing isRoot with isEntryPoint', async () => {
+			const initialRootFilter = createSpanScopeFilter('isRoot');
+			const localQuery = createLocalQuery([initialRootFilter]);
+			const { container } = renderWithContext(
+				queryName,
+				defaultQuery,
+				mockOnChange,
+				localQuery,
+			);
+			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+
+			await selectOption('Entrypoint Spans');
+
+			expect(mockRedirectWithQueryBuilderData).not.toHaveBeenCalled();
+			assertOnChangePayload(0, 'isEntryPoint', []);
+			expect(
+				container.querySelector('span[title="Entrypoint Spans"]'),
+			).toBeInTheDocument();
+		});
+
+		it('should preserve non-scope filters from query prop when changing scope', async () => {
+			const nonScopeItem = createNonScopeFilter('customTag', 'customValue');
+			const initialRootFilter = createSpanScopeFilter('isRoot');
+			const localQuery = createLocalQuery([nonScopeItem, initialRootFilter], 'OR');
+
+			const { container } = renderWithContext(
+				queryName,
+				defaultQuery,
+				mockOnChange,
+				localQuery,
+			);
+			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+
+			await selectOption('Entrypoint Spans');
+
+			expect(mockRedirectWithQueryBuilderData).not.toHaveBeenCalled();
+			assertOnChangePayload(0, 'isEntryPoint', [nonScopeItem]);
+			expect(
+				container.querySelector('span[title="Entrypoint Spans"]'),
+			).toBeInTheDocument();
+		});
+
+		it('should preserve non-scope filters when changing to ALL_SPANS', async () => {
+			const nonScopeItem1 = createNonScopeFilter('service', 'checkout');
+			const nonScopeItem2 = createNonScopeFilter('version', 'v1');
+			const initialEntryFilter = createSpanScopeFilter('isEntryPoint');
+			const localQuery = createLocalQuery([
+				nonScopeItem1,
+				initialEntryFilter,
+				nonScopeItem2,
+			]);
+
+			const { container } = renderWithContext(
+				queryName,
+				defaultQuery,
+				mockOnChange,
+				localQuery,
+			);
+			expect(await screen.findByText('Entrypoint Spans')).toBeInTheDocument();
+
+			await selectOption('All Spans');
+
+			expect(mockRedirectWithQueryBuilderData).not.toHaveBeenCalled();
+			assertOnChangePayload(0, null, [nonScopeItem1, nonScopeItem2]);
+			expect(
+				container.querySelector('span[title="All Spans"]'),
+			).toBeInTheDocument();
+		});
 	});
 });
