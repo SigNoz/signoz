@@ -41,6 +41,22 @@ func NewStorableLicense(ID valuer.UUID, key string, data map[string]any, created
 	}
 }
 
+func NewStorableLicenseFromLicense(license *License) *StorableLicense {
+	return &StorableLicense{
+		Identifiable: types.Identifiable{
+			ID: license.ID,
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: license.CreatedAt,
+			UpdatedAt: license.UpdatedAt,
+		},
+		Key:             license.Key,
+		Data:            license.Data,
+		LastValidatedAt: license.LastValidatedAt,
+		OrgID:           license.OrganizationID,
+	}
+}
+
 func GetActiveLicenseFromStorableLicenses(storableLicenses []*StorableLicense, organizationID valuer.UUID) (*License, error) {
 	var activeLicense *License
 	for _, storableLicense := range storableLicenses {

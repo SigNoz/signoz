@@ -97,7 +97,7 @@ func (provider *provider) Activate(ctx context.Context, organizationID valuer.UU
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity")
 	}
 
-	storableLicense := licensetypes.NewStorableLicense(license.ID, license.Key, license.Data, license.CreatedAt, license.UpdatedAt, license.LastValidatedAt, license.OrganizationID)
+	storableLicense := licensetypes.NewStorableLicenseFromLicense(license)
 	err = provider.store.Create(ctx, storableLicense)
 	if err != nil {
 		return err
@@ -164,7 +164,7 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 	}
 
 	provider.settings.Logger().DebugContext(ctx, "license validation completed successfully", "licenseID", updatedLicense.ID, "organizationID", organizationID.StringValue())
-	updatedStorableLicense := licensetypes.NewStorableLicense(updatedLicense.ID, updatedLicense.Key, updatedLicense.Data, updatedLicense.CreatedAt, updatedLicense.UpdatedAt, updatedLicense.LastValidatedAt, organizationID)
+	updatedStorableLicense := licensetypes.NewStorableLicenseFromLicense(updatedLicense)
 	err = provider.store.Update(ctx, organizationID, updatedStorableLicense)
 	if err != nil {
 		return err

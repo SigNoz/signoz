@@ -31,6 +31,7 @@ type newLicense34 struct {
 	bun.BaseModel `bun:"table:license"`
 
 	types.Identifiable
+	types.TimeAuditable
 	Key             string         `bun:"key,type:text,notnull,unique"`
 	Data            map[string]any `bun:"data,type:text"`
 	LastValidatedAt time.Time      `bun:"last_validated_at,notnull"`
@@ -131,6 +132,10 @@ func (migration *updateLicense) CopyExistingLicensesToNewLicenses(existingLicens
 		newLicenses[idx] = &newLicense34{
 			Identifiable: types.Identifiable{
 				ID: licenseID,
+			},
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			},
 			Key:             existingLicense.Key,
 			Data:            licenseData,
