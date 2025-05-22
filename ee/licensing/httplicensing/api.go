@@ -76,14 +76,14 @@ func (api *licensingAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gettableLicense, err := api.licensing.GetActive(r.Context(), orgID)
+	license, err := api.licensing.GetActive(r.Context(), orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	gettableLicense.Data["key"] = gettableLicense.Key
-	render.Success(rw, http.StatusOK, gettableLicense.Data)
+	gettableLicense := licensetypes.NewGettableLicense(license.Data, license.Key)
+	render.Success(rw, http.StatusOK, gettableLicense)
 }
 
 func (api *licensingAPI) Refresh(rw http.ResponseWriter, r *http.Request) {

@@ -232,6 +232,17 @@ func NewLicenseWithIDAndKey(id string, key string, data map[string]interface{}, 
 	return NewLicense(licenseData, createdAt, updatedAt, lastValidatedAt, organizationID)
 }
 
+type GettableLicense map[string]any
+
+func NewGettableLicense(data map[string]any, key string) *GettableLicense {
+	gettableLicense := make(GettableLicense)
+	for k, v := range data {
+		gettableLicense[k] = v
+	}
+	gettableLicense["key"] = key
+	return &gettableLicense
+}
+
 type Store interface {
 	Create(context.Context, *StorableLicense) error
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
