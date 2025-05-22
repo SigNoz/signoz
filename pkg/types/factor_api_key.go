@@ -10,6 +10,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
+var NEVER_EXPIRES = time.Unix(0, 0)
+
 type PostableAPIKey struct {
 	Name          string `json:"name"`
 	Role          Role   `json:"role"`
@@ -86,7 +88,7 @@ func NewStorableAPIKey(name string, userID valuer.UUID, role Role, expiresAt int
 
 	// if the expiresAt is 0, it means the APIKey never expires
 	if expiresAt == 0 {
-		expiresAtTime = time.Unix(0, 0)
+		expiresAtTime = NEVER_EXPIRES
 	}
 
 	// Generate a 32-byte random token.

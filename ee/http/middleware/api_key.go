@@ -48,7 +48,7 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 		}
 
 		// allow the APIKey if expires_at is not set
-		if apiKey.ExpiresAt.Before(time.Now()) && !apiKey.ExpiresAt.Equal(time.Unix(0, 0)) {
+		if apiKey.ExpiresAt.Before(time.Now()) && !apiKey.ExpiresAt.Equal(types.NEVER_EXPIRES) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -77,7 +77,7 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 		apiKey.LastUsed = time.Now()
 		_, err = a.store.BunDB().NewUpdate().Model(&apiKey).Column("last_used").Where("token = ?", apiKeyToken).Where("revoked = false").Exec(r.Context())
 		if err != nil {
-			zap.L().Error("Failed to update APIKey last used in db, err: %v", zap.Error(err))
+			zap.L().Error("Failed to update APIKey last used in db", zap.Error(err))
 		}
 
 	})
