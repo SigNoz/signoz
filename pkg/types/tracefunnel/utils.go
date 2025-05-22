@@ -27,7 +27,7 @@ func ValidateTimestampIsMilliseconds(timestamp int64) bool {
 	return timestamp >= 1000000000000 && timestamp <= 9999999999999
 }
 
-func ValidateFunnelSteps(steps []FunnelStep) error {
+func ValidateFunnelSteps(steps []*FunnelStep) error {
 	if len(steps) < 2 {
 		return fmt.Errorf("funnel must have at least 2 steps")
 	}
@@ -49,12 +49,12 @@ func ValidateFunnelSteps(steps []FunnelStep) error {
 
 // NormalizeFunnelSteps normalizes step orders to be sequential starting from 1.
 // Returns a new slice with normalized step orders, leaving the input slice unchanged.
-func NormalizeFunnelSteps(steps []FunnelStep) []FunnelStep {
+func NormalizeFunnelSteps(steps []*FunnelStep) []*FunnelStep {
 	if len(steps) == 0 {
-		return []FunnelStep{}
+		return []*FunnelStep{}
 	}
 
-	newSteps := make([]FunnelStep, len(steps))
+	newSteps := make([]*FunnelStep, len(steps))
 	copy(newSteps, steps)
 
 	sort.Slice(newSteps, func(i, j int) bool {
@@ -109,7 +109,7 @@ func ConstructFunnelResponse(funnel *StorableFunnel, claims *authtypes.Claims) G
 	return resp
 }
 
-func ProcessFunnelSteps(steps []FunnelStep) ([]FunnelStep, error) {
+func ProcessFunnelSteps(steps []*FunnelStep) ([]*FunnelStep, error) {
 	// First validate the steps
 	if err := ValidateFunnelSteps(steps); err != nil {
 		return nil, errors.Newf(errors.TypeInvalidInput,
