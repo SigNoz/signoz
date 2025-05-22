@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	eeTypes "github.com/SigNoz/signoz/ee/types"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -25,7 +24,7 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var values []string
 		var patToken string
-		var pat eeTypes.StorablePersonalAccessToken
+		var pat types.StorableAPIKey
 
 		for _, header := range p.headers {
 			values = append(values, r.Header.Get(header))
@@ -48,7 +47,7 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		if pat.ExpiresAt < time.Now().Unix() && pat.ExpiresAt != 0 {
+		if pat.ExpiresAt.Before(time.Now()) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -61,15 +60,9 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		role, err := types.NewRole(user.Role)
-		if err != nil {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		jwt := authtypes.Claims{
 			UserID: user.ID.String(),
-			Role:   role,
+			Role:   pat.Role,
 			Email:  user.Email,
 			OrgID:  user.OrgID,
 		}
@@ -80,7 +73,7 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 
-		pat.LastUsed = time.Now().Unix()
+		pat.LastUsed = time.Now()
 		_, err = p.store.BunDB().NewUpdate().Model(&pat).Column("last_used").Where("token = ?", patToken).Where("revoked = false").Exec(r.Context())
 		if err != nil {
 			zap.L().Error("Failed to update PAT last used in db, err: %v", zap.Error(err))

@@ -10,7 +10,7 @@ import (
 
 type TelemetryUser struct {
 	types.User
-	Organization string `json:"organization"`
+	Organization string
 }
 
 func GetUsers(ctx context.Context, sqlstore sqlstore.SQLStore) ([]TelemetryUser, error) {
@@ -27,20 +27,37 @@ func GetUserCount(ctx context.Context, sqlstore sqlstore.SQLStore) (int, error) 
 
 // GetUsersWithOpts fetches users and supports additional search options
 func GetUsersWithOpts(ctx context.Context, limit int, sqlstore sqlstore.SQLStore) ([]TelemetryUser, error) {
-	users := []TelemetryUser{}
+	var displayName string
+	err := sqlstore.BunDB().NewSelect().
+		Model(&types.Organization{}).
+		Column("display_name").
+		Scan(ctx, &displayName)
+	if err != nil {
+		return nil, sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "cannot find organization")
+	}
 
-	query := sqlstore.BunDB().NewSelect().
-		Table("user").
-		Column("user.id", "user.display_name", "user.email", "user.created_at", "user.org_id").
-		ColumnExpr("o.display_name as organization").
-		Join("JOIN organizations o ON o.id = user.org_id")
+	users := []types.User{}
 
+	query := sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&users)
 	if limit > 0 {
 		query.Limit(limit)
 	}
-	err := query.Scan(ctx, &users)
+
+	err = query.Scan(ctx)
 	if err != nil {
-		return nil, errors.WrapNotFoundf(err, errors.CodeNotFound, "failed to get users")
+		return nil, sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "failed to get users")
 	}
-	return users, nil
+
+	telemetryUsers := []TelemetryUser{}
+	for _, user := range users {
+		telemetryUsers = append(telemetryUsers, TelemetryUser{
+			User:         user,
+			Organization: displayName,
+		})
+	}
+
+	return telemetryUsers, nil
 }
