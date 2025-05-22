@@ -21,13 +21,13 @@ func NewHandler(module tracefunnel.Module) tracefunnel.Handler {
 }
 
 func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
-	var req tf.FunnelRequest
+	var req tf.PostableFunnel
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	claims, err := tracefunnel.GetClaims(r)
+	claims, err := tf.GetClaims(r)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -41,24 +41,24 @@ func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := tracefunnel.ConstructFunnelResponse(funnel, claims)
+	response := tf.ConstructFunnelResponse(funnel, claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
 func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
-	var req tf.FunnelRequest
+	var req tf.PostableFunnel
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	claims, err := tracefunnel.GetClaims(r)
+	claims, err := tf.GetClaims(r)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	updatedAt, err := tracefunnel.ValidateAndConvertTimestamp(req.Timestamp)
+	updatedAt, err := tf.ValidateAndConvertTimestamp(req.Timestamp)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -72,7 +72,7 @@ func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	steps, err := tracefunnel.ProcessFunnelSteps(req.Steps)
+	steps, err := tf.ProcessFunnelSteps(req.Steps)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -104,24 +104,24 @@ func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := tracefunnel.ConstructFunnelResponse(updatedFunnel, claims)
+	response := tf.ConstructFunnelResponse(updatedFunnel, claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
 func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
-	var req tf.FunnelRequest
+	var req tf.PostableFunnel
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	claims, err := tracefunnel.GetClaims(r)
+	claims, err := tf.GetClaims(r)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	updatedAt, err := tracefunnel.ValidateAndConvertTimestamp(req.Timestamp)
+	updatedAt, err := tf.ValidateAndConvertTimestamp(req.Timestamp)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -163,12 +163,12 @@ func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := tracefunnel.ConstructFunnelResponse(updatedFunnel, claims)
+	response := tf.ConstructFunnelResponse(updatedFunnel, claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
-	claims, err := tracefunnel.GetClaims(r)
+	claims, err := tf.GetClaims(r)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -182,9 +182,9 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []tf.FunnelResponse
+	var response []tf.GettableFunnel
 	for _, f := range funnels {
-		response = append(response, tracefunnel.ConstructFunnelResponse(f, claims))
+		response = append(response, tf.ConstructFunnelResponse(f, claims))
 	}
 
 	render.Success(rw, http.StatusOK, response)
@@ -202,8 +202,8 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, _ := tracefunnel.GetClaims(r) // Ignore error as email is optional
-	response := tracefunnel.ConstructFunnelResponse(funnel, claims)
+	claims, _ := tf.GetClaims(r) // Ignore error as email is optional
+	response := tf.ConstructFunnelResponse(funnel, claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
@@ -222,7 +222,7 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *handler) Save(rw http.ResponseWriter, r *http.Request) {
-	var req tf.FunnelRequest
+	var req tf.PostableFunnel
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
@@ -230,7 +230,7 @@ func (handler *handler) Save(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := tracefunnel.GetClaims(r)
+	claims, err := tf.GetClaims(r)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -247,14 +247,14 @@ func (handler *handler) Save(rw http.ResponseWriter, r *http.Request) {
 	updateTimestamp := req.Timestamp
 	if updateTimestamp == 0 {
 		updateTimestamp = time.Now().UnixMilli()
-	} else if !tracefunnel.ValidateTimestampIsMilliseconds(updateTimestamp) {
+	} else if !tf.ValidateTimestampIsMilliseconds(updateTimestamp) {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
 			"timestamp must be in milliseconds format (13 digits)"))
 		return
 	}
 
-	updatedAt, err := tracefunnel.ValidateAndConvertTimestamp(updateTimestamp)
+	updatedAt, err := tf.ValidateAndConvertTimestamp(updateTimestamp)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -279,7 +279,7 @@ func (handler *handler) Save(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := tf.FunnelResponse{
+	resp := tf.GettableFunnel{
 		FunnelName:  funnel.Name,
 		CreatedAt:   createdAtMillis,
 		UpdatedAt:   updatedAtMillis,

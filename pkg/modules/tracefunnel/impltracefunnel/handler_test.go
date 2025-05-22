@@ -22,24 +22,24 @@ type MockModule struct {
 	mock.Mock
 }
 
-func (m *MockModule) Create(ctx context.Context, timestamp int64, name string, userID string, orgID string) (*traceFunnels.Funnel, error) {
+func (m *MockModule) Create(ctx context.Context, timestamp int64, name string, userID string, orgID string) (*traceFunnels.StorableFunnel, error) {
 	args := m.Called(ctx, timestamp, name, userID, orgID)
-	return args.Get(0).(*traceFunnels.Funnel), args.Error(1)
+	return args.Get(0).(*traceFunnels.StorableFunnel), args.Error(1)
 }
 
-func (m *MockModule) Get(ctx context.Context, funnelID string) (*traceFunnels.Funnel, error) {
+func (m *MockModule) Get(ctx context.Context, funnelID string) (*traceFunnels.StorableFunnel, error) {
 	args := m.Called(ctx, funnelID)
-	return args.Get(0).(*traceFunnels.Funnel), args.Error(1)
+	return args.Get(0).(*traceFunnels.StorableFunnel), args.Error(1)
 }
 
-func (m *MockModule) Update(ctx context.Context, funnel *traceFunnels.Funnel, userID string) error {
+func (m *MockModule) Update(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID string) error {
 	args := m.Called(ctx, funnel, userID)
 	return args.Error(0)
 }
 
-func (m *MockModule) List(ctx context.Context, orgID string) ([]*traceFunnels.Funnel, error) {
+func (m *MockModule) List(ctx context.Context, orgID string) ([]*traceFunnels.StorableFunnel, error) {
 	args := m.Called(ctx, orgID)
-	return args.Get(0).([]*traceFunnels.Funnel), args.Error(1)
+	return args.Get(0).([]*traceFunnels.StorableFunnel), args.Error(1)
 }
 
 func (m *MockModule) Delete(ctx context.Context, funnelID string) error {
@@ -47,7 +47,7 @@ func (m *MockModule) Delete(ctx context.Context, funnelID string) error {
 	return args.Error(0)
 }
 
-func (m *MockModule) Save(ctx context.Context, funnel *traceFunnels.Funnel, userID string, orgID string) error {
+func (m *MockModule) Save(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID string, orgID string) error {
 	args := m.Called(ctx, funnel, userID, orgID)
 	return args.Error(0)
 }
@@ -61,7 +61,7 @@ func TestHandler_New(t *testing.T) {
 	mockModule := new(MockModule)
 	handler := NewHandler(mockModule)
 
-	reqBody := traceFunnels.FunnelRequest{
+	reqBody := traceFunnels.PostableFunnel{
 		Name:      "test-funnel",
 		Timestamp: time.Now().UnixMilli(),
 	}
@@ -81,7 +81,7 @@ func TestHandler_New(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	funnelID := valuer.GenerateUUID()
-	expectedFunnel := &traceFunnels.Funnel{
+	expectedFunnel := &traceFunnels.StorableFunnel{
 		BaseMetadata: traceFunnels.BaseMetadata{
 			Identifiable: types.Identifiable{
 				ID: funnelID,
@@ -91,7 +91,7 @@ func TestHandler_New(t *testing.T) {
 		},
 	}
 
-	mockModule.On("List", req.Context(), orgID).Return([]*traceFunnels.Funnel{}, nil)
+	mockModule.On("List", req.Context(), orgID).Return([]*traceFunnels.StorableFunnel{}, nil)
 	mockModule.On("Create", req.Context(), reqBody.Timestamp, reqBody.Name, "user-123", orgID).Return(expectedFunnel, nil)
 
 	handler.New(rr, req)
@@ -100,7 +100,7 @@ func TestHandler_New(t *testing.T) {
 
 	var response struct {
 		Status string                      `json:"status"`
-		Data   traceFunnels.FunnelResponse `json:"data"`
+		Data   traceFunnels.GettableFunnel `json:"data"`
 	}
 	err := json.Unmarshal(rr.Body.Bytes(), &response)
 	assert.NoError(t, err)
@@ -120,10 +120,10 @@ func TestHandler_Update(t *testing.T) {
 	funnelID := valuer.GenerateUUID()
 	orgID := valuer.GenerateUUID().String()
 
-	reqBody := traceFunnels.FunnelRequest{
+	reqBody := traceFunnels.PostableFunnel{
 		FunnelID: funnelID,
 		Name:     "updated-funnel",
-		Steps: []traceFunnels.FunnelStep{
+		Steps: []*traceFunnels.FunnelStep{
 			{
 				ID:          valuer.GenerateUUID(),
 				Name:        "Step 1",
@@ -161,7 +161,7 @@ func TestHandler_Update(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// Set up mock expectations
-	existingFunnel := &traceFunnels.Funnel{
+	existingFunnel := &traceFunnels.StorableFunnel{
 		BaseMetadata: traceFunnels.BaseMetadata{
 			Identifiable: types.Identifiable{
 				ID: funnelID,
@@ -183,7 +183,7 @@ func TestHandler_Update(t *testing.T) {
 		},
 	}
 
-	updatedFunnel := &traceFunnels.Funnel{
+	updatedFunnel := &traceFunnels.StorableFunnel{
 		BaseMetadata: traceFunnels.BaseMetadata{
 			Identifiable: types.Identifiable{
 				ID: funnelID,
@@ -209,9 +209,9 @@ func TestHandler_Update(t *testing.T) {
 	// First Get call to validate the funnel exists
 	mockModule.On("Get", req.Context(), funnelID.String()).Return(existingFunnel, nil).Once()
 	// List call to check for name conflicts
-	mockModule.On("List", req.Context(), orgID).Return([]*traceFunnels.Funnel{}, nil).Once()
+	mockModule.On("List", req.Context(), orgID).Return([]*traceFunnels.StorableFunnel{}, nil).Once()
 	// Update call to save the changes
-	mockModule.On("Update", req.Context(), mock.MatchedBy(func(f *traceFunnels.Funnel) bool {
+	mockModule.On("Update", req.Context(), mock.MatchedBy(func(f *traceFunnels.StorableFunnel) bool {
 		return f.Name == reqBody.Name &&
 			f.ID.String() == funnelID.String() &&
 			len(f.Steps) == len(reqBody.Steps) &&
@@ -233,7 +233,7 @@ func TestHandler_Update(t *testing.T) {
 
 	var response struct {
 		Status string                      `json:"status"`
-		Data   traceFunnels.FunnelResponse `json:"data"`
+		Data   traceFunnels.GettableFunnel `json:"data"`
 	}
 	err = json.Unmarshal(rr.Body.Bytes(), &response)
 	assert.NoError(t, err)
@@ -261,7 +261,7 @@ func TestHandler_List(t *testing.T) {
 
 	funnel1ID := valuer.GenerateUUID()
 	funnel2ID := valuer.GenerateUUID()
-	expectedFunnels := []*traceFunnels.Funnel{
+	expectedFunnels := []*traceFunnels.StorableFunnel{
 		{
 			BaseMetadata: traceFunnels.BaseMetadata{
 				Identifiable: types.Identifiable{
@@ -290,7 +290,7 @@ func TestHandler_List(t *testing.T) {
 
 	var response struct {
 		Status string                        `json:"status"`
-		Data   []traceFunnels.FunnelResponse `json:"data"`
+		Data   []traceFunnels.GettableFunnel `json:"data"`
 	}
 	err := json.Unmarshal(rr.Body.Bytes(), &response)
 	assert.NoError(t, err)
@@ -312,7 +312,7 @@ func TestHandler_Get(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	expectedFunnel := &traceFunnels.Funnel{
+	expectedFunnel := &traceFunnels.StorableFunnel{
 		BaseMetadata: traceFunnels.BaseMetadata{
 			Identifiable: types.Identifiable{
 				ID: funnelID,
@@ -330,7 +330,7 @@ func TestHandler_Get(t *testing.T) {
 
 	var response struct {
 		Status string                      `json:"status"`
-		Data   traceFunnels.FunnelResponse `json:"data"`
+		Data   traceFunnels.GettableFunnel `json:"data"`
 	}
 	err := json.Unmarshal(rr.Body.Bytes(), &response)
 	assert.NoError(t, err)
@@ -364,7 +364,7 @@ func TestHandler_Save(t *testing.T) {
 	mockModule := new(MockModule)
 	handler := NewHandler(mockModule)
 
-	reqBody := traceFunnels.FunnelRequest{
+	reqBody := traceFunnels.PostableFunnel{
 		FunnelID:    valuer.GenerateUUID(),
 		Description: "updated description",
 		Timestamp:   time.Now().UnixMilli(),
@@ -384,7 +384,7 @@ func TestHandler_Save(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	existingFunnel := &traceFunnels.Funnel{
+	existingFunnel := &traceFunnels.StorableFunnel{
 		BaseMetadata: traceFunnels.BaseMetadata{
 			Identifiable: types.Identifiable{
 				ID: reqBody.FunnelID,
@@ -395,7 +395,7 @@ func TestHandler_Save(t *testing.T) {
 	}
 
 	mockModule.On("Get", req.Context(), reqBody.FunnelID.String()).Return(existingFunnel, nil)
-	mockModule.On("Save", req.Context(), mock.MatchedBy(func(f *traceFunnels.Funnel) bool {
+	mockModule.On("Save", req.Context(), mock.MatchedBy(func(f *traceFunnels.StorableFunnel) bool {
 		return f.ID.String() == reqBody.FunnelID.String() &&
 			f.Name == existingFunnel.Name &&
 			f.Description == reqBody.Description &&
@@ -410,7 +410,7 @@ func TestHandler_Save(t *testing.T) {
 
 	var response struct {
 		Status string                      `json:"status"`
-		Data   traceFunnels.FunnelResponse `json:"data"`
+		Data   traceFunnels.GettableFunnel `json:"data"`
 	}
 	err := json.Unmarshal(rr.Body.Bytes(), &response)
 	assert.NoError(t, err)

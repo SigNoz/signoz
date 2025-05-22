@@ -8,7 +8,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -28,7 +27,7 @@ func ValidateTimestampIsMilliseconds(timestamp int64) bool {
 	return timestamp >= 1000000000000 && timestamp <= 9999999999999
 }
 
-func ValidateFunnelSteps(steps []tracefunnel.FunnelStep) error {
+func ValidateFunnelSteps(steps []FunnelStep) error {
 	if len(steps) < 2 {
 		return fmt.Errorf("funnel must have at least 2 steps")
 	}
@@ -50,12 +49,12 @@ func ValidateFunnelSteps(steps []tracefunnel.FunnelStep) error {
 
 // NormalizeFunnelSteps normalizes step orders to be sequential starting from 1.
 // Returns a new slice with normalized step orders, leaving the input slice unchanged.
-func NormalizeFunnelSteps(steps []tracefunnel.FunnelStep) []tracefunnel.FunnelStep {
+func NormalizeFunnelSteps(steps []FunnelStep) []FunnelStep {
 	if len(steps) == 0 {
-		return []tracefunnel.FunnelStep{}
+		return []FunnelStep{}
 	}
 
-	newSteps := make([]tracefunnel.FunnelStep, len(steps))
+	newSteps := make([]FunnelStep, len(steps))
 	copy(newSteps, steps)
 
 	sort.Slice(newSteps, func(i, j int) bool {
@@ -88,8 +87,8 @@ func ValidateAndConvertTimestamp(timestamp int64) (time.Time, error) {
 	return time.Unix(0, timestamp*1000000), nil // Convert to nanoseconds
 }
 
-func ConstructFunnelResponse(funnel *tracefunnel.Funnel, claims *authtypes.Claims) tracefunnel.FunnelResponse {
-	resp := tracefunnel.FunnelResponse{
+func ConstructFunnelResponse(funnel *StorableFunnel, claims *authtypes.Claims) GettableFunnel {
+	resp := GettableFunnel{
 		FunnelName:  funnel.Name,
 		FunnelID:    funnel.ID.String(),
 		Steps:       funnel.Steps,
@@ -110,7 +109,7 @@ func ConstructFunnelResponse(funnel *tracefunnel.Funnel, claims *authtypes.Claim
 	return resp
 }
 
-func ProcessFunnelSteps(steps []tracefunnel.FunnelStep) ([]tracefunnel.FunnelStep, error) {
+func ProcessFunnelSteps(steps []FunnelStep) ([]FunnelStep, error) {
 	// First validate the steps
 	if err := ValidateFunnelSteps(steps); err != nil {
 		return nil, errors.Newf(errors.TypeInvalidInput,
