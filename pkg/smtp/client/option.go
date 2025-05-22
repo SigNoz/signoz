@@ -1,17 +1,5 @@
 package client
 
-//    auth:
-// username:
-// identity:
-// secret:
-// identity:
-// tls:
-// enabled: false
-// insecure_skip_verify: false
-// ca_file_path:
-// key_file_path:
-// cert_file_path:
-
 type Auth struct {
 	Username string
 	Password string
