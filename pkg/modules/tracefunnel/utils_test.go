@@ -8,7 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	tracefunnel "github.com/SigNoz/signoz/pkg/types/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/types/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
@@ -452,8 +452,8 @@ func TestConstructFunnelResponse(t *testing.T) {
 					},
 				},
 				CreatedByUser: &types.User{
-					ID:    "user-123",
-					Email: "funnel@example.com",
+					Identifiable: types.Identifiable{ID: valuer.MustNewUUID("user-123")},
+					Email:        "funnel@example.com",
 				},
 				Steps: []tracefunnel.FunnelStep{
 					{

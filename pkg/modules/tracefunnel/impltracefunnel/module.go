@@ -38,7 +38,9 @@ func (module *module) Create(ctx context.Context, timestamp int64, name string, 
 
 	// Set up the user relationship
 	funnel.CreatedByUser = &types.User{
-		ID: userID,
+		Identifiable: types.Identifiable{
+			ID: valuer.MustNewUUID(userID),
+		},
 	}
 
 	if err := module.store.Create(ctx, funnel); err != nil {
