@@ -22,12 +22,12 @@ var (
 // initializes the Zeus configuration
 func Config() zeus.Config {
 	once.Do(func() {
-		parsedURL, err := neturl.Parse("https://api.staging.signoz.cloud")
+		parsedURL, err := neturl.Parse(url)
 		if err != nil {
 			panic(fmt.Errorf("invalid zeus URL: %w", err))
 		}
 
-		deprecatedParsedURL, err := neturl.Parse("https://license.staging.signoz.cloud")
+		deprecatedParsedURL, err := neturl.Parse(deprecatedURL)
 		if err != nil {
 			panic(fmt.Errorf("invalid zeus deprecated URL: %w", err))
 		}
