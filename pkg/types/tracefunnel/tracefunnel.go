@@ -84,8 +84,8 @@ type TimeRange struct {
 // StepTransitionRequest represents a request for step transition analytics
 type StepTransitionRequest struct {
 	TimeRange
-	StepAOrder int64 `json:"step_a_order"`
-	StepBOrder int64 `json:"step_b_order"`
+	StepAOrder int64 `json:"step_start,omitempty"`
+	StepBOrder int64 `json:"step_end,omitempty"`
 }
 
 // UserInfo represents basic user information

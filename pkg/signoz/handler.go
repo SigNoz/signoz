@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
@@ -20,6 +22,7 @@ type Handlers struct {
 	Organization organization.Handler
 	Preference   preference.Handler
 	User         user.Handler
+	TraceFunnel  tracefunnel.Handler
 	SavedView    savedview.Handler
 	Apdex        apdex.Handler
 	Dashboard    dashboard.Handler
@@ -30,6 +33,7 @@ func NewHandlers(modules Modules, user user.Handler) Handlers {
 	return Handlers{
 		Organization: implorganization.NewHandler(modules.Organization),
 		Preference:   implpreference.NewHandler(modules.Preference),
+		TraceFunnel:  impltracefunnel.NewHandler(modules.TraceFunnel),
 		User:         user,
 		SavedView:    implsavedview.NewHandler(modules.SavedView),
 		Apdex:        implapdex.NewHandler(modules.Apdex),
