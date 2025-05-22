@@ -13,6 +13,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
@@ -23,6 +25,7 @@ type Handlers struct {
 	Organization organization.Handler
 	Preference   preference.Handler
 	User         user.Handler
+	TraceFunnel  tracefunnel.Handler
 	SavedView    savedview.Handler
 	Apdex        apdex.Handler
 	Dashboard    dashboard.Handler
