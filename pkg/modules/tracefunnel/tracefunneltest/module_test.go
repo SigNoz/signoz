@@ -1,7 +1,8 @@
-package impltracefunnel
+package tracefunneltest
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"testing"
 	"time"
 
@@ -43,28 +44,28 @@ func (m *MockStore) Delete(ctx context.Context, uuid valuer.UUID) error {
 
 func TestModule_Create(t *testing.T) {
 	mockStore := new(MockStore)
-	module := NewModule(mockStore)
+	module := impltracefunnel.NewModule(mockStore)
 
 	ctx := context.Background()
 	timestamp := time.Now().UnixMilli()
 	name := "test-funnel"
-	userID := "user-123"
+	userID := valuer.GenerateUUID()
 	orgID := valuer.GenerateUUID().String()
 
 	mockStore.On("Create", ctx, mock.MatchedBy(func(f *traceFunnels.Funnel) bool {
 		return f.Name == name &&
-			f.CreatedBy == userID &&
+			f.CreatedBy == userID.String() &&
 			f.OrgID.String() == orgID &&
 			f.CreatedByUser != nil &&
 			f.CreatedByUser.ID == userID &&
 			f.CreatedAt.UnixNano()/1000000 == timestamp
 	})).Return(nil)
 
-	funnel, err := module.Create(ctx, timestamp, name, userID, orgID)
+	funnel, err := module.Create(ctx, timestamp, name, userID.String(), orgID)
 	assert.NoError(t, err)
 	assert.NotNil(t, funnel)
 	assert.Equal(t, name, funnel.Name)
-	assert.Equal(t, userID, funnel.CreatedBy)
+	assert.Equal(t, userID.String(), funnel.CreatedBy)
 	assert.Equal(t, orgID, funnel.OrgID.String())
 	assert.NotNil(t, funnel.CreatedByUser)
 	assert.Equal(t, userID, funnel.CreatedByUser.ID)
@@ -74,7 +75,7 @@ func TestModule_Create(t *testing.T) {
 
 func TestModule_Get(t *testing.T) {
 	mockStore := new(MockStore)
-	module := NewModule(mockStore)
+	module := impltracefunnel.NewModule(mockStore)
 
 	ctx := context.Background()
 	funnelID := valuer.GenerateUUID().String()
@@ -95,7 +96,7 @@ func TestModule_Get(t *testing.T) {
 
 func TestModule_Update(t *testing.T) {
 	mockStore := new(MockStore)
-	module := NewModule(mockStore)
+	module := impltracefunnel.NewModule(mockStore)
 
 	ctx := context.Background()
 	userID := "user-123"
@@ -116,7 +117,7 @@ func TestModule_Update(t *testing.T) {
 
 func TestModule_List(t *testing.T) {
 	mockStore := new(MockStore)
-	module := NewModule(mockStore)
+	module := impltracefunnel.NewModule(mockStore)
 
 	ctx := context.Background()
 	orgID := valuer.GenerateUUID().String()
@@ -148,7 +149,7 @@ func TestModule_List(t *testing.T) {
 
 func TestModule_Delete(t *testing.T) {
 	mockStore := new(MockStore)
-	module := NewModule(mockStore)
+	module := impltracefunnel.NewModule(mockStore)
 
 	ctx := context.Background()
 	funnelID := valuer.GenerateUUID().String()
@@ -163,7 +164,7 @@ func TestModule_Delete(t *testing.T) {
 
 func TestModule_Save(t *testing.T) {
 	mockStore := new(MockStore)
-	module := NewModule(mockStore)
+	module := impltracefunnel.NewModule(mockStore)
 
 	ctx := context.Background()
 	userID := "user-123"
@@ -186,7 +187,7 @@ func TestModule_Save(t *testing.T) {
 
 func TestModule_GetFunnelMetadata(t *testing.T) {
 	mockStore := new(MockStore)
-	module := NewModule(mockStore)
+	module := impltracefunnel.NewModule(mockStore)
 
 	ctx := context.Background()
 	funnelID := valuer.GenerateUUID().String()
