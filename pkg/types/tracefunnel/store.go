@@ -7,9 +7,9 @@ import (
 )
 
 type FunnelStore interface {
-	Create(context.Context, *Funnel) error
-	Get(context.Context, valuer.UUID) (*Funnel, error)
-	List(context.Context, valuer.UUID) ([]*Funnel, error)
-	Update(context.Context, *Funnel) error
+	Create(context.Context, *StorableFunnel) error
+	Get(context.Context, valuer.UUID) (*StorableFunnel, error)
+	List(context.Context, valuer.UUID) ([]*StorableFunnel, error)
+	Update(context.Context, *StorableFunnel) error
 	Delete(context.Context, valuer.UUID) error
 }

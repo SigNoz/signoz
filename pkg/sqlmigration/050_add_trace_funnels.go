@@ -3,25 +3,54 @@ package sqlmigration
 import (
 	"context"
 	"fmt"
-
 	"github.com/SigNoz/signoz/pkg/factory"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 )
+
+type BaseMetadata struct {
+	types.Identifiable // funnel id
+	types.TimeAuditable
+	types.UserAuditable
+	Name        string      `json:"funnel_name" bun:"name,type:text,notnull"` // funnel name
+	Description string      `json:"description" bun:"description,type:text"`  // funnel description
+	OrgID       valuer.UUID `json:"org_id" bun:"org_id,type:varchar,notnull"`
+}
+
+// Funnel Core Data Structure (Funnel and FunnelStep)
+type Funnel struct {
+	bun.BaseModel `bun:"table:trace_funnel"`
+	BaseMetadata
+	Steps         []FunnelStep `json:"steps" bun:"steps,type:text,notnull"`
+	Tags          string       `json:"tags" bun:"tags,type:text"`
+	CreatedByUser *types.User  `json:"user" bun:"rel:belongs-to,join:created_by=id"`
+}
+
+type FunnelStep struct {
+	ID             valuer.UUID   `json:"id,omitempty"`
+	Name           string        `json:"name,omitempty"`        // step name
+	Description    string        `json:"description,omitempty"` // step description
+	Order          int64         `json:"step_order"`
+	ServiceName    string        `json:"service_name"`
+	SpanName       string        `json:"span_name"`
+	Filters        *v3.FilterSet `json:"filters,omitempty"`
+	LatencyPointer string        `json:"latency_pointer,omitempty"`
+	LatencyType    string        `json:"latency_type,omitempty"`
+	HasErrors      bool          `json:"has_errors"`
+}
 
 type addTraceFunnels struct {
 	sqlstore sqlstore.SQLStore
 }
 
 func NewAddTraceFunnelsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.
-		NewProviderFactory(factory.
-			MustNewName("add_trace_funnels"),
-			func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
-				return newAddTraceFunnels(ctx, providerSettings, config, sqlstore)
-			})
+	return factory.NewProviderFactory(factory.MustNewName("add_trace_funnels"), func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
+		return newAddTraceFunnels(ctx, providerSettings, config, sqlstore)
+	})
 }
 
 func newAddTraceFunnels(_ context.Context, _ factory.ProviderSettings, _ Config, sqlstore sqlstore.SQLStore) (SQLMigration, error) {
@@ -29,8 +58,7 @@ func newAddTraceFunnels(_ context.Context, _ factory.ProviderSettings, _ Config,
 }
 
 func (migration *addTraceFunnels) Register(migrations *migrate.Migrations) error {
-	if err := migrations.
-		Register(migration.Up, migration.Down); err != nil {
+	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
 	return nil
@@ -43,9 +71,8 @@ func (migration *addTraceFunnels) Up(ctx context.Context, db *bun.DB) error {
 	}
 	defer tx.Rollback()
 
-	// Create trace_funnel table with foreign key constraint inline
 	_, err = tx.NewCreateTable().
-		Model((*traceFunnels.Funnel)(nil)).
+		Model((*Funnel)(nil)).
 		ForeignKey(`("org_id") REFERENCES "organizations" ("id") ON DELETE CASCADE`).
 		IfNotExists().
 		Exec(ctx)
@@ -53,62 +80,9 @@ func (migration *addTraceFunnels) Up(ctx context.Context, db *bun.DB) error {
 		return fmt.Errorf("failed to create trace_funnel table: %v", err)
 	}
 
-	// Add unique constraint for org_id and name
-	//_, err = tx.NewRaw(`
-	//	CREATE UNIQUE INDEX IF NOT EXISTS idx_trace_funnel_org_id_name
-	//	ON trace_funnel (org_id, name)
-	//`).Exec(ctx)
-	//if err != nil {
-	//	return fmt.Errorf("failed to create unique constraint: %v", err)
-	//}
-
-	// Create indexes
-	_, err = tx.NewCreateIndex().
-		Model((*traceFunnels.Funnel)(nil)).
-		Index("idx_trace_funnel_org_id").
-		Column("org_id").
-		IfNotExists().
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create org_id index: %v", err)
-	}
-
-	_, err = tx.NewCreateIndex().
-		Model((*traceFunnels.Funnel)(nil)).
-		Index("idx_trace_funnel_created_at").
-		Column("created_at").
-		IfNotExists().
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create created_at index: %v", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (migration *addTraceFunnels) Down(ctx context.Context, db *bun.DB) error {
-	//tx, err := db.BeginTx(ctx, nil)
-	//if err != nil {
-	//	return err
-	//}
-	//defer tx.Rollback()
-	//
-	//// Drop trace_funnel table
-	//_, err = tx.NewDropTable().
-	//	Model((*traceFunnels.Funnel)(nil)).
-	//	IfExists().
-	//	Exec(ctx)
-	//if err != nil {
-	//	return fmt.Errorf("failed to drop trace_funnel table: %v", err)
-	//}
-	//
-	//if err := tx.Commit(); err != nil {
-	//	return err
-	//}
-
 	return nil
 }

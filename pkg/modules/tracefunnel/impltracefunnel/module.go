@@ -21,13 +21,13 @@ func NewModule(store traceFunnels.FunnelStore) tracefunnel.Module {
 	}
 }
 
-func (module *module) Create(ctx context.Context, timestamp int64, name string, userID string, orgID string) (*traceFunnels.Funnel, error) {
+func (module *module) Create(ctx context.Context, timestamp int64, name string, userID string, orgID string) (*traceFunnels.StorableFunnel, error) {
 	orgUUID, err := valuer.NewUUID(orgID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid org ID: %v", err)
 	}
 
-	funnel := &traceFunnels.Funnel{
+	funnel := &traceFunnels.StorableFunnel{
 		BaseMetadata: traceFunnels.BaseMetadata{
 			Name:  name,
 			OrgID: orgUUID,
@@ -43,6 +43,22 @@ func (module *module) Create(ctx context.Context, timestamp int64, name string, 
 		},
 	}
 
+	if funnel.ID.IsZero() {
+		funnel.ID = valuer.GenerateUUID()
+	}
+
+	if funnel.CreatedAt.IsZero() {
+		funnel.CreatedAt = time.Now()
+	}
+	if funnel.UpdatedAt.IsZero() {
+		funnel.UpdatedAt = time.Now()
+	}
+
+	// Set created_by if CreatedByUser is present
+	if funnel.CreatedByUser != nil {
+		funnel.CreatedBy = funnel.CreatedByUser.Identifiable.ID.String()
+	}
+
 	if err := module.store.Create(ctx, funnel); err != nil {
 		return nil, fmt.Errorf("failed to create funnel: %v", err)
 	}
@@ -51,7 +67,7 @@ func (module *module) Create(ctx context.Context, timestamp int64, name string, 
 }
 
 // Get gets a funnel by ID
-func (module *module) Get(ctx context.Context, funnelID string) (*traceFunnels.Funnel, error) {
+func (module *module) Get(ctx context.Context, funnelID string) (*traceFunnels.StorableFunnel, error) {
 	uuid, err := valuer.NewUUID(funnelID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid funnel ID: %v", err)
@@ -60,13 +76,13 @@ func (module *module) Get(ctx context.Context, funnelID string) (*traceFunnels.F
 }
 
 // Update updates a funnel
-func (module *module) Update(ctx context.Context, funnel *traceFunnels.Funnel, userID string) error {
+func (module *module) Update(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID string) error {
 	funnel.UpdatedBy = userID
 	return module.store.Update(ctx, funnel)
 }
 
 // List lists all funnels for an organization
-func (module *module) List(ctx context.Context, orgID string) ([]*traceFunnels.Funnel, error) {
+func (module *module) List(ctx context.Context, orgID string) ([]*traceFunnels.StorableFunnel, error) {
 	orgUUID, err := valuer.NewUUID(orgID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid org ID: %v", err)
@@ -90,7 +106,7 @@ func (module *module) Delete(ctx context.Context, funnelID string) error {
 }
 
 // Save saves a funnel
-func (module *module) Save(ctx context.Context, funnel *traceFunnels.Funnel, userID string, orgID string) error {
+func (module *module) Save(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID string, orgID string) error {
 	orgUUID, err := valuer.NewUUID(orgID)
 	if err != nil {
 		return fmt.Errorf("invalid org ID: %v", err)
