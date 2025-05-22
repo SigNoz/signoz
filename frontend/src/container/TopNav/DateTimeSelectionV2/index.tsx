@@ -507,7 +507,7 @@ function DateTimeSelection({
 			return relativeTimeFromUrl as Time;
 		}
 
-		// if the startTime and endTime params are present in the url give next preference to the them.
+		// if the startTime and endTime params are present in the url give next preference to them.
 		if (searchEndTime !== null && searchStartTime !== null) {
 			return 'custom';
 		}

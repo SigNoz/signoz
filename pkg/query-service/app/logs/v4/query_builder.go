@@ -137,7 +137,7 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 	}
 
 	// TODO(nitya): as of now __attrs is only supports attributes_string. Discuss more on this
-	// also for eq and contains as now it does a exact match
+	// also for eq and contains as now it does an exact match
 	if key == "__attrs" {
 		if (op != v3.FilterOperatorEqual && op != v3.FilterOperatorContains) || item.Key.DataType != v3.AttributeKeyDataTypeString {
 			return "", fmt.Errorf("only = operator and string data type is supported for __attrs")
@@ -361,7 +361,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	logsStart := utils.GetEpochNanoSecs(start)
 	logsEnd := utils.GetEpochNanoSecs(end)
 
-	// -1800 this is added so that the bucket start considers all the fingerprints.
+	// -1800 this is added so that the bucket starts considering all the fingerprints.
 	bucketStart := logsStart/NANOSECOND - 1800
 	bucketEnd := logsEnd / NANOSECOND
 
@@ -452,7 +452,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	query := queryTmplPrefix + selectLabels + aggClause
 
 	// for limit query this is the first query,
-	// we don't the the aggregation value here as we are just concerned with the names of group by
+	// we don't need the aggregation value here as we are just concerned with the names of group by
 	// for applying the limit
 	if graphLimitQtype == constants.FirstQueryGraphLimit {
 		query = "SELECT " + logsV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + query + ")"
@@ -548,7 +548,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 				query = logsV3.AddLimitToQuery(query, mq.PageSize)
 			}
 
-			// add offset to the query only if it is not orderd by timestamp.
+			// add offset to the query only if it is not ordered by timestamp.
 			if !logsV3.IsOrderByTs(mq.OrderBy) {
 				query = logsV3.AddOffsetToQuery(query, mq.Offset)
 			}

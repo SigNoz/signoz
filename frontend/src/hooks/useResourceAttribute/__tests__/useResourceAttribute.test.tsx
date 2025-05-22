@@ -14,7 +14,7 @@ jest.mock('hooks/useSafeNavigate', () => ({
 describe('useResourceAttribute component hook', () => {
 	it('should not change other query params except for resourceAttribute', async () => {
 		const history = createMemoryHistory({
-			initialEntries: ['/inital-url?tab=overview'],
+			initialEntries: ['/initial-url?tab=overview'],
 		});
 		const wrapper = ({ children }: { children: any }): JSX.Element => (
 			<Router history={history}>
