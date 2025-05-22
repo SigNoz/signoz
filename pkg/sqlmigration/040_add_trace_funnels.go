@@ -80,6 +80,11 @@ func (migration *addTraceFunnels) Up(ctx context.Context, db *bun.DB) error {
 		return fmt.Errorf("failed to create trace_funnel table: %v", err)
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
