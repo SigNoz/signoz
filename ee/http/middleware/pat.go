@@ -47,7 +47,8 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		if pat.ExpiresAt.Before(time.Now()) {
+		// allow the PAT if expires_at is not set
+		if pat.ExpiresAt.Before(time.Now()) && !pat.ExpiresAt.Equal(time.Unix(0, 0)) {
 			next.ServeHTTP(w, r)
 			return
 		}

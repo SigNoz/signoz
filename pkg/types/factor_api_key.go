@@ -65,7 +65,9 @@ type StorableAPIKey struct {
 
 func NewStorableAPIKey(name string, userID valuer.UUID, role Role, expiresAt int64) (*StorableAPIKey, error) {
 	// validate
-	if expiresAt <= 0 {
+
+	// we allow the PAT if expiresAt is not set, which means it never expires
+	if expiresAt < 0 {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "expiresAt must be greater than 0")
 	}
 
