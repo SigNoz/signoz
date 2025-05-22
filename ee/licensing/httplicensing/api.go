@@ -57,7 +57,7 @@ func (api *licensingAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusNoContent, nil)
+	render.Success(rw, http.StatusAccepted, nil)
 }
 
 func (api *licensingAPI) GetActive(rw http.ResponseWriter, r *http.Request) {

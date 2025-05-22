@@ -1,4 +1,4 @@
-import getActive from 'api/licensesV3/getActive';
+import getActive from 'api/v3/licenses/active/get';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery, UseQueryResult } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
