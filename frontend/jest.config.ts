@@ -15,6 +15,7 @@ const config: Config.InitialOptions = {
 		extensionsToTreatAsEsm: ['.ts'],
 		'ts-jest': {
 			useESM: true,
+			isolatedModules: true,
 		},
 	},
 	testMatch: ['<rootDir>/src/**/*?(*.)(test).(ts|js)?(x)'],

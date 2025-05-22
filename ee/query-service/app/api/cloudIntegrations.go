@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	eeTypes "github.com/SigNoz/signoz/ee/types"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -116,14 +116,21 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		return "", apiErr
 	}
 
-	allPats, err := ah.AppDao().ListPATs(ctx, orgId)
+	orgIdUUID, err := valuer.NewUUID(orgId)
+	if err != nil {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't parse orgId: %w", err,
+		))
+	}
+
+	allPats, err := ah.Signoz.Modules.User.ListAPIKeys(ctx, orgIdUUID)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't list PATs: %w", err,
 		))
 	}
 	for _, p := range allPats {
-		if p.UserID == integrationUser.ID.String() && p.Name == integrationPATName {
+		if p.UserID == integrationUser.ID && p.Name == integrationPATName {
 			return p.Token, nil
 		}
 	}
@@ -133,19 +140,25 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		zap.String("cloudProvider", cloudProvider),
 	)
 
-	newPAT := eeTypes.NewGettablePAT(
+	newPAT, err := types.NewStorableAPIKey(
 		integrationPATName,
-		types.RoleViewer.String(),
-		integrationUser.ID.String(),
+		integrationUser.ID,
+		types.RoleViewer,
 		0,
 	)
-	integrationPAT, err := ah.AppDao().CreatePAT(ctx, orgId, newPAT)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't create cloud integration PAT: %w", err,
 		))
 	}
-	return integrationPAT.Token, nil
+
+	err = ah.Signoz.Modules.User.CreateAPIKey(ctx, newPAT)
+	if err != nil {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't create cloud integration PAT: %w", err,
+		))
+	}
+	return newPAT.Token, nil
 }
 
 func (ah *APIHandler) getOrCreateCloudIntegrationUser(
