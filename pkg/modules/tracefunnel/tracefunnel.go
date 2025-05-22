@@ -9,17 +9,17 @@ import (
 
 // Module defines the interface for trace funnel operations
 type Module interface {
-	Create(ctx context.Context, timestamp int64, name string, userID string, orgID string) (*traceFunnels.Funnel, error)
+	Create(ctx context.Context, timestamp int64, name string, userID string, orgID string) (*traceFunnels.StorableFunnel, error)
 
-	Get(ctx context.Context, funnelID string) (*traceFunnels.Funnel, error)
+	Get(ctx context.Context, funnelID string) (*traceFunnels.StorableFunnel, error)
 
-	Update(ctx context.Context, funnel *traceFunnels.Funnel, userID string) error
+	Update(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID string) error
 
-	List(ctx context.Context, orgID string) ([]*traceFunnels.Funnel, error)
+	List(ctx context.Context, orgID string) ([]*traceFunnels.StorableFunnel, error)
 
 	Delete(ctx context.Context, funnelID string) error
 
-	Save(ctx context.Context, funnel *traceFunnels.Funnel, userID string, orgID string) error
+	Save(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID string, orgID string) error
 
 	GetFunnelMetadata(ctx context.Context, funnelID string) (int64, int64, string, error)
 }

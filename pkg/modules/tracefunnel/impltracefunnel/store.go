@@ -18,23 +18,7 @@ func NewStore(sqlstore sqlstore.SQLStore) traceFunnels.FunnelStore {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) Create(ctx context.Context, funnel *traceFunnels.Funnel) error {
-	if funnel.ID.IsZero() {
-		funnel.ID = valuer.GenerateUUID()
-	}
-
-	if funnel.CreatedAt.IsZero() {
-		funnel.CreatedAt = time.Now()
-	}
-	if funnel.UpdatedAt.IsZero() {
-		funnel.UpdatedAt = time.Now()
-	}
-
-	// Set created_by if CreatedByUser is present
-	if funnel.CreatedByUser != nil {
-		funnel.CreatedBy = funnel.CreatedByUser.Identifiable.ID.String()
-	}
-
+func (store *store) Create(ctx context.Context, funnel *traceFunnels.StorableFunnel) error {
 	_, err := store.
 		sqlstore.
 		BunDB().
@@ -49,8 +33,8 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.Funnel) err
 }
 
 // Get retrieves a funnel by ID
-func (store *store) Get(ctx context.Context, uuid valuer.UUID) (*traceFunnels.Funnel, error) {
-	funnel := &traceFunnels.Funnel{}
+func (store *store) Get(ctx context.Context, uuid valuer.UUID) (*traceFunnels.StorableFunnel, error) {
+	funnel := &traceFunnels.StorableFunnel{}
 	err := store.
 		sqlstore.
 		BunDB().
@@ -66,7 +50,7 @@ func (store *store) Get(ctx context.Context, uuid valuer.UUID) (*traceFunnels.Fu
 }
 
 // Update updates an existing funnel
-func (store *store) Update(ctx context.Context, funnel *traceFunnels.Funnel) error {
+func (store *store) Update(ctx context.Context, funnel *traceFunnels.StorableFunnel) error {
 	funnel.UpdatedAt = time.Now()
 
 	_, err := store.
@@ -83,8 +67,8 @@ func (store *store) Update(ctx context.Context, funnel *traceFunnels.Funnel) err
 }
 
 // List retrieves all funnels for a given organization
-func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnels.Funnel, error) {
-	var funnels []*traceFunnels.Funnel
+func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnels.StorableFunnel, error) {
+	var funnels []*traceFunnels.StorableFunnel
 	err := store.
 		sqlstore.
 		BunDB().
@@ -105,7 +89,7 @@ func (store *store) Delete(ctx context.Context, uuid valuer.UUID) error {
 		sqlstore.
 		BunDB().
 		NewDelete().
-		Model((*traceFunnels.Funnel)(nil)).
+		Model((*traceFunnels.StorableFunnel)(nil)).
 		Where("id = ?", uuid).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete funnel: %v", err)
