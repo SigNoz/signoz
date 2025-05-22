@@ -24,7 +24,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	pkgzeus "github.com/SigNoz/signoz/pkg/zeus"
 
@@ -124,7 +123,7 @@ func main() {
 		config,
 		zeus.Config(),
 		httpzeus.NewProviderFactory(),
-		licensing.Config(licensetypes.ValidationFrequency),
+		licensing.Config(24*time.Hour, 3),
 		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus) factory.ProviderFactory[pkglicensing.Licensing, pkglicensing.Config] {
 			return httplicensing.NewProviderFactory(sqlstore, zeus)
 		},

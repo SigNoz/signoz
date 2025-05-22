@@ -14,9 +14,9 @@ var (
 )
 
 // initializes the licensing configuration
-func Config(pollInterval time.Duration) licensing.Config {
+func Config(pollInterval time.Duration, failureThreshold int) licensing.Config {
 	once.Do(func() {
-		config = licensing.Config{PollInterval: pollInterval}
+		config = licensing.Config{PollInterval: pollInterval, FailureThreshold: failureThreshold}
 		if err := config.Validate(); err != nil {
 			panic(fmt.Errorf("invalid licensing config: %w", err))
 		}

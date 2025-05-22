@@ -14,9 +14,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// validate and update license every 24 hours
-var ValidationFrequency = 24 * time.Hour
-
 type StorableLicense struct {
 	bun.BaseModel `bun:"table:license"`
 
@@ -173,7 +170,7 @@ type Store interface {
 	Create(context.Context, *StorableLicense) error
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
 	GetAll(context.Context, valuer.UUID) ([]*StorableLicense, error)
-	Update(context.Context, valuer.UUID,*StorableLicense) error
+	Update(context.Context, valuer.UUID, *StorableLicense) error
 
 	// feature surrogate
 	InitFeatures(context.Context, []*featuretypes.StorableFeature) error

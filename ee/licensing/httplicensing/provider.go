@@ -93,7 +93,7 @@ func (provider *provider) Validate(ctx context.Context) error {
 				return err
 			}
 
-			if time.Since(license.LastValidatedAt) > 3*provider.config.PollInterval {
+			if time.Since(license.LastValidatedAt) > time.Duration(provider.config.FailureThreshold)*provider.config.PollInterval {
 				provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive 3 validation cycles. defaulting to basic plan", "licenseID", license.ID.StringValue(), "organizationID", organizationID.StringValue())
 				err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 				if err != nil {
