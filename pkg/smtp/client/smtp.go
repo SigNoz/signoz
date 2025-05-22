@@ -253,7 +253,7 @@ func (c *Client) Do(ctx context.Context, tos []*mail.Address, subject string, co
 
 	// Complete the message and await response.
 	if err = closeOnce(); err != nil {
-		return fmt.Errorf("failed to delivery: %w", err)
+		return fmt.Errorf("failed to deliver: %w", err)
 	}
 
 	success = true
