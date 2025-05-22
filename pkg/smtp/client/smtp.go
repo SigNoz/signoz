@@ -187,6 +187,11 @@ func (c *Client) Do(ctx context.Context, tos []*mail.Address, subject string, co
 	multipartBuffer := &bytes.Buffer{}
 	multipartWriter := multipart.NewWriter(multipartBuffer)
 
+	tosAsStrings := make([]string, len(tos))
+	for i, to := range tos {
+		tosAsStrings[i] = to.String()
+	}
+	fmt.Fprintf(buffer, "To: %s\r\n", strings.Join(tosAsStrings, ","))
 	fmt.Fprintf(buffer, "Subject: %s\r\n", subject)
 	fmt.Fprintf(buffer, "Date: %s\r\n", time.Now().Format(time.RFC1123Z))
 	fmt.Fprintf(buffer, "Content-Type: multipart/alternative;  boundary=%s\r\n", multipartWriter.Boundary())
