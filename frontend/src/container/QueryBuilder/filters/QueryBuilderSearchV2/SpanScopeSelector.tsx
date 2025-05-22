@@ -23,7 +23,7 @@ interface SpanFilterConfig {
 interface SpanScopeSelectorProps {
 	queryName: string;
 	onChange?: (value: TagFilter) => void;
-	query: IBuilderQuery;
+	query?: IBuilderQuery;
 }
 
 const SPAN_FILTER_CONFIG: Record<SpanScope, SpanFilterConfig | null> = {
@@ -154,6 +154,7 @@ function SpanScopeSelector({
 
 SpanScopeSelector.defaultProps = {
 	onChange: undefined,
+	query: undefined,
 };
 
 export default SpanScopeSelector;
