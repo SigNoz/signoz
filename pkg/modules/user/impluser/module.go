@@ -311,7 +311,7 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 		return nil, err
 	}
 	if len(user) == 0 {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("user with email: %s does not exist", email))
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "user with email: %s does not exist", email)
 	} else if len(user) == 1 {
 		dbUser = &user[0].User
 	} else {
