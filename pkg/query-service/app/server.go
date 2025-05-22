@@ -147,7 +147,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
 		RuleManager:                   rm,
 		FeatureFlags:                  fm,
-		Cache:                         serverOptions.SigNoz.Cache,
 		IntegrationsController:        integrationsController,
 		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
