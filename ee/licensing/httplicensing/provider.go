@@ -89,10 +89,10 @@ func (provider *provider) Validate(ctx context.Context) error {
 func (provider *provider) Activate(ctx context.Context, organizationID valuer.UUID, key string) error {
 	data, err := provider.zeus.GetLicense(ctx, key)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to validate license data with upstream server")
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to fetch license data with upstream server")
 	}
-	currentTime := time.Now()
-	license, err := licensetypes.NewLicense(data, currentTime, currentTime, currentTime, organizationID)
+
+	license, err := licensetypes.NewLicense(data, organizationID)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity")
 	}
@@ -157,14 +157,13 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 		return err
 	}
 
-	currentTime := time.Now()
-	updatedLicense, err := licensetypes.NewLicense(data, activeLicense.CreatedAt, currentTime, currentTime, organizationID)
+	err = activeLicense.Update(data)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity from license data")
 	}
 
-	provider.settings.Logger().DebugContext(ctx, "license validation completed successfully", "licenseID", updatedLicense.ID, "organizationID", organizationID.StringValue())
-	updatedStorableLicense := licensetypes.NewStorableLicenseFromLicense(updatedLicense)
+	provider.settings.Logger().DebugContext(ctx, "license validation completed successfully", "licenseID", activeLicense.ID, "organizationID", organizationID.StringValue())
+	updatedStorableLicense := licensetypes.NewStorableLicenseFromLicense(activeLicense)
 	err = provider.store.Update(ctx, organizationID, updatedStorableLicense)
 	if err != nil {
 		return err
@@ -181,12 +180,12 @@ func (provider *provider) Checkout(ctx context.Context, organizationID valuer.UU
 
 	body, err := json.Marshal(postableSubscription)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to marshal checkout payload")
 	}
 
 	response, err := provider.zeus.GetCheckoutURL(ctx, activeLicense.Key, body)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to generate checkout session")
 	}
 
 	return &licensetypes.GettableSubscription{RedirectURL: gjson.GetBytes(response, "url").String()}, nil
@@ -200,12 +199,12 @@ func (provider *provider) Portal(ctx context.Context, organizationID valuer.UUID
 
 	body, err := json.Marshal(postableSubscription)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to marshal portal payload")
 	}
 
 	response, err := provider.zeus.GetPortalURL(ctx, activeLicense.Key, body)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to generate portal session")
 	}
 
 	return &licensetypes.GettableSubscription{RedirectURL: gjson.GetBytes(response, "url").String()}, nil
@@ -280,8 +279,4 @@ func (provider *provider) UpdateFeatureFlag(ctx context.Context, feature *featur
 		UsageLimit: int(feature.UsageLimit),
 		Route:      feature.Route,
 	})
-}
-
-func (provider *provider) ListOrganizations(ctx context.Context) ([]valuer.UUID, error) {
-	return provider.store.ListOrganizations(ctx)
 }

@@ -38,14 +38,8 @@ func (api *licensingAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(licensetypes.ActivateLicense)
+	req := new(licensetypes.PostableLicense)
 	err = json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	err = req.Validate()
 	if err != nil {
 		render.Error(rw, err)
 		return

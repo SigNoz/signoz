@@ -1,11 +1,10 @@
-package licensetypestest
+package licensetypes
 
 import (
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +16,7 @@ func TestNewLicenseV3(t *testing.T) {
 		name     string
 		data     []byte
 		pass     bool
-		expected *licensetypes.License
+		expected *License
 		error    error
 	}{
 		{
@@ -78,7 +77,7 @@ func TestNewLicenseV3(t *testing.T) {
 			name: "Parse the entire license properly",
 			data: []byte(`{"id":"0196f794-ff30-7bee-a5f4-ef5ad315715e","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"ENTERPRISE"},"valid_from": 1730899309,"valid_until": -1}`),
 			pass: true,
-			expected: &licensetypes.License{
+			expected: &License{
 				ID:  valuer.MustNewUUID("0196f794-ff30-7bee-a5f4-ef5ad315715e"),
 				Key: "does-not-matter-key",
 				Data: map[string]interface{}{
@@ -90,7 +89,7 @@ func TestNewLicenseV3(t *testing.T) {
 					"valid_from":  float64(1730899309),
 					"valid_until": float64(-1),
 				},
-				PlanName:       licensetypes.PlanNameEnterprise,
+				PlanName:       PlanNameEnterprise,
 				ValidFrom:      1730899309,
 				ValidUntil:     -1,
 				Status:         "ACTIVE",
@@ -102,7 +101,7 @@ func TestNewLicenseV3(t *testing.T) {
 			name: "Fallback to basic plan if license status is invalid",
 			data: []byte(`{"id":"0196f794-ff30-7bee-a5f4-ef5ad315715e","key":"does-not-matter-key","category":"FREE","status":"INVALID","plan":{"name":"ENTERPRISE"},"valid_from": 1730899309,"valid_until": -1}`),
 			pass: true,
-			expected: &licensetypes.License{
+			expected: &License{
 				ID:  valuer.MustNewUUID("0196f794-ff30-7bee-a5f4-ef5ad315715e"),
 				Key: "does-not-matter-key",
 				Data: map[string]interface{}{
@@ -114,7 +113,7 @@ func TestNewLicenseV3(t *testing.T) {
 					"valid_from":  float64(1730899309),
 					"valid_until": float64(-1),
 				},
-				PlanName:       licensetypes.PlanNameBasic,
+				PlanName:       PlanNameBasic,
 				ValidFrom:      1730899309,
 				ValidUntil:     -1,
 				Status:         "INVALID",
@@ -126,7 +125,7 @@ func TestNewLicenseV3(t *testing.T) {
 			name: "fallback states for validFrom and validUntil",
 			data: []byte(`{"id":"0196f794-ff30-7bee-a5f4-ef5ad315715e","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"ENTERPRISE"},"valid_from":1234.456,"valid_until":5678.567}`),
 			pass: true,
-			expected: &licensetypes.License{
+			expected: &License{
 				ID:  valuer.MustNewUUID("0196f794-ff30-7bee-a5f4-ef5ad315715e"),
 				Key: "does-not-matter-key",
 				Data: map[string]interface{}{
@@ -138,7 +137,7 @@ func TestNewLicenseV3(t *testing.T) {
 					"category":    "FREE",
 					"status":      "ACTIVE",
 				},
-				PlanName:        licensetypes.PlanNameEnterprise,
+				PlanName:        PlanNameEnterprise,
 				ValidFrom:       1234,
 				ValidUntil:      5678,
 				Status:          "ACTIVE",
@@ -152,7 +151,7 @@ func TestNewLicenseV3(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		license, err := licensetypes.NewLicense(tc.data, time.Time{}, time.Time{}, time.Time{}, valuer.MustNewUUID("0196f794-ff30-7bee-a5f4-ef5ad315715e"))
+		license, err := NewLicense(tc.data, valuer.MustNewUUID("0196f794-ff30-7bee-a5f4-ef5ad315715e"))
 		if license != nil {
 			license.Features = make([]*featuretypes.GettableFeature, 0)
 			delete(license.Data, "features")

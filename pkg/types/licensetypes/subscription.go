@@ -6,18 +6,6 @@ type GettableSubscription struct {
 	RedirectURL string `json:"redirectURL"`
 }
 
-type ActivateLicense struct {
-	Key string `json:"key"`
-}
-
-func (activate *ActivateLicense) Validate() error {
-	if activate.Key == "" {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "license key is needed to activate the license")
-	}
-
-	return nil
-}
-
 type PostableSubscription struct {
 	SuccessURL string `json:"url"`
 }
