@@ -27,7 +27,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	// Try to create a template store. If it fails, use an empty store.
 	store, err := filetemplatestore.NewStore(config.Templates.Directory, emailtypes.Templates, settings.Logger())
 	if err != nil {
-		settings.Logger().Error("failed to create template store", "error", err)
+		settings.Logger().ErrorContext(ctx, "failed to create template store, using empty store", "error", err)
 		store = filetemplatestore.NewEmptyStore()
 	}
 
