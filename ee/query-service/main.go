@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
+	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	pkglicensing "github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -118,30 +119,6 @@ func main() {
 		zap.L().Fatal("Failed to add postgressqlstore factory", zap.Error(err))
 	}
 
-	signoz, err := signoz.New(
-		ctx,
-		config,
-		zeus.Config(),
-		httpzeus.NewProviderFactory(),
-		licensing.Config(24*time.Hour, 3),
-		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus) factory.ProviderFactory[pkglicensing.Licensing, pkglicensing.Config] {
-			return httplicensing.NewProviderFactory(sqlstore, zeus)
-		},
-		signoz.NewCacheProviderFactories(),
-		signoz.NewWebProviderFactories(),
-		sqlStoreFactories,
-		signoz.NewTelemetryStoreProviderFactories(),
-		func(sqlstore sqlstore.SQLStore) user.Module {
-			return eeuserimpl.NewModule(eeuserimpl.NewStore(sqlstore))
-		},
-		func(userModule user.Module) user.Handler {
-			return eeuserimpl.NewHandler(userModule)
-		},
-	)
-	if err != nil {
-		zap.L().Fatal("Failed to create signoz", zap.Error(err))
-	}
-
 	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
 
 	if len(jwtSecret) == 0 {
@@ -151,6 +128,31 @@ func main() {
 	}
 
 	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)
+
+	signoz, err := signoz.New(
+		context.Background(),
+		config,
+		zeus.Config(),
+		httpzeus.NewProviderFactory(),
+		licensing.Config(24*time.Hour, 3),
+		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus) factory.ProviderFactory[pkglicensing.Licensing, pkglicensing.Config] {
+			return httplicensing.NewProviderFactory(sqlstore, zeus)
+		},
+		signoz.NewEmailingProviderFactories(),
+		signoz.NewCacheProviderFactories(),
+		signoz.NewWebProviderFactories(),
+		sqlStoreFactories,
+		signoz.NewTelemetryStoreProviderFactories(),
+		func(sqlstore sqlstore.SQLStore, emailing emailing.Emailing, providerSettings factory.ProviderSettings) user.Module {
+			return eeuserimpl.NewModule(eeuserimpl.NewStore(sqlstore), jwt, emailing, providerSettings)
+		},
+		func(userModule user.Module) user.Handler {
+			return eeuserimpl.NewHandler(userModule)
+		},
+	)
+	if err != nil {
+		zap.L().Fatal("Failed to create signoz", zap.Error(err))
+	}
 
 	serverOptions := &app.ServerOptions{
 		Config:                     config,

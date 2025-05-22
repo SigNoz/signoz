@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -22,7 +25,9 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	require.NoError(err)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore))
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore), nil, emailing, providerSettings)
 	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 
@@ -70,7 +75,9 @@ func TestAgentCheckIns(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore))
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore), nil, emailing, providerSettings)
 	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 
@@ -158,7 +165,9 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	require.NoError(err)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore))
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore), nil, emailing, providerSettings)
 	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 
@@ -178,7 +187,9 @@ func TestConfigureService(t *testing.T) {
 	require.NoError(err)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore))
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore), nil, emailing, providerSettings)
 	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 
