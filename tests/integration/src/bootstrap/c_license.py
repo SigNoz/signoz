@@ -61,7 +61,7 @@ def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
         timeout=5,
     )
 
-    assert response.status_code == http.HTTPStatus.CREATED
+    assert response.status_code == http.HTTPStatus.ACCEPTED
 
     response = requests.post(
         url=signoz.zeus.host_config.get("/__admin/requests/count"),
