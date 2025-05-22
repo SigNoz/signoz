@@ -310,7 +310,9 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 	if err != nil {
 		return nil, err
 	}
-	if len(user) == 1 {
+	if len(user) == 0 {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "user with email: %s does not exist", email)
+	} else if len(user) == 1 {
 		dbUser = &user[0].User
 	} else {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "please provide an orgID")
