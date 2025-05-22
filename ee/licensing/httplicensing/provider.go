@@ -3,6 +3,7 @@ package httplicensing
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/SigNoz/signoz/ee/licensing/licensingstore/sqllicensingstore"
@@ -147,7 +148,7 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 		provider.settings.Logger().ErrorContext(ctx, "failed to validate the license with upstream server", "licenseID", activeLicense.Key, "organizationID", organizationID.StringValue())
 
 		if time.Since(activeLicense.LastValidatedAt) > time.Duration(provider.config.FailureThreshold)*provider.config.PollInterval {
-			provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive 3 validation cycles. defaulting to basic plan", "licenseID", activeLicense.ID.StringValue(), "organizationID", organizationID.StringValue())
+			provider.settings.Logger().ErrorContext(ctx, fmt.Sprintf("license validation failed for consecutive %v poll intervals. defaulting to basic plan", provider.config.FailureThreshold), "licenseID", activeLicense.ID.StringValue(), "organizationID", organizationID.StringValue())
 			err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 			if err != nil {
 				return err
