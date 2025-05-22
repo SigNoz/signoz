@@ -14,6 +14,8 @@
     {
       "h": 6,
       "i": "7a010b4e-ea7c-4a45-a9eb-93af650c45b4",
+      "moved": false,
+      "static": false,
       "w": 6,
       "x": 6,
       "y": 0
@@ -21,6 +23,8 @@
     {
       "h": 6,
       "i": "2299d4e3-6c40-4bf2-a550-c7bb8a7acd38",
+      "moved": false,
+      "static": false,
       "w": 6,
       "x": 0,
       "y": 6
@@ -28,6 +32,8 @@
     {
       "h": 6,
       "i": "16eec8b7-de1a-4039-b180-24c7a6704b6e",
+      "moved": false,
+      "static": false,
       "w": 6,
       "x": 6,
       "y": 6
@@ -300,7 +306,7 @@
               "filters": {
                 "items": [
                   {
-                    "id": "3c194a13",
+                    "id": "1aa0d1a9",
                     "key": {
                       "dataType": "string",
                       "id": "TopicName--string--tag--false",
@@ -315,7 +321,7 @@
                     ]
                   },
                   {
-                    "id": "f042bbc8",
+                    "id": "62255cff",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -328,7 +334,7 @@
                     "value": "$Region"
                   },
                   {
-                    "id": "a341d23c",
+                    "id": "17c7153e",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -445,8 +451,8 @@
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Number of Messages Published",
-      "yAxisUnit": "none"
+      "title": "Published Message Size",
+      "yAxisUnit": "decbytes"
     },
     {
       "bucketCount": 30,
