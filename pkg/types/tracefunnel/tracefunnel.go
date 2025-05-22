@@ -22,13 +22,13 @@ type BaseMetadata struct {
 	OrgID       valuer.UUID `json:"org_id" bun:"org_id,type:varchar,notnull"`
 }
 
-// Funnel Core Data Structure (Funnel and FunnelStep)
-type Funnel struct {
+// StorableFunnel Core Data Structure (StorableFunnel and FunnelStep)
+type StorableFunnel struct {
 	bun.BaseModel `bun:"table:trace_funnel"`
 	BaseMetadata
-	Steps         []FunnelStep `json:"steps" bun:"steps,type:text,notnull"`
-	Tags          string       `json:"tags" bun:"tags,type:text"`
-	CreatedByUser *types.User  `json:"user" bun:"rel:belongs-to,join:created_by=id"`
+	Steps         []*FunnelStep `json:"steps" bun:"steps,type:text,notnull"`
+	Tags          string        `json:"tags" bun:"tags,type:text"`
+	CreatedByUser *types.User   `json:"user" bun:"rel:belongs-to,join:created_by=id"`
 }
 
 type FunnelStep struct {
@@ -44,14 +44,14 @@ type FunnelStep struct {
 	HasErrors      bool          `json:"has_errors"`
 }
 
-// FunnelRequest represents all possible funnel-related requests
-type FunnelRequest struct {
-	FunnelID    valuer.UUID  `json:"funnel_id,omitempty"`
-	Name        string       `json:"funnel_name,omitempty"`
-	Timestamp   int64        `json:"timestamp,omitempty"`
-	Description string       `json:"description,omitempty"`
-	Steps       []FunnelStep `json:"steps,omitempty"`
-	UserID      string       `json:"user_id,omitempty"`
+// PostableFunnel represents all possible funnel-related requests
+type PostableFunnel struct {
+	FunnelID    valuer.UUID   `json:"funnel_id,omitempty"`
+	Name        string        `json:"funnel_name,omitempty"`
+	Timestamp   int64         `json:"timestamp,omitempty"`
+	Description string        `json:"description,omitempty"`
+	Steps       []*FunnelStep `json:"steps,omitempty"`
+	UserID      string        `json:"user_id,omitempty"`
 
 	// Analytics specific fields
 	StartTime  int64 `json:"start_time,omitempty"`
@@ -60,19 +60,19 @@ type FunnelRequest struct {
 	StepBOrder int64 `json:"step_b_order,omitempty"`
 }
 
-// FunnelResponse represents all possible funnel-related responses
-type FunnelResponse struct {
-	FunnelID    string       `json:"funnel_id,omitempty"`
-	FunnelName  string       `json:"funnel_name,omitempty"`
-	Description string       `json:"description,omitempty"`
-	CreatedAt   int64        `json:"created_at,omitempty"`
-	CreatedBy   string       `json:"created_by,omitempty"`
-	UpdatedAt   int64        `json:"updated_at,omitempty"`
-	UpdatedBy   string       `json:"updated_by,omitempty"`
-	OrgID       string       `json:"org_id,omitempty"`
-	UserEmail   string       `json:"user_email,omitempty"`
-	Funnel      *Funnel      `json:"funnel,omitempty"`
-	Steps       []FunnelStep `json:"steps,omitempty"`
+// GettableFunnel represents all possible funnel-related responses
+type GettableFunnel struct {
+	FunnelID    string          `json:"funnel_id,omitempty"`
+	FunnelName  string          `json:"funnel_name,omitempty"`
+	Description string          `json:"description,omitempty"`
+	CreatedAt   int64           `json:"created_at,omitempty"`
+	CreatedBy   string          `json:"created_by,omitempty"`
+	UpdatedAt   int64           `json:"updated_at,omitempty"`
+	UpdatedBy   string          `json:"updated_by,omitempty"`
+	OrgID       string          `json:"org_id,omitempty"`
+	UserEmail   string          `json:"user_email,omitempty"`
+	Funnel      *StorableFunnel `json:"funnel,omitempty"`
+	Steps       []*FunnelStep   `json:"steps,omitempty"`
 }
 
 // TimeRange represents a time range for analytics

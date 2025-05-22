@@ -17,22 +17,22 @@ type MockStore struct {
 	mock.Mock
 }
 
-func (m *MockStore) Create(ctx context.Context, funnel *traceFunnels.Funnel) error {
+func (m *MockStore) Create(ctx context.Context, funnel *traceFunnels.StorableFunnel) error {
 	args := m.Called(ctx, funnel)
 	return args.Error(0)
 }
 
-func (m *MockStore) Get(ctx context.Context, uuid valuer.UUID) (*traceFunnels.Funnel, error) {
+func (m *MockStore) Get(ctx context.Context, uuid valuer.UUID) (*traceFunnels.StorableFunnel, error) {
 	args := m.Called(ctx, uuid)
-	return args.Get(0).(*traceFunnels.Funnel), args.Error(1)
+	return args.Get(0).(*traceFunnels.StorableFunnel), args.Error(1)
 }
 
-func (m *MockStore) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnels.Funnel, error) {
+func (m *MockStore) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnels.StorableFunnel, error) {
 	args := m.Called(ctx, orgID)
-	return args.Get(0).([]*traceFunnels.Funnel), args.Error(1)
+	return args.Get(0).([]*traceFunnels.StorableFunnel), args.Error(1)
 }
 
-func (m *MockStore) Update(ctx context.Context, funnel *traceFunnels.Funnel) error {
+func (m *MockStore) Update(ctx context.Context, funnel *traceFunnels.StorableFunnel) error {
 	args := m.Called(ctx, funnel)
 	return args.Error(0)
 }
@@ -52,7 +52,7 @@ func TestModule_Create(t *testing.T) {
 	userID := valuer.GenerateUUID()
 	orgID := valuer.GenerateUUID().String()
 
-	mockStore.On("Create", ctx, mock.MatchedBy(func(f *traceFunnels.Funnel) bool {
+	mockStore.On("Create", ctx, mock.MatchedBy(func(f *traceFunnels.StorableFunnel) bool {
 		return f.Name == name &&
 			f.CreatedBy == userID.String() &&
 			f.OrgID.String() == orgID &&
@@ -79,7 +79,7 @@ func TestModule_Get(t *testing.T) {
 
 	ctx := context.Background()
 	funnelID := valuer.GenerateUUID().String()
-	expectedFunnel := &traceFunnels.Funnel{
+	expectedFunnel := &traceFunnels.StorableFunnel{
 		BaseMetadata: traceFunnels.BaseMetadata{
 			Name: "test-funnel",
 		},
@@ -100,7 +100,7 @@ func TestModule_Update(t *testing.T) {
 
 	ctx := context.Background()
 	userID := "user-123"
-	funnel := &traceFunnels.Funnel{
+	funnel := &traceFunnels.StorableFunnel{
 		BaseMetadata: traceFunnels.BaseMetadata{
 			Name: "test-funnel",
 		},
@@ -122,7 +122,7 @@ func TestModule_List(t *testing.T) {
 	ctx := context.Background()
 	orgID := valuer.GenerateUUID().String()
 	orgUUID := valuer.MustNewUUID(orgID)
-	expectedFunnels := []*traceFunnels.Funnel{
+	expectedFunnels := []*traceFunnels.StorableFunnel{
 		{
 			BaseMetadata: traceFunnels.BaseMetadata{
 				Name:  "funnel-1",
@@ -169,7 +169,7 @@ func TestModule_Save(t *testing.T) {
 	ctx := context.Background()
 	userID := "user-123"
 	orgID := valuer.GenerateUUID().String()
-	funnel := &traceFunnels.Funnel{
+	funnel := &traceFunnels.StorableFunnel{
 		BaseMetadata: traceFunnels.BaseMetadata{
 			Name: "test-funnel",
 		},
@@ -192,7 +192,7 @@ func TestModule_GetFunnelMetadata(t *testing.T) {
 	ctx := context.Background()
 	funnelID := valuer.GenerateUUID().String()
 	now := time.Now()
-	expectedFunnel := &traceFunnels.Funnel{
+	expectedFunnel := &traceFunnels.StorableFunnel{
 		BaseMetadata: traceFunnels.BaseMetadata{
 			Description: "test description",
 			TimeAuditable: types.TimeAuditable{

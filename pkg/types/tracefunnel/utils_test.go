@@ -8,7 +8,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
@@ -91,12 +90,12 @@ func TestValidateTimestampIsMilliseconds(t *testing.T) {
 func TestValidateFunnelSteps(t *testing.T) {
 	tests := []struct {
 		name        string
-		steps       []tracefunnel.FunnelStep
+		steps       []FunnelStep
 		expectError bool
 	}{
 		{
 			name: "valid steps",
-			steps: []tracefunnel.FunnelStep{
+			steps: []FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -116,7 +115,7 @@ func TestValidateFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "too few steps",
-			steps: []tracefunnel.FunnelStep{
+			steps: []FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -129,7 +128,7 @@ func TestValidateFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "missing service name",
-			steps: []tracefunnel.FunnelStep{
+			steps: []FunnelStep{
 				{
 					ID:       valuer.GenerateUUID(),
 					Name:     "Step 1",
@@ -148,7 +147,7 @@ func TestValidateFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "missing span name",
-			steps: []tracefunnel.FunnelStep{
+			steps: []FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -167,7 +166,7 @@ func TestValidateFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "negative order",
-			steps: []tracefunnel.FunnelStep{
+			steps: []FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -202,12 +201,12 @@ func TestValidateFunnelSteps(t *testing.T) {
 func TestNormalizeFunnelSteps(t *testing.T) {
 	tests := []struct {
 		name     string
-		steps    []tracefunnel.FunnelStep
-		expected []tracefunnel.FunnelStep
+		steps    []FunnelStep
+		expected []FunnelStep
 	}{
 		{
 			name: "already normalized steps",
-			steps: []tracefunnel.FunnelStep{
+			steps: []FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -223,7 +222,7 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 					Order:       2,
 				},
 			},
-			expected: []tracefunnel.FunnelStep{
+			expected: []FunnelStep{
 				{
 					Name:        "Step 1",
 					ServiceName: "test-service",
@@ -240,7 +239,7 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "unordered steps",
-			steps: []tracefunnel.FunnelStep{
+			steps: []FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 2",
@@ -256,7 +255,7 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 					Order:       1,
 				},
 			},
-			expected: []tracefunnel.FunnelStep{
+			expected: []FunnelStep{
 				{
 					Name:        "Step 1",
 					ServiceName: "test-service",
@@ -273,7 +272,7 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "steps with gaps in order",
-			steps: []tracefunnel.FunnelStep{
+			steps: []FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -296,7 +295,7 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 					Order:       2,
 				},
 			},
-			expected: []tracefunnel.FunnelStep{
+			expected: []FunnelStep{
 				{
 					Name:        "Step 1",
 					ServiceName: "test-service",
@@ -322,7 +321,7 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Make a copy of the steps to avoid modifying the original
-			steps := make([]tracefunnel.FunnelStep, len(tt.steps))
+			steps := make([]FunnelStep, len(tt.steps))
 			copy(steps, tt.steps)
 
 			result := NormalizeFunnelSteps(steps)
@@ -429,14 +428,14 @@ func TestConstructFunnelResponse(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		funnel   *tracefunnel.Funnel
+		funnel   *StorableFunnel
 		claims   *authtypes.Claims
-		expected tracefunnel.FunnelResponse
+		expected GettableFunnel
 	}{
 		{
 			name: "with user email from funnel",
-			funnel: &tracefunnel.Funnel{
-				BaseMetadata: tracefunnel.BaseMetadata{
+			funnel: &StorableFunnel{
+				BaseMetadata: BaseMetadata{
 					Identifiable: types.Identifiable{
 						ID: funnelID,
 					},
@@ -455,7 +454,7 @@ func TestConstructFunnelResponse(t *testing.T) {
 					Identifiable: types.Identifiable{ID: valuer.MustNewUUID("user-123")},
 					Email:        "funnel@example.com",
 				},
-				Steps: []tracefunnel.FunnelStep{
+				Steps: []*FunnelStep{
 					{
 						ID:          valuer.GenerateUUID(),
 						Name:        "Step 1",
@@ -470,10 +469,10 @@ func TestConstructFunnelResponse(t *testing.T) {
 				OrgID:  orgID.String(),
 				Email:  "claims@example.com",
 			},
-			expected: tracefunnel.FunnelResponse{
+			expected: GettableFunnel{
 				FunnelName: "test-funnel",
 				FunnelID:   funnelID.String(),
-				Steps: []tracefunnel.FunnelStep{
+				Steps: []*FunnelStep{
 					{
 						Name:        "Step 1",
 						ServiceName: "test-service",
@@ -491,8 +490,8 @@ func TestConstructFunnelResponse(t *testing.T) {
 		},
 		{
 			name: "with user email from claims",
-			funnel: &tracefunnel.Funnel{
-				BaseMetadata: tracefunnel.BaseMetadata{
+			funnel: &StorableFunnel{
+				BaseMetadata: BaseMetadata{
 					Identifiable: types.Identifiable{
 						ID: funnelID,
 					},
@@ -507,7 +506,7 @@ func TestConstructFunnelResponse(t *testing.T) {
 						UpdatedBy: "user-123",
 					},
 				},
-				Steps: []tracefunnel.FunnelStep{
+				Steps: []*FunnelStep{
 					{
 						ID:          valuer.GenerateUUID(),
 						Name:        "Step 1",
@@ -522,10 +521,10 @@ func TestConstructFunnelResponse(t *testing.T) {
 				OrgID:  orgID.String(),
 				Email:  "claims@example.com",
 			},
-			expected: tracefunnel.FunnelResponse{
+			expected: GettableFunnel{
 				FunnelName: "test-funnel",
 				FunnelID:   funnelID.String(),
-				Steps: []tracefunnel.FunnelStep{
+				Steps: []*FunnelStep{
 					{
 						Name:        "Step 1",
 						ServiceName: "test-service",
@@ -573,12 +572,12 @@ func TestConstructFunnelResponse(t *testing.T) {
 func TestProcessFunnelSteps(t *testing.T) {
 	tests := []struct {
 		name        string
-		steps       []tracefunnel.FunnelStep
+		steps       []FunnelStep
 		expectError bool
 	}{
 		{
 			name: "valid steps with missing IDs",
-			steps: []tracefunnel.FunnelStep{
+			steps: []FunnelStep{
 				{
 					Name:        "Step 1",
 					ServiceName: "test-service",
@@ -596,7 +595,7 @@ func TestProcessFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "invalid steps - missing service name",
-			steps: []tracefunnel.FunnelStep{
+			steps: []FunnelStep{
 				{
 					Name:     "Step 1",
 					SpanName: "test-span",
@@ -613,7 +612,7 @@ func TestProcessFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "invalid steps - negative order",
-			steps: []tracefunnel.FunnelStep{
+			steps: []FunnelStep{
 				{
 					Name:        "Step 1",
 					ServiceName: "test-service",
