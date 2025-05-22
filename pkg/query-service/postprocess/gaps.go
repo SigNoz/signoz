@@ -29,6 +29,7 @@ func fillGap(series *v3.Series, start, end, step, shiftBy int64) *v3.Series {
 	// that don't have value and add zero point
 	start = start - (start % (step * 1000))
 	start += shiftBy * 1000
+	end += shiftBy * 1000
 	for i := start; i <= end; i += step * 1000 {
 		if _, ok := v[i]; !ok {
 			v[i] = 0
