@@ -116,7 +116,9 @@ func (s *Store) CreateUserWithPassword(ctx context.Context, user *types.User, pa
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	if _, err := tx.NewInsert().
 		Model(user).
@@ -304,7 +306,9 @@ func (s *Store) DeleteUser(ctx context.Context, orgID string, id string) error {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// get the password id
 
@@ -427,7 +431,9 @@ func (s *Store) UpdatePasswordAndDeleteResetPasswordEntry(ctx context.Context, u
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	factorPassword := &types.FactorPassword{
 		UserID:   userID,
