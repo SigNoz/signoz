@@ -127,12 +127,6 @@ func (api *licensingAPI) Checkout(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.Validate()
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
 	gettableSubscription, err := api.licensing.Checkout(ctx, orgID, req)
 	if err != nil {
 		render.Error(rw, err)
@@ -160,12 +154,6 @@ func (api *licensingAPI) Portal(rw http.ResponseWriter, r *http.Request) {
 
 	req := new(licensetypes.PostableSubscription)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	err = req.Validate()
-	if err != nil {
 		render.Error(rw, err)
 		return
 	}
