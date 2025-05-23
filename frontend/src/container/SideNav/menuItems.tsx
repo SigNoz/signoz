@@ -9,18 +9,22 @@ import {
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
+	Globe,
 	HardDrive,
 	Home,
+	Key,
 	Layers2,
 	LayoutGrid,
 	ListMinus,
-	MessageSquare,
+	MessageSquareText,
 	Receipt,
 	Route,
 	ScrollText,
+	Search,
 	Settings,
 	Slack,
 	Unplug,
+	User,
 	// Unplug,
 	UserPlus,
 } from 'lucide-react';
@@ -60,7 +64,7 @@ export const manageLicenseMenuItem = {
 export const helpSupportMenuItem = {
 	key: ROUTES.SUPPORT,
 	label: 'Help & Support',
-	icon: <MessageSquare size={16} />,
+	icon: <MessageSquareText size={16} />,
 };
 
 export const shortcutMenuItem = {
@@ -92,11 +96,7 @@ const menuItems: SidebarItem[] = [
 		label: 'Services',
 		icon: <HardDrive size={16} />,
 	},
-	{
-		key: ROUTES.TRACES_EXPLORER,
-		label: 'Traces',
-		icon: <DraftingCompass size={16} />,
-	},
+
 	{
 		key: ROUTES.LOGS,
 		label: 'Logs',
@@ -159,6 +159,133 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.SETTINGS,
 		label: 'Settings',
 		icon: <Settings size={16} />,
+	},
+];
+
+export const primaryMenuItems: SidebarItem[] = [
+	{
+		key: ROUTES.HOME,
+		label: 'Home',
+		icon: <Home size={16} />,
+	},
+	{
+		key: ROUTES.SEARCH,
+		label: 'Search',
+		icon: <Search size={16} />,
+	},
+	{
+		key: ROUTES.LIST_ALL_ALERT,
+		label: 'Alerts',
+		icon: <BellDot size={16} />,
+	},
+	{
+		key: ROUTES.ALL_DASHBOARD,
+		label: 'Dashboards',
+		icon: <LayoutGrid size={16} />,
+	},
+];
+
+export const defaultMoreMenuItems: SidebarItem[] = [
+	{
+		key: ROUTES.LOGS,
+		label: 'Logs',
+		icon: <ScrollText size={16} />,
+		isBeta: true,
+	},
+	{
+		key: ROUTES.TRACES_EXPLORER,
+		label: 'Traces',
+		icon: <DraftingCompass size={16} />,
+	},
+	{
+		key: ROUTES.METRICS_EXPLORER,
+		label: 'Metrics',
+		icon: <BarChart2 size={16} />,
+		isNew: true,
+	},
+	{
+		key: ROUTES.APPLICATION,
+		label: 'Services',
+		icon: <HardDrive size={16} />,
+	},
+	{
+		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+		label: 'Infrastructure',
+		icon: <Boxes size={16} />,
+	},
+	{
+		key: ROUTES.INTEGRATIONS,
+		label: 'Integrations',
+		icon: <Unplug size={16} />,
+	},
+	{
+		key: ROUTES.ALL_ERROR,
+		label: 'Exceptions',
+		icon: <BugIcon size={16} />,
+	},
+	{
+		key: ROUTES.API_MONITORING,
+		label: 'External APIs',
+		icon: <Binoculars size={16} />,
+		isNew: true,
+	},
+	{
+		key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
+		label: 'Messaging Queues',
+		icon: <ListMinus size={16} />,
+	},
+];
+
+export const settingsMenuItems: SidebarItem[] = [
+	{
+		key: ROUTES.SETTINGS,
+		label: 'General',
+		icon: <Settings size={16} />,
+	},
+	{
+		key: ROUTES.BILLING,
+		label: 'Billing',
+		icon: <Receipt size={16} />,
+	},
+	{
+		key: ROUTES.ORG_SETTINGS,
+		label: 'Members & SSO',
+		icon: <User size={16} />,
+	},
+	{
+		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
+		label: 'Custom Domain',
+		icon: <Globe size={16} />,
+	},
+	{
+		key: ROUTES.INTEGRATIONS,
+		label: 'Integrations',
+		icon: <Unplug size={16} />,
+	},
+	{
+		key: ROUTES.API_KEYS,
+		label: 'Notification Channels',
+		icon: <FileKey2 size={16} />,
+	},
+	{
+		key: ROUTES.API_KEYS,
+		label: 'API Keys',
+		icon: <Key size={16} />,
+	},
+	{
+		key: ROUTES.INGESTION_SETTINGS,
+		label: 'Ingestion',
+		icon: <RocketOutlined rotate={45} />,
+	},
+	{
+		key: ROUTES.MY_SETTINGS,
+		label: 'Account Settings',
+		icon: <User size={16} />,
+	},
+	{
+		key: ROUTES.SHORTCUTS,
+		label: 'Keyboard Shortcuts',
+		icon: <Layers2 size={16} />,
 	},
 ];
 
