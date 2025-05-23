@@ -170,3 +170,40 @@ alertmanager:
 analytics:
   # Whether to enable analytics.
   enabled: false
+
+##################### Emailing #####################
+emailing:
+  # Whether to enable emailing.
+  enabled: false
+  templates:
+    # The directory containing the email templates. This directory should contain a list of files defined at pkg/types/emailtypes/template.go.
+    directory: /opt/signoz/conf/templates/email
+  smtp:
+    # The SMTP server address.
+    address: localhost:25
+    # The email address to use for the SMTP server.
+    from:
+    # The hello message to use for the SMTP server.
+    hello:
+    # The static headers to send with the email.
+    headers: {}
+    auth:
+      # The username to use for the SMTP server.
+      username:
+      # The password to use for the SMTP server.
+      password:
+      # The secret to use for the SMTP server.
+      secret:
+      # The identity to use for the SMTP server.
+      identity:
+    tls:
+      # Whether to enable TLS. It should be false in most cases since the authentication mechanism should use the STARTTLS extension instead.
+      enabled: false
+      # Whether to skip TLS verification.
+      insecure_skip_verify: false
+      # The path to the CA file.
+      ca_file_path:
+      # The path to the key file.
+      key_file_path:
+      # The path to the certificate file.
+      cert_file_path:

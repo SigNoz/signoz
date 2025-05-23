@@ -87,11 +87,7 @@ function HostMetricLogsDetailedView({
 					/>
 				</div>
 			</div>
-			<HostMetricsLogs
-				timeRange={timeRange}
-				handleChangeLogFilters={handleChangeLogFilters}
-				filters={logFilters}
-			/>
+			<HostMetricsLogs timeRange={timeRange} filters={logFilters} />
 		</div>
 	);
 }
