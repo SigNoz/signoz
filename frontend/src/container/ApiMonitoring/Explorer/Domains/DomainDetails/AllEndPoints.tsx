@@ -1,28 +1,19 @@
-import { LoadingOutlined } from '@ant-design/icons';
-import { Select, Spin, Table, Typography } from 'antd';
-import { ENTITY_VERSION_V4 } from 'constants/app';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { Select } from 'antd';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import {
-	EndPointsTableRowData,
-	formatEndPointsDataForTable,
-	getEndPointsColumnsConfig,
-	getEndPointsQueryPayload,
+	getAllEndpointsWidgetData,
+	getGroupByFiltersFromGroupByValues,
 } from 'container/ApiMonitoring/utils';
+import GridCard from 'container/GridCardLayout/GridCard';
+import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
+import { isEqual } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
-import ErrorState from './components/ErrorState';
-import ExpandedRow from './components/ExpandedRow';
-import { VIEW_TYPES, VIEWS } from './constants';
+import { useApiMonitoringParams } from '../../../queryParams';
+import { SPAN_ATTRIBUTES, VIEWS } from './constants';
 
 function AllEndPoints({
 	domainName,
@@ -30,13 +21,28 @@ function AllEndPoints({
 	setSelectedView,
 	groupBy,
 	setGroupBy,
+	timeRange,
+	initialFilters,
+	setInitialFiltersEndPointStats,
 }: {
 	domainName: string;
 	setSelectedEndPointName: (name: string) => void;
 	setSelectedView: (tab: VIEWS) => void;
 	groupBy: IBuilderQuery['groupBy'];
 	setGroupBy: (groupBy: IBuilderQuery['groupBy']) => void;
+	timeRange: {
+		startTime: number;
+		endTime: number;
+	};
+	initialFilters: IBuilderQuery['filters'];
+	setInitialFiltersEndPointStats: (filters: IBuilderQuery['filters']) => void;
 }): JSX.Element {
+	const [params, setParams] = useApiMonitoringParams();
+	const [groupBySearchValue, setGroupBySearchValue] = useState<string>('');
+	const [allAvailableGroupByOptions, setAllAvailableGroupByOptions] = useState<{
+		[key: string]: any;
+	}>({});
+
 	const {
 		data: groupByFiltersData,
 		isLoading: isLoadingGroupByFilters,
@@ -44,7 +50,7 @@ function AllEndPoints({
 		dataSource: DataSource.TRACES,
 		aggregateAttribute: '',
 		aggregateOperator: 'noop',
-		searchText: '',
+		searchText: groupBySearchValue,
 		tagType: '',
 	});
 
@@ -52,129 +58,189 @@ function AllEndPoints({
 		{ value: string; label: string }[]
 	>([]);
 
-	const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
+	// --- FILTERS STATE SYNC ---
+	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
+		if (params.allEndpointsLocalFilters) {
+			return params.allEndpointsLocalFilters;
+		}
+		// Initialize filters based on the initial endPointName prop
+		const initialItems = [...initialFilters.items];
+		return { op: 'AND', items: initialItems };
+	});
 
+	// Sync params to local filters state on param change
+	useEffect(() => {
+		if (
+			params.allEndpointsLocalFilters &&
+			!isEqual(params.allEndpointsLocalFilters, filters)
+		) {
+			setFilters(params.allEndpointsLocalFilters);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [params.allEndpointsLocalFilters]);
+
+	// Handler for changes from the QueryBuilderSearchV2 component
+	const handleFilterChange = useCallback(
+		(newFilters: IBuilderQuery['filters']): void => {
+			setFilters(newFilters);
+			setParams({ allEndpointsLocalFilters: newFilters });
+		},
+		[setParams],
+	);
+
+	const currentQuery = initialQueriesMap[DataSource.TRACES];
+
+	const updatedCurrentQuery = useMemo(
+		() => ({
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: [
+					{
+						...currentQuery.builder.queryData[0],
+						dataSource: DataSource.TRACES,
+						filters, // Use the local filters state
+					},
+				],
+			},
+		}),
+		[filters, currentQuery],
+	);
+
+	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
+
+	const allEndpointsWidgetData = useMemo(
+		() => getAllEndpointsWidgetData(groupBy, domainName, filters),
+		[groupBy, domainName, filters],
+	);
+
+	// --- GROUP BY STATE SYNC (existing) ---
 	const handleGroupByChange = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
-			const groupBy = [];
+			const newGroupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
 				const element = (value[index] as unknown) as string;
 
-				const key = groupByFiltersData?.payload?.attributeKeys?.find(
-					(key) => key.key === element,
-				);
+				// Check if the key exists in our cached options first
+				if (allAvailableGroupByOptions[element]) {
+					newGroupBy.push(allAvailableGroupByOptions[element]);
+				} else {
+					// If not found in cache, check the current filtered results
+					const key = groupByFiltersData?.payload?.attributeKeys?.find(
+						(key) => key.key === element,
+					);
 
-				if (key) {
-					groupBy.push(key);
+					if (key) {
+						newGroupBy.push(key);
+					}
 				}
 			}
-			setGroupBy(groupBy);
+
+			setGroupBy(newGroupBy);
+			setGroupBySearchValue('');
+			// Update params
+			setParams({ groupBy: newGroupBy.map((g) => g.key) });
 		},
-		[groupByFiltersData, setGroupBy],
+		[groupByFiltersData, setGroupBy, allAvailableGroupByOptions, setParams],
 	);
+
+	// Sync params to local groupBy state on param change
+	useEffect(() => {
+		if (
+			params.groupBy &&
+			Array.isArray(params.groupBy) &&
+			!isEqual(
+				params.groupBy,
+				groupBy.map((g) => g.key),
+			)
+		) {
+			// Only update if different
+			const newGroupBy = params.groupBy
+				.map((key) => allAvailableGroupByOptions[key])
+				.filter(Boolean);
+			if (newGroupBy.length === params.groupBy.length) {
+				setGroupBy(newGroupBy);
+			}
+		}
+	}, [params.groupBy, allAvailableGroupByOptions, groupBy, setGroupBy]);
 
 	useEffect(() => {
 		if (groupByFiltersData?.payload) {
+			// Update dropdown options
 			setGroupByOptions(
 				groupByFiltersData?.payload?.attributeKeys?.map((filter) => ({
 					value: filter.key,
 					label: filter.key,
 				})) || [],
 			);
+
+			// Cache all available options to preserve selected values using functional update
+			setAllAvailableGroupByOptions((prevOptions) => {
+				const newOptions = { ...prevOptions };
+				groupByFiltersData?.payload?.attributeKeys?.forEach((filter) => {
+					newOptions[filter.key] = filter;
+				});
+				return newOptions;
+			});
 		}
-	}, [groupByFiltersData]);
+	}, [groupByFiltersData]); // Only depends on groupByFiltersData now
 
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	const queryPayloads = useMemo(
-		() =>
-			getEndPointsQueryPayload(
-				groupBy,
-				domainName,
-				Math.floor(minTime / 1e9),
-				Math.floor(maxTime / 1e9),
-			),
-		[groupBy, domainName, minTime, maxTime],
-	);
-
-	// Since only one query here
-	const endPointsDataQueries = useQueries(
-		queryPayloads.map((payload) => ({
-			queryKey: [
-				REACT_QUERY_KEY.GET_ENDPOINTS_LIST_BY_DOMAIN,
-				payload,
-				ENTITY_VERSION_V4,
-				groupBy,
-			],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
-			enabled: !!payload,
-			staleTime: 60 * 1000, // 1 minute stale time : optimize this part
-		})),
-	);
-
-	const endPointsDataQuery = endPointsDataQueries[0];
-	const {
-		data: allEndPointsData,
-		isLoading,
-		isRefetching,
-		isError,
-		refetch,
-	} = endPointsDataQuery;
-
-	const endPointsColumnsConfig = useMemo(
-		() => getEndPointsColumnsConfig(groupBy.length > 0, expandedRowKeys),
-		[groupBy.length, expandedRowKeys],
-	);
-
-	const expandedRowRender = (record: EndPointsTableRowData): JSX.Element => (
-		<ExpandedRow
-			domainName={domainName}
-			selectedRowData={record}
-			setSelectedEndPointName={setSelectedEndPointName}
-			setSelectedView={setSelectedView}
-		/>
-	);
-
-	const handleGroupByRowClick = (record: EndPointsTableRowData): void => {
-		if (expandedRowKeys.includes(record.key)) {
-			setExpandedRowKeys(expandedRowKeys.filter((key) => key !== record.key));
-		} else {
-			setExpandedRowKeys((expandedRowKeys) => [...expandedRowKeys, record.key]);
+	// Cache existing selected options on component mount
+	useEffect(() => {
+		if (groupBy && groupBy.length > 0) {
+			setAllAvailableGroupByOptions((prevOptions) => {
+				const newOptions = { ...prevOptions };
+				groupBy.forEach((option) => {
+					newOptions[option.key] = option;
+				});
+				return newOptions;
+			});
 		}
-	};
+	}, [groupBy]);
 
-	const handleRowClick = (record: EndPointsTableRowData): void => {
-		if (groupBy.length === 0) {
-			setSelectedEndPointName(record.endpointName); // this will open up the endpoint details tab
-			setSelectedView(VIEW_TYPES.ENDPOINT_DETAILS);
-		} else {
-			handleGroupByRowClick(record); // this will prepare the nested query payload
-		}
-	};
-
-	const formattedEndPointsData = useMemo(
-		() =>
-			formatEndPointsDataForTable(
-				allEndPointsData?.payload?.data?.result[0]?.table?.rows,
-				groupBy,
-			),
-		[groupBy, allEndPointsData],
+	const onRowClick = useCallback(
+		(props: any): void => {
+			setSelectedEndPointName(props[SPAN_ATTRIBUTES.URL_PATH] as string);
+			setSelectedView(VIEWS.ENDPOINT_STATS);
+			const initialItems = [
+				...filters.items,
+				...getGroupByFiltersFromGroupByValues(props, groupBy).items,
+			];
+			setInitialFiltersEndPointStats({
+				items: initialItems,
+				op: 'AND',
+			});
+			setParams({
+				selectedEndPointName: props[SPAN_ATTRIBUTES.URL_PATH] as string,
+				selectedView: VIEWS.ENDPOINT_STATS,
+				endPointDetailsLocalFilters: {
+					items: initialItems,
+					op: 'AND',
+				},
+			});
+		},
+		[
+			filters,
+			setInitialFiltersEndPointStats,
+			setSelectedEndPointName,
+			setSelectedView,
+			groupBy,
+			setParams,
+		],
 	);
-
-	if (isError) {
-		return (
-			<div className="all-endpoints-error-state-wrapper">
-				<ErrorState refetch={refetch} />
-			</div>
-		);
-	}
 
 	return (
 		<div className="all-endpoints-container">
+			<div className="all-endpoints-header">
+				<div className="filter-container">
+					<QueryBuilderSearchV2
+						query={query}
+						onChange={handleFilterChange}
+						placeholder="Search for filters..."
+					/>
+				</div>
+			</div>
 			<div className="group-by-container">
 				<div className="group-by-label"> Group by </div>
 				<Select
@@ -187,49 +253,17 @@ function AllEndPoints({
 					placeholder="Search for attribute"
 					options={groupByOptions}
 					onChange={handleGroupByChange}
+					onSearch={(value: string): void => setGroupBySearchValue(value)}
 				/>{' '}
 			</div>
 			<div className="endpoints-table-container">
-				<div className="endpoints-table-header">Endpoint overview</div>
-				<Table
-					columns={endPointsColumnsConfig}
-					loading={{
-						spinning: isLoading || isRefetching,
-						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-					}}
-					dataSource={isLoading || isRefetching ? [] : formattedEndPointsData}
-					locale={{
-						emptyText:
-							isLoading || isRefetching ? null : (
-								<div className="no-filtered-endpoints-message-container">
-									<div className="no-filtered-endpoints-message-content">
-										<img
-											src="/Icons/emptyState.svg"
-											alt="thinking-emoji"
-											className="empty-state-svg"
-										/>
-
-										<Typography.Text className="no-filtered-endpoints-message">
-											This query had no results. Edit your query and try again!
-										</Typography.Text>
-									</div>
-								</div>
-							),
-					}}
-					scroll={{ x: true }}
-					tableLayout="fixed"
-					onRow={(record): { onClick: () => void; className: string } => ({
-						onClick: (): void => handleRowClick(record),
-						className: 'clickable-row',
-					})}
-					expandable={{
-						expandedRowRender: groupBy.length > 0 ? expandedRowRender : undefined,
-						expandedRowKeys,
-						expandIconColumnIndex: -1,
-					}}
-					rowClassName={(_, index): string =>
-						index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
-					}
+				<GridCard
+					widget={allEndpointsWidgetData}
+					isQueryEnabled
+					onDragSelect={(): void => {}}
+					customOnDragSelect={(): void => {}}
+					customTimeRange={timeRange}
+					customOnRowClick={onRowClick}
 				/>
 			</div>
 		</div>

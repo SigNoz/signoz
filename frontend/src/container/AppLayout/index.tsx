@@ -9,8 +9,8 @@ import manageCreditCardApi from 'api/billing/manage';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
-import getUserLatestVersion from 'api/user/getLatestVersion';
-import getUserVersion from 'api/user/getVersion';
+import getUserLatestVersion from 'api/v1/version/getLatestVersion';
+import getUserVersion from 'api/v1/version/getVersion';
 import cx from 'classnames';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -42,7 +42,7 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
 import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { matchPath, useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import {
@@ -339,6 +339,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const isApiMonitoringView = (): boolean => routeKey === 'API_MONITORING';
 
+	const isExceptionsView = (): boolean => routeKey === 'ALL_ERROR';
+
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
@@ -360,6 +362,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS' ||
 		routeKey === 'INFRASTRUCTURE_MONITORING_KUBERNETES';
 	const isTracesFunnels = (): boolean => routeKey === 'TRACES_FUNNELS';
+	const isTracesFunnelDetails = (): boolean =>
+		!!matchPath(pathname, ROUTES.TRACES_FUNNELS_DETAIL);
+
 	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
 
 	const isDashboardView = (): boolean =>
@@ -374,9 +379,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	useEffect(() => {
 		if (isDarkMode) {
 			document.body.classList.remove('lightMode');
+			document.body.classList.add('dark');
 			document.body.classList.add('darkMode');
 		} else {
 			document.body.classList.add('lightMode');
+			document.body.classList.remove('dark');
 			document.body.classList.remove('darkMode');
 		}
 	}, [isDarkMode]);
@@ -586,7 +593,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	);
 
 	return (
-		<Layout className={cx(isDarkMode ? 'darkMode' : 'lightMode')}>
+		<Layout className={cx(isDarkMode ? 'darkMode dark' : 'lightMode')}>
 			<Helmet>
 				<title>{pageTitle}</title>
 			</Helmet>
@@ -636,7 +643,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				</div>
 			)}
 
-			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
+			<Flex
+				className={cx('app-layout', isDarkMode ? 'darkMode dark' : 'lightMode')}
+			>
 				{isToDisplayLayout && !renderFullScreen && <SideNav />}
 				<div
 					className={cx('app-content', {
@@ -661,11 +670,16 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isMessagingQueues() ||
 											isCloudIntegrationPage() ||
 											isInfraMonitoring() ||
-											isApiMonitoringView()
+											isApiMonitoringView() ||
+											isExceptionsView()
 												? 0
 												: '0 1rem',
 
-										...(isTraceDetailsView() || isTracesFunnels() ? { margin: 0 } : {}),
+										...(isTraceDetailsView() ||
+										isTracesFunnels() ||
+										isTracesFunnelDetails()
+											? { margin: 0 }
+											: {}),
 									}}
 								>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}

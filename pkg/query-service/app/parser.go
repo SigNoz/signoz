@@ -25,16 +25,13 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
-	"github.com/SigNoz/signoz/pkg/types"
 	chVariables "github.com/SigNoz/signoz/pkg/variables/clickhouse"
 )
 
@@ -474,142 +471,6 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	return &model.GetTTLParams{Type: typeTTL}, nil
 }
 
-func parseUserRequest(r *http.Request) (*types.User, error) {
-	var req types.User
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	return &req, nil
-}
-
-func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
-	var req model.InviteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	// Trim spaces from email
-	req.Email = strings.TrimSpace(req.Email)
-	return &req, nil
-}
-
-func isValidRole(role string) bool {
-	switch role {
-	case constants.AdminGroup, constants.EditorGroup, constants.ViewerGroup:
-		return true
-	}
-	return false
-}
-
-func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) {
-	var req model.BulkInviteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	// Validate that the request contains users
-	if len(req.Users) == 0 {
-		return nil, fmt.Errorf("no users provided for invitation")
-	}
-
-	// Trim spaces and validate each user
-	for i := range req.Users {
-		req.Users[i].Email = strings.TrimSpace(req.Users[i].Email)
-		if req.Users[i].Email == "" {
-			return nil, fmt.Errorf("email is required for each user")
-		}
-		if req.Users[i].FrontendBaseUrl == "" {
-			return nil, fmt.Errorf("frontendBaseUrl is required for each user")
-		}
-		if !isValidRole(req.Users[i].Role) {
-			return nil, fmt.Errorf("invalid role for user: %s", req.Users[i].Email)
-		}
-	}
-
-	return &req, nil
-}
-
-func parseSetApdexScoreRequest(r *http.Request) (*types.ApdexSettings, error) {
-	var req types.ApdexSettings
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	return &req, nil
-}
-
-func parseInsertIngestionKeyRequest(r *http.Request) (*model.IngestionKey, error) {
-	var req model.IngestionKey
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	return &req, nil
-}
-
-func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
-	var req auth.RegisterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	if err := auth.ValidatePassword(req.Password); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseLoginRequest(r *http.Request) (*model.LoginRequest, error) {
-	var req model.LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseUserRoleRequest(r *http.Request) (*model.UserRole, error) {
-	var req model.UserRole
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseEditOrgRequest(r *http.Request) (*types.Organization, error) {
-	var req types.Organization
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseResetPasswordRequest(r *http.Request) (*model.ResetPasswordRequest, error) {
-	var req model.ResetPasswordRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	if err := auth.ValidatePassword(req.Password); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseChangePasswordRequest(r *http.Request) (*model.ChangePasswordRequest, error) {
-	id := mux.Vars(r)["id"]
-	var req model.ChangePasswordRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	req.UserId = id
-	if err := auth.ValidatePassword(req.NewPassword); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
 func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequest, error) {
 	var req v3.AggregateAttributeRequest
 
@@ -719,6 +580,21 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	tagType := v3.TagType(r.URL.Query().Get("tagType"))
+
+	// empty string is a valid tagType
+	// i.e retrieve all attributes
+	if tagType != "" {
+		// what is happening here?
+		// if tagType is undefined(uh oh javascript) or any invalid value, set it to empty string
+		// instead of failing the request. Ideally, we should fail the request.
+		// but we are not doing that to maintain backward compatibility.
+		if err := tagType.Validate(); err != nil {
+			// if the tagType is invalid, set it to empty string
+			tagType = ""
+		}
+	}
+
 	if err != nil {
 		limit = 50
 	}
@@ -739,6 +615,7 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		AggregateAttribute: aggregateAttribute,
 		Limit:              limit,
 		SearchText:         r.URL.Query().Get("searchText"),
+		TagType:            tagType,
 	}
 	return &req, nil
 }
@@ -861,7 +738,7 @@ func chTransformQuery(query string, variables map[string]interface{}) {
 	transformer := chVariables.NewQueryTransformer(query, varsForTransform)
 	transformedQuery, err := transformer.Transform()
 	if err != nil {
-		zap.L().Warn("failed to transform clickhouse query", zap.Error(err))
+		zap.L().Warn("failed to transform clickhouse query", zap.String("query", query), zap.Error(err))
 	}
 	zap.L().Info("transformed clickhouse query", zap.String("transformedQuery", transformedQuery), zap.String("originalQuery", query))
 }

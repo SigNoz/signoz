@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -24,12 +25,12 @@ import (
 type LogParsingPipelineController struct {
 	Repo
 
-	GetIntegrationPipelines func(context.Context) ([]pipelinetypes.GettablePipeline, *model.ApiError)
+	GetIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, *model.ApiError)
 }
 
 func NewLogParsingPipelinesController(
 	sqlStore sqlstore.SQLStore,
-	getIntegrationPipelines func(context.Context) ([]pipelinetypes.GettablePipeline, *model.ApiError),
+	getIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, *model.ApiError),
 ) (*LogParsingPipelineController, error) {
 	repo := NewRepo(sqlStore)
 	return &LogParsingPipelineController{
@@ -53,8 +54,8 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	postable []pipelinetypes.PostablePipeline,
 ) (*PipelinesResponse, *model.ApiError) {
 	// get user id from context
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
 		return nil, model.UnauthorizedError(fmt.Errorf("failed to get userId from context"))
 	}
 
@@ -83,7 +84,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	// prepare config elements
 	elements := make([]string, len(pipelines))
 	for i, p := range pipelines {
-		elements[i] = p.ID
+		elements[i] = p.ID.StringValue()
 	}
 
 	// prepare config by calling gen func
@@ -111,7 +112,9 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 	for _, pp := range postedPipelines {
 		gettablePipelines = append(gettablePipelines, pipelinetypes.GettablePipeline{
 			StoreablePipeline: pipelinetypes.StoreablePipeline{
-				ID:          uuid.New().String(),
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
 				OrderID:     pp.OrderID,
 				Enabled:     pp.Enabled,
 				Name:        pp.Name,
@@ -143,6 +146,15 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 ) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
 	result := []pipelinetypes.GettablePipeline{}
 
+	// todo(nitya): remove this once we fix agents in multitenancy
+	defaultOrgID, err := ic.GetDefaultOrgID(ctx)
+	if err != nil {
+		// we don't want to fail the request if we can't get the default org ID
+		// we will just return an empty list of pipelines
+		zap.L().Warn("failed to get default org ID", zap.Error(err))
+		return result, nil
+	}
+
 	if version >= 0 {
 		savedPipelines, errors := ic.getPipelinesByVersion(ctx, orgID, version)
 		if errors != nil {
@@ -152,7 +164,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 		result = savedPipelines
 	}
 
-	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx)
+	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx, defaultOrgID)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
 			apiErr, "could not get pipelines for installed integrations",

@@ -4,7 +4,7 @@ import '../OnboardingQuestionaire.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import editOrg from 'api/user/editOrg';
+import editOrg from 'api/organization/editOrg';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
@@ -13,8 +13,7 @@ import { useTranslation } from 'react-i18next';
 
 export interface OrgData {
 	id: string;
-	isAnonymous: boolean;
-	name: string;
+	displayName: string;
 }
 
 export interface OrgDetails {
@@ -110,15 +109,14 @@ function OrgQuestions({
 		try {
 			setIsLoading(true);
 			const { statusCode, error } = await editOrg({
-				isAnonymous: currentOrgData.isAnonymous,
-				name: organisationName,
+				displayName: organisationName,
 				orgId: currentOrgData.id,
 			});
-			if (statusCode === 200) {
-				updateOrg(currentOrgData?.id, orgDetails.organisationName);
+			if (statusCode === 204) {
+				updateOrg(currentOrgData?.id, organisationName);
 
 				logEvent('Org Onboarding: Org Name Updated', {
-					organisationName: orgDetails.organisationName,
+					organisationName,
 				});
 
 				logEvent('Org Onboarding: Answered', {
@@ -200,7 +198,7 @@ function OrgQuestions({
 	return (
 		<div className="questions-container">
 			<Typography.Title level={3} className="title">
-				Welcome, {user?.name}!
+				Welcome, {user?.displayName}!
 			</Typography.Title>
 			<Typography.Paragraph className="sub-title">
 				We&apos;ll help you get the most out of SigNoz, whether you&apos;re new to

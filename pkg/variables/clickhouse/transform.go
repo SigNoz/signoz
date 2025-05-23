@@ -2,9 +2,11 @@ package clickhouse
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/AfterShip/clickhouse-sql-parser/parser"
+	"github.com/SigNoz/signoz/pkg/variables"
 )
 
 // VariableValue represents a variable's assigned value
@@ -23,10 +25,21 @@ type QueryTransformer struct {
 }
 
 // NewQueryTransformer creates a new transformer with the given SQL and variables
-func NewQueryTransformer(sql string, variables []VariableValue) *QueryTransformer {
+func NewQueryTransformer(sql string, vars []VariableValue) *QueryTransformer {
 	varMap := make(map[string]VariableValue)
-	for _, v := range variables {
+	for _, v := range vars {
+		if slices.Contains(variables.ReservedTimeVars, v.Name) {
+			continue
+		}
 		varMap[v.Name] = v
+	}
+
+	for _, v := range variables.ReservedTimeVars {
+		varMap[v] = VariableValue{
+			Name:        v,
+			IsSelectAll: false,
+			FieldType:   "scalar",
+		}
 	}
 
 	// for each variable, replace the `{{variable_name}}`, [[variable_name]], {{ .variable_name }}, {{.variable_name}}

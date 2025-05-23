@@ -1,13 +1,6 @@
+import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
-import { allAlertChannels } from 'mocks-server/__mockdata__/alerts';
 import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
-
-jest.mock('hooks/useFetch', () => ({
-	__esModule: true,
-	default: jest.fn().mockImplementation(() => ({
-		payload: allAlertChannels,
-	})),
-}));
 
 const successNotification = jest.fn();
 jest.mock('hooks/useNotifications', () => ({
@@ -20,9 +13,19 @@ jest.mock('hooks/useNotifications', () => ({
 	})),
 }));
 
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { pathname: string } => ({
+		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALL_CHANNELS}`,
+	}),
+}));
+
 describe('Alert Channels Settings List page', () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		render(<AlertChannels />);
+		await waitFor(() =>
+			expect(screen.getByText('sending_channels_note')).toBeInTheDocument(),
+		);
 	});
 	afterEach(() => {
 		jest.restoreAllMocks();

@@ -6,6 +6,6 @@ export type PayloadProps = {
 };
 
 export interface Props {
-	id?: number;
+	id?: string;
 	data: AlertDef;
 }

@@ -9,11 +9,16 @@ export interface Props {
 }
 
 export interface PayloadProps {
+	data: InviteDetails;
+	status: string;
+}
+
+export interface InviteDetails {
 	createdAt: number;
 	email: User['email'];
-	name: User['name'];
+	name: User['displayName'];
 	role: ROLES;
 	token: string;
-	organization: Organization['name'];
+	organization: Organization['displayName'];
 	precheck?: LoginPrecheckPayloadProps;
 }

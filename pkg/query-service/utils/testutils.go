@@ -7,8 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -50,9 +48,26 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 			sqlmigration.NewModifyDatetimeFactory(),
 			sqlmigration.NewModifyOrgDomainFactory(),
 			sqlmigration.NewUpdateOrganizationFactory(sqlStore),
+			sqlmigration.NewAddAlertmanagerFactory(sqlStore),
 			sqlmigration.NewUpdateDashboardAndSavedViewsFactory(sqlStore),
 			sqlmigration.NewUpdatePatAndOrgDomainsFactory(sqlStore),
 			sqlmigration.NewUpdatePipelines(sqlStore),
+			sqlmigration.NewDropLicensesSitesFactory(sqlStore),
+			sqlmigration.NewUpdateInvitesFactory(sqlStore),
+			sqlmigration.NewUpdatePatFactory(sqlStore),
+			sqlmigration.NewUpdateAlertmanagerFactory(sqlStore),
+			sqlmigration.NewUpdatePreferencesFactory(sqlStore),
+			sqlmigration.NewUpdateApdexTtlFactory(sqlStore),
+			sqlmigration.NewUpdateResetPasswordFactory(sqlStore),
+			sqlmigration.NewUpdateRulesFactory(sqlStore),
+			sqlmigration.NewAddVirtualFieldsFactory(),
+			sqlmigration.NewUpdateIntegrationsFactory(sqlStore),
+			sqlmigration.NewUpdateOrganizationsFactory(sqlStore),
+			sqlmigration.NewDropGroupsFactory(sqlStore),
+			sqlmigration.NewCreateQuickFiltersFactory(sqlStore),
+			sqlmigration.NewUpdateQuickFiltersFactory(sqlStore),
+			sqlmigration.NewAuthRefactorFactory(sqlStore),
+			sqlmigration.NewMigratePATToFactorAPIKey(sqlStore),
 			sqlmigration.NewUpdateAgentsFactory(sqlStore),
 		),
 	)
@@ -70,13 +85,6 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 
 func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
 	sqlStore, _ := NewTestSqliteDB(t)
-
-	err := dao.InitDao(sqlStore)
-	if err != nil {
-		t.Fatalf("could not initialize dao: %v", err)
-	}
-	_ = dashboards.InitDB(sqlStore)
-
 	return sqlStore
 }
 

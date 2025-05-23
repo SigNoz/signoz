@@ -4,13 +4,13 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
@@ -28,9 +28,9 @@ func (api *API) GetAlerts(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -53,9 +53,9 @@ func (api *API) TestReceiver(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -85,9 +85,9 @@ func (api *API) ListChannels(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -122,9 +122,9 @@ func (api *API) GetChannelByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -140,9 +140,9 @@ func (api *API) GetChannelByID(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	id, err := strconv.Atoi(idString)
+	id, err := valuer.NewUUID(idString)
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid integer"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
 		return
 	}
 
@@ -159,9 +159,9 @@ func (api *API) UpdateChannelByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -177,9 +177,9 @@ func (api *API) UpdateChannelByID(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	id, err := strconv.Atoi(idString)
+	id, err := valuer.NewUUID(idString)
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid integer"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
 		return
 	}
 
@@ -209,9 +209,9 @@ func (api *API) DeleteChannelByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -227,9 +227,9 @@ func (api *API) DeleteChannelByID(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	id, err := strconv.Atoi(idString)
+	id, err := valuer.NewUUID(idString)
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid integer"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
 		return
 	}
 
@@ -246,9 +246,9 @@ func (api *API) CreateChannel(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 

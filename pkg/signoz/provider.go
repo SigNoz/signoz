@@ -7,10 +7,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
+	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
+	"github.com/SigNoz/signoz/pkg/emailing/smtpemailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -39,7 +43,6 @@ func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sql
 	hook := sqlstorehook.NewLoggingFactory()
 	return factory.MustNewNamedMap(
 		sqlitesqlstore.NewFactory(hook),
-		postgressqlstore.NewFactory(hook),
 	)
 }
 
@@ -64,13 +67,33 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewUpdatePipelines(sqlstore),
 		sqlmigration.NewDropLicensesSitesFactory(sqlstore),
 		sqlmigration.NewUpdateInvitesFactory(sqlstore),
+		sqlmigration.NewUpdatePatFactory(sqlstore),
+		sqlmigration.NewUpdateAlertmanagerFactory(sqlstore),
+		sqlmigration.NewUpdatePreferencesFactory(sqlstore),
+		sqlmigration.NewUpdateApdexTtlFactory(sqlstore),
+		sqlmigration.NewUpdateResetPasswordFactory(sqlstore),
+		sqlmigration.NewUpdateRulesFactory(sqlstore),
+		sqlmigration.NewAddVirtualFieldsFactory(),
+		sqlmigration.NewUpdateIntegrationsFactory(sqlstore),
+		sqlmigration.NewUpdateOrganizationsFactory(sqlstore),
+		sqlmigration.NewDropGroupsFactory(sqlstore),
+		sqlmigration.NewCreateQuickFiltersFactory(sqlstore),
+		sqlmigration.NewUpdateQuickFiltersFactory(sqlstore),
+		sqlmigration.NewAuthRefactorFactory(sqlstore),
+		sqlmigration.NewMigratePATToFactorAPIKey(sqlstore),
 		sqlmigration.NewUpdateAgentsFactory(sqlstore),
 	)
 }
 
 func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
 	return factory.MustNewNamedMap(
-		clickhousetelemetrystore.NewFactory(telemetrystorehook.NewFactory()),
+		clickhousetelemetrystore.NewFactory(telemetrystorehook.NewSettingsFactory(), telemetrystorehook.NewLoggingFactory()),
+	)
+}
+
+func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore) factory.NamedMap[factory.ProviderFactory[prometheus.Prometheus, prometheus.Config]] {
+	return factory.MustNewNamedMap(
+		clickhouseprometheus.NewFactory(telemetryStore),
 	)
 }
 
@@ -78,5 +101,12 @@ func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 	return factory.MustNewNamedMap(
 		legacyalertmanager.NewFactory(sqlstore),
 		signozalertmanager.NewFactory(sqlstore),
+	)
+}
+
+func NewEmailingProviderFactories() factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]] {
+	return factory.MustNewNamedMap(
+		noopemailing.NewFactory(),
+		smtpemailing.NewFactory(),
 	)
 }

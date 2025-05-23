@@ -20,4 +20,5 @@ export type QueryTableProps = Omit<
 	dataSource?: RowData[];
 	sticky?: TableProps<RowData>['sticky'];
 	searchTerm?: string;
+	widgetId?: string;
 };

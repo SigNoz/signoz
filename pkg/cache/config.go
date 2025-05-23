@@ -4,12 +4,11 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	go_cache "github.com/patrickmn/go-cache"
 )
 
 type Memory struct {
 	TTL             time.Duration `mapstructure:"ttl"`
-	CleanupInterval time.Duration `mapstructure:"cleanupInterval"`
+	CleanupInterval time.Duration `mapstructure:"cleanup_interval"`
 }
 
 type Redis struct {
@@ -33,8 +32,8 @@ func newConfig() factory.Config {
 	return &Config{
 		Provider: "memory",
 		Memory: Memory{
-			TTL:             go_cache.NoExpiration,
-			CleanupInterval: 1 * time.Minute,
+			TTL:             time.Hour * 168,
+			CleanupInterval: 10 * time.Minute,
 		},
 		Redis: Redis{
 			Host:     "localhost",

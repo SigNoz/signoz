@@ -42,12 +42,9 @@ type newInvite struct {
 }
 
 func NewUpdateInvitesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.
-		NewProviderFactory(
-			factory.MustNewName("update_invites"),
-			func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-				return newUpdateInvites(ctx, ps, c, sqlstore)
-			})
+	return factory.NewProviderFactory(factory.MustNewName("update_invites"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return newUpdateInvites(ctx, ps, c, sqlstore)
+	})
 }
 
 func newUpdateInvites(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
@@ -55,8 +52,7 @@ func newUpdateInvites(_ context.Context, _ factory.ProviderSettings, _ Config, s
 }
 
 func (migration *updateInvites) Register(migrations *migrate.Migrations) error {
-	if err := migrations.
-		Register(migration.Up, migration.Down); err != nil {
+	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
 
@@ -64,8 +60,7 @@ func (migration *updateInvites) Register(migrations *migrate.Migrations) error {
 }
 
 func (migration *updateInvites) Up(ctx context.Context, db *bun.DB) error {
-	tx, err := db.
-		BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -75,7 +70,7 @@ func (migration *updateInvites) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingInvite), new(newInvite), func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingInvite), new(newInvite), []string{OrgReference}, func(ctx context.Context) error {
 			existingInvites := make([]*existingInvite, 0)
 			err = tx.
 				NewSelect().
@@ -88,8 +83,7 @@ func (migration *updateInvites) Up(ctx context.Context, db *bun.DB) error {
 			}
 
 			if err == nil && len(existingInvites) > 0 {
-				newInvites := migration.
-					CopyOldInvitesToNewInvites(existingInvites)
+				newInvites := migration.CopyOldInvitesToNewInvites(existingInvites)
 				_, err = tx.
 					NewInsert().
 					Model(&newInvites).

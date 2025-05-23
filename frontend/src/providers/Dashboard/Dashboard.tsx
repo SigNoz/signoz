@@ -40,7 +40,11 @@ import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
-import { DashboardSortOrder, IDashboardContext } from './types';
+import {
+	DashboardSortOrder,
+	IDashboardContext,
+	WidgetColumnWidths,
+} from './types';
 import { sortLayout } from './util';
 
 const DashboardContext = createContext<IDashboardContext>({
@@ -74,6 +78,8 @@ const DashboardContext = createContext<IDashboardContext>({
 	selectedRowWidgetId: '',
 	setSelectedRowWidgetId: () => {},
 	isDashboardFetching: false,
+	columnWidths: {},
+	setColumnWidths: () => {},
 });
 
 interface Props {
@@ -408,6 +414,8 @@ export function DashboardProvider({
 		}
 	};
 
+	const [columnWidths, setColumnWidths] = useState<WidgetColumnWidths>({});
+
 	const value: IDashboardContext = useMemo(
 		() => ({
 			toScrollWidgetId,
@@ -435,6 +443,8 @@ export function DashboardProvider({
 			selectedRowWidgetId,
 			setSelectedRowWidgetId,
 			isDashboardFetching,
+			columnWidths,
+			setColumnWidths,
 		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -457,6 +467,8 @@ export function DashboardProvider({
 			selectedRowWidgetId,
 			setSelectedRowWidgetId,
 			isDashboardFetching,
+			columnWidths,
+			setColumnWidths,
 		],
 	);
 

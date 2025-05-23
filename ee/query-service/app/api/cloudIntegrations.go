@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	"github.com/SigNoz/signoz/ee/query-service/model"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/render"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -30,6 +30,12 @@ type CloudIntegrationConnectionParamsResponse struct {
 }
 
 func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	if cloudProvider != "aws" {
 		RespondError(w, basemodel.BadRequest(fmt.Errorf(
@@ -38,15 +44,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	currentUser, err := auth.GetUserFromReqContext(r.Context())
-	if err != nil {
-		RespondError(w, basemodel.UnauthorizedError(fmt.Errorf(
-			"couldn't deduce current user: %w", err,
-		)), nil)
-		return
-	}
-
-	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), currentUser.OrgID, cloudProvider)
+	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), claims.OrgID, cloudProvider)
 	if apiErr != nil {
 		RespondError(w, basemodel.WrapApiError(
 			apiErr, "couldn't provision PAT for cloud integration:",
@@ -118,7 +116,14 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		return "", apiErr
 	}
 
-	allPats, err := ah.AppDao().ListPATs(ctx, orgId)
+	orgIdUUID, err := valuer.NewUUID(orgId)
+	if err != nil {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't parse orgId: %w", err,
+		))
+	}
+
+	allPats, err := ah.Signoz.Modules.User.ListAPIKeys(ctx, orgIdUUID)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't list PATs: %w", err,
@@ -135,36 +140,36 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		zap.String("cloudProvider", cloudProvider),
 	)
 
-	newPAT := model.PAT{
-		StorablePersonalAccessToken: types.StorablePersonalAccessToken{
-			Token:     generatePATToken(),
-			UserID:    integrationUser.ID,
-			Name:      integrationPATName,
-			Role:      baseconstants.ViewerGroup,
-			ExpiresAt: 0,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			},
-		},
-	}
-	integrationPAT, err := ah.AppDao().CreatePAT(ctx, orgId, newPAT)
+	newPAT, err := types.NewStorableAPIKey(
+		integrationPATName,
+		integrationUser.ID,
+		types.RoleViewer,
+		0,
+	)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't create cloud integration PAT: %w", err,
 		))
 	}
-	return integrationPAT.Token, nil
+
+	err = ah.Signoz.Modules.User.CreateAPIKey(ctx, newPAT)
+	if err != nil {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't create cloud integration PAT: %w", err,
+		))
+	}
+	return newPAT.Token, nil
 }
 
 func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	ctx context.Context, orgId string, cloudProvider string,
 ) (*types.User, *basemodel.ApiError) {
-	cloudIntegrationUserId := fmt.Sprintf("%s-integration", cloudProvider)
+	cloudIntegrationUser := fmt.Sprintf("%s-integration", cloudProvider)
+	email := fmt.Sprintf("%s@signoz.io", cloudIntegrationUser)
 
-	integrationUserResult, apiErr := ah.AppDao().GetUser(ctx, cloudIntegrationUserId)
-	if apiErr != nil {
-		return nil, basemodel.WrapApiError(apiErr, "couldn't look for integration user")
+	integrationUserResult, err := ah.Signoz.Modules.User.GetUserByEmailInOrg(ctx, orgId, email)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, basemodel.NotFoundError(fmt.Errorf("couldn't look for integration user: %w", err))
 	}
 
 	if integrationUserResult != nil {
@@ -176,33 +181,18 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 		zap.String("cloudProvider", cloudProvider),
 	)
 
-	newUser := &types.User{
-		ID:    cloudIntegrationUserId,
-		Name:  fmt.Sprintf("%s integration", cloudProvider),
-		Email: fmt.Sprintf("%s@signoz.io", cloudIntegrationUserId),
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-		},
-		OrgID: orgId,
-	}
-
-	viewerGroup, apiErr := dao.DB().GetGroupByName(ctx, baseconstants.ViewerGroup)
-	if apiErr != nil {
-		return nil, basemodel.WrapApiError(apiErr, "couldn't get viewer group for creating integration user")
-	}
-	newUser.GroupID = viewerGroup.ID
-
-	passwordHash, err := auth.PasswordHash(uuid.NewString())
+	newUser, err := types.NewUser(cloudIntegrationUser, email, types.RoleViewer.String(), orgId)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf(
-			"couldn't hash random password for cloud integration user: %w", err,
+			"couldn't create cloud integration user: %w", err,
 		))
 	}
-	newUser.Password = passwordHash
 
-	integrationUser, apiErr := ah.AppDao().CreateUser(ctx, newUser, false)
-	if apiErr != nil {
-		return nil, basemodel.WrapApiError(apiErr, "couldn't create cloud integration user")
+	password, err := types.NewFactorPassword(uuid.NewString())
+
+	integrationUser, err := ah.Signoz.Modules.User.CreateUserWithPassword(ctx, newUser, password)
+	if err != nil {
+		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration user: %w", err))
 	}
 
 	return integrationUser, nil

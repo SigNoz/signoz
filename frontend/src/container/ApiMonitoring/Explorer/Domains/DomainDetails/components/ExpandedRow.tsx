@@ -1,6 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Table } from 'antd';
 import { ColumnType } from 'antd/lib/table';
+import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -18,6 +19,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { VIEW_TYPES, VIEWS } from '../constants';
@@ -27,11 +29,13 @@ function ExpandedRow({
 	selectedRowData,
 	setSelectedEndPointName,
 	setSelectedView,
+	orderBy,
 }: {
 	domainName: string;
 	selectedRowData: EndPointsTableRowData;
 	setSelectedEndPointName: (name: string) => void;
 	setSelectedView: (view: VIEWS) => void;
+	orderBy: OrderByPayload | null;
 }): JSX.Element {
 	const nestedColumns = useMemo(() => getEndPointsColumnsConfig(false, []), []);
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -99,6 +103,7 @@ function ExpandedRow({
 								? formatEndPointsDataForTable(
 										groupedByRowQuery.data?.payload.data.result[0].table?.rows,
 										[],
+										orderBy,
 								  )
 								: []
 						}
@@ -113,7 +118,8 @@ function ExpandedRow({
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
 								setSelectedEndPointName(record.endpointName);
-								setSelectedView(VIEW_TYPES.ENDPOINT_DETAILS);
+								setSelectedView(VIEW_TYPES.ENDPOINT_STATS);
+								logEvent('API Monitoring: Endpoint name row clicked', {});
 							},
 							className: 'expanded-clickable-row',
 						})}

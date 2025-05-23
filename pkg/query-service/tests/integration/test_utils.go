@@ -8,54 +8,50 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"runtime/debug"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
-	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
 )
 
-var jwt = authtypes.NewJWT("secret", 1*time.Hour, 2*time.Hour)
+var jwt = authtypes.NewJWT(os.Getenv("SIGNOZ_JWT_SECRET"), 1*time.Hour, 2*time.Hour)
 
-func NewMockClickhouseReader(
-	t *testing.T, testDB *sqlx.DB, featureFlags interfaces.FeatureLookup,
-) (
-	*clickhouseReader.ClickHouseReader, mockhouse.ClickConnMockCommon,
-) {
+func NewMockClickhouseReader(t *testing.T, testDB sqlstore.SQLStore) (*clickhouseReader.ClickHouseReader, mockhouse.ClickConnMockCommon) {
 	require.NotNil(t, testDB)
 
-	mockDB, err := mockhouse.NewClickHouseWithQueryMatcher(nil, sqlmock.QueryMatcherRegexp)
-
-	require.Nil(t, err, "could not init mock clickhouse")
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherRegexp)
 	reader := clickhouseReader.NewReaderFromClickhouseConnection(
-		mockDB,
 		clickhouseReader.NewOptions("", ""),
 		testDB,
+		telemetryStore,
+		prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
 		"",
-		featureFlags,
-		"",
-		true,
-		true,
 		time.Duration(time.Second),
 		nil,
 	)
 
-	return reader, mockDB
+	return reader, telemetryStore.Mock()
 }
 
 func addLogsQueryExpectation(
@@ -151,44 +147,37 @@ func makeTestSignozLog(
 	return testLog
 }
 
-func createTestUser() (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
-	org, apiErr := dao.DB().CreateOrg(ctx, &types.Organization{
-		Name: "test",
-	})
-	if apiErr != nil {
-		return nil, apiErr
+	organization := types.NewOrganization("test")
+	err := organizationModule.Create(ctx, organization)
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
 
-	group, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
-	if apiErr != nil {
-		return nil, apiErr
+	userId := valuer.GenerateUUID()
+
+	user, err := types.NewUser("test", userId.String()+"test@test.com", types.RoleAdmin.String(), organization.ID.StringValue())
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
 
-	auth.InitAuthCache(ctx)
+	err = userModule.CreateUser(ctx, user)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
 
-	userId := uuid.NewString()
-	return dao.DB().CreateUser(
-		ctx,
-		&types.User{
-			ID:       userId,
-			Name:     "test",
-			Email:    userId[:8] + "test@test.com",
-			Password: "test",
-			OrgID:    org.ID,
-			GroupID:  group.ID,
-		},
-		true,
-	)
+	return user, nil
 }
 
 func AuthenticatedRequestForTest(
+	userModule user.Module,
 	user *types.User,
 	path string,
 	postData interface{},
 ) (*http.Request, error) {
-	userJwt, err := auth.GenerateJWTForUser(user, jwt)
+	userJwt, err := userModule.GetJWTForUser(context.Background(), user)
 	if err != nil {
 		return nil, err
 	}

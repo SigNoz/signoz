@@ -1,6 +1,5 @@
 import { Form, FormInstance, Input, Select, Switch, Typography } from 'antd';
 import { Store } from 'antd/lib/form/interface';
-import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
@@ -11,11 +10,8 @@ import {
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
 import history from 'lib/history';
-import { useAppContext } from 'providers/App/App';
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';
-import { isFeatureKeys } from 'utils/app';
 
 import EmailSettings from './Settings/Email';
 import MsTeamsSettings from './Settings/MsTeams';
@@ -39,17 +35,6 @@ function FormAlertChannels({
 	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
-	const { featureFlags } = useAppContext();
-
-	const feature = `ALERT_CHANNEL_${type.toUpperCase()}`;
-
-	const featureKey = isFeatureKeys(feature)
-		? feature
-		: FeatureKeys.ALERT_CHANNEL_SLACK;
-
-	const hasFeature = featureFlags?.find(
-		(flag: FeatureFlagProps) => flag.name === featureKey,
-	);
 
 	const renderSettings = (): ReactElement | null => {
 		switch (type) {
@@ -146,7 +131,7 @@ function FormAlertChannels({
 
 				<Form.Item>
 					<Button
-						disabled={savingState || !hasFeature}
+						disabled={savingState}
 						loading={savingState}
 						type="primary"
 						onClick={(): void => onSaveHandler(type)}
@@ -154,7 +139,7 @@ function FormAlertChannels({
 						{t('button_save_channel')}
 					</Button>
 					<Button
-						disabled={testingState || !hasFeature}
+						disabled={testingState}
 						loading={testingState}
 						onClick={(): void => onTestHandler(type)}
 					>

@@ -2,6 +2,7 @@ package telemetrystoretest
 
 import (
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 )
@@ -10,28 +11,27 @@ var _ telemetrystore.TelemetryStore = (*Provider)(nil)
 
 // Provider represents a mock telemetry store provider for testing
 type Provider struct {
-	mock cmock.ClickConnMockCommon
+	clickhouseDB cmock.ClickConnMockCommon
 }
 
 // New creates a new mock telemetry store provider
-func New() (*Provider, error) {
-	options := &clickhouse.Options{} // Default options
-	mock, err := cmock.NewClickHouseNative(options)
+func New(_ telemetrystore.Config, matcher sqlmock.QueryMatcher) *Provider {
+	clickhouseDB, err := cmock.NewClickHouseWithQueryMatcher(&clickhouse.Options{}, matcher)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	return &Provider{
-		mock: mock,
-	}, nil
+		clickhouseDB: clickhouseDB,
+	}
 }
 
 // ClickhouseDB returns the mock Clickhouse connection
-func (p *Provider) ClickHouseDB() clickhouse.Conn {
-	return p.mock.(clickhouse.Conn)
+func (p *Provider) ClickhouseDB() clickhouse.Conn {
+	return p.clickhouseDB.(clickhouse.Conn)
 }
 
 // Mock returns the underlying Clickhouse mock instance for setting expectations
 func (p *Provider) Mock() cmock.ClickConnMockCommon {
-	return p.mock
+	return p.clickhouseDB
 }

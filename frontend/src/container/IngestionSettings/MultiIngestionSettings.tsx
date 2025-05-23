@@ -293,7 +293,7 @@ function MultiIngestionSettings(): JSX.Element {
 		isLoading: isLoadingDeploymentsData,
 		isFetching: isFetchingDeploymentsData,
 		isError: isErrorDeploymentsData,
-	} = useGetDeploymentsData();
+	} = useGetDeploymentsData(true);
 
 	const {
 		mutate: createIngestionKey,

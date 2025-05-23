@@ -1,0 +1,53 @@
+name: integrationci
+
+on:
+  pull_request:
+    types:
+      - labeled
+  pull_request_target:
+    types:
+      - labeled
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        src:
+          - bootstrap
+        sqlstore-provider:
+          - postgres
+          - sqlite
+        clickhouse-version:
+          - 24.1.2-alpine
+          - 24.12-alpine
+        schema-migrator-version:
+          - v0.111.38
+        postgres-version:
+          - 15
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: poetry
+        run: |
+          python -m pip install poetry==2.1.2
+          python -m poetry config virtualenvs.in-project true
+          cd tests/integration && poetry install --no-root
+      - name: run
+        run: |
+          cd tests/integration && \
+            poetry run pytest \
+            --basetemp=./tmp/ \
+            src/${{matrix.src}} \
+            --sqlstore-provider ${{matrix.sqlstore-provider}} \
+            --postgres-version ${{matrix.postgres-version}} \
+            --clickhouse-version ${{matrix.clickhouse-version}} \
+            --schema-migrator-version ${{matrix.schema-migrator-version}}

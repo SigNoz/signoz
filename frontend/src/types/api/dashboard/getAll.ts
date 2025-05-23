@@ -1,6 +1,7 @@
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { ReactNode } from 'react';
 import { Layout } from 'react-grid-layout';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -109,9 +110,12 @@ export interface IBaseWidget {
 	selectedLogFields: IField[] | null;
 	selectedTracesFields: BaseAutocompleteData[] | null;
 	isLogScale?: boolean;
+	columnWidths?: Record<string, number>;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
+	renderColumnCell?: QueryTableProps['renderColumnCell'];
+	customColTitles?: Record<string, string>;
 }
 
 export interface PromQLWidgets extends IBaseWidget {

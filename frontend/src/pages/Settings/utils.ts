@@ -17,8 +17,8 @@ export const getRoutes = (
 	isCurrentOrgSettings: boolean,
 	isGatewayEnabled: boolean,
 	isWorkspaceBlocked: boolean,
-	isCloudAccount: boolean,
-	isEECloudAccount: boolean,
+	isCloudUser: boolean,
+	isEnterpriseSelfHostedUser: boolean,
 	t: TFunction,
 ): RouteTabProps['routes'] => {
 	const settings = [];
@@ -42,17 +42,17 @@ export const getRoutes = (
 		settings.push(...multiIngestionSettings(t));
 	}
 
-	if (isCloudAccount && !isGatewayEnabled) {
+	if (isCloudUser && !isGatewayEnabled) {
 		settings.push(...ingestionSettings(t));
 	}
 
 	settings.push(...alertChannels(t));
 
-	if ((isCloudAccount || isEECloudAccount) && isAdmin) {
+	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
 		settings.push(...apiKeys(t));
 	}
 
-	if (isCloudAccount && isAdmin) {
+	if (isCloudUser && isAdmin) {
 		settings.push(...customDomainSettings(t));
 	}
 

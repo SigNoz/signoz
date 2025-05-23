@@ -18,6 +18,13 @@
   "field_send_resolved": "Send resolved alerts",
   "field_channel_type": "Type",
   "field_webhook_url": "Webhook URL",
+  "tooltip_webhook_url": "The URL of the webhook to send alerts to. Learn more about webhook integration in the docs [here](https://signoz.io/docs/alerts-management/notification-channel/webhook/). Integrates with [Incident.io](https://signoz.io/docs/alerts-management/notification-channel/incident-io/), [Rootly](https://signoz.io/docs/alerts-management/notification-channel/rootly/), [Zenduty](https://signoz.io/docs/alerts-management/notification-channel/zenduty/) and [more](https://signoz.io/docs/alerts-management/notification-channel/webhook/#my-incident-management-tool-is-not-listed-can-i-still-integrate).",
+  "tooltip_slack_url": "The URL of the slack [incoming webhook](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/) to send alerts to. Learn more about slack integration in the docs [here](https://signoz.io/docs/alerts-management/notification-channel/slack/).",
+  "tooltip_pager_routing_key": "Learn how to obtain the routing key from your PagerDuty account [here](https://signoz.io/docs/alerts-management/notification-channel/pagerduty/#obtaining-integration-or-routing-key).",
+  "tooltip_opsgenie_api_key": "Learn how to obtain the API key from your OpsGenie account [here](https://support.atlassian.com/opsgenie/docs/integrate-opsgenie-with-prometheus/).",
+  "tooltip_email_to": "Enter email addresses separated by commas.",
+  "tooltip_ms_teams_url": "The URL of the Microsoft Teams [webhook](https://support.microsoft.com/en-us/office/create-incoming-webhooks-with-workflows-for-microsoft-teams-8ae491c7-0394-4861-ba59-055e33f75498) to send alerts to. Learn more about Microsoft Teams integration in the docs [here](https://signoz.io/docs/alerts-management/notification-channel/ms-teams/).",
+
   "field_slack_recipient": "Recipient",
   "field_slack_title": "Title",
   "field_slack_description": "Description",

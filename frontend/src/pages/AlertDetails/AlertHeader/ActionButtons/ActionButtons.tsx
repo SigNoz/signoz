@@ -44,7 +44,7 @@ function AlertActionButtons({
 	const { handleAlertDuplicate } = useAlertRuleDuplicate({
 		alertDetails: (alertDetails as unknown) as AlertDef,
 	});
-	const { handleAlertDelete } = useAlertRuleDelete({ ruleId: Number(ruleId) });
+	const { handleAlertDelete } = useAlertRuleDelete({ ruleId });
 	const { handleAlertUpdate, isLoading } = useAlertRuleUpdate({
 		alertDetails: (alertDetails as unknown) as AlertDef,
 		setUpdatedName,

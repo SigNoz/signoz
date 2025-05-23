@@ -12,7 +12,7 @@ import { v4 } from 'uuid';
 
 import { extractQueryNamesFromExpression } from './utils';
 
-type GraphClickMetaData = {
+export type GraphClickMetaData = {
 	[key: string]: string | boolean;
 	queryName: string;
 	inFocusOrNot: boolean;

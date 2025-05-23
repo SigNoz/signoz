@@ -50,7 +50,7 @@ cache:
     # Time-to-live for cache entries in memory. Specify the duration in ns
     ttl: 60000000000
     # The interval at which the cache will be cleaned up
-    cleanupInterval: 1m
+    cleanup_interval: 1m
   # redis: Uses Redis as the caching backend.
   redis:
     # The hostname or IP address of the Redis server.
@@ -72,7 +72,6 @@ sqlstore:
     # The path to the SQLite database file.
     path: /var/lib/signoz/signoz.db
 
-
 ##################### APIServer #####################
 apiserver:
   timeout:
@@ -91,20 +90,36 @@ apiserver:
       - /api/v1/version
       - /
 
-
 ##################### TelemetryStore #####################
 telemetrystore:
-  # Specifies the telemetrystore provider to use.
-  provider: clickhouse
   # Maximum number of idle connections in the connection pool.
   max_idle_conns: 50
   # Maximum number of open connections to the database.
   max_open_conns: 100
   # Maximum time to wait for a connection to be established.
   dial_timeout: 5s
+  # Specifies the telemetrystore provider to use.
+  provider: clickhouse
   clickhouse:
-    # The DSN to use for ClickHouse.
-    dsn: http://localhost:9000
+    # The DSN to use for clickhouse.
+    dsn: tcp://localhost:9000
+    # The query settings for clickhouse.
+    settings:
+      max_execution_time: 0
+      max_execution_time_leaf: 0
+      timeout_before_checking_execution_speed: 0
+      max_bytes_to_read: 0
+      max_result_rows_for_ch_query: 0
+
+##################### Prometheus #####################
+prometheus:
+  active_query_tracker:
+    # Whether to enable the active query tracker.
+    enabled: true
+    # The path to use for the active query tracker.
+    path: ""
+    # The maximum number of concurrent queries.
+    max_concurrent: 20
 
 ##################### Alertmanager #####################
 alertmanager:
@@ -117,7 +132,7 @@ alertmanager:
     # The poll interval for periodically syncing the alertmanager with the config in the store.
     poll_interval: 1m
     # The URL under which Alertmanager is externally reachable (for example, if Alertmanager is served via a reverse proxy). Used for generating relative and absolute links back to Alertmanager itself.
-    external_url: http://localhost:9093
+    external_url: http://localhost:8080
     # The global configuration for the alertmanager. All the exahustive fields can be found in the upstream: https://github.com/prometheus/alertmanager/blob/efa05feffd644ba4accb526e98a8c6545d26a783/config/config.go#L833
     global:
       # ResolveTimeout is the time after which an alert is declared resolved if it has not been updated.
@@ -149,3 +164,46 @@ alertmanager:
       maintenance_interval: 15m
       # Retention of the notification logs.
       retention: 120h
+
+
+##################### Analytics #####################
+analytics:
+  # Whether to enable analytics.
+  enabled: false
+
+##################### Emailing #####################
+emailing:
+  # Whether to enable emailing.
+  enabled: false
+  templates:
+    # The directory containing the email templates. This directory should contain a list of files defined at pkg/types/emailtypes/template.go.
+    directory: /opt/signoz/conf/templates/email
+  smtp:
+    # The SMTP server address.
+    address: localhost:25
+    # The email address to use for the SMTP server.
+    from:
+    # The hello message to use for the SMTP server.
+    hello:
+    # The static headers to send with the email.
+    headers: {}
+    auth:
+      # The username to use for the SMTP server.
+      username:
+      # The password to use for the SMTP server.
+      password:
+      # The secret to use for the SMTP server.
+      secret:
+      # The identity to use for the SMTP server.
+      identity:
+    tls:
+      # Whether to enable TLS. It should be false in most cases since the authentication mechanism should use the STARTTLS extension instead.
+      enabled: false
+      # Whether to skip TLS verification.
+      insecure_skip_verify: false
+      # The path to the CA file.
+      ca_file_path:
+      # The path to the key file.
+      key_file_path:
+      # The path to the certificate file.
+      cert_file_path:

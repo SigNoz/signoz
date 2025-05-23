@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path"
 	"reflect"
 	"time"
 
@@ -12,8 +13,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/config"
+	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -51,8 +54,14 @@ type Config struct {
 	// TelemetryStore config
 	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
 
+	// Prometheus config
+	Prometheus prometheus.Config `mapstructure:"prometheus"`
+
 	// Alertmanager config
 	Alertmanager alertmanager.Config `mapstructure:"alertmanager" yaml:"alertmanager"`
+
+	// Emailing config
+	Emailing emailing.Config `mapstructure:"emailing" yaml:"emailing"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
@@ -61,6 +70,7 @@ type DeprecatedFlags struct {
 	MaxIdleConns int
 	MaxOpenConns int
 	DialTimeout  time.Duration
+	Config       string
 }
 
 func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {
@@ -73,7 +83,9 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 		sqlmigrator.NewConfigFactory(),
 		apiserver.NewConfigFactory(),
 		telemetrystore.NewConfigFactory(),
+		prometheus.NewConfigFactory(),
 		alertmanager.NewConfigFactory(),
+		emailing.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
@@ -145,7 +157,7 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 
 	if os.Getenv("ClickHouseUrl") != "" {
 		fmt.Println("[Deprecated] env ClickHouseUrl is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN instead.")
-		config.TelemetryStore.ClickHouse.DSN = os.Getenv("ClickHouseUrl")
+		config.TelemetryStore.Clickhouse.DSN = os.Getenv("ClickHouseUrl")
 	}
 
 	if deprecatedFlags.MaxIdleConns != 50 {
@@ -175,5 +187,47 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 
 	if os.Getenv("ALERTMANAGER_API_CHANNEL_PATH") != "" {
 		fmt.Println("[Deprecated] env ALERTMANAGER_API_CHANNEL_PATH is deprecated and scheduled for complete removal.")
+	}
+
+	if deprecatedFlags.Config != "" {
+		fmt.Println("[Deprecated] flag --config is deprecated for passing prometheus config. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.")
+	}
+
+	if os.Getenv("INVITE_EMAIL_TEMPLATE") != "" {
+		fmt.Println("[Deprecated] env INVITE_EMAIL_TEMPLATE is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_TEMPLATES_DIRECTORY instead.")
+		config.Emailing.Templates.Directory = path.Dir(os.Getenv("INVITE_EMAIL_TEMPLATE"))
+	}
+
+	if os.Getenv("SMTP_ENABLED") != "" {
+		fmt.Println("[Deprecated] env SMTP_ENABLED is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ENABLED instead.")
+		config.Emailing.Enabled = os.Getenv("SMTP_ENABLED") == "true"
+	}
+
+	if os.Getenv("SMTP_HOST") != "" {
+		fmt.Println("[Deprecated] env SMTP_HOST is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ADDRESS instead.")
+		if os.Getenv("SMTP_PORT") != "" {
+			config.Emailing.SMTP.Address = os.Getenv("SMTP_HOST") + ":" + os.Getenv("SMTP_PORT")
+		} else {
+			config.Emailing.SMTP.Address = os.Getenv("SMTP_HOST")
+		}
+	}
+
+	if os.Getenv("SMTP_PORT") != "" {
+		fmt.Println("[Deprecated] env SMTP_PORT is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ADDRESS instead.")
+	}
+
+	if os.Getenv("SMTP_USERNAME") != "" {
+		fmt.Println("[Deprecated] env SMTP_USERNAME is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_AUTH_USERNAME instead.")
+		config.Emailing.SMTP.Auth.Username = os.Getenv("SMTP_USERNAME")
+	}
+
+	if os.Getenv("SMTP_PASSWORD") != "" {
+		fmt.Println("[Deprecated] env SMTP_PASSWORD is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_AUTH_PASSWORD instead.")
+		config.Emailing.SMTP.Auth.Password = os.Getenv("SMTP_PASSWORD")
+	}
+
+	if os.Getenv("SMTP_FROM") != "" {
+		fmt.Println("[Deprecated] env SMTP_FROM is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_FROM instead.")
+		config.Emailing.SMTP.From = os.Getenv("SMTP_FROM")
 	}
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -53,15 +53,17 @@ func (r *Repo) insertPipeline(
 		))
 	}
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
 		return nil, model.UnauthorizedError(fmt.Errorf("failed to get email from context"))
 	}
 
 	insertRow := &pipelinetypes.GettablePipeline{
 		StoreablePipeline: pipelinetypes.StoreablePipeline{
-			OrgID:        orgID,
-			ID:           uuid.New().String(),
+			OrgID: orgID,
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
 			OrderID:      postable.OrderID,
 			Enabled:      postable.Enabled,
 			Name:         postable.Name,
@@ -127,6 +129,20 @@ func (r *Repo) getPipelinesByVersion(
 	}
 
 	return gettablePipelines, errors
+}
+
+func (r *Repo) GetDefaultOrgID(ctx context.Context) (string, *model.ApiError) {
+	var orgs []types.Organization
+	err := r.sqlStore.BunDB().NewSelect().
+		Model(&orgs).
+		Scan(ctx)
+	if err != nil {
+		return "", model.InternalError(errors.Wrap(err, "failed to get default org ID"))
+	}
+	if len(orgs) == 0 {
+		return "", model.InternalError(errors.New("no orgs found"))
+	}
+	return orgs[0].ID.StringValue(), nil
 }
 
 // GetPipelines returns pipeline and errors (if any)

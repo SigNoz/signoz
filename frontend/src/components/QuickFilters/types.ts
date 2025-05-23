@@ -17,6 +17,13 @@ export enum SpecficFilterOperations {
 	ONLY = 'ONLY',
 }
 
+export enum SignalType {
+	TRACES = 'traces',
+	LOGS = 'logs',
+	API_MONITORING = 'api_monitoring',
+	EXCEPTIONS = 'exceptions',
+}
+
 export interface IQuickFiltersConfig {
 	type: FiltersType;
 	title: string;
@@ -33,6 +40,8 @@ export interface IQuickFiltersProps {
 	handleFilterVisibilityChange: () => void;
 	source: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
+	signal?: SignalType;
+	className?: string;
 }
 
 export enum QuickFiltersSource {
@@ -40,4 +49,5 @@ export enum QuickFiltersSource {
 	INFRA_MONITORING = 'infra-monitoring',
 	TRACES_EXPLORER = 'traces-explorer',
 	API_MONITORING = 'api-monitoring',
+	EXCEPTIONS = 'exceptions',
 }

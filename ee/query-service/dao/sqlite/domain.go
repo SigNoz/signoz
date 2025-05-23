@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	"github.com/SigNoz/signoz/ee/types"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
-	ossTypes "github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -44,7 +43,7 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 		}
 
 		domain, err = m.GetDomain(ctx, domainId)
-		if (err != nil) || domain == nil {
+		if err != nil {
 			zap.L().Error("failed to find domain from domainId received in IdP response", zap.Error(err))
 			return nil, fmt.Errorf("invalid credentials")
 		}
@@ -54,7 +53,7 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 
 		domainFromDB, err := m.GetDomainByName(ctx, domainNameStr)
 		domain = domainFromDB
-		if (err != nil) || domain == nil {
+		if err != nil {
 			zap.L().Error("failed to find domain from domainName received in IdP response", zap.Error(err))
 			return nil, fmt.Errorf("invalid credentials")
 		}
@@ -70,7 +69,7 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 func (m *modelDao) GetDomainByName(ctx context.Context, name string) (*types.GettableOrgDomain, basemodel.BaseApiError) {
 
 	stored := types.StorableOrgDomain{}
-	err := m.DB().NewSelect().
+	err := m.sqlStore.BunDB().NewSelect().
 		Model(&stored).
 		Where("name = ?", name).
 		Limit(1).
@@ -94,7 +93,7 @@ func (m *modelDao) GetDomainByName(ctx context.Context, name string) (*types.Get
 func (m *modelDao) GetDomain(ctx context.Context, id uuid.UUID) (*types.GettableOrgDomain, basemodel.BaseApiError) {
 
 	stored := types.StorableOrgDomain{}
-	err := m.DB().NewSelect().
+	err := m.sqlStore.BunDB().NewSelect().
 		Model(&stored).
 		Where("id = ?", id).
 		Limit(1).
@@ -119,7 +118,7 @@ func (m *modelDao) ListDomains(ctx context.Context, orgId string) ([]types.Getta
 	domains := []types.GettableOrgDomain{}
 
 	stored := []types.StorableOrgDomain{}
-	err := m.DB().NewSelect().
+	err := m.sqlStore.BunDB().NewSelect().
 		Model(&stored).
 		Where("org_id = ?", orgId).
 		Scan(ctx)
@@ -164,10 +163,10 @@ func (m *modelDao) CreateDomain(ctx context.Context, domain *types.GettableOrgDo
 		Name:          domain.Name,
 		OrgID:         domain.OrgID,
 		Data:          string(configJson),
-		TimeAuditable: ossTypes.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}
 
-	_, err = m.DB().NewInsert().
+	_, err = m.sqlStore.BunDB().NewInsert().
 		Model(&storableDomain).
 		Exec(ctx)
 
@@ -198,10 +197,10 @@ func (m *modelDao) UpdateDomain(ctx context.Context, domain *types.GettableOrgDo
 		Name:          domain.Name,
 		OrgID:         domain.OrgID,
 		Data:          string(configJson),
-		TimeAuditable: ossTypes.TimeAuditable{UpdatedAt: time.Now()},
+		TimeAuditable: types.TimeAuditable{UpdatedAt: time.Now()},
 	}
 
-	_, err = m.DB().NewUpdate().
+	_, err = m.sqlStore.BunDB().NewUpdate().
 		Model(storableDomain).
 		Column("data", "updated_at").
 		WherePK().
@@ -224,7 +223,7 @@ func (m *modelDao) DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.Bas
 	}
 
 	storableDomain := &types.StorableOrgDomain{ID: id}
-	_, err := m.DB().NewDelete().
+	_, err := m.sqlStore.BunDB().NewDelete().
 		Model(storableDomain).
 		WherePK().
 		Exec(ctx)
@@ -251,7 +250,7 @@ func (m *modelDao) GetDomainByEmail(ctx context.Context, email string) (*types.G
 	parsedDomain := components[1]
 
 	stored := types.StorableOrgDomain{}
-	err := m.DB().NewSelect().
+	err := m.sqlStore.BunDB().NewSelect().
 		Model(&stored).
 		Where("name = ?", parsedDomain).
 		Limit(1).

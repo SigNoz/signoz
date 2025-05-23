@@ -235,6 +235,22 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 			},
 			want: `labels like '%service.name%Application\\\\"%'`,
 		},
+		{
+			name: "test exists",
+			args: args{
+				key: "service.name",
+				op:  v3.FilterOperatorExists,
+			},
+			want: `lower(labels) like '%service.name%'`,
+		},
+		{
+			name: "test not exists",
+			args: args{
+				key: "service.name",
+				op:  v3.FilterOperatorNotExists,
+			},
+			want: `lower(labels) not like '%service.name%'`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

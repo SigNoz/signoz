@@ -21,6 +21,7 @@ import { useQuery } from 'react-query';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import { PayloadProps as LicensesResModel } from 'types/api/licenses/getAll';
 import {
+	LicensePlatform,
 	LicenseState,
 	LicenseV3ResModel,
 	TrialInfo,
@@ -70,10 +71,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		error: userFetchError,
 	} = useGetUser(user.id, isLoggedIn);
 	useEffect(() => {
-		if (!isFetchingUser && userData && userData.payload) {
+		if (!isFetchingUser && userData && userData.data) {
 			setUser((prev) => ({
 				...prev,
-				...userData.payload,
+				...userData.data,
 			}));
 			setOrg((prev) => {
 				if (!prev) {
@@ -81,23 +82,19 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					return [
 						{
 							createdAt: 0,
-							hasOptedUpdates: false,
-							id: userData.payload.orgId,
-							isAnonymous: false,
-							name: userData.payload.organization,
+							id: userData.data.orgId,
+							displayName: userData.data.organization,
 						},
 					];
 				}
 				// else mutate the existing entry
-				const orgIndex = prev.findIndex((e) => e.id === userData.payload.orgId);
+				const orgIndex = prev.findIndex((e) => e.id === userData.data.orgId);
 				const updatedOrg: Organization[] = [
 					...prev.slice(0, orgIndex),
 					{
 						createdAt: 0,
-						hasOptedUpdates: false,
-						id: userData.payload.orgId,
-						isAnonymous: false,
-						name: userData.payload.organization,
+						id: userData.data.orgId,
+						displayName: userData.data.organization,
 					},
 					...prev.slice(orgIndex + 1, prev.length),
 				];
@@ -145,7 +142,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				).unix(),
 				onTrial: isOnTrial,
 				workSpaceBlock:
-					activeLicenseV3Data.payload.state === LicenseState.EVALUATION_EXPIRED,
+					activeLicenseV3Data.payload.state === LicenseState.EVALUATION_EXPIRED &&
+					activeLicenseV3Data.payload.platform === LicensePlatform.CLOUD,
 				trialConvertedToSubscription:
 					activeLicenseV3Data.payload.state !== LicenseState.ISSUED &&
 					activeLicenseV3Data.payload.state !== LicenseState.EVALUATING &&
@@ -207,10 +205,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					...org.slice(0, orgIndex),
 					{
 						createdAt: 0,
-						hasOptedUpdates: false,
 						id: orgId,
-						isAnonymous: false,
-						name: updatedOrgName,
+						displayName: updatedOrgName,
 					},
 					...org.slice(orgIndex + 1, org.length),
 				];

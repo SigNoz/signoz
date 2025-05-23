@@ -28,6 +28,8 @@ function EndPointDetailsZeroState({
 					<EndPointsDropDown
 						setSelectedEndPointName={setSelectedEndPointName}
 						endPointDropDownDataQuery={endPointDropDownDataQuery}
+						parentContainerDiv=".end-point-details-zero-state-wrapper"
+						dropdownStyle={{ width: '60%' }}
 					/>
 				</div>
 			</div>

@@ -12,10 +12,12 @@ import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
@@ -24,6 +26,8 @@ import { v4 as uuid } from 'uuid';
 import QuerySection from './QuerySection';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
+
+const ONE_CHART_PER_QUERY_ENABLED_KEY = 'isOneChartPerQueryEnabled';
 
 function Explorer(): JSX.Element {
 	const {
@@ -41,11 +45,22 @@ function Explorer(): JSX.Element {
 		aggregateOperator: 'noop',
 	});
 
-	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(false);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const isOneChartPerQueryEnabled =
+		searchParams.get(ONE_CHART_PER_QUERY_ENABLED_KEY) === 'true';
+
+	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(
+		isOneChartPerQueryEnabled,
+	);
 	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
 
-	const handleToggleShowOneChartPerQuery = (): void =>
+	const handleToggleShowOneChartPerQuery = (): void => {
 		toggleShowOneChartPerQuery(!showOneChartPerQuery);
+		setSearchParams({
+			...Object.fromEntries(searchParams),
+			[ONE_CHART_PER_QUERY_ENABLED_KEY]: (!showOneChartPerQuery).toString(),
+		});
+	};
 
 	const exportDefaultQuery = useMemo(
 		() =>
@@ -56,6 +71,8 @@ function Explorer(): JSX.Element {
 			),
 		[currentQuery, updateAllQueriesOperators],
 	);
+
+	useShareBuilderUrl(exportDefaultQuery);
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null): void => {
