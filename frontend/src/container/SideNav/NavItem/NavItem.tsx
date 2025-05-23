@@ -4,6 +4,7 @@ import './NavItem.styles.scss';
 
 import { Tag } from 'antd';
 import cx from 'classnames';
+import { Pin, PinOff } from 'lucide-react';
 
 import { SidebarItem } from '../sideNav.types';
 
@@ -12,13 +13,26 @@ export default function NavItem({
 	isActive,
 	onClick,
 	isDisabled,
+	onTogglePin,
+	isPinned,
+	showIcon,
 }: {
 	item: SidebarItem;
 	isActive: boolean;
 	onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
 	isDisabled: boolean;
+	onTogglePin?: (item: SidebarItem) => void;
+	isPinned?: boolean;
+	showIcon?: boolean;
 }): JSX.Element {
 	const { label, icon, isBeta, isNew } = item;
+
+	const handleTogglePinClick = (
+		event: React.MouseEvent<SVGSVGElement, MouseEvent>,
+	): void => {
+		event.stopPropagation();
+		onTogglePin?.(item);
+	};
 
 	return (
 		<div
@@ -34,15 +48,15 @@ export default function NavItem({
 				onClick(event);
 			}}
 		>
-			<div className="nav-item-active-marker" />
+			{showIcon && <div className="nav-item-active-marker" />}
 			<div className={cx('nav-item-data', isBeta ? 'beta-tag' : '')}>
-				<div className="nav-item-icon">{icon}</div>
+				{showIcon && <div className="nav-item-icon">{icon}</div>}
 
 				<div className="nav-item-label">{label}</div>
 
 				{isBeta && (
 					<div className="nav-item-beta">
-						<Tag bordered={false} color="geekblue">
+						<Tag bordered={false} className="sidenav-beta-tag">
 							Beta
 						</Tag>
 					</div>
@@ -55,7 +69,31 @@ export default function NavItem({
 						</Tag>
 					</div>
 				)}
+
+				{onTogglePin && !isPinned && (
+					<Pin
+						size={12}
+						className="nav-item-pin-icon"
+						onClick={handleTogglePinClick}
+						color="var(--Vanilla-400, #c0c1c3)"
+					/>
+				)}
+
+				{onTogglePin && isPinned && (
+					<PinOff
+						size={12}
+						className="nav-item-pin-icon"
+						onClick={handleTogglePinClick}
+						color="var(--Vanilla-400, #c0c1c3)"
+					/>
+				)}
 			</div>
 		</div>
 	);
 }
+
+NavItem.defaultProps = {
+	onTogglePin: undefined,
+	isPinned: false,
+	showIcon: false,
+};

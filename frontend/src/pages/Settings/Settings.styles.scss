@@ -1,0 +1,43 @@
+.settings-page {
+	.settings-page-header {
+		border-bottom: 1px solid var(--Slate-500, #161922);
+		background: rgba(11, 12, 14, 0.7);
+		backdrop-filter: blur(20px);
+
+		.settings-page-header-title {
+			color: var(--Vanilla-100, #fff);
+			text-align: center;
+			font-family: Inter;
+			font-size: 13px;
+			font-style: normal;
+			line-height: 14px;
+			letter-spacing: 0.4px;
+
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 16px;
+		}
+	}
+
+	.settings-page-content-container {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+
+		.settings-page-sidenav {
+			width: 240px;
+			height: calc(100vh - 48px);
+			border-right: 1px solid var(--Slate-500, #161922);
+			background: var(--Ink-500, #0b0c0e);
+			padding: 10px 8px;
+		}
+
+		.settings-page-content {
+			flex: 1;
+			height: calc(100vh - 48px);
+			background: var(--Ink-500, #0b0c0e);
+			padding: 10px 8px;
+		}
+	}
+}

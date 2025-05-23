@@ -17,8 +17,12 @@ import history from 'lib/history';
 import {
 	AlertTriangle,
 	CheckSquare,
+	ClockFading,
+	Cog,
+	Ellipsis,
+	Logs,
+	MousePointerClick,
 	PackagePlus,
-	UserCircle,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
@@ -34,12 +38,11 @@ import { checkVersionState } from 'utils/app';
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
 import defaultMenuItems, {
+	defaultMoreMenuItems,
 	helpSupportMenuItem,
-	inviteMemberMenuItem,
 	manageLicenseMenuItem,
-	shortcutMenuItem,
+	primaryMenuItems,
 	slackSupportMenuItem,
-	trySignozCloudMenuItem,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
 import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
@@ -51,8 +54,9 @@ interface UserManagementMenuItems {
 	icon: JSX.Element;
 }
 
-function SideNav(): JSX.Element {
-	const [menuItems, setMenuItems] = useState(defaultMenuItems);
+// eslint-disable-next-line sonarjs/cognitive-complexity
+function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
+	const [, setMenuItems] = useState(primaryMenuItems);
 	const { pathname, search } = useLocation();
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
 		AppState,
@@ -74,22 +78,26 @@ function SideNav(): JSX.Element {
 	const [licenseTag, setLicenseTag] = useState('');
 
 	const userSettingsMenuItem = {
-		key: ROUTES.MY_SETTINGS,
-		label: user?.displayName || 'User',
-		icon: <UserCircle size={16} />,
+		key: ROUTES.SETTINGS,
+		label: 'Settings',
+		icon: <Cog size={16} />,
 	};
 
 	const [userManagementMenuItems, setUserManagementMenuItems] = useState<
 		UserManagementMenuItems[]
 	>([]);
 
+	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>([]);
+
+	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
+		defaultMoreMenuItems,
+	);
+
 	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
 	};
 
 	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
-
-	const [inviteMembers] = useComponentPermission(['invite_members'], user.role);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -157,6 +165,24 @@ function SideNav(): JSX.Element {
 		} else {
 			history.push(ROUTES.VERSION);
 		}
+	}, []);
+
+	const onTogglePin = useCallback((item: SidebarItem): void => {
+		setSecondaryMenuItems((prevItems) =>
+			prevItems.map((i) => {
+				if (i.key === item.key) {
+					return { ...i, isPinned: !i.isPinned };
+				}
+				return i;
+			}),
+		);
+
+		setPinnedMenuItems((prevItems) => {
+			if (prevItems?.some((i) => i.key === item.key)) {
+				return prevItems?.filter((i) => i.key !== item.key);
+			}
+			return [item, ...(prevItems || [])];
+		});
 	}, []);
 
 	const onClickHandler = useCallback(
@@ -358,9 +384,41 @@ function SideNav(): JSX.Element {
 		activeLicense?.status,
 	]);
 
+	const isPinnedItem = useMemo(
+		() => (item: SidebarItem): boolean =>
+			secondaryMenuItems.some((i) => i.key === item.key && i.isPinned),
+		[secondaryMenuItems],
+	);
+
+	const renderNavItems = (
+		items: SidebarItem[],
+		allowPin?: boolean,
+	): JSX.Element => (
+		<>
+			{items.map((item, index) => (
+				<NavItem
+					showIcon
+					key={item.key || index}
+					item={item}
+					isActive={activeMenuKey === item.key}
+					isDisabled={
+						isWorkspaceBlocked &&
+						item.key !== ROUTES.BILLING &&
+						item.key !== ROUTES.SETTINGS
+					}
+					onTogglePin={allowPin ? onTogglePin : undefined}
+					onClick={(event): void => {
+						handleMenuItemClick(event, item);
+					}}
+					isPinned={isPinnedItem(item)}
+				/>
+			))}
+		</>
+	);
+
 	return (
-		<div className={cx('sidenav-container')}>
-			<div className={cx('sideNav')}>
+		<div className={cx('sidenav-container', isPinned && 'pinned')}>
+			<div className={cx('sideNav', isPinned && 'pinned')}>
 				<div className="brand">
 					<div className="brand-company-meta">
 						<div
@@ -372,8 +430,6 @@ function SideNav(): JSX.Element {
 							}}
 						>
 							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
-
-							<span className="brand-logo-name nav-item-label"> SigNoz </span>
 						</div>
 
 						{licenseTag && (
@@ -390,118 +446,123 @@ function SideNav(): JSX.Element {
 							>
 								<div
 									className={cx(
-										'license tag nav-item-label',
+										'brand-title-section',
 										isCommunityEnterpriseUser && 'community-enterprise-user',
 									)}
 								>
-									{licenseTag}
+									<span className="license-type"> {licenseTag} </span>
+									<span className="version"> {latestVersion} </span>
 								</div>
 							</Tooltip>
 						)}
 					</div>
+
+					<div className="user-history-section">
+						<ClockFading size={16} color={Color.BG_SLATE_50} />
+					</div>
 				</div>
 
-				{isCloudUser && user?.role !== USER_ROLES.VIEWER && (
-					<div className="get-started-nav-items">
-						<Button
-							className="get-started-btn"
-							disabled={isWorkspaceBlocked}
-							onClick={(event: MouseEvent): void => {
-								if (isWorkspaceBlocked) {
-									return;
-								}
-								onClickGetStarted(event);
-							}}
-						>
-							<PackagePlus size={16} />
-
-							<div className="license tag nav-item-label"> New source </div>
-						</Button>
-					</div>
-				)}
-
 				<div className={cx(`nav-wrapper`, isCloudUser && 'nav-wrapper-cloud')}>
-					<div className="primary-nav-items">
-						{menuItems.map((item, index) => (
-							<NavItem
-								key={item.key || index}
-								item={item}
-								isActive={activeMenuKey === item.key}
-								isDisabled={
-									isWorkspaceBlocked &&
-									item.key !== ROUTES.BILLING &&
-									item.key !== ROUTES.SETTINGS
-								}
-								onClick={(event): void => {
-									handleMenuItemClick(event, item);
-								}}
-							/>
-						))}
+					<div className="nav-top-section">
+						{isCloudUser && user?.role !== USER_ROLES.VIEWER && (
+							<div className="get-started-nav-items">
+								<Button
+									className="get-started-btn"
+									disabled={isWorkspaceBlocked}
+									onClick={(event: MouseEvent): void => {
+										if (isWorkspaceBlocked) {
+											return;
+										}
+										onClickGetStarted(event);
+									}}
+								>
+									<PackagePlus size={16} />
+
+									<div className="license tag nav-item-label"> New source </div>
+								</Button>
+							</div>
+						)}
+
+						<div className="primary-nav-items">
+							{renderNavItems(primaryMenuItems)}
+						</div>
+
+						<div className="shortcut-nav-items">
+							<div className="nav-title-section">
+								<div className="nav-section-title">
+									<div className="nav-section-title-icon">
+										<MousePointerClick size={16} />
+									</div>
+
+									<div className="nav-section-title-text">SHORTCUTS</div>
+
+									{pinnedMenuItems.length > 1 && (
+										<div className="nav-section-title-icon reorder">
+											<Logs size={16} />
+										</div>
+									)}
+								</div>
+
+								{pinnedMenuItems.length === 0 && (
+									<div className="nav-section-subtitle">
+										You have not added any shortcuts yet.
+									</div>
+								)}
+
+								{pinnedMenuItems.length > 0 && (
+									<div className="nav-items-section">
+										{renderNavItems(pinnedMenuItems, true)}
+									</div>
+								)}
+							</div>
+						</div>
+
+						<div className="more-nav-items">
+							<div className="nav-title-section">
+								<div className="nav-section-title">
+									<div className="nav-section-title-icon">
+										<Ellipsis size={16} />
+									</div>
+
+									<div className="nav-section-title-text">MORE</div>
+								</div>
+							</div>
+
+							{secondaryMenuItems.filter((i) => !i.isPinned).length > 0 && (
+								<div className="nav-items-section">
+									{renderNavItems(
+										secondaryMenuItems.filter((i) => !i.isPinned),
+										true,
+									)}
+								</div>
+							)}
+						</div>
 					</div>
 
-					<div className="secondary-nav-items">
-						<NavItem
-							key="keyboardShortcuts"
-							item={shortcutMenuItem}
-							isDisabled={isWorkspaceBlocked}
-							isActive={false}
-							onClick={onClickShortcuts}
-						/>
-
-						{!isLicenseActive && (
+					<div className="nav-bottom-section">
+						<div className="secondary-nav-items">
 							<NavItem
-								key="trySignozCloud"
-								item={trySignozCloudMenuItem}
-								isActive={false}
+								key={ROUTES.SUPPORT}
+								item={helpSupportMenuItem}
 								isDisabled={isWorkspaceBlocked}
-								onClick={onClickSignozCloud}
-							/>
-						)}
-
-						{userManagementMenuItems.map(
-							(item, index): JSX.Element => (
-								<NavItem
-									key={item?.key || index}
-									item={item}
-									isActive={activeMenuKey === item?.key}
-									isDisabled={isWorkspaceBlocked}
-									onClick={(event: MouseEvent): void => {
-										handleUserManagentMenuItemClick(item?.key as string, event);
-										logEvent('Sidebar: Menu clicked', {
-											menuRoute: item?.key,
-											menuLabel: item?.label,
-										});
-									}}
-								/>
-							),
-						)}
-
-						{inviteMembers && (
-							<NavItem
-								key={inviteMemberMenuItem.key}
-								item={inviteMemberMenuItem}
-								isActive={activeMenuKey === inviteMemberMenuItem?.key}
-								isDisabled={false}
-								onClick={(event: React.MouseEvent): void => {
-									if (isCtrlMetaKey(event)) {
-										openInNewTab(`${inviteMemberMenuItem.key}`);
-									} else {
-										history.push(`${inviteMemberMenuItem.key}`);
-									}
-									logEvent('Sidebar: Menu clicked', {
-										menuRoute: inviteMemberMenuItem?.key,
-										menuLabel: inviteMemberMenuItem?.label,
-									});
+								isActive={activeMenuKey === helpSupportMenuItem?.key}
+								isPinned={isPinnedItem(helpSupportMenuItem)}
+								onClick={(event: MouseEvent): void => {
+									handleUserManagentMenuItemClick(
+										helpSupportMenuItem?.key as string,
+										event,
+									);
 								}}
+								showIcon
 							/>
-						)}
 
-						{user && (
 							<NavItem
-								key={ROUTES.MY_SETTINGS}
+								key={ROUTES.SETTINGS}
 								item={userSettingsMenuItem}
 								isActive={activeMenuKey === userSettingsMenuItem?.key}
 								isDisabled={false}
+								isPinned={isPinnedItem(userSettingsMenuItem)}
+								showIcon
 								onClick={(event: MouseEvent): void => {
 									handleUserManagentMenuItemClick(
 										userSettingsMenuItem?.key as string,
@@ -513,7 +574,7 @@ function SideNav(): JSX.Element {
 									});
 								}}
 							/>
-						)}
+						</div>
 					</div>
 				</div>
 			</div>

@@ -5,13 +5,13 @@
 	flex-direction: row;
 	align-items: center;
 
-	height: 36px;
+	height: 32px;
 	margin-bottom: 4px;
 	cursor: pointer;
 
 	&.active {
 		.nav-item-active-marker {
-			background: #3f5ecc;
+			background: #4e74f8;
 		}
 	}
 
@@ -27,24 +27,24 @@
 
 		.nav-item-data {
 			color: white;
-			background: #121317;
+			background: var(--Slate-500, #161922);
 		}
 	}
 
 	&.active {
 		.nav-item-data {
 			color: white;
-			background: #121317;
+			background: var(--Slate-500, #161922);
 			// color: #3f5ecc;
 		}
 	}
 
 	.nav-item-active-marker {
-		margin: 8px 0;
+		margin: 4px 0;
 		width: 8px;
 		height: 24px;
 		background: transparent;
-		border-radius: 3px;
+		border-radius: 2px;
 		margin-left: -5px;
 	}
 
@@ -53,23 +53,24 @@
 		max-width: calc(100% - 24px);
 		display: flex;
 		margin: 0px 8px;
-		padding: 4px 12px;
+		padding: 2px 8px;
 		flex-direction: row;
 		align-items: center;
 		gap: 8px;
 		align-self: stretch;
 		color: #c0c1c3;
 
-		border-radius: 3px;
 		font-family: Inter;
 		font-size: 13px;
 		font-style: normal;
-		font-weight: 400;
+		font-weight: 300;
 		line-height: 18px;
 
 		background: transparent;
 
 		transition: 0.2s all linear;
+
+		border-radius: 3px;
 
 		.nav-item-icon {
 			height: 16px;
@@ -80,6 +81,31 @@
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
+
+			color: #c0c1c3;
+			font-family: Inter;
+			font-size: 13px;
+			font-style: normal;
+			font-weight: 300;
+			line-height: normal;
+			letter-spacing: 0.14px;
+		}
+
+		.nav-item-pin-icon {
+			margin-left: auto;
+			cursor: pointer;
+
+			display: none;
+		}
+
+		&:hover {
+			.nav-item-label {
+				color: var(--Vanilla-100, #fff);
+			}
+
+			.nav-item-pin-icon {
+				display: block;
+			}
 		}
 	}
 
@@ -92,7 +118,7 @@
 	.nav-item {
 		&.active {
 			.nav-item-active-marker {
-				background: #3f5ecc;
+				background: #4e74f8;
 			}
 		}
 
