@@ -7,4 +7,5 @@ const (
 	TagAttributesV2TableName      = "distributed_tag_attributes_v2"
 	TagAttributesV2LocalTableName = "tag_attributes_v2"
 	TopLevelOperationsTableName   = "distributed_top_level_operations"
+	ResourceV3TableName           = "distributed_traces_v3_resource"
 )
