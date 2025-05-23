@@ -54,7 +54,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		return "", err
 	}
 
-	keyIndexFilter := sb.Like(column.Name, keyIndexFilter(key))
+	keyIdxFilter := sb.Like(column.Name, keyIndexFilter(key))
 	valueForIndexFilter := valueForIndexFilter(key, value)
 
 	fieldName, err := b.fm.FieldFor(ctx, key)
@@ -66,34 +66,34 @@ func (b *defaultConditionBuilder) ConditionFor(
 	case qbtypes.FilterOperatorEqual:
 		return sb.And(
 			sb.E(fieldName, value),
-			keyIndexFilter,
+			keyIdxFilter,
 			sb.Like(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotEqual:
 		return sb.And(
 			sb.NE(fieldName, value),
-			keyIndexFilter,
+			keyIdxFilter,
 			sb.NotLike(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorGreaterThan:
-		return sb.And(sb.GT(fieldName, value), keyIndexFilter), nil
+		return sb.And(sb.GT(fieldName, value), keyIdxFilter), nil
 	case qbtypes.FilterOperatorGreaterThanOrEq:
-		return sb.And(sb.GE(fieldName, value), keyIndexFilter), nil
+		return sb.And(sb.GE(fieldName, value), keyIdxFilter), nil
 	case qbtypes.FilterOperatorLessThan:
-		return sb.And(sb.LT(fieldName, value), keyIndexFilter), nil
+		return sb.And(sb.LT(fieldName, value), keyIdxFilter), nil
 	case qbtypes.FilterOperatorLessThanOrEq:
-		return sb.And(sb.LE(fieldName, value), keyIndexFilter), nil
+		return sb.And(sb.LE(fieldName, value), keyIdxFilter), nil
 
 	case qbtypes.FilterOperatorLike, qbtypes.FilterOperatorILike:
 		return sb.And(
 			sb.ILike(fieldName, value),
-			keyIndexFilter,
+			keyIdxFilter,
 			sb.ILike(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotLike, qbtypes.FilterOperatorNotILike:
 		return sb.And(
 			sb.NotILike(fieldName, value),
-			keyIndexFilter,
+			keyIdxFilter,
 			sb.NotILike(column.Name, valueForIndexFilter),
 		), nil
 
@@ -105,7 +105,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		if len(values) != 2 {
 			return "", qbtypes.ErrBetweenValues
 		}
-		return sb.And(keyIndexFilter, sb.Between(fieldName, values[0], values[1])), nil
+		return sb.And(keyIdxFilter, sb.Between(fieldName, values[0], values[1])), nil
 	case qbtypes.FilterOperatorNotBetween:
 		values, ok := value.([]any)
 		if !ok {
@@ -114,7 +114,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		if len(values) != 2 {
 			return "", qbtypes.ErrBetweenValues
 		}
-		return sb.And(keyIndexFilter, sb.NotBetween(fieldName, values[0], values[1])), nil
+		return sb.And(keyIdxFilter, sb.NotBetween(fieldName, values[0], values[1])), nil
 
 	case qbtypes.FilterOperatorIn:
 		values, ok := value.([]any)
@@ -132,7 +132,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 				valConditions = append(valConditions, sb.Like(column.Name, v))
 			}
 		}
-		mainCondition = sb.And(mainCondition, keyIndexFilter, sb.Or(valConditions...))
+		mainCondition = sb.And(mainCondition, keyIdxFilter, sb.Or(valConditions...))
 
 		return mainCondition, nil
 	case qbtypes.FilterOperatorNotIn:
@@ -151,41 +151,41 @@ func (b *defaultConditionBuilder) ConditionFor(
 				valConditions = append(valConditions, sb.NotLike(column.Name, v))
 			}
 		}
-		mainCondition = sb.And(mainCondition, keyIndexFilter, sb.And(valConditions...))
+		mainCondition = sb.And(mainCondition, keyIdxFilter, sb.And(valConditions...))
 		return mainCondition, nil
 
 	case qbtypes.FilterOperatorExists:
 		return sb.And(
 			sb.E(fmt.Sprintf("simpleJSONHas(%s, '%s')", column.Name, key.Name), true),
-			keyIndexFilter,
+			keyIdxFilter,
 		), nil
 	case qbtypes.FilterOperatorNotExists:
 		return sb.And(
 			sb.NE(fmt.Sprintf("simpleJSONHas(%s, '%s')", column.Name, key.Name), true),
-			keyIndexFilter,
+			keyIdxFilter,
 		), nil
 
 	case qbtypes.FilterOperatorRegexp:
 		return sb.And(
 			fmt.Sprintf("match(%s, %s)", fieldName, sb.Var(value)),
-			keyIndexFilter,
+			keyIdxFilter,
 		), nil
 	case qbtypes.FilterOperatorNotRegexp:
 		return sb.And(
 			fmt.Sprintf("NOT match(%s, %s)", fieldName, sb.Var(value)),
-			keyIndexFilter,
+			keyIdxFilter,
 		), nil
 
 	case qbtypes.FilterOperatorContains:
 		return sb.And(
 			sb.ILike(fieldName, fmt.Sprintf(`%%%s%%`, value)),
-			keyIndexFilter,
+			keyIdxFilter,
 			sb.ILike(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotContains:
 		return sb.And(
 			sb.NotILike(fieldName, fmt.Sprintf(`%%%s%%`, value)),
-			keyIndexFilter,
+			keyIdxFilter,
 			sb.NotILike(column.Name, valueForIndexFilter),
 		), nil
 	}

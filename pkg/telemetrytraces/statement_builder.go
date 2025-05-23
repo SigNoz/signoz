@@ -58,7 +58,7 @@ func (b *traceQueryStatementBuilder) Build(
 	end = querybuilder.ToNanoSecs(end)
 
 	keySelectors := getKeySelectors(query)
-	keys, err := b.opts.MetadataStore.GetKeysMulti(context.Background(), keySelectors)
+	keys, err := b.opts.MetadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	)
 
 	for _, field := range query.SelectFields {
-		colExpr, err := b.fm.ColumnExpressionFor(context.Background(), &field, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -137,7 +137,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(sb, start, end, query)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +196,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		colExpr, err := b.fm.ColumnExpressionFor(context.Background(), &gb.TelemetryFieldKey, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, &gb.TelemetryFieldKey, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +207,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	// Aggregations
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
-		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(context.Background(), agg.Expression)
+		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, agg.Expression)
 		if err != nil {
 			return nil, err
 		}
@@ -216,7 +216,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
-	warnings, err := b.addFilterCondition(sb, start, end, query)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +297,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 	// Add group by columns
 	for _, groupBy := range query.GroupBy {
-		colExpr, err := b.fm.ColumnExpressionFor(context.Background(), &groupBy.TelemetryFieldKey, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, &groupBy.TelemetryFieldKey, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -308,7 +308,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	if len(query.Aggregations) > 0 {
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
-			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(context.Background(), aggExpr.Expression)
+			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, aggExpr.Expression)
 			if err != nil {
 				return nil, err
 			}
@@ -321,7 +321,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(sb, start, end, query)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query)
 	if err != nil {
 		return nil, err
 	}
@@ -378,11 +378,11 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 }
 
 // buildFilterCondition builds SQL condition from filter expression
-func (b *traceQueryStatementBuilder) addFilterCondition(sb *sqlbuilder.SelectBuilder, start, end uint64, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) ([]string, error) {
+func (b *traceQueryStatementBuilder) addFilterCondition(ctx context.Context, sb *sqlbuilder.SelectBuilder, start, end uint64, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) ([]string, error) {
 
 	// add filter expression
 
-	filterWhereClause, warnings, err := b.compiler.Compile(context.Background(), query.Filter.Expression)
+	filterWhereClause, warnings, err := b.compiler.Compile(ctx, query.Filter.Expression)
 
 	if err != nil {
 		return nil, err
