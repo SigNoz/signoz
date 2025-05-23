@@ -208,6 +208,7 @@ function GridCardGraph({
 					: globalSelectedInterval,
 			start: customTimeRange?.startTime || start,
 			end: customTimeRange?.endTime || end,
+			originalGraphType: widget?.panelTypes,
 		},
 		version || DEFAULT_ENTITY_VERSION,
 		{
