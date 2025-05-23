@@ -160,6 +160,10 @@ func TestNewLicenseV3(t *testing.T) {
 		if tc.pass {
 			require.NoError(t, err)
 			require.NotNil(t, license)
+			// as the new license will pick the time.Now() value. doesn't make sense to compare them
+			license.CreatedAt = time.Time{}
+			license.UpdatedAt = time.Time{}
+			license.LastValidatedAt = time.Time{}
 			assert.Equal(t, tc.expected, license)
 		} else {
 			require.Error(t, err)
