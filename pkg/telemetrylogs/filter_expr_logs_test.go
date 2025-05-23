@@ -1,11 +1,10 @@
-package telemetrytests
+package telemetrylogs
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/require"
@@ -13,8 +12,8 @@ import (
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogs(t *testing.T) {
-	fm := telemetrylogs.NewFieldMapper()
-	cb := telemetrylogs.NewConditionBuilder(fm)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap()
@@ -27,7 +26,7 @@ func TestFilterExprLogs(t *testing.T) {
 			Name: "body",
 		},
 		JsonBodyPrefix: "body",
-		JsonKeyToKey:   telemetrylogs.GetBodyJSONKey,
+		JsonKeyToKey:   GetBodyJSONKey,
 	}
 
 	testCases := []struct {
