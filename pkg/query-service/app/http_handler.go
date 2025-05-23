@@ -1194,7 +1194,20 @@ func prepareQuery(r *http.Request) (string, error) {
 	if tmplErr != nil {
 		return "", tmplErr
 	}
-	return queryBuf.String(), nil
+
+	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "false" {
+		return queryBuf.String(), nil
+	}
+
+	query = queryBuf.String()
+
+	// Now handle $var replacements (simple string replace)
+	for k, v := range vars {
+		placeholder := "$" + k
+		query = strings.ReplaceAll(query, placeholder, v)
+	}
+
+	return query, nil
 }
 
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {

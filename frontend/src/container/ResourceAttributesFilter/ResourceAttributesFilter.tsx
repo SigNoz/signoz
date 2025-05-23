@@ -9,12 +9,15 @@ import {
 	convertMetricKeyToTrace,
 	getEnvironmentTagKeys,
 	getEnvironmentTagValues,
+	getResourceDeploymentKeys,
 } from 'hooks/useResourceAttribute/utils';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { SelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
+import { FeatureKeys } from '../../constants/features';
+import { useAppContext } from '../../providers/App/App';
 import QueryChip from './components/QueryChip';
 import { QueryChipItem, SearchContainer } from './styles';
 
@@ -39,24 +42,27 @@ function ResourceAttributesFilter({
 		SelectOption<string, string>[]
 	>([]);
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
+	const resourceDeploymentKey = getResourceDeploymentKeys(dotMetricsEnabled);
+
 	const [selectedEnvironments, setSelectedEnvironments] = useState<string[]>([]);
 
 	const queriesExcludingEnvironment = useMemo(
-		() =>
-			queries.filter(
-				(query) => query.tagKey !== 'resource_deployment_environment',
-			),
-		[queries],
+		() => queries.filter((query) => query.tagKey !== resourceDeploymentKey),
+		[queries, resourceDeploymentKey],
 	);
 
 	const isEmpty = useMemo(
 		() => isResourceEmpty(queriesExcludingEnvironment, staging, selectedQuery),
 		[queriesExcludingEnvironment, selectedQuery, staging],
 	);
-
 	useEffect(() => {
 		const resourceDeploymentEnvironmentQuery = queries.filter(
-			(query) => query.tagKey === 'resource_deployment_environment',
+			(query) => query.tagKey === resourceDeploymentKey,
 		);
 
 		if (resourceDeploymentEnvironmentQuery?.length > 0) {
@@ -64,17 +70,17 @@ function ResourceAttributesFilter({
 		} else {
 			setSelectedEnvironments([]);
 		}
-	}, [queries]);
+	}, [queries, resourceDeploymentKey]);
 
 	useEffect(() => {
-		getEnvironmentTagKeys().then((tagKeys) => {
+		getEnvironmentTagKeys(dotMetricsEnabled).then((tagKeys) => {
 			if (tagKeys && Array.isArray(tagKeys) && tagKeys.length > 0) {
-				getEnvironmentTagValues().then((tagValues) => {
+				getEnvironmentTagValues(dotMetricsEnabled).then((tagValues) => {
 					setEnvironments(tagValues);
 				});
 			}
 		});
-	}, []);
+	}, [dotMetricsEnabled]);
 
 	return (
 		<div className="resourceAttributesFilter-container">
