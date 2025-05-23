@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -205,6 +206,14 @@ func (r *Repo) GetAllFeatures() ([]basemodel.Feature, error) {
 		`SELECT * FROM feature_status;`)
 	if err != nil {
 		return feature, err
+	}
+
+	env := constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false")
+	if env == "true" {
+		feature = append(feature, basemodel.Feature{
+			Name:   constants.DotMetricsEnabled,
+			Active: true,
+		})
 	}
 
 	return feature, nil

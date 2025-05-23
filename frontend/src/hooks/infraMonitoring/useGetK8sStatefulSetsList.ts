@@ -17,6 +17,7 @@ type UseGetK8sStatefulSetsList = (
 	>,
 
 	headers?: Record<string, string>,
+	dotMetricsEnabled?: boolean,
 ) => UseQueryResult<
 	SuccessResponse<K8sStatefulSetsListResponse> | ErrorResponse,
 	Error
@@ -28,6 +29,7 @@ export const useGetK8sStatefulSetsList: UseGetK8sStatefulSetsList = (
 	options,
 
 	headers,
+	dotMetricsEnabled,
 ) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
@@ -38,14 +40,15 @@ export const useGetK8sStatefulSetsList: UseGetK8sStatefulSetsList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_STATEFULSET_LIST, requestData];
-	}, [options?.queryKey, requestData]);
+		return [REACT_QUERY_KEY.GET_STATEFULSET_LIST, requestData, dotMetricsEnabled];
+	}, [options?.queryKey, requestData, dotMetricsEnabled]);
 
 	return useQuery<
 		SuccessResponse<K8sStatefulSetsListResponse> | ErrorResponse,
 		Error
 	>({
-		queryFn: ({ signal }) => getK8sStatefulSetsList(requestData, signal, headers),
+		queryFn: ({ signal }) =>
+			getK8sStatefulSetsList(requestData, signal, headers, dotMetricsEnabled),
 
 		...options,
 

@@ -29,6 +29,9 @@ import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Options } from 'uplot';
 
+import { FeatureKeys } from '../../../../constants/features';
+import { useAppContext } from '../../../../providers/App/App';
+
 interface EntityMetricsProps<T> {
 	timeRange: {
 		startTime: number;
@@ -49,6 +52,7 @@ interface EntityMetricsProps<T> {
 		node: T,
 		start: number,
 		end: number,
+		dotMetricsEnabled: boolean,
 	) => GetQueryResultsProps[];
 	queryKey: string;
 	category: K8sCategory;
@@ -65,9 +69,25 @@ function EntityMetrics<T>({
 	queryKey,
 	category,
 }: EntityMetricsProps<T>): JSX.Element {
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
 	const queryPayloads = useMemo(
-		() => getEntityQueryPayload(entity, timeRange.startTime, timeRange.endTime),
-		[getEntityQueryPayload, entity, timeRange.startTime, timeRange.endTime],
+		() =>
+			getEntityQueryPayload(
+				entity,
+				timeRange.startTime,
+				timeRange.endTime,
+				dotMetricsEnabled,
+			),
+		[
+			getEntityQueryPayload,
+			entity,
+			timeRange.startTime,
+			timeRange.endTime,
+			dotMetricsEnabled,
+		],
 	);
 
 	const queries = useQueries(

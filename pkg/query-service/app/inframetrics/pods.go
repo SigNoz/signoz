@@ -19,22 +19,22 @@ import (
 )
 
 var (
-	metricToUseForPods = "k8s_pod_cpu_utilization"
+	metricToUseForPods = GetDotMetrics("k8s_pod_cpu_utilization")
 
 	podAttrsToEnrich = []string{
-		"k8s_pod_uid",
-		"k8s_pod_name",
-		"k8s_namespace_name",
-		"k8s_node_name",
-		"k8s_deployment_name",
-		"k8s_statefulset_name",
-		"k8s_daemonset_name",
-		"k8s_job_name",
-		"k8s_cronjob_name",
-		"k8s_cluster_name",
+		GetDotMetrics("k8s_pod_uid"),
+		GetDotMetrics("k8s_pod_name"),
+		GetDotMetrics("k8s_namespace_name"),
+		GetDotMetrics("k8s_node_name"),
+		GetDotMetrics("k8s_deployment_name"),
+		GetDotMetrics("k8s_statefulset_name"),
+		GetDotMetrics("k8s_daemonset_name"),
+		GetDotMetrics("k8s_job_name"),
+		GetDotMetrics("k8s_cronjob_name"),
+		GetDotMetrics("k8s_cluster_name"),
 	}
 
-	k8sPodUIDAttrKey = "k8s_pod_uid"
+	k8sPodUIDAttrKey = GetDotMetrics("k8s_pod_uid")
 
 	queryNamesForPods = map[string][]string{
 		"cpu":            {"A"},
@@ -49,14 +49,14 @@ var (
 	podQueryNames = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"}
 
 	metricNamesForPods = map[string]string{
-		"cpu":            "k8s_pod_cpu_utilization",
-		"cpu_request":    "k8s_pod_cpu_request_utilization",
-		"cpu_limit":      "k8s_pod_cpu_limit_utilization",
-		"memory":         "k8s_pod_memory_usage",
-		"memory_request": "k8s_pod_memory_request_utilization",
-		"memory_limit":   "k8s_pod_memory_limit_utilization",
-		"restarts":       "k8s_container_restarts",
-		"pod_phase":      "k8s_pod_phase",
+		"cpu":            GetDotMetrics("k8s_pod_cpu_utilization"),
+		"cpu_request":    GetDotMetrics("k8s_pod_cpu_request_utilization"),
+		"cpu_limit":      GetDotMetrics("k8s_pod_cpu_limit_utilization"),
+		"memory":         GetDotMetrics("k8s_pod_memory_usage"),
+		"memory_request": GetDotMetrics("k8s_pod_memory_request_utilization"),
+		"memory_limit":   GetDotMetrics("k8s_pod_memory_limit_utilization"),
+		"restarts":       GetDotMetrics("k8s_container_restarts"),
+		"pod_phase":      GetDotMetrics("k8s_pod_phase"),
 	}
 )
 
@@ -167,7 +167,7 @@ func (p *PodsRepo) SendingRequiredMetadata(ctx context.Context) ([]model.PodOnbo
 	// for each pod, check if we have all the required metadata
 	for _, row := range result {
 		status := model.PodOnboardingStatus{}
-		switch v := row.Data["k8s_cluster_name"].(type) {
+		switch v := row.Data[GetDotMetrics("k8s_cluster_name")].(type) {
 		case string:
 			status.HasClusterName = true
 			status.ClusterName = v
@@ -175,7 +175,7 @@ func (p *PodsRepo) SendingRequiredMetadata(ctx context.Context) ([]model.PodOnbo
 			status.HasClusterName = *v != ""
 			status.ClusterName = *v
 		}
-		switch v := row.Data["k8s_node_name"].(type) {
+		switch v := row.Data[GetDotMetrics("k8s_node_name")].(type) {
 		case string:
 			status.HasNodeName = true
 			status.NodeName = v
@@ -183,7 +183,7 @@ func (p *PodsRepo) SendingRequiredMetadata(ctx context.Context) ([]model.PodOnbo
 			status.HasNodeName = *v != ""
 			status.NodeName = *v
 		}
-		switch v := row.Data["k8s_namespace_name"].(type) {
+		switch v := row.Data[GetDotMetrics("k8s_namespace_name")].(type) {
 		case string:
 			status.HasNamespaceName = true
 			status.NamespaceName = v
@@ -191,38 +191,38 @@ func (p *PodsRepo) SendingRequiredMetadata(ctx context.Context) ([]model.PodOnbo
 			status.HasNamespaceName = *v != ""
 			status.NamespaceName = *v
 		}
-		switch v := row.Data["k8s_deployment_name"].(type) {
+		switch v := row.Data[GetDotMetrics("k8s_deployment_name")].(type) {
 		case string:
 			status.HasDeploymentName = true
 		case *string:
 			status.HasDeploymentName = *v != ""
 		}
-		switch v := row.Data["k8s_statefulset_name"].(type) {
+		switch v := row.Data[GetDotMetrics("k8s_statefulset_name")].(type) {
 		case string:
 			status.HasStatefulsetName = true
 		case *string:
 			status.HasStatefulsetName = *v != ""
 		}
-		switch v := row.Data["k8s_daemonset_name"].(type) {
+		switch v := row.Data[GetDotMetrics("k8s_daemonset_name")].(type) {
 		case string:
 			status.HasDaemonsetName = true
 		case *string:
 			status.HasDaemonsetName = *v != ""
 		}
-		switch v := row.Data["k8s_cronjob_name"].(type) {
+		switch v := row.Data[GetDotMetrics("k8s_cronjob_name")].(type) {
 		case string:
 			status.HasCronjobName = true
 		case *string:
 			status.HasCronjobName = *v != ""
 		}
-		switch v := row.Data["k8s_job_name"].(type) {
+		switch v := row.Data[GetDotMetrics("k8s_job_name")].(type) {
 		case string:
 			status.HasJobName = true
 		case *string:
 			status.HasJobName = *v != ""
 		}
 
-		switch v := row.Data["k8s_pod_name"].(type) {
+		switch v := row.Data[GetDotMetrics("k8s_pod_name")].(type) {
 		case string:
 			status.PodName = v
 		case *string:

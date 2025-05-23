@@ -13,6 +13,8 @@ import { useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
 import { useGetAllConfigOptions } from './useGetAllConfigOptions';
 
 type ConfigOptionType = 'group' | 'topic' | 'partition';
@@ -38,11 +40,19 @@ const useConfigOptions = (
 	isFetching: boolean;
 	options: DefaultOptionType[];
 } => {
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const [searchText, setSearchText] = useState<string>('');
-	const { isFetching, options } = useGetAllConfigOptions({
-		attributeKey: type,
-		searchText,
-	});
+	const { isFetching, options } = useGetAllConfigOptions(
+		{
+			attributeKey: type,
+			searchText,
+		},
+		dotMetricsEnabled,
+	);
 	const handleDebouncedSearch = useDebouncedFn((searchText): void => {
 		setSearchText(searchText as string);
 	}, 500);

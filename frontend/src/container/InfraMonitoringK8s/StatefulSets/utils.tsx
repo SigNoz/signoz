@@ -236,6 +236,11 @@ export const getK8sStatefulSetsListColumns = (
 	return columnsConfig as ColumnType<K8sStatefulSetsRowData>[];
 };
 
+const dotToUnder: Record<string, keyof K8sStatefulSetsData['meta']> = {
+	'k8s.namespace.name': 'k8s_namespace_name',
+	'k8s.statefulset.name': 'k8s_statefulset_name',
+};
+
 const getGroupByEle = (
 	statefulSet: K8sStatefulSetsData,
 	groupBy: IBuilderQuery['groupBy'],
@@ -243,9 +248,16 @@ const getGroupByEle = (
 	const groupByValues: string[] = [];
 
 	groupBy.forEach((group) => {
-		groupByValues.push(
-			statefulSet.meta[group.key as keyof typeof statefulSet.meta],
-		);
+		const rawKey = group.key as string;
+
+		// 3) Choose mapped key if present, otherwise use rawKey
+		const metaKey = (dotToUnder[rawKey] ??
+			rawKey) as keyof typeof statefulSet.meta;
+
+		// 4) Now safely index into pod.meta
+		const value = statefulSet.meta[metaKey];
+
+		groupByValues.push(value);
 	});
 
 	return (

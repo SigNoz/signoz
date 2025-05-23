@@ -37,10 +37,18 @@ export const latency = ({
 	tagFilterItems,
 	isSpanMetricEnable = false,
 	topLevelOperationsRoute,
+	dotMetricsEnabled,
 }: LatencyProps): QueryBuilderData => {
+	const signozLatencyBucketMetrics = dotMetricsEnabled
+		? WidgetKeys.Signoz_latency_bucket
+		: WidgetKeys.Signoz_latency_bucket_norm;
+
+	const signozMetricsServiceName = dotMetricsEnabled
+		? WidgetKeys.Service_name
+		: WidgetKeys.Service_name_norm;
 	const newAutoCompleteData: BaseAutocompleteData = {
 		key: isSpanMetricEnable
-			? WidgetKeys.Signoz_latency_bucket
+			? signozLatencyBucketMetrics
 			: WidgetKeys.DurationNano,
 		dataType: DataTypes.Float64,
 		isColumn: true,
@@ -53,7 +61,7 @@ export const latency = ({
 		{
 			id: '',
 			key: {
-				key: isSpanMetricEnable ? WidgetKeys.Service_name : WidgetKeys.ServiceName,
+				key: isSpanMetricEnable ? signozMetricsServiceName : WidgetKeys.ServiceName,
 				dataType: DataTypes.String,
 				type: isSpanMetricEnable ? MetricsType.Resource : MetricsType.Tag,
 				isColumn: !isSpanMetricEnable,
@@ -295,23 +303,30 @@ export const apDexMetricsQueryBuilderQueries = ({
 	threashold,
 	delta,
 	metricsBuckets,
+	dotMetricsEnabled,
 }: ApDexMetricsQueryBuilderQueriesProps): QueryBuilderData => {
 	const autoCompleteDataA: BaseAutocompleteData = {
-		key: WidgetKeys.SignozLatencyCount,
+		key: dotMetricsEnabled
+			? WidgetKeys.SignozLatencyCount
+			: WidgetKeys.SignozLatencyCountNorm,
 		dataType: DataTypes.Float64,
 		isColumn: true,
 		type: '',
 	};
 
 	const autoCompleteDataB: BaseAutocompleteData = {
-		key: WidgetKeys.Signoz_latency_bucket,
+		key: dotMetricsEnabled
+			? WidgetKeys.Signoz_latency_bucket
+			: WidgetKeys.Signoz_latency_bucket_norm,
 		dataType: DataTypes.Float64,
 		isColumn: true,
 		type: '',
 	};
 
 	const autoCompleteDataC: BaseAutocompleteData = {
-		key: WidgetKeys.Signoz_latency_bucket,
+		key: dotMetricsEnabled
+			? WidgetKeys.Signoz_latency_bucket
+			: WidgetKeys.Signoz_latency_bucket_norm,
 		dataType: DataTypes.Float64,
 		isColumn: true,
 		type: '',
@@ -321,7 +336,9 @@ export const apDexMetricsQueryBuilderQueries = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
@@ -347,7 +364,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.StatusCode,
+				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
 				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
@@ -369,7 +386,9 @@ export const apDexMetricsQueryBuilderQueries = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
@@ -406,7 +425,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.StatusCode,
+				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
 				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
@@ -417,7 +436,9 @@ export const apDexMetricsQueryBuilderQueries = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
@@ -482,10 +503,13 @@ export const operationPerSec = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
+	dotMetricsEnabled,
 }: OperationPerSecProps): QueryBuilderData => {
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
-			key: WidgetKeys.SignozLatencyCount,
+			key: dotMetricsEnabled
+				? WidgetKeys.SignozLatencyCount
+				: WidgetKeys.SignozLatencyCountNorm,
 			dataType: DataTypes.Float64,
 			isColumn: true,
 			type: '',
@@ -497,7 +521,9 @@ export const operationPerSec = ({
 			{
 				id: '',
 				key: {
-					key: WidgetKeys.Service_name,
+					key: dotMetricsEnabled
+						? WidgetKeys.Service_name
+						: WidgetKeys.Service_name_norm,
 					dataType: DataTypes.String,
 					isColumn: false,
 					type: MetricsType.Resource,
@@ -540,6 +566,7 @@ export const errorPercentage = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
+	dotMetricsEnabled,
 }: OperationPerSecProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
@@ -560,7 +587,9 @@ export const errorPercentage = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Resource,
@@ -582,7 +611,9 @@ export const errorPercentage = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.StatusCode,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.StatusCodeNorm,
 				dataType: DataTypes.Int64,
 				isColumn: false,
 				type: MetricsType.Tag,
@@ -597,7 +628,9 @@ export const errorPercentage = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Resource,

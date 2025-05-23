@@ -17,6 +17,7 @@ type UseGetK8sClustersList = (
 	>,
 
 	headers?: Record<string, string>,
+	dotMetricsEnabled?: boolean,
 ) => UseQueryResult<
 	SuccessResponse<K8sClustersListResponse> | ErrorResponse,
 	Error
@@ -28,6 +29,7 @@ export const useGetK8sClustersList: UseGetK8sClustersList = (
 	options,
 
 	headers,
+	dotMetricsEnabled?: boolean,
 ) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
@@ -38,14 +40,15 @@ export const useGetK8sClustersList: UseGetK8sClustersList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_CLUSTER_LIST, requestData];
-	}, [options?.queryKey, requestData]);
+		return [REACT_QUERY_KEY.GET_CLUSTER_LIST, requestData, dotMetricsEnabled];
+	}, [options?.queryKey, requestData, dotMetricsEnabled]);
 
 	return useQuery<
 		SuccessResponse<K8sClustersListResponse> | ErrorResponse,
 		Error
 	>({
-		queryFn: ({ signal }) => getK8sClustersList(requestData, signal, headers),
+		queryFn: ({ signal }) =>
+			getK8sClustersList(requestData, signal, headers, dotMetricsEnabled),
 
 		...options,
 

@@ -18,6 +18,8 @@ import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
+import { FeatureKeys } from '../../../../constants/features';
+import { useAppContext } from '../../../../providers/App/App';
 import { IServiceName } from '../types';
 import { title } from './config';
 import ColumnWithLink from './TableRenderer/ColumnWithLink';
@@ -40,6 +42,11 @@ function TopOperationMetrics(): JSX.Element {
 		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const keyOperationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -48,13 +55,14 @@ function TopOperationMetrics(): JSX.Element {
 					promql: [],
 					builder: topOperationQueries({
 						servicename,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
 				panelTypes: PANEL_TYPES.TABLE,
 			}),
-		[servicename],
+		[servicename, dotMetricsEnabled],
 	);
 
 	const updatedQuery = useStepInterval(keyOperationWidget.query);
