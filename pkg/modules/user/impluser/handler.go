@@ -101,7 +101,6 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusCreated, nil)
-	return
 }
 
 func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
@@ -133,7 +132,6 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusCreated, nil)
-	return
 }
 
 func (h *handler) GetInvite(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +146,6 @@ func (h *handler) GetInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, http.StatusOK, invite)
-	return
 }
 
 func (h *handler) ListInvite(w http.ResponseWriter, r *http.Request) {
@@ -160,11 +157,13 @@ func (h *handler) ListInvite(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
+
 	invites, err := h.module.ListInvite(ctx, claims.OrgID)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
+
 	render.Success(w, http.StatusOK, invites)
 }
 

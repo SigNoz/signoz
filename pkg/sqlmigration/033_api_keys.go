@@ -78,7 +78,9 @@ func (migration *migratePATToFactorAPIKey) Up(ctx context.Context, db *bun.DB) e
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	err = migration.
 		store.
