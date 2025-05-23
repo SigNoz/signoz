@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -8,9 +9,13 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -303,7 +308,10 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
-	userModule := impluser.NewModule(impluser.NewStore(testDB))
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
+	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	userModule := impluser.NewModule(impluser.NewStore(testDB), jwt, emailing, providerSettings)
 	userHandler := impluser.NewHandler(userModule)
 	modules := signoz.NewModules(testDB, userModule)
 	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
