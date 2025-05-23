@@ -62,7 +62,9 @@ func (migration *updateLicense) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	err = migration.store.Dialect().RenameTableAndModifyModel(ctx, tx, new(existingLicense34), new(newLicense34), []string{OrgReference}, func(ctx context.Context) error {
 		existingLicenses := make([]*existingLicense34, 0)

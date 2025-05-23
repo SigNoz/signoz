@@ -51,7 +51,9 @@ func (provider *provider) Start(ctx context.Context) error {
 		case <-provider.stopChan:
 			return nil
 		case <-tick.C:
-			provider.Validate(ctx)
+			if err := provider.Validate(ctx); err != nil {
+				provider.settings.Logger().ErrorContext(ctx, "failed to validate license from upstream server", "error", err)
+			}
 		}
 	}
 }
