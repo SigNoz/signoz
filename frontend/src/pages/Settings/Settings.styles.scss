@@ -1,4 +1,7 @@
 .settings-page {
+	max-height: 100vh;
+	overflow: hidden;
+
 	.settings-page-header {
 		border-bottom: 1px solid var(--Slate-500, #161922);
 		background: rgba(11, 12, 14, 0.7);
