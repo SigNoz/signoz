@@ -159,7 +159,7 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		user, err = h.module.CreateUserWithPassword(ctx, user, password)
+		_, err = h.module.CreateUserWithPassword(ctx, user, password)
 		if err != nil {
 			render.Error(w, err)
 			return
@@ -202,7 +202,6 @@ func (h *Handler) GetInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, http.StatusOK, gettableInvite)
-	return
 }
 
 func (h *Handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
@@ -212,6 +211,12 @@ func (h *Handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(w, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is not a valid uuid-v7"))
 		return
 	}
 
@@ -244,8 +249,14 @@ func (h *Handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	createdApiKey, err := h.module.GetAPIKey(ctx, orgID, apiKey.ID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	// just corrected the status code, response is same,
-	render.Success(w, http.StatusCreated, apiKey)
+	render.Success(w, http.StatusCreated, createdApiKey)
 }
 
 func (h *Handler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {

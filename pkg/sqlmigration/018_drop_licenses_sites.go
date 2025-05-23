@@ -36,7 +36,10 @@ func (migration *dropLicensesSites) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	if _, err := tx.
 		NewDropTable().

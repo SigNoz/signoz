@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	saml2 "github.com/russellhaering/gosaml2"
 	dsig "github.com/russellhaering/goxmldsig"
@@ -20,12 +21,12 @@ func LoadCertificateStore(certString string) (dsig.X509CertificateStore, error) 
 
 	certData, err := base64.StdEncoding.DecodeString(certString)
 	if err != nil {
-		return certStore, fmt.Errorf(fmt.Sprintf("failed to read certificate: %v", err))
+		return certStore, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to read certificate: %v", err)
 	}
 
 	idpCert, err := x509.ParseCertificate(certData)
 	if err != nil {
-		return certStore, fmt.Errorf(fmt.Sprintf("failed to prepare saml request, invalid cert: %s", err.Error()))
+		return certStore, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to prepare saml request, invalid cert: %s", err.Error())
 	}
 
 	certStore.Roots = append(certStore.Roots, idpCert)
@@ -40,12 +41,12 @@ func LoadCertFromPem(certString string) (dsig.X509CertificateStore, error) {
 
 	block, _ := pem.Decode([]byte(certString))
 	if block == nil {
-		return certStore, fmt.Errorf("no valid pem cert found")
+		return certStore, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "no valid pem cert found")
 	}
 
 	idpCert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return certStore, fmt.Errorf(fmt.Sprintf("failed to parse pem cert: %s", err.Error()))
+		return certStore, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse pem cert: %s", err.Error())
 	}
 
 	certStore.Roots = append(certStore.Roots, idpCert)

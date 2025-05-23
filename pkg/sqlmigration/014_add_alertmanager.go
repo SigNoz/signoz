@@ -47,7 +47,9 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	defer tx.Rollback() //nolint:errcheck
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "notification_channels", "deleted"); err != nil {
 		return err

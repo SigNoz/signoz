@@ -135,7 +135,14 @@ var (
 	ReduceToMedian  = ReduceTo{valuer.NewString("median")}
 )
 
-type Aggregation struct {
+type TraceAggregation struct {
+	// aggregation expression - example: count(), sum(item_price), countIf(day > 10)
+	Expression string `json:"expression"`
+	// if any, it will be used as the alias of the aggregation in the result
+	Alias string `json:"alias,omitempty"`
+}
+
+type LogAggregation struct {
 	// aggregation expression - example: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
 	// if any, it will be used as the alias of the aggregation in the result

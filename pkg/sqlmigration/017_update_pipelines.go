@@ -35,13 +35,14 @@ func (migration *updatePipelines) Register(migrations *migrate.Migrations) error
 }
 
 func (migration *updatePipelines) Up(ctx context.Context, db *bun.DB) error {
-
-	// begin transaction
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback() //nolint:errcheck
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// get all org ids
 	var orgIDs []string

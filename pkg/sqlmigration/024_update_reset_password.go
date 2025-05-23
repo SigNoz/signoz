@@ -84,7 +84,9 @@ func (migration *updateResetPassword) Up(ctx context.Context, db *bun.DB) error 
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	err = migration.store.Dialect().UpdatePrimaryKey(ctx, tx, new(existingResetPasswordRequest), new(newResetPasswordRequest), UserReference, func(ctx context.Context) error {
 		existingResetPasswordRequests := make([]*existingResetPasswordRequest, 0)

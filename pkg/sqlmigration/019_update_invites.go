@@ -65,7 +65,9 @@ func (migration *updateInvites) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	err = migration.
 		store.

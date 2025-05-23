@@ -4,7 +4,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-type QueryBuilderQuery struct {
+type QueryBuilderQuery[T any] struct {
 	// name of the query, mainly used when query is used in formula
 	Name string `json:"name"`
 
@@ -16,7 +16,7 @@ type QueryBuilderQuery struct {
 
 	// we want to support multiple aggregations
 	// currently supported: []Aggregation, []MetricAggregation
-	Aggregations []any `json:"aggregations,omitempty"`
+	Aggregations []T `json:"aggregations,omitempty"`
 
 	// disabled if true, the query will not be executed
 	Disabled bool `json:"disabled,omitempty"`

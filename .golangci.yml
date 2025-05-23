@@ -1,0 +1,4 @@
+issues:
+  exclude-dirs:
+    - "pkg/query-service"
+    - "ee/query-service"

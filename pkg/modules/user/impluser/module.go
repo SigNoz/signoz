@@ -271,25 +271,16 @@ func (m *Module) GetAuthenticatedUser(ctx context.Context, orgID, email, passwor
 	}
 
 	var dbUser *types.User
-
-	// when the orgID is provided
-	if orgID != "" {
-		user, err := m.store.GetUserByEmailInOrg(ctx, orgID, email)
-		if err != nil {
-			return nil, err
-		}
-		dbUser = &user.User
-	}
-
 	// when the orgID is not provided we login if the user exists in just one org
-	user, err := m.store.GetUsersByEmail(ctx, email)
+	users, err := m.store.GetUsersByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
-	if len(user) == 0 {
+
+	if len(users) == 0 {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "user with email: %s does not exist", email)
-	} else if len(user) == 1 {
-		dbUser = &user[0].User
+	} else if len(users) == 1 {
+		dbUser = &users[0].User
 	} else {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "please provide an orgID")
 	}
