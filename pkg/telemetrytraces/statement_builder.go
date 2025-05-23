@@ -382,10 +382,10 @@ func (b *traceQueryStatementBuilder) addFilterCondition(ctx context.Context, sb 
 	}
 
 	// add time filter
-	start_bucket := start/1000000000 - 1800
-	end_bucket := end / 1000000000
+	startBucket := start/1000000000 - 1800
+	endBucket := end / 1000000000
 
-	sb.Where(sb.GE("timestamp", start), sb.LE("timestamp", end), sb.GE("ts_bucket_start", start_bucket), sb.LE("ts_bucket_start", end_bucket))
+	sb.Where(sb.GE("timestamp", start), sb.LE("timestamp", end), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 
 	return warnings, nil
 }
