@@ -18,7 +18,7 @@ def test_api_key(signoz: types.SigNoz, get_jwt_token) -> None:
         },
     )
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
     pat_response = response.json()
     assert "data" in pat_response
     assert "token" in pat_response["data"]

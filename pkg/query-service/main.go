@@ -9,6 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
+	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
@@ -102,26 +104,6 @@ func main() {
 
 	version.Info.PrettyPrint(config.Version)
 
-	signoz, err := signoz.New(
-		context.Background(),
-		config,
-		zeus.Config{},
-		noopzeus.NewProviderFactory(),
-		signoz.NewCacheProviderFactories(),
-		signoz.NewWebProviderFactories(),
-		signoz.NewSQLStoreProviderFactories(),
-		signoz.NewTelemetryStoreProviderFactories(),
-		func(sqlstore sqlstore.SQLStore) user.Module {
-			return impluser.NewModule(impluser.NewStore(sqlstore))
-		},
-		func(userModule user.Module) user.Handler {
-			return impluser.NewHandler(userModule)
-		},
-	)
-	if err != nil {
-		zap.L().Fatal("Failed to create signoz", zap.Error(err))
-	}
-
 	// Read the jwt secret key
 	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
 
@@ -132,6 +114,27 @@ func main() {
 	}
 
 	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)
+
+	signoz, err := signoz.New(
+		context.Background(),
+		config,
+		zeus.Config{},
+		noopzeus.NewProviderFactory(),
+		signoz.NewEmailingProviderFactories(),
+		signoz.NewCacheProviderFactories(),
+		signoz.NewWebProviderFactories(),
+		signoz.NewSQLStoreProviderFactories(),
+		signoz.NewTelemetryStoreProviderFactories(),
+		func(sqlstore sqlstore.SQLStore, emailing emailing.Emailing, providerSettings factory.ProviderSettings) user.Module {
+			return impluser.NewModule(impluser.NewStore(sqlstore), jwt, emailing, providerSettings)
+		},
+		func(userModule user.Module) user.Handler {
+			return impluser.NewHandler(userModule)
+		},
+	)
+	if err != nil {
+		zap.L().Fatal("Failed to create signoz", zap.Error(err))
+	}
 
 	serverOptions := &app.ServerOptions{
 		Config:                     config,

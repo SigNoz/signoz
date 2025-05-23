@@ -12,7 +12,6 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
-	ossTypes "github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -164,7 +163,7 @@ func (m *modelDao) CreateDomain(ctx context.Context, domain *types.GettableOrgDo
 		Name:          domain.Name,
 		OrgID:         domain.OrgID,
 		Data:          string(configJson),
-		TimeAuditable: ossTypes.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}
 
 	_, err = m.sqlStore.BunDB().NewInsert().
@@ -198,7 +197,7 @@ func (m *modelDao) UpdateDomain(ctx context.Context, domain *types.GettableOrgDo
 		Name:          domain.Name,
 		OrgID:         domain.OrgID,
 		Data:          string(configJson),
-		TimeAuditable: ossTypes.TimeAuditable{UpdatedAt: time.Now()},
+		TimeAuditable: types.TimeAuditable{UpdatedAt: time.Now()},
 	}
 
 	_, err = m.sqlStore.BunDB().NewUpdate().

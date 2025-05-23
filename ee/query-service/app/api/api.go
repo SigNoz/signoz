@@ -146,10 +146,10 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/login", am.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
 
 	// PAT APIs
-	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.createPAT)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.getPATs)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(ah.updatePAT)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(ah.revokePAT)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.Signoz.Handlers.User.CreateAPIKey)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.Signoz.Handlers.User.ListAPIKeys)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(ah.Signoz.Handlers.User.UpdateAPIKey)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(ah.Signoz.Handlers.User.RevokeAPIKey)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/checkout", am.AdminAccess(ah.checkout)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/billing", am.AdminAccess(ah.getBilling)).Methods(http.MethodGet)
