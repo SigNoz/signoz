@@ -22,15 +22,15 @@ type GettableAPIKey struct {
 	Identifiable
 	TimeAuditable
 	UserAuditable
-	Token     string `json:"token"`
-	Role      Role   `json:"role"`
-	Name      string `json:"name"`
-	ExpiresAt int64  `json:"expiresAt"`
-	LastUsed  int64  `json:"lastUsed"`
-	Revoked   bool   `json:"revoked"`
-	UserID    string `json:"userId"`
-	CreatedBy *User  `json:"createdBy"`
-	UpdatedBy *User  `json:"updatedBy"`
+	Token         string `json:"token"`
+	Role          Role   `json:"role"`
+	Name          string `json:"name"`
+	ExpiresAt     int64  `json:"expiresAt"`
+	LastUsed      int64  `json:"lastUsed"`
+	Revoked       bool   `json:"revoked"`
+	UserID        string `json:"userId"`
+	CreatedByUser *User  `json:"createdByUser"`
+	UpdatedByUser *User  `json:"updatedByUser"`
 }
 
 type OrgUserAPIKey struct {
@@ -138,7 +138,7 @@ func NewGettableAPIKeyFromStorableAPIKey(storableAPIKey *StorableAPIKeyUser) *Ge
 		LastUsed:      lastUsed,
 		Revoked:       storableAPIKey.Revoked,
 		UserID:        storableAPIKey.UserID.String(),
-		CreatedBy:     storableAPIKey.CreatedByUser,
-		UpdatedBy:     storableAPIKey.UpdatedByUser,
+		CreatedByUser: storableAPIKey.CreatedByUser,
+		UpdatedByUser: storableAPIKey.UpdatedByUser,
 	}
 }
