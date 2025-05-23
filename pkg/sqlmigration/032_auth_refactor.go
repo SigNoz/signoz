@@ -80,7 +80,9 @@ func (migration *authRefactor) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	if _, err := tx.NewCreateTable().
 		Model(new(factorPassword32)).

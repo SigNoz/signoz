@@ -159,7 +159,7 @@ func (h *Handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		user, err = h.module.CreateUserWithPassword(ctx, user, password)
+		_, err = h.module.CreateUserWithPassword(ctx, user, password)
 		if err != nil {
 			render.Error(w, err)
 			return
@@ -202,7 +202,6 @@ func (h *Handler) GetInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, http.StatusOK, gettableInvite)
-	return
 }
 
 func (h *Handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
