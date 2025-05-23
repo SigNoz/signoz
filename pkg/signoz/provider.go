@@ -7,6 +7,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
+	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
+	"github.com/SigNoz/signoz/pkg/emailing/smtpemailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
@@ -97,5 +100,12 @@ func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 	return factory.MustNewNamedMap(
 		legacyalertmanager.NewFactory(sqlstore),
 		signozalertmanager.NewFactory(sqlstore),
+	)
+}
+
+func NewEmailingProviderFactories() factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]] {
+	return factory.MustNewNamedMap(
+		noopemailing.NewFactory(),
+		smtpemailing.NewFactory(),
 	)
 }
