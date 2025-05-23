@@ -1,6 +1,6 @@
 {
     "id": "msk",
-    "title": "Amazon MSK",
+    "title": "MSK",
     "icon": "file://icon.svg",
     "overview": "file://overview.md",
     "supported_signals": {
