@@ -1,8 +1,11 @@
 .timezone-adaption {
 	padding: 16px;
-	background: var(--bg-ink-400);
-	border: 1px solid var(--bg-ink-500);
-	border-radius: 4px;
+
+	border-radius: 4px 4px 0px 0px;
+	border: 1px solid var(--Slate-500, #161922);
+	background: var(--Ink-400, #121317);
+
+	border-radius: 3px;
 
 	&__header {
 		display: flex;

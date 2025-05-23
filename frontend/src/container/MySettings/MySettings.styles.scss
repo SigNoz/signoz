@@ -1,3 +1,12 @@
+.my-settings-container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	width: 80%;
+	margin: 12px auto;
+}
+
 .flexBtn {
 	display: flex;
 	align-items: center;
@@ -8,4 +17,16 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+.logout-button {
+	display: inline-flex;
+}
+
+.reset-password-card {
+	border-radius: 0px 0px 4px 4px;
+	border: 1px solid var(--Slate-500, #161922);
+	background: var(--Ink-400, #121317);
+
+	border-radius: 3px;
 }
