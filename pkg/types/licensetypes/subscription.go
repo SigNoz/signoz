@@ -25,7 +25,7 @@ func (p *PostableSubscription) UnmarshalJSON(data []byte) error {
 	}
 
 	if postableSubscription.SuccessURL == "" {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "license key cannot be empty")
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "success url cannot be empty")
 	}
 
 	p.SuccessURL = postableSubscription.SuccessURL
