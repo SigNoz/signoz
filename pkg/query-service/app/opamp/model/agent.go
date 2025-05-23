@@ -39,7 +39,13 @@ type Agent struct {
 const lbExporterFlag = "capabilities.lbexporter"
 
 func New(store sqlstore.SQLStore, orgID string, ID string, conn opampTypes.Connection) *Agent {
-	return &Agent{StorableAgent: types.StorableAgent{OrgID: orgID, Identifiable: types.Identifiable{ID: valuer.GenerateUUID()}, StartedAt: time.Now(), CurrentStatus: types.AgentStatusConnected}, conn: conn, store: store}
+	agentId, err := valuer.NewUUID(ID)
+	if err != nil {
+		zap.L().Error("could not create agent ID", zap.String("agentID", ID), zap.Error(err))
+		agentId = valuer.GenerateUUID()
+	}
+
+	return &Agent{StorableAgent: types.StorableAgent{OrgID: orgID, Identifiable: types.Identifiable{ID: agentId}, StartedAt: time.Now(), CurrentStatus: types.AgentStatusConnected}, conn: conn, store: store}
 }
 
 // Upsert inserts or updates the agent in the database.

@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
@@ -39,7 +40,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	// Even if there are no recommended changes to the agent's initial config
 	require.False(tb.testConfigProvider.HasRecommendations())
 	agent1Conn := &MockOpAmpConnection{}
-	agent1Id := "testAgent1"
+	agent1Id := valuer.GenerateUUID().String()
 	// get orgId from the db
 	tb.opampServer.OnMessage(
 		agent1Conn,
@@ -72,7 +73,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 
 	tb.testConfigProvider.ZPagesEndpoint = "localhost:55555"
 	require.True(tb.testConfigProvider.HasRecommendations())
-	agent2Id := "testAgent2"
+	agent2Id := valuer.GenerateUUID().String()
 	agent2Conn := &MockOpAmpConnection{}
 	tb.opampServer.OnMessage(
 		agent2Conn,
