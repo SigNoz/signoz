@@ -225,16 +225,16 @@ func generateLookupKey(selector *telemetrytypes.FieldValueSelector) string {
 }
 
 // SetKey adds a test key to the mock store
-func (m *MockMetadataStore) SetKey(key telemetrytypes.TelemetryFieldKey) {
+func (m *MockMetadataStore) SetKey(key *telemetrytypes.TelemetryFieldKey) {
 	name := key.Name
 	if _, exists := m.KeysMap[name]; !exists {
 		m.KeysMap[name] = []*telemetrytypes.TelemetryFieldKey{}
 	}
-	m.KeysMap[name] = append(m.KeysMap[name], &key)
+	m.KeysMap[name] = append(m.KeysMap[name], key)
 }
 
 // SetKeys adds a list of test keys to the mock store
-func (m *MockMetadataStore) SetKeys(keys []telemetrytypes.TelemetryFieldKey) {
+func (m *MockMetadataStore) SetKeys(keys []*telemetrytypes.TelemetryFieldKey) {
 	for _, key := range keys {
 		m.SetKey(key)
 	}
