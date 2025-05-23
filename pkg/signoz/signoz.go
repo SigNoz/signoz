@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -29,6 +30,7 @@ type SigNoz struct {
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
 	Zeus            zeus.Zeus
+	Emailing        emailing.Emailing
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -38,12 +40,13 @@ func New(
 	config Config,
 	zeusConfig zeus.Config,
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
+	emailingProviderFactories factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
-	diModules func(sqlstore.SQLStore) user.Module,
-	diHandlers func(user.Module) user.Handler,
+	userModuleFactory func(sqlstore sqlstore.SQLStore, emailing emailing.Emailing, providerSettings factory.ProviderSettings) user.Module,
+	userHandlerFactory func(user.Module) user.Handler,
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -63,6 +66,18 @@ func New(
 		ctx,
 		providerSettings,
 		zeusConfig,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize emailing from the available emailing provider factories
+	emailing, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Emailing,
+		emailingProviderFactories,
+		config.Emailing.Provider(),
 	)
 	if err != nil {
 		return nil, err
@@ -156,8 +171,8 @@ func New(
 		return nil, err
 	}
 
-	userModule := diModules(sqlstore)
-	userHandler := diHandlers(userModule)
+	userModule := userModuleFactory(sqlstore, emailing, providerSettings)
+	userHandler := userHandlerFactory(userModule)
 
 	// Initialize all modules
 	modules := NewModules(sqlstore, userModule)
@@ -184,6 +199,7 @@ func New(
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
 		Zeus:            zeus,
+		Emailing:        emailing,
 		Modules:         modules,
 		Handlers:        handlers,
 	}, nil

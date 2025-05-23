@@ -574,8 +574,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.Signoz.Handlers.Preference.UpdateOrg)).Methods(http.MethodPut)
 
 	// Quick Filters
-	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.QuickFilters.GetQuickFilters)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.AdminAccess(aH.QuickFilters.GetSignalFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters", am.ViewAccess(aH.QuickFilters.GetQuickFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.QuickFilters.GetSignalFilters)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.QuickFilters.UpdateQuickFilters)).Methods(http.MethodPut)
 
 	// === Authentication APIs ===
