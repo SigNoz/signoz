@@ -35,13 +35,15 @@ func (migration *updatePatAndOrgDomains) Register(migrations *migrate.Migrations
 }
 
 func (migration *updatePatAndOrgDomains) Up(ctx context.Context, db *bun.DB) error {
-
 	// begin transaction
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// get all org ids
 	var orgIDs []string
