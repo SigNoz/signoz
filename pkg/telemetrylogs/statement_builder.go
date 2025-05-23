@@ -45,7 +45,7 @@ func NewLogQueryStatementBuilder(opts LogQueryStatementBuilderOpts) *logQuerySta
 	}
 }
 
-// Build builds a SQL query for traces based on the given parameters
+// Build builds a SQL query for logs based on the given parameters
 func (b *logQueryStatementBuilder) Build(
 	ctx context.Context,
 	start uint64,
@@ -99,7 +99,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -368,10 +368,10 @@ func (b *logQueryStatementBuilder) addFilterCondition(ctx context.Context, sb *s
 	}
 
 	// add time filter
-	start_bucket := start/1000000000 - 1800
-	end_bucket := end / 1000000000
+	startBucket := start/1000000000 - 1800
+	endBucket := end / 1000000000
 
-	sb.Where(sb.GE("timestamp", start), sb.LE("timestamp", end), sb.GE("ts_bucket_start", start_bucket), sb.LE("ts_bucket_start", end_bucket))
+	sb.Where(sb.GE("timestamp", start), sb.LE("timestamp", end), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 
 	return warnings, nil
 }
