@@ -1,6 +1,6 @@
 {
   "id": "lambda",
-  "title": "AWS Lambda",
+  "title": "Lambda",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
   "supported_signals": {
