@@ -122,7 +122,9 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// don't run the migration if there are multiple org ids
 	orgIDs := make([]string, 0)
