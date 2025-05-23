@@ -240,8 +240,33 @@ export function SpanDuration({
 					left: `${leftOffset}%`,
 					width: `${width}%`,
 					backgroundColor: color,
+					position: 'relative',
 				}}
-			/>
+			>
+				{span.event?.map((event) => {
+					const eventTimeMs = event.timeUnixNano / 1e6;
+					const eventOffsetPercent =
+						((eventTimeMs - span.timestamp) / (span.durationNano / 1e6)) * 100;
+					const clampedOffset = Math.max(1, Math.min(eventOffsetPercent, 99));
+					const { isError } = event;
+					const { time, timeUnitName } = convertTimeToRelevantUnit(
+						eventTimeMs - span.timestamp,
+					);
+					return (
+						<Tooltip
+							key={`${span.spanId}-event-${event.name}-${event.timeUnixNano}`}
+							title={`${event.name} @ ${toFixed(time, 2)} ${timeUnitName}`}
+						>
+							<div
+								className={`event-dot ${isError ? 'error' : ''}`}
+								style={{
+									left: `${clampedOffset}%`,
+								}}
+							/>
+						</Tooltip>
+					);
+				})}
+			</div>
 			{hasActionButtons && <SpanLineActionButtons span={span} />}
 			<Tooltip title={`${toFixed(time, 2)} ${timeUnitName}`}>
 				<Typography.Text

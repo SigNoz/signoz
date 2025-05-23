@@ -7,6 +7,13 @@ export interface GetTraceFlamegraphPayloadProps {
 	selectedSpanId: string;
 }
 
+export interface Event {
+	name: string;
+	timeUnixNano: number;
+	attributeMap: Record<string, string>;
+	isError: boolean;
+}
+
 export interface FlamegraphSpan {
 	timestamp: number;
 	durationNano: number;
@@ -17,6 +24,7 @@ export interface FlamegraphSpan {
 	serviceName: string;
 	name: string;
 	level: number;
+	event: Event[];
 }
 
 export interface GetTraceFlamegraphSuccessResponse {
