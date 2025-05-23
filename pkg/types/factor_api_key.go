@@ -10,6 +10,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
+var NEVER_EXPIRES = time.Unix(0, 0)
+
 type PostableAPIKey struct {
 	Name          string `json:"name"`
 	Role          Role   `json:"role"`
@@ -20,15 +22,15 @@ type GettableAPIKey struct {
 	Identifiable
 	TimeAuditable
 	UserAuditable
-	Token     string `json:"token"`
-	Role      Role   `json:"role"`
-	Name      string `json:"name"`
-	ExpiresAt int64  `json:"expiresAt"`
-	LastUsed  int64  `json:"lastUsed"`
-	Revoked   bool   `json:"revoked"`
-	UserID    string `json:"userId"`
-	CreatedBy *User  `json:"createdBy"`
-	UpdatedBy *User  `json:"updatedBy"`
+	Token         string `json:"token"`
+	Role          Role   `json:"role"`
+	Name          string `json:"name"`
+	ExpiresAt     int64  `json:"expiresAt"`
+	LastUsed      int64  `json:"lastUsed"`
+	Revoked       bool   `json:"revoked"`
+	UserID        string `json:"userId"`
+	CreatedByUser *User  `json:"createdByUser"`
+	UpdatedByUser *User  `json:"updatedByUser"`
 }
 
 type OrgUserAPIKey struct {
@@ -65,7 +67,9 @@ type StorableAPIKey struct {
 
 func NewStorableAPIKey(name string, userID valuer.UUID, role Role, expiresAt int64) (*StorableAPIKey, error) {
 	// validate
-	if expiresAt <= 0 {
+
+	// we allow the APIKey if expiresAt is not set, which means it never expires
+	if expiresAt < 0 {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "expiresAt must be greater than 0")
 	}
 
@@ -81,6 +85,11 @@ func NewStorableAPIKey(name string, userID valuer.UUID, role Role, expiresAt int
 	// convert expiresAt to unix timestamp from days
 	// expiresAt = now.Unix() + (expiresAt * 24 * 60 * 60)
 	expiresAtTime := now.AddDate(0, 0, int(expiresAt))
+
+	// if the expiresAt is 0, it means the APIKey never expires
+	if expiresAt == 0 {
+		expiresAtTime = NEVER_EXPIRES
+	}
 
 	// Generate a 32-byte random token.
 	token := make([]byte, 32)
@@ -129,7 +138,7 @@ func NewGettableAPIKeyFromStorableAPIKey(storableAPIKey *StorableAPIKeyUser) *Ge
 		LastUsed:      lastUsed,
 		Revoked:       storableAPIKey.Revoked,
 		UserID:        storableAPIKey.UserID.String(),
-		CreatedBy:     storableAPIKey.CreatedByUser,
-		UpdatedBy:     storableAPIKey.UpdatedByUser,
+		CreatedByUser: storableAPIKey.CreatedByUser,
+		UpdatedByUser: storableAPIKey.UpdatedByUser,
 	}
 }
