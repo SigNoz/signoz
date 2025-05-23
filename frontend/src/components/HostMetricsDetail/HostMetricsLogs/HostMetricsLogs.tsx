@@ -75,7 +75,6 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 	const getItemContent = useCallback(
 		(_: number, logToRender: ILog): JSX.Element => (
 			<RawLogView
-				isReadOnly
 				isTextOverflowEllipsisDisabled
 				key={logToRender.id}
 				data={logToRender}
