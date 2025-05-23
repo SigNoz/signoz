@@ -1,4 +1,4 @@
-package telemetrytests
+package telemetrylogs
 
 import (
 	"strings"
