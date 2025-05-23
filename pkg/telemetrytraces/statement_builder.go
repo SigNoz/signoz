@@ -366,17 +366,6 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	}, nil
 }
 
-// buildTraceQuery builds a query for trace panel type
-func (b *traceQueryStatementBuilder) buildTraceQuery(
-	sb *sqlbuilder.SelectBuilder,
-	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
-	start, end int64,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-) (*qbtypes.Statement, error) {
-	// TODO: Implement this
-	return nil, nil
-}
-
 // buildFilterCondition builds SQL condition from filter expression
 func (b *traceQueryStatementBuilder) addFilterCondition(ctx context.Context, sb *sqlbuilder.SelectBuilder, start, end uint64, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) ([]string, error) {
 
