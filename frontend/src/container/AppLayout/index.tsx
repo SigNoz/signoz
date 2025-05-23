@@ -341,6 +341,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const isExceptionsView = (): boolean => routeKey === 'ALL_ERROR';
 
+	const isSettingsView = (): boolean => routeKey === 'SETTINGS';
+
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
@@ -592,6 +594,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		</div>
 	);
 
+	const sideNavPinned = true;
+
 	return (
 		<Layout className={cx(isDarkMode ? 'darkMode dark' : 'lightMode')}>
 			<Helmet>
@@ -644,9 +648,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			)}
 
 			<Flex
-				className={cx('app-layout', isDarkMode ? 'darkMode dark' : 'lightMode')}
+				className={cx(
+					'app-layout',
+					isDarkMode ? 'darkMode dark' : 'lightMode',
+					sideNavPinned ? 'side-nav-pinned' : '',
+				)}
 			>
-				{isToDisplayLayout && !renderFullScreen && <SideNav />}
+				{isToDisplayLayout && !renderFullScreen && (
+					<SideNav isPinned={sideNavPinned} />
+				)}
 				<div
 					className={cx('app-content', {
 						'full-screen-content': renderFullScreen,
@@ -671,7 +681,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isCloudIntegrationPage() ||
 											isInfraMonitoring() ||
 											isApiMonitoringView() ||
-											isExceptionsView()
+											isExceptionsView() ||
+											isSettingsView()
 												? 0
 												: '0 1rem',
 
