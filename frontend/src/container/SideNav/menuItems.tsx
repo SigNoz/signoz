@@ -263,7 +263,7 @@ export const settingsMenuItems: SidebarItem[] = [
 		icon: <Unplug size={16} />,
 	},
 	{
-		key: ROUTES.API_KEYS,
+		key: ROUTES.ALL_CHANNELS,
 		label: 'Notification Channels',
 		icon: <FileKey2 size={16} />,
 	},

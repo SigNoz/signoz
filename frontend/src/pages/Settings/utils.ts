@@ -5,10 +5,15 @@ import { ROLES, USER_ROLES } from 'types/roles';
 import {
 	alertChannels,
 	apiKeys,
+	billingSettings,
+	createAlertChannels,
 	customDomainSettings,
+	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
+	keyboardShortcuts,
 	multiIngestionSettings,
+	mySettings,
 	organizationSettings,
 } from './config';
 
@@ -53,8 +58,15 @@ export const getRoutes = (
 	}
 
 	if (isCloudUser && isAdmin) {
-		settings.push(...customDomainSettings(t));
+		settings.push(...customDomainSettings(t), ...billingSettings(t));
 	}
+
+	settings.push(
+		...mySettings(t),
+		...createAlertChannels(t),
+		...editAlertChannels(t),
+		...keyboardShortcuts(t),
+	);
 
 	return settings;
 };

@@ -27,7 +27,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { INTEGRATION_TYPES } from 'pages/Integrations/utils';
 import { useAppContext } from 'providers/App/App';
 import {
 	ReactNode,
@@ -41,7 +40,7 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
 import { useDispatch } from 'react-redux';
-import { matchPath, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import {
@@ -329,55 +328,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			url: window.location.origin,
 		});
 	}, [manageCreditCard]);
-
-	const isHome = (): boolean => routeKey === 'HOME';
-
-	const isLogsView = (): boolean =>
-		routeKey === 'LOGS' ||
-		routeKey === 'LOGS_EXPLORER' ||
-		routeKey === 'LOGS_PIPELINES' ||
-		routeKey === 'LOGS_SAVE_VIEWS';
-
-	const isApiMonitoringView = (): boolean => routeKey === 'API_MONITORING';
-
-	const isExceptionsView = (): boolean => routeKey === 'ALL_ERROR';
-
-	const isSettingsView = (): boolean => routeKey === 'SETTINGS';
-
-	const isTracesView = (): boolean =>
-		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
-
-	const isMessagingQueues = (): boolean =>
-		routeKey === 'MESSAGING_QUEUES_KAFKA' ||
-		routeKey === 'MESSAGING_QUEUES_KAFKA_DETAIL' ||
-		routeKey === 'MESSAGING_QUEUES_CELERY_TASK' ||
-		routeKey === 'MESSAGING_QUEUES_OVERVIEW';
-
-	const isCloudIntegrationPage = (): boolean =>
-		routeKey === 'INTEGRATIONS' &&
-		new URLSearchParams(window.location.search).get('integration') ===
-			INTEGRATION_TYPES.AWS_INTEGRATION;
-
-	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
-	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
-	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
-	const isInfraMonitoring = (): boolean =>
-		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS' ||
-		routeKey === 'INFRASTRUCTURE_MONITORING_KUBERNETES';
-	const isTracesFunnels = (): boolean => routeKey === 'TRACES_FUNNELS';
-	const isTracesFunnelDetails = (): boolean =>
-		!!matchPath(pathname, ROUTES.TRACES_FUNNELS_DETAIL);
-
-	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
-
-	const isDashboardView = (): boolean =>
-		isPathMatch(/^\/dashboard\/[a-zA-Z0-9_-]+$/);
-
-	const isDashboardWidgetView = (): boolean =>
-		isPathMatch(/^\/dashboard\/[a-zA-Z0-9_-]+\/new$/);
-
-	const isTraceDetailsView = (): boolean =>
-		isPathMatch(/^\/trace\/[a-zA-Z0-9]+(\?.*)?$/);
 
 	useEffect(() => {
 		if (isDarkMode) {
@@ -667,33 +617,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar>
-								<ChildrenContainer
-									style={{
-										margin:
-											isHome() ||
-											isLogsView() ||
-											isTracesView() ||
-											isDashboardView() ||
-											isDashboardWidgetView() ||
-											isDashboardListView() ||
-											isAlertHistory() ||
-											isAlertOverview() ||
-											isMessagingQueues() ||
-											isCloudIntegrationPage() ||
-											isInfraMonitoring() ||
-											isApiMonitoringView() ||
-											isExceptionsView() ||
-											isSettingsView()
-												? 0
-												: '0 1rem',
-
-										...(isTraceDetailsView() ||
-										isTracesFunnels() ||
-										isTracesFunnelDetails()
-											? { margin: 0 }
-											: {}),
-									}}
-								>
+								<ChildrenContainer>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}
 									{children}
 								</ChildrenContainer>

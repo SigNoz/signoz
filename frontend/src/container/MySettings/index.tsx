@@ -1,6 +1,6 @@
 import './MySettings.styles.scss';
 
-import { Button, Radio, RadioChangeEvent, Space, Tag, Typography } from 'antd';
+import { Button, Radio, RadioChangeEvent, Tag } from 'antd';
 import { Logout } from 'api/utils';
 import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
 import { LogOut, Moon, Sun } from 'lucide-react';
@@ -44,23 +44,8 @@ function MySettings(): JSX.Element {
 	};
 
 	return (
-		<Space
-			direction="vertical"
-			size="large"
-			style={{
-				margin: '16px 0',
-			}}
-		>
+		<div className="my-settings-container">
 			<div className="theme-selector">
-				<Typography.Title
-					level={5}
-					style={{
-						margin: '0 0 16px 0',
-					}}
-				>
-					{' '}
-					Theme{' '}
-				</Typography.Title>
 				<Radio.Group
 					options={themeOptions}
 					onChange={handleThemeChange}
@@ -81,15 +66,18 @@ function MySettings(): JSX.Element {
 
 			<TimezoneAdaptation />
 
-			<Button
-				className="flexBtn"
-				onClick={(): void => Logout()}
-				type="primary"
-				data-testid="logout-button"
-			>
-				<LogOut size={12} /> Logout
-			</Button>
-		</Space>
+			<div className="settings-footer">
+				<Button
+					type="primary"
+					className="periscope-btn primary"
+					icon={<LogOut size={14} />}
+					onClick={(): void => Logout()}
+					data-testid="logout-button"
+				>
+					Logout
+				</Button>
+			</div>
+		</div>
 	);
 }
 

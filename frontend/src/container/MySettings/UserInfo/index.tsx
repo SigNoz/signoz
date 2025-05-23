@@ -55,7 +55,7 @@ function UserInfo(): JSX.Element {
 	};
 
 	return (
-		<Card>
+		<Card className="user-info-card">
 			<Space direction="vertical" size="middle">
 				<Flex gap={8}>
 					<Typography.Title level={4} style={{ marginTop: 0 }}>
