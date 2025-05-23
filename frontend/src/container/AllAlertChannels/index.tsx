@@ -1,3 +1,5 @@
+import './AllAlertChannels.styles.scss';
+
 import { PlusOutlined } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import getAll from 'api/channels/getAll';
@@ -56,7 +58,7 @@ function AlertChannels(): JSX.Element {
 	}
 
 	return (
-		<>
+		<div className="alert-channels-container">
 			<ButtonContainer>
 				<Paragraph ellipsis type="secondary">
 					{t('sending_channels_note')}
@@ -87,7 +89,7 @@ function AlertChannels(): JSX.Element {
 			</ButtonContainer>
 
 			<AlertChannelsComponent allChannels={data?.data || []} />
-		</>
+		</div>
 	);
 }
 

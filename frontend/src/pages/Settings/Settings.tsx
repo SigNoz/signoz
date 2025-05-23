@@ -1,6 +1,5 @@
 import './Settings.styles.scss';
 
-import { Color } from '@signozhq/design-tokens';
 import RouteTab from 'components/RouteTab';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
@@ -106,7 +105,7 @@ function SettingsPage(): JSX.Element {
 		}
 	};
 
-	// return <RouteTab routes={routes} activeKey={pathname} history={history} />;
+	console.log('routes', routes, pathname);
 
 	return (
 		<div className="settings-page">
@@ -127,16 +126,19 @@ function SettingsPage(): JSX.Element {
 							isDisabled={false}
 							showIcon={false}
 							onClick={(event): void => {
-								handleMenuItemClick(event, item);
+								handleMenuItemClick((event as unknown) as MouseEvent, item);
 							}}
 						/>
 					))}
 				</div>
 
 				<div className="settings-page-content">
-					<div className="settings-page-content-header">
-						<div className="settings-page-content-header-title">Settings</div>
-					</div>
+					<RouteTab
+						routes={routes}
+						activeKey={pathname}
+						history={history}
+						tabBarStyle={{ display: 'none' }}
+					/>
 				</div>
 			</div>
 		</div>
