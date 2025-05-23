@@ -1,3 +1,3 @@
-### Monitor Simple Queue Service with SigNoz
+### Monitor DynamoDB with SigNoz
 
-Collect SQS key Metrics and view them with an out of the box dashboard.
+Collect DynamoDB Key Metrics and view them with an out of the box dashboard.
