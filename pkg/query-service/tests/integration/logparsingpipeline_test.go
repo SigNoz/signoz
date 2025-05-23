@@ -48,7 +48,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	testbed := NewLogPipelinesTestBed(t, nil)
 	require := require.New(t)
 
-	orgID, err := utils.GetTestOrgId(testbed.sqlStore)
+	orgID, err := utils.GetTestOrgId(testbed.store)
 	require.Nil(err)
 
 	getPipelinesResp := testbed.GetPipelinesFromQS()
@@ -461,6 +461,7 @@ type LogPipelinesTestBed struct {
 	agentConfMgr    *agentConf.Manager
 	opampServer     *opamp.Server
 	opampClientConn *opamp.MockOpAmpConnection
+	store           sqlstore.SQLStore
 	userModule      user.Module
 }
 
@@ -485,11 +486,11 @@ func NewTestbedWithoutOpamp(t *testing.T, store sqlstore.SQLStore) *LogPipelines
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 10*time.Minute, 30*time.Minute)
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore), jwt, emailing, providerSettings)
+	userModule := impluser.NewModule(impluser.NewStore(store), jwt, emailing, providerSettings)
 	userHandler := impluser.NewHandler(userModule)
-	modules := signoz.NewModules(sqlStore, userModule)
+	modules := signoz.NewModules(store, userModule)
 	handlers := signoz.NewHandlers(modules, userHandler)
-	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(sqlStore)))
+	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(store)))
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		LogsParsingPipelineController: controller,
@@ -504,7 +505,7 @@ func NewTestbedWithoutOpamp(t *testing.T, store sqlstore.SQLStore) *LogPipelines
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
-	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
+	organizationModule := implorganization.NewModule(implorganization.NewStore(store))
 	user, apiErr := createTestUser(organizationModule, userModule)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
@@ -526,6 +527,7 @@ func NewTestbedWithoutOpamp(t *testing.T, store sqlstore.SQLStore) *LogPipelines
 		testUser:     user,
 		apiHandler:   apiHandler,
 		agentConfMgr: agentConfMgr,
+		store:        store,
 		userModule:   userModule,
 	}
 }
@@ -533,10 +535,10 @@ func NewTestbedWithoutOpamp(t *testing.T, store sqlstore.SQLStore) *LogPipelines
 func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipelinesTestBed {
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
-	orgID, err := utils.GetTestOrgId(testbed.sqlStore)
+	orgID, err := utils.GetTestOrgId(testbed.store)
 	require.Nil(t, err)
 
-	model.InitDB(testbed.sqlStore)
+	model.InitDB(testbed.store)
 
 	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
 	err = opampServer.Start(opamp.GetAvailableLocalAddress())

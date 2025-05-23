@@ -3395,15 +3395,9 @@ func (aH *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request)
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
 		RespondError(w, model.UnauthorizedError(errors.New("unauthorized")), nil)
-		return
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
 		return
 	}
 

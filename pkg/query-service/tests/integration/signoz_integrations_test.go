@@ -388,6 +388,7 @@ type IntegrationsTestBed struct {
 	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
+	store          sqlstore.SQLStore
 	userModule     user.Module
 }
 
@@ -627,6 +628,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
+		store:          testDB,
 		userModule:     userModule,
 	}
 }

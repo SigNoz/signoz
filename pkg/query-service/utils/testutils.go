@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -90,7 +90,9 @@ func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
 
 func CreateTestOrg(t *testing.T, store sqlstore.SQLStore) error {
 	org := &types.Organization{
-		ID:   uuid.NewString(),
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
 		Name: "testOrg",
 	}
 	_, err := store.BunDB().NewInsert().Model(org).Exec(context.Background())

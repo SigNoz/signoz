@@ -27,7 +27,7 @@ func (r *Repo) GetConfigHistory(
 		Model(&c).
 		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
 		ColumnExpr("COALESCE(created_by, '') as created_by").
-		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
+		ColumnExpr(`COALESCE((SELECT display_name FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
 		ColumnExpr("COALESCE(last_hash, '') as last_hash, COALESCE(last_config, '{}') as last_config").
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
@@ -57,7 +57,7 @@ func (r *Repo) GetConfigVersion(
 		Model(&c).
 		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
 		ColumnExpr("COALESCE(created_by, '') as created_by").
-		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
+		ColumnExpr(`COALESCE((SELECT display_name FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
 		ColumnExpr("COALESCE(last_hash, '') as last_hash, COALESCE(last_config, '{}') as last_config").
 		Where("acv.element_type = ?", typ).
 		Where("acv.version = ?", v).
@@ -82,7 +82,7 @@ func (r *Repo) GetLatestVersion(
 		Model(&c).
 		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
 		ColumnExpr("COALESCE(created_by, '') as created_by").
-		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
+		ColumnExpr(`COALESCE((SELECT display_name FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
 		Where("version = (SELECT MAX(version) FROM agent_config_versions WHERE acv.element_type = ?)", typ).

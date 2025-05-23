@@ -68,7 +68,3 @@ func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table inte
 func (dialect *dialect) ToggleForeignKeyConstraint(ctx context.Context, bun *bun.DB, enable bool) error {
 	return nil
 }
-
-func (dialect *dialect) IndexExists(ctx context.Context, bun bun.IDB, table string, index string) (bool, error) {
-	return false, nil
-}
