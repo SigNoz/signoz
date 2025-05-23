@@ -5,7 +5,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -99,10 +99,7 @@ export const useLogsData = ({
 	): Query | null => {
 		if (!query) return null;
 
-		const paginateData = getPaginationQueryData({
-			filters: params.filters,
-			listItemId: params.log ? params.log.id : null,
-			orderByTimestamp,
+		const paginateData = getPaginationQueryDataV2({
 			page: params.page,
 			pageSize: params.pageSize,
 		});

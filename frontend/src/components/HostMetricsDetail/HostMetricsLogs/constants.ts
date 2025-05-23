@@ -57,9 +57,6 @@ export const getHostLogsQueryPayload = (
 		id: uuidv4(),
 		queryType: EQueryType.QUERY_BUILDER,
 	},
-	params: {
-		lastLogLineTimestamp: null,
-	},
 	start,
 	end,
 });

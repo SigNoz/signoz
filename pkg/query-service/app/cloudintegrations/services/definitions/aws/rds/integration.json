@@ -1,6 +1,6 @@
 {
   "id": "rds",
-  "title": "Amazon RDS",
+  "title": "RDS",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
   "supported_signals": {
