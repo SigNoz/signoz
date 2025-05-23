@@ -142,6 +142,7 @@ function ChartPreview({
 			params: {
 				allowSelectedIntervalForStepGen,
 			},
+			originalGraphType: graphType,
 		},
 		alertDef?.version || DEFAULT_ENTITY_VERSION,
 		{

@@ -94,6 +94,7 @@ function FullView({
 				variables: getDashboardVariables(selectedDashboard?.data.variables),
 				fillGaps: widget.fillSpans,
 				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
+				originalGraphType: widget?.panelTypes,
 			};
 		}
 		updatedQuery.builder.queryData[0].pageSize = 10;
