@@ -8,7 +8,6 @@ import { getQueryString } from 'container/SideNav/helper';
 import { settingsMenuItems } from 'container/SideNav/menuItems';
 import NavItem from 'container/SideNav/NavItem/NavItem';
 import { SidebarItem } from 'container/SideNav/sideNav.types';
-import { getActiveMenuKeyFromPath } from 'container/SideNav/sideNav.utils';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
@@ -22,9 +21,6 @@ import { getRoutes } from './utils';
 
 function SettingsPage(): JSX.Element {
 	const { pathname, search } = useLocation();
-	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
-		pathname,
-	]);
 
 	const { user, featureFlags, trialInfo } = useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
@@ -63,10 +59,6 @@ function SettingsPage(): JSX.Element {
 		],
 	);
 
-	const settingsRoute = isCurrentOrgSettings
-		? ROUTES.ORG_SETTINGS
-		: ROUTES.SETTINGS;
-
 	const isCtrlMetaKey = (e: MouseEvent): boolean => e.ctrlKey || e.metaKey;
 
 	const openInNewTab = (path: string): void => {
@@ -94,18 +86,16 @@ function SettingsPage(): JSX.Element {
 	);
 
 	const handleMenuItemClick = (event: MouseEvent, item: SidebarItem): void => {
-		if (item.key === ROUTES.SETTINGS) {
-			if (isCtrlMetaKey(event)) {
-				openInNewTab(settingsRoute);
-			} else {
-				history.push(settingsRoute);
-			}
-		} else if (item) {
-			onClickHandler(item?.key as string, event);
-		}
+		onClickHandler(item?.key as string, event);
 	};
 
-	console.log('routes', routes, pathname);
+	const isActiveNavItem = (key: string): boolean => {
+		if (pathname.startsWith(ROUTES.ALL_CHANNELS) && key === ROUTES.ALL_CHANNELS) {
+			return true;
+		}
+
+		return pathname === key;
+	};
 
 	return (
 		<div className="settings-page">
@@ -122,7 +112,7 @@ function SettingsPage(): JSX.Element {
 						<NavItem
 							key={item.key}
 							item={item}
-							isActive={activeMenuKey === item.key}
+							isActive={isActiveNavItem(item.key as string)}
 							isDisabled={false}
 							showIcon={false}
 							onClick={(event): void => {

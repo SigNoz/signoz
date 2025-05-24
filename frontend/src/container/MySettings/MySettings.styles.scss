@@ -1,7 +1,7 @@
 .my-settings-container {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: 48px;
 
 	width: 80%;
 	margin: 12px auto;
@@ -21,6 +21,72 @@
 
 .logout-button {
 	display: inline-flex;
+}
+
+.user-info-section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	.user-info-section-header {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+
+		.user-info-section-title {
+			color: #fff;
+			font-family: Inter;
+			font-size: 16px;
+			font-style: normal;
+			line-height: 24px; /* 155.556% */
+			letter-spacing: -0.08px;
+		}
+
+		.user-info-section-subtitle {
+			color: var(--Vanilla-400, #c0c1c3);
+			font-family: Inter;
+			font-size: 12px;
+			font-style: normal;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+		}
+	}
+}
+
+.user-preference-section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	.user-preference-section-header {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+
+		.user-preference-section-title {
+			color: #fff;
+			font-family: Inter;
+			font-size: 16px;
+			font-style: normal;
+			line-height: 24px; /* 155.556% */
+			letter-spacing: -0.08px;
+		}
+
+		.user-preference-section-subtitle {
+			color: var(--Vanilla-400, #c0c1c3);
+			font-family: Inter;
+			font-size: 12px;
+			font-style: normal;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+		}
+	}
+
+	.user-preference-section-content {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
 }
 
 .reset-password-card {
