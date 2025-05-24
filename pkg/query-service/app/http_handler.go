@@ -594,7 +594,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/complete/google", am.OpenAccess(aH.receiveGoogleAuth)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/orgs/{orgId}/domains", am.AdminAccess(aH.Signoz.Handlers.User.ListDomains)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.User.ListDomains)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.User.CreateDomain)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.User.UpdateDomain)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteDomain)).Methods(http.MethodDelete)

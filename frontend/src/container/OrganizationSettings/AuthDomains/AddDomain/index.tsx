@@ -2,12 +2,13 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
-import createDomainApi from 'api/SAML/postDomain';
+import createDomainApi from 'api/v1/domains/create';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import APIError from 'types/api/error';
 
 import { Container } from '../styles';
 
@@ -23,26 +24,21 @@ function AddDomain({ refetch }: Props): JSX.Element {
 
 	const onCreateHandler = async (): Promise<void> => {
 		try {
-			const response = await createDomainApi({
+			await createDomainApi({
 				name: form.getFieldValue('domain'),
 				orgId: (org || [])[0].id,
 			});
 
-			if (response.statusCode === 200) {
-				notifications.success({
-					message: 'Your domain has been added successfully.',
-					duration: 15,
-				});
-				setIsDomain(false);
-				refetch();
-			} else {
-				notifications.error({
-					message: t('common:something_went_wrong'),
-				});
-			}
+			notifications.success({
+				message: 'Your domain has been added successfully.',
+				duration: 15,
+			});
+			setIsDomain(false);
+			refetch();
 		} catch (error) {
 			notifications.error({
-				message: t('common:something_went_wrong'),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 	};
