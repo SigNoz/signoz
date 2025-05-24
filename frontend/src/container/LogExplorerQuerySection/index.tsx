@@ -1,5 +1,6 @@
 import './LogsExplorerQuerySection.styles.scss';
 
+import QueryBuilderV2 from 'components/QueryBuilderV2/QueryBuilderV2';
 import {
 	initialQueriesMap,
 	OPERATORS,
@@ -106,6 +107,10 @@ function LogExplorerQuerySection({
 					queryComponents={queryComponents}
 					version="v3" // setting this to v3 as we this is rendered in logs explorer
 				/>
+			)}
+
+			{selectedView === SELECTED_VIEWS.QUERY_BUILDER_V2 && (
+				<QueryBuilderV2 source={DataSource.LOGS} query={query} />
 			)}
 		</>
 	);
