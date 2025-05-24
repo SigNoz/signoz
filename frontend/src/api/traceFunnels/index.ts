@@ -274,7 +274,7 @@ export const getFunnelErrorTraces = async (
 	payload: FunnelOverviewPayload,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<ErrorTraceData> | ErrorResponse> => {
-	const response: AxiosResponse = await axios.post(
+	const response = await axios.post(
 		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/error-traces`,
 		payload,
 		{
