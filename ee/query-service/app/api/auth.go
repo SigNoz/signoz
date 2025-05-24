@@ -9,7 +9,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 )
 
 func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
