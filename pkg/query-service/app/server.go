@@ -220,6 +220,7 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 	).Wrap)
 	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
 	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
 
 	api.RegisterPrivateRoutes(r)
 
@@ -250,7 +251,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	).Wrap)
 	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
 	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
-
+	r.Use(middleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
 	am := middleware.NewAuthZ(s.serverOptions.SigNoz.Instrumentation.Logger())
 
 	api.RegisterRoutes(r, am)
