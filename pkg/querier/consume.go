@@ -58,118 +58,138 @@ func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
 
-	vars := make([]any, len(colTypes))
-	countOfNumericColumns := 0
-
+	slots := make([]any, len(colTypes))
+	numCols := 0
 	for i, ct := range colTypes {
-		vars[i] = reflect.New(ct.ScanType()).Interface()
+		slots[i] = reflect.New(ct.ScanType()).Interface()
 		if numericKind(ct.ScanType().Kind()) {
-			countOfNumericColumns++
+			numCols++
 		}
 	}
 
-	type seriesKey struct {
+	type sKey struct {
 		agg int
 		key string // deterministic join of label values
 	}
+	seriesMap := map[sKey]*qbtypes.TimeSeries{}
 
-	seriesMap := map[seriesKey]*qbtypes.TimeSeries{}
-	aggAliasRe := regexp.MustCompile(`^__result_(\d+)$`)
+	aggRe := regexp.MustCompile(`^__result_(\d+)$`)
 
 	for rows.Next() {
-		if err := rows.Scan(vars...); err != nil {
+		if err := rows.Scan(slots...); err != nil {
 			return nil, err
 		}
 
 		var (
-			lblVals []string
-			lblObjs []*qbtypes.Label
-			tsVal   qbtypes.TimeSeriesValue
-			aggIdx  = -1
+			ts            int64
+			lblVals       []string
+			lblObjs       []*qbtypes.Label
+			aggValues     = map[int]float64{} // all __result_N in this row
+			fallbackValue float64             // value when NO __result_N columns exist
+			fallbackSeen  bool
 		)
 
-		for idx, ptr := range vars {
+		for idx, ptr := range slots {
 			name := colNames[idx]
+
 			switch v := ptr.(type) {
-
 			case *time.Time:
-				tsVal.Timestamp = v.UnixMilli()
+				ts = v.UnixMilli()
 
-			/* ── Numbers (aggregation or grouping) ─────────────────── */
 			case *float64, *float32, *int64, *int32, *uint64, *uint32:
 				val := numericAsFloat(reflect.ValueOf(ptr).Elem().Interface())
-				if m := aggAliasRe.FindStringSubmatch(name); m != nil {
-					// aggregation column – its index is m[1]
-					n, _ := strconv.Atoi(m[1])
-					aggIdx = n
-					tsVal.Value = val
-				} else if countOfNumericColumns == 1 { // single numeric column -> treat as value as well
-					aggIdx = 0
-					tsVal.Value = val
+				if m := aggRe.FindStringSubmatch(name); m != nil {
+					id, _ := strconv.Atoi(m[1])
+					aggValues[id] = val
+				} else if numCols == 1 { // classic single-value query
+					fallbackValue = val
+					fallbackSeen = true
 				} else {
-					// numeric label (rare but legal)
+					// numeric label
 					lblVals = append(lblVals, fmt.Sprint(val))
 					lblObjs = append(lblObjs, &qbtypes.Label{
 						Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 						Value: val,
 					})
 				}
+
 			case *string:
 				lblVals = append(lblVals, *v)
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 					Value: *v,
 				})
+
 			default:
 				continue
 			}
 		}
 
-		if aggIdx < 0 || math.IsNaN(tsVal.Value) || math.IsInf(tsVal.Value, 0) {
-			continue // nothing usable in this row
+		// Edge-case: no __result_N columns, but a single numeric column present
+		if len(aggValues) == 0 && fallbackSeen {
+			aggValues[0] = fallbackValue
+		}
+
+		if ts == 0 || len(aggValues) == 0 {
+			continue // nothing useful
 		}
 
 		sort.Strings(lblVals)
-		sKey := seriesKey{agg: aggIdx, key: strings.Join(lblVals, ",")}
+		labelsKey := strings.Join(lblVals, ",")
 
-		series, ok := seriesMap[sKey]
-		if !ok {
-			series = &qbtypes.TimeSeries{Labels: lblObjs}
-			seriesMap[sKey] = series
+		// one point per aggregation in this row
+		for aggIdx, val := range aggValues {
+			if math.IsNaN(val) || math.IsInf(val, 0) {
+				continue
+			}
+
+			key := sKey{agg: aggIdx, key: labelsKey}
+
+			series, ok := seriesMap[key]
+			if !ok {
+				series = &qbtypes.TimeSeries{Labels: lblObjs}
+				seriesMap[key] = series
+			}
+			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
+				Timestamp: ts,
+				Value:     val,
+			})
 		}
-		series.Values = append(series.Values, &tsVal)
 	}
-
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	// gather the distinct aggregation indexes we have
-	var maxAgg int
+	maxAgg := -1
 	for k := range seriesMap {
 		if k.agg > maxAgg {
 			maxAgg = k.agg
 		}
 	}
+	if maxAgg < 0 {
+		return nil, nil // empty result-set
+	}
 
 	buckets := make([]*qbtypes.AggregationBucket, maxAgg+1)
 	for i := range buckets {
-		buckets[i] = &qbtypes.AggregationBucket{Index: i, Alias: "__result_" + strconv.Itoa(i)}
+		buckets[i] = &qbtypes.AggregationBucket{
+			Index: i,
+			Alias: "__result_" + strconv.Itoa(i),
+		}
 	}
-
 	for k, s := range seriesMap {
 		buckets[k.agg].Series = append(buckets[k.agg].Series, s)
 	}
 
-	var aggBuckets []*qbtypes.AggregationBucket
+	var nonEmpty []*qbtypes.AggregationBucket
 	for _, b := range buckets {
 		if len(b.Series) > 0 {
-			aggBuckets = append(aggBuckets, b)
+			nonEmpty = append(nonEmpty, b)
 		}
 	}
 
 	return []*qbtypes.TimeSeriesData{{
-		Aggregations: aggBuckets,
+		Aggregations: nonEmpty,
 	}}, nil
 }
 
