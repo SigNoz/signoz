@@ -14,7 +14,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/SigNoz/signoz/ee/query-service/dao"
 	"github.com/SigNoz/signoz/ee/query-service/license"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
@@ -39,17 +38,14 @@ type Manager struct {
 
 	scheduler *gocron.Scheduler
 
-	modelDao dao.ModelDao
-
 	zeus zeus.Zeus
 }
 
-func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, zeus zeus.Zeus) (*Manager, error) {
+func New(licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, zeus zeus.Zeus) (*Manager, error) {
 	m := &Manager{
 		clickhouseConn: clickhouseConn,
 		licenseRepo:    licenseRepo,
 		scheduler:      gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
-		modelDao:       modelDao,
 		zeus:           zeus,
 	}
 	return m, nil

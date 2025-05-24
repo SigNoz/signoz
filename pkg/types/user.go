@@ -2,11 +2,13 @@ package types
 
 import (
 	"context"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -57,6 +59,14 @@ type UserStore interface {
 
 	// Auth Domain
 	GetDomainByName(ctx context.Context, name string) (*StorableOrgDomain, error)
+	// org domain (auth domains) CRUD ops
+	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*GettableOrgDomain, error)
+	ListDomains(ctx context.Context, orgId valuer.UUID) ([]*GettableOrgDomain, error)
+	GetDomain(ctx context.Context, id uuid.UUID) (*GettableOrgDomain, error)
+	CreateDomain(ctx context.Context, d *GettableOrgDomain) error
+	UpdateDomain(ctx context.Context, domain *GettableOrgDomain) error
+	DeleteDomain(ctx context.Context, id uuid.UUID) error
+	GetDomainByEmail(ctx context.Context, email string) (*GettableOrgDomain, error)
 
 	// Temporary func for SSO
 	GetDefaultOrgID(ctx context.Context) (string, error)
