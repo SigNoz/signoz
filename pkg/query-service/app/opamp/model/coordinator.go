@@ -15,7 +15,7 @@ func init() {
 	}
 }
 
-type OnChangeCallback func(agentId string, hash string, err error)
+type OnChangeCallback func(orgId string, agentId string, hash string, err error)
 
 // responsible for managing subscribers on config change
 type Coordinator struct {
@@ -25,16 +25,16 @@ type Coordinator struct {
 	subscribers map[string][]OnChangeCallback
 }
 
-func onConfigSuccess(agentId string, hash string) {
-	notifySubscribers(agentId, hash, nil)
+func onConfigSuccess(orgId string, agentId string, hash string) {
+	notifySubscribers(orgId, agentId, hash, nil)
 }
 
-func onConfigFailure(agentId string, hash string, errorMessage string) {
-	notifySubscribers(agentId, hash, fmt.Errorf(errorMessage))
+func onConfigFailure(orgId string, agentId string, hash string, errorMessage string) {
+	notifySubscribers(orgId, agentId, hash, fmt.Errorf(errorMessage))
 }
 
 // OnSuccess listens to config changes and notifies subscribers
-func notifySubscribers(agentId string, hash string, err error) {
+func notifySubscribers(orgId string, agentId string, hash string, err error) {
 	// this method currently does not handle multi-agent scenario.
 	// as soon as a message is delivered, we release all the subscribers
 	// for a given hash
@@ -44,7 +44,7 @@ func notifySubscribers(agentId string, hash string, err error) {
 	}
 
 	for _, s := range subs {
-		s(agentId, hash, err)
+		s(orgId, agentId, hash, err)
 	}
 
 	// delete all subscribers for this hash, assume future
