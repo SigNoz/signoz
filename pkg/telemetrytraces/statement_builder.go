@@ -21,7 +21,6 @@ type TraceQueryStatementBuilderOpts struct {
 	FieldMapper               qbtypes.FieldMapper
 	ConditionBuilder          qbtypes.ConditionBuilder
 	ResourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
-	Compiler                  qbtypes.FilterCompiler
 	AggExprRewriter           qbtypes.AggExprRewriter
 }
 
@@ -29,7 +28,6 @@ type traceQueryStatementBuilder struct {
 	opts            TraceQueryStatementBuilderOpts
 	fm              qbtypes.FieldMapper
 	cb              qbtypes.ConditionBuilder
-	compiler        qbtypes.FilterCompiler
 	aggExprRewriter qbtypes.AggExprRewriter
 }
 
@@ -40,7 +38,6 @@ func NewTraceQueryStatementBuilder(opts TraceQueryStatementBuilderOpts) *traceQu
 		opts:            opts,
 		fm:              opts.FieldMapper,
 		cb:              opts.ConditionBuilder,
-		compiler:        opts.Compiler,
 		aggExprRewriter: opts.AggExprRewriter,
 	}
 }
@@ -87,8 +84,22 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 		keySelectors = append(keySelectors, selectors...)
 	}
 
-	whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
-	keySelectors = append(keySelectors, whereClauseSelectors...)
+	if query.Filter != nil && query.Filter.Expression != "" {
+		whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
+		keySelectors = append(keySelectors, whereClauseSelectors...)
+	}
+
+	if query.GroupBy != nil {
+		for idx := range query.GroupBy {
+			groupBy := query.GroupBy[idx]
+			selectors := querybuilder.QueryStringToKeysSelectors(groupBy.TelemetryFieldKey.Name)
+			keySelectors = append(keySelectors, selectors...)
+		}
+	}
+
+	for idx := range keySelectors {
+		keySelectors[idx].Signal = telemetrytypes.SignalTraces
+	}
 
 	return keySelectors
 }
@@ -130,14 +141,14 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(colExpr)
+		sb.SelectMore(sqlbuilder.Escape(colExpr))
 	}
 
 	// From table
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -200,14 +211,18 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(colExpr)
+		sb.SelectMore(sqlbuilder.Escape(colExpr))
 		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
 	}
 
 	// Aggregations
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
-		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, agg.Expression)
+		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+			ctx, agg.Expression,
+			qbtypes.WithKeys(keys),
+			qbtypes.WithSignal(telemetrytypes.SignalTraces),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -216,7 +231,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -301,14 +316,18 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(colExpr)
+		sb.SelectMore(sqlbuilder.Escape(colExpr))
 	}
 
 	// Add aggregation
 	if len(query.Aggregations) > 0 {
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
-			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, aggExpr.Expression)
+			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+				ctx, aggExpr.Expression,
+				qbtypes.WithKeys(keys),
+				qbtypes.WithSignal(telemetrytypes.SignalTraces),
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -321,7 +340,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -367,14 +386,29 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 }
 
 // buildFilterCondition builds SQL condition from filter expression
-func (b *traceQueryStatementBuilder) addFilterCondition(ctx context.Context, sb *sqlbuilder.SelectBuilder, start, end uint64, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) ([]string, error) {
+func (b *traceQueryStatementBuilder) addFilterCondition(
+	ctx context.Context,
+	sb *sqlbuilder.SelectBuilder,
+	start, end uint64,
+	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) ([]string, error) {
 
-	// add filter expression
+	var filterWhereClause *sqlbuilder.WhereClause
+	var warnings []string
+	var err error
 
-	filterWhereClause, warnings, err := b.compiler.Compile(ctx, query.Filter.Expression)
+	if query.Filter != nil && query.Filter.Expression != "" {
+		// add filter expression
+		filterWhereClause, warnings, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			FieldMapper:      b.opts.FieldMapper,
+			ConditionBuilder: b.opts.ConditionBuilder,
+			FieldKeys:        keys,
+		})
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if filterWhereClause != nil {
@@ -385,7 +419,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(ctx context.Context, sb 
 	startBucket := start/1000000000 - 1800
 	endBucket := end / 1000000000
 
-	sb.Where(sb.GE("timestamp", start), sb.LE("timestamp", end), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
+	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.LE("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 
 	return warnings, nil
 }

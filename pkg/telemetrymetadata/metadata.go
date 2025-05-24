@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -35,7 +36,6 @@ type telemetryMetaStore struct {
 
 	fm               qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
-	compiler         qbtypes.FilterCompiler
 }
 
 func NewTelemetryMetaStore(
@@ -562,7 +562,10 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 	sb := sqlbuilder.Select("DISTINCT " + selectColumn).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
 
 	if len(fieldValueSelector.ExistingQuery) != 0 {
-		whereClause, _, err := t.compiler.Compile(ctx, fieldValueSelector.ExistingQuery)
+		whereClause, _, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
+			FieldMapper:      t.fm,
+			ConditionBuilder: t.conditionBuilder,
+		})
 		if err == nil {
 			sb.AddWhereClause(whereClause)
 		} else {

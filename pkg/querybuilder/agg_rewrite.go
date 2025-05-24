@@ -14,11 +14,9 @@ import (
 )
 
 type AggExprRewriterOptions struct {
-	MetadataStore    telemetrytypes.MetadataStore
 	FullTextColumn   *telemetrytypes.TelemetryFieldKey
 	FieldMapper      qbtypes.FieldMapper
 	ConditionBuilder qbtypes.ConditionBuilder
-	FilterCompiler   qbtypes.FilterCompiler
 	JsonBodyPrefix   string
 	JsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 }
@@ -62,14 +60,7 @@ func (r *aggExprRewriter) Rewrite(ctx context.Context, expr string, opts ...qbty
 		return "", nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
 	}
 
-	selectors := QueryStringToKeysSelectors(expr)
-
-	keys, err := r.opts.MetadataStore.GetKeysMulti(ctx, selectors)
-	if err != nil {
-		return "", nil, err
-	}
-
-	visitor := newExprVisitor(keys,
+	visitor := newExprVisitor(rctx.Keys,
 		r.opts.FullTextColumn,
 		r.opts.FieldMapper,
 		r.opts.ConditionBuilder,

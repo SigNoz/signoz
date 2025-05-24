@@ -21,7 +21,6 @@ type LogQueryStatementBuilderOpts struct {
 	FieldMapper               qbtypes.FieldMapper
 	ConditionBuilder          qbtypes.ConditionBuilder
 	ResourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
-	Compiler                  qbtypes.FilterCompiler
 	AggExprRewriter           qbtypes.AggExprRewriter
 }
 
@@ -29,7 +28,6 @@ type logQueryStatementBuilder struct {
 	opts            LogQueryStatementBuilderOpts
 	fm              qbtypes.FieldMapper
 	cb              qbtypes.ConditionBuilder
-	compiler        qbtypes.FilterCompiler
 	aggExprRewriter qbtypes.AggExprRewriter
 }
 
@@ -40,7 +38,6 @@ func NewLogQueryStatementBuilder(opts LogQueryStatementBuilderOpts) *logQuerySta
 		opts:            opts,
 		fm:              opts.FieldMapper,
 		cb:              opts.ConditionBuilder,
-		compiler:        opts.Compiler,
 		aggExprRewriter: opts.AggExprRewriter,
 	}
 }
@@ -99,7 +96,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
-	_ map[string][]*telemetrytypes.TelemetryFieldKey,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -123,7 +120,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -186,14 +183,18 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(colExpr)
+		sb.SelectMore(sqlbuilder.Escape(colExpr))
 		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
 	}
 
 	// Aggregations
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
-		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, agg.Expression)
+		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+			ctx, agg.Expression,
+			qbtypes.WithKeys(keys),
+			qbtypes.WithSignal(telemetrytypes.SignalLogs),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +203,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -287,14 +288,18 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(colExpr)
+		sb.SelectMore(sqlbuilder.Escape(colExpr))
 	}
 
 	// Add aggregation
 	if len(query.Aggregations) > 0 {
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
-			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, aggExpr.Expression)
+			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+				ctx, aggExpr.Expression,
+				qbtypes.WithKeys(keys),
+				qbtypes.WithSignal(telemetrytypes.SignalLogs),
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -307,7 +312,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -353,11 +358,20 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 }
 
 // buildFilterCondition builds SQL condition from filter expression
-func (b *logQueryStatementBuilder) addFilterCondition(ctx context.Context, sb *sqlbuilder.SelectBuilder, start, end uint64, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) ([]string, error) {
+func (b *logQueryStatementBuilder) addFilterCondition(
+	ctx context.Context,
+	sb *sqlbuilder.SelectBuilder,
+	start, end uint64,
+	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) ([]string, error) {
 
 	// add filter expression
-
-	filterWhereClause, warnings, err := b.compiler.Compile(ctx, query.Filter.Expression)
+	filterWhereClause, warnings, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		FieldMapper:      b.opts.FieldMapper,
+		ConditionBuilder: b.opts.ConditionBuilder,
+		FieldKeys:        keys,
+	})
 
 	if err != nil {
 		return nil, err

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -13,7 +14,7 @@ import (
 type ResourceFilterStatementBuilderOpts struct {
 	FieldMapper      qbtypes.FieldMapper
 	ConditionBuilder qbtypes.ConditionBuilder
-	Compiler         qbtypes.FilterCompiler
+	MetadataStore    telemetrytypes.MetadataStore
 }
 
 var (
@@ -64,6 +65,21 @@ func NewLogResourceFilterStatementBuilder(opts ResourceFilterStatementBuilderOpt
 	}
 }
 
+func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryBuilderQuery[T]) []*telemetrytypes.FieldKeySelector {
+	var keySelectors []*telemetrytypes.FieldKeySelector
+
+	if query.Filter != nil && query.Filter.Expression != "" {
+		whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
+		keySelectors = append(keySelectors, whereClauseSelectors...)
+	}
+
+	for idx := range keySelectors {
+		keySelectors[idx].Signal = b.signal
+	}
+
+	return keySelectors
+}
+
 // Build builds a SQL query based on the given parameters
 func (b *resourceFilterStatementBuilder[T]) Build(
 	ctx context.Context,
@@ -81,7 +97,13 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	q.Select("fingerprint")
 	q.From(fmt.Sprintf("%s.%s", config.dbName, config.tableName))
 
-	if err := b.addConditions(ctx, q, start, end, query); err != nil {
+	keySelectors := b.getKeySelectors(query)
+	keys, err := b.opts.MetadataStore.GetKeysMulti(ctx, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := b.addConditions(ctx, q, start, end, query, keys); err != nil {
 		return nil, err
 	}
 
@@ -98,10 +120,17 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[T],
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) error {
 	// Add filter condition if present
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhereClause, _, err := b.opts.Compiler.Compile(ctx, query.Filter.Expression)
+
+		filterWhereClause, _, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			FieldMapper:      b.opts.FieldMapper,
+			ConditionBuilder: b.opts.ConditionBuilder,
+			FieldKeys:        keys,
+		})
+
 		if err != nil {
 			return err
 		}
