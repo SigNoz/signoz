@@ -1,0 +1,658 @@
+{
+  "id": "eks",
+  "title": "EKS",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": false
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_ADMIT_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_ADMIT_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_ADMIT_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_ADMIT_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_VALIDATING_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_VALIDATING_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_VALIDATING_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_VALIDATING_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_admission_webhook_request_total_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_current_inflight_requests_MUTATING_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_current_inflight_requests_MUTATING_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_current_inflight_requests_MUTATING_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_current_inflight_requests_MUTATING_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_current_inflight_requests_READONLY_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_current_inflight_requests_READONLY_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_current_inflight_requests_READONLY_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_current_inflight_requests_READONLY_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_DELETE_P99_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_DELETE_P99_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_DELETE_P99_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_DELETE_P99_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_GET_P99_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_GET_P99_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_GET_P99_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_GET_P99_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_LIST_P99_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_LIST_P99_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_LIST_P99_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_LIST_P99_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_PATCH_P99_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_PATCH_P99_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_PATCH_P99_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_PATCH_P99_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_POST_P99_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_POST_P99_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_POST_P99_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_POST_P99_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_PUT_P99_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_PUT_P99_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_PUT_P99_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_duration_seconds_PUT_P99_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_429_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_429_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_429_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_429_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_4XX_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_4XX_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_4XX_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_4XX_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_5XX_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_5XX_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_5XX_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_5XX_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_LIST_PODS_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_LIST_PODS_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_LIST_PODS_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_LIST_PODS_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_request_total_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_storage_size_bytes_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_storage_size_bytes_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_storage_size_bytes_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_apiserver_storage_size_bytes_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_ACTIVEQ_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_ACTIVEQ_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_ACTIVEQ_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_ACTIVEQ_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_BACKOFF_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_BACKOFF_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_BACKOFF_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_BACKOFF_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_GATED_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_GATED_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_GATED_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_GATED_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_UNSCHEDULABLE_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_UNSCHEDULABLE_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_UNSCHEDULABLE_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_UNSCHEDULABLE_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_pending_pods_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_ERROR_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_ERROR_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_ERROR_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_ERROR_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_SCHEDULED_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_SCHEDULED_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_SCHEDULED_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_SCHEDULED_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_UNSCHEDULABLE_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_UNSCHEDULABLE_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_UNSCHEDULABLE_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_UNSCHEDULABLE_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_total_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_total_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_total_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EKS_scheduler_schedule_attempts_total_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/EKS"
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview.json",
+        "title": "EKS Overview",
+        "description": "Overview of Elastic Kubernetes Service",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}
