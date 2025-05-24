@@ -16,7 +16,7 @@ import (
 )
 
 // This is a test to ensure that all fields of the handlers are initialized.
-// It also helps us catch these errors during testing instead of runtime.
+// It also helps us catch these errors at compile time instead of runtime.
 func TestNewHandlers(t *testing.T) {
 	sqlstore := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
