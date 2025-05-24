@@ -90,6 +90,8 @@ function ExplorerOptions({
 	sourcepage,
 	isExplorerOptionHidden = false,
 	setIsExplorerOptionHidden,
+	isOneChartPerQuery = false,
+	splitedQueries = [],
 }: ExplorerOptionsProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
 	const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -99,6 +101,8 @@ function ExplorerOptions({
 	const history = useHistory();
 	const ref = useRef<RefSelectProps>(null);
 	const isDarkMode = useIsDarkMode();
+	const [queryToExport, setQueryToExport] = useState<Query | null>(null);
+
 	const isLogsExplorer = sourcepage === DataSource.LOGS;
 	const isMetricsExplorer = sourcepage === DataSource.METRICS;
 
@@ -149,51 +153,62 @@ function ExplorerOptions({
 
 	const { user } = useAppContext();
 
-	const handleConditionalQueryModification = useCallback((): string => {
-		if (
-			query?.builder?.queryData?.[0]?.aggregateOperator !== StringOperators.NOOP
-		) {
-			return JSON.stringify(query);
-		}
+	const handleConditionalQueryModification = useCallback(
+		(defaultQuery: Query | null): string => {
+			const queryToUse = defaultQuery || query;
+			if (
+				queryToUse?.builder?.queryData?.[0]?.aggregateOperator !==
+				StringOperators.NOOP
+			) {
+				return JSON.stringify(queryToUse);
+			}
 
-		// Modify aggregateOperator to count, as noop is not supported in alerts
-		const modifiedQuery = cloneDeep(query);
+			// Modify aggregateOperator to count, as noop is not supported in alerts
+			const modifiedQuery = cloneDeep(queryToUse);
 
-		modifiedQuery.builder.queryData[0].aggregateOperator = StringOperators.COUNT;
+			modifiedQuery.builder.queryData[0].aggregateOperator = StringOperators.COUNT;
 
-		return JSON.stringify(modifiedQuery);
-	}, [query]);
+			return JSON.stringify(modifiedQuery);
+		},
+		[query],
+	);
 
-	const onCreateAlertsHandler = useCallback(() => {
-		if (sourcepage === DataSource.TRACES) {
-			logEvent('Traces Explorer: Create alert', {
-				panelType,
-			});
-		} else if (isLogsExplorer) {
-			logEvent('Logs Explorer: Create alert', {
-				panelType,
-			});
-		} else if (isMetricsExplorer) {
-			logEvent('Metrics Explorer: Create alert', {
-				panelType,
-			});
-		}
+	const onCreateAlertsHandler = useCallback(
+		(defaultQuery: Query | null) => {
+			if (sourcepage === DataSource.TRACES) {
+				logEvent('Traces Explorer: Create alert', {
+					panelType,
+				});
+			} else if (isLogsExplorer) {
+				logEvent('Logs Explorer: Create alert', {
+					panelType,
+				});
+			} else if (isMetricsExplorer) {
+				logEvent('Metrics Explorer: Create alert', {
+					panelType,
+				});
+			}
 
-		const stringifiedQuery = handleConditionalQueryModification();
+			const stringifiedQuery = handleConditionalQueryModification(defaultQuery);
 
-		history.push(
-			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-				stringifiedQuery,
-			)}`,
-		);
+			history.push(
+				`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+					stringifiedQuery,
+				)}`,
+			);
+		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [handleConditionalQueryModification, history]);
+		[handleConditionalQueryModification, history],
+	);
 
 	const onCancel = (value: boolean) => (): void => {
 		onModalToggle(value);
+		if (isOneChartPerQuery) {
+			setQueryToExport(null);
+		}
 	};
 
-	const onAddToDashboard = (): void => {
+	const onAddToDashboard = useCallback((): void => {
 		if (sourcepage === DataSource.TRACES) {
 			logEvent('Traces Explorer: Add to dashboard clicked', {
 				panelType,
@@ -208,7 +223,7 @@ function ExplorerOptions({
 			});
 		}
 		setIsExport(true);
-	};
+	}, [isLogsExplorer, isMetricsExplorer, panelType, setIsExport, sourcepage]);
 
 	const {
 		data: viewsData,
@@ -616,6 +631,120 @@ function ExplorerOptions({
 		return 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar';
 	}, [isLogsExplorer, isMetricsExplorer]);
 
+	const getQueryName = (query: Query): string => {
+		if (query.builder.queryFormulas.length > 0) {
+			return `Formula ${query.builder.queryFormulas[0].queryName}`;
+		}
+		return `Query ${query.builder.queryData[0].queryName}`;
+	};
+
+	const alertButton = useMemo(() => {
+		if (isOneChartPerQuery) {
+			const selectLabel = (
+				<Button
+					disabled={disabled}
+					shape="round"
+					icon={<ConciergeBell size={16} />}
+				>
+					Create an Alert
+				</Button>
+			);
+			return (
+				<Select
+					disabled={disabled}
+					className="multi-alert-button"
+					placeholder={selectLabel}
+					value={selectLabel}
+					suffixIcon={null}
+					onSelect={(e): void => {
+						const selectedQuery = splitedQueries.find(
+							(query) => query.id === ((e as unknown) as string),
+						);
+						if (selectedQuery) {
+							onCreateAlertsHandler(selectedQuery);
+						}
+					}}
+				>
+					{splitedQueries.map((splittedQuery) => (
+						<Select.Option key={splittedQuery.id} value={splittedQuery.id}>
+							{getQueryName(splittedQuery)}
+						</Select.Option>
+					))}
+				</Select>
+			);
+		}
+		return (
+			<Button
+				disabled={disabled}
+				shape="round"
+				onClick={(): void => onCreateAlertsHandler(query)}
+				icon={<ConciergeBell size={16} />}
+			>
+				Create an Alert
+			</Button>
+		);
+	}, [
+		disabled,
+		isOneChartPerQuery,
+		onCreateAlertsHandler,
+		query,
+		splitedQueries,
+	]);
+
+	const dashboardButton = useMemo(() => {
+		if (isOneChartPerQuery) {
+			const selectLabel = (
+				<Button
+					type="primary"
+					disabled={disabled}
+					shape="round"
+					onClick={onAddToDashboard}
+					icon={<Plus size={16} />}
+				>
+					Add to Dashboard
+				</Button>
+			);
+			return (
+				<Select
+					disabled={disabled}
+					className="multi-dashboard-button"
+					placeholder={selectLabel}
+					value={selectLabel}
+					suffixIcon={null}
+					onSelect={(e): void => {
+						const selectedQuery = splitedQueries.find(
+							(query) => query.id === ((e as unknown) as string),
+						);
+						if (selectedQuery) {
+							setQueryToExport(() => {
+								onAddToDashboard();
+								return selectedQuery;
+							});
+						}
+					}}
+				>
+					{/* eslint-disable-next-line sonarjs/no-identical-functions */}
+					{splitedQueries.map((splittedQuery) => (
+						<Select.Option key={splittedQuery.id} value={splittedQuery.id}>
+							{getQueryName(splittedQuery)}
+						</Select.Option>
+					))}
+				</Select>
+			);
+		}
+		return (
+			<Button
+				type="primary"
+				disabled={disabled}
+				shape="round"
+				onClick={onAddToDashboard}
+				icon={<Plus size={16} />}
+			>
+				Add to Dashboard
+			</Button>
+		);
+	}, [disabled, isOneChartPerQuery, onAddToDashboard, splitedQueries]);
+
 	return (
 		<div className="explorer-options-container">
 			{
@@ -719,24 +848,8 @@ function ExplorerOptions({
 					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
 
 					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
-						<Button
-							disabled={disabled}
-							shape="round"
-							onClick={onCreateAlertsHandler}
-							icon={<ConciergeBell size={16} />}
-						>
-							Create an Alert
-						</Button>
-
-						<Button
-							type="primary"
-							disabled={disabled}
-							shape="round"
-							onClick={onAddToDashboard}
-							icon={<Plus size={16} />}
-						>
-							Add to Dashboard
-						</Button>
+						{alertButton}
+						{dashboardButton}
 					</div>
 					<div className="actions">
 						{/* Hide the info icon for metrics explorer until we get the docs link */}
@@ -818,9 +931,15 @@ function ExplorerOptions({
 				destroyOnClose
 			>
 				<ExportPanelContainer
-					query={query}
+					query={isOneChartPerQuery ? queryToExport : query}
 					isLoading={isLoading}
-					onExport={onExport}
+					onExport={(dashboard, isNewDashboard): void => {
+						if (isOneChartPerQuery && queryToExport) {
+							onExport(dashboard, isNewDashboard, queryToExport);
+						} else {
+							onExport(dashboard, isNewDashboard);
+						}
+					}}
 				/>
 			</Modal>
 		</div>
@@ -829,18 +948,26 @@ function ExplorerOptions({
 
 export interface ExplorerOptionsProps {
 	isLoading?: boolean;
-	onExport: (dashboard: Dashboard | null, isNewDashboard?: boolean) => void;
+	onExport: (
+		dashboard: Dashboard | null,
+		isNewDashboard?: boolean,
+		queryToExport?: Query,
+	) => void;
 	query: Query | null;
 	disabled: boolean;
 	sourcepage: DataSource;
 	isExplorerOptionHidden?: boolean;
 	setIsExplorerOptionHidden?: Dispatch<SetStateAction<boolean>>;
+	isOneChartPerQuery?: boolean;
+	splitedQueries?: Query[];
 }
 
 ExplorerOptions.defaultProps = {
 	isLoading: false,
 	isExplorerOptionHidden: false,
 	setIsExplorerOptionHidden: undefined,
+	isOneChartPerQuery: false,
+	splitedQueries: [],
 };
 
 export default ExplorerOptions;
