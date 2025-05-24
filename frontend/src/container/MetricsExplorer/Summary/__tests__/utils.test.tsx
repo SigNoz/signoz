@@ -1,6 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { render } from '@testing-library/react';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 
 import { TreemapViewType } from '../types';
 import {
@@ -128,7 +129,9 @@ describe('formatDataForMetricsTable', () => {
 		// Verify unit rendering
 		const unitElement = result[0].unit as JSX.Element;
 		const { container: unitWrapper } = render(unitElement);
-		expect(unitWrapper.textContent).toBe('bytes');
+		expect(unitWrapper.textContent).toBe(
+			getUniversalNameFromMetricUnit(mockData[0].unit),
+		);
 
 		// Verify samples rendering
 		const samplesElement = result[0][TreemapViewType.SAMPLES] as JSX.Element;
@@ -171,7 +174,9 @@ describe('formatDataForMetricsTable', () => {
 		// Verify null unit rendering
 		const unitElement = result[0].unit as JSX.Element;
 		const { container: unitWrapper } = render(unitElement);
-		expect(unitWrapper.textContent).toBe('ms');
+		expect(unitWrapper.textContent).toBe(
+			getUniversalNameFromMetricUnit(mockData[0].unit),
+		);
 
 		// Verify zero samples rendering
 		const samplesElement = result[0][TreemapViewType.SAMPLES] as JSX.Element;
