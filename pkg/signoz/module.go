@@ -9,6 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -23,6 +25,7 @@ type Modules struct {
 	SavedView    savedview.Module
 	Apdex        apdex.Module
 	Dashboard    dashboard.Module
+	QuickFilter  quickfilter.Module
 }
 
 func NewModules(sqlstore sqlstore.SQLStore, user user.Module) Modules {
@@ -33,5 +36,6 @@ func NewModules(sqlstore sqlstore.SQLStore, user user.Module) Modules {
 		SavedView:    implsavedview.NewModule(sqlstore),
 		Apdex:        implapdex.NewModule(sqlstore),
 		Dashboard:    impldashboard.NewModule(sqlstore),
+		QuickFilter:  implquickfilter.NewModule(implquickfilter.NewStore(sqlstore)),
 	}
 }

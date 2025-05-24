@@ -1,9 +1,9 @@
-package core
+package implquickfilter
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -11,18 +11,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type usecase struct {
+type module struct {
 	store quickfiltertypes.QuickFilterStore
 }
 
-// NewQuickFilters creates a new quick filters usecase
-func NewQuickFilters(store quickfiltertypes.QuickFilterStore) quickfilter.Usecase {
-	return &usecase{store: store}
+func NewModule(store quickfiltertypes.QuickFilterStore) quickfilter.Module {
+	return &module{store: store}
 }
 
 // GetQuickFilters returns all quick filters for an organization
-func (u *usecase) GetQuickFilters(ctx context.Context, orgID valuer.UUID) ([]*quickfiltertypes.SignalFilters, error) {
-	storedFilters, err := u.store.Get(ctx, orgID)
+func (module *module) GetQuickFilters(ctx context.Context, orgID valuer.UUID) ([]*quickfiltertypes.SignalFilters, error) {
+	storedFilters, err := module.store.Get(ctx, orgID)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error fetching organization filters")
 	}
@@ -40,8 +39,8 @@ func (u *usecase) GetQuickFilters(ctx context.Context, orgID valuer.UUID) ([]*qu
 }
 
 // GetSignalFilters returns quick filters for a specific signal in an organization
-func (u *usecase) GetSignalFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal) (*quickfiltertypes.SignalFilters, error) {
-	storedFilter, err := u.store.GetBySignal(ctx, orgID, signal.StringValue())
+func (m *module) GetSignalFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal) (*quickfiltertypes.SignalFilters, error) {
+	storedFilter, err := m.store.GetBySignal(ctx, orgID, signal.StringValue())
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +63,7 @@ func (u *usecase) GetSignalFilters(ctx context.Context, orgID valuer.UUID, signa
 }
 
 // UpdateQuickFilters updates quick filters for a specific signal in an organization
-func (u *usecase) UpdateQuickFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal, filters []v3.AttributeKey) error {
+func (module *module) UpdateQuickFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal, filters []v3.AttributeKey) error {
 	// Validate each filter
 	for _, filter := range filters {
 		if err := filter.Validate(); err != nil {
@@ -79,7 +78,7 @@ func (u *usecase) UpdateQuickFilters(ctx context.Context, orgID valuer.UUID, sig
 	}
 
 	// Check if filter exists
-	existingFilter, err := u.store.GetBySignal(ctx, orgID, signal.StringValue())
+	existingFilter, err := module.store.GetBySignal(ctx, orgID, signal.StringValue())
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error checking existing filters")
 	}
@@ -100,17 +99,18 @@ func (u *usecase) UpdateQuickFilters(ctx context.Context, orgID valuer.UUID, sig
 	}
 
 	// Persist filter
-	if err := u.store.Upsert(ctx, filter); err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error upserting filter for signal: %s", signal.StringValue()))
+	if err := module.store.Upsert(ctx, filter); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (u *usecase) SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error {
+func (module *module) SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error {
 	storableQuickFilters, err := quickfiltertypes.NewDefaultQuickFilter(orgID)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error creating default quick filters")
+		return err
 	}
-	return u.store.Create(ctx, storableQuickFilters)
+
+	return module.store.Create(ctx, storableQuickFilters)
 }

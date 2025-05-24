@@ -1,8 +1,9 @@
-package core
+package implquickfilter
 
 import (
 	"context"
 	"database/sql"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/quickfiltertypes"

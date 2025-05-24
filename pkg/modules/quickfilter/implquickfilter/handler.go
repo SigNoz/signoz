@@ -1,37 +1,33 @@
-package quickfilter
+package implquickfilter
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/quickfiltertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
-type API interface {
-	GetQuickFilters(http.ResponseWriter, *http.Request)
-	UpdateQuickFilters(http.ResponseWriter, *http.Request)
-	GetSignalFilters(http.ResponseWriter, *http.Request)
+type handler struct {
+	module quickfilter.Module
 }
 
-type quickFiltersAPI struct {
-	usecase Usecase
+func NewHandler(module quickfilter.Module) quickfilter.Handler {
+	return &handler{module: module}
 }
 
-func NewAPI(usecase Usecase) API {
-	return &quickFiltersAPI{usecase: usecase}
-}
-
-func (q *quickFiltersAPI) GetQuickFilters(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) GetQuickFilters(rw http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	filters, err := q.usecase.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID))
+	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -40,7 +36,7 @@ func (q *quickFiltersAPI) GetQuickFilters(rw http.ResponseWriter, r *http.Reques
 	render.Success(rw, http.StatusOK, filters)
 }
 
-func (q *quickFiltersAPI) UpdateQuickFilters(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) UpdateQuickFilters(rw http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
@@ -54,7 +50,7 @@ func (q *quickFiltersAPI) UpdateQuickFilters(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err = q.usecase.UpdateQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), req.Signal, req.Filters)
+	err = handler.module.UpdateQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), req.Signal, req.Filters)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -63,7 +59,7 @@ func (q *quickFiltersAPI) UpdateQuickFilters(rw http.ResponseWriter, r *http.Req
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (q *quickFiltersAPI) GetSignalFilters(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) GetSignalFilters(rw http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
@@ -77,7 +73,7 @@ func (q *quickFiltersAPI) GetSignalFilters(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	filters, err := q.usecase.GetSignalFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSignal)
+	filters, err := handler.module.GetSignalFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSignal)
 	if err != nil {
 		render.Error(rw, err)
 		return
