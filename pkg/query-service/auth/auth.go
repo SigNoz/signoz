@@ -47,7 +47,7 @@ func RegisterOrgAndFirstUser(ctx context.Context, req *types.PostableRegisterOrg
 }
 
 // First user registration
-func Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin, alertmanager alertmanager.Alertmanager, organizationModule organization.Module, userModule user.Module, quickfiltermodule quickfilter.Usecase) (*types.User, *model.ApiError) {
+func Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin, alertmanager alertmanager.Alertmanager, organizationModule organization.Module, userModule user.Module, quickfiltermodule quickfilter.Module) (*types.User, *model.ApiError) {
 	user, err := RegisterOrgAndFirstUser(ctx, req, organizationModule, userModule)
 	if err != nil {
 		return nil, err

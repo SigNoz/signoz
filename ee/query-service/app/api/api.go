@@ -17,8 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/licensing"
-	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
-	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -59,8 +57,6 @@ type APIHandler struct {
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
-	quickfiltermodule := quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(signoz.SQLStore))
-	quickFilter := quickfilter.NewAPI(quickfiltermodule)
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
@@ -73,8 +69,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		LicensingAPI:                  httplicensing.NewLicensingAPI(signoz.Licensing),
 		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore),
 		Signoz:                        signoz,
-		QuickFilters:                  quickFilter,
-		QuickFilterModule:             quickfiltermodule,
 	})
 
 	if err != nil {

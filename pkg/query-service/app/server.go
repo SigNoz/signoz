@@ -15,8 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
-	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
-	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
@@ -138,8 +136,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetUserCountCallback(telemetry.GetUserCount)
 	telemetry.GetInstance().SetDashboardsInfoCallback(telemetry.GetDashboardsInfo)
 
-	quickfiltermodule := quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(serverOptions.SigNoz.SQLStore))
-	quickFilter := quickfilter.NewAPI(quickfiltermodule)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
@@ -153,8 +149,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
 		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore),
 		Signoz:                        serverOptions.SigNoz,
-		QuickFilters:                  quickFilter,
-		QuickFilterModule:             quickfiltermodule,
 	})
 	if err != nil {
 		return nil, err
