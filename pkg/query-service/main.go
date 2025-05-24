@@ -9,12 +9,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
-	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
-	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -120,6 +117,7 @@ func main() {
 	signoz, err := signoz.New(
 		context.Background(),
 		config,
+		jwt,
 		zeus.Config{},
 		noopzeus.NewProviderFactory(),
 		licensing.Config{},
@@ -131,12 +129,6 @@ func main() {
 		signoz.NewWebProviderFactories(),
 		signoz.NewSQLStoreProviderFactories(),
 		signoz.NewTelemetryStoreProviderFactories(),
-		func(sqlstore sqlstore.SQLStore, emailing emailing.Emailing, providerSettings factory.ProviderSettings) user.Module {
-			return impluser.NewModule(impluser.NewStore(sqlstore), jwt, emailing, providerSettings)
-		},
-		func(userModule user.Module) user.Handler {
-			return impluser.NewHandler(userModule)
-		},
 	)
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz", zap.Error(err))

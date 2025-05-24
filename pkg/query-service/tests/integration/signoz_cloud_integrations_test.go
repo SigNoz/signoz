@@ -16,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/signoz"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -369,10 +368,8 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 10*time.Minute, 30*time.Minute)
-	userModule := impluser.NewModule(impluser.NewStore(testDB), jwt, emailing, providerSettings)
-	userHandler := impluser.NewHandler(userModule)
-	modules := signoz.NewModules(testDB, userModule)
-	handlers := signoz.NewHandlers(modules, userHandler)
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
+	handlers := signoz.NewHandlers(modules)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,
@@ -394,7 +391,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	apiHandler.RegisterCloudIntegrationsRoutes(router, am)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
-	user, apiErr := createTestUser(organizationModule, userModule)
+	user, apiErr := createTestUser(organizationModule, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
@@ -404,7 +401,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
-		userModule:     userModule,
+		userModule:     modules.User,
 	}
 }
 

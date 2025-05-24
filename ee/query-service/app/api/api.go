@@ -7,16 +7,12 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
-	"github.com/SigNoz/signoz/ee/query-service/dao"
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 	"github.com/SigNoz/signoz/ee/query-service/interfaces"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
-	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/licensing"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -24,18 +20,14 @@ import (
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
 	PreferSpanMetrics             bool
-	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
 	UsageManager                  *usage.Manager
 	IntegrationsController        *integrations.Controller
@@ -90,10 +82,6 @@ func (ah *APIHandler) UM() *usage.Manager {
 	return ah.opts.UsageManager
 }
 
-func (ah *APIHandler) AppDao() dao.ModelDao {
-	return ah.opts.AppDao
-}
-
 func (ah *APIHandler) Gateway() *httputil.ReverseProxy {
 	return ah.opts.Gateway
 }
@@ -110,30 +98,17 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// routes available only in ee version
 
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(ah.loginPrecheck)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(ah.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
 
 	// invite
-	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(ah.acceptInvite)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.Signoz.Handlers.User.GetInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(ah.Signoz.Handlers.User.AcceptInvite)).Methods(http.MethodPost)
 
 	// paid plans specific routes
 	router.HandleFunc("/api/v1/complete/saml", am.OpenAccess(ah.receiveSAML)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/complete/google", am.OpenAccess(ah.receiveGoogleAuth)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/orgs/{orgId}/domains", am.AdminAccess(ah.listDomainsByOrg)).Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/domains", am.AdminAccess(ah.postDomain)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(ah.putDomain)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(ah.deleteDomain)).Methods(http.MethodDelete)
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", am.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/login", am.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
-
-	// PAT APIs
-	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.Signoz.Handlers.User.CreateAPIKey)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.Signoz.Handlers.User.ListAPIKeys)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(ah.Signoz.Handlers.User.UpdateAPIKey)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(ah.Signoz.Handlers.User.RevokeAPIKey)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/checkout", am.AdminAccess(ah.LicensingAPI.Checkout)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/billing", am.AdminAccess(ah.getBilling)).Methods(http.MethodGet)
@@ -154,48 +129,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.EditAccess(ah.ServeGatewayHTTP))
 
 	ah.APIHandler.RegisterRoutes(router, am)
-
-}
-
-// TODO(nitya): remove this once we know how to get the FF's
-func (ah *APIHandler) updateRequestContext(_ http.ResponseWriter, r *http.Request) (*http.Request, error) {
-	ssoAvailable := true
-	err := ah.Signoz.Licensing.CheckFeature(r.Context(), licensetypes.SSO)
-	if err != nil && errors.Asc(err, licensing.ErrCodeFeatureUnavailable) {
-		ssoAvailable = false
-	} else if err != nil {
-		zap.L().Error("feature check failed", zap.String("featureKey", licensetypes.SSO), zap.Error(err))
-		return r, errors.New(errors.TypeInternal, errors.CodeInternal, "error checking SSO feature")
-	}
-	ctx := context.WithValue(r.Context(), types.SSOAvailable, ssoAvailable)
-	return r.WithContext(ctx), nil
-}
-
-func (ah *APIHandler) loginPrecheck(w http.ResponseWriter, r *http.Request) {
-	r, err := ah.updateRequestContext(w, r)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	ah.Signoz.Handlers.User.LoginPrecheck(w, r)
-}
-
-func (ah *APIHandler) acceptInvite(w http.ResponseWriter, r *http.Request) {
-	r, err := ah.updateRequestContext(w, r)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	ah.Signoz.Handlers.User.AcceptInvite(w, r)
-}
-
-func (ah *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
-	r, err := ah.updateRequestContext(w, r)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	ah.Signoz.Handlers.User.GetInvite(w, r)
 
 }
 
