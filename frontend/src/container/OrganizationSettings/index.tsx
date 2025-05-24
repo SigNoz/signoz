@@ -1,4 +1,6 @@
-import { Divider, Space } from 'antd';
+import './OrganizationSettings.styles.scss';
+
+import { Space } from 'antd';
 import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
 
@@ -20,19 +22,19 @@ function OrganizationSettings(): JSX.Element {
 	}
 
 	return (
-		<>
+		<div className="organization-settings-container">
 			<Space direction="vertical">
 				{org.map((e, index) => (
 					<DisplayName key={e.id} id={e.id} index={index} />
 				))}
 			</Space>
-			<Divider />
+
 			<PendingInvitesContainer />
-			<Divider />
+
 			<Members />
-			<Divider />
+
 			{isAuthDomain && <AuthDomains />}
-		</>
+		</div>
 	);
 }
 
