@@ -14,19 +14,19 @@ type QueryRangeResponse struct {
 }
 
 type TimeSeriesData struct {
-	QueryName    string              `json:"queryName"`
-	Aggregations []AggregationBucket `json:"aggregations"`
+	QueryName    string               `json:"queryName"`
+	Aggregations []*AggregationBucket `json:"aggregations"`
 }
 
 type AggregationBucket struct {
-	Index  int          `json:"index"` // or string Alias
-	Alias  string       `json:"alias"`
-	Series []TimeSeries `json:"series"` // no extra nesting
+	Index  int           `json:"index"` // or string Alias
+	Alias  string        `json:"alias"`
+	Series []*TimeSeries `json:"series"` // no extra nesting
 }
 
 type TimeSeries struct {
-	Labels []Label           `json:"labels,omitempty"`
-	Values []TimeSeriesValue `json:"values"`
+	Labels []*Label           `json:"labels,omitempty"`
+	Values []*TimeSeriesValue `json:"values"`
 }
 
 type Label struct {
@@ -65,16 +65,16 @@ type ColumnDescriptor struct {
 }
 
 type ScalarData struct {
-	Columns []ColumnDescriptor `json:"columns"`
-	Data    [][]any            `json:"data"`
+	Columns []*ColumnDescriptor `json:"columns"`
+	Data    [][]*any            `json:"data"`
 }
 
 type RawData struct {
-	QueryName string   `json:"queryName"`
-	Rows      []RawRow `json:"rows"`
+	QueryName string    `json:"queryName"`
+	Rows      []*RawRow `json:"rows"`
 }
 
 type RawRow struct {
-	Timestamp time.Time      `json:"timestamp"`
-	Data      map[string]any `json:"data"`
+	Timestamp time.Time       `json:"timestamp"`
+	Data      map[string]*any `json:"data"`
 }
