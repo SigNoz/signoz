@@ -1,12 +1,11 @@
 import './MySettings.styles.scss';
 
-import { Button, Radio, RadioChangeEvent, Tag } from 'antd';
+import { Button, Radio, RadioChangeEvent, Switch, Tag } from 'antd';
 import { Logout } from 'api/utils';
 import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 
-import Password from './Password';
 import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
 import UserInfo from './UserInfo';
 
@@ -45,26 +44,44 @@ function MySettings(): JSX.Element {
 
 	return (
 		<div className="my-settings-container">
-			<div className="theme-selector">
-				<Radio.Group
-					options={themeOptions}
-					onChange={handleThemeChange}
-					value={theme}
-					optionType="button"
-					buttonStyle="solid"
-					data-testid="theme-selector"
-				/>
+			<div className="user-info-section">
+				<div className="user-info-section-header">
+					<div className="user-info-section-title">General </div>
+
+					<div className="user-info-section-subtitle">
+						Manage your account settings.
+					</div>
+				</div>
+
+				<div className="user-info-container">
+					<UserInfo />
+				</div>
 			</div>
 
-			<div className="user-info-container">
-				<UserInfo />
-			</div>
+			<div className="user-preference-section">
+				<div className="user-preference-section-header">
+					<div className="user-preference-section-title">User Preferences</div>
 
-			<div className="password-reset-container">
-				<Password />
-			</div>
+					<div className="user-preference-section-subtitle">
+						Tailor the SigNoz console to work according to your needs.
+					</div>
+				</div>
 
-			<TimezoneAdaptation />
+				<div className="user-preference-section-content">
+					<div className="theme-selector">
+						<Radio.Group
+							options={themeOptions}
+							onChange={handleThemeChange}
+							value={theme}
+							optionType="button"
+							buttonStyle="solid"
+							data-testid="theme-selector"
+						/>
+					</div>
+
+					<TimezoneAdaptation />
+				</div>
+			</div>
 
 			<div className="settings-footer">
 				<Button
