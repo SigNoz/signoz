@@ -3,7 +3,6 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import createDomainApi from 'api/v1/domains/create';
-import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
 import { useState } from 'react';
@@ -16,9 +15,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isAddDomains, setIsDomain] = useState(false);
 	const [form] = useForm<FormProps>();
-	const { featureFlags, org } = useAppContext();
-	const isSsoFlagEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
+	const { org } = useAppContext();
 
 	const { notifications } = useNotifications();
 
@@ -51,15 +48,13 @@ function AddDomain({ refetch }: Props): JSX.Element {
 						ns: 'organizationsettings',
 					})}
 				</Typography.Title>
-				{isSsoFlagEnabled && (
-					<Button
-						onClick={(): void => setIsDomain(true)}
-						type="primary"
-						icon={<PlusOutlined />}
-					>
-						{t('add_domain', { ns: 'organizationsettings' })}
-					</Button>
-				)}
+				<Button
+					onClick={(): void => setIsDomain(true)}
+					type="primary"
+					icon={<PlusOutlined />}
+				>
+					{t('add_domain', { ns: 'organizationsettings' })}
+				</Button>
 			</Container>
 			<Modal
 				centered

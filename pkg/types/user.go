@@ -13,10 +13,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const (
-	SSOAvailable = "sso_available"
-)
-
 var (
 	ErrUserAlreadyExists               = errors.MustNewCode("user_already_exists")
 	ErrPasswordAlreadyExists           = errors.MustNewCode("password_already_exists")
