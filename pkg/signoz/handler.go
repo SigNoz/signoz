@@ -9,6 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -22,6 +24,7 @@ type Handlers struct {
 	SavedView    savedview.Handler
 	Apdex        apdex.Handler
 	Dashboard    dashboard.Handler
+	QuickFilter  quickfilter.Handler
 }
 
 func NewHandlers(modules Modules) Handlers {
@@ -32,5 +35,6 @@ func NewHandlers(modules Modules) Handlers {
 		SavedView:    implsavedview.NewHandler(modules.SavedView),
 		Apdex:        implapdex.NewHandler(modules.Apdex),
 		Dashboard:    impldashboard.NewHandler(modules.Dashboard),
+		QuickFilter:  implquickfilter.NewHandler(modules.QuickFilter),
 	}
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 )
 
 const (
@@ -65,9 +66,9 @@ func UseMetricsPreAggregation() bool {
 
 var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
 
-var DEFAULT_FEATURE_SET = model.FeatureSet{
-	model.Feature{
-		Name:       model.UseSpanMetrics,
+var DEFAULT_FEATURE_SET = []*featuretypes.GettableFeature{
+	&featuretypes.GettableFeature{
+		Name:       featuretypes.UseSpanMetrics,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,

@@ -25,7 +25,7 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
@@ -61,6 +61,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
@@ -92,7 +93,6 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	reader            interfaces.Reader
 	ruleManager       *rules.Manager
-	featureFlags      interfaces.FeatureLookup
 	querier           interfaces.Querier
 	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
@@ -139,13 +139,11 @@ type APIHandler struct {
 
 	AlertmanagerAPI *alertmanager.API
 
+	LicensingAPI licensing.API
+
 	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
-
-	QuickFilters quickfilter.API
-
-	QuickFilterModule quickfilter.Usecase
 }
 
 type APIHandlerOpts struct {
@@ -157,9 +155,6 @@ type APIHandlerOpts struct {
 
 	// rule manager handles rule crud operations
 	RuleManager *rules.Manager
-
-	// feature flags querier
-	FeatureFlags interfaces.FeatureLookup
 
 	// Integrations
 	IntegrationsController *integrations.Controller
@@ -180,13 +175,11 @@ type APIHandlerOpts struct {
 
 	AlertmanagerAPI *alertmanager.API
 
+	LicensingAPI licensing.API
+
 	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
-
-	QuickFilters quickfilter.API
-
-	QuickFilterModule quickfilter.Usecase
 }
 
 // NewAPIHandler returns an APIHandler
@@ -227,7 +220,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
-		featureFlags:                  opts.FeatureFlags,
 		IntegrationsController:        opts.IntegrationsController,
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
@@ -247,10 +239,9 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		JWT:                           opts.JWT,
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
+		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
-		QuickFilters:                  opts.QuickFilters,
-		QuickFilterModule:             opts.QuickFilterModule,
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -577,9 +568,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.Signoz.Handlers.Preference.UpdateOrg)).Methods(http.MethodPut)
 
 	// Quick Filters
-	router.HandleFunc("/api/v1/orgs/me/filters", am.ViewAccess(aH.QuickFilters.GetQuickFilters)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.QuickFilters.GetSignalFilters)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.QuickFilters.UpdateQuickFilters)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/orgs/me/filters", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetQuickFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSignalFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.Signoz.Handlers.QuickFilter.UpdateQuickFilters)).Methods(http.MethodPut)
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.Signoz.Handlers.User.CreateInvite)).Methods(http.MethodPost)
@@ -621,7 +612,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 		render.Success(rw, http.StatusOK, []any{})
 	})).Methods(http.MethodGet)
 	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
-		render.Error(rw, errorsV2.New(errorsV2.TypeUnsupported, errorsV2.CodeUnsupported, "not implemented"))
+		aH.LicensingAPI.Activate(rw, req)
 	})).Methods(http.MethodGet)
 }
 
@@ -1993,15 +1984,14 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet, err := aH.FF().GetFeatureFlags()
+	featureSet, err := aH.Signoz.Licensing.GetFeatureFlags(r.Context())
 	if err != nil {
 		aH.HandleError(w, err, http.StatusInternalServerError)
 		return
 	}
 	if aH.preferSpanMetrics {
-		for idx := range featureSet {
-			feature := &featureSet[idx]
-			if feature.Name == model.UseSpanMetrics {
+		for idx, feature := range featureSet {
+			if feature.Name == featuretypes.UseSpanMetrics {
 				featureSet[idx].Active = true
 			}
 		}
@@ -2009,12 +1999,8 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, featureSet)
 }
 
-func (aH *APIHandler) FF() interfaces.FeatureLookup {
-	return aH.featureFlags
-}
-
-func (aH *APIHandler) CheckFeature(f string) bool {
-	err := aH.FF().CheckFeature(f)
+func (aH *APIHandler) CheckFeature(ctx context.Context, key string) bool {
+	err := aH.Signoz.Licensing.CheckFeature(ctx, key)
 	return err == nil
 }
 
@@ -2046,7 +2032,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), &req, aH.Signoz.Alertmanager, aH.Signoz.Modules.Organization, aH.Signoz.Modules.User, aH.QuickFilterModule)
+	_, apiErr := auth.Register(context.Background(), &req, aH.Signoz.Alertmanager, aH.Signoz.Modules.Organization, aH.Signoz.Modules.User, aH.Signoz.Modules.QuickFilter)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
