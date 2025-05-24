@@ -39,7 +39,7 @@ type TimeSeriesValue struct {
 	Value     float64 `json:"value,omitempty"`
 	// for the heatmap type chart
 	Values []float64 `json:"values,omitempty"`
-	Bucket Bucket    `json:"bucket,omitempty"`
+	Bucket *Bucket   `json:"bucket,omitempty"`
 }
 
 type Bucket struct {
@@ -66,7 +66,7 @@ type ColumnDescriptor struct {
 
 type ScalarData struct {
 	Columns []*ColumnDescriptor `json:"columns"`
-	Data    [][]*any            `json:"data"`
+	Data    [][]any             `json:"data"`
 }
 
 type RawData struct {

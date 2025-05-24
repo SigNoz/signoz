@@ -34,19 +34,24 @@ type ConditionBuilder interface {
 	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
 }
 
-type FilterCompiler interface {
-	// Compile compiles the filter into a sqlbuilder.WhereClause.
-	Compile(ctx context.Context, filter string) (*sqlbuilder.WhereClause, []string, error)
-}
-
 type RewriteCtx struct {
 	RateInterval uint64
+	Signal       telemetrytypes.Signal
+	Keys         map[string][]*telemetrytypes.TelemetryFieldKey
 }
 
 type RewriteOption func(*RewriteCtx)
 
 func WithRateInterval(interval uint64) RewriteOption {
 	return func(c *RewriteCtx) { c.RateInterval = interval }
+}
+
+func WithSignal(signal telemetrytypes.Signal) RewriteOption {
+	return func(c *RewriteCtx) { c.Signal = signal }
+}
+
+func WithKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey) RewriteOption {
+	return func(c *RewriteCtx) { c.Keys = keys }
 }
 
 type AggExprRewriter interface {

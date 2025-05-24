@@ -25,7 +25,7 @@ type chQueryStats struct {
 // given request type.
 //
 // * Time-series → []*qbtypes.TimeSeriesData
-// * Scalar      → float64
+// * Scalar      → [][]any
 // * Raw         → [][]any (each inner slice is a row)
 // * Distribution→ []Bucket     (struct{Lower,Upper,Count float64})
 //
@@ -185,13 +185,10 @@ func numericKind(k reflect.Kind) bool {
 }
 
 func readAsScalar(rows driver.Rows) (*qbtypes.ScalarData, error) {
-
+	// ------------------------------------------------------------------ column descriptors
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 
-	/* ------------------------------------------------------------------
-	   0.  Build ColumnDescriptor list
-	------------------------------------------------------------------ */
 	cd := make([]*qbtypes.ColumnDescriptor, len(colNames))
 	aggRe := regexp.MustCompile(`^__result_(\d+)$`)
 
@@ -200,7 +197,6 @@ func readAsScalar(rows driver.Rows) (*qbtypes.ScalarData, error) {
 		if aggRe.MatchString(name) {
 			colType = qbtypes.ColumnTypeAggregation
 		}
-
 		cd[i] = &qbtypes.ColumnDescriptor{
 			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: name},
 			AggregationIndex:  int64(i),
@@ -208,22 +204,27 @@ func readAsScalar(rows driver.Rows) (*qbtypes.ScalarData, error) {
 		}
 	}
 
-	var data [][]*any
+	// ------------------------------------------------------------------ rows -> [][]any
+	var data [][]any
 
 	for rows.Next() {
-		// prepare scan slots
 		scan := make([]interface{}, len(colTypes))
 		for i := range scan {
-			scan[i] = new(interface{})
+			scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
 		}
 		if err := rows.Scan(scan...); err != nil {
 			return nil, err
 		}
 
-		row := make([]*any, len(scan))
+		// 2. deref each slot into the output row
+		row := make([]any, len(scan))
 		for i, cell := range scan {
-			val := *(cell.(*interface{})) // de-pointer
-			row[i] = &val                 // store pointer so JSON “null” is possible
+			valPtr := reflect.ValueOf(cell)
+			if valPtr.Kind() == reflect.Pointer && !valPtr.IsNil() {
+				row[i] = valPtr.Elem().Interface()
+			} else {
+				row[i] = nil // Nullable columns come back as nil pointers
+			}
 		}
 		data = append(data, row)
 	}
