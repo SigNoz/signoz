@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import ROUTES from 'constants/routes';
 import * as useGetMetricDetails from 'hooks/metricsExplorer/useGetMetricDetails';
 import * as useUpdateMetricMetadata from 'hooks/metricsExplorer/useUpdateMetricMetadata';
@@ -95,7 +96,9 @@ describe('MetricDetails', () => {
 
 		expect(screen.getByText(mockMetricName)).toBeInTheDocument();
 		expect(screen.getByText(mockMetricDescription)).toBeInTheDocument();
-		expect(screen.getByText(`${mockMetricData.unit}`)).toBeInTheDocument();
+		expect(
+			screen.getByText(`${getUniversalNameFromMetricUnit(mockMetricData.unit)}`),
+		).toBeInTheDocument();
 	});
 
 	it('renders the "open in explorer" and "inspect" buttons', () => {
