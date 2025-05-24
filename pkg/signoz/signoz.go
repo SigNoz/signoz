@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
@@ -30,6 +31,7 @@ type SigNoz struct {
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
 	Zeus            zeus.Zeus
+	Licensing       licensing.Licensing
 	Emailing        emailing.Emailing
 	Modules         Modules
 	Handlers        Handlers
@@ -40,6 +42,8 @@ func New(
 	config Config,
 	zeusConfig zeus.Config,
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
+	licenseConfig licensing.Config,
+	licenseProviderFactoryCb func(sqlstore.SQLStore, zeus.Zeus) factory.ProviderFactory[licensing.Licensing, licensing.Config],
 	emailingProviderFactories factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
@@ -171,6 +175,16 @@ func New(
 		return nil, err
 	}
 
+	licensingProviderFactory := licenseProviderFactoryCb(sqlstore, zeus)
+	licensing, err := licensingProviderFactory.New(
+		ctx,
+		providerSettings,
+		licenseConfig,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	userModule := userModuleFactory(sqlstore, emailing, providerSettings)
 	userHandler := userHandlerFactory(userModule)
 
@@ -184,6 +198,7 @@ func New(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
+		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 	)
 	if err != nil {
 		return nil, err
@@ -199,6 +214,7 @@ func New(
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
 		Zeus:            zeus,
+		Licensing:       licensing,
 		Emailing:        emailing,
 		Modules:         modules,
 		Handlers:        handlers,

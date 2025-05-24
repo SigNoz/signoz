@@ -1,8 +1,6 @@
-package model
+package licensetypes
 
-import (
-	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
-)
+import "github.com/SigNoz/signoz/pkg/types/featuretypes"
 
 const SSO = "SSO"
 const Basic = "BASIC_PLAN"
@@ -26,44 +24,44 @@ const ChatSupport = "CHAT_SUPPORT"
 const Gateway = "GATEWAY"
 const PremiumSupport = "PREMIUM_SUPPORT"
 
-var BasicPlan = basemodel.FeatureSet{
-	basemodel.Feature{
+var BasicPlan = featuretypes.FeatureSet{
+	&featuretypes.GettableFeature{
 		Name:       SSO,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
-		Name:       basemodel.UseSpanMetrics,
+	&featuretypes.GettableFeature{
+		Name:       featuretypes.UseSpanMetrics,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
+	&featuretypes.GettableFeature{
 		Name:       Gateway,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
+	&featuretypes.GettableFeature{
 		Name:       PremiumSupport,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
-		Name:       basemodel.AnomalyDetection,
+	&featuretypes.GettableFeature{
+		Name:       featuretypes.AnomalyDetection,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
-		Name:       basemodel.TraceFunnels,
+	&featuretypes.GettableFeature{
+		Name:       featuretypes.TraceFunnels,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
@@ -71,58 +69,68 @@ var BasicPlan = basemodel.FeatureSet{
 	},
 }
 
-var EnterprisePlan = basemodel.FeatureSet{
-	basemodel.Feature{
+var EnterprisePlan = featuretypes.FeatureSet{
+	&featuretypes.GettableFeature{
 		Name:       SSO,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
-		Name:       basemodel.UseSpanMetrics,
+	&featuretypes.GettableFeature{
+		Name:       featuretypes.UseSpanMetrics,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
+	&featuretypes.GettableFeature{
 		Name:       Onboarding,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
+	&featuretypes.GettableFeature{
 		Name:       ChatSupport,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
+	&featuretypes.GettableFeature{
 		Name:       Gateway,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
+	&featuretypes.GettableFeature{
 		Name:       PremiumSupport,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
-		Name:       basemodel.AnomalyDetection,
+	&featuretypes.GettableFeature{
+		Name:       featuretypes.AnomalyDetection,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
-		Name:       basemodel.TraceFunnels,
+	&featuretypes.GettableFeature{
+		Name:       featuretypes.TraceFunnels,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+}
+
+var DefaultFeatureSet = featuretypes.FeatureSet{
+	&featuretypes.GettableFeature{
+		Name:       featuretypes.UseSpanMetrics,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,

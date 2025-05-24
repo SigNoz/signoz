@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
@@ -120,6 +122,10 @@ func main() {
 		config,
 		zeus.Config{},
 		noopzeus.NewProviderFactory(),
+		licensing.Config{},
+		func(_ sqlstore.SQLStore, _ zeus.Zeus) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
+			return nooplicensing.NewFactory()
+		},
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),

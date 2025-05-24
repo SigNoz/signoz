@@ -6,7 +6,6 @@ import dayjs from 'dayjs';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
-import useLicense from 'hooks/useLicense';
 import useGetUser from 'hooks/user/useGetUser';
 import {
 	createContext,
@@ -19,11 +18,10 @@ import {
 } from 'react';
 import { useQuery } from 'react-query';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
-import { PayloadProps as LicensesResModel } from 'types/api/licenses/getAll';
 import {
 	LicensePlatform,
+	LicenseResModel,
 	LicenseState,
-	LicenseV3ResModel,
 	TrialInfo,
 } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
@@ -38,14 +36,10 @@ export const AppContext = createContext<IAppContext | undefined>(undefined);
 export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	// on load of the provider set the user defaults with access jwt , refresh jwt and user id from local storage
 	const [user, setUser] = useState<IUser>(() => getUserDefaults());
-	const [licenses, setLicenses] = useState<LicensesResModel | null>(null);
-	const [
-		activeLicenseV3,
-		setActiveLicenseV3,
-	] = useState<LicenseV3ResModel | null>(null);
-
+	const [activeLicense, setActiveLicense] = useState<LicenseResModel | null>(
+		null,
+	);
 	const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
-
 	const [featureFlags, setFeatureFlags] = useState<FeatureFlags[] | null>(null);
 	const [orgPreferences, setOrgPreferences] = useState<OrgPreference[] | null>(
 		null,
@@ -103,59 +97,40 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	}, [userData, isFetchingUser]);
 
-	// fetcher for licenses v2
-	// license will be fetched if we are in logged in state
-	const {
-		data: licenseData,
-		isFetching: isFetchingLicenses,
-		error: licensesFetchError,
-		refetch: licensesRefetch,
-	} = useLicense(isLoggedIn);
-	useEffect(() => {
-		if (!isFetchingLicenses && licenseData && licenseData.payload) {
-			setLicenses(licenseData.payload);
-		}
-	}, [licenseData, isFetchingLicenses]);
-
 	// fetcher for licenses v3
 	const {
-		data: activeLicenseV3Data,
-		isFetching: isFetchingActiveLicenseV3,
-		error: activeLicenseV3FetchError,
+		data: activeLicenseData,
+		isFetching: isFetchingActiveLicense,
+		error: activeLicenseFetchError,
+		refetch: activeLicenseRefetch,
 	} = useActiveLicenseV3(isLoggedIn);
 	useEffect(() => {
-		if (
-			!isFetchingActiveLicenseV3 &&
-			activeLicenseV3Data &&
-			activeLicenseV3Data.payload
-		) {
-			setActiveLicenseV3(activeLicenseV3Data.payload);
+		if (!isFetchingActiveLicense && activeLicenseData && activeLicenseData.data) {
+			setActiveLicense(activeLicenseData.data);
 
 			const isOnTrial = dayjs(
-				activeLicenseV3Data.payload.free_until || Date.now(),
+				activeLicenseData.data.free_until || Date.now(),
 			).isAfter(dayjs());
 
 			const trialInfo: TrialInfo = {
-				trialStart: activeLicenseV3Data.payload.valid_from,
-				trialEnd: dayjs(
-					activeLicenseV3Data.payload.free_until || Date.now(),
-				).unix(),
+				trialStart: activeLicenseData.data.valid_from,
+				trialEnd: dayjs(activeLicenseData.data.free_until || Date.now()).unix(),
 				onTrial: isOnTrial,
 				workSpaceBlock:
-					activeLicenseV3Data.payload.state === LicenseState.EVALUATION_EXPIRED &&
-					activeLicenseV3Data.payload.platform === LicensePlatform.CLOUD,
+					activeLicenseData.data.state === LicenseState.EVALUATION_EXPIRED &&
+					activeLicenseData.data.platform === LicensePlatform.CLOUD,
 				trialConvertedToSubscription:
-					activeLicenseV3Data.payload.state !== LicenseState.ISSUED &&
-					activeLicenseV3Data.payload.state !== LicenseState.EVALUATING &&
-					activeLicenseV3Data.payload.state !== LicenseState.EVALUATION_EXPIRED,
+					activeLicenseData.data.state !== LicenseState.ISSUED &&
+					activeLicenseData.data.state !== LicenseState.EVALUATING &&
+					activeLicenseData.data.state !== LicenseState.EVALUATION_EXPIRED,
 				gracePeriodEnd: dayjs(
-					activeLicenseV3Data.payload.event_queue.scheduled_at || Date.now(),
+					activeLicenseData.data.event_queue.scheduled_at || Date.now(),
 				).unix(),
 			};
 
 			setTrialInfo(trialInfo);
 		}
-	}, [activeLicenseV3Data, isFetchingActiveLicenseV3]);
+	}, [activeLicenseData, isFetchingActiveLicense]);
 
 	// fetcher for feature flags
 	const {
@@ -242,9 +217,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	useGlobalEventListener('LOGOUT', () => {
 		setIsLoggedIn(false);
 		setUser(getUserDefaults());
-		setActiveLicenseV3(null);
+		setActiveLicense(null);
 		setTrialInfo(null);
-		setLicenses(null);
 		setFeatureFlags(null);
 		setOrgPreferences(null);
 		setOrg(null);
@@ -254,46 +228,40 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const value: IAppContext = useMemo(
 		() => ({
 			user,
-			licenses,
-			activeLicenseV3,
+			activeLicense,
 			featureFlags,
 			trialInfo,
 			orgPreferences,
 			isLoggedIn,
 			org,
 			isFetchingUser,
-			isFetchingLicenses,
-			isFetchingActiveLicenseV3,
+			isFetchingActiveLicense,
 			isFetchingFeatureFlags,
 			isFetchingOrgPreferences,
 			userFetchError,
-			licensesFetchError,
-			activeLicenseV3FetchError,
+			activeLicenseFetchError,
 			featureFlagsFetchError,
 			orgPreferencesFetchError,
-			licensesRefetch,
+			activeLicenseRefetch,
 			updateUser,
 			updateOrgPreferences,
 			updateOrg,
 		}),
 		[
 			trialInfo,
-			activeLicenseV3,
-			activeLicenseV3FetchError,
+			activeLicense,
+			activeLicenseFetchError,
 			featureFlags,
 			featureFlagsFetchError,
-			isFetchingActiveLicenseV3,
+			isFetchingActiveLicense,
 			isFetchingFeatureFlags,
-			isFetchingLicenses,
 			isFetchingOrgPreferences,
 			isFetchingUser,
 			isLoggedIn,
-			licenses,
-			licensesFetchError,
-			licensesRefetch,
 			org,
 			orgPreferences,
 			orgPreferencesFetchError,
+			activeLicenseRefetch,
 			updateOrg,
 			user,
 			userFetchError,
