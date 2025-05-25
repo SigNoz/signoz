@@ -3,11 +3,11 @@ package impltracefunnel
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/types"
-	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunnel"
+	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -21,25 +21,18 @@ func NewModule(store traceFunnels.FunnelStore) tracefunnel.Module {
 	}
 }
 
-func (module *module) Create(ctx context.Context, timestamp int64, name string, userID string, orgID string) (*traceFunnels.StorableFunnel, error) {
-	orgUUID, err := valuer.NewUUID(orgID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid org ID: %v", err)
-	}
-
+func (module *module) Create(ctx context.Context, timestamp int64, name string, userID valuer.UUID, orgID valuer.UUID) (*traceFunnels.StorableFunnel, error) {
 	funnel := &traceFunnels.StorableFunnel{
-		BaseMetadata: traceFunnels.BaseMetadata{
-			Name:  name,
-			OrgID: orgUUID,
-		},
+		Name:  name,
+		OrgID: orgID,
 	}
 	funnel.CreatedAt = time.Unix(0, timestamp*1000000) // Convert to nanoseconds
-	funnel.CreatedBy = userID
+	funnel.CreatedBy = userID.String()
 
 	// Set up the user relationship
 	funnel.CreatedByUser = &types.User{
 		Identifiable: types.Identifiable{
-			ID: valuer.MustNewUUID(userID),
+			ID: userID,
 		},
 	}
 
@@ -67,28 +60,19 @@ func (module *module) Create(ctx context.Context, timestamp int64, name string, 
 }
 
 // Get gets a funnel by ID
-func (module *module) Get(ctx context.Context, funnelID string) (*traceFunnels.StorableFunnel, error) {
-	uuid, err := valuer.NewUUID(funnelID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid funnel ID: %v", err)
-	}
-	return module.store.Get(ctx, uuid)
+func (module *module) Get(ctx context.Context, funnelID valuer.UUID, orgID valuer.UUID) (*traceFunnels.StorableFunnel, error) {
+	return module.store.Get(ctx, funnelID, orgID)
 }
 
 // Update updates a funnel
-func (module *module) Update(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID string) error {
-	funnel.UpdatedBy = userID
+func (module *module) Update(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID valuer.UUID) error {
+	funnel.UpdatedBy = userID.String()
 	return module.store.Update(ctx, funnel)
 }
 
 // List lists all funnels for an organization
-func (module *module) List(ctx context.Context, orgID string) ([]*traceFunnels.StorableFunnel, error) {
-	orgUUID, err := valuer.NewUUID(orgID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid org ID: %v", err)
-	}
-
-	funnels, err := module.store.List(ctx, orgUUID)
+func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnels.StorableFunnel, error) {
+	funnels, err := module.store.List(ctx, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list funnels: %v", err)
 	}
@@ -97,34 +81,13 @@ func (module *module) List(ctx context.Context, orgID string) ([]*traceFunnels.S
 }
 
 // Delete deletes a funnel
-func (module *module) Delete(ctx context.Context, funnelID string) error {
-	uuid, err := valuer.NewUUID(funnelID)
-	if err != nil {
-		return fmt.Errorf("invalid funnel ID: %v", err)
-	}
-	return module.store.Delete(ctx, uuid)
-}
-
-// Save saves a funnel
-func (module *module) Save(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID string, orgID string) error {
-	orgUUID, err := valuer.NewUUID(orgID)
-	if err != nil {
-		return fmt.Errorf("invalid org ID: %v", err)
-	}
-
-	funnel.UpdatedBy = userID
-	funnel.OrgID = orgUUID
-	return module.store.Update(ctx, funnel)
+func (module *module) Delete(ctx context.Context, funnelID valuer.UUID, orgID valuer.UUID) error {
+	return module.store.Delete(ctx, funnelID, orgID)
 }
 
 // GetFunnelMetadata gets metadata for a funnel
-func (module *module) GetFunnelMetadata(ctx context.Context, funnelID string) (int64, int64, string, error) {
-	uuid, err := valuer.NewUUID(funnelID)
-	if err != nil {
-		return 0, 0, "", fmt.Errorf("invalid funnel ID: %v", err)
-	}
-
-	funnel, err := module.store.Get(ctx, uuid)
+func (module *module) GetFunnelMetadata(ctx context.Context, funnelID valuer.UUID, orgID valuer.UUID) (int64, int64, string, error) {
+	funnel, err := module.store.Get(ctx, funnelID, orgID)
 	if err != nil {
 		return 0, 0, "", err
 	}

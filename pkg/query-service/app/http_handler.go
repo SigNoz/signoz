@@ -5233,19 +5233,15 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 // RegisterTraceFunnelsRoutes adds trace funnels routes
 func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// Main trace funnels router
-	traceFunnelsRouter := router.PathPrefix("/api/v1/trace-funnels").Subrouter()
+	traceFunnelsRouter := router.PathPrefix("/api/v1/orgs/me/trace-funnels").Subrouter()
 
 	// API endpoints
-	traceFunnelsRouter.HandleFunc("/new",
+	traceFunnelsRouter.HandleFunc("",
 		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.New)).
 		Methods(http.MethodPost)
-	traceFunnelsRouter.HandleFunc("/list",
+	traceFunnelsRouter.HandleFunc("",
 		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.List)).
 		Methods(http.MethodGet)
-	traceFunnelsRouter.HandleFunc("/steps/update",
-		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.UpdateSteps)).
-		Methods(http.MethodPut)
-
 	traceFunnelsRouter.HandleFunc("/{funnel_id}",
 		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.Get)).
 		Methods(http.MethodGet)
