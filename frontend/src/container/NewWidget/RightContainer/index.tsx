@@ -30,7 +30,11 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { ColumnUnit, Widgets } from 'types/api/dashboard/getAll';
+import {
+	ColumnUnit,
+	LegendPosition,
+	Widgets,
+} from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -40,6 +44,7 @@ import {
 	panelTypeVsColumnUnitPreferences,
 	panelTypeVsCreateAlert,
 	panelTypeVsFillSpan,
+	panelTypeVsLegendPosition,
 	panelTypeVsLogScale,
 	panelTypeVsPanelTimePreferences,
 	panelTypeVsSoftMinMax,
@@ -98,6 +103,8 @@ function RightContainer({
 	setColumnUnits,
 	isLogScale,
 	setIsLogScale,
+	legendPosition,
+	setLegendPosition,
 }: RightContainerProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
@@ -128,6 +135,7 @@ function RightContainer({
 		panelTypeVsStackingChartPreferences[selectedGraph];
 	const allowPanelTimePreference =
 		panelTypeVsPanelTimePreferences[selectedGraph];
+	const allowLegendPosition = panelTypeVsLegendPosition[selectedGraph];
 
 	const allowPanelColumnPreference =
 		panelTypeVsColumnUnitPreferences[selectedGraph];
@@ -430,6 +438,30 @@ function RightContainer({
 						</Select>
 					</section>
 				)}
+
+				{allowLegendPosition && (
+					<section className="legend-position">
+						<Typography.Text className="typography">Legend Position</Typography.Text>
+						<Select
+							onChange={(value: LegendPosition): void => setLegendPosition(value)}
+							value={legendPosition}
+							style={{ width: '100%' }}
+							className="panel-type-select"
+							defaultValue={LegendPosition.BOTTOM}
+						>
+							<Option value={LegendPosition.BOTTOM}>
+								<div className="select-option">
+									<Typography.Text className="display">Bottom</Typography.Text>
+								</div>
+							</Option>
+							<Option value={LegendPosition.RIGHT}>
+								<div className="select-option">
+									<Typography.Text className="display">Right</Typography.Text>
+								</div>
+							</Option>
+						</Select>
+					</section>
+				)}
 			</section>
 
 			{allowCreateAlerts && (
@@ -495,6 +527,8 @@ interface RightContainerProps {
 	setSoftMax: Dispatch<SetStateAction<number | null>>;
 	isLogScale: boolean;
 	setIsLogScale: Dispatch<SetStateAction<boolean>>;
+	legendPosition: LegendPosition;
+	setLegendPosition: Dispatch<SetStateAction<LegendPosition>>;
 }
 
 RightContainer.defaultProps = {

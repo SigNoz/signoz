@@ -1,4 +1,5 @@
 import { Dimensions } from 'hooks/useDimensions';
+import { LegendPosition } from 'types/api/dashboard/getAll';
 
 export interface EnhancedLegendConfig {
 	minHeight: number;
@@ -6,6 +7,10 @@ export interface EnhancedLegendConfig {
 	calculatedHeight: number;
 	showScrollbar: boolean;
 	requiredRows: number;
+	// For right-side legend
+	minWidth?: number;
+	maxWidth?: number;
+	calculatedWidth?: number;
 }
 
 /**
@@ -16,12 +21,60 @@ export function calculateEnhancedLegendConfig(
 	dimensions: Dimensions,
 	seriesCount: number,
 	seriesLabels?: string[],
+	legendPosition: LegendPosition = LegendPosition.BOTTOM,
 ): EnhancedLegendConfig {
 	const lineHeight = 34;
 	const padding = 12;
 	const maxRowsToShow = 2; // Reduced from 3 to 2 for better chart/legend ratio
 
-	// Legend should not take more than 15% of panel height, with absolute max of 80px
+	// Different configurations for bottom vs right positioning
+	if (legendPosition === LegendPosition.RIGHT) {
+		// Right-side legend configuration
+		const maxLegendWidthRatio = 0.3; // Legend should not take more than 30% of panel width
+		const absoluteMaxWidth = Math.min(
+			400,
+			dimensions.width * maxLegendWidthRatio,
+		);
+		const minWidth = 150;
+
+		// For right-side legend, calculate based on text length
+		const avgCharWidth = 8;
+		let avgTextLength = 15;
+		if (seriesLabels && seriesLabels.length > 0) {
+			const totalLength = seriesLabels.reduce(
+				(sum, label) => sum + Math.min(label.length, 40),
+				0,
+			);
+			avgTextLength = Math.max(
+				10,
+				Math.min(35, totalLength / seriesLabels.length),
+			);
+		}
+
+		const estimatedWidth = Math.max(
+			minWidth,
+			Math.min(absoluteMaxWidth, 80 + avgCharWidth * avgTextLength),
+		);
+
+		// For right-side legend, height can be more flexible
+		const maxHeight = dimensions.height - 40; // Leave some padding
+		const idealHeight = seriesCount * lineHeight + padding;
+		const calculatedHeight = Math.min(idealHeight, maxHeight);
+		const showScrollbar = idealHeight > calculatedHeight;
+
+		return {
+			minHeight: lineHeight + padding,
+			maxHeight,
+			calculatedHeight,
+			showScrollbar,
+			requiredRows: seriesCount, // Each series on its own row for right-side
+			minWidth,
+			maxWidth: absoluteMaxWidth,
+			calculatedWidth: estimatedWidth,
+		};
+	}
+
+	// Bottom legend configuration (existing logic)
 	const maxLegendRatio = 0.15;
 	const absoluteMaxHeight = Math.min(80, dimensions.height * maxLegendRatio);
 
@@ -98,15 +151,44 @@ export function applyEnhancedLegendStyling(
 	legend: HTMLElement,
 	config: EnhancedLegendConfig,
 	requiredRows: number,
+	legendPosition: LegendPosition = LegendPosition.BOTTOM,
 ): void {
 	const legendElement = legend;
 	legendElement.classList.add('u-legend-enhanced');
-	legendElement.style.height = `${config.calculatedHeight}px`;
-	legendElement.style.minHeight = `${config.minHeight}px`;
-	legendElement.style.maxHeight = `${config.maxHeight}px`;
 
-	// Apply alignment based on number of rows
-	if (requiredRows === 1) {
+	// Apply position-specific styling
+	if (legendPosition === LegendPosition.RIGHT) {
+		legendElement.classList.add('u-legend-right');
+		legendElement.classList.remove('u-legend-bottom');
+
+		// Set width for right-side legend
+		if (config.calculatedWidth) {
+			legendElement.style.width = `${config.calculatedWidth}px`;
+			legendElement.style.minWidth = `${config.minWidth}px`;
+			legendElement.style.maxWidth = `${config.maxWidth}px`;
+		}
+
+		// Height for right-side legend
+		legendElement.style.height = `${config.calculatedHeight}px`;
+		legendElement.style.minHeight = `${config.minHeight}px`;
+		legendElement.style.maxHeight = `${config.maxHeight}px`;
+	} else {
+		legendElement.classList.add('u-legend-bottom');
+		legendElement.classList.remove('u-legend-right');
+
+		// Height for bottom legend
+		legendElement.style.height = `${config.calculatedHeight}px`;
+		legendElement.style.minHeight = `${config.minHeight}px`;
+		legendElement.style.maxHeight = `${config.maxHeight}px`;
+
+		// Reset width for bottom legend
+		legendElement.style.width = '';
+		legendElement.style.minWidth = '';
+		legendElement.style.maxWidth = '';
+	}
+
+	// Apply alignment based on number of rows and position
+	if (legendPosition === LegendPosition.RIGHT || requiredRows === 1) {
 		legendElement.classList.add('u-legend-single-line');
 		legendElement.classList.remove('u-legend-multi-line');
 	} else {

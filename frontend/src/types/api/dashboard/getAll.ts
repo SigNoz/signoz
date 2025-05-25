@@ -17,6 +17,11 @@ export type TVariableQueryType = typeof VariableQueryTypeArr[number];
 export const VariableSortTypeArr = ['DISABLED', 'ASC', 'DESC'] as const;
 export type TSortVariableValuesType = typeof VariableSortTypeArr[number];
 
+export enum LegendPosition {
+	BOTTOM = 'bottom',
+	RIGHT = 'right',
+}
+
 export interface IDashboardVariable {
 	id: string;
 	order?: any;
@@ -111,6 +116,7 @@ export interface IBaseWidget {
 	selectedTracesFields: BaseAutocompleteData[] | null;
 	isLogScale?: boolean;
 	columnWidths?: Record<string, number>;
+	legendPosition?: LegendPosition;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

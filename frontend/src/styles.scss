@@ -96,22 +96,107 @@ body {
 			justify-content: center;
 		}
 
-		tr.u-series {
+		// Right-side legend specific styles
+		&.u-legend-right {
+			tbody {
+				flex-direction: column;
+				flex-wrap: nowrap;
+				align-items: stretch;
+				justify-content: flex-start;
+				gap: 1px;
+			}
+
+			tr.u-series {
+				width: 100%;
+
+				th {
+					display: flex;
+					align-items: center;
+					gap: 6px;
+					font-size: 12px;
+					font-weight: 600;
+					justify-content: flex-start;
+					padding: 8px 12px;
+					cursor: pointer;
+					position: relative;
+					min-width: 0;
+					width: 100%;
+
+					.u-marker {
+						border-radius: 50%;
+						min-width: 10px;
+						min-height: 10px;
+						width: 10px;
+						height: 10px;
+						flex-shrink: 0;
+					}
+
+					// Text container for proper ellipsis
+					.legend-text {
+						text-overflow: ellipsis;
+						overflow: hidden;
+						white-space: nowrap;
+						min-width: 0;
+						flex: 1;
+					}
+
+					// Tooltip styling
+					&[title] {
+						cursor: pointer;
+					}
+
+					&:hover {
+						background: rgba(255, 255, 255, 0.05);
+					}
+				}
+
+				&.u-off {
+					opacity: 0.5;
+					text-decoration: line-through;
+					text-decoration-thickness: 1px;
+
+					th {
+						&:hover {
+							opacity: 0.7;
+						}
+					}
+				}
+
+				// Focus styles for keyboard navigation
+				&:focus {
+					outline: 1px solid rgba(66, 165, 245, 0.8);
+					outline-offset: 1px;
+				}
+			}
+		}
+
+		// Bottom legend specific styles
+		&.u-legend-bottom {
+			tbody {
+				flex-direction: row;
+				flex-wrap: wrap;
+			}
+		}
+
+		&.u-legend-bottom tr.u-series {
 			display: flex;
 			flex: 0 0 auto;
 			min-width: fit-content;
+			max-width: 200px; // Limit width to enable truncation
 
 			th {
 				display: flex;
 				align-items: center;
 				gap: 6px;
-				font-size: 13px;
-				font-weight: 400;
+				font-size: 12px;
+				font-weight: 600;
 				padding: 6px 10px;
 				cursor: pointer;
 				white-space: nowrap;
 				-webkit-font-smoothing: antialiased;
 				border-radius: 2px;
+				min-width: 0; // Allow shrinking
+				max-width: 100%;
 
 				&:hover {
 					background: rgba(255, 255, 255, 0.05);
@@ -124,6 +209,19 @@ body {
 					width: 10px;
 					height: 10px;
 					flex-shrink: 0;
+				}
+
+				.legend-text {
+					text-overflow: ellipsis;
+					overflow: hidden;
+					white-space: nowrap;
+					min-width: 0;
+					flex: 1;
+				}
+
+				// Tooltip styling
+				&[title] {
+					cursor: pointer;
 				}
 			}
 
@@ -144,6 +242,35 @@ body {
 				outline: 1px solid rgba(66, 165, 245, 0.8);
 				outline-offset: 1px;
 			}
+		}
+	}
+}
+
+// uPlot container adjustments for right-side legend
+.uplot {
+	&.u-plot-right-legend {
+		display: flex;
+		flex-direction: row;
+
+		.u-over {
+			flex: 1;
+		}
+
+		.u-legend {
+			flex-shrink: 0;
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+	}
+
+	&.u-plot-bottom-legend {
+		display: flex;
+		flex-direction: column;
+
+		.u-legend {
+			margin-top: 10px;
+			margin-left: 0;
+			margin-right: 0;
 		}
 	}
 }
@@ -355,7 +482,7 @@ body {
 			}
 		}
 
-		tr.u-series {
+		&.u-legend-bottom tr.u-series {
 			th {
 				&:hover {
 					background: rgba(0, 0, 0, 0.05);
@@ -363,9 +490,40 @@ body {
 			}
 
 			&.u-off {
+				opacity: 0.5;
+				text-decoration: line-through;
+				text-decoration-thickness: 1px;
+
 				th {
 					&:hover {
 						background: rgba(0, 0, 0, 0.08);
+						opacity: 0.7;
+					}
+				}
+			}
+
+			// Light mode focus styles
+			&:focus {
+				outline: 1px solid rgba(25, 118, 210, 0.8);
+			}
+		}
+
+		&.u-legend-right tr.u-series {
+			th {
+				&:hover {
+					background: rgba(0, 0, 0, 0.05);
+				}
+			}
+
+			&.u-off {
+				opacity: 0.5;
+				text-decoration: line-through;
+				text-decoration-thickness: 1px;
+
+				th {
+					&:hover {
+						background: rgba(0, 0, 0, 0.08);
+						opacity: 0.7;
 					}
 				}
 			}
@@ -445,4 +603,31 @@ notifications	-  2050
 
 .animate-spin {
 	animation: spin 1s linear infinite;
+}
+
+// Custom legend tooltip for immediate display
+.legend-tooltip {
+	position: fixed;
+	background: var(--bg-slate-400);
+	color: var(--text-vanilla-100);
+	padding: 8px 12px;
+	border-radius: 6px;
+	font-size: 12px;
+	font-family: 'Geist Mono';
+	font-weight: 500;
+	z-index: 10000;
+	pointer-events: none;
+	white-space: nowrap;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+	border: 1px solid #374151;
+	-webkit-font-smoothing: antialiased;
+	letter-spacing: 0.025em;
+}
+
+// Light mode styling for legend tooltip
+.lightMode .legend-tooltip {
+	background: #ffffff;
+	color: #1f2937;
+	border: 1px solid #d1d5db;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }

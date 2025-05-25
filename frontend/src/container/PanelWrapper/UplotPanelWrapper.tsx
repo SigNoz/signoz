@@ -139,6 +139,7 @@ function UplotPanelWrapper({
 				customSeries,
 				isLogScale: widget?.isLogScale,
 				enhancedLegend: true, // Enable enhanced legend
+				legendPosition: widget?.legendPosition,
 			}),
 		[
 			widget?.id,
@@ -164,6 +165,7 @@ function UplotPanelWrapper({
 			timezone.value,
 			customSeries,
 			widget?.isLogScale,
+			widget?.legendPosition,
 		],
 	);
 
