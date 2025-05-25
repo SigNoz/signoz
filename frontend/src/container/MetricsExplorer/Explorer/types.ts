@@ -10,6 +10,10 @@ export enum ExplorerTabs {
 
 export interface TimeSeriesProps {
 	showOneChartPerQuery: boolean;
+	areAllMetricUnitsSame: boolean;
+	isMetricUnitsLoading: boolean;
+	isMetricUnitsError: boolean;
+	metricUnits: string[];
 }
 
 export interface RelatedMetricsProps {

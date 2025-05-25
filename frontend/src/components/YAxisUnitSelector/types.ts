@@ -2,6 +2,8 @@ export interface YAxisUnitSelectorProps {
 	value: string | undefined;
 	onChange: (value: UniversalYAxisUnit) => void;
 	placeholder?: string;
+	loading?: boolean;
+	disabled?: boolean;
 }
 
 export enum UniversalYAxisUnit {
