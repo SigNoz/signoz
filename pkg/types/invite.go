@@ -85,3 +85,7 @@ type PostableInvite struct {
 type PostableBulkInviteRequest struct {
 	Invites []PostableInvite `json:"invites"`
 }
+
+type GettableCreateInviteResponse struct {
+	InviteToken string `json:"token"`
+}
