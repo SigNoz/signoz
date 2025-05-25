@@ -1,9 +1,8 @@
 import './QueryBuilderV2.styles.scss';
 
-import { OPERATORS } from 'constants/queryBuilder';
+import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
-import { useMemo } from 'react';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { memo, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { LogsQB } from './Logs/LogsQB';
@@ -11,14 +10,20 @@ import MetricsQB from './Metrics/MetricsQB';
 import { QueryBuilderV2Provider } from './QueryBuilderV2Context';
 import TracesQB from './Traces/TracesQB';
 
-type QueryBuilderV2Props = {
+export type QueryBuilderV2Props = {
 	source: DataSource;
-	query: IBuilderQuery;
+	panelType: PANEL_TYPES;
+	filterConfigs: QueryBuilderProps['filterConfigs'];
+	isListViewPanel: boolean;
+	version: string;
 };
 
-function QueryBuilderV2Main({
+const QueryBuilderV2Main = memo(function QueryBuilderV2Main({
 	source,
-	query,
+	panelType,
+	filterConfigs,
+	isListViewPanel,
+	version,
 }: QueryBuilderV2Props): JSX.Element {
 	const isMetricsDataSource = source === DataSource.METRICS;
 	const isLogsDataSource = source === DataSource.LOGS;
@@ -53,28 +58,49 @@ function QueryBuilderV2Main({
 
 	return (
 		<div className="query-builder-v2">
-			{isMetricsDataSource ? <MetricsQB query={query} /> : null}
-			{isLogsDataSource ? (
-				<LogsQB
-					query={query}
-					filterConfigs={
-						query.dataSource === DataSource.TRACES
-							? listViewTracesFilterConfigs
-							: listViewLogFilterConfigs
-					}
+			{isMetricsDataSource ? (
+				<MetricsQB
+					source={DataSource.METRICS}
+					filterConfigs={filterConfigs}
+					panelType={panelType}
+					version={version}
+					isListViewPanel={isListViewPanel}
 				/>
 			) : null}
-			{isTracesDataSource ? <TracesQB query={query} /> : null}
+			{isLogsDataSource ? (
+				<LogsQB
+					source={DataSource.LOGS}
+					filterConfigs={listViewLogFilterConfigs}
+					panelType={panelType}
+					version={version}
+					isListViewPanel={isListViewPanel}
+				/>
+			) : null}
+			{isTracesDataSource ? (
+				<TracesQB
+					source={DataSource.TRACES}
+					filterConfigs={listViewTracesFilterConfigs}
+					panelType={panelType}
+					version={version}
+					isListViewPanel={isListViewPanel}
+				/>
+			) : null}
 		</div>
 	);
-}
+});
 
 function QueryBuilderV2(props: QueryBuilderV2Props): JSX.Element {
-	const { source, query } = props;
+	const { source, panelType, filterConfigs, isListViewPanel, version } = props;
 
 	return (
 		<QueryBuilderV2Provider>
-			<QueryBuilderV2Main source={source} query={query} />
+			<QueryBuilderV2Main
+				source={source}
+				panelType={panelType}
+				filterConfigs={filterConfigs}
+				isListViewPanel={isListViewPanel}
+				version={version}
+			/>
 		</QueryBuilderV2Provider>
 	);
 }

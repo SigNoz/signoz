@@ -1,5 +1,19 @@
 .metrics-qb {
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
 	gap: 8px;
+
+	border-bottom: 1px solid var(--Slate-400, #1d212d);
+
+	.query-v2 {
+		.qb-entity-options {
+			.options {
+				.query-name {
+					&::before {
+						height: 306px !important;
+					}
+				}
+			}
+		}
+	}
 }
