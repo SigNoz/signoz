@@ -31,12 +31,13 @@ interface QBEntityOptionsProps {
 	isCollapsed: boolean;
 	entityType: string;
 	entityData: any;
-	onDelete: () => void;
+	onDelete?: () => void;
 	onCloneQuery?: (type: string, query: IBuilderQuery) => void;
 	onToggleVisibility: () => void;
 	onCollapseEntity: () => void;
 	onQueryFunctionsUpdates?: (functions: QueryFunctionProps[]) => void;
-	showDeleteButton: boolean;
+	showDeleteButton?: boolean;
+	showCloneOption?: boolean;
 	isListViewPanel?: boolean;
 	index?: number;
 }
@@ -48,13 +49,14 @@ export default function QBEntityOptions({
 	showFunctions,
 	entityType,
 	entityData,
-	onDelete,
-	onCloneQuery,
 	onToggleVisibility,
 	onCollapseEntity,
-	showDeleteButton,
 	onQueryFunctionsUpdates,
 	isListViewPanel,
+	onDelete,
+	showDeleteButton,
+	showCloneOption,
+	onCloneQuery,
 	index,
 }: QBEntityOptionsProps): JSX.Element {
 	const handleCloneEntity = (): void => {
@@ -96,14 +98,14 @@ export default function QBEntityOptions({
 									{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
 								</Button>
 							</Tooltip>
-							{/* 
-							{entityType === 'query' && (
+
+							{entityType === 'query' && showCloneOption && (
 								<Tooltip title={`Clone Query ${entityData.queryName}`}>
 									<Button className={cx('periscope-btn')} onClick={handleCloneEntity}>
 										<Copy size={14} />
 									</Button>
 								</Tooltip>
-							)} */}
+							)}
 
 							<Button
 								className={cx(
@@ -156,4 +158,7 @@ QBEntityOptions.defaultProps = {
 	showFunctions: false,
 	onCloneQuery: noop,
 	index: 0,
+	onDelete: noop,
+	showDeleteButton: false,
+	showCloneOption: true,
 };

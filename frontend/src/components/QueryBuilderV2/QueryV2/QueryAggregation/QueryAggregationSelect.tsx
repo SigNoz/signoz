@@ -33,7 +33,7 @@ import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
-import { useQueryBuilderV2Context } from '../QueryBuilderV2Context';
+import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
 
 const chipDecoration = Decoration.mark({
 	class: 'chip-decorator',
