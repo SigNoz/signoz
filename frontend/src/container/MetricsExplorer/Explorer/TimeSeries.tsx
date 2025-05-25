@@ -151,8 +151,6 @@ function TimeSeries({
 						metricUnits.length > 0 &&
 						metricUnits[index] === '';
 
-					console.log({ isMetricUnitsLoading, metricUnits });
-
 					return (
 						<div
 							className="time-series-view"
