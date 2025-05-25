@@ -110,7 +110,13 @@ function LogExplorerQuerySection({
 			)}
 
 			{selectedView === SELECTED_VIEWS.QUERY_BUILDER_V2 && (
-				<QueryBuilderV2 source={DataSource.LOGS} query={query} />
+				<QueryBuilderV2
+					source={DataSource.LOGS}
+					isListViewPanel={panelTypes === PANEL_TYPES.LIST}
+					panelType={panelTypes}
+					filterConfigs={filterConfigs}
+					version="v3" // setting this to v3 as we this is rendered in logs explorer
+				/>
 			)}
 		</>
 	);
