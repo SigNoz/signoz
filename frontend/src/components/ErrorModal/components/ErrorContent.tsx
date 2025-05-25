@@ -15,13 +15,11 @@ interface ErrorContentProps {
 function ErrorContent({ error }: ErrorContentProps): JSX.Element {
 	return (
 		<section className="error-content">
-			{/* === SECTION 1: Summary Header === */}
+			{/* Summary Header */}
 			<section className="error-content__summary-section">
 				<header className="error-content__summary">
 					<div className="error-content__summary-left">
 						<div className="error-content__icon-wrapper">
-							{/* TODO(shaheer): replace with custom error icon */}
-							{/* <AlertTriangle size={20} className="error-content__icon" /> */}
 							<ErrorIcon />
 						</div>
 
@@ -62,7 +60,7 @@ function ErrorContent({ error }: ErrorContentProps): JSX.Element {
 				)}
 			</section>
 
-			{/* === SECTION 2: Detailed Messages === */}
+			{/* Detailed Messages */}
 			<section className="error-content__messages-section">
 				<div className="error-content__message-list-container">
 					<OverlayScrollbar>

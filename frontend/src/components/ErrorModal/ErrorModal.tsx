@@ -4,8 +4,11 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Modal, Tag } from 'antd';
 import { CircleAlert, X } from 'lucide-react';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
+import { useAppContext } from 'providers/App/App';
 import React from 'react';
+import { useQueryClient } from 'react-query';
 import { ErrorV2 } from 'types/api';
+import { PayloadProps } from 'types/api/user/getVersion';
 
 import ErrorContent from './components/ErrorContent';
 
@@ -31,6 +34,17 @@ function ErrorModal({ error, triggerComponent, onClose }: Props): JSX.Element {
 		onClose?.();
 	};
 
+	const queryClient = useQueryClient();
+
+	const { user } = useAppContext();
+
+	const versionData = queryClient.getQueryData([
+		'getUserVersion',
+		user?.accessJwt,
+	]) as { payload: PayloadProps } | undefined;
+
+	const versionDataPayload = versionData?.payload;
+
 	return (
 		<>
 			{!triggerComponent ? (
@@ -53,8 +67,14 @@ function ErrorModal({ error, triggerComponent, onClose }: Props): JSX.Element {
 				footer={<div className="error-modal__footer" />}
 				title={
 					<>
-						{/* TODO(shaheer): get the version */}
-						<KeyValueLabel badgeKey="ENTERPRISE" badgeValue="v3.4.55" />
+						{versionDataPayload ? (
+							<KeyValueLabel
+								badgeKey={versionDataPayload.ee === 'Y' ? 'ENTERPRISE' : 'COMMUNITY'}
+								badgeValue={versionDataPayload.version}
+							/>
+						) : (
+							<div className="error-modal__version-placeholder" />
+						)}
 						<Button type="default" className="close-button" onClick={handleClose}>
 							<X size={16} color={Color.BG_VANILLA_400} />
 						</Button>
@@ -65,7 +85,6 @@ function ErrorModal({ error, triggerComponent, onClose }: Props): JSX.Element {
 				classNames={classNames}
 				wrapClassName="error-modal__wrap"
 			>
-				{/* {JSON.stringify(error)} */}
 				<ErrorContent error={error} />
 			</Modal>
 		</>
