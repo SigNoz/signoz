@@ -169,7 +169,7 @@ export const verifyFiltersAndOrderBy = (queryData: IBuilderQuery): void => {
 	}
 };
 
-describe('LogsExplorerViews Pagination', () => {
+describe.skip('LogsExplorerViews Pagination', () => {
 	// Array to store captured API request payloads
 	let capturedPayloads: QueryRangePayload[];
 

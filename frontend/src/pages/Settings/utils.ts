@@ -48,7 +48,7 @@ export const getRoutes = (
 
 	settings.push(...alertChannels(t));
 
-	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
+	if (isAdmin) {
 		settings.push(...apiKeys(t));
 	}
 

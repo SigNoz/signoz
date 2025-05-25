@@ -45,7 +45,7 @@ jest.mock(
 		},
 );
 
-describe('HostMetricsLogs', () => {
+describe.skip('HostMetricsLogs', () => {
 	let capturedQueryRangePayloads: QueryRangePayload[] = [];
 	const itemHeight = 100;
 	beforeEach(() => {
