@@ -96,14 +96,14 @@ export default function QBEntityOptions({
 									{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
 								</Button>
 							</Tooltip>
-
+							{/* 
 							{entityType === 'query' && (
 								<Tooltip title={`Clone Query ${entityData.queryName}`}>
 									<Button className={cx('periscope-btn')} onClick={handleCloneEntity}>
 										<Copy size={14} />
 									</Button>
 								</Tooltip>
-							)}
+							)} */}
 
 							<Button
 								className={cx(

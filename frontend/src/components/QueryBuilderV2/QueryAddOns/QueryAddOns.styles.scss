@@ -14,13 +14,20 @@
 			font-size: var(--font-size-xs);
 			font-style: normal;
 			font-weight: var(--font-weight-normal);
+
+			color: var(--Vanilla-400, #c0c1c3);
 		}
 
 		.tab {
 			border: 1px solid var(--bg-slate-400);
+			border-left: none;
 			min-width: 114px;
 			height: 36px;
 			line-height: 36px;
+
+			&:first-child {
+				border-left: 1px solid var(--bg-slate-400);
+			}
 		}
 
 		.tab::before {
