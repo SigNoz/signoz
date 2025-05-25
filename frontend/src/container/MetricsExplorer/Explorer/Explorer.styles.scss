@@ -57,6 +57,14 @@
 	.explore-content {
 		margin-top: 10px;
 
+		.y-axis-unit-selector-container {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			padding-top: 10px;
+			margin-bottom: 10px;
+		}
+
 		.ant-space {
 			margin-top: 10px;
 			margin-bottom: 20px;
@@ -74,6 +82,14 @@
 		.time-series-view {
 			min-width: 100%;
 			width: 100%;
+			position: relative;
+
+			.no-unit-warning {
+				position: absolute;
+				top: 30px;
+				right: 30px;
+				z-index: 1000;
+			}
 		}
 
 		.time-series-container {
