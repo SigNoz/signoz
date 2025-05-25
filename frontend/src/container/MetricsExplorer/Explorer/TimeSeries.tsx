@@ -9,7 +9,7 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Info } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -139,6 +139,9 @@ function TimeSeries({
 					loading={isMetricUnitsLoading}
 					disabled={isMetricUnitsLoading || isMetricUnitsError}
 				/>
+				<Tooltip title="To permanently set the unit for any of the metrics, please do so from the metric details page.">
+					<Info size={16} />
+				</Tooltip>
 			</div>
 			<div
 				className={classNames({
@@ -160,7 +163,7 @@ function TimeSeries({
 							{isMetricUnitEmpty && (
 								<Tooltip
 									className="no-unit-warning"
-									title="This metric does not have a unit. Please set a unit for it in the details drawer."
+									title="This metric does not have a unit. Please set one for it in the metric details page."
 								>
 									<AlertTriangle size={16} color={Color.BG_AMBER_400} />
 								</Tooltip>
