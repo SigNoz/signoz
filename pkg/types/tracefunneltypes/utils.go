@@ -1,4 +1,4 @@
-package tracefunnel
+package tracefunneltypes
 
 import (
 	"fmt"
@@ -48,14 +48,33 @@ func ValidateFunnelSteps(steps []*FunnelStep) error {
 }
 
 // NormalizeFunnelSteps normalizes step orders to be sequential starting from 1.
-// Returns a new slice with normalized step orders, leaving the input slice unchanged.
+// The function takes a slice of pointers to FunnelStep and returns a new slice with normalized step orders.
+// The input slice is left unchanged. If the input slice contains nil pointers, they will be filtered out.
+// Returns an empty slice if the input is empty or contains only nil pointers.
 func NormalizeFunnelSteps(steps []*FunnelStep) []*FunnelStep {
 	if len(steps) == 0 {
 		return []*FunnelStep{}
 	}
 
-	newSteps := make([]*FunnelStep, len(steps))
-	copy(newSteps, steps)
+	// Filter out nil pointers and create a new slice
+	validSteps := make([]*FunnelStep, 0, len(steps))
+	for _, step := range steps {
+		if step != nil {
+			validSteps = append(validSteps, step)
+		}
+	}
+
+	if len(validSteps) == 0 {
+		return []*FunnelStep{}
+	}
+
+	// Create a defensive copy of the valid steps
+	newSteps := make([]*FunnelStep, len(validSteps))
+	for i, step := range validSteps {
+		// Create a copy of each step to avoid modifying the original
+		stepCopy := *step
+		newSteps[i] = &stepCopy
+	}
 
 	sort.Slice(newSteps, func(i, j int) bool {
 		return newSteps[i].Order < newSteps[j].Order
