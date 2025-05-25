@@ -1,14 +1,17 @@
 import { RocketOutlined } from '@ant-design/icons';
+import { MenuProps } from 'antd';
 import ROUTES from 'constants/routes';
 import {
 	BarChart2,
 	BellDot,
 	Binoculars,
+	Book,
 	Boxes,
 	BugIcon,
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
+	Github,
 	Globe,
 	HardDrive,
 	Home,
@@ -286,6 +289,29 @@ export const settingsMenuItems: SidebarItem[] = [
 		key: ROUTES.SHORTCUTS,
 		label: 'Keyboard Shortcuts',
 		icon: <Layers2 size={16} />,
+	},
+];
+
+export const helpSupportDropdownMenuItems: MenuProps['items'] = [
+	{
+		key: 'documentation',
+		label: 'Documentation',
+		icon: <Book size={16} />,
+	},
+	{
+		key: 'github',
+		label: 'GitHub',
+		icon: <Github size={16} />,
+	},
+	{
+		key: 'slack',
+		label: 'Slack',
+		icon: <Slack size={16} />,
+	},
+	{
+		key: 'chat-support',
+		label: 'Chat with Support',
+		icon: <MessageSquareText size={16} />,
 	},
 ];
 

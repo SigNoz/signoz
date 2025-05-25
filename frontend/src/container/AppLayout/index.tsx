@@ -545,7 +545,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		</div>
 	);
 
-	const sideNavPinned = false; // Temp - Till we implement sidenav pinned state
+	const sideNavPinned = true; // Temp - Till we implement sidenav pinned state
 
 	return (
 		<Layout className={cx(isDarkMode ? 'darkMode dark' : 'lightMode')}>
