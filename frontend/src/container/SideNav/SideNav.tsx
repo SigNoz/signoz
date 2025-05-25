@@ -3,7 +3,7 @@
 import './SideNav.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tooltip } from 'antd';
+import { Button, Dropdown, MenuProps, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
@@ -39,6 +39,7 @@ import { routeConfig } from './config';
 import { getQueryString } from './helper';
 import defaultMenuItems, {
 	defaultMoreMenuItems,
+	helpSupportDropdownMenuItems,
 	helpSupportMenuItem,
 	manageLicenseMenuItem,
 	primaryMenuItems,
@@ -83,10 +84,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		icon: <Cog size={16} />,
 	};
 
-	const [userManagementMenuItems, setUserManagementMenuItems] = useState<
-		UserManagementMenuItems[]
-	>([]);
-
 	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>([]);
 
 	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
@@ -127,19 +124,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const openInNewTab = (path: string): void => {
 		window.open(path, '_blank');
-	};
-
-	const onClickShortcuts = (e: MouseEvent): void => {
-		// eslint-disable-next-line sonarjs/no-duplicate-string
-		logEvent('Sidebar: Menu clicked', {
-			menuRoute: '/shortcuts',
-			menuLabel: 'Keyboard Shortcuts',
-		});
-		if (isCtrlMetaKey(e)) {
-			openInNewTab('/shortcuts');
-		} else {
-			history.push(`/shortcuts`);
-		}
 	};
 
 	const onClickGetStarted = (event: MouseEvent): void => {
@@ -225,6 +209,43 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				break;
 		}
 	};
+
+	const userSettingsDropdownMenuItems: MenuProps['items'] = [
+		{
+			key: 'label',
+			label: (
+				<div className="user-settings-dropdown-logged-in-section">
+					<span className="user-settings-dropdown-label-text">LOGGED IN AS</span>
+					<span className="user-settings-dropdown-label-email">{user.email}</span>
+				</div>
+			),
+			disabled: true,
+		},
+		{
+			type: 'divider',
+		},
+		{
+			key: 'account',
+			label: 'Account Settings',
+		},
+		{
+			key: 'workspace',
+			label: 'Workspace Settings',
+		},
+		{
+			key: 'license',
+			label: 'Manage License',
+		},
+		{
+			type: 'divider',
+		},
+		{
+			key: 'logout',
+			label: (
+				<span className="user-settings-dropdown-logout-section">Sign out</span>
+			),
+		},
+	];
 
 	useEffect(() => {
 		if (isCloudUser) {
@@ -368,7 +389,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			}
 		}
 		setMenuItems(updatedMenuItems);
-		setUserManagementMenuItems(updatedUserManagementItems);
 	}, [
 		isCommunityEnterpriseUser,
 		currentVersion,
@@ -419,46 +439,48 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	return (
 		<div className={cx('sidenav-container', isPinned && 'pinned')}>
 			<div className={cx('sideNav', isPinned && 'pinned')}>
-				<div className="brand">
-					<div className="brand-company-meta">
-						<div
-							className="brand-logo"
-							// eslint-disable-next-line react/no-unknown-property
-							onClick={(event: MouseEvent): void => {
-								// Current home page
-								onClickHandler(ROUTES.HOME, event);
-							}}
-						>
-							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+				<div className="brand-container">
+					<div className="brand">
+						<div className="brand-company-meta">
+							<div
+								className="brand-logo"
+								// eslint-disable-next-line react/no-unknown-property
+								onClick={(event: MouseEvent): void => {
+									// Current home page
+									onClickHandler(ROUTES.HOME, event);
+								}}
+							>
+								<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+							</div>
+
+							{licenseTag && (
+								<Tooltip
+									title={
+										// eslint-disable-next-line no-nested-ternary
+										isCommunityUser
+											? 'You are running the community version of SigNoz. You have to install the Enterprise edition in order enable Enterprise features.'
+											: isCommunityEnterpriseUser
+											? 'You do not have an active license present. Add an active license to enable Enterprise features.'
+											: ''
+									}
+									placement="bottomRight"
+								>
+									<div
+										className={cx(
+											'brand-title-section',
+											isCommunityEnterpriseUser && 'community-enterprise-user',
+										)}
+									>
+										<span className="license-type"> {licenseTag} </span>
+										<span className="version"> {latestVersion} </span>
+									</div>
+								</Tooltip>
+							)}
 						</div>
 
-						{licenseTag && (
-							<Tooltip
-								title={
-									// eslint-disable-next-line no-nested-ternary
-									isCommunityUser
-										? 'You are running the community version of SigNoz. You have to install the Enterprise edition in order enable Enterprise features.'
-										: isCommunityEnterpriseUser
-										? 'You do not have an active license present. Add an active license to enable Enterprise features.'
-										: ''
-								}
-								placement="bottomRight"
-							>
-								<div
-									className={cx(
-										'brand-title-section',
-										isCommunityEnterpriseUser && 'community-enterprise-user',
-									)}
-								>
-									<span className="license-type"> {licenseTag} </span>
-									<span className="version"> {latestVersion} </span>
-								</div>
-							</Tooltip>
-						)}
-					</div>
-
-					<div className="user-history-section">
-						<ClockFading size={16} color={Color.BG_SLATE_50} />
+						<div className="user-history-section">
+							<ClockFading size={16} color={Color.BG_SLATE_50} />
+						</div>
 					</div>
 				</div>
 
@@ -541,39 +563,57 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 					<div className="nav-bottom-section">
 						<div className="secondary-nav-items">
-							<NavItem
-								key={ROUTES.SUPPORT}
-								item={helpSupportMenuItem}
-								isDisabled={isWorkspaceBlocked}
-								isActive={activeMenuKey === helpSupportMenuItem?.key}
-								isPinned={isPinnedItem(helpSupportMenuItem)}
-								onClick={(event: MouseEvent): void => {
-									handleUserManagentMenuItemClick(
-										helpSupportMenuItem?.key as string,
-										event,
-									);
-								}}
-								showIcon
-							/>
+							<div className="nav-dropdown-item">
+								<Dropdown
+									menu={{ items: helpSupportDropdownMenuItems }}
+									placement="topLeft"
+									overlayClassName="nav-dropdown-overlay"
+								>
+									<div
+										className="nav-item"
+										onClick={(event: MouseEvent): void => {
+											handleUserManagentMenuItemClick(
+												helpSupportMenuItem?.key as string,
+												event,
+											);
+										}}
+									>
+										<div className="nav-item-data">
+											<div className="nav-item-icon">{helpSupportMenuItem.icon}</div>
 
-							<NavItem
-								key={ROUTES.SETTINGS}
-								item={userSettingsMenuItem}
-								isActive={activeMenuKey === userSettingsMenuItem?.key}
-								isDisabled={false}
-								isPinned={isPinnedItem(userSettingsMenuItem)}
-								showIcon
-								onClick={(event: MouseEvent): void => {
-									handleUserManagentMenuItemClick(
-										userSettingsMenuItem?.key as string,
-										event,
-									);
-									logEvent('Sidebar: Menu clicked', {
-										menuRoute: userSettingsMenuItem?.key,
-										menuLabel: 'User',
-									});
-								}}
-							/>
+											<div className="nav-item-label">{helpSupportMenuItem.label}</div>
+										</div>
+									</div>
+								</Dropdown>
+							</div>
+
+							<div className="nav-dropdown-item">
+								<Dropdown
+									menu={{ items: userSettingsDropdownMenuItems }}
+									placement="topLeft"
+									overlayClassName="nav-dropdown-overlay settings-dropdown"
+								>
+									<div
+										className="nav-item"
+										onClick={(event: MouseEvent): void => {
+											handleUserManagentMenuItemClick(
+												userSettingsMenuItem?.key as string,
+												event,
+											);
+											logEvent('Sidebar: Menu clicked', {
+												menuRoute: userSettingsMenuItem?.key,
+												menuLabel: 'User',
+											});
+										}}
+									>
+										<div className="nav-item-data">
+											<div className="nav-item-icon">{userSettingsMenuItem.icon}</div>
+
+											<div className="nav-item-label">{userSettingsMenuItem.label}</div>
+										</div>
+									</div>
+								</Dropdown>
+							</div>
 						</div>
 					</div>
 				</div>
