@@ -75,13 +75,13 @@ function LogsExplorer(): JSX.Element {
 	// Switch to query builder view if there are more than 1 queries
 	useEffect(() => {
 		if (currentQuery.builder.queryData.length > 1) {
-			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER);
+			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER_V2);
 		}
 		if (
 			currentQuery.builder.queryData.length === 1 &&
 			currentQuery.builder.queryData?.[0]?.groupBy?.length > 0
 		) {
-			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER);
+			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER_V2);
 		}
 	}, [currentQuery.builder.queryData, currentQuery.builder.queryData.length]);
 
