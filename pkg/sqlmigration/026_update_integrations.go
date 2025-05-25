@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
-	"go.uber.org/zap"
 )
 
 type updateIntegrations struct {
@@ -332,7 +331,6 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIn
 			if err == sql.ErrNoRows {
 				continue
 			}
-			zap.L().Error("failed to get cloud integration id", zap.Error(err))
 			return nil
 		}
 		newServices = append(newServices, &newCloudIntegrationService{

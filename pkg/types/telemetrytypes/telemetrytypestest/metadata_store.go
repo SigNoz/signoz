@@ -129,7 +129,7 @@ func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, fieldValueSele
 // GetAllValues returns all values for a given field
 func (m *MockMetadataStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
 	if fieldValueSelector == nil {
-		return nil, nil
+		return &telemetrytypes.TelemetryFieldValues{}, nil
 	}
 
 	// Generate a lookup key from the selector

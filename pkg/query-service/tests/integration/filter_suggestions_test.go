@@ -325,7 +325,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 
 	router := app.NewRouter()
 	//add the jwt middleware
-	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	router.Use(middleware.NewAuth(jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
 	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterQueryRangeV3Routes(router, am)

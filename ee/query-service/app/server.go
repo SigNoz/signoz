@@ -247,15 +247,15 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 	r := baseapp.NewRouter()
 
-	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(eemiddleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
-	r.Use(middleware.NewTimeout(zap.L(),
+	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	r.Use(eemiddleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.serverOptions.SigNoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewTimeout(s.serverOptions.SigNoz.Instrumentation.Logger(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
 		s.serverOptions.Config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
-	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewAnalytics().Wrap)
+	r.Use(middleware.NewLogging(s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	apiHandler.RegisterPrivateRoutes(r)
 
@@ -279,15 +279,15 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	r := baseapp.NewRouter()
 	am := middleware.NewAuthZ(s.serverOptions.SigNoz.Instrumentation.Logger())
 
-	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(eemiddleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
-	r.Use(middleware.NewTimeout(zap.L(),
+	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	r.Use(eemiddleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.serverOptions.SigNoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewTimeout(s.serverOptions.SigNoz.Instrumentation.Logger(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
 		s.serverOptions.Config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
-	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewAnalytics().Wrap)
+	r.Use(middleware.NewLogging(s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)

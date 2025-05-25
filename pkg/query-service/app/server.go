@@ -147,7 +147,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		JWT:                           serverOptions.Jwt,
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
 		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
-		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore),
+		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore, serverOptions.SigNoz.Instrumentation.Logger()),
 		Signoz:                        serverOptions.SigNoz,
 	})
 	if err != nil {
@@ -212,14 +212,14 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 
 	r := NewRouter()
 
-	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(middleware.NewTimeout(zap.L(),
+	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	r.Use(middleware.NewTimeout(s.serverOptions.SigNoz.Instrumentation.Logger(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
 		s.serverOptions.Config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
-	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewAnalytics().Wrap)
+	r.Use(middleware.NewLogging(s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	api.RegisterPrivateRoutes(r)
 
@@ -242,14 +242,14 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
 	r := NewRouter()
 
-	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(middleware.NewTimeout(zap.L(),
+	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	r.Use(middleware.NewTimeout(s.serverOptions.SigNoz.Instrumentation.Logger(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
 		s.serverOptions.Config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
-	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewAnalytics().Wrap)
+	r.Use(middleware.NewLogging(s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	am := middleware.NewAuthZ(s.serverOptions.SigNoz.Instrumentation.Logger())
 
