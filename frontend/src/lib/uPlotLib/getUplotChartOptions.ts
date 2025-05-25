@@ -8,8 +8,13 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
 import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import {
+	applyEnhancedLegendStyling,
+	calculateEnhancedLegendConfig,
+} from 'container/PanelWrapper/enhancedLegend';
 import { Dimensions } from 'hooks/useDimensions';
 import { convertValue } from 'lib/getConvertedValue';
+import getLabelName from 'lib/getLabelName';
 import { cloneDeep, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -60,6 +65,7 @@ export interface GetUPlotChartOptions {
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
 	isLogScale?: boolean;
 	colorMapping?: Record<string, string>;
+	enhancedLegend?: boolean;
 }
 
 /** the function converts series A , series B , series C to
@@ -168,6 +174,7 @@ export const getUPlotChartOptions = ({
 	customSeries,
 	isLogScale,
 	colorMapping,
+	enhancedLegend = true,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -180,10 +187,27 @@ export const getUPlotChartOptions = ({
 
 	const bands = stackBarChart ? getBands(series) : null;
 
+	// Calculate dynamic legend height based on panel dimensions and series count
+	const seriesCount = (apiResponse?.data?.result || []).length;
+	const seriesLabels = enhancedLegend
+		? (apiResponse?.data?.result || []).map((item) =>
+				getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+		  )
+		: [];
+	const legendConfig = enhancedLegend
+		? calculateEnhancedLegendConfig(dimensions, seriesCount, seriesLabels)
+		: {
+				calculatedHeight: 30,
+				minHeight: 30,
+				maxHeight: 30,
+				itemsPerRow: 3,
+				showScrollbar: false,
+		  };
+
 	return {
 		id,
 		width: dimensions.width,
-		height: dimensions.height - 30,
+		height: dimensions.height - legendConfig.calculatedHeight - 10, // Adjust chart height for enhanced legend
 		legend: {
 			show: true,
 			live: false,
@@ -335,6 +359,15 @@ export const getUPlotChartOptions = ({
 				(self): void => {
 					const legend = self.root.querySelector('.u-legend');
 					if (legend) {
+						// Apply enhanced legend styling
+						if (enhancedLegend) {
+							applyEnhancedLegendStyling(
+								legend as HTMLElement,
+								legendConfig,
+								legendConfig.requiredRows,
+							);
+						}
+
 						const seriesEls = legend.querySelectorAll('.u-series');
 						const seriesArray = Array.from(seriesEls);
 						seriesArray.forEach((seriesEl, index) => {

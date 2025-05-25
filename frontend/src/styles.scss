@@ -17,12 +17,12 @@ body {
 }
 
 .u-legend {
-	max-height: 30px; // slicing the height of the widget Header height ;
+	max-height: 30px; // Default height for backward compatibility
 	overflow-y: auto;
 	overflow-x: hidden;
 
 	&::-webkit-scrollbar {
-		width: 0.3rem;
+		width: 0.5rem;
 	}
 	&::-webkit-scrollbar-corner {
 		background: transparent;
@@ -51,6 +51,99 @@ body {
 		&.u-off {
 			text-decoration: line-through;
 			text-decoration-thickness: 3px;
+		}
+	}
+
+	// Enhanced legend styles
+	&.u-legend-enhanced {
+		max-height: none; // Remove default max-height restriction
+		padding: 6px 4px; // Back to original padding
+
+		// Thin and neat scrollbar for enhanced legend
+		&::-webkit-scrollbar {
+			width: 0.25rem;
+			height: 0.25rem;
+		}
+		&::-webkit-scrollbar-thumb {
+			background: rgba(136, 136, 136, 0.4);
+			border-radius: 0.125rem;
+
+			&:hover {
+				background: rgba(136, 136, 136, 0.7);
+			}
+		}
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		// Enhanced table layout for better responsiveness
+		table {
+			width: 100%;
+			table-layout: fixed;
+		}
+
+		tbody {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 2px 2px;
+			align-items: center;
+			justify-content: flex-start;
+			width: 100%;
+		}
+
+		// Center alignment for single-line legends
+		&.u-legend-single-line tbody {
+			justify-content: center;
+		}
+
+		tr.u-series {
+			display: flex;
+			flex: 0 0 auto;
+			min-width: fit-content;
+
+			th {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 13px;
+				font-weight: 400;
+				padding: 6px 10px;
+				cursor: pointer;
+				white-space: nowrap;
+				-webkit-font-smoothing: antialiased;
+				border-radius: 2px;
+
+				&:hover {
+					background: rgba(255, 255, 255, 0.05);
+				}
+
+				.u-marker {
+					border-radius: 50%;
+					min-width: 10px;
+					min-height: 10px;
+					width: 10px;
+					height: 10px;
+					flex-shrink: 0;
+				}
+			}
+
+			&.u-off {
+				opacity: 0.5;
+				text-decoration: line-through;
+				text-decoration-thickness: 1px;
+
+				th {
+					&:hover {
+						opacity: 0.7;
+					}
+				}
+			}
+
+			// Focus styles for keyboard navigation
+			&:focus {
+				outline: 1px solid rgba(66, 165, 245, 0.8);
+				outline-offset: 1px;
+			}
 		}
 	}
 }
@@ -247,6 +340,39 @@ body {
 
 			&.ant-dropdown-menu-item-danger {
 				background-color: var(--bg-cherry-500) !important;
+			}
+		}
+	}
+
+	// Enhanced legend light mode styles
+	.u-legend-enhanced {
+		// Light mode scrollbar styling
+		&::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.2);
+
+			&:hover {
+				background: rgba(0, 0, 0, 0.4);
+			}
+		}
+
+		tr.u-series {
+			th {
+				&:hover {
+					background: rgba(0, 0, 0, 0.05);
+				}
+			}
+
+			&.u-off {
+				th {
+					&:hover {
+						background: rgba(0, 0, 0, 0.08);
+					}
+				}
+			}
+
+			// Light mode focus styles
+			&:focus {
+				outline: 1px solid rgba(25, 118, 210, 0.8);
 			}
 		}
 	}
