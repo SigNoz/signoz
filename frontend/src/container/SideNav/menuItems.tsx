@@ -193,7 +193,6 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		key: ROUTES.LOGS,
 		label: 'Logs',
 		icon: <ScrollText size={16} />,
-		isBeta: true,
 	},
 	{
 		key: ROUTES.TRACES_EXPLORER,
@@ -296,22 +295,22 @@ export const helpSupportDropdownMenuItems: MenuProps['items'] = [
 	{
 		key: 'documentation',
 		label: 'Documentation',
-		icon: <Book size={16} />,
+		icon: <Book size={14} />,
 	},
 	{
 		key: 'github',
 		label: 'GitHub',
-		icon: <Github size={16} />,
+		icon: <Github size={14} />,
 	},
 	{
 		key: 'slack',
 		label: 'Slack',
-		icon: <Slack size={16} />,
+		icon: <Slack size={14} />,
 	},
 	{
 		key: 'chat-support',
 		label: 'Chat with Support',
-		icon: <MessageSquareText size={16} />,
+		icon: <MessageSquareText size={14} />,
 	},
 ];
 

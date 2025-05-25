@@ -1,9 +1,25 @@
+/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './SideNav.styles.scss';
 
+import {
+	closestCenter,
+	DndContext,
+	DragEndEvent,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from '@dnd-kit/core';
+import {
+	arrayMove,
+	SortableContext,
+	useSortable,
+	verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Dropdown, MenuProps, Tooltip } from 'antd';
+import { Button, Dropdown, MenuProps, Modal, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
@@ -16,13 +32,16 @@ import { StatusCodes } from 'http-status-codes';
 import history from 'lib/history';
 import {
 	AlertTriangle,
+	Check,
 	CheckSquare,
 	ClockFading,
 	Cog,
 	Ellipsis,
+	GripVertical,
 	Logs,
 	MousePointerClick,
 	PackagePlus,
+	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
@@ -55,6 +74,40 @@ interface UserManagementMenuItems {
 	icon: JSX.Element;
 }
 
+function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+	} = useSortable({ id: item.key });
+
+	const style = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+	};
+
+	return (
+		<div ref={setNodeRef} style={style} className="reorder-shortcut-nav-item">
+			<div
+				{...attributes}
+				{...listeners}
+				className="reorder-shortcut-nav-item drag-handle"
+				key={item.key}
+			>
+				<div className="reorder-shortcut-nav-item-grab-icon">
+					<GripVertical size={16} />
+				</div>
+
+				<div className="reorder-shortcut-nav-item-icon">{item.icon}</div>
+
+				<div className="reorder-shortcut-nav-item-label">{item.label}</div>
+			</div>
+		</div>
+	);
+}
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const [, setMenuItems] = useState(primaryMenuItems);
@@ -84,11 +137,26 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		icon: <Cog size={16} />,
 	};
 
-	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>([]);
+	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>(
+		defaultMoreMenuItems.filter((item) => item.isPinned),
+	);
 
 	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
 		defaultMoreMenuItems,
 	);
+
+	const [
+		isReorderShortcutNavItemsModalOpen,
+		setIsReorderShortcutNavItemsModalOpen,
+	] = useState(false);
+
+	const hideReorderShortcutNavItemsModal = (): void => {
+		setIsReorderShortcutNavItemsModalOpen(false);
+	};
+
+	const handleReorderShortcutNavItems = (): void => {
+		// setIsReorderShortcutNavItemsModalOpen(false);
+	};
 
 	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
@@ -168,6 +236,21 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			return [item, ...(prevItems || [])];
 		});
 	}, []);
+
+	const sensors = useSensors(useSensor(PointerSensor));
+
+	const handleDragEnd = (event: DragEndEvent): void => {
+		const { active, over } = event;
+
+		if (over && active.id !== over.id) {
+			setPinnedMenuItems((items) => {
+				const oldIndex = items.findIndex((item) => item.key === active.id);
+				const newIndex = items.findIndex((item) => item.key === over.id);
+
+				return arrayMove(items, oldIndex, newIndex);
+			});
+		}
+	};
 
 	const onClickHandler = useCallback(
 		(key: string, event: MouseEvent | null) => {
@@ -519,7 +602,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									<div className="nav-section-title-text">SHORTCUTS</div>
 
 									{pinnedMenuItems.length > 1 && (
-										<div className="nav-section-title-icon reorder">
+										<div
+											className="nav-section-title-icon reorder"
+											onClick={(): void => {
+												setIsReorderShortcutNavItemsModalOpen(true);
+											}}
+										>
 											<Logs size={16} />
 										</div>
 									)}
@@ -618,6 +706,52 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					</div>
 				</div>
 			</div>
+
+			<Modal
+				className="reorder-shortcut-nav-items-modal"
+				title={<span className="title">Manage Shortcuts</span>}
+				open={isReorderShortcutNavItemsModalOpen}
+				closable
+				onCancel={hideReorderShortcutNavItemsModal}
+				footer={[
+					<Button
+						key="cancel"
+						onClick={hideReorderShortcutNavItemsModal}
+						className="periscope-btn cancel-btn secondary-btn"
+						icon={<X size={16} />}
+					>
+						Cancel
+					</Button>,
+					<Button
+						key="submit"
+						type="primary"
+						icon={<Check size={16} />}
+						onClick={handleReorderShortcutNavItems}
+						data-testid="save-view-btn"
+					>
+						Save Changes
+					</Button>,
+				]}
+			>
+				<div className="reorder-shortcut-nav-items-container">
+					<div className="reorder-shortcut-nav-items">
+						<DndContext
+							sensors={sensors}
+							collisionDetection={closestCenter}
+							onDragEnd={handleDragEnd}
+						>
+							<SortableContext
+								items={pinnedMenuItems.map((f) => f.key)}
+								strategy={verticalListSortingStrategy}
+							>
+								{pinnedMenuItems.map((item) => (
+									<SortableFilter key={item.key} item={item} />
+								))}
+							</SortableContext>
+						</DndContext>
+					</div>
+				</div>
+			</Modal>
 		</div>
 	);
 }
