@@ -1,7 +1,7 @@
 import './Explorer.styles.scss';
 
 import * as Sentry from '@sentry/react';
-import { Switch } from 'antd';
+import { Switch, Tooltip } from 'antd';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
@@ -133,12 +133,17 @@ function Explorer(): JSX.Element {
 				<div className="explore-header">
 					<div className="explore-header-left-actions">
 						<span>1 chart/query</span>
-						<Switch
-							checked={showOneChartPerQuery}
-							onChange={handleToggleShowOneChartPerQuery}
-							disabled={disableOneChartPerQuery}
-							size="small"
-						/>
+						<Tooltip
+							open={disableOneChartPerQuery ? undefined : false}
+							title="One chart per query cannot be disabled for multiple queries with different units."
+						>
+							<Switch
+								checked={showOneChartPerQuery}
+								onChange={handleToggleShowOneChartPerQuery}
+								disabled={disableOneChartPerQuery}
+								size="small"
+							/>
+						</Tooltip>
 					</div>
 					<div className="explore-header-right-actions">
 						<DateTimeSelector showAutoRefresh />
