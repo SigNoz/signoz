@@ -122,20 +122,25 @@ function QueryAddOns({
 					)}
 					{selectedViews.find((view) => view.key === 'having') && (
 						<div className="add-on-content">
-							<HavingFilter
-								onClose={(): void => {
-									setSelectedViews(
-										selectedViews.filter((view) => view.key !== 'having'),
-									);
-								}}
-							/>
+							<div className="periscope-input-with-label">
+								<div className="label">Having</div>
+								<div className="input">
+									<HavingFilter
+										onClose={(): void => {
+											setSelectedViews(
+												selectedViews.filter((view) => view.key !== 'having'),
+											);
+										}}
+									/>
+								</div>
+							</div>
 						</div>
 					)}
 					{selectedViews.find((view) => view.key === 'limit') && (
 						<div className="add-on-content">
 							<InputWithLabel
-								label="Limit"
-								placeholder="Select a field"
+								label="LIMIT"
+								placeholder="Enter limit"
 								onClose={(): void => {
 									setSelectedViews(selectedViews.filter((view) => view.key !== 'limit'));
 								}}
@@ -165,7 +170,7 @@ function QueryAddOns({
 					{selectedViews.find((view) => view.key === 'legend_format') && (
 						<div className="add-on-content">
 							<InputWithLabel
-								label="Legend format"
+								label="LEGEND FORMAT"
 								placeholder="Write legend format"
 								onClose={(): void => {
 									setSelectedViews(
