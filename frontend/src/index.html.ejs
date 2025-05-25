@@ -9,6 +9,11 @@
 		<meta http-equiv="Pragma" content="no-cache" />
 		<meta http-equiv="Expires" content="0" />
 
+		<!-- Preconnect to CDNs -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="preconnect" href="https://cdn.vercel.com" crossorigin />
+
 		<title data-react-helmet="true">
 			Open source Observability platform | SigNoz
 		</title>
@@ -53,6 +58,17 @@
 		<link data-react-helmet="true" rel="shortcut icon" href="/favicon.ico" />
 
 		<link rel="stylesheet" href="/css/uPlot.min.css" />
+		<% if (htmlWebpackPlugin.options.templateParameters.preloadFonts) { %> <%
+		htmlWebpackPlugin.options.templateParameters.preloadFonts.forEach(function(font)
+		{ %>
+		<link
+			rel="preload"
+			href="<%= font.href %>"
+			as="<%= font.as %>"
+			type="<%= font.type %>"
+			crossorigin="<%= font.crossorigin %>"
+		/>
+		<% }); %> <% } %>
 	</head>
 	<body>
 		<noscript>You need to enable JavaScript to run this app.</noscript>
