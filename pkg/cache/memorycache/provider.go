@@ -37,7 +37,7 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	}
 
 	if ttl == 0 {
-		provider.settings.Logger().WarnContext(ctx, "zero value for TTL found. defaulting to the base TTL", "cacheKey", cacheKey, "defaultTTL", provider.config.Memory.TTL)
+		provider.settings.Logger().WarnContext(ctx, "zero value for TTL found. defaulting to the base TTL", "cache_key", cacheKey, "default_ttl", provider.config.Memory.TTL)
 	}
 	provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), data, ttl)
 	return nil

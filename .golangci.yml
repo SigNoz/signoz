@@ -1,4 +1,33 @@
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - misspell
+    - nilnil
+    - sloglint
+    - depguard
+    - iface
+
+linters-settings:
+  sloglint:
+    no-mixed-args: true
+    kv-only: true
+    no-global: all
+    context: all
+    static-msg: true
+    msg-style: lowercased
+    key-naming-case: snake
+  depguard:
+    rules:
+      nozap:
+        deny:
+          - pkg: "go.uber.org/zap"
+            desc: "Do not use zap logger. Use slog instead."
+  iface:
+    enable:
+      - identical
 issues:
   exclude-dirs:
     - "pkg/query-service"
     - "ee/query-service"
+    - "scripts/"

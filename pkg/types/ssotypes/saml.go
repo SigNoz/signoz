@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	saml2 "github.com/russellhaering/gosaml2"
 	dsig "github.com/russellhaering/goxmldsig"
-	"go.uber.org/zap"
 )
 
 func LoadCertificateStore(certString string) (dsig.X509CertificateStore, error) {
@@ -103,6 +102,6 @@ func PrepareRequest(issuer, acsUrl, audience, entity, idp, certString string) (*
 		IDPCertificateStore: certStore,
 		SPKeyStore:          randomKeyStore,
 	}
-	zap.L().Debug("SAML request", zap.Any("sp", sp))
+
 	return sp, nil
 }

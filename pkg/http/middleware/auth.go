@@ -4,21 +4,15 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"go.uber.org/zap"
 )
 
 type Auth struct {
-	logger  *zap.Logger
 	jwt     *authtypes.JWT
 	headers []string
 }
 
-func NewAuth(logger *zap.Logger, jwt *authtypes.JWT, headers []string) *Auth {
-	if logger == nil {
-		panic("cannot build auth middleware, logger is empty")
-	}
-
-	return &Auth{logger: logger, jwt: jwt, headers: headers}
+func NewAuth(jwt *authtypes.JWT, headers []string) *Auth {
+	return &Auth{jwt: jwt, headers: headers}
 }
 
 func (a *Auth) Wrap(next http.Handler) http.Handler {

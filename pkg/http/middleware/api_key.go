@@ -1,23 +1,24 @@
 package middleware
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"go.uber.org/zap"
 )
 
 type APIKey struct {
 	store   sqlstore.SQLStore
 	uuid    *authtypes.UUID
 	headers []string
+	logger  *slog.Logger
 }
 
-func NewAPIKey(store sqlstore.SQLStore, headers []string) *APIKey {
-	return &APIKey{store: store, uuid: authtypes.NewUUID(), headers: headers}
+func NewAPIKey(store sqlstore.SQLStore, headers []string, logger *slog.Logger) *APIKey {
+	return &APIKey{store: store, uuid: authtypes.NewUUID(), headers: headers, logger: logger}
 }
 
 func (a *APIKey) Wrap(next http.Handler) http.Handler {
@@ -77,7 +78,7 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 		apiKey.LastUsed = time.Now()
 		_, err = a.store.BunDB().NewUpdate().Model(&apiKey).Column("last_used").Where("token = ?", apiKeyToken).Where("revoked = false").Exec(r.Context())
 		if err != nil {
-			zap.L().Error("Failed to update APIKey last used in db", zap.Error(err))
+			a.logger.ErrorContext(r.Context(), "failed to update last used of api key", "error", err)
 		}
 
 	})

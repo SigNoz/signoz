@@ -27,7 +27,6 @@ import (
 	"github.com/google/uuid"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 func TestAWSIntegrationAccountLifecycle(t *testing.T) {
@@ -385,7 +384,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	}
 
 	router := app.NewRouter()
-	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	router.Use(middleware.NewAuth(jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
 	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterCloudIntegrationsRoutes(router, am)
