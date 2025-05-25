@@ -25,10 +25,7 @@ export const useGetMultipleMetrics: UseGetMultipleMetrics = (
 			(metricName) =>
 				({
 					queryKey: [REACT_QUERY_KEY.GET_METRIC_DETAILS, metricName],
-					queryFn: ({ signal }) => {
-						console.log({ metricName, signal, headers });
-						return getMetricDetails(metricName, signal, headers);
-					},
+					queryFn: ({ signal }) => getMetricDetails(metricName, signal, headers),
 					...options,
 				} as UseQueryOptions<QueryData, Error>),
 		),
