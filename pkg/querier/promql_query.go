@@ -14,6 +14,8 @@ type promqlQuery struct {
 	requestType qbv5.RequestType
 }
 
+var _ qbv5.Query = &promqlQuery{}
+
 func newPromqlQuery(
 	promEngine prometheus.Prometheus,
 	query qbv5.PromQuery,
@@ -24,6 +26,7 @@ func newPromqlQuery(
 }
 
 func (q *promqlQuery) Fingerprint() string {
+	// TODO: Implement this
 	return ""
 }
 
@@ -31,7 +34,7 @@ func (q *promqlQuery) Window() (uint64, uint64) {
 	return q.tr.From, q.tr.To
 }
 
-func (q *promqlQuery) Execute(ctx context.Context) (qbv5.Result, error) {
-	// TODO: Implement
-	return qbv5.Result{}, nil
+func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
+	// TODO: Implement this
+	return nil, nil
 }

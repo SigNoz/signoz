@@ -11,13 +11,14 @@ type Query interface {
 	// Window returns [from, to) in epoch‑ms so cache can slice/merge.
 	Window() (startMS, endMS uint64)
 	// Execute runs the query; implementors must be side‑effect‑free.
-	Execute(ctx context.Context) (Result, error)
+	Execute(ctx context.Context) (*Result, error)
 }
 
 type Result struct {
-	Type  RequestType
-	Value any // concrete Go value (to be type asserted based on the RequestType)
-	Stats ExecStats
+	Type     RequestType
+	Value    any // concrete Go value (to be type asserted based on the RequestType)
+	Stats    ExecStats
+	Warnings []string
 }
 
 type ExecStats struct {

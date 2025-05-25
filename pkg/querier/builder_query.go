@@ -22,6 +22,8 @@ type builderQuery[T any] struct {
 	kind   qbtypes.RequestType
 }
 
+var _ qbtypes.Query = &builderQuery[any]{}
+
 func newBuilderQuery[T any](
 	telemetryStore telemetrystore.TelemetryStore,
 	stmtBuilder qbtypes.StatementBuilder[T],
@@ -40,6 +42,7 @@ func newBuilderQuery[T any](
 }
 
 func (q *builderQuery[T]) Fingerprint() string {
+	// TODO: implement this
 	return ""
 }
 
@@ -68,15 +71,16 @@ func (q *builderQuery[T]) isWindowList() bool {
 	return true
 }
 
-func (q *builderQuery[T]) Execute(ctx context.Context) (qbtypes.Result, error) {
+func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) {
 
+	// can we do window based pagination?
 	if q.kind == qbtypes.RequestTypeRaw && q.isWindowList() {
 		return q.executeWindowList(ctx)
 	}
 
 	stmt, err := q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec)
 	if err != nil {
-		return qbtypes.Result{}, err
+		return nil, err
 	}
 
 	chQuery := qbtypes.ClickHouseQuery{
@@ -85,10 +89,15 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (qbtypes.Result, error) {
 	}
 
 	chExec := newchSQLQuery(q.telemetryStore, chQuery, stmt.Args, qbtypes.TimeRange{From: q.fromMS, To: q.toMS}, q.kind)
-	return chExec.Execute(ctx)
+	result, err := chExec.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result.Warnings = stmt.Warnings
+	return result, nil
 }
 
-func (q *builderQuery[T]) executeWindowList(ctx context.Context) (qbtypes.Result, error) {
+func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Result, error) {
 	isAsc := len(q.spec.Order) > 0 &&
 		strings.ToLower(string(q.spec.Order[0].Direction.StringValue())) == "asc"
 
@@ -126,7 +135,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (qbtypes.Result
 
 		stmt, err := q.stmtBuilder.Build(ctx, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec)
 		if err != nil {
-			return qbtypes.Result{}, err
+			return nil, err
 		}
 
 		chExec := newchSQLQuery(
@@ -138,7 +147,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (qbtypes.Result
 		)
 		res, err := chExec.Execute(ctx)
 		if err != nil {
-			return qbtypes.Result{}, err
+			return nil, err
 		}
 		totalRows += res.Stats.RowsScanned
 		totalBytes += res.Stats.BytesScanned
@@ -167,7 +176,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (qbtypes.Result
 		nextCursor = encodeCursor(lastTS)
 	}
 
-	return qbtypes.Result{
+	return &qbtypes.Result{
 		Type: qbtypes.RequestTypeRaw,
 		Value: &qbtypes.RawData{
 			QueryName:  q.spec.Name,

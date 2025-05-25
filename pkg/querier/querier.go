@@ -76,12 +76,13 @@ func (q *querier) QueryRange(ctx context.Context, orgID string, req *qbtypes.Que
 			}
 		}
 	}
-	return q.run(ctx, orgID, queries)
+	return q.run(ctx, orgID, queries, req.RequestType)
 }
 
-func (q *querier) run(ctx context.Context, orgID string, qs map[string]qbtypes.Query) (*qbtypes.QueryRangeResponse, error) {
-	results := make([]qbtypes.Result, 0, len(qs))
+func (q *querier) run(ctx context.Context, _ string, qs map[string]qbtypes.Query, kind qbtypes.RequestType) (*qbtypes.QueryRangeResponse, error) {
+	results := make([]*qbtypes.Result, 0, len(qs))
 	for _, query := range qs {
+		// TODO: run in controlled batches
 		result, err := query.Execute(ctx)
 		if err != nil {
 			return nil, err
@@ -89,6 +90,7 @@ func (q *querier) run(ctx context.Context, orgID string, qs map[string]qbtypes.Q
 		results = append(results, result)
 	}
 	return &qbtypes.QueryRangeResponse{
+		Type: kind,
 		Data: results,
 	}, nil
 }

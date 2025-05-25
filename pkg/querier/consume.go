@@ -15,11 +15,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// stats returned to the caller so that ExecStats can be filled.
-type chQueryStats struct {
-	Rows  int64
-	Bytes int64
-}
+var (
+	aggRe = regexp.MustCompile(`^__result_(\d+)$`)
+)
 
 // consume reads every row and shapes it into the payload expected for the
 // given request type.
@@ -28,9 +26,6 @@ type chQueryStats struct {
 // * Scalar      - []*qbtypes.ScalarData
 // * Raw         - []*qbtypes.RawData
 // * Distribution- []*qbtypes.DistributionData
-//
-// It also extracts `RowsRead` and `BytesRead` from the ClickHouse driver so the
-// caller can set ExecStats.RowsScanned / BytesScanned.
 func consume(rows driver.Rows, kind qbtypes.RequestType) (any, error) {
 	var (
 		payload any
@@ -40,13 +35,11 @@ func consume(rows driver.Rows, kind qbtypes.RequestType) (any, error) {
 	switch kind {
 	case qbtypes.RequestTypeTimeSeries:
 		payload, err = readAsTimeSeries(rows)
-
 	case qbtypes.RequestTypeScalar:
 		payload, err = readAsScalar(rows)
-
 	case qbtypes.RequestTypeRaw:
 		payload, err = readAsRaw(rows)
-
+		// TODO: add support for other request types
 	}
 
 	return payload, err
@@ -58,11 +51,11 @@ func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
 	colNames := rows.Columns()
 
 	slots := make([]any, len(colTypes))
-	numCols := 0
+	numericColsCount := 0
 	for i, ct := range colTypes {
 		slots[i] = reflect.New(ct.ScanType()).Interface()
 		if numericKind(ct.ScanType().Kind()) {
-			numCols++
+			numericColsCount++
 		}
 	}
 
@@ -71,8 +64,6 @@ func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
 		key string // deterministic join of label values
 	}
 	seriesMap := map[sKey]*qbtypes.TimeSeries{}
-
-	aggRe := regexp.MustCompile(`^__result_(\d+)$`)
 
 	for rows.Next() {
 		if err := rows.Scan(slots...); err != nil {
@@ -100,7 +91,7 @@ func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
 				if m := aggRe.FindStringSubmatch(name); m != nil {
 					id, _ := strconv.Atoi(m[1])
 					aggValues[id] = val
-				} else if numCols == 1 { // classic single-value query
+				} else if numericColsCount == 1 { // classic single-value query
 					fallbackValue = val
 					fallbackSeen = true
 				} else {
@@ -208,7 +199,6 @@ func readAsScalar(rows driver.Rows) (*qbtypes.ScalarData, error) {
 	colTypes := rows.ColumnTypes()
 
 	cd := make([]*qbtypes.ColumnDescriptor, len(colNames))
-	aggRe := regexp.MustCompile(`^__result_(\d+)$`)
 
 	for i, name := range colNames {
 		colType := qbtypes.ColumnTypeGroup
