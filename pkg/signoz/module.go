@@ -39,7 +39,7 @@ func NewModules(sqlstore sqlstore.SQLStore, jwt *authtypes.JWT, emailing emailin
 		SavedView:    implsavedview.NewModule(sqlstore),
 		Apdex:        implapdex.NewModule(sqlstore),
 		Dashboard:    impldashboard.NewModule(sqlstore),
-		User:         impluser.NewModule(impluser.NewStore(sqlstore), jwt, emailing, ps),
+		User:         impluser.NewModule(impluser.NewStore(sqlstore, ps), jwt, emailing, ps),
 		QuickFilter:  implquickfilter.NewModule(implquickfilter.NewStore(sqlstore)),
 	}
 }

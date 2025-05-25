@@ -62,7 +62,6 @@ type UserStore interface {
 	CreateDomain(ctx context.Context, d *GettableOrgDomain) error
 	UpdateDomain(ctx context.Context, domain *GettableOrgDomain) error
 	DeleteDomain(ctx context.Context, id uuid.UUID) error
-	GetDomainByEmail(ctx context.Context, email string) (*GettableOrgDomain, error)
 
 	// Temporary func for SSO
 	GetDefaultOrgID(ctx context.Context) (string, error)

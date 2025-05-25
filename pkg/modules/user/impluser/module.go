@@ -19,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 type Module struct {
@@ -351,7 +350,7 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 		// the front-end will redirect user to this url
 		resp.SSOUrl, err = orgDomain.BuildSsoUrl(siteUrl)
 		if err != nil {
-			zap.L().Error("failed to prepare saml request for domain", zap.String("domain", orgDomain.Name), zap.Error(err))
+			m.settings.Logger().ErrorContext(ctx, "failed to prepare saml request for domain", "domain", orgDomain.Name, "error", err)
 			return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to prepare saml request for domain")
 		}
 
@@ -422,7 +421,7 @@ func (m *Module) CreateUserForSAMLRequest(ctx context.Context, email string) (*t
 func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (string, error) {
 	users, err := m.GetUsersByEmail(ctx, email)
 	if err != nil {
-		zap.L().Error("failed to get user with email received from auth provider", zap.String("error", err.Error()))
+		m.settings.Logger().ErrorContext(ctx, "failed to get user with email received from auth provider", "error", err)
 		return "", err
 	}
 	user := &types.User{}
@@ -431,7 +430,7 @@ func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email stri
 		newUser, err := m.CreateUserForSAMLRequest(ctx, email)
 		user = newUser
 		if err != nil {
-			zap.L().Error("failed to create user with email received from auth provider", zap.Error(err))
+			m.settings.Logger().ErrorContext(ctx, "failed to create user with email received from auth provider", "error", err)
 			return "", err
 		}
 	} else {
@@ -440,7 +439,7 @@ func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email stri
 
 	tokenStore, err := m.GetJWTForUser(ctx, user)
 	if err != nil {
-		zap.L().Error("failed to generate token for SSO login user", zap.Error(err))
+		m.settings.Logger().ErrorContext(ctx, "failed to generate token for SSO login user", "error", err)
 		return "", err
 	}
 
