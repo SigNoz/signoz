@@ -9,12 +9,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
-	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 
@@ -40,6 +40,7 @@ type SigNoz struct {
 func New(
 	ctx context.Context,
 	config Config,
+	jwt *authtypes.JWT,
 	zeusConfig zeus.Config,
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	licenseConfig licensing.Config,
@@ -49,8 +50,6 @@ func New(
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
-	userModuleFactory func(sqlstore sqlstore.SQLStore, emailing emailing.Emailing, providerSettings factory.ProviderSettings) user.Module,
-	userHandlerFactory func(user.Module) user.Handler,
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -185,14 +184,11 @@ func New(
 		return nil, err
 	}
 
-	userModule := userModuleFactory(sqlstore, emailing, providerSettings)
-	userHandler := userHandlerFactory(userModule)
-
 	// Initialize all modules
-	modules := NewModules(sqlstore, userModule)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, userHandler)
+	handlers := NewHandlers(modules)
 
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),

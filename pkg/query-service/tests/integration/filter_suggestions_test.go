@@ -19,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -307,16 +306,14 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
-	userModule := impluser.NewModule(impluser.NewStore(testDB), jwt, emailing, providerSettings)
-	userHandler := impluser.NewHandler(userModule)
-	modules := signoz.NewModules(testDB, userModule)
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader: reader,
 		JWT:    jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
-			Handlers: signoz.NewHandlers(modules, userHandler),
+			Handlers: signoz.NewHandlers(modules),
 		},
 	})
 	if err != nil {
@@ -331,7 +328,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	apiHandler.RegisterQueryRangeV3Routes(router, am)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
-	user, apiErr := createTestUser(organizationModule, userModule)
+	user, apiErr := createTestUser(organizationModule, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
@@ -348,7 +345,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
-		userModule:     userModule,
+		userModule:     modules.User,
 	}
 }
 

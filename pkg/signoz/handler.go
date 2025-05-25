@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 )
 
 type Handlers struct {
@@ -26,11 +27,11 @@ type Handlers struct {
 	QuickFilter  quickfilter.Handler
 }
 
-func NewHandlers(modules Modules, user user.Handler) Handlers {
+func NewHandlers(modules Modules) Handlers {
 	return Handlers{
 		Organization: implorganization.NewHandler(modules.Organization),
 		Preference:   implpreference.NewHandler(modules.Preference),
-		User:         user,
+		User:         impluser.NewHandler(modules.User),
 		SavedView:    implsavedview.NewHandler(modules.SavedView),
 		Apdex:        implapdex.NewHandler(modules.Apdex),
 		Dashboard:    impldashboard.NewHandler(modules.Dashboard),

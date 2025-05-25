@@ -3,18 +3,22 @@ package impluser
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/google/uuid"
 )
 
 type Module struct {
@@ -319,6 +323,41 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 		}
 	}
 
+	// TODO(Nitya): in multitenancy this should use orgId as well.
+	orgDomain, err := m.GetAuthDomainByEmail(ctx, email)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
+
+	if orgDomain != nil && orgDomain.SsoEnabled {
+		// this is to allow self registration
+		resp.IsUser = true
+
+		// saml is enabled for this domain, lets prepare sso url
+		if sourceUrl == "" {
+			sourceUrl = constants.GetDefaultSiteURL()
+		}
+
+		// parse source url that generated the login request
+		var err error
+		escapedUrl, _ := url.QueryUnescape(sourceUrl)
+		siteUrl, err := url.Parse(escapedUrl)
+		if err != nil {
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse referer")
+		}
+
+		// build Idp URL that will authenticat the user
+		// the front-end will redirect user to this url
+		resp.SSOUrl, err = orgDomain.BuildSsoUrl(siteUrl)
+		if err != nil {
+			m.settings.Logger().ErrorContext(ctx, "failed to prepare saml request for domain", "domain", orgDomain.Name, "error", err)
+			return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to prepare saml request for domain")
+		}
+
+		// set SSO to true, as the url is generated correctly
+		resp.SSO = true
+	}
+
 	return resp, nil
 }
 
@@ -347,37 +386,155 @@ func (m *Module) GetJWTForUser(ctx context.Context, user *types.User) (types.Get
 }
 
 func (m *Module) CreateUserForSAMLRequest(ctx context.Context, email string) (*types.User, error) {
-	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SAML login is not supported")
+	// get auth domain from email domain
+	_, err := m.GetAuthDomainByEmail(ctx, email)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
+
+	// get name from email
+	parts := strings.Split(email, "@")
+	if len(parts) < 2 {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email format")
+	}
+	name := parts[0]
+
+	defaultOrgID, err := m.store.GetDefaultOrgID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := types.NewUser(name, email, types.RoleViewer.String(), defaultOrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.CreateUser(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+
 }
 
 func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (string, error) {
-	return "", errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SSO is not supported")
+	users, err := m.GetUsersByEmail(ctx, email)
+	if err != nil {
+		m.settings.Logger().ErrorContext(ctx, "failed to get user with email received from auth provider", "error", err)
+		return "", err
+	}
+	user := &types.User{}
+
+	if len(users) == 0 {
+		newUser, err := m.CreateUserForSAMLRequest(ctx, email)
+		user = newUser
+		if err != nil {
+			m.settings.Logger().ErrorContext(ctx, "failed to create user with email received from auth provider", "error", err)
+			return "", err
+		}
+	} else {
+		user = &users[0].User
+	}
+
+	tokenStore, err := m.GetJWTForUser(ctx, user)
+	if err != nil {
+		m.settings.Logger().ErrorContext(ctx, "failed to generate token for SSO login user", "error", err)
+		return "", err
+	}
+
+	return fmt.Sprintf("%s?jwt=%s&usr=%s&refreshjwt=%s",
+		redirectUri,
+		tokenStore.AccessJwt,
+		user.ID,
+		tokenStore.RefreshJwt), nil
 }
 
 func (m *Module) CanUsePassword(ctx context.Context, email string) (bool, error) {
-	return false, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SSO is not supported")
+	domain, err := m.GetAuthDomainByEmail(ctx, email)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return false, err
+	}
+
+	if domain != nil && domain.SsoEnabled {
+		// sso is enabled, check if the user has admin role
+		users, err := m.GetUsersByEmail(ctx, email)
+		if err != nil {
+			return false, err
+		}
+
+		if len(users) == 0 {
+			return false, errors.New(errors.TypeNotFound, errors.CodeNotFound, "user not found")
+		}
+
+		if users[0].Role != types.RoleAdmin.String() {
+			return false, errors.New(errors.TypeForbidden, errors.CodeForbidden, "auth method not supported")
+		}
+
+	}
+
+	return true, nil
 }
 
 func (m *Module) GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error) {
-	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "SSO is not supported")
+
+	if email == "" {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
+	}
+
+	components := strings.Split(email, "@")
+	if len(components) < 2 {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email format")
+	}
+
+	domain, err := m.store.GetDomainByName(ctx, components[1])
+	if err != nil {
+		return nil, err
+	}
+
+	gettableDomain := &types.GettableOrgDomain{StorableOrgDomain: *domain}
+	if err := gettableDomain.LoadConfig(domain.Data); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to load domain config")
+	}
+	return gettableDomain, nil
 }
 
 func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
-	return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
+	return m.store.CreateAPIKey(ctx, apiKey)
 }
 
 func (m *Module) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
-	return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
+	return m.store.UpdateAPIKey(ctx, id, apiKey, updaterID)
 }
 
 func (m *Module) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
-	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
+	return m.store.ListAPIKeys(ctx, orgID)
 }
 
 func (m *Module) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
-	return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
+	return m.store.GetAPIKey(ctx, orgID, id)
 }
 
 func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error {
-	return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "API Keys are not supported")
+	return m.store.RevokeAPIKey(ctx, id, removedByUserID)
+}
+
+func (m *Module) GetDomainFromSsoResponse(ctx context.Context, url *url.URL) (*types.GettableOrgDomain, error) {
+	return m.store.GetDomainFromSsoResponse(ctx, url)
+}
+
+func (m *Module) CreateDomain(ctx context.Context, domain *types.GettableOrgDomain) error {
+	return m.store.CreateDomain(ctx, domain)
+}
+
+func (m *Module) DeleteDomain(ctx context.Context, id uuid.UUID) error {
+	return m.store.DeleteDomain(ctx, id)
+}
+
+func (m *Module) ListDomains(ctx context.Context, orgID valuer.UUID) ([]*types.GettableOrgDomain, error) {
+	return m.store.ListDomains(ctx, orgID)
+}
+
+func (m *Module) UpdateDomain(ctx context.Context, domain *types.GettableOrgDomain) error {
+	return m.store.UpdateDomain(ctx, domain)
 }

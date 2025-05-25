@@ -4,10 +4,6 @@ import (
 	"os"
 )
 
-const (
-	DefaultSiteURL = "https://localhost:8080"
-)
-
 var LicenseSignozIo = "https://license.signoz.io/api/v1"
 var LicenseAPIKey = GetOrDefaultEnv("SIGNOZ_LICENSE_API_KEY", "")
 var SaasSegmentKey = GetOrDefaultEnv("SIGNOZ_SAAS_SEGMENT_KEY", "")
@@ -23,13 +19,4 @@ func GetOrDefaultEnv(key string, fallback string) string {
 		return fallback
 	}
 	return v
-}
-
-// constant functions that override env vars
-
-// GetDefaultSiteURL returns default site url, primarily
-// used to send saml request and allowing backend to
-// handle http redirect
-func GetDefaultSiteURL() string {
-	return GetOrDefaultEnv("SIGNOZ_SITE_URL", DefaultSiteURL)
 }
