@@ -19,7 +19,7 @@ type chSQLQuery struct {
 	kind   qbtypes.RequestType
 }
 
-var _ qbtypes.Query = &chSQLQuery{}
+var _ qbtypes.Query = (*chSQLQuery)(nil)
 
 func newchSQLQuery(
 	telemetryStore telemetrystore.TelemetryStore,

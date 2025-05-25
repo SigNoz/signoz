@@ -14,7 +14,7 @@ type promqlQuery struct {
 	requestType qbv5.RequestType
 }
 
-var _ qbv5.Query = &promqlQuery{}
+var _ qbv5.Query = (*promqlQuery)(nil)
 
 func newPromqlQuery(
 	promEngine prometheus.Prometheus,

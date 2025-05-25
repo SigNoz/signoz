@@ -22,7 +22,7 @@ type builderQuery[T any] struct {
 	kind   qbtypes.RequestType
 }
 
-var _ qbtypes.Query = &builderQuery[any]{}
+var _ qbtypes.Query = (*builderQuery[any])(nil)
 
 func newBuilderQuery[T any](
 	telemetryStore telemetrystore.TelemetryStore,
