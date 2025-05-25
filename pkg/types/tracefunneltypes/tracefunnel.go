@@ -1,4 +1,4 @@
-package tracefunnel
+package tracefunneltypes
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -12,20 +12,18 @@ var (
 	ErrFunnelAlreadyExists = errors.MustNewCode("funnel_already_exists")
 )
 
-// BaseMetadata metadata for funnels
 type BaseMetadata struct {
-	types.Identifiable // funnel id
-	types.TimeAuditable
-	types.UserAuditable
-	Name        string      `json:"funnel_name" bun:"name,type:text,notnull"` // funnel name
-	Description string      `json:"description" bun:"description,type:text"`  // funnel description
-	OrgID       valuer.UUID `json:"org_id" bun:"org_id,type:varchar,notnull"`
 }
 
 // StorableFunnel Core Data Structure (StorableFunnel and FunnelStep)
 type StorableFunnel struct {
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
 	bun.BaseModel `bun:"table:trace_funnel"`
-	BaseMetadata
+	Name          string        `json:"funnel_name" bun:"name,type:text,notnull"`
+	Description   string        `json:"description" bun:"description,type:text"`
+	OrgID         valuer.UUID   `json:"org_id" bun:"org_id,type:varchar,notnull"`
 	Steps         []*FunnelStep `json:"steps" bun:"steps,type:text,notnull"`
 	Tags          string        `json:"tags" bun:"tags,type:text"`
 	CreatedByUser *types.User   `json:"user" bun:"rel:belongs-to,join:created_by=id"`
@@ -84,8 +82,8 @@ type TimeRange struct {
 // StepTransitionRequest represents a request for step transition analytics
 type StepTransitionRequest struct {
 	TimeRange
-	StepAOrder int64 `json:"step_start,omitempty"`
-	StepBOrder int64 `json:"step_end,omitempty"`
+	StepStart int64 `json:"step_start,omitempty"`
+	StepEnd   int64 `json:"step_end,omitempty"`
 }
 
 // UserInfo represents basic user information

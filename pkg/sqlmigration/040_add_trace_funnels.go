@@ -3,6 +3,7 @@ package sqlmigration
 import (
 	"context"
 	"fmt"
+
 	"github.com/SigNoz/signoz/pkg/factory"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -12,19 +13,15 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type BaseMetadata struct {
+// Funnel Core Data Structure (Funnel and FunnelStep)
+type Funnel struct {
+	bun.BaseModel      `bun:"table:trace_funnel"`
 	types.Identifiable // funnel id
 	types.TimeAuditable
 	types.UserAuditable
-	Name        string      `json:"funnel_name" bun:"name,type:text,notnull"` // funnel name
-	Description string      `json:"description" bun:"description,type:text"`  // funnel description
-	OrgID       valuer.UUID `json:"org_id" bun:"org_id,type:varchar,notnull"`
-}
-
-// Funnel Core Data Structure (Funnel and FunnelStep)
-type Funnel struct {
-	bun.BaseModel `bun:"table:trace_funnel"`
-	BaseMetadata
+	Name          string       `json:"funnel_name" bun:"name,type:text,notnull"` // funnel name
+	Description   string       `json:"description" bun:"description,type:text"`  // funnel description
+	OrgID         valuer.UUID  `json:"org_id" bun:"org_id,type:varchar,notnull"`
 	Steps         []FunnelStep `json:"steps" bun:"steps,type:text,notnull"`
 	Tags          string       `json:"tags" bun:"tags,type:text"`
 	CreatedByUser *types.User  `json:"user" bun:"rel:belongs-to,join:created_by=id"`
