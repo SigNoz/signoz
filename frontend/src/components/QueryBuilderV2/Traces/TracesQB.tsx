@@ -1,23 +1,86 @@
 import './TracesQB.styles.scss';
 
-import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { ENTITY_VERSION_V4 } from 'constants/app';
+import { Formula } from 'container/QueryBuilder/components/Formula';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { DataSource } from 'types/common/queryBuilder';
 
-import QueryAddOns from '../QueryAddOns/QueryAddOns';
-import QueryAggregation from '../QueryAggregation/QueryAggregation';
-import QuerySearch from '../QuerySearch/QuerySearch';
+import { QueryBuilderV2Props } from '../QueryBuilderV2';
+import QueryFooter from '../QueryV2/QueryFooter/QueryFooter';
+import { QueryV2 } from '../QueryV2/QueryV2';
 
-function TracesQB({ query }: { query: IBuilderQuery }): JSX.Element {
+function TracesQB({ filterConfigs }: QueryBuilderV2Props): JSX.Element {
+	const version = ENTITY_VERSION_V4;
+
+	const { currentQuery, addNewFormula, addNewBuilderQuery } = useQueryBuilder();
+
+	const { isMetricsDataSource } = useQueryOperations({
+		index: 0,
+		query: currentQuery.builder.queryData[0],
+		filterConfigs,
+		isListViewPanel: false,
+		entityVersion: version,
+	});
+
 	return (
 		<div className="traces-qb">
-			<div className="traces-search-filter-container">
-				<QuerySearch />
-				<div className="traces-search-filter-in">in</div>
-				<SpanScopeSelector queryName={query.queryName} />
+			<div className="qb-content-container">
+				{currentQuery.builder.queryData.map((query, index) => (
+					<QueryV2
+						key={query.queryName}
+						index={index}
+						query={query}
+						filterConfigs={filterConfigs}
+						version={version}
+						isAvailableToDisable={false}
+						queryVariant="static"
+						source={DataSource.TRACES}
+						showSpanScopeSelector
+					/>
+				))}
+
+				{currentQuery.builder.queryFormulas.length > 0 && (
+					<div className="qb-formulas-container">
+						{currentQuery.builder.queryFormulas.map((formula, index) => {
+							const query =
+								currentQuery.builder.queryData[index] ||
+								currentQuery.builder.queryData[0];
+
+							return (
+								<div key={formula.queryName} className="qb-formula">
+									<Formula
+										filterConfigs={filterConfigs}
+										query={query}
+										formula={formula}
+										index={index}
+										isAdditionalFilterEnable={isMetricsDataSource}
+									/>
+								</div>
+							);
+						})}
+					</div>
+				)}
+
+				<QueryFooter
+					addNewBuilderQuery={addNewBuilderQuery}
+					addNewFormula={addNewFormula}
+				/>
 			</div>
-			<QueryAggregation source={DataSource.TRACES} />
-			<QueryAddOns query={query} version="v3" isListViewPanel={false} />
+
+			<div className="query-names-section">
+				{currentQuery.builder.queryData.map((query) => (
+					<div key={query.queryName} className="query-name">
+						{query.queryName}
+					</div>
+				))}
+
+				{currentQuery.builder.queryFormulas.map((formula) => (
+					<div key={formula.queryName} className="formula-name">
+						{formula.queryName}
+					</div>
+				))}
+			</div>
 		</div>
 	);
 }
