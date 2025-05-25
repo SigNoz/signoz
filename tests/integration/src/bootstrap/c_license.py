@@ -69,7 +69,7 @@ def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
         timeout=5,
     )
 
-    assert response.json()["count"] >= 1
+    assert response.json()["count"] == 1
 
 
 def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
@@ -123,7 +123,7 @@ def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None
 
     cursor = signoz.sqlstore.conn.cursor()
     cursor.execute(
-        "SELECT data FROM licenses_v3 WHERE id='0196360e-90cd-7a74-8313-1aa815ce2a67'"
+        "SELECT data FROM license WHERE id='0196360e-90cd-7a74-8313-1aa815ce2a67'"
     )
     record = cursor.fetchone()[0]
     assert json.loads(record)["valid_from"] == 1732146922
@@ -134,7 +134,7 @@ def test_refresh_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None
         timeout=5,
     )
 
-    assert response.json()["count"] >= 1
+    assert response.json()["count"] == 1
 
 
 def test_license_checkout(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
@@ -172,7 +172,7 @@ def test_license_checkout(signoz: SigNoz, make_http_mocks, get_jwt_token) -> Non
         timeout=5,
     )
 
-    assert response.status_code == http.HTTPStatus.OK
+    assert response.status_code == http.HTTPStatus.CREATED
     assert response.json()["data"]["redirectURL"] == "https://signoz.checkout.com"
 
     response = requests.post(
@@ -219,7 +219,7 @@ def test_license_portal(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
         timeout=5,
     )
 
-    assert response.status_code == http.HTTPStatus.OK
+    assert response.status_code == http.HTTPStatus.CREATED
     assert response.json()["data"]["redirectURL"] == "https://signoz.portal.com"
 
     response = requests.post(

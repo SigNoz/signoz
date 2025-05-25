@@ -36,6 +36,12 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is invalid"))
+		return
+	}
+
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	if cloudProvider != "aws" {
 		RespondError(w, basemodel.BadRequest(fmt.Errorf(
@@ -56,11 +62,9 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		SigNozAPIKey: apiKey,
 	}
 
-	license, apiErr := ah.LM().GetRepo().GetActiveLicense(r.Context())
-	if apiErr != nil {
-		RespondError(w, basemodel.WrapApiError(
-			apiErr, "couldn't look for active license",
-		), nil)
+	license, err := ah.Signoz.Licensing.GetActive(r.Context(), orgID)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 

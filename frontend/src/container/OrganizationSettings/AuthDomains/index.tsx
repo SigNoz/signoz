@@ -1,18 +1,16 @@
-import { LockTwoTone } from '@ant-design/icons';
 import { Button, Modal, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import deleteDomain from 'api/SAML/deleteDomain';
-import listAllDomain from 'api/SAML/listAllDomain';
-import updateDomain from 'api/SAML/updateDomain';
+import deleteDomain from 'api/v1/domains/delete';
+import listAllDomain from 'api/v1/domains/list';
+import updateDomain from 'api/v1/domains/update';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
-import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
-import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
 import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
+import APIError from 'types/api/error';
 import { AuthDomain } from 'types/api/SAML/listDomain';
 import { v4 } from 'uuid';
 
@@ -26,33 +24,12 @@ import SwitchComponent from './Switch';
 function AuthDomains(): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-	const { org, featureFlags } = useAppContext();
+	const { org } = useAppContext();
 	const [currentDomain, setCurrentDomain] = useState<AuthDomain>();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-	const SSOFlag =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
-
-	const notEntripriseData: AuthDomain[] = [
-		{
-			id: v4(),
-			name: '',
-			ssoEnabled: false,
-			orgId: (org || [])[0].id || '',
-			samlConfig: {
-				samlCert: '',
-				samlEntity: '',
-				samlIdp: '',
-			},
-			ssoType: 'SAML',
-		},
-	];
-
 	const { data, isLoading, refetch } = useQuery(['saml'], {
-		queryFn: () =>
-			listAllDomain({
-				orgId: (org || [])[0].id,
-			}),
+		queryFn: () => listAllDomain(),
 		enabled: org !== null,
 	});
 
@@ -75,32 +52,19 @@ function AuthDomains(): JSX.Element {
 	const onRecordUpdateHandler = useCallback(
 		async (record: AuthDomain): Promise<boolean> => {
 			try {
-				const response = await updateDomain(record);
-
-				if (response.statusCode === 200) {
-					notifications.success({
-						message: t('saml_settings', {
-							ns: 'organizationsettings',
-						}),
-					});
-					refetch();
-					onCloseHandler(setIsEditModalOpen)();
-
-					return true;
-				}
-
-				notifications.error({
-					message: t('something_went_wrong', {
-						ns: 'common',
+				await updateDomain(record);
+				notifications.success({
+					message: t('saml_settings', {
+						ns: 'organizationsettings',
 					}),
 				});
-
-				return false;
+				refetch();
+				onCloseHandler(setIsEditModalOpen)();
+				return true;
 			} catch (error) {
 				notifications.error({
-					message: t('something_went_wrong', {
-						ns: 'common',
-					}),
+					message: (error as APIError).getErrorCode(),
+					description: (error as APIError).getErrorMessage(),
 				});
 				return false;
 			}
@@ -139,18 +103,19 @@ function AuthDomains(): JSX.Element {
 					ns: 'organizationsettings',
 				}),
 				onOk: async () => {
-					const response = await deleteDomain({
-						...record,
-					});
+					try {
+						await deleteDomain({
+							...record,
+						});
 
-					if (response.statusCode === 200) {
 						notifications.success({
 							message: t('common:success'),
 						});
 						refetch();
-					} else {
+					} catch (error) {
 						notifications.error({
-							message: t('common:something_went_wrong'),
+							message: (error as APIError).getErrorCode(),
+							description: (error as APIError).getErrorMessage(),
 						});
 					}
 				},
@@ -158,10 +123,6 @@ function AuthDomains(): JSX.Element {
 		},
 		[refetch, t, notifications],
 	);
-
-	const onClickLicenseHandler = useCallback(() => {
-		window.open(SIGNOZ_UPGRADE_PLAN_URL);
-	}, []);
 
 	const columns: ColumnsType<AuthDomain> = [
 		{
@@ -185,52 +146,24 @@ function AuthDomains(): JSX.Element {
 			dataIndex: 'ssoEnabled',
 			key: 'ssoEnabled',
 			width: 80,
-			render: (value: boolean, record: AuthDomain): JSX.Element => {
-				if (!SSOFlag) {
-					return (
-						<Button
-							onClick={onClickLicenseHandler}
-							type="link"
-							icon={<LockTwoTone />}
-						>
-							Upgrade to Configure SSO
-						</Button>
-					);
-				}
-
-				return (
-					<SwitchComponent
-						onRecordUpdateHandler={onRecordUpdateHandler}
-						isDefaultChecked={value}
-						record={record}
-					/>
-				);
-			},
+			render: (value: boolean, record: AuthDomain): JSX.Element => (
+				<SwitchComponent
+					onRecordUpdateHandler={onRecordUpdateHandler}
+					isDefaultChecked={value}
+					record={record}
+				/>
+			),
 		},
 		{
 			title: '',
 			dataIndex: 'description',
 			key: 'description',
 			width: 100,
-			render: (_, record: AuthDomain): JSX.Element => {
-				if (!SSOFlag) {
-					return (
-						<Button
-							onClick={onClickLicenseHandler}
-							type="link"
-							icon={<LockTwoTone />}
-						>
-							Upgrade to Configure SSO
-						</Button>
-					);
-				}
-
-				return (
-					<Button type="link" onClick={onEditHandler(record)}>
-						{ConfigureSsoButtonText(record.ssoType)}
-					</Button>
-				);
-			},
+			render: (_, record: AuthDomain): JSX.Element => (
+				<Button type="link" onClick={onEditHandler(record)}>
+					{ConfigureSsoButtonText(record.ssoType)}
+				</Button>
+			),
 		},
 		{
 			title: 'Action',
@@ -238,19 +171,14 @@ function AuthDomains(): JSX.Element {
 			key: 'action',
 			width: 50,
 			render: (_, record): JSX.Element => (
-				<Button
-					disabled={!SSOFlag}
-					onClick={onDeleteHandler(record)}
-					danger
-					type="link"
-				>
+				<Button onClick={onDeleteHandler(record)} danger type="link">
 					Delete
 				</Button>
 			),
 		},
 	];
 
-	if (!isLoading && data?.payload?.length === 0) {
+	if (!isLoading && data?.data?.length === 0) {
 		return (
 			<Space direction="vertical" size="middle">
 				<AddDomain refetch={refetch} />
@@ -273,7 +201,7 @@ function AuthDomains(): JSX.Element {
 				<ResizeTable
 					columns={columns}
 					rowKey={(record: AuthDomain): string => record.name + v4()}
-					dataSource={!SSOFlag ? notEntripriseData : []}
+					dataSource={[]}
 					tableLayout="fixed"
 					bordered
 				/>
@@ -281,8 +209,7 @@ function AuthDomains(): JSX.Element {
 		);
 	}
 
-	const tableData = SSOFlag ? data?.payload || [] : notEntripriseData;
-
+	const tableData = data?.data || [];
 	return (
 		<>
 			<Modal
