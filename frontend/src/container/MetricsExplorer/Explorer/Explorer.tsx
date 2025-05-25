@@ -16,7 +16,7 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -28,6 +28,7 @@ import QuerySection from './QuerySection';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
 import { splitQueryIntoOneChartPerQuery } from './utils';
+import { useGetMetricUnits } from './utils';
 
 const ONE_CHART_PER_QUERY_ENABLED_KEY = 'isOneChartPerQueryEnabled';
 
@@ -47,6 +48,27 @@ function Explorer(): JSX.Element {
 		aggregateOperator: 'noop',
 	});
 
+	const metricNames = useMemo(
+		() =>
+			currentQuery.builder.queryData.map((query) => query.aggregateAttribute.key),
+		[currentQuery],
+	);
+
+	const {
+		units,
+		isLoading: isMetricUnitsLoading,
+		isError: isMetricUnitsError,
+	} = useGetMetricUnits(metricNames);
+
+	const areAllMetricUnitsSame = useMemo(
+		() =>
+			!isMetricUnitsLoading &&
+			!isMetricUnitsError &&
+			units.length > 0 &&
+			units.every((unit) => unit === units[0]),
+		[units, isMetricUnitsLoading, isMetricUnitsError],
+	);
+
 	const [searchParams, setSearchParams] = useSearchParams();
 	const isOneChartPerQueryEnabled =
 		searchParams.get(ONE_CHART_PER_QUERY_ENABLED_KEY) === 'true';
@@ -54,7 +76,19 @@ function Explorer(): JSX.Element {
 	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(
 		isOneChartPerQueryEnabled,
 	);
+	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] = useState(
+		false,
+	);
 	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
+
+	useEffect(() => {
+		if (units.length > 1 && !areAllMetricUnitsSame) {
+			toggleShowOneChartPerQuery(true);
+			toggleDisableOneChartPerQuery(true);
+		} else {
+			toggleDisableOneChartPerQuery(false);
+		}
+	}, [units, areAllMetricUnitsSame]);
 
 	const handleToggleShowOneChartPerQuery = (): void => {
 		toggleShowOneChartPerQuery(!showOneChartPerQuery);
@@ -158,6 +192,7 @@ function Explorer(): JSX.Element {
 						<Switch
 							checked={showOneChartPerQuery}
 							onChange={handleToggleShowOneChartPerQuery}
+							disabled={disableOneChartPerQuery}
 							size="small"
 						/>
 					</div>
@@ -190,7 +225,13 @@ function Explorer(): JSX.Element {
 				</Button.Group> */}
 				<div className="explore-content">
 					{selectedTab === ExplorerTabs.TIME_SERIES && (
-						<TimeSeries showOneChartPerQuery={showOneChartPerQuery} />
+						<TimeSeries
+							showOneChartPerQuery={showOneChartPerQuery}
+							areAllMetricUnitsSame={areAllMetricUnitsSame}
+							isMetricUnitsLoading={isMetricUnitsLoading}
+							isMetricUnitsError={isMetricUnitsError}
+							metricUnits={units}
+						/>
 					)}
 					{/* TODO: Enable once we have resolved all related metrics issues */}
 					{/* {selectedTab === ExplorerTabs.RELATED_METRICS && (
