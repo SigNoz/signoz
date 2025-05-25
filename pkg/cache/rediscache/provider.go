@@ -40,10 +40,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	return &provider{client: client, settings: settings}, nil
 }
 
-func WithClient(client *redis.Client) *provider {
-	return &provider{client: client}
-}
-
 func (c *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) error {
 	return c.client.Set(ctx, strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), data, ttl).Err()
 }
