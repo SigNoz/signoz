@@ -70,8 +70,9 @@ type ScalarData struct {
 }
 
 type RawData struct {
-	QueryName string    `json:"queryName"`
-	Rows      []*RawRow `json:"rows"`
+	QueryName  string    `json:"queryName"`
+	NextCursor string    `json:"nextCursor"`
+	Rows       []*RawRow `json:"rows"`
 }
 
 type RawRow struct {

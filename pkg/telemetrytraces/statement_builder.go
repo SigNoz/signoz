@@ -131,7 +131,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		"trace_id",
 		"span_id",
 		"name",
-		"resource_string_service$$name",
+		sqlbuilder.Escape("resource_string_service$$name"),
 		"duration_nano",
 		"response_status_code",
 	)
@@ -155,7 +155,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction))
+		sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
 	}
 
 	// Add limit and offset
@@ -357,9 +357,9 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	for _, orderBy := range query.Order {
 		idx, ok := aggOrderBy(orderBy, query)
 		if ok {
-			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction))
+			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction))
+			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
 		}
 	}
 

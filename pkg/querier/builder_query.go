@@ -2,9 +2,13 @@ package querier
 
 import (
 	"context"
+	"encoding/base64"
+	"strconv"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type builderQuery[T any] struct {
@@ -42,7 +46,33 @@ func (q *builderQuery[T]) Window() (uint64, uint64) {
 	return q.fromMS, q.toMS
 }
 
+// must be a single query, ordered by timestamp (logs need an id tie-break).
+func (q *builderQuery[T]) isWindowList() bool {
+	if len(q.spec.Order) == 0 {
+		return false
+	}
+
+	// first ORDER BY must be `timestamp`
+	if q.spec.Order[0].Key.Name != "timestamp" {
+		return false
+	}
+
+	if q.spec.Signal == telemetrytypes.SignalLogs {
+		// logs require timestamp,id with identical direction
+		if len(q.spec.Order) != 2 || q.spec.Order[1].Key.Name != "id" ||
+			q.spec.Order[1].Direction != q.spec.Order[0].Direction {
+			return false
+		}
+	}
+	return true
+}
+
 func (q *builderQuery[T]) Execute(ctx context.Context) (qbtypes.Result, error) {
+
+	if q.kind == qbtypes.RequestTypeRaw && q.isWindowList() {
+		return q.executeWindowList(ctx)
+	}
+
 	stmt, err := q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec)
 	if err != nil {
 		return qbtypes.Result{}, err
@@ -55,4 +85,100 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (qbtypes.Result, error) {
 
 	chExec := newchSQLQuery(q.telemetryStore, chQuery, stmt.Args, qbtypes.TimeRange{From: q.fromMS, To: q.toMS}, q.kind)
 	return chExec.Execute(ctx)
+}
+
+func (q *builderQuery[T]) executeWindowList(ctx context.Context) (qbtypes.Result, error) {
+	isAsc := len(q.spec.Order) > 0 &&
+		strings.ToLower(string(q.spec.Order[0].Direction.StringValue())) == "asc"
+
+	// Adjust [fromMS,toMS] window if a cursor was supplied
+	if cur := strings.TrimSpace(q.spec.Cursor); cur != "" {
+		if ts, err := decodeCursor(cur); err == nil {
+			if isAsc {
+				if uint64(ts) >= q.fromMS {
+					q.fromMS = uint64(ts + 1)
+				}
+			} else { // DESC
+				if uint64(ts) <= q.toMS {
+					q.toMS = uint64(ts - 1)
+				}
+			}
+		}
+	}
+
+	reqLimit := q.spec.Limit
+	if reqLimit == 0 {
+		reqLimit = 10_000 // sane upper-bound default
+	}
+	offsetLeft := q.spec.Offset
+	need := reqLimit + offsetLeft // rows to fetch from ClickHouse
+
+	var rows []*qbtypes.RawRow
+
+	for _, r := range makeBuckets(q.fromMS, q.toMS) {
+		q.spec.Offset = 0
+		q.spec.Limit = need
+
+		stmt, err := q.stmtBuilder.Build(ctx, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec)
+		if err != nil {
+			return qbtypes.Result{}, err
+		}
+
+		chExec := newchSQLQuery(
+			q.telemetryStore,
+			qbtypes.ClickHouseQuery{Name: q.spec.Name, Query: stmt.Query},
+			stmt.Args,
+			qbtypes.TimeRange{From: q.fromMS, To: q.toMS},
+			q.kind,
+		)
+		res, err := chExec.Execute(ctx)
+		if err != nil {
+			return qbtypes.Result{}, err
+		}
+
+		rawRows := res.Value.(*qbtypes.RawData).Rows
+		need -= len(rawRows)
+
+		for _, rr := range rawRows {
+			if offsetLeft > 0 { // client-requested initial offset
+				offsetLeft--
+				continue
+			}
+			rows = append(rows, rr)
+			if len(rows) >= reqLimit { // page filled
+				break
+			}
+		}
+		if len(rows) >= reqLimit {
+			break
+		}
+	}
+
+	nextCursor := ""
+	if len(rows) == reqLimit {
+		lastTS := rows[len(rows)-1].Timestamp.UnixMilli()
+		nextCursor = encodeCursor(lastTS)
+	}
+
+	return qbtypes.Result{
+		Type: qbtypes.RequestTypeRaw,
+		Value: &qbtypes.RawData{
+			QueryName:  q.spec.Name,
+			Rows:       rows,
+			NextCursor: nextCursor,
+		},
+		Stats: qbtypes.ExecStats{RowsScanned: int64(len(rows))},
+	}, nil
+}
+
+func encodeCursor(tsMilli int64) string {
+	return base64.StdEncoding.EncodeToString([]byte(strconv.FormatInt(tsMilli, 10)))
+}
+
+func decodeCursor(cur string) (int64, error) {
+	b, err := base64.StdEncoding.DecodeString(cur)
+	if err != nil {
+		return 0, err
+	}
+	return strconv.ParseInt(string(b), 10, 64)
 }

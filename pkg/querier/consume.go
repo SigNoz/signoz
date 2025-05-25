@@ -228,7 +228,7 @@ func readAsScalar(rows driver.Rows) (*qbtypes.ScalarData, error) {
 	var data [][]any
 
 	for rows.Next() {
-		scan := make([]interface{}, len(colTypes))
+		scan := make([]any, len(colTypes))
 		for i := range scan {
 			scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
 		}
@@ -258,29 +258,71 @@ func readAsScalar(rows driver.Rows) (*qbtypes.ScalarData, error) {
 	}, nil
 }
 
-func readAsRaw(rows driver.Rows) ([][]any, error) {
-	colCnt := len(rows.Columns())
-	var out [][]any
+func readAsRaw(rows driver.Rows) (*qbtypes.RawData, error) {
+
+	colNames := rows.Columns()
+	colTypes := rows.ColumnTypes()
+	colCnt := len(colNames)
+
+	// Build a template slice of correctly-typed pointers once
+	scanTpl := make([]any, colCnt)
+	for i, ct := range colTypes {
+		scanTpl[i] = reflect.New(ct.ScanType()).Interface()
+	}
+
+	var outRows []*qbtypes.RawRow
 
 	for rows.Next() {
-		rowVals := make([]interface{}, colCnt)
-		for i := range rowVals {
-			rowVals[i] = new(interface{})
+		// fresh copy of the scan slice (otherwise the driver reuses pointers)
+		scan := make([]any, colCnt)
+		for i := range scanTpl {
+			scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
 		}
-		if err := rows.Scan(rowVals...); err != nil {
+
+		if err := rows.Scan(scan...); err != nil {
 			return nil, err
 		}
 
-		flattened := make([]any, colCnt)
-		for i, v := range rowVals {
-			flattened[i] = *(v.(*interface{}))
+		rr := qbtypes.RawRow{
+			Data: make(map[string]*any, colCnt),
 		}
-		out = append(out, flattened)
+
+		for i, cellPtr := range scan {
+			name := colNames[i]
+
+			// de-reference the typed pointer → any
+			val := reflect.ValueOf(cellPtr).Elem().Interface()
+
+			// special-case: timestamp column
+			if name == "timestamp" || name == "timestamp_datetime" {
+				switch t := val.(type) {
+				case time.Time:
+					rr.Timestamp = t
+				case uint64: // epoch-ns stored as integer
+					rr.Timestamp = time.Unix(0, int64(t))
+				case int64:
+					rr.Timestamp = time.Unix(0, t)
+				default:
+					// leave zero time if unrecognised
+				}
+			}
+
+			// store value in map as *any, to match the schema
+			v := any(val)
+			rr.Data[name] = &v
+		}
+		outRows = append(outRows, &rr)
 	}
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &qbtypes.RawData{
+		Rows: outRows,
+	}, nil
 }
 
-func numericAsFloat(v interface{}) float64 {
+func numericAsFloat(v any) float64 {
 	switch x := v.(type) {
 	case float64:
 		return x
