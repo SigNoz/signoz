@@ -72,7 +72,6 @@ func (b *defaultConditionBuilder) ConditionFor(
 	case qbtypes.FilterOperatorNotEqual:
 		return sb.And(
 			sb.NE(fieldName, value),
-			keyIdxFilter,
 			sb.NotLike(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorGreaterThan:
@@ -93,7 +92,6 @@ func (b *defaultConditionBuilder) ConditionFor(
 	case qbtypes.FilterOperatorNotLike, qbtypes.FilterOperatorNotILike:
 		return sb.And(
 			sb.NotILike(fieldName, value),
-			keyIdxFilter,
 			sb.NotILike(column.Name, valueForIndexFilter),
 		), nil
 
@@ -114,7 +112,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		if len(values) != 2 {
 			return "", qbtypes.ErrBetweenValues
 		}
-		return sb.And(keyIdxFilter, sb.NotBetween(fieldName, values[0], values[1])), nil
+		return sb.And(sb.NotBetween(fieldName, values[0], values[1])), nil
 
 	case qbtypes.FilterOperatorIn:
 		values, ok := value.([]any)
@@ -151,7 +149,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 				valConditions = append(valConditions, sb.NotLike(column.Name, v))
 			}
 		}
-		mainCondition = sb.And(mainCondition, keyIdxFilter, sb.And(valConditions...))
+		mainCondition = sb.And(mainCondition, sb.And(valConditions...))
 		return mainCondition, nil
 
 	case qbtypes.FilterOperatorExists:
@@ -162,7 +160,6 @@ func (b *defaultConditionBuilder) ConditionFor(
 	case qbtypes.FilterOperatorNotExists:
 		return sb.And(
 			sb.NE(fmt.Sprintf("simpleJSONHas(%s, '%s')", column.Name, key.Name), true),
-			keyIdxFilter,
 		), nil
 
 	case qbtypes.FilterOperatorRegexp:
@@ -173,7 +170,6 @@ func (b *defaultConditionBuilder) ConditionFor(
 	case qbtypes.FilterOperatorNotRegexp:
 		return sb.And(
 			fmt.Sprintf("NOT match(%s, %s)", fieldName, sb.Var(value)),
-			keyIdxFilter,
 		), nil
 
 	case qbtypes.FilterOperatorContains:
@@ -185,7 +181,6 @@ func (b *defaultConditionBuilder) ConditionFor(
 	case qbtypes.FilterOperatorNotContains:
 		return sb.And(
 			sb.NotILike(fieldName, fmt.Sprintf(`%%%s%%`, value)),
-			keyIdxFilter,
 			sb.NotILike(column.Name, valueForIndexFilter),
 		), nil
 	}
