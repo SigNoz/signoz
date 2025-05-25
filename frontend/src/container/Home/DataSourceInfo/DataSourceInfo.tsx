@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { Button, Skeleton, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ErrorModal from 'components/ErrorModal/ErrorModal';
 import ROUTES from 'constants/routes';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import history from 'lib/history';
@@ -155,6 +156,46 @@ function DataSourceInfo({
 			<Typography className="welcome-title">
 				Hello there, Welcome to your SigNoz workspace
 			</Typography>
+
+			<ErrorModal
+				error={{
+					code: 'bulk_invite_failed',
+					message: 'Failed to invite users, SQL unique constraint failed',
+					url: 'https://ant.design/components/modal',
+					errors: [
+						{ message: 'invite email: vikrant@signoz.io is already invited' },
+						{ message: 'invite email: john.doe@example.com is already invited' },
+						{
+							message:
+								'invite email: sarah.smith@example.com is already invited. Please check if this user already exists in the system',
+						},
+						{ message: 'invite email: mike.wilson@example.com is already invited' },
+						{
+							message:
+								'invite email: emma.brown@example.com is already invited. This user was previously invited on 2024-03-15',
+						},
+						{ message: 'invite email: david.clark@example.com is already invited' },
+						{
+							message:
+								'invite email: lisa.johnson@example.com is already invited. User has an active subscription',
+						},
+						{ message: 'invite email: robert.taylor@example.com is already invited' },
+						{
+							message:
+								'invite email: amy.martinez@example.com is already invited. Please verify the email address',
+						},
+						{
+							message: 'invite email: james.anderson@example.com is already invited',
+						},
+						{
+							message:
+								'invite email: rachel.white@example.com is already invited. This user was previously invited on 2024-03-10',
+						},
+						{ message: 'invite email: thomas.moore@example.com is already invited' },
+						// ...other errors
+					],
+				}}
+			/>
 
 			{!isErrorDeploymentsData && deploymentsData && (
 				<Card className="welcome-card">
