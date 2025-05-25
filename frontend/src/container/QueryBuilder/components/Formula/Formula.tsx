@@ -165,6 +165,7 @@ export function Formula({
 							onChange={handleChange}
 							size="middle"
 							value={formula.expression}
+							placeholder="Enter formula"
 							rows={2}
 						/>
 					</Col>

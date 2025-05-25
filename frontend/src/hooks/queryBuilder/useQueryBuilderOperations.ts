@@ -24,7 +24,6 @@ import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetri
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 import { isEmpty, isEqual } from 'lodash-es';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -182,11 +181,6 @@ export const useQueryOperations: UseQueryOperations = ({
 					break;
 			}
 
-			console.log(
-				'newOperators handleMetricAggregateAtributeTypes',
-				cloneDeep(newOperators),
-			);
-
 			setOperators(newOperators);
 		},
 		[panelType],
@@ -199,9 +193,6 @@ export const useQueryOperations: UseQueryOperations = ({
 				aggregateAttribute: value,
 				having: [],
 			};
-
-			console.log('newQuery', newQuery.dataSource);
-			console.log('entityVersion', entityVersion);
 
 			if (
 				newQuery.dataSource === DataSource.METRICS &&
@@ -275,8 +266,6 @@ export const useQueryOperations: UseQueryOperations = ({
 				dataSource: nextSource,
 				aggregateOperator: newOperators[0].value,
 			};
-
-			console.log('newOperators handleChangeDataSource', cloneDeep(newOperators));
 
 			setOperators(newOperators);
 			handleSetQueryData(index, newQuery);
@@ -398,8 +387,6 @@ export const useQueryOperations: UseQueryOperations = ({
 
 		setListOfAdditionalFormulaFilters(additionalFilters);
 	}, [dataSource, aggregateOperator, getNewListOfAdditionalFilters]);
-
-	console.log('operators useQueryOperations', cloneDeep(operators));
 
 	return {
 		isTracePanelType,
