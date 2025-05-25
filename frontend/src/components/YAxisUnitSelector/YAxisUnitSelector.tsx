@@ -1,3 +1,5 @@
+import './styles.scss';
+
 import { Select } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 
@@ -9,6 +11,7 @@ function YAxisUnitSelector({
 	value,
 	onChange,
 	placeholder = 'Please select a unit',
+	loading = false,
 }: YAxisUnitSelectorProps): JSX.Element {
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
 
@@ -41,6 +44,7 @@ function YAxisUnitSelector({
 				onChange={onChange}
 				placeholder={placeholder}
 				filterOption={(input, option): boolean => handleSearch(input, option)}
+				loading={loading}
 			>
 				{Y_AXIS_CATEGORIES.map((category) => (
 					<Select.OptGroup key={category.name} label={category.name}>

@@ -1,13 +1,16 @@
+import { Color } from '@signozhq/design-tokens';
+import { Tooltip } from 'antd';
 import classNames from 'classnames';
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter/BuilderUnits';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useMemo, useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -19,7 +22,13 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { TimeSeriesProps } from './types';
 import { splitQueryIntoOneChartPerQuery } from './utils';
 
-function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
+function TimeSeries({
+	showOneChartPerQuery,
+	areAllMetricUnitsSame,
+	isMetricUnitsLoading,
+	isMetricUnitsError,
+	metricUnits,
+}: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
@@ -57,6 +66,22 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 	);
 
 	const [yAxisUnit, setYAxisUnit] = useState<string>('');
+
+	useEffect(() => {
+		if (metricUnits.length === 0) {
+			setYAxisUnit('');
+			return;
+		}
+		if (metricUnits.length === 1) {
+			setYAxisUnit(metricUnits[0]);
+			return;
+		}
+		if (areAllMetricUnitsSame) {
+			setYAxisUnit(metricUnits[0]);
+			return;
+		}
+		setYAxisUnit('');
+	}, [metricUnits, areAllMetricUnitsSame]);
 
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({
@@ -107,28 +132,52 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 
 	return (
 		<>
-			<BuilderUnitsFilter onChange={onUnitChangeHandler} yAxisUnit={yAxisUnit} />
+			<div className="y-axis-unit-selector-container">
+				<YAxisUnitSelector
+					value={yAxisUnit}
+					onChange={onUnitChangeHandler}
+					loading={isMetricUnitsLoading}
+					disabled={isMetricUnitsLoading || isMetricUnitsError}
+				/>
+			</div>
 			<div
 				className={classNames({
 					'time-series-container': changeLayoutForOneChartPerQuery,
 				})}
 			>
-				{responseData.map((datapoint, index) => (
-					<div
-						className="time-series-view"
-						// eslint-disable-next-line react/no-array-index-key
-						key={index}
-					>
-						<TimeSeriesView
-							isFilterApplied={false}
-							isError={queries[index].isError}
-							isLoading={queries[index].isLoading}
-							data={datapoint}
-							yAxisUnit={yAxisUnit}
-							dataSource={DataSource.METRICS}
-						/>
-					</div>
-				))}
+				{responseData.map((datapoint, index) => {
+					const isMetricUnitEmpty =
+						!isMetricUnitsLoading &&
+						metricUnits.length > 0 &&
+						metricUnits[index] === '';
+
+					console.log({ isMetricUnitsLoading, metricUnits });
+
+					return (
+						<div
+							className="time-series-view"
+							// eslint-disable-next-line react/no-array-index-key
+							key={index}
+						>
+							{isMetricUnitEmpty && (
+								<Tooltip
+									className="no-unit-warning"
+									title="This metric does not have a unit. Please set a unit for it in the details drawer."
+								>
+									<AlertTriangle size={16} color={Color.BG_AMBER_400} />
+								</Tooltip>
+							)}
+							<TimeSeriesView
+								isFilterApplied={false}
+								isError={queries[index].isError}
+								isLoading={queries[index].isLoading}
+								data={datapoint}
+								yAxisUnit={yAxisUnit}
+								dataSource={DataSource.METRICS}
+							/>
+						</div>
+					);
+				})}
 			</div>
 		</>
 	);
