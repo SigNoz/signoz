@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -115,6 +116,10 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (qbtypes.Result
 
 	var rows []*qbtypes.RawRow
 
+	totalRows := uint64(0)
+	totalBytes := uint64(0)
+	start := time.Now()
+
 	for _, r := range makeBuckets(q.fromMS, q.toMS) {
 		q.spec.Offset = 0
 		q.spec.Limit = need
@@ -135,6 +140,8 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (qbtypes.Result
 		if err != nil {
 			return qbtypes.Result{}, err
 		}
+		totalRows += res.Stats.RowsScanned
+		totalBytes += res.Stats.BytesScanned
 
 		rawRows := res.Value.(*qbtypes.RawData).Rows
 		need -= len(rawRows)
@@ -167,7 +174,11 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (qbtypes.Result
 			Rows:       rows,
 			NextCursor: nextCursor,
 		},
-		Stats: qbtypes.ExecStats{RowsScanned: int64(len(rows))},
+		Stats: qbtypes.ExecStats{
+			RowsScanned:  totalRows,
+			BytesScanned: totalBytes,
+			DurationMS:   uint64(time.Since(start).Milliseconds()),
+		},
 	}, nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
@@ -40,13 +41,21 @@ func (q *chSQLQuery) Window() (uint64, uint64) { return q.fromMS, q.toMS }
 
 func (q *chSQLQuery) Execute(ctx context.Context) (qbtypes.Result, error) {
 	start := time.Now()
+
+	totalRows := uint64(0)
+	totalBytes := uint64(0)
+	ctx = clickhouse.Context(ctx, clickhouse.WithProgress(func(p *clickhouse.Progress) {
+		totalRows += p.Rows
+		totalBytes += p.Bytes
+	}))
+
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, q.query.Query, q.args...)
 	if err != nil {
 		return qbtypes.Result{}, err
 	}
 	defer rows.Close()
 
-	payload, stats, err := consume(rows, q.kind)
+	payload, err := consume(rows, q.kind)
 	if err != nil {
 		return qbtypes.Result{}, err
 	}
@@ -54,9 +63,9 @@ func (q *chSQLQuery) Execute(ctx context.Context) (qbtypes.Result, error) {
 		Type:  q.kind,
 		Value: payload,
 		Stats: qbtypes.ExecStats{
-			RowsScanned:  stats.Rows,
-			BytesScanned: stats.Bytes,
-			DurationMS:   time.Since(start).Milliseconds(),
+			RowsScanned:  totalRows,
+			BytesScanned: totalBytes,
+			DurationMS:   uint64(time.Since(start).Milliseconds()),
 		},
 	}, nil
 }

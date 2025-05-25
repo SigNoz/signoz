@@ -24,17 +24,16 @@ type chQueryStats struct {
 // consume reads every row and shapes it into the payload expected for the
 // given request type.
 //
-// * Time-series → []*qbtypes.TimeSeriesData
-// * Scalar      → [][]any
-// * Raw         → [][]any (each inner slice is a row)
-// * Distribution→ []Bucket     (struct{Lower,Upper,Count float64})
+// * Time-series - []*qbtypes.TimeSeriesData
+// * Scalar      - []*qbtypes.ScalarData
+// * Raw         - []*qbtypes.RawData
+// * Distribution- []*qbtypes.DistributionData
 //
 // It also extracts `RowsRead` and `BytesRead` from the ClickHouse driver so the
 // caller can set ExecStats.RowsScanned / BytesScanned.
-func consume(rows driver.Rows, kind qbtypes.RequestType) (any, chQueryStats, error) {
+func consume(rows driver.Rows, kind qbtypes.RequestType) (any, error) {
 	var (
 		payload any
-		stats   chQueryStats
 		err     error
 	)
 
@@ -50,7 +49,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType) (any, chQueryStats, err
 
 	}
 
-	return payload, stats, err
+	return payload, err
 }
 
 func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
@@ -205,7 +204,6 @@ func numericKind(k reflect.Kind) bool {
 }
 
 func readAsScalar(rows driver.Rows) (*qbtypes.ScalarData, error) {
-	// ------------------------------------------------------------------ column descriptors
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 
@@ -224,7 +222,6 @@ func readAsScalar(rows driver.Rows) (*qbtypes.ScalarData, error) {
 		}
 	}
 
-	// ------------------------------------------------------------------ rows -> [][]any
 	var data [][]any
 
 	for rows.Next() {
@@ -290,7 +287,7 @@ func readAsRaw(rows driver.Rows) (*qbtypes.RawData, error) {
 		for i, cellPtr := range scan {
 			name := colNames[i]
 
-			// de-reference the typed pointer → any
+			// de-reference the typed pointer to any
 			val := reflect.ValueOf(cellPtr).Elem().Interface()
 
 			// special-case: timestamp column
