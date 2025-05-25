@@ -2062,7 +2062,7 @@ func (aH *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 	q := r.URL.Query()
 	if errType := q.Get("error"); errType != "" {
 		zap.L().Error("[receiveGoogleAuth] failed to login with google auth", zap.String("error", errType), zap.String("error_description", q.Get("error_description")))
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to login through SSO "), http.StatusMovedPermanently)
+		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to login through SSO"), http.StatusMovedPermanently)
 		return
 	}
 
@@ -2098,7 +2098,7 @@ func (aH *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 
 	identity, err := callbackHandler.HandleCallback(r)
 	if err != nil {
-		zap.L().Error("[receiveGoogleAuth] failed to process HandleCallback ", zap.String("domain", domain.String()), zap.Error(err))
+		zap.L().Error("[receiveGoogleAuth] failed to process HandleCallback", zap.String("domain", domain.String()), zap.Error(err))
 		handleSsoError(w, r, redirectUri)
 		return
 	}

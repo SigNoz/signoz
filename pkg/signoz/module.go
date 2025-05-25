@@ -32,14 +32,14 @@ type Modules struct {
 	QuickFilter  quickfilter.Module
 }
 
-func NewModules(sqlstore sqlstore.SQLStore, jwt *authtypes.JWT, emailing emailing.Emailing, ps factory.ProviderSettings) Modules {
+func NewModules(sqlstore sqlstore.SQLStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings) Modules {
 	return Modules{
 		Organization: implorganization.NewModule(implorganization.NewStore(sqlstore)),
 		Preference:   implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewDefaultPreferenceMap()),
 		SavedView:    implsavedview.NewModule(sqlstore),
 		Apdex:        implapdex.NewModule(sqlstore),
 		Dashboard:    impldashboard.NewModule(sqlstore),
-		User:         impluser.NewModule(impluser.NewStore(sqlstore, ps), jwt, emailing, ps),
+		User:         impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), jwt, emailing, providerSettings),
 		QuickFilter:  implquickfilter.NewModule(implquickfilter.NewStore(sqlstore)),
 	}
 }

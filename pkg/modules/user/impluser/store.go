@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"sort"
 	"strings"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -637,31 +635,27 @@ func (store *store) GetDomainFromSsoResponse(ctx context.Context, relayState *ur
 	if domainIdStr != "" {
 		domainId, err := uuid.Parse(domainIdStr)
 		if err != nil {
-			store.settings.Logger.ErrorContext(ctx, "failed to parse domainId from relay state", "error", err)
-			return nil, fmt.Errorf("failed to parse domainId from IdP response")
+			return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse domainID from IdP response")
 		}
 
 		domain, err = store.GetDomain(ctx, domainId)
 		if err != nil {
-			store.settings.Logger.ErrorContext(ctx, "failed to find domain from domain_id received in IDP response", "error", err)
-			return nil, fmt.Errorf("invalid credentials")
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to find domain from domainID received in IDP response")
 		}
 	}
 
 	if domainNameStr != "" {
-
 		domainFromDB, err := store.GetGettableDomainByName(ctx, domainNameStr)
 		domain = domainFromDB
 		if err != nil {
-			store.settings.Logger.ErrorContext(ctx, "failed to find domain from domain_name received in IDP response", "error", err)
-			return nil, fmt.Errorf("invalid credentials")
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to find domain from domainName received in IDP response")
 		}
 	}
 	if domain != nil {
 		return domain, nil
 	}
 
-	return nil, fmt.Errorf("failed to find domain received in IdP response")
+	return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to find domain received in IDP response")
 }
 
 // GetDomainByName returns org domain for a given domain name
@@ -673,17 +667,13 @@ func (store *store) GetGettableDomainByName(ctx context.Context, name string) (*
 		Where("name = ?", name).
 		Limit(1).
 		Scan(ctx)
-
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, model.BadRequest(fmt.Errorf("invalid domain name"))
-		}
-		return nil, model.InternalError(err)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "domain with name: %s doesn't exist", name)
 	}
 
 	domain := &types.GettableOrgDomain{StorableOrgDomain: stored}
 	if err := domain.LoadConfig(stored.Data); err != nil {
-		return nil, model.InternalError(err)
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to load domain config")
 	}
 	return domain, nil
 }
@@ -712,7 +702,6 @@ func (store *store) GetDomain(ctx context.Context, id uuid.UUID) (*types.Gettabl
 // ListDomains gets the list of auth domains by org id
 func (store *store) ListDomains(ctx context.Context, orgId valuer.UUID) ([]*types.GettableOrgDomain, error) {
 	domains := make([]*types.GettableOrgDomain, 0)
-
 	stored := []types.StorableOrgDomain{}
 	err := store.sqlstore.BunDB().NewSelect().
 		Model(&stored).

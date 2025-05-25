@@ -53,7 +53,7 @@ type Module interface {
 
 	ListDomains(ctx context.Context, orgID valuer.UUID) ([]*types.GettableOrgDomain, error)
 	CreateDomain(ctx context.Context, domain *types.GettableOrgDomain) error
-	UpdateDomain(ctx context.Context, doamin *types.GettableOrgDomain) error
+	UpdateDomain(ctx context.Context, domain *types.GettableOrgDomain) error
 	DeleteDomain(ctx context.Context, id uuid.UUID) error
 
 	// API KEY
