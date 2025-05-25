@@ -2,13 +2,14 @@ package impltracefunnel
 
 import (
 	"encoding/json"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"net/http"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
-	tf "github.com/SigNoz/signoz/pkg/types/tracefunnel"
+	tf "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 	"github.com/gorilla/mux"
 )
 
@@ -33,7 +34,7 @@ func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	funnel, err := handler.module.Create(r.Context(), req.Timestamp, req.Name, claims.UserID, claims.OrgID)
+	funnel, err := handler.module.Create(r.Context(), req.Timestamp, req.Name, valuer.MustNewUUID(claims.UserID), valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
@@ -64,7 +65,7 @@ func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	funnel, err := handler.module.Get(r.Context(), req.FunnelID.String())
+	funnel, err := handler.module.Get(r.Context(), req.FunnelID, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
@@ -89,14 +90,14 @@ func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
 		funnel.Description = req.Description
 	}
 
-	if err := handler.module.Update(r.Context(), funnel, claims.UserID); err != nil {
+	if err := handler.module.Update(r.Context(), funnel, valuer.MustNewUUID(claims.UserID)); err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
 			"failed to update funnel in database: %v", err))
 		return
 	}
 
-	updatedFunnel, err := handler.module.Get(r.Context(), funnel.ID.String())
+	updatedFunnel, err := handler.module.Get(r.Context(), funnel.ID, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
@@ -130,7 +131,7 @@ func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	funnel, err := handler.module.Get(r.Context(), funnelID)
+	funnel, err := handler.module.Get(r.Context(), valuer.MustNewUUID(funnelID), valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
@@ -148,14 +149,14 @@ func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
 		funnel.Description = req.Description
 	}
 
-	if err := handler.module.Update(r.Context(), funnel, claims.UserID); err != nil {
+	if err := handler.module.Update(r.Context(), funnel, valuer.MustNewUUID(claims.UserID)); err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
 			"failed to update funnel in database: %v", err))
 		return
 	}
 
-	updatedFunnel, err := handler.module.Get(r.Context(), funnel.ID.String())
+	updatedFunnel, err := handler.module.Get(r.Context(), funnel.ID, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
@@ -174,7 +175,7 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	funnels, err := handler.module.List(r.Context(), claims.OrgID)
+	funnels, err := handler.module.List(r.Context(), valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
@@ -194,15 +195,15 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	funnel, err := handler.module.Get(r.Context(), funnelID)
+	claims, _ := tf.GetClaims(r) // Ignore error as email is optional
+
+	funnel, err := handler.module.Get(r.Context(), valuer.MustNewUUID(funnelID), valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
 			"funnel not found: %v", err))
 		return
 	}
-
-	claims, _ := tf.GetClaims(r) // Ignore error as email is optional
 	response := tf.ConstructFunnelResponse(funnel, claims)
 	render.Success(rw, http.StatusOK, response)
 }
@@ -211,7 +212,9 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	if err := handler.module.Delete(r.Context(), funnelID); err != nil {
+	claims, _ := tf.GetClaims(r)
+
+	if err := handler.module.Delete(r.Context(), valuer.MustNewUUID(funnelID), valuer.MustNewUUID(claims.OrgID)); err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
 			"failed to delete funnel: %v", err))
@@ -236,7 +239,7 @@ func (handler *handler) Save(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	funnel, err := handler.module.Get(r.Context(), req.FunnelID.String())
+	funnel, err := handler.module.Get(r.Context(), req.FunnelID, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
@@ -264,14 +267,14 @@ func (handler *handler) Save(rw http.ResponseWriter, r *http.Request) {
 	funnel.UpdatedBy = claims.UserID
 	funnel.Description = req.Description
 
-	if err := handler.module.Save(r.Context(), funnel, funnel.UpdatedBy, claims.OrgID); err != nil {
+	if err := handler.module.Update(r.Context(), funnel, valuer.MustNewUUID(claims.OrgID)); err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
 			"failed to save funnel: %v", err))
 		return
 	}
 
-	createdAtMillis, updatedAtMillis, extraDataFromDB, err := handler.module.GetFunnelMetadata(r.Context(), funnel.ID.String())
+	createdAtMillis, updatedAtMillis, extraDataFromDB, err := handler.module.GetFunnelMetadata(r.Context(), funnel.ID, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,

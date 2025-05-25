@@ -1,4 +1,4 @@
-package tracefunnel
+package tracefunneltypes
 
 import (
 	"net/http"
@@ -90,12 +90,12 @@ func TestValidateTimestampIsMilliseconds(t *testing.T) {
 func TestValidateFunnelSteps(t *testing.T) {
 	tests := []struct {
 		name        string
-		steps       []FunnelStep
+		steps       []*FunnelStep
 		expectError bool
 	}{
 		{
 			name: "valid steps",
-			steps: []FunnelStep{
+			steps: []*FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -115,7 +115,7 @@ func TestValidateFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "too few steps",
-			steps: []FunnelStep{
+			steps: []*FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -128,7 +128,7 @@ func TestValidateFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "missing service name",
-			steps: []FunnelStep{
+			steps: []*FunnelStep{
 				{
 					ID:       valuer.GenerateUUID(),
 					Name:     "Step 1",
@@ -147,7 +147,7 @@ func TestValidateFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "missing span name",
-			steps: []FunnelStep{
+			steps: []*FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -166,7 +166,7 @@ func TestValidateFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "negative order",
-			steps: []FunnelStep{
+			steps: []*FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -201,12 +201,12 @@ func TestValidateFunnelSteps(t *testing.T) {
 func TestNormalizeFunnelSteps(t *testing.T) {
 	tests := []struct {
 		name     string
-		steps    []FunnelStep
-		expected []FunnelStep
+		steps    []*FunnelStep
+		expected []*FunnelStep
 	}{
 		{
 			name: "already normalized steps",
-			steps: []FunnelStep{
+			steps: []*FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -222,7 +222,7 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 					Order:       2,
 				},
 			},
-			expected: []FunnelStep{
+			expected: []*FunnelStep{
 				{
 					Name:        "Step 1",
 					ServiceName: "test-service",
@@ -239,7 +239,7 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "unordered steps",
-			steps: []FunnelStep{
+			steps: []*FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 2",
@@ -255,7 +255,7 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 					Order:       1,
 				},
 			},
-			expected: []FunnelStep{
+			expected: []*FunnelStep{
 				{
 					Name:        "Step 1",
 					ServiceName: "test-service",
@@ -272,7 +272,7 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "steps with gaps in order",
-			steps: []FunnelStep{
+			steps: []*FunnelStep{
 				{
 					ID:          valuer.GenerateUUID(),
 					Name:        "Step 1",
@@ -295,7 +295,7 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 					Order:       2,
 				},
 			},
-			expected: []FunnelStep{
+			expected: []*FunnelStep{
 				{
 					Name:        "Step 1",
 					ServiceName: "test-service",
@@ -316,17 +316,58 @@ func TestNormalizeFunnelSteps(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "steps with nil pointers",
+			steps: []*FunnelStep{
+				{
+					ID:          valuer.GenerateUUID(),
+					Name:        "Step 1",
+					ServiceName: "test-service",
+					SpanName:    "test-span",
+					Order:       1,
+				},
+				nil,
+				{
+					ID:          valuer.GenerateUUID(),
+					Name:        "Step 2",
+					ServiceName: "test-service",
+					SpanName:    "test-span-2",
+					Order:       2,
+				},
+			},
+			expected: []*FunnelStep{
+				{
+					Name:        "Step 1",
+					ServiceName: "test-service",
+					SpanName:    "test-span",
+					Order:       1,
+				},
+				{
+					Name:        "Step 2",
+					ServiceName: "test-service",
+					SpanName:    "test-span-2",
+					Order:       2,
+				},
+			},
+		},
+		{
+			name:     "empty steps",
+			steps:    []*FunnelStep{},
+			expected: []*FunnelStep{},
+		},
+		{
+			name:     "all nil steps",
+			steps:    []*FunnelStep{nil, nil},
+			expected: []*FunnelStep{},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Make a copy of the steps to avoid modifying the original
-			steps := make([]FunnelStep, len(tt.steps))
-			copy(steps, tt.steps)
-
-			result := NormalizeFunnelSteps(steps)
+			result := NormalizeFunnelSteps(tt.steps)
 
 			// Compare only the relevant fields
+			assert.Len(t, result, len(tt.expected))
 			for i := range result {
 				assert.Equal(t, tt.expected[i].Name, result[i].Name)
 				assert.Equal(t, tt.expected[i].ServiceName, result[i].ServiceName)
@@ -425,6 +466,7 @@ func TestConstructFunnelResponse(t *testing.T) {
 	now := time.Now()
 	funnelID := valuer.GenerateUUID()
 	orgID := valuer.GenerateUUID()
+	userID := valuer.GenerateUUID()
 
 	tests := []struct {
 		name     string
@@ -435,24 +477,24 @@ func TestConstructFunnelResponse(t *testing.T) {
 		{
 			name: "with user email from funnel",
 			funnel: &StorableFunnel{
-				BaseMetadata: BaseMetadata{
-					Identifiable: types.Identifiable{
-						ID: funnelID,
-					},
-					Name:  "test-funnel",
-					OrgID: orgID,
-					TimeAuditable: types.TimeAuditable{
-						CreatedAt: now,
-						UpdatedAt: now,
-					},
-					UserAuditable: types.UserAuditable{
-						CreatedBy: "user-123",
-						UpdatedBy: "user-123",
-					},
+				Identifiable: types.Identifiable{
+					ID: funnelID,
 				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: now,
+					UpdatedAt: now,
+				},
+				UserAuditable: types.UserAuditable{
+					CreatedBy: userID.String(),
+					UpdatedBy: userID.String(),
+				},
+				Name:  "test-funnel",
+				OrgID: orgID,
 				CreatedByUser: &types.User{
-					Identifiable: types.Identifiable{ID: valuer.MustNewUUID("user-123")},
-					Email:        "funnel@example.com",
+					Identifiable: types.Identifiable{
+						ID: userID,
+					},
+					Email: "funnel@example.com",
 				},
 				Steps: []*FunnelStep{
 					{
@@ -465,7 +507,7 @@ func TestConstructFunnelResponse(t *testing.T) {
 				},
 			},
 			claims: &authtypes.Claims{
-				UserID: "user-123",
+				UserID: userID.String(),
 				OrgID:  orgID.String(),
 				Email:  "claims@example.com",
 			},
@@ -481,9 +523,9 @@ func TestConstructFunnelResponse(t *testing.T) {
 					},
 				},
 				CreatedAt: now.UnixNano() / 1000000,
-				CreatedBy: "user-123",
+				CreatedBy: userID.String(),
 				UpdatedAt: now.UnixNano() / 1000000,
-				UpdatedBy: "user-123",
+				UpdatedBy: userID.String(),
 				OrgID:     orgID.String(),
 				UserEmail: "funnel@example.com",
 			},
@@ -491,21 +533,19 @@ func TestConstructFunnelResponse(t *testing.T) {
 		{
 			name: "with user email from claims",
 			funnel: &StorableFunnel{
-				BaseMetadata: BaseMetadata{
-					Identifiable: types.Identifiable{
-						ID: funnelID,
-					},
-					Name:  "test-funnel",
-					OrgID: orgID,
-					TimeAuditable: types.TimeAuditable{
-						CreatedAt: now,
-						UpdatedAt: now,
-					},
-					UserAuditable: types.UserAuditable{
-						CreatedBy: "user-123",
-						UpdatedBy: "user-123",
-					},
+				Identifiable: types.Identifiable{
+					ID: funnelID,
 				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: now,
+					UpdatedAt: now,
+				},
+				UserAuditable: types.UserAuditable{
+					CreatedBy: userID.String(),
+					UpdatedBy: userID.String(),
+				},
+				Name:  "test-funnel",
+				OrgID: orgID,
 				Steps: []*FunnelStep{
 					{
 						ID:          valuer.GenerateUUID(),
@@ -517,7 +557,7 @@ func TestConstructFunnelResponse(t *testing.T) {
 				},
 			},
 			claims: &authtypes.Claims{
-				UserID: "user-123",
+				UserID: userID.String(),
 				OrgID:  orgID.String(),
 				Email:  "claims@example.com",
 			},
@@ -533,9 +573,9 @@ func TestConstructFunnelResponse(t *testing.T) {
 					},
 				},
 				CreatedAt: now.UnixNano() / 1000000,
-				CreatedBy: "user-123",
+				CreatedBy: userID.String(),
 				UpdatedAt: now.UnixNano() / 1000000,
-				UpdatedBy: "user-123",
+				UpdatedBy: userID.String(),
 				OrgID:     orgID.String(),
 				UserEmail: "claims@example.com",
 			},
@@ -572,12 +612,12 @@ func TestConstructFunnelResponse(t *testing.T) {
 func TestProcessFunnelSteps(t *testing.T) {
 	tests := []struct {
 		name        string
-		steps       []FunnelStep
+		steps       []*FunnelStep
 		expectError bool
 	}{
 		{
 			name: "valid steps with missing IDs",
-			steps: []FunnelStep{
+			steps: []*FunnelStep{
 				{
 					Name:        "Step 1",
 					ServiceName: "test-service",
@@ -595,7 +635,7 @@ func TestProcessFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "invalid steps - missing service name",
-			steps: []FunnelStep{
+			steps: []*FunnelStep{
 				{
 					Name:     "Step 1",
 					SpanName: "test-span",
@@ -612,7 +652,7 @@ func TestProcessFunnelSteps(t *testing.T) {
 		},
 		{
 			name: "invalid steps - negative order",
-			steps: []FunnelStep{
+			steps: []*FunnelStep{
 				{
 					Name:        "Step 1",
 					ServiceName: "test-service",

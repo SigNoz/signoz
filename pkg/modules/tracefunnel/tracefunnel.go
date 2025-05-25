@@ -2,26 +2,25 @@ package tracefunnel
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"net/http"
 
-	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunnel"
+	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 )
 
 // Module defines the interface for trace funnel operations
 type Module interface {
-	Create(ctx context.Context, timestamp int64, name string, userID string, orgID string) (*traceFunnels.StorableFunnel, error)
+	Create(ctx context.Context, timestamp int64, name string, userID valuer.UUID, orgID valuer.UUID) (*traceFunnels.StorableFunnel, error)
 
-	Get(ctx context.Context, funnelID string) (*traceFunnels.StorableFunnel, error)
+	Get(ctx context.Context, funnelID valuer.UUID, orgID valuer.UUID) (*traceFunnels.StorableFunnel, error)
 
-	Update(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID string) error
+	Update(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID valuer.UUID) error
 
-	List(ctx context.Context, orgID string) ([]*traceFunnels.StorableFunnel, error)
+	List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnels.StorableFunnel, error)
 
-	Delete(ctx context.Context, funnelID string) error
+	Delete(ctx context.Context, funnelID valuer.UUID, orgID valuer.UUID) error
 
-	Save(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID string, orgID string) error
-
-	GetFunnelMetadata(ctx context.Context, funnelID string) (int64, int64, string, error)
+	GetFunnelMetadata(ctx context.Context, funnelID valuer.UUID, orgID valuer.UUID) (int64, int64, string, error)
 }
 
 type Handler interface {
