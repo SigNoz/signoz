@@ -15,7 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.uber.org/zap"
 )
 
 // EnterpriseModule embeds the base module implementation
@@ -67,7 +66,6 @@ func (m *Module) createUserForSAMLRequest(ctx context.Context, email string) (*t
 func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (string, error) {
 	users, err := m.GetUsersByEmail(ctx, email)
 	if err != nil {
-		zap.L().Error("failed to get user with email received from auth provider", zap.String("error", err.Error()))
 		return "", err
 	}
 	user := &types.User{}
@@ -76,7 +74,6 @@ func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email stri
 		newUser, err := m.createUserForSAMLRequest(ctx, email)
 		user = newUser
 		if err != nil {
-			zap.L().Error("failed to create user with email received from auth provider", zap.Error(err))
 			return "", err
 		}
 	} else {
@@ -85,7 +82,6 @@ func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email stri
 
 	tokenStore, err := m.GetJWTForUser(ctx, user)
 	if err != nil {
-		zap.L().Error("failed to generate token for SSO login user", zap.Error(err))
 		return "", err
 	}
 
@@ -164,7 +160,6 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 	// the EE handler wrapper passes the feature flag value in context
 	ssoAvailable, ok := ctx.Value(types.SSOAvailable).(bool)
 	if !ok {
-		zap.L().Error("failed to retrieve ssoAvailable from context")
 		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to retrieve SSO availability")
 	}
 
@@ -197,7 +192,6 @@ func (m *Module) LoginPrecheck(ctx context.Context, orgID, email, sourceUrl stri
 			// the front-end will redirect user to this url
 			resp.SSOUrl, err = orgDomain.BuildSsoUrl(siteUrl)
 			if err != nil {
-				zap.L().Error("failed to prepare saml request for domain", zap.String("domain", orgDomain.Name), zap.Error(err))
 				return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to prepare saml request for domain")
 			}
 

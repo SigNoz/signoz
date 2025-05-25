@@ -30,7 +30,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 // Higher level tests for UI facing APIs
@@ -595,7 +594,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	}
 
 	router := app.NewRouter()
-	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	router.Use(middleware.NewAuth(jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
 	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterIntegrationRoutes(router, am)

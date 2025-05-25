@@ -21,7 +21,7 @@ type store struct {
 	fs map[emailtypes.TemplateName]*template.Template
 }
 
-func NewStore(baseDir string, templates []emailtypes.TemplateName, logger *slog.Logger) (emailtypes.TemplateStore, error) {
+func NewStore(ctx context.Context, baseDir string, templates []emailtypes.TemplateName, logger *slog.Logger) (emailtypes.TemplateStore, error) {
 	fs := make(map[emailtypes.TemplateName]*template.Template)
 	fis, err := os.ReadDir(filepath.Clean(baseDir))
 	if err != nil {
@@ -45,7 +45,7 @@ func NewStore(baseDir string, templates []emailtypes.TemplateName, logger *slog.
 
 		t, err := parseTemplateFile(filepath.Join(baseDir, fi.Name()), templateName)
 		if err != nil {
-			logger.Error("failed to parse template file", "template", templateName, "path", filepath.Join(baseDir, fi.Name()), "error", err)
+			logger.ErrorContext(ctx, "failed to parse template file", "template", templateName, "path", filepath.Join(baseDir, fi.Name()), "error", err)
 			continue
 		}
 
@@ -54,7 +54,7 @@ func NewStore(baseDir string, templates []emailtypes.TemplateName, logger *slog.
 	}
 
 	if err := checkMissingTemplates(templates, foundTemplates); err != nil {
-		logger.Error("some templates are missing", "error", err)
+		logger.ErrorContext(ctx, "some templates are missing", "error", err)
 	}
 
 	return &store{fs: fs}, nil

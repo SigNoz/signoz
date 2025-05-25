@@ -125,86 +125,86 @@ func validateConfig(config Config) error {
 
 func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags DeprecatedFlags) {
 	if os.Getenv("SIGNOZ_LOCAL_DB_PATH") != "" {
-		fmt.Println("[Deprecated] env SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.")
+		fmt.Println("[Deprecated] env SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.") //nolint:forbidigo
 		config.SQLStore.Sqlite.Path = os.Getenv("SIGNOZ_LOCAL_DB_PATH")
 	}
 
 	if os.Getenv("CONTEXT_TIMEOUT") != "" {
-		fmt.Println("[Deprecated] env CONTEXT_TIMEOUT is deprecated and scheduled for removal. Please use SIGNOZ_APISERVER_TIMEOUT_DEFAULT instead.")
+		fmt.Println("[Deprecated] env CONTEXT_TIMEOUT is deprecated and scheduled for removal. Please use SIGNOZ_APISERVER_TIMEOUT_DEFAULT instead.") //nolint:forbidigo
 		contextTimeoutDuration, err := time.ParseDuration(os.Getenv("CONTEXT_TIMEOUT") + "s")
 		if err == nil {
 			config.APIServer.Timeout.Default = contextTimeoutDuration
 		} else {
-			fmt.Println("Error parsing CONTEXT_TIMEOUT, using default value of 60s")
+			fmt.Println("Error parsing CONTEXT_TIMEOUT, using default value of 60s") //nolint:forbidigo
 		}
 	}
 
 	if os.Getenv("CONTEXT_TIMEOUT_MAX_ALLOWED") != "" {
-		fmt.Println("[Deprecated] env CONTEXT_TIMEOUT_MAX_ALLOWED is deprecated and scheduled for removal. Please use SIGNOZ_APISERVER_TIMEOUT_MAX instead.")
+		fmt.Println("[Deprecated] env CONTEXT_TIMEOUT_MAX_ALLOWED is deprecated and scheduled for removal. Please use SIGNOZ_APISERVER_TIMEOUT_MAX instead.") //nolint:forbidigo
 
 		contextTimeoutDuration, err := time.ParseDuration(os.Getenv("CONTEXT_TIMEOUT_MAX_ALLOWED") + "s")
 		if err == nil {
 			config.APIServer.Timeout.Max = contextTimeoutDuration
 		} else {
-			fmt.Println("Error parsing CONTEXT_TIMEOUT_MAX_ALLOWED, using default value of 600s")
+			fmt.Println("Error parsing CONTEXT_TIMEOUT_MAX_ALLOWED, using default value of 600s") //nolint:forbidigo
 		}
 	}
 
 	if os.Getenv("STORAGE") != "" {
-		fmt.Println("[Deprecated] env STORAGE is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_PROVIDER instead.")
+		fmt.Println("[Deprecated] env STORAGE is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_PROVIDER instead.") //nolint:forbidigo
 		config.TelemetryStore.Provider = os.Getenv("STORAGE")
 	}
 
 	if os.Getenv("ClickHouseUrl") != "" {
-		fmt.Println("[Deprecated] env ClickHouseUrl is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN instead.")
+		fmt.Println("[Deprecated] env ClickHouseUrl is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN instead.") //nolint:forbidigo
 		config.TelemetryStore.Clickhouse.DSN = os.Getenv("ClickHouseUrl")
 	}
 
 	if deprecatedFlags.MaxIdleConns != 50 {
-		fmt.Println("[Deprecated] flag --max-idle-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS instead.")
+		fmt.Println("[Deprecated] flag --max-idle-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS instead.") //nolint:forbidigo
 		config.TelemetryStore.Connection.MaxIdleConns = deprecatedFlags.MaxIdleConns
 	}
 
 	if deprecatedFlags.MaxOpenConns != 100 {
-		fmt.Println("[Deprecated] flag --max-open-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS instead.")
+		fmt.Println("[Deprecated] flag --max-open-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS instead.") //nolint:forbidigo
 		config.TelemetryStore.Connection.MaxOpenConns = deprecatedFlags.MaxOpenConns
 	}
 
 	if deprecatedFlags.DialTimeout != 5*time.Second {
-		fmt.Println("[Deprecated] flag --dial-timeout is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead.")
+		fmt.Println("[Deprecated] flag --dial-timeout is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead.") //nolint:forbidigo
 		config.TelemetryStore.Connection.DialTimeout = deprecatedFlags.DialTimeout
 	}
 
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
-		fmt.Println("[Deprecated] env ALERTMANAGER_API_PREFIX is deprecated and scheduled for removal. Please use SIGNOZ_ALERTMANAGER_LEGACY_API__URL instead.")
+		fmt.Println("[Deprecated] env ALERTMANAGER_API_PREFIX is deprecated and scheduled for removal. Please use SIGNOZ_ALERTMANAGER_LEGACY_API__URL instead.") //nolint:forbidigo
 		u, err := url.Parse(os.Getenv("ALERTMANAGER_API_PREFIX"))
 		if err != nil {
-			fmt.Println("Error parsing ALERTMANAGER_API_PREFIX, using default value")
+			fmt.Println("Error parsing ALERTMANAGER_API_PREFIX, using default value") //nolint:forbidigo
 		} else {
 			config.Alertmanager.Legacy.ApiURL = u
 		}
 	}
 
 	if os.Getenv("ALERTMANAGER_API_CHANNEL_PATH") != "" {
-		fmt.Println("[Deprecated] env ALERTMANAGER_API_CHANNEL_PATH is deprecated and scheduled for complete removal.")
+		fmt.Println("[Deprecated] env ALERTMANAGER_API_CHANNEL_PATH is deprecated and scheduled for complete removal.") //nolint:forbidigo
 	}
 
 	if deprecatedFlags.Config != "" {
-		fmt.Println("[Deprecated] flag --config is deprecated for passing prometheus config. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.")
+		fmt.Println("[Deprecated] flag --config is deprecated for passing prometheus config. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.") //nolint:forbidigo
 	}
 
 	if os.Getenv("INVITE_EMAIL_TEMPLATE") != "" {
-		fmt.Println("[Deprecated] env INVITE_EMAIL_TEMPLATE is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_TEMPLATES_DIRECTORY instead.")
+		fmt.Println("[Deprecated] env INVITE_EMAIL_TEMPLATE is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_TEMPLATES_DIRECTORY instead.") //nolint:forbidigo
 		config.Emailing.Templates.Directory = path.Dir(os.Getenv("INVITE_EMAIL_TEMPLATE"))
 	}
 
 	if os.Getenv("SMTP_ENABLED") != "" {
-		fmt.Println("[Deprecated] env SMTP_ENABLED is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ENABLED instead.")
+		fmt.Println("[Deprecated] env SMTP_ENABLED is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ENABLED instead.") //nolint:forbidigo
 		config.Emailing.Enabled = os.Getenv("SMTP_ENABLED") == "true"
 	}
 
 	if os.Getenv("SMTP_HOST") != "" {
-		fmt.Println("[Deprecated] env SMTP_HOST is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ADDRESS instead.")
+		fmt.Println("[Deprecated] env SMTP_HOST is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ADDRESS instead.") //nolint:forbidigo
 		if os.Getenv("SMTP_PORT") != "" {
 			config.Emailing.SMTP.Address = os.Getenv("SMTP_HOST") + ":" + os.Getenv("SMTP_PORT")
 		} else {
@@ -213,21 +213,21 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 	}
 
 	if os.Getenv("SMTP_PORT") != "" {
-		fmt.Println("[Deprecated] env SMTP_PORT is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ADDRESS instead.")
+		fmt.Println("[Deprecated] env SMTP_PORT is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_ADDRESS instead.") //nolint:forbidigo
 	}
 
 	if os.Getenv("SMTP_USERNAME") != "" {
-		fmt.Println("[Deprecated] env SMTP_USERNAME is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_AUTH_USERNAME instead.")
+		fmt.Println("[Deprecated] env SMTP_USERNAME is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_AUTH_USERNAME instead.") //nolint:forbidigo
 		config.Emailing.SMTP.Auth.Username = os.Getenv("SMTP_USERNAME")
 	}
 
 	if os.Getenv("SMTP_PASSWORD") != "" {
-		fmt.Println("[Deprecated] env SMTP_PASSWORD is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_AUTH_PASSWORD instead.")
+		fmt.Println("[Deprecated] env SMTP_PASSWORD is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_AUTH_PASSWORD instead.") //nolint:forbidigo
 		config.Emailing.SMTP.Auth.Password = os.Getenv("SMTP_PASSWORD")
 	}
 
 	if os.Getenv("SMTP_FROM") != "" {
-		fmt.Println("[Deprecated] env SMTP_FROM is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_FROM instead.")
+		fmt.Println("[Deprecated] env SMTP_FROM is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_FROM instead.") //nolint:forbidigo
 		config.Emailing.SMTP.From = os.Getenv("SMTP_FROM")
 	}
 }

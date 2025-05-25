@@ -79,7 +79,6 @@ func (provider *provider) Validate(ctx context.Context) error {
 	}
 
 	if len(organizations) == 0 {
-		provider.settings.Logger().DebugContext(ctx, "no organizations found, defaulting to basic plan")
 		err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 		if err != nil {
 			return err
@@ -129,15 +128,14 @@ func (provider *provider) GetActive(ctx context.Context, organizationID valuer.U
 }
 
 func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUID) error {
-	provider.settings.Logger().DebugContext(ctx, "license validation started for organizationID", "organizationID", organizationID.StringValue())
 	activeLicense, err := provider.GetActive(ctx, organizationID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		provider.settings.Logger().ErrorContext(ctx, "license validation failed", "organizationID", organizationID.StringValue())
+		provider.settings.Logger().ErrorContext(ctx, "license validation failed", "org_id", organizationID.StringValue())
 		return err
 	}
 
 	if err != nil && errors.Ast(err, errors.TypeNotFound) {
-		provider.settings.Logger().DebugContext(ctx, "no active license found, defaulting to basic plan", "organizationID", organizationID.StringValue())
+		provider.settings.Logger().DebugContext(ctx, "no active license found, defaulting to basic plan", "org_id", organizationID.StringValue())
 		err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 		if err != nil {
 			return err
@@ -147,10 +145,8 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 
 	data, err := provider.zeus.GetLicense(ctx, activeLicense.Key)
 	if err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to validate the license with upstream server", "licenseID", activeLicense.Key, "organizationID", organizationID.StringValue())
-
 		if time.Since(activeLicense.LastValidatedAt) > time.Duration(provider.config.FailureThreshold)*provider.config.PollInterval {
-			provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive poll intervals. defaulting to basic plan", "failureThreshold", provider.config.FailureThreshold, "licenseID", activeLicense.ID.StringValue(), "organizationID", organizationID.StringValue())
+			provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive poll intervals, defaulting to basic plan", "failure_threshold", provider.config.FailureThreshold, "license_id", activeLicense.ID.StringValue(), "org_id", organizationID.StringValue())
 			err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
 			if err != nil {
 				return err
@@ -165,7 +161,6 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity from license data")
 	}
 
-	provider.settings.Logger().DebugContext(ctx, "license validation completed successfully", "licenseID", activeLicense.ID, "organizationID", organizationID.StringValue())
 	updatedStorableLicense := licensetypes.NewStorableLicenseFromLicense(activeLicense)
 	err = provider.store.Update(ctx, organizationID, updatedStorableLicense)
 	if err != nil {
