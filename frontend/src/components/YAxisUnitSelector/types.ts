@@ -7,37 +7,69 @@ export interface YAxisUnitSelectorProps {
 }
 
 export enum UniversalYAxisUnit {
+	// Time
+	DAYS = 'd',
+	HOURS = 'h',
+	MINUTES = 'min',
 	SECONDS = 's',
 	MICROSECONDS = 'us',
 	MILLISECONDS = 'ms',
+	NANOSECONDS = 'ns',
 
+	// Data
 	BYTES = 'By',
 	KILOBYTES = 'kBy',
 	MEGABYTES = 'MBy',
 	GIGABYTES = 'GBy',
 	TERABYTES = 'TBy',
+	PETABYTES = 'PBy',
 
+	// Data Rate
 	BYTES_SECOND = 'By/s',
 	KILOBYTES_SECOND = 'kBy/s',
 	MEGABYTES_SECOND = 'MBy/s',
 	GIGABYTES_SECOND = 'GBy/s',
 	TERABYTES_SECOND = 'TBy/s',
+	PETABYTES_SECOND = 'PBy/s',
 
+	// Bits
 	BITS = 'bit',
 	KILOBITS = 'kbit',
 	MEGABITS = 'Mbit',
 	GIGABITS = 'Gbit',
 	TERABITS = 'Tbit',
+	PETABITS = 'Pbit',
 
+	// Bit Rate
 	BITS_SECOND = 'bit/s',
 	KILOBITS_SECOND = 'kbit/s',
 	MEGABITS_SECOND = 'Mbit/s',
 	GIGABITS_SECOND = 'Gbit/s',
 	TERABITS_SECOND = 'Tbit/s',
+	PETABITS_SECOND = 'Pbit/s',
 
+	// Count
 	COUNT = '{count}',
 	COUNT_SECOND = '{count}/s',
+	COUNT_MINUTE = '{count}/min',
 
+	// Operations
+	OPS_SECOND = '{ops}/s',
+	OPS_MINUTE = '{ops}/min',
+
+	// Requests
+	REQUESTS_SECOND = '{req}/s',
+
+	// Reads/Writes
+	READS_SECOND = '{read}/s',
+	WRITES_SECOND = '{write}/s',
+	READS_MINUTE = '{read}/min',
+	WRITES_MINUTE = '{write}/min',
+
+	// IO Operations
+	IOOPS_SECOND = '{iops}/s',
+
+	// Percent
 	PERCENT = '%',
 	NONE = '1',
 }
@@ -46,82 +78,206 @@ export enum YAxisUnit {
 	AWS_SECONDS = 'Seconds',
 	UCUM_SECONDS = 's',
 	OPEN_METRICS_SECONDS = 'seconds',
+
 	AWS_MICROSECONDS = 'Microseconds',
 	UCUM_MICROSECONDS = 'us',
 	OPEN_METRICS_MICROSECONDS = 'microseconds',
+
 	AWS_MILLISECONDS = 'Milliseconds',
 	UCUM_MILLISECONDS = 'ms',
 	OPEN_METRICS_MILLISECONDS = 'milliseconds',
+
 	AWS_BYTES = 'Bytes',
 	UCUM_BYTES = 'By',
 	OPEN_METRICS_BYTES = 'bytes',
+
 	AWS_KILOBYTES = 'Kilobytes',
 	UCUM_KILOBYTES = 'kBy',
 	OPEN_METRICS_KILOBYTES = 'kilobytes',
+
 	AWS_MEGABYTES = 'Megabytes',
 	UCUM_MEGABYTES = 'MBy',
 	OPEN_METRICS_MEGABYTES = 'megabytes',
+
 	AWS_GIGABYTES = 'Gigabytes',
 	UCUM_GIGABYTES = 'GBy',
 	OPEN_METRICS_GIGABYTES = 'gigabytes',
+
 	AWS_TERABYTES = 'Terabytes',
 	UCUM_TERABYTES = 'TBy',
 	OPEN_METRICS_TERABYTES = 'terabytes',
+
 	AWS_BYTES_SECOND = 'Bytes/Second',
 	UCUM_BYTES_SECOND = 'By/s',
 	OPEN_METRICS_BYTES_SECOND = 'bytes_per_second',
+
 	AWS_KILOBYTES_SECOND = 'Kilobytes/Second',
 	UCUM_KILOBYTES_SECOND = 'kBy/s',
 	OPEN_METRICS_KILOBYTES_SECOND = 'kilobytes_per_second',
+
 	AWS_MEGABYTES_SECOND = 'Megabytes/Second',
 	UCUM_MEGABYTES_SECOND = 'MBy/s',
 	OPEN_METRICS_MEGABYTES_SECOND = 'megabytes_per_second',
+
 	AWS_GIGABYTES_SECOND = 'Gigabytes/Second',
 	UCUM_GIGABYTES_SECOND = 'GBy/s',
 	OPEN_METRICS_GIGABYTES_SECOND = 'gigabytes_per_second',
+
 	AWS_TERABYTES_SECOND = 'Terabytes/Second',
 	UCUM_TERABYTES_SECOND = 'TBy/s',
 	OPEN_METRICS_TERABYTES_SECOND = 'terabytes_per_second',
+
 	AWS_BITS = 'Bits',
 	UCUM_BITS = 'bit',
 	OPEN_METRICS_BITS = 'bits',
+
 	AWS_KILOBITS = 'Kilobits',
 	UCUM_KILOBITS = 'kbit',
 	OPEN_METRICS_KILOBITS = 'kilobits',
+
 	AWS_MEGABITS = 'Megabits',
 	UCUM_MEGABITS = 'Mbit',
 	OPEN_METRICS_MEGABITS = 'megabits',
+
 	AWS_GIGABITS = 'Gigabits',
 	UCUM_GIGABITS = 'Gbit',
 	OPEN_METRICS_GIGABITS = 'gigabits',
+
 	AWS_TERABITS = 'Terabits',
 	UCUM_TERABITS = 'Tbit',
 	OPEN_METRICS_TERABITS = 'terabits',
+
+	UCUM_PETABITS = 'Pbit',
+
 	AWS_BITS_SECOND = 'Bits/Second',
 	UCUM_BITS_SECOND = 'bit/s',
 	OPEN_METRICS_BITS_SECOND = 'bits_per_second',
+
 	AWS_KILOBITS_SECOND = 'Kilobits/Second',
 	UCUM_KILOBITS_SECOND = 'kbit/s',
 	OPEN_METRICS_KILOBITS_SECOND = 'kilobits_per_second',
+
 	AWS_MEGABITS_SECOND = 'Megabits/Second',
 	UCUM_MEGABITS_SECOND = 'Mbit/s',
 	OPEN_METRICS_MEGABITS_SECOND = 'megabits_per_second',
+
 	AWS_GIGABITS_SECOND = 'Gigabits/Second',
 	UCUM_GIGABITS_SECOND = 'Gbit/s',
 	OPEN_METRICS_GIGABITS_SECOND = 'gigabits_per_second',
+
 	AWS_TERABITS_SECOND = 'Terabits/Second',
 	UCUM_TERABITS_SECOND = 'Tbit/s',
 	OPEN_METRICS_TERABITS_SECOND = 'terabits_per_second',
+
 	AWS_COUNT = 'Count',
 	UCUM_COUNT = '{count}',
 	OPEN_METRICS_COUNT = 'count',
+
 	AWS_COUNT_SECOND = 'Count/Second',
 	UCUM_COUNT_SECOND = '{count}/s',
 	OPEN_METRICS_COUNT_SECOND = 'count_per_second',
+
 	AWS_PERCENT = 'Percent',
 	UCUM_PERCENT = '%',
 	OPEN_METRICS_PERCENT = 'ratio',
+
 	AWS_NONE = 'None',
 	UCUM_NONE = '1',
 	OPEN_METRICS_NONE = 'none',
+
+	UCUM_NANOSECONDS = 'ns',
+	OPEN_METRICS_NANOSECONDS = 'nanoseconds',
+
+	UCUM_MINUTES = 'min',
+	OPEN_METRICS_MINUTES = 'minutes',
+
+	UCUM_HOURS = 'h',
+	OPEN_METRICS_HOURS = 'hours',
+
+	UCUM_DAYS = 'd',
+	OPEN_METRICS_DAYS = 'days',
+
+	UCUM_KIBIBYTES = 'KiBy',
+	OPEN_METRICS_KIBIBYTES = 'kibibytes',
+
+	UCUM_MEBIBYTES = 'MiBy',
+	OPEN_METRICS_MEBIBYTES = 'mebibytes',
+
+	UCUM_GIBIBYTES = 'GiBy',
+	OPEN_METRICS_GIBIBYTES = 'gibibytes',
+
+	UCUM_TEBIBYTES = 'TiBy',
+	OPEN_METRICS_TEBIBYTES = 'tebibytes',
+
+	UCUM_PEBIBYTES = 'PiBy',
+	OPEN_METRICS_PEBIBYTES = 'pebibytes',
+
+	UCUM_KIBIBYTES_SECOND = 'KiBy/s',
+	OPEN_METRICS_KIBIBYTES_SECOND = 'kibibytes_per_second',
+
+	UCUM_KIBIBITS_SECOND = 'Kibit/s',
+	OPEN_METRICS_KIBIBITS_SECOND = 'kibibits_per_second',
+
+	UCUM_MEBIBYTES_SECOND = 'MiBy/s',
+	OPEN_METRICS_MEBIBYTES_SECOND = 'mebibytes_per_second',
+
+	UCUM_MEBIBITS_SECOND = 'Mibit/s',
+	OPEN_METRICS_MEBIBITS_SECOND = 'mebibits_per_second',
+
+	UCUM_GIBIBYTES_SECOND = 'GiBy/s',
+	OPEN_METRICS_GIBIBYTES_SECOND = 'gibibytes_per_second',
+
+	UCUM_GIBIBITS_SECOND = 'Gibit/s',
+	OPEN_METRICS_GIBIBITS_SECOND = 'gibibits_per_second',
+
+	UCUM_TEBIBYTES_SECOND = 'TiBy/s',
+	OPEN_METRICS_TEBIBYTES_SECOND = 'tebibytes_per_second',
+
+	UCUM_TEBIBITS_SECOND = 'Tibit/s',
+	OPEN_METRICS_TEBIBITS_SECOND = 'tebibits_per_second',
+
+	UCUM_PEBIBYTES_SECOND = 'PiBy/s',
+	OPEN_METRICS_PEBIBYTES_SECOND = 'pebibytes_per_second',
+
+	UCUM_PEBIBITS_SECOND = 'Pibit/s',
+	OPEN_METRICS_PEBIBITS_SECOND = 'pebibits_per_second',
+
+	UCUM_TRUE_FALSE = '{bool}',
+	OPEN_METRICS_TRUE_FALSE = 'boolean_true_false',
+
+	UCUM_YES_NO = '{bool}',
+	OPEN_METRICS_YES_NO = 'boolean_yes_no',
+
+	UCUM_COUNTS_SECOND = '{count}/s',
+	OPEN_METRICS_COUNTS_SECOND = 'counts_per_second',
+
+	UCUM_OPS_SECOND = '{ops}/s',
+	OPEN_METRICS_OPS_SECOND = 'ops_per_second',
+
+	UCUM_REQUESTS_SECOND = '{requests}/s',
+	OPEN_METRICS_REQUESTS_SECOND = 'requests_per_second',
+
+	UCUM_READS_SECOND = '{reads}/s',
+	OPEN_METRICS_READS_SECOND = 'reads_per_second',
+
+	UCUM_WRITES_SECOND = '{writes}/s',
+	OPEN_METRICS_WRITES_SECOND = 'writes_per_second',
+
+	UCUM_IOPS_SECOND = '{iops}/s',
+	OPEN_METRICS_IOPS_SECOND = 'io_ops_per_second',
+
+	UCUM_COUNTS_MINUTE = '{count}/min',
+	OPEN_METRICS_COUNTS_MINUTE = 'counts_per_minute',
+
+	UCUM_OPS_MINUTE = '{ops}/min',
+	OPEN_METRICS_OPS_MINUTE = 'ops_per_minute',
+
+	UCUM_READS_MINUTE = '{reads}/min',
+	OPEN_METRICS_READS_MINUTE = 'reads_per_minute',
+
+	UCUM_WRITES_MINUTE = '{writes}/min',
+	OPEN_METRICS_WRITES_MINUTE = 'writes_per_minute',
+
+	UCUM_PETABYTES = 'PBy',
+	OPEN_METRICS_PETABYTES = 'petabytes',
 }
