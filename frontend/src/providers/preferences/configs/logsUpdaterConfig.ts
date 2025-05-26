@@ -44,13 +44,22 @@ const getLogsUpdaterConfig = (
 		}
 	},
 	updateFormatting: (newFormatting: FormattingOptions, mode: string): void => {
-		// Always update URL
-		redirectWithOptionsData({
-			...defaultOptionsQuery,
-			...newFormatting,
-		});
+		if (mode === 'savedView') {
+			setSavedViewPreferences((prev) => {
+				if (!prev) return { columns: [], formatting: newFormatting };
+				return {
+					...prev,
+					formatting: newFormatting,
+				};
+			});
+		}
 
 		if (mode === 'direct') {
+			redirectWithOptionsData({
+				...defaultOptionsQuery,
+				...newFormatting,
+			});
+
 			// Also update local storage
 			const local = JSON.parse(
 				localStorage.getItem(LOCALSTORAGE.LOGS_LIST_OPTIONS) || '{}',
