@@ -28,6 +28,10 @@ import {
 } from 'types/api/dashboard/getAll';
 import { v4 as generateUUID } from 'uuid';
 
+import {
+	buildDependencies,
+	buildDependencyGraph,
+} from '../../../DashboardVariablesSelection/util';
 import { variablePropsToPayloadVariables } from '../../../utils';
 import { TVariableMode } from '../types';
 import { LabelContainer, VariableItemRow } from './styles';
@@ -107,7 +111,8 @@ function VariableItem({
 	]);
 
 	const handleSave = (): void => {
-		const variable: IDashboardVariable = {
+		// Check for cyclic dependencies
+		const newVariable = {
 			name: variableName,
 			description: variableDescription,
 			type: queryType,
@@ -126,7 +131,21 @@ function VariableItem({
 			order: variableData.order,
 		};
 
-		onSave(mode, variable);
+		const allVariables = [...Object.values(existingVariables), newVariable];
+
+		const dependencies = buildDependencies(allVariables);
+		const { hasCycle, cycleNodes } = buildDependencyGraph(dependencies);
+
+		if (hasCycle) {
+			setErrorPreview(
+				`Cannot save: Circular dependency detected between variables: ${cycleNodes?.join(
+					' → ',
+				)}`,
+			);
+			return;
+		}
+
+		onSave(mode, newVariable);
 	};
 
 	// Fetches the preview values for the SQL variable query

@@ -5,6 +5,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
+import UserpilotRouteTracker from 'components/UserpilotRouteTracker/UserpilotRouteTracker';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
@@ -12,9 +13,9 @@ import AppLayout from 'container/AppLayout';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
+import { StatusCodes } from 'http-status-codes';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
@@ -40,14 +41,13 @@ import defaultRoutes, {
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
 	const {
-		licenses,
 		user,
 		isFetchingUser,
-		isFetchingLicenses,
 		isFetchingFeatureFlags,
 		trialInfo,
-		activeLicenseV3,
-		isFetchingActiveLicenseV3,
+		activeLicense,
+		isFetchingActiveLicense,
+		activeLicenseFetchError,
 		userFetchError,
 		featureFlagsFetchError,
 		isLoggedIn: isLoggedInState,
@@ -65,18 +65,18 @@ function App(): JSX.Element {
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
 			// wait for the required data to be loaded before doing init for anything!
-			if (!isFetchingActiveLicenseV3 && activeLicenseV3 && org) {
+			if (!isFetchingActiveLicense && activeLicense && org) {
 				const orgName =
 					org && Array.isArray(org) && org.length > 0 ? org[0].displayName : '';
 
-				const { name, email, role } = user;
+				const { displayName, email, role } = user;
 
 				const domain = extractDomain(email);
 				const hostNameParts = hostname.split('.');
 
 				const identifyPayload = {
 					email,
-					name,
+					name: displayName,
 					company_name: orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -105,7 +105,7 @@ function App(): JSX.Element {
 
 				Userpilot.identify(email, {
 					email,
-					name,
+					name: displayName,
 					orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -117,7 +117,7 @@ function App(): JSX.Element {
 
 				posthog?.identify(email, {
 					email,
-					name,
+					name: displayName,
 					orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -143,7 +143,7 @@ function App(): JSX.Element {
 				) {
 					window.cioanalytics.reset();
 					window.cioanalytics.identify(email, {
-						name: user.name,
+						name: user.displayName,
 						email,
 						role: user.role,
 					});
@@ -152,8 +152,8 @@ function App(): JSX.Element {
 		},
 		[
 			hostname,
-			isFetchingActiveLicenseV3,
-			activeLicenseV3,
+			isFetchingActiveLicense,
+			activeLicense,
 			org,
 			trialInfo?.trialConvertedToSubscription,
 		],
@@ -162,18 +162,17 @@ function App(): JSX.Element {
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		if (
-			!isFetchingLicenses &&
-			licenses &&
+			!isFetchingActiveLicense &&
+			(activeLicense || activeLicenseFetchError) &&
 			!isFetchingUser &&
 			user &&
 			!!user.email
 		) {
 			const isOnBasicPlan =
-				licenses.licenses?.some(
-					(license) =>
-						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-				) || licenses.licenses === null;
-
+				activeLicenseFetchError &&
+				[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
+					activeLicenseFetchError?.getHttpStatusCode(),
+				);
 			const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
 
 			if (isLoggedInState && user && user.id && user.email && !isIdentifiedUser) {
@@ -203,11 +202,12 @@ function App(): JSX.Element {
 	}, [
 		isLoggedInState,
 		user,
-		licenses,
 		isCloudUser,
 		isEnterpriseSelfHostedUser,
-		isFetchingLicenses,
+		isFetchingActiveLicense,
 		isFetchingUser,
+		activeLicense,
+		activeLicenseFetchError,
 	]);
 
 	useEffect(() => {
@@ -230,8 +230,7 @@ function App(): JSX.Element {
 		if (
 			!isFetchingFeatureFlags &&
 			(featureFlags || featureFlagsFetchError) &&
-			licenses &&
-			activeLicenseV3 &&
+			activeLicense &&
 			trialInfo
 		) {
 			let isChatSupportEnabled = false;
@@ -257,7 +256,7 @@ function App(): JSX.Element {
 				window.Intercom('boot', {
 					app_id: process.env.INTERCOM_APP_ID,
 					email: user?.email || '',
-					name: user?.name || '',
+					name: user?.displayName || '',
 				});
 			}
 		}
@@ -269,8 +268,7 @@ function App(): JSX.Element {
 		featureFlags,
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
-		licenses,
-		activeLicenseV3,
+		activeLicense,
 		trialInfo,
 		isCloudUser,
 		isEnterpriseSelfHostedUser,
@@ -332,7 +330,7 @@ function App(): JSX.Element {
 	// if the user is in logged in state
 	if (isLoggedInState) {
 		// if the setup calls are loading then return a spinner
-		if (isFetchingLicenses || isFetchingUser || isFetchingFeatureFlags) {
+		if (isFetchingActiveLicense || isFetchingUser || isFetchingFeatureFlags) {
 			return <Spinner tip="Loading..." />;
 		}
 
@@ -344,7 +342,11 @@ function App(): JSX.Element {
 		}
 
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
-		if ((!licenses || !user.email || !featureFlags) && !userFetchError) {
+		if (
+			(!activeLicense || !user.email || !featureFlags) &&
+			!userFetchError &&
+			!activeLicenseFetchError
+		) {
 			return <Spinner tip="Loading..." />;
 		}
 	}
@@ -354,6 +356,7 @@ function App(): JSX.Element {
 			<ConfigProvider theme={themeConfig}>
 				<Router history={history}>
 					<CompatRouter>
+						<UserpilotRouteTracker />
 						<NotificationProvider>
 							<PrivateRoute>
 								<ResourceProvider>

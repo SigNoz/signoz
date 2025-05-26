@@ -4,13 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +25,10 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	require.NoError(err)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationModule)
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore, providerSettings), nil, emailing, providerSettings)
+	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 
 	// should be able to generate connection url for
@@ -69,33 +75,36 @@ func TestAgentCheckIns(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationModule)
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore, providerSettings), nil, emailing, providerSettings)
+	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 
 	// An agent should be able to check in from a cloud account even
 	// if no connection url was requested (no account with agent's account id exists)
 	testAccountId1 := uuid.NewString()
 	testCloudAccountId1 := "546311234"
-	resp1, apiErr := controller.CheckInAsAgent(
+	resp1, err := controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
 			ID:        testAccountId1,
 			AccountID: testCloudAccountId1,
 		},
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 	require.Equal(testAccountId1, resp1.AccountId)
 	require.Equal(testCloudAccountId1, resp1.CloudAccountId)
 
 	// The agent should not be able to check in with a different
 	// cloud account id for the same account.
 	testCloudAccountId2 := "99999999"
-	_, apiErr = controller.CheckInAsAgent(
+	_, err = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
 			ID:        testAccountId1,
 			AccountID: testCloudAccountId2,
 		},
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 
 	// The agent should not be able to check-in with a particular cloud account id
 	// if another connected AccountRecord exists for same cloud account
@@ -110,13 +119,13 @@ func TestAgentCheckIns(t *testing.T) {
 	require.Nil(existingConnected.RemovedAt)
 
 	testAccountId2 := uuid.NewString()
-	_, apiErr = controller.CheckInAsAgent(
+	_, err = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
 			ID:        testAccountId2,
 			AccountID: testCloudAccountId1,
 		},
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 
 	// After disconnecting existing account record, the agent should be able to
 	// connected for a particular cloud account id
@@ -131,22 +140,22 @@ func TestAgentCheckIns(t *testing.T) {
 	require.NotNil(apiErr)
 	require.Equal(model.ErrorNotFound, apiErr.Type())
 
-	_, apiErr = controller.CheckInAsAgent(
+	_, err = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
 			ID:        testAccountId2,
 			AccountID: testCloudAccountId1,
 		},
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 
 	// should be able to keep checking in
-	_, apiErr = controller.CheckInAsAgent(
+	_, err = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
 			ID:        testAccountId2,
 			AccountID: testCloudAccountId1,
 		},
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 }
 
 func TestCantDisconnectNonExistentAccount(t *testing.T) {
@@ -156,7 +165,10 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	require.NoError(err)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationModule)
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore, providerSettings), nil, emailing, providerSettings)
+	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 
 	// Attempting to disconnect a non-existent account should return error
@@ -175,7 +187,10 @@ func TestConfigureService(t *testing.T) {
 	require.NoError(err)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationModule)
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore, providerSettings), nil, emailing, providerSettings)
+	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 
 	// create a connected account
@@ -194,10 +209,10 @@ func TestConfigureService(t *testing.T) {
 	testSvcId := svcListResp.Services[0].Id
 	require.Nil(svcListResp.Services[0].Config)
 
-	svcDetails, apiErr := controller.GetServiceDetails(
+	svcDetails, err := controller.GetServiceDetails(
 		context.TODO(), user.OrgID, "aws", testSvcId, &testCloudAccountId,
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 	require.Equal(testSvcId, svcDetails.Id)
 	require.Nil(svcDetails.Config)
 
@@ -207,20 +222,20 @@ func TestConfigureService(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	updateSvcConfigResp, apiErr := controller.UpdateServiceConfig(
-		context.TODO(), user.OrgID, "aws", testSvcId, UpdateServiceConfigRequest{
+	updateSvcConfigResp, err := controller.UpdateServiceConfig(
+		context.TODO(), user.OrgID, "aws", testSvcId, &UpdateServiceConfigRequest{
 			CloudAccountId: testCloudAccountId,
 			Config:         testSvcConfig,
 		},
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 	require.Equal(testSvcId, updateSvcConfigResp.Id)
 	require.Equal(testSvcConfig, updateSvcConfigResp.Config)
 
-	svcDetails, apiErr = controller.GetServiceDetails(
+	svcDetails, err = controller.GetServiceDetails(
 		context.TODO(), user.OrgID, "aws", testSvcId, &testCloudAccountId,
 	)
-	require.Nil(apiErr)
+	require.Nil(err)
 	require.Equal(testSvcId, svcDetails.Id)
 	require.Equal(testSvcConfig, *svcDetails.Config)
 
@@ -240,33 +255,33 @@ func TestConfigureService(t *testing.T) {
 	)
 	require.Nil(apiErr)
 
-	_, apiErr = controller.UpdateServiceConfig(
+	_, err = controller.UpdateServiceConfig(
 		context.TODO(), user.OrgID, "aws", testSvcId,
-		UpdateServiceConfigRequest{
+		&UpdateServiceConfigRequest{
 			CloudAccountId: testCloudAccountId,
 			Config:         testSvcConfig,
 		},
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 
 	// should not be able to configure a service for a cloud account id that is not connected yet
-	_, apiErr = controller.UpdateServiceConfig(
+	_, err = controller.UpdateServiceConfig(
 		context.TODO(), user.OrgID, "aws", testSvcId,
-		UpdateServiceConfigRequest{
+		&UpdateServiceConfigRequest{
 			CloudAccountId: "9999999999",
 			Config:         testSvcConfig,
 		},
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 
 	// should not be able to set config for an unsupported service
-	_, apiErr = controller.UpdateServiceConfig(
-		context.TODO(), user.OrgID, "aws", "bad-service", UpdateServiceConfigRequest{
+	_, err = controller.UpdateServiceConfig(
+		context.TODO(), user.OrgID, "aws", "bad-service", &UpdateServiceConfigRequest{
 			CloudAccountId: testCloudAccountId,
 			Config:         testSvcConfig,
 		},
 	)
-	require.NotNil(apiErr)
+	require.NotNil(err)
 
 }
 
@@ -290,7 +305,7 @@ func makeTestConnectedAccount(t *testing.T, orgId string, controller *Controller
 	return acc
 }
 
-func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
 	organization := types.NewOrganization("test")
@@ -299,17 +314,18 @@ func createTestUser(organizationModule organization.Module) (*types.User, *model
 		return nil, model.InternalError(err)
 	}
 
-	userId := uuid.NewString()
-	return dao.DB().CreateUser(
-		ctx,
-		&types.User{
-			ID:       userId,
-			Name:     "test",
-			Email:    userId[:8] + "test@test.com",
-			Password: "test",
-			OrgID:    organization.ID.StringValue(),
-			Role:     authtypes.RoleAdmin.String(),
-		},
-		true,
-	)
+	random, err := utils.RandomHex(3)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	user, err := types.NewUser("test", random+"test@test.com", types.RoleAdmin.String(), organization.ID.StringValue())
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+	err = userModule.CreateUser(ctx, user)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+	return user, nil
 }

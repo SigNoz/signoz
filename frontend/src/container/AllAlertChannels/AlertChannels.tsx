@@ -10,7 +10,7 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
-import { Channels, PayloadProps } from 'types/api/channels/getAll';
+import { Channels } from 'types/api/channels/getAll';
 
 import Delete from './Delete';
 
@@ -68,7 +68,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 }
 
 interface AlertChannelsProps {
-	allChannels: PayloadProps;
+	allChannels: Channels[];
 }
 
 export default AlertChannels;

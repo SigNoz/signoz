@@ -1,12 +1,12 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Select, Spin } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PayloadProps } from 'types/api/channels/getAll';
+import { Channels } from 'types/api/channels/getAll';
+import APIError from 'types/api/error';
 
 import { StyledCreateChannelOption, StyledSelect } from './styles';
 
@@ -15,7 +15,10 @@ export interface ChannelSelectProps {
 	currentValue?: string[];
 	onSelectChannels: (s: string[]) => void;
 	onDropdownOpen: () => void;
-	channels: State<PayloadProps | undefined>;
+	isLoading: boolean;
+	channels: Channels[];
+	hasError: boolean;
+	error: APIError;
 	handleCreateNewChannels: () => void;
 }
 
@@ -25,6 +28,9 @@ function ChannelSelect({
 	onSelectChannels,
 	onDropdownOpen,
 	channels,
+	isLoading,
+	hasError,
+	error,
 	handleCreateNewChannels,
 }: ChannelSelectProps): JSX.Element | null {
 	// init namespace for translations
@@ -40,10 +46,10 @@ function ChannelSelect({
 		onSelectChannels(value);
 	};
 
-	if (channels.error && channels.errorMessage !== '') {
+	if (hasError) {
 		notifications.error({
-			message: 'Error',
-			description: channels.errorMessage,
+			message: error.getErrorCode(),
+			description: error.getErrorMessage(),
 		});
 	}
 
@@ -56,7 +62,7 @@ function ChannelSelect({
 	const renderOptions = (): ReactNode[] => {
 		const children: ReactNode[] = [];
 
-		if (!channels.loading && addNewChannelPermission) {
+		if (!isLoading && addNewChannelPermission) {
 			children.push(
 				<Select.Option key="add-new-channel" value="add-new-channel">
 					<StyledCreateChannelOption>
@@ -67,15 +73,11 @@ function ChannelSelect({
 			);
 		}
 
-		if (
-			channels.loading ||
-			channels.payload === undefined ||
-			channels.payload.length === 0
-		) {
+		if (isLoading || channels.length === 0) {
 			return children;
 		}
 
-		channels.payload.forEach((o) => {
+		channels.forEach((o) => {
 			children.push(
 				<Select.Option key={o.id} value={o.name}>
 					{o.name}
@@ -89,13 +91,13 @@ function ChannelSelect({
 	return (
 		<StyledSelect
 			disabled={disabled}
-			status={channels.error ? 'error' : ''}
+			status={hasError ? 'error' : ''}
 			mode="multiple"
 			style={{ width: '100%' }}
 			placeholder={t('placeholder_channel_select')}
 			data-testid="alert-channel-select"
 			value={currentValue}
-			notFoundContent={channels.loading && <Spin size="small" />}
+			notFoundContent={isLoading && <Spin size="small" />}
 			onDropdownVisibleChange={(open): void => {
 				if (open) {
 					onDropdownOpen();

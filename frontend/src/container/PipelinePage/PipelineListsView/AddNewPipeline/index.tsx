@@ -38,7 +38,7 @@ function AddNewPipeline({
 			id: v4(),
 			orderId: (currPipelineData?.length || 0) + 1,
 			createdAt: new Date().toISOString(),
-			createdBy: user?.name || '',
+			createdBy: user?.displayName || '',
 			name: values.name,
 			alias: values.name.replace(/\s/g, ''),
 			description: values.description,

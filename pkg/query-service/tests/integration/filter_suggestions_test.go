@@ -1,23 +1,26 @@
 package tests
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
-	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	"net/http"
 	"slices"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
-	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -267,6 +270,7 @@ type FilterSuggestionsTestBed struct {
 	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
+	userModule     user.Module
 }
 
 func (tb *FilterSuggestionsTestBed) GetQBFilterSuggestionsForLogs(
@@ -296,23 +300,21 @@ func (tb *FilterSuggestionsTestBed) GetQBFilterSuggestionsForLogs(
 func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	testDB := utils.NewQueryServiceDBForTests(t)
 
-	fm := featureManager.StartManager()
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
-	modules := signoz.NewModules(testDB)
-	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
+	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		Reader:       reader,
-		AppDao:       dao.DB(),
-		FeatureFlags: fm,
-		JWT:          jwt,
+		Reader: reader,
+		JWT:    jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
 			Handlers: signoz.NewHandlers(modules),
 		},
-		QuickFilters: quickFilterModule,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
@@ -320,13 +322,13 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 
 	router := app.NewRouter()
 	//add the jwt middleware
-	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	router.Use(middleware.NewAuth(jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
 	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterQueryRangeV3Routes(router, am)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
-	user, apiErr := createTestUser(organizationModule)
+	user, apiErr := createTestUser(organizationModule, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
@@ -343,6 +345,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
+		userModule:     modules.User,
 	}
 }
 
@@ -359,7 +362,7 @@ func (tb *FilterSuggestionsTestBed) QSGetRequest(
 	}
 
 	req, err := AuthenticatedRequestForTest(
-		tb.testUser, path, nil,
+		tb.userModule, tb.testUser, path, nil,
 	)
 	if err != nil {
 		tb.t.Fatalf("couldn't create authenticated test request: %v", err)

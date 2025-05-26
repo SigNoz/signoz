@@ -11,7 +11,7 @@ import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
@@ -27,6 +27,7 @@ import { GridCardGraphProps } from './types';
 import { isDataAvailableByPanelType } from './utils';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function GridCardGraph({
 	widget,
 	headerMenuList = [MenuItemKeys.View],
@@ -49,6 +50,7 @@ function GridCardGraph({
 	analyticsEvent,
 	customTimeRange,
 	customOnRowClick,
+	customTimeRangeWindowForCoRelation,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -187,12 +189,23 @@ function GridCardGraph({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [updatedQuery]);
 
+	const isLogsQuery = useMemo(
+		() =>
+			requestData.query.builder.queryData.every(
+				(query) => query.dataSource === DataSource.LOGS,
+			),
+		[requestData.query],
+	);
+
 	const queryResponse = useGetQueryRange(
 		{
 			...requestData,
 			variables: getDashboardVariables(variables),
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
-			globalSelectedInterval,
+			globalSelectedInterval:
+				widget.panelTypes === PANEL_TYPES.LIST && isLogsQuery
+					? 'custom'
+					: globalSelectedInterval,
 			start: customTimeRange?.startTime || start,
 			end: customTimeRange?.endTime || end,
 		},
@@ -289,6 +302,7 @@ function GridCardGraph({
 					customSeries={customSeries}
 					customErrorMessage={isInternalServerError ? customErrorMessage : undefined}
 					customOnRowClick={customOnRowClick}
+					customTimeRangeWindowForCoRelation={customTimeRangeWindowForCoRelation}
 				/>
 			)}
 		</div>
@@ -303,6 +317,7 @@ GridCardGraph.defaultProps = {
 	headerMenuList: [MenuItemKeys.View],
 	version: 'v3',
 	analyticsEvent: undefined,
+	customTimeRangeWindowForCoRelation: undefined,
 };
 
 export default memo(GridCardGraph);
