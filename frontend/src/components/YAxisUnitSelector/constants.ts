@@ -139,6 +139,71 @@ export const UniversalYAxisUnitMappings: Record<
 		YAxisUnit.UCUM_NONE,
 		YAxisUnit.OPEN_METRICS_NONE,
 	]),
+	[UniversalYAxisUnit.DAYS]: new Set([
+		YAxisUnit.UCUM_DAYS,
+		YAxisUnit.OPEN_METRICS_DAYS,
+	]),
+	[UniversalYAxisUnit.HOURS]: new Set([
+		YAxisUnit.UCUM_HOURS,
+		YAxisUnit.OPEN_METRICS_HOURS,
+	]),
+	[UniversalYAxisUnit.MINUTES]: new Set([
+		YAxisUnit.UCUM_MINUTES,
+		YAxisUnit.OPEN_METRICS_MINUTES,
+	]),
+	[UniversalYAxisUnit.NANOSECONDS]: new Set([
+		YAxisUnit.UCUM_NANOSECONDS,
+		YAxisUnit.OPEN_METRICS_NANOSECONDS,
+	]),
+	[UniversalYAxisUnit.PETABYTES]: new Set([
+		YAxisUnit.UCUM_PEBIBYTES,
+		YAxisUnit.OPEN_METRICS_PEBIBYTES,
+	]),
+	[UniversalYAxisUnit.PETABYTES_SECOND]: new Set([
+		YAxisUnit.UCUM_PEBIBYTES_SECOND,
+		YAxisUnit.OPEN_METRICS_PEBIBYTES_SECOND,
+	]),
+	[UniversalYAxisUnit.PETABITS]: new Set([YAxisUnit.UCUM_PETABITS]),
+	[UniversalYAxisUnit.PETABITS_SECOND]: new Set([
+		YAxisUnit.UCUM_PEBIBITS_SECOND,
+		YAxisUnit.OPEN_METRICS_PEBIBITS_SECOND,
+	]),
+	[UniversalYAxisUnit.COUNT_MINUTE]: new Set([
+		YAxisUnit.UCUM_COUNTS_MINUTE,
+		YAxisUnit.OPEN_METRICS_COUNTS_MINUTE,
+	]),
+	[UniversalYAxisUnit.OPS_SECOND]: new Set([
+		YAxisUnit.UCUM_OPS_SECOND,
+		YAxisUnit.OPEN_METRICS_OPS_SECOND,
+	]),
+	[UniversalYAxisUnit.OPS_MINUTE]: new Set([
+		YAxisUnit.UCUM_OPS_MINUTE,
+		YAxisUnit.OPEN_METRICS_OPS_MINUTE,
+	]),
+	[UniversalYAxisUnit.REQUESTS_SECOND]: new Set([
+		YAxisUnit.UCUM_REQUESTS_SECOND,
+		YAxisUnit.OPEN_METRICS_REQUESTS_SECOND,
+	]),
+	[UniversalYAxisUnit.READS_SECOND]: new Set([
+		YAxisUnit.UCUM_READS_SECOND,
+		YAxisUnit.OPEN_METRICS_READS_SECOND,
+	]),
+	[UniversalYAxisUnit.WRITES_SECOND]: new Set([
+		YAxisUnit.UCUM_WRITES_SECOND,
+		YAxisUnit.OPEN_METRICS_WRITES_SECOND,
+	]),
+	[UniversalYAxisUnit.READS_MINUTE]: new Set([
+		YAxisUnit.UCUM_READS_MINUTE,
+		YAxisUnit.OPEN_METRICS_READS_MINUTE,
+	]),
+	[UniversalYAxisUnit.WRITES_MINUTE]: new Set([
+		YAxisUnit.UCUM_WRITES_MINUTE,
+		YAxisUnit.OPEN_METRICS_WRITES_MINUTE,
+	]),
+	[UniversalYAxisUnit.IOOPS_SECOND]: new Set([
+		YAxisUnit.UCUM_IOPS_SECOND,
+		YAxisUnit.OPEN_METRICS_IOPS_SECOND,
+	]),
 };
 
 export const Y_AXIS_UNIT_NAMES: Record<UniversalYAxisUnit, string> = {
@@ -169,6 +234,23 @@ export const Y_AXIS_UNIT_NAMES: Record<UniversalYAxisUnit, string> = {
 	[UniversalYAxisUnit.COUNT_SECOND]: 'Count/sec',
 	[UniversalYAxisUnit.PERCENT]: 'Percent (%)',
 	[UniversalYAxisUnit.NONE]: 'None',
+	[UniversalYAxisUnit.DAYS]: 'Days',
+	[UniversalYAxisUnit.HOURS]: 'Hours',
+	[UniversalYAxisUnit.MINUTES]: 'Minutes',
+	[UniversalYAxisUnit.NANOSECONDS]: 'Nanoseconds',
+	[UniversalYAxisUnit.PETABYTES]: 'Petabytes',
+	[UniversalYAxisUnit.PETABYTES_SECOND]: 'Petabytes/sec',
+	[UniversalYAxisUnit.PETABITS]: 'Petabits',
+	[UniversalYAxisUnit.PETABITS_SECOND]: 'Petabits/sec',
+	[UniversalYAxisUnit.COUNT_MINUTE]: 'Count/min',
+	[UniversalYAxisUnit.OPS_SECOND]: 'Ops/sec',
+	[UniversalYAxisUnit.OPS_MINUTE]: 'Ops/min',
+	[UniversalYAxisUnit.REQUESTS_SECOND]: 'Requests/sec',
+	[UniversalYAxisUnit.READS_SECOND]: 'Reads/sec',
+	[UniversalYAxisUnit.WRITES_SECOND]: 'Writes/sec',
+	[UniversalYAxisUnit.READS_MINUTE]: 'Reads/min',
+	[UniversalYAxisUnit.WRITES_MINUTE]: 'Writes/min',
+	[UniversalYAxisUnit.IOOPS_SECOND]: 'IOPS/sec',
 };
 
 export const Y_AXIS_CATEGORIES = [
@@ -186,6 +268,22 @@ export const Y_AXIS_CATEGORIES = [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MICROSECONDS],
 				id: UniversalYAxisUnit.MICROSECONDS,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.NANOSECONDS],
+				id: UniversalYAxisUnit.NANOSECONDS,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MINUTES],
+				id: UniversalYAxisUnit.MINUTES,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.HOURS],
+				id: UniversalYAxisUnit.HOURS,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.DAYS],
+				id: UniversalYAxisUnit.DAYS,
 			},
 		],
 	},
@@ -213,6 +311,10 @@ export const Y_AXIS_CATEGORIES = [
 				id: UniversalYAxisUnit.TERABYTES,
 			},
 			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PETABYTES],
+				id: UniversalYAxisUnit.PETABYTES,
+			},
+			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BITS],
 				id: UniversalYAxisUnit.BITS,
 			},
@@ -231,6 +333,10 @@ export const Y_AXIS_CATEGORIES = [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.TERABITS],
 				id: UniversalYAxisUnit.TERABITS,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PETABITS],
+				id: UniversalYAxisUnit.PETABITS,
 			},
 		],
 	},
@@ -258,6 +364,10 @@ export const Y_AXIS_CATEGORIES = [
 				id: UniversalYAxisUnit.TERABYTES_SECOND,
 			},
 			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PETABYTES_SECOND],
+				id: UniversalYAxisUnit.PETABYTES_SECOND,
+			},
+			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BITS_SECOND],
 				id: UniversalYAxisUnit.BITS_SECOND,
 			},
@@ -277,6 +387,10 @@ export const Y_AXIS_CATEGORIES = [
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.TERABITS_SECOND],
 				id: UniversalYAxisUnit.TERABITS_SECOND,
 			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PETABITS_SECOND],
+				id: UniversalYAxisUnit.PETABITS_SECOND,
+			},
 		],
 	},
 	{
@@ -289,6 +403,47 @@ export const Y_AXIS_CATEGORIES = [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.COUNT_SECOND],
 				id: UniversalYAxisUnit.COUNT_SECOND,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.COUNT_MINUTE],
+				id: UniversalYAxisUnit.COUNT_MINUTE,
+			},
+		],
+	},
+	{
+		name: 'Operations',
+		units: [
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.OPS_SECOND],
+				id: UniversalYAxisUnit.OPS_SECOND,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.OPS_MINUTE],
+				id: UniversalYAxisUnit.OPS_MINUTE,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.REQUESTS_SECOND],
+				id: UniversalYAxisUnit.REQUESTS_SECOND,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.READS_SECOND],
+				id: UniversalYAxisUnit.READS_SECOND,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.WRITES_SECOND],
+				id: UniversalYAxisUnit.WRITES_SECOND,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.READS_MINUTE],
+				id: UniversalYAxisUnit.READS_MINUTE,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.WRITES_MINUTE],
+				id: UniversalYAxisUnit.WRITES_MINUTE,
+			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.IOOPS_SECOND],
+				id: UniversalYAxisUnit.IOOPS_SECOND,
 			},
 		],
 	},
