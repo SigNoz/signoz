@@ -25,42 +25,49 @@ type Coordinator struct {
 	subscribers map[string][]OnChangeCallback
 }
 
+func getSubscriberKey(orgId string, hash string) string {
+	return orgId + hash
+}
+
 func onConfigSuccess(orgId string, agentId string, hash string) {
-	notifySubscribers(orgId, agentId, hash, nil)
+	key := getSubscriberKey(orgId, hash)
+	notifySubscribers(orgId, agentId, key, nil)
 }
 
 func onConfigFailure(orgId string, agentId string, hash string, errorMessage string) {
-	notifySubscribers(orgId, agentId, hash, fmt.Errorf(errorMessage))
+	key := getSubscriberKey(orgId, hash)
+	notifySubscribers(orgId, agentId, key, fmt.Errorf(errorMessage))
 }
 
 // OnSuccess listens to config changes and notifies subscribers
-func notifySubscribers(orgId string, agentId string, hash string, err error) {
+func notifySubscribers(orgId string, agentId string, key string, err error) {
 	// this method currently does not handle multi-agent scenario.
 	// as soon as a message is delivered, we release all the subscribers
-	// for a given hash
-	subs, ok := coordinator.subscribers[hash]
+	// for a given key
+	subs, ok := coordinator.subscribers[key]
 	if !ok {
 		return
 	}
 
 	for _, s := range subs {
-		s(orgId, agentId, hash, err)
+		s(orgId, agentId, key, err)
 	}
 
-	// delete all subscribers for this hash, assume future
+	// delete all subscribers for this key, assume future
 	// notifies will be disabled. the first response is processed
-	delete(coordinator.subscribers, hash)
+	delete(coordinator.subscribers, key)
 }
 
 // callers subscribe to this function to listen on config change requests
-func ListenToConfigUpdate(agentId string, hash string, ss OnChangeCallback) {
+func ListenToConfigUpdate(orgId string, agentId string, hash string, ss OnChangeCallback) {
 	coordinator.mutex.Lock()
 	defer coordinator.mutex.Unlock()
 
-	if subs, ok := coordinator.subscribers[hash]; ok {
+	key := getSubscriberKey(orgId, hash)
+	if subs, ok := coordinator.subscribers[key]; ok {
 		subs = append(subs, ss)
-		coordinator.subscribers[hash] = subs
+		coordinator.subscribers[key] = subs
 	} else {
-		coordinator.subscribers[hash] = []OnChangeCallback{ss}
+		coordinator.subscribers[key] = []OnChangeCallback{ss}
 	}
 }

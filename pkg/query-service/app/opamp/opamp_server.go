@@ -147,6 +147,6 @@ func Ready() bool {
 	return true
 }
 
-func Subscribe(agentId string, hash string, f model.OnChangeCallback) {
-	model.ListenToConfigUpdate(agentId, hash, f)
+func Subscribe(orgId string, agentId string, hash string, f model.OnChangeCallback) {
+	model.ListenToConfigUpdate(orgId, agentId, hash, f)
 }

@@ -140,8 +140,8 @@ func (r *Repo) insertConfig(
 	defer func() {
 		if fnerr != nil {
 			// remove all the damage (invalid rows from db)
-			r.store.BunDB().NewDelete().Model((*types.AgentConfigVersion)(nil)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
-			r.store.BunDB().NewDelete().Model((*types.AgentConfigElement)(nil)).Where("version_id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
+			r.store.BunDB().NewDelete().Model(new(types.AgentConfigVersion)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
+			r.store.BunDB().NewDelete().Model(new(types.AgentConfigElement)).Where("version_id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
 		}
 	}()
 
@@ -195,7 +195,7 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 	lastconf string) *model.ApiError {
 
 	_, err := r.store.BunDB().NewUpdate().
-		Model((*types.AgentConfigVersion)(nil)).
+		Model(new(types.AgentConfigVersion)).
 		Set("deploy_status = ?", status).
 		Set("deploy_result = ?", result).
 		Set("last_hash = COALESCE(?, last_hash)", lastHash).
@@ -217,7 +217,7 @@ func (r *Repo) updateDeployStatusByHash(
 ) *model.ApiError {
 
 	_, err := r.store.BunDB().NewUpdate().
-		Model((*types.AgentConfigVersion)(nil)).
+		Model(new(types.AgentConfigVersion)).
 		Set("deploy_status = ?", status).
 		Set("deploy_result = ?", result).
 		Where("last_hash = ?", confighash).

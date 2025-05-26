@@ -123,10 +123,10 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		},
 	})
 	expectedConfId := tb.testConfigProvider.ZPagesEndpoint
-	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(expectedConfId, agent2Id),
+	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, agent2Id),
 		"Server should report deployment success to config provider on receiving update from agent.",
 	)
-	require.True(tb.testConfigProvider.ReportedDeploymentStatuses[expectedConfId][agent2Id])
+	require.True(tb.testConfigProvider.ReportedDeploymentStatuses[orgID+expectedConfId][agent2Id])
 	require.Nil(
 		agent2Conn.LatestMsgFromServer(),
 		"Server should not recommend a RemoteConfig if agent is already running it.",
@@ -156,10 +156,10 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		},
 	})
 	expectedConfId = tb.testConfigProvider.ZPagesEndpoint
-	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(expectedConfId, agent2Id),
+	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, agent2Id),
 		"Server should report deployment failure to config provider on receiving update from agent.",
 	)
-	require.False(tb.testConfigProvider.ReportedDeploymentStatuses[expectedConfId][agent2Id])
+	require.False(tb.testConfigProvider.ReportedDeploymentStatuses[orgID+expectedConfId][agent2Id])
 
 	lastAgent1Msg = agent1Conn.LatestMsgFromServer()
 	agent1Conn.ClearMsgsFromServer()

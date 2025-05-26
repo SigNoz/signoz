@@ -161,7 +161,7 @@ func (agents *Agents) RecommendLatestConfigToAll(
 			RemoteConfig: newRemoteConfig,
 		})
 
-		ListenToConfigUpdate(agent.ID.StringValue(), confId, provider.ReportConfigDeploymentStatus)
+		ListenToConfigUpdate(agent.OrgID, agent.ID.StringValue(), confId, provider.ReportConfigDeploymentStatus)
 	}
 	return nil
 }

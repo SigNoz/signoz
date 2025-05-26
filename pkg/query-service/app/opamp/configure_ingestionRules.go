@@ -66,7 +66,7 @@ func UpsertControlProcessors(
 
 		if agenthash != "" {
 			// subscribe callback
-			model.ListenToConfigUpdate(agent.ID.StringValue(), agenthash, callback)
+			model.ListenToConfigUpdate(agent.OrgID, agent.ID.StringValue(), agenthash, callback)
 		}
 
 		hash = agenthash

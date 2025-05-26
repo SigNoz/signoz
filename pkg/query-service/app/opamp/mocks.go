@@ -97,7 +97,9 @@ func (ta *MockAgentConfigProvider) ReportConfigDeploymentStatus(
 	configId string,
 	err error,
 ) {
-	confIdReports := ta.ReportedDeploymentStatuses[configId]
+	// using orgID + configId as key to avoid collisions with other orgs
+	// check code in model/coordinator.go for more details
+	confIdReports := ta.ReportedDeploymentStatuses[orgId+configId]
 	if confIdReports == nil {
 		confIdReports = map[string]bool{}
 		ta.ReportedDeploymentStatuses[configId] = confIdReports
@@ -107,10 +109,12 @@ func (ta *MockAgentConfigProvider) ReportConfigDeploymentStatus(
 }
 
 // Test helper.
-func (ta *MockAgentConfigProvider) HasReportedDeploymentStatus(
+func (ta *MockAgentConfigProvider) HasReportedDeploymentStatus(orgID string,
 	configId string, agentId string,
 ) bool {
-	confIdReports := ta.ReportedDeploymentStatuses[configId]
+	// using orgID + configId as key to avoid collisions with other orgs
+	// check code in model/coordinator.go for more details
+	confIdReports := ta.ReportedDeploymentStatuses[orgID+configId]
 	if confIdReports == nil {
 		return false
 	}

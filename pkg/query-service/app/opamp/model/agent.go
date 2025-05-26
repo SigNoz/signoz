@@ -263,6 +263,7 @@ func (agent *Agent) processStatusUpdate(
 		agent.SendToAgent(response)
 
 		ListenToConfigUpdate(
+			agent.OrgID,
 			agent.ID.StringValue(),
 			string(response.RemoteConfig.ConfigHash),
 			configProvider.ReportConfigDeploymentStatus,
