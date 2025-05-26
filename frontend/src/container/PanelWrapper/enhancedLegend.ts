@@ -17,6 +17,7 @@ export interface EnhancedLegendConfig {
  * Calculate legend configuration based on panel dimensions and series count
  * Prioritizes chart space while ensuring legend usability
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function calculateEnhancedLegendConfig(
 	dimensions: Dimensions,
 	seriesCount: number,
@@ -51,9 +52,11 @@ export function calculateEnhancedLegendConfig(
 			);
 		}
 
-		const estimatedWidth = Math.max(
-			minWidth,
-			Math.min(absoluteMaxWidth, 80 + avgCharWidth * avgTextLength),
+		// Fix: Ensure width respects the ratio constraint even if it's less than minWidth
+		const estimatedWidth = 80 + avgCharWidth * avgTextLength;
+		const calculatedWidth = Math.min(
+			Math.max(minWidth, estimatedWidth),
+			absoluteMaxWidth,
 		);
 
 		// For right-side legend, height can be more flexible
@@ -70,13 +73,26 @@ export function calculateEnhancedLegendConfig(
 			requiredRows: seriesCount, // Each series on its own row for right-side
 			minWidth,
 			maxWidth: absoluteMaxWidth,
-			calculatedWidth: estimatedWidth,
+			calculatedWidth,
 		};
 	}
 
 	// Bottom legend configuration (existing logic)
 	const maxLegendRatio = 0.15;
-	const absoluteMaxHeight = Math.min(80, dimensions.height * maxLegendRatio);
+	// Fix: For very small dimensions, respect the ratio instead of using fixed 80px minimum
+	const ratioBasedMaxHeight = dimensions.height * maxLegendRatio;
+
+	// Handle edge cases and calculate absolute max height
+	let absoluteMaxHeight;
+	if (dimensions.height <= 0) {
+		absoluteMaxHeight = 46; // Fallback for invalid dimensions
+	} else if (dimensions.height <= 400) {
+		// For small to medium panels, prioritize ratio constraint
+		absoluteMaxHeight = Math.min(80, Math.max(15, ratioBasedMaxHeight));
+	} else {
+		// For larger panels, maintain a reasonable minimum
+		absoluteMaxHeight = Math.min(80, Math.max(20, ratioBasedMaxHeight));
+	}
 
 	const baseItemWidth = 44;
 	const avgCharWidth = 8;
@@ -130,11 +146,15 @@ export function calculateEnhancedLegendConfig(
 		minHeight = Math.min(2 * lineHeight + padding, idealHeight);
 	}
 
+	// For very small dimensions, allow the minHeight to be smaller to respect ratio constraints
+	if (dimensions.height < 200) {
+		minHeight = Math.min(minHeight, absoluteMaxHeight);
+	}
+
 	// Maximum height constraint - prioritize chart space
-	const maxHeight = Math.min(
-		maxRowsToShow * lineHeight + padding,
-		absoluteMaxHeight,
-	);
+	// Fix: Ensure we respect the ratio-based constraint for small dimensions
+	const rowBasedMaxHeight = maxRowsToShow * lineHeight + padding;
+	const maxHeight = Math.min(rowBasedMaxHeight, absoluteMaxHeight);
 
 	const calculatedHeight = Math.max(minHeight, Math.min(idealHeight, maxHeight));
 	const showScrollbar = idealHeight > calculatedHeight;
