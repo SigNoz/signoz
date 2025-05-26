@@ -212,13 +212,13 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (pathname === ROUTES.ONBOARDING) {
-			window.Intercom('update', {
-				hide_default_launcher: true,
-			});
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			window.Pylon('hideChatBubble');
 		} else {
-			window.Intercom('update', {
-				hide_default_launcher: false,
-			});
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			window.Pylon('showChatBubble');
 		}
 	}, [pathname]);
 
@@ -253,11 +253,13 @@ function App(): JSX.Element {
 				!showAddCreditCardModal &&
 				(isCloudUser || isEnterpriseSelfHostedUser)
 			) {
-				window.Intercom('boot', {
-					app_id: process.env.INTERCOM_APP_ID,
-					email: user?.email || '',
-					name: user?.displayName || '',
-				});
+				window.pylon = {
+					chat_settings: {
+						app_id: 'da78df6d-7828-4ab0-ac24-5e3550b0c6af',
+						email: user.email,
+						name: user.displayName,
+					},
+				};
 			}
 		}
 	}, [

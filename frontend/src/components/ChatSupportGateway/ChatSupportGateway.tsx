@@ -49,7 +49,7 @@ export default function ChatSupportGateway(): JSX.Element {
 
 	const handleAddCreditCard = (): void => {
 		logEvent('Add Credit card modal: Clicked', {
-			source: `intercom icon`,
+			source: `chat support icon`,
 			page: pathname,
 		});
 
@@ -65,7 +65,7 @@ export default function ChatSupportGateway(): JSX.Element {
 					className="chat-support-gateway-btn"
 					onClick={(): void => {
 						logEvent('Disabled Chat Support: Clicked', {
-							source: `intercom icon`,
+							source: `chat support icon`,
 							page: pathname,
 						});
 

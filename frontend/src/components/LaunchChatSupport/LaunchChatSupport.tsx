@@ -24,7 +24,7 @@ export interface LaunchChatSupportProps {
 	buttonText?: string;
 	className?: string;
 	onHoverText?: string;
-	intercomMessageDisabled?: boolean;
+	chatMessageDisabled?: boolean;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -35,7 +35,7 @@ function LaunchChatSupport({
 	buttonText = '',
 	className = '',
 	onHoverText = '',
-	intercomMessageDisabled = false,
+	chatMessageDisabled = false,
 }: LaunchChatSupportProps): JSX.Element | null {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const { notifications } = useNotifications();
@@ -111,8 +111,10 @@ function LaunchChatSupport({
 			setIsAddCreditCardModalOpen(true);
 		} else {
 			logEvent(eventName, attributes);
-			if (window.Intercom && !intercomMessageDisabled) {
-				window.Intercom('showNewMessage', defaultTo(message, ''));
+			if (window.pylon && !chatMessageDisabled) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				window.Pylon('showNewMessage', defaultTo(message, ''));
 			}
 		}
 	};
@@ -220,7 +222,7 @@ LaunchChatSupport.defaultProps = {
 	buttonText: '',
 	className: '',
 	onHoverText: '',
-	intercomMessageDisabled: false,
+	chatMessageDisabled: false,
 };
 
 export default LaunchChatSupport;
