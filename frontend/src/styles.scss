@@ -85,7 +85,7 @@ body {
 		tbody {
 			display: flex;
 			flex-wrap: wrap;
-			gap: 2px 2px;
+			gap: 1px 2px;
 			align-items: center;
 			justify-content: flex-start;
 			width: 100%;
@@ -103,7 +103,7 @@ body {
 				flex-wrap: nowrap;
 				align-items: stretch;
 				justify-content: flex-start;
-				gap: 1px;
+				gap: 2px;
 			}
 
 			tr.u-series {
@@ -116,7 +116,6 @@ body {
 					font-size: 12px;
 					font-weight: 600;
 					justify-content: flex-start;
-					padding: 8px 12px;
 					cursor: pointer;
 					position: relative;
 					min-width: 0;
@@ -124,11 +123,23 @@ body {
 
 					.u-marker {
 						border-radius: 50%;
-						min-width: 10px;
-						min-height: 10px;
-						width: 10px;
-						height: 10px;
+						min-width: 11px;
+						min-height: 11px;
+						width: 11px;
+						height: 11px;
 						flex-shrink: 0;
+						cursor: pointer;
+						transition: all 0.2s ease;
+						position: relative;
+
+						&:hover {
+							transform: scale(1.2);
+							box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+						}
+
+						&:active {
+							transform: scale(0.9);
+						}
 					}
 
 					// Text container for proper ellipsis
@@ -138,6 +149,7 @@ body {
 						white-space: nowrap;
 						min-width: 0;
 						flex: 1;
+						padding-bottom: 2px;
 					}
 
 					// Tooltip styling
@@ -158,6 +170,27 @@ body {
 					th {
 						&:hover {
 							opacity: 0.7;
+						}
+
+						.u-marker {
+							opacity: 0.3;
+							position: relative;
+
+							&::after {
+								content: '';
+								position: absolute;
+								top: 50%;
+								left: 50%;
+								width: 12px;
+								height: 2px;
+								background: #ff4444;
+								transform: translate(-50%, -50%) rotate(45deg);
+								border-radius: 1px;
+							}
+
+							&:hover {
+								opacity: 0.6;
+							}
 						}
 					}
 				}
@@ -204,11 +237,23 @@ body {
 
 				.u-marker {
 					border-radius: 50%;
-					min-width: 10px;
-					min-height: 10px;
-					width: 10px;
-					height: 10px;
+					min-width: 11px;
+					min-height: 11px;
+					width: 11px;
+					height: 11px;
 					flex-shrink: 0;
+					cursor: pointer;
+					transition: all 0.2s ease;
+					position: relative;
+
+					&:hover {
+						transform: scale(1.2);
+						box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+					}
+
+					&:active {
+						transform: scale(0.9);
+					}
 				}
 
 				.legend-text {
@@ -217,6 +262,7 @@ body {
 					white-space: nowrap;
 					min-width: 0;
 					flex: 1;
+					padding-bottom: 2px;
 				}
 
 				// Tooltip styling
@@ -233,6 +279,27 @@ body {
 				th {
 					&:hover {
 						opacity: 0.7;
+					}
+
+					.u-marker {
+						opacity: 0.3;
+						position: relative;
+
+						&::after {
+							content: '';
+							position: absolute;
+							top: 50%;
+							left: 50%;
+							width: 12px;
+							height: 2px;
+							background: #ff4444;
+							transform: translate(-50%, -50%) rotate(45deg);
+							border-radius: 1px;
+						}
+
+						&:hover {
+							opacity: 0.6;
+						}
 					}
 				}
 			}
@@ -499,6 +566,18 @@ body {
 						background: rgba(0, 0, 0, 0.08);
 						opacity: 0.7;
 					}
+
+					.u-marker {
+						opacity: 0.3;
+
+						&::after {
+							background: #cc3333;
+						}
+
+						&:hover {
+							opacity: 0.6;
+						}
+					}
 				}
 			}
 
@@ -524,6 +603,18 @@ body {
 					&:hover {
 						background: rgba(0, 0, 0, 0.08);
 						opacity: 0.7;
+					}
+
+					.u-marker {
+						opacity: 0.3;
+
+						&::after {
+							background: #cc3333;
+						}
+
+						&:hover {
+							opacity: 0.6;
+						}
 					}
 				}
 			}

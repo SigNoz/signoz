@@ -529,9 +529,13 @@ export const getUPlotChartOptions = ({
 								// Simple tooltip events
 								thElement.addEventListener('mouseenter', showTooltip);
 								thElement.addEventListener('mouseleave', hideTooltip);
-							}
-							seriesEl.addEventListener('click', () => {
-								if (stackChart) {
+
+								// Add click handlers for marker and text separately
+								const currentMarker = thElement.querySelector('.u-marker');
+								const textElement = thElement.querySelector('.legend-text');
+
+								// Helper function to handle stack chart logic
+								const handleStackChart = (): void => {
 									setHiddenGraph((prev) => {
 										if (isUndefined(prev)) {
 											return { [index]: true };
@@ -541,30 +545,71 @@ export const getUPlotChartOptions = ({
 										}
 										return { [index]: true };
 									});
-								}
-								if (graphsVisibilityStates) {
-									setGraphsVisibilityStates?.((prev) => {
-										const newGraphVisibilityStates = [...prev];
-										if (
-											newGraphVisibilityStates[index + 1] &&
-											newGraphVisibilityStates.every((value, i) =>
-												i === index + 1 ? value : !value,
-											)
-										) {
-											newGraphVisibilityStates.fill(true);
-										} else {
-											newGraphVisibilityStates.fill(false);
-											newGraphVisibilityStates[index + 1] = true;
+								};
+
+								// Marker click handler - checkbox behavior (toggle individual series)
+								if (currentMarker) {
+									currentMarker.addEventListener('click', (e) => {
+										e.stopPropagation(); // Prevent event bubbling to text handler
+
+										if (stackChart) {
+											handleStackChart();
 										}
-										saveLegendEntriesToLocalStorage({
-											options: self,
-											graphVisibilityState: newGraphVisibilityStates,
-											name: id || '',
-										});
-										return newGraphVisibilityStates;
+										if (graphsVisibilityStates) {
+											setGraphsVisibilityStates?.((prev) => {
+												const newGraphVisibilityStates = [...prev];
+												// Toggle the specific series visibility (checkbox behavior)
+												newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
+													index + 1
+												];
+
+												saveLegendEntriesToLocalStorage({
+													options: self,
+													graphVisibilityState: newGraphVisibilityStates,
+													name: id || '',
+												});
+												return newGraphVisibilityStates;
+											});
+										}
 									});
 								}
-							});
+
+								// Text click handler - show only/show all behavior (existing behavior)
+								if (textElement) {
+									textElement.addEventListener('click', (e) => {
+										e.stopPropagation(); // Prevent event bubbling
+
+										if (stackChart) {
+											handleStackChart();
+										}
+										if (graphsVisibilityStates) {
+											setGraphsVisibilityStates?.((prev) => {
+												const newGraphVisibilityStates = [...prev];
+												// Show only this series / show all behavior
+												if (
+													newGraphVisibilityStates[index + 1] &&
+													newGraphVisibilityStates.every((value, i) =>
+														i === index + 1 ? value : !value,
+													)
+												) {
+													// If only this series is visible, show all
+													newGraphVisibilityStates.fill(true);
+												} else {
+													// Otherwise, show only this series
+													newGraphVisibilityStates.fill(false);
+													newGraphVisibilityStates[index + 1] = true;
+												}
+												saveLegendEntriesToLocalStorage({
+													options: self,
+													graphVisibilityState: newGraphVisibilityStates,
+													name: id || '',
+												});
+												return newGraphVisibilityStates;
+											});
+										}
+									});
+								}
+							}
 						});
 					}
 				},
