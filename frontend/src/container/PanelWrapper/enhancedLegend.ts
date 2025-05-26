@@ -112,7 +112,11 @@ export function calculateEnhancedLegendConfig(
 		1,
 		Math.floor(availableWidth / estimatedItemWidth),
 	);
-	const requiredRows = Math.ceil(seriesCount / itemsPerRow);
+	let requiredRows = Math.ceil(seriesCount / itemsPerRow);
+
+	if (requiredRows === 1 && seriesCount > 3) {
+		requiredRows = 2;
+	}
 
 	// Calculate heights
 	const idealHeight = requiredRows * lineHeight + padding;
