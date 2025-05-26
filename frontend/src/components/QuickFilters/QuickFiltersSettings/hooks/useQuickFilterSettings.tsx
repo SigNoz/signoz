@@ -56,7 +56,6 @@ const useQuickFilterSettings = ({
 			});
 		},
 		onError: (error: AxiosError) => {
-			logEvent('Quick Filters Settings: error saving changes', {});
 			notifications.error({
 				message: axios.isAxiosError(error) ? error.message : SOMETHING_WENT_WRONG,
 				placement: 'bottomRight',
