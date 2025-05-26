@@ -1,3 +1,4 @@
+import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
 import { useGetMultipleMetrics } from 'hooks/metricsExplorer/useGetMultipleMetrics';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
@@ -39,13 +40,19 @@ export const splitQueryIntoOneChartPerQuery = (query: Query): Query[] => {
 
 export function useGetMetricUnits(
 	metricNames: string[],
-): { isLoading: boolean; units: string[]; isError: boolean } {
+): {
+	isLoading: boolean;
+	units: string[];
+	isError: boolean;
+	metrics: (MetricDetails | undefined)[];
+} {
 	const metricsData = useGetMultipleMetrics(metricNames);
 	return {
 		isLoading: metricsData.some((metric) => metric.isLoading),
 		units: metricsData.map(
 			(metric) => metric.data?.payload?.data?.metadata?.unit ?? '',
 		),
+		metrics: metricsData.map((metric) => metric.data?.payload?.data),
 		isError: metricsData.some((metric) => metric.isError),
 	};
 }
