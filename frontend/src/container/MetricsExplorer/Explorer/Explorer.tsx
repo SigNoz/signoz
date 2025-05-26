@@ -24,11 +24,11 @@ import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 as uuid } from 'uuid';
 
+import MetricDetails from '../MetricDetails/MetricDetails';
 import QuerySection from './QuerySection';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
-import { splitQueryIntoOneChartPerQuery } from './utils';
-import { useGetMetricUnits } from './utils';
+import { splitQueryIntoOneChartPerQuery, useGetMetricUnits } from './utils';
 
 const ONE_CHART_PER_QUERY_ENABLED_KEY = 'isOneChartPerQueryEnabled';
 
@@ -42,6 +42,7 @@ function Explorer(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { notifications } = useNotifications();
 	const { mutate: updateDashboard, isLoading } = useUpdateDashboard();
+	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.METRICS_LIST_OPTIONS,
 		dataSource: DataSource.METRICS,
@@ -50,12 +51,15 @@ function Explorer(): JSX.Element {
 
 	const metricNames = useMemo(
 		() =>
-			currentQuery.builder.queryData.map((query) => query.aggregateAttribute.key),
-		[currentQuery],
+			stagedQuery?.builder.queryData.map(
+				(query) => query.aggregateAttribute.key,
+			) ?? [],
+		[stagedQuery],
 	);
 
 	const {
 		units,
+		metrics,
 		isLoading: isMetricUnitsLoading,
 		isError: isMetricUnitsError,
 	} = useGetMetricUnits(metricNames);
@@ -236,6 +240,9 @@ function Explorer(): JSX.Element {
 							isMetricUnitsLoading={isMetricUnitsLoading}
 							isMetricUnitsError={isMetricUnitsError}
 							metricUnits={units}
+							metricNames={metricNames}
+							metrics={metrics}
+							setIsMetricDetailsOpen={setIsMetricDetailsOpen}
 						/>
 					)}
 					{/* TODO: Enable once we have resolved all related metrics issues */}
@@ -253,6 +260,14 @@ function Explorer(): JSX.Element {
 				isOneChartPerQuery={showOneChartPerQuery}
 				splitedQueries={splitedQueries}
 			/>
+			{isMetricDetailsOpen && (
+				<MetricDetails
+					metricName={metricNames[0]}
+					isOpen={isMetricDetailsOpen}
+					onClose={(): void => setIsMetricDetailsOpen(false)}
+					isModalTimeSelection={false}
+				/>
+			)}
 		</Sentry.ErrorBoundary>
 	);
 }
