@@ -325,16 +325,12 @@ describe('Quick Filters with custom filters', () => {
 		expect(maxDuration).toHaveValue(null);
 		expect(maxDuration).toHaveProperty('placeholder', '100000000');
 
-		// set values
-		fireEvent.change(minDuration, { target: { value: '10000' } });
-		fireEvent.change(maxDuration, { target: { value: '20000' } });
-
-		// Advance timers **inside act**
 		await act(async () => {
+			// set values
+			fireEvent.change(minDuration, { target: { value: '10000' } });
+			fireEvent.change(maxDuration, { target: { value: '20000' } });
 			jest.advanceTimersByTime(2000);
 		});
-
-		// Then run assertions
 		await waitFor(() => {
 			expect(redirectWithQueryBuilderData).toHaveBeenCalledWith(
 				expect.objectContaining({

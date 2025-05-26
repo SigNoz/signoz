@@ -208,11 +208,6 @@ function Duration({
 					})),
 				},
 			};
-			// if (!isEmpty(selectedFilters)) {
-			// 	logEvent('Traces Explorer: Sidebar filter used', {
-			// 		selectedFilters,
-			// 	});
-			// }
 
 			const currentQueryWithoutIds = removeFilterItemIds(currentQuery);
 			const preparedQueryWithoutIds = removeFilterItemIds(preparedQuery);
