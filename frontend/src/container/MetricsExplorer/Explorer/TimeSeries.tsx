@@ -14,7 +14,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { AlertTriangle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useQueries } from 'react-query';
+import { useQueries, useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
@@ -37,6 +37,7 @@ function TimeSeries({
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 	const { notifications } = useNotifications();
+	const queryClient = useQueryClient();
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
@@ -171,6 +172,10 @@ function TimeSeries({
 					notifications.success({
 						message: 'Unit saved successfully',
 					});
+					queryClient.invalidateQueries([
+						REACT_QUERY_KEY.GET_METRIC_DETAILS,
+						metricNames[0],
+					]);
 				},
 				onError: () => {
 					notifications.error({
