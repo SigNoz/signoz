@@ -5,6 +5,8 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
+import { UnderscoreToDotMap } from '../utils';
+
 export interface K8sDaemonSetsListPayload {
 	filters: TagFilter;
 	groupBy?: BaseAutocompleteData[];
@@ -76,7 +78,31 @@ export const getK8sDaemonSetsList = async (
 		const requestProps =
 			dotMetricsEnabled && Array.isArray(props.filters?.items)
 				? {
-						/* …same reduce logic… */
+						...props,
+						filters: {
+							...props.filters,
+							items: props.filters.items.reduce<typeof props.filters.items>(
+								(acc, item) => {
+									if (item.value === undefined) return acc;
+									if (
+										item.key &&
+										typeof item.key === 'object' &&
+										'key' in item.key &&
+										typeof item.key.key === 'string'
+									) {
+										const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
+										acc.push({
+											...item,
+											key: { ...item.key, key: mappedKey },
+										});
+									} else {
+										acc.push(item);
+									}
+									return acc;
+								},
+								[] as typeof props.filters.items,
+							),
+						},
 				  }
 				: props;
 
