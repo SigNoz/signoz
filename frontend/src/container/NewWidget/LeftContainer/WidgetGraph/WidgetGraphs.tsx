@@ -46,14 +46,16 @@ function WidgetGraph({
 
 	// Add legend state management similar to dashboard components
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
-		Array(queryResponse.data?.payload?.data?.result?.length || 0).fill(true),
+		Array((queryResponse.data?.payload?.data?.result?.length || 0) + 1).fill(
+			true,
+		),
 	);
 
 	// Initialize graph visibility when data changes
 	useEffect(() => {
 		if (queryResponse.data?.payload?.data?.result) {
 			setGraphVisibility(
-				Array(queryResponse.data.payload.data.result.length).fill(true),
+				Array(queryResponse.data.payload.data.result.length + 1).fill(true),
 			);
 		}
 	}, [queryResponse.data?.payload?.data?.result]);

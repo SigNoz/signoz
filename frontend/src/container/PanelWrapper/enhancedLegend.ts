@@ -148,6 +148,11 @@ export function calculateEnhancedLegendConfig(
 	};
 }
 
+// CSS class constants
+const LEGEND_SINGLE_LINE_CLASS = 'u-legend-single-line';
+const LEGEND_MULTI_LINE_CLASS = 'u-legend-multi-line';
+const LEGEND_RIGHT_ALIGNED_CLASS = 'u-legend-right-aligned';
+
 /**
  * Apply enhanced legend styling to a legend element
  */
@@ -191,13 +196,25 @@ export function applyEnhancedLegendStyling(
 		legendElement.style.maxWidth = '';
 	}
 
-	// Apply alignment based on number of rows and position
-	if (legendPosition === LegendPosition.RIGHT || requiredRows === 1) {
-		legendElement.classList.add('u-legend-single-line');
-		legendElement.classList.remove('u-legend-multi-line');
+	// Apply alignment based on position and number of rows
+	if (legendPosition === LegendPosition.RIGHT) {
+		legendElement.classList.add(LEGEND_RIGHT_ALIGNED_CLASS);
+		legendElement.classList.remove(
+			LEGEND_SINGLE_LINE_CLASS,
+			LEGEND_MULTI_LINE_CLASS,
+		);
+	} else if (requiredRows === 1) {
+		legendElement.classList.add(LEGEND_SINGLE_LINE_CLASS);
+		legendElement.classList.remove(
+			LEGEND_MULTI_LINE_CLASS,
+			LEGEND_RIGHT_ALIGNED_CLASS,
+		);
 	} else {
-		legendElement.classList.add('u-legend-multi-line');
-		legendElement.classList.remove('u-legend-single-line');
+		legendElement.classList.add(LEGEND_MULTI_LINE_CLASS);
+		legendElement.classList.remove(
+			LEGEND_SINGLE_LINE_CLASS,
+			LEGEND_RIGHT_ALIGNED_CLASS,
+		);
 	}
 
 	// Add scrollbar indicator if needed

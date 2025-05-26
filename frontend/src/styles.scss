@@ -96,6 +96,26 @@ body {
 			justify-content: center;
 		}
 
+		&.u-legend-right-aligned {
+			tbody {
+				align-items: flex-start !important;
+				justify-content: flex-start !important;
+			}
+
+			tr.u-series {
+				justify-content: flex-start !important;
+
+				th {
+					justify-content: flex-start !important;
+					text-align: left !important;
+
+					.legend-text {
+						text-align: left !important;
+					}
+				}
+			}
+		}
+
 		// Right-side legend specific styles
 		&.u-legend-right {
 			tbody {

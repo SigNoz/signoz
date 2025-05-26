@@ -629,6 +629,7 @@ export const getUPlotChartOptions = ({
 					stackBarChart,
 					hiddenGraph,
 					isDarkMode,
+					colorMapping,
 			  }),
 		axes: getAxes({ isDarkMode, yAxisUnit, panelType, isLogScale }),
 	};
