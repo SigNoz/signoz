@@ -2,7 +2,6 @@ package telemetrytraces
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -56,12 +55,6 @@ func (b *traceQueryStatementBuilder) Build(
 	end = querybuilder.ToNanoSecs(end)
 
 	keySelectors := getKeySelectors(query)
-
-	jsun, err := json.Marshal(keySelectors)
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println("keySelectors", string(jsun))
 
 	keys, err := b.opts.MetadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
