@@ -27,7 +27,7 @@ export default function HostsListTable({
 	tableData: data,
 	hostMetricsData,
 	filters,
-	setSelectedHostName,
+	onHostClick,
 	currentPage,
 	setCurrentPage,
 	pageSize,
@@ -77,7 +77,7 @@ export default function HostsListTable({
 	);
 
 	const handleRowClick = (record: HostRowData): void => {
-		setSelectedHostName(record.hostName);
+		onHostClick(record.hostName);
 		logEvent(InfraMonitoringEvents.ItemClicked, {
 			entity: InfraMonitoringEvents.HostEntity,
 			page: InfraMonitoringEvents.ListPage,

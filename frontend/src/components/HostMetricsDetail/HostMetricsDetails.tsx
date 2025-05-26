@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -67,6 +68,7 @@ function HostMetricsDetails({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
 		minTime,
@@ -86,7 +88,9 @@ function HostMetricsDetails({
 		selectedTime as Time,
 	);
 
-	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.METRICS);
+	const [selectedView, setSelectedView] = useState<VIEWS>(
+		(searchParams.get('view') as VIEWS) || VIEWS.METRICS,
+	);
 	const isDarkMode = useIsDarkMode();
 
 	const initialFilters = useMemo(
@@ -149,6 +153,9 @@ function HostMetricsDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		if (host?.hostName) {
+			setSearchParams({ hostName: host?.hostName, view: e.target.value });
+		}
 		logEvent(InfraMonitoringEvents.TabChanged, {
 			entity: InfraMonitoringEvents.HostEntity,
 			view: e.target.value,
@@ -313,6 +320,7 @@ function HostMetricsDetails({
 
 	const handleClose = (): void => {
 		setSelectedInterval(selectedTime as Time);
+		setSearchParams({});
 
 		if (selectedTime !== 'custom') {
 			const { maxTime, minTime } = GetMinMax(selectedTime);
