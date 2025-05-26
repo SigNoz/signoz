@@ -36,6 +36,7 @@ function ErrorContent({ error }: ErrorContentProps): JSX.Element {
 								className="error-content__docs-button"
 								href={error.url}
 								target="__blank"
+								data-testid="error-docs-button"
 							>
 								<BookOpenText size={14} />
 								Open Docs

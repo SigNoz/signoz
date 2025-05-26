@@ -81,7 +81,12 @@ function ErrorModal({
 						) : (
 							<div className="error-modal__version-placeholder" />
 						)}
-						<Button type="default" className="close-button" onClick={handleClose}>
+						<Button
+							type="default"
+							className="close-button"
+							onClick={handleClose}
+							data-testid="close-button"
+						>
 							<X size={16} color={Color.BG_VANILLA_400} />
 						</Button>
 					</>
