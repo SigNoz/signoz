@@ -138,6 +138,7 @@ function UplotPanelWrapper({
 				timezone: timezone.value,
 				customSeries,
 				isLogScale: widget?.isLogScale,
+				colorMapping: widget?.customLegendColors,
 				enhancedLegend: true, // Enable enhanced legend
 				legendPosition: widget?.legendPosition,
 			}),
@@ -166,6 +167,7 @@ function UplotPanelWrapper({
 			customSeries,
 			widget?.isLogScale,
 			widget?.legendPosition,
+			widget?.customLegendColors,
 		],
 	);
 

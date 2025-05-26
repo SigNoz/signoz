@@ -30,11 +30,14 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { UseQueryResult } from 'react-query';
+import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
 	LegendPosition,
 	Widgets,
 } from 'types/api/dashboard/getAll';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -44,6 +47,7 @@ import {
 	panelTypeVsColumnUnitPreferences,
 	panelTypeVsCreateAlert,
 	panelTypeVsFillSpan,
+	panelTypeVsLegendColors,
 	panelTypeVsLegendPosition,
 	panelTypeVsLogScale,
 	panelTypeVsPanelTimePreferences,
@@ -52,6 +56,7 @@ import {
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
 } from './constants';
+import LegendColors from './LegendColors/LegendColors';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
@@ -105,6 +110,9 @@ function RightContainer({
 	setIsLogScale,
 	legendPosition,
 	setLegendPosition,
+	customLegendColors,
+	setCustomLegendColors,
+	queryResponse,
 }: RightContainerProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
@@ -136,6 +144,7 @@ function RightContainer({
 	const allowPanelTimePreference =
 		panelTypeVsPanelTimePreferences[selectedGraph];
 	const allowLegendPosition = panelTypeVsLegendPosition[selectedGraph];
+	const allowLegendColors = panelTypeVsLegendColors[selectedGraph];
 
 	const allowPanelColumnPreference =
 		panelTypeVsColumnUnitPreferences[selectedGraph];
@@ -462,6 +471,16 @@ function RightContainer({
 						</Select>
 					</section>
 				)}
+
+				{allowLegendColors && (
+					<section className="legend-colors">
+						<LegendColors
+							customLegendColors={customLegendColors}
+							setCustomLegendColors={setCustomLegendColors}
+							queryResponse={queryResponse}
+						/>
+					</section>
+				)}
 			</section>
 
 			{allowCreateAlerts && (
@@ -529,10 +548,17 @@ interface RightContainerProps {
 	setIsLogScale: Dispatch<SetStateAction<boolean>>;
 	legendPosition: LegendPosition;
 	setLegendPosition: Dispatch<SetStateAction<LegendPosition>>;
+	customLegendColors: Record<string, string>;
+	setCustomLegendColors: Dispatch<SetStateAction<Record<string, string>>>;
+	queryResponse?: UseQueryResult<
+		SuccessResponse<MetricRangePayloadProps, unknown>,
+		Error
+	>;
 }
 
 RightContainer.defaultProps = {
 	selectedWidget: undefined,
+	queryResponse: null,
 };
 
 export default RightContainer;
