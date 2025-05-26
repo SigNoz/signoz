@@ -8,11 +8,11 @@ export const mapMetricUnitToUniversalUnit = (
 		return null;
 	}
 
-	const universalUnit = Object.values(UniversalYAxisUnit).find((u) =>
-		UniversalYAxisUnitMappings[u].has(unit as YAxisUnit),
+	const universalUnit = Object.values(UniversalYAxisUnit).find(
+		(u) => UniversalYAxisUnitMappings[u].has(unit as YAxisUnit) || unit === u,
 	);
 
-	return universalUnit || null;
+	return universalUnit || (unit as UniversalYAxisUnit) || null;
 };
 
 export const getUniversalNameFromMetricUnit = (
@@ -29,5 +29,5 @@ export const getUniversalNameFromMetricUnit = (
 
 	const universalName = Y_AXIS_UNIT_NAMES[universalUnit];
 
-	return universalName || '-';
+	return universalName || unit || '-';
 };
