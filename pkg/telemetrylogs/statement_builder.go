@@ -61,7 +61,7 @@ func (b *logQueryStatementBuilder) Build(
 	}
 
 	// Create SQL builder
-	q := sqlbuilder.ClickHouse.NewSelectBuilder()
+	q := sqlbuilder.NewSelectBuilder()
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
@@ -89,12 +89,19 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 		keySelectors = append(keySelectors, whereClauseSelectors...)
 	}
 
-	if query.GroupBy != nil {
-		for idx := range query.GroupBy {
-			groupBy := query.GroupBy[idx]
-			selectors := querybuilder.QueryStringToKeysSelectors(groupBy.TelemetryFieldKey.Name)
-			keySelectors = append(keySelectors, selectors...)
-		}
+	for idx := range query.GroupBy {
+		groupBy := query.GroupBy[idx]
+		selectors := querybuilder.QueryStringToKeysSelectors(groupBy.TelemetryFieldKey.Name)
+		keySelectors = append(keySelectors, selectors...)
+	}
+
+	for idx := range query.Order {
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          query.Order[idx].Key.Name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  query.Order[idx].Key.FieldContext,
+			FieldDataType: query.Order[idx].Key.FieldDataType,
+		})
 	}
 
 	for idx := range keySelectors {
@@ -155,8 +162,8 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	finalSQL := combineCTEs(cteFragments) + mainSQL
-	finalArgs := prependArgs(cteArgs, mainArgs)
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
+	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	return &qbtypes.Statement{
 		Query:    finalSQL,
@@ -227,7 +234,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 
 	if query.Limit > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
-		cteSB := sqlbuilder.ClickHouse.NewSelectBuilder()
+		cteSB := sqlbuilder.NewSelectBuilder()
 		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, true)
 		if err != nil {
 			return nil, err
@@ -249,8 +256,8 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
-		finalSQL = combineCTEs(cteFragments) + mainSQL
-		finalArgs = prependArgs(cteArgs, mainArgs)
+		finalSQL = querybuilder.CombineCTEs(cteFragments) + mainSQL
+		finalArgs = querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	} else {
 		sb.GroupBy("ALL")
@@ -261,8 +268,8 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
-		finalSQL = combineCTEs(cteFragments) + mainSQL
-		finalArgs = prependArgs(cteArgs, mainArgs)
+		finalSQL = querybuilder.CombineCTEs(cteFragments) + mainSQL
+		finalArgs = querybuilder.PrependArgs(cteArgs, mainArgs)
 	}
 
 	return &qbtypes.Statement{
@@ -364,8 +371,8 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
 
-	finalSQL := combineCTEs(cteFragments) + mainSQL
-	finalArgs := prependArgs(cteArgs, mainArgs)
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
+	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	return &qbtypes.Statement{
 		Query:    finalSQL,
@@ -406,28 +413,6 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.LE("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 
 	return warnings, nil
-}
-
-// combineCTEs takes any number of individual CTE fragments like
-//
-//	"__resource_filter AS (...)", "__limit_cte AS (...)"
-//
-// and renders the final `WITH …` clause.
-func combineCTEs(ctes []string) string {
-	if len(ctes) == 0 {
-		return ""
-	}
-	return "WITH " + strings.Join(ctes, ", ") + " "
-}
-
-// prependArgs ensures CTE arguments appear before main-query arguments
-// in the final slice so their ordinal positions match the SQL string.
-func prependArgs(cteArgs [][]any, mainArgs []any) []any {
-	out := make([]any, 0, len(mainArgs)+len(cteArgs))
-	for _, a := range cteArgs { // CTEs first, in declaration order
-		out = append(out, a...)
-	}
-	return append(out, mainArgs...)
 }
 
 func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) (int, bool) {

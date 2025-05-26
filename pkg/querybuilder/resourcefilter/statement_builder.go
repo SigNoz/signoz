@@ -93,7 +93,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedSignal, b.signal)
 	}
 
-	q := sqlbuilder.ClickHouse.NewSelectBuilder()
+	q := sqlbuilder.NewSelectBuilder()
 	q.Select("fingerprint")
 	q.From(fmt.Sprintf("%s.%s", config.dbName, config.tableName))
 
@@ -107,7 +107,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 		return nil, err
 	}
 
-	stmt, args := q.Build()
+	stmt, args := q.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{
 		Query: stmt,
 		Args:  args,
