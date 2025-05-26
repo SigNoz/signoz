@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip } from 'antd';
+import { Button, Tooltip, Typography } from 'antd';
+import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import classNames from 'classnames';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -7,9 +8,11 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
+import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useNotifications } from 'hooks/useNotifications';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { AlertTriangle, Info } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -28,8 +31,12 @@ function TimeSeries({
 	isMetricUnitsLoading,
 	isMetricUnitsError,
 	metricUnits,
+	metricNames,
+	metrics,
+	setIsMetricDetailsOpen,
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
+	const { notifications } = useNotifications();
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
@@ -130,18 +137,78 @@ function TimeSeries({
 		setYAxisUnit(value);
 	};
 
+	const goToMetricDetails = (): void => {
+		setIsMetricDetailsOpen(true);
+	};
+
+	const showYAxisUnitSelector = useMemo(() => {
+		if (metricUnits.length <= 1) {
+			return true;
+		}
+		if (areAllMetricUnitsSame) {
+			return metricUnits[0] !== '';
+		}
+		return false;
+	}, [metricUnits, areAllMetricUnitsSame]);
+
+	const {
+		mutate: updateMetricMetadata,
+		isLoading: isUpdatingMetricMetadata,
+	} = useUpdateMetricMetadata();
+
+	const handleSaveUnit = (): void => {
+		updateMetricMetadata(
+			{
+				metricName: metricNames[0],
+				payload: {
+					unit: yAxisUnit,
+					description: metrics[0]?.metadata?.description ?? '',
+					metricType: metrics[0]?.metadata?.metric_type as MetricType,
+				},
+			},
+			{
+				onSuccess: () => {
+					notifications.success({
+						message: 'Unit saved successfully',
+					});
+				},
+				onError: () => {
+					notifications.error({
+						message: 'Failed to save unit',
+					});
+				},
+			},
+		);
+	};
+
 	return (
 		<>
 			<div className="y-axis-unit-selector-container">
-				<YAxisUnitSelector
-					value={yAxisUnit}
-					onChange={onUnitChangeHandler}
-					loading={isMetricUnitsLoading}
-					disabled={isMetricUnitsLoading || isMetricUnitsError}
-				/>
-				<Tooltip title="To permanently set the unit for any of the metrics, please do so from the metric details page.">
-					<Info size={16} />
-				</Tooltip>
+				{showYAxisUnitSelector && (
+					<>
+						<YAxisUnitSelector
+							value={yAxisUnit}
+							onChange={onUnitChangeHandler}
+							loading={isMetricUnitsLoading}
+							disabled={isMetricUnitsLoading || isMetricUnitsError}
+						/>
+						{metricUnits.length === 1 && metricUnits[0] === '' && yAxisUnit !== '' && (
+							<div className="save-unit-container">
+								<Typography.Text>
+									Save the selected unit for this metric?
+								</Typography.Text>
+								<Button
+									type="primary"
+									size="small"
+									loading={isUpdatingMetricMetadata}
+									onClick={handleSaveUnit}
+								>
+									Yes
+								</Button>
+							</div>
+						)}
+					</>
+				)}
 			</div>
 			<div
 				className={classNames({
@@ -150,8 +217,9 @@ function TimeSeries({
 			>
 				{responseData.map((datapoint, index) => {
 					const isMetricUnitEmpty =
+						!queries[index].isLoading &&
 						!isMetricUnitsLoading &&
-						metricUnits.length > 0 &&
+						metricUnits.length > 1 &&
 						metricUnits[index] === '';
 
 					return (
@@ -163,7 +231,15 @@ function TimeSeries({
 							{isMetricUnitEmpty && (
 								<Tooltip
 									className="no-unit-warning"
-									title="This metric does not have a unit. Please set one for it in the metric details page."
+									title={
+										<Typography.Text>
+											This metric does not have a unit. Please set one for it in the{' '}
+											<Typography.Link onClick={goToMetricDetails}>
+												metric details
+											</Typography.Link>{' '}
+											drawer.
+										</Typography.Text>
+									}
 								>
 									<AlertTriangle size={16} color={Color.BG_AMBER_400} />
 								</Tooltip>

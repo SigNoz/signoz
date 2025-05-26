@@ -63,6 +63,12 @@
 			gap: 10px;
 			padding-top: 10px;
 			margin-bottom: 10px;
+
+			.save-unit-container {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
 		}
 
 		.ant-space {
@@ -87,7 +93,7 @@
 			.no-unit-warning {
 				position: absolute;
 				top: 30px;
-				right: 30px;
+				right: 40px;
 				z-index: 1000;
 			}
 		}

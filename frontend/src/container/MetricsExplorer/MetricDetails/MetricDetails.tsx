@@ -110,16 +110,18 @@ function MetricDetails({
 						<Typography.Text>{metric?.name}</Typography.Text>
 					</div>
 					<div className="metric-details-header-buttons">
-						<Button
-							onClick={goToMetricsExplorerwithSelectedMetric}
-							icon={<Compass size={16} />}
-							disabled={!metricName}
-							data-testid="open-in-explorer-button"
-						>
-							Open in Explorer
-						</Button>
+						{openInspectModal && (
+							<Button
+								onClick={goToMetricsExplorerwithSelectedMetric}
+								icon={<Compass size={16} />}
+								disabled={!metricName}
+								data-testid="open-in-explorer-button"
+							>
+								Open in Explorer
+							</Button>
+						)}
 						{/* Show the based on the feature flag. Will remove before releasing the feature */}
-						{showInspectFeature && (
+						{showInspectFeature && openInspectModal && (
 							<Button
 								className="inspect-metrics-button"
 								aria-label="Inspect Metric"
