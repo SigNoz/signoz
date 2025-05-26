@@ -16,6 +16,7 @@ type Props = {
 	error: ErrorV2;
 	triggerComponent?: React.ReactElement;
 	onClose?: () => void;
+	open?: boolean;
 };
 
 const classNames = {
@@ -26,8 +27,13 @@ const classNames = {
 	content: 'error-modal__content',
 };
 
-function ErrorModal({ error, triggerComponent, onClose }: Props): JSX.Element {
-	const [visible, setVisible] = React.useState(false);
+function ErrorModal({
+	open,
+	error,
+	triggerComponent,
+	onClose,
+}: Props): JSX.Element {
+	const [visible, setVisible] = React.useState(open);
 
 	const handleClose = (): void => {
 		setVisible(false);
@@ -94,6 +100,7 @@ function ErrorModal({ error, triggerComponent, onClose }: Props): JSX.Element {
 ErrorModal.defaultProps = {
 	onClose: undefined,
 	triggerComponent: null,
+	open: false,
 };
 
 export default ErrorModal;
