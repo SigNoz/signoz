@@ -117,6 +117,7 @@ export interface IBaseWidget {
 	isLogScale?: boolean;
 	columnWidths?: Record<string, number>;
 	legendPosition?: LegendPosition;
+	customLegendColors?: Record<string, string>;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

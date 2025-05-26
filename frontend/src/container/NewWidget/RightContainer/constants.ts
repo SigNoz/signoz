@@ -164,3 +164,17 @@ export const panelTypeVsLegendPosition: {
 	[PANEL_TYPES.HISTOGRAM]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
+
+export const panelTypeVsLegendColors: {
+	[key in PANEL_TYPES]: boolean;
+} = {
+	[PANEL_TYPES.TIME_SERIES]: true,
+	[PANEL_TYPES.VALUE]: false,
+	[PANEL_TYPES.TABLE]: false,
+	[PANEL_TYPES.LIST]: false,
+	[PANEL_TYPES.PIE]: true,
+	[PANEL_TYPES.BAR]: true,
+	[PANEL_TYPES.TRACE]: false,
+	[PANEL_TYPES.HISTOGRAM]: true,
+	[PANEL_TYPES.EMPTY_WIDGET]: false,
+} as const;
