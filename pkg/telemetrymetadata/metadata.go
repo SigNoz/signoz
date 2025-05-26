@@ -562,9 +562,19 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 	sb := sqlbuilder.Select("DISTINCT " + selectColumn).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
 
 	if len(fieldValueSelector.ExistingQuery) != 0 {
+		keySelectors := querybuilder.QueryStringToKeysSelectors(fieldValueSelector.ExistingQuery)
+		for _, keySelector := range keySelectors {
+			keySelector.Signal = fieldValueSelector.Signal
+		}
+		keys, err := t.GetKeysMulti(ctx, keySelectors)
+		if err != nil {
+			return nil, err
+		}
+
 		whereClause, _, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
+			FieldKeys:        keys,
 		})
 		if err == nil {
 			sb.AddWhereClause(whereClause)

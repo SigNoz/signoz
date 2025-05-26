@@ -116,7 +116,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 
 // addConditions adds both filter and time conditions to the query
 func (b *resourceFilterStatementBuilder[T]) addConditions(
-	ctx context.Context,
+	_ context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[T],
@@ -125,6 +125,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	// Add filter condition if present
 	if query.Filter != nil && query.Filter.Expression != "" {
 
+		// warnings would be encountered as part of the main condition already
 		filterWhereClause, _, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			FieldMapper:      b.opts.FieldMapper,
 			ConditionBuilder: b.opts.ConditionBuilder,
@@ -147,13 +148,9 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 // addTimeFilter adds time-based filtering conditions
 func (b *resourceFilterStatementBuilder[T]) addTimeFilter(sb *sqlbuilder.SelectBuilder, start, end uint64) {
 	// Convert nanoseconds to seconds and adjust start bucket
-	const (
-		nsToSeconds      = 1000000000
-		bucketAdjustment = 1800 // 30 minutes
-	)
 
-	startBucket := start/nsToSeconds - bucketAdjustment
-	endBucket := end / nsToSeconds
+	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := end / querybuilder.NsToSeconds
 
 	sb.Where(
 		sb.GE("seen_at_ts_bucket_start", startBucket),

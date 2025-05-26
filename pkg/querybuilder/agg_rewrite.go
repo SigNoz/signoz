@@ -25,6 +25,8 @@ type aggExprRewriter struct {
 	opts AggExprRewriterOptions
 }
 
+var _ qbtypes.AggExprRewriter = (*aggExprRewriter)(nil)
+
 func NewAggExprRewriter(opts AggExprRewriterOptions) *aggExprRewriter {
 	return &aggExprRewriter{opts: opts}
 }
@@ -32,12 +34,12 @@ func NewAggExprRewriter(opts AggExprRewriterOptions) *aggExprRewriter {
 // Rewrite parses the given aggregation expression, maps the column, and condition to
 // valid data source column and condition expression, and returns the rewritten expression
 // and the args if the parametric aggregation function is used.
-func (r *aggExprRewriter) Rewrite(ctx context.Context, expr string, opts ...qbtypes.RewriteOption) (string, []any, error) {
-
-	rctx := &qbtypes.RewriteCtx{}
-	for _, opt := range opts {
-		opt(rctx)
-	}
+func (r *aggExprRewriter) Rewrite(
+	ctx context.Context,
+	expr string,
+	rateInterval uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) (string, []any, error) {
 
 	wrapped := fmt.Sprintf("SELECT %s", expr)
 	p := chparser.NewParser(wrapped)
@@ -60,7 +62,7 @@ func (r *aggExprRewriter) Rewrite(ctx context.Context, expr string, opts ...qbty
 		return "", nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
 	}
 
-	visitor := newExprVisitor(rctx.Keys,
+	visitor := newExprVisitor(keys,
 		r.opts.FullTextColumn,
 		r.opts.FieldMapper,
 		r.opts.ConditionBuilder,
@@ -73,26 +75,23 @@ func (r *aggExprRewriter) Rewrite(ctx context.Context, expr string, opts ...qbty
 	}
 
 	if visitor.isRate {
-		return fmt.Sprintf("%s/%d", sel.SelectItems[0].String(), rctx.RateInterval), visitor.chArgs, nil
+		return fmt.Sprintf("%s/%d", sel.SelectItems[0].String(), rateInterval), visitor.chArgs, nil
 	}
 	return sel.SelectItems[0].String(), visitor.chArgs, nil
 }
 
-// RewriteMultiple rewrites a slice of expressions.
-func (r *aggExprRewriter) RewriteMultiple(
+// RewriteMulti rewrites a slice of expressions.
+func (r *aggExprRewriter) RewriteMulti(
 	ctx context.Context,
 	exprs []string,
-	opts ...qbtypes.RewriteOption,
+	rateInterval uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) ([]string, [][]any, error) {
-	rctx := &qbtypes.RewriteCtx{}
-	for _, opt := range opts {
-		opt(rctx)
-	}
 	out := make([]string, len(exprs))
 	var errs []error
 	var chArgsList [][]any
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(ctx, e, opts...)
+		w, chArgs, err := r.Rewrite(ctx, e, rateInterval, keys)
 		if err != nil {
 			errs = append(errs, err)
 			out[i] = e

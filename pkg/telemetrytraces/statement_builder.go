@@ -2,6 +2,7 @@ package telemetrytraces
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -55,6 +56,13 @@ func (b *traceQueryStatementBuilder) Build(
 	end = querybuilder.ToNanoSecs(end)
 
 	keySelectors := getKeySelectors(query)
+
+	jsun, err := json.Marshal(keySelectors)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("keySelectors", string(jsun))
+
 	keys, err := b.opts.MetadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
@@ -220,8 +228,8 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	for i, agg := range query.Aggregations {
 		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
 			ctx, agg.Expression,
-			qbtypes.WithKeys(keys),
-			qbtypes.WithSignal(telemetrytypes.SignalTraces),
+			uint64(query.StepInterval.Seconds()),
+			keys,
 		)
 		if err != nil {
 			return nil, err
@@ -319,14 +327,17 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		sb.SelectMore(sqlbuilder.Escape(colExpr))
 	}
 
+	// for scalar queries, the rate would be end-start
+	rateInterval := (end - start) / querybuilder.NsToSeconds
+
 	// Add aggregation
 	if len(query.Aggregations) > 0 {
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
 			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
 				ctx, aggExpr.Expression,
-				qbtypes.WithKeys(keys),
-				qbtypes.WithSignal(telemetrytypes.SignalTraces),
+				rateInterval,
+				keys,
 			)
 			if err != nil {
 				return nil, err
@@ -387,7 +398,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 // buildFilterCondition builds SQL condition from filter expression
 func (b *traceQueryStatementBuilder) addFilterCondition(
-	ctx context.Context,
+	_ context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
@@ -401,9 +412,10 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
 		filterWhereClause, warnings, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
-			FieldMapper:      b.opts.FieldMapper,
-			ConditionBuilder: b.opts.ConditionBuilder,
-			FieldKeys:        keys,
+			FieldMapper:        b.opts.FieldMapper,
+			ConditionBuilder:   b.opts.ConditionBuilder,
+			FieldKeys:          keys,
+			SkipResourceFilter: true,
 		})
 
 		if err != nil {
@@ -416,8 +428,8 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	}
 
 	// add time filter
-	startBucket := start/1000000000 - 1800
-	endBucket := end / 1000000000
+	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := end / querybuilder.NsToSeconds
 
 	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.LE("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 

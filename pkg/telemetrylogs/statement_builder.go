@@ -84,8 +84,22 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 		keySelectors = append(keySelectors, selectors...)
 	}
 
-	whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
-	keySelectors = append(keySelectors, whereClauseSelectors...)
+	if query.Filter != nil && query.Filter.Expression != "" {
+		whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
+		keySelectors = append(keySelectors, whereClauseSelectors...)
+	}
+
+	if query.GroupBy != nil {
+		for idx := range query.GroupBy {
+			groupBy := query.GroupBy[idx]
+			selectors := querybuilder.QueryStringToKeysSelectors(groupBy.TelemetryFieldKey.Name)
+			keySelectors = append(keySelectors, selectors...)
+		}
+	}
+
+	for idx := range keySelectors {
+		keySelectors[idx].Signal = telemetrytypes.SignalLogs
+	}
 
 	return keySelectors
 }
@@ -192,8 +206,8 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	for i, agg := range query.Aggregations {
 		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
 			ctx, agg.Expression,
-			qbtypes.WithKeys(keys),
-			qbtypes.WithSignal(telemetrytypes.SignalLogs),
+			uint64(query.StepInterval.Seconds()),
+			keys,
 		)
 		if err != nil {
 			return nil, err
@@ -291,14 +305,17 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		sb.SelectMore(sqlbuilder.Escape(colExpr))
 	}
 
+	// for scalar queries, the rate would be end-start
+	rateInterval := (end - start) / querybuilder.NsToSeconds
+
 	// Add aggregation
 	if len(query.Aggregations) > 0 {
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
 			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
 				ctx, aggExpr.Expression,
-				qbtypes.WithKeys(keys),
-				qbtypes.WithSignal(telemetrytypes.SignalLogs),
+				rateInterval,
+				keys,
 			)
 			if err != nil {
 				return nil, err
@@ -359,7 +376,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 // buildFilterCondition builds SQL condition from filter expression
 func (b *logQueryStatementBuilder) addFilterCondition(
-	ctx context.Context,
+	_ context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
@@ -368,9 +385,10 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 
 	// add filter expression
 	filterWhereClause, warnings, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
-		FieldMapper:      b.opts.FieldMapper,
-		ConditionBuilder: b.opts.ConditionBuilder,
-		FieldKeys:        keys,
+		FieldMapper:        b.opts.FieldMapper,
+		ConditionBuilder:   b.opts.ConditionBuilder,
+		FieldKeys:          keys,
+		SkipResourceFilter: true,
 	})
 
 	if err != nil {
@@ -382,10 +400,10 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	}
 
 	// add time filter
-	startBucket := start/1000000000 - 1800
-	endBucket := end / 1000000000
+	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := end / querybuilder.NsToSeconds
 
-	sb.Where(sb.GE("timestamp", start), sb.LE("timestamp", end), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
+	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.LE("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 
 	return warnings, nil
 }
