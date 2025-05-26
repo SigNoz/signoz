@@ -147,7 +147,7 @@ function CreateAlertChannels({
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
-			showErrorModal((error as APIError).error.error);
+			showErrorModal((error as APIError)?.error?.error);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
@@ -201,7 +201,7 @@ function CreateAlertChannels({
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
-			showErrorModal((error as APIError).error.error);
+			showErrorModal((error as APIError)?.error?.error);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
@@ -250,7 +250,7 @@ function CreateAlertChannels({
 			}
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} catch (error) {
-			showErrorModal((error as APIError).error.error);
+			showErrorModal((error as APIError)?.error?.error);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
@@ -280,7 +280,7 @@ function CreateAlertChannels({
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
-			showErrorModal((error as APIError).error.error);
+			showErrorModal((error as APIError)?.error?.error);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
@@ -310,7 +310,7 @@ function CreateAlertChannels({
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
-			showErrorModal((error as APIError).error.error);
+			showErrorModal((error as APIError)?.error?.error);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
@@ -340,7 +340,7 @@ function CreateAlertChannels({
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
-			showErrorModal((error as APIError).error.error);
+			showErrorModal((error as APIError)?.error?.error);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
@@ -443,7 +443,7 @@ function CreateAlertChannels({
 					status: 'Test success',
 				});
 			} catch (error) {
-				showErrorModal((error as APIError).error.error);
+				showErrorModal((error as APIError)?.error?.error);
 
 				logEvent('Alert Channel: Test notification', {
 					type: channelType,
