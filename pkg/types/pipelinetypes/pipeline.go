@@ -150,7 +150,7 @@ func (p *PostablePipeline) IsValid() error {
 	// check the filter
 	_, err := queryBuilderToExpr.Parse(p.Filter)
 	if err != nil {
-		return fmt.Errorf(fmt.Sprintf("filter for pipeline %v is not correct: %v", p.Name, err.Error()))
+		return fmt.Errorf("filter for pipeline %v is not correct: %v", p.Name, err.Error())
 	}
 
 	idUnique := map[string]struct{}{}
@@ -168,10 +168,10 @@ func (p *PostablePipeline) IsValid() error {
 			return fmt.Errorf("type of an operator cannot be empty")
 		}
 		if i != (l-1) && op.Output == "" {
-			return fmt.Errorf(fmt.Sprintf("Output of operator %s cannot be nil", op.ID))
+			return fmt.Errorf("output of operator %s cannot be nil", op.ID)
 		}
 		if i == (l-1) && op.Output != "" {
-			return fmt.Errorf(fmt.Sprintf("Output of operator %s should be empty", op.ID))
+			return fmt.Errorf("output of operator %s should be empty", op.ID)
 		}
 
 		if _, ok := idUnique[op.ID]; ok {
@@ -204,19 +204,19 @@ func isValidOperator(op PipelineOperator) error {
 	switch op.Type {
 	case "json_parser":
 		if op.ParseFrom == "" && op.ParseTo == "" {
-			return fmt.Errorf(fmt.Sprintf("parse from and parse to of %s json operator cannot be empty", op.ID))
+			return fmt.Errorf("parse from and parse to of %s json operator cannot be empty", op.ID)
 		}
 	case "grok_parser":
 		if op.Pattern == "" {
-			return fmt.Errorf(fmt.Sprintf("pattern of %s grok operator cannot be empty", op.ID))
+			return fmt.Errorf("pattern of %s grok operator cannot be empty", op.ID)
 		}
 	case "regex_parser":
 		if op.Regex == "" {
-			return fmt.Errorf(fmt.Sprintf("regex of %s regex operator cannot be empty", op.ID))
+			return fmt.Errorf("regex of %s regex operator cannot be empty", op.ID)
 		}
 		r, err := regexp.Compile(op.Regex)
 		if err != nil {
-			return fmt.Errorf(fmt.Sprintf("error compiling regex expression of %s regex operator", op.ID))
+			return fmt.Errorf("error compiling regex expression of %s regex operator", op.ID)
 		}
 		namedCaptureGroups := 0
 		for _, groupName := range r.SubexpNames() {
@@ -225,27 +225,27 @@ func isValidOperator(op PipelineOperator) error {
 			}
 		}
 		if namedCaptureGroups == 0 {
-			return fmt.Errorf(fmt.Sprintf("no capture groups in regex expression of %s regex operator", op.ID))
+			return fmt.Errorf("no capture groups in regex expression of %s regex operator", op.ID)
 		}
 	case "copy":
 		if op.From == "" || op.To == "" {
-			return fmt.Errorf(fmt.Sprintf("from or to of %s copy operator cannot be empty", op.ID))
+			return fmt.Errorf("from or to of %s copy operator cannot be empty", op.ID)
 		}
 	case "move":
 		if op.From == "" || op.To == "" {
-			return fmt.Errorf(fmt.Sprintf("from or to of %s move operator cannot be empty", op.ID))
+			return fmt.Errorf("from or to of %s move operator cannot be empty", op.ID)
 		}
 	case "add":
 		if op.Field == "" || op.Value == "" {
-			return fmt.Errorf(fmt.Sprintf("field or value of %s add operator cannot be empty", op.ID))
+			return fmt.Errorf("field or value of %s add operator cannot be empty", op.ID)
 		}
 	case "remove":
 		if op.Field == "" {
-			return fmt.Errorf(fmt.Sprintf("field of %s remove operator cannot be empty", op.ID))
+			return fmt.Errorf("field of %s remove operator cannot be empty", op.ID)
 		}
 	case "trace_parser":
 		if op.TraceParser == nil {
-			return fmt.Errorf(fmt.Sprintf("field of %s remove operator cannot be empty", op.ID))
+			return fmt.Errorf("field of %s remove operator cannot be empty", op.ID)
 		}
 
 		hasTraceIdParseFrom := (op.TraceParser.TraceId != nil && op.TraceParser.TraceId.ParseFrom != "")
@@ -253,7 +253,7 @@ func isValidOperator(op PipelineOperator) error {
 		hasTraceFlagsParseFrom := (op.TraceParser.TraceFlags != nil && op.TraceParser.TraceFlags.ParseFrom != "")
 
 		if !(hasTraceIdParseFrom || hasSpanIdParseFrom || hasTraceFlagsParseFrom) {
-			return fmt.Errorf(fmt.Sprintf("one of trace_id, span_id, trace_flags of %s trace_parser operator must be present", op.ID))
+			return fmt.Errorf("one of trace_id, span_id, trace_flags of %s trace_parser operator must be present", op.ID)
 		}
 
 		if hasTraceIdParseFrom && !isValidOtelValue(op.TraceParser.TraceId.ParseFrom) {
@@ -268,7 +268,7 @@ func isValidOperator(op PipelineOperator) error {
 
 	case "retain":
 		if len(op.Fields) == 0 {
-			return fmt.Errorf(fmt.Sprintf("fields of %s retain operator cannot be empty", op.ID))
+			return fmt.Errorf("fields of %s retain operator cannot be empty", op.ID)
 		}
 
 	case "time_parser":
@@ -282,7 +282,7 @@ func isValidOperator(op PipelineOperator) error {
 			)
 		}
 		if op.Layout == "" {
-			return fmt.Errorf(fmt.Sprintf("format can not be empty for time parsing processor %s", op.ID))
+			return fmt.Errorf("format can not be empty for time parsing processor %s", op.ID)
 		}
 
 		validEpochLayouts := []string{"s", "ms", "us", "ns", "s.ms", "s.us", "s.ns"}
@@ -297,9 +297,7 @@ func isValidOperator(op PipelineOperator) error {
 		if op.LayoutType == "strptime" {
 			_, err := RegexForStrptimeLayout(op.Layout)
 			if err != nil {
-				return fmt.Errorf(
-					"invalid strptime format '%s' of time parsing processor %s: %w", op.LayoutType, op.ID, err,
-				)
+				return fmt.Errorf("invalid strptime format '%s' of time parsing processor %s: %w", op.LayoutType, op.ID, err)
 			}
 		}
 
@@ -316,7 +314,7 @@ func isValidOperator(op PipelineOperator) error {
 		}
 
 	default:
-		return fmt.Errorf(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, trace_parser, retain)", op.Type, op.ID))
+		return fmt.Errorf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, trace_parser, retain)", op.Type, op.ID)
 	}
 
 	if !isValidOtelValue(op.ParseFrom) ||
@@ -325,7 +323,7 @@ func isValidOperator(op PipelineOperator) error {
 		!isValidOtelValue(op.To) ||
 		!isValidOtelValue(op.Field) {
 		valueErrStr := "value should have prefix of body, attributes, resource"
-		return fmt.Errorf(fmt.Sprintf("%s for operator Id %s", valueErrStr, op.ID))
+		return fmt.Errorf("%s for operator Id %s", valueErrStr, op.ID)
 	}
 	return nil
 }
