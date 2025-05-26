@@ -3,6 +3,25 @@
 	background: var(--bg-ink-400);
 	box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 
+	.log-detail-drawer__title {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+
+		.log-detail-drawer__title-left {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.log-detail-drawer__title-right {
+			.ant-btn {
+				display: flex;
+				align-items: center;
+			}
+		}
+	}
+
 	.ant-drawer-header {
 		padding: 8px 16px;
 		border-bottom: none;

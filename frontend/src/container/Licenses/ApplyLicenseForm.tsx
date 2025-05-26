@@ -1,8 +1,9 @@
 import { Button, Form, Input } from 'antd';
-import apply from 'api/licenses/apply';
+import apply from 'api/v3/licenses/put';
 import { useNotifications } from 'hooks/useNotifications';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import APIError from 'types/api/error';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import {
@@ -36,27 +37,18 @@ function ApplyLicenseForm({
 
 		setIsLoading(true);
 		try {
-			const response = await apply({
+			await apply({
 				key: params.key,
 			});
-
-			if (response.statusCode === 200) {
-				await Promise.all([licenseRefetch()]);
-
-				notifications.success({
-					message: 'Success',
-					description: t('license_applied'),
-				});
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('unexpected_error'),
-				});
-			}
+			await Promise.all([licenseRefetch()]);
+			notifications.success({
+				message: 'Success',
+				description: t('license_applied'),
+			});
 		} catch (e) {
 			notifications.error({
-				message: 'Error',
-				description: t('unexpected_error'),
+				message: (e as APIError).getErrorCode(),
+				description: (e as APIError).getErrorMessage(),
 			});
 		}
 		setIsLoading(false);
