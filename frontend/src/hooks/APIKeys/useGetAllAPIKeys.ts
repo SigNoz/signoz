@@ -1,13 +1,14 @@
-import { getAllAPIKeys } from 'api/APIKeys/getAllAPIKeys';
-import { AxiosError, AxiosResponse } from 'axios';
+import list from 'api/v1/pats/list';
 import { useQuery, UseQueryResult } from 'react-query';
-import { AllAPIKeyProps } from 'types/api/pat/types';
+import { SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
+import { APIKeyProps } from 'types/api/pat/types';
 
 export const useGetAllAPIKeys = (): UseQueryResult<
-	AxiosResponse<AllAPIKeyProps>,
-	AxiosError
+	SuccessResponseV2<APIKeyProps[]>,
+	APIError
 > =>
-	useQuery<AxiosResponse<AllAPIKeyProps>, AxiosError>({
+	useQuery<SuccessResponseV2<APIKeyProps[]>, APIError>({
 		queryKey: ['APIKeys'],
-		queryFn: () => getAllAPIKeys(),
+		queryFn: () => list(),
 	});

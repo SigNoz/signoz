@@ -300,17 +300,17 @@ export default function Home(): JSX.Element {
 		}
 	}, [hostData, k8sPodsData, handleUpdateChecklistDoneItem]);
 
-	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
+	const { activeLicense, isFetchingActiveLicense } = useAppContext();
 
 	const [isEnabled, setIsEnabled] = useState(false);
 
 	useEffect(() => {
-		if (isFetchingActiveLicenseV3) {
+		if (isFetchingActiveLicense) {
 			setIsEnabled(false);
 			return;
 		}
-		setIsEnabled(Boolean(activeLicenseV3?.platform === LicensePlatform.CLOUD));
-	}, [activeLicenseV3, isFetchingActiveLicenseV3]);
+		setIsEnabled(Boolean(activeLicense?.platform === LicensePlatform.CLOUD));
+	}, [activeLicense, isFetchingActiveLicense]);
 
 	const { data: deploymentsData } = useGetDeploymentsData(isEnabled);
 
