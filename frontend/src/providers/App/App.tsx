@@ -1,6 +1,7 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
 import { Logout } from 'api/utils';
+import getUserVersion from 'api/v1/version/getVersion';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
@@ -151,6 +152,12 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		enabled: !!isLoggedIn && !!user.email && user.role === USER_ROLES.ADMIN,
 	});
 
+	const { data: versionData } = useQuery({
+		queryFn: getUserVersion,
+		queryKey: ['getUserVersion', user?.accessJwt],
+		enabled: isLoggedIn,
+	});
+
 	useEffect(() => {
 		if (
 			!isFetchingOrgPreferences &&
@@ -246,6 +253,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			updateUser,
 			updateOrgPreferences,
 			updateOrg,
+			versionData: versionData?.payload || null,
 		}),
 		[
 			trialInfo,
@@ -265,6 +273,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			updateOrg,
 			user,
 			userFetchError,
+			versionData,
 		],
 	);
 	return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

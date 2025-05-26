@@ -6,13 +6,19 @@ import ErrorIcon from 'assets/Error';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { BookOpenText, ChevronsDown } from 'lucide-react';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
-import { ErrorV2 } from 'types/api';
+import APIError from 'types/api/error';
 
 interface ErrorContentProps {
-	error: ErrorV2;
+	error: APIError;
 }
 
 function ErrorContent({ error }: ErrorContentProps): JSX.Element {
+	const {
+		url: errorUrl,
+		errors: errorMessages,
+		code: errorCode,
+		message: errorMessage,
+	} = error.error.error;
 	return (
 		<section className="error-content">
 			{/* Summary Header */}
@@ -24,17 +30,17 @@ function ErrorContent({ error }: ErrorContentProps): JSX.Element {
 						</div>
 
 						<div className="error-content__summary-text">
-							<h2 className="error-content__error-code">{error.code}</h2>
-							<p className="error-content__error-message">{error.message}</p>
+							<h2 className="error-content__error-code">{errorCode}</h2>
+							<p className="error-content__error-message">{errorMessage}</p>
 						</div>
 					</div>
 
-					{error.url && (
+					{errorUrl && (
 						<div className="error-content__summary-right">
 							<Button
 								type="default"
 								className="error-content__docs-button"
-								href={error.url}
+								href={errorUrl}
 								target="_blank"
 								data-testid="error-docs-button"
 							>
@@ -45,7 +51,7 @@ function ErrorContent({ error }: ErrorContentProps): JSX.Element {
 					)}
 				</header>
 
-				{error.errors?.length > 0 && (
+				{errorMessages?.length > 0 && (
 					<div className="error-content__message-badge">
 						<KeyValueLabel
 							badgeKey={
@@ -54,7 +60,7 @@ function ErrorContent({ error }: ErrorContentProps): JSX.Element {
 									<div className="error-content__message-badge-label-text">MESSAGES</div>
 								</div>
 							}
-							badgeValue={error.errors.length.toString()}
+							badgeValue={errorMessages.length.toString()}
 						/>
 						<div className="error-content__message-badge-line" />
 					</div>
@@ -66,14 +72,14 @@ function ErrorContent({ error }: ErrorContentProps): JSX.Element {
 				<div className="error-content__message-list-container">
 					<OverlayScrollbar>
 						<ul className="error-content__message-list">
-							{error.errors?.map((error) => (
+							{errorMessages?.map((error) => (
 								<li className="error-content__message-item" key={error.message}>
 									{error.message}
 								</li>
 							))}
 						</ul>
 					</OverlayScrollbar>
-					{error.errors?.length > 10 && (
+					{errorMessages?.length > 10 && (
 						<div className="error-content__scroll-hint">
 							<ChevronsDown
 								size={16}

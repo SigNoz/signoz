@@ -235,6 +235,11 @@ export function getAppContextMock(
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
 		activeLicenseRefetch: jest.fn(),
+		versionData: {
+			version: '1.0.0',
+			ee: 'Y',
+			setupCompleted: true,
+		},
 		...appContextOverrides,
 	};
 }

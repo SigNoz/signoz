@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
-import { ErrorV2 } from 'types/api';
+import APIError from 'types/api/error';
 
 import ErrorModal from './ErrorModal';
 
@@ -16,17 +16,22 @@ jest.mock('react-query', () => ({
 		getQueryData: jest.fn(() => mockVersionData),
 	}),
 }));
-const mockError: ErrorV2 = {
-	message: 'Something went wrong while processing your request.',
-	// eslint-disable-next-line sonarjs/no-duplicate-string
-	code: 'An error occurred',
-	url: 'https://example.com/docs',
-	errors: [
-		{ message: 'First error detail' },
-		{ message: 'Second error detail' },
-		{ message: 'Third error detail' },
-	],
-};
+const mockError: APIError = new APIError({
+	httpStatusCode: 400,
+	error: {
+		// eslint-disable-next-line sonarjs/no-duplicate-string
+		message: 'Something went wrong while processing your request.',
+		// eslint-disable-next-line sonarjs/no-duplicate-string
+		code: 'An error occurred',
+		// eslint-disable-next-line sonarjs/no-duplicate-string
+		url: 'https://example.com/docs',
+		errors: [
+			{ message: 'First error detail' },
+			{ message: 'Second error detail' },
+			{ message: 'Third error detail' },
+		],
+	},
+});
 describe('ErrorModal Component', () => {
 	it('should render the modal when open is true', () => {
 		render(<ErrorModal error={mockError} open onClose={jest.fn()} />);
@@ -90,7 +95,7 @@ describe('ErrorModal Component', () => {
 
 		expect(openDocsButton).toHaveAttribute('href', 'https://example.com/docs');
 
-		expect(openDocsButton).toHaveAttribute('target', '__blank');
+		expect(openDocsButton).toHaveAttribute('target', '_blank');
 	});
 
 	it('should not display scroll for more if there are less than 10 messages', () => {
@@ -99,12 +104,18 @@ describe('ErrorModal Component', () => {
 		expect(screen.queryByText('Scroll for more')).not.toBeInTheDocument();
 	});
 	it('should display scroll for more if there are more than 10 messages', async () => {
-		const longError: ErrorV2 = {
-			...mockError,
-			errors: Array.from({ length: 15 }, (_, i) => ({
-				message: `Error detail ${i + 1}`,
-			})),
-		};
+		const longError = new APIError({
+			httpStatusCode: 400,
+			error: {
+				...mockError.error,
+				code: 'An error occurred',
+				message: 'Something went wrong while processing your request.',
+				url: 'https://example.com/docs',
+				errors: Array.from({ length: 15 }, (_, i) => ({
+					message: `Error detail ${i + 1}`,
+				})),
+			},
+		});
 
 		render(<ErrorModal error={longError} open onClose={jest.fn()} />);
 

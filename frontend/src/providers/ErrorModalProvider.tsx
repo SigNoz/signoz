@@ -7,10 +7,10 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { ErrorV2 } from 'types/api';
+import APIError from 'types/api/error';
 
 interface ErrorModalContextType {
-	showErrorModal: (error: ErrorV2) => void;
+	showErrorModal: (error: APIError) => void;
 	hideErrorModal: () => void;
 }
 
@@ -23,10 +23,10 @@ export function ErrorModalProvider({
 }: {
 	children: ReactNode;
 }): JSX.Element {
-	const [error, setError] = useState<ErrorV2 | null>(null);
+	const [error, setError] = useState<APIError | null>(null);
 	const [isVisible, setIsVisible] = useState(false);
 
-	const showErrorModal = useCallback((error: ErrorV2): void => {
+	const showErrorModal = useCallback((error: APIError): void => {
 		setError(error);
 		setIsVisible(true);
 	}, []);

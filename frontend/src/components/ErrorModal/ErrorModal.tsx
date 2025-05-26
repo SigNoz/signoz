@@ -6,14 +6,12 @@ import { CircleAlert, X } from 'lucide-react';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { useAppContext } from 'providers/App/App';
 import React from 'react';
-import { useQueryClient } from 'react-query';
-import { ErrorV2 } from 'types/api';
-import { PayloadProps } from 'types/api/user/getVersion';
+import APIError from 'types/api/error';
 
 import ErrorContent from './components/ErrorContent';
 
 type Props = {
-	error: ErrorV2;
+	error: APIError;
 	triggerComponent?: React.ReactElement;
 	onClose?: () => void;
 	open?: boolean;
@@ -40,16 +38,9 @@ function ErrorModal({
 		onClose?.();
 	};
 
-	const queryClient = useQueryClient();
+	const { versionData } = useAppContext();
 
-	const { user } = useAppContext();
-
-	const versionData = queryClient.getQueryData([
-		'getUserVersion',
-		user?.accessJwt,
-	]) as { payload: PayloadProps } | undefined;
-
-	const versionDataPayload = versionData?.payload;
+	const versionDataPayload = versionData;
 
 	return (
 		<>
