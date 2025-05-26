@@ -34,16 +34,6 @@ const plugins = [
 		SENTRY_DSN: process.env.SENTRY_DSN,
 		TUNNEL_URL: process.env.TUNNEL_URL,
 		TUNNEL_DOMAIN: process.env.TUNNEL_DOMAIN,
-		templateParameters: {
-			preloadFonts: [
-				{
-					href: 'https://cdn.vercel.com/geist/font/mono/GeistMonoVF.woff2',
-					as: 'font',
-					type: 'font/woff2',
-					crossorigin: 'anonymous',
-				},
-			],
-		},
 	}),
 	new CompressionPlugin({
 		exclude: /.map$/,
