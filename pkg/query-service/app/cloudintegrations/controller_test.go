@@ -27,7 +27,7 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore), nil, emailing, providerSettings)
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore, providerSettings), nil, emailing, providerSettings)
 	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 
@@ -77,7 +77,7 @@ func TestAgentCheckIns(t *testing.T) {
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore), nil, emailing, providerSettings)
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore, providerSettings), nil, emailing, providerSettings)
 	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 
@@ -167,7 +167,7 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore), nil, emailing, providerSettings)
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore, providerSettings), nil, emailing, providerSettings)
 	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 
@@ -189,7 +189,7 @@ func TestConfigureService(t *testing.T) {
 	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore), nil, emailing, providerSettings)
+	userModule := impluser.NewModule(impluser.NewStore(sqlStore, providerSettings), nil, emailing, providerSettings)
 	user, apiErr := createTestUser(organizationModule, userModule)
 	require.Nil(apiErr)
 

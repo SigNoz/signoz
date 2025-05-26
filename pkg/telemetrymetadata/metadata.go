@@ -3,13 +3,13 @@ package telemetrymetadata
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
-	"go.uber.org/zap"
 )
 
 var (
@@ -21,6 +21,7 @@ var (
 )
 
 type telemetryMetaStore struct {
+	logger                 *slog.Logger
 	telemetrystore         telemetrystore.TelemetryStore
 	tracesDBName           string
 	tracesFieldsTblName    string
@@ -39,6 +40,7 @@ type telemetryMetaStore struct {
 }
 
 func NewTelemetryMetaStore(
+	logger *slog.Logger,
 	telemetrystore telemetrystore.TelemetryStore,
 	tracesDBName string,
 	tracesFieldsTblName string,
@@ -98,7 +100,6 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 
 // getTracesKeys returns the keys from the spans that match the field selection criteria
 func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
-
 	if len(fieldKeySelectors) == 0 {
 		return nil, nil
 	}
@@ -566,7 +567,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		if err == nil {
 			sb.AddWhereClause(whereClause)
 		} else {
-			zap.L().Warn("error parsing existing query for related values", zap.Error(err))
+			t.logger.WarnContext(ctx, "error parsing existing query for related values", "error", err)
 		}
 	}
 
@@ -586,7 +587,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	zap.L().Debug("query for related values", zap.String("query", query), zap.Any("args", args))
+	t.logger.DebugContext(ctx, "query for related values", "query", query, "args", args)
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
