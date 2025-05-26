@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 )
 
 const (
@@ -52,7 +53,8 @@ var TELEMETRY_HEART_BEAT_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_HEART_
 
 var TELEMETRY_ACTIVE_USER_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_ACTIVE_USER_DURATION_MINUTES", 360)
 
-var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email_template.html")
+// Deprecated: Use the new emailing service instead
+var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email.gotmpl")
 
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
 var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
@@ -64,9 +66,9 @@ func UseMetricsPreAggregation() bool {
 
 var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
 
-var DEFAULT_FEATURE_SET = model.FeatureSet{
-	model.Feature{
-		Name:       model.UseSpanMetrics,
+var DEFAULT_FEATURE_SET = []*featuretypes.GettableFeature{
+	&featuretypes.GettableFeature{
+		Name:       featuretypes.UseSpanMetrics,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
@@ -659,3 +661,7 @@ var MaterializedDataTypeMap = map[string]string{
 }
 
 const InspectMetricsMaxTimeDiff = 1800000
+
+func GetDefaultSiteURL() string {
+	return GetOrDefaultEnv("SIGNOZ_SITE_URL", HTTPHostPort)
+}

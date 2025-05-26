@@ -5,4 +5,7 @@ export type Props = {
 	orgId: string;
 };
 
-export type PayloadProps = AuthDomain;
+export interface PayloadProps {
+	data: AuthDomain;
+	status: string;
+}

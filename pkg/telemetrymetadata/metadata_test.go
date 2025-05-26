@@ -3,6 +3,8 @@ package telemetrymetadata
 import (
 	"context"
 	"fmt"
+	"io"
+	"log/slog"
 	"regexp"
 	"testing"
 
@@ -34,6 +36,7 @@ func TestGetKeys(t *testing.T) {
 	mock := mockTelemetryStore.Mock()
 
 	metadata := NewTelemetryMetaStore(
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		mockTelemetryStore,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,

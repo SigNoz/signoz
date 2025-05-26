@@ -9,13 +9,29 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	pkgError "github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
 func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	featureSet, err := ah.FF().GetFeatureFlags()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, pkgError.Newf(pkgError.TypeInvalidInput, pkgError.CodeInvalidInput, "orgId is invalid"))
+		return
+	}
+
+	featureSet, err := ah.Signoz.Licensing.GetFeatureFlags(r.Context())
 	if err != nil {
 		ah.HandleError(w, err, http.StatusInternalServerError)
 		return
@@ -23,7 +39,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	if constants.FetchFeatures == "true" {
 		zap.L().Debug("fetching license")
-		license, err := ah.LM().GetRepo().GetActiveLicense(ctx)
+		license, err := ah.Signoz.Licensing.GetActive(ctx, orgID)
 		if err != nil {
 			zap.L().Error("failed to fetch license", zap.Error(err))
 		} else if license == nil {
@@ -44,9 +60,8 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if ah.opts.PreferSpanMetrics {
-		for idx := range featureSet {
-			feature := &featureSet[idx]
-			if feature.Name == basemodel.UseSpanMetrics {
+		for idx, feature := range featureSet {
+			if feature.Name == featuretypes.UseSpanMetrics {
 				featureSet[idx].Active = true
 			}
 		}
@@ -57,7 +72,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 // fetchZeusFeatures makes an HTTP GET request to the /zeusFeatures endpoint
 // and returns the FeatureSet.
-func fetchZeusFeatures(url, licenseKey string) (basemodel.FeatureSet, error) {
+func fetchZeusFeatures(url, licenseKey string) ([]*featuretypes.GettableFeature, error) {
 	// Check if the URL is empty
 	if url == "" {
 		return nil, fmt.Errorf("url is empty")
@@ -116,14 +131,14 @@ func fetchZeusFeatures(url, licenseKey string) (basemodel.FeatureSet, error) {
 }
 
 type ZeusFeaturesResponse struct {
-	Status string               `json:"status"`
-	Data   basemodel.FeatureSet `json:"data"`
+	Status string                          `json:"status"`
+	Data   []*featuretypes.GettableFeature `json:"data"`
 }
 
 // MergeFeatureSets merges two FeatureSet arrays with precedence to zeusFeatures.
-func MergeFeatureSets(zeusFeatures, internalFeatures basemodel.FeatureSet) basemodel.FeatureSet {
+func MergeFeatureSets(zeusFeatures, internalFeatures []*featuretypes.GettableFeature) []*featuretypes.GettableFeature {
 	// Create a map to store the merged features
-	featureMap := make(map[string]basemodel.Feature)
+	featureMap := make(map[string]*featuretypes.GettableFeature)
 
 	// Add all features from the otherFeatures set to the map
 	for _, feature := range internalFeatures {
@@ -137,7 +152,7 @@ func MergeFeatureSets(zeusFeatures, internalFeatures basemodel.FeatureSet) basem
 	}
 
 	// Convert the map back to a FeatureSet slice
-	var mergedFeatures basemodel.FeatureSet
+	var mergedFeatures []*featuretypes.GettableFeature
 	for _, feature := range featureMap {
 		mergedFeatures = append(mergedFeatures, feature)
 	}

@@ -14,8 +14,14 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/commonUtils';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import {
+	filterDuplicateFilters,
+	getFiltersFromParams,
+} from 'container/InfraMonitoringK8s/commonUtils';
+import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
+	K8sCategory,
+} from 'container/InfraMonitoringK8s/constants';
 import NodeEvents from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityEvents';
 import {
 	CustomTimeType,
@@ -34,6 +40,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -82,11 +89,27 @@ function NodeDetails({
 		selectedTime as Time,
 	);
 
-	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.METRICS);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [selectedView, setSelectedView] = useState<VIEWS>(() => {
+		const view = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW);
+		if (view) {
+			return view as VIEWS;
+		}
+		return VIEWS.METRICS;
+	});
 	const isDarkMode = useIsDarkMode();
 
-	const initialFilters = useMemo(
-		() => ({
+	const initialFilters = useMemo(() => {
+		const urlView = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW);
+		const queryKey =
+			urlView === VIEW_TYPES.LOGS
+				? INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS
+				: INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS;
+		const filters = getFiltersFromParams(searchParams, queryKey);
+		if (filters) {
+			return filters;
+		}
+		return {
 			op: 'AND',
 			items: [
 				{
@@ -103,12 +126,18 @@ function NodeDetails({
 					value: node?.meta.k8s_node_name || '',
 				},
 			],
-		}),
-		[node?.meta.k8s_node_name],
-	);
+		};
+	}, [node?.meta.k8s_node_name, searchParams]);
 
-	const initialEventsFilters = useMemo(
-		() => ({
+	const initialEventsFilters = useMemo(() => {
+		const filters = getFiltersFromParams(
+			searchParams,
+			INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
+		);
+		if (filters) {
+			return filters;
+		}
+		return {
 			op: 'AND',
 			items: [
 				{
@@ -138,9 +167,8 @@ function NodeDetails({
 					value: node?.meta.k8s_node_name || '',
 				},
 			],
-		}),
-		[node?.meta.k8s_node_name],
-	);
+		};
+	}, [node?.meta.k8s_node_name, searchParams]);
 
 	const [logAndTracesFilters, setLogAndTracesFilters] = useState<
 		IBuilderQuery['filters']
@@ -181,6 +209,13 @@ function NodeDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: e.target.value,
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(null),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(null),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS]: JSON.stringify(null),
+		});
 		logEvent(InfraMonitoringEvents.TabChanged, {
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.DetailedPage,
@@ -220,7 +255,7 @@ function NodeDetails({
 	);
 
 	const handleChangeLogFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
@@ -242,7 +277,7 @@ function NodeDetails({
 					});
 				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: filterDuplicateFilters(
 						[
@@ -252,6 +287,16 @@ function NodeDetails({
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -259,7 +304,7 @@ function NodeDetails({
 	);
 
 	const handleChangeTracesFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
@@ -276,7 +321,7 @@ function NodeDetails({
 					});
 				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: filterDuplicateFilters(
 						[
@@ -287,6 +332,16 @@ function NodeDetails({
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -294,7 +349,7 @@ function NodeDetails({
 	);
 
 	const handleChangeEventsFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setEventsFilters((prevFilters) => {
 				const nodeKindFilter = prevFilters.items.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
@@ -312,7 +367,7 @@ function NodeDetails({
 					});
 				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: [
 						nodeKindFilter,
@@ -324,6 +379,16 @@ function NodeDetails({
 						),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

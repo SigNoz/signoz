@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type QueryEnvelope struct {
@@ -32,11 +33,35 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	// 2. Decode the spec based on the Type.
 	switch shadow.Type {
 	case QueryTypeBuilder, QueryTypeSubQuery:
-		var spec QueryBuilderQuery
-		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid builder query spec")
+		var header struct {
+			Signal telemetrytypes.Signal `json:"signal"`
 		}
-		q.Spec = spec
+		if err := json.Unmarshal(shadow.Spec, &header); err != nil {
+			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot detect builder signal")
+		}
+
+		switch header.Signal {
+		case telemetrytypes.SignalTraces:
+			var spec QueryBuilderQuery[TraceAggregation]
+			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
+				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid trace builder query spec")
+			}
+			q.Spec = spec
+		case telemetrytypes.SignalLogs:
+			var spec QueryBuilderQuery[LogAggregation]
+			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
+				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid log builder query spec")
+			}
+			q.Spec = spec
+		case telemetrytypes.SignalMetrics:
+			var spec QueryBuilderQuery[MetricAggregation]
+			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
+				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid metric builder query spec")
+			}
+			q.Spec = spec
+		default:
+			return errors.WrapInvalidInputf(nil, errors.CodeInvalidInput, "unknown builder signal %q", header.Signal)
+		}
 
 	case QueryTypeFormula:
 		var spec QueryBuilderFormula
