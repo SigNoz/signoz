@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from 'tests/test-utils';
+import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { ErrorV2 } from 'types/api';
 
 import ErrorModal from './ErrorModal';
@@ -110,5 +110,75 @@ describe('ErrorModal Component', () => {
 
 		// Check if the scroll hint is displayed
 		expect(screen.getByText('Scroll for more')).toBeInTheDocument();
+	});
+});
+it('should render the trigger component if provided', () => {
+	const mockTrigger = <button type="button">Open Error Modal</button>;
+	render(
+		<ErrorModal
+			error={mockError}
+			triggerComponent={mockTrigger}
+			onClose={jest.fn()}
+		/>,
+	);
+
+	// Check if the trigger component is rendered
+	expect(screen.getByText('Open Error Modal')).toBeInTheDocument();
+});
+
+it('should open the modal when the trigger component is clicked', async () => {
+	const mockTrigger = <button type="button">Open Error Modal</button>;
+	render(
+		<ErrorModal
+			error={mockError}
+			triggerComponent={mockTrigger}
+			onClose={jest.fn()}
+		/>,
+	);
+
+	// Click the trigger component
+	const triggerButton = screen.getByText('Open Error Modal');
+	act(() => {
+		fireEvent.click(triggerButton);
+	});
+
+	// Check if the modal is displayed
+	expect(screen.getByText('An error occurred')).toBeInTheDocument();
+});
+
+it('should render the default trigger tag if no trigger component is provided', () => {
+	render(<ErrorModal error={mockError} onClose={jest.fn()} />);
+
+	// Check if the default trigger tag is rendered
+	expect(screen.getByText('error')).toBeInTheDocument();
+});
+
+it('should close the modal when the onCancel event is triggered', async () => {
+	const onCloseMock = jest.fn();
+	render(<ErrorModal error={mockError} onClose={onCloseMock} />);
+
+	// Click the trigger component
+	const triggerButton = screen.getByText('error');
+	act(() => {
+		fireEvent.click(triggerButton);
+	});
+
+	await waitFor(() => {
+		expect(screen.getByText('An error occurred')).toBeInTheDocument();
+	});
+
+	// Trigger the onCancel event
+	act(() => {
+		fireEvent.click(screen.getByTestId('close-button'));
+	});
+
+	// Check if the modal is closed
+	expect(onCloseMock).toHaveBeenCalledTimes(1);
+
+	await waitFor(() => {
+		// check if the modal is not visible
+		const modal = document.getElementsByClassName('ant-modal');
+		const style = window.getComputedStyle(modal[0]);
+		expect(style.display).toBe('none');
 	});
 });
