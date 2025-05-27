@@ -152,6 +152,15 @@ function TimeSeries({
 		return false;
 	}, [metricUnits, areAllMetricUnitsSame]);
 
+	const showSaveUnitButton = useMemo(
+		() =>
+			metricUnits.length === 1 &&
+			Boolean(metrics?.[0]) &&
+			metricUnits[0] === '' &&
+			yAxisUnit !== '',
+		[metricUnits, metrics, yAxisUnit],
+	);
+
 	const {
 		mutate: updateMetricMetadata,
 		isLoading: isUpdatingMetricMetadata,
@@ -197,7 +206,7 @@ function TimeSeries({
 							loading={isMetricUnitsLoading}
 							disabled={isMetricUnitsLoading || isMetricUnitsError}
 						/>
-						{metricUnits.length === 1 && metricUnits[0] === '' && yAxisUnit !== '' && (
+						{showSaveUnitButton && (
 							<div className="save-unit-container">
 								<Typography.Text>
 									Save the selected unit for this metric?
