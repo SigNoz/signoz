@@ -27,6 +27,11 @@ export interface WidgetGraphProps {
 	requestData: GetQueryResultsProps;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	isLoadingPanelData: boolean;
+	setQueryResponse?: Dispatch<
+		SetStateAction<
+			UseQueryResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error>
+		>
+	>;
 }
 
 export type WidgetGraphContainerProps = {
