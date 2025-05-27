@@ -2,6 +2,7 @@ package telemetrylogs
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -17,18 +18,19 @@ func resourceFilterStmtBuilder() (qbtypes.StatementBuilder[qbtypes.LogAggregatio
 	fm := resourcefilter.NewFieldMapper()
 	cb := resourcefilter.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	compiler := resourcefilter.NewFilterCompiler(resourcefilter.FilterCompilerOpts{
-		FieldMapper:      fm,
-		ConditionBuilder: cb,
-		MetadataStore:    mockMetadataStore,
-	})
+	keysMap := buildCompleteFieldKeyMap()
+	for _, keys := range keysMap {
+		for _, key := range keys {
+			key.Signal = telemetrytypes.SignalLogs
+		}
+	}
+	mockMetadataStore.KeysMap = keysMap
 
-	return resourcefilter.NewLogResourceFilterStatementBuilder(resourcefilter.ResourceFilterStatementBuilderOpts{
-		FieldMapper:      fm,
-		ConditionBuilder: cb,
-		Compiler:         compiler,
-	}), nil
+	return resourcefilter.NewLogResourceFilterStatementBuilder(
+		fm,
+		cb,
+		mockMetadataStore,
+	), nil
 }
 
 func TestStatementBuilder(t *testing.T) {
@@ -63,8 +65,8 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT resources_string['service.name'] AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp <= ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY ALL ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, resources_string['service.name'] AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp <= ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`service.name`) IN (SELECT `service.name` FROM __limit_cte) GROUP BY ALL",
-				Args:  []any{"cartservice", "%service.name%", "%service.name%cartservice%", uint64(1747945619), uint64(1747983448), uint64(1747947419000000000), uint64(1747983448000000000), uint64(1747945619), uint64(1747983448), 10, uint64(1747947419000000000), uint64(1747983448000000000), uint64(1747945619), uint64(1747983448)},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(mapContains(resources_string, 'service.name') = ?, resources_string['service.name'], NULL)) AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp <= ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY ALL ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(mapContains(resources_string, 'service.name') = ?, resources_string['service.name'], NULL)) AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp <= ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`service.name`) IN (SELECT `service.name` FROM __limit_cte) GROUP BY ALL",
+				Args:  []any{"cartservice", "%service.name%", "%service.name%cartservice%", uint64(1747945619), uint64(1747983448), true, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, true, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
 		},
@@ -74,29 +76,20 @@ func TestStatementBuilder(t *testing.T) {
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	compiler := NewFilterCompiler(FilterCompilerOpts{
-		FieldMapper:        fm,
-		ConditionBuilder:   cb,
-		MetadataStore:      mockMetadataStore,
-		SkipResourceFilter: true,
-	})
-	aggExprRewriter := querybuilder.NewAggExprRewriter(querybuilder.AggExprRewriterOptions{
-		FieldMapper:      fm,
-		ConditionBuilder: cb,
-		MetadataStore:    mockMetadataStore,
-	})
+
+	aggExprRewriter := querybuilder.NewAggExprRewriter(nil, fm, cb, "", nil)
 
 	resourceFilterStmtBuilder, err := resourceFilterStmtBuilder()
 	require.NoError(t, err)
 
-	statementBuilder := NewLogQueryStatementBuilder(LogQueryStatementBuilderOpts{
-		FieldMapper:               fm,
-		ConditionBuilder:          cb,
-		Compiler:                  compiler,
-		MetadataStore:             mockMetadataStore,
-		AggExprRewriter:           aggExprRewriter,
-		ResourceFilterStmtBuilder: resourceFilterStmtBuilder,
-	})
+	statementBuilder := NewLogQueryStatementBuilder(
+		slog.Default(),
+		mockMetadataStore,
+		fm,
+		cb,
+		resourceFilterStmtBuilder,
+		aggExprRewriter,
+	)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
