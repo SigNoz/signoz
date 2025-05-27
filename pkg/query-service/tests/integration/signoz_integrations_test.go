@@ -11,18 +11,14 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
-	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
-	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
-	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -33,7 +29,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 // Higher level tests for UI facing APIs
@@ -567,7 +562,6 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		t.Fatalf("could not create integrations controller: %v", err)
 	}
 
-	fm := featureManager.StartManager()
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
@@ -579,37 +573,32 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 10*time.Minute, 30*time.Minute)
-	userModule := impluser.NewModule(impluser.NewStore(testDB), jwt, emailing, providerSettings)
-	userHandler := impluser.NewHandler(userModule)
-	modules := signoz.NewModules(testDB, userModule)
-	handlers := signoz.NewHandlers(modules, userHandler)
-
-	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
+	handlers := signoz.NewHandlers(modules)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		Reader:                      reader,
-		IntegrationsController:      controller,
-		FeatureFlags:                fm,
+		Reader:                 reader,
+		IntegrationsController: controller,
+
 		JWT:                         jwt,
 		CloudIntegrationsController: cloudIntegrationsController,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
 			Handlers: handlers,
 		},
-		QuickFilters: quickFilterModule,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
 	router := app.NewRouter()
-	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	router.Use(middleware.NewAuth(jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
 	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterIntegrationRoutes(router, am)
 
 	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
-	user, apiErr := createTestUser(organizationModule, userModule)
+	user, apiErr := createTestUser(organizationModule, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
@@ -619,7 +608,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
-		userModule:     userModule,
+		userModule:     modules.User,
 	}
 }
 

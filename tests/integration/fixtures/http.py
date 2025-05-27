@@ -6,6 +6,7 @@ from testcontainers.core.container import Network
 from wiremock.client import (
     Mapping,
     Mappings,
+    Requests,
 )
 from wiremock.constants import Config
 from wiremock.testing.testcontainer import WireMockContainer
@@ -78,3 +79,4 @@ def make_http_mocks():
     yield _make_http_mocks
 
     Mappings.delete_all_mappings()
+    Requests.reset_request_journal()

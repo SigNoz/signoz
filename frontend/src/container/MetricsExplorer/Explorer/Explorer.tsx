@@ -19,6 +19,7 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 as uuid } from 'uuid';
@@ -26,6 +27,7 @@ import { v4 as uuid } from 'uuid';
 import QuerySection from './QuerySection';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
+import { splitQueryIntoOneChartPerQuery } from './utils';
 
 const ONE_CHART_PER_QUERY_ENABLED_KEY = 'isOneChartPerQueryEnabled';
 
@@ -75,14 +77,18 @@ function Explorer(): JSX.Element {
 	useShareBuilderUrl(exportDefaultQuery);
 
 	const handleExport = useCallback(
-		(dashboard: Dashboard | null): void => {
+		(
+			dashboard: Dashboard | null,
+			_isNewDashboard?: boolean,
+			queryToExport?: Query,
+		): void => {
 			if (!dashboard) return;
 
 			const widgetId = uuid();
 
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
-				exportDefaultQuery,
+				queryToExport || exportDefaultQuery,
 				widgetId,
 				PANEL_TYPES.TIME_SERIES,
 				options.selectColumns,
@@ -114,7 +120,7 @@ function Explorer(): JSX.Element {
 						return;
 					}
 					const dashboardEditView = generateExportToDashboardLink({
-						query: exportDefaultQuery,
+						query: queryToExport || exportDefaultQuery,
 						panelType: PANEL_TYPES.TIME_SERIES,
 						dashboardId: data.payload?.uuid || '',
 						widgetId,
@@ -133,6 +139,14 @@ function Explorer(): JSX.Element {
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[exportDefaultQuery, notifications, updateDashboard],
+	);
+
+	const splitedQueries = useMemo(
+		() =>
+			splitQueryIntoOneChartPerQuery(
+				stagedQuery || initialQueriesMap[DataSource.METRICS],
+			),
+		[stagedQuery],
 	);
 
 	return (
@@ -190,6 +204,8 @@ function Explorer(): JSX.Element {
 				isLoading={isLoading}
 				sourcepage={DataSource.METRICS}
 				onExport={handleExport}
+				isOneChartPerQuery={showOneChartPerQuery}
+				splitedQueries={splitedQueries}
 			/>
 		</Sentry.ErrorBoundary>
 	);

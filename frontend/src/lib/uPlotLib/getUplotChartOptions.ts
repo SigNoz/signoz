@@ -60,6 +60,7 @@ export interface GetUPlotChartOptions {
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
 	isLogScale?: boolean;
 	colorMapping?: Record<string, string>;
+	enableZoom?: boolean;
 }
 
 /** the function converts series A , series B , series C to
@@ -168,6 +169,7 @@ export const getUPlotChartOptions = ({
 	customSeries,
 	isLogScale,
 	colorMapping,
+	enableZoom,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -205,7 +207,25 @@ export const getUPlotChartOptions = ({
 					`${u.series[seriesIdx].points.stroke(u, seriesIdx)}90`,
 				fill: (): string => '#fff',
 			},
+			...(enableZoom
+				? {
+						drag: {
+							x: true,
+							y: true,
+						},
+						focus: {
+							prox: 30,
+						},
+				  }
+				: {}),
 		},
+		...(enableZoom
+			? {
+					select: {
+						show: true,
+					},
+			  }
+			: {}),
 		tzDate,
 		padding: [16, 16, 8, 8],
 		bands,

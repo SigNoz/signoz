@@ -24,11 +24,14 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { getOrderByFromParams } from '../commonUtils';
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -59,21 +62,38 @@ function K8sDaemonSetsList({
 	);
 
 	const [currentPage, setCurrentPage] = useState(1);
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
 
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
-	} | null>(null);
+	} | null>(() => getOrderByFromParams(searchParams, true));
 
-	const [selectedDaemonSetUID, setselectedDaemonSetUID] = useState<
+	const [selectedDaemonSetUID, setSelectedDaemonSetUID] = useState<
 		string | null
-	>(null);
+	>(() => {
+		const daemonSetUID = searchParams.get(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.DAEMONSET_UID,
+		);
+		if (daemonSetUID) {
+			return daemonSetUID;
+		}
+		return null;
+	});
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.DAEMONSETS);
 
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
+	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
+		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
+		if (groupBy) {
+			const decoded = decodeURIComponent(groupBy);
+			const parsed = JSON.parse(decoded);
+			return parsed as IBuilderQuery['groupBy'];
+		}
+		return [];
+	});
 
 	const [
 		selectedRowData,
@@ -262,15 +282,26 @@ function K8sDaemonSetsList({
 			}
 
 			if ('field' in sorter && sorter.order) {
-				setOrderBy({
+				const currentOrderBy = {
 					columnName: sorter.field as string,
-					order: sorter.order === 'ascend' ? 'asc' : 'desc',
+					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
+				};
+				setOrderBy(currentOrderBy);
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
+						currentOrderBy,
+					),
 				});
 			} else {
 				setOrderBy(null);
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
+				});
 			}
 		},
-		[],
+		[searchParams, setSearchParams],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -329,7 +360,11 @@ function K8sDaemonSetsList({
 	const handleRowClick = (record: K8sDaemonSetsRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			setselectedDaemonSetUID(record.daemonsetUID);
+			setSelectedDaemonSetUID(record.daemonsetUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.DAEMONSET_UID]: record.daemonsetUID,
+			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -356,6 +391,11 @@ function K8sDaemonSetsList({
 		setSelectedRowData(null);
 		setGroupBy([]);
 		setOrderBy(null);
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
+		});
 	};
 
 	const expandedRowRender = (): JSX.Element => (
@@ -380,7 +420,9 @@ function K8sDaemonSetsList({
 						}}
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setselectedDaemonSetUID(record.daemonsetUID),
+							onClick: (): void => {
+								setSelectedDaemonSetUID(record.daemonsetUID);
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
@@ -443,7 +485,21 @@ function K8sDaemonSetsList({
 	};
 
 	const handleCloseDaemonSetDetail = (): void => {
-		setselectedDaemonSetUID(null);
+		setSelectedDaemonSetUID(null);
+		setSearchParams({
+			...Object.fromEntries(
+				Array.from(searchParams.entries()).filter(
+					([key]) =>
+						![
+							INFRA_MONITORING_K8S_PARAMS_KEYS.DAEMONSET_UID,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS,
+						].includes(key),
+				),
+			),
+		});
 	};
 
 	const handleGroupByChange = useCallback(
@@ -464,6 +520,10 @@ function K8sDaemonSetsList({
 
 			setCurrentPage(1);
 			setGroupBy(groupBy);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
+			});
 			setExpandedRowKeys([]);
 
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
@@ -472,7 +532,7 @@ function K8sDaemonSetsList({
 				category: InfraMonitoringEvents.DaemonSet,
 			});
 		},
-		[groupByFiltersData],
+		[groupByFiltersData, searchParams, setSearchParams],
 	);
 
 	useEffect(() => {

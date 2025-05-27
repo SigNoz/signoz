@@ -8,8 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 )
 
-type provider struct{}
-
 func New(config cache.Config) (cache.Cache, error) {
 	cache, err := memorycache.New(context.TODO(), factorytest.NewSettings(), config)
 	if err != nil {

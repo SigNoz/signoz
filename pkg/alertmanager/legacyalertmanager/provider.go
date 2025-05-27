@@ -168,7 +168,7 @@ func (provider *provider) putAlerts(ctx context.Context, orgID string, alerts al
 
 		receivers := cfg.ReceiverNamesFromRuleID(ruleID)
 		if len(receivers) == 0 {
-			provider.settings.Logger().WarnContext(ctx, "cannot find receivers for alert, skipping sending alert to alertmanager", "ruleID", ruleID, "alert", alert)
+			provider.settings.Logger().WarnContext(ctx, "cannot find receivers for alert, skipping sending alert to alertmanager", "rule_id", ruleID, "alert", alert)
 			continue
 		}
 
