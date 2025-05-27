@@ -4,6 +4,7 @@ import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	getMetricsTableData,
@@ -17,14 +18,19 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useQueries, UseQueryResult } from 'react-query';
+import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { UpdateTimeInterval } from 'store/actions/global';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Options } from 'uplot';
@@ -70,6 +76,11 @@ function EntityMetrics<T>({
 		[getEntityQueryPayload, entity, timeRange.startTime, timeRange.endTime],
 	);
 
+	const urlQuery = useUrlQuery();
+	const { pathname } = useLocation();
+	const { safeNavigate } = useSafeNavigate();
+	const dispatch = useDispatch();
+
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
 			queryKey: [queryKey, payload, ENTITY_VERSION_V4, category],
@@ -94,6 +105,23 @@ function EntityMetrics<T>({
 		[queries],
 	);
 
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			safeNavigate(generatedUrl);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch, pathname, safeNavigate, urlQuery],
+	);
+
 	const options = useMemo(
 		() =>
 			queries.map(({ data }, idx) => {
@@ -110,7 +138,8 @@ function EntityMetrics<T>({
 					softMin: null,
 					minTimeScale: timeRange.startTime,
 					maxTimeScale: timeRange.endTime,
-					enableZoom: true,
+					// enableZoom: true,
+					onDragSelect,
 				});
 			}),
 		[
@@ -120,6 +149,7 @@ function EntityMetrics<T>({
 			entityWidgetInfo,
 			timeRange.startTime,
 			timeRange.endTime,
+			onDragSelect,
 		],
 	);
 

@@ -4,6 +4,7 @@ import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import {
 	getHostQueryPayload,
 	hostWidgetInfo,
@@ -15,11 +16,16 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useQueries, UseQueryResult } from 'react-query';
+import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom-v5-compat';
+import { UpdateTimeInterval } from 'store/actions/global';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
@@ -63,9 +69,31 @@ function Metrics({
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
 
+	const urlQuery = useUrlQuery();
+	const { pathname } = useLocation();
+	const { safeNavigate } = useSafeNavigate();
+	const dispatch = useDispatch();
+
 	const chartData = useMemo(
 		() => queries.map(({ data }) => getUPlotChartData(data?.payload)),
 		[queries],
+	);
+
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			safeNavigate(generatedUrl);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch, pathname, safeNavigate, urlQuery],
 	);
 
 	const options = useMemo(
@@ -80,10 +108,17 @@ function Metrics({
 					softMin: null,
 					minTimeScale: timeRange.startTime,
 					maxTimeScale: timeRange.endTime,
-					enableZoom: true,
+					onDragSelect,
 				}),
 			),
-		[queries, isDarkMode, dimensions, timeRange.startTime, timeRange.endTime],
+		[
+			queries,
+			isDarkMode,
+			dimensions,
+			timeRange.startTime,
+			timeRange.endTime,
+			onDragSelect,
+		],
 	);
 
 	const renderCardContent = (
