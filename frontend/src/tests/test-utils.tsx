@@ -5,6 +5,7 @@ import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
+import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import React, { ReactElement } from 'react';
@@ -234,6 +235,11 @@ export function getAppContextMock(
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
 		activeLicenseRefetch: jest.fn(),
+		versionData: {
+			version: '1.0.0',
+			ee: 'Y',
+			setupCompleted: true,
+		},
 		...appContextOverrides,
 	};
 }
@@ -249,16 +255,18 @@ function AllTheProviders({
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ResourceProvider>
-				<Provider store={mockStored(role)}>
-					<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
-						<BrowserRouter>
-							{/* Use the mock store with the provided role */}
-							<TimezoneProvider>
-								<QueryBuilderProvider>{children}</QueryBuilderProvider>
-							</TimezoneProvider>
-						</BrowserRouter>
-					</AppContext.Provider>
-				</Provider>
+				<ErrorModalProvider>
+					<Provider store={mockStored(role)}>
+						<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
+							<BrowserRouter>
+								{/* Use the mock store with the provided role */}
+								<TimezoneProvider>
+									<QueryBuilderProvider>{children}</QueryBuilderProvider>
+								</TimezoneProvider>
+							</BrowserRouter>
+						</AppContext.Provider>
+					</Provider>
+				</ErrorModalProvider>
 			</ResourceProvider>
 		</QueryClientProvider>
 	);
