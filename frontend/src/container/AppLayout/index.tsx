@@ -18,6 +18,7 @@ import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
+import { USER_PREFERENCES } from 'constants/userPreferences';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
@@ -79,6 +80,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		featureFlags,
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
+		userPreferences,
 	} = useAppContext();
 
 	const { notifications } = useNotifications();
@@ -545,7 +547,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		</div>
 	);
 
-	const sideNavPinned = true; // Temp - Till we implement sidenav pinned state
+	const sideNavPinned = userPreferences?.find(
+		(preference) => preference.key === USER_PREFERENCES.SIDENAV_PINNED,
+	)?.value as boolean;
 
 	return (
 		<Layout className={cx(isDarkMode ? 'darkMode dark' : 'lightMode')}>

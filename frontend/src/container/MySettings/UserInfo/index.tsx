@@ -151,7 +151,7 @@ function UserInfo(): JSX.Element {
 					icon={<FileTerminal size={16} />}
 					onClick={(): void => setIsUpdateNameModalOpen(true)}
 				>
-					Update
+					Update name
 				</Button>
 
 				<Button
@@ -160,13 +160,13 @@ function UserInfo(): JSX.Element {
 					icon={<FileTerminal size={16} />}
 					onClick={(): void => setIsResetPasswordModalOpen(true)}
 				>
-					Reset Password
+					Reset password
 				</Button>
 			</div>
 
 			<Modal
 				className="update-name-modal"
-				title={<span className="title">Update Name</span>}
+				title={<span className="title">Update name</span>}
 				open={isUpdateNameModalOpen}
 				closable
 				onCancel={hideUpdateNameModal}
@@ -179,7 +179,7 @@ function UserInfo(): JSX.Element {
 						disabled={isLoading}
 						data-testid="save-view-btn"
 					>
-						Update Name
+						Update name
 					</Button>,
 				]}
 			>
@@ -195,7 +195,7 @@ function UserInfo(): JSX.Element {
 
 			<Modal
 				className="reset-password-modal"
-				title={<span className="title">Reset Password</span>}
+				title={<span className="title">Reset password</span>}
 				open={isResetPasswordModalOpen}
 				closable
 				onCancel={hideResetPasswordModal}
@@ -208,13 +208,13 @@ function UserInfo(): JSX.Element {
 						disabled={isLoading || isResetPasswordDisabled}
 						data-testid="save-view-btn"
 					>
-						Reset Password
+						Reset password
 					</Button>,
 				]}
 			>
 				<div className="reset-password-container">
 					<div className="current-password-input">
-						<Typography.Text>Current Password</Typography.Text>
+						<Typography.Text>Current password</Typography.Text>
 						<Input.Password
 							data-testid="current-password-textbox"
 							disabled={isLoading}
@@ -230,7 +230,7 @@ function UserInfo(): JSX.Element {
 					</div>
 
 					<div className="new-password-input">
-						<Typography.Text>New Password</Typography.Text>
+						<Typography.Text>New password</Typography.Text>
 						<Input.Password
 							data-testid="new-password-textbox"
 							disabled={isLoading}

@@ -467,6 +467,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		[secondaryMenuItems],
 	);
 
+	const moreMenuItems = useMemo(
+		() => secondaryMenuItems.filter((i) => !i.isPinned),
+		[secondaryMenuItems],
+	);
+
 	const renderNavItems = (
 		items: SidebarItem[],
 		allowPin?: boolean,
@@ -648,44 +653,41 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							</div>
 						</div>
 
-						<div
-							className={cx(
-								'more-nav-items',
-								isMoreMenuCollapsed ? 'collapsed' : 'expanded',
-							)}
-						>
-							<div className="nav-title-section">
-								<div
-									className="nav-section-title"
-									onClick={(): void => {
-										setIsMoreMenuCollapsed(!isMoreMenuCollapsed);
-									}}
-								>
-									<div className="nav-section-title-icon">
-										<Ellipsis size={16} />
-									</div>
+						{moreMenuItems.length > 0 && (
+							<div
+								className={cx(
+									'more-nav-items',
+									isMoreMenuCollapsed ? 'collapsed' : 'expanded',
+								)}
+							>
+								<div className="nav-title-section">
+									<div
+										className="nav-section-title"
+										onClick={(): void => {
+											setIsMoreMenuCollapsed(!isMoreMenuCollapsed);
+										}}
+									>
+										<div className="nav-section-title-icon">
+											<Ellipsis size={16} />
+										</div>
 
-									<div className="nav-section-title-text">MORE</div>
+										<div className="nav-section-title-text">MORE</div>
 
-									<div className="collapse-expand-section-icon">
-										{isMoreMenuCollapsed ? (
-											<ChevronDown size={16} />
-										) : (
-											<ChevronUp size={16} />
-										)}
+										<div className="collapse-expand-section-icon">
+											{isMoreMenuCollapsed ? (
+												<ChevronDown size={16} />
+											) : (
+												<ChevronUp size={16} />
+											)}
+										</div>
 									</div>
+								</div>
+
+								<div className="nav-items-section">
+									{renderNavItems(moreMenuItems, true)}
 								</div>
 							</div>
-
-							{secondaryMenuItems.filter((i) => !i.isPinned).length > 0 && (
-								<div className="nav-items-section">
-									{renderNavItems(
-										secondaryMenuItems.filter((i) => !i.isPinned),
-										true,
-									)}
-								</div>
-							)}
-						</div>
+						)}
 					</div>
 
 					<div className="nav-bottom-section">
