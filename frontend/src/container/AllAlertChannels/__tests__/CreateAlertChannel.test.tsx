@@ -15,7 +15,7 @@ import {
 } from 'mocks-server/__mockdata__/alerts';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import { testLabelInputAndHelpValue } from './testUtils';
 
@@ -28,6 +28,14 @@ jest.mock('hooks/useNotifications', () => ({
 			success: successNotification,
 			error: errorNotification,
 		},
+	})),
+}));
+const showErrorModal = jest.fn();
+jest.mock('providers/ErrorModalProvider', () => ({
+	__esModule: true,
+	...jest.requireActual('providers/ErrorModalProvider'),
+	useErrorModal: jest.fn(() => ({
+		showErrorModal,
 	})),
 }));
 
@@ -119,7 +127,7 @@ describe('Create Alert Channel', () => {
 
 			fireEvent.click(saveButton);
 
-			await waitFor(() => expect(errorNotification).toHaveBeenCalled());
+			await waitFor(() => expect(showErrorModal).toHaveBeenCalled());
 		});
 		it('Should check if clicking on Test button shows "An alert has been sent to this channel" success message if testing passes', async () => {
 			server.use(
@@ -151,9 +159,11 @@ describe('Create Alert Channel', () => {
 				name: 'button_test_channel',
 			});
 
-			fireEvent.click(testButton);
+			act(() => {
+				fireEvent.click(testButton);
+			});
 
-			await waitFor(() => expect(errorNotification).toHaveBeenCalled());
+			await waitFor(() => expect(showErrorModal).toHaveBeenCalled());
 		});
 	});
 	describe('New Alert Channel Cascading Fields Based on Channel Type', () => {
