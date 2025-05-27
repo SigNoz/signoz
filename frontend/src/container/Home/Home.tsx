@@ -55,7 +55,7 @@ export default function Home(): JSX.Element {
 	const [updatingUserPreferences, setUpdatingUserPreferences] = useState(false);
 	const [loadingUserPreferences, setLoadingUserPreferences] = useState(true);
 
-	const { isCommunityUser } = useGetTenantLicense();
+	const { isCommunityUser, isCommunityEnterpriseUser } = useGetTenantLicense();
 
 	const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(
 		defaultChecklistItemsState,
@@ -326,10 +326,15 @@ export default function Home(): JSX.Element {
 		setIsBannerDismissed(true);
 	};
 
+	const showBanner = useMemo(
+		() => !isBannerDismissed && (isCommunityUser || isCommunityEnterpriseUser),
+		[isBannerDismissed, isCommunityUser, isCommunityEnterpriseUser],
+	);
+
 	return (
 		<div className="home-container">
 			<div className="sticky-header">
-				{!isBannerDismissed && isCommunityUser && (
+				{showBanner && (
 					<div className="home-container-banner">
 						<div className="home-container-banner-content">
 							Big News: SigNoz Community Edition now available with SSO (Google OAuth)
