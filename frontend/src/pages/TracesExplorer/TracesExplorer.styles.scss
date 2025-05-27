@@ -2,6 +2,7 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	padding-left: 8px;
 
 	.trace-explorer-run-query {
 		display: flex;
@@ -54,7 +55,7 @@
 		background: var(--bg-ink-500);
 
 		> .ant-card-body {
-			padding: 8px 8px;
+			padding: 0;
 		}
 
 		border-color: var(--bg-slate-400);
