@@ -47,6 +47,9 @@ func TestCache(t *testing.T) {
 
 			res, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
+			defer func() {
+				require.NoError(t, res.Body.Close())
+			}()
 
 			actual := res.Header.Get("Cache-control")
 			require.NoError(t, err)

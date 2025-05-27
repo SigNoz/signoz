@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	saml2 "github.com/russellhaering/gosaml2"
 	"github.com/uptrace/bun"
-	"go.uber.org/zap"
 )
 
 type StorableOrgDomain struct {
@@ -182,7 +181,6 @@ func (od *GettableOrgDomain) BuildSsoUrl(siteUrl *url.URL) (ssoUrl string, err e
 		return googleProvider.BuildAuthURL(relayState)
 
 	default:
-		zap.L().Error("found unsupported SSO config for the org domain", zap.String("orgDomain", od.Name))
 		return "", fmt.Errorf("unsupported SSO config for the domain")
 	}
 
