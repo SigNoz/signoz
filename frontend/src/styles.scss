@@ -719,3 +719,9 @@ notifications	-  2050
 	border: 1px solid #d1d5db;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
+.metrics-application-container,
+.service-metric-table-container,
+.service-traces-table-container {
+	padding: 0px 8px;
+}

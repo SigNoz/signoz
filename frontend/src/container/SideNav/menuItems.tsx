@@ -23,12 +23,10 @@ import {
 	Receipt,
 	Route,
 	ScrollText,
-	Search,
 	Settings,
 	Slack,
 	Unplug,
 	User,
-	// Unplug,
 	UserPlus,
 } from 'lucide-react';
 
@@ -172,11 +170,6 @@ export const primaryMenuItems: SidebarItem[] = [
 		icon: <Home size={16} />,
 	},
 	{
-		key: ROUTES.SEARCH,
-		label: 'Search',
-		icon: <Search size={16} />,
-	},
-	{
 		key: ROUTES.LIST_ALL_ALERT,
 		label: 'Alerts',
 		icon: <BellDot size={16} />,
@@ -190,14 +183,22 @@ export const primaryMenuItems: SidebarItem[] = [
 
 export const defaultMoreMenuItems: SidebarItem[] = [
 	{
+		key: ROUTES.APPLICATION,
+		label: 'Services',
+		icon: <HardDrive size={16} />,
+		isPinned: true,
+	},
+	{
 		key: ROUTES.LOGS,
 		label: 'Logs',
 		icon: <ScrollText size={16} />,
+		isPinned: true,
 	},
 	{
 		key: ROUTES.TRACES_EXPLORER,
 		label: 'Traces',
 		icon: <DraftingCompass size={16} />,
+		isPinned: true,
 	},
 	{
 		key: ROUTES.METRICS_EXPLORER,
@@ -206,14 +207,10 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		isNew: true,
 	},
 	{
-		key: ROUTES.APPLICATION,
-		label: 'Services',
-		icon: <HardDrive size={16} />,
-	},
-	{
 		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		label: 'Infrastructure',
 		icon: <Boxes size={16} />,
+		isPinned: true,
 	},
 	{
 		key: ROUTES.INTEGRATIONS,

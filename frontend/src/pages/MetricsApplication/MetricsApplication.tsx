@@ -59,11 +59,11 @@ function MetricsApplication(): JSX.Element {
 	);
 
 	return (
-		<>
+		<div className="metrics-application-container">
 			<ResourceAttributesFilter />
 			<ApDexApplication />
 			<RouteTab routes={routes} history={history} activeKey={activeKey} />
-		</>
+		</div>
 	);
 }
 
