@@ -3,6 +3,7 @@ import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeatures
 import { LicenseResModel, TrialInfo } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import { UserResponse as User } from 'types/api/user/getUser';
+import { PayloadProps } from 'types/api/user/getVersion';
 import { OrgPreference } from 'types/reducer/app';
 
 export interface IAppContext {
@@ -25,6 +26,7 @@ export interface IAppContext {
 	updateUser: (user: IUser) => void;
 	updateOrgPreferences: (orgPreferences: OrgPreference[]) => void;
 	updateOrg(orgId: string, updatedOrgName: string): void;
+	versionData: PayloadProps | null;
 }
 
 // User
