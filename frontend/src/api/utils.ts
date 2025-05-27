@@ -15,11 +15,5 @@ export const Logout = (): void => {
 	deleteLocalStorageKey(LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT);
 	window.dispatchEvent(new CustomEvent('LOGOUT'));
 
-	if (window && window.pylon) {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		window.Pylon('shutdown');
-	}
-
 	history.push(ROUTES.LOGIN);
 };
