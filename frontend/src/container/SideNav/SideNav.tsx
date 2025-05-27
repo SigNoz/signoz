@@ -18,7 +18,6 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Color } from '@signozhq/design-tokens';
 import { Button, Dropdown, MenuProps, Modal, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { Logout } from 'api/utils';
@@ -34,7 +33,6 @@ import {
 	Check,
 	ChevronDown,
 	ChevronUp,
-	ClockFading,
 	Cog,
 	Ellipsis,
 	GripVertical,
@@ -51,6 +49,7 @@ import { AppState } from 'store/reducers';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
+import { checkVersionState } from 'utils/app';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
@@ -101,9 +100,10 @@ function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const { pathname, search } = useLocation();
-	const { latestVersion } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
+		AppState,
+		AppReducer
+	>((state) => state.app);
 
 	const { user, featureFlags, trialInfo } = useAppContext();
 
@@ -131,6 +131,15 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		label: 'Settings',
 		icon: <Cog size={16} />,
 	};
+
+	const isCtrlMetaKey = (e: MouseEvent): boolean => e.ctrlKey || e.metaKey;
+
+	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
+
+	const [
+		showVersionUpdateNotification,
+		setShowVersionUpdateNotification,
+	] = useState(false);
 
 	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>(
 		defaultMoreMenuItems.filter((item) => item.isPinned),
@@ -189,8 +198,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	} = useGetTenantLicense();
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
-
-	const isCtrlMetaKey = (e: MouseEvent): boolean => e.ctrlKey || e.metaKey;
 
 	const openInNewTab = (path: string): void => {
 		window.open(path, '_blank');
@@ -267,42 +274,46 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		pathname,
 	]);
 
-	const userSettingsDropdownMenuItems: MenuProps['items'] = [
-		{
-			key: 'label',
-			label: (
-				<div className="user-settings-dropdown-logged-in-section">
-					<span className="user-settings-dropdown-label-text">LOGGED IN AS</span>
-					<span className="user-settings-dropdown-label-email">{user.email}</span>
-				</div>
-			),
-			disabled: true,
-		},
-		{
-			type: 'divider',
-		},
-		{
-			key: 'account',
-			label: 'Account Settings',
-		},
-		{
-			key: 'workspace',
-			label: 'Workspace Settings',
-		},
-		{
-			key: 'license',
-			label: 'Manage License',
-		},
-		{
-			type: 'divider',
-		},
-		{
-			key: 'logout',
-			label: (
-				<span className="user-settings-dropdown-logout-section">Sign out</span>
-			),
-		},
-	];
+	const userSettingsDropdownMenuItems: MenuProps['items'] = useMemo(
+		() =>
+			[
+				{
+					key: 'label',
+					label: (
+						<div className="user-settings-dropdown-logged-in-section">
+							<span className="user-settings-dropdown-label-text">LOGGED IN AS</span>
+							<span className="user-settings-dropdown-label-email">{user.email}</span>
+						</div>
+					),
+					disabled: true,
+				},
+				{ type: 'divider' as const },
+				{
+					key: 'account',
+					label: 'Account Settings',
+				},
+				{
+					key: 'workspace',
+					label: 'Workspace Settings',
+				},
+				...(isEnterpriseSelfHostedUser
+					? [
+							{
+								key: 'license',
+								label: 'Manage License',
+							},
+					  ]
+					: []),
+				{ type: 'divider' as const },
+				{
+					key: 'logout',
+					label: (
+						<span className="user-settings-dropdown-logout-section">Sign out</span>
+					),
+				},
+			].filter(Boolean),
+		[isEnterpriseSelfHostedUser, user.email],
+	);
 
 	useEffect(() => {
 		if (isCloudUser) {
@@ -544,6 +555,119 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	};
 
+	// useEffect(() => {
+	// 	let updatedMenuItems = defaultMenuItems;
+	// 	let updatedUserManagementItems: UserManagementMenuItems[] = [
+	// 		manageLicenseMenuItem,
+	// 	];
+
+	// 	if (isCloudUser || isEnterpriseSelfHostedUser) {
+	// 		const isOnboardingEnabled =
+	// 			featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
+	// 				?.active || false;
+
+	// 		if (!isOnboardingEnabled) {
+	// 			updatedMenuItems = updatedMenuItems.filter(
+	// 				(item) =>
+	// 					item.key !== ROUTES.GET_STARTED &&
+	// 					item.key !== ROUTES.ONBOARDING &&
+	// 					item.key !== ROUTES.GET_STARTED_WITH_CLOUD,
+	// 			);
+	// 		}
+
+	// 		const isOnBasicPlan =
+	// 			activeLicenseFetchError &&
+	// 			[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
+	// 				activeLicenseFetchError?.getHttpStatusCode(),
+	// 			);
+
+	// 		if (user.role !== USER_ROLES.ADMIN || isOnBasicPlan) {
+	// 			updatedMenuItems = updatedMenuItems.filter(
+	// 				(item) => item.key !== ROUTES.BILLING,
+	// 			);
+	// 		}
+
+	// 		updatedUserManagementItems = [helpSupportMenuItem];
+
+	// 		// Show manage license menu item for EE cloud users with a active license
+	// 		if (isEnterpriseSelfHostedUser) {
+	// 			updatedUserManagementItems.push(manageLicenseMenuItem);
+	// 		}
+	// 	} else {
+	// 		updatedMenuItems = updatedMenuItems.filter(
+	// 			(item) => item.key !== ROUTES.INTEGRATIONS && item.key !== ROUTES.BILLING,
+	// 		);
+	// 		const versionMenuItem = {
+	// 			key: SecondaryMenuItemKey.Version,
+	// 			label: !isCurrentVersionError ? currentVersion : t('n_a'),
+	// 			icon: !isLatestVersion ? (
+	// 				<AlertTriangle color={Color.BG_CHERRY_600} size={16} />
+	// 			) : (
+	// 				<CheckSquare color={Color.BG_FOREST_500} size={16} />
+	// 			),
+	// 			onClick: onClickVersionHandler,
+	// 		};
+
+	// 		updatedUserManagementItems = [versionMenuItem, slackSupportMenuItem];
+
+	// 		if (isCommunityEnterpriseUser) {
+	// 			updatedUserManagementItems.push(manageLicenseMenuItem);
+	// 		}
+	// 	}
+	// 	setMenuItems(updatedMenuItems);
+	// 	setUserManagementMenuItems(updatedUserManagementItems);
+	// }, [
+	// 	isCommunityEnterpriseUser,
+	// 	currentVersion,
+	// 	featureFlags,
+	// 	isCloudUser,
+	// 	isEnterpriseSelfHostedUser,
+	// 	isCurrentVersionError,
+	// 	isLatestVersion,
+	// 	onClickVersionHandler,
+	// 	t,
+	// 	user.role,
+	// 	activeLicenseFetchError,
+	// ]);
+
+	useEffect(() => {
+		if (isCloudUser || isEnterpriseSelfHostedUser) {
+			// enable integrations for cloud users
+			setSecondaryMenuItems((prevItems) =>
+				prevItems.map((item) => ({
+					...item,
+					isEnabled: item.key === ROUTES.INTEGRATIONS ? true : item.isEnabled,
+				})),
+			);
+
+			// enable integrations for pinned menu items
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setPinnedMenuItems((prevItems) =>
+				prevItems.map((item) => ({
+					...item,
+					isEnabled: item.key === ROUTES.INTEGRATIONS ? true : item.isEnabled,
+				})),
+			);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isCloudUser, isEnterpriseSelfHostedUser]);
+
+	const onClickVersionHandler = useCallback((event: MouseEvent): void => {
+		if (isCtrlMetaKey(event)) {
+			openInNewTab(ROUTES.VERSION);
+		} else {
+			history.push(ROUTES.VERSION);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (!isLatestVersion) {
+			setShowVersionUpdateNotification(true);
+		} else {
+			setShowVersionUpdateNotification(false);
+		}
+	}, [currentVersion, latestVersion, isCurrentVersionError, isLatestVersion]);
+
 	return (
 		<div className={cx('sidenav-container', isPinned && 'pinned')}>
 			<div className={cx('sideNav', isPinned && 'pinned')}>
@@ -581,14 +705,36 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									>
 										<span className="license-type"> {licenseTag} </span>
 
-										{latestVersion && <span className="version"> {latestVersion} </span>}
+										{currentVersion && (
+											<Tooltip
+												placement="bottomLeft"
+												overlayClassName="version-tooltip-overlay"
+												arrow={false}
+												overlay={
+													showVersionUpdateNotification && (
+														<div className="version-update-notification-tooltip">
+															<div className="version-update-notification-tooltip-title">
+																There&apos;s a new version available.
+															</div>
+
+															<div className="version-update-notification-tooltip-content">
+																{latestVersion}
+															</div>
+														</div>
+													)
+												}
+											>
+												<span className="version" onClick={onClickVersionHandler}>
+													{currentVersion}
+													{showVersionUpdateNotification && (
+														<span className="version-update-notification-dot-icon" />
+													)}
+												</span>
+											</Tooltip>
+										)}
 									</div>
 								</Tooltip>
 							)}
-						</div>
-
-						<div className="user-history-section">
-							<ClockFading size={16} color={Color.BG_SLATE_50} />
 						</div>
 					</div>
 				</div>
@@ -647,7 +793,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 								{pinnedMenuItems.length > 0 && (
 									<div className="nav-items-section">
-										{renderNavItems(pinnedMenuItems, true)}
+										{renderNavItems(
+											pinnedMenuItems.filter((item) => item.isEnabled),
+											true,
+										)}
 									</div>
 								)}
 							</div>
@@ -684,7 +833,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 								</div>
 
 								<div className="nav-items-section">
-									{renderNavItems(moreMenuItems, true)}
+									{renderNavItems(
+										moreMenuItems.filter((item) => item.isEnabled),
+										true,
+									)}
 								</div>
 							</div>
 						)}

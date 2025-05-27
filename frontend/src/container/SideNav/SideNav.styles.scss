@@ -70,15 +70,15 @@
 				align-items: center;
 				gap: 4px;
 
+				color: var(--bg-vanilla-100);
 				border-radius: 4px 0px 0px 4px;
-				background: var(--Slate-400, #1d212d);
+				background: var(--bg-robin-500);
 
-				color: var(--Vanilla-100, #fff);
 				text-align: center;
 				font-family: Inter;
 				font-size: 10px;
 				font-style: normal;
-				font-weight: 600;
+				font-weight: 500;
 				line-height: 14px; /* 140% */
 				letter-spacing: 0.4px;
 				text-transform: uppercase;
@@ -104,6 +104,23 @@
 				font-weight: 500;
 				line-height: 14px; /* 140% */
 				letter-spacing: 0.4px;
+
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+
+				cursor: pointer;
+
+				.version-update-notification-dot-icon {
+					width: 4px;
+					height: 4px;
+					border-radius: 50%;
+					background-color: var(--bg-amber-500);
+					animation: ripple 1s infinite;
+					position: relative;
+					margin-left: 4px;
+					margin-right: 4px;
+				}
 			}
 
 			&.community-enterprise-user {
@@ -536,6 +553,12 @@
 						.nav-section-title-text {
 							display: block;
 						}
+
+						.nav-section-title-icon {
+							&.reorder {
+								display: flex;
+							}
+						}
 					}
 
 					.nav-section-subtitle {
@@ -965,5 +988,63 @@
 		.title {
 			color: var(--bg-ink-400);
 		}
+	}
+}
+
+.version-tooltip-overlay {
+	.ant-tooltip-inner {
+		background-color: var(--bg-ink-400);
+		color: var(--bg-vanilla-100);
+
+		font-size: 11px;
+
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-500);
+
+		color: var(--Vanilla-100, #fff);
+		font-family: Inter;
+		font-size: 11px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 14px; /* 150% */
+		letter-spacing: 0.4px;
+	}
+
+	.version-update-notification-tooltip {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+
+		.version-update-notification-tooltip-title {
+			color: var(--Vanilla-100, #fff);
+			font-family: Inter;
+			font-size: 11px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 14px; /* 150% */
+			letter-spacing: 0.4px;
+		}
+
+		.version-update-notification-tooltip-content {
+			color: var(--Vanilla-100, #fff);
+			font-family: Inter;
+			font-size: 10px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 14px; /* 150% */
+			letter-spacing: 0.4px;
+		}
+	}
+}
+
+@keyframes ripple {
+	0% {
+		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+	}
+	70% {
+		box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
 	}
 }

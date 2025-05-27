@@ -1,5 +1,7 @@
-import { WarningFilled } from '@ant-design/icons';
-import { Button, Card, Form, Space, Typography } from 'antd';
+import './Version.styles.scss';
+
+import { Button, Form } from 'antd';
+import { CheckCircle, CloudUpload, InfoIcon, Wrench } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -34,73 +36,82 @@ function Version(): JSX.Element {
 	);
 
 	return (
-		<Card style={{ margin: '16px 0' }}>
-			<Typography.Title ellipsis level={4} style={{ marginTop: 0 }}>
-				{t('version')}
-			</Typography.Title>
-
-			<Form
-				wrapperCol={{
-					span: 14,
-				}}
-				labelCol={{
-					span: 3,
-				}}
-				layout="horizontal"
-				form={form}
-				labelAlign="left"
-			>
-				<Form.Item label={t('current_version')}>
-					<InputComponent
-						readOnly
-						value={isCurrentVersionError ? t('n_a').toString() : currentVersion}
-						placeholder={t('current_version')}
-					/>
-				</Form.Item>
-
-				<Form.Item label={t('latest_version')}>
-					<InputComponent
-						readOnly
-						value={isLatestVersionError ? t('n_a').toString() : latestVersion}
-						placeholder={t('latest_version')}
-					/>
-					<Button href={latestVersionUrl} target="_blank" type="link">
-						{t('release_notes')}
-					</Button>
-				</Form.Item>
-			</Form>
-
-			{!isError && isLatestVersion && (
-				<div>
-					<Space align="start">
-						<span>✅</span>
-						<Typography.Paragraph italic>
-							{t('latest_version_signoz')}
-						</Typography.Paragraph>
-					</Space>
+		<div className="version-container">
+			<header className="version-page-header">
+				<div className="version-page-header-title">
+					<Wrench size={16} />
+					Version
 				</div>
-			)}
+			</header>
 
-			{!isError && !isLatestVersion && (
-				<div>
-					<Space align="start">
-						<span>
-							<WarningFilled style={{ color: '#E87040' }} />
-						</span>
-						<Typography.Paragraph italic>{t('stale_version')}</Typography.Paragraph>
-					</Space>
+			<div className="version-page-container">
+				<div className="version-card">
+					<Form
+						wrapperCol={{
+							span: 14,
+						}}
+						labelCol={{
+							span: 3,
+						}}
+						layout="horizontal"
+						form={form}
+						labelAlign="left"
+					>
+						<Form.Item label={t('current_version')}>
+							<InputComponent
+								readOnly
+								value={isCurrentVersionError ? t('n_a').toString() : currentVersion}
+								placeholder={t('current_version')}
+							/>
+						</Form.Item>
+
+						<Form.Item label={t('latest_version')}>
+							<InputComponent
+								readOnly
+								value={isLatestVersionError ? t('n_a').toString() : latestVersion}
+								placeholder={t('latest_version')}
+							/>
+							<Button href={latestVersionUrl} target="_blank" type="link">
+								{t('release_notes')}
+							</Button>
+						</Form.Item>
+					</Form>
+
+					{!isError && isLatestVersion && (
+						<div className="version-page-latest-version-container">
+							<div className="version-page-latest-version-container-title">
+								<CheckCircle size={16} />
+
+								{t('latest_version_signoz')}
+							</div>
+						</div>
+					)}
+
+					{!isError && !isLatestVersion && (
+						<div className="version-page-stale-version-container">
+							<div className="version-page-stale-version-container-title">
+								<InfoIcon size={16} />
+								{t('stale_version')}
+							</div>
+						</div>
+					)}
+
+					{!isError && !isLatestVersion && (
+						<div className="version-page-upgrade-container">
+							<Button
+								href="https://signoz.io/docs/operate/docker-standalone/#upgrade"
+								target="_blank"
+								type="primary"
+								className="periscope-btn primary"
+								icon={<CloudUpload size={16} />}
+							>
+								{t('read_how_to_upgrade')}
+							</Button>
+						</div>
+					)}
 				</div>
-			)}
-
-			{!isError && !isLatestVersion && (
-				<Button
-					href="https://signoz.io/docs/operate/docker-standalone/#upgrade"
-					target="_blank"
-				>
-					{t('read_how_to_upgrade')}
-				</Button>
-			)}
-		</Card>
+			</div>
+		</div>
 	);
 }
 
