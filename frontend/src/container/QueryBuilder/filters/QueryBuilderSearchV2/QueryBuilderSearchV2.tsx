@@ -1038,11 +1038,7 @@ function QueryBuilderSearchV2(
 				})}
 			</Select>
 			{!hideSpanScopeSelector && (
-				<SpanScopeSelector
-					queryName={query.queryName}
-					query={query}
-					onChange={onChange}
-				/>
+				<SpanScopeSelector query={query} onChange={onChange} />
 			)}
 		</div>
 	);
