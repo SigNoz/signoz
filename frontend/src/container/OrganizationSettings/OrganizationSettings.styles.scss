@@ -12,3 +12,10 @@
 	background: var(--Ink-400, #121317);
 	border-radius: 3px;
 }
+
+.lightMode {
+	.organization-settings-container {
+		border: 1px solid var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
+	}
+}

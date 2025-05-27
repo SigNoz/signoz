@@ -5,7 +5,7 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
-import { settingsMenuItems } from 'container/SideNav/menuItems';
+import { settingsMenuItems as defaultSettingsMenuItems } from 'container/SideNav/menuItems';
 import NavItem from 'container/SideNav/NavItem/NavItem';
 import { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -13,9 +13,10 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { Wrench } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
+import { USER_ROLES } from 'types/roles';
 
 import { getRoutes } from './utils';
 
@@ -24,6 +25,12 @@ function SettingsPage(): JSX.Element {
 
 	const { user, featureFlags, trialInfo } = useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
+
+	const [settingsMenuItems, setSettingsMenuItems] = useState<SidebarItem[]>(
+		defaultSettingsMenuItems,
+	);
+
+	const isAdmin = user.role === USER_ROLES.ADMIN;
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
@@ -36,6 +43,32 @@ function SettingsPage(): JSX.Element {
 	const isGatewayEnabled =
 		featureFlags?.find((feature) => feature.name === FeatureKeys.GATEWAY)
 			?.active || false;
+
+	useEffect(() => {
+		if (!isCloudUser && !isEnterpriseSelfHostedUser) {
+			if (isAdmin) {
+				// enable billing for admin
+				const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
+					...item,
+					isEnabled: item.key === ROUTES.BILLING ? true : item.isEnabled,
+				}));
+
+				setSettingsMenuItems(updatedSettingsMenuItems);
+			}
+		} else {
+			// disable billing and integrations for non-cloud users
+			const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
+				...item,
+				isEnabled:
+					item.key === ROUTES.BILLING || item.key === ROUTES.INTEGRATIONS
+						? false
+						: item.isEnabled,
+			}));
+
+			setSettingsMenuItems(updatedSettingsMenuItems);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isAdmin, isCloudUser, isEnterpriseSelfHostedUser]);
 
 	const routes = useMemo(
 		() =>
@@ -108,18 +141,20 @@ function SettingsPage(): JSX.Element {
 
 			<div className="settings-page-content-container">
 				<div className="settings-page-sidenav">
-					{settingsMenuItems.map((item) => (
-						<NavItem
-							key={item.key}
-							item={item}
-							isActive={isActiveNavItem(item.key as string)}
-							isDisabled={false}
-							showIcon={false}
-							onClick={(event): void => {
-								handleMenuItemClick((event as unknown) as MouseEvent, item);
-							}}
-						/>
-					))}
+					{settingsMenuItems
+						.filter((item) => item.isEnabled)
+						.map((item) => (
+							<NavItem
+								key={item.key}
+								item={item}
+								isActive={isActiveNavItem(item.key as string)}
+								isDisabled={false}
+								showIcon={false}
+								onClick={(event): void => {
+									handleMenuItemClick((event as unknown) as MouseEvent, item);
+								}}
+							/>
+						))}
 				</div>
 
 				<div className="settings-page-content">
