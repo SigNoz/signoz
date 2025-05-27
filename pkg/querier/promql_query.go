@@ -36,5 +36,6 @@ func (q *promqlQuery) Window() (uint64, uint64) {
 
 func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	// TODO: Implement this
+	//nolint:nilnil
 	return nil, nil
 }
