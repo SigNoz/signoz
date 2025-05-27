@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import { AppProvider } from 'providers/App/App';
 import { Router } from 'react-router-dom';
 
 import ResourceProvider from '../ResourceProvider';
@@ -17,9 +18,11 @@ describe('useResourceAttribute component hook', () => {
 			initialEntries: ['/inital-url?tab=overview'],
 		});
 		const wrapper = ({ children }: { children: any }): JSX.Element => (
-			<Router history={history}>
-				<ResourceProvider>{children}</ResourceProvider>
-			</Router>
+			<AppProvider>
+				<Router history={history}>
+					<ResourceProvider>{children}</ResourceProvider>
+				</Router>
+			</AppProvider>
 		);
 		const { result } = renderHook(() => useResourceAttribute(), { wrapper });
 

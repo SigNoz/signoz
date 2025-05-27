@@ -202,6 +202,12 @@ var dotMetricMap = map[string]string{
 	"k8s_node_condition": "k8s.node.condition",
 }
 
+const fromWhereQuery = `
+FROM %s.%s
+WHERE metric_name IN (%s)
+  AND unix_milli >= toUnixTimestamp(now() - toIntervalMinute(60)) * 1000
+`
+
 var (
 	// TODO(srikanthccv): import metadata yaml from receivers and use generated files to check the metrics
 	podMetricNamesToCheck = []string{
@@ -285,12 +291,6 @@ SELECT
 		GetDotMetrics("k8s_job_name"),
 		GetDotMetrics("k8s_pod_name"),
 	)
-
-	fromWhereQuery = fmt.Sprintf(`
-FROM %s.%s
-WHERE metric_name IN (%s)
-  AND unix_milli >= toUnixTimestamp(now() - toIntervalMinute(60)) * 1000
-`)
 
 	filterGroupQuery = fmt.Sprintf(`
 AND JSONExtractString(labels, '%s')
