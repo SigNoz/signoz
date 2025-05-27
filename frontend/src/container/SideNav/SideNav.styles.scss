@@ -22,7 +22,7 @@
 	transition: all 0.2s, background 0s, border 0s;
 
 	.brand-container {
-		padding: 8px 16px;
+		padding: 8px 18px;
 	}
 
 	.brand-company-meta {
@@ -252,7 +252,7 @@
 			overflow-y: auto;
 			overflow-x: hidden;
 
-			padding: 12px 0px;
+			padding-top: 12px;
 
 			.secondary-nav-items {
 				display: flex;
