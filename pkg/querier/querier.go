@@ -47,14 +47,14 @@ func (q *querier) QueryRange(ctx context.Context, orgID string, req *qbtypes.Que
 		case qbtypes.QueryTypePromQL:
 			promQuery, ok := query.Spec.(qbtypes.PromQuery)
 			if !ok {
-				return nil, errors.WrapInvalidInputf(nil, errors.CodeInvalidInput, "invalid promql query spec %T", query.Spec)
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query spec %T", query.Spec)
 			}
 			promqlQuery := newPromqlQuery(q.promEngine, promQuery, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 			queries[query.Name] = promqlQuery
 		case qbtypes.QueryTypeClickHouseSQL:
 			chQuery, ok := query.Spec.(qbtypes.ClickHouseQuery)
 			if !ok {
-				return nil, errors.WrapInvalidInputf(nil, errors.CodeInvalidInput, "invalid clickhouse query spec %T", query.Spec)
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid clickhouse query spec %T", query.Spec)
 			}
 			chSQLQuery := newchSQLQuery(q.telemetryStore, chQuery, nil, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 			queries[query.Name] = chSQLQuery
@@ -72,7 +72,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID string, req *qbtypes.Que
 				bq := newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 				queries[query.Name] = bq
 			default:
-				return nil, errors.WrapInvalidInputf(nil, errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
 			}
 		}
 	}
