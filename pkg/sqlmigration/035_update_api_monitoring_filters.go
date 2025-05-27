@@ -3,6 +3,8 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/quickfiltertypes"
@@ -78,10 +80,9 @@ func (migration *updateApiMonitoringFilters) Up(ctx context.Context, db *bun.DB)
 		}
 
 		if apiMonitoringFilterJSON != "" {
-			// Update only the API monitoring filters for this organization
 			_, err = tx.NewUpdate().
 				Table("quick_filter").
-				Set("filter = ?", apiMonitoringFilterJSON).
+				Set("filter = ?, updated_at = ?", apiMonitoringFilterJSON, time.Now()).
 				Where("signal = ? AND org_id = ?", quickfiltertypes.SignalApiMonitoring, orgID).
 				Exec(ctx)
 
