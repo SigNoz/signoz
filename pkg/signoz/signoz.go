@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -10,11 +11,20 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
+	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 
@@ -35,6 +45,88 @@ type SigNoz struct {
 	Emailing        emailing.Emailing
 	Modules         Modules
 	Handlers        Handlers
+}
+
+// TODO: clean up this
+func newQuerier(
+	logger *slog.Logger,
+	telemetrystore telemetrystore.TelemetryStore,
+	prometheus prometheus.Prometheus,
+) (qbtypes.Querier, error) {
+
+	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
+		logger,
+		telemetrystore,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanIndexV3TableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.AttributesMetadataTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2TableName,
+		telemetrylogs.TagAttributesV2TableName,
+		telemetrymetadata.DBName,
+		telemetrymetadata.AttributesMetadataLocalTableName,
+	)
+	traceFieldMapper := telemetrytraces.NewFieldMapper()
+	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
+
+	resourceFilterFieldMapper := resourcefilter.NewFieldMapper()
+	resourceFilterConditionBuilder := resourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
+	resourceFilterStmtBuilder := resourcefilter.NewTraceResourceFilterStatementBuilder(
+		resourceFilterFieldMapper,
+		resourceFilterConditionBuilder,
+		telemetryMetadataStore,
+	)
+
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(nil, traceFieldMapper, traceConditionBuilder, "", nil)
+	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
+		slog.Default(),
+		telemetryMetadataStore,
+		traceFieldMapper,
+		traceConditionBuilder,
+		resourceFilterStmtBuilder,
+		traceAggExprRewriter,
+	)
+
+	logFieldMapper := telemetrylogs.NewFieldMapper()
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
+	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
+		logFieldMapper,
+		logConditionBuilder,
+		telemetryMetadataStore,
+	)
+	logAggExprRewriter := querybuilder.NewAggExprRewriter(
+		&telemetrytypes.TelemetryFieldKey{
+			Name:          "body",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		logFieldMapper,
+		logConditionBuilder,
+		telemetrylogs.BodyJSONStringSearchPrefix,
+		telemetrylogs.GetBodyJSONKey,
+	)
+	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
+		logger,
+		telemetryMetadataStore,
+		logFieldMapper,
+		logConditionBuilder,
+		logResourceFilterStmtBuilder,
+		logAggExprRewriter,
+	)
+
+	querier := querier.NewQuerier(
+		telemetrystore,
+		telemetryMetadataStore,
+		prometheus,
+		traceStmtBuilder,
+		logStmtBuilder,
+		nil,
+	)
+
+	return querier, nil
 }
 
 func New(
@@ -184,8 +276,13 @@ func New(
 		return nil, err
 	}
 
+	querier, err := newQuerier(instrumentation.Logger(), telemetrystore, prometheus)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize all modules
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, querier)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules)

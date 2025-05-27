@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/queryrange"
+	"github.com/SigNoz/signoz/pkg/modules/queryrange/implqueryrange"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
@@ -20,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 type Modules struct {
@@ -30,9 +33,16 @@ type Modules struct {
 	Apdex        apdex.Module
 	Dashboard    dashboard.Module
 	QuickFilter  quickfilter.Module
+	QueryRange   queryrange.Module
 }
 
-func NewModules(sqlstore sqlstore.SQLStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings) Modules {
+func NewModules(
+	sqlstore sqlstore.SQLStore,
+	jwt *authtypes.JWT,
+	emailing emailing.Emailing,
+	providerSettings factory.ProviderSettings,
+	querier qbtypes.Querier,
+) Modules {
 	return Modules{
 		Organization: implorganization.NewModule(implorganization.NewStore(sqlstore)),
 		Preference:   implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewDefaultPreferenceMap()),
@@ -41,5 +51,6 @@ func NewModules(sqlstore sqlstore.SQLStore, jwt *authtypes.JWT, emailing emailin
 		Dashboard:    impldashboard.NewModule(sqlstore),
 		User:         impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), jwt, emailing, providerSettings),
 		QuickFilter:  implquickfilter.NewModule(implquickfilter.NewStore(sqlstore)),
+		QueryRange:   implqueryrange.NewModule(querier),
 	}
 }
