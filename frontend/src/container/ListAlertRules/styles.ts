@@ -15,7 +15,7 @@ export const SearchContainer = styled.div`
 		gap: 12px;
 
 		.search-tooltip {
-			color: #1890ff;
+			color: var(--bg-robin-500);
 			cursor: help;
 		}
 
