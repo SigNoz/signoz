@@ -32,9 +32,7 @@ ex:
 
 > Tag the relevant teams for review:
 
-- [ ] @SigNoz/frontend
-- [ ] @SigNoz/backend
-- [ ] @SigNoz/devops
+- frontend / backend / devops
 
 ---
 
