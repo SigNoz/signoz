@@ -51,7 +51,7 @@
   ],
   "panelMap": {},
   "tags": [],
-  "title": "EKS Overview",
+  "title": "EKS ControlPlane Overview",
   "uploadedGrafana": false,
   "variables": {
     "1f7a94df-9735-4bfa-a1b8-dca8ac29f945": {
