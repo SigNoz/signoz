@@ -211,10 +211,18 @@
 						align-items: center;
 
 						&.reorder {
-							display: block;
+							display: flex;
 							cursor: pointer;
 							margin-left: auto;
 						}
+					}
+
+					.collapse-expand-section-icon {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						cursor: pointer;
+						margin-left: auto;
 					}
 				}
 
@@ -241,6 +249,28 @@
 					display: flex;
 					flex-direction: column;
 					gap: 4px;
+				}
+			}
+
+			.more-nav-items {
+				&.collapsed {
+					.nav-items-section {
+						opacity: 0;
+						transform: translateY(-10px);
+						transition: all 0.4s ease;
+						overflow: hidden;
+						height: 0;
+					}
+				}
+
+				&.expanded {
+					.nav-items-section {
+						opacity: 1;
+						transform: translateY(0);
+						transition: all 0.4s ease;
+						overflow: hidden;
+						height: auto;
+					}
 				}
 			}
 		}
@@ -409,7 +439,7 @@
 
 						.nav-section-title-icon {
 							&.reorder {
-								display: block;
+								display: flex;
 							}
 						}
 					}
@@ -617,6 +647,13 @@
 
 	.ant-dropdown-menu-item-divider {
 		background-color: var(--Slate-500, #161922) !important;
+	}
+}
+
+.settings-dropdown,
+.help-support-dropdown {
+	.ant-dropdown-menu-item {
+		height: 32px;
 	}
 }
 
