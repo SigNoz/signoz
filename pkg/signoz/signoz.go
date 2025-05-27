@@ -92,8 +92,8 @@ func newQuerier(
 	logFieldMapper := telemetrylogs.NewFieldMapper()
 	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
 	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
-		logFieldMapper,
-		logConditionBuilder,
+		resourceFilterFieldMapper,
+		resourceFilterConditionBuilder,
 		telemetryMetadataStore,
 	)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
@@ -115,6 +115,14 @@ func newQuerier(
 		logConditionBuilder,
 		logResourceFilterStmtBuilder,
 		logAggExprRewriter,
+		&telemetrytypes.TelemetryFieldKey{
+			Name:          "body",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		telemetrylogs.BodyJSONStringSearchPrefix,
+		telemetrylogs.GetBodyJSONKey,
 	)
 
 	querier := querier.NewQuerier(

@@ -24,6 +24,10 @@ type logQueryStatementBuilder struct {
 	cb                        qbtypes.ConditionBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
+
+	fullTextColumn *telemetrytypes.TelemetryFieldKey
+	jsonBodyPrefix string
+	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*logQueryStatementBuilder)(nil)
@@ -35,6 +39,9 @@ func NewLogQueryStatementBuilder(
 	conditionBuilder qbtypes.ConditionBuilder,
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
+	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	jsonBodyPrefix string,
+	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *logQueryStatementBuilder {
 	return &logQueryStatementBuilder{
 		logger:                    logger,
@@ -43,6 +50,9 @@ func NewLogQueryStatementBuilder(
 		cb:                        conditionBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
+		fullTextColumn:            fullTextColumn,
+		jsonBodyPrefix:            jsonBodyPrefix,
+		jsonKeyToKey:              jsonKeyToKey,
 	}
 }
 
@@ -413,6 +423,9 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 		ConditionBuilder:   b.cb,
 		FieldKeys:          keys,
 		SkipResourceFilter: true,
+		FullTextColumn:     b.fullTextColumn,
+		JsonBodyPrefix:     b.jsonBodyPrefix,
+		JsonKeyToKey:       b.jsonKeyToKey,
 	})
 
 	if err != nil {
