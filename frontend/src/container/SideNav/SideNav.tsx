@@ -656,16 +656,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									menu={{ items: helpSupportDropdownMenuItems }}
 									placement="topLeft"
 									overlayClassName="nav-dropdown-overlay"
+									trigger={['click']}
 								>
-									<div
-										className="nav-item"
-										onClick={(event: MouseEvent): void => {
-											handleUserManagentMenuItemClick(
-												helpSupportMenuItem?.key as string,
-												event,
-											);
-										}}
-									>
+									<div className="nav-item">
 										<div className="nav-item-data">
 											<div className="nav-item-icon">{helpSupportMenuItem.icon}</div>
 
@@ -680,20 +673,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									menu={{ items: userSettingsDropdownMenuItems }}
 									placement="topLeft"
 									overlayClassName="nav-dropdown-overlay settings-dropdown"
+									trigger={['click']}
 								>
-									<div
-										className="nav-item"
-										onClick={(event: MouseEvent): void => {
-											handleUserManagentMenuItemClick(
-												userSettingsMenuItem?.key as string,
-												event,
-											);
-											logEvent('Sidebar: Menu clicked', {
-												menuRoute: userSettingsMenuItem?.key,
-												menuLabel: 'User',
-											});
-										}}
-									>
+									<div className="nav-item">
 										<div className="nav-item-data">
 											<div className="nav-item-icon">{userSettingsMenuItem.icon}</div>
 
