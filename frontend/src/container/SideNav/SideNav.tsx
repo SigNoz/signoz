@@ -34,6 +34,8 @@ import {
 	AlertTriangle,
 	Check,
 	CheckSquare,
+	ChevronDown,
+	ChevronUp,
 	ClockFading,
 	Cog,
 	Ellipsis,
@@ -144,6 +146,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
 		defaultMoreMenuItems,
 	);
+
+	const [isMoreMenuCollapsed, setIsMoreMenuCollapsed] = useState(false);
 
 	const [
 		isReorderShortcutNavItemsModalOpen,
@@ -519,6 +523,18 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		</>
 	);
 
+	const handleHelpSupportMenuItemClick = (info: SidebarItem): void => {
+		console.log('info', info);
+
+		const item = helpSupportDropdownMenuItems.find(
+			(item) => item.key === info.key,
+		);
+
+		if (item?.isExternal && item?.url) {
+			window.open(item.url, '_blank');
+		}
+	};
+
 	return (
 		<div className={cx('sidenav-container', isPinned && 'pinned')}>
 			<div className={cx('sideNav', isPinned && 'pinned')}>
@@ -627,14 +643,32 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							</div>
 						</div>
 
-						<div className="more-nav-items">
+						<div
+							className={cx(
+								'more-nav-items',
+								isMoreMenuCollapsed ? 'collapsed' : 'expanded',
+							)}
+						>
 							<div className="nav-title-section">
-								<div className="nav-section-title">
+								<div
+									className="nav-section-title"
+									onClick={(): void => {
+										setIsMoreMenuCollapsed(!isMoreMenuCollapsed);
+									}}
+								>
 									<div className="nav-section-title-icon">
 										<Ellipsis size={16} />
 									</div>
 
 									<div className="nav-section-title-text">MORE</div>
+
+									<div className="collapse-expand-section-icon">
+										{isMoreMenuCollapsed ? (
+											<ChevronDown size={16} />
+										) : (
+											<ChevronUp size={16} />
+										)}
+									</div>
 								</div>
 							</div>
 
@@ -653,9 +687,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						<div className="secondary-nav-items">
 							<div className="nav-dropdown-item">
 								<Dropdown
-									menu={{ items: helpSupportDropdownMenuItems }}
+									menu={{
+										items: helpSupportDropdownMenuItems,
+										onClick: handleHelpSupportMenuItemClick,
+									}}
 									placement="topLeft"
-									overlayClassName="nav-dropdown-overlay"
+									overlayClassName="nav-dropdown-overlay help-support-dropdown"
 									trigger={['click']}
 								>
 									<div className="nav-item">
