@@ -154,10 +154,14 @@ function MetricsTreemap({
 													<foreignObject
 														width={nodeWidth}
 														height={nodeHeight}
-														style={getTreemapTileStyle(node.data)}
 														onClick={(): void => openMetricDetails(node.data.id)}
 													>
-														<div style={getTreemapTileTextStyle()}>
+														<div
+															style={{
+																...getTreemapTileStyle(node.data),
+																...getTreemapTileTextStyle(),
+															}}
+														>
 															{`${node.data.displayValue}%`}
 														</div>
 													</foreignObject>

@@ -32,7 +32,7 @@ export default function ServiceTraces({
 		(state) => state.globalTime,
 	);
 
-	const { user, activeLicenseV3 } = useAppContext();
+	const { user, activeLicense } = useAppContext();
 
 	const now = new Date().getTime();
 	const [timeRange, setTimeRange] = useState({
@@ -124,8 +124,8 @@ export default function ServiceTraces({
 									});
 
 									if (
-										activeLicenseV3 &&
-										activeLicenseV3.platform === LicensePlatform.CLOUD
+										activeLicense &&
+										activeLicense.platform === LicensePlatform.CLOUD
 									) {
 										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 									} else {
@@ -160,7 +160,7 @@ export default function ServiceTraces({
 				</div>
 			</div>
 		),
-		[user?.role, activeLicenseV3],
+		[user?.role, activeLicense],
 	);
 
 	const renderDashboardsList = useCallback(

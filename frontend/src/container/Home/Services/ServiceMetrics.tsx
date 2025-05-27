@@ -23,7 +23,7 @@ import { Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import {
 	LicensePlatform,
-	LicenseV3ResModel,
+	LicenseResModel,
 } from 'types/api/licensesV3/getActive';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -42,7 +42,7 @@ const EmptyState = memo(
 		activeLicenseV3,
 	}: {
 		user: IUser;
-		activeLicenseV3: LicenseV3ResModel | null;
+		activeLicenseV3: LicenseResModel | null;
 	}): JSX.Element => (
 		<div className="empty-state-container">
 			<div className="empty-state-content-container">
@@ -146,7 +146,7 @@ function ServiceMetrics({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const { user, activeLicenseV3 } = useAppContext();
+	const { user, activeLicense } = useAppContext();
 
 	const [timeRange, setTimeRange] = useState(() => {
 		const now = new Date().getTime();
@@ -335,7 +335,7 @@ function ServiceMetrics({
 				{servicesExist ? (
 					<ServicesListTable services={top5Services} onRowClick={handleRowClick} />
 				) : (
-					<EmptyState user={user} activeLicenseV3={activeLicenseV3} />
+					<EmptyState user={user} activeLicenseV3={activeLicense} />
 				)}
 			</Card.Content>
 
