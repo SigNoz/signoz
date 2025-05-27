@@ -33,11 +33,7 @@ const statusMap: Record<string, string> = {
 /**
  * Returns true if the alert matches the search words and key-value pairs.
  */
-function alertMatches(
-	alert: GettableAlert,
-	searchWords: string[],
-	keyValuePairs: Record<string, string>,
-): boolean {
+function alertMatches(alert: GettableAlert, searchWords: string[]): boolean {
 	const alertName = alert.alert?.toLowerCase() || '';
 	const severity = alert.labels?.severity?.toLowerCase() || '';
 	const status = alert.state?.toLowerCase() || '';
@@ -56,25 +52,42 @@ function alertMatches(
 		...labelValues,
 	].join(' ');
 
-	const allWordsMatch = searchWords.every((word) => searchable.includes(word));
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	return searchWords.every((word) => {
+		const plainTextMatch = searchable.includes(word);
 
-	const allKeyValueMatch = Object.entries(keyValuePairs).every(
-		([key, value]) => {
-			if (key === 'severity') {
-				return severity === value;
-			}
-			if (key === 'status') {
-				const mappedStatus = statusMap[value] || value;
-				return status === mappedStatus;
-			}
-			if (alert.labels && key in alert.labels) {
-				return String(alert.labels[key]).toLowerCase() === value;
-			}
-			return false;
-		},
-	);
+		// Check if this word is a key:value pair
+		const isKeyValue = word.includes(':');
+		if (isKeyValue) {
+			// For key:value pairs, check if the key:value logic matches
+			const [key, value] = word.split(':');
+			const keyValueMatch = ((): boolean => {
+				if (key === 'severity') {
+					return severity === value;
+				}
+				if (key === 'status') {
+					const mappedStatus = statusMap[value] || value;
+					const labelVal =
+						alert.labels && key in alert.labels ? alert.labels[key] : undefined;
+					return (
+						status === mappedStatus ||
+						(typeof labelVal === 'string' && labelVal.toLowerCase() === value)
+					);
+				}
+				if (alert.labels && key in alert.labels) {
+					const labelVal = alert.labels[key];
+					return typeof labelVal === 'string' && labelVal.toLowerCase() === value;
+				}
+				return false;
+			})();
 
-	return allWordsMatch && allKeyValueMatch;
+			// For key:value pairs, match if EITHER plain text OR key:value logic matches
+			return plainTextMatch || keyValueMatch;
+		}
+
+		// For regular words, only plain text matching is required
+		return plainTextMatch;
+	});
 }
 
 export const filterAlerts = (
@@ -84,11 +97,14 @@ export const filterAlerts = (
 	if (!filter.trim()) return allAlertRules;
 
 	const { keyValuePairs, filterCopy } = parseKeyValuePairs(filter);
-	const searchWords = filterCopy.split(/\s+/).filter(Boolean);
-
-	return allAlertRules.filter((alert) =>
-		alertMatches(alert, searchWords, keyValuePairs),
+	// Include both the remaining words AND the original key:value strings as search words
+	const remainingWords = filterCopy.split(/\s+/).filter(Boolean);
+	const keyValueStrings = Object.entries(keyValuePairs).map(
+		([key, value]) => `${key}:${value}`,
 	);
+	const searchWords = [...remainingWords, ...keyValueStrings];
+
+	return allAlertRules.filter((alert) => alertMatches(alert, searchWords));
 };
 
 export const alertActionLogEvent = (

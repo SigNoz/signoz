@@ -8,6 +8,17 @@ export const SearchContainer = styled.div`
 		align-items: center;
 		gap: 2rem;
 	}
+	.search-container {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+
+		.search-tooltip {
+			color: #1890ff;
+			cursor: help;
+		}
+	}
 `;
 
 export const Button = styled(ButtonComponent)`
