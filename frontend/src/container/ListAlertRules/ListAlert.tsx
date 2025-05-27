@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import { InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Flex, Input, Tooltip, Typography } from 'antd';
+import { Divider, Flex, Input, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
@@ -384,10 +384,15 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 						placeholder="Search by name, status, severity, labels or key:value or chaining (e.g. 'status:ok cpu warning')"
 						onChange={handleSearch}
 						defaultValue={searchString}
+						prefix={
+							<Flex align="center" gap={8}>
+								<Tooltip title={searchTooltipContent} placement="bottomRight">
+									<InfoCircleOutlined className="search-tooltip" />
+								</Tooltip>
+								<Divider type="vertical" style={{ height: '16px', margin: 0 }} />
+							</Flex>
+						}
 					/>
-					<Tooltip title={searchTooltipContent} placement="bottomRight">
-						<InfoCircleOutlined className="search-tooltip" />
-					</Tooltip>
 				</div>
 
 				<Flex gap={12}>
