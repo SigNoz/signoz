@@ -6,7 +6,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource } from 'components/QuickFilters/types';
+import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import RouteTab from 'components/RouteTab';
 import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -20,7 +20,6 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { routes } from './config';
-import { ExceptionsQuickFiltersConfig } from './utils';
 
 function AllErrors(): JSX.Element {
 	const { pathname } = useLocation();
@@ -49,8 +48,9 @@ function AllErrors(): JSX.Element {
 			{showFilters && (
 				<section className={cx('all-errors-quick-filter-section')}>
 					<QuickFilters
+						className="qf-exceptions"
 						source={QuickFiltersSource.EXCEPTIONS}
-						config={ExceptionsQuickFiltersConfig}
+						signal={SignalType.EXCEPTIONS}
 						handleFilterVisibilityChange={handleFilterVisibilityChange}
 					/>
 				</section>
