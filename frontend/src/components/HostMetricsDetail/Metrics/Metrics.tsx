@@ -94,6 +94,7 @@ function Metrics({
 					softMin: null,
 					minTimeScale: timeRange.startTime,
 					maxTimeScale: timeRange.endTime,
+					enableZoom: true,
 				}),
 			),
 		[queries, isDarkMode, dimensions, timeRange.startTime, timeRange.endTime],
@@ -129,7 +130,7 @@ function Metrics({
 			<div className="metrics-header">
 				<div className="metrics-datetime-section">
 					<DateTimeSelectionV2
-						showAutoRefresh={false}
+						showAutoRefresh
 						showRefreshText={false}
 						hideShareModal
 						onTimeChange={handleTimeChange}

@@ -22,7 +22,7 @@ func TestIntegrationLifecycle(t *testing.T) {
 	organizationModule := implorganization.NewModule(implorganization.NewStore(store))
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
-	userModule := impluser.NewModule(impluser.NewStore(store), nil, emailing, providerSettings)
+	userModule := impluser.NewModule(impluser.NewStore(store, providerSettings), nil, emailing, providerSettings)
 	user, apiErr := createTestUser(organizationModule, userModule)
 	if apiErr != nil {
 		t.Fatalf("could not create test user: %v", apiErr)

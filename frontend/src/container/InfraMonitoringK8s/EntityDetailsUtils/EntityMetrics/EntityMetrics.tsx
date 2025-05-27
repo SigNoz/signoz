@@ -130,6 +130,7 @@ function EntityMetrics<T>({
 					softMin: null,
 					minTimeScale: timeRange.startTime,
 					maxTimeScale: timeRange.endTime,
+					enableZoom: true,
 				});
 			}),
 		[
@@ -182,7 +183,7 @@ function EntityMetrics<T>({
 			<div className="metrics-header">
 				<div className="metrics-datetime-section">
 					<DateTimeSelectionV2
-						showAutoRefresh={false}
+						showAutoRefresh
 						showRefreshText={false}
 						hideShareModal
 						onTimeChange={handleTimeChange}
