@@ -3,6 +3,7 @@ package telemetrytraces
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,29 +17,32 @@ var (
 	ErrUnsupportedAggregation = errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported aggregation")
 )
 
-type TraceQueryStatementBuilderOpts struct {
-	MetadataStore             telemetrytypes.MetadataStore
-	FieldMapper               qbtypes.FieldMapper
-	ConditionBuilder          qbtypes.ConditionBuilder
-	ResourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
-	AggExprRewriter           qbtypes.AggExprRewriter
-}
-
 type traceQueryStatementBuilder struct {
-	opts            TraceQueryStatementBuilderOpts
-	fm              qbtypes.FieldMapper
-	cb              qbtypes.ConditionBuilder
-	aggExprRewriter qbtypes.AggExprRewriter
+	logger                    *slog.Logger
+	metadataStore             telemetrytypes.MetadataStore
+	fm                        qbtypes.FieldMapper
+	cb                        qbtypes.ConditionBuilder
+	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	aggExprRewriter           qbtypes.AggExprRewriter
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
 
-func NewTraceQueryStatementBuilder(opts TraceQueryStatementBuilderOpts) *traceQueryStatementBuilder {
+func NewTraceQueryStatementBuilder(
+	logger *slog.Logger,
+	metadataStore telemetrytypes.MetadataStore,
+	fieldMapper qbtypes.FieldMapper,
+	conditionBuilder qbtypes.ConditionBuilder,
+	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	aggExprRewriter qbtypes.AggExprRewriter,
+) *traceQueryStatementBuilder {
 	return &traceQueryStatementBuilder{
-		opts:            opts,
-		fm:              opts.FieldMapper,
-		cb:              opts.ConditionBuilder,
-		aggExprRewriter: opts.AggExprRewriter,
+		logger:                    logger,
+		metadataStore:             metadataStore,
+		fm:                        fieldMapper,
+		cb:                        conditionBuilder,
+		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
+		aggExprRewriter:           aggExprRewriter,
 	}
 }
 
@@ -56,7 +60,7 @@ func (b *traceQueryStatementBuilder) Build(
 
 	keySelectors := getKeySelectors(query)
 
-	keys, err := b.opts.MetadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -222,13 +226,17 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		int64(query.StepInterval.Seconds()),
 	))
 
+	var allGroupByArgs []any
+
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, &gb.TelemetryFieldKey, keys)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString)
 		if err != nil {
 			return nil, err
 		}
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(sqlbuilder.Escape(colExpr))
 		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
 	}
@@ -278,7 +286,8 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			sb.Having(query.Having.Expression)
 		}
 
-		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
+		combinedArgs := append(allGroupByArgs, allAggChArgs...)
+		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
 		finalSQL = querybuilder.CombineCTEs(cteFragments) + mainSQL
@@ -290,7 +299,8 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			sb.Having(query.Having.Expression)
 		}
 
-		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
+		combinedArgs := append(allGroupByArgs, allAggChArgs...)
+		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
 		finalSQL = querybuilder.CombineCTEs(cteFragments) + mainSQL
@@ -328,12 +338,14 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 	allAggChArgs := []any{}
 
-	// Add group by columns
-	for _, groupBy := range query.GroupBy {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, &groupBy.TelemetryFieldKey, keys)
+	var allGroupByArgs []any
+	for _, gb := range query.GroupBy {
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString)
 		if err != nil {
 			return nil, err
 		}
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(sqlbuilder.Escape(colExpr))
 	}
 
@@ -394,7 +406,9 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		sb.Limit(query.Limit)
 	}
 
-	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allAggChArgs...)
+	combinedArgs := append(allGroupByArgs, allAggChArgs...)
+
+	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
@@ -422,8 +436,8 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
 		filterWhereClause, warnings, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
-			FieldMapper:        b.opts.FieldMapper,
-			ConditionBuilder:   b.opts.ConditionBuilder,
+			FieldMapper:        b.fm,
+			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 		})
@@ -480,7 +494,7 @@ func (b *traceQueryStatementBuilder) buildResourceFilterCTE(
 	start, end uint64,
 ) (*qbtypes.Statement, error) {
 
-	return b.opts.ResourceFilterStmtBuilder.Build(
+	return b.resourceFilterStmtBuilder.Build(
 		ctx,
 		start,
 		end,

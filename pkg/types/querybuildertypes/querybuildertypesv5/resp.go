@@ -36,7 +36,7 @@ type Label struct {
 
 type TimeSeriesValue struct {
 	Timestamp int64   `json:"timestamp"`
-	Value     float64 `json:"value,omitempty"`
+	Value     float64 `json:"value"`
 	// for the heatmap type chart
 	Values []float64 `json:"values,omitempty"`
 	Bucket *Bucket   `json:"bucket,omitempty"`

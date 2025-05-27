@@ -13,22 +13,30 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-type AggExprRewriterOptions struct {
-	FullTextColumn   *telemetrytypes.TelemetryFieldKey
-	FieldMapper      qbtypes.FieldMapper
-	ConditionBuilder qbtypes.ConditionBuilder
-	JsonBodyPrefix   string
-	JsonKeyToKey     qbtypes.JsonKeyToFieldFunc
-}
-
 type aggExprRewriter struct {
-	opts AggExprRewriterOptions
+	fullTextColumn   *telemetrytypes.TelemetryFieldKey
+	fieldMapper      qbtypes.FieldMapper
+	conditionBuilder qbtypes.ConditionBuilder
+	jsonBodyPrefix   string
+	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 }
 
 var _ qbtypes.AggExprRewriter = (*aggExprRewriter)(nil)
 
-func NewAggExprRewriter(opts AggExprRewriterOptions) *aggExprRewriter {
-	return &aggExprRewriter{opts: opts}
+func NewAggExprRewriter(
+	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	fieldMapper qbtypes.FieldMapper,
+	conditionBuilder qbtypes.ConditionBuilder,
+	jsonBodyPrefix string,
+	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+) *aggExprRewriter {
+	return &aggExprRewriter{
+		fullTextColumn:   fullTextColumn,
+		fieldMapper:      fieldMapper,
+		conditionBuilder: conditionBuilder,
+		jsonBodyPrefix:   jsonBodyPrefix,
+		jsonKeyToKey:     jsonKeyToKey,
+	}
 }
 
 // Rewrite parses the given aggregation expression, maps the column, and condition to
@@ -63,11 +71,11 @@ func (r *aggExprRewriter) Rewrite(
 	}
 
 	visitor := newExprVisitor(keys,
-		r.opts.FullTextColumn,
-		r.opts.FieldMapper,
-		r.opts.ConditionBuilder,
-		r.opts.JsonBodyPrefix,
-		r.opts.JsonKeyToKey,
+		r.fullTextColumn,
+		r.fieldMapper,
+		r.conditionBuilder,
+		r.jsonBodyPrefix,
+		r.jsonKeyToKey,
 	)
 	// Rewrite the first select item (our expression)
 	if err := sel.SelectItems[0].Accept(visitor); err != nil {
@@ -163,6 +171,11 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		v.isRate = true
 	}
 
+	dataType := telemetrytypes.FieldDataTypeString
+	if aggFunc.Numeric {
+		dataType = telemetrytypes.FieldDataTypeFloat64
+	}
+
 	// Handle *If functions with predicate + values
 	if aggFunc.FuncCombinator {
 		// Map the predicate (last argument)
@@ -195,11 +208,13 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		// Map each value column argument
 		for i := 0; i < len(args)-1; i++ {
 			origVal := args[i].String()
-			colName, err := v.fieldMapper.ColumnExpressionFor(context.Background(), &telemetrytypes.TelemetryFieldKey{Name: origVal}, v.fieldKeys)
+			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
+			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
-			newVal := colName
+			v.chArgs = append(v.chArgs, exprArgs...)
+			newVal := expr
 			parsedVal, err := parseFragment(newVal)
 			if err != nil {
 				return err
@@ -211,11 +226,13 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		// Non-If functions: map every argument as a column/value
 		for i, arg := range args {
 			orig := arg.String()
-			colName, err := v.fieldMapper.ColumnExpressionFor(context.Background(), &telemetrytypes.TelemetryFieldKey{Name: orig}, v.fieldKeys)
+			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
+			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", orig)
 			}
-			newCol := colName
+			v.chArgs = append(v.chArgs, exprArgs...)
+			newCol := expr
 			parsed, err := parseFragment(newCol)
 			if err != nil {
 				return err

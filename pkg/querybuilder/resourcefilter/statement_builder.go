@@ -11,12 +11,6 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-type ResourceFilterStatementBuilderOpts struct {
-	FieldMapper      qbtypes.FieldMapper
-	ConditionBuilder qbtypes.ConditionBuilder
-	MetadataStore    telemetrytypes.MetadataStore
-}
-
 var (
 	ErrUnsupportedSignal = errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported signal type")
 )
@@ -40,8 +34,10 @@ var signalConfigs = map[telemetrytypes.Signal]signalConfig{
 
 // Generic resource filter statement builder
 type resourceFilterStatementBuilder[T any] struct {
-	opts   ResourceFilterStatementBuilderOpts
-	signal telemetrytypes.Signal
+	fieldMapper      qbtypes.FieldMapper
+	conditionBuilder qbtypes.ConditionBuilder
+	metadataStore    telemetrytypes.MetadataStore
+	signal           telemetrytypes.Signal
 }
 
 // Ensure interface compliance at compile time
@@ -51,17 +47,29 @@ var (
 )
 
 // Constructor functions
-func NewTraceResourceFilterStatementBuilder(opts ResourceFilterStatementBuilderOpts) *resourceFilterStatementBuilder[qbtypes.TraceAggregation] {
+func NewTraceResourceFilterStatementBuilder(
+	fieldMapper qbtypes.FieldMapper,
+	conditionBuilder qbtypes.ConditionBuilder,
+	metadataStore telemetrytypes.MetadataStore,
+) *resourceFilterStatementBuilder[qbtypes.TraceAggregation] {
 	return &resourceFilterStatementBuilder[qbtypes.TraceAggregation]{
-		opts:   opts,
-		signal: telemetrytypes.SignalTraces,
+		fieldMapper:      fieldMapper,
+		conditionBuilder: conditionBuilder,
+		metadataStore:    metadataStore,
+		signal:           telemetrytypes.SignalTraces,
 	}
 }
 
-func NewLogResourceFilterStatementBuilder(opts ResourceFilterStatementBuilderOpts) *resourceFilterStatementBuilder[qbtypes.LogAggregation] {
+func NewLogResourceFilterStatementBuilder(
+	fieldMapper qbtypes.FieldMapper,
+	conditionBuilder qbtypes.ConditionBuilder,
+	metadataStore telemetrytypes.MetadataStore,
+) *resourceFilterStatementBuilder[qbtypes.LogAggregation] {
 	return &resourceFilterStatementBuilder[qbtypes.LogAggregation]{
-		opts:   opts,
-		signal: telemetrytypes.SignalLogs,
+		fieldMapper:      fieldMapper,
+		conditionBuilder: conditionBuilder,
+		metadataStore:    metadataStore,
+		signal:           telemetrytypes.SignalLogs,
 	}
 }
 
@@ -98,7 +106,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	q.From(fmt.Sprintf("%s.%s", config.dbName, config.tableName))
 
 	keySelectors := b.getKeySelectors(query)
-	keys, err := b.opts.MetadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +135,8 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 
 		// warnings would be encountered as part of the main condition already
 		filterWhereClause, _, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
-			FieldMapper:      b.opts.FieldMapper,
-			ConditionBuilder: b.opts.ConditionBuilder,
+			FieldMapper:      b.fieldMapper,
+			ConditionBuilder: b.conditionBuilder,
 			FieldKeys:        keys,
 		})
 

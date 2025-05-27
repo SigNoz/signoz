@@ -103,11 +103,43 @@ func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
 					})
 				}
 
+			case **float64, **float32, **int64, **int32, **uint64, **uint32:
+				tempVal := reflect.ValueOf(ptr)
+				if tempVal.IsValid() && !tempVal.IsNil() && !tempVal.Elem().IsNil() {
+					val := numericAsFloat(tempVal.Elem().Elem().Interface())
+					if m := aggRe.FindStringSubmatch(name); m != nil {
+						id, _ := strconv.Atoi(m[1])
+						aggValues[id] = val
+					} else if numericColsCount == 1 { // classic single-value query
+						fallbackValue = val
+						fallbackSeen = true
+					} else {
+						// numeric label
+						lblVals = append(lblVals, fmt.Sprint(val))
+						lblObjs = append(lblObjs, &qbtypes.Label{
+							Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+							Value: val,
+						})
+					}
+				}
+
 			case *string:
 				lblVals = append(lblVals, *v)
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 					Value: *v,
+				})
+
+			case **string:
+				val := *v
+				if val == nil {
+					var empty string
+					val = &empty
+				}
+				lblVals = append(lblVals, *val)
+				lblObjs = append(lblObjs, &qbtypes.Label{
+					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+					Value: val,
 				})
 
 			default:
