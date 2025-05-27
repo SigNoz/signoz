@@ -18,6 +18,13 @@ export const SearchContainer = styled.div`
 			color: #1890ff;
 			cursor: help;
 		}
+
+		.search-divider {
+			height: 16px;
+			margin: 0;
+			border-left: 1px solid var(--bg-slate-100);
+			margin-right: 6px;
+		}
 	}
 `;
 
