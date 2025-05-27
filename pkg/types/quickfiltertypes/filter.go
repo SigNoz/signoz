@@ -164,7 +164,7 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 
 	apiMonitoringFilters := []map[string]interface{}{
 		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
-		{"key": "service.name", "dataType": "string", "type": "tag"},
+		{"key": "service.name", "dataType": "string", "type": "resource"},
 		{"key": "rpc.method", "dataType": "string", "type": "tag"},
 	}
 
