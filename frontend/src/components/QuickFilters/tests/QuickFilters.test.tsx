@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -8,6 +9,7 @@ import {
 	waitFor,
 } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
+import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	otherFiltersResponse,
@@ -17,6 +19,7 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { USER_ROLES } from 'types/roles';
 
 import QuickFilters from '../QuickFilters';
 import { IQuickFiltersConfig, QuickFiltersSource, SignalType } from '../types';
@@ -24,6 +27,21 @@ import { QuickFiltersConfig } from './constants';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
+}));
+
+// eslint-disable-next-line sonarjs/no-duplicate-string
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { pathname: string } => ({
+		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.TRACES_EXPLORER}/`,
+	}),
+}));
+
+const userRole = USER_ROLES.ADMIN;
+
+// mock useAppContext
+jest.mock('providers/App/App', () => ({
+	useAppContext: jest.fn(() => ({ user: { role: userRole } })),
 }));
 
 const handleFilterVisibilityChange = jest.fn();
@@ -163,7 +181,9 @@ describe('Quick Filters with custom filters', () => {
 		expect(screen.getByText('Filters for')).toBeInTheDocument();
 		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
 		await screen.findByText(FILTER_SERVICE_NAME);
-		await screen.findByText('otel-demo');
+		const allByText = await screen.findAllByText('otel-demo');
+		// since 2 filter collapse are open, there are 2 filter items visible
+		expect(allByText).toHaveLength(2);
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
 		fireEvent.click(icon);
@@ -284,5 +304,60 @@ describe('Quick Filters with custom filters', () => {
 			]),
 		);
 		expect(requestBody.signal).toBe(SIGNAL);
+	});
+
+	// render duration filter
+	it('should render duration slider for duration_nono filter', async () => {
+		// Set up fake timers **before rendering**
+		jest.useFakeTimers();
+
+		const { getByTestId } = render(<TestQuickFilters signal={SIGNAL} />);
+		await screen.findByText(FILTER_SERVICE_NAME);
+		expect(screen.getByText('Duration')).toBeInTheDocument();
+
+		// click to open the duration filter
+		fireEvent.click(screen.getByText('Duration'));
+
+		const minDuration = getByTestId('min-input') as HTMLInputElement;
+		const maxDuration = getByTestId('max-input') as HTMLInputElement;
+		expect(minDuration).toHaveValue(null);
+		expect(minDuration).toHaveProperty('placeholder', '0');
+		expect(maxDuration).toHaveValue(null);
+		expect(maxDuration).toHaveProperty('placeholder', '100000000');
+
+		await act(async () => {
+			// set values
+			fireEvent.change(minDuration, { target: { value: '10000' } });
+			fireEvent.change(maxDuration, { target: { value: '20000' } });
+			jest.advanceTimersByTime(2000);
+		});
+		await waitFor(() => {
+			expect(redirectWithQueryBuilderData).toHaveBeenCalledWith(
+				expect.objectContaining({
+					builder: {
+						queryData: expect.arrayContaining([
+							expect.objectContaining({
+								filters: expect.objectContaining({
+									items: expect.arrayContaining([
+										expect.objectContaining({
+											key: expect.objectContaining({ key: 'durationNano' }),
+											op: '>=',
+											value: 10000000000,
+										}),
+										expect.objectContaining({
+											key: expect.objectContaining({ key: 'durationNano' }),
+											op: '<=',
+											value: 20000000000,
+										}),
+									]),
+								}),
+							}),
+						]),
+					},
+				}),
+			);
+		});
+
+		jest.useRealTimers(); // Clean up
 	});
 });

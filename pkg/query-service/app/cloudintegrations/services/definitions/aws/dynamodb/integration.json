@@ -1,0 +1,394 @@
+{
+  "id": "dynamodb",
+  "title": "DynamoDB",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": false
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "aws_DynamoDB_AccountMaxReads_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxReads_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxReads_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxReads_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxTableLevelReads_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxTableLevelReads_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxTableLevelReads_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxTableLevelReads_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxTableLevelWrites_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxTableLevelWrites_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxTableLevelWrites_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxTableLevelWrites_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxWrites_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxWrites_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxWrites_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountMaxWrites_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountProvisionedReadCapacityUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountProvisionedReadCapacityUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountProvisionedReadCapacityUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountProvisionedReadCapacityUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountProvisionedWriteCapacityUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountProvisionedWriteCapacityUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountProvisionedWriteCapacityUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_AccountProvisionedWriteCapacityUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ConsumedReadCapacityUnits_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ConsumedReadCapacityUnits_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ConsumedReadCapacityUnits_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ConsumedReadCapacityUnits_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ConsumedWriteCapacityUnits_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ConsumedWriteCapacityUnits_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ConsumedWriteCapacityUnits_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ConsumedWriteCapacityUnits_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_MaxProvisionedTableReadCapacityUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_MaxProvisionedTableReadCapacityUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_MaxProvisionedTableReadCapacityUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_MaxProvisionedTableReadCapacityUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_MaxProvisionedTableWriteCapacityUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_MaxProvisionedTableWriteCapacityUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_MaxProvisionedTableWriteCapacityUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_MaxProvisionedTableWriteCapacityUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ReturnedItemCount_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ReturnedItemCount_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ReturnedItemCount_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ReturnedItemCount_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_SuccessfulRequestLatency_count",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_SuccessfulRequestLatency_max",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_SuccessfulRequestLatency_min",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_SuccessfulRequestLatency_sum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ThrottledRequests_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ThrottledRequests_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ThrottledRequests_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_ThrottledRequests_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_UserErrors_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_UserErrors_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_UserErrors_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_UserErrors_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_WriteThrottleEvents_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_WriteThrottleEvents_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_WriteThrottleEvents_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_DynamoDB_WriteThrottleEvents_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/DynamoDB"
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "DynamoDB Overview",
+        "description": "Overview of DynamoDB",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}
