@@ -288,21 +288,27 @@ export const settingsMenuItems: SidebarItem[] = [
 	},
 ];
 
-export const helpSupportDropdownMenuItems: MenuProps['items'] = [
+export const helpSupportDropdownMenuItems: SidebarItem[] = [
 	{
 		key: 'documentation',
 		label: 'Documentation',
 		icon: <Book size={14} />,
+		isExternal: true,
+		url: 'https://signoz.io/docs',
 	},
 	{
 		key: 'github',
 		label: 'GitHub',
 		icon: <Github size={14} />,
+		isExternal: true,
+		url: 'https://github.com/signoz/signoz',
 	},
 	{
 		key: 'slack',
 		label: 'Slack',
 		icon: <Slack size={14} />,
+		isExternal: true,
+		url: 'https://signoz.slack.com',
 	},
 	{
 		key: 'chat-support',

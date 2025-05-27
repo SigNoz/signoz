@@ -16,6 +16,8 @@ export interface SidebarItem {
 	isNew?: boolean;
 	isPinned?: boolean;
 	children?: SidebarItem[];
+	isExternal?: boolean;
+	url?: string;
 }
 
 export enum SecondaryMenuItemKey {
