@@ -141,6 +141,10 @@
 
 		.nav-item-data {
 			color: #121317;
+
+			.nav-item-label {
+				color: var(--bg-ink-400);
+			}
 		}
 	}
 }

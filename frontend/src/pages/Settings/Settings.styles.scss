@@ -62,3 +62,43 @@
 		}
 	}
 }
+
+.lightMode {
+	.settings-page {
+		.settings-page-header {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+			background: #fff;
+			backdrop-filter: blur(20px);
+
+			.settings-page-header-title {
+				color: var(--bg-ink-400);
+
+				background: var(--bg-vanilla-100);
+				border-right: 1px solid var(--bg-vanilla-300);
+			}
+		}
+
+		.settings-page-content-container {
+			.settings-page-sidenav {
+				border-right: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+			}
+
+			.settings-page-content {
+				background: var(--bg-vanilla-100);
+
+				&::-webkit-scrollbar-track {
+					background: transparent;
+				}
+
+				&::-webkit-scrollbar-thumb {
+					background: var(--bg-slate-300);
+				}
+
+				&::-webkit-scrollbar-thumb:hover {
+					background: var(--bg-slate-200);
+				}
+			}
+		}
+	}
+}

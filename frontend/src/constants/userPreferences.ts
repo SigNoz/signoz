@@ -1,0 +1,3 @@
+export const USER_PREFERENCES = {
+	SIDENAV_PINNED: 'SIDENAV_PINNED',
+};
