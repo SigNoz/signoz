@@ -5,16 +5,11 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 )
-
-type ResourceFilterStatementBuilderOpts struct {
-	FieldMapper      qbtypes.FieldMapper
-	ConditionBuilder qbtypes.ConditionBuilder
-	Compiler         qbtypes.FilterCompiler
-}
 
 var (
 	ErrUnsupportedSignal = errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported signal type")
@@ -39,8 +34,10 @@ var signalConfigs = map[telemetrytypes.Signal]signalConfig{
 
 // Generic resource filter statement builder
 type resourceFilterStatementBuilder[T any] struct {
-	opts   ResourceFilterStatementBuilderOpts
-	signal telemetrytypes.Signal
+	fieldMapper      qbtypes.FieldMapper
+	conditionBuilder qbtypes.ConditionBuilder
+	metadataStore    telemetrytypes.MetadataStore
+	signal           telemetrytypes.Signal
 }
 
 // Ensure interface compliance at compile time
@@ -50,18 +47,45 @@ var (
 )
 
 // Constructor functions
-func NewTraceResourceFilterStatementBuilder(opts ResourceFilterStatementBuilderOpts) *resourceFilterStatementBuilder[qbtypes.TraceAggregation] {
+func NewTraceResourceFilterStatementBuilder(
+	fieldMapper qbtypes.FieldMapper,
+	conditionBuilder qbtypes.ConditionBuilder,
+	metadataStore telemetrytypes.MetadataStore,
+) *resourceFilterStatementBuilder[qbtypes.TraceAggregation] {
 	return &resourceFilterStatementBuilder[qbtypes.TraceAggregation]{
-		opts:   opts,
-		signal: telemetrytypes.SignalTraces,
+		fieldMapper:      fieldMapper,
+		conditionBuilder: conditionBuilder,
+		metadataStore:    metadataStore,
+		signal:           telemetrytypes.SignalTraces,
 	}
 }
 
-func NewLogResourceFilterStatementBuilder(opts ResourceFilterStatementBuilderOpts) *resourceFilterStatementBuilder[qbtypes.LogAggregation] {
+func NewLogResourceFilterStatementBuilder(
+	fieldMapper qbtypes.FieldMapper,
+	conditionBuilder qbtypes.ConditionBuilder,
+	metadataStore telemetrytypes.MetadataStore,
+) *resourceFilterStatementBuilder[qbtypes.LogAggregation] {
 	return &resourceFilterStatementBuilder[qbtypes.LogAggregation]{
-		opts:   opts,
-		signal: telemetrytypes.SignalLogs,
+		fieldMapper:      fieldMapper,
+		conditionBuilder: conditionBuilder,
+		metadataStore:    metadataStore,
+		signal:           telemetrytypes.SignalLogs,
 	}
+}
+
+func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryBuilderQuery[T]) []*telemetrytypes.FieldKeySelector {
+	var keySelectors []*telemetrytypes.FieldKeySelector
+
+	if query.Filter != nil && query.Filter.Expression != "" {
+		whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
+		keySelectors = append(keySelectors, whereClauseSelectors...)
+	}
+
+	for idx := range keySelectors {
+		keySelectors[idx].Signal = b.signal
+	}
+
+	return keySelectors
 }
 
 // Build builds a SQL query based on the given parameters
@@ -77,15 +101,21 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedSignal, b.signal)
 	}
 
-	q := sqlbuilder.ClickHouse.NewSelectBuilder()
+	q := sqlbuilder.NewSelectBuilder()
 	q.Select("fingerprint")
 	q.From(fmt.Sprintf("%s.%s", config.dbName, config.tableName))
 
-	if err := b.addConditions(ctx, q, start, end, query); err != nil {
+	keySelectors := b.getKeySelectors(query)
+	keys, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	if err != nil {
 		return nil, err
 	}
 
-	stmt, args := q.Build()
+	if err := b.addConditions(ctx, q, start, end, query, keys); err != nil {
+		return nil, err
+	}
+
+	stmt, args := q.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{
 		Query: stmt,
 		Args:  args,
@@ -94,14 +124,22 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 
 // addConditions adds both filter and time conditions to the query
 func (b *resourceFilterStatementBuilder[T]) addConditions(
-	ctx context.Context,
+	_ context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[T],
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) error {
 	// Add filter condition if present
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhereClause, _, err := b.opts.Compiler.Compile(ctx, query.Filter.Expression)
+
+		// warnings would be encountered as part of the main condition already
+		filterWhereClause, _, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			FieldMapper:      b.fieldMapper,
+			ConditionBuilder: b.conditionBuilder,
+			FieldKeys:        keys,
+		})
+
 		if err != nil {
 			return err
 		}
@@ -118,13 +156,9 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 // addTimeFilter adds time-based filtering conditions
 func (b *resourceFilterStatementBuilder[T]) addTimeFilter(sb *sqlbuilder.SelectBuilder, start, end uint64) {
 	// Convert nanoseconds to seconds and adjust start bucket
-	const (
-		nsToSeconds      = 1000000000
-		bucketAdjustment = 1800 // 30 minutes
-	)
 
-	startBucket := start/nsToSeconds - bucketAdjustment
-	endBucket := end / nsToSeconds
+	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := end / querybuilder.NsToSeconds
 
 	sb.Where(
 		sb.GE("seen_at_ts_bucket_start", startBucket),
