@@ -103,19 +103,20 @@ function App(): JSX.Element {
 				if (domain) {
 					logEvent('Domain Identified', groupTraits, 'group');
 				}
+				if (window && window.Appcues) {
+					window.Appcues.identify(email, {
+						name: displayName,
 
-				window.Appcues.identify(email, {
-					name: displayName,
+						tenant_id: hostNameParts[0],
+						data_region: hostNameParts[1],
+						tenant_url: hostname,
+						company_domain: domain,
 
-					tenant_id: hostNameParts[0],
-					data_region: hostNameParts[1],
-					tenant_url: hostname,
-					company_domain: domain,
-
-					companyName: orgName,
-					email,
-					paidUser: !!trialInfo?.trialConvertedToSubscription,
-				});
+						companyName: orgName,
+						email,
+						paidUser: !!trialInfo?.trialConvertedToSubscription,
+					});
+				}
 
 				Userpilot.identify(email, {
 					email,
