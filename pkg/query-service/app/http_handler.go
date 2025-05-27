@@ -1207,12 +1207,23 @@ func prepareQuery(r *http.Request) (string, error) {
 	query = queryBuf.String()
 
 	// Now handle $var replacements (simple string replace)
-	for k, v := range vars {
-		placeholder := "$" + k
-		query = strings.ReplaceAll(query, placeholder, v)
+	keys := make([]string, 0, len(vars))
+	for k := range vars {
+		keys = append(keys, k)
 	}
 
-	return query, nil
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i]) > len(keys[j])
+	})
+
+	newQuery := query
+	for _, k := range keys {
+		placeholder := "$" + k
+		v := vars[k]
+		newQuery = strings.ReplaceAll(newQuery, placeholder, v)
+	}
+
+	return newQuery, nil
 }
 
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {
