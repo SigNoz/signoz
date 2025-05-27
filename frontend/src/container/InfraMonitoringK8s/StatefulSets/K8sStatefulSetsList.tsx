@@ -24,11 +24,14 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { getOrderByFromParams } from '../commonUtils';
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -60,19 +63,36 @@ function K8sStatefulSetsList({
 	const [currentPage, setCurrentPage] = useState(1);
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
-	} | null>(null);
+	} | null>(() => getOrderByFromParams(searchParams, true));
 
 	const [selectedStatefulSetUID, setselectedStatefulSetUID] = useState<
 		string | null
-	>(null);
+	>(() => {
+		const statefulSetUID = searchParams.get(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.STATEFULSET_UID,
+		);
+		if (statefulSetUID) {
+			return statefulSetUID;
+		}
+		return null;
+	});
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.STATEFULSETS);
 
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
+	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
+		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
+		if (groupBy) {
+			const decoded = decodeURIComponent(groupBy);
+			const parsed = JSON.parse(decoded);
+			return parsed as IBuilderQuery['groupBy'];
+		}
+		return [];
+	});
 
 	const [
 		selectedRowData,
@@ -263,15 +283,26 @@ function K8sStatefulSetsList({
 			}
 
 			if ('field' in sorter && sorter.order) {
-				setOrderBy({
+				const currentOrderBy = {
 					columnName: sorter.field as string,
-					order: sorter.order === 'ascend' ? 'asc' : 'desc',
+					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
+				};
+				setOrderBy(currentOrderBy);
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
+						currentOrderBy,
+					),
 				});
 			} else {
 				setOrderBy(null);
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
+				});
 			}
 		},
-		[],
+		[searchParams, setSearchParams],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -330,6 +361,10 @@ function K8sStatefulSetsList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedStatefulSetUID(record.statefulsetUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.STATEFULSET_UID]: record.statefulsetUID,
+			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -356,6 +391,11 @@ function K8sStatefulSetsList({
 		setSelectedRowData(null);
 		setGroupBy([]);
 		setOrderBy(null);
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
+		});
 	};
 
 	const expandedRowRender = (): JSX.Element => (
@@ -380,7 +420,9 @@ function K8sStatefulSetsList({
 						}}
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setselectedStatefulSetUID(record.statefulsetUID),
+							onClick: (): void => {
+								setselectedStatefulSetUID(record.statefulsetUID);
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
@@ -444,6 +486,20 @@ function K8sStatefulSetsList({
 
 	const handleCloseStatefulSetDetail = (): void => {
 		setselectedStatefulSetUID(null);
+		setSearchParams({
+			...Object.fromEntries(
+				Array.from(searchParams.entries()).filter(
+					([key]) =>
+						![
+							INFRA_MONITORING_K8S_PARAMS_KEYS.STATEFULSET_UID,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
+							INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS,
+						].includes(key),
+				),
+			),
+		});
 	};
 
 	const handleGroupByChange = useCallback(
@@ -465,6 +521,10 @@ function K8sStatefulSetsList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
+			});
 
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
 				entity: InfraMonitoringEvents.K8sEntity,
@@ -472,7 +532,7 @@ function K8sStatefulSetsList({
 				category: InfraMonitoringEvents.StatefulSet,
 			});
 		},
-		[groupByFiltersData],
+		[groupByFiltersData, searchParams, setSearchParams],
 	);
 
 	useEffect(() => {

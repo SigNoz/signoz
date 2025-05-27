@@ -69,6 +69,7 @@ export interface GetUPlotChartOptions {
 	colorMapping?: Record<string, string>;
 	enhancedLegend?: boolean;
 	legendPosition?: LegendPosition;
+	enableZoom?: boolean;
 }
 
 /** the function converts series A , series B , series C to
@@ -179,6 +180,7 @@ export const getUPlotChartOptions = ({
 	colorMapping,
 	enhancedLegend = true,
 	legendPosition = LegendPosition.BOTTOM,
+	enableZoom,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -248,7 +250,25 @@ export const getUPlotChartOptions = ({
 					`${u.series[seriesIdx].points.stroke(u, seriesIdx)}90`,
 				fill: (): string => '#fff',
 			},
+			...(enableZoom
+				? {
+						drag: {
+							x: true,
+							y: true,
+						},
+						focus: {
+							prox: 30,
+						},
+				  }
+				: {}),
 		},
+		...(enableZoom
+			? {
+					select: {
+						show: true,
+					},
+			  }
+			: {}),
 		tzDate,
 		padding: [16, 16, 8, 8],
 		bands,
