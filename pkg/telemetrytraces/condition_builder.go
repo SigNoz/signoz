@@ -126,6 +126,11 @@ func (c *conditionBuilder) conditionFor(
 	// in the query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
+		// if the field is intrinsic, it always exists
+		if slices.Contains(IntrinsicFields, tblFieldName) || slices.Contains(CalculatedFields, tblFieldName) {
+			return "true", nil
+		}
+
 		var value any
 		switch column.Type {
 		case schema.ColumnTypeString,
