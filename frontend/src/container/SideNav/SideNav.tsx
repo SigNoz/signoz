@@ -136,6 +136,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		defaultMoreMenuItems.filter((item) => item.isPinned),
 	);
 
+	const [tempPinnedMenuItems, setTempPinnedMenuItems] = useState<SidebarItem[]>(
+		[],
+	);
+
 	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
 		defaultMoreMenuItems,
 	);
@@ -147,13 +151,33 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		setIsReorderShortcutNavItemsModalOpen,
 	] = useState(false);
 
+	const handleDragEnd = (event: DragEndEvent): void => {
+		const { active, over } = event;
+
+		if (over && active.id !== over.id) {
+			setTempPinnedMenuItems((items) => {
+				const oldIndex = items.findIndex((item) => item.key === active.id);
+				const newIndex = items.findIndex((item) => item.key === over.id);
+
+				return arrayMove(items, oldIndex, newIndex);
+			});
+		}
+	};
+
+	const handleReorderShortcutNavItems = (): void => {
+		setPinnedMenuItems(tempPinnedMenuItems);
+		setIsReorderShortcutNavItemsModalOpen(false);
+	};
+
 	const hideReorderShortcutNavItemsModal = (): void => {
 		setIsReorderShortcutNavItemsModalOpen(false);
 	};
 
-	const handleReorderShortcutNavItems = (): void => {
-		// setIsReorderShortcutNavItemsModalOpen(false);
-	};
+	useEffect(() => {
+		if (isReorderShortcutNavItemsModalOpen) {
+			setTempPinnedMenuItems(pinnedMenuItems);
+		}
+	}, [isReorderShortcutNavItemsModalOpen, pinnedMenuItems]);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -208,19 +232,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	}, []);
 
 	const sensors = useSensors(useSensor(PointerSensor));
-
-	const handleDragEnd = (event: DragEndEvent): void => {
-		const { active, over } = event;
-
-		if (over && active.id !== over.id) {
-			setPinnedMenuItems((items) => {
-				const oldIndex = items.findIndex((item) => item.key === active.id);
-				const newIndex = items.findIndex((item) => item.key === over.id);
-
-				return arrayMove(items, oldIndex, newIndex);
-			});
-		}
-	};
 
 	useEffect(() => {
 		if (isChatSupportEnabled && isPremiumSupportEnabled && !isCloudUser) {
@@ -757,10 +768,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							onDragEnd={handleDragEnd}
 						>
 							<SortableContext
-								items={pinnedMenuItems.map((f) => f.key)}
+								items={tempPinnedMenuItems.map((f) => f.key)}
 								strategy={verticalListSortingStrategy}
 							>
-								{pinnedMenuItems.map((item) => (
+								{tempPinnedMenuItems.map((item) => (
 									<SortableFilter key={item.key} item={item} />
 								))}
 							</SortableContext>
