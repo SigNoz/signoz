@@ -7,6 +7,8 @@ import logEvent from 'api/common/logEvent';
 import axios from 'axios';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -34,7 +36,6 @@ import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
-import { Filter } from './Filter/Filter';
 import { ActionsWrapper, Container } from './styles';
 import { getTabsItems } from './utils';
 
@@ -244,7 +245,14 @@ function TracesExplorer(): JSX.Element {
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="trace-explorer-page">
 				<Card className="filter" hidden={!isOpen}>
-					<Filter setOpen={setOpen} />
+					<QuickFilters
+						className="qf-traces-explorer"
+						source={QuickFiltersSource.TRACES_EXPLORER}
+						signal={SignalType.TRACES}
+						handleFilterVisibilityChange={(): void => {
+							setOpen(!isOpen);
+						}}
+					/>
 				</Card>
 				<Card
 					className={cx('trace-explorer', {

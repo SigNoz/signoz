@@ -33,7 +33,7 @@ const useFilterConfig = ({
 	const isDynamicFilters = useMemo(() => customFilters.length > 0, [
 		customFilters,
 	]);
-	const { isLoading: isCustomFiltersLoading } = useQuery<
+	const { isFetching: isCustomFiltersLoading } = useQuery<
 		SuccessResponse<PayloadProps> | ErrorResponse,
 		Error
 	>(
@@ -49,10 +49,10 @@ const useFilterConfig = ({
 			enabled: !!signal && isStale,
 		},
 	);
-	const filterConfig = useMemo(() => getFilterConfig(customFilters, config), [
-		config,
-		customFilters,
-	]);
+	const filterConfig = useMemo(
+		() => getFilterConfig(signal, customFilters, config),
+		[config, customFilters, signal],
+	);
 
 	return {
 		filterConfig,
