@@ -1,9 +1,8 @@
 import './MySettings.styles.scss';
 
-import { Button, Radio, RadioChangeEvent, Switch, Tag } from 'antd';
-import { Logout } from 'api/utils';
+import { Radio, RadioChangeEvent, Tag } from 'antd';
 import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
-import { LogOut, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 
 import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
@@ -81,18 +80,6 @@ function MySettings(): JSX.Element {
 
 					<TimezoneAdaptation />
 				</div>
-			</div>
-
-			<div className="settings-footer">
-				<Button
-					type="primary"
-					className="periscope-btn primary"
-					icon={<LogOut size={14} />}
-					onClick={(): void => Logout()}
-					data-testid="logout-button"
-				>
-					Logout
-				</Button>
 			</div>
 		</div>
 	);

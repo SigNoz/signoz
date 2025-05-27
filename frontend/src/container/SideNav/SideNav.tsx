@@ -21,6 +21,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Dropdown, MenuProps, Modal, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { Logout } from 'api/utils';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
@@ -28,12 +29,9 @@ import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { StatusCodes } from 'http-status-codes';
 import history from 'lib/history';
 import {
-	AlertTriangle,
 	Check,
-	CheckSquare,
 	ChevronDown,
 	ChevronUp,
 	ClockFading,
@@ -47,33 +45,23 @@ import {
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { checkVersionState } from 'utils/app';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
-import defaultMenuItems, {
+import {
 	defaultMoreMenuItems,
-	helpSupportDropdownMenuItems,
+	helpSupportDropdownMenuItems as DefaultHelpSupportDropdownMenuItems,
 	helpSupportMenuItem,
-	manageLicenseMenuItem,
 	primaryMenuItems,
-	slackSupportMenuItem,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
-import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
+import { SidebarItem } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
-
-interface UserManagementMenuItems {
-	key: string;
-	label: string;
-	icon: JSX.Element;
-}
 
 function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 	const {
@@ -111,23 +99,28 @@ function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
-	const [, setMenuItems] = useState(primaryMenuItems);
 	const { pathname, search } = useLocation();
-	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
-		AppState,
-		AppReducer
-	>((state) => state.app);
+	const { latestVersion } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 
-	const {
-		user,
-		featureFlags,
-		trialInfo,
-		activeLicense,
-		activeLicenseFetchError,
-	} = useAppContext();
+	const { user, featureFlags, trialInfo } = useAppContext();
+
+	const [
+		helpSupportDropdownMenuItems,
+		setHelpSupportDropdownMenuItems,
+	] = useState<SidebarItem[]>(DefaultHelpSupportDropdownMenuItems);
 
 	const isOnboardingV3Enabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
+	)?.active;
+
+	const isChatSupportEnabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.CHAT_SUPPORT,
+	)?.active;
+
+	const isPremiumSupportEnabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT,
 	)?.active;
 
 	const [licenseTag, setLicenseTag] = useState('');
@@ -161,12 +154,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		// setIsReorderShortcutNavItemsModalOpen(false);
 	};
 
-	const onClickSlackHandler = (): void => {
-		window.open('https://signoz.io/slack', '_blank');
-	};
-
-	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
-
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const {
@@ -176,20 +163,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isCommunityEnterpriseUser,
 	} = useGetTenantLicense();
 
-	const { t } = useTranslation('');
-
-	const licenseStatus: string = activeLicense?.status || '';
-
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
-
-	const isLicenseActive = licenseStatus !== '' && licenseStatus !== 'INVALID';
-
-	const onClickSignozCloud = (): void => {
-		window.open(
-			'https://signoz.io/oss-to-cloud/?utm_source=product_navbar&utm_medium=frontend&utm_campaign=oss_users',
-			'_blank',
-		);
-	};
 
 	const isCtrlMetaKey = (e: MouseEvent): boolean => e.ctrlKey || e.metaKey;
 
@@ -213,14 +187,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			history.push(onboaringRoute);
 		}
 	};
-
-	const onClickVersionHandler = useCallback((event: MouseEvent): void => {
-		if (isCtrlMetaKey(event)) {
-			openInNewTab(ROUTES.VERSION);
-		} else {
-			history.push(ROUTES.VERSION);
-		}
-	}, []);
 
 	const onTogglePin = useCallback((item: SidebarItem): void => {
 		setSecondaryMenuItems((prevItems) =>
@@ -255,6 +221,16 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	};
 
+	useEffect(() => {
+		if (isChatSupportEnabled && isPremiumSupportEnabled && !isCloudUser) {
+			setHelpSupportDropdownMenuItems(
+				DefaultHelpSupportDropdownMenuItems.filter(
+					(item) => item.key !== 'chat-support',
+				),
+			);
+		}
+	}, [isChatSupportEnabled, isPremiumSupportEnabled, isCloudUser]);
+
 	const onClickHandler = useCallback(
 		(key: string, event: MouseEvent | null) => {
 			const params = new URLSearchParams(search);
@@ -278,23 +254,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
 		pathname,
 	]);
-
-	const handleUserManagentMenuItemClick = (
-		key: string,
-		event: MouseEvent,
-	): void => {
-		switch (key) {
-			case SecondaryMenuItemKey.Slack:
-				onClickSlackHandler();
-				break;
-			case SecondaryMenuItemKey.Version:
-				onClickVersionHandler(event);
-				break;
-			default:
-				onClickHandler(key, event);
-				break;
-		}
-	};
 
 	const userSettingsDropdownMenuItems: MenuProps['items'] = [
 		{
@@ -413,81 +372,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		};
 	}, [deregisterShortcut, onClickHandler, registerShortcut]);
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	useEffect(() => {
-		let updatedMenuItems = defaultMenuItems;
-		let updatedUserManagementItems: UserManagementMenuItems[] = [
-			manageLicenseMenuItem,
-		];
-
-		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			const isOnboardingEnabled =
-				featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
-					?.active || false;
-
-			if (!isOnboardingEnabled) {
-				updatedMenuItems = updatedMenuItems.filter(
-					(item) =>
-						item.key !== ROUTES.GET_STARTED &&
-						item.key !== ROUTES.ONBOARDING &&
-						item.key !== ROUTES.GET_STARTED_WITH_CLOUD,
-				);
-			}
-
-			const isOnBasicPlan =
-				activeLicenseFetchError &&
-				[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
-					activeLicenseFetchError?.getHttpStatusCode(),
-				);
-
-			if (user.role !== USER_ROLES.ADMIN || isOnBasicPlan) {
-				updatedMenuItems = updatedMenuItems.filter(
-					(item) => item.key !== ROUTES.BILLING,
-				);
-			}
-
-			updatedUserManagementItems = [helpSupportMenuItem];
-
-			// Show manage license menu item for EE cloud users with a active license
-			if (isEnterpriseSelfHostedUser) {
-				updatedUserManagementItems.push(manageLicenseMenuItem);
-			}
-		} else {
-			updatedMenuItems = updatedMenuItems.filter(
-				(item) => item.key !== ROUTES.INTEGRATIONS && item.key !== ROUTES.BILLING,
-			);
-			const versionMenuItem = {
-				key: SecondaryMenuItemKey.Version,
-				label: !isCurrentVersionError ? currentVersion : t('n_a'),
-				icon: !isLatestVersion ? (
-					<AlertTriangle color={Color.BG_CHERRY_600} size={16} />
-				) : (
-					<CheckSquare color={Color.BG_FOREST_500} size={16} />
-				),
-				onClick: onClickVersionHandler,
-			};
-
-			updatedUserManagementItems = [versionMenuItem, slackSupportMenuItem];
-
-			if (isCommunityEnterpriseUser) {
-				updatedUserManagementItems.push(manageLicenseMenuItem);
-			}
-		}
-		setMenuItems(updatedMenuItems);
-	}, [
-		isCommunityEnterpriseUser,
-		currentVersion,
-		featureFlags,
-		isCloudUser,
-		isEnterpriseSelfHostedUser,
-		isCurrentVersionError,
-		isLatestVersion,
-		onClickVersionHandler,
-		t,
-		user.role,
-		activeLicenseFetchError,
-	]);
-
 	const isPinnedItem = useMemo(
 		() => (item: SidebarItem): boolean =>
 			secondaryMenuItems.some((i) => i.key === item.key && i.isPinned),
@@ -521,14 +405,48 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	);
 
 	const handleHelpSupportMenuItemClick = (info: SidebarItem): void => {
-		console.log('info', info);
-
 		const item = helpSupportDropdownMenuItems.find(
 			(item) => item.key === info.key,
 		);
 
 		if (item?.isExternal && item?.url) {
 			window.open(item.url, '_blank');
+		}
+
+		switch (item?.key) {
+			case ROUTES.SHORTCUTS:
+				history.push(ROUTES.SHORTCUTS);
+				break;
+			case 'invite-collaborators':
+				history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+				break;
+			case 'chat-support':
+				if (window.Intercom) {
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-ignore
+					window.Intercom('show');
+				}
+				break;
+			default:
+				break;
+		}
+	};
+
+	const handleSettingsMenuItemClick = (info: SidebarItem): void => {
+		switch (info.key) {
+			case 'account':
+				history.push(ROUTES.MY_SETTINGS);
+				break;
+			case 'workspace':
+				history.push(ROUTES.SETTINGS);
+				break;
+			case 'license':
+				history.push(ROUTES.LIST_LICENSES);
+				break;
+			case 'logout':
+				Logout();
+				break;
+			default:
 		}
 	};
 
@@ -568,7 +486,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										)}
 									>
 										<span className="license-type"> {licenseTag} </span>
-										<span className="version"> {latestVersion} </span>
+
+										{latestVersion && <span className="version"> {latestVersion} </span>}
 									</div>
 								</Tooltip>
 							)}
@@ -704,7 +623,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 							<div className="nav-dropdown-item">
 								<Dropdown
-									menu={{ items: userSettingsDropdownMenuItems }}
+									menu={{
+										items: userSettingsDropdownMenuItems,
+										onClick: handleSettingsMenuItemClick,
+									}}
 									placement="topLeft"
 									overlayClassName="nav-dropdown-overlay settings-dropdown"
 									trigger={['click']}
