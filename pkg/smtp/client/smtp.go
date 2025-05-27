@@ -108,7 +108,7 @@ func (c *Client) Do(ctx context.Context, tos []*mail.Address, subject string, co
 	// Try to clean up after ourselves but don't log anything if something has failed.
 	defer func() {
 		if err := smtpClient.Quit(); success && err != nil {
-			c.logger.Warn("failed to close SMTP connection", "error", err)
+			c.logger.WarnContext(ctx, "failed to close SMTP connection", "error", err)
 		}
 	}()
 

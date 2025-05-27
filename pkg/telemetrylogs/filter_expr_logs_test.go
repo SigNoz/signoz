@@ -459,7 +459,7 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedErrorContains: "",
 		},
 
-		// Conflicts with the key token, are valid and without additonal tokens, they are searched as FREETEXT
+		// Conflicts with the key token, are valid and without additional tokens, they are searched as FREETEXT
 		{
 			category:              "Key token conflict",
 			query:                 "status.code",

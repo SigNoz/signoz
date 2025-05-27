@@ -1,5 +1,7 @@
 import { GoogleSquareFilled, KeyOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
+import { FeatureKeys } from 'constants/features';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useMemo } from 'react';
 import { AuthDomain, GOOGLE_AUTH, SAML } from 'types/api/SAML/listDomain';
 
@@ -12,6 +14,10 @@ function Create({
 	setIsSettingsOpen,
 	setIsEditModalOpen,
 }: CreateProps): JSX.Element {
+	const { featureFlags } = useAppContext();
+	const SSOFlag =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
+
 	const onGoogleAuthClickHandler = useCallback(() => {
 		assignSsoMethod(GOOGLE_AUTH);
 		setIsSettingsOpen(false);
@@ -35,24 +41,35 @@ function Create({
 		}
 	}, [ssoMethod]);
 
-	const data: RowProps[] = [
-		{
-			buttonText: ConfigureButtonText,
-			Icon: <GoogleSquareFilled style={{ fontSize: '37px' }} />,
-			title: 'Google Apps Authentication',
-			subTitle: 'Let members sign-in with a Google account',
-			onClickHandler: onGoogleAuthClickHandler,
-			isDisabled: false,
-		},
-		{
-			buttonText: ConfigureButtonText,
-			Icon: <KeyOutlined style={{ fontSize: '37px' }} />,
-			onClickHandler: onEditSAMLHandler,
-			subTitle: 'Azure, Active Directory, Okta or your custom SAML 2.0 solution',
-			title: 'SAML Authentication',
-			isDisabled: false,
-		},
-	];
+	const data: RowProps[] = SSOFlag
+		? [
+				{
+					buttonText: ConfigureButtonText,
+					Icon: <GoogleSquareFilled style={{ fontSize: '37px' }} />,
+					title: 'Google Apps Authentication',
+					subTitle: 'Let members sign-in with a Google account',
+					onClickHandler: onGoogleAuthClickHandler,
+					isDisabled: false,
+				},
+				{
+					buttonText: ConfigureButtonText,
+					Icon: <KeyOutlined style={{ fontSize: '37px' }} />,
+					onClickHandler: onEditSAMLHandler,
+					subTitle: 'Azure, Active Directory, Okta or your custom SAML 2.0 solution',
+					title: 'SAML Authentication',
+					isDisabled: false,
+				},
+		  ]
+		: [
+				{
+					buttonText: ConfigureButtonText,
+					Icon: <GoogleSquareFilled style={{ fontSize: '37px' }} />,
+					title: 'Google Apps Authentication',
+					subTitle: 'Let members sign-in with a Google account',
+					onClickHandler: onGoogleAuthClickHandler,
+					isDisabled: false,
+				},
+		  ];
 
 	return (
 		<div>

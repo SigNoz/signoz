@@ -1,10 +1,9 @@
 import './LaunchChatSupport.styles.scss';
 
 import { Button, Modal, Tooltip, Typography } from 'antd';
-import updateCreditCardApi from 'api/billing/checkout';
 import logEvent from 'api/common/logEvent';
+import updateCreditCardApi from 'api/v1/checkout/create';
 import cx from 'classnames';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
@@ -14,8 +13,9 @@ import { useAppContext } from 'providers/App/App';
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import APIError from 'types/api/error';
 
 export interface LaunchChatSupportProps {
 	eventName: string;
@@ -118,20 +118,21 @@ function LaunchChatSupport({
 	};
 
 	const handleBillingOnSuccess = (
-		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
+		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
 	): void => {
-		if (data?.payload?.redirectURL) {
+		if (data?.data?.redirectURL) {
 			const newTab = document.createElement('a');
-			newTab.href = data.payload.redirectURL;
+			newTab.href = data.data.redirectURL;
 			newTab.target = '_blank';
 			newTab.rel = 'noopener noreferrer';
 			newTab.click();
 		}
 	};
 
-	const handleBillingOnError = (): void => {
+	const handleBillingOnError = (error: APIError): void => {
 		notifications.error({
-			message: SOMETHING_WENT_WRONG,
+			message: error.getErrorCode(),
+			description: error.getErrorMessage(),
 		});
 	};
 

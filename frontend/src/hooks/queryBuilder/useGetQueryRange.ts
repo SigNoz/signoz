@@ -1,9 +1,11 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { updateStepInterval } from 'container/GridCardLayout/utils';
 import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
+import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
@@ -75,9 +77,32 @@ export const useGetQueryRange: UseGetQueryRange = (
 		return [REACT_QUERY_KEY.GET_QUERY_RANGE, newRequestData];
 	}, [options?.queryKey, newRequestData]);
 
+	const modifiedRequestData = useMemo(() => {
+		const graphType = requestData.originalGraphType || requestData.graphType;
+		if (graphType === PANEL_TYPES.BAR) {
+			const { start, end } = getStartEndRangeTime({
+				type: requestData.selectedTime,
+				interval: requestData.globalSelectedInterval,
+			});
+
+			const updatedQuery = updateStepInterval(
+				requestData.query,
+				requestData.start ? requestData.start * 1e3 : parseInt(start, 10) * 1e3,
+				requestData.end ? requestData.end * 1e3 : parseInt(end, 10) * 1e3,
+			);
+
+			return {
+				...requestData,
+				query: updatedQuery,
+			};
+		}
+
+		return requestData;
+	}, [requestData]);
+
 	return useQuery<SuccessResponse<MetricRangePayloadProps>, Error>({
 		queryFn: async ({ signal }) =>
-			GetMetricQueryRange(requestData, version, signal, headers),
+			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
 		...options,
 		queryKey,
 	});

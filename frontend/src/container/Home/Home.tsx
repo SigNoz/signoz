@@ -19,6 +19,7 @@ import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData'
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CompassIcon, DotIcon, HomeIcon, Plus, Wrench, X } from 'lucide-react';
@@ -53,6 +54,8 @@ export default function Home(): JSX.Element {
 	const [endTime, setEndTime] = useState<number | null>(null);
 	const [updatingUserPreferences, setUpdatingUserPreferences] = useState(false);
 	const [loadingUserPreferences, setLoadingUserPreferences] = useState(true);
+
+	const { isCommunityUser, isCommunityEnterpriseUser } = useGetTenantLicense();
 
 	const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(
 		defaultChecklistItemsState,
@@ -300,17 +303,17 @@ export default function Home(): JSX.Element {
 		}
 	}, [hostData, k8sPodsData, handleUpdateChecklistDoneItem]);
 
-	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
+	const { activeLicense, isFetchingActiveLicense } = useAppContext();
 
 	const [isEnabled, setIsEnabled] = useState(false);
 
 	useEffect(() => {
-		if (isFetchingActiveLicenseV3) {
+		if (isFetchingActiveLicense) {
 			setIsEnabled(false);
 			return;
 		}
-		setIsEnabled(Boolean(activeLicenseV3?.platform === LicensePlatform.CLOUD));
-	}, [activeLicenseV3, isFetchingActiveLicenseV3]);
+		setIsEnabled(Boolean(activeLicense?.platform === LicensePlatform.CLOUD));
+	}, [activeLicense, isFetchingActiveLicense]);
 
 	const { data: deploymentsData } = useGetDeploymentsData(isEnabled);
 
@@ -323,22 +326,27 @@ export default function Home(): JSX.Element {
 		setIsBannerDismissed(true);
 	};
 
+	const showBanner = useMemo(
+		() => !isBannerDismissed && (isCommunityUser || isCommunityEnterpriseUser),
+		[isBannerDismissed, isCommunityUser, isCommunityEnterpriseUser],
+	);
+
 	return (
 		<div className="home-container">
 			<div className="sticky-header">
-				{!isBannerDismissed && (
+				{showBanner && (
 					<div className="home-container-banner">
 						<div className="home-container-banner-content">
-							Big news: SigNoz Cloud Teams plan now starting at just $49/Month -
+							Big News: SigNoz Community Edition now available with SSO (Google OAuth)
+							and API keys -
 							<a
-								href="https://signoz.io/blog/cloud-teams-plan-now-at-49usd/"
+								href="https://signoz.io/blog/open-source-signoz-now-available-with-sso-and-api-keys/"
 								target="_blank"
 								rel="noreferrer"
 								className="home-container-banner-link"
 							>
 								<i>read more</i>
 							</a>
-							🥳🎉
 						</div>
 
 						<div className="home-container-banner-close">

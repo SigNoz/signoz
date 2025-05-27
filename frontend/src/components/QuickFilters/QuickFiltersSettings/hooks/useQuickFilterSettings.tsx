@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import updateCustomFiltersAPI from 'api/quickFilters/updateCustomFilters';
 import axios, { AxiosError } from 'axios';
 import { SignalType } from 'components/QuickFilters/types';
@@ -46,6 +47,9 @@ const useQuickFilterSettings = ({
 		onSuccess: () => {
 			setIsSettingsOpen(false);
 			setIsStale(true);
+			logEvent('Quick Filters Settings: changes saved', {
+				addedFilters,
+			});
 			notifications.success({
 				message: 'Quick filters updated successfully',
 				placement: 'bottomRight',
