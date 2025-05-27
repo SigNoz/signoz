@@ -1,5 +1,4 @@
 import { RocketOutlined } from '@ant-design/icons';
-import { MenuProps } from 'antd';
 import ROUTES from 'constants/routes';
 import {
 	BarChart2,
@@ -16,10 +15,12 @@ import {
 	HardDrive,
 	Home,
 	Key,
+	Keyboard,
 	Layers2,
 	LayoutGrid,
 	ListMinus,
 	MessageSquareText,
+	Plus,
 	Receipt,
 	Route,
 	ScrollText,
@@ -70,6 +71,7 @@ export const helpSupportMenuItem = {
 
 export const shortcutMenuItem = {
 	key: ROUTES.SHORTCUTS,
+	// eslint-disable-next-line sonarjs/no-duplicate-string
 	label: 'Keyboard Shortcuts',
 	icon: <Layers2 size={16} />,
 };
@@ -314,6 +316,16 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 		key: 'chat-support',
 		label: 'Chat with Support',
 		icon: <MessageSquareText size={14} />,
+	},
+	{
+		key: ROUTES.SHORTCUTS,
+		label: 'Keyboard Shortcuts',
+		icon: <Keyboard size={14} />,
+	},
+	{
+		key: 'invite-collaborators',
+		label: 'Invite a Collaborator',
+		icon: <Plus size={14} />,
 	},
 ];
 
