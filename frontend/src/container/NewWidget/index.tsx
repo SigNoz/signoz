@@ -371,6 +371,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
 				variables: getDashboardVariables(selectedDashboard?.data.variables),
+				originalGraphType: selectedGraph || selectedWidget?.panelTypes,
 			};
 		}
 
