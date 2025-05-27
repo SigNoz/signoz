@@ -37,7 +37,12 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { ColumnUnit, Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import {
+	ColumnUnit,
+	Dashboard,
+	LegendPosition,
+	Widgets,
+} from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -183,6 +188,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [isLogScale, setIsLogScale] = useState<boolean>(
 		selectedWidget?.isLogScale || false,
 	);
+	const [legendPosition, setLegendPosition] = useState<LegendPosition>(
+		selectedWidget?.legendPosition || LegendPosition.BOTTOM,
+	);
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
 
@@ -248,6 +256,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				selectedLogFields,
 				selectedTracesFields,
 				isLogScale,
+				legendPosition,
 				columnWidths: columnWidths?.[selectedWidget?.id],
 			};
 		});
@@ -272,6 +281,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		combineHistogram,
 		stackedBarChart,
 		isLogScale,
+		legendPosition,
 		columnWidths,
 	]);
 
@@ -471,6 +481,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
 								selectedLogFields: selectedWidget?.selectedLogFields || [],
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
+								legendPosition: selectedWidget?.legendPosition || LegendPosition.BOTTOM,
 							},
 					  ]
 					: [
@@ -498,6 +509,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
 								selectedLogFields: selectedWidget?.selectedLogFields || [],
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
+								legendPosition: selectedWidget?.legendPosition || LegendPosition.BOTTOM,
 							},
 							...afterWidgets,
 					  ],
@@ -752,6 +764,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							setIsFillSpans={setIsFillSpans}
 							isLogScale={isLogScale}
 							setIsLogScale={setIsLogScale}
+							legendPosition={legendPosition}
+							setLegendPosition={setLegendPosition}
 							softMin={softMin}
 							setSoftMin={setSoftMin}
 							softMax={softMax}
