@@ -3,6 +3,7 @@ import './entityEvents.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Table, TableColumnsType } from 'antd';
+import { VIEWS } from 'components/HostMetricsDetail/constants';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { EventContents } from 'container/InfraMonitoringK8s/commonUtils';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
@@ -28,6 +29,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import {
 	EntityDetailsEmptyContainer,
 	getEntityEventsOrLogsQueryPayload,
+	QUERY_KEYS,
 } from '../utils';
 
 interface EventDataType {
@@ -55,7 +57,10 @@ interface IEntityEventsProps {
 		startTime: number;
 		endTime: number;
 	};
-	handleChangeEventFilters: (filters: IBuilderQuery['filters']) => void;
+	handleChangeEventFilters: (
+		filters: IBuilderQuery['filters'],
+		view: VIEWS,
+	) => void;
 	filters: IBuilderQuery['filters'];
 	isModalTimeSelection: boolean;
 	handleTimeChange: (
@@ -103,14 +108,18 @@ export default function Events({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: [],
+							items: filters.items.filter(
+								(item) =>
+									item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
+									item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
+							),
 							op: 'AND',
 						},
 					},
 				],
 			},
 		}),
-		[currentQuery],
+		[currentQuery, filters],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
@@ -243,7 +252,7 @@ export default function Events({
 					{query && (
 						<QueryBuilderSearch
 							query={query}
-							onChange={handleChangeEventFilters}
+							onChange={(value): void => handleChangeEventFilters(value, VIEWS.EVENTS)}
 							disableNavigationShortcuts
 						/>
 					)}

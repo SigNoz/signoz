@@ -30,7 +30,7 @@ export const LicensePlanKey = {
 	BASIC: 'BASIC',
 };
 
-export type LicenseV3EventQueueResModel = {
+export type LicenseEventQueueResModel = {
 	event: LicenseEvent;
 	status: string;
 	scheduled_at: string;
@@ -38,10 +38,11 @@ export type LicenseV3EventQueueResModel = {
 	updated_at: string;
 };
 
-export type LicenseV3ResModel = {
+export type LicenseResModel = {
+	key: string;
 	status: LicenseStatus;
 	state: LicenseState;
-	event_queue: LicenseV3EventQueueResModel;
+	event_queue: LicenseEventQueueResModel;
 	platform: LicensePlatform;
 	created_at: string;
 	plan: {
@@ -67,3 +68,8 @@ export type TrialInfo = {
 	trialConvertedToSubscription: boolean;
 	gracePeriodEnd: number;
 };
+
+export interface PayloadProps {
+	data: LicenseEventQueueResModel;
+	status: string;
+}

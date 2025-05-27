@@ -21,13 +21,13 @@ function ServiceTraceTable({
 	const [RPS, setRPS] = useState(0);
 	const { t: getText } = useTranslation(['services']);
 
-	const { isFetchingActiveLicenseV3, trialInfo } = useAppContext();
+	const { isFetchingActiveLicense, trialInfo } = useAppContext();
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const tableColumns = useMemo(() => getColumns(search, false), [search]);
 
 	useEffect(() => {
 		if (
-			!isFetchingActiveLicenseV3 &&
+			!isFetchingActiveLicense &&
 			trialInfo?.onTrial &&
 			!trialInfo?.trialConvertedToSubscription &&
 			isCloudUserVal
@@ -42,7 +42,7 @@ function ServiceTraceTable({
 	}, [
 		services,
 		isCloudUserVal,
-		isFetchingActiveLicenseV3,
+		isFetchingActiveLicense,
 		trialInfo?.onTrial,
 		trialInfo?.trialConvertedToSubscription,
 	]);
