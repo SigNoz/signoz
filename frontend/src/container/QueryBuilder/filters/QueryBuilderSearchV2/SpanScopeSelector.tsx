@@ -21,7 +21,6 @@ interface SpanFilterConfig {
 }
 
 interface SpanScopeSelectorProps {
-	queryName: string;
 	onChange?: (value: TagFilter) => void;
 	query?: IBuilderQuery;
 }
@@ -57,7 +56,6 @@ const SELECT_OPTIONS = [
 ];
 
 function SpanScopeSelector({
-	queryName,
 	onChange,
 	query,
 }: SpanScopeSelectorProps): JSX.Element {
@@ -83,7 +81,7 @@ function SpanScopeSelector({
 	};
 	useEffect(() => {
 		let queryData = (currentQuery?.builder?.queryData || [])?.find(
-			(item) => item.queryName === queryName,
+			(item) => item.queryName === query?.queryName,
 		);
 
 		if (onChange && query) {
@@ -93,7 +91,7 @@ function SpanScopeSelector({
 		const filters = queryData?.filters?.items;
 		const currentScope = getCurrentScopeFromFilters(filters);
 		setSelectedScope(currentScope);
-	}, [currentQuery, onChange, query, queryName]);
+	}, [currentQuery, onChange, query]);
 
 	const handleScopeChange = (newScope: SpanScope): void => {
 		const newQuery = cloneDeep(currentQuery);
@@ -122,7 +120,10 @@ function SpanScopeSelector({
 			...item,
 			filters: {
 				...item.filters,
-				items: getUpdatedFilters(item.filters?.items, item.queryName === queryName),
+				items: getUpdatedFilters(
+					item.filters?.items,
+					item.queryName === query?.queryName,
+				),
 			},
 		}));
 
