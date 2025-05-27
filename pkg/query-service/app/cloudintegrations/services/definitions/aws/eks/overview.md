@@ -1,3 +1,3 @@
-### Monitor ElastiCache with SigNoz
+### Monitor EKS with SigNoz
 
-Collect ElastiCache key Metrics and view them with an out of the box dashboard.
+Collect EKS key Metrics and ContainerInsights Metrics(if enabled in EKS) and view them with an out of the box dashboard.
