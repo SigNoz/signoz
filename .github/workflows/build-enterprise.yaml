@@ -69,7 +69,6 @@ jobs:
           echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
           echo 'PYLON_APP_ID="${{ secrets.PYLON_APP_ID }}"' >> frontend/.env
           echo 'APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> frontend/.env
-          echo 'USERPILOT_KEY="${{ secrets.USERPILOT_KEY }}"' >> frontend/.env
       - name: cache-dotenv
         uses: actions/cache@v4
         with:
