@@ -104,7 +104,7 @@ const interceptorRejected = async (
 
 						return await Promise.resolve(reResponse);
 					} catch (error) {
-						if ((error as AxiosError).status === 401) {
+						if ((error as AxiosError)?.response?.status === 401) {
 							Logout();
 						}
 					}
