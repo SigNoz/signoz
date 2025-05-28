@@ -110,7 +110,7 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:v0.85.0
+    image: signoz/signoz:v0.85.2
     command:
       - --config=/root/config/prometheus.yml
     ports:
@@ -141,7 +141,7 @@ services:
       retries: 3
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:v0.111.41
+    image: signoz/signoz-otel-collector:v0.111.42
     command:
       - --config=/etc/otel-collector-config.yaml
       - --manager-config=/etc/manager-config.yaml
@@ -165,7 +165,7 @@ services:
       - signoz
   schema-migrator:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:v0.111.41
+    image: signoz/signoz-schema-migrator:v0.111.42
     deploy:
       restart_policy:
         condition: on-failure
