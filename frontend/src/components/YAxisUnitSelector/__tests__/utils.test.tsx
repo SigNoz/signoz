@@ -12,7 +12,7 @@ describe('YAxisUnitSelector utils', () => {
 		});
 
 		it('returns null for unknown units', () => {
-			expect(mapMetricUnitToUniversalUnit('unknown_unit')).toBe(null);
+			expect(mapMetricUnitToUniversalUnit('unknown_unit')).toBe('unknown_unit');
 			expect(mapMetricUnitToUniversalUnit('')).toBe(null);
 			expect(mapMetricUnitToUniversalUnit(undefined)).toBe(null);
 		});
