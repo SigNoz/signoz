@@ -263,13 +263,13 @@ export const settingsMenuItems: SidebarItem[] = [
 		key: ROUTES.ORG_SETTINGS,
 		label: 'Members & SSO',
 		icon: <User size={16} />,
-		isEnabled: true,
+		isEnabled: false,
 	},
 	{
 		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
 		label: 'Custom Domain',
 		icon: <Globe size={16} />,
-		isEnabled: true,
+		isEnabled: false,
 	},
 	{
 		key: ROUTES.INTEGRATIONS,
@@ -287,13 +287,13 @@ export const settingsMenuItems: SidebarItem[] = [
 		key: ROUTES.API_KEYS,
 		label: 'API Keys',
 		icon: <Key size={16} />,
-		isEnabled: true,
+		isEnabled: false,
 	},
 	{
 		key: ROUTES.INGESTION_SETTINGS,
 		label: 'Ingestion',
 		icon: <RocketOutlined rotate={45} />,
-		isEnabled: true,
+		isEnabled: false,
 	},
 	{
 		key: ROUTES.MY_SETTINGS,
