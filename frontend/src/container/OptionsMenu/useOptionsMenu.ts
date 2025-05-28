@@ -297,7 +297,7 @@ const useOptionsMenu = ({
 
 			updateFormatting({
 				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
-				format: value === 'list' ? 'table' : value,
+				format: value,
 				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
 			});
 			handleRedirectWithOptionsData(optionsData);
