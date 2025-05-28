@@ -103,6 +103,20 @@ function App(): JSX.Element {
 				if (domain) {
 					logEvent('Domain Identified', groupTraits, 'group');
 				}
+				if (window && window.Appcues) {
+					window.Appcues.identify(email, {
+						name: displayName,
+
+						tenant_id: hostNameParts[0],
+						data_region: hostNameParts[1],
+						tenant_url: hostname,
+						company_domain: domain,
+
+						companyName: orgName,
+						email,
+						paidUser: !!trialInfo?.trialConvertedToSubscription,
+					});
+				}
 
 				Userpilot.identify(email, {
 					email,
@@ -137,18 +151,6 @@ function App(): JSX.Element {
 					source: 'signoz-ui',
 					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
 				});
-
-				if (
-					window.cioanalytics &&
-					typeof window.cioanalytics.identify === 'function'
-				) {
-					window.cioanalytics.reset();
-					window.cioanalytics.identify(email, {
-						name: user.displayName,
-						email,
-						role: user.role,
-					});
-				}
 			}
 		},
 		[
@@ -213,13 +215,13 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (pathname === ROUTES.ONBOARDING) {
-			window.Intercom('update', {
-				hide_default_launcher: true,
-			});
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			window.Pylon('hideChatBubble');
 		} else {
-			window.Intercom('update', {
-				hide_default_launcher: false,
-			});
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			window.Pylon('showChatBubble');
 		}
 	}, [pathname]);
 
@@ -254,11 +256,13 @@ function App(): JSX.Element {
 				!showAddCreditCardModal &&
 				(isCloudUser || isEnterpriseSelfHostedUser)
 			) {
-				window.Intercom('boot', {
-					app_id: process.env.INTERCOM_APP_ID,
-					email: user?.email || '',
-					name: user?.displayName || '',
-				});
+				window.pylon = {
+					chat_settings: {
+						app_id: process.env.PYLON_APP_ID,
+						email: user.email,
+						name: user.displayName,
+					},
+				};
 			}
 		}
 	}, [
@@ -320,10 +324,6 @@ function App(): JSX.Element {
 		} else {
 			posthog.reset();
 			Sentry.close();
-
-			if (window.cioanalytics && typeof window.cioanalytics.reset === 'function') {
-				window.cioanalytics.reset();
-			}
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);

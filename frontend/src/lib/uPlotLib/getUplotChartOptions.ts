@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
@@ -8,10 +9,16 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
 import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import {
+	applyEnhancedLegendStyling,
+	calculateEnhancedLegendConfig,
+} from 'container/PanelWrapper/enhancedLegend';
 import { Dimensions } from 'hooks/useDimensions';
 import { convertValue } from 'lib/getConvertedValue';
+import getLabelName from 'lib/getLabelName';
 import { cloneDeep, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
+import { LegendPosition } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
@@ -60,6 +67,8 @@ export interface GetUPlotChartOptions {
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
 	isLogScale?: boolean;
 	colorMapping?: Record<string, string>;
+	enhancedLegend?: boolean;
+	legendPosition?: LegendPosition;
 	enableZoom?: boolean;
 }
 
@@ -169,6 +178,8 @@ export const getUPlotChartOptions = ({
 	customSeries,
 	isLogScale,
 	colorMapping,
+	enhancedLegend = true,
+	legendPosition = LegendPosition.BOTTOM,
 	enableZoom,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
@@ -182,10 +193,42 @@ export const getUPlotChartOptions = ({
 
 	const bands = stackBarChart ? getBands(series) : null;
 
+	// Calculate dynamic legend configuration based on panel dimensions and series count
+	const seriesCount = (apiResponse?.data?.result || []).length;
+	const seriesLabels = enhancedLegend
+		? (apiResponse?.data?.result || []).map((item) =>
+				getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+		  )
+		: [];
+	const legendConfig = enhancedLegend
+		? calculateEnhancedLegendConfig(
+				dimensions,
+				seriesCount,
+				seriesLabels,
+				legendPosition,
+		  )
+		: {
+				calculatedHeight: 30,
+				minHeight: 30,
+				maxHeight: 30,
+				itemsPerRow: 3,
+				showScrollbar: false,
+		  };
+
+	// Calculate chart dimensions based on legend position
+	const chartWidth =
+		legendPosition === LegendPosition.RIGHT && legendConfig.calculatedWidth
+			? dimensions.width - legendConfig.calculatedWidth - 10
+			: dimensions.width;
+	const chartHeight =
+		legendPosition === LegendPosition.BOTTOM
+			? dimensions.height - legendConfig.calculatedHeight - 10
+			: dimensions.height;
+
 	return {
 		id,
-		width: dimensions.width,
-		height: dimensions.height - 30,
+		width: chartWidth,
+		height: chartHeight,
 		legend: {
 			show: true,
 			live: false,
@@ -353,13 +396,166 @@ export const getUPlotChartOptions = ({
 			],
 			ready: [
 				(self): void => {
+					// Add CSS classes to the uPlot container based on legend position
+					const uplotContainer = self.root;
+					if (uplotContainer) {
+						uplotContainer.classList.remove(
+							'u-plot-right-legend',
+							'u-plot-bottom-legend',
+						);
+						if (legendPosition === LegendPosition.RIGHT) {
+							uplotContainer.classList.add('u-plot-right-legend');
+						} else {
+							uplotContainer.classList.add('u-plot-bottom-legend');
+						}
+					}
+
 					const legend = self.root.querySelector('.u-legend');
 					if (legend) {
+						// Apply enhanced legend styling
+						if (enhancedLegend) {
+							applyEnhancedLegendStyling(
+								legend as HTMLElement,
+								legendConfig,
+								legendConfig.requiredRows,
+								legendPosition,
+							);
+						}
+
+						// Global cleanup function for all legend tooltips
+						const cleanupAllTooltips = (): void => {
+							const existingTooltips = document.querySelectorAll('.legend-tooltip');
+							existingTooltips.forEach((tooltip) => tooltip.remove());
+						};
+
+						// Add single global cleanup listener for this chart
+						const globalCleanupHandler = (e: MouseEvent): void => {
+							const target = e.target as HTMLElement;
+							if (
+								!target.closest('.u-legend') &&
+								!target.classList.contains('legend-tooltip')
+							) {
+								cleanupAllTooltips();
+							}
+						};
+						document.addEventListener('mousemove', globalCleanupHandler);
+
+						// Store cleanup function for potential removal later
+						(self as any)._tooltipCleanup = (): void => {
+							cleanupAllTooltips();
+							document.removeEventListener('mousemove', globalCleanupHandler);
+						};
+
 						const seriesEls = legend.querySelectorAll('.u-series');
 						const seriesArray = Array.from(seriesEls);
 						seriesArray.forEach((seriesEl, index) => {
-							seriesEl.addEventListener('click', () => {
-								if (stackChart) {
+							// Add tooltip and proper text wrapping for legends
+							const thElement = seriesEl.querySelector('th');
+							if (thElement && seriesLabels[index]) {
+								// Store the original marker element before clearing
+								const markerElement = thElement.querySelector('.u-marker');
+								const markerClone = markerElement
+									? (markerElement.cloneNode(true) as HTMLElement)
+									: null;
+
+								// Get the current text content
+								const legendText = seriesLabels[index];
+
+								// Clear the th content and rebuild it
+								thElement.innerHTML = '';
+
+								// Add back the marker
+								if (markerClone) {
+									thElement.appendChild(markerClone);
+								}
+
+								// Create text wrapper
+								const textSpan = document.createElement('span');
+								textSpan.className = 'legend-text';
+								textSpan.textContent = legendText;
+								thElement.appendChild(textSpan);
+
+								// Setup tooltip functionality - check truncation on hover
+								let tooltipElement: HTMLElement | null = null;
+								let isHovering = false;
+
+								const showTooltip = (e: MouseEvent): void => {
+									// Check if text is actually truncated at the time of hover
+									const isTextTruncated = (): boolean => {
+										// For right-side legends, check if text overflows the container
+										if (legendPosition === LegendPosition.RIGHT) {
+											return textSpan.scrollWidth > textSpan.clientWidth;
+										}
+										// For bottom legends, check if text is longer than reasonable display length
+										return legendText.length > 20;
+									};
+
+									// Only show tooltip if text is actually truncated
+									if (!isTextTruncated()) {
+										return;
+									}
+
+									isHovering = true;
+
+									// Clean up any existing tooltips first
+									cleanupAllTooltips();
+
+									// Small delay to ensure cleanup is complete and DOM is ready
+									setTimeout(() => {
+										if (!isHovering) return; // Don't show if mouse already left
+
+										// Double-check no tooltip exists
+										if (document.querySelector('.legend-tooltip')) {
+											return;
+										}
+
+										// Create tooltip element
+										tooltipElement = document.createElement('div');
+										tooltipElement.className = 'legend-tooltip';
+										tooltipElement.textContent = legendText;
+										tooltipElement.style.cssText = `
+											position: fixed;
+											padding: 8px 12px;
+											border-radius: 6px;
+											font-size: 12px;
+											z-index: 10000;
+											pointer-events: none;
+											white-space: nowrap;
+											box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+											border: 1px solid #374151;
+										`;
+
+										// Position tooltip near cursor
+										const rect = (e.target as HTMLElement).getBoundingClientRect();
+										tooltipElement.style.left = `${e.clientX + 10}px`;
+										tooltipElement.style.top = `${rect.top - 35}px`;
+
+										document.body.appendChild(tooltipElement);
+									}, 15);
+								};
+
+								const hideTooltip = (): void => {
+									isHovering = false;
+
+									// Simple cleanup with a reasonable delay
+									setTimeout(() => {
+										if (!isHovering && tooltipElement) {
+											tooltipElement.remove();
+											tooltipElement = null;
+										}
+									}, 200);
+								};
+
+								// Simple tooltip events
+								thElement.addEventListener('mouseenter', showTooltip);
+								thElement.addEventListener('mouseleave', hideTooltip);
+
+								// Add click handlers for marker and text separately
+								const currentMarker = thElement.querySelector('.u-marker');
+								const textElement = thElement.querySelector('.legend-text');
+
+								// Helper function to handle stack chart logic
+								const handleStackChart = (): void => {
 									setHiddenGraph((prev) => {
 										if (isUndefined(prev)) {
 											return { [index]: true };
@@ -369,30 +565,71 @@ export const getUPlotChartOptions = ({
 										}
 										return { [index]: true };
 									});
-								}
-								if (graphsVisibilityStates) {
-									setGraphsVisibilityStates?.((prev) => {
-										const newGraphVisibilityStates = [...prev];
-										if (
-											newGraphVisibilityStates[index + 1] &&
-											newGraphVisibilityStates.every((value, i) =>
-												i === index + 1 ? value : !value,
-											)
-										) {
-											newGraphVisibilityStates.fill(true);
-										} else {
-											newGraphVisibilityStates.fill(false);
-											newGraphVisibilityStates[index + 1] = true;
+								};
+
+								// Marker click handler - checkbox behavior (toggle individual series)
+								if (currentMarker) {
+									currentMarker.addEventListener('click', (e) => {
+										e.stopPropagation(); // Prevent event bubbling to text handler
+
+										if (stackChart) {
+											handleStackChart();
 										}
-										saveLegendEntriesToLocalStorage({
-											options: self,
-											graphVisibilityState: newGraphVisibilityStates,
-											name: id || '',
-										});
-										return newGraphVisibilityStates;
+										if (graphsVisibilityStates) {
+											setGraphsVisibilityStates?.((prev) => {
+												const newGraphVisibilityStates = [...prev];
+												// Toggle the specific series visibility (checkbox behavior)
+												newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
+													index + 1
+												];
+
+												saveLegendEntriesToLocalStorage({
+													options: self,
+													graphVisibilityState: newGraphVisibilityStates,
+													name: id || '',
+												});
+												return newGraphVisibilityStates;
+											});
+										}
 									});
 								}
-							});
+
+								// Text click handler - show only/show all behavior (existing behavior)
+								if (textElement) {
+									textElement.addEventListener('click', (e) => {
+										e.stopPropagation(); // Prevent event bubbling
+
+										if (stackChart) {
+											handleStackChart();
+										}
+										if (graphsVisibilityStates) {
+											setGraphsVisibilityStates?.((prev) => {
+												const newGraphVisibilityStates = [...prev];
+												// Show only this series / show all behavior
+												if (
+													newGraphVisibilityStates[index + 1] &&
+													newGraphVisibilityStates.every((value, i) =>
+														i === index + 1 ? value : !value,
+													)
+												) {
+													// If only this series is visible, show all
+													newGraphVisibilityStates.fill(true);
+												} else {
+													// Otherwise, show only this series
+													newGraphVisibilityStates.fill(false);
+													newGraphVisibilityStates[index + 1] = true;
+												}
+												saveLegendEntriesToLocalStorage({
+													options: self,
+													graphVisibilityState: newGraphVisibilityStates,
+													name: id || '',
+												});
+												return newGraphVisibilityStates;
+											});
+										}
+									});
+								}
+							}
 						});
 					}
 				},
@@ -412,6 +649,7 @@ export const getUPlotChartOptions = ({
 					stackBarChart,
 					hiddenGraph,
 					isDarkMode,
+					colorMapping,
 			  }),
 		axes: getAxes({ isDarkMode, yAxisUnit, panelType, isLogScale }),
 	};

@@ -2,6 +2,11 @@ package querybuilder
 
 import "math"
 
+const (
+	NsToSeconds      = 1000000000
+	BucketAdjustment = 1800 // 30 minutes
+)
+
 // ToNanoSecs takes epoch and returns it in ns
 func ToNanoSecs(epoch uint64) uint64 {
 	temp := epoch
