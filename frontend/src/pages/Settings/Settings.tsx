@@ -44,18 +44,26 @@ function SettingsPage(): JSX.Element {
 		featureFlags?.find((feature) => feature.name === FeatureKeys.GATEWAY)
 			?.active || false;
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if (isAdmin) {
-				// enable billing for admin
-				const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
-					...item,
-					isEnabled: item.key === ROUTES.BILLING ? true : item.isEnabled,
-				}));
+		if (isAdmin) {
+			const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
+				...item,
+				isEnabled:
+					item.key === ROUTES.BILLING ||
+					item.key === ROUTES.INTEGRATIONS ||
+					item.key === ROUTES.CUSTOM_DOMAIN_SETTINGS ||
+					item.key === ROUTES.API_KEYS ||
+					item.key === ROUTES.INGESTION_SETTINGS ||
+					item.key === ROUTES.ORG_SETTINGS
+						? true
+						: item.isEnabled,
+			}));
 
-				setSettingsMenuItems(updatedSettingsMenuItems);
-			}
-		} else {
+			setSettingsMenuItems(updatedSettingsMenuItems);
+		}
+
+		if (!isCloudUser && !isEnterpriseSelfHostedUser) {
 			// disable billing and integrations for non-cloud users
 			const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
 				...item,
@@ -67,6 +75,7 @@ function SettingsPage(): JSX.Element {
 
 			setSettingsMenuItems(updatedSettingsMenuItems);
 		}
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isAdmin, isCloudUser, isEnterpriseSelfHostedUser]);
 
