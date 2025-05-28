@@ -1,6 +1,7 @@
 package constants
 
 import (
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"maps"
 	"os"
 	"strconv"
@@ -637,9 +638,14 @@ var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
 
 var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
+var IsDotMetricsEnabled = false
+
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
+	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+		IsDotMetricsEnabled = true
+	}
 }
 
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000

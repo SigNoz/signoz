@@ -883,6 +883,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			}
 
 			chTransformQuery(chQuery.Query, queryRangeParams.Variables)
+			querytemplate.AssignReservedVarsV3(queryRangeParams)
 			for name, value := range queryRangeParams.Variables {
 				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
 				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
@@ -897,7 +898,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			var query bytes.Buffer
 
 			// replace go template variables
-			querytemplate.AssignReservedVarsV3(queryRangeParams)
 
 			err = tmpl.Execute(&query, queryRangeParams.Variables)
 			if err != nil {

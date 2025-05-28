@@ -102,7 +102,7 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
 
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 

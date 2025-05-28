@@ -67,7 +67,7 @@ func buildBuilderQueriesProducerBytes(
 ) (map[string]*v3.BuilderQuery, error) {
 
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
@@ -139,7 +139,7 @@ func buildBuilderQueriesNetwork(
 	queryName := "latency"
 
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
@@ -218,7 +218,7 @@ func BuildBuilderQueriesKafkaOnboarding(messagingQueue *MessagingQueue) (*v3.Que
 	unixMilliEnd := messagingQueue.End / 1000000
 
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 

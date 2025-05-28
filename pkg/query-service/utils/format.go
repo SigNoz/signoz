@@ -233,7 +233,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 
 func ClickHouseFormattedMetricNames(v interface{}) string {
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 

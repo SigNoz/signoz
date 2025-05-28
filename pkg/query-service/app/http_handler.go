@@ -1200,7 +1200,7 @@ func prepareQuery(r *http.Request) (string, error) {
 		return "", tmplErr
 	}
 
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "false" {
+	if !constants.IsDotMetricsEnabled {
 		return queryBuf.String(), nil
 	}
 
@@ -2021,7 +2021,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		featureSet = append(featureSet, &featuretypes.GettableFeature{
 			Name:   featuretypes.DotMetricsEnabled,
 			Active: true,
@@ -2536,7 +2536,7 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 	}
 	var kafkaConsumerFetchLatencyAvg string = "kafka_consumer_fetch_latency_avg"
 	var kafkaConsumerLag string = "kafka_consumer_group_lag"
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		kafkaConsumerLag = "kafka.consumer_group.lag"
 		kafkaConsumerFetchLatencyAvg = "kafka.consumer.fetch_latency_avg"
 	}

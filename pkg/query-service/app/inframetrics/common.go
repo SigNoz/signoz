@@ -9,8 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
-var dotMetricsEnabled = constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true"
-
 var dotMetricMap = map[string]string{
 	"system_cpu_time":                       "system.cpu.time",
 	"system_memory_usage":                   "system.memory.usage",
@@ -401,7 +399,7 @@ func localQueryToDistributedQuery(query string) string {
 }
 
 func GetDotMetrics(key string) string {
-	if dotMetricsEnabled {
+	if constants.IsDotMetricsEnabled {
 		if _, ok := dotMetricMap[key]; ok {
 			return dotMetricMap[key]
 		}

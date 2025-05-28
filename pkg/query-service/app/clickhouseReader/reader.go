@@ -3010,7 +3010,7 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 	var rows driver.Rows
 	var response v3.AggregateAttributeResponse
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
@@ -3079,7 +3079,7 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	var response v3.FilterAttributeKeyResponse
 
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
@@ -3120,7 +3120,7 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	var attributeValues v3.FilterAttributeValueResponse
 
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
@@ -5005,7 +5005,7 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, 
 	var rows driver.Rows
 	var response []v3.AttributeKey
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 	query := fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE unix_milli >= $1 and __normalized = $2 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $3 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
@@ -5044,7 +5044,7 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context
 	var rows driver.Rows
 	var attributeValues []string
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
@@ -5191,7 +5191,7 @@ func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metri
 		}
 	}
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
@@ -5286,7 +5286,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 	}
 
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
@@ -5484,7 +5484,7 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 	var args []interface{}
 
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
@@ -5568,7 +5568,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	}
 
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
@@ -5723,7 +5723,7 @@ func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_e
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
@@ -5776,7 +5776,7 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
 	normalized := true
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		normalized = false
 	}
 
