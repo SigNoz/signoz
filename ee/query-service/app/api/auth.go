@@ -9,9 +9,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -25,29 +23,11 @@ func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) 
 
 // receiveSAML completes a SAML request and gets user logged in
 func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
 	// this is the source url that initiated the login request
 	redirectUri := constants.GetDefaultSiteURL()
 	ctx := context.Background()
 
-	_, err = ah.Signoz.Licensing.GetActive(ctx, orgID)
-	if err != nil {
-		zap.L().Error("[receiveSAML] sso requested but feature unavailable in org domain")
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "feature unavailable, please upgrade your billing plan to access this feature"), http.StatusMovedPermanently)
-		return
-	}
-
-	err = r.ParseForm()
+	err := r.ParseForm()
 	if err != nil {
 		zap.L().Error("[receiveSAML] failed to process response - invalid response from IDP", zap.Error(err), zap.Any("request", r))
 		handleSsoError(w, r, redirectUri)
@@ -73,6 +53,19 @@ func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
 	domain, err := ah.Signoz.Modules.User.GetDomainFromSsoResponse(ctx, parsedState)
 	if err != nil {
 		handleSsoError(w, r, redirectUri)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(domain.OrgID)
+	if err != nil {
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+
+	_, err = ah.Signoz.Licensing.GetActive(ctx, orgID)
+	if err != nil {
+		zap.L().Error("[receiveSAML] sso requested but feature unavailable in org domain")
+		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "feature unavailable, please upgrade your billing plan to access this feature"), http.StatusMovedPermanently)
 		return
 	}
 
