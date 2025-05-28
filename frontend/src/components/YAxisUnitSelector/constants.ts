@@ -466,3 +466,73 @@ export const Y_AXIS_CATEGORIES = [
 		],
 	},
 ];
+
+export const UniversalUnitToGrafanaUnit: Record<UniversalYAxisUnit, string> = {
+	// Time
+	[UniversalYAxisUnit.DAYS]: 'd',
+	[UniversalYAxisUnit.HOURS]: 'h',
+	[UniversalYAxisUnit.MINUTES]: 'm',
+	[UniversalYAxisUnit.SECONDS]: 's',
+	[UniversalYAxisUnit.MILLISECONDS]: 'ms',
+	[UniversalYAxisUnit.MICROSECONDS]: 'µs',
+	[UniversalYAxisUnit.NANOSECONDS]: 'ns',
+
+	// Data (Grafana uses 1024-based IEC format)
+	[UniversalYAxisUnit.BYTES]: 'bytes',
+	[UniversalYAxisUnit.KILOBYTES]: 'bytes',
+	[UniversalYAxisUnit.MEGABYTES]: 'bytes',
+	[UniversalYAxisUnit.GIGABYTES]: 'bytes',
+	[UniversalYAxisUnit.TERABYTES]: 'bytes',
+	[UniversalYAxisUnit.PETABYTES]: 'bytes',
+
+	// Data Rate
+	[UniversalYAxisUnit.BYTES_SECOND]: 'Bps',
+	[UniversalYAxisUnit.KILOBYTES_SECOND]: 'KBs',
+	[UniversalYAxisUnit.MEGABYTES_SECOND]: 'MBs',
+	[UniversalYAxisUnit.GIGABYTES_SECOND]: 'GBs',
+	[UniversalYAxisUnit.TERABYTES_SECOND]: 'TBs',
+	[UniversalYAxisUnit.PETABYTES_SECOND]: 'PBs',
+
+	// Bits
+	[UniversalYAxisUnit.BITS]: 'bits',
+	[UniversalYAxisUnit.KILOBITS]: 'bits',
+	[UniversalYAxisUnit.MEGABITS]: 'bits',
+	[UniversalYAxisUnit.GIGABITS]: 'bits',
+	[UniversalYAxisUnit.TERABITS]: 'bits',
+	[UniversalYAxisUnit.PETABITS]: 'bits',
+
+	// Bit Rate
+	[UniversalYAxisUnit.BITS_SECOND]: 'bps',
+	[UniversalYAxisUnit.KILOBITS_SECOND]: 'bps',
+	[UniversalYAxisUnit.MEGABITS_SECOND]: 'bps',
+	[UniversalYAxisUnit.GIGABITS_SECOND]: 'bps',
+	[UniversalYAxisUnit.TERABITS_SECOND]: 'bps',
+	[UniversalYAxisUnit.PETABITS_SECOND]: 'bps',
+
+	// Count
+	[UniversalYAxisUnit.COUNT]: 'short',
+	[UniversalYAxisUnit.COUNT_SECOND]: 'cps',
+	[UniversalYAxisUnit.COUNT_MINUTE]: 'cpm',
+
+	// Operations
+	[UniversalYAxisUnit.OPS_SECOND]: 'ops',
+	[UniversalYAxisUnit.OPS_MINUTE]: 'opm',
+
+	// Requests
+	[UniversalYAxisUnit.REQUESTS_SECOND]: 'reqps',
+
+	// Reads/Writes
+	[UniversalYAxisUnit.READS_SECOND]: 'rps',
+	[UniversalYAxisUnit.WRITES_SECOND]: 'wps',
+	[UniversalYAxisUnit.READS_MINUTE]: 'rpm',
+	[UniversalYAxisUnit.WRITES_MINUTE]: 'wpm',
+
+	// IO Operations
+	[UniversalYAxisUnit.IOOPS_SECOND]: 'iops',
+
+	// Percent
+	[UniversalYAxisUnit.PERCENT]: 'percent',
+
+	// None
+	[UniversalYAxisUnit.NONE]: 'none',
+};
