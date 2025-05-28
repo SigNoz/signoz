@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
@@ -55,7 +56,13 @@ func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = ah.Signoz.Licensing.GetActive(ctx, domain.Org.ID)
+	orgID, err := valuer.NewUUID(domain.OrgID)
+	if err != nil {
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+
+	_, err = ah.Signoz.Licensing.GetActive(ctx, orgID)
 	if err != nil {
 		zap.L().Error("[receiveSAML] sso requested but feature unavailable in org domain")
 		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "feature unavailable, please upgrade your billing plan to access this feature"), http.StatusMovedPermanently)
