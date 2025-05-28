@@ -70,6 +70,7 @@ export interface GetUPlotChartOptions {
 	enhancedLegend?: boolean;
 	legendPosition?: LegendPosition;
 	enableZoom?: boolean;
+	usingUniversalUnits?: boolean;
 }
 
 /** the function converts series A , series B , series C to
@@ -181,6 +182,7 @@ export const getUPlotChartOptions = ({
 	enhancedLegend = true,
 	legendPosition = LegendPosition.BOTTOM,
 	enableZoom,
+	usingUniversalUnits,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -654,6 +656,12 @@ export const getUPlotChartOptions = ({
 					isDarkMode,
 					colorMapping,
 			  }),
-		axes: getAxes({ isDarkMode, yAxisUnit, panelType, isLogScale }),
+		axes: getAxes({
+			isDarkMode,
+			yAxisUnit,
+			panelType,
+			isLogScale,
+			usingUniversalUnits,
+		}),
 	};
 };
