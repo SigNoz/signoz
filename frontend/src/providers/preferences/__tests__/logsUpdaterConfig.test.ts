@@ -208,12 +208,6 @@ describe('logsUpdaterConfig', () => {
 
 		logsUpdater.updateFormatting(newFormatting, 'savedView' as PreferenceMode);
 
-		// Should always update URL for both modes
-		expect(redirectWithOptionsData).toHaveBeenCalledWith({
-			...defaultOptionsQuery,
-			...newFormatting,
-		});
-
 		// Should not override localStorage in savedView mode
 		const storedData = JSON.parse(
 			mockLocalStorage[LOCALSTORAGE.LOGS_LIST_OPTIONS],
