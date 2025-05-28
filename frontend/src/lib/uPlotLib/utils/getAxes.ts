@@ -18,11 +18,13 @@ const getAxes = ({
 	yAxisUnit,
 	panelType,
 	isLogScale,
+	usingUniversalUnits,
 }: {
 	isDarkMode: boolean;
 	yAxisUnit?: string;
 	panelType?: PANEL_TYPES;
 	isLogScale?: boolean;
+	usingUniversalUnits?: boolean;
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 }): any => [
 	{
@@ -61,7 +63,7 @@ const getAxes = ({
 				if (v === null || v === undefined || Number.isNaN(v)) {
 					return '';
 				}
-				const value = getToolTipValue(v.toString(), yAxisUnit);
+				const value = getToolTipValue(v.toString(), yAxisUnit, usingUniversalUnits);
 				return `${value}`;
 			}),
 		gap: 5,
