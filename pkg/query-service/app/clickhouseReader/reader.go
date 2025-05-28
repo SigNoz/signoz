@@ -3129,7 +3129,7 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 	names := []string{req.AggregateAttribute}
-	names = append(names, metrics.GetTransitionedMetrics(req.AggregateAttribute, normalized))
+	names = append(names, metrics.GetTransitionedMetric(req.AggregateAttribute, normalized))
 
 	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff(), normalized)
 
