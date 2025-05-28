@@ -504,6 +504,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 											onChange(value, currentFilterState[value], true);
 										}}
 									>
+										<div className={`${filter.title} label-${value}`} />
 										{filter.customRendererForValue ? (
 											filter.customRendererForValue(value)
 										) : (
@@ -511,7 +512,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 												className="value-string"
 												ellipsis={{ tooltip: { placement: 'right' } }}
 											>
-												{value}
+												{String(value)}
 											</Typography.Text>
 										)}
 										<Button type="text" className="only-btn">

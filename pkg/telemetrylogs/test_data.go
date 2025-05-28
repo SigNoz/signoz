@@ -19,7 +19,7 @@ func limitString(s string, maxLen int) string {
 
 // Function to build a complete field key map for testing all scenarios
 func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
-	return map[string][]*telemetrytypes.TelemetryFieldKey{
+	keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"service.name": {
 			{
 				Name:          "service.name",
@@ -856,4 +856,11 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 			},
 		},
 	}
+
+	for _, keys := range keysMap {
+		for _, key := range keys {
+			key.Signal = telemetrytypes.SignalLogs
+		}
+	}
+	return keysMap
 }

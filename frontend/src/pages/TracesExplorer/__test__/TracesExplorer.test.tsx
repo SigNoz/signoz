@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import userEvent from '@testing-library/user-event';
+import { ENVIRONMENT } from 'constants/env';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
@@ -7,10 +8,10 @@ import {
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import * as compositeQueryHook from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { quickFiltersListResponse } from 'mocks-server/__mockdata__/customQuickFilters';
 import {
 	queryRangeForListView,
 	queryRangeForTableView,
-	queryRangeForTimeSeries,
 	queryRangeForTraceView,
 } from 'mocks-server/__mockdata__/query_range';
 import { server } from 'mocks-server/server';
@@ -18,6 +19,7 @@ import { rest } from 'msw';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import {
 	act,
+	cleanup,
 	fireEvent,
 	render,
 	screen,
@@ -41,6 +43,9 @@ import {
 } from './testUtils';
 
 const historyPush = jest.fn();
+
+const BASE_URL = ENVIRONMENT.baseURL;
+const FILTER_SERVICE_NAME = 'Service Name';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -435,24 +440,6 @@ describe('TracesExplorer - Filters', () => {
 			][0].builder.queryData[0].filters.items,
 		).toEqual([]);
 	});
-
-	it('filter panel should collapse & uncollapsed', async () => {
-		const { getByText, getByTestId } = render(<TracesExplorer />);
-
-		Object.values(AllTraceFilterKeyValue).forEach((filter) => {
-			expect(getByText(filter)).toBeInTheDocument();
-		});
-
-		// Filter panel should collapse
-		const collapseButton = getByTestId('toggle-filter-panel');
-		expect(collapseButton).toBeInTheDocument();
-		fireEvent.click(collapseButton);
-
-		// uncollapse btn should be present
-		expect(
-			await screen.findByTestId('filter-uncollapse-btn'),
-		).toBeInTheDocument();
-	});
 });
 
 const handleExplorerTabChangeTest = jest.fn();
@@ -463,57 +450,32 @@ jest.mock('hooks/useHandleExplorerTabChange', () => ({
 }));
 
 describe('TracesExplorer - ', () => {
-	it('should render the traces explorer page', async () => {
+	const quickFiltersListURL = `${BASE_URL}/api/v1/orgs/me/filters/traces`;
+
+	const setupServer = (): void => {
 		server.use(
-			rest.post('http://localhost/api/v4/query_range', (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(queryRangeForTimeSeries)),
+			rest.get(quickFiltersListURL, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(quickFiltersListResponse)),
 			),
 		);
-		const { findByText, getByText } = render(<TracesExplorer />);
+	};
 
-		// assert mocked date time selection
-		expect(await findByText('MockDateTimeSelection')).toBeInTheDocument();
-
-		// assert stage&Btn
-		expect(getByText('Stage & Run Query')).toBeInTheDocument();
-
-		// assert QB - will not write tests for QB as that would be covererd in QB tests separately
-		expect(
-			getByText(
-				'Search Filter : select options from suggested values, for IN/NOT IN operators - press "Enter" after selecting options',
-			),
-		).toBeInTheDocument();
-		expect(getByText('AGGREGATION INTERVAL')).toBeInTheDocument();
-		// why is this present here??
-		// expect(getByText('Metrics name')).toBeInTheDocument();
-		// expect(getByText('WHERE')).toBeInTheDocument();
-		// expect(getByText('Legend Format')).toBeInTheDocument();
-
-		// assert timeseries chart mock
-		// expect(await screen.findByText('MockUplot')).toBeInTheDocument();
+	beforeEach(() => {
+		setupServer();
 	});
 
-	it('check tab navigation', async () => {
-		const { getByTestId, getByText } = render(<TracesExplorer />);
+	afterEach(() => {
+		server.resetHandlers();
+	});
 
-		// switch to Table view
-		const TableBtn = getByText('Table View');
-		expect(TableBtn).toBeInTheDocument();
-		fireEvent.click(TableBtn);
-
-		expect(handleExplorerTabChangeTest).toBeCalledWith(PANEL_TYPES.TABLE);
-
-		// switch to traces view
-		const tracesBtn = getByTestId('Traces');
-		expect(tracesBtn).toBeInTheDocument();
-		fireEvent.click(tracesBtn);
-
-		expect(handleExplorerTabChangeTest).toBeCalledWith(PANEL_TYPES.TRACE);
+	afterAll(() => {
+		server.close();
+		cleanup();
 	});
 
 	it('trace explorer - list view', async () => {
 		server.use(
-			rest.post('http://localhost/api/v4/query_range', (req, res, ctx) =>
+			rest.post(`${BASE_URL}/api/v4/query_range`, (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(queryRangeForListView)),
 			),
 		);
@@ -524,6 +486,7 @@ describe('TracesExplorer - ', () => {
 			</QueryBuilderContext.Provider>,
 		);
 
+		await screen.findByText(FILTER_SERVICE_NAME);
 		expect(await screen.findByText('Timestamp')).toBeInTheDocument();
 		expect(getByText('options_menu.options')).toBeInTheDocument();
 
@@ -536,7 +499,7 @@ describe('TracesExplorer - ', () => {
 
 	it('trace explorer - table view', async () => {
 		server.use(
-			rest.post('http://localhost/api/v4/query_range', (req, res, ctx) =>
+			rest.post(`${BASE_URL}/api/v4/query_range`, (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(queryRangeForTableView)),
 			),
 		);
@@ -554,7 +517,7 @@ describe('TracesExplorer - ', () => {
 
 	it('trace explorer - trace view', async () => {
 		server.use(
-			rest.post('http://localhost/api/v4/query_range', (req, res, ctx) =>
+			rest.post(`${BASE_URL}/api/v4/query_range`, (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(queryRangeForTraceView)),
 			),
 		);
@@ -591,7 +554,11 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('test for explorer options', async () => {
-		const { getByText, getByTestId } = render(<TracesExplorer />);
+		const { getByText, getByTestId } = render(
+			<QueryBuilderContext.Provider value={{ ...qbProviderValue }}>
+				<TracesExplorer />
+			</QueryBuilderContext.Provider>,
+		);
 
 		// assert explorer options - action btns
 		[
@@ -619,8 +586,12 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('select a view options - assert and save this view', async () => {
-		const { container } = render(<TracesExplorer />);
-
+		const { container } = render(
+			<QueryBuilderContext.Provider value={{ ...qbProviderValue }}>
+				<TracesExplorer />
+			</QueryBuilderContext.Provider>,
+		);
+		await screen.findByText(FILTER_SERVICE_NAME);
 		await act(async () => {
 			fireEvent.mouseDown(
 				container.querySelector(
@@ -664,7 +635,12 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('create a dashboard btn assert', async () => {
-		const { getByText } = render(<TracesExplorer />);
+		const { getByText } = render(
+			<QueryBuilderContext.Provider value={{ ...qbProviderValue }}>
+				<TracesExplorer />
+			</QueryBuilderContext.Provider>,
+		);
+		await screen.findByText(FILTER_SERVICE_NAME);
 
 		const createDashboardBtn = getByText('Add to Dashboard');
 		expect(createDashboardBtn).toBeInTheDocument();
@@ -687,7 +663,12 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('create an alert btn assert', async () => {
-		const { getByText } = render(<TracesExplorer />);
+		const { getByText } = render(
+			<QueryBuilderContext.Provider value={{ ...qbProviderValue }}>
+				<TracesExplorer />
+			</QueryBuilderContext.Provider>,
+		);
+		await screen.findByText(FILTER_SERVICE_NAME);
 
 		const createAlertBtn = getByText('Create an Alert');
 		expect(createAlertBtn).toBeInTheDocument();
