@@ -22,6 +22,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
+import { isEmpty } from 'lodash-es';
 import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -203,6 +204,18 @@ export const useQueryOperations: UseQueryOperations = ({
 				}
 
 				newQuery.spaceAggregation = '';
+
+				if (isEmpty(newQuery.aggregateAttribute.type)) {
+					if (!isEmpty(newQuery.aggregateAttribute.key)) {
+						newQuery.aggregateOperator = MetricAggregateOperator.AVG;
+						newQuery.timeAggregation = MetricAggregateOperator.AVG;
+						newQuery.spaceAggregation = MetricAggregateOperator.AVG;
+					} else {
+						newQuery.aggregateOperator = MetricAggregateOperator.COUNT;
+						newQuery.timeAggregation = MetricAggregateOperator.RATE;
+						newQuery.spaceAggregation = MetricAggregateOperator.SUM;
+					}
+				}
 			}
 
 			handleSetQueryData(index, newQuery);
