@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -25,8 +26,6 @@ type StorableDashboard struct {
 	Locked bool                  `json:"isLocked" bun:"locked,notnull,default:0"`
 }
 
-type StorableDashboardData map[string]interface{}
-
 type Dashboard struct {
 	ID string
 	types.TimeAuditable
@@ -38,13 +37,58 @@ type Dashboard struct {
 	Title  string
 }
 
-type GettableDashboard struct{}
+type (
+	StorableDashboardData map[string]interface{}
 
-type PostableDashboard struct{}
+	GettableDashboard = Dashboard
 
-type UpdatableDashboard struct{}
+	PostableDashboard = StorableDashboardData
 
-type ListableDashboard []*GettableDashboard
+	UpdatableDashboard = StorableDashboardData
+
+	ListableDashboard []*GettableDashboard
+)
+
+func NewDashboard(orgID valuer.UUID, createdBy string, storableDashboardData *StorableDashboardData) (*Dashboard, error) {
+	return &Dashboard{
+		ID: valuer.GenerateUUID().StringValue(),
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: createdBy,
+			UpdatedBy: createdBy,
+		},
+		OrgID:  orgID,
+		Data:   *storableDashboardData,
+		Locked: false,
+	}, nil
+}
+
+func NewGettableDashboardsFromDashboards(dashboards []*Dashboard) ([]*GettableDashboard, error) {
+	if dashboards == nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert dashboards to gettable dashboards for <nil> dashboards")
+	}
+
+	gettableDashboards := make([]*GettableDashboard, len(dashboards))
+	for idx, dashboard := range dashboards {
+		gettableDashboard := NewGettableDashboardFromDashboard(dashboard)
+		gettableDashboards[idx] = gettableDashboard
+	}
+	return gettableDashboards, nil
+}
+
+func NewGettableDashboardFromDashboard(dashboard *Dashboard) *GettableDashboard {
+	return &GettableDashboard{
+		ID:            dashboard.ID,
+		TimeAuditable: dashboard.TimeAuditable,
+		UserAuditable: dashboard.UserAuditable,
+		OrgID:         dashboard.OrgID,
+		Data:          dashboard.Data,
+		Locked:        dashboard.Locked,
+	}
+}
 
 func NewStorableDashboardFromDashboard(dashboard *Dashboard) (*StorableDashboard, error) {
 	dashboardID, err := valuer.NewUUID(dashboard.ID)
@@ -108,6 +152,23 @@ func NewDashboardsFromStorableDashboards(storableDashboards []*StorableDashboard
 	}
 
 	return dashboards, nil
+}
+
+func NewDashboardFromUpdatableDashboard(id valuer.UUID, orgID valuer.UUID, data *PostableDashboard) (*Dashboard, error) {
+	return &Dashboard{
+		ID:    id.StringValue(),
+		OrgID: orgID,
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: "",
+			UpdatedBy: "",
+		},
+		Data:   *data,
+		Locked: false,
+	}, nil
 }
 
 func (storableDashboardData *StorableDashboardData) Scan(src interface{}) error {

@@ -7,8 +7,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Controller struct {
@@ -128,13 +129,13 @@ func (c *Controller) GetPipelinesForInstalledIntegrations(
 }
 
 func (c *Controller) GetDashboardsForInstalledIntegrations(
-	ctx context.Context, orgId string,
-) ([]*types.Dashboard, *model.ApiError) {
+	ctx context.Context, orgId valuer.UUID,
+) ([]*dashboardtypes.Dashboard, *model.ApiError) {
 	return c.mgr.GetDashboardsForInstalledIntegrations(ctx, orgId)
 }
 
 func (c *Controller) GetInstalledIntegrationDashboardById(
-	ctx context.Context, orgId string, dashboardUuid string,
-) (*types.Dashboard, *model.ApiError) {
+	ctx context.Context, orgId valuer.UUID, dashboardUuid string,
+) (*dashboardtypes.Dashboard, *model.ApiError) {
 	return c.mgr.GetInstalledIntegrationDashboardById(ctx, orgId, dashboardUuid)
 }
