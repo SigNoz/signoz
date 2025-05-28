@@ -265,6 +265,7 @@ function TimeSeries({
 								data={datapoint}
 								yAxisUnit={yAxisUnit}
 								dataSource={DataSource.METRICS}
+								usingUniversalUnits
 							/>
 						</div>
 					);
