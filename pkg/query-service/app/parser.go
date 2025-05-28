@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -903,37 +902,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			if err != nil {
 				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 			}
-
-			keys := make([]string, 0, len(queryRangeParams.Variables))
-			for k := range queryRangeParams.Variables {
-				keys = append(keys, k)
-			}
-
-			sort.Slice(keys, func(i, j int) bool {
-				return len(keys[i]) > len(keys[j])
-			})
-
-			newQuery := query.String()
-			for _, k := range keys {
-				placeholder := "$" + k
-				v := queryRangeParams.Variables[k]
-
-				var rep string
-				switch q := v.(type) {
-				case string:
-					rep = q
-				case int64:
-					rep = fmt.Sprintf("%d", q)
-				case float64:
-					rep = fmt.Sprintf("%f", q)
-				default:
-					continue
-				}
-
-				newQuery = strings.ReplaceAll(newQuery, placeholder, rep)
-			}
-
-			chQuery.Query = newQuery
+			chQuery.Query = query.String()
 		}
 	}
 
