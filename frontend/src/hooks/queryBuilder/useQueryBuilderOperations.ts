@@ -12,6 +12,7 @@ import {
 	metricsGaugeSpaceAggregateOperatorOptions,
 	metricsHistogramSpaceAggregateOperatorOptions,
 	metricsSumSpaceAggregateOperatorOptions,
+	metricsUnknownSpaceAggregateOperatorOptions,
 } from 'constants/queryBuilderOperators';
 import {
 	listViewInitialLogQuery,
@@ -168,7 +169,7 @@ export const useQueryOperations: UseQueryOperations = ({
 					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
 					break;
 				default:
-					setSpaceAggregationOptions(metricsGaugeSpaceAggregateOperatorOptions);
+					setSpaceAggregationOptions(metricsUnknownSpaceAggregateOperatorOptions);
 					break;
 			}
 
