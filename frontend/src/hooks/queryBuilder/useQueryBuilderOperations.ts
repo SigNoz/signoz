@@ -205,6 +205,9 @@ export const useQueryOperations: UseQueryOperations = ({
 
 				newQuery.spaceAggregation = '';
 
+				// Handled query with unknown metric to avoid 400 and 500 errors
+				// With metric value typed and not available then - time - 'avg', space - 'avg'
+				// If not typed - time - 'rate', space - 'sum', op - 'count'
 				if (isEmpty(newQuery.aggregateAttribute.type)) {
 					if (!isEmpty(newQuery.aggregateAttribute.key)) {
 						newQuery.aggregateOperator = MetricAggregateOperator.AVG;
