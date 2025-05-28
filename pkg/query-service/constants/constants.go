@@ -1,7 +1,6 @@
 package constants
 
 import (
-	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"maps"
 	"os"
 	"strconv"
@@ -643,7 +642,7 @@ var IsDotMetricsEnabled = false
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if GetOrDefaultEnv(DotMetricsEnabled, "false") == "true" {
 		IsDotMetricsEnabled = true
 	}
 }
