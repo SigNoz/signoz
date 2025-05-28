@@ -1,4 +1,6 @@
 import { formattedValueToString, getValueFormat } from '@grafana/data';
+import { UniversalUnitToGrafanaUnit } from 'components/YAxisUnitSelector/constants';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 
 export const getYAxisFormattedValue = (
 	value: string,
@@ -47,9 +49,18 @@ export const getYAxisFormattedValue = (
 };
 
 export const getToolTipValue = (value: string, format?: string): string => {
+	const conversionRequired = format && format in UniversalUnitToGrafanaUnit;
+	const processedFormat = conversionRequired
+		? UniversalUnitToGrafanaUnit[format as UniversalYAxisUnit]
+		: format;
 	try {
 		return formattedValueToString(
-			getValueFormat(format)(parseFloat(value), undefined, undefined, undefined),
+			getValueFormat(processedFormat)(
+				parseFloat(value),
+				undefined,
+				undefined,
+				undefined,
+			),
 		);
 	} catch (error) {
 		console.error(error);
