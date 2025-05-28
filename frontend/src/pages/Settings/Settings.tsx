@@ -45,7 +45,7 @@ function SettingsPage(): JSX.Element {
 			?.active || false;
 
 	useEffect(() => {
-		if (!isCloudUser && !isEnterpriseSelfHostedUser) {
+		if (isCloudUser || isEnterpriseSelfHostedUser) {
 			if (isAdmin) {
 				// enable billing for admin
 				const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
