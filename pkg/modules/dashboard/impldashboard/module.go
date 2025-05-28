@@ -2,164 +2,68 @@ package impldashboard
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	sqlstore sqlstore.SQLStore
+	store dashboardtypes.Store
 }
 
 func NewModule(sqlstore sqlstore.SQLStore) dashboard.Module {
 	return &module{
-		sqlstore: sqlstore,
+		store: NewStore(sqlstore),
 	}
 }
 
 // CreateDashboard creates a new dashboard
-func (module *module) Create(ctx context.Context, orgID string, email string, data map[string]interface{}) (*types.Dashboard, error) {
-	dash := &types.Dashboard{
-		Data: data,
-	}
-
-	dash.OrgID = orgID
-	dash.CreatedAt = time.Now()
-	dash.CreatedBy = email
-	dash.UpdatedAt = time.Now()
-	dash.UpdatedBy = email
-	dash.UpdateSlug()
-	dash.UUID = uuid.New().String()
-	if data["uuid"] != nil {
-		dash.UUID = data["uuid"].(string)
-	}
-
-	err := module.
-		sqlstore.
-		BunDB().
-		NewInsert().
-		Model(dash).
-		Returning("id").
-		Scan(ctx, &dash.ID)
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, dashboard *dashboardtypes.Dashboard) error {
+	storableDashboard, err := dashboardtypes.NewStorableDashboardFromDashboard(dashboard)
 	if err != nil {
-		return nil, module.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "dashboard with uuid %s already exists", dash.UUID)
+		return err
 	}
-
-	return dash, nil
+	return module.store.Create(ctx, storableDashboard)
 }
 
-func (module *module) List(ctx context.Context, orgID string) ([]*types.Dashboard, error) {
-	dashboards := []*types.Dashboard{}
-
-	err := module.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Model(&dashboards).
-		Where("org_id = ?", orgID).
-		Scan(ctx)
+func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
+	storableDashboards, err := module.store.GetAll(ctx, orgID)
 	if err != nil {
 		return nil, err
+	}
+
+	dashboards, err := dashboardtypes.NewDashboardsFromStorableDashboards(storableDashboards)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to list dashboards")
 	}
 
 	return dashboards, nil
 }
 
-func (module *module) Delete(ctx context.Context, orgID, uuid string) error {
-	dashboard, err := module.Get(ctx, orgID, uuid)
+func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
 
-	if dashboard.Locked != nil && *dashboard.Locked == 1 {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be able to delete it")
+	if dashboard.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
 	}
 
-	result, err := module.
-		sqlstore.
-		BunDB().
-		NewDelete().
-		Model(&types.Dashboard{}).
-		Where("org_id = ?", orgID).
-		Where("uuid = ?", uuid).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	affectedRows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if affectedRows == 0 {
-		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "no dashboard found with uuid: %s", uuid)
-	}
-
-	return nil
+	return module.store.Delete(ctx, orgID, id)
 }
 
-func (module *module) Get(ctx context.Context, orgID, uuid string) (*types.Dashboard, error) {
-	dashboard := types.Dashboard{}
-	err := module.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Model(&dashboard).
-		Where("org_id = ?", orgID).
-		Where("uuid = ?", uuid).
-		Scan(ctx)
-	if err != nil {
-		return nil, module.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with uuid %s not found", uuid)
-	}
-
-	return &dashboard, nil
-}
-
-func (module *module) Update(ctx context.Context, orgID, userEmail, uuid string, data map[string]interface{}) (*types.Dashboard, error) {
-	mapData, err := json.Marshal(data)
+func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
+	storableDashboard, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
 
-	dashboard, err := module.Get(ctx, orgID, uuid)
-	if err != nil {
-		return nil, err
-	}
-
-	if dashboard.Locked != nil && *dashboard.Locked == 1 {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be able to edit it")
-	}
-
-	// if the total count of panels has reduced by more than 1,
-	// return error
-	existingIds := getWidgetIds(dashboard.Data)
-	newIds := getWidgetIds(data)
-
-	differenceIds := getIdDifference(existingIds, newIds)
-
-	if len(differenceIds) > 1 {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "deleting more than one panel is not supported")
-	}
-
-	dashboard.UpdatedAt = time.Now()
-	dashboard.UpdatedBy = userEmail
-	dashboard.Data = data
-
-	_, err = module.sqlstore.
-		BunDB().
-		NewUpdate().
-		Model(dashboard).
-		Set("updated_at = ?", dashboard.UpdatedAt).
-		Set("updated_by = ?", userEmail).
-		Set("data = ?", mapData).
-		Where("uuid = ?", dashboard.UUID).Exec(ctx)
+	dashboard, err := dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -167,44 +71,52 @@ func (module *module) Update(ctx context.Context, orgID, userEmail, uuid string,
 	return dashboard, nil
 }
 
-func (module *module) LockUnlock(ctx context.Context, orgID, uuid string, lock bool) error {
-	dashboard, err := module.Get(ctx, orgID, uuid)
+func (module *module) Update(ctx context.Context, orgID valuer.UUID, dashboard *dashboardtypes.Dashboard) error {
+	dashboardUUID, err := valuer.NewUUID(dashboard.ID)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "id should be a valid uuid")
+	}
+
+	existingDashboard, err := module.Get(ctx, orgID, dashboardUUID)
 	if err != nil {
 		return err
 	}
 
-	var lockValue int
-	if lock {
-		lockValue = 1
-	} else {
-		lockValue = 0
+	if existingDashboard.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to edit it")
 	}
 
-	_, err = module.
-		sqlstore.
-		BunDB().
-		NewUpdate().
-		Model(dashboard).
-		Set("locked = ?", lockValue).
-		Where("org_id = ?", orgID).
-		Where("uuid = ?", uuid).
-		Exec(ctx)
+	existingIds := dashboardtypes.GetWidgetIds(existingDashboard.Data)
+	newIds := dashboardtypes.GetWidgetIds(dashboard.Data)
+	differenceIds := dashboardtypes.GetIdDifference(existingIds, newIds)
+	if len(differenceIds) > 1 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "deleting more than one panel is not supported")
+	}
+
+	storableDashboard, err := dashboardtypes.NewStorableDashboardFromDashboard(dashboard)
 	if err != nil {
 		return err
 	}
-
-	return nil
+	return module.store.Update(ctx, storableDashboard)
 }
 
-func (module *module) GetByMetricNames(ctx context.Context, orgID string, metricNames []string) (map[string][]map[string]string, error) {
-	dashboards := []types.Dashboard{}
-	err := module.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Model(&dashboards).
-		Where("org_id = ?", orgID).
-		Scan(ctx)
+func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, lock bool) error {
+	dashboard, err := module.Get(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	storableDashboard, err := dashboardtypes.NewStorableDashboardFromDashboard(dashboard)
+	if err != nil {
+		return err
+	}
+
+	// TODO[@vikrantgupta25]: update this
+	return module.store.Update(ctx, storableDashboard)
+}
+
+func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
+	dashboards, err := module.List(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +178,7 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID string, metric
 					for _, metricName := range metricNames {
 						if strings.TrimSpace(key) == metricName {
 							result[metricName] = append(result[metricName], map[string]string{
-								"dashboard_id":   dashboard.UUID,
+								"dashboard_id":   dashboard.ID,
 								"widget_name":    widgetTitle,
 								"widget_id":      widgetID,
 								"dashboard_name": dashTitle,
@@ -279,53 +191,4 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID string, metric
 	}
 
 	return result, nil
-}
-
-func getWidgetIds(data map[string]interface{}) []string {
-	widgetIds := []string{}
-	if data != nil && data["widgets"] != nil {
-		widgets, ok := data["widgets"]
-		if ok {
-			data, ok := widgets.([]interface{})
-			if ok {
-				for _, widget := range data {
-					sData, ok := widget.(map[string]interface{})
-					if ok && sData["query"] != nil && sData["id"] != nil {
-						id, ok := sData["id"].(string)
-
-						if ok {
-							widgetIds = append(widgetIds, id)
-						}
-
-					}
-				}
-			}
-		}
-	}
-	return widgetIds
-}
-
-func getIdDifference(existingIds []string, newIds []string) []string {
-	// Convert newIds array to a map for faster lookups
-	newIdsMap := make(map[string]bool)
-	for _, id := range newIds {
-		newIdsMap[id] = true
-	}
-
-	// Initialize a map to keep track of elements in the difference array
-	differenceMap := make(map[string]bool)
-
-	// Initialize the difference array
-	difference := []string{}
-
-	// Iterate through existingIds
-	for _, id := range existingIds {
-		// If the id is not found in newIds, and it's not already in the difference array
-		if _, found := newIdsMap[id]; !found && !differenceMap[id] {
-			difference = append(difference, id)
-			differenceMap[id] = true // Mark the id as seen in the difference array
-		}
-	}
-
-	return difference
 }

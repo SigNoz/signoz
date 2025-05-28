@@ -513,10 +513,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", am.ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.Signoz.Handlers.Dashboard.GetAll)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", am.ViewAccess(aH.Signoz.Handlers.Dashboard.Get)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Update)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Delete)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
@@ -1085,76 +1085,76 @@ func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, rules)
 }
 
-func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
+// func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
+// 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+// 	if errv2 != nil {
+// 		render.Error(w, errv2)
+// 		return
+// 	}
 
-	allDashboards, errv2 := aH.Signoz.Modules.Dashboard.List(r.Context(), claims.OrgID)
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
+// 	allDashboards, errv2 := aH.Signoz.Modules.Dashboard.List(r.Context(), claims.OrgID)
+// 	if errv2 != nil {
+// 		render.Error(w, errv2)
+// 		return
+// 	}
 
-	ic := aH.IntegrationsController
-	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context(), claims.OrgID)
-	if err != nil {
-		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(err))
-	} else {
-		allDashboards = append(allDashboards, installedIntegrationDashboards...)
-	}
+// 	ic := aH.IntegrationsController
+// 	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context(), claims.OrgID)
+// 	if err != nil {
+// 		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(err))
+// 	} else {
+// 		allDashboards = append(allDashboards, installedIntegrationDashboards...)
+// 	}
 
-	cloudIntegrationDashboards, err := aH.CloudIntegrationsController.AvailableDashboards(r.Context(), claims.OrgID)
-	if err != nil {
-		zap.L().Error("failed to get cloud dashboards", zap.Error(err))
-	} else {
-		allDashboards = append(allDashboards, cloudIntegrationDashboards...)
-	}
+// 	cloudIntegrationDashboards, err := aH.CloudIntegrationsController.AvailableDashboards(r.Context(), claims.OrgID)
+// 	if err != nil {
+// 		zap.L().Error("failed to get cloud dashboards", zap.Error(err))
+// 	} else {
+// 		allDashboards = append(allDashboards, cloudIntegrationDashboards...)
+// 	}
 
-	tagsFromReq, ok := r.URL.Query()["tags"]
-	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
-		aH.Respond(w, allDashboards)
-		return
-	}
+// 	tagsFromReq, ok := r.URL.Query()["tags"]
+// 	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
+// 		aH.Respond(w, allDashboards)
+// 		return
+// 	}
 
-	tags2Dash := make(map[string][]int)
-	for i := 0; i < len(allDashboards); i++ {
-		tags, ok := (allDashboards)[i].Data["tags"].([]interface{})
-		if !ok {
-			continue
-		}
+// 	tags2Dash := make(map[string][]int)
+// 	for i := 0; i < len(allDashboards); i++ {
+// 		tags, ok := (allDashboards)[i].Data["tags"].([]interface{})
+// 		if !ok {
+// 			continue
+// 		}
 
-		tagsArray := make([]string, len(tags))
-		for i, v := range tags {
-			tagsArray[i] = v.(string)
-		}
+// 		tagsArray := make([]string, len(tags))
+// 		for i, v := range tags {
+// 			tagsArray[i] = v.(string)
+// 		}
 
-		for _, tag := range tagsArray {
-			tags2Dash[tag] = append(tags2Dash[tag], i)
-		}
+// 		for _, tag := range tagsArray {
+// 			tags2Dash[tag] = append(tags2Dash[tag], i)
+// 		}
 
-	}
+// 	}
 
-	inter := make([]int, len(allDashboards))
-	for i := range inter {
-		inter[i] = i
-	}
+// 	inter := make([]int, len(allDashboards))
+// 	for i := range inter {
+// 		inter[i] = i
+// 	}
 
-	for _, tag := range tagsFromReq {
-		inter = Intersection(inter, tags2Dash[tag])
-	}
+// 	for _, tag := range tagsFromReq {
+// 		inter = Intersection(inter, tags2Dash[tag])
+// 	}
 
-	filteredDashboards := []*types.Dashboard{}
-	for _, val := range inter {
-		dash := (allDashboards)[val]
-		filteredDashboards = append(filteredDashboards, dash)
-	}
+// 	filteredDashboards := []*types.Dashboard{}
+// 	for _, val := range inter {
+// 		dash := (allDashboards)[val]
+// 		filteredDashboards = append(filteredDashboards, dash)
+// 	}
 
-	aH.Respond(w, filteredDashboards)
+// 	aH.Respond(w, filteredDashboards)
 
-}
+// }
 
 func prepareQuery(r *http.Request) (string, error) {
 	var postData *model.DashboardVars
@@ -1216,120 +1216,120 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 	aH.Respond(w, dashboardVars)
 }
 
-func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
+// func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
+// 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+// 	if errv2 != nil {
+// 		render.Error(w, errv2)
+// 		return
+// 	}
 
-	uuid := mux.Vars(r)["uuid"]
+// 	uuid := mux.Vars(r)["uuid"]
 
-	var postData map[string]interface{}
-	err := json.NewDecoder(r.Body).Decode(&postData)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
-		return
-	}
+// 	var postData map[string]interface{}
+// 	err := json.NewDecoder(r.Body).Decode(&postData)
+// 	if err != nil {
+// 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+// 		return
+// 	}
 
-	err = aH.IsDashboardPostDataSane(&postData)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
-		return
-	}
+// 	err = aH.IsDashboardPostDataSane(&postData)
+// 	if err != nil {
+// 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+// 		return
+// 	}
 
-	dashboard, apiError := aH.Signoz.Modules.Dashboard.Update(r.Context(), claims.OrgID, claims.Email, uuid, postData)
-	if apiError != nil {
-		render.Error(w, apiError)
-		return
-	}
+// 	dashboard, apiError := aH.Signoz.Modules.Dashboard.Update(r.Context(), claims.OrgID, claims.Email, uuid, postData)
+// 	if apiError != nil {
+// 		render.Error(w, apiError)
+// 		return
+// 	}
 
-	aH.Respond(w, dashboard)
+// 	aH.Respond(w, dashboard)
 
-}
+// }
 
-func (aH *APIHandler) IsDashboardPostDataSane(data *map[string]interface{}) error {
-	val, ok := (*data)["title"]
-	if !ok || val == nil {
-		return fmt.Errorf("title not found in post data")
-	}
+// func (aH *APIHandler) IsDashboardPostDataSane(data *map[string]interface{}) error {
+// 	val, ok := (*data)["title"]
+// 	if !ok || val == nil {
+// 		return fmt.Errorf("title not found in post data")
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
+// func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
-	uuid := mux.Vars(r)["uuid"]
+// 	uuid := mux.Vars(r)["uuid"]
 
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-	dashboard, errv2 := aH.Signoz.Modules.Dashboard.Get(r.Context(), claims.OrgID, uuid)
+// 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+// 	if errv2 != nil {
+// 		render.Error(w, errv2)
+// 		return
+// 	}
+// 	dashboard, errv2 := aH.Signoz.Modules.Dashboard.Get(r.Context(), claims.OrgID, uuid)
 
-	var apiError *model.ApiError
-	if errv2 != nil {
-		if !errorsV2.Ast(errv2, errorsV2.TypeNotFound) {
-			render.Error(w, errv2)
-			return
-		}
+// 	var apiError *model.ApiError
+// 	if errv2 != nil {
+// 		if !errorsV2.Ast(errv2, errorsV2.TypeNotFound) {
+// 			render.Error(w, errv2)
+// 			return
+// 		}
 
-		if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(uuid) {
-			dashboard, apiError = aH.CloudIntegrationsController.GetDashboardById(
-				r.Context(), claims.OrgID, uuid,
-			)
-			if apiError != nil {
-				RespondError(w, apiError, nil)
-				return
-			}
+// 		if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(uuid) {
+// 			dashboard, apiError = aH.CloudIntegrationsController.GetDashboardById(
+// 				r.Context(), claims.OrgID, uuid,
+// 			)
+// 			if apiError != nil {
+// 				RespondError(w, apiError, nil)
+// 				return
+// 			}
 
-		} else {
-			dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
-				r.Context(), claims.OrgID, uuid,
-			)
-			if apiError != nil {
-				RespondError(w, apiError, nil)
-				return
-			}
+// 		} else {
+// 			dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
+// 				r.Context(), claims.OrgID, uuid,
+// 			)
+// 			if apiError != nil {
+// 				RespondError(w, apiError, nil)
+// 				return
+// 			}
 
-		}
+// 		}
 
-	}
+// 	}
 
-	aH.Respond(w, dashboard)
+// 	aH.Respond(w, dashboard)
 
-}
+// }
 
-func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
-	var postData map[string]interface{}
+// func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
+// 	var postData map[string]interface{}
 
-	err := json.NewDecoder(r.Body).Decode(&postData)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
-		return
-	}
+// 	err := json.NewDecoder(r.Body).Decode(&postData)
+// 	if err != nil {
+// 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+// 		return
+// 	}
 
-	err = aH.IsDashboardPostDataSane(&postData)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
-		return
-	}
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
+// 	err = aH.IsDashboardPostDataSane(&postData)
+// 	if err != nil {
+// 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+// 		return
+// 	}
+// 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+// 	if errv2 != nil {
+// 		render.Error(w, errv2)
+// 		return
+// 	}
 
-	dash, errv2 := aH.Signoz.Modules.Dashboard.Create(r.Context(), claims.OrgID, claims.Email, postData)
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
+// 	dash, errv2 := aH.Signoz.Modules.Dashboard.Create(r.Context(), claims.OrgID, claims.Email, postData)
+// 	if errv2 != nil {
+// 		render.Error(w, errv2)
+// 		return
+// 	}
 
-	aH.Respond(w, dash)
+// 	aH.Respond(w, dash)
 
-}
+// }
 
 func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
