@@ -1,10 +1,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { AppProvider } from 'providers/App/App';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { Router } from 'react-router-dom';
 
 import ResourceProvider from '../ResourceProvider';
 import useResourceAttribute from '../useResourceAttribute';
+
+const queryClient = new QueryClient();
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
@@ -18,11 +21,13 @@ describe('useResourceAttribute component hook', () => {
 			initialEntries: ['/inital-url?tab=overview'],
 		});
 		const wrapper = ({ children }: { children: any }): JSX.Element => (
-			<AppProvider>
-				<Router history={history}>
-					<ResourceProvider>{children}</ResourceProvider>
-				</Router>
-			</AppProvider>
+			<QueryClientProvider client={queryClient}>
+				<AppProvider>
+					<Router history={history}>
+						<ResourceProvider>{children}</ResourceProvider>
+					</Router>
+				</AppProvider>
+			</QueryClientProvider>
 		);
 		const { result } = renderHook(() => useResourceAttribute(), { wrapper });
 
