@@ -11,7 +11,7 @@ describe('YAxisUnitSelector utils', () => {
 			expect(mapMetricUnitToUniversalUnit('bytes_per_second')).toBe('By/s');
 		});
 
-		it('returns null for unknown units', () => {
+		it('returns null or self for unknown units', () => {
 			expect(mapMetricUnitToUniversalUnit('unknown_unit')).toBe('unknown_unit');
 			expect(mapMetricUnitToUniversalUnit('')).toBe(null);
 			expect(mapMetricUnitToUniversalUnit(undefined)).toBe(null);
