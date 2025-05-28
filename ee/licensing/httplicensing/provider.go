@@ -252,7 +252,7 @@ func (provider *provider) GetFeatureFlags(ctx context.Context) ([]*featuretypes.
 		}
 	}
 
-	if constants.GetOrDefaultEnv(constants.DotMetricsEnabled, "false") == "true" {
+	if constants.IsDotMetricsEnabled {
 		gettableFeatures = append(gettableFeatures, &featuretypes.GettableFeature{
 			Name:   featuretypes.DotMetricsEnabled,
 			Active: true,

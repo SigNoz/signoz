@@ -35,3 +35,11 @@ func GetDefaultSiteURL() string {
 }
 
 const DotMetricsEnabled = "DOT_METRICS_ENABLED"
+
+var IsDotMetricsEnabled = false
+
+func init() {
+	if GetOrDefaultEnv(DotMetricsEnabled, "false") == "true" {
+		IsDotMetricsEnabled = true
+	}
+}
