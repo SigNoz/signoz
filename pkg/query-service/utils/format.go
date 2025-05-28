@@ -233,7 +233,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 
 func ClickHouseFormattedMetricNames(v interface{}) string {
 	if name, ok := v.(string); ok {
-		transitionedMetrics := metrics.GetTransitionedMetrics(name, !constants.IsDotMetricsEnabled)
+		transitionedMetrics := metrics.GetTransitionedMetric(name, !constants.IsDotMetricsEnabled)
 		if transitionedMetrics != name {
 			return ClickHouseFormattedValue([]interface{}{name, transitionedMetrics})
 		} else {
