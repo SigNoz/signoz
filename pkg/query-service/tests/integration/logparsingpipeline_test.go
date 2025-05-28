@@ -31,6 +31,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -42,7 +43,8 @@ import (
 )
 
 func TestLogPipelinesLifecycle(t *testing.T) {
-	testbed := NewLogPipelinesTestBed(t, nil)
+	agentID := valuer.GenerateUUID().String()
+	testbed := NewLogPipelinesTestBed(t, nil, agentID)
 	require := require.New(t)
 
 	orgID, err := utils.GetTestOrgId(testbed.store)
@@ -137,7 +139,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	)
 
 	// Deployment status should get updated after acknowledgement from opamp client
-	testbed.simulateOpampClientAcknowledgementForLatestConfig()
+	testbed.simulateOpampClientAcknowledgementForLatestConfig(agentID)
 
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 	assertPipelinesResponseMatchesPostedPipelines(
@@ -169,7 +171,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	)
 
 	// Deployment status should get updated again on receiving msg from client.
-	testbed.simulateOpampClientAcknowledgementForLatestConfig()
+	testbed.simulateOpampClientAcknowledgementForLatestConfig(agentID)
 
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 	assertPipelinesResponseMatchesPostedPipelines(
@@ -184,7 +186,8 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 
 func TestLogPipelinesHistory(t *testing.T) {
 	require := require.New(t)
-	testbed := NewLogPipelinesTestBed(t, nil)
+	agentID := valuer.GenerateUUID().String()
+	testbed := NewLogPipelinesTestBed(t, nil, agentID)
 
 	// Only the latest config version can be "IN_PROGRESS",
 	// other incomplete deployments should have status "UNKNOWN"
@@ -387,7 +390,8 @@ func TestLogPipelinesValidation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			testbed := NewLogPipelinesTestBed(t, nil)
+			agentID := valuer.GenerateUUID().String()
+			testbed := NewLogPipelinesTestBed(t, nil, agentID)
 			testbed.PostPipelinesToQSExpectingStatusCode(
 				pipelinetypes.PostablePipelines{
 					Pipelines: []pipelinetypes.PostablePipeline{tc.Pipeline},
@@ -525,7 +529,7 @@ func NewTestbedWithoutOpamp(t *testing.T, store sqlstore.SQLStore) *LogPipelines
 	}
 }
 
-func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipelinesTestBed {
+func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore, agentID string) *LogPipelinesTestBed {
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
 	orgID, err := utils.GetTestOrgId(testbed.store)
@@ -545,7 +549,7 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipeline
 	opampServer.OnMessage(
 		opampClientConnection,
 		&protobufs.AgentToServer{
-			InstanceUid: "test",
+			InstanceUid: agentID,
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
 			},
@@ -750,10 +754,10 @@ func assertPipelinesRecommendedInRemoteConfig(
 	}
 }
 
-func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig() {
+func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig(agentID string) {
 	lastMsg := tb.opampClientConn.LatestMsgFromServer()
 	tb.opampServer.OnMessage(tb.opampClientConn, &protobufs.AgentToServer{
-		InstanceUid: "test",
+		InstanceUid: agentID,
 		EffectiveConfig: &protobufs.EffectiveConfig{
 			ConfigMap: lastMsg.RemoteConfig.Config,
 		},

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -194,6 +195,11 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 	lastHash string,
 	lastconf string) *model.ApiError {
 
+	// check if it has org orgID prefix
+	if !strings.HasPrefix(lastHash, orgId) {
+		lastHash = orgId + lastHash
+	}
+
 	_, err := r.store.BunDB().NewUpdate().
 		Model(new(types.AgentConfigVersion)).
 		Set("deploy_status = ?", status).
@@ -215,6 +221,11 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 func (r *Repo) updateDeployStatusByHash(
 	ctx context.Context, orgId string, confighash string, status string, result string,
 ) *model.ApiError {
+
+	// check if it has org orgID prefix
+	if !strings.HasPrefix(confighash, orgId) {
+		confighash = orgId + confighash
+	}
 
 	_, err := r.store.BunDB().NewUpdate().
 		Model(new(types.AgentConfigVersion)).

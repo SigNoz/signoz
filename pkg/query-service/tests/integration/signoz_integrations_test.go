@@ -11,6 +11,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -128,8 +129,10 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	orgID, err := utils.GetTestOrgId(testDB)
 	require.Nil(err)
 
+	agentID := valuer.GenerateUUID().String()
+
 	integrationsTB := NewIntegrationsTestBed(t, testDB)
-	pipelinesTB := NewLogPipelinesTestBed(t, testDB)
+	pipelinesTB := NewLogPipelinesTestBed(t, testDB, agentID)
 
 	availableIntegrationsResp := integrationsTB.GetAvailableIntegrationsFromQS()
 	availableIntegrations := availableIntegrationsResp.Integrations
