@@ -693,7 +693,7 @@ export default function Home(): JSX.Element {
 					)}
 				</div>
 				<div className="home-right-content">
-					{deploymentsData?.data?.data?.cluster?.region?.name === 'in' && (
+					{deploymentsData?.data?.data?.cluster?.region?.name && (
 						<div className="home-notifications-container">
 							<div className="notification">
 								<Alert
