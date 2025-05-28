@@ -661,12 +661,19 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	}, []);
 
 	useEffect(() => {
-		if (!isLatestVersion) {
+		if (!isLatestVersion && !isCloudUser && !isEnterpriseSelfHostedUser) {
 			setShowVersionUpdateNotification(true);
 		} else {
 			setShowVersionUpdateNotification(false);
 		}
-	}, [currentVersion, latestVersion, isCurrentVersionError, isLatestVersion]);
+	}, [
+		currentVersion,
+		latestVersion,
+		isCurrentVersionError,
+		isLatestVersion,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+	]);
 
 	return (
 		<div className={cx('sidenav-container', isPinned && 'pinned')}>
