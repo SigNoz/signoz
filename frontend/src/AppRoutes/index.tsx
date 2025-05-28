@@ -258,7 +258,7 @@ function App(): JSX.Element {
 			) {
 				window.pylon = {
 					chat_settings: {
-						app_id: 'da78df6d-7828-4ab0-ac24-5e3550b0c6af',
+						app_id: process.env.PYLON_APP_ID,
 						email: user.email,
 						name: user.displayName,
 					},
