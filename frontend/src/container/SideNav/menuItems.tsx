@@ -263,7 +263,7 @@ export const settingsMenuItems: SidebarItem[] = [
 		key: ROUTES.ORG_SETTINGS,
 		label: 'Members & SSO',
 		icon: <User size={16} />,
-		isEnabled: false,
+		isEnabled: true,
 	},
 	{
 		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
