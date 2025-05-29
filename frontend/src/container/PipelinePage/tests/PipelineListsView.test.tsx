@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { findByText, fireEvent, render, waitFor } from 'tests/test-utils';
 
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
@@ -56,17 +57,38 @@ jest.mock(
 	}),
 );
 
+// Mock usePreferenceSync
+jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
+	usePreferenceSync: (): any => ({
+		preferences: {
+			columns: [],
+			formatting: {
+				maxLines: 2,
+				format: 'table',
+				fontSize: 'small',
+				version: 1,
+			},
+		},
+		loading: false,
+		error: null,
+		updateColumns: jest.fn(),
+		updateFormatting: jest.fn(),
+	}),
+}));
+
 describe('PipelinePage container test', () => {
 	it('should render PipelineListsView section', () => {
 		const { getByText, container } = render(
-			<PipelineListsView
-				setActionType={jest.fn()}
-				isActionMode="viewing-mode"
-				setActionMode={jest.fn()}
-				pipelineData={pipelineApiResponseMockData}
-				isActionType=""
-				refetchPipelineLists={jest.fn()}
-			/>,
+			<PreferenceContextProvider>
+				<PipelineListsView
+					setActionType={jest.fn()}
+					isActionMode="viewing-mode"
+					setActionMode={jest.fn()}
+					pipelineData={pipelineApiResponseMockData}
+					isActionType=""
+					refetchPipelineLists={jest.fn()}
+				/>
+			</PreferenceContextProvider>,
 		);
 
 		// table headers assertions
@@ -90,14 +112,16 @@ describe('PipelinePage container test', () => {
 
 	it('should render expanded content and edit mode correctly', async () => {
 		const { getByText } = render(
-			<PipelineListsView
-				setActionType={jest.fn()}
-				isActionMode="editing-mode"
-				setActionMode={jest.fn()}
-				pipelineData={pipelineApiResponseMockData}
-				isActionType=""
-				refetchPipelineLists={jest.fn()}
-			/>,
+			<PreferenceContextProvider>
+				<PipelineListsView
+					setActionType={jest.fn()}
+					isActionMode="editing-mode"
+					setActionMode={jest.fn()}
+					pipelineData={pipelineApiResponseMockData}
+					isActionType=""
+					refetchPipelineLists={jest.fn()}
+				/>
+			</PreferenceContextProvider>,
 		);
 
 		// content assertion
@@ -121,14 +145,16 @@ describe('PipelinePage container test', () => {
 
 	it('should be able to perform actions and edit on expanded view content', async () => {
 		render(
-			<PipelineListsView
-				setActionType={jest.fn()}
-				isActionMode="editing-mode"
-				setActionMode={jest.fn()}
-				pipelineData={pipelineApiResponseMockData}
-				isActionType=""
-				refetchPipelineLists={jest.fn()}
-			/>,
+			<PreferenceContextProvider>
+				<PipelineListsView
+					setActionType={jest.fn()}
+					isActionMode="editing-mode"
+					setActionMode={jest.fn()}
+					pipelineData={pipelineApiResponseMockData}
+					isActionType=""
+					refetchPipelineLists={jest.fn()}
+				/>
+			</PreferenceContextProvider>,
 		);
 
 		// content assertion
@@ -179,14 +205,16 @@ describe('PipelinePage container test', () => {
 
 	it('should be able to toggle and delete pipeline', async () => {
 		const { getByText } = render(
-			<PipelineListsView
-				setActionType={jest.fn()}
-				isActionMode="editing-mode"
-				setActionMode={jest.fn()}
-				pipelineData={pipelineApiResponseMockData}
-				isActionType=""
-				refetchPipelineLists={jest.fn()}
-			/>,
+			<PreferenceContextProvider>
+				<PipelineListsView
+					setActionType={jest.fn()}
+					isActionMode="editing-mode"
+					setActionMode={jest.fn()}
+					pipelineData={pipelineApiResponseMockData}
+					isActionType=""
+					refetchPipelineLists={jest.fn()}
+				/>
+			</PreferenceContextProvider>,
 		);
 
 		const addNewPipelineBtn = getByText('add_new_pipeline');

@@ -23,6 +23,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
@@ -35,6 +36,8 @@ function LogsExplorer(): JSX.Element {
 	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
 		SELECTED_VIEWS.SEARCH,
 	);
+	const { preferences } = usePreferenceContext();
+
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
 			LOCALSTORAGE.SHOW_LOGS_QUICK_FILTERS,
@@ -83,7 +86,6 @@ function LogsExplorer(): JSX.Element {
 	}, [currentQuery.builder.queryData, currentQuery.builder.queryData.length]);
 
 	const {
-		queryData: optionsQueryData,
 		redirectWithQuery: redirectWithOptionsData,
 	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
@@ -164,12 +166,32 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	useEffect(() => {
-		const migratedQuery = migrateOptionsQuery(optionsQueryData);
+		const migratedQuery = migrateOptionsQuery(
+			preferences
+				? {
+						selectColumns: preferences.columns || [],
+						maxLines:
+							preferences.formatting?.maxLines || defaultOptionsQuery.maxLines,
+						format: preferences.formatting?.format || defaultOptionsQuery.format,
+						fontSize:
+							preferences.formatting?.fontSize || defaultOptionsQuery.fontSize,
+						version: preferences.formatting?.version,
+				  }
+				: defaultOptionsQuery,
+		);
 		// Only redirect if the query was actually modified
-		if (!isEqual(migratedQuery, optionsQueryData)) {
+		if (
+			!isEqual(migratedQuery, {
+				selectColumns: preferences?.columns || [],
+				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
+				format: preferences?.formatting?.format || defaultOptionsQuery.format,
+				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
+				version: preferences?.formatting?.version,
+			})
+		) {
 			redirectWithOptionsData(migratedQuery);
 		}
-	}, [migrateOptionsQuery, optionsQueryData, redirectWithOptionsData]);
+	}, [migrateOptionsQuery, preferences, redirectWithOptionsData]);
 
 	const isMultipleQueries = useMemo(
 		() =>
