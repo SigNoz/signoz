@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -28,16 +27,16 @@ type Funnel struct {
 }
 
 type FunnelStep struct {
-	ID             valuer.UUID   `json:"id,omitempty"`
-	Name           string        `json:"name,omitempty"`        // step name
-	Description    string        `json:"description,omitempty"` // step description
-	Order          int64         `json:"step_order"`
-	ServiceName    string        `json:"service_name"`
-	SpanName       string        `json:"span_name"`
-	Filters        *v3.FilterSet `json:"filters,omitempty"`
-	LatencyPointer string        `json:"latency_pointer,omitempty"`
-	LatencyType    string        `json:"latency_type,omitempty"`
-	HasErrors      bool          `json:"has_errors"`
+	types.Identifiable
+	Name           string `json:"name,omitempty"`        // step name
+	Description    string `json:"description,omitempty"` // step description
+	Order          int64  `json:"step_order"`
+	ServiceName    string `json:"service_name"`
+	SpanName       string `json:"span_name"`
+	Filters        string `json:"filters,omitempty"`
+	LatencyPointer string `json:"latency_pointer,omitempty"`
+	LatencyType    string `json:"latency_type,omitempty"`
+	HasErrors      bool   `json:"has_errors"`
 }
 
 type addTraceFunnels struct {
@@ -69,7 +68,7 @@ func (migration *addTraceFunnels) Up(ctx context.Context, db *bun.DB) error {
 	defer tx.Rollback()
 
 	_, err = tx.NewCreateTable().
-		Model((*Funnel)(nil)).
+		Model(new(Funnel)).
 		ForeignKey(`("org_id") REFERENCES "organizations" ("id") ON DELETE CASCADE`).
 		IfNotExists().
 		Exec(ctx)
