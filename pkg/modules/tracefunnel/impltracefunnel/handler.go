@@ -2,6 +2,7 @@ package impltracefunnel
 
 import (
 	"encoding/json"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"net/http"
 	"time"
@@ -28,7 +29,7 @@ func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := tf.GetClaims(r)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -42,7 +43,7 @@ func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := tf.ConstructFunnelResponse(funnel, claims)
+	response := tf.ConstructFunnelResponse(funnel, &claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
@@ -53,7 +54,7 @@ func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := tf.GetClaims(r)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -105,7 +106,7 @@ func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := tf.ConstructFunnelResponse(updatedFunnel, claims)
+	response := tf.ConstructFunnelResponse(updatedFunnel, &claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
@@ -116,7 +117,7 @@ func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := tf.GetClaims(r)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -164,12 +165,12 @@ func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := tf.ConstructFunnelResponse(updatedFunnel, claims)
+	response := tf.ConstructFunnelResponse(updatedFunnel, &claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
-	claims, err := tf.GetClaims(r)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -185,7 +186,7 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 
 	var response []tf.GettableFunnel
 	for _, f := range funnels {
-		response = append(response, tf.ConstructFunnelResponse(f, claims))
+		response = append(response, tf.ConstructFunnelResponse(f, &claims))
 	}
 
 	render.Success(rw, http.StatusOK, response)
@@ -195,7 +196,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	claims, _ := tf.GetClaims(r) // Ignore error as email is optional
+	claims, _ := authtypes.ClaimsFromContext(r.Context()) // Ignore error as email is optional
 
 	funnel, err := handler.module.Get(r.Context(), valuer.MustNewUUID(funnelID), valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
@@ -204,7 +205,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 			"funnel not found: %v", err))
 		return
 	}
-	response := tf.ConstructFunnelResponse(funnel, claims)
+	response := tf.ConstructFunnelResponse(funnel, &claims)
 	render.Success(rw, http.StatusOK, response)
 }
 
@@ -212,7 +213,7 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	claims, _ := tf.GetClaims(r)
+	claims, _ := authtypes.ClaimsFromContext(r.Context())
 
 	if err := handler.module.Delete(r.Context(), valuer.MustNewUUID(funnelID), valuer.MustNewUUID(claims.OrgID)); err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
@@ -233,7 +234,7 @@ func (handler *handler) Save(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := tf.GetClaims(r)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
 		return
