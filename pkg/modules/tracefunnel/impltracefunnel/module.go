@@ -3,9 +3,9 @@ package impltracefunnel
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/types"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
