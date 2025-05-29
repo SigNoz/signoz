@@ -196,6 +196,7 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 	lastconf string) *model.ApiError {
 
 	// check if it has org orgID prefix
+	// ensuring it here and also ensuring in coordinator.go
 	if !strings.HasPrefix(lastHash, orgId) {
 		lastHash = orgId + lastHash
 	}
@@ -221,11 +222,6 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 func (r *Repo) updateDeployStatusByHash(
 	ctx context.Context, orgId string, confighash string, status string, result string,
 ) *model.ApiError {
-
-	// check if it has org orgID prefix
-	if !strings.HasPrefix(confighash, orgId) {
-		confighash = orgId + confighash
-	}
 
 	_, err := r.store.BunDB().NewUpdate().
 		Model(new(types.AgentConfigVersion)).
