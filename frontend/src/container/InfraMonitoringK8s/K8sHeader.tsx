@@ -136,7 +136,7 @@ function K8sHeader({
 
 			<div className="k8s-list-controls-right">
 				<DateTimeSelectionV2
-					showAutoRefresh={false}
+					showAutoRefresh
 					showRefreshText={false}
 					hideShareModal
 				/>
