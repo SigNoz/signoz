@@ -125,6 +125,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	)?.active;
 
 	const [licenseTag, setLicenseTag] = useState('');
+	const isAdmin = user.role === USER_ROLES.ADMIN;
 
 	const userSettingsMenuItem = {
 		key: ROUTES.SETTINGS,
@@ -240,16 +241,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const sensors = useSensors(useSensor(PointerSensor));
 
-	useEffect(() => {
-		if (isChatSupportEnabled && isPremiumSupportEnabled && !isCloudUser) {
-			setHelpSupportDropdownMenuItems(
-				DefaultHelpSupportDropdownMenuItems.filter(
-					(item) => item.key !== 'chat-support',
-				),
-			);
-		}
-	}, [isChatSupportEnabled, isPremiumSupportEnabled, isCloudUser]);
-
 	const onClickHandler = useCallback(
 		(key: string, event: MouseEvent | null) => {
 			const params = new URLSearchParams(search);
@@ -331,6 +322,23 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isCommunityEnterpriseUser,
 		isCommunityUser,
 	]);
+
+	useEffect(() => {
+		if (!isAdmin) {
+			setHelpSupportDropdownMenuItems(
+				helpSupportDropdownMenuItems.filter(
+					(item) => item.key !== 'invite-collaborators',
+				),
+			);
+		}
+
+		if (isChatSupportEnabled && isPremiumSupportEnabled && !isCloudUser) {
+			setHelpSupportDropdownMenuItems(
+				helpSupportDropdownMenuItems.filter((item) => item.key !== 'chat-support'),
+			);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isAdmin, isChatSupportEnabled, isPremiumSupportEnabled, isCloudUser]);
 
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
