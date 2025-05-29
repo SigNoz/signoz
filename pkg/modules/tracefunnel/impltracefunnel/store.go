@@ -2,9 +2,9 @@ package impltracefunnel
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
