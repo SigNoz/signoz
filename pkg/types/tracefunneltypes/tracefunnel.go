@@ -12,9 +12,6 @@ var (
 	ErrFunnelAlreadyExists = errors.MustNewCode("funnel_already_exists")
 )
 
-type BaseMetadata struct {
-}
-
 // StorableFunnel Core Data Structure (StorableFunnel and FunnelStep)
 type StorableFunnel struct {
 	types.Identifiable
