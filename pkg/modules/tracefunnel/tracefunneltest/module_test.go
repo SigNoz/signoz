@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
-
 	"github.com/SigNoz/signoz/pkg/types"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
