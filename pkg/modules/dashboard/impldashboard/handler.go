@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -15,19 +16,20 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 type handler struct {
-	module dashboard.Module
+	module   dashboard.Module
+	settings factory.ScopedProviderSettings
 
 	// TODO we need to move DIs from pointers of structs to interfaces
 	integrationsController      *integrations.Controller
 	cloudIntegrationsController *cloudintegrations.Controller
 }
 
-func NewHandler(module dashboard.Module, integrationsController *integrations.Controller, cloudIntegrationsController *cloudintegrations.Controller) dashboard.Handler {
-	return &handler{module: module, integrationsController: integrationsController, cloudIntegrationsController: cloudIntegrationsController}
+func NewHandler(module dashboard.Module, settings factory.ProviderSettings, integrationsController *integrations.Controller, cloudIntegrationsController *cloudintegrations.Controller) dashboard.Handler {
+	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/impldashboard")
+	return &handler{module: module, settings: scopedProviderSettings, integrationsController: integrationsController, cloudIntegrationsController: cloudIntegrationsController}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -150,16 +152,16 @@ func (handler *handler) GetAll(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	installedIntegrationDashboards, err := handler.integrationsController.GetDashboardsForInstalledIntegrations(r.Context(), orgID)
-	if err != nil {
-		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(err))
+	installedIntegrationDashboards, apiErr := handler.integrationsController.GetDashboardsForInstalledIntegrations(r.Context(), orgID)
+	if apiErr != nil {
+		handler.settings.Logger().ErrorContext(ctx, "failed to get dashboards for installed integrations", "error", apiErr)
 	} else {
 		dashboards = append(dashboards, installedIntegrationDashboards...)
 	}
 
-	cloudIntegrationDashboards, err := handler.cloudIntegrationsController.AvailableDashboards(r.Context(), orgID)
-	if err != nil {
-		zap.L().Error("failed to get cloud dashboards", zap.Error(err))
+	cloudIntegrationDashboards, apiErr := handler.cloudIntegrationsController.AvailableDashboards(r.Context(), orgID)
+	if apiErr != nil {
+		handler.settings.Logger().ErrorContext(ctx, "failed to get cloud dashboards", "error", apiErr)
 	} else {
 		dashboards = append(dashboards, cloudIntegrationDashboards...)
 	}

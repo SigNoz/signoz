@@ -35,7 +35,7 @@ func TestNewHandlers(t *testing.T) {
 		t.Fatalf("could not create a new cloud integrations controller: %v", err)
 	}
 
-	handlers := NewHandlers(modules, integrationsController, cloudIntegrationsController)
+	handlers := NewHandlers(modules, providerSettings, integrationsController, cloudIntegrationsController)
 
 	reflectVal := reflect.ValueOf(handlers)
 	for i := 0; i < reflectVal.NumField(); i++ {

@@ -493,7 +493,7 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	if err != nil {
 		t.Fatalf("could not create a new cloud integrations controller: %v", err)
 	}
-	handlers := signoz.NewHandlers(modules, integrationsController, cloudIntegrationsController)
+	handlers := signoz.NewHandlers(modules, providerSettings, integrationsController, cloudIntegrationsController)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		LogsParsingPipelineController: controller,

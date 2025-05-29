@@ -378,7 +378,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	if err != nil {
 		t.Fatalf("could not create a new cloud integrations controller: %v", err)
 	}
-	handlers := signoz.NewHandlers(modules, integrationsController, cloudIntegrationsController)
+	handlers := signoz.NewHandlers(modules, providerSettings, integrationsController, cloudIntegrationsController)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,

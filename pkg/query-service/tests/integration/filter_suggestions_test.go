@@ -325,7 +325,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 		JWT:    jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
-			Handlers: signoz.NewHandlers(modules, integrationsController, cloudIntegrationsController),
+			Handlers: signoz.NewHandlers(modules, providerSettings, integrationsController, cloudIntegrationsController),
 		},
 	})
 	if err != nil {

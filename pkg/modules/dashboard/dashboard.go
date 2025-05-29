@@ -22,7 +22,7 @@ type Module interface {
 	// check the need for these two
 	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
 
-	// this might have been present seperately due to requirement in EE codebase but it's anyways not behind license so doesn't make sense.
+	// this might have been present separately due to requirement in EE codebase but it's anyways not behind license so doesn't make sense.
 	LockUnlock(ctx context.Context, orgID valuer.UUID, uuid valuer.UUID, lock bool) error
 }
 

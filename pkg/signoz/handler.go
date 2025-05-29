@@ -1,6 +1,7 @@
 package signoz
 
 import (
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -29,14 +30,14 @@ type Handlers struct {
 	QuickFilter  quickfilter.Handler
 }
 
-func NewHandlers(modules Modules, integrationController *integrations.Controller, cloudIntegrationsController *cloudintegrations.Controller) Handlers {
+func NewHandlers(modules Modules, settings factory.ProviderSettings, integrationController *integrations.Controller, cloudIntegrationsController *cloudintegrations.Controller) Handlers {
 	return Handlers{
 		Organization: implorganization.NewHandler(modules.Organization),
 		Preference:   implpreference.NewHandler(modules.Preference),
 		User:         impluser.NewHandler(modules.User),
 		SavedView:    implsavedview.NewHandler(modules.SavedView),
 		Apdex:        implapdex.NewHandler(modules.Apdex),
-		Dashboard:    impldashboard.NewHandler(modules.Dashboard, integrationController, cloudIntegrationsController),
+		Dashboard:    impldashboard.NewHandler(modules.Dashboard, settings, integrationController, cloudIntegrationsController),
 		QuickFilter:  implquickfilter.NewHandler(modules.QuickFilter),
 	}
 }

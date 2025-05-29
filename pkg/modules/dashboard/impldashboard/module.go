@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -12,12 +13,15 @@ import (
 )
 
 type module struct {
-	store dashboardtypes.Store
+	store    dashboardtypes.Store
+	settings factory.ScopedProviderSettings
 }
 
-func NewModule(sqlstore sqlstore.SQLStore) dashboard.Module {
+func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings) dashboard.Module {
+	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/impldashboard")
 	return &module{
-		store: NewStore(sqlstore),
+		store:    NewStore(sqlstore),
+		settings: scopedProviderSettings,
 	}
 }
 
