@@ -575,7 +575,12 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 10*time.Minute, 30*time.Minute)
 	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
-	handlers := signoz.NewHandlers(modules)
+	integrationsController, err := integrations.NewController(testDB)
+	if err != nil {
+		t.Fatalf("could not create a new integrations controller: %v", err)
+	}
+
+	handlers := signoz.NewHandlers(modules, integrationsController, cloudIntegrationsController)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                 reader,

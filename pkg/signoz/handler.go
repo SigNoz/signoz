@@ -15,6 +15,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 )
 
 type Handlers struct {
@@ -27,14 +29,14 @@ type Handlers struct {
 	QuickFilter  quickfilter.Handler
 }
 
-func NewHandlers(modules Modules) Handlers {
+func NewHandlers(modules Modules, integrationController *integrations.Controller, cloudIntegrationsController *cloudintegrations.Controller) Handlers {
 	return Handlers{
 		Organization: implorganization.NewHandler(modules.Organization),
 		Preference:   implpreference.NewHandler(modules.Preference),
 		User:         impluser.NewHandler(modules.User),
 		SavedView:    implsavedview.NewHandler(modules.SavedView),
 		Apdex:        implapdex.NewHandler(modules.Apdex),
-		Dashboard:    impldashboard.NewHandler(modules.Dashboard),
+		Dashboard:    impldashboard.NewHandler(modules.Dashboard, integrationController, cloudIntegrationsController),
 		QuickFilter:  implquickfilter.NewHandler(modules.QuickFilter),
 	}
 }

@@ -8,6 +8,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -23,7 +25,17 @@ func TestNewHandlers(t *testing.T) {
 	providerSettings := factorytest.NewSettings()
 
 	modules := NewModules(sqlstore, jwt, emailing, providerSettings)
-	handlers := NewHandlers(modules)
+	integrationsController, err := integrations.NewController(sqlstore)
+	if err != nil {
+		t.Fatalf("could not create a new integrations controller: %v", err)
+	}
+
+	cloudIntegrationsController, err := cloudintegrations.NewController(sqlstore)
+	if err != nil {
+		t.Fatalf("could not create a new cloud integrations controller: %v", err)
+	}
+
+	handlers := NewHandlers(modules, integrationsController, cloudIntegrationsController)
 
 	reflectVal := reflect.ValueOf(handlers)
 	for i := 0; i < reflectVal.NumField(); i++ {

@@ -10,6 +10,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -23,18 +25,20 @@ import (
 
 type SigNoz struct {
 	*factory.Registry
-	Instrumentation instrumentation.Instrumentation
-	Cache           cache.Cache
-	Web             web.Web
-	SQLStore        sqlstore.SQLStore
-	TelemetryStore  telemetrystore.TelemetryStore
-	Prometheus      prometheus.Prometheus
-	Alertmanager    alertmanager.Alertmanager
-	Zeus            zeus.Zeus
-	Licensing       licensing.Licensing
-	Emailing        emailing.Emailing
-	Modules         Modules
-	Handlers        Handlers
+	Instrumentation              instrumentation.Instrumentation
+	Cache                        cache.Cache
+	Web                          web.Web
+	SQLStore                     sqlstore.SQLStore
+	TelemetryStore               telemetrystore.TelemetryStore
+	Prometheus                   prometheus.Prometheus
+	Alertmanager                 alertmanager.Alertmanager
+	Zeus                         zeus.Zeus
+	Licensing                    licensing.Licensing
+	Emailing                     emailing.Emailing
+	IntegrationsController       *integrations.Controller
+	CloudIntegrationsControlller *cloudintegrations.Controller
+	Modules                      Modules
+	Handlers                     Handlers
 }
 
 func New(
@@ -184,11 +188,21 @@ func New(
 		return nil, err
 	}
 
+	integrationsController, err := integrations.NewController(sqlstore)
+	if err != nil {
+		return nil, err
+	}
+
+	cloudIntegrationsController, err := cloudintegrations.NewController(sqlstore)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize all modules
 	modules := NewModules(sqlstore, jwt, emailing, providerSettings)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules)
+	handlers := NewHandlers(modules, integrationsController, cloudIntegrationsController)
 
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),
@@ -201,18 +215,20 @@ func New(
 	}
 
 	return &SigNoz{
-		Registry:        registry,
-		Instrumentation: instrumentation,
-		Cache:           cache,
-		Web:             web,
-		SQLStore:        sqlstore,
-		TelemetryStore:  telemetrystore,
-		Prometheus:      prometheus,
-		Alertmanager:    alertmanager,
-		Zeus:            zeus,
-		Licensing:       licensing,
-		Emailing:        emailing,
-		Modules:         modules,
-		Handlers:        handlers,
+		Registry:                     registry,
+		Instrumentation:              instrumentation,
+		Cache:                        cache,
+		Web:                          web,
+		SQLStore:                     sqlstore,
+		TelemetryStore:               telemetrystore,
+		Prometheus:                   prometheus,
+		Alertmanager:                 alertmanager,
+		Zeus:                         zeus,
+		Licensing:                    licensing,
+		Emailing:                     emailing,
+		IntegrationsController:       integrationsController,
+		CloudIntegrationsControlller: cloudIntegrationsController,
+		Modules:                      modules,
+		Handlers:                     handlers,
 	}, nil
 }

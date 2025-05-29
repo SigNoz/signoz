@@ -22,7 +22,7 @@ func NewModule(sqlstore sqlstore.SQLStore) dashboard.Module {
 }
 
 // CreateDashboard creates a new dashboard
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, dashboard *dashboardtypes.Dashboard) error {
+func (module *module) Create(ctx context.Context, dashboard *dashboardtypes.Dashboard) error {
 	storableDashboard, err := dashboardtypes.NewStorableDashboardFromDashboard(dashboard)
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, dashboard *
 	return module.store.Create(ctx, storableDashboard)
 }
 
-func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
+func (module *module) GetAll(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	storableDashboards, err := module.store.GetAll(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -71,13 +71,13 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	return dashboard, nil
 }
 
-func (module *module) Update(ctx context.Context, orgID valuer.UUID, dashboard *dashboardtypes.Dashboard) error {
+func (module *module) Update(ctx context.Context, dashboard *dashboardtypes.Dashboard) error {
 	dashboardUUID, err := valuer.NewUUID(dashboard.ID)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "id should be a valid uuid")
 	}
 
-	existingDashboard, err := module.Get(ctx, orgID, dashboardUUID)
+	existingDashboard, err := module.Get(ctx, dashboard.OrgID, dashboardUUID)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 }
 
 func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
-	dashboards, err := module.List(ctx, orgID)
+	dashboards, err := module.GetAll(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}

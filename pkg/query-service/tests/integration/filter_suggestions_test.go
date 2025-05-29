@@ -20,6 +20,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -308,12 +310,22 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
 
+	integrationsController, err := integrations.NewController(testDB)
+	if err != nil {
+		t.Fatalf("could not create a new integrations controller: %v", err)
+	}
+
+	cloudIntegrationsController, err := cloudintegrations.NewController(testDB)
+	if err != nil {
+		t.Fatalf("could not create a new cloud integrations controller: %v", err)
+	}
+
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader: reader,
 		JWT:    jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
-			Handlers: signoz.NewHandlers(modules),
+			Handlers: signoz.NewHandlers(modules, integrationsController, cloudIntegrationsController),
 		},
 	})
 	if err != nil {

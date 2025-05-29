@@ -3,15 +3,13 @@ package dashboardtypes
 import (
 	"context"
 	"database/sql/driver"
-	"encoding/base64"
 	"encoding/json"
-	"strings"
+	"reflect"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/gosimple/slug"
 	"github.com/uptrace/bun"
 )
 
@@ -21,20 +19,24 @@ type StorableDashboard struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID  valuer.UUID           `json:"-" bun:"org_id,notnull"`
 	Data   StorableDashboardData `json:"data" bun:"data,type:text,notnull"`
 	Locked bool                  `json:"isLocked" bun:"locked,notnull,default:0"`
+	OrgID  valuer.UUID           `json:"-" bun:"org_id,notnull"`
 }
 
 type Dashboard struct {
-	ID string
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID  valuer.UUID
+
+	ID     string
 	Data   StorableDashboardData
 	Locked bool
-	Slug   string
-	Title  string
+	OrgID  valuer.UUID
+}
+
+type UpdatableDashboard struct {
+	StorableDashboardData StorableDashboardData `json:"data"`
+	Locked                bool                  `json:"locked"`
 }
 
 type (
@@ -44,57 +46,19 @@ type (
 
 	PostableDashboard = StorableDashboardData
 
-	UpdatableDashboard = StorableDashboardData
-
 	ListableDashboard []*GettableDashboard
 )
 
-func NewDashboard(orgID valuer.UUID, createdBy string, storableDashboardData *StorableDashboardData) (*Dashboard, error) {
-	return &Dashboard{
-		ID: valuer.GenerateUUID().StringValue(),
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		UserAuditable: types.UserAuditable{
-			CreatedBy: createdBy,
-			UpdatedBy: createdBy,
-		},
-		OrgID:  orgID,
-		Data:   *storableDashboardData,
-		Locked: false,
-	}, nil
-}
-
-func NewGettableDashboardsFromDashboards(dashboards []*Dashboard) ([]*GettableDashboard, error) {
-	if dashboards == nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert dashboards to gettable dashboards for <nil> dashboards")
-	}
-
-	gettableDashboards := make([]*GettableDashboard, len(dashboards))
-	for idx, dashboard := range dashboards {
-		gettableDashboard := NewGettableDashboardFromDashboard(dashboard)
-		gettableDashboards[idx] = gettableDashboard
-	}
-	return gettableDashboards, nil
-}
-
-func NewGettableDashboardFromDashboard(dashboard *Dashboard) *GettableDashboard {
-	return &GettableDashboard{
-		ID:            dashboard.ID,
-		TimeAuditable: dashboard.TimeAuditable,
-		UserAuditable: dashboard.UserAuditable,
-		OrgID:         dashboard.OrgID,
-		Data:          dashboard.Data,
-		Locked:        dashboard.Locked,
-	}
-}
-
 func NewStorableDashboardFromDashboard(dashboard *Dashboard) (*StorableDashboard, error) {
+	if dashboard == nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert <nil> dashboard to storable dashboard")
+	}
+
 	dashboardID, err := valuer.NewUUID(dashboard.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid")
 	}
+
 	return &StorableDashboard{
 		Identifiable: types.Identifiable{
 			ID: dashboardID,
@@ -113,12 +77,31 @@ func NewStorableDashboardFromDashboard(dashboard *Dashboard) (*StorableDashboard
 	}, nil
 }
 
+func NewDashboard(orgID valuer.UUID, createdBy string, storableDashboardData StorableDashboardData) (*Dashboard, error) {
+	currentTime := time.Now()
+
+	return &Dashboard{
+		ID: valuer.GenerateUUID().StringValue(),
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: currentTime,
+			UpdatedAt: currentTime,
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: createdBy,
+			UpdatedBy: createdBy,
+		},
+		OrgID:  orgID,
+		Data:   storableDashboardData,
+		Locked: false,
+	}, nil
+}
+
 func NewDashboardFromStorableDashboard(storableDashboard *StorableDashboard) (*Dashboard, error) {
 	if storableDashboard == nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert storable dashboard to dashboard entity for <nil> storable dashboard")
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert <nil> storable dashboard to dashboard")
 	}
 
-	dashboard := &Dashboard{
+	return &Dashboard{
 		ID: storableDashboard.ID.StringValue(),
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: storableDashboard.CreatedAt,
@@ -131,15 +114,12 @@ func NewDashboardFromStorableDashboard(storableDashboard *StorableDashboard) (*D
 		OrgID:  storableDashboard.OrgID,
 		Data:   storableDashboard.Data,
 		Locked: storableDashboard.Locked,
-	}
-	dashboard.UpdateSlug()
-
-	return dashboard, nil
+	}, nil
 }
 
 func NewDashboardsFromStorableDashboards(storableDashboards []*StorableDashboard) ([]*Dashboard, error) {
 	if storableDashboards == nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert storable dashboards to dashboards entity for <nil> storable dashboards")
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert <nil> storable dashboards to dashboards")
 	}
 
 	dashboards := make([]*Dashboard, len(storableDashboards))
@@ -154,21 +134,47 @@ func NewDashboardsFromStorableDashboards(storableDashboards []*StorableDashboard
 	return dashboards, nil
 }
 
-func NewDashboardFromUpdatableDashboard(id valuer.UUID, orgID valuer.UUID, data *PostableDashboard) (*Dashboard, error) {
-	return &Dashboard{
-		ID:    id.StringValue(),
-		OrgID: orgID,
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		UserAuditable: types.UserAuditable{
-			CreatedBy: "",
-			UpdatedBy: "",
-		},
-		Data:   *data,
-		Locked: false,
+func NewGettableDashboardsFromDashboards(dashboards []*Dashboard) ([]*GettableDashboard, error) {
+	if dashboards == nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert dashboards to gettable dashboards for <nil> dashboards")
+	}
+
+	gettableDashboards := make([]*GettableDashboard, len(dashboards))
+	for idx, dashboard := range dashboards {
+		gettableDashboard, err := NewGettableDashboardFromDashboard(dashboard)
+		if err != nil {
+			return nil, err
+		}
+		gettableDashboards[idx] = gettableDashboard
+	}
+	return gettableDashboards, nil
+}
+
+func NewGettableDashboardFromDashboard(dashboard *Dashboard) (*GettableDashboard, error) {
+	if dashboard == nil {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert <nil> dashboard to gettable dashboard")
+	}
+
+	return &GettableDashboard{
+		ID:            dashboard.ID,
+		TimeAuditable: dashboard.TimeAuditable,
+		UserAuditable: dashboard.UserAuditable,
+		OrgID:         dashboard.OrgID,
+		Data:          dashboard.Data,
+		Locked:        dashboard.Locked,
 	}, nil
+}
+
+func (dashboard *Dashboard) Update(updatableDashboard *UpdatableDashboard) error {
+	if dashboard.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
+	}
+	dashboard.Locked = updatableDashboard.Locked
+
+	if !reflect.DeepEqual(updatableDashboard.StorableDashboardData, StorableDashboardData{}) {
+		dashboard.Data = updatableDashboard.StorableDashboardData
+	}
+	return nil
 }
 
 func (storableDashboardData *StorableDashboardData) Scan(src interface{}) error {
@@ -183,31 +189,6 @@ func (storableDashboardData *StorableDashboardData) Scan(src interface{}) error 
 
 func (storableDashboardData *StorableDashboardData) Value() (driver.Value, error) {
 	return json.Marshal(storableDashboardData)
-}
-
-func (d *Dashboard) UpdateSlug() {
-	var title string
-
-	if val, ok := d.Data["title"]; ok {
-		title = val.(string)
-	}
-
-	d.Slug = SlugifyTitle(title)
-}
-
-func SlugifyTitle(title string) string {
-	s := slug.Make(strings.ToLower(title))
-	if s == "" {
-		// If the dashboard name is only characters outside of the
-		// sluggable characters, the slug creation will return an
-		// empty string which will mess up URLs. This failsafe picks
-		// that up and creates the slug as a base64 identifier instead.
-		s = base64.RawURLEncoding.EncodeToString([]byte(title))
-		if slug.MaxLength != 0 && len(s) > slug.MaxLength {
-			s = s[:slug.MaxLength]
-		}
-	}
-	return s
 }
 
 func GetWidgetIds(data map[string]interface{}) []string {
@@ -257,6 +238,21 @@ func GetIdDifference(existingIds []string, newIds []string) []string {
 	}
 
 	return difference
+}
+
+func Intersection(a, b []int) (c []int) {
+	m := make(map[int]bool)
+
+	for _, item := range a {
+		m[item] = true
+	}
+
+	for _, item := range b {
+		if _, ok := m[item]; ok {
+			c = append(c, item)
+		}
+	}
+	return
 }
 
 type Store interface {
