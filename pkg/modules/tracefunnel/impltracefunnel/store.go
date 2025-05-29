@@ -28,7 +28,7 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.StorableFun
 		Where("name = ? AND org_id = ?", funnel.Name, funnel.OrgID.String()).
 		Exists(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check for existing funnelr")
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check for existing funnel")
 	}
 	if exists {
 		return store.sqlstore.WrapAlreadyExistsErrf(nil, traceFunnels.ErrFunnelAlreadyExists, "a funnel with name '%s' already exists in this organization", funnel.Name)
