@@ -411,7 +411,7 @@ func TestGetClaims(t *testing.T) {
 			claims, err := authtypes.ClaimsFromContext(req.Context())
 			if tt.expectError {
 				assert.Error(t, err)
-				assert.Nil(t, claims)
+				assert.Nil(t, claims.Audience)
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, claims)
