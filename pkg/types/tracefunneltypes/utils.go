@@ -2,7 +2,6 @@ package tracefunneltypes
 
 import (
 	"fmt"
-	"net/http"
 	"sort"
 	"time"
 
@@ -85,16 +84,6 @@ func NormalizeFunnelSteps(steps []*FunnelStep) []*FunnelStep {
 	}
 
 	return newSteps
-}
-
-func GetClaims(r *http.Request) (*authtypes.Claims, error) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		return nil, errors.Newf(errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"unauthenticated")
-	}
-	return &claims, nil
 }
 
 func ValidateAndConvertTimestamp(timestamp int64) (time.Time, error) {

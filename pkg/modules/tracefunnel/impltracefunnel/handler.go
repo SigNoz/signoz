@@ -196,7 +196,12 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	claims, _ := authtypes.ClaimsFromContext(r.Context()) // Ignore error as email is optional
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
 	funnel, err := handler.module.Get(r.Context(), valuer.MustNewUUID(funnelID), valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
@@ -213,7 +218,12 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	claims, _ := authtypes.ClaimsFromContext(r.Context())
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
 	if err := handler.module.Delete(r.Context(), valuer.MustNewUUID(funnelID), valuer.MustNewUUID(claims.OrgID)); err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
