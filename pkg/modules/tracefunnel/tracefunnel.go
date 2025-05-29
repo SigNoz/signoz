@@ -35,6 +35,4 @@ type Handler interface {
 	Get(http.ResponseWriter, *http.Request)
 
 	Delete(http.ResponseWriter, *http.Request)
-
-	Save(http.ResponseWriter, *http.Request)
 }

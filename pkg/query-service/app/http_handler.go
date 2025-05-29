@@ -5251,7 +5251,4 @@ func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middlew
 	traceFunnelsRouter.HandleFunc("/{funnel_id}",
 		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.UpdateFunnel)).
 		Methods(http.MethodPut)
-	traceFunnelsRouter.HandleFunc("/save",
-		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.Save)).
-		Methods(http.MethodPost)
 }
