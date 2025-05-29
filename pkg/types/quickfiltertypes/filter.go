@@ -2,12 +2,13 @@ package quickfiltertypes
 
 import (
 	"encoding/json"
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
-	"time"
 )
 
 type Signal struct {
@@ -48,7 +49,7 @@ func NewSignal(s string) (Signal, error) {
 	case "exceptions":
 		return SignalExceptions, nil
 	default:
-		return Signal{}, errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid signal: "+s)
+		return Signal{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", s)
 	}
 }
 
@@ -163,7 +164,7 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 
 	apiMonitoringFilters := []map[string]interface{}{
 		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
-		{"key": "service.name", "dataType": "string", "type": "tag"},
+		{"key": "service.name", "dataType": "string", "type": "resource"},
 		{"key": "rpc.method", "dataType": "string", "type": "tag"},
 	}
 

@@ -24,11 +24,14 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { getOrderByFromParams } from '../commonUtils';
 import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
@@ -57,22 +60,55 @@ function K8sVolumesList({
 		(state) => state.globalTime,
 	);
 
-	const [currentPage, setCurrentPage] = useState(1);
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const [currentPage, setCurrentPage] = useState(() => {
+		const page = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE);
+		if (page) {
+			return parseInt(page, 10);
+		}
+		return 1;
+	});
+	const [filtersInitialised, setFiltersInitialised] = useState(false);
+
+	useEffect(() => {
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE]: currentPage.toString(),
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [currentPage]);
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
 
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
-	} | null>(null);
+	} | null>(() => getOrderByFromParams(searchParams, true));
 
 	const [selectedVolumeUID, setselectedVolumeUID] = useState<string | null>(
-		null,
+		() => {
+			const volumeUID = searchParams.get(
+				INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID,
+			);
+			if (volumeUID) {
+				return volumeUID;
+			}
+			return null;
+		},
 	);
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.VOLUMES);
 
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
+	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
+		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
+		if (groupBy) {
+			const decoded = decodeURIComponent(groupBy);
+			const parsed = JSON.parse(decoded);
+			return parsed as IBuilderQuery['groupBy'];
+		}
+		return [];
+	});
 
 	const [
 		selectedRowData,
@@ -96,7 +132,9 @@ function K8sVolumesList({
 
 	// Reset pagination every time quick filters are changed
 	useEffect(() => {
-		setCurrentPage(1);
+		if (quickFiltersLastUpdated !== -1) {
+			setCurrentPage(1);
+		}
 	}, [quickFiltersLastUpdated]);
 
 	const createFiltersForSelectedRowData = (
@@ -253,15 +291,26 @@ function K8sVolumesList({
 			}
 
 			if ('field' in sorter && sorter.order) {
-				setOrderBy({
+				const currentOrderBy = {
 					columnName: sorter.field as string,
-					order: sorter.order === 'ascend' ? 'asc' : 'desc',
+					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
+				};
+				setOrderBy(currentOrderBy);
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
+						currentOrderBy,
+					),
 				});
 			} else {
 				setOrderBy(null);
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
+				});
 			}
 		},
-		[],
+		[searchParams, setSearchParams],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -273,7 +322,11 @@ function K8sVolumesList({
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
 			handleChangeQueryData('filters', value);
-			setCurrentPage(1);
+			if (filtersInitialised) {
+				setCurrentPage(1);
+			} else {
+				setFiltersInitialised(true);
+			}
 
 			if (value.items.length > 0) {
 				logEvent(InfraMonitoringEvents.FilterApplied, {
@@ -283,7 +336,8 @@ function K8sVolumesList({
 				});
 			}
 		},
-		[handleChangeQueryData],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
 	);
 
 	useEffect(() => {
@@ -315,6 +369,10 @@ function K8sVolumesList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedVolumeUID(record.volumeUID);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID]: record.volumeUID,
+			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -341,6 +399,11 @@ function K8sVolumesList({
 		setSelectedRowData(null);
 		setGroupBy([]);
 		setOrderBy(null);
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
+		});
 	};
 
 	const expandedRowRender = (): JSX.Element => (
@@ -365,7 +428,9 @@ function K8sVolumesList({
 						}}
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => setselectedVolumeUID(record.volumeUID),
+							onClick: (): void => {
+								setselectedVolumeUID(record.volumeUID);
+							},
 							className: 'expanded-clickable-row',
 						})}
 					/>
@@ -429,6 +494,13 @@ function K8sVolumesList({
 
 	const handleCloseVolumeDetail = (): void => {
 		setselectedVolumeUID(null);
+		setSearchParams({
+			...Object.fromEntries(
+				Array.from(searchParams.entries()).filter(
+					([key]) => key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID,
+				),
+			),
+		});
 	};
 
 	const handleGroupByChange = useCallback(
@@ -449,6 +521,10 @@ function K8sVolumesList({
 
 			setCurrentPage(1);
 			setGroupBy(groupBy);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
+			});
 			setExpandedRowKeys([]);
 
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
@@ -457,7 +533,7 @@ function K8sVolumesList({
 				category: InfraMonitoringEvents.Volumes,
 			});
 		},
-		[groupByFiltersData],
+		[groupByFiltersData?.payload?.attributeKeys, searchParams, setSearchParams],
 	);
 
 	useEffect(() => {

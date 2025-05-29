@@ -3,13 +3,14 @@ package telemetrymetadata
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
-	"go.uber.org/zap"
 )
 
 var (
@@ -21,6 +22,7 @@ var (
 )
 
 type telemetryMetaStore struct {
+	logger                 *slog.Logger
 	telemetrystore         telemetrystore.TelemetryStore
 	tracesDBName           string
 	tracesFieldsTblName    string
@@ -35,10 +37,10 @@ type telemetryMetaStore struct {
 
 	fm               qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
-	compiler         qbtypes.FilterCompiler
 }
 
 func NewTelemetryMetaStore(
+	logger *slog.Logger,
 	telemetrystore telemetrystore.TelemetryStore,
 	tracesDBName string,
 	tracesFieldsTblName string,
@@ -98,7 +100,6 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 
 // getTracesKeys returns the keys from the spans that match the field selection criteria
 func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
-
 	if len(fieldKeySelectors) == 0 {
 		return nil, nil
 	}
@@ -562,11 +563,24 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 	sb := sqlbuilder.Select("DISTINCT " + selectColumn).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
 
 	if len(fieldValueSelector.ExistingQuery) != 0 {
-		whereClause, _, err := t.compiler.Compile(ctx, fieldValueSelector.ExistingQuery)
+		keySelectors := querybuilder.QueryStringToKeysSelectors(fieldValueSelector.ExistingQuery)
+		for _, keySelector := range keySelectors {
+			keySelector.Signal = fieldValueSelector.Signal
+		}
+		keys, err := t.GetKeysMulti(ctx, keySelectors)
+		if err != nil {
+			return nil, err
+		}
+
+		whereClause, _, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
+			FieldMapper:      t.fm,
+			ConditionBuilder: t.conditionBuilder,
+			FieldKeys:        keys,
+		})
 		if err == nil {
 			sb.AddWhereClause(whereClause)
 		} else {
-			zap.L().Warn("error parsing existing query for related values", zap.Error(err))
+			t.logger.WarnContext(ctx, "error parsing existing query for related values", "error", err)
 		}
 	}
 
@@ -586,7 +600,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	zap.L().Debug("query for related values", zap.String("query", query), zap.Any("args", args))
+	t.logger.DebugContext(ctx, "query for related values", "query", query, "args", args)
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {

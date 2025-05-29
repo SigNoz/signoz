@@ -149,7 +149,7 @@ func (m *defaultFieldMapper) getColumn(
 		case telemetrytypes.FieldDataTypeBool:
 			return indexV3Columns["attributes_bool"], nil
 		}
-	case telemetrytypes.FieldContextSpan:
+	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextUnspecified:
 		if col, ok := indexV3Columns[key.Name]; ok {
 			return col, nil
 		}

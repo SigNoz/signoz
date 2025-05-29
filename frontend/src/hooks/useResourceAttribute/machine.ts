@@ -57,5 +57,6 @@ export const ResourceAttributesFilterMachine =
 				},
 			},
 		},
+		predictableActionArguments: true,
 		id: 'ResourceAttributesFilterMachine',
 	});

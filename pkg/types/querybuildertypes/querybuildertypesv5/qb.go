@@ -10,9 +10,10 @@ import (
 )
 
 var (
-	ErrColumnNotFound = errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "field not found")
-	ErrBetweenValues  = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) between operator requires two values")
-	ErrInValues       = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) in operator requires a list of values")
+	ErrColumnNotFound      = errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "field not found")
+	ErrBetweenValues       = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) between operator requires two values")
+	ErrInValues            = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "(not) in operator requires a list of values")
+	ErrUnsupportedOperator = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported operator")
 )
 
 type JsonKeyToFieldFunc func(context.Context, *telemetrytypes.TelemetryFieldKey, FilterOperator, any) (string, any)
@@ -33,14 +34,10 @@ type ConditionBuilder interface {
 	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
 }
 
-type FilterCompiler interface {
-	// Compile compiles the filter into a sqlbuilder.WhereClause.
-	Compile(ctx context.Context, filter string) (*sqlbuilder.WhereClause, []string, error)
-}
-
 type AggExprRewriter interface {
 	// Rewrite rewrites the aggregation expression to be used in the query.
-	Rewrite(ctx context.Context, expr string) (string, []any, error)
+	Rewrite(ctx context.Context, expr string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, []any, error)
+	RewriteMulti(ctx context.Context, exprs []string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]string, [][]any, error)
 }
 
 type Statement struct {
@@ -50,7 +47,7 @@ type Statement struct {
 }
 
 // StatementBuilder builds the query.
-type StatementBuilder interface {
+type StatementBuilder[T any] interface {
 	// Build builds the query.
-	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery) (*Statement, error)
+	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery[T]) (*Statement, error)
 }

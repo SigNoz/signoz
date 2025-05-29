@@ -8,6 +8,8 @@ import { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import JSONView from 'container/LogDetailedView/JsonView';
@@ -22,9 +24,12 @@ import dompurify from 'dompurify';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	BarChart2,
 	Braces,
+	Compass,
 	Copy,
 	Filter,
 	HardHat,
@@ -33,9 +38,12 @@ import {
 	X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
+import { useSelector } from 'react-redux';
+import { useCopyToClipboard, useLocation } from 'react-use';
+import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
@@ -77,6 +85,12 @@ function LogDetail({
 	});
 
 	const isDarkMode = useIsDarkMode();
+	const location = useLocation();
+	const { safeNavigate } = useSafeNavigate();
+	const urlQuery = useUrlQuery();
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const { notifications } = useNotifications();
 
@@ -119,6 +133,21 @@ function LogDetail({
 		});
 	};
 
+	// Go to logs explorer page with the log data
+	const handleOpenInExplorer = (): void => {
+		urlQuery.set(QueryParams.activeLogId, `"${log?.id}"`);
+		urlQuery.set(QueryParams.startTime, minTime?.toString() || '');
+		urlQuery.set(QueryParams.endTime, maxTime?.toString() || '');
+		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`);
+	};
+
+	// Only show when opened from infra monitoring page
+	const showOpenInExplorerBtn = useMemo(
+		() => location.pathname?.includes('/infrastructure-monitoring'),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
+	);
+
 	if (!log) {
 		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
@@ -131,10 +160,23 @@ function LogDetail({
 			width="60%"
 			maskStyle={{ background: 'none' }}
 			title={
-				<>
-					<Divider type="vertical" className={cx('log-type-indicator', LogType)} />
-					<Typography.Text className="title">Log details</Typography.Text>
-				</>
+				<div className="log-detail-drawer__title">
+					<div className="log-detail-drawer__title-left">
+						<Divider type="vertical" className={cx('log-type-indicator', LogType)} />
+						<Typography.Text className="title">Log details</Typography.Text>
+					</div>
+					{showOpenInExplorerBtn && (
+						<div className="log-detail-drawer__title-right">
+							<Button
+								className="open-in-explorer-btn"
+								icon={<Compass size={16} />}
+								onClick={handleOpenInExplorer}
+							>
+								Open in Explorer
+							</Button>
+						</div>
+					)}
+				</div>
 			}
 			placement="right"
 			// closable

@@ -3,10 +3,12 @@ package user
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/google/uuid"
 )
 
 type Module interface {
@@ -47,6 +49,19 @@ type Module interface {
 
 	// Auth Domain
 	GetAuthDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, error)
+	GetDomainFromSsoResponse(ctx context.Context, url *url.URL) (*types.GettableOrgDomain, error)
+
+	ListDomains(ctx context.Context, orgID valuer.UUID) ([]*types.GettableOrgDomain, error)
+	CreateDomain(ctx context.Context, domain *types.GettableOrgDomain) error
+	UpdateDomain(ctx context.Context, domain *types.GettableOrgDomain) error
+	DeleteDomain(ctx context.Context, id uuid.UUID) error
+
+	// API KEY
+	CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error
+	UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error
+	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error)
+	RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error
+	GetAPIKey(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.StorableAPIKeyUser, error)
 }
 
 type Handler interface {
@@ -72,4 +87,15 @@ type Handler interface {
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)
 	ResetPassword(http.ResponseWriter, *http.Request)
 	ChangePassword(http.ResponseWriter, *http.Request)
+
+	// API KEY
+	CreateAPIKey(http.ResponseWriter, *http.Request)
+	ListAPIKeys(http.ResponseWriter, *http.Request)
+	UpdateAPIKey(http.ResponseWriter, *http.Request)
+	RevokeAPIKey(http.ResponseWriter, *http.Request)
+
+	ListDomains(http.ResponseWriter, *http.Request)
+	CreateDomain(http.ResponseWriter, *http.Request)
+	UpdateDomain(http.ResponseWriter, *http.Request)
+	DeleteDomain(http.ResponseWriter, *http.Request)
 }
