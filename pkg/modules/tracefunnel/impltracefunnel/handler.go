@@ -3,7 +3,6 @@ package impltracefunnel
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -233,76 +232,4 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusOK, nil)
-}
-
-func (handler *handler) Save(rw http.ResponseWriter, r *http.Request) {
-	var req tf.PostableFunnel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"invalid request: %v", err))
-		return
-	}
-
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	funnel, err := handler.module.Get(r.Context(), req.FunnelID, valuer.MustNewUUID(claims.OrgID))
-	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"funnel not found: %v", err))
-		return
-	}
-
-	updateTimestamp := req.Timestamp
-	if updateTimestamp == 0 {
-		updateTimestamp = time.Now().UnixMilli()
-	} else if !tf.ValidateTimestampIsMilliseconds(updateTimestamp) {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"timestamp must be in milliseconds format (13 digits)"))
-		return
-	}
-
-	updatedAt, err := tf.ValidateAndConvertTimestamp(updateTimestamp)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	funnel.UpdatedAt = updatedAt
-	funnel.UpdatedBy = claims.UserID
-	funnel.Description = req.Description
-
-	if err := handler.module.Update(r.Context(), funnel, valuer.MustNewUUID(claims.OrgID)); err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"failed to save funnel: %v", err))
-		return
-	}
-
-	createdAtMillis, updatedAtMillis, extraDataFromDB, err := handler.module.GetFunnelMetadata(r.Context(), funnel.ID, valuer.MustNewUUID(claims.OrgID))
-	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"failed to get funnel metadata: %v", err))
-		return
-	}
-
-	resp := tf.GettableFunnel{
-		FunnelName:  funnel.Name,
-		CreatedAt:   createdAtMillis,
-		UpdatedAt:   updatedAtMillis,
-		CreatedBy:   funnel.CreatedBy,
-		UpdatedBy:   funnel.UpdatedBy,
-		OrgID:       funnel.OrgID.String(),
-		Description: extraDataFromDB,
-		UserEmail:   claims.Email,
-	}
-
-	render.Success(rw, http.StatusOK, resp)
 }
