@@ -105,8 +105,7 @@ function SideNav(): JSX.Element {
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
-	const isLicenseActive =
-		licenseStatus === 'VALID' || licenseStatus === 'SUSPENDED';
+	const isLicenseActive = licenseStatus !== 'INVALID';
 
 	const onClickSignozCloud = (): void => {
 		window.open(
