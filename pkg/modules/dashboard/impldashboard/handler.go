@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -92,19 +91,10 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var dashboard *dashboardtypes.Dashboard
 	idStr := mux.Vars(r)["id"]
 	dashboardID, err := valuer.NewUUID(idStr)
 	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	dashboard, err := handler.module.Get(ctx, orgID, dashboardID)
-	if err != nil {
-		if !errors.Ast(err, errors.TypeNotFound) {
-			render.Error(rw, err)
-			return
-		}
 		if handler.cloudIntegrationsController.IsCloudIntegrationDashboardUuid(idStr) {
 			_dashboard, apiErr := handler.cloudIntegrationsController.GetDashboardById(r.Context(), orgID, idStr)
 			if apiErr != nil {
@@ -120,6 +110,25 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 			}
 			dashboard = _dashboard
 		}
+
+		if dashboard == nil {
+			render.Error(rw, err)
+			return
+		} else {
+			gettableDashboard, err := dashboardtypes.NewGettableDashboardFromDashboard(dashboard)
+			if err != nil {
+				render.Error(rw, err)
+				return
+			}
+			render.Success(rw, http.StatusOK, gettableDashboard)
+			return
+		}
+	}
+
+	dashboard, err = handler.module.Get(ctx, orgID, dashboardID)
+	if err != nil {
+		render.Error(rw, err)
+		return
 	}
 	gettableDashboard, err := dashboardtypes.NewGettableDashboardFromDashboard(dashboard)
 	if err != nil {
