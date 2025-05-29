@@ -2,7 +2,7 @@ package impltracefunnel
 
 import (
 	"context"
-	"fmt"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -24,11 +24,11 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.StorableFun
 		sqlstore.
 		BunDB().
 		NewSelect().
-		Model((*traceFunnels.StorableFunnel)(nil)).
+		Model(new(traceFunnels.StorableFunnel)).
 		Where("name = ? AND org_id = ?", funnel.Name, funnel.OrgID.String()).
 		Exists(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to check for existing funnel: %v", err)
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to check for existing funnelr")
 	}
 	if exists {
 		return store.sqlstore.WrapAlreadyExistsErrf(nil, traceFunnels.ErrFunnelAlreadyExists, "a funnel with name '%s' already exists in this organization", funnel.Name)
@@ -41,7 +41,7 @@ func (store *store) Create(ctx context.Context, funnel *traceFunnels.StorableFun
 		Model(funnel).
 		Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to create funnel: %v", err)
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create funnels")
 	}
 
 	return nil
@@ -59,7 +59,7 @@ func (store *store) Get(ctx context.Context, uuid valuer.UUID, orgID valuer.UUID
 		Where("?TableAlias.id = ? AND ?TableAlias.org_id = ?", uuid.String(), orgID.String()).
 		Scan(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get funnel: %v", err)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get funnels")
 	}
 	return funnel, nil
 }
@@ -93,7 +93,7 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnel
 		Where("?TableAlias.org_id = ?", orgID.String()).
 		Scan(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list funnels: %v", err)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to list funnels")
 	}
 	return funnels, nil
 }
@@ -104,11 +104,11 @@ func (store *store) Delete(ctx context.Context, funnelID valuer.UUID, orgID valu
 		sqlstore.
 		BunDB().
 		NewDelete().
-		Model((*traceFunnels.StorableFunnel)(nil)).
+		Model(new(traceFunnels.StorableFunnel)).
 		Where("id = ? AND org_id = ?", funnelID.String(), orgID.String()).
 		Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to delete funnel: %v", err)
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete funnel")
 	}
 	return nil
 }
