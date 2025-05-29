@@ -408,7 +408,7 @@ func TestGetClaims(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
 			tt.setup(req)
 
-			claims, err := GetClaims(req)
+			claims, err := authtypes.ClaimsFromContext(req.Context())
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.Nil(t, claims)
