@@ -526,10 +526,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
 				break;
 			case 'chat-support':
-				if (window.Intercom) {
+				if (window.pylon) {
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-ignore
-					window.Intercom('show');
+					window.Pylon('show');
 				}
 				break;
 			default:
@@ -554,81 +554,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			default:
 		}
 	};
-
-	// useEffect(() => {
-	// 	let updatedMenuItems = defaultMenuItems;
-	// 	let updatedUserManagementItems: UserManagementMenuItems[] = [
-	// 		manageLicenseMenuItem,
-	// 	];
-
-	// 	if (isCloudUser || isEnterpriseSelfHostedUser) {
-	// 		const isOnboardingEnabled =
-	// 			featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
-	// 				?.active || false;
-
-	// 		if (!isOnboardingEnabled) {
-	// 			updatedMenuItems = updatedMenuItems.filter(
-	// 				(item) =>
-	// 					item.key !== ROUTES.GET_STARTED &&
-	// 					item.key !== ROUTES.ONBOARDING &&
-	// 					item.key !== ROUTES.GET_STARTED_WITH_CLOUD,
-	// 			);
-	// 		}
-
-	// 		const isOnBasicPlan =
-	// 			activeLicenseFetchError &&
-	// 			[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
-	// 				activeLicenseFetchError?.getHttpStatusCode(),
-	// 			);
-
-	// 		if (user.role !== USER_ROLES.ADMIN || isOnBasicPlan) {
-	// 			updatedMenuItems = updatedMenuItems.filter(
-	// 				(item) => item.key !== ROUTES.BILLING,
-	// 			);
-	// 		}
-
-	// 		updatedUserManagementItems = [helpSupportMenuItem];
-
-	// 		// Show manage license menu item for EE cloud users with a active license
-	// 		if (isEnterpriseSelfHostedUser) {
-	// 			updatedUserManagementItems.push(manageLicenseMenuItem);
-	// 		}
-	// 	} else {
-	// 		updatedMenuItems = updatedMenuItems.filter(
-	// 			(item) => item.key !== ROUTES.INTEGRATIONS && item.key !== ROUTES.BILLING,
-	// 		);
-	// 		const versionMenuItem = {
-	// 			key: SecondaryMenuItemKey.Version,
-	// 			label: !isCurrentVersionError ? currentVersion : t('n_a'),
-	// 			icon: !isLatestVersion ? (
-	// 				<AlertTriangle color={Color.BG_CHERRY_600} size={16} />
-	// 			) : (
-	// 				<CheckSquare color={Color.BG_FOREST_500} size={16} />
-	// 			),
-	// 			onClick: onClickVersionHandler,
-	// 		};
-
-	// 		updatedUserManagementItems = [versionMenuItem, slackSupportMenuItem];
-
-	// 		if (isCommunityEnterpriseUser) {
-	// 			updatedUserManagementItems.push(manageLicenseMenuItem);
-	// 		}
-	// 	}
-	// 	setMenuItems(updatedMenuItems);
-	// 	setUserManagementMenuItems(updatedUserManagementItems);
-	// }, [
-	// 	isCommunityEnterpriseUser,
-	// 	currentVersion,
-	// 	featureFlags,
-	// 	isCloudUser,
-	// 	isEnterpriseSelfHostedUser,
-	// 	isCurrentVersionError,
-	// 	isLatestVersion,
-	// 	onClickVersionHandler,
-	// 	t,
-	// 	user.role,
-	// 	activeLicenseFetchError,
-	// ]);
 
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
