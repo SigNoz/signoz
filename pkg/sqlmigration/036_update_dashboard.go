@@ -101,7 +101,7 @@ func (migration *updateDashboard) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	migration.store.Dialect().RenameTableAndModifyModel(ctx, tx, new(existingDashboard36), new(newDashboard36), []string{OrgReference}, func(ctx context.Context) error {
+	err = migration.store.Dialect().RenameTableAndModifyModel(ctx, tx, new(existingDashboard36), new(newDashboard36), []string{OrgReference}, func(ctx context.Context) error {
 		existingDashboards := make([]*existingDashboard36, 0)
 		err = tx.NewSelect().Model(&existingDashboards).Scan(ctx)
 		if err != nil {
@@ -126,6 +126,9 @@ func (migration *updateDashboard) Up(ctx context.Context, db *bun.DB) error {
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	err = tx.Commit()
 	if err != nil {
