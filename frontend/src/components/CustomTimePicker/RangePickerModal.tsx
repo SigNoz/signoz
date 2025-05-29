@@ -1,9 +1,14 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import './RangePickerModal.styles.scss';
 
 import { DatePicker } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
-import { LexicalContext } from 'container/TopNav/DateTimeSelectionV2/config';
+import {
+	CustomTimeType,
+	LexicalContext,
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
 import { Dispatch, SetStateAction, useMemo } from 'react';
@@ -19,6 +24,10 @@ interface RangePickerModalProps {
 		lexicalContext?: LexicalContext | undefined,
 	) => void;
 	selectedTime: string;
+	onTimeChange?: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	) => void;
 }
 
 function RangePickerModal(props: RangePickerModalProps): JSX.Element {
@@ -27,6 +36,7 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 		setIsOpen,
 		onCustomDateHandler,
 		selectedTime,
+		onTimeChange,
 	} = props;
 	const { RangePicker } = DatePicker;
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -74,13 +84,22 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 					date.tz(timezone.value).format(DATE_TIME_FORMATS.ISO_DATETIME)
 				}
 				onOk={onModalOkHandler}
-				// eslint-disable-next-line react/jsx-props-no-spreading
-				{...(selectedTime === 'custom' && {
-					value: rangeValue,
-				})}
+				{...(selectedTime === 'custom' &&
+					!onTimeChange && {
+						value: rangeValue,
+					})}
+				// use default value if onTimeChange is provided
+				{...(selectedTime === 'custom' &&
+					onTimeChange && {
+						defaultValue: rangeValue,
+					})}
 			/>
 		</div>
 	);
 }
+
+RangePickerModal.defaultProps = {
+	onTimeChange: undefined,
+};
 
 export default RangePickerModal;

@@ -191,8 +191,9 @@ function GridCardGraph({
 
 	const isLogsQuery = useMemo(
 		() =>
-			requestData.query.builder.queryData.every(
-				(query) => query.dataSource === DataSource.LOGS,
+			requestData?.query?.builder?.queryData?.length > 0 &&
+			requestData?.query?.builder?.queryData?.every(
+				(query) => query?.dataSource === DataSource.LOGS,
 			),
 		[requestData.query],
 	);
@@ -203,7 +204,7 @@ function GridCardGraph({
 			variables: getDashboardVariables(variables),
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval:
-				widget.panelTypes === PANEL_TYPES.LIST && isLogsQuery
+				widget?.panelTypes === PANEL_TYPES.LIST && isLogsQuery
 					? 'custom'
 					: globalSelectedInterval,
 			start: customTimeRange?.startTime || start,

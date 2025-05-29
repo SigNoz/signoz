@@ -58,7 +58,7 @@ function HostsListControls({
 
 			<div className="time-selector">
 				<DateTimeSelectionV2
-					showAutoRefresh={false}
+					showAutoRefresh
 					showRefreshText={false}
 					hideShareModal
 				/>

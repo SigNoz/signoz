@@ -86,7 +86,7 @@ function EntityLogsDetailedView({
 				</div>
 				<div className="datetime-section">
 					<DateTimeSelectionV2
-						showAutoRefresh={false}
+						showAutoRefresh
 						showRefreshText={false}
 						hideShareModal
 						isModalTimeSelection={isModalTimeSelection}

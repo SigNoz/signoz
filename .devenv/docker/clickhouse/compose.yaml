@@ -40,7 +40,7 @@ services:
       timeout: 5s
       retries: 3
   schema-migrator-sync:
-    image: signoz/signoz-schema-migrator:v0.111.41
+    image: signoz/signoz-schema-migrator:v0.111.42
     container_name: schema-migrator-sync
     command:
       - sync
@@ -53,7 +53,7 @@ services:
         condition: service_healthy
     restart: on-failure
   schema-migrator-async:
-    image: signoz/signoz-schema-migrator:v0.111.41
+    image: signoz/signoz-schema-migrator:v0.111.42
     container_name: schema-migrator-async
     command:
       - async

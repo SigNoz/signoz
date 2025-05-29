@@ -538,4 +538,5 @@ export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	TRACES_FILTERS: 'tracesFilters',
 	EVENTS_FILTERS: 'eventsFilters',
 	HOSTS_FILTERS: 'hostsFilters',
+	CURRENT_PAGE: 'currentPage',
 };

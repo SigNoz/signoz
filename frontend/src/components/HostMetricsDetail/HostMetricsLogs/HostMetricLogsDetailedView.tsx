@@ -11,6 +11,7 @@ import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { VIEWS } from '../constants';
 import HostMetricsLogs from './HostMetricsLogs';
 
 interface Props {
@@ -23,7 +24,7 @@ interface Props {
 		interval: Time | CustomTimeType,
 		dateTimeRange?: [number, number],
 	) => void;
-	handleChangeLogFilters: (value: IBuilderQuery['filters']) => void;
+	handleChangeLogFilters: (value: IBuilderQuery['filters'], view: VIEWS) => void;
 	logFilters: IBuilderQuery['filters'];
 	selectedInterval: Time;
 }
@@ -51,14 +52,14 @@ function HostMetricLogsDetailedView({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: [],
+							items: logFilters.items.filter((item) => item.key?.key !== 'host.name'),
 							op: 'AND',
 						},
 					},
 				],
 			},
 		}),
-		[currentQuery],
+		[currentQuery, logFilters.items],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
@@ -70,14 +71,14 @@ function HostMetricLogsDetailedView({
 					{query && (
 						<QueryBuilderSearch
 							query={query}
-							onChange={handleChangeLogFilters}
+							onChange={(value): void => handleChangeLogFilters(value, VIEWS.LOGS)}
 							disableNavigationShortcuts
 						/>
 					)}
 				</div>
 				<div className="datetime-section">
 					<DateTimeSelectionV2
-						showAutoRefresh={false}
+						showAutoRefresh
 						showRefreshText={false}
 						hideShareModal
 						isModalTimeSelection={isModalTimeSelection}

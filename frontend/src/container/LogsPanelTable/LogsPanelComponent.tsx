@@ -108,7 +108,7 @@ function LogsPanelComponent({
 			...prev,
 			tableParams: {
 				pagination: {
-					limit: widget.query.builder.queryData[0].limit || 0,
+					limit: widget.query?.builder?.queryData[0]?.limit || 0,
 					offset: newOffset < 0 ? 0 : newOffset,
 				},
 			},

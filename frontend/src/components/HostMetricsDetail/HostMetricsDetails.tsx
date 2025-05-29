@@ -19,6 +19,8 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { getFiltersFromParams } from 'container/InfraMonitoringK8s/commonUtils';
+import { INFRA_MONITORING_K8S_PARAMS_KEYS } from 'container/InfraMonitoringK8s/constants';
 import {
 	CustomTimeType,
 	Time,
@@ -93,8 +95,18 @@ function HostMetricsDetails({
 	);
 	const isDarkMode = useIsDarkMode();
 
-	const initialFilters = useMemo(
-		() => ({
+	const initialFilters = useMemo(() => {
+		const urlView = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW);
+		const queryKey =
+			urlView === VIEW_TYPES.LOGS
+				? INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS
+				: INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS;
+		const filters = getFiltersFromParams(searchParams, queryKey);
+		if (filters) {
+			return filters;
+		}
+
+		return {
 			op: 'AND',
 			items: [
 				{
@@ -111,9 +123,8 @@ function HostMetricsDetails({
 					value: host?.hostName || '',
 				},
 			],
-		}),
-		[host?.hostName],
-	);
+		};
+	}, [host?.hostName, searchParams]);
 
 	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
 		initialFilters,
@@ -154,7 +165,13 @@ function HostMetricsDetails({
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
 		if (host?.hostName) {
-			setSearchParams({ hostName: host?.hostName, view: e.target.value });
+			setSelectedView(e.target.value);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: e.target.value,
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(null),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(null),
+			});
 		}
 		logEvent(InfraMonitoringEvents.TabChanged, {
 			entity: InfraMonitoringEvents.HostEntity,
@@ -191,7 +208,7 @@ function HostMetricsDetails({
 	);
 
 	const handleChangeLogFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogFilters((prevFilters) => {
 				const hostNameFilter = prevFilters.items.find(
 					(item) => item.key?.key === 'host.name',
@@ -209,7 +226,7 @@ function HostMetricsDetails({
 					});
 				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: [
 						hostNameFilter,
@@ -217,6 +234,15 @@ function HostMetricsDetails({
 						...(paginationFilter ? [paginationFilter] : []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -224,7 +250,7 @@ function HostMetricsDetails({
 	);
 
 	const handleChangeTracesFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setTracesFilters((prevFilters) => {
 				const hostNameFilter = prevFilters.items.find(
 					(item) => item.key?.key === 'host.name',
@@ -238,13 +264,23 @@ function HostMetricsDetails({
 					});
 				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: [
 						hostNameFilter,
 						...value.items.filter((item) => item.key?.key !== 'host.name'),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

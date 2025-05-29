@@ -23,7 +23,7 @@ import {
 } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -94,6 +94,45 @@ function EntityMetrics<T>({
 		[queries],
 	);
 
+	const [graphTimeIntervals, setGraphTimeIntervals] = useState<
+		{
+			start: number;
+			end: number;
+		}[]
+	>(
+		new Array(queries.length).fill({
+			start: timeRange.startTime,
+			end: timeRange.endTime,
+		}),
+	);
+
+	useEffect(() => {
+		setGraphTimeIntervals(
+			new Array(queries.length).fill({
+				start: timeRange.startTime,
+				end: timeRange.endTime,
+			}),
+		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [timeRange]);
+
+	const onDragSelect = useCallback(
+		(start: number, end: number, graphIndex: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			setGraphTimeIntervals((prev) => {
+				const newIntervals = [...prev];
+				newIntervals[graphIndex] = {
+					start: Math.floor(startTimestamp / 1000),
+					end: Math.floor(endTimestamp / 1000),
+				};
+				return newIntervals;
+			});
+		},
+		[],
+	);
+
 	const options = useMemo(
 		() =>
 			queries.map(({ data }, idx) => {
@@ -108,9 +147,9 @@ function EntityMetrics<T>({
 					yAxisUnit: entityWidgetInfo[idx].yAxisUnit,
 					softMax: null,
 					softMin: null,
-					minTimeScale: timeRange.startTime,
-					maxTimeScale: timeRange.endTime,
-					enableZoom: true,
+					minTimeScale: graphTimeIntervals[idx].start,
+					maxTimeScale: graphTimeIntervals[idx].end,
+					onDragSelect: (start, end) => onDragSelect(start, end, idx),
 				});
 			}),
 		[
@@ -118,8 +157,8 @@ function EntityMetrics<T>({
 			isDarkMode,
 			dimensions,
 			entityWidgetInfo,
-			timeRange.startTime,
-			timeRange.endTime,
+			graphTimeIntervals,
+			onDragSelect,
 		],
 	);
 
