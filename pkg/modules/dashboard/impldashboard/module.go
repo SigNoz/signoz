@@ -75,7 +75,7 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	return dashboard, nil
 }
 
-func (module *module) Update(ctx context.Context, dashboard *dashboardtypes.Dashboard) error {
+func (module *module) Update(ctx context.Context, orgID valuer.UUID, dashboard *dashboardtypes.Dashboard) error {
 	dashboardUUID, err := valuer.NewUUID(dashboard.ID)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "id should be a valid uuid")
@@ -101,7 +101,7 @@ func (module *module) Update(ctx context.Context, dashboard *dashboardtypes.Dash
 	if err != nil {
 		return err
 	}
-	return module.store.Update(ctx, storableDashboard)
+	return module.store.Update(ctx, orgID, storableDashboard)
 }
 
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, lock bool) error {
@@ -115,8 +115,7 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 		return err
 	}
 
-	// TODO[@vikrantgupta25]: update this
-	return module.store.Update(ctx, storableDashboard)
+	return module.store.Update(ctx, orgID, storableDashboard)
 }
 
 func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {

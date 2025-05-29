@@ -15,7 +15,7 @@ type Module interface {
 
 	GetAll(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 
-	Update(ctx context.Context, data *dashboardtypes.Dashboard) error
+	Update(ctx context.Context, orgID valuer.UUID, data *dashboardtypes.Dashboard) error
 
 	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 

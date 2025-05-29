@@ -256,7 +256,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.Update(ctx, dashboard)
+	err = handler.module.Update(ctx, orgID, dashboard)
 	if err != nil {
 		render.Error(rw, err)
 		return

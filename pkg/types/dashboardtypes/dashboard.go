@@ -262,7 +262,7 @@ type Store interface {
 
 	GetAll(context.Context, valuer.UUID) ([]*StorableDashboard, error)
 
-	Update(context.Context, *StorableDashboard) error
+	Update(context.Context, valuer.UUID, *StorableDashboard) error
 
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 }
