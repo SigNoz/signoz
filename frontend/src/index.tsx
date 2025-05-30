@@ -46,9 +46,6 @@ if (container) {
 								<AppRoutes />
 							</AppProvider>
 						</Provider>
-						{/* {process.env.NODE_ENV === 'development' && (
-							<ReactQueryDevtools initialIsOpen={false} />
-						)} */}
 					</QueryClientProvider>
 				</TimezoneProvider>
 			</ThemeProvider>
