@@ -18,7 +18,6 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import QuerySection from 'container/TracesExplorer/QuerySection';
-import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -119,9 +118,7 @@ function TracesExplorer(): JSX.Element {
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	const { isLoading } = useUpdateDashboard();
-
-	const getUpdatedQueryForExport = (): Query => {
+	const getUpdatedQueryForExport = useCallback((): Query => {
 		const updatedQuery = cloneDeep(currentQuery);
 
 		set(
@@ -131,7 +128,7 @@ function TracesExplorer(): JSX.Element {
 		);
 
 		return updatedQuery;
-	};
+	}, [currentQuery, options.selectColumns]);
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
@@ -163,8 +160,7 @@ function TracesExplorer(): JSX.Element {
 
 			safeNavigate(dashboardEditView);
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[exportDefaultQuery, panelType],
+		[exportDefaultQuery, panelType, safeNavigate, getUpdatedQueryForExport],
 	);
 
 	useShareBuilderUrl(defaultQuery);
@@ -235,11 +231,7 @@ function TracesExplorer(): JSX.Element {
 
 					<Container className="traces-explorer-views">
 						<ActionsWrapper>
-							<ExportPanel
-								query={exportDefaultQuery}
-								isLoading={isLoading}
-								onExport={handleExport}
-							/>
+							<ExportPanel query={exportDefaultQuery} onExport={handleExport} />
 						</ActionsWrapper>
 
 						<Tabs
@@ -252,7 +244,6 @@ function TracesExplorer(): JSX.Element {
 					<ExplorerOptionWrapper
 						disabled={!stagedQuery}
 						query={exportDefaultQuery}
-						isLoading={isLoading}
 						sourcepage={DataSource.TRACES}
 						onExport={handleExport}
 					/>

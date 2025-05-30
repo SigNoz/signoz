@@ -6,7 +6,6 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
-import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -34,7 +33,6 @@ function Explorer(): JSX.Element {
 		currentQuery,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
-	const { isLoading } = useUpdateDashboard();
 
 	const [searchParams, setSearchParams] = useSearchParams();
 	const isOneChartPerQueryEnabled =
@@ -84,8 +82,7 @@ function Explorer(): JSX.Element {
 
 			safeNavigate(dashboardEditView);
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[exportDefaultQuery],
+		[exportDefaultQuery, safeNavigate],
 	);
 
 	const splitedQueries = useMemo(
@@ -148,7 +145,6 @@ function Explorer(): JSX.Element {
 			<ExplorerOptionWrapper
 				disabled={!stagedQuery}
 				query={exportDefaultQuery}
-				isLoading={isLoading}
 				sourcepage={DataSource.METRICS}
 				onExport={handleExport}
 				isOneChartPerQuery={showOneChartPerQuery}

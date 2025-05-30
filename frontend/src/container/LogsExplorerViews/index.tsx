@@ -28,7 +28,6 @@ import LogsExplorerTable from 'container/LogsExplorerTable';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import dayjs from 'dayjs';
-import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
@@ -389,8 +388,6 @@ function LogsExplorerViews({
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data?.payload]);
-
-	const { isLoading: isUpdateDashboardLoading } = useUpdateDashboard();
 
 	const getUpdatedQueryForExport = useCallback((): Query => {
 		const updatedQuery = cloneDeep(currentQuery);
@@ -756,7 +753,6 @@ function LogsExplorerViews({
 			<ExplorerOptionWrapper
 				disabled={!stagedQuery}
 				query={exportDefaultQuery}
-				isLoading={isUpdateDashboardLoading}
 				onExport={handleExport}
 				sourcepage={DataSource.LOGS}
 			/>
