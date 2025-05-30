@@ -176,8 +176,8 @@ func GetFunnelStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange t
 	if len(funnel.Steps) > 2 {
 		latencyPointerT3 = funnelSteps[2].LatencyPointer
 	}
-	latencyTypeT2 := "p99"
-	latencyTypeT3 := "p99"
+	latencyTypeT2 := "0.99"
+	latencyTypeT3 := "0.99"
 
 	if stepStart == stepEnd {
 		return nil, fmt.Errorf("step start and end cannot be the same for /step/overview")
@@ -194,10 +194,24 @@ func GetFunnelStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange t
 	}
 
 	if funnelSteps[1].LatencyType != "" {
-		latencyTypeT2 = strings.ToLower(funnelSteps[1].LatencyType)
+		latency := strings.ToLower(funnelSteps[1].LatencyType)
+		if latency == "p90" {
+			latencyTypeT2 = "0.90"
+		} else if latency == "p95" {
+			latencyTypeT2 = "0.95"
+		} else {
+			latencyTypeT2 = "0.99"
+		}
 	}
 	if len(funnel.Steps) > 2 && funnelSteps[2].LatencyType != "" {
-		latencyTypeT3 = strings.ToLower(funnelSteps[2].LatencyType)
+		latency := strings.ToLower(funnelSteps[2].LatencyType)
+		if latency == "p90" {
+			latencyTypeT3 = "0.90"
+		} else if latency == "p95" {
+			latencyTypeT3 = "0.95"
+		} else {
+			latencyTypeT3 = "0.99"
+		}
 	}
 
 	// Build filter clauses for each step
