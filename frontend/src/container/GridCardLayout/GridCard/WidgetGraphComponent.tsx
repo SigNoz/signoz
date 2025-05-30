@@ -120,11 +120,9 @@ function WidgetGraphComponent({
 
 		const updatedSelectedDashboard: Props = {
 			data: {
-				data: {
-					...selectedDashboard.data,
-					widgets: updatedWidgets,
-					layout: updatedLayout,
-				},
+				...selectedDashboard.data,
+				widgets: updatedWidgets,
+				layout: updatedLayout,
 			},
 			id: selectedDashboard.id,
 		};
@@ -162,20 +160,19 @@ function WidgetGraphComponent({
 		updateDashboardMutation.mutateAsync(
 			{
 				id: selectedDashboard.id,
+
 				data: {
-					data: {
-						...selectedDashboard.data,
-						layout,
-						widgets: [
-							...(selectedDashboard.data.widgets || []),
-							{
-								...{
-									...widget,
-									id: uuid,
-								},
+					...selectedDashboard.data,
+					layout,
+					widgets: [
+						...(selectedDashboard.data.widgets || []),
+						{
+							...{
+								...widget,
+								id: uuid,
 							},
-						],
-					},
+						},
+					],
 				},
 			},
 			{

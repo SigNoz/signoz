@@ -172,11 +172,10 @@ function VariablesSetting({
 		updateMutation.mutateAsync(
 			{
 				id: selectedDashboard.id,
+
 				data: {
-					data: {
-						...selectedDashboard.data,
-						variables: updatedVariablesData,
-					},
+					...selectedDashboard.data,
+					variables: updatedVariablesData,
 				},
 			},
 			{

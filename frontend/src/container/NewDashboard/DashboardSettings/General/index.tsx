@@ -43,13 +43,11 @@ function GeneralDashboardSettings(): JSX.Element {
 			{
 				id: selectedDashboard.id,
 				data: {
-					data: {
-						...selectedDashboard.data,
-						description: updatedDescription,
-						tags: updatedTags,
-						title: updatedTitle,
-						image: updatedImage,
-					},
+					...selectedDashboard.data,
+					description: updatedDescription,
+					tags: updatedTags,
+					title: updatedTitle,
+					image: updatedImage,
 				},
 			},
 			{

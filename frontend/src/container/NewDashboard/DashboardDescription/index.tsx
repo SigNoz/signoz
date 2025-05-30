@@ -174,11 +174,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		}
 		const updatedDashboard: Props = {
 			id: selectedDashboard.id,
+
 			data: {
-				data: {
-					...selectedDashboard.data,
-					title: updatedTitle,
-				},
+				...selectedDashboard.data,
+				title: updatedTitle,
 			},
 		};
 		updateDashboardMutation.mutate(updatedDashboard, {
@@ -245,33 +244,32 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 		const updatedDashboard: Props = {
 			id: selectedDashboard.id,
+
 			data: {
-				data: {
-					...selectedDashboard.data,
-					layout: [
-						{
-							i: id,
-							w: 12,
-							minW: 12,
-							minH: 1,
-							maxH: 1,
-							x: 0,
-							h: 1,
-							y: 0,
-						},
-						...layouts.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
-					],
-					panelMap: { ...panelMap, [id]: newRowWidgetMap },
-					widgets: [
-						...(selectedDashboard.data.widgets || []),
-						{
-							id,
-							title: sectionName,
-							description: '',
-							panelTypes: PANEL_GROUP_TYPES.ROW,
-						},
-					],
-				},
+				...selectedDashboard.data,
+				layout: [
+					{
+						i: id,
+						w: 12,
+						minW: 12,
+						minH: 1,
+						maxH: 1,
+						x: 0,
+						h: 1,
+						y: 0,
+					},
+					...layouts.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
+				],
+				panelMap: { ...panelMap, [id]: newRowWidgetMap },
+				widgets: [
+					...(selectedDashboard.data.widgets || []),
+					{
+						id,
+						title: sectionName,
+						description: '',
+						panelTypes: PANEL_GROUP_TYPES.ROW,
+					},
+				],
 			},
 		};
 

@@ -1,4 +1,4 @@
-import update from 'api/v1/dashboards/update';
+import update from 'api/v1/dashboards/id/update';
 import dayjs from 'dayjs';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';

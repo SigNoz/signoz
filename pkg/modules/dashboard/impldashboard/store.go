@@ -31,22 +31,6 @@ func (store *store) Create(ctx context.Context, storabledashboard *dashboardtype
 	return nil
 }
 
-func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
-	_, err := store.
-		sqlstore.
-		BunDB().
-		NewDelete().
-		Model(new(dashboardtypes.StorableDashboard)).
-		Where("id = ?", id).
-		Where("org_id = ?", orgID).
-		Exec(ctx)
-	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", id)
-	}
-
-	return nil
-}
-
 func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.StorableDashboard, error) {
 	storableDashboard := new(dashboardtypes.StorableDashboard)
 
@@ -93,6 +77,22 @@ func (store *store) Update(ctx context.Context, orgID valuer.UUID, storableDashb
 		Exec(ctx)
 	if err != nil {
 		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeAlreadyExists, "dashboard with id %s doesn't exist", storableDashboard.ID)
+	}
+
+	return nil
+}
+
+func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDB().
+		NewDelete().
+		Model(new(dashboardtypes.StorableDashboard)).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", id)
 	}
 
 	return nil

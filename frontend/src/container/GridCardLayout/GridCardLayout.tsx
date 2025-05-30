@@ -171,20 +171,18 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		const updatedDashboard: Props = {
 			id: selectedDashboard.id,
 			data: {
-				data: {
-					...selectedDashboard.data,
-					panelMap: { ...currentPanelMap },
-					layout: dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
-					widgets: selectedDashboard?.data?.widgets?.map((widget) => {
-						if (columnWidths?.[widget.id]) {
-							return {
-								...widget,
-								columnWidths: columnWidths[widget.id],
-							};
-						}
-						return widget;
-					}),
-				},
+				...selectedDashboard.data,
+				panelMap: { ...currentPanelMap },
+				layout: dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
+				widgets: selectedDashboard?.data?.widgets?.map((widget) => {
+					if (columnWidths?.[widget.id]) {
+						return {
+							...widget,
+							columnWidths: columnWidths[widget.id],
+						};
+					}
+					return widget;
+				}),
 			},
 		};
 
@@ -283,10 +281,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		const updatedSelectedDashboard: Props = {
 			id: selectedDashboard.id,
 			data: {
-				data: {
-					...selectedDashboard.data,
-					widgets: updatedWidgets,
-				},
+				...selectedDashboard.data,
+				widgets: updatedWidgets,
 			},
 		};
 
@@ -438,12 +434,10 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		const updatedSelectedDashboard: Props = {
 			id: selectedDashboard.id,
 			data: {
-				data: {
-					...selectedDashboard.data,
-					widgets: updatedWidgets,
-					layout: updatedLayout,
-					panelMap: updatedPanelMap,
-				},
+				...selectedDashboard.data,
+				widgets: updatedWidgets,
+				layout: updatedLayout,
+				panelMap: updatedPanelMap,
 			},
 		};
 

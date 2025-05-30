@@ -138,6 +138,34 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id string, 
 	return dashboard, nil
 }
 
+func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id string, updatedBy string, lock bool) error {
+	if module.cloudIntegrationsController.IsCloudIntegrationDashboardUuid(id) || module.integrationsController.IsInstalledIntegrationDashboardID(id) {
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot unlock the integrations dashboards")
+	}
+
+	dashboard, err := module.Get(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	err = dashboard.LockUnlock(lock, updatedBy)
+	if err != nil {
+		return err
+	}
+	storableDashboard, err := dashboardtypes.NewStorableDashboardFromDashboard(dashboard)
+	if err != nil {
+		return err
+	}
+
+	err = module.store.Update(ctx, orgID, storableDashboard)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id string) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
@@ -145,7 +173,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id string) 
 	}
 
 	if dashboard.Locked {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
 	}
 
 	dashboardID, err := valuer.NewUUID(id)

@@ -17,6 +17,8 @@ type Module interface {
 
 	Update(ctx context.Context, orgID valuer.UUID, id string, updatedBy string, data dashboardtypes.UpdatableDashboard) (*dashboardtypes.Dashboard, error)
 
+	LockUnlock(ctx context.Context, orgID valuer.UUID, id string, updatedBy string, lock bool) error
+
 	Delete(ctx context.Context, orgID valuer.UUID, id string) error
 
 	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
@@ -30,6 +32,10 @@ type Handler interface {
 	GetAll(http.ResponseWriter, *http.Request)
 
 	Update(http.ResponseWriter, *http.Request)
+
+	Lock(http.ResponseWriter, *http.Request)
+
+	Unlock(http.ResponseWriter, *http.Request)
 
 	Delete(http.ResponseWriter, *http.Request)
 }

@@ -34,8 +34,7 @@ type Dashboard struct {
 }
 
 type UpdatableDashboard struct {
-	StorableDashboardData StorableDashboardData `json:"data"`
-	Locked                bool                  `json:"locked"`
+	StorableDashboardData `json:"data"`
 }
 
 type (
@@ -231,12 +230,29 @@ func (dashboard *Dashboard) Update(updatableDashboard UpdatableDashboard, update
 	if dashboard.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
-	dashboard.Locked = updatableDashboard.Locked
 	dashboard.UpdatedBy = updatedBy
 	dashboard.UpdatedAt = time.Now()
 
 	if updatableDashboard.StorableDashboardData != nil {
 		dashboard.Data = updatableDashboard.StorableDashboardData
+	}
+	return nil
+}
+
+func (dashboard *Dashboard) LockUnlock(lock bool, updatedBy string) error {
+	err := dashboard.CanLockUnlock(updatedBy)
+	if err != nil {
+		return err
+	}
+	dashboard.Locked = lock
+	dashboard.UpdatedBy = updatedBy
+	dashboard.UpdatedAt = time.Now()
+	return nil
+}
+
+func (dashboard *Dashboard) CanLockUnlock(updatedBy string) error {
+	if dashboard.CreatedBy != updatedBy {
+		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}
 	return nil
 }

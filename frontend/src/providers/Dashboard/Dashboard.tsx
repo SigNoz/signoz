@@ -1,7 +1,8 @@
 /* eslint-disable no-nested-ternary */
 import { Modal } from 'antd';
-import getDashboard from 'api/v1/dashboards/get';
-import update from 'api/v1/dashboards/update';
+import getDashboard from 'api/v1/dashboards/id/get';
+import locked from 'api/v1/dashboards/id/lock';
+import unlocked from 'api/v1/dashboards/id/unlock';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
@@ -396,22 +397,32 @@ export function DashboardProvider({
 		setIsDashboardSlider(value);
 	};
 
-	const { mutate: lockDashboard } = useMutation(update, {
+	const { mutate: lockDashboard } = useMutation(locked, {
 		onSuccess: () => {
 			setIsDashboardSlider(false);
 			setIsDashboardLocked(true);
 		},
 	});
 
+	const { mutate: unlockDashboard } = useMutation(unlocked, {
+		onSuccess: () => {
+			setIsDashboardSlider(false);
+			setIsDashboardLocked(false);
+		},
+	});
+
 	const handleDashboardLockToggle = async (value: boolean): Promise<void> => {
 		if (selectedDashboard) {
 			try {
-				await lockDashboard({
-					id: selectedDashboard.id,
-					data: {
-						locked: value,
-					},
-				});
+				if (value) {
+					await lockDashboard({
+						id: selectedDashboard.id,
+					});
+				} else {
+					await unlockDashboard({
+						id: selectedDashboard.id,
+					});
+				}
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}

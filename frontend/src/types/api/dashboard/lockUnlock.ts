@@ -1,11 +1,10 @@
-import { Dashboard, DashboardData } from './getAll';
+import { Dashboard } from './getAll';
 
 export type Props = {
 	id: Dashboard['id'];
-	data: DashboardData;
 };
 
 export interface PayloadProps {
-	data: Dashboard;
+	data: null;
 	status: string;
 }

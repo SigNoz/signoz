@@ -1,4 +1,4 @@
-import deleteDashboard from 'api/v1/dashboards/delete';
+import deleteDashboard from 'api/v1/dashboards/id/delete';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useMutation, UseMutationResult } from 'react-query';
