@@ -28,11 +28,13 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
 import { getOrderByFromParams } from '../commonUtils';
 import {
+	GetK8sEntityToAggregateAttribute,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
-	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
@@ -135,6 +137,11 @@ function K8sClustersList({
 		}
 	}, [quickFiltersLastUpdated]);
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const createFiltersForSelectedRowData = (
 		selectedRowData: K8sClustersRowData,
 		groupBy: IBuilderQuery['groupBy'],
@@ -194,6 +201,8 @@ function K8sClustersList({
 			queryKey: ['clusterList', fetchGroupedByRowDataQuery],
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const {
@@ -202,8 +211,10 @@ function K8sClustersList({
 	} = useGetAggregateKeys(
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute:
-				K8sEntityToAggregateAttributeMapping[K8sCategory.CLUSTERS],
+			aggregateAttribute: GetK8sEntityToAggregateAttribute(
+				K8sCategory.CLUSTERS,
+				dotMetricsEnabled,
+			),
 			aggregateOperator: 'noop',
 			searchText: '',
 			tagType: '',
@@ -249,6 +260,8 @@ function K8sClustersList({
 			queryKey: ['clusterList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const clustersData = useMemo(() => data?.payload?.data?.records || [], [data]);

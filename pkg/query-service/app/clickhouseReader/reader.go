@@ -3003,18 +3003,22 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 	return &result, nil
 }
 
-func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest, skipDotNames bool, skipSignozMetrics bool) (*v3.AggregateAttributeResponse, error) {
+func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest, skipSignozMetrics bool) (*v3.AggregateAttributeResponse, error) {
 
 	var query string
 	var err error
 	var rows driver.Rows
 	var response v3.AggregateAttributeResponse
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
 
-	query = fmt.Sprintf("SELECT metric_name, type, is_monotonic, temporality FROM %s.%s WHERE metric_name ILIKE $1 GROUP BY metric_name, type, is_monotonic, temporality", signozMetricDBName, signozTSTableNameV41Day)
+	query = fmt.Sprintf("SELECT metric_name, type, is_monotonic, temporality FROM %s.%s WHERE metric_name ILIKE $1 and __normalized = $2 GROUP BY metric_name, type, is_monotonic, temporality", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), normalized)
 
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -3030,11 +3034,8 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 		if err := rows.Scan(&metricName, &typ, &isMonotonic, &temporality); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
-		if skipDotNames && strings.Contains(metricName, ".") {
-			continue
-		}
 
-		if skipSignozMetrics && strings.HasPrefix(metricName, "signoz_") {
+		if skipSignozMetrics && strings.HasPrefix(metricName, "signoz") {
 			continue
 		}
 
@@ -3077,12 +3078,17 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
 	// skips the internal attributes i.e attributes starting with __
-	query = fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE metric_name=$1 AND unix_milli >= $2 AND __normalized = true GROUP BY tagKeys) WHERE distinctTagKey ILIKE $3 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
+	query = fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE metric_name=$1 AND unix_milli >= $2 AND __normalized = $3 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $4 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, common.PastDayRoundOff(), fmt.Sprintf("%%%s%%", req.SearchText))
+	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, common.PastDayRoundOff(), normalized, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
@@ -3113,16 +3119,19 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name IN $2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
+	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name IN $2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 AND __normalized=$6 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 	names := []string{req.AggregateAttribute}
-	if _, ok := metrics.MetricsUnderTransition[req.AggregateAttribute]; ok {
-		names = append(names, metrics.MetricsUnderTransition[req.AggregateAttribute])
-	}
+	names = append(names, metrics.GetTransitionedMetric(req.AggregateAttribute, normalized))
 
-	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
+	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff(), normalized)
 
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -4992,15 +5001,19 @@ func (r *ClickHouseReader) SubscribeToQueryProgress(
 	return r.queryProgressTracker.SubscribeToQueryProgress(queryId)
 }
 
-func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, req *metrics_explorer.FilterKeyRequest, skipDotNames bool) (*[]v3.AttributeKey, *model.ApiError) {
+func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, req *metrics_explorer.FilterKeyRequest) (*[]v3.AttributeKey, *model.ApiError) {
 	var rows driver.Rows
 	var response []v3.AttributeKey
-	query := fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE unix_milli >= $1 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $2 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+	query := fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE unix_milli >= $1 and __normalized = $2 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $3 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-	rows, err := r.db.Query(valueCtx, query, common.PastDayRoundOff(), fmt.Sprintf("%%%s%%", req.SearchText)) //only showing past day data
+	rows, err := r.db.Query(valueCtx, query, common.PastDayRoundOff(), normalized, fmt.Sprintf("%%%s%%", req.SearchText)) //only showing past day data
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -5010,9 +5023,6 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, 
 	for rows.Next() {
 		if err := rows.Scan(&attributeKey); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
-		}
-		if skipDotNames && strings.Contains(attributeKey, ".") {
-			continue
 		}
 		key := v3.AttributeKey{
 			Key:      attributeKey,
@@ -5033,13 +5043,17 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context
 	var err error
 	var rows driver.Rows
 	var attributeValues []string
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
 
-	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE JSONExtractString(labels, $2) ILIKE $3 AND unix_milli >= $4 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
+	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE JSONExtractString(labels, $2) ILIKE $3 AND unix_milli >= $4 AND __normalized = $5 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-	rows, err = r.db.Query(valueCtx, query, req.FilterKey, req.FilterKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff()) //only showing past day data
+	rows, err = r.db.Query(valueCtx, query, req.FilterKey, req.FilterKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff(), normalized) //only showing past day data
 
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -5176,6 +5190,11 @@ func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metri
 			whereClause = "AND " + strings.Join(conditions, " AND ")
 		}
 	}
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
 	const baseQueryTemplate = `
 SELECT 
     kv.1 AS key,
@@ -5183,11 +5202,13 @@ SELECT
     length(groupUniqArray(10000)(kv.2)) AS valueCount
 FROM %s.%s
 ARRAY JOIN arrayFilter(x -> NOT startsWith(x.1, '__'), JSONExtractKeysAndValuesRaw(labels)) AS kv
-WHERE metric_name = ? AND __normalized=true %s`
+WHERE metric_name = ? AND __normalized=? %s`
 
 	var args []interface{}
 	args = append(args, metricName)
 	tableName := signozTSTableNameV41Week
+
+	args = append(args, normalized)
 
 	if start != nil && end != nil {
 		st, en, tsTable, _ := utils.WhichTSTableToUse(*start, *end)
@@ -5264,6 +5285,11 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY %s %s", req.OrderBy.ColumnName, req.OrderBy.Order)
 	}
 
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
 	// Determine which tables to use
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
 	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
@@ -5278,8 +5304,8 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 			uniq(metric_name) OVER() AS total
 		FROM %s.%s AS t
 		WHERE unix_milli BETWEEN ? AND ?
-		AND NOT startsWith(metric_name, 'signoz_')
-		AND __normalized = true
+		AND NOT startsWith(metric_name, 'signoz')
+		AND __normalized = ?
 		%s
 		GROUP BY t.metric_name
 		%s
@@ -5287,6 +5313,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 		signozMetricDBName, tsTable, whereClause, orderByClauseFirstQuery, firstQueryLimit, req.Offset)
 
 	args = append(args, start, end)
+	args = append(args, normalized)
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	begin := time.Now()
 	rows, err := r.db.Query(valueCtx, metricsQuery, args...)
@@ -5346,7 +5373,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 					SELECT fingerprint
 					FROM %s.%s
 					WHERE metric_name IN (%s)
-					AND __normalized = true
+					AND __normalized = ?
 					AND unix_milli BETWEEN ? AND ?
 					%s
 					GROUP BY fingerprint
@@ -5361,6 +5388,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 			metricsList,
 			whereClause,
 		))
+		args = append(args, normalized)
 		args = append(args, start, end)
 		args = append(args, req.Start, req.End)
 	} else {
@@ -5455,6 +5483,11 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError) {
 	var args []interface{}
 
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
 	// Build filters dynamically
 	conditions, _ := utils.BuildFilterConditions(&req.Filters, "")
 	whereClause := ""
@@ -5475,9 +5508,9 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 					uniq(fingerprint) AS total_value,
 					(SELECT uniq(fingerprint) 
 					 FROM %s.%s 
-					 WHERE unix_milli BETWEEN ? AND ? AND __normalized = true) AS total_time_series
+					 WHERE unix_milli BETWEEN ? AND ? AND __normalized = ?) AS total_time_series
 				FROM %s.%s
-				WHERE unix_milli BETWEEN ? AND ? AND NOT startsWith(metric_name, 'signoz_') AND __normalized = true %s
+				WHERE unix_milli BETWEEN ? AND ? AND NOT startsWith(metric_name, 'signoz') AND __normalized = ? %s
 				GROUP BY metric_name
 			)
 			ORDER BY percentage DESC
@@ -5491,8 +5524,10 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 	)
 
 	args = append(args,
-		start, end, // For total_time_series subquery
+		start, end,
+		normalized, // For total_time_series subquery
 		start, end, // For main query
+		normalized,
 	)
 
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
@@ -5532,6 +5567,11 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 		whereClause = "AND " + strings.Join(conditions, " AND ")
 	}
 
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
 	// Determine time range and tables to use
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
 	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
@@ -5543,7 +5583,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 		    uniq(ts.fingerprint) AS timeSeries
 		FROM %s.%s AS ts
 		WHERE NOT startsWith(ts.metric_name, 'signoz_')
-		AND __normalized = true
+		AND __normalized = ?
 		AND unix_milli BETWEEN ? AND ?
 		%s
 		GROUP BY ts.metric_name
@@ -5554,7 +5594,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	begin := time.Now()
-	rows, err := r.db.Query(valueCtx, metricsQuery, start, end)
+	rows, err := r.db.Query(valueCtx, metricsQuery, normalized, start, end)
 	duration := time.Since(begin)
 	zap.L().Info("Time taken to execute samples percentage metric name query to reduce search space", zap.String("query", metricsQuery), zap.Any("start", start), zap.Any("end", end), zap.Duration("duration", duration))
 	if err != nil {
@@ -5626,13 +5666,13 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 				FROM %s.%s AS ts
 				WHERE ts.metric_name IN (%s)
 				AND unix_milli BETWEEN ? AND ?
-				AND __normalized = true
+				AND __normalized = ?
 				%s
 				GROUP BY ts.fingerprint
 			)`,
 			signozMetricDBName, localTsTable, metricsList, whereClause,
 		))
-		args = append(args, start, end)
+		args = append(args, start, end, normalized)
 	}
 
 	// Apply metric filtering after all conditions
@@ -5682,6 +5722,11 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
 	query := fmt.Sprintf(`
 		SELECT 
 			metric_name,
@@ -5692,15 +5737,15 @@ func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_e
 		FROM %s.%s
 		WHERE metric_name != ?
 		  AND unix_milli BETWEEN ? AND ?
-		 AND NOT startsWith(metric_name, 'signoz_')
-		AND __normalized = true
+		 AND NOT startsWith(metric_name, 'signoz')
+		AND __normalized = ?
 		GROUP BY metric_name
 		ORDER BY name_similarity DESC
 		LIMIT 30;`,
 		signozMetricDBName, tsTable)
 
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-	rows, err := r.db.Query(valueCtx, query, req.CurrentMetricName, req.CurrentMetricName, req.CurrentMetricName, start, end)
+	rows, err := r.db.Query(valueCtx, query, req.CurrentMetricName, req.CurrentMetricName, req.CurrentMetricName, start, end, normalized)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -5730,6 +5775,11 @@ func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_e
 func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
 	// Get target labels
 	extractedLabelsQuery := fmt.Sprintf(`
 		SELECT 
@@ -5741,12 +5791,12 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 		  AND unix_milli between ? and ?
 		  AND NOT startsWith(kv.1, '__')
 		AND NOT startsWith(metric_name, 'signoz_')
-		AND __normalized = true
+		AND __normalized = ?
 		GROUP BY label_key
 		LIMIT 50`, signozMetricDBName, tsTable)
 
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-	rows, err := r.db.Query(valueCtx, extractedLabelsQuery, req.CurrentMetricName, start, end)
+	rows, err := r.db.Query(valueCtx, extractedLabelsQuery, req.CurrentMetricName, start, end, normalized)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -5819,7 +5869,7 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 		WHERE rand() %% 100 < 10
 		AND unix_milli between ? and ?
 		AND NOT startsWith(metric_name, 'signoz_')
-		AND __normalized = true
+		AND __normalized = ?
 		GROUP BY metric_name
 		ORDER BY weighted_match_count DESC, raw_match_count DESC
 		LIMIT 30
@@ -5827,7 +5877,7 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 		targetKeysList, targetValuesList, priorityListString, 2,
 		signozMetricDBName, tsTable)
 
-	rows, err = r.db.Query(valueCtx, candidateLabelsQuery, start, end)
+	rows, err = r.db.Query(valueCtx, candidateLabelsQuery, start, end, normalized)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}

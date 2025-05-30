@@ -29,6 +29,7 @@ export interface GetQueryRangeRequestDataProps {
 	maxTime: number;
 	minTime: number;
 	globalSelectedInterval: Time | TimeV2 | CustomTimeType;
+	dotMetricsEnabled: boolean;
 }
 
 export interface GetServiceListFromQueryProps {
