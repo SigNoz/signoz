@@ -36,8 +36,8 @@ export const useGetK8sNodesList: UseGetK8sNodesList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_NODE_LIST, requestData, dotMetricsEnabled];
-	}, [options?.queryKey, requestData, dotMetricsEnabled]);
+		return [REACT_QUERY_KEY.GET_NODE_LIST, requestData];
+	}, [options?.queryKey, requestData]);
 
 	return useQuery<SuccessResponse<K8sNodesListResponse> | ErrorResponse, Error>({
 		queryFn: ({ signal }) =>

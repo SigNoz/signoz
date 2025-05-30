@@ -40,8 +40,8 @@ export const useGetK8sJobsList: UseGetK8sJobsList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_JOB_LIST, requestData, dotMetricsEnabled];
-	}, [options?.queryKey, requestData, dotMetricsEnabled]);
+		return [REACT_QUERY_KEY.GET_JOB_LIST, requestData];
+	}, [options?.queryKey, requestData]);
 
 	return useQuery<SuccessResponse<K8sJobsListResponse> | ErrorResponse, Error>({
 		queryFn: ({ signal }) =>

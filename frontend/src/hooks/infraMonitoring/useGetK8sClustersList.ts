@@ -40,8 +40,8 @@ export const useGetK8sClustersList: UseGetK8sClustersList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_CLUSTER_LIST, requestData, dotMetricsEnabled];
-	}, [options?.queryKey, requestData, dotMetricsEnabled]);
+		return [REACT_QUERY_KEY.GET_CLUSTER_LIST, requestData];
+	}, [options?.queryKey, requestData]);
 
 	return useQuery<
 		SuccessResponse<K8sClustersListResponse> | ErrorResponse,

@@ -40,8 +40,8 @@ export const useGetK8sStatefulSetsList: UseGetK8sStatefulSetsList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_STATEFULSET_LIST, requestData, dotMetricsEnabled];
-	}, [options?.queryKey, requestData, dotMetricsEnabled]);
+		return [REACT_QUERY_KEY.GET_STATEFULSET_LIST, requestData];
+	}, [options?.queryKey, requestData]);
 
 	return useQuery<
 		SuccessResponse<K8sStatefulSetsListResponse> | ErrorResponse,

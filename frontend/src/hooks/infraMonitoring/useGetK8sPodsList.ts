@@ -36,8 +36,8 @@ export const useGetK8sPodsList: UseGetK8sPodsList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_POD_LIST, requestData, dotMetricsEnabled];
-	}, [options?.queryKey, requestData, dotMetricsEnabled]);
+		return [REACT_QUERY_KEY.GET_POD_LIST, requestData];
+	}, [options?.queryKey, requestData]);
 
 	return useQuery<SuccessResponse<K8sPodsListResponse> | ErrorResponse, Error>({
 		queryFn: ({ signal }) =>

@@ -36,8 +36,8 @@ export const useGetK8sDeploymentsList: UseGetK8sDeploymentsList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_DEPLOYMENT_LIST, requestData, dotMetricsEnabled];
-	}, [options?.queryKey, requestData, dotMetricsEnabled]);
+		return [REACT_QUERY_KEY.GET_DEPLOYMENT_LIST, requestData];
+	}, [options?.queryKey, requestData]);
 
 	return useQuery<
 		SuccessResponse<K8sDeploymentsListResponse> | ErrorResponse,

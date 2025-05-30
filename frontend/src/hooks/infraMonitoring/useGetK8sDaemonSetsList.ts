@@ -40,8 +40,8 @@ export const useGetK8sDaemonSetsList: UseGetK8sDaemonSetsList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_DAEMONSET_LIST, requestData, dotMetricsEnabled];
-	}, [options?.queryKey, requestData, dotMetricsEnabled]);
+		return [REACT_QUERY_KEY.GET_DAEMONSET_LIST, requestData];
+	}, [options?.queryKey, requestData]);
 
 	return useQuery<
 		SuccessResponse<K8sDaemonSetsListResponse> | ErrorResponse,

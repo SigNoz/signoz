@@ -241,11 +241,9 @@ const getGroupByEle = (
 	groupBy.forEach((group) => {
 		const rawKey = group.key as string;
 
-		// 3) Choose mapped key if present, otherwise use rawKey
+		// Choose mapped key if present, otherwise use rawKey
 		const metaKey = (dotToUnder[rawKey] ??
 			rawKey) as keyof typeof deployment.meta;
-
-		// 4) Now safely index into pod.meta
 		const value = deployment.meta[metaKey];
 
 		groupByValues.push(value);

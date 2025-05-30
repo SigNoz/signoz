@@ -36,8 +36,8 @@ export const useGetK8sVolumesList: UseGetK8sVolumesList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_VOLUME_LIST, requestData, dotMetricsEnabled];
-	}, [options?.queryKey, requestData, dotMetricsEnabled]);
+		return [REACT_QUERY_KEY.GET_VOLUME_LIST, requestData];
+	}, [options?.queryKey, requestData]);
 
 	return useQuery<
 		SuccessResponse<K8sVolumesListResponse> | ErrorResponse,

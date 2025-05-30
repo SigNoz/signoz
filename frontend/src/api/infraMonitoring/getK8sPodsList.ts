@@ -141,8 +141,6 @@ export const getK8sPodsList = async (
 			headers,
 		});
 		const payload: K8sPodsListResponse = response.data;
-
-		// apply just our helper
 		payload.data.records = payload.data.records.map((record) => ({
 			...record,
 			meta: mapPodsMeta(record.meta as Record<string, unknown>),
