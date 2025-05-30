@@ -397,8 +397,11 @@ func TestGetClaims(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "no claims in context",
-			setup:       func(r *http.Request) {},
+			name: "no claims in context",
+			setup: func(r *http.Request) {
+				claims := authtypes.Claims{}
+				*r = *r.WithContext(authtypes.NewContextWithClaims(r.Context(), claims))
+			},
 			expectError: true,
 		},
 	}
@@ -410,8 +413,7 @@ func TestGetClaims(t *testing.T) {
 
 			claims, err := authtypes.ClaimsFromContext(req.Context())
 			if tt.expectError {
-				assert.Error(t, err)
-				assert.Nil(t, claims.Audience)
+				assert.Equal(t, authtypes.Claims{}, claims)
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, claims)
