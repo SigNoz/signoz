@@ -423,7 +423,7 @@ function SideNav(): JSX.Element {
 							<NavItem
 								key={item.key || index}
 								item={item}
-								isActive={activeMenuKey === item.key}
+								isActive={String(item.key).startsWith(activeMenuKey)}
 								isDisabled={
 									isWorkspaceBlocked &&
 									item.key !== ROUTES.BILLING &&
