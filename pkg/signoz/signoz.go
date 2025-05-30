@@ -199,10 +199,10 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, integrationsController, cloudIntegrationsController)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings, integrationsController, cloudIntegrationsController)
+	handlers := NewHandlers(modules)
 
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),

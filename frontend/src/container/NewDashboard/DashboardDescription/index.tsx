@@ -108,7 +108,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const selectedData = selectedDashboard
 		? {
 				...selectedDashboard.data,
-				uuid: selectedDashboard.uuid,
+				uuid: selectedDashboard.id,
 		  }
 		: ({} as DashboardData);
 
@@ -162,7 +162,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		setSelectedRowWidgetId(null);
 		handleToggleDashboardSlider(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
-			dashboardId: selectedDashboard?.uuid,
+			dashboardId: selectedDashboard?.id,
 			dashboardName: selectedDashboard?.data.title,
 			numberOfPanels: selectedDashboard?.data.widgets?.length,
 		});
@@ -445,7 +445,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 									<DeleteButton
 										createdBy={selectedDashboard?.createdBy || ''}
 										name={selectedDashboard?.data.title || ''}
-										id={String(selectedDashboard?.uuid) || ''}
+										id={String(selectedDashboard?.id) || ''}
 										isLocked={isDashboardLocked}
 										routeToListPage
 									/>

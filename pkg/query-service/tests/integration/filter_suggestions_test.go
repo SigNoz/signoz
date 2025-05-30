@@ -308,8 +308,6 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
-	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
-
 	integrationsController, err := integrations.NewController(testDB)
 	if err != nil {
 		t.Fatalf("could not create a new integrations controller: %v", err)
@@ -320,12 +318,13 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 		t.Fatalf("could not create a new cloud integrations controller: %v", err)
 	}
 
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings, integrationsController, cloudIntegrationsController)
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader: reader,
 		JWT:    jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
-			Handlers: signoz.NewHandlers(modules, providerSettings, integrationsController, cloudIntegrationsController),
+			Handlers: signoz.NewHandlers(modules),
 		},
 	})
 	if err != nil {

@@ -483,7 +483,6 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 10*time.Minute, 30*time.Minute)
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings)
 	integrationsController, err := integrations.NewController(sqlStore)
 	if err != nil {
 		t.Fatalf("could not create a new integrations controller: %v", err)
@@ -493,7 +492,8 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	if err != nil {
 		t.Fatalf("could not create a new cloud integrations controller: %v", err)
 	}
-	handlers := signoz.NewHandlers(modules, providerSettings, integrationsController, cloudIntegrationsController)
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, integrationsController, cloudIntegrationsController)
+	handlers := signoz.NewHandlers(modules)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		LogsParsingPipelineController: controller,

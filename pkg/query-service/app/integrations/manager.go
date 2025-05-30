@@ -305,6 +305,11 @@ func (m *Manager) parseDashboardUuid(dashboardUuid string) (
 	return parts[1], parts[2], nil
 }
 
+func (m *Manager) IsInstalledIntegrationDashboardUuid(dashboardUuid string) bool {
+	_, _, apiErr := m.parseDashboardUuid(dashboardUuid)
+	return apiErr == nil
+}
+
 func (m *Manager) GetInstalledIntegrationDashboardById(
 	ctx context.Context,
 	orgId valuer.UUID,

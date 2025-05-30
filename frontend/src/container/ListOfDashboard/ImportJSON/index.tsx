@@ -14,7 +14,7 @@ import {
 	UploadProps,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
-import createDashboard from 'api/dashboard/create';
+import createDashboard from 'api/v1/dashboards/create';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
@@ -97,26 +97,16 @@ function ImportJSON({
 				uploadedGrafana,
 			});
 
-			if (response.statusCode === 200) {
-				safeNavigate(
-					generatePath(ROUTES.DASHBOARD, {
-						dashboardId: response.payload.uuid,
-					}),
-				);
-				logEvent('Dashboard List: New dashboard imported successfully', {
-					dashboardId: response.payload?.uuid,
-					dashboardName: response.payload?.data?.title,
-				});
-			} else {
-				setIsCreateDashboardError(true);
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
+			safeNavigate(
+				generatePath(ROUTES.DASHBOARD, {
+					dashboardId: response.data.id,
+				}),
+			);
+			logEvent('Dashboard List: New dashboard imported successfully', {
+				dashboardId: response.data?.id,
+				dashboardName: response.data?.data?.title,
+			});
+
 			setDashboardCreating(false);
 		} catch (error) {
 			setDashboardCreating(false);

@@ -24,7 +24,6 @@ func TestNewHandlers(t *testing.T) {
 	emailing := emailingtest.New()
 	providerSettings := factorytest.NewSettings()
 
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings)
 	integrationsController, err := integrations.NewController(sqlstore)
 	if err != nil {
 		t.Fatalf("could not create a new integrations controller: %v", err)
@@ -35,7 +34,8 @@ func TestNewHandlers(t *testing.T) {
 		t.Fatalf("could not create a new cloud integrations controller: %v", err)
 	}
 
-	handlers := NewHandlers(modules, providerSettings, integrationsController, cloudIntegrationsController)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, integrationsController, cloudIntegrationsController)
+	handlers := NewHandlers(modules)
 
 	reflectVal := reflect.ValueOf(handlers)
 	for i := 0; i < reflectVal.NumField(); i++ {

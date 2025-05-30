@@ -281,7 +281,7 @@ export function DashboardProvider({
 				const updatedDashboardData = transformDashboardVariables(data);
 				const updatedDate = dayjs(updatedDashboardData.updatedAt);
 
-				setIsDashboardLocked(updatedDashboardData?.isLocked || false);
+				setIsDashboardLocked(updatedDashboardData?.locked || false);
 
 				// on first render
 				if (updatedTimeRef.current === null) {

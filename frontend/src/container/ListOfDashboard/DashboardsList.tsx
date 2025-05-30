@@ -22,7 +22,7 @@ import {
 } from 'antd';
 import { TableProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
-import createDashboard from 'api/dashboard/create';
+import createDashboard from 'api/v1/dashboards/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -260,13 +260,13 @@ function DashboardsList(): JSX.Element {
 		dashboards?.map((e) => ({
 			createdAt: e.createdAt,
 			description: e.data.description || '',
-			id: e.uuid,
+			id: e.id,
 			lastUpdatedTime: e.updatedAt,
 			name: e.data.title,
 			tags: e.data.tags || [],
-			key: e.uuid,
+			key: e.id,
 			createdBy: e.createdBy,
-			isLocked: !!e.isLocked || false,
+			isLocked: !!e.locked || false,
 			lastUpdatedBy: e.updatedBy,
 			image: e.data.image || Base64Icons[0],
 			variables: e.data.variables,
@@ -292,20 +292,11 @@ function DashboardsList(): JSX.Element {
 				version: ENTITY_VERSION_V4,
 			});
 
-			if (response.statusCode === 200) {
-				safeNavigate(
-					generatePath(ROUTES.DASHBOARD, {
-						dashboardId: response.payload.uuid,
-					}),
-				);
-			} else {
-				setNewDashboardState({
-					...newDashboardState,
-					loading: false,
-					error: true,
-					errorMessage: response.error || 'Something went wrong',
-				});
-			}
+			safeNavigate(
+				generatePath(ROUTES.DASHBOARD, {
+					dashboardId: response.data.id,
+				}),
+			);
 		} catch (error) {
 			setNewDashboardState({
 				...newDashboardState,

@@ -19,19 +19,19 @@ type StorableDashboard struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Data   StorableDashboardData `json:"data" bun:"data,type:text,notnull"`
-	Locked bool                  `json:"isLocked" bun:"locked,notnull,default:0"`
-	OrgID  valuer.UUID           `json:"-" bun:"org_id,notnull"`
+	Data   StorableDashboardData
+	Locked bool
+	OrgID  valuer.UUID
 }
 
 type Dashboard struct {
 	types.TimeAuditable
 	types.UserAuditable
 
-	ID     string
-	Data   StorableDashboardData
-	Locked bool
-	OrgID  valuer.UUID
+	ID     string                `json:"id"`
+	Data   StorableDashboardData `json:"data"`
+	Locked bool                  `json:"locked"`
+	OrgID  valuer.UUID           `json:"org_id"`
 }
 
 type UpdatableDashboard struct {
@@ -165,18 +165,6 @@ func NewGettableDashboardFromDashboard(dashboard *Dashboard) (*GettableDashboard
 	}, nil
 }
 
-func (dashboard *Dashboard) Update(updatableDashboard *UpdatableDashboard) error {
-	if dashboard.Locked {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
-	}
-	dashboard.Locked = updatableDashboard.Locked
-
-	if !reflect.DeepEqual(updatableDashboard.StorableDashboardData, StorableDashboardData{}) {
-		dashboard.Data = updatableDashboard.StorableDashboardData
-	}
-	return nil
-}
-
 func (storableDashboardData *StorableDashboardData) Scan(src interface{}) error {
 	var data []byte
 	if b, ok := src.([]byte); ok {
@@ -191,7 +179,8 @@ func (storableDashboardData *StorableDashboardData) Value() (driver.Value, error
 	return json.Marshal(storableDashboardData)
 }
 
-func GetWidgetIds(data map[string]interface{}) []string {
+func (storableDashboardData *StorableDashboardData) GetWidgetIds() []string {
+	data := *storableDashboardData
 	widgetIds := []string{}
 	if data != nil && data["widgets"] != nil {
 		widgets, ok := data["widgets"]
@@ -215,44 +204,42 @@ func GetWidgetIds(data map[string]interface{}) []string {
 	return widgetIds
 }
 
-func GetIdDifference(existingIds []string, newIds []string) []string {
-	// Convert newIds array to a map for faster lookups
+func (storableDashboardData *StorableDashboardData) CanUpdate(data StorableDashboardData) bool {
+	existingIDs := storableDashboardData.GetWidgetIds()
+	newIDs := data.GetWidgetIds()
+
 	newIdsMap := make(map[string]bool)
-	for _, id := range newIds {
+	for _, id := range newIDs {
 		newIdsMap[id] = true
 	}
 
-	// Initialize a map to keep track of elements in the difference array
 	differenceMap := make(map[string]bool)
-
-	// Initialize the difference array
 	difference := []string{}
-
-	// Iterate through existingIds
-	for _, id := range existingIds {
-		// If the id is not found in newIds, and it's not already in the difference array
+	for _, id := range existingIDs {
 		if _, found := newIdsMap[id]; !found && !differenceMap[id] {
 			difference = append(difference, id)
-			differenceMap[id] = true // Mark the id as seen in the difference array
+			differenceMap[id] = true
 		}
 	}
-
-	return difference
+	return len(difference) <= 1
 }
 
-func Intersection(a, b []int) (c []int) {
-	m := make(map[int]bool)
-
-	for _, item := range a {
-		m[item] = true
+func (dashboard *Dashboard) Update(updatableDashboard UpdatableDashboard, updatedBy string) error {
+	canUpdate := dashboard.Data.CanUpdate(updatableDashboard.StorableDashboardData)
+	if !canUpdate {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "deleting more than one panel is not supported")
 	}
-
-	for _, item := range b {
-		if _, ok := m[item]; ok {
-			c = append(c, item)
-		}
+	if dashboard.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
-	return
+	dashboard.Locked = updatableDashboard.Locked
+	dashboard.UpdatedBy = updatedBy
+	dashboard.UpdatedAt = time.Now()
+
+	if !reflect.DeepEqual(updatableDashboard.StorableDashboardData, StorableDashboardData{}) {
+		dashboard.Data = updatableDashboard.StorableDashboardData
+	}
+	return nil
 }
 
 type Store interface {

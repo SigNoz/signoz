@@ -50,14 +50,13 @@ export interface IDashboardVariable {
 	change?: boolean;
 }
 export interface Dashboard {
-	id: number;
-	uuid: string;
+	id: string;
 	createdAt: string;
 	updatedAt: string;
 	createdBy: string;
 	updatedBy: string;
 	data: DashboardData;
-	isLocked?: boolean;
+	locked?: boolean;
 }
 
 export interface DashboardTemplate {

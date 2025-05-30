@@ -17,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
@@ -32,13 +34,13 @@ type Modules struct {
 	QuickFilter  quickfilter.Module
 }
 
-func NewModules(sqlstore sqlstore.SQLStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings) Modules {
+func NewModules(sqlstore sqlstore.SQLStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, integrationController *integrations.Controller, cloudIntegrationsController *cloudintegrations.Controller) Modules {
 	return Modules{
 		Organization: implorganization.NewModule(implorganization.NewStore(sqlstore)),
 		Preference:   implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewDefaultPreferenceMap()),
 		SavedView:    implsavedview.NewModule(sqlstore),
 		Apdex:        implapdex.NewModule(sqlstore),
-		Dashboard:    impldashboard.NewModule(sqlstore, providerSettings),
+		Dashboard:    impldashboard.NewModule(sqlstore, providerSettings, integrationController, cloudIntegrationsController),
 		User:         impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), jwt, emailing, providerSettings),
 		QuickFilter:  implquickfilter.NewModule(implquickfilter.NewStore(sqlstore)),
 	}

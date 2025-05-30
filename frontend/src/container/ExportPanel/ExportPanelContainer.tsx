@@ -1,5 +1,5 @@
 import { Button, Typography } from 'antd';
-import createDashboard from 'api/dashboard/create';
+import createDashboard from 'api/v1/dashboards/create';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useAxiosError from 'hooks/useAxiosError';
@@ -40,8 +40,8 @@ function ExportPanelContainer({
 		isLoading: createDashboardLoading,
 	} = useMutation(createDashboard, {
 		onSuccess: (data) => {
-			if (data.payload) {
-				onExport(data?.payload, true);
+			if (data.data) {
+				onExport(data?.data, true);
 			}
 			refetch();
 		},
@@ -52,7 +52,7 @@ function ExportPanelContainer({
 
 	const handleExportClick = useCallback((): void => {
 		const currentSelectedDashboard = data?.find(
-			({ uuid }) => uuid === selectedDashboardId,
+			({ id }) => id === selectedDashboardId,
 		);
 
 		onExport(currentSelectedDashboard || null, false);

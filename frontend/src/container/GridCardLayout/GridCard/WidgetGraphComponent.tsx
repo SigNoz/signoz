@@ -126,7 +126,7 @@ function WidgetGraphComponent({
 				widgets: updatedWidgets,
 				layout: updatedLayout,
 			},
-			uuid: selectedDashboard.uuid,
+			id: selectedDashboard.id,
 		};
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
