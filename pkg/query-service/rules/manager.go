@@ -213,6 +213,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		prepareTestRuleFunc: o.PrepareTestRuleFunc,
 		alertmanager:        o.Alertmanager,
 		sqlstore:            o.SQLStore,
+		orgGetter:           o.OrgGetter,
 	}
 
 	return m, nil
