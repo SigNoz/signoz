@@ -31,6 +31,7 @@ function SettingsPage(): JSX.Element {
 	);
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
+	const isEditor = user.role === USER_ROLES.EDITOR;
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
@@ -58,6 +59,15 @@ function SettingsPage(): JSX.Element {
 					item.key === ROUTES.ORG_SETTINGS
 						? true
 						: item.isEnabled,
+			}));
+
+			setSettingsMenuItems(updatedSettingsMenuItems);
+		}
+
+		if (isEditor) {
+			const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
+				...item,
+				isEnabled: item.key === ROUTES.INGESTION_SETTINGS ? true : item.isEnabled,
 			}));
 
 			setSettingsMenuItems(updatedSettingsMenuItems);

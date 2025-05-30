@@ -244,6 +244,12 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		icon: <ListMinus size={16} />,
 		isEnabled: true,
 	},
+	{
+		key: ROUTES.SERVICE_MAP,
+		label: 'Service Map',
+		icon: <Route size={16} />,
+		isEnabled: true,
+	},
 ];
 
 export const settingsMenuItems: SidebarItem[] = [
@@ -326,10 +332,10 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 	},
 	{
 		key: 'slack',
-		label: 'Slack',
+		label: 'Community Slack',
 		icon: <Slack size={14} />,
 		isExternal: true,
-		url: 'https://signoz.slack.com',
+		url: 'https://signoz.io/slack',
 	},
 	{
 		key: 'chat-support',

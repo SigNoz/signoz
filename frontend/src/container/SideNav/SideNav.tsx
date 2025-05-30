@@ -105,12 +105,24 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		AppReducer
 	>((state) => state.app);
 
-	const { user, featureFlags, trialInfo } = useAppContext();
+	const { user, featureFlags, trialInfo, isLoggedIn } = useAppContext();
 
 	const [
 		helpSupportDropdownMenuItems,
 		setHelpSupportDropdownMenuItems,
 	] = useState<SidebarItem[]>(DefaultHelpSupportDropdownMenuItems);
+
+	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>(
+		defaultMoreMenuItems.filter((item) => item.isPinned),
+	);
+
+	const [tempPinnedMenuItems, setTempPinnedMenuItems] = useState<SidebarItem[]>(
+		[],
+	);
+
+	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
+		defaultMoreMenuItems,
+	);
 
 	const isOnboardingV3Enabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
@@ -141,18 +153,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		showVersionUpdateNotification,
 		setShowVersionUpdateNotification,
 	] = useState(false);
-
-	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>(
-		defaultMoreMenuItems.filter((item) => item.isPinned),
-	);
-
-	const [tempPinnedMenuItems, setTempPinnedMenuItems] = useState<SidebarItem[]>(
-		[],
-	);
-
-	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
-		defaultMoreMenuItems,
-	);
 
 	const [isMoreMenuCollapsed, setIsMoreMenuCollapsed] = useState(false);
 
@@ -325,20 +325,34 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	useEffect(() => {
 		if (!isAdmin) {
-			setHelpSupportDropdownMenuItems(
-				helpSupportDropdownMenuItems.filter(
-					(item) => item.key !== 'invite-collaborators',
-				),
+			setHelpSupportDropdownMenuItems((prevState) =>
+				prevState.filter((item) => item.key !== 'invite-collaborators'),
 			);
 		}
 
-		if (isChatSupportEnabled && isPremiumSupportEnabled && !isCloudUser) {
-			setHelpSupportDropdownMenuItems(
-				helpSupportDropdownMenuItems.filter((item) => item.key !== 'chat-support'),
+		const showAddCreditCardModal =
+			!isPremiumSupportEnabled && !trialInfo?.trialConvertedToSubscription;
+
+		if (
+			!(
+				isLoggedIn &&
+				isChatSupportEnabled &&
+				!showAddCreditCardModal &&
+				(isCloudUser || isEnterpriseSelfHostedUser)
+			)
+		) {
+			setHelpSupportDropdownMenuItems((prevState) =>
+				prevState.filter((item) => item.key !== 'chat-support'),
 			);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isAdmin, isChatSupportEnabled, isPremiumSupportEnabled, isCloudUser]);
+	}, [
+		isAdmin,
+		isChatSupportEnabled,
+		isPremiumSupportEnabled,
+		isCloudUser,
+		trialInfo,
+	]);
 
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
