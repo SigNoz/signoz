@@ -15,6 +15,7 @@ type UseGetK8sVolumesList = (
 		Error
 	>,
 	headers?: Record<string, string>,
+	dotMetricsEnabled?: boolean,
 ) => UseQueryResult<
 	SuccessResponse<K8sVolumesListResponse> | ErrorResponse,
 	Error
@@ -24,6 +25,7 @@ export const useGetK8sVolumesList: UseGetK8sVolumesList = (
 	requestData,
 	options,
 	headers,
+	dotMetricsEnabled,
 ) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
@@ -41,7 +43,8 @@ export const useGetK8sVolumesList: UseGetK8sVolumesList = (
 		SuccessResponse<K8sVolumesListResponse> | ErrorResponse,
 		Error
 	>({
-		queryFn: ({ signal }) => getK8sVolumesList(requestData, signal, headers),
+		queryFn: ({ signal }) =>
+			getK8sVolumesList(requestData, signal, headers, dotMetricsEnabled),
 		...options,
 		queryKey,
 	});

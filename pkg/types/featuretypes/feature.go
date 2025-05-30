@@ -26,3 +26,4 @@ func NewStorableFeature() {}
 const UseSpanMetrics = "USE_SPAN_METRICS"
 const AnomalyDetection = "ANOMALY_DETECTION"
 const TraceFunnels = "TRACE_FUNNELS"
+const DotMetricsEnabled = "DOT_METRICS_ENABLED"

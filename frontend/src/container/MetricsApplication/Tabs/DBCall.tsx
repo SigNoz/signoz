@@ -11,6 +11,7 @@ import {
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
+	getResourceDeploymentKeys,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -26,6 +27,8 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
 import { GraphTitle, MENU_ITEMS, SERVICE_CHART_ID } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
@@ -80,7 +83,12 @@ function DBCall(): JSX.Element {
 		[queries],
 	);
 
-	const legend = '{{db_system}}';
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
+	const legend = dotMetricsEnabled ? '{{db.system}}' : '{{db_system}}';
 
 	const databaseCallsRPSWidget = useMemo(
 		() =>
@@ -92,6 +100,7 @@ function DBCall(): JSX.Element {
 						servicename,
 						legend,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -102,7 +111,7 @@ function DBCall(): JSX.Element {
 				id: SERVICE_CHART_ID.dbCallsRPS,
 				fillSpans: false,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled, legend],
 	);
 	const databaseCallsAverageDurationWidget = useMemo(
 		() =>
@@ -113,6 +122,7 @@ function DBCall(): JSX.Element {
 					builder: databaseCallsAvgDuration({
 						servicename,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -123,7 +133,7 @@ function DBCall(): JSX.Element {
 				id: GraphTitle.DATABASE_CALLS_AVG_DURATION,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled],
 	);
 
 	const stepInterval = useMemo(
@@ -141,7 +151,7 @@ function DBCall(): JSX.Element {
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === 'resource_deployment_environment',
+				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
 			)?.tagValue;
 
 			logEvent('APM: Service detail page visited', {

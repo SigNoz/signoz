@@ -21,7 +21,10 @@ import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
-import { convertCompositeQueryToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import {
+	convertCompositeQueryToTraceSelectedTags,
+	getResourceDeploymentKeys,
+} from 'hooks/useResourceAttribute/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
@@ -38,6 +41,8 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Exception, PayloadProps } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { FeatureKeys } from '../../constants/features';
+import { useAppContext } from '../../providers/App/App';
 import { FilterDropdownExtendsProps } from './types';
 import {
 	extractFilterValues,
@@ -405,6 +410,11 @@ function AllErrors(): JSX.Element {
 		},
 	];
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const onChangeHandler: TableProps<Exception>['onChange'] = useCallback(
 		(
 			paginations: TablePaginationConfig,
@@ -438,7 +448,7 @@ function AllErrors(): JSX.Element {
 	useEffect(() => {
 		if (!isUndefined(errorCountResponse.data?.payload)) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === 'resource_deployment_environment',
+				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
 			)?.tagValue;
 
 			logEvent('Exception: List page visited', {
