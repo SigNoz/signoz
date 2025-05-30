@@ -87,7 +87,7 @@ func GetActiveLicenseFromStorableLicenses(storableLicenses []*StorableLicense, o
 			return nil, err
 		}
 
-		if license.Status != "VALID" {
+		if license.Status == "INVALID" {
 			continue
 		}
 		if activeLicense == nil &&
