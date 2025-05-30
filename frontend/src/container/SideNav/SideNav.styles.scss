@@ -270,6 +270,10 @@
 			}
 
 			.more-nav-items {
+				.nav-section-title {
+					cursor: pointer;
+				}
+
 				&.collapsed {
 					.nav-items-section {
 						opacity: 0;
