@@ -4,7 +4,6 @@ import { Skeleton, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { placeWidgetAtBottom } from 'container/NewWidget/utils';
@@ -31,7 +30,7 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { Props } from 'types/api/dashboard/update';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
@@ -119,28 +118,24 @@ function WidgetGraphComponent({
 		const updatedLayout =
 			selectedDashboard.data.layout?.filter((e) => e.i !== widget.id) || [];
 
-		const updatedSelectedDashboard: Dashboard = {
-			...selectedDashboard,
+		const updatedSelectedDashboard: Props = {
 			data: {
-				...selectedDashboard.data,
-				widgets: updatedWidgets,
-				layout: updatedLayout,
+				data: {
+					...selectedDashboard.data,
+					widgets: updatedWidgets,
+					layout: updatedLayout,
+				},
 			},
 			id: selectedDashboard.id,
 		};
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
-				if (setSelectedDashboard && updatedDashboard.payload) {
-					setSelectedDashboard(updatedDashboard.payload);
+				if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+				if (setSelectedDashboard && updatedDashboard.data) {
+					setSelectedDashboard(updatedDashboard.data);
 				}
 				setDeleteModal(false);
-			},
-			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
 			},
 		});
 	};
@@ -166,26 +161,28 @@ function WidgetGraphComponent({
 
 		updateDashboardMutation.mutateAsync(
 			{
-				...selectedDashboard,
+				id: selectedDashboard.id,
 				data: {
-					...selectedDashboard.data,
-					layout,
-					widgets: [
-						...(selectedDashboard.data.widgets || []),
-						{
-							...{
-								...widget,
-								id: uuid,
+					data: {
+						...selectedDashboard.data,
+						layout,
+						widgets: [
+							...(selectedDashboard.data.widgets || []),
+							{
+								...{
+									...widget,
+									id: uuid,
+								},
 							},
-						},
-					],
+						],
+					},
 				},
 			},
 			{
 				onSuccess: (updatedDashboard) => {
-					if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
-					if (setSelectedDashboard && updatedDashboard.payload) {
-						setSelectedDashboard(updatedDashboard.payload);
+					if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+					if (setSelectedDashboard && updatedDashboard.data) {
+						setSelectedDashboard(updatedDashboard.data);
 					}
 					notifications.success({
 						message: 'Panel cloned successfully, redirecting to new copy.',

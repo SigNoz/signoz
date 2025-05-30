@@ -1,9 +1,10 @@
 import { Dashboard } from './getAll';
 
 export type Props = {
-	uuid: Dashboard['uuid'];
+	id: Dashboard['id'];
 };
 
 export interface PayloadProps {
-	status: 'success';
+	status: string;
+	data: null;
 }

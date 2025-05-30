@@ -9,8 +9,6 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { IField } from '../logs/fields';
 import { BaseAutocompleteData } from '../queryBuilder/queryAutocompleteResponse';
 
-export type PayloadProps = Dashboard[];
-
 export const VariableQueryTypeArr = ['QUERY', 'TEXTBOX', 'CUSTOM'] as const;
 export type TVariableQueryType = typeof VariableQueryTypeArr[number];
 
@@ -59,6 +57,11 @@ export interface Dashboard {
 	locked?: boolean;
 }
 
+export interface PayloadProps {
+	data: Dashboard[];
+	status: string;
+}
+
 export interface DashboardTemplate {
 	name: string;
 	icon: React.ReactElement;
@@ -68,7 +71,7 @@ export interface DashboardTemplate {
 }
 
 export interface DashboardData {
-	uuid?: string;
+	// uuid?: string;
 	description?: string;
 	tags?: string[];
 	name?: string;

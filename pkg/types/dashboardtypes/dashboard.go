@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql/driver"
 	"encoding/json"
-	"reflect"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -236,7 +235,7 @@ func (dashboard *Dashboard) Update(updatableDashboard UpdatableDashboard, update
 	dashboard.UpdatedBy = updatedBy
 	dashboard.UpdatedAt = time.Now()
 
-	if !reflect.DeepEqual(updatableDashboard.StorableDashboardData, StorableDashboardData{}) {
+	if updatableDashboard.StorableDashboardData != nil {
 		dashboard.Data = updatableDashboard.StorableDashboardData
 	}
 	return nil

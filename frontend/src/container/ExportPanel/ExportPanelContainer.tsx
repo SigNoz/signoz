@@ -2,10 +2,11 @@ import { Button, Typography } from 'antd';
 import createDashboard from 'api/v1/dashboards/create';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
-import useAxiosError from 'hooks/useAxiosError';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
+import APIError from 'types/api/error';
 
 import { ExportPanelProps } from '.';
 import {
@@ -33,7 +34,7 @@ function ExportPanelContainer({
 		refetch,
 	} = useGetAllDashboard();
 
-	const handleError = useAxiosError();
+	const { showErrorModal } = useErrorModal();
 
 	const {
 		mutate: createNewDashboard,
@@ -45,13 +46,15 @@ function ExportPanelContainer({
 			}
 			refetch();
 		},
-		onError: handleError,
+		onError: (error) => {
+			showErrorModal(error as APIError);
+		},
 	});
 
-	const options = useMemo(() => getSelectOptions(data || []), [data]);
+	const options = useMemo(() => getSelectOptions(data?.data || []), [data]);
 
 	const handleExportClick = useCallback((): void => {
-		const currentSelectedDashboard = data?.find(
+		const currentSelectedDashboard = data?.data?.find(
 			({ id }) => id === selectedDashboardId,
 		);
 

@@ -1,8 +1,8 @@
 import { Dashboard, DashboardData } from './getAll';
 
 export type UpdateDashboardData = {
-	data: DashboardData;
-	locked: boolean;
+	data?: DashboardData;
+	locked?: boolean;
 };
 
 export type Props = {

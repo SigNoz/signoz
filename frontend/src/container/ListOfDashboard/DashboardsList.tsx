@@ -63,6 +63,7 @@ import {
 import { handleContactSupport } from 'pages/Integrations/utils';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import {
 	ChangeEvent,
@@ -83,6 +84,7 @@ import {
 	WidgetRow,
 	Widgets,
 } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
@@ -226,7 +228,7 @@ function DashboardsList(): JSX.Element {
 	useEffect(() => {
 		const filteredDashboards = filterDashboard(
 			searchString,
-			dashboardListResponse || [],
+			dashboardListResponse?.data || [],
 		);
 		if (sortOrder.columnKey === 'updatedAt') {
 			sortDashboardsByUpdatedAt(filteredDashboards || []);
@@ -255,6 +257,8 @@ function DashboardsList(): JSX.Element {
 		error: false,
 		errorMessage: '',
 	});
+
+	const { showErrorModal } = useErrorModal();
 
 	const data: Data[] =
 		dashboards?.map((e) => ({
@@ -298,13 +302,14 @@ function DashboardsList(): JSX.Element {
 				}),
 			);
 		} catch (error) {
+			showErrorModal(error as APIError);
 			setNewDashboardState({
 				...newDashboardState,
 				error: true,
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState, safeNavigate, t]);
+	}, [newDashboardState, safeNavigate, showErrorModal, t]);
 
 	const onModalHandler = (uploadedGrafana: boolean): void => {
 		logEvent('Dashboard List: Import JSON clicked', {});
@@ -318,7 +323,7 @@ function DashboardsList(): JSX.Element {
 		const searchText = (event as React.BaseSyntheticEvent)?.target?.value || '';
 		const filteredDashboards = filterDashboard(
 			searchText,
-			dashboardListResponse || [],
+			dashboardListResponse?.data || [],
 		);
 		setDashboards(filteredDashboards);
 		setIsFilteringDashboards(false);
@@ -668,7 +673,7 @@ function DashboardsList(): JSX.Element {
 			!isUndefined(dashboardListResponse)
 		) {
 			logEvent('Dashboard List: Page visited', {
-				number: dashboardListResponse?.length,
+				number: dashboardListResponse?.data?.length,
 			});
 			logEventCalledRef.current = true;
 		}
