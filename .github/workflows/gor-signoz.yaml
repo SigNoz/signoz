@@ -33,9 +33,8 @@ jobs:
           echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> .env
           echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> .env
           echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> .env
-          echo 'CUSTOMERIO_ID="${{ secrets.CUSTOMERIO_ID }}"' >> .env
-          echo 'CUSTOMERIO_SITE_ID="${{ secrets.CUSTOMERIO_SITE_ID }}"' >> .env
-          echo 'USERPILOT_KEY="${{ secrets.USERPILOT_KEY }}"' >> .env
+          echo 'PYLON_APP_ID="${{ secrets.PYLON_APP_ID }}"' >> .env
+          echo 'APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> .env
       - name: build-frontend
         run:  make js-build
       - name: upload-frontend-artifact
