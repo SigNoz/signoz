@@ -1153,34 +1153,33 @@ func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboardID, err := valuer.NewUUID(id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	dashboard, err := aH.Signoz.Modules.Dashboard.Get(ctx, orgID, dashboardID)
-	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
-		render.Error(rw, err)
-		return
-	}
-
-	if err != nil && errorsV2.Ast(err, errorsV2.TypeNotFound) {
-		if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(id) {
-			cloudintegrationDashboard, apiErr := aH.CloudIntegrationsController.GetDashboardById(ctx, orgID, id)
-			if apiErr != nil {
-				render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
-				return
-			}
-			dashboard = cloudintegrationDashboard
-		} else if aH.IntegrationsController.IsInstalledIntegrationDashboardID(id) {
-			integrationDashboard, apiErr := aH.IntegrationsController.GetInstalledIntegrationDashboardById(ctx, orgID, id)
-			if apiErr != nil {
-				render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
-				return
-			}
-			dashboard = integrationDashboard
+	dashboard := new(dashboardtypes.Dashboard)
+	if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(id) {
+		cloudintegrationDashboard, apiErr := aH.CloudIntegrationsController.GetDashboardById(ctx, orgID, id)
+		if apiErr != nil {
+			render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
+			return
 		}
+		dashboard = cloudintegrationDashboard
+	} else if aH.IntegrationsController.IsInstalledIntegrationDashboardID(id) {
+		integrationDashboard, apiErr := aH.IntegrationsController.GetInstalledIntegrationDashboardById(ctx, orgID, id)
+		if apiErr != nil {
+			render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
+			return
+		}
+		dashboard = integrationDashboard
+	} else {
+		dashboardID, err := valuer.NewUUID(id)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		sqlDashboard, err := aH.Signoz.Modules.Dashboard.Get(ctx, orgID, dashboardID)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		dashboard = sqlDashboard
 	}
 
 	gettableDashboard, err := dashboardtypes.NewGettableDashboardFromDashboard(dashboard)
