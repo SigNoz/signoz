@@ -151,30 +151,24 @@ func BuildTwoStepFunnelOverviewQuery(
 ) string {
 	queryTemplate := `
 WITH
-    %[1]d AS contains_error_t1,
-    %[2]d AS contains_error_t2,
-    '%[3]s' AS latency_pointer_t1,
-    '%[4]s' AS latency_pointer_t2,
+    %[1]d    AS contains_error_t1,
+    %[2]d    AS contains_error_t2,
+    '%[3]s'  AS latency_pointer_t1,
+    '%[4]s'  AS latency_pointer_t2,
     toDateTime64(%[5]d/1e9, 9) AS start_ts,
     toDateTime64(%[6]d/1e9, 9) AS end_ts,
-    (%[6]d-%[5]d)/1e9     AS time_window_sec,
+    (%[6]d - %[5]d)/1e9        AS time_window_sec,
 
     ('%[7]s','%[8]s') AS step1,
     ('%[9]s','%[10]s') AS step2
 
-SELECT
-    round(countIf(t1_time>0 AND t2_time>0)*100.0/countIf(t1_time>0),2) AS conversion_rate,
-    countIf(t1_time>0 AND t2_time>0)/time_window_sec    AS avg_rate,
-    greatest(sum(s1_error), sum(s2_error))              AS errors,
-    avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)      AS avg_duration,
-    quantile(0.99)(dateDiff('microseconds', t1_time, t2_time)/1000.0) AS latency
-FROM (
+, funnel AS (
     SELECT
         trace_id,
         minIf(timestamp, serviceName=step1.1 AND name=step1.2) AS t1_time,
         minIf(timestamp, serviceName=step2.1 AND name=step2.2) AS t2_time,
-        anyIf(has_error,serviceName=step1.1 AND name=step1.2)   AS s1_error,
-        anyIf(has_error,serviceName=step2.1 AND name=step2.2)   AS s2_error
+        anyIf(has_error, serviceName=step1.1 AND name=step1.2)   AS s1_error,
+        anyIf(has_error, serviceName=step2.1 AND name=step2.2)   AS s2_error
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
@@ -184,8 +178,28 @@ FROM (
             (serviceName=step2.1 AND name=step2.2 AND (contains_error_t2=0 OR has_error=true) %[12]s)
         )
     GROUP BY trace_id
-) AS funnel
-WHERE t1_time>0 AND t2_time>t1_time;`
+)
+
+, totals AS (
+    SELECT
+        countIf(t1_time>0)                                         AS total_s1_spans,
+        countIf(t1_time>0 AND t2_time>t1_time)                     AS total_s2_spans,
+        countIf(t1_time>0 AND t2_time>0)                           AS total_s2_raw_spans,
+        sum(s1_error)                                              AS sum_s1_error,
+        sum(s2_error)                                              AS sum_s2_error,
+        avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)     AS avg_duration,
+        quantile(0.99)(dateDiff('microseconds', t1_time, t2_time)/1000.0) AS latency
+    FROM funnel
+)
+
+SELECT
+    round(total_s2_spans * 100.0 / total_s1_spans, 2)  AS conversion_rate,
+    total_s2_raw_spans / time_window_sec               AS avg_rate,
+    greatest(sum_s1_error, sum_s2_error)               AS errors,
+    avg_duration,
+    latency
+FROM totals;
+`
 	return fmt.Sprintf(queryTemplate,
 		containsErrorT1,
 		containsErrorT2,
@@ -223,48 +237,63 @@ func BuildThreeStepFunnelOverviewQuery(
 ) string {
 	queryTemplate := `
 WITH
-    %[1]d AS contains_error_t1,
-    %[2]d AS contains_error_t2,
-    %[3]d AS contains_error_t3,
-    '%[4]s' AS latency_pointer_t1,
-    '%[5]s' AS latency_pointer_t2,
-    '%[6]s' AS latency_pointer_t3,
+    %[1]d    AS contains_error_t1,
+    %[2]d    AS contains_error_t2,
+    %[3]d    AS contains_error_t3,
+    '%[4]s'  AS latency_pointer_t1,
+    '%[5]s'  AS latency_pointer_t2,
+    '%[6]s'  AS latency_pointer_t3,
     toDateTime64(%[7]d/1e9,9) AS start_ts,
     toDateTime64(%[8]d/1e9,9) AS end_ts,
-    (%[8]d-%[7]d)/1e9     AS time_window_sec,
+    (%[8]d - %[7]d)/1e9      AS time_window_sec,
 
     ('%[9]s','%[10]s') AS step1,
     ('%[11]s','%[12]s') AS step2,
     ('%[13]s','%[14]s') AS step3
 
-SELECT
-    round(countIf(t1_time>0 AND t2_time>t1_time AND t3_time>t2_time)*100.0/countIf(t1_time>0),2) AS conversion_rate,
-    countIf(t1_time>0 AND t2_time>t1_time)/time_window_sec                       AS avg_rate,
-    greatest(sum(s1_error), sum(s2_error), sum(s3_error))                        AS errors,
-    avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)                      AS avg_duration,
-    quantile(0.99)(dateDiff('microseconds', t1_time, t2_time)/1000.0)           AS latency 
-FROM (
+, funnel AS (
     SELECT
         trace_id,
-        minIf(timestamp,serviceName=step1.1 AND name=step1.2) AS t1_time,
-        minIf(timestamp,serviceName=step2.1 AND name=step2.2) AS t2_time,
-        minIf(timestamp,serviceName=step3.1 AND name=step3.2) AS t3_time,
-        anyIf(has_error,serviceName=step1.1 AND name=step1.2)   AS s1_error,
-        anyIf(has_error,serviceName=step2.1 AND name=step2.2)   AS s2_error,
-        anyIf(has_error,serviceName=step3.1 AND name=step3.2)   AS s3_error
+        minIf(timestamp, serviceName=step1.1 AND name=step1.2) AS t1_time,
+        minIf(timestamp, serviceName=step2.1 AND name=step2.2) AS t2_time,
+        minIf(timestamp, serviceName=step3.1 AND name=step3.2) AS t3_time,
+        anyIf(has_error, serviceName=step1.1 AND name=step1.2)   AS s1_error,
+        anyIf(has_error, serviceName=step2.1 AND name=step2.2)   AS s2_error,
+        anyIf(has_error, serviceName=step3.1 AND name=step3.2)   AS s3_error
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
             (serviceName=step1.1 AND name=step1.2 AND (contains_error_t1=0 OR has_error=true) %[15]s)
-         OR
-            (serviceName=step2.1 AND name=step2.2 AND (contains_error_t2=0 OR has_error=true) %[16]s)
-         OR
-            (serviceName=step3.1 AND name=step3.2 AND (contains_error_t3=0 OR has_error=true) %[17]s)
+         OR (serviceName=step2.1 AND name=step2.2 AND (contains_error_t2=0 OR has_error=true) %[16]s)
+         OR (serviceName=step3.1 AND name=step3.2 AND (contains_error_t3=0 OR has_error=true) %[17]s)
         )
     GROUP BY trace_id
-) AS funnel
-WHERE t1_time>0 AND t2_time>t1_time AND t3_time>t2_time;`
+)
+
+, totals AS (
+    SELECT
+        countIf(t1_time > 0)                                                   AS total_s1_spans,
+        countIf(t1_time > 0 AND t2_time > t1_time)                              AS total_s2_spans,
+        countIf(t1_time > 0 AND t2_time > t1_time AND t3_time > t2_time)        AS total_s3_spans,
+        sum(s1_error)                                                           AS sum_s1_error,
+        sum(s2_error)                                                           AS sum_s2_error,
+        sum(s3_error)                                                           AS sum_s3_error,
+        avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)                  AS avg_duration,
+        quantile(0.99)(dateDiff('microseconds', t1_time, t2_time)/1000.0)       AS latency
+    FROM funnel
+)
+
+SELECT
+    -- compute conversion_rate before dropping any “failures”
+    round(total_s3_spans * 100.0 / total_s1_spans, 2)                         AS conversion_rate,
+    -- avg_rate remains step-2 hits per second
+    total_s2_spans / time_window_sec                                          AS avg_rate,
+    greatest(sum_s1_error, sum_s2_error, sum_s3_error)                         AS errors,
+    avg_duration,
+    latency
+FROM totals;
+`
 	return fmt.Sprintf(queryTemplate,
 		containsErrorT1,
 		containsErrorT2,
@@ -561,27 +590,12 @@ func BuildTwoStepFunnelStepOverviewQuery(
 WITH
     toDateTime64(%[5]d/1e9,9) AS start_ts,
     toDateTime64(%[6]d/1e9,9) AS end_ts,
-    (%[6]d - %[5]d)/1e9                   AS time_window_sec,
+    (%[6]d - %[5]d)/1e9      AS time_window_sec,
 
-    ('%[7]s','%[8]s') AS step1,
-    ('%[9]s','%[10]s') AS step2
+    ('%[7]s','%[8]s')        AS step1,
+    ('%[9]s','%[10]s')       AS step2
 
-SELECT
-    round(
-      countIf(t1_time > 0 AND t2_time > t1_time) * 100.0
-    / countIf(t1_time > 0),
-    2
-    )                                     AS conversion_rate,
-    countIf(t1_time > 0 AND t2_time > t1_time)
-    / time_window_sec                     AS avg_rate,
-    greatest(sum(s1_error), sum(s2_error)) AS errors,
-    avg(
-      dateDiff('microseconds', t1_time, t2_time) / 1000.0
-    )                                     AS avg_duration,
-    quantile(0.99)(
-      dateDiff('microseconds', t1_time, t2_time) / 1000.0
-    )                                     AS latency 
-FROM (
+, funnel AS (
     SELECT
         trace_id,
         minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
@@ -598,8 +612,25 @@ FROM (
         %[11]s
         %[12]s
     GROUP BY trace_id
-) AS funnel
-WHERE t1_time > 0 AND t2_time > t1_time;`
+)
+
+, totals AS (
+    SELECT
+        countIf(t1_time > 0)                                        AS total_s1_spans,
+        countIf(t1_time > 0 AND t2_time > t1_time)                  AS total_s2_spans,
+        greatest(sum(s1_error), sum(s2_error))                      AS errors,
+        avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)      AS avg_duration,
+        quantile(%[13]s)(dateDiff('microseconds', t1_time, t2_time)/1000.0) AS latency
+    FROM funnel
+)
+
+SELECT
+    round(total_s2_spans * 100.0 / total_s1_spans, 2) AS conversion_rate,
+    total_s2_spans / time_window_sec                  AS avg_rate,
+    errors,
+    avg_duration,
+    latency
+FROM totals;`
 
 	return fmt.Sprintf(tpl,
 		containsErrorT1,
@@ -641,36 +672,21 @@ func BuildThreeStepFunnelStepOverviewQuery(
 	latencyTypeT2 string,
 	latencyTypeT3 string,
 ) string {
-	const tpl = `
+	const baseTpl = `
 WITH
     toDateTime64(%[7]d/1e9,9) AS start_ts,
     toDateTime64(%[8]d/1e9,9) AS end_ts,
-    (%[8]d - %[7]d)/1e9                       AS time_window_sec,
+    (%[8]d - %[7]d)/1e9       AS time_window_sec,
 
     ('%[9]s','%[10]s') AS step1,
     ('%[11]s','%[12]s') AS step2,
-    ('%[13]s','%[14]s') AS step3
+    ('%[13]s','%[14]s') AS step3,
 
-SELECT
-    round(
-      countIf(
-        t1_time > 0
-        AND t2_time > t1_time
-        AND t3_time > t2_time
-      ) * 100.0
-    / countIf(t1_time > 0),
-    2
-    )                                            AS conversion_rate,
-    countIf(t1_time > 0 AND t2_time > t1_time)
-    / time_window_sec                            AS avg_rate,
-    greatest(sum(s1_error), sum(s2_error), sum(s3_error)) AS errors,
-    avg(
-      dateDiff('microseconds', t1_time, t2_time) / 1000.0
-    )                                            AS avg_duration,
-    quantile(0.99)(
-      dateDiff('microseconds', t1_time, t2_time) / 1000.0
-    )                                            AS latency
-FROM (
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2,
+    %[3]d AS contains_error_t3
+
+, funnel AS (
     SELECT
         trace_id,
         minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
@@ -684,19 +700,60 @@ FROM (
         timestamp BETWEEN start_ts AND end_ts
         AND serviceName IN (step1.1, step2.1, step3.1)
         AND name       IN (step1.2, step2.2, step3.2)
-        AND ((%[1]d = 0) OR (has_error AND serviceName = step1.1 AND name = step1.2))
-        AND ((%[2]d = 0) OR (has_error AND serviceName = step2.1 AND name = step2.2))
-        AND ((%[3]d = 0) OR (has_error AND serviceName = step3.1 AND name = step3.2))
-        %[15]s
-        %[16]s
-        %[17]s
+        AND ((contains_error_t1=0) OR (has_error AND serviceName=step1.1 AND name=step1.2)) %[15]s
+        AND ((contains_error_t2=0) OR (has_error AND serviceName=step2.1 AND name=step2.2)) %[16]s
+        AND ((contains_error_t3=0) OR (has_error AND serviceName=step3.1 AND name=step3.2)) %[17]s
     GROUP BY trace_id
-) AS funnel
-WHERE t1_time > 0
-  AND t2_time > t1_time
-  AND t3_time > t2_time;`
+)
 
-	return fmt.Sprintf(tpl,
+, totals AS (
+    SELECT
+        countIf(t1_time > 0)                                                     AS total_s1_spans,
+        countIf(t1_time > 0 AND t2_time > t1_time)                                AS total_s2_spans,
+        countIf(t1_time > 0 AND t2_time > t1_time AND t3_time > t2_time)          AS total_s3_spans,
+        sum(s1_error)                                                             AS sum_s1_error,
+        sum(s2_error)                                                             AS sum_s2_error,
+        sum(s3_error)                                                             AS sum_s3_error,
+        avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)                    AS avg_duration_12,
+        quantile(%[18]s)(dateDiff('microseconds', t1_time, t2_time)/1000.0)       AS latency_12,
+        avg(dateDiff('microseconds', t2_time, t3_time)/1000.0)                    AS avg_duration_23,
+        quantile(%[19]s)(dateDiff('microseconds', t2_time, t3_time)/1000.0)       AS latency_23
+    FROM funnel
+)
+`
+
+	const select12 = `
+SELECT
+    round(total_s2_spans * 100.0 / total_s1_spans, 2) AS conversion_rate,
+    total_s2_spans / time_window_sec                AS avg_rate,
+    greatest(sum_s1_error, sum_s2_error)             AS errors,
+    avg_duration_12                                  AS avg_duration,
+    latency_12                                       AS latency
+FROM totals;
+`
+
+	const select23 = `
+SELECT
+    round(total_s3_spans * 100.0 / total_s2_spans, 2) AS conversion_rate,
+    total_s3_spans / time_window_sec                AS avg_rate,
+    greatest(sum_s2_error, sum_s3_error)             AS errors,
+    avg_duration_23                                  AS avg_duration,
+    latency_23                                       AS latency
+FROM totals;
+`
+
+	var selectTpl string
+	switch {
+	case stepStart == 1 && stepEnd == 2:
+		selectTpl = select12
+	case stepStart == 2 && stepEnd == 3:
+		selectTpl = select23
+	default:
+		selectTpl = `SELECT 0 AS conversion_rate, 0 AS avg_rate, 0 AS errors, 0 AS avg_duration, 0 AS latency;`
+	}
+
+	return fmt.Sprintf(
+		baseTpl+selectTpl,
 		containsErrorT1,
 		containsErrorT2,
 		containsErrorT3,
@@ -714,8 +771,6 @@ WHERE t1_time > 0
 		clauseStep1,
 		clauseStep2,
 		clauseStep3,
-		stepStart,
-		stepEnd,
 		latencyTypeT2,
 		latencyTypeT3,
 	)
