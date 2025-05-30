@@ -287,8 +287,11 @@ export function DashboardProvider({
 				}
 			},
 			refetchOnWindowFocus: false,
+			onError: (error) => {
+				showErrorModal(error as APIError);
+			},
 			onSuccess: (data: SuccessResponseV2<Dashboard>) => {
-				const updatedDashboardData = transformDashboardVariables(data.data);
+				const updatedDashboardData = transformDashboardVariables(data?.data);
 				const updatedDate = dayjs(updatedDashboardData.updatedAt);
 
 				setIsDashboardLocked(updatedDashboardData?.locked || false);

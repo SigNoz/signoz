@@ -69,14 +69,18 @@ function ExportPanelContainer({
 	);
 
 	const handleNewDashboard = useCallback(async () => {
-		createNewDashboard({
-			title: t('new_dashboard_title', {
-				ns: 'dashboard',
-			}),
-			uploadedGrafana: false,
-			version: ENTITY_VERSION_V4,
-		});
-	}, [t, createNewDashboard]);
+		try {
+			await createNewDashboard({
+				title: t('new_dashboard_title', {
+					ns: 'dashboard',
+				}),
+				uploadedGrafana: false,
+				version: ENTITY_VERSION_V4,
+			});
+		} catch (error) {
+			showErrorModal(error as APIError);
+		}
+	}, [createNewDashboard, t, showErrorModal]);
 
 	const isDashboardLoading = isAllDashboardsLoading || createDashboardLoading;
 
