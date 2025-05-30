@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { AppProvider } from 'providers/App/App';
+import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { Provider } from 'react-redux';
 import store from 'store';
@@ -189,24 +190,26 @@ describe('WidgetGraphComponent', () => {
 	it('should show correct menu items when hovering over more options while loading', async () => {
 		const { getByTestId, findByRole, getByText, container } = render(
 			<MockQueryClientProvider>
-				<Provider store={store}>
-					<AppProvider>
-						<WidgetGraphComponent
-							widget={mockProps.widget}
-							queryResponse={mockProps.queryResponse}
-							errorMessage={mockProps.errorMessage}
-							version={mockProps.version}
-							headerMenuList={mockProps.headerMenuList}
-							isWarning={mockProps.isWarning}
-							isFetchingResponse={mockProps.isFetchingResponse}
-							setRequestData={mockProps.setRequestData}
-							onClickHandler={mockProps.onClickHandler}
-							onDragSelect={mockProps.onDragSelect}
-							openTracesButton={mockProps.openTracesButton}
-							onOpenTraceBtnClick={mockProps.onOpenTraceBtnClick}
-						/>
-					</AppProvider>
-				</Provider>
+				<ErrorModalProvider>
+					<Provider store={store}>
+						<AppProvider>
+							<WidgetGraphComponent
+								widget={mockProps.widget}
+								queryResponse={mockProps.queryResponse}
+								errorMessage={mockProps.errorMessage}
+								version={mockProps.version}
+								headerMenuList={mockProps.headerMenuList}
+								isWarning={mockProps.isWarning}
+								isFetchingResponse={mockProps.isFetchingResponse}
+								setRequestData={mockProps.setRequestData}
+								onClickHandler={mockProps.onClickHandler}
+								onDragSelect={mockProps.onDragSelect}
+								openTracesButton={mockProps.openTracesButton}
+								onOpenTraceBtnClick={mockProps.onOpenTraceBtnClick}
+							/>
+						</AppProvider>
+					</Provider>
+				</ErrorModalProvider>
 			</MockQueryClientProvider>,
 		);
 

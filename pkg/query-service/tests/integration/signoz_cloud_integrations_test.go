@@ -367,6 +367,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 10*time.Minute, 30*time.Minute)
+
 	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
 	handlers := signoz.NewHandlers(modules)
 

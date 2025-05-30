@@ -38,7 +38,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 			logEvent('Panel Edit: Create alert', {
 				panelType: widget.panelTypes,
 				dashboardName: selectedDashboard?.data?.title,
-				dashboardId: selectedDashboard?.uuid,
+				dashboardId: selectedDashboard?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});
@@ -47,7 +47,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 				action: MenuItemKeys.CreateAlerts,
 				panelType: widget.panelTypes,
 				dashboardName: selectedDashboard?.data?.title,
-				dashboardId: selectedDashboard?.uuid,
+				dashboardId: selectedDashboard?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});

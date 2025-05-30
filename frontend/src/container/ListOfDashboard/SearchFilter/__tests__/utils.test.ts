@@ -6,8 +6,7 @@ import { executeSearchQueries } from '../utils';
 
 describe('executeSearchQueries', () => {
 	const firstDashboard: Dashboard = {
-		id: 11111,
-		uuid: uuid(),
+		id: uuid(),
 		createdAt: '',
 		updatedAt: '',
 		createdBy: '',
@@ -18,8 +17,7 @@ describe('executeSearchQueries', () => {
 		},
 	};
 	const secondDashboard: Dashboard = {
-		id: 22222,
-		uuid: uuid(),
+		id: uuid(),
 		createdAt: '',
 		updatedAt: '',
 		createdBy: '',
@@ -30,8 +28,7 @@ describe('executeSearchQueries', () => {
 		},
 	};
 	const thirdDashboard: Dashboard = {
-		id: 333333,
-		uuid: uuid(),
+		id: uuid(),
 		createdAt: '',
 		updatedAt: '',
 		createdBy: '',

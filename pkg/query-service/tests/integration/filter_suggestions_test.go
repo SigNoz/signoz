@@ -306,8 +306,8 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
-	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
 
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader: reader,
 		JWT:    jwt,

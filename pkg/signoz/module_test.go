@@ -21,6 +21,7 @@ func TestNewModules(t *testing.T) {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	providerSettings := factorytest.NewSettings()
+
 	modules := NewModules(sqlstore, jwt, emailing, providerSettings)
 
 	reflectVal := reflect.ValueOf(modules)

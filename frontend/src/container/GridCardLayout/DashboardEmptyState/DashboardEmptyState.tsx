@@ -38,7 +38,7 @@ export default function DashboardEmptyState(): JSX.Element {
 		setSelectedRowWidgetId(null);
 		handleToggleDashboardSlider(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
-			dashboardId: selectedDashboard?.uuid,
+			dashboardId: selectedDashboard?.id,
 			dashboardName: selectedDashboard?.data.title,
 			numberOfPanels: selectedDashboard?.data.widgets?.length,
 		});

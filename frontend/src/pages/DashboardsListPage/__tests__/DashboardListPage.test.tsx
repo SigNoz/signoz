@@ -234,7 +234,6 @@ describe('dashboard list page', () => {
 		const firstDashboardData = dashboardSuccessResponse.data[0];
 		expect(dashboardUtils.sanitizeDashboardData).toHaveBeenCalledWith(
 			expect.objectContaining({
-				id: firstDashboardData.uuid,
 				title: firstDashboardData.data.title,
 				createdAt: firstDashboardData.createdAt,
 			}),

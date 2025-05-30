@@ -1,10 +1,8 @@
 import './GeneralSettings.styles.scss';
 
 import { Col, Input, Select, Space, Typography } from 'antd';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import AddTags from 'container/NewDashboard/DashboardSettings/General/AddTags';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useNotifications } from 'hooks/useNotifications';
 import { isEqual } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -38,14 +36,12 @@ function GeneralDashboardSettings(): JSX.Element {
 
 	const { t } = useTranslation('common');
 
-	const { notifications } = useNotifications();
-
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) return;
 
-		updateDashboardMutation.mutateAsync(
+		updateDashboardMutation.mutate(
 			{
-				...selectedDashboard,
+				id: selectedDashboard.id,
 				data: {
 					...selectedDashboard.data,
 					description: updatedDescription,
@@ -56,15 +52,11 @@ function GeneralDashboardSettings(): JSX.Element {
 			},
 			{
 				onSuccess: (updatedDashboard) => {
-					if (updatedDashboard.payload) {
-						setSelectedDashboard(updatedDashboard.payload);
+					if (updatedDashboard.data) {
+						setSelectedDashboard(updatedDashboard.data);
 					}
 				},
-				onError: () => {
-					notifications.error({
-						message: SOMETHING_WENT_WRONG,
-					});
-				},
+				onError: () => {},
 			},
 		);
 	};

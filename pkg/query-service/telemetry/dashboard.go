@@ -8,7 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +16,7 @@ import (
 func GetDashboardsInfo(ctx context.Context, sqlstore sqlstore.SQLStore) (*model.DashboardsInfo, error) {
 	dashboardsInfo := model.DashboardsInfo{}
 	// fetch dashboards from dashboard db
-	dashboards := []types.Dashboard{}
+	dashboards := []dashboardtypes.Dashboard{}
 	err := sqlstore.BunDB().NewSelect().Model(&dashboards).Scan(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))

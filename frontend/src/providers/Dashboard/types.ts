@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import { Layout } from 'react-grid-layout';
 import { UseQueryResult } from 'react-query';
+import { SuccessResponseV2 } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
 export interface DashboardSortOrder {
@@ -19,7 +20,7 @@ export interface IDashboardContext {
 	isDashboardLocked: boolean;
 	handleToggleDashboardSlider: (value: boolean) => void;
 	handleDashboardLockToggle: (value: boolean) => void;
-	dashboardResponse: UseQueryResult<Dashboard, unknown>;
+	dashboardResponse: UseQueryResult<SuccessResponseV2<Dashboard>, unknown>;
 	selectedDashboard: Dashboard | undefined;
 	dashboardId: string;
 	layouts: Layout[];

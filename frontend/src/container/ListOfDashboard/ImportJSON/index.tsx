@@ -14,19 +14,21 @@ import {
 	UploadProps,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
-import createDashboard from 'api/dashboard/create';
+import createDashboard from 'api/v1/dashboards/create';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import { ExternalLink, Github, MonitorDot, MoveRight, X } from 'lucide-react';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 // #TODO: Lucide will be removing brand icons like GitHub in the future. In that case, we can use Simple Icons. https://simpleicons.org/
 // See more: https://github.com/lucide-icons/lucide/issues/94
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { DashboardData } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 
 function ImportJSON({
 	isImportJSONModalVisible,
@@ -74,17 +76,14 @@ function ImportJSON({
 		}
 	};
 
+	const { showErrorModal } = useErrorModal();
+
 	const onClickLoadJsonHandler = async (): Promise<void> => {
 		try {
 			setDashboardCreating(true);
 			logEvent('Dashboard List: Import and next clicked', {});
 
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
-
-			// Remove uuid from the dashboard data, in all cases - empty, duplicate or any valid not duplicate uuid
-			if (dashboardData.uuid !== undefined) {
-				delete dashboardData.uuid;
-			}
 
 			if (dashboardData?.layout) {
 				dashboardData.layout = getUpdatedLayout(dashboardData.layout);
@@ -97,28 +96,19 @@ function ImportJSON({
 				uploadedGrafana,
 			});
 
-			if (response.statusCode === 200) {
-				safeNavigate(
-					generatePath(ROUTES.DASHBOARD, {
-						dashboardId: response.payload.uuid,
-					}),
-				);
-				logEvent('Dashboard List: New dashboard imported successfully', {
-					dashboardId: response.payload?.uuid,
-					dashboardName: response.payload?.data?.title,
-				});
-			} else {
-				setIsCreateDashboardError(true);
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
+			safeNavigate(
+				generatePath(ROUTES.DASHBOARD, {
+					dashboardId: response.data.id,
+				}),
+			);
+			logEvent('Dashboard List: New dashboard imported successfully', {
+				dashboardId: response.data?.id,
+				dashboardName: response.data?.data?.title,
+			});
+
 			setDashboardCreating(false);
 		} catch (error) {
+			showErrorModal(error as APIError);
 			setDashboardCreating(false);
 			setIsCreateDashboardError(true);
 			notifications.error({

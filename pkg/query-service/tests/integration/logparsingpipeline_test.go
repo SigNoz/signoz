@@ -482,6 +482,7 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 10*time.Minute, 30*time.Minute)
+
 	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings)
 	handlers := signoz.NewHandlers(modules)
 

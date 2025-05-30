@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
@@ -121,7 +122,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []types.DashboardData{},
+				Dashboards: []dashboardtypes.StorableDashboardData{},
 				Alerts:     []ruletypes.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
@@ -189,7 +190,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []types.DashboardData{},
+				Dashboards: []dashboardtypes.StorableDashboardData{},
 				Alerts:     []ruletypes.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{

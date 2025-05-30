@@ -38,7 +38,7 @@ func NewModules(sqlstore sqlstore.SQLStore, jwt *authtypes.JWT, emailing emailin
 		Preference:   implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewDefaultPreferenceMap()),
 		SavedView:    implsavedview.NewModule(sqlstore),
 		Apdex:        implapdex.NewModule(sqlstore),
-		Dashboard:    impldashboard.NewModule(sqlstore),
+		Dashboard:    impldashboard.NewModule(sqlstore, providerSettings),
 		User:         impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), jwt, emailing, providerSettings),
 		QuickFilter:  implquickfilter.NewModule(implquickfilter.NewStore(sqlstore)),
 	}

@@ -1,11 +1,12 @@
 import { Button, Typography } from 'antd';
-import createDashboard from 'api/dashboard/create';
+import createDashboard from 'api/v1/dashboards/create';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
-import useAxiosError from 'hooks/useAxiosError';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
+import APIError from 'types/api/error';
 
 import { ExportPanelProps } from '.';
 import {
@@ -33,26 +34,28 @@ function ExportPanelContainer({
 		refetch,
 	} = useGetAllDashboard();
 
-	const handleError = useAxiosError();
+	const { showErrorModal } = useErrorModal();
 
 	const {
 		mutate: createNewDashboard,
 		isLoading: createDashboardLoading,
 	} = useMutation(createDashboard, {
 		onSuccess: (data) => {
-			if (data.payload) {
-				onExport(data?.payload, true);
+			if (data.data) {
+				onExport(data?.data, true);
 			}
 			refetch();
 		},
-		onError: handleError,
+		onError: (error) => {
+			showErrorModal(error as APIError);
+		},
 	});
 
-	const options = useMemo(() => getSelectOptions(data || []), [data]);
+	const options = useMemo(() => getSelectOptions(data?.data || []), [data]);
 
 	const handleExportClick = useCallback((): void => {
-		const currentSelectedDashboard = data?.find(
-			({ uuid }) => uuid === selectedDashboardId,
+		const currentSelectedDashboard = data?.data?.find(
+			({ id }) => id === selectedDashboardId,
 		);
 
 		onExport(currentSelectedDashboard || null, false);
@@ -66,14 +69,18 @@ function ExportPanelContainer({
 	);
 
 	const handleNewDashboard = useCallback(async () => {
-		createNewDashboard({
-			title: t('new_dashboard_title', {
-				ns: 'dashboard',
-			}),
-			uploadedGrafana: false,
-			version: ENTITY_VERSION_V4,
-		});
-	}, [t, createNewDashboard]);
+		try {
+			await createNewDashboard({
+				title: t('new_dashboard_title', {
+					ns: 'dashboard',
+				}),
+				uploadedGrafana: false,
+				version: ENTITY_VERSION_V4,
+			});
+		} catch (error) {
+			showErrorModal(error as APIError);
+		}
+	}, [createNewDashboard, t, showErrorModal]);
 
 	const isDashboardLoading = isAllDashboardsLoading || createDashboardLoading;
 

@@ -22,7 +22,7 @@ import {
 } from 'antd';
 import { TableProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
-import createDashboard from 'api/dashboard/create';
+import createDashboard from 'api/v1/dashboards/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -63,6 +63,7 @@ import {
 import { handleContactSupport } from 'pages/Integrations/utils';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import {
 	ChangeEvent,
@@ -83,6 +84,7 @@ import {
 	WidgetRow,
 	Widgets,
 } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
@@ -226,7 +228,7 @@ function DashboardsList(): JSX.Element {
 	useEffect(() => {
 		const filteredDashboards = filterDashboard(
 			searchString,
-			dashboardListResponse || [],
+			dashboardListResponse?.data || [],
 		);
 		if (sortOrder.columnKey === 'updatedAt') {
 			sortDashboardsByUpdatedAt(filteredDashboards || []);
@@ -256,17 +258,19 @@ function DashboardsList(): JSX.Element {
 		errorMessage: '',
 	});
 
+	const { showErrorModal } = useErrorModal();
+
 	const data: Data[] =
 		dashboards?.map((e) => ({
 			createdAt: e.createdAt,
 			description: e.data.description || '',
-			id: e.uuid,
+			id: e.id,
 			lastUpdatedTime: e.updatedAt,
 			name: e.data.title,
 			tags: e.data.tags || [],
-			key: e.uuid,
+			key: e.id,
 			createdBy: e.createdBy,
-			isLocked: !!e.isLocked || false,
+			isLocked: !!e.locked || false,
 			lastUpdatedBy: e.updatedBy,
 			image: e.data.image || Base64Icons[0],
 			variables: e.data.variables,
@@ -292,28 +296,20 @@ function DashboardsList(): JSX.Element {
 				version: ENTITY_VERSION_V4,
 			});
 
-			if (response.statusCode === 200) {
-				safeNavigate(
-					generatePath(ROUTES.DASHBOARD, {
-						dashboardId: response.payload.uuid,
-					}),
-				);
-			} else {
-				setNewDashboardState({
-					...newDashboardState,
-					loading: false,
-					error: true,
-					errorMessage: response.error || 'Something went wrong',
-				});
-			}
+			safeNavigate(
+				generatePath(ROUTES.DASHBOARD, {
+					dashboardId: response.data.id,
+				}),
+			);
 		} catch (error) {
+			showErrorModal(error as APIError);
 			setNewDashboardState({
 				...newDashboardState,
 				error: true,
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState, safeNavigate, t]);
+	}, [newDashboardState, safeNavigate, showErrorModal, t]);
 
 	const onModalHandler = (uploadedGrafana: boolean): void => {
 		logEvent('Dashboard List: Import JSON clicked', {});
@@ -327,7 +323,7 @@ function DashboardsList(): JSX.Element {
 		const searchText = (event as React.BaseSyntheticEvent)?.target?.value || '';
 		const filteredDashboards = filterDashboard(
 			searchText,
-			dashboardListResponse || [],
+			dashboardListResponse?.data || [],
 		);
 		setDashboards(filteredDashboards);
 		setIsFilteringDashboards(false);
@@ -677,7 +673,7 @@ function DashboardsList(): JSX.Element {
 			!isUndefined(dashboardListResponse)
 		) {
 			logEvent('Dashboard List: Page visited', {
-				number: dashboardListResponse?.length,
+				number: dashboardListResponse?.data?.length,
 			});
 			logEventCalledRef.current = true;
 		}

@@ -1,25 +1,31 @@
-import update from 'api/dashboard/update';
+import update from 'api/v1/dashboards/id/update';
 import dayjs from 'dayjs';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useMutation, UseMutationResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
+import APIError from 'types/api/error';
 
 export const useUpdateDashboard = (): UseUpdateDashboard => {
 	const { updatedTimeRef } = useDashboard();
+	const { showErrorModal } = useErrorModal();
 	return useMutation(update, {
 		onSuccess: (data) => {
-			if (data.payload) {
-				updatedTimeRef.current = dayjs(data.payload.updatedAt);
+			if (data.data) {
+				updatedTimeRef.current = dayjs(data.data.updatedAt);
 			}
+		},
+		onError: (error) => {
+			showErrorModal(error);
 		},
 	});
 };
 
 type UseUpdateDashboard = UseMutationResult<
-	SuccessResponse<Dashboard> | ErrorResponse,
-	unknown,
+	SuccessResponseV2<Dashboard>,
+	APIError,
 	Props,
 	unknown
 >;
