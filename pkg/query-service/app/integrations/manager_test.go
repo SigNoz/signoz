@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -27,7 +28,7 @@ func TestIntegrationLifecycle(t *testing.T) {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	sharder, _ := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(store), sharder)
-	alertmanager, _ := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, store, orgGetter)
+	alertmanager, _ := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, store, orgGetter)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	modules := signoz.NewModules(store, jwt, emailing, providerSettings, orgGetter, alertmanager)
