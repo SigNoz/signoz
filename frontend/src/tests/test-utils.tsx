@@ -243,7 +243,8 @@ export function getAppContextMock(
 		...appContextOverrides,
 	};
 }
-function AllTheProviders({
+
+export function AllTheProviders({
 	children,
 	role, // Accept the role as a prop
 	appContextOverrides,
@@ -254,20 +255,19 @@ function AllTheProviders({
 }): ReactElement {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<ResourceProvider>
-				<ErrorModalProvider>
-					<Provider store={mockStored(role)}>
-						<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
+			<Provider store={mockStored(role)}>
+				<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
+					<ResourceProvider>
+						<ErrorModalProvider>
 							<BrowserRouter>
-								{/* Use the mock store with the provided role */}
 								<TimezoneProvider>
 									<QueryBuilderProvider>{children}</QueryBuilderProvider>
 								</TimezoneProvider>
 							</BrowserRouter>
-						</AppContext.Provider>
-					</Provider>
-				</ErrorModalProvider>
-			</ResourceProvider>
+						</ErrorModalProvider>
+					</ResourceProvider>
+				</AppContext.Provider>
+			</Provider>
 		</QueryClientProvider>
 	);
 }
