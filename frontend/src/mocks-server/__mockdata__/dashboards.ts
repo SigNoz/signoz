@@ -3,8 +3,7 @@ export const dashboardSuccessResponse = {
 	status: 'success',
 	data: [
 		{
-			id: 1,
-			uuid: '1',
+			id: '1',
 			createdAt: '2022-11-16T13:29:47.064874419Z',
 			createdBy: null,
 			updatedAt: '2024-05-21T06:41:30.546630961Z',
@@ -23,8 +22,7 @@ export const dashboardSuccessResponse = {
 			},
 		},
 		{
-			id: 2,
-			uuid: '2',
+			id: '2',
 			createdAt: '2022-11-16T13:20:47.064874419Z',
 			createdBy: null,
 			updatedAt: '2024-05-21T06:42:30.546630961Z',
@@ -53,8 +51,7 @@ export const dashboardEmptyState = {
 export const getDashboardById = {
 	status: 'success',
 	data: {
-		id: 1,
-		uuid: '1',
+		id: '1',
 		createdAt: '2022-11-16T13:29:47.064874419Z',
 		createdBy: 'integration',
 		updatedAt: '2024-05-21T06:41:30.546630961Z',
@@ -78,8 +75,7 @@ export const getDashboardById = {
 export const getNonIntegrationDashboardById = {
 	status: 'success',
 	data: {
-		id: 1,
-		uuid: '1',
+		id: '1',
 		createdAt: '2022-11-16T13:29:47.064874419Z',
 		createdBy: 'thor',
 		updatedAt: '2024-05-21T06:41:30.546630961Z',
