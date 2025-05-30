@@ -61,6 +61,17 @@ func (migration *addKeyOrganization) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
+	if _, err := tx.
+		NewCreateIndex().
+		Unique().
+		IfNotExists().
+		Index("idx_unique_key").
+		Table("organizations").
+		Column("key").
+		Exec(ctx); err != nil {
+		return err
+	}
+
 	var existingOrgIDs []string
 	if err := tx.NewSelect().
 		Table("organizations").
