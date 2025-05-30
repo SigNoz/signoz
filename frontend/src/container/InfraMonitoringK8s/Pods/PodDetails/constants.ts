@@ -2633,7 +2633,7 @@ export const getPodMetricsQueryPayload = (
 						functions: [],
 						groupBy: [],
 						having: [],
-						legend: 'Uage',
+						legend: 'Usage',
 						limit: null,
 						orderBy: [],
 						queryName: 'C',
