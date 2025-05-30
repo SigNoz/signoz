@@ -49,11 +49,13 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation])
 		whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
 		keySelectors = append(keySelectors, whereClauseSelectors...)
 	}
+
 	for idx := range query.GroupBy {
 		groupBy := query.GroupBy[idx]
 		selectors := querybuilder.QueryStringToKeysSelectors(groupBy.TelemetryFieldKey.Name)
 		keySelectors = append(keySelectors, selectors...)
 	}
+
 	for idx := range query.Order {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
 			Name:          query.Order[idx].Key.Name,
@@ -62,6 +64,7 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation])
 			FieldDataType: query.Order[idx].Key.FieldDataType,
 		})
 	}
+
 	for idx := range keySelectors {
 		keySelectors[idx].Signal = telemetrytypes.SignalMetrics
 	}
@@ -85,6 +88,27 @@ func (b *metricQueryStatementBuilder) Build(
 }
 
 // Fast‑path (no fingerprint grouping)
+// canShortCircuitDelta returns true if we can use the optimized query
+// for the given query
+// This is used to avoid the group by fingerprint thus improving the performance
+// for certain queries
+// cases where we can short circuit:
+// 1. time aggregation = (rate|increase) and space aggregation = sum
+//   - rate = sum(value)/step, increase = sum(value) - sum of sums is same as sum of all values
+//
+// 2. time aggregation = sum and space aggregation = sum
+//   - sum of sums is same as sum of all values
+//
+// 3. time aggregation = min and space aggregation = min
+//   - min of mins is same as min of all values
+//
+// 4. time aggregation = max and space aggregation = max
+//   - max of maxs is same as max of all values
+//
+// 5. special case exphist, there is no need for per series/fingerprint aggregation
+// we can directly use the quantilesDDMerge function
+//
+// all of this is true only for delta metrics
 func (b *metricQueryStatementBuilder) canShortCircuitDelta(q qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) bool {
 	if q.Aggregations[0].Temporality != metrictypes.Delta {
 		return false
@@ -126,8 +150,9 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 	origTimeAgg := query.Aggregations[0].TimeAggregation
 	origGroupBy := query.GroupBy
 
-	if query.Aggregations[0].SpaceAggregation.IsPercentile() {
-		// 1. add le in the group by if doesn't exist
+	if query.Aggregations[0].SpaceAggregation.IsPercentile() &&
+		query.Aggregations[0].Type != metrictypes.ExpHistogramType {
+		// add le in the group by if doesn't exist
 		leExists := false
 		for _, g := range query.GroupBy {
 			if g.TelemetryFieldKey.Name == "le" {
@@ -135,18 +160,21 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 				break
 			}
 		}
+
+		// we need to add le in the group by if it doesn't exist
 		if !leExists {
 			query.GroupBy = append(query.GroupBy, qbtypes.GroupByKey{
 				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "le"},
 			})
 		}
 
-		// 2. make the time aggregation rate and space aggregation sum
+		// make the time aggregation rate and space aggregation sum
 		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationSum
 		query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
 	}
 
-	// 1. time_series_cte
+	// time_series_cte
+	// this is applicable for all the queries
 	if frag, args, err := b.buildTimeSeriesCTE(ctx, start, end, query, keys); err != nil {
 		return nil, err
 	} else if frag != "" {
@@ -155,7 +183,7 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 	}
 
 	if b.canShortCircuitDelta(query) {
-		// 2. spatial_aggregation_cte directly
+		// spatial_aggregation_cte directly for certain delta queries
 		if frag, args, err := b.buildTemporalAggDeltaFastPath(start, end, query); err != nil {
 			return nil, err
 		} else if frag != "" {
@@ -163,7 +191,7 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 			cteArgs = append(cteArgs, args)
 		}
 	} else {
-		// 2. temporal_aggregation_cte
+		// temporal_aggregation_cte
 		if frag, args, err := b.buildTemporalAggregationCTE(ctx, start, end, query, keys); err != nil {
 			return nil, err
 		} else if frag != "" {
@@ -171,7 +199,7 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 			cteArgs = append(cteArgs, args)
 		}
 
-		// 3. spatial_aggregation_cte
+		// spatial_aggregation_cte
 		if frag, args, err := b.buildSpatialAggregationCTE(ctx, start, end, query, keys); err != nil {
 			return nil, err
 		} else if frag != "" {
@@ -185,7 +213,7 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 	query.Aggregations[0].TimeAggregation = origTimeAgg
 	query.GroupBy = origGroupBy
 
-	// 4. final SELECT
+	// final SELECT
 	return b.buildFinalSelect(cteFragments, cteArgs, query)
 }
 
@@ -205,12 +233,16 @@ func (b *metricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 	}
 
-	aggCol := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	aggCol := AggregationColumnForSamplesTable(
+		start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality,
+		query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints,
+	)
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
 		aggCol = fmt.Sprintf("%s/%d", aggCol, stepSec)
 	}
 
-	if query.Aggregations[0].SpaceAggregation.IsPercentile() {
+	if query.Aggregations[0].SpaceAggregation.IsPercentile() &&
+		query.Aggregations[0].Type == metrictypes.ExpHistogramType {
 		aggCol = fmt.Sprintf("quantilesDDMerge(0.01, %f)(sketch)[1]", query.Aggregations[0].SpaceAggregation.Percentile())
 	}
 
@@ -264,9 +296,17 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.In("metric_name", query.Aggregations[0].MetricName),
 		sb.GTE("unix_milli", start),
 		sb.LTE("unix_milli", end),
-		sb.ILike("temporality", query.Aggregations[0].Temporality.StringValue()),
-		sb.EQ("__normalized", false), // TODO configurable
 	)
+
+	if query.Aggregations[0].Temporality != metrictypes.Unspecified {
+		sb.Where(sb.ILike("temporality", query.Aggregations[0].Temporality.StringValue()))
+	}
+
+	// TODO configurable if we don't rollout the new un-normalized metrics
+	sb.Where(
+		sb.EQ("__normalized", false),
+	)
+
 	if filterWhere != nil {
 		sb.AddWhereClause(filterWhere)
 	}
@@ -284,12 +324,13 @@ func (b *metricQueryStatementBuilder) buildTemporalAggregationCTE(
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
 	if query.Aggregations[0].Temporality == metrictypes.Delta {
-		return b.buildTemporalAggDelta(start, end, query)
+		return b.buildTemporalAggDelta(ctx, start, end, query)
 	}
 	return b.buildTemporalAggCumulativeOrUnspecified(ctx, start, end, query)
 }
 
 func (b *metricQueryStatementBuilder) buildTemporalAggDelta(
+	_ context.Context,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 ) (string, []any, error) {
@@ -329,7 +370,7 @@ func (b *metricQueryStatementBuilder) buildTemporalAggDelta(
 }
 
 func (b *metricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
-	ctx context.Context,
+	_ context.Context,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 ) (string, []any, error) {

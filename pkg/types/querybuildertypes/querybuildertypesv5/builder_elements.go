@@ -153,7 +153,7 @@ type MetricAggregation struct {
 	// metric to query
 	MetricName string `json:"metricName"`
 	// type of the metric
-	Type metrictypes.Type `json:"type"`
+	Type metrictypes.Type `json:"-"`
 	// temporality to apply to the query
 	Temporality metrictypes.Temporality `json:"temporality"`
 	// time aggregation to apply to the query

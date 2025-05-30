@@ -54,6 +54,8 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	case telemetrytypes.FieldContextUnspecified:
 		col, ok := timeSeriesV4Columns[key.Name]
 		if !ok {
+			// if nothing is found, return labels column
+			// as we keep all the labels in the labels column
 			return timeSeriesV4Columns["labels"], nil
 		}
 		return col, nil

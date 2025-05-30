@@ -2,7 +2,6 @@ package telemetrymetrics
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"testing"
 	"time"
@@ -24,7 +23,7 @@ func TestStatementBuilder(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name:        "test",
+			name:        "test_cumulative_rate_sum",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Signal:       telemetrytypes.SignalMetrics,
@@ -51,13 +50,13 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(mapContains(resources_string, 'service.name') = ?, resources_string['service.name'], NULL)) AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp <= ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY ALL ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(mapContains(resources_string, 'service.name') = ?, resources_string['service.name'], NULL)) AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp <= ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`service.name`) IN (SELECT `service.name` FROM __limit_cte) GROUP BY ALL",
-				Args:  []any{"cartservice", "%service.name%", "%service.name%cartservice%", uint64(1747945619), uint64(1747983448), true, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, true, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+				Query: "WITH __time_series_cte AS (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `service.name` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) AND __normalized = ? AND JSONExtractString(labels, 'service.name') = ? GROUP BY ALL), __temporal_aggregation_cte AS (SELECT ts, `service.name`, If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value, (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(1747947419000))) OVER rate_window)) AS per_series_value FROM (SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `service.name`, max(value) AS per_series_value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN __time_series_cte ON points.fingerprint = __time_series_cte.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ALL ORDER BY fingerprint, ts) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)), __spatial_aggregation_cte AS (SELECT ts, `service.name`, sum(per_series_value) AS value FROM __temporal_aggregation_cte WHERE isNaN(per_series_value) = ? GROUP BY ALL) SELECT * FROM __spatial_aggregation_cte",
+				Args:  []any{"signoz_calls_total", uint64(1747936800000), uint64(1747983448000), "cumulative", false, "cartservice", "signoz_calls_total", uint64(1747947419000), uint64(1747983448000), 0},
 			},
 			expectedErr: nil,
 		},
 		{
-			name:        "test",
+			name:        "test_delta_rate_sum",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Signal:       telemetrytypes.SignalMetrics,
@@ -84,8 +83,73 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(mapContains(resources_string, 'service.name') = ?, resources_string['service.name'], NULL)) AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp <= ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY ALL ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(mapContains(resources_string, 'service.name') = ?, resources_string['service.name'], NULL)) AS `service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp <= ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`service.name`) IN (SELECT `service.name` FROM __limit_cte) GROUP BY ALL",
-				Args:  []any{"cartservice", "%service.name%", "%service.name%cartservice%", uint64(1747945619), uint64(1747983448), true, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, true, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+				Query: "WITH __time_series_cte AS (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `service.name` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) AND __normalized = ? AND JSONExtractString(labels, 'service.name') = ? GROUP BY ALL), __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `service.name`, sum(value)/30 AS value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN __time_series_cte ON points.fingerprint = __time_series_cte.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ALL) SELECT * FROM __spatial_aggregation_cte",
+				Args:  []any{"signoz_calls_total", uint64(1747936800000), uint64(1747983448000), "delta", false, "cartservice", "signoz_calls_total", uint64(1747947419000), uint64(1747983448000)},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "test_histogram_percentile",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Signal:       telemetrytypes.SignalMetrics,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_latency",
+						Type:             metrictypes.HistogramType,
+						Temporality:      metrictypes.Delta,
+						SpaceAggregation: metrictypes.SpaceAggregationPercentile95,
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "service.name = 'cartservice'",
+				},
+				Limit: 10,
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "service.name",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __time_series_cte AS (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) AND __normalized = ? AND JSONExtractString(labels, 'service.name') = ? GROUP BY ALL), __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `service.name`, `le`, sum(value) AS value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN __time_series_cte ON points.fingerprint = __time_series_cte.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ALL) SELECT ts, `service.name`, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) AS value FROM __spatial_aggregation_cte GROUP BY ALL",
+				Args:  []any{"signoz_latency", uint64(1747936800000), uint64(1747983448000), "delta", false, "cartservice", "signoz_latency", uint64(1747947419000), uint64(1747983448000)},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "test_gauge_avg_sum",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Signal:       telemetrytypes.SignalMetrics,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "system.memory.usage",
+						Type:             metrictypes.GaugeType,
+						Temporality:      metrictypes.Unspecified,
+						TimeAggregation:  metrictypes.TimeAggregationAvg,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "host.name = 'big-data-node-1'",
+				},
+				Limit: 10,
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "host.name",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __time_series_cte AS (SELECT fingerprint, JSONExtractString(labels, 'host.name') AS `host.name` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND __normalized = ? AND JSONExtractString(labels, 'host.name') = ? GROUP BY ALL), __temporal_aggregation_cte AS (SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `host.name`, avg(value) AS per_series_value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN __time_series_cte ON points.fingerprint = __time_series_cte.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ALL ORDER BY fingerprint, ts), __spatial_aggregation_cte AS (SELECT ts, `host.name`, sum(per_series_value) AS value FROM __temporal_aggregation_cte WHERE isNaN(per_series_value) = ? GROUP BY ALL) SELECT * FROM __spatial_aggregation_cte",
+				Args:  []any{"system.memory.usage", uint64(1747936800000), uint64(1747983448000), false, "big-data-node-1", "system.memory.usage", uint64(1747947419000), uint64(1747983448000), 0},
 			},
 			expectedErr: nil,
 		},
@@ -94,7 +158,11 @@ func TestStatementBuilder(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	keys, err := telemetrytypestest.LoadFieldKeysFromJSON("testdata/keys_map.json")
+	if err != nil {
+		t.Fatalf("failed to load field keys: %v", err)
+	}
+	mockMetadataStore.KeysMap = keys
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(nil, fm, cb, "", nil)
 
@@ -115,10 +183,6 @@ func TestStatementBuilder(t *testing.T) {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErr.Error())
 			} else {
-
-				fmt.Println(q.Query)
-				fmt.Println(q.Args)
-
 				require.NoError(t, err)
 				require.Equal(t, c.expected.Query, q.Query)
 				require.Equal(t, c.expected.Args, q.Args)

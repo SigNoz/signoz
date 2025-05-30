@@ -92,22 +92,16 @@ func (s SpaceAggregation) Percentile() float64 {
 }
 
 // MetricTableHints is a struct that contains tables to use instead of the derived tables
-// from the start and end time
+// from the start and end time, for internal use only when we need to override the derived tables
 type MetricTableHints struct {
 	TimeSeriesTableName string
 	SamplesTableName    string
 }
 
-// Certain OTEL metrics encode the state in the value of the metric, which is in general
-// a bad modelling (presumably coming from some vendor) and makes it hard to write the aggregation queries
-//
-//	(should have been a key:value with 0, 1 ), example: (pod_status: 0, 1, 2, 3, 4, 5)
-//
-// they are better modelled as pod_status: (state: running, pending, terminated, etc)
-// the value would be 0 or 1, if the value is 1, and the state is pending, then it indicates pod is pending.
-//
-// however, there have been some metrics that do this, and we need to support them.
-// This is workaround for those metrics.
+// Until recently, certain OTEL metrics encode the state in the value of the metric, which is in general
+// a bad modelling (presumably coming from some vendor) and makes it hard to write the aggregation queries.
+// While this is not the case anymore, there are some existing metrics that do this, we need a way to support them.
+// This is a workaround for those metrics.
 type MetricValueFilter struct {
 	Value float64
 }
