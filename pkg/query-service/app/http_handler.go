@@ -5237,22 +5237,22 @@ func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middlew
 
 	// API endpoints
 	traceFunnelsRouter.HandleFunc("/new",
-		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.New)).
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.New)).
 		Methods(http.MethodPost)
 	traceFunnelsRouter.HandleFunc("/list",
 		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.List)).
 		Methods(http.MethodGet)
 	traceFunnelsRouter.HandleFunc("/steps/update",
-		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.UpdateSteps)).
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.UpdateSteps)).
 		Methods(http.MethodPut)
 
 	traceFunnelsRouter.HandleFunc("/{funnel_id}",
 		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.Get)).
 		Methods(http.MethodGet)
 	traceFunnelsRouter.HandleFunc("/{funnel_id}",
-		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.Delete)).
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.Delete)).
 		Methods(http.MethodDelete)
 	traceFunnelsRouter.HandleFunc("/{funnel_id}",
-		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.UpdateFunnel)).
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.UpdateFunnel)).
 		Methods(http.MethodPut)
 }
