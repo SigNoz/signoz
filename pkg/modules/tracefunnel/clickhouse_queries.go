@@ -167,7 +167,7 @@ SELECT
     countIf(t1_time>0 AND t2_time>0)/time_window_sec    AS avg_rate,
     greatest(sum(s1_error), sum(s2_error))              AS errors,
     avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)      AS avg_duration,
-    quantile(0.99)(dateDiff('microseconds', t1_time, t2_time)/1000.0) AS p99_latency
+    quantile(0.99)(dateDiff('microseconds', t1_time, t2_time)/1000.0) AS latency
 FROM (
     SELECT
         trace_id,
@@ -241,8 +241,8 @@ SELECT
     round(countIf(t1_time>0 AND t2_time>t1_time AND t3_time>t2_time)*100.0/countIf(t1_time>0),2) AS conversion_rate,
     countIf(t1_time>0 AND t2_time>t1_time)/time_window_sec                       AS avg_rate,
     greatest(sum(s1_error), sum(s2_error), sum(s3_error))                        AS errors,
-    avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)                      AS avg_duration_ms,
-    quantile(0.99)(dateDiff('microseconds', t1_time, t2_time)/1000.0)           AS p99_duration_ms
+    avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)                      AS avg_duration,
+    quantile(0.99)(dateDiff('microseconds', t1_time, t2_time)/1000.0)           AS latency 
 FROM (
     SELECT
         trace_id,
@@ -577,10 +577,10 @@ SELECT
     greatest(sum(s1_error), sum(s2_error)) AS errors,
     avg(
       dateDiff('microseconds', t1_time, t2_time) / 1000.0
-    )                                     AS avg_duration_ms,
+    )                                     AS avg_duration,
     quantile(0.99)(
       dateDiff('microseconds', t1_time, t2_time) / 1000.0
-    )                                     AS p99_duration_ms
+    )                                     AS latency 
 FROM (
     SELECT
         trace_id,
@@ -662,14 +662,14 @@ SELECT
     2
     )                                            AS conversion_rate,
     countIf(t1_time > 0 AND t2_time > t1_time)
-    / time_window_sec                            AS avg_rate_step1_to_2,
+    / time_window_sec                            AS avg_rate,
     greatest(sum(s1_error), sum(s2_error), sum(s3_error)) AS errors,
     avg(
       dateDiff('microseconds', t1_time, t2_time) / 1000.0
-    )                                            AS avg_duration_ms,
+    )                                            AS avg_duration,
     quantile(0.99)(
       dateDiff('microseconds', t1_time, t2_time) / 1000.0
-    )                                            AS p99_duration_ms
+    )                                            AS latency
 FROM (
     SELECT
         trace_id,
