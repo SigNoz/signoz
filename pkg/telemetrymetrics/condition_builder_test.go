@@ -93,7 +93,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotILike,
 			value:         "%admin%",
-			expectedSQL:   "WHERE LOWER(JSONExtractString(labels, 'user.id')) NOT LIKE LOWER(?)",
+			expectedSQL:   "LOWER(JSONExtractString(labels, 'user.id')) NOT LIKE LOWER(?)",
 			expectedArgs:  []any{"%admin%"},
 			expectedError: nil,
 		},

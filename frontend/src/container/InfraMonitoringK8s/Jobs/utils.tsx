@@ -263,6 +263,12 @@ export const getK8sJobsListColumns = (
 	return columnsConfig as ColumnType<K8sJobsRowData>[];
 };
 
+const dotToUnder: Record<string, keyof K8sJobsData['meta']> = {
+	'k8s.job.name': 'k8s_job_name',
+	'k8s.namespace.name': 'k8s_namespace_name',
+	'k8s.cluster.name': 'k8s_cluster_name',
+};
+
 const getGroupByEle = (
 	job: K8sJobsData,
 	groupBy: IBuilderQuery['groupBy'],
@@ -270,7 +276,13 @@ const getGroupByEle = (
 	const groupByValues: string[] = [];
 
 	groupBy.forEach((group) => {
-		groupByValues.push(job.meta[group.key as keyof typeof job.meta]);
+		const rawKey = group.key as string;
+
+		// Choose mapped key if present, otherwise use rawKey
+		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof job.meta;
+		const value = job.meta[metaKey];
+
+		groupByValues.push(value);
 	});
 
 	return (

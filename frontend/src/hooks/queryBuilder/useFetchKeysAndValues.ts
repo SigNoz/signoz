@@ -4,8 +4,8 @@ import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
+	GetK8sEntityToAggregateAttribute,
 	K8sCategory,
-	K8sEntityToAggregateAttributeMapping,
 } from 'container/InfraMonitoringK8s/constants';
 import {
 	getRemovePrefixFromKey,
@@ -50,6 +50,7 @@ type IuseFetchKeysAndValues = {
 export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQuery,
+	dotMetricsEnabled: boolean,
 	searchKey: string,
 	shouldUseSuggestions?: boolean,
 	isInfraMonitoring?: boolean,
@@ -123,7 +124,7 @@ export const useFetchKeysAndValues = (
 			aggregateOperator: query.aggregateOperator,
 			aggregateAttribute:
 				isInfraMonitoring && entity
-					? K8sEntityToAggregateAttributeMapping[entity]
+					? GetK8sEntityToAggregateAttribute(entity, dotMetricsEnabled)
 					: query.aggregateAttribute.key,
 			tagType: query.aggregateAttribute.type ?? null,
 		},
@@ -219,7 +220,7 @@ export const useFetchKeysAndValues = (
 					aggregateOperator: 'noop',
 					dataSource: query.dataSource,
 					aggregateAttribute:
-						K8sEntityToAggregateAttributeMapping[entity] ||
+						GetK8sEntityToAggregateAttribute(entity, dotMetricsEnabled) ||
 						query.aggregateAttribute.key,
 					attributeKey: filterAttributeKey?.key ?? tagKey,
 					filterAttributeKeyDataType:
