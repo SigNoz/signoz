@@ -69,7 +69,7 @@ WITH
         s1.first_time AS t1_time,
         s2.first_time AS t2_time
     FROM step1 s1
-    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    GLOBAL INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
 )
 SELECT trace_id
@@ -173,8 +173,8 @@ WITH
         s2.first_time AS t2_time,
         s3.first_time AS t3_time
     FROM step1 AS s1
-    INNER JOIN step2 AS s2 ON s1.trace_id = s2.trace_id
-    INNER JOIN step3 AS s3 ON s1.trace_id = s3.trace_id
+    GLOBAL INNER JOIN step2 AS s2 ON s1.trace_id = s2.trace_id
+    GLOBAL INNER JOIN step3 AS s3 ON s1.trace_id = s3.trace_id
     WHERE s2.first_time > s1.first_time
       AND s3.first_time > s2.first_time
 )
@@ -269,7 +269,7 @@ WITH
         s1.has_error_flag AS s1_has_error,
         s2.has_error_flag AS s2_has_error
     FROM step1 s1
-    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    GLOBAL INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
 )
 -- Error counts for each step
@@ -391,7 +391,7 @@ WITH
         s1.has_error_flag AS s1_has_error,
         s2.has_error_flag AS s2_has_error
     FROM step1 s1
-    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    GLOBAL INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
 )
 -- Join with T3 for complete funnel
@@ -405,7 +405,7 @@ WITH
         j2.s2_has_error,
         s3.has_error_flag AS s3_has_error
     FROM joined_t2 j2
-    INNER JOIN step3 s3 ON j2.trace_id = s3.trace_id
+    GLOBAL INNER JOIN step3 s3 ON j2.trace_id = s3.trace_id
     WHERE s3.first_time > j2.t2_time
 )
 -- Error counts for each step
@@ -510,7 +510,7 @@ WITH
         s1.has_error_flag AS s1_has_error,
         s2.has_error_flag AS s2_has_error
     FROM step1 s1
-    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    GLOBAL INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
 )
 -- Error counts for each step
@@ -643,7 +643,7 @@ WITH
         s1.has_error_flag AS s1_has_error,
         s2.has_error_flag AS s2_has_error
     FROM step1 s1
-    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    GLOBAL INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
 )
 -- Join with T3 for complete funnel
@@ -657,7 +657,7 @@ WITH
         j2.s2_has_error,
         s3.has_error_flag AS s3_has_error
     FROM joined_t2 j2
-    INNER JOIN step3 s3 ON j2.trace_id = s3.trace_id
+    GLOBAL INNER JOIN step3 s3 ON j2.trace_id = s3.trace_id
     WHERE s3.first_time > j2.t2_time
 )
 -- Error counts for each step
@@ -789,7 +789,7 @@ WITH
         s1.has_error_flag AS t1_has_error,
         s2.has_error_flag AS t2_has_error
     FROM step1 s1
-    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    GLOBAL INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
 )
 -- Final counts
@@ -899,7 +899,7 @@ WITH
         s1.has_error_flag AS t1_has_error,
         s2.has_error_flag AS t2_has_error
     FROM step1 s1
-    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    GLOBAL INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
 )
 -- Join T2 and T3
@@ -913,7 +913,7 @@ WITH
         j2.t2_has_error,
         s3.has_error_flag AS t3_has_error
     FROM joined_t2 j2
-    INNER JOIN step3 s3 ON j2.trace_id = s3.trace_id
+    GLOBAL INNER JOIN step3 s3 ON j2.trace_id = s3.trace_id
     WHERE s3.first_time > j2.t2_time
 )
 -- Final counts
@@ -982,7 +982,7 @@ WITH
 ), step1 AS (
     SELECT s1.trace_id, s1.timestamp AS first_time
     FROM signoz_traces.signoz_index_v3 s1
-    INNER JOIN step1_first f1 ON s1.trace_id = f1.trace_id AND s1.timestamp = f1.first_time
+    GLOBAL INNER JOIN step1_first f1 ON s1.trace_id = f1.trace_id AND s1.timestamp = f1.first_time
 )
 -- Step 2: first span
 , step2_first AS (
@@ -998,7 +998,7 @@ WITH
 ), step2 AS (
     SELECT s2.trace_id, s2.timestamp AS first_time
     FROM signoz_traces.signoz_index_v3 s2
-    INNER JOIN step2_first f2 ON s2.trace_id = f2.trace_id AND s2.timestamp = f2.first_time
+    GLOBAL INNER JOIN step2_first f2 ON s2.trace_id = f2.trace_id AND s2.timestamp = f2.first_time
 )
 -- Join T1 and T2
 , joined AS (
@@ -1007,7 +1007,7 @@ WITH
         s1.first_time AS t1_time,
         s2.first_time AS t2_time
     FROM step1 s1
-    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    GLOBAL INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
 )
 -- Calculate duration in milliseconds
@@ -1030,7 +1030,7 @@ SELECT
     f.duration_ms,
     s.span_count
 FROM final f
-INNER JOIN span_counts s ON f.trace_id = s.trace_id
+GLOBAL INNER JOIN span_counts s ON f.trace_id = s.trace_id
 ORDER BY f.duration_ms DESC
 LIMIT 5;`
 
@@ -1086,7 +1086,7 @@ WITH
 ), step1 AS (
     SELECT s1.trace_id, s1.timestamp AS first_time, s1.has_error AS has_error_flag
     FROM signoz_traces.signoz_index_v3 s1
-    INNER JOIN step1_first f1 ON s1.trace_id = f1.trace_id AND s1.timestamp = f1.first_time
+    GLOBAL INNER JOIN step1_first f1 ON s1.trace_id = f1.trace_id AND s1.timestamp = f1.first_time
 )
 -- Step 2: first span
 , step2_first AS (
@@ -1102,7 +1102,7 @@ WITH
 ), step2 AS (
     SELECT s2.trace_id, s2.timestamp AS first_time, s2.has_error AS has_error_flag
     FROM signoz_traces.signoz_index_v3 s2
-    INNER JOIN step2_first f2 ON s2.trace_id = f2.trace_id AND s2.timestamp = f2.first_time
+    GLOBAL INNER JOIN step2_first f2 ON s2.trace_id = f2.trace_id AND s2.timestamp = f2.first_time
 )
 -- Join T1 and T2
 , joined AS (
@@ -1113,7 +1113,7 @@ WITH
         s1.has_error_flag AS t1_has_error,
         s2.has_error_flag AS t2_has_error
     FROM step1 s1
-    INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
+    GLOBAL INNER JOIN step2 s2 ON s1.trace_id = s2.trace_id
     WHERE s2.first_time > s1.first_time
 )
 -- Calculate duration in milliseconds and filter error traces
@@ -1139,7 +1139,7 @@ SELECT
     f.duration_ms,
     s.span_count
 FROM final f
-INNER JOIN span_counts s ON f.trace_id = s.trace_id
+GLOBAL INNER JOIN span_counts s ON f.trace_id = s.trace_id
 ORDER BY f.duration_ms DESC
 LIMIT 5;`
 
