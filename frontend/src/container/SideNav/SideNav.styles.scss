@@ -72,7 +72,7 @@
 
 				color: var(--bg-vanilla-100);
 				border-radius: 4px 0px 0px 4px;
-				background: var(--bg-robin-500);
+				background: var(--Slate-400, #1d212d);
 
 				text-align: center;
 				font-family: Inter;
@@ -84,16 +84,20 @@
 				text-transform: uppercase;
 			}
 
-			.version {
+			.version-container {
 				display: flex;
+				align-items: center;
+
 				padding: 2px 6px;
 				justify-content: center;
 				align-items: center;
-				gap: 4px;
+				gap: 6px;
 
 				border-radius: 0px 4px 4px 0px;
 				background: var(--Slate-300, #242834);
+			}
 
+			.version {
 				color: var(--Vanilla-400, #c0c1c3);
 				text-align: center;
 				font-variant-numeric: lining-nums tabular-nums slashed-zero;
@@ -105,21 +109,28 @@
 				line-height: 14px; /* 140% */
 				letter-spacing: 0.4px;
 
+				cursor: pointer;
+
+				max-width: 100px;
+
 				overflow: hidden;
 				text-overflow: ellipsis;
 				white-space: nowrap;
+			}
 
-				cursor: pointer;
+			.version-update-notification-dot-icon {
+				width: 4px;
+				height: 4px;
+				border-radius: 50%;
+				background-color: var(--bg-amber-500);
+				animation: ripple 1s infinite;
 
-				.version-update-notification-dot-icon {
-					width: 4px;
-					height: 4px;
-					border-radius: 50%;
-					background-color: var(--bg-amber-500);
-					animation: ripple 1s infinite;
-					position: relative;
-					margin-left: 4px;
-					margin-right: 4px;
+				margin-right: 4px;
+			}
+
+			&.cloud-user {
+				.version {
+					cursor: default;
 				}
 			}
 
@@ -127,6 +138,12 @@
 				color: var(--bg-sakura-500);
 				background: rgba(255, 113, 113, 0.1);
 				border: 1px solid var(--bg-sakura-500);
+			}
+
+			&.version-update-notification {
+				.license-type {
+					background: var(--bg-robin-500);
+				}
 			}
 		}
 
@@ -862,8 +879,11 @@
 					color: var(--bg-ink-400);
 				}
 
-				.version {
+				.version-container {
 					background: var(--bg-vanilla-300);
+				}
+
+				.version {
 					color: var(--bg-ink-400);
 				}
 

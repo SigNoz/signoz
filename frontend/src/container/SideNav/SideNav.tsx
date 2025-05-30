@@ -599,16 +599,23 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);
 
-	const onClickVersionHandler = useCallback((event: MouseEvent): void => {
-		if (isCtrlMetaKey(event)) {
-			openInNewTab(ROUTES.VERSION);
-		} else {
-			history.push(ROUTES.VERSION);
-		}
-	}, []);
+	const onClickVersionHandler = useCallback(
+		(event: MouseEvent): void => {
+			if (isCloudUser) {
+				return;
+			}
+
+			if (isCtrlMetaKey(event)) {
+				openInNewTab(ROUTES.VERSION);
+			} else {
+				history.push(ROUTES.VERSION);
+			}
+		},
+		[isCloudUser],
+	);
 
 	useEffect(() => {
-		if (!isLatestVersion && !isCloudUser && !isEnterpriseSelfHostedUser) {
+		if (!isLatestVersion && !isCloudUser) {
 			setShowVersionUpdateNotification(true);
 		} else {
 			setShowVersionUpdateNotification(false);
@@ -655,6 +662,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										className={cx(
 											'brand-title-section',
 											isCommunityEnterpriseUser && 'community-enterprise-user',
+											isCloudUser && 'cloud-user',
+											showVersionUpdateNotification && 'version-update-notification',
 										)}
 									>
 										<span className="license-type"> {licenseTag} </span>
@@ -678,12 +687,15 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 													)
 												}
 											>
-												<span className="version" onClick={onClickVersionHandler}>
-													{currentVersion}
+												<div className="version-container">
+													<span className="version" onClick={onClickVersionHandler}>
+														{currentVersion}
+													</span>
+
 													{showVersionUpdateNotification && (
 														<span className="version-update-notification-dot-icon" />
 													)}
-												</span>
+												</div>
 											</Tooltip>
 										)}
 									</div>
