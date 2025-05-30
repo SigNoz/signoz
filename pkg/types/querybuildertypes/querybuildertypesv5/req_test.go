@@ -249,7 +249,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							Name:       "error_rate",
 							Expression: "A / B * 100",
 							Functions: []Function{{
-								Name: "absolute",
+								Name: FunctionNameAbsolute,
 								Args: []struct {
 									Name  string `json:"name,omitempty"`
 									Value string `json:"value"`

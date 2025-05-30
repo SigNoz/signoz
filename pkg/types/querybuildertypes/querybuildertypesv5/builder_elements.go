@@ -207,7 +207,7 @@ type SecondaryAggregation struct {
 
 type Function struct {
 	// name of the function
-	Name string `json:"name"`
+	Name FunctionName `json:"name"`
 
 	// args is the arguments to the function
 	Args []struct {
