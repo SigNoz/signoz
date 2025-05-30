@@ -2,8 +2,9 @@ package helpers
 
 import (
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"strings"
+
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )

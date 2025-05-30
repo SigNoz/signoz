@@ -65,3 +65,43 @@ var (
 	SpaceAggregationPercentile95 = SpaceAggregation{valuer.NewString("p95")}
 	SpaceAggregationPercentile99 = SpaceAggregation{valuer.NewString("p99")}
 )
+
+func (s SpaceAggregation) IsPercentile() bool {
+	return s == SpaceAggregationPercentile50 ||
+		s == SpaceAggregationPercentile75 ||
+		s == SpaceAggregationPercentile90 ||
+		s == SpaceAggregationPercentile95 ||
+		s == SpaceAggregationPercentile99
+}
+
+func (s SpaceAggregation) Percentile() float64 {
+	switch s {
+	case SpaceAggregationPercentile50:
+		return 0.5
+	case SpaceAggregationPercentile75:
+		return 0.75
+	case SpaceAggregationPercentile90:
+		return 0.9
+	case SpaceAggregationPercentile95:
+		return 0.95
+	case SpaceAggregationPercentile99:
+		return 0.99
+	default:
+		return 0
+	}
+}
+
+// MetricTableHints is a struct that contains tables to use instead of the derived tables
+// from the start and end time, for internal use only when we need to override the derived tables
+type MetricTableHints struct {
+	TimeSeriesTableName string
+	SamplesTableName    string
+}
+
+// Until recently, certain OTEL metrics encode the state in the value of the metric, which is in general
+// a bad modelling (presumably coming from some vendor) and makes it hard to write the aggregation queries.
+// While this is not the case anymore, there are some existing metrics that do this, we need a way to support them.
+// This is a workaround for those metrics.
+type MetricValueFilter struct {
+	Value float64
+}
