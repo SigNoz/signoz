@@ -3,6 +3,7 @@ package telemetrymetrics
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -44,10 +45,16 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope, telemetrytypes.FieldContextAttribute:
 		return timeSeriesV4Columns["labels"], nil
-	case telemetrytypes.FieldContextMetric, telemetrytypes.FieldContextUnspecified:
+	case telemetrytypes.FieldContextMetric:
 		col, ok := timeSeriesV4Columns[key.Name]
 		if !ok {
 			return nil, qbtypes.ErrColumnNotFound
+		}
+		return col, nil
+	case telemetrytypes.FieldContextUnspecified:
+		col, ok := timeSeriesV4Columns[key.Name]
+		if !ok {
+			return timeSeriesV4Columns["labels"], nil
 		}
 		return col, nil
 	}
@@ -66,6 +73,11 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		return fmt.Sprintf("JSONExtractString(%s, '%s')", column.Name, key.Name), nil
 	case telemetrytypes.FieldContextMetric:
 		return column.Name, nil
+	case telemetrytypes.FieldContextUnspecified:
+		if slices.Contains(IntrinsicFields, key.Name) {
+			return column.Name, nil
+		}
+		return fmt.Sprintf("JSONExtractString(%s, '%s')", column.Name, key.Name), nil
 	}
 
 	return column.Name, nil
