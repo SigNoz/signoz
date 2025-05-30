@@ -142,6 +142,7 @@ export const useValidateFunnelSteps = ({
 interface SaveFunnelDescriptionPayload {
 	funnel_id: string;
 	description: string;
+	timestamp: number;
 }
 
 export const useSaveFunnelDescription = (): UseMutationResult<
@@ -149,7 +150,11 @@ export const useSaveFunnelDescription = (): UseMutationResult<
 	Error,
 	SaveFunnelDescriptionPayload
 > =>
-	useMutation({
+	useMutation<
+		SuccessResponse<FunnelData> | ErrorResponse,
+		Error,
+		SaveFunnelDescriptionPayload
+	>({
 		mutationFn: saveFunnelDescription,
 	});
 

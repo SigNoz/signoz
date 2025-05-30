@@ -83,6 +83,7 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewUpdateLicenseFactory(sqlstore),
 		sqlmigration.NewMigratePATToFactorAPIKey(sqlstore),
 		sqlmigration.NewUpdateApiMonitoringFiltersFactory(sqlstore),
+		sqlmigration.NewAddTraceFunnelsFactory(sqlstore),
 	)
 }
 
