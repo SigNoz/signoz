@@ -18,7 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
@@ -483,16 +482,8 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 10*time.Minute, 30*time.Minute)
-	integrationsController, err := integrations.NewController(sqlStore)
-	if err != nil {
-		t.Fatalf("could not create a new integrations controller: %v", err)
-	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(sqlStore)
-	if err != nil {
-		t.Fatalf("could not create a new cloud integrations controller: %v", err)
-	}
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, integrationsController, cloudIntegrationsController)
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings)
 	handlers := signoz.NewHandlers(modules)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{

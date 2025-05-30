@@ -20,8 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -308,17 +306,8 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
-	integrationsController, err := integrations.NewController(testDB)
-	if err != nil {
-		t.Fatalf("could not create a new integrations controller: %v", err)
-	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(testDB)
-	if err != nil {
-		t.Fatalf("could not create a new cloud integrations controller: %v", err)
-	}
-
-	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings, integrationsController, cloudIntegrationsController)
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader: reader,
 		JWT:    jwt,

@@ -21,7 +21,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -368,16 +367,8 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
 	jwt := authtypes.NewJWT("", 10*time.Minute, 30*time.Minute)
-	integrationsController, err := integrations.NewController(testDB)
-	if err != nil {
-		t.Fatalf("could not create a new integrations controller: %v", err)
-	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(testDB)
-	if err != nil {
-		t.Fatalf("could not create a new cloud integrations controller: %v", err)
-	}
-	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings, integrationsController, cloudIntegrationsController)
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings)
 	handlers := signoz.NewHandlers(modules)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{

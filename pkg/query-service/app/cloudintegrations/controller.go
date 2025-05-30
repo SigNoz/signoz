@@ -34,9 +34,7 @@ type Controller struct {
 	serviceConfigRepo ServiceConfigDatabase
 }
 
-func NewController(sqlStore sqlstore.SQLStore) (
-	*Controller, error,
-) {
+func NewController(sqlStore sqlstore.SQLStore) (*Controller, error) {
 	accountsRepo, err := newCloudProviderAccountsRepository(sqlStore)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create cloud provider accounts repo: %w", err)
@@ -57,9 +55,7 @@ type ConnectedAccountsListResponse struct {
 	Accounts []types.Account `json:"accounts"`
 }
 
-func (c *Controller) ListConnectedAccounts(
-	ctx context.Context, orgId string, cloudProvider string,
-) (
+func (c *Controller) ListConnectedAccounts(ctx context.Context, orgId string, cloudProvider string) (
 	*ConnectedAccountsListResponse, *model.ApiError,
 ) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
@@ -105,9 +101,7 @@ type GenerateConnectionUrlResponse struct {
 	ConnectionUrl string `json:"connection_url"`
 }
 
-func (c *Controller) GenerateConnectionUrl(
-	ctx context.Context, orgId string, cloudProvider string, req GenerateConnectionUrlRequest,
-) (*GenerateConnectionUrlResponse, *model.ApiError) {
+func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cloudProvider string, req GenerateConnectionUrlRequest) (*GenerateConnectionUrlResponse, *model.ApiError) {
 	// Account connection with a simple connection URL may not be available for all providers.
 	if cloudProvider != "aws" {
 		return nil, model.BadRequest(fmt.Errorf("unsupported cloud provider: %s", cloudProvider))
@@ -156,9 +150,7 @@ type AccountStatusResponse struct {
 	Status         types.AccountStatus `json:"status"`
 }
 
-func (c *Controller) GetAccountStatus(
-	ctx context.Context, orgId string, cloudProvider string, accountId string,
-) (
+func (c *Controller) GetAccountStatus(ctx context.Context, orgId string, cloudProvider string, accountId string) (
 	*AccountStatusResponse, *model.ApiError,
 ) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
@@ -200,9 +192,7 @@ type IntegrationConfigForAgent struct {
 	TelemetryCollectionStrategy *CompiledCollectionStrategy `json:"telemetry,omitempty"`
 }
 
-func (c *Controller) CheckInAsAgent(
-	ctx context.Context, orgId string, cloudProvider string, req AgentCheckInRequest,
-) (*AgentCheckInResponse, error) {
+func (c *Controller) CheckInAsAgent(ctx context.Context, orgId string, cloudProvider string, req AgentCheckInRequest) (*AgentCheckInResponse, error) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -295,13 +285,7 @@ type UpdateAccountConfigRequest struct {
 	Config types.AccountConfig `json:"config"`
 }
 
-func (c *Controller) UpdateAccountConfig(
-	ctx context.Context,
-	orgId string,
-	cloudProvider string,
-	accountId string,
-	req UpdateAccountConfigRequest,
-) (*types.Account, *model.ApiError) {
+func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, cloudProvider string, accountId string, req UpdateAccountConfigRequest) (*types.Account, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -318,9 +302,7 @@ func (c *Controller) UpdateAccountConfig(
 	return &account, nil
 }
 
-func (c *Controller) DisconnectAccount(
-	ctx context.Context, orgId string, cloudProvider string, accountId string,
-) (*types.CloudIntegration, *model.ApiError) {
+func (c *Controller) DisconnectAccount(ctx context.Context, orgId string, cloudProvider string, accountId string) (*types.CloudIntegration, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -522,9 +504,7 @@ func (c *Controller) UpdateServiceConfig(
 
 // All dashboards that are available based on cloud integrations configuration
 // across all cloud providers
-func (c *Controller) AvailableDashboards(ctx context.Context, orgId valuer.UUID) (
-	[]*dashboardtypes.Dashboard, *model.ApiError,
-) {
+func (c *Controller) AvailableDashboards(ctx context.Context, orgId valuer.UUID) ([]*dashboardtypes.Dashboard, *model.ApiError) {
 	allDashboards := []*dashboardtypes.Dashboard{}
 
 	for _, provider := range []string{"aws"} {
@@ -541,10 +521,7 @@ func (c *Controller) AvailableDashboards(ctx context.Context, orgId valuer.UUID)
 	return allDashboards, nil
 }
 
-func (c *Controller) AvailableDashboardsForCloudProvider(
-	ctx context.Context, orgID valuer.UUID, cloudProvider string,
-) ([]*dashboardtypes.Dashboard, *model.ApiError) {
-
+func (c *Controller) AvailableDashboardsForCloudProvider(ctx context.Context, orgID valuer.UUID, cloudProvider string) ([]*dashboardtypes.Dashboard, *model.ApiError) {
 	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, orgID.StringValue(), cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list connected cloud accounts")
@@ -602,11 +579,7 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 
 	return svcDashboards, nil
 }
-func (c *Controller) GetDashboardById(
-	ctx context.Context,
-	orgId valuer.UUID,
-	dashboardUuid string,
-) (*dashboardtypes.Dashboard, *model.ApiError) {
+func (c *Controller) GetDashboardById(ctx context.Context, orgId valuer.UUID, dashboardUuid string) (*dashboardtypes.Dashboard, *model.ApiError) {
 	cloudProvider, _, _, apiErr := c.parseDashboardUuid(dashboardUuid)
 	if apiErr != nil {
 		return nil, apiErr
@@ -614,9 +587,7 @@ func (c *Controller) GetDashboardById(
 
 	allDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, orgId, cloudProvider)
 	if apiErr != nil {
-		return nil, model.WrapApiError(
-			apiErr, fmt.Sprintf("couldn't list available dashboards"),
-		)
+		return nil, model.WrapApiError(apiErr, "couldn't list available dashboards")
 	}
 
 	for _, d := range allDashboards {
@@ -625,27 +596,19 @@ func (c *Controller) GetDashboardById(
 		}
 	}
 
-	return nil, model.NotFoundError(fmt.Errorf(
-		"couldn't find dashboard with uuid: %s", dashboardUuid,
-	))
+	return nil, model.NotFoundError(fmt.Errorf("couldn't find dashboard with uuid: %s", dashboardUuid))
 }
 
 func (c *Controller) dashboardUuid(
 	cloudProvider string, svcId string, dashboardId string,
 ) string {
-	return fmt.Sprintf(
-		"cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId,
-	)
+	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId)
 }
 
-func (c *Controller) parseDashboardUuid(dashboardUuid string) (
-	cloudProvider string, svcId string, dashboardId string, apiErr *model.ApiError,
-) {
+func (c *Controller) parseDashboardUuid(dashboardUuid string) (cloudProvider string, svcId string, dashboardId string, apiErr *model.ApiError) {
 	parts := strings.SplitN(dashboardUuid, "--", 4)
 	if len(parts) != 4 || parts[0] != "cloud-integration" {
-		return "", "", "", model.BadRequest(fmt.Errorf(
-			"invalid cloud integration dashboard id",
-		))
+		return "", "", "", model.BadRequest(fmt.Errorf("invalid cloud integration dashboard id"))
 	}
 
 	return parts[1], parts[2], parts[3], nil

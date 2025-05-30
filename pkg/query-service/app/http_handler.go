@@ -61,6 +61,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -513,9 +514,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.Signoz.Handlers.Dashboard.GetAll)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.GetAll)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{id}", am.ViewAccess(aH.Signoz.Handlers.Dashboard.Get)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards/{id}", am.ViewAccess(aH.Get)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Update)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Delete)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/dashboards/{id}/lock", am.EditAccess(aH.Signoz.Handlers.Dashboard.Lock)).Methods(http.MethodPut)
@@ -531,7 +532,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
 
-	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
@@ -1130,6 +1130,115 @@ func prepareQuery(r *http.Request) (string, error) {
 		return "", tmplErr
 	}
 	return queryBuf.String(), nil
+}
+
+func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := aH.Signoz.Modules.Dashboard.Get(ctx, orgID, dashboardID)
+	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
+		render.Error(rw, err)
+		return
+	}
+
+	if err != nil && errorsV2.Ast(err, errorsV2.TypeNotFound) {
+		if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(id) {
+			cloudintegrationDashboard, apiErr := aH.CloudIntegrationsController.GetDashboardById(ctx, orgID, id)
+			if apiErr != nil {
+				render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
+				return
+			}
+			dashboard = cloudintegrationDashboard
+		} else if aH.IntegrationsController.IsInstalledIntegrationDashboardID(id) {
+			integrationDashboard, apiErr := aH.IntegrationsController.GetInstalledIntegrationDashboardById(ctx, orgID, id)
+			if apiErr != nil {
+				render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
+				return
+			}
+			dashboard = integrationDashboard
+		}
+	}
+
+	gettableDashboard, err := dashboardtypes.NewGettableDashboardFromDashboard(dashboard)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, gettableDashboard)
+}
+
+func (aH *APIHandler) GetAll(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboards := make([]*dashboardtypes.Dashboard, 0)
+	sqlDashboards, err := aH.Signoz.Modules.Dashboard.GetAll(ctx, orgID)
+	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
+		render.Error(rw, err)
+		return
+	}
+	if sqlDashboards != nil {
+		dashboards = append(dashboards, sqlDashboards...)
+	}
+
+	installedIntegrationDashboards, apiErr := aH.IntegrationsController.GetDashboardsForInstalledIntegrations(ctx, orgID)
+	if apiErr != nil {
+		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(apiErr))
+	} else {
+		dashboards = append(dashboards, installedIntegrationDashboards...)
+	}
+
+	cloudIntegrationDashboards, apiErr := aH.CloudIntegrationsController.AvailableDashboards(ctx, orgID)
+	if apiErr != nil {
+		zap.L().Error("failed to get dashboards for cloud integrations", zap.Error(apiErr))
+	} else {
+		dashboards = append(dashboards, cloudIntegrationDashboards...)
+	}
+
+	gettableDashboards, err := dashboardtypes.NewGettableDashboardsFromDashboards(dashboards)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	render.Success(rw, http.StatusOK, gettableDashboards)
 }
 
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {

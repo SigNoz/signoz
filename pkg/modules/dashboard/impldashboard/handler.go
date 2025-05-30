@@ -61,73 +61,6 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, gettableDashboard)
 }
 
-func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	id := mux.Vars(r)["id"]
-	if id == "" {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
-		return
-	}
-
-	dashboard, err := handler.module.Get(ctx, orgID, id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	gettableDashboard, err := dashboardtypes.NewGettableDashboardFromDashboard(dashboard)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	render.Success(rw, http.StatusOK, gettableDashboard)
-}
-
-func (handler *handler) GetAll(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	dashboards, err := handler.module.GetAll(ctx, orgID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		render.Error(rw, err)
-		return
-	}
-
-	if err != nil && errors.Ast(err, errors.TypeNotFound) {
-		render.Success(rw, http.StatusOK, []*dashboardtypes.GettableDashboard{})
-	}
-
-	gettableDashboards, err := dashboardtypes.NewGettableDashboardsFromDashboards(dashboards)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	render.Success(rw, http.StatusOK, gettableDashboards)
-}
-
 func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -149,6 +82,11 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
 		return
 	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
 	req := dashboardtypes.UpdatableDashboard{}
 	err = json.NewDecoder(r.Body).Decode(&req)
@@ -157,7 +95,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := handler.module.Update(ctx, orgID, id, claims.Email, req)
+	dashboard, err := handler.module.Update(ctx, orgID, dashboardID, claims.Email, req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -187,8 +125,13 @@ func (handler *handler) Lock(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
 		return
 	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-	err = handler.module.LockUnlock(ctx, orgID, id, claims.Email, true)
+	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, true)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -218,8 +161,13 @@ func (handler *handler) Unlock(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
 		return
 	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-	err = handler.module.LockUnlock(ctx, orgID, id, claims.Email, false)
+	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, false)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -244,7 +192,16 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	id := mux.Vars(r)["id"]
-	err = handler.module.Delete(ctx, orgID, id)
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	err = handler.module.Delete(ctx, orgID, dashboardID)
 	if err != nil {
 		render.Error(rw, err)
 		return

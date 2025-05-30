@@ -11,25 +11,21 @@ import (
 type Module interface {
 	Create(ctx context.Context, orgID valuer.UUID, createdBy string, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
 
-	Get(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error)
+	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error)
 
 	GetAll(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 
-	Update(ctx context.Context, orgID valuer.UUID, id string, updatedBy string, data dashboardtypes.UpdatableDashboard) (*dashboardtypes.Dashboard, error)
+	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboard) (*dashboardtypes.Dashboard, error)
 
-	LockUnlock(ctx context.Context, orgID valuer.UUID, id string, updatedBy string, lock bool) error
+	LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, lock bool) error
 
-	Delete(ctx context.Context, orgID valuer.UUID, id string) error
+	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
 	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
 }
 
 type Handler interface {
 	Create(http.ResponseWriter, *http.Request)
-
-	Get(http.ResponseWriter, *http.Request)
-
-	GetAll(http.ResponseWriter, *http.Request)
 
 	Update(http.ResponseWriter, *http.Request)
 

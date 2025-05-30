@@ -96,13 +96,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// note: add ee override methods first
 
 	// routes available only in ee version
-
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(ah.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
-
-	// invite
-	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.Signoz.Handlers.User.GetInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(ah.Signoz.Handlers.User.AcceptInvite)).Methods(http.MethodPost)
 
 	// paid plans specific routes
 	router.HandleFunc("/api/v1/complete/saml", am.OpenAccess(ah.receiveSAML)).Methods(http.MethodPost)

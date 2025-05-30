@@ -18,6 +18,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
@@ -83,6 +85,16 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore)
+	if err != nil {
+		return nil, err
+	}
+
+	cloudIntegrationsController, err := cloudintegrations.NewController(serverOptions.SigNoz.SQLStore)
+	if err != nil {
+		return nil, err
+	}
+
 	reader := clickhouseReader.NewReader(
 		serverOptions.SigNoz.SQLStore,
 		serverOptions.SigNoz.TelemetryStore,
@@ -110,7 +122,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		serverOptions.SigNoz.SQLStore, serverOptions.SigNoz.IntegrationsController.GetPipelinesForInstalledIntegrations,
+		serverOptions.SigNoz.SQLStore, integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -128,8 +140,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Reader:                        reader,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
 		RuleManager:                   rm,
-		IntegrationsController:        serverOptions.SigNoz.IntegrationsController,
-		CloudIntegrationsController:   serverOptions.SigNoz.CloudIntegrationsControlller,
+		IntegrationsController:        integrationsController,
+		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  fluxInterval,
 		JWT:                           serverOptions.Jwt,

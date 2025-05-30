@@ -7,27 +7,21 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	store                       dashboardtypes.Store
-	settings                    factory.ScopedProviderSettings
-	integrationsController      *integrations.Controller
-	cloudIntegrationsController *cloudintegrations.Controller
+	store    dashboardtypes.Store
+	settings factory.ScopedProviderSettings
 }
 
-func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, integrationsController *integrations.Controller, cloudIntegrationsController *cloudintegrations.Controller) dashboard.Module {
+func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/impldashboard")
 	return &module{
-		store:                       NewStore(sqlstore),
-		settings:                    scopedProviderSettings,
-		integrationsController:      integrationsController,
-		cloudIntegrationsController: cloudIntegrationsController,
+		store:    NewStore(sqlstore),
+		settings: scopedProviderSettings,
 	}
 }
 
@@ -49,27 +43,8 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 	return dashboard, nil
 }
 
-func (module *module) Get(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error) {
-	dashboardID, err := valuer.NewUUID(id)
-	if err != nil {
-		if module.cloudIntegrationsController.IsCloudIntegrationDashboardUuid(id) {
-			dashboard, apiErr := module.cloudIntegrationsController.GetDashboardById(ctx, orgID, id)
-			if apiErr != nil {
-				return nil, apiErr
-			}
-			return dashboard, nil
-		} else if module.integrationsController.IsInstalledIntegrationDashboardID(id) {
-			dashboard, apiErr := module.integrationsController.GetInstalledIntegrationDashboardById(ctx, orgID, id)
-			if apiErr != nil {
-				return nil, apiErr
-			}
-			return dashboard, nil
-		}
-
-		return nil, err
-	}
-
-	storableDashboard, err := module.store.Get(ctx, orgID, dashboardID)
+func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
+	storableDashboard, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -82,39 +57,20 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id string) (*d
 }
 
 func (module *module) GetAll(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	dashboards := make([]*dashboardtypes.Dashboard, 0)
-
-	installedIntegrationDashboards, apiErr := module.integrationsController.GetDashboardsForInstalledIntegrations(ctx, orgID)
-	if apiErr != nil {
-		module.settings.Logger().ErrorContext(ctx, "failed to get dashboards for installed integrations", "error", apiErr)
-	} else {
-		dashboards = append(dashboards, installedIntegrationDashboards...)
-	}
-
-	cloudIntegrationDashboards, apiErr := module.cloudIntegrationsController.AvailableDashboards(ctx, orgID)
-	if apiErr != nil {
-		module.settings.Logger().ErrorContext(ctx, "failed to get cloud dashboards", "error", apiErr)
-	} else {
-		dashboards = append(dashboards, cloudIntegrationDashboards...)
-	}
-
 	storableDashboards, err := module.store.GetAll(ctx, orgID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+	if err != nil {
 		return nil, err
 	}
 
-	if err == nil {
-		sqlDashboards, err := dashboardtypes.NewDashboardsFromStorableDashboards(storableDashboards)
-		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to list dashboards")
-		}
-		dashboards = append(dashboards, sqlDashboards...)
+	dashboards, err := dashboardtypes.NewDashboardsFromStorableDashboards(storableDashboards)
+	if err != nil {
+		return nil, err
 	}
 
 	return dashboards, nil
 }
 
-func (module *module) Update(ctx context.Context, orgID valuer.UUID, id string, updatedBy string, updatableDashboard dashboardtypes.UpdatableDashboard) (*dashboardtypes.Dashboard, error) {
+func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatableDashboard dashboardtypes.UpdatableDashboard) (*dashboardtypes.Dashboard, error) {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
@@ -138,11 +94,7 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id string, 
 	return dashboard, nil
 }
 
-func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id string, updatedBy string, lock bool) error {
-	if module.cloudIntegrationsController.IsCloudIntegrationDashboardUuid(id) || module.integrationsController.IsInstalledIntegrationDashboardID(id) {
-		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot unlock the integrations dashboards")
-	}
-
+func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, lock bool) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -163,10 +115,9 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id stri
 	}
 
 	return nil
-
 }
 
-func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id string) error {
+func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -176,12 +127,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id string) 
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
 	}
 
-	dashboardID, err := valuer.NewUUID(id)
-	if err != nil {
-		return err
-	}
-
-	return module.store.Delete(ctx, orgID, dashboardID)
+	return module.store.Delete(ctx, orgID, id)
 }
 
 func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {

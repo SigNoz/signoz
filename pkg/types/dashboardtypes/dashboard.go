@@ -33,14 +33,12 @@ type Dashboard struct {
 	OrgID  valuer.UUID           `json:"org_id"`
 }
 
-type UpdatableDashboard struct {
-	StorableDashboardData `json:"data"`
-}
-
 type (
 	StorableDashboardData map[string]interface{}
 
 	GettableDashboard = Dashboard
+
+	UpdatableDashboard = StorableDashboardData
 
 	PostableDashboard = StorableDashboardData
 
@@ -223,18 +221,20 @@ func (storableDashboardData *StorableDashboardData) CanUpdate(data StorableDashb
 }
 
 func (dashboard *Dashboard) Update(updatableDashboard UpdatableDashboard, updatedBy string) error {
-	canUpdate := dashboard.Data.CanUpdate(updatableDashboard.StorableDashboardData)
+
+	canUpdate := dashboard.Data.CanUpdate(updatableDashboard)
 	if !canUpdate {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "deleting more than one panel is not supported")
 	}
+
 	if dashboard.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
 	dashboard.UpdatedBy = updatedBy
 	dashboard.UpdatedAt = time.Now()
 
-	if updatableDashboard.StorableDashboardData != nil {
-		dashboard.Data = updatableDashboard.StorableDashboardData
+	if updatableDashboard != nil {
+		dashboard.Data = updatableDashboard
 	}
 	return nil
 }
