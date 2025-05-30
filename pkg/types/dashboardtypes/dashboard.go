@@ -33,6 +33,10 @@ type Dashboard struct {
 	OrgID  valuer.UUID           `json:"org_id"`
 }
 
+type LockUnlockDashboard struct {
+	Locked *bool `json:"locked"`
+}
+
 type (
 	StorableDashboardData map[string]interface{}
 
@@ -46,10 +50,6 @@ type (
 )
 
 func NewStorableDashboardFromDashboard(dashboard *Dashboard) (*StorableDashboard, error) {
-	if dashboard == nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert <nil> dashboard to storable dashboard")
-	}
-
 	dashboardID, err := valuer.NewUUID(dashboard.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid")
@@ -93,10 +93,6 @@ func NewDashboard(orgID valuer.UUID, createdBy string, storableDashboardData Sto
 }
 
 func NewDashboardFromStorableDashboard(storableDashboard *StorableDashboard) (*Dashboard, error) {
-	if storableDashboard == nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert <nil> storable dashboard to dashboard")
-	}
-
 	return &Dashboard{
 		ID: storableDashboard.ID.StringValue(),
 		TimeAuditable: types.TimeAuditable{
@@ -114,10 +110,6 @@ func NewDashboardFromStorableDashboard(storableDashboard *StorableDashboard) (*D
 }
 
 func NewDashboardsFromStorableDashboards(storableDashboards []*StorableDashboard) ([]*Dashboard, error) {
-	if storableDashboards == nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert <nil> storable dashboards to dashboards")
-	}
-
 	dashboards := make([]*Dashboard, len(storableDashboards))
 	for idx, storableDashboard := range storableDashboards {
 		dashboard, err := NewDashboardFromStorableDashboard(storableDashboard)
@@ -131,10 +123,6 @@ func NewDashboardsFromStorableDashboards(storableDashboards []*StorableDashboard
 }
 
 func NewGettableDashboardsFromDashboards(dashboards []*Dashboard) ([]*GettableDashboard, error) {
-	if dashboards == nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert dashboards to gettable dashboards for <nil> dashboards")
-	}
-
 	gettableDashboards := make([]*GettableDashboard, len(dashboards))
 	for idx, dashboard := range dashboards {
 		gettableDashboard, err := NewGettableDashboardFromDashboard(dashboard)
@@ -147,10 +135,6 @@ func NewGettableDashboardsFromDashboards(dashboards []*Dashboard) ([]*GettableDa
 }
 
 func NewGettableDashboardFromDashboard(dashboard *Dashboard) (*GettableDashboard, error) {
-	if dashboard == nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot convert <nil> dashboard to gettable dashboard")
-	}
-
 	return &GettableDashboard{
 		ID:            dashboard.ID,
 		TimeAuditable: dashboard.TimeAuditable,
@@ -221,7 +205,6 @@ func (storableDashboardData *StorableDashboardData) CanUpdate(data StorableDashb
 }
 
 func (dashboard *Dashboard) Update(updatableDashboard UpdatableDashboard, updatedBy string) error {
-
 	canUpdate := dashboard.Data.CanUpdate(updatableDashboard)
 	if !canUpdate {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "deleting more than one panel is not supported")
@@ -254,6 +237,24 @@ func (dashboard *Dashboard) CanLockUnlock(updatedBy string) error {
 	if dashboard.CreatedBy != updatedBy {
 		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}
+	return nil
+}
+
+func (lockUnlockDashboard *LockUnlockDashboard) UnmarshalJSON(src []byte) error {
+	var lockUnlock struct {
+		Locked *bool `json:"lock"`
+	}
+
+	err := json.Unmarshal(src, &lockUnlock)
+	if err != nil {
+		return err
+	}
+
+	if lockUnlock.Locked == nil {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "lock is missing in the request payload")
+	}
+
+	lockUnlockDashboard.Locked = lockUnlock.Locked
 	return nil
 }
 

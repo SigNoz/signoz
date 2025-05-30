@@ -8,6 +8,7 @@ const unlock = async (props: Props): Promise<SuccessResponseV2<null>> => {
 	try {
 		const response = await axios.put<PayloadProps>(
 			`/dashboards/${props.id}/lock`,
+			{ lock: props.lock },
 		);
 
 		return {

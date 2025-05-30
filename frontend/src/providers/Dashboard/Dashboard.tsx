@@ -2,7 +2,6 @@
 import { Modal } from 'antd';
 import getDashboard from 'api/v1/dashboards/id/get';
 import locked from 'api/v1/dashboards/id/lock';
-import unlocked from 'api/v1/dashboards/id/unlock';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
@@ -401,31 +400,19 @@ export function DashboardProvider({
 	};
 
 	const { mutate: lockDashboard } = useMutation(locked, {
-		onSuccess: () => {
+		onSuccess: (_, props) => {
 			setIsDashboardSlider(false);
-			setIsDashboardLocked(true);
-		},
-	});
-
-	const { mutate: unlockDashboard } = useMutation(unlocked, {
-		onSuccess: () => {
-			setIsDashboardSlider(false);
-			setIsDashboardLocked(false);
+			setIsDashboardLocked(props.lock);
 		},
 	});
 
 	const handleDashboardLockToggle = async (value: boolean): Promise<void> => {
 		if (selectedDashboard) {
 			try {
-				if (value) {
-					await lockDashboard({
-						id: selectedDashboard.id,
-					});
-				} else {
-					await unlockDashboard({
-						id: selectedDashboard.id,
-					});
-				}
+				await lockDashboard({
+					id: selectedDashboard.id,
+					lock: value,
+				});
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}

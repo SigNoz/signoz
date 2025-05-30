@@ -29,9 +29,7 @@ type Handler interface {
 
 	Update(http.ResponseWriter, *http.Request)
 
-	Lock(http.ResponseWriter, *http.Request)
-
-	Unlock(http.ResponseWriter, *http.Request)
+	LockUnlock(http.ResponseWriter, *http.Request)
 
 	Delete(http.ResponseWriter, *http.Request)
 }

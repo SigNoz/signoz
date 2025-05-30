@@ -104,7 +104,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, dashboard)
 }
 
-func (handler *handler) Lock(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -131,7 +131,14 @@ func (handler *handler) Lock(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, true)
+	req := new(dashboardtypes.LockUnlockDashboard)
+	err = json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, *req.Locked)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -139,41 +146,6 @@ func (handler *handler) Lock(rw http.ResponseWriter, r *http.Request) {
 
 	render.Success(rw, http.StatusOK, nil)
 
-}
-func (handler *handler) Unlock(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	id := mux.Vars(r)["id"]
-	if id == "" {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
-		return
-	}
-	dashboardID, err := valuer.NewUUID(id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, false)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, nil)
 }
 
 func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
