@@ -62,11 +62,26 @@ function K8sJobsList({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+	const [searchParams, setSearchParams] = useSearchParams();
 
-	const [currentPage, setCurrentPage] = useState(1);
+	const [currentPage, setCurrentPage] = useState(() => {
+		const page = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE);
+		if (page) {
+			return parseInt(page, 10);
+		}
+		return 1;
+	});
+	const [filtersInitialised, setFiltersInitialised] = useState(false);
+
+	useEffect(() => {
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE]: currentPage.toString(),
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [currentPage]);
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
-	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
@@ -114,7 +129,9 @@ function K8sJobsList({
 
 	// Reset pagination every time quick filters are changed
 	useEffect(() => {
-		setCurrentPage(1);
+		if (quickFiltersLastUpdated !== -1) {
+			setCurrentPage(1);
+		}
 	}, [quickFiltersLastUpdated]);
 
 	const { featureFlags } = useAppContext();
@@ -317,7 +334,11 @@ function K8sJobsList({
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
 			handleChangeQueryData('filters', value);
-			setCurrentPage(1);
+			if (filtersInitialised) {
+				setCurrentPage(1);
+			} else {
+				setFiltersInitialised(true);
+			}
 
 			if (value.items.length > 0) {
 				logEvent(InfraMonitoringEvents.FilterApplied, {
@@ -327,7 +348,8 @@ function K8sJobsList({
 				});
 			}
 		},
-		[handleChangeQueryData],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
 	);
 
 	useEffect(() => {
