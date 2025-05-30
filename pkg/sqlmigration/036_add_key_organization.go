@@ -92,10 +92,10 @@ func (migration *addKeyOrganization) Down(ctx context.Context, db *bun.DB) error
 	return nil
 }
 
-func (migration *addKeyOrganization) getHash(_ context.Context, orgID string) uint64 {
-	hasher := fnv.New64a()
+func (migration *addKeyOrganization) getHash(_ context.Context, orgID string) uint32 {
+	hasher := fnv.New32a()
 
 	// Hasher never returns err.
 	_, _ = hasher.Write([]byte(orgID))
-	return hasher.Sum64()
+	return hasher.Sum32()
 }
