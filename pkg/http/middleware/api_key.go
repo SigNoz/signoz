@@ -5,9 +5,15 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+const (
+	apiKeyCrossOrgMessage string = "::API-KEY-CROSS-ORG::"
 )
 
 type APIKey struct {
@@ -15,10 +21,11 @@ type APIKey struct {
 	uuid    *authtypes.UUID
 	headers []string
 	logger  *slog.Logger
+	sharder sharder.Sharder
 }
 
-func NewAPIKey(store sqlstore.SQLStore, headers []string, logger *slog.Logger) *APIKey {
-	return &APIKey{store: store, uuid: authtypes.NewUUID(), headers: headers, logger: logger}
+func NewAPIKey(store sqlstore.SQLStore, headers []string, logger *slog.Logger, sharder sharder.Sharder) *APIKey {
+	return &APIKey{store: store, uuid: authtypes.NewUUID(), headers: headers, logger: logger, sharder: sharder}
 }
 
 func (a *APIKey) Wrap(next http.Handler) http.Handler {
@@ -36,13 +43,20 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+
 		apiKeyToken, ok := authtypes.UUIDFromContext(ctx)
 		if !ok {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		err = a.store.BunDB().NewSelect().Model(&apiKey).Where("token = ?", apiKeyToken).Scan(r.Context())
+		err = a.
+			store.
+			BunDB().
+			NewSelect().
+			Model(&apiKey).
+			Where("token = ?", apiKeyToken).
+			Scan(r.Context())
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
@@ -70,6 +84,18 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 		}
 
 		ctx = authtypes.NewContextWithClaims(ctx, jwt)
+
+		claims, err := authtypes.ClaimsFromContext(ctx)
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if err := a.sharder.IsMyOwnedKey(r.Context(), types.NewOrganizationKey(valuer.MustNewUUID(claims.OrgID))); err != nil {
+			a.logger.ErrorContext(r.Context(), apiKeyCrossOrgMessage, "claims", claims, "error", err)
+			next.ServeHTTP(w, r)
+			return
+		}
 
 		r = r.WithContext(ctx)
 

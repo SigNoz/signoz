@@ -207,3 +207,13 @@ emailing:
       key_file_path:
       # The path to the certificate file.
       cert_file_path:
+
+##################### Sharder (experimental) #####################
+sharder:
+  # Whether to enable sharding.
+  enabled: false
+  # Specifies the sharder provider to use.
+  provider: single
+  single:
+    # The org id to which this instance belongs to.
+    org_id: org_id
