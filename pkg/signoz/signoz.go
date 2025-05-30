@@ -172,7 +172,7 @@ func New(
 		providerSettings,
 		config.Sharder,
 		NewSharderProviderFactories(),
-		config.Sharder.Provider(),
+		config.Sharder.Provider,
 	)
 	if err != nil {
 		return nil, err

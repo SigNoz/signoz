@@ -93,7 +93,7 @@ func (store *store) Delete(ctx context.Context, id valuer.UUID) error {
 	return nil
 }
 
-func (store *store) ListByKeyRange(ctx context.Context, start, end uint64) ([]*types.Organization, error) {
+func (store *store) ListByKeyRange(ctx context.Context, start, end uint32) ([]*types.Organization, error) {
 	organizations := make([]*types.Organization, 0)
 	err := store.
 		sqlstore.

@@ -56,7 +56,7 @@ func (migration *addKeyOrganization) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := tx.
 		NewAddColumn().
 		Table("organizations").
-		ColumnExpr("key TEXT").
+		ColumnExpr("key BIGINT").
 		Exec(ctx); err != nil {
 		return err
 	}

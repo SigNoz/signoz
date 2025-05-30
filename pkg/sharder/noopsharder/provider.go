@@ -24,10 +24,10 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}, nil
 }
 
-func (provider *provider) GetMyOwnedKeyRange(ctx context.Context) (uint64, uint64, error) {
-	return 0, math.MaxUint64, nil
+func (provider *provider) GetMyOwnedKeyRange(ctx context.Context) (uint32, uint32, error) {
+	return 0, math.MaxUint32, nil
 }
 
-func (provider *provider) IsMyOwnedKey(ctx context.Context, key uint64) error {
+func (provider *provider) IsMyOwnedKey(ctx context.Context, key uint32) error {
 	return nil
 }

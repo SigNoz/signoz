@@ -21,7 +21,7 @@ type Organization struct {
 	Identifiable
 	Name        string `bun:"name,type:text,nullzero" json:"name"`
 	Alias       string `bun:"alias,type:text,nullzero" json:"alias"`
-	Key         uint64 `bun:"key,type:integer,notnull" json:"key"`
+	Key         uint32 `bun:"key,type:bigint,notnull" json:"key"`
 	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
 }
 
@@ -41,19 +41,19 @@ func NewOrganization(displayName string) *Organization {
 	}
 }
 
-func NewOrganizationKey(orgID valuer.UUID) uint64 {
-	hasher := fnv.New64a()
+func NewOrganizationKey(orgID valuer.UUID) uint32 {
+	hasher := fnv.New32a()
 
 	// Hasher never returns err.
 	_, _ = hasher.Write([]byte(orgID.String()))
-	return hasher.Sum64()
+	return hasher.Sum32()
 }
 
 type OrganizationStore interface {
 	Create(context.Context, *Organization) error
 	Get(context.Context, valuer.UUID) (*Organization, error)
 	GetAll(context.Context) ([]*Organization, error)
-	ListByKeyRange(context.Context, uint64, uint64) ([]*Organization, error)
+	ListByKeyRange(context.Context, uint32, uint32) ([]*Organization, error)
 	Update(context.Context, *Organization) error
 	Delete(context.Context, valuer.UUID) error
 }

@@ -6,8 +6,8 @@ import (
 )
 
 type Config struct {
-	Enabled bool   `mapstructure:"enabled"`
-	Single  Single `mapstructure:"single"`
+	Provider string `mapstructure:"provider"`
+	Single   Single `mapstructure:"single"`
 }
 
 type Single struct {
@@ -20,18 +20,13 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
-		Enabled: false,
+		Provider: "noop",
+		Single: Single{
+			OrgID: valuer.UUID{},
+		},
 	}
 }
 
 func (c Config) Validate() error {
 	return nil
-}
-
-func (c Config) Provider() string {
-	if c.Enabled {
-		return "single"
-	}
-
-	return "noop"
 }

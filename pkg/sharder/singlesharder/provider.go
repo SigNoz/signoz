@@ -13,7 +13,7 @@ import (
 type provider struct {
 	settings factory.ScopedProviderSettings
 	orgID    valuer.UUID
-	orgIDKey uint64
+	orgIDKey uint32
 }
 
 func NewFactory() factory.ProviderFactory[sharder.Sharder, sharder.Config] {
@@ -30,11 +30,11 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}, nil
 }
 
-func (provider *provider) GetMyOwnedKeyRange(ctx context.Context) (uint64, uint64, error) {
+func (provider *provider) GetMyOwnedKeyRange(ctx context.Context) (uint32, uint32, error) {
 	return provider.orgIDKey, provider.orgIDKey, nil
 }
 
-func (provider *provider) IsMyOwnedKey(ctx context.Context, key uint64) error {
+func (provider *provider) IsMyOwnedKey(ctx context.Context, key uint32) error {
 	if key == provider.orgIDKey {
 		return nil
 	}
