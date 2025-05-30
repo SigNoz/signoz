@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"io"
 	"math"
 	"net/http"
@@ -29,7 +30,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
@@ -1198,7 +1198,31 @@ func prepareQuery(r *http.Request) (string, error) {
 	if tmplErr != nil {
 		return "", tmplErr
 	}
-	return queryBuf.String(), nil
+
+	if !constants.IsDotMetricsEnabled {
+		return queryBuf.String(), nil
+	}
+
+	query = queryBuf.String()
+
+	// Now handle $var replacements (simple string replace)
+	keys := make([]string, 0, len(vars))
+	for k := range vars {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i]) > len(keys[j])
+	})
+
+	newQuery := query
+	for _, k := range keys {
+		placeholder := "$" + k
+		v := vars[k]
+		newQuery = strings.ReplaceAll(newQuery, placeholder, v)
+	}
+
+	return newQuery, nil
 }
 
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {
@@ -1996,6 +2020,12 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	if constants.IsDotMetricsEnabled {
+		featureSet = append(featureSet, &featuretypes.GettableFeature{
+			Name:   featuretypes.DotMetricsEnabled,
+			Active: true,
+		})
+	}
 	aH.Respond(w, featureSet)
 }
 
@@ -2503,6 +2533,12 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	var kafkaConsumerFetchLatencyAvg string = "kafka_consumer_fetch_latency_avg"
+	var kafkaConsumerLag string = "kafka_consumer_group_lag"
+	if constants.IsDotMetricsEnabled {
+		kafkaConsumerLag = "kafka.consumer_group.lag"
+		kafkaConsumerFetchLatencyAvg = "kafka.consumer.fetch_latency_avg"
+	}
 
 	if !fetchLatencyState && !consumerLagState {
 		entries = append(entries, kafka.OnboardingResponse{
@@ -2513,27 +2549,28 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !fetchLatencyState {
+
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_fetch_latency_avg",
+			Attribute: kafkaConsumerFetchLatencyAvg,
 			Message:   "Metric kafka_consumer_fetch_latency_avg is not present in the given time range.",
 			Status:    "0",
 		})
 	} else {
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_fetch_latency_avg",
+			Attribute: kafkaConsumerFetchLatencyAvg,
 			Status:    "1",
 		})
 	}
 
 	if !consumerLagState {
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_group_lag",
+			Attribute: kafkaConsumerLag,
 			Message:   "Metric kafka_consumer_group_lag is not present in the given time range.",
 			Status:    "0",
 		})
 	} else {
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_group_lag",
+			Attribute: kafkaConsumerLag,
 			Status:    "1",
 		})
 	}
@@ -4327,7 +4364,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), orgID, req, true, false)
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), orgID, req, false)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
