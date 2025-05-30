@@ -10,6 +10,7 @@ import getAllUserPreferences from 'api/preferences/getAllUserPreference';
 import updateUserPreferenceAPI from 'api/preferences/updateUserPreference';
 import Header from 'components/Header/Header';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -161,10 +162,20 @@ export default function Home(): JSX.Element {
 		enabled: !!query,
 	});
 
-	const { data: k8sPodsData } = useGetK8sPodsList(query as K8sPodsListPayload, {
-		queryKey: ['K8sPodsList', query],
-		enabled: !!query,
-	});
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
+	const { data: k8sPodsData } = useGetK8sPodsList(
+		query as K8sPodsListPayload,
+		{
+			queryKey: ['K8sPodsList', query],
+			enabled: !!query,
+		},
+		undefined,
+		dotMetricsEnabled,
+	);
 
 	const [isLogsIngestionActive, setIsLogsIngestionActive] = useState(false);
 	const [isTracesIngestionActive, setIsTracesIngestionActive] = useState(false);

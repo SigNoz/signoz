@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -882,10 +883,23 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			}
 
 			chTransformQuery(chQuery.Query, queryRangeParams.Variables)
-			for name, value := range queryRangeParams.Variables {
-				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
-				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
-				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
+
+			keys := make([]string, 0, len(queryRangeParams.Variables))
+
+			querytemplate.AssignReservedVarsV3(queryRangeParams)
+
+			for k := range queryRangeParams.Variables {
+				keys = append(keys, k)
+			}
+
+			sort.Slice(keys, func(i, j int) bool {
+				return len(keys[i]) > len(keys[j])
+			})
+
+			for _, k := range keys {
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("$%s", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
 			}
 
 			tmpl := template.New("clickhouse-query")
@@ -896,7 +910,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			var query bytes.Buffer
 
 			// replace go template variables
-			querytemplate.AssignReservedVarsV3(queryRangeParams)
 
 			err = tmpl.Execute(&query, queryRangeParams.Variables)
 			if err != nil {
@@ -913,10 +926,22 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				continue
 			}
 
-			for name, value := range queryRangeParams.Variables {
-				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
-				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
-				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
+			querytemplate.AssignReservedVarsV3(queryRangeParams)
+
+			keys := make([]string, 0, len(queryRangeParams.Variables))
+
+			for k := range queryRangeParams.Variables {
+				keys = append(keys, k)
+			}
+
+			sort.Slice(keys, func(i, j int) bool {
+				return len(keys[i]) > len(keys[j])
+			})
+
+			for _, k := range keys {
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("$%s", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
 			}
 
 			tmpl := template.New("prometheus-query")
@@ -925,9 +950,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 			}
 			var query bytes.Buffer
-
-			// replace go template variables
-			querytemplate.AssignReservedVarsV3(queryRangeParams)
 
 			err = tmpl.Execute(&query, queryRangeParams.Variables)
 			if err != nil {
