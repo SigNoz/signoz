@@ -108,7 +108,7 @@ function MetricsTable({
 					total: totalCount,
 				}}
 				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => openMetricDetails(record.key),
+					onClick: (): void => openMetricDetails(record.key, 'list'),
 					className: 'clickable-row',
 				})}
 			/>
