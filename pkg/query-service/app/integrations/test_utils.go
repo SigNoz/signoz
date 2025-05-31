@@ -30,7 +30,7 @@ func NewTestIntegrationsManager(t *testing.T) (*Manager, sqlstore.SQLStore) {
 	}, testDB
 }
 
-func createTestUser(organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Setter, userModule user.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
 	organization := types.NewOrganization("test")

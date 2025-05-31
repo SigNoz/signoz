@@ -67,23 +67,6 @@ func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config, 
 	}, opts...)
 }
 
-func (store *config) ListOrgs(ctx context.Context) ([]string, error) {
-	var orgIDs []string
-
-	err := store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Table("organizations").
-		ColumnExpr("id").
-		Scan(ctx, &orgIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	return orgIDs, nil
-}
-
 func (store *config) CreateChannel(ctx context.Context, channel *alertmanagertypes.Channel, opts ...alertmanagertypes.StoreOption) error {
 	return store.wrap(ctx, func(ctx context.Context) error {
 		if _, err := store.

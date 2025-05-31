@@ -8,17 +8,22 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type Module interface {
-	// Create creates the given organization
-	Create(context.Context, *types.Organization) error
-
+type Getter interface {
 	// Get gets the organization based on the given id
 	Get(context.Context, valuer.UUID) (*types.Organization, error)
 
-	// GetAll gets all the organizations
-	GetAll(context.Context) ([]*types.Organization, error)
+	// Lists all the organizations
+	List(context.Context) ([]*types.Organization, error)
 
-	// Update updates the given organization based on id present
+	// ListByOwnedKeyRange gets all the organizations owned by the instance
+	ListByOwnedKeyRange(context.Context) ([]*types.Organization, error)
+}
+
+type Setter interface {
+	// Create creates the given organization
+	Create(context.Context, *types.Organization) error
+
+	// Update updates the given organization
 	Update(context.Context, *types.Organization) error
 }
 
