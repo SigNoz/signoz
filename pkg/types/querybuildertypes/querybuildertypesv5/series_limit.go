@@ -36,9 +36,27 @@ func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit int) []*Tim
 		}
 	}
 
+	// Cache series values and labels
+	seriesValues := make(map[*TimeSeries]float64, len(series))
+	seriesLabels := make(map[*TimeSeries]map[string]string, len(series))
+
+	for _, s := range series {
+		seriesValues[s] = calculateSeriesValue(s)
+		// Cache all labels for this series
+		labelMap := make(map[string]string)
+		for _, label := range s.Labels {
+			if strVal, ok := label.Value.(string); ok {
+				labelMap[label.Key.Name] = strVal
+			} else {
+				labelMap[label.Key.Name] = convertValueToString(label.Value)
+			}
+		}
+		seriesLabels[s] = labelMap
+	}
+
 	// Sort the series based on the order criteria
 	sort.SliceStable(series, func(i, j int) bool {
-		return compareSeries(series[i], series[j], effectiveOrderBy)
+		return compareSeries(series[i], series[j], effectiveOrderBy, seriesValues, seriesLabels)
 	})
 
 	// Apply limit if specified
@@ -51,15 +69,14 @@ func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit int) []*Tim
 
 // compareSeries compares two time series based on the order criteria
 // Returns true if series i should come before series j
-func compareSeries(seriesI, seriesJ *TimeSeries, orderBy []OrderBy) bool {
+func compareSeries(seriesI, seriesJ *TimeSeries, orderBy []OrderBy, seriesValues map[*TimeSeries]float64, seriesLabels map[*TimeSeries]map[string]string) bool {
 	for _, order := range orderBy {
 		columnName := order.Key.Name
 		direction := order.Direction
 
 		if columnName == DefaultOrderByKey {
-			// Sort based on aggregated values
-			valueI := calculateSeriesValue(seriesI)
-			valueJ := calculateSeriesValue(seriesJ)
+			valueI := seriesValues[seriesI]
+			valueJ := seriesValues[seriesJ]
 
 			if valueI != valueJ {
 				if direction == OrderDirectionAsc {
@@ -69,9 +86,8 @@ func compareSeries(seriesI, seriesJ *TimeSeries, orderBy []OrderBy) bool {
 				}
 			}
 		} else {
-			// Sort based on labels
-			labelI, existsI := findLabelValue(seriesI, columnName)
-			labelJ, existsJ := findLabelValue(seriesJ, columnName)
+			labelI, existsI := seriesLabels[seriesI][columnName]
+			labelJ, existsJ := seriesLabels[seriesJ][columnName]
 
 			if existsI != existsJ {
 				// Handle missing labels - non-existent labels come first
@@ -130,22 +146,6 @@ func calculateSeriesValue(series *TimeSeries) float64 {
 	}
 
 	return sum / count
-}
-
-// findLabelValue finds the value of a label with the given key in a time series
-// Returns the label value and whether it was found
-func findLabelValue(series *TimeSeries, key string) (string, bool) {
-	for _, label := range series.Labels {
-		if label.Key.Name == key {
-			// Convert label value to string
-			if strVal, ok := label.Value.(string); ok {
-				return strVal, true
-			}
-			// Handle non-string values by converting to string
-			return convertValueToString(label.Value), true
-		}
-	}
-	return "", false
 }
 
 // convertValueToString converts various types to string for comparison
