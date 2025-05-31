@@ -205,17 +205,19 @@ type SecondaryAggregation struct {
 	LimitBy LimitBy `json:"limitBy,omitempty"`
 }
 
+type FunctionArg struct {
+	// name of the argument
+	Name string `json:"name,omitempty"`
+	// value of the argument
+	Value string `json:"value"`
+}
+
 type Function struct {
 	// name of the function
 	Name FunctionName `json:"name"`
 
 	// args is the arguments to the function
-	Args []struct {
-		// name of the argument
-		Name string `json:"name,omitempty"`
-		// value of the argument
-		Value string `json:"value"`
-	} `json:"args,omitempty"`
+	Args []FunctionArg `json:"args,omitempty"`
 }
 
 type LimitBy struct {

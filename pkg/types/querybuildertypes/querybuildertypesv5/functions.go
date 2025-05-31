@@ -13,27 +13,27 @@ type FunctionName struct {
 }
 
 var (
-	FunctionNameCutOffMin     = FunctionName{valuer.NewString("cutoff_min")}
-	FunctionNameCutOffMax     = FunctionName{valuer.NewString("cutoff_max")}
-	FunctionNameClampMin      = FunctionName{valuer.NewString("clamp_min")}
-	FunctionNameClampMax      = FunctionName{valuer.NewString("clamp_max")}
+	FunctionNameCutOffMin     = FunctionName{valuer.NewString("cutOffMin")}
+	FunctionNameCutOffMax     = FunctionName{valuer.NewString("cutOffMax")}
+	FunctionNameClampMin      = FunctionName{valuer.NewString("clampMin")}
+	FunctionNameClampMax      = FunctionName{valuer.NewString("clampMax")}
 	FunctionNameAbsolute      = FunctionName{valuer.NewString("absolute")}
-	FunctionNameRunningDiff   = FunctionName{valuer.NewString("running_diff")}
+	FunctionNameRunningDiff   = FunctionName{valuer.NewString("runningDiff")}
 	FunctionNameLog2          = FunctionName{valuer.NewString("log2")}
 	FunctionNameLog10         = FunctionName{valuer.NewString("log10")}
-	FunctionNameCumulativeSum = FunctionName{valuer.NewString("cumulative_sum")}
+	FunctionNameCumulativeSum = FunctionName{valuer.NewString("cumulativeSum")}
 	FunctionNameEWMA3         = FunctionName{valuer.NewString("ewma3")}
 	FunctionNameEWMA5         = FunctionName{valuer.NewString("ewma5")}
 	FunctionNameEWMA7         = FunctionName{valuer.NewString("ewma7")}
 	FunctionNameMedian3       = FunctionName{valuer.NewString("median3")}
 	FunctionNameMedian5       = FunctionName{valuer.NewString("median5")}
 	FunctionNameMedian7       = FunctionName{valuer.NewString("median7")}
-	FunctionNameTimeShift     = FunctionName{valuer.NewString("time_shift")}
+	FunctionNameTimeShift     = FunctionName{valuer.NewString("timeShift")}
 	FunctionNameAnomaly       = FunctionName{valuer.NewString("anomaly")}
 )
 
 // ApplyFunction applies the given function to the result data
-func ApplyFunction(fn Function, result *Result) *Result {
+func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 	// Extract the function name and arguments
 	name := fn.Name
 	args := fn.Args
@@ -86,7 +86,8 @@ func ApplyFunction(fn Function, result *Result) *Result {
 		}
 		return funcTimeShift(result, shift)
 	case FunctionNameAnomaly:
-		// Placeholder for anomaly detection - would need more sophisticated implementation
+		// Placeholder for anomaly detection as function that can be used in dashboards other than
+		// the anomaly alert
 		return result
 	}
 	return result
@@ -98,10 +99,7 @@ func parseFloat64Arg(value string) (float64, error) {
 }
 
 // getEWMAAlpha calculates the alpha value for EWMA functions
-func getEWMAAlpha(name FunctionName, args []struct {
-	Name  string `json:"name,omitempty"`
-	Value string `json:"value"`
-}) float64 {
+func getEWMAAlpha(name FunctionName, args []FunctionArg) float64 {
 	// Try to get alpha from arguments first
 	if len(args) > 0 {
 		if alpha, err := parseFloat64Arg(args[0].Value); err == nil {
@@ -122,324 +120,196 @@ func getEWMAAlpha(name FunctionName, args []struct {
 }
 
 // funcCutOffMin cuts off values below the threshold and replaces them with NaN
-func funcCutOffMin(result *Result, threshold float64) *Result {
-	if result.Type != RequestTypeTimeSeries {
-		return result
-	}
-
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
-		return result
-	}
-
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			for idx, point := range series.Values {
-				if point.Value < threshold {
-					point.Value = math.NaN()
-				}
-				series.Values[idx] = point
-			}
+func funcCutOffMin(result *TimeSeries, threshold float64) *TimeSeries {
+	for idx, point := range result.Values {
+		if point.Value < threshold {
+			point.Value = math.NaN()
 		}
+		result.Values[idx] = point
 	}
 	return result
 }
 
 // funcCutOffMax cuts off values above the threshold and replaces them with NaN
-func funcCutOffMax(result *Result, threshold float64) *Result {
-	if result.Type != RequestTypeTimeSeries {
-		return result
-	}
-
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
-		return result
-	}
-
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			for idx, point := range series.Values {
-				if point.Value > threshold {
-					point.Value = math.NaN()
-				}
-				series.Values[idx] = point
-			}
+func funcCutOffMax(result *TimeSeries, threshold float64) *TimeSeries {
+	for idx, point := range result.Values {
+		if point.Value > threshold {
+			point.Value = math.NaN()
 		}
+		result.Values[idx] = point
 	}
 	return result
 }
 
 // funcClampMin cuts off values below the threshold and replaces them with the threshold
-func funcClampMin(result *Result, threshold float64) *Result {
-	if result.Type != RequestTypeTimeSeries {
-		return result
-	}
-
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
-		return result
-	}
-
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			for idx, point := range series.Values {
-				if point.Value < threshold {
-					point.Value = threshold
-				}
-				series.Values[idx] = point
-			}
+func funcClampMin(result *TimeSeries, threshold float64) *TimeSeries {
+	for idx, point := range result.Values {
+		if point.Value < threshold {
+			point.Value = threshold
 		}
+		result.Values[idx] = point
 	}
 	return result
 }
 
 // funcClampMax cuts off values above the threshold and replaces them with the threshold
-func funcClampMax(result *Result, threshold float64) *Result {
-	if result.Type != RequestTypeTimeSeries {
-		return result
-	}
-
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
-		return result
-	}
-
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			for idx, point := range series.Values {
-				if point.Value > threshold {
-					point.Value = threshold
-				}
-				series.Values[idx] = point
-			}
+func funcClampMax(result *TimeSeries, threshold float64) *TimeSeries {
+	for idx, point := range result.Values {
+		if point.Value > threshold {
+			point.Value = threshold
 		}
+		result.Values[idx] = point
 	}
 	return result
 }
 
 // funcAbsolute returns the absolute value of each point
-func funcAbsolute(result *Result) *Result {
-	if result.Type != RequestTypeTimeSeries {
-		return result
-	}
-
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
-		return result
-	}
-
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			for idx, point := range series.Values {
-				point.Value = math.Abs(point.Value)
-				series.Values[idx] = point
-			}
-		}
+func funcAbsolute(result *TimeSeries) *TimeSeries {
+	for idx, point := range result.Values {
+		point.Value = math.Abs(point.Value)
+		result.Values[idx] = point
 	}
 	return result
 }
 
 // funcRunningDiff returns the running difference of each point
-func funcRunningDiff(result *Result) *Result {
-	if result.Type != RequestTypeTimeSeries {
-		return result
-	}
-
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
-		return result
-	}
-
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			// iterate over the points in reverse order
-			for idx := len(series.Values) - 1; idx >= 0; idx-- {
-				if idx > 0 {
-					series.Values[idx].Value = series.Values[idx].Value - series.Values[idx-1].Value
-				}
-			}
-			// remove the first point
-			if len(series.Values) > 0 {
-				series.Values = series.Values[1:]
-			}
+func funcRunningDiff(result *TimeSeries) *TimeSeries {
+	// iterate over the points in reverse order
+	for idx := len(result.Values) - 1; idx >= 0; idx-- {
+		if idx > 0 {
+			result.Values[idx].Value = result.Values[idx].Value - result.Values[idx-1].Value
 		}
 	}
+	// remove the first point
+	result.Values = result.Values[1:]
 	return result
 }
 
 // funcLog2 returns the log2 of each point
-func funcLog2(result *Result) *Result {
-	if result.Type != RequestTypeTimeSeries {
-		return result
-	}
-
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
-		return result
-	}
-
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			for idx, point := range series.Values {
-				point.Value = math.Log2(point.Value)
-				series.Values[idx] = point
-			}
-		}
+func funcLog2(result *TimeSeries) *TimeSeries {
+	for idx, point := range result.Values {
+		point.Value = math.Log2(point.Value)
+		result.Values[idx] = point
 	}
 	return result
 }
 
 // funcLog10 returns the log10 of each point
-func funcLog10(result *Result) *Result {
-	if result.Type != RequestTypeTimeSeries {
-		return result
-	}
-
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
-		return result
-	}
-
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			for idx, point := range series.Values {
-				point.Value = math.Log10(point.Value)
-				series.Values[idx] = point
-			}
-		}
+func funcLog10(result *TimeSeries) *TimeSeries {
+	for idx, point := range result.Values {
+		point.Value = math.Log10(point.Value)
+		result.Values[idx] = point
 	}
 	return result
 }
 
 // funcCumulativeSum returns the cumulative sum for each point in a series
-func funcCumulativeSum(result *Result) *Result {
-	if result.Type != RequestTypeTimeSeries {
-		return result
-	}
-
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
-		return result
-	}
-
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			var sum float64
-			for idx, point := range series.Values {
-				if !math.IsNaN(point.Value) {
-					sum += point.Value
-				}
-				point.Value = sum
-				series.Values[idx] = point
-			}
+func funcCumulativeSum(result *TimeSeries) *TimeSeries {
+	var sum float64
+	for idx, point := range result.Values {
+		if !math.IsNaN(point.Value) {
+			sum += point.Value
 		}
+		point.Value = sum
+		result.Values[idx] = point
 	}
+
 	return result
 }
 
 // funcEWMA calculates the Exponentially Weighted Moving Average
-func funcEWMA(result *Result, alpha float64) *Result {
-	if result.Type != RequestTypeTimeSeries {
-		return result
-	}
+func funcEWMA(result *TimeSeries, alpha float64) *TimeSeries {
+	var ewma float64
+	var initialized bool
 
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
-		return result
-	}
-
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			var ewma float64
-			var initialized bool
-
-			for i, point := range series.Values {
-				if !initialized {
-					if !math.IsNaN(point.Value) {
-						// Initialize EWMA with the first non-NaN value
-						ewma = point.Value
-						initialized = true
-					}
-					// Continue until the EWMA is initialized
-					continue
-				}
-
-				if !math.IsNaN(point.Value) {
-					// Update EWMA with the current value
-					ewma = alpha*point.Value + (1-alpha)*ewma
-				}
-				// Set the EWMA value for the current point
-				series.Values[i].Value = ewma
+	for i, point := range result.Values {
+		if !initialized {
+			if !math.IsNaN(point.Value) {
+				// Initialize EWMA with the first non-NaN value
+				ewma = point.Value
+				initialized = true
 			}
+			// Continue until the EWMA is initialized
+			continue
 		}
+
+		if !math.IsNaN(point.Value) {
+			// Update EWMA with the current value
+			ewma = alpha*point.Value + (1-alpha)*ewma
+		}
+		// Set the EWMA value for the current point
+		result.Values[i].Value = ewma
 	}
 	return result
 }
 
 // funcMedian3 returns the median of 3 points for each point in a series
-func funcMedian3(result *Result) *Result {
+func funcMedian3(result *TimeSeries) *TimeSeries {
 	return funcMedianN(result, 3)
 }
 
 // funcMedian5 returns the median of 5 points for each point in a series
-func funcMedian5(result *Result) *Result {
+func funcMedian5(result *TimeSeries) *TimeSeries {
 	return funcMedianN(result, 5)
 }
 
 // funcMedian7 returns the median of 7 points for each point in a series
-func funcMedian7(result *Result) *Result {
+func funcMedian7(result *TimeSeries) *TimeSeries {
 	return funcMedianN(result, 7)
 }
 
 // funcMedianN returns the median of N points for each point in a series
-func funcMedianN(result *Result, n int) *Result {
-	if result.Type != RequestTypeTimeSeries {
+func funcMedianN(result *TimeSeries, n int) *TimeSeries {
+	if len(result.Values) == 0 {
 		return result
 	}
 
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
+	// For series shorter than window size, return original values
+	if len(result.Values) < n {
 		return result
 	}
 
 	halfWindow := n / 2
+	newValues := make([]*TimeSeriesValue, len(result.Values))
 
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			medianValues := make([]*TimeSeriesValue, 0)
-
-			for i := halfWindow; i < len(series.Values)-halfWindow; i++ {
-				values := make([]float64, 0, n)
-
-				// Add non-NaN values to the slice
-				for j := -halfWindow; j <= halfWindow; j++ {
-					if !math.IsNaN(series.Values[i+j].Value) {
-						values = append(values, series.Values[i+j].Value)
-					}
-				}
-
-				// Create a new point with median value
-				newPoint := &TimeSeriesValue{
-					Timestamp: series.Values[i].Timestamp,
-				}
-
-				// Handle the case where there are not enough values to calculate a median
-				if len(values) == 0 {
-					newPoint.Value = math.NaN()
-				} else {
-					newPoint.Value = median(values)
-				}
-
-				medianValues = append(medianValues, newPoint)
-			}
-
-			// Replace the series values with median values
-			// Keep the original edge points unchanged
-			for i := halfWindow; i < len(series.Values)-halfWindow; i++ {
-				series.Values[i] = medianValues[i-halfWindow]
-			}
+	// Copy edge values that can't have a full window
+	for i := 0; i < halfWindow; i++ {
+		newValues[i] = &TimeSeriesValue{
+			Timestamp: result.Values[i].Timestamp,
+			Value:     result.Values[i].Value,
 		}
 	}
+	for i := len(result.Values) - halfWindow; i < len(result.Values); i++ {
+		newValues[i] = &TimeSeriesValue{
+			Timestamp: result.Values[i].Timestamp,
+			Value:     result.Values[i].Value,
+		}
+	}
+
+	// Calculate median for points that have a full window
+	for i := halfWindow; i < len(result.Values)-halfWindow; i++ {
+		values := make([]float64, 0, n)
+
+		// Add non-NaN values to the slice
+		for j := -halfWindow; j <= halfWindow; j++ {
+			if !math.IsNaN(result.Values[i+j].Value) {
+				values = append(values, result.Values[i+j].Value)
+			}
+		}
+
+		newValues[i] = &TimeSeriesValue{
+			Timestamp: result.Values[i].Timestamp,
+		}
+
+		// Handle the case where there are not enough values to calculate a median
+		if len(values) == 0 {
+			newValues[i].Value = math.NaN()
+		} else {
+			newValues[i].Value = median(values)
+		}
+	}
+
+	result.Values = newValues
 	return result
 }
 
@@ -458,30 +328,19 @@ func median(values []float64) float64 {
 }
 
 // funcTimeShift shifts all timestamps by the given amount (in seconds)
-func funcTimeShift(result *Result, shift float64) *Result {
-	if result.Type != RequestTypeTimeSeries {
-		return result
-	}
-
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok {
-		return result
-	}
-
+func funcTimeShift(result *TimeSeries, shift float64) *TimeSeries {
 	shiftMs := int64(shift * 1000) // Convert seconds to milliseconds
 
-	for _, aggregation := range timeSeriesData.Aggregations {
-		for _, series := range aggregation.Series {
-			for idx, point := range series.Values {
-				series.Values[idx].Timestamp = point.Timestamp + shiftMs
-			}
-		}
+	for idx, point := range result.Values {
+		point.Timestamp = point.Timestamp + shiftMs
+		result.Values[idx] = point
 	}
+
 	return result
 }
 
 // ApplyFunctions applies a list of functions sequentially to the result
-func ApplyFunctions(functions []Function, result *Result) *Result {
+func ApplyFunctions(functions []Function, result *TimeSeries) *TimeSeries {
 	for _, fn := range functions {
 		result = ApplyFunction(fn, result)
 	}

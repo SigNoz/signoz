@@ -6,7 +6,7 @@ import (
 )
 
 // Helper function to create test time series data
-func createTestTimeSeriesData(values []float64) *Result {
+func createTestTimeSeriesData(values []float64) *TimeSeries {
 	timeSeriesValues := make([]*TimeSeriesValue, len(values))
 	for i, val := range values {
 		timeSeriesValues[i] = &TimeSeriesValue{
@@ -19,33 +19,13 @@ func createTestTimeSeriesData(values []float64) *Result {
 		Values: timeSeriesValues,
 	}
 
-	aggregation := &AggregationBucket{
-		Index:  0,
-		Alias:  "test",
-		Series: []*TimeSeries{series},
-	}
-
-	timeSeriesData := &TimeSeriesData{
-		QueryName:    "test",
-		Aggregations: []*AggregationBucket{aggregation},
-	}
-
-	return &Result{
-		Type:  RequestTypeTimeSeries,
-		Value: timeSeriesData,
-	}
+	return series
 }
 
 // Helper function to extract values from result for comparison
-func extractValues(result *Result) []float64 {
-	timeSeriesData, ok := result.Value.(*TimeSeriesData)
-	if !ok || len(timeSeriesData.Aggregations) == 0 || len(timeSeriesData.Aggregations[0].Series) == 0 {
-		return nil
-	}
-
-	series := timeSeriesData.Aggregations[0].Series[0]
-	values := make([]float64, len(series.Values))
-	for i, point := range series.Values {
+func extractValues(result *TimeSeries) []float64 {
+	values := make([]float64, len(result.Values))
+	for i, point := range result.Values {
 		values[i] = point.Value
 	}
 	return values
@@ -578,13 +558,13 @@ func TestFuncTimeShift(t *testing.T) {
 			name:   "test funcTimeShift positive",
 			values: []float64{1, 2, 3},
 			shift:  5.0,                       // 5 seconds
-			want:   []int64{6000, 7000, 8000}, // original timestamps (1,2,3) + 5000ms
+			want:   []int64{5001, 5002, 5003}, // original timestamps (1,2,3) + 5000ms
 		},
 		{
 			name:   "test funcTimeShift negative",
 			values: []float64{1, 2, 3},
-			shift:  -2.0,                    // -2 seconds
-			want:   []int64{-1000, 0, 1000}, // original timestamps (1,2,3) - 2000ms
+			shift:  -2.0,                         // -2 seconds
+			want:   []int64{-1999, -1998, -1997}, // original timestamps (1,2,3) - 2000ms
 		},
 	}
 
@@ -593,15 +573,8 @@ func TestFuncTimeShift(t *testing.T) {
 			result := createTestTimeSeriesData(tt.values)
 			newResult := funcTimeShift(result, tt.shift)
 
-			timeSeriesData, ok := newResult.Value.(*TimeSeriesData)
-			if !ok {
-				t.Errorf("funcTimeShift() failed to get time series data")
-				return
-			}
-
-			series := timeSeriesData.Aggregations[0].Series[0]
-			got := make([]int64, len(series.Values))
-			for i, point := range series.Values {
+			got := make([]int64, len(newResult.Values))
+			for i, point := range newResult.Values {
 				got[i] = point.Timestamp
 			}
 
@@ -630,10 +603,7 @@ func TestApplyFunction(t *testing.T) {
 			name: "cutOffMin function",
 			function: Function{
 				Name: FunctionNameCutOffMin,
-				Args: []struct {
-					Name  string `json:"name,omitempty"`
-					Value string `json:"value"`
-				}{
+				Args: []FunctionArg{
 					{Value: "0.3"},
 				},
 			},
@@ -680,10 +650,7 @@ func TestApplyFunctions(t *testing.T) {
 	functions := []Function{
 		{
 			Name: FunctionNameCutOffMin,
-			Args: []struct {
-				Name  string `json:"name,omitempty"`
-				Value string `json:"value"`
-			}{
+			Args: []FunctionArg{
 				{Value: "0.3"},
 			},
 		},
