@@ -11,6 +11,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -36,6 +37,9 @@ import (
 func TestSignozIntegrationLifeCycle(t *testing.T) {
 	require := require.New(t)
 	testbed := NewIntegrationsTestBed(t, nil)
+
+	merr := utils.CreateTestOrg(t, testbed.store)
+	require.NoError(merr)
 
 	installedResp := testbed.GetInstalledIntegrationsFromQS()
 	require.Equal(
@@ -120,8 +124,15 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require := require.New(t)
 
 	testDB := utils.NewQueryServiceDBForTests(t)
+	utils.CreateTestOrg(t, testDB)
+
+	orgID, err := utils.GetTestOrgId(testDB)
+	require.Nil(err)
+
+	agentID := valuer.GenerateUUID().String()
+
 	integrationsTB := NewIntegrationsTestBed(t, testDB)
-	pipelinesTB := NewLogPipelinesTestBed(t, testDB)
+	pipelinesTB := NewLogPipelinesTestBed(t, testDB, agentID)
 
 	availableIntegrationsResp := integrationsTB.GetAvailableIntegrationsFromQS()
 	availableIntegrations := availableIntegrationsResp.Integrations
@@ -177,7 +188,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(lastPipeline))
 
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(orgID, getPipelinesResp.Pipelines)
 
 	// After saving a user created pipeline, pipelines response should include
 	// both user created pipelines and pipelines for installed integrations.
@@ -222,7 +233,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
 	require.Equal(1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines))
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(orgID, getPipelinesResp.Pipelines)
 
 	// Reordering integration pipelines should be possible.
 	postable := postableFromPipelines(getPipelinesResp.Pipelines)
@@ -239,7 +250,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
 
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(orgID, getPipelinesResp.Pipelines)
 
 	// enabling/disabling integration pipelines should be possible.
 	require.True(firstPipeline.Enabled)
@@ -257,7 +268,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require.False(firstPipeline.Enabled)
 
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(orgID, getPipelinesResp.Pipelines)
 
 	// should not be able to edit integrations pipeline.
 	require.Greater(len(postable.Pipelines[0].Config), 0)
@@ -296,7 +307,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 		"Pipelines for uninstalled integrations should get removed from pipelines list",
 	)
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(orgID, getPipelinesResp.Pipelines)
 }
 
 func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {
@@ -375,6 +386,7 @@ type IntegrationsTestBed struct {
 	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
+	store          sqlstore.SQLStore
 	userModule     user.Module
 }
 
@@ -608,6 +620,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
+		store:          testDB,
 		userModule:     modules.User,
 	}
 }

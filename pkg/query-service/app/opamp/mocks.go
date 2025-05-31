@@ -67,7 +67,7 @@ func (ta *MockAgentConfigProvider) HasRecommendations() bool {
 }
 
 // AgentConfigProvider interface
-func (ta *MockAgentConfigProvider) RecommendAgentConfig(baseConfYaml []byte) (
+func (ta *MockAgentConfigProvider) RecommendAgentConfig(orgId string, baseConfYaml []byte) (
 	[]byte, string, error,
 ) {
 	if len(ta.ZPagesEndpoint) < 1 {
@@ -92,11 +92,14 @@ func (ta *MockAgentConfigProvider) RecommendAgentConfig(baseConfYaml []byte) (
 
 // AgentConfigProvider interface
 func (ta *MockAgentConfigProvider) ReportConfigDeploymentStatus(
+	orgId string,
 	agentId string,
 	configId string,
 	err error,
 ) {
-	confIdReports := ta.ReportedDeploymentStatuses[configId]
+	// using orgID + configId as key to avoid collisions with other orgs
+	// check code in model/coordinator.go for more details
+	confIdReports := ta.ReportedDeploymentStatuses[orgId+configId]
 	if confIdReports == nil {
 		confIdReports = map[string]bool{}
 		ta.ReportedDeploymentStatuses[configId] = confIdReports
@@ -106,10 +109,12 @@ func (ta *MockAgentConfigProvider) ReportConfigDeploymentStatus(
 }
 
 // Test helper.
-func (ta *MockAgentConfigProvider) HasReportedDeploymentStatus(
+func (ta *MockAgentConfigProvider) HasReportedDeploymentStatus(orgID string,
 	configId string, agentId string,
 ) bool {
-	confIdReports := ta.ReportedDeploymentStatuses[configId]
+	// using orgID + configId as key to avoid collisions with other orgs
+	// check code in model/coordinator.go for more details
+	confIdReports := ta.ReportedDeploymentStatuses[orgID+configId]
 	if confIdReports == nil {
 		return false
 	}
