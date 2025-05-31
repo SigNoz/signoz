@@ -88,9 +88,9 @@ func buildSingleFilterCondition(key string, op v3.FilterOperator, fmtVal string,
 	case v3.FilterOperatorLessThanOrEq:
 		return fmt.Sprintf("%s <= %s", keyCondition, fmtVal), nil
 	case v3.FilterOperatorContains:
-		return fmt.Sprintf("like(%s, %s)", keyCondition, fmtVal), nil
+		return fmt.Sprintf("ilike(%s, %s)", keyCondition, fmtVal), nil
 	case v3.FilterOperatorNotContains:
-		return fmt.Sprintf("notLike(%s, %s)", keyCondition, fmtVal), nil
+		return fmt.Sprintf("notILike(%s, %s)", keyCondition, fmtVal), nil
 	case v3.FilterOperatorExists:
 		return fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", key), nil
 	case v3.FilterOperatorNotExists:
