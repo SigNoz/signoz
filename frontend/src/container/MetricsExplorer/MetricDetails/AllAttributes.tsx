@@ -1,5 +1,6 @@
 import { Button, Collapse, Input, Menu, Popover, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import logEvent from 'api/common/logEvent';
 import { ResizeTable } from 'components/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useNotifications } from 'hooks/useNotifications';
@@ -10,6 +11,7 @@ import { useCopyToClipboard } from 'react-use';
 import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';
 import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
+import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import { AllAttributesProps, AllAttributesValueProps } from './types';
 import { getMetricDetailsQuery } from './utils';
 
@@ -135,9 +137,16 @@ function AllAttributes({
 				},
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 			);
+			logEvent(MetricsExplorerEvents.OpenInExplorerClicked, {
+				[MetricsExplorerEventKeys.MetricName]: metricName,
+				[MetricsExplorerEventKeys.Tab]: 'summary',
+				[MetricsExplorerEventKeys.Modal]: 'metric-details',
+				[MetricsExplorerEventKeys.AttributeKey]: groupBy,
+			});
 		},
 		[metricName, metricType, handleExplorerTabChange],
 	);
+
 	const goToMetricsExploreWithAppliedAttribute = useCallback(
 		(key: string, value: string) => {
 			const compositeQuery = getMetricDetailsQuery(metricName, metricType, {
@@ -153,6 +162,13 @@ function AllAttributes({
 				},
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 			);
+			logEvent(MetricsExplorerEvents.OpenInExplorerClicked, {
+				[MetricsExplorerEventKeys.MetricName]: metricName,
+				[MetricsExplorerEventKeys.Tab]: 'summary',
+				[MetricsExplorerEventKeys.Modal]: 'metric-details',
+				[MetricsExplorerEventKeys.AttributeKey]: key,
+				[MetricsExplorerEventKeys.AttributeValue]: value,
+			});
 		},
 		[metricName, metricType, handleExplorerTabChange],
 	);
