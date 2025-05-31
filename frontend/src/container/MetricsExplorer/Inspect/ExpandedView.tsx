@@ -4,6 +4,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { Card, Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import logEvent from 'api/common/logEvent';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import classNames from 'classnames';
 import ResizeTable from 'components/ResizeTable/ResizeTable';
@@ -11,6 +12,7 @@ import { DataType } from 'container/LogDetailedView/TableView';
 import { ArrowDownCircle, ArrowRightCircle, Focus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {
 	SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW,
 	TIME_AGGREGATION_OPTIONS,
@@ -38,6 +40,21 @@ function ExpandedView({
 		selectedTimeSeries,
 		setSelectedTimeSeries,
 	] = useState<InspectMetricsSeries | null>(null);
+
+	useEffect(() => {
+		logEvent(MetricsExplorerEvents.InspectPointClicked, {
+			[MetricsExplorerEventKeys.Modal]: 'inspect',
+			[MetricsExplorerEventKeys.Filters]: metricInspectionOptions.filters,
+			[MetricsExplorerEventKeys.TimeAggregationInterval]:
+				metricInspectionOptions.timeAggregationInterval,
+			[MetricsExplorerEventKeys.TimeAggregationOption]:
+				metricInspectionOptions.timeAggregationOption,
+			[MetricsExplorerEventKeys.SpaceAggregationOption]:
+				metricInspectionOptions.spaceAggregationOption,
+			[MetricsExplorerEventKeys.SpaceAggregationLabels]:
+				metricInspectionOptions.spaceAggregationLabels,
+		});
+	}, [metricInspectionOptions]);
 
 	useEffect(() => {
 		if (step !== InspectionStep.COMPLETED) {
