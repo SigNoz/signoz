@@ -249,17 +249,61 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							Name:       "error_rate",
 							Expression: "A / B * 100",
 							Functions: []Function{{
-								Name: "absolute",
-								Args: []struct {
-									Name  string `json:"name,omitempty"`
-									Value string `json:"value"`
-								}{},
+								Name: FunctionNameAbsolute,
+								Args: []FunctionArg{},
 							}},
 						},
 					}},
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "function cut off min",
+			jsonData: `{
+				"schemaVersion": "v1",
+				"start": 1640995200000,
+				"end": 1640998800000,
+				"requestType": "time_series",
+				"compositeQuery": {
+					"queries": [{
+						"name": "F1",
+						"type": "builder_formula",
+						"spec": {
+							"name": "error_rate",
+							"expression": "A / B * 100",
+							"functions": [{
+								"name": "cut_off_min",
+								"args": [{
+									"value": "0.3"
+								}]
+							}]
+						}
+					}]
+				}
+			}`,
+			expected: QueryRangeRequest{
+				SchemaVersion: "v1",
+				Start:         1640995200000,
+				End:           1640998800000,
+				RequestType:   RequestTypeTimeSeries,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{{
+						Name: "F1",
+						Type: QueryTypeFormula,
+						Spec: QueryBuilderFormula{
+							Name:       "error_rate",
+							Expression: "A / B * 100",
+							Functions: []Function{{
+								Name: FunctionNameCutOffMin,
+								Args: []FunctionArg{{
+									Value: "0.3",
+								}},
+							}},
+						},
+					}},
+				},
+			},
 		},
 		{
 			name: "valid join query",
