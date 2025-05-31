@@ -1,5 +1,6 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
+import getAllUserPreferences from 'api/preferences/getAllUserPreference';
 import { Logout } from 'api/utils';
 import getUserVersion from 'api/v1/version/getVersion';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -26,7 +27,7 @@ import {
 	TrialInfo,
 } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
-import { OrgPreference } from 'types/reducer/app';
+import { OrgPreference, UserPreference } from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
 import { IAppContext, IUser } from './types';
@@ -45,6 +46,11 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const [orgPreferences, setOrgPreferences] = useState<OrgPreference[] | null>(
 		null,
 	);
+
+	const [userPreferences, setUserPreferences] = useState<
+		UserPreference[] | null
+	>(null);
+
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	);
@@ -168,12 +174,49 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
 
+	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
+	const {
+		data: userPreferencesData,
+		isFetching: isFetchingUserPreferences,
+	} = useQuery({
+		queryFn: () => getAllUserPreferences(),
+		queryKey: ['getAllUserPreferences', 'app-context'],
+		enabled: !!isLoggedIn && !!user.email,
+	});
+
+	useEffect(() => {
+		if (
+			userPreferencesData &&
+			userPreferencesData.payload &&
+			!isFetchingUserPreferences
+		) {
+			setUserPreferences(userPreferencesData.payload.data);
+		}
+	}, [userPreferencesData, isFetchingUserPreferences, isLoggedIn]);
+
 	function updateUser(user: IUser): void {
 		setUser((prev) => ({
 			...prev,
 			...user,
 		}));
 	}
+
+	const updateUserPreferenceInContext = useCallback(
+		(userPreference: UserPreference): void => {
+			setUserPreferences((prev) => {
+				const index = prev?.findIndex((e) => e.key === userPreference.key);
+				if (index !== undefined) {
+					return [
+						...(prev?.slice(0, index) || []),
+						userPreference,
+						...(prev?.slice(index + 1, prev.length) || []),
+					];
+				}
+				return prev;
+			});
+		},
+		[],
+	);
 
 	function updateOrgPreferences(orgPreferences: OrgPreference[]): void {
 		setOrgPreferences(orgPreferences);
@@ -235,7 +278,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const value: IAppContext = useMemo(
 		() => ({
 			user,
-			activeLicense,
+			userPreferences,
 			featureFlags,
 			trialInfo,
 			orgPreferences,
@@ -249,9 +292,11 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			activeLicenseFetchError,
 			featureFlagsFetchError,
 			orgPreferencesFetchError,
+			activeLicense,
 			activeLicenseRefetch,
 			updateUser,
 			updateOrgPreferences,
+			updateUserPreferenceInContext,
 			updateOrg,
 			versionData: versionData?.payload || null,
 		}),
@@ -259,6 +304,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			trialInfo,
 			activeLicense,
 			activeLicenseFetchError,
+			userPreferences,
 			featureFlags,
 			featureFlagsFetchError,
 			isFetchingActiveLicense,
@@ -268,8 +314,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isLoggedIn,
 			org,
 			orgPreferences,
-			orgPreferencesFetchError,
 			activeLicenseRefetch,
+			orgPreferencesFetchError,
+			updateUserPreferenceInContext,
 			updateOrg,
 			user,
 			userFetchError,

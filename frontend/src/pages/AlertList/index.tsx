@@ -1,3 +1,5 @@
+import './AlertList.styles.scss';
+
 import { Tabs } from 'antd';
 import { TabsProps } from 'antd/lib';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
@@ -70,7 +72,7 @@ function AllAlertList(): JSX.Element {
 				}
 				safeNavigate(`/alerts?${params}`);
 			}}
-			className={`${
+			className={`alerts-container ${
 				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
 			}`}
 		/>

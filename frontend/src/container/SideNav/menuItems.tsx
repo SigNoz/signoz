@@ -4,24 +4,30 @@ import {
 	BarChart2,
 	BellDot,
 	Binoculars,
+	Book,
 	Boxes,
 	BugIcon,
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
+	Github,
+	Globe,
 	HardDrive,
 	Home,
+	Key,
+	Keyboard,
 	Layers2,
 	LayoutGrid,
 	ListMinus,
-	MessageSquare,
+	MessageSquareText,
+	Plus,
 	Receipt,
 	Route,
 	ScrollText,
 	Settings,
 	Slack,
 	Unplug,
-	// Unplug,
+	User,
 	UserPlus,
 } from 'lucide-react';
 
@@ -60,11 +66,12 @@ export const manageLicenseMenuItem = {
 export const helpSupportMenuItem = {
 	key: ROUTES.SUPPORT,
 	label: 'Help & Support',
-	icon: <MessageSquare size={16} />,
+	icon: <MessageSquareText size={16} />,
 };
 
 export const shortcutMenuItem = {
 	key: ROUTES.SHORTCUTS,
+	// eslint-disable-next-line sonarjs/no-duplicate-string
 	label: 'Keyboard Shortcuts',
 	icon: <Layers2 size={16} />,
 };
@@ -92,11 +99,7 @@ const menuItems: SidebarItem[] = [
 		label: 'Services',
 		icon: <HardDrive size={16} />,
 	},
-	{
-		key: ROUTES.TRACES_EXPLORER,
-		label: 'Traces',
-		icon: <DraftingCompass size={16} />,
-	},
+
 	{
 		key: ROUTES.LOGS,
 		label: 'Logs',
@@ -159,6 +162,195 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.SETTINGS,
 		label: 'Settings',
 		icon: <Settings size={16} />,
+	},
+];
+
+export const primaryMenuItems: SidebarItem[] = [
+	{
+		key: ROUTES.HOME,
+		label: 'Home',
+		icon: <Home size={16} />,
+	},
+	{
+		key: ROUTES.LIST_ALL_ALERT,
+		label: 'Alerts',
+		icon: <BellDot size={16} />,
+	},
+	{
+		key: ROUTES.ALL_DASHBOARD,
+		label: 'Dashboards',
+		icon: <LayoutGrid size={16} />,
+	},
+];
+
+export const defaultMoreMenuItems: SidebarItem[] = [
+	{
+		key: ROUTES.APPLICATION,
+		label: 'Services',
+		icon: <HardDrive size={16} />,
+		isPinned: true,
+		isEnabled: true,
+	},
+	{
+		key: ROUTES.LOGS,
+		label: 'Logs',
+		icon: <ScrollText size={16} />,
+		isPinned: true,
+		isEnabled: true,
+	},
+	{
+		key: ROUTES.TRACES_EXPLORER,
+		label: 'Traces',
+		icon: <DraftingCompass size={16} />,
+		isPinned: true,
+		isEnabled: true,
+	},
+	{
+		key: ROUTES.METRICS_EXPLORER,
+		label: 'Metrics',
+		icon: <BarChart2 size={16} />,
+		isNew: true,
+		isEnabled: true,
+	},
+	{
+		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+		label: 'Infrastructure',
+		icon: <Boxes size={16} />,
+		isPinned: true,
+		isEnabled: true,
+	},
+	{
+		key: ROUTES.INTEGRATIONS,
+		label: 'Integrations',
+		icon: <Unplug size={16} />,
+		isEnabled: false,
+	},
+	{
+		key: ROUTES.ALL_ERROR,
+		label: 'Exceptions',
+		icon: <BugIcon size={16} />,
+		isEnabled: true,
+	},
+	{
+		key: ROUTES.API_MONITORING,
+		label: 'External APIs',
+		icon: <Binoculars size={16} />,
+		isNew: true,
+		isEnabled: true,
+	},
+	{
+		key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
+		label: 'Messaging Queues',
+		icon: <ListMinus size={16} />,
+		isEnabled: true,
+	},
+	{
+		key: ROUTES.SERVICE_MAP,
+		label: 'Service Map',
+		icon: <Route size={16} />,
+		isEnabled: true,
+	},
+];
+
+export const settingsMenuItems: SidebarItem[] = [
+	{
+		key: ROUTES.SETTINGS,
+		label: 'General',
+		icon: <Settings size={16} />,
+		isEnabled: true,
+	},
+	{
+		key: ROUTES.BILLING,
+		label: 'Billing',
+		icon: <Receipt size={16} />,
+		isEnabled: false,
+	},
+	{
+		key: ROUTES.ORG_SETTINGS,
+		label: 'Members & SSO',
+		icon: <User size={16} />,
+		isEnabled: false,
+	},
+	{
+		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
+		label: 'Custom Domain',
+		icon: <Globe size={16} />,
+		isEnabled: false,
+	},
+	{
+		key: ROUTES.INTEGRATIONS,
+		label: 'Integrations',
+		icon: <Unplug size={16} />,
+		isEnabled: false,
+	},
+	{
+		key: ROUTES.ALL_CHANNELS,
+		label: 'Notification Channels',
+		icon: <FileKey2 size={16} />,
+		isEnabled: true,
+	},
+	{
+		key: ROUTES.API_KEYS,
+		label: 'API Keys',
+		icon: <Key size={16} />,
+		isEnabled: false,
+	},
+	{
+		key: ROUTES.INGESTION_SETTINGS,
+		label: 'Ingestion',
+		icon: <RocketOutlined rotate={45} />,
+		isEnabled: false,
+	},
+	{
+		key: ROUTES.MY_SETTINGS,
+		label: 'Account Settings',
+		icon: <User size={16} />,
+		isEnabled: true,
+	},
+	{
+		key: ROUTES.SHORTCUTS,
+		label: 'Keyboard Shortcuts',
+		icon: <Layers2 size={16} />,
+		isEnabled: true,
+	},
+];
+
+export const helpSupportDropdownMenuItems: SidebarItem[] = [
+	{
+		key: 'documentation',
+		label: 'Documentation',
+		icon: <Book size={14} />,
+		isExternal: true,
+		url: 'https://signoz.io/docs',
+	},
+	{
+		key: 'github',
+		label: 'GitHub',
+		icon: <Github size={14} />,
+		isExternal: true,
+		url: 'https://github.com/signoz/signoz',
+	},
+	{
+		key: 'slack',
+		label: 'Community Slack',
+		icon: <Slack size={14} />,
+		isExternal: true,
+		url: 'https://signoz.io/slack',
+	},
+	{
+		key: 'chat-support',
+		label: 'Chat with Support',
+		icon: <MessageSquareText size={14} />,
+	},
+	{
+		key: ROUTES.SHORTCUTS,
+		label: 'Keyboard Shortcuts',
+		icon: <Keyboard size={14} />,
+	},
+	{
+		key: 'invite-collaborators',
+		label: 'Invite a Collaborator',
+		icon: <Plus size={14} />,
 	},
 ];
 

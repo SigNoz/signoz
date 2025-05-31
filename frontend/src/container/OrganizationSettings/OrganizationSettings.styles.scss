@@ -1,0 +1,21 @@
+.organization-settings-container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin: 16px auto;
+
+	padding: 16px;
+
+	width: 90%;
+
+	border: 1px solid var(--Slate-500, #161922);
+	background: var(--Ink-400, #121317);
+	border-radius: 3px;
+}
+
+.lightMode {
+	.organization-settings-container {
+		border: 1px solid var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
+	}
+}

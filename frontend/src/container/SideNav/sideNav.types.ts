@@ -8,12 +8,17 @@ export type SidebarMenu = MenuItem & {
 };
 
 export interface SidebarItem {
+	key: string | number;
 	icon?: ReactNode;
 	text?: ReactNode;
-	key: string | number;
 	label?: ReactNode;
 	isBeta?: boolean;
 	isNew?: boolean;
+	isPinned?: boolean;
+	children?: SidebarItem[];
+	isExternal?: boolean;
+	url?: string;
+	isEnabled?: boolean;
 }
 
 export enum SecondaryMenuItemKey {
