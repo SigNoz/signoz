@@ -45,8 +45,13 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 
 	// get all org ids
 	var orgIDs []string
-	if err := migration.store.BunDB().NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs); err != nil {
+	if err := tx.NewSelect().Model(new(types.Organization)).Column("id").Scan(ctx, &orgIDs); err != nil {
 		return err
+	}
+
+	// there are multiple orgs, so we don't need to update the agents table
+	if len(orgIDs) > 1 {
+		return nil
 	}
 
 	// add org id to dashboards table
@@ -80,6 +85,11 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 	// rename agent_id to id
 	_, err = migration.store.Dialect().RenameColumn(ctx, tx, "agents", "agent_id", "id")
 	if err != nil {
+		return err
+	}
+
+	// update the value of last_hash in agent_config_versions table
+	if _, err := tx.NewUpdate().Table("agent_config_versions").Set("last_hash = org_id || last_hash").Where("true").Exec(ctx); err != nil {
 		return err
 	}
 
