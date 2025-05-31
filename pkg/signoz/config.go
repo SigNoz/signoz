@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -62,6 +63,9 @@ type Config struct {
 
 	// Emailing config
 	Emailing emailing.Config `mapstructure:"emailing" yaml:"emailing"`
+
+	// Sharder config
+	Sharder sharder.Config `mapstructure:"sharder" yaml:"sharder"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
@@ -86,6 +90,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 		prometheus.NewConfigFactory(),
 		alertmanager.NewConfigFactory(),
 		emailing.NewConfigFactory(),
+		sharder.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

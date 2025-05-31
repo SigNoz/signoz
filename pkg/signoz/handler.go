@@ -29,7 +29,7 @@ type Handlers struct {
 
 func NewHandlers(modules Modules) Handlers {
 	return Handlers{
-		Organization: implorganization.NewHandler(modules.Organization),
+		Organization: implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
 		Preference:   implpreference.NewHandler(modules.Preference),
 		User:         impluser.NewHandler(modules.User),
 		SavedView:    implsavedview.NewHandler(modules.SavedView),
