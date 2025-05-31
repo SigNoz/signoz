@@ -299,6 +299,19 @@ export const getK8sPodsListColumns = (
 	return updatedColumnsConfig as ColumnType<K8sPodsRowData>[];
 };
 
+const dotToUnder: Record<string, keyof K8sPodsData['meta']> = {
+	'k8s.cronjob.name': 'k8s_cronjob_name',
+	'k8s.daemonset.name': 'k8s_daemonset_name',
+	'k8s.deployment.name': 'k8s_deployment_name',
+	'k8s.job.name': 'k8s_job_name',
+	'k8s.namespace.name': 'k8s_namespace_name',
+	'k8s.node.name': 'k8s_node_name',
+	'k8s.pod.name': 'k8s_pod_name',
+	'k8s.pod.uid': 'k8s_pod_uid',
+	'k8s.statefulset.name': 'k8s_statefulset_name',
+	'k8s.cluster.name': 'k8s_cluster_name',
+};
+
 const getGroupByEle = (
 	pod: K8sPodsData,
 	groupBy: IBuilderQuery['groupBy'],
@@ -306,7 +319,13 @@ const getGroupByEle = (
 	const groupByValues: string[] = [];
 
 	groupBy.forEach((group) => {
-		groupByValues.push(pod.meta[group.key as keyof typeof pod.meta]);
+		const rawKey = group.key as string;
+
+		// Choose mapped key if present, otherwise use rawKey
+		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof pod.meta;
+		const value = pod.meta[metaKey];
+
+		groupByValues.push(value);
 	});
 
 	return (

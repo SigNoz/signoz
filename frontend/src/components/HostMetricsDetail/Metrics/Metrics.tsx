@@ -23,6 +23,9 @@ import { useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
+
 interface MetricsTabProps {
 	timeRange: {
 		startTime: number;
@@ -45,9 +48,20 @@ function Metrics({
 	handleTimeChange,
 	isModalTimeSelection,
 }: MetricsTabProps): JSX.Element {
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const queryPayloads = useMemo(
-		() => getHostQueryPayload(hostName, timeRange.startTime, timeRange.endTime),
-		[hostName, timeRange.startTime, timeRange.endTime],
+		() =>
+			getHostQueryPayload(
+				hostName,
+				timeRange.startTime,
+				timeRange.endTime,
+				dotMetricsEnabled,
+			),
+		[hostName, timeRange.startTime, timeRange.endTime, dotMetricsEnabled],
 	);
 
 	const queries = useQueries(

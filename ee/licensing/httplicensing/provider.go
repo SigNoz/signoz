@@ -3,6 +3,7 @@ package httplicensing
 import (
 	"context"
 	"encoding/json"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"time"
 
 	"github.com/SigNoz/signoz/ee/licensing/licensingstore/sqllicensingstore"
@@ -249,6 +250,13 @@ func (provider *provider) GetFeatureFlags(ctx context.Context) ([]*featuretypes.
 			UsageLimit: int64(gettableFeature.UsageLimit),
 			Route:      gettableFeature.Route,
 		}
+	}
+
+	if constants.IsDotMetricsEnabled {
+		gettableFeatures = append(gettableFeatures, &featuretypes.GettableFeature{
+			Name:   featuretypes.DotMetricsEnabled,
+			Active: true,
+		})
 	}
 
 	return gettableFeatures, nil

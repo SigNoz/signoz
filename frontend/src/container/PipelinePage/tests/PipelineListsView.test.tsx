@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { screen } from '@testing-library/react';
 import { findByText, fireEvent, render, waitFor } from 'tests/test-utils';
 
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
@@ -242,5 +243,35 @@ describe('PipelinePage container test', () => {
 		const saveBtn = getByText('save_configuration');
 		expect(saveBtn).toBeInTheDocument();
 		await fireEvent.click(saveBtn);
+	});
+
+	it('should have populated form fields when edit pipeline is clicked', async () => {
+		render(
+			<PipelineListsView
+				setActionType={jest.fn()}
+				isActionMode="editing-mode"
+				setActionMode={jest.fn()}
+				pipelineData={pipelineApiResponseMockData}
+				isActionType="edit-pipeline"
+				refetchPipelineLists={jest.fn()}
+			/>,
+		);
+
+		// content assertion
+		expect(document.querySelectorAll('[data-icon="edit"]').length).toBe(2);
+
+		// expand action
+		const expandIcon = document.querySelectorAll(
+			'.ant-table-row-expand-icon-cell > span[class*="anticon-right"]',
+		);
+		expect(expandIcon.length).toBe(2);
+		await fireEvent.click(expandIcon[0]);
+
+		const editBtn = document.querySelectorAll('[data-icon="edit"]');
+		// click on edit btn
+		await fireEvent.click(editBtn[0] as HTMLElement);
+
+		// to have length 2
+		expect(screen.queryAllByText('source = nginx').length).toBe(2);
 	});
 });
