@@ -16,6 +16,7 @@ import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
 import {
 	aggregateAttributesResourcesToString,
+	escapeHtml,
 	removeEscapeCharacters,
 	unescapeString,
 } from 'container/LogDetailedView/utils';
@@ -118,7 +119,7 @@ function LogDetail({
 	const htmlBody = useMemo(
 		() => ({
 			__html: convert.toHtml(
-				dompurify.sanitize(unescapeString(log?.body || ''), {
+				dompurify.sanitize(unescapeString(escapeHtml(log?.body || '')), {
 					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 				}),
 			),
