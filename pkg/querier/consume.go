@@ -45,7 +45,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType) (any, error) {
 	return payload, err
 }
 
-func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
+func readAsTimeSeries(rows driver.Rows) (*qbtypes.TimeSeriesData, error) {
 
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
@@ -210,9 +210,9 @@ func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
 		}
 	}
 
-	return []*qbtypes.TimeSeriesData{{
+	return &qbtypes.TimeSeriesData{
 		Aggregations: nonEmpty,
-	}}, nil
+	}, nil
 }
 
 func numericKind(k reflect.Kind) bool {
