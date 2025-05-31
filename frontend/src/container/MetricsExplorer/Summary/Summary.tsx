@@ -46,7 +46,7 @@ function Summary(): JSX.Element {
 	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
 	const [currentPage, setCurrentPage] = useState(1);
 	const [orderBy, setOrderBy] = useState<OrderByPayload>(DEFAULT_ORDER_BY);
-	const [heatmapView, sexHeatmapView] = useState<TreemapViewType>(
+	const [heatmapView, setHeatmapView] = useState<TreemapViewType>(
 		TreemapViewType.TIMESERIES,
 	);
 
@@ -295,8 +295,9 @@ function Summary(): JSX.Element {
 	};
 
 	const handleSetHeatmapView = (view: TreemapViewType): void => {
-		sexHeatmapView(view);
+		setHeatmapView(view);
 		logEvent(MetricsExplorerEvents.TreemapViewChanged, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
 			[MetricsExplorerEventKeys.ViewType]: view,
 		});
 	};
