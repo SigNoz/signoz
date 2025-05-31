@@ -6,7 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/apdextypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -25,8 +25,8 @@ func NewModule(sqlstore sqlstore.SQLStore) apdex.Module {
 	}
 }
 
-func (module *module) Get(ctx context.Context, orgID string, services []string) ([]*types.ApdexSettings, error) {
-	var apdexSettings []*types.ApdexSettings
+func (module *module) Get(ctx context.Context, orgID string, services []string) ([]*apdextypes.Settings, error) {
+	var apdexSettings []*apdextypes.Settings
 
 	err := module.
 		sqlstore.
@@ -51,7 +51,7 @@ func (module *module) Get(ctx context.Context, orgID string, services []string) 
 		}
 
 		if !found {
-			apdexSettings = append(apdexSettings, &types.ApdexSettings{
+			apdexSettings = append(apdexSettings, &apdextypes.Settings{
 				ServiceName: service,
 				Threshold:   defaultApdexThreshold,
 			})
@@ -61,7 +61,7 @@ func (module *module) Get(ctx context.Context, orgID string, services []string) 
 	return apdexSettings, nil
 }
 
-func (module *module) Set(ctx context.Context, orgID string, apdexSettings *types.ApdexSettings) error {
+func (module *module) Set(ctx context.Context, orgID string, apdexSettings *apdextypes.Settings) error {
 	apdexSettings.OrgID = orgID
 	apdexSettings.Identifiable.ID = valuer.GenerateUUID()
 
