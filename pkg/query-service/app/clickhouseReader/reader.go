@@ -867,7 +867,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadataCache(ctx contex
 	return cachedTraceData, nil
 }
 
-func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Context, orgID valuer.UUID, traceID string, req *model.GetWaterfallSpansForTraceWithMetadataParams) (*model.GetWaterfallSpansForTraceWithMetadataResponse, *model.ApiError) {
+func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Context, orgID valuer.UUID, traceID string, req *model.GetWaterfallSpansForTraceWithMetadataParams) (*model.GetWaterfallSpansForTraceWithMetadataResponse, error) {
 	response := new(model.GetWaterfallSpansForTraceWithMetadataResponse)
 	var startTime, endTime, durationNano, totalErrorSpans, totalSpans uint64
 	var spanIdToSpanNodeMap = map[string]*model.Span{}
@@ -916,7 +916,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			err := json.Unmarshal([]byte(item.References), &ref)
 			if err != nil {
 				zap.L().Error("getWaterfallSpansForTraceWithMetadata: error unmarshalling references", zap.Error(err), zap.String("traceID", traceID))
-				return nil, model.BadRequest(fmt.Errorf("getWaterfallSpansForTraceWithMetadata: error unmarshalling references %w", err))
+				return nil, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "getWaterfallSpansForTraceWithMetadata: error unmarshalling references %s", err.Error())
 			}
 
 			// merge attributes_number and attributes_bool to attributes_string
@@ -928,6 +928,17 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			}
 			for k, v := range item.Resources_string {
 				item.Attributes_string[k] = v
+			}
+
+			events := make([]model.Event, 0)
+			for _, event := range item.Events {
+				var eventMap model.Event
+				err = json.Unmarshal([]byte(event), &eventMap)
+				if err != nil {
+					zap.L().Error("Error unmarshalling events", zap.Error(err))
+					return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getWaterfallSpansForTraceWithMetadata: error in unmarshalling events %s", err.Error())
+				}
+				events = append(events, eventMap)
 			}
 
 			jsonItem := model.Span{
@@ -942,7 +953,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				StatusCodeString: item.StatusCodeString,
 				SpanKind:         item.SpanKind,
 				References:       ref,
-				Events:           item.Events,
+				Events:           events,
 				TagMap:           item.Attributes_string,
 				Children:         make([]*model.Span, 0),
 			}
@@ -998,6 +1009,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 							StatusMessage:    "",
 							StatusCodeString: "",
 							SpanKind:         "",
+							Events:           make([]model.Event, 0),
 							Children:         make([]*model.Span, 0),
 						}
 						missingSpan.Children = append(missingSpan.Children, spanNode)
@@ -1075,7 +1087,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTraceCache(ctx context.Context, 
 	return cachedTraceData, nil
 }
 
-func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID valuer.UUID, traceID string, req *model.GetFlamegraphSpansForTraceParams) (*model.GetFlamegraphSpansForTraceResponse, *model.ApiError) {
+func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID valuer.UUID, traceID string, req *model.GetFlamegraphSpansForTraceParams) (*model.GetFlamegraphSpansForTraceResponse, error) {
 	trace := new(model.GetFlamegraphSpansForTraceResponse)
 	var startTime, endTime, durationNano uint64
 	var spanIdToSpanNodeMap = map[string]*model.FlamegraphSpan{}
@@ -1097,7 +1109,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	if err != nil {
 		zap.L().Info("cache miss for getFlamegraphSpansForTrace", zap.String("traceID", traceID))
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,references, resource_string_service$$name, name FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,references, resource_string_service$$name, name, events FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
 		if err != nil {
 			return nil, err
 		}
@@ -1111,7 +1123,18 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 			err := json.Unmarshal([]byte(item.References), &ref)
 			if err != nil {
 				zap.L().Error("Error unmarshalling references", zap.Error(err))
-				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error in unmarshalling references: %w", err)}
+				return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling references %s", err.Error())
+			}
+
+			events := make([]model.Event, 0)
+			for _, event := range item.Events {
+				var eventMap model.Event
+				err = json.Unmarshal([]byte(event), &eventMap)
+				if err != nil {
+					zap.L().Error("Error unmarshalling events", zap.Error(err))
+					return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling events %s", err.Error())
+				}
+				events = append(events, eventMap)
 			}
 
 			jsonItem := model.FlamegraphSpan{
@@ -1122,6 +1145,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 				DurationNano: item.DurationNano,
 				HasError:     item.HasError,
 				References:   ref,
+				Events:       events,
 				Children:     make([]*model.FlamegraphSpan, 0),
 			}
 
@@ -1160,6 +1184,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 							TimeUnixNano: spanNode.TimeUnixNano,
 							DurationNano: spanNode.DurationNano,
 							HasError:     false,
+							Events:       make([]model.Event, 0),
 							Children:     make([]*model.FlamegraphSpan, 0),
 						}
 						missingSpan.Children = append(missingSpan.Children, spanNode)

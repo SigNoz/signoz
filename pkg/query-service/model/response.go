@@ -288,7 +288,7 @@ type Span struct {
 	Name             string            `json:"name"`
 	References       []OtelSpanRef     `json:"references,omitempty"`
 	TagMap           map[string]string `json:"tagMap"`
-	Events           []string          `json:"event"`
+	Events           []Event           `json:"event"`
 	RootName         string            `json:"rootName"`
 	StatusMessage    string            `json:"statusMessage"`
 	StatusCodeString string            `json:"statusCodeString"`
@@ -311,6 +311,7 @@ type FlamegraphSpan struct {
 	ServiceName  string            `json:"serviceName"`
 	Name         string            `json:"name"`
 	Level        int64             `json:"level"`
+	Events       []Event           `json:"event"`
 	References   []OtelSpanRef     `json:"references,omitempty"`
 	Children     []*FlamegraphSpan `json:"children"`
 }
