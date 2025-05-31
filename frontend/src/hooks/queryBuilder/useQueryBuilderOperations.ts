@@ -12,6 +12,7 @@ import {
 	metricsGaugeSpaceAggregateOperatorOptions,
 	metricsHistogramSpaceAggregateOperatorOptions,
 	metricsSumSpaceAggregateOperatorOptions,
+	metricsUnknownSpaceAggregateOperatorOptions,
 } from 'constants/queryBuilderOperators';
 import {
 	listViewInitialLogQuery,
@@ -21,6 +22,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
+import { isEmpty } from 'lodash-es';
 import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -168,7 +170,7 @@ export const useQueryOperations: UseQueryOperations = ({
 					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
 					break;
 				default:
-					setSpaceAggregationOptions(metricsGaugeSpaceAggregateOperatorOptions);
+					setSpaceAggregationOptions(metricsUnknownSpaceAggregateOperatorOptions);
 					break;
 			}
 
@@ -202,6 +204,21 @@ export const useQueryOperations: UseQueryOperations = ({
 				}
 
 				newQuery.spaceAggregation = '';
+
+				// Handled query with unknown metric to avoid 400 and 500 errors
+				// With metric value typed and not available then - time - 'avg', space - 'avg'
+				// If not typed - time - 'rate', space - 'sum', op - 'count'
+				if (isEmpty(newQuery.aggregateAttribute.type)) {
+					if (!isEmpty(newQuery.aggregateAttribute.key)) {
+						newQuery.aggregateOperator = MetricAggregateOperator.AVG;
+						newQuery.timeAggregation = MetricAggregateOperator.AVG;
+						newQuery.spaceAggregation = MetricAggregateOperator.AVG;
+					} else {
+						newQuery.aggregateOperator = MetricAggregateOperator.COUNT;
+						newQuery.timeAggregation = MetricAggregateOperator.RATE;
+						newQuery.spaceAggregation = MetricAggregateOperator.SUM;
+					}
+				}
 			}
 
 			handleSetQueryData(index, newQuery);
