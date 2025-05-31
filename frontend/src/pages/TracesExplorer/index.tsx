@@ -4,7 +4,6 @@ import { FilterOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import { Button, Card, Tabs, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
-import axios from 'axios';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
@@ -19,13 +18,10 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import QuerySection from 'container/TracesExplorer/QuerySection';
-import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
-import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { cloneDeep, isEmpty, set } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -40,8 +36,6 @@ import { ActionsWrapper, Container } from './styles';
 import { getTabsItems } from './utils';
 
 function TracesExplorer(): JSX.Element {
-	const { notifications } = useNotifications();
-
 	const {
 		currentQuery,
 		panelType,
@@ -124,9 +118,7 @@ function TracesExplorer(): JSX.Element {
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	const { mutate: updateDashboard, isLoading } = useUpdateDashboard();
-
-	const getUpdatedQueryForExport = (): Query => {
+	const getUpdatedQueryForExport = useCallback((): Query => {
 		const updatedQuery = cloneDeep(currentQuery);
 
 		set(
@@ -136,7 +128,7 @@ function TracesExplorer(): JSX.Element {
 		);
 
 		return updatedQuery;
-	};
+	}, [currentQuery, options.selectColumns]);
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
@@ -153,65 +145,22 @@ function TracesExplorer(): JSX.Element {
 					? getUpdatedQueryForExport()
 					: exportDefaultQuery;
 
-			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
-				dashboard,
-				query,
-				widgetId,
-				panelTypeParam,
-				options.selectColumns,
-			);
-
 			logEvent('Traces Explorer: Add to dashboard successful', {
 				panelType,
 				isNewDashboard,
 				dashboardName: dashboard?.data?.title,
 			});
 
-			updateDashboard(updatedDashboard, {
-				onSuccess: (data) => {
-					if (data.error) {
-						const message =
-							data.error === 'feature usage exceeded' ? (
-								<span>
-									Panel limit exceeded for {DataSource.TRACES} in community edition.
-									Please checkout our paid plans{' '}
-									<a
-										href="https://signoz.io/pricing/?utm_source=product&utm_medium=dashboard-limit"
-										rel="noreferrer noopener"
-										target="_blank"
-									>
-										here
-									</a>
-								</span>
-							) : (
-								data.error
-							);
-						notifications.error({
-							message,
-						});
-
-						return;
-					}
-					const dashboardEditView = generateExportToDashboardLink({
-						query,
-						panelType: panelTypeParam,
-						dashboardId: data.payload?.uuid || '',
-						widgetId,
-					});
-
-					safeNavigate(dashboardEditView);
-				},
-				onError: (error) => {
-					if (axios.isAxiosError(error)) {
-						notifications.error({
-							message: error.message,
-						});
-					}
-				},
+			const dashboardEditView = generateExportToDashboardLink({
+				query,
+				panelType: panelTypeParam,
+				dashboardId: dashboard?.uuid || '',
+				widgetId,
 			});
+
+			safeNavigate(dashboardEditView);
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[exportDefaultQuery, notifications, panelType, updateDashboard],
+		[exportDefaultQuery, panelType, safeNavigate, getUpdatedQueryForExport],
 	);
 
 	useShareBuilderUrl(defaultQuery);
@@ -282,11 +231,7 @@ function TracesExplorer(): JSX.Element {
 
 					<Container className="traces-explorer-views">
 						<ActionsWrapper>
-							<ExportPanel
-								query={exportDefaultQuery}
-								isLoading={isLoading}
-								onExport={handleExport}
-							/>
+							<ExportPanel query={exportDefaultQuery} onExport={handleExport} />
 						</ActionsWrapper>
 
 						<Tabs
@@ -299,7 +244,6 @@ function TracesExplorer(): JSX.Element {
 					<ExplorerOptionWrapper
 						disabled={!stagedQuery}
 						query={exportDefaultQuery}
-						isLoading={isLoading}
 						sourcepage={DataSource.TRACES}
 						onExport={handleExport}
 					/>
