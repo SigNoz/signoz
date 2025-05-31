@@ -1,3 +1,4 @@
+import { MetricDetails } from 'api/metricsExplorer/getMetricDetails';
 import { RelatedMetric } from 'api/metricsExplorer/getRelatedMetrics';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
@@ -10,6 +11,13 @@ export enum ExplorerTabs {
 
 export interface TimeSeriesProps {
 	showOneChartPerQuery: boolean;
+	areAllMetricUnitsSame: boolean;
+	isMetricUnitsLoading: boolean;
+	isMetricUnitsError: boolean;
+	metricUnits: string[];
+	metricNames: string[];
+	metrics: (MetricDetails | undefined)[];
+	setIsMetricDetailsOpen: (isOpen: boolean) => void;
 }
 
 export interface RelatedMetricsProps {

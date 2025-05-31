@@ -1,7 +1,7 @@
 import './Explorer.styles.scss';
 
 import * as Sentry from '@sentry/react';
-import { Switch } from 'antd';
+import { Switch, Tooltip } from 'antd';
 import axios from 'axios';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -16,7 +16,7 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -24,10 +24,11 @@ import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 as uuid } from 'uuid';
 
+import MetricDetails from '../MetricDetails/MetricDetails';
 import QuerySection from './QuerySection';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
-import { splitQueryIntoOneChartPerQuery } from './utils';
+import { splitQueryIntoOneChartPerQuery, useGetMetricUnits } from './utils';
 
 const ONE_CHART_PER_QUERY_ENABLED_KEY = 'isOneChartPerQueryEnabled';
 
@@ -41,11 +42,36 @@ function Explorer(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { notifications } = useNotifications();
 	const { mutate: updateDashboard, isLoading } = useUpdateDashboard();
+	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.METRICS_LIST_OPTIONS,
 		dataSource: DataSource.METRICS,
 		aggregateOperator: 'noop',
 	});
+
+	const metricNames = useMemo(
+		() =>
+			stagedQuery?.builder.queryData.map(
+				(query) => query.aggregateAttribute.key,
+			) ?? [],
+		[stagedQuery],
+	);
+
+	const {
+		units,
+		metrics,
+		isLoading: isMetricUnitsLoading,
+		isError: isMetricUnitsError,
+	} = useGetMetricUnits(metricNames);
+
+	const areAllMetricUnitsSame = useMemo(
+		() =>
+			!isMetricUnitsLoading &&
+			!isMetricUnitsError &&
+			units.length > 0 &&
+			units.every((unit) => unit === units[0]),
+		[units, isMetricUnitsLoading, isMetricUnitsError],
+	);
 
 	const [searchParams, setSearchParams] = useSearchParams();
 	const isOneChartPerQueryEnabled =
@@ -54,7 +80,19 @@ function Explorer(): JSX.Element {
 	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(
 		isOneChartPerQueryEnabled,
 	);
+	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] = useState(
+		false,
+	);
 	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
+
+	useEffect(() => {
+		if (units.length > 1 && !areAllMetricUnitsSame) {
+			toggleShowOneChartPerQuery(true);
+			toggleDisableOneChartPerQuery(true);
+		} else {
+			toggleDisableOneChartPerQuery(false);
+		}
+	}, [units, areAllMetricUnitsSame]);
 
 	const handleToggleShowOneChartPerQuery = (): void => {
 		toggleShowOneChartPerQuery(!showOneChartPerQuery);
@@ -155,11 +193,17 @@ function Explorer(): JSX.Element {
 				<div className="explore-header">
 					<div className="explore-header-left-actions">
 						<span>1 chart/query</span>
-						<Switch
-							checked={showOneChartPerQuery}
-							onChange={handleToggleShowOneChartPerQuery}
-							size="small"
-						/>
+						<Tooltip
+							open={disableOneChartPerQuery ? undefined : false}
+							title="One chart per query cannot be disabled for multiple queries with different units."
+						>
+							<Switch
+								checked={showOneChartPerQuery}
+								onChange={handleToggleShowOneChartPerQuery}
+								disabled={disableOneChartPerQuery}
+								size="small"
+							/>
+						</Tooltip>
 					</div>
 					<div className="explore-header-right-actions">
 						<DateTimeSelector showAutoRefresh />
@@ -190,7 +234,16 @@ function Explorer(): JSX.Element {
 				</Button.Group> */}
 				<div className="explore-content">
 					{selectedTab === ExplorerTabs.TIME_SERIES && (
-						<TimeSeries showOneChartPerQuery={showOneChartPerQuery} />
+						<TimeSeries
+							showOneChartPerQuery={showOneChartPerQuery}
+							areAllMetricUnitsSame={areAllMetricUnitsSame}
+							isMetricUnitsLoading={isMetricUnitsLoading}
+							isMetricUnitsError={isMetricUnitsError}
+							metricUnits={units}
+							metricNames={metricNames}
+							metrics={metrics}
+							setIsMetricDetailsOpen={setIsMetricDetailsOpen}
+						/>
 					)}
 					{/* TODO: Enable once we have resolved all related metrics issues */}
 					{/* {selectedTab === ExplorerTabs.RELATED_METRICS && (
@@ -207,6 +260,14 @@ function Explorer(): JSX.Element {
 				isOneChartPerQuery={showOneChartPerQuery}
 				splitedQueries={splitedQueries}
 			/>
+			{isMetricDetailsOpen && (
+				<MetricDetails
+					metricName={metricNames[0]}
+					isOpen={isMetricDetailsOpen}
+					onClose={(): void => setIsMetricDetailsOpen(false)}
+					isModalTimeSelection={false}
+				/>
+			)}
 		</Sentry.ErrorBoundary>
 	);
 }

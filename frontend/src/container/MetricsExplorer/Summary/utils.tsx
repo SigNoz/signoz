@@ -10,6 +10,7 @@ import {
 	SamplesData,
 	TimeseriesData,
 } from 'api/metricsExplorer/getMetricsTreeMap';
+import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import {
 	BarChart,
 	BarChart2,
@@ -197,7 +198,7 @@ export const formatDataForMetricsTable = (
 		metric_type: <MetricTypeRenderer type={metric.type} />,
 		unit: (
 			<ValidateRowValueWrapper value={metric.unit}>
-				{metric.unit}
+				{getUniversalNameFromMetricUnit(metric.unit)}
 			</ValidateRowValueWrapper>
 		),
 		[TreemapViewType.SAMPLES]: (
