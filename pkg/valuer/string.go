@@ -67,3 +67,8 @@ func (enum *String) Scan(val interface{}) error {
 	*enum = NewString(str)
 	return nil
 }
+
+func (enum *String) UnmarshalText(text []byte) error {
+	*enum = NewString(string(text))
+	return nil
+}
