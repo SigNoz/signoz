@@ -1,0 +1,2782 @@
+{
+  "id": "aws_rds_postgres",
+  "description": "",
+  "layout": [
+    {
+      "h": 5,
+      "i": "8d22c6a7-b22e-4ad2-b242-e15de32ddc0f",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 5,
+      "i": "94fe032e-3ffc-4cdc-aae6-f851fa47d957",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 5,
+      "i": "d73f2e63-33d8-40f7-a67b-861a628ba249",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 5
+    },
+    {
+      "h": 5,
+      "i": "336bca83-50be-4937-b41b-ca8fde150f4d",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 5
+    },
+    {
+      "h": 5,
+      "i": "6807e631-4894-4de8-8a55-686c8fa08d4b",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 10
+    },
+    {
+      "h": 5,
+      "i": "d599a942-4dbf-4e29-a3ac-a3142399b557",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 10
+    },
+    {
+      "h": 5,
+      "i": "31c78945-ea1e-4ae1-b0fb-6f1c9de2c016",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 15
+    },
+    {
+      "h": 5,
+      "i": "845ee717-bbd1-424c-8293-f49e76aa43b3",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 15
+    },
+    {
+      "h": 5,
+      "i": "c5189b72-1055-4d6a-b18d-fa23bd9c28d6",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 20
+    },
+    {
+      "h": 5,
+      "i": "ae099f6e-5d6c-4127-ac70-2da9741837d7",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 20
+    },
+    {
+      "h": 5,
+      "i": "03c1f0bd-6713-4355-b8e3-6ef781af32c2",
+      "moved": false,
+      "static": false,
+      "w": 4,
+      "x": 0,
+      "y": 25
+    },
+    {
+      "h": 5,
+      "i": "37aabb43-fd8b-47c5-9444-0cd77f9ac435",
+      "moved": false,
+      "static": false,
+      "w": 4,
+      "x": 4,
+      "y": 25
+    },
+    {
+      "h": 5,
+      "i": "c6939628-3c4c-48fb-a2cf-46f6cb358359",
+      "moved": false,
+      "static": false,
+      "w": 4,
+      "x": 8,
+      "y": 25
+    },
+    {
+      "h": 5,
+      "i": "7854afc7-0cd5-4792-a760-be98a2e2f96b",
+      "moved": false,
+      "static": false,
+      "w": 4,
+      "x": 0,
+      "y": 30
+    },
+    {
+      "h": 5,
+      "i": "8126584b-eaa9-4b79-ba8e-a00c394544d8",
+      "moved": false,
+      "static": false,
+      "w": 4,
+      "x": 4,
+      "y": 30
+    },
+    {
+      "h": 5,
+      "i": "3d0a6717-1fd0-4810-b0e9-fe5190d5809f",
+      "moved": false,
+      "static": false,
+      "w": 4,
+      "x": 8,
+      "y": 30
+    },
+    {
+      "h": 5,
+      "i": "ffc39591-288f-4b28-87ee-43456d5d0667",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 35
+    }
+  ],
+  "panelMap": {},
+  "tags": [
+    "aws",
+    "rds",
+    "postgres"
+  ],
+  "title": "AWS RDS Postgres",
+  "uploadedGrafana": false,
+  "variables": {
+    "5ae02d7b-d201-4481-ad6f-ffb9d53e1b3e": {
+      "allSelected": true,
+      "customValue": "",
+      "description": "This is the unique key that identifies a DB instance",
+      "id": "5ae02d7b-d201-4481-ad6f-ffb9d53e1b3e",
+      "modificationUUID": "1ecf21e3-488a-41e7-92f2-7dc75c9de49a",
+      "multiSelect": true,
+      "name": "dbinstance_identifier",
+      "order": 0,
+      "queryValue": "SELECT JSONExtractString(labels, 'dbinstance_identifier') as dbinstance_identifier\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name like 'aws_rds_database_connections_average'\nGROUP BY dbinstance_identifier",
+      "selectedValue": [
+        "integration-db-instance-instance-1",
+        "integration-db-instance-instance-2",
+        "integration-db-instance-instance-3",
+        "integration-test-postgres-instance-1",
+        "integration-test-postgres-instance-2",
+        "integration-test-postgres-instance-3",
+        "integration-testing-db-instance-1",
+        "integration-testing-db-instance-2",
+        "integration-testing-db-instance-3"
+      ],
+      "showALLOption": true,
+      "sort": "ASC",
+      "textboxValue": "",
+      "type": "QUERY"
+    }
+  },
+  "version": "v4",
+  "widgets": [
+    {
+      "description": "The number of client network connections to the database instance.",
+      "fillSpans": false,
+      "id": "94fe032e-3ffc-4cdc-aae6-f851fa47d957",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_database_connections_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_database_connections_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "4e451ffc",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "b6816e82-3e9b-4dc6-9fc0-047ef50e47d4",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "DatabaseConnections",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "The percentage of CPU utilization.",
+      "fillSpans": false,
+      "id": "8d22c6a7-b22e-4ad2-b242-e15de32ddc0f",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_cpuutilization_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_cpuutilization_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "f0a48ddc",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "0318116a-ba6b-405c-b2c0-8dfb321f3ad0",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "CPUUtilization",
+      "yAxisUnit": "percent"
+    },
+    {
+      "description": "The amount of available random access memory. This metric reports the value of the MemAvailable field of /proc/meminfo",
+      "fillSpans": false,
+      "id": "d599a942-4dbf-4e29-a3ac-a3142399b557",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_freeable_memory_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_freeable_memory_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "b738d056",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "5a1e0e0d-3190-4a38-8030-b48d24ebe0f1",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "FreeableMemory",
+      "yAxisUnit": "decbytes"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "c6939628-3c4c-48fb-a2cf-46f6cb358359",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_read_latency_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_read_latency_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "d0ac5956",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "794a5db3-b75c-4354-a509-ab24b5daeba4",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "ReadLatency",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "03c1f0bd-6713-4355-b8e3-6ef781af32c2",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_read_throughput_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_read_throughput_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "bdc062ed",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "avg",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "6915105d-17eb-4863-8ccd-88c6a56d9ad7",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": "aws_rds_read_throughput_average"
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "ReadThroughput",
+      "yAxisUnit": "decbytes"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "37aabb43-fd8b-47c5-9444-0cd77f9ac435",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_read_iops_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_read_iops_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "74504cdf",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "avg",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "0ab52186-6617-4f8b-a3fc-3778c09b6faf",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "ReadIOPS",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "The amount of available storage space.",
+      "fillSpans": false,
+      "id": "6807e631-4894-4de8-8a55-686c8fa08d4b",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_free_storage_space_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_free_storage_space_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "3cfa657c",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "b7f7c9e9-0fdf-462e-b465-57025785e98f",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "FreeStorageSpace",
+      "yAxisUnit": "decbytes"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "7854afc7-0cd5-4792-a760-be98a2e2f96b",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_write_throughput_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_write_throughput_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "05330793",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "d6be5165-c686-412f-80f7-4a81a28cae7d",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "WriteThroughput",
+      "yAxisUnit": "decbytes"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "8126584b-eaa9-4b79-ba8e-a00c394544d8",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_write_iops_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_write_iops_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "0606e3a2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "253e440a-b13d-411c-a069-d4da1f4c84d7",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "WriteIOPS",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "ffc39591-288f-4b28-87ee-43456d5d0667",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "table",
+      "query": {
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "legend": "",
+            "disabled": false,
+            "query": ""
+          }
+        ],
+        "promql": [
+          {
+            "name": "A",
+            "query": "",
+            "legend": "",
+            "disabled": false
+          }
+        ],
+        "builder": {
+          "queryData": [
+            {
+              "dataSource": "metrics",
+              "queryName": "A",
+              "aggregateOperator": "sum",
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_network_transmit_throughput_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_network_transmit_throughput_average",
+                "type": "Gauge"
+              },
+              "timeAggregation": "sum",
+              "spaceAggregation": "sum",
+              "functions": [],
+              "filters": {
+                "items": [
+                  {
+                    "id": "9a27ef98",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "expression": "A",
+              "disabled": true,
+              "having": [],
+              "stepInterval": 60,
+              "limit": null,
+              "orderBy": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag",
+                  "id": "dbinstance_identifier--string--tag--false"
+                }
+              ],
+              "legend": "n/w transmit",
+              "reduceTo": "sum"
+            },
+            {
+              "dataSource": "metrics",
+              "queryName": "B",
+              "aggregateOperator": "sum",
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_network_receive_throughput_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_network_receive_throughput_average",
+                "type": "Gauge"
+              },
+              "timeAggregation": "sum",
+              "spaceAggregation": "sum",
+              "functions": [],
+              "filters": {
+                "items": [
+                  {
+                    "id": "df2ee1fc",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "expression": "B",
+              "disabled": true,
+              "having": [],
+              "stepInterval": 60,
+              "limit": null,
+              "orderBy": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag",
+                  "id": "dbinstance_identifier--string--tag--false"
+                }
+              ],
+              "legend": "n/w receive",
+              "reduceTo": "sum"
+            }
+          ],
+          "queryFormulas": [
+            {
+              "queryName": "F1",
+              "expression": "A/1024/1024",
+              "disabled": false,
+              "legend": "n/w transmit (mb)"
+            },
+            {
+              "queryName": "F2",
+              "expression": "B/1024/1024",
+              "disabled": false,
+              "legend": "n/w receive (mb)"
+            }
+          ]
+        },
+        "id": "60b5a712-ac27-4b2e-a8d7-a180b389c780",
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Network transmit/receive",
+      "yAxisUnit": "Bps"
+    },
+    {
+      "description": "The number of outstanding I/Os (read/write requests) waiting to access the disk.",
+      "fillSpans": false,
+      "id": "845ee717-bbd1-424c-8293-f49e76aa43b3",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_disk_queue_depth_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_disk_queue_depth_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "96c73381",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "avg",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "afe73a96-1c56-451e-bca6-2c41c62d47a8",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "DiskQueueDepth",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "The percentage of throughput credits remaining in the burst bucket of your RDS database. ",
+      "fillSpans": false,
+      "id": "ae099f6e-5d6c-4127-ac70-2da9741837d7",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_ebsiobalance__average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_ebsiobalance__average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "e88eb970",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "avg",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "1d8b8b67-0646-4ebc-aa8b-1c10643ddfa0",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "EBSByteBalance%",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "The percentage of I/O credits remaining in the burst bucket of your RDS database.",
+      "fillSpans": false,
+      "id": "31c78945-ea1e-4ae1-b0fb-6f1c9de2c016",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_ebsiobalance__average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_ebsiobalance__average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "c8d78684",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "a0f7c676-ae5f-4db9-bb73-26dbb9db7fab",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "EBSIOBalance%",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "3d0a6717-1fd0-4810-b0e9-fe5190d5809f",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_write_latency_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_write_latency_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "5b97fb87",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "7533cf12-7ee3-49e8-8fcd-c1f82ea317ab",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "WriteLatency",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "c5189b72-1055-4d6a-b18d-fa23bd9c28d6",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_swap_usage_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_swap_usage_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "afabe318",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "avg",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "61ecb019-0fbf-44f1-a9db-995b86ee4805",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "SwapUsage",
+      "yAxisUnit": "decbytes"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "336bca83-50be-4937-b41b-ca8fde150f4d",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_checkpoint_lag_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_checkpoint_lag_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "abac3888",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "187a2eae-4fe4-4e47-b544-20404532cbb2",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "CheckpointLag",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "d73f2e63-33d8-40f7-a67b-861a628ba249",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_rds_replica_lag_average--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_rds_replica_lag_average",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "47be5579",
+                    "key": {
+                      "dataType": "string",
+                      "id": "dbinstance_identifier--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "dbinstance_identifier",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.dbinstance_identifier}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "dbinstance_identifier--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "dbinstance_identifier",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{dbinstance_identifier}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "53e6ee05-bcbc-4f01-b061-a358371d92ff",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "ReplicaLag",
+      "yAxisUnit": "none"
+    }
+  ],
+  "uuid": "05e473e2-5733-4877-8b7f-cb311d4e9c0a"
+}
