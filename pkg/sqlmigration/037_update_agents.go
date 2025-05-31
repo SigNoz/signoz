@@ -54,16 +54,16 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 		return nil
 	}
 
-	// add org id to dashboards table
+	// add org id to agents, agent_config_versions, and agent_config_elements tables
 	for _, table := range []string{"agents", "agent_config_versions", "agent_config_elements"} {
 		if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, table, "org_id"); err != nil {
 			return err
 		} else if !exists {
-			if _, err := tx.NewAddColumn().Table(table).ColumnExpr("org_id TEXT REFERENCES organizations(id) ON DELETE CASCADE").Exec(ctx); err != nil {
+			if _, err := tx.NewAddColumn().Table(table).ColumnExpr("org_id TEXT REFERENCES organizations(id)").Exec(ctx); err != nil {
 				return err
 			}
 
-			// check if there is one org ID if yes then set it to all dashboards.
+			// check if there is one org ID if yes then set it to table.
 			if len(orgIDs) == 1 {
 				orgID := orgIDs[0]
 				if _, err := tx.NewUpdate().Table(table).Set("org_id = ?", orgID).Where("org_id IS NULL").Exec(ctx); err != nil {
