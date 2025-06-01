@@ -56,8 +56,8 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	return dashboard, nil
 }
 
-func (module *module) GetAll(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	storableDashboards, err := module.store.GetAll(ctx, orgID)
+func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
+	storableDashboards, err := module.store.List(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 		return err
 	}
 
-	err = dashboard.LockUnlock(lock, updatedBy)
+	err = dashboard.LockUnlock(ctx, lock, updatedBy)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 }
 
 func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
-	dashboards, err := module.GetAll(ctx, orgID)
+	dashboards, err := module.List(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}

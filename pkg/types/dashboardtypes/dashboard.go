@@ -2,12 +2,12 @@ package dashboardtypes
 
 import (
 	"context"
-	"database/sql/driver"
 	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -145,20 +145,6 @@ func NewGettableDashboardFromDashboard(dashboard *Dashboard) (*GettableDashboard
 	}, nil
 }
 
-func (storableDashboardData *StorableDashboardData) Scan(src interface{}) error {
-	var data []byte
-	if b, ok := src.([]byte); ok {
-		data = b
-	} else if s, ok := src.(string); ok {
-		data = []byte(s)
-	}
-	return json.Unmarshal(data, storableDashboardData)
-}
-
-func (storableDashboardData *StorableDashboardData) Value() (driver.Value, error) {
-	return json.Marshal(storableDashboardData)
-}
-
 func (storableDashboardData *StorableDashboardData) GetWidgetIds() []string {
 	data := *storableDashboardData
 	widgetIds := []string{}
@@ -184,10 +170,13 @@ func (storableDashboardData *StorableDashboardData) GetWidgetIds() []string {
 	return widgetIds
 }
 
-func (storableDashboardData *StorableDashboardData) CanUpdate(data StorableDashboardData) bool {
-	existingIDs := storableDashboardData.GetWidgetIds()
-	newIDs := data.GetWidgetIds()
+func (dashboard *Dashboard) CanUpdate(data StorableDashboardData) error {
+	if dashboard.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
+	}
 
+	existingIDs := dashboard.Data.GetWidgetIds()
+	newIDs := data.GetWidgetIds()
 	newIdsMap := make(map[string]bool)
 	for _, id := range newIDs {
 		newIdsMap[id] = true
@@ -201,42 +190,44 @@ func (storableDashboardData *StorableDashboardData) CanUpdate(data StorableDashb
 			differenceMap[id] = true
 		}
 	}
-	return len(difference) <= 1
-}
-
-func (dashboard *Dashboard) Update(updatableDashboard UpdatableDashboard, updatedBy string) error {
-	canUpdate := dashboard.Data.CanUpdate(updatableDashboard)
-	if !canUpdate {
+	if len(difference) > 1 {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "deleting more than one panel is not supported")
 	}
 
-	if dashboard.Locked {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
+	return nil
+}
+
+func (dashboard *Dashboard) Update(updatableDashboard UpdatableDashboard, updatedBy string) error {
+	err := dashboard.CanUpdate(updatableDashboard)
+	if err != nil {
+		return err
 	}
 	dashboard.UpdatedBy = updatedBy
 	dashboard.UpdatedAt = time.Now()
+	dashboard.Data = updatableDashboard
+	return nil
+}
 
-	if updatableDashboard != nil {
-		dashboard.Data = updatableDashboard
+func (dashboard *Dashboard) CanLockUnlock(ctx context.Context, updatedBy string) error {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if dashboard.CreatedBy != updatedBy || claims.Role != types.RoleAdmin {
+		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}
 	return nil
 }
 
-func (dashboard *Dashboard) LockUnlock(lock bool, updatedBy string) error {
-	err := dashboard.CanLockUnlock(updatedBy)
+func (dashboard *Dashboard) LockUnlock(ctx context.Context, lock bool, updatedBy string) error {
+	err := dashboard.CanLockUnlock(ctx, updatedBy)
 	if err != nil {
 		return err
 	}
 	dashboard.Locked = lock
 	dashboard.UpdatedBy = updatedBy
 	dashboard.UpdatedAt = time.Now()
-	return nil
-}
-
-func (dashboard *Dashboard) CanLockUnlock(updatedBy string) error {
-	if dashboard.CreatedBy != updatedBy {
-		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
-	}
 	return nil
 }
 
@@ -263,7 +254,7 @@ type Store interface {
 
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, error)
 
-	GetAll(context.Context, valuer.UUID) ([]*StorableDashboard, error)
+	List(context.Context, valuer.UUID) ([]*StorableDashboard, error)
 
 	Update(context.Context, valuer.UUID, *StorableDashboard) error
 

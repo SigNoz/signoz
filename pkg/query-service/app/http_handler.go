@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"io"
 	"math"
 	"net/http"
@@ -20,6 +19,8 @@ import (
 	"sync"
 	"text/template"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
@@ -513,7 +514,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.GetAll)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.List)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{id}", am.ViewAccess(aH.Get)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Update)).Methods(http.MethodPut)
@@ -1214,7 +1215,7 @@ func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, gettableDashboard)
 }
 
-func (aH *APIHandler) GetAll(rw http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -1231,7 +1232,7 @@ func (aH *APIHandler) GetAll(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	dashboards := make([]*dashboardtypes.Dashboard, 0)
-	sqlDashboards, err := aH.Signoz.Modules.Dashboard.GetAll(ctx, orgID)
+	sqlDashboards, err := aH.Signoz.Modules.Dashboard.List(ctx, orgID)
 	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
 		render.Error(rw, err)
 		return

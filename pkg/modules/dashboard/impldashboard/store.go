@@ -49,7 +49,7 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storableDashboard, nil
 }
 
-func (store *store) GetAll(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.StorableDashboard, error) {
+func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.StorableDashboard, error) {
 	storableDashboards := make([]*dashboardtypes.StorableDashboard, 0)
 
 	err := store.

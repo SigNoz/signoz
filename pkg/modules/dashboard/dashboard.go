@@ -13,7 +13,7 @@ type Module interface {
 
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error)
 
-	GetAll(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
+	List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 
 	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboard) (*dashboardtypes.Dashboard, error)
 

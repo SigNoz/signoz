@@ -3,8 +3,6 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
-	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -18,48 +16,16 @@ type updateDashboard struct {
 	store sqlstore.SQLStore
 }
 
-type dashboardData map[string]interface{}
-
-func (c dashboardData) Value() (driver.Value, error) {
-	return json.Marshal(c)
-}
-
-func (c *dashboardData) Scan(src interface{}) error {
-	var data []byte
-	if b, ok := src.([]byte); ok {
-		data = b
-	} else if s, ok := src.(string); ok {
-		data = []byte(s)
-	}
-	return json.Unmarshal(data, c)
-}
-
 type existingDashboard36 struct {
 	bun.BaseModel `bun:"table:dashboards"`
 
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID  string        `json:"-" bun:"org_id,notnull"`
-	ID     int           `json:"id" bun:"id,pk,autoincrement"`
-	UUID   string        `json:"uuid" bun:"uuid,type:text,notnull,unique"`
-	Data   dashboardData `json:"data" bun:"data,type:text,notnull"`
-	Locked *int          `json:"isLocked" bun:"locked,notnull,default:0"`
-}
-
-type storableDashboardData map[string]interface{}
-
-func (storableDashboardData *storableDashboardData) Scan(src interface{}) error {
-	var data []byte
-	if b, ok := src.([]byte); ok {
-		data = b
-	} else if s, ok := src.(string); ok {
-		data = []byte(s)
-	}
-	return json.Unmarshal(data, storableDashboardData)
-}
-
-func (storableDashboardData *storableDashboardData) Value() (driver.Value, error) {
-	return json.Marshal(storableDashboardData)
+	OrgID  string                 `json:"-" bun:"org_id,notnull"`
+	ID     int                    `json:"id" bun:"id,pk,autoincrement"`
+	UUID   string                 `json:"uuid" bun:"uuid,type:text,notnull,unique"`
+	Data   map[string]interface{} `json:"data" bun:"data,type:text,notnull"`
+	Locked *int                   `json:"isLocked" bun:"locked,notnull,default:0"`
 }
 
 type newDashboard36 struct {
@@ -68,9 +34,9 @@ type newDashboard36 struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Data   storableDashboardData `json:"data" bun:"data,type:text,notnull"`
-	Locked bool                  `json:"isLocked" bun:"locked,notnull,default:0"`
-	OrgID  valuer.UUID           `json:"-" bun:"org_id,notnull"`
+	Data   map[string]interface{} `json:"data" bun:"data,type:text,notnull"`
+	Locked bool                   `json:"isLocked" bun:"locked,notnull,default:0"`
+	OrgID  valuer.UUID            `json:"-" bun:"org_id,notnull"`
 }
 
 func NewUpdateDashboardFactory(store sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
@@ -165,7 +131,7 @@ func (migration *updateDashboard) CopyExistingDashboardsToNewDashboards(existing
 			},
 			TimeAuditable: existingDashboard.TimeAuditable,
 			UserAuditable: existingDashboard.UserAuditable,
-			Data:          storableDashboardData(existingDashboard.Data),
+			Data:          existingDashboard.Data,
 			Locked:        locked,
 			OrgID:         orgID,
 		}
