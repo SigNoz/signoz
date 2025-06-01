@@ -187,8 +187,8 @@ WITH
         countIf(t1_time>0 AND t2_time>0)                           AS total_s2_raw_spans,
         sum(s1_error)                                              AS sum_s1_error,
         sum(s2_error)                                              AS sum_s2_error,
-        avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)     AS avg_duration,
-        quantile(0.99)(dateDiff('microseconds', t1_time, t2_time)/1000.0) AS latency
+        avg((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)     AS avg_duration,
+        quantile(0.99)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6) AS latency
     FROM funnel
 )
 
@@ -279,15 +279,13 @@ WITH
         sum(s1_error)                                                           AS sum_s1_error,
         sum(s2_error)                                                           AS sum_s2_error,
         sum(s3_error)                                                           AS sum_s3_error,
-        avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)                  AS avg_duration,
-        quantile(0.99)(dateDiff('microseconds', t1_time, t2_time)/1000.0)       AS latency
+        avg((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)                  AS avg_duration,
+        quantile(0.99)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)       AS latency
     FROM funnel
 )
 
 SELECT
-    -- compute conversion_rate before dropping any “failures”
     round(total_s3_spans * 100.0 / total_s1_spans, 2)                         AS conversion_rate,
-    -- avg_rate remains step-2 hits per second
     total_s2_spans / time_window_sec                                          AS avg_rate,
     greatest(sum_s1_error, sum_s2_error, sum_s3_error)                         AS errors,
     avg_duration,
@@ -473,7 +471,7 @@ WITH
 
 SELECT
     trace_id,
-    dateDiff('microseconds', t1_time, t2_time)/1000.0 AS duration_ms,
+    (toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6 AS duration_ms,
     span_count
 FROM (
     SELECT
@@ -532,7 +530,7 @@ WITH
 
 SELECT
     trace_id,
-    dateDiff('microseconds', t1_time, t2_time)/1000.0 AS duration_ms,
+    (toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6 AS duration_ms,
     span_count
 FROM (
     SELECT
@@ -619,8 +617,8 @@ WITH
         countIf(t1_time > 0)                                        AS total_s1_spans,
         countIf(t1_time > 0 AND t2_time > t1_time)                  AS total_s2_spans,
         greatest(sum(s1_error), sum(s2_error))                      AS errors,
-        avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)      AS avg_duration,
-        quantile(%[13]s)(dateDiff('microseconds', t1_time, t2_time)/1000.0) AS latency
+        avg((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)      AS avg_duration,
+        quantile(%[13]s)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6) AS latency
     FROM funnel
 )
 
@@ -714,10 +712,10 @@ WITH
         sum(s1_error)                                                             AS sum_s1_error,
         sum(s2_error)                                                             AS sum_s2_error,
         sum(s3_error)                                                             AS sum_s3_error,
-        avg(dateDiff('microseconds', t1_time, t2_time)/1000.0)                    AS avg_duration_12,
-        quantile(%[18]s)(dateDiff('microseconds', t1_time, t2_time)/1000.0)       AS latency_12,
-        avg(dateDiff('microseconds', t2_time, t3_time)/1000.0)                    AS avg_duration_23,
-        quantile(%[19]s)(dateDiff('microseconds', t2_time, t3_time)/1000.0)       AS latency_23
+        avg((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)                    AS avg_duration_12,
+        quantile(%[18]s)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)       AS latency_12,
+        avg((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time)) / 1e6)                    AS avg_duration_23,
+        quantile(%[19]s)((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time)) / 1e6)       AS latency_23
     FROM funnel
 )
 `
