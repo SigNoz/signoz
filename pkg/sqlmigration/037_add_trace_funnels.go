@@ -2,8 +2,6 @@ package sqlmigration
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -12,8 +10,8 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-// Funnel Core Data Structure (Funnel and FunnelStep)
-type Funnel struct {
+// funnel Core Data Structure (funnel and funnelStep)
+type funnel struct {
 	bun.BaseModel      `bun:"table:trace_funnel"`
 	types.Identifiable // funnel id
 	types.TimeAuditable
@@ -21,12 +19,12 @@ type Funnel struct {
 	Name          string       `json:"funnel_name" bun:"name,type:text,notnull"` // funnel name
 	Description   string       `json:"description" bun:"description,type:text"`  // funnel description
 	OrgID         valuer.UUID  `json:"org_id" bun:"org_id,type:varchar,notnull"`
-	Steps         []FunnelStep `json:"steps" bun:"steps,type:text,notnull"`
+	Steps         []funnelStep `json:"steps" bun:"steps,type:text,notnull"`
 	Tags          string       `json:"tags" bun:"tags,type:text"`
 	CreatedByUser *types.User  `json:"user" bun:"rel:belongs-to,join:created_by=id"`
 }
 
-type FunnelStep struct {
+type funnelStep struct {
 	types.Identifiable
 	Name           string `json:"name,omitempty"`        // step name
 	Description    string `json:"description,omitempty"` // step description
@@ -65,15 +63,17 @@ func (migration *addTraceFunnels) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	_, err = tx.NewCreateTable().
-		Model(new(Funnel)).
+		Model(new(funnel)).
 		ForeignKey(`("org_id") REFERENCES "organizations" ("id") ON DELETE CASCADE`).
 		IfNotExists().
 		Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to create trace_funnel table: %v", err)
+		return err
 	}
 
 	err = tx.Commit()
