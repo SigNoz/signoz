@@ -404,6 +404,9 @@ export function DashboardProvider({
 			setIsDashboardSlider(false);
 			setIsDashboardLocked(props.lock);
 		},
+		onError: (error) => {
+			showErrorModal(error as APIError);
+		},
 	});
 
 	const handleDashboardLockToggle = async (value: boolean): Promise<void> => {
