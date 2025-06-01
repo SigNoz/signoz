@@ -42,11 +42,8 @@ FROM (
             (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
         )
     GROUP BY trace_id
-) AS funnel
-WHERE
-    t2_time > t1_time
-    AND t1_time > 0
-    AND t2_time > 0
+    HAVING t1_time > 0 AND t2_time > t1_time
+)
 ORDER BY t1_time
 LIMIT 5;`
 	return fmt.Sprintf(queryTemplate,
@@ -104,17 +101,12 @@ FROM (
         timestamp BETWEEN start_ts AND end_ts
         AND (
             (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[12]s)
-         OR
-            (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[13]s)
-         OR
-            (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[14]s)
+         OR (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[13]s)
+         OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[14]s)
         )
     GROUP BY trace_id
-) AS funnel
-WHERE
-    t1_time > 0
-    AND t2_time > t1_time
-    AND t3_time > t2_time
+    HAVING t1_time > 0 AND t2_time > t1_time AND t3_time > t2_time
+)
 ORDER BY t1_time
 LIMIT 5;`
 	return fmt.Sprintf(queryTemplate,
@@ -165,37 +157,37 @@ WITH
 , funnel AS (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName=step1.1 AND name=step1.2) AS t1_time,
-        minIf(timestamp, serviceName=step2.1 AND name=step2.2) AS t2_time,
-        anyIf(has_error, serviceName=step1.1 AND name=step1.2)   AS s1_error,
-        anyIf(has_error, serviceName=step2.1 AND name=step2.2)   AS s2_error
+        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
+        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
+        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName=step1.1 AND name=step1.2 AND (contains_error_t1=0 OR has_error=true) %[11]s)
+            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[11]s)
          OR
-            (serviceName=step2.1 AND name=step2.2 AND (contains_error_t2=0 OR has_error=true) %[12]s)
+            (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[12]s)
         )
     GROUP BY trace_id
+    HAVING t1_time > 0 AND t2_time > t1_time
 )
 
 , totals AS (
     SELECT
-        countIf(t1_time>0)                                         AS total_s1_spans,
-        countIf(t1_time>0 AND t2_time>t1_time)                     AS total_s2_spans,
-        countIf(t1_time>0 AND t2_time>0)                           AS total_s2_raw_spans,
-        sum(s1_error)                                              AS sum_s1_error,
-        sum(s2_error)                                              AS sum_s2_error,
-        avg((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)     AS avg_duration,
+        count() AS total_s1_spans,
+        countIf(t2_time > t1_time) AS total_s2_spans,
+        sum(s1_error) AS sum_s1_error,
+        sum(s2_error) AS sum_s2_error,
+        avg((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6) AS avg_duration,
         quantile(0.99)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6) AS latency
     FROM funnel
 )
 
 SELECT
-    round(total_s2_spans * 100.0 / total_s1_spans, 2)  AS conversion_rate,
-    total_s2_raw_spans / time_window_sec               AS avg_rate,
-    greatest(sum_s1_error, sum_s2_error)               AS errors,
+    round(if(total_s1_spans > 0, total_s2_spans * 100.0 / total_s1_spans, 0), 2) AS conversion_rate,
+    total_s2_spans / time_window_sec AS avg_rate,
+    greatest(sum_s1_error, sum_s2_error) AS errors,
     avg_duration,
     latency
 FROM totals;
@@ -237,15 +229,15 @@ func BuildThreeStepFunnelOverviewQuery(
 ) string {
 	queryTemplate := `
 WITH
-    %[1]d    AS contains_error_t1,
-    %[2]d    AS contains_error_t2,
-    %[3]d    AS contains_error_t3,
-    '%[4]s'  AS latency_pointer_t1,
-    '%[5]s'  AS latency_pointer_t2,
-    '%[6]s'  AS latency_pointer_t3,
-    toDateTime64(%[7]d/1e9,9) AS start_ts,
-    toDateTime64(%[8]d/1e9,9) AS end_ts,
-    (%[8]d - %[7]d)/1e9      AS time_window_sec,
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2,
+    %[3]d AS contains_error_t3,
+    '%[4]s' AS latency_pointer_t1,
+    '%[5]s' AS latency_pointer_t2,
+    '%[6]s' AS latency_pointer_t3,
+    toDateTime64(%[7]d/1e9, 9) AS start_ts,
+    toDateTime64(%[8]d/1e9, 9) AS end_ts,
+    (%[8]d - %[7]d)/1e9 AS time_window_sec,
 
     ('%[9]s','%[10]s') AS step1,
     ('%[11]s','%[12]s') AS step2,
@@ -254,45 +246,51 @@ WITH
 , funnel AS (
     SELECT
         trace_id,
-        minIf(timestamp, serviceName=step1.1 AND name=step1.2) AS t1_time,
-        minIf(timestamp, serviceName=step2.1 AND name=step2.2) AS t2_time,
-        minIf(timestamp, serviceName=step3.1 AND name=step3.2) AS t3_time,
-        anyIf(has_error, serviceName=step1.1 AND name=step1.2)   AS s1_error,
-        anyIf(has_error, serviceName=step2.1 AND name=step2.2)   AS s2_error,
-        anyIf(has_error, serviceName=step3.1 AND name=step3.2)   AS s3_error
+        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
+        minIf(timestamp, serviceName = step3.1 AND name = step3.2) AS t3_time,
+        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
+        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error,
+        toUInt8(anyIf(has_error, serviceName = step3.1 AND name = step3.2)) AS s3_error
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName=step1.1 AND name=step1.2 AND (contains_error_t1=0 OR has_error=true) %[15]s)
-         OR (serviceName=step2.1 AND name=step2.2 AND (contains_error_t2=0 OR has_error=true) %[16]s)
-         OR (serviceName=step3.1 AND name=step3.2 AND (contains_error_t3=0 OR has_error=true) %[17]s)
+            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[15]s)
+         OR (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[16]s)
+         OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[17]s)
         )
     GROUP BY trace_id
 )
 
 , totals AS (
     SELECT
-        countIf(t1_time > 0)                                                   AS total_s1_spans,
-        countIf(t1_time > 0 AND t2_time > t1_time)                              AS total_s2_spans,
-        countIf(t1_time > 0 AND t2_time > t1_time AND t3_time > t2_time)        AS total_s3_spans,
-        sum(s1_error)                                                           AS sum_s1_error,
-        sum(s2_error)                                                           AS sum_s2_error,
-        sum(s3_error)                                                           AS sum_s3_error,
-        avg((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)                  AS avg_duration,
-        quantile(0.99)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)       AS latency
+        countIf(t1_time > 0) AS total_s1_spans,
+        countIf(t1_time > 0 AND t2_time > t1_time) AS total_s2_spans,
+        countIf(t2_time > 0 AND t3_time > t2_time) AS total_s3_spans,
+
+        sum(s1_error) AS sum_s1_error,
+        sum(s2_error) AS sum_s2_error,
+        sum(s3_error) AS sum_s3_error,
+
+        avgIf((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))/1e6, t1_time > 0 AND t2_time > t1_time) AS avg_duration_12,
+        quantileIf(0.99)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))/1e6, t1_time > 0 AND t2_time > t1_time) AS latency_12,
+
+        avgIf((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time))/1e6, t2_time > 0 AND t3_time > t2_time) AS avg_duration_23,
+        quantileIf(0.99)((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time))/1e6, t2_time > 0 AND t3_time > t2_time) AS latency_23
     FROM funnel
 )
 
 SELECT
-    round(total_s3_spans * 100.0 / total_s1_spans, 2)                         AS conversion_rate,
-    total_s2_spans / time_window_sec                                          AS avg_rate,
-    greatest(sum_s1_error, sum_s2_error, sum_s3_error)                         AS errors,
-    avg_duration,
-    latency
+    round(if(total_s1_spans > 0, total_s3_spans * 100.0 / total_s1_spans, 0), 2) AS conversion_rate,
+    total_s3_spans / nullIf(time_window_sec, 0) AS avg_rate,
+    greatest(sum_s1_error, sum_s2_error, sum_s3_error) AS errors,
+    avg_duration_23 AS avg_duration,
+    latency_23 AS latency
 FROM totals;
 `
-	return fmt.Sprintf(queryTemplate,
+	return fmt.Sprintf(
+		queryTemplate,
 		containsErrorT1,
 		containsErrorT2,
 		containsErrorT3,
@@ -336,28 +334,29 @@ WITH
     ('%[7]s','%[8]s') AS step2
 
 SELECT
-    countIf(t1_time>0)                                                 AS total_s1_spans,
-    countIf(t1_error=1)                                                AS total_s1_errored_spans,
-    countIf(t1_time>0 AND t2_time>t1_time)                              AS total_s2_spans,
-    countIf(t1_time>0 AND t2_time>t1_time AND t2_error=1)               AS total_s2_errored_spans
+    count() AS total_s1_spans,
+    countIf(t1_error = 1) AS total_s1_errored_spans,
+    countIf(t2_time > t1_time) AS total_s2_spans,
+    countIf(t2_time > t1_time AND t2_error = 1) AS total_s2_errored_spans
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp,serviceName=step1.1 AND name=step1.2)           AS t1_time,
-        minIf(timestamp,serviceName=step2.1 AND name=step2.2)           AS t2_time,
-        toUInt8(anyIf(has_error,serviceName=step1.1 AND name=step1.2))  AS t1_error,
-        toUInt8(anyIf(has_error,serviceName=step2.1 AND name=step2.2))  AS t2_error
+        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
+        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS t1_error,
+        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS t2_error
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName=step1.1 AND name=step1.2 AND (contains_error_t1=0 OR has_error=true) %[9]s)
+            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[9]s)
          OR
-            (serviceName=step2.1 AND name=step2.2 AND (contains_error_t2=0 OR has_error=true) %[10]s)
+            (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
         )
     GROUP BY trace_id
-) AS funnel
-WHERE t1_time>0;`
+    HAVING t1_time > 0 AND t2_time > t1_time
+) AS funnel;
+`
 	return fmt.Sprintf(queryTemplate,
 		containsErrorT1,
 		containsErrorT2,
@@ -401,34 +400,33 @@ WITH
     ('%[10]s','%[11]s') AS step3
 
 SELECT
-    countIf(t1_time>0)                                                       AS total_s1_spans,
-    countIf(t1_error=1)                                                      AS total_s1_errored_spans,
-    countIf(t1_time>0 AND t2_time>t1_time)                                    AS total_s2_spans,
-    countIf(t1_time>0 AND t2_time>t1_time AND t2_error=1)                     AS total_s2_errored_spans,
-    countIf(t1_time>0 AND t2_time>t1_time AND t3_time>t2_time)                AS total_s3_spans,
-    countIf(t1_time>0 AND t2_time>t1_time AND t3_time>t2_time AND t3_error=1) AS total_s3_errored_spans
+    count() AS total_s1_spans,
+    countIf(t1_error = 1) AS total_s1_errored_spans,
+    countIf(t2_time > t1_time) AS total_s2_spans,
+    countIf(t2_time > t1_time AND t2_error = 1) AS total_s2_errored_spans,
+    countIf(t2_time > t1_time AND t3_time > t2_time) AS total_s3_spans,
+    countIf(t2_time > t1_time AND t3_time > t2_time AND t3_error = 1) AS total_s3_errored_spans
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp,serviceName=step1.1 AND name=step1.2)             AS t1_time,
-        minIf(timestamp,serviceName=step2.1 AND name=step2.2)             AS t2_time,
-        minIf(timestamp,serviceName=step3.1 AND name=step3.2)             AS t3_time,
-        toUInt8(anyIf(has_error,serviceName=step1.1 AND name=step1.2))   AS t1_error,
-        toUInt8(anyIf(has_error,serviceName=step2.1 AND name=step2.2))   AS t2_error,
-        toUInt8(anyIf(has_error,serviceName=step3.1 AND name=step3.2))   AS t3_error
+        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
+        minIf(timestamp, serviceName = step3.1 AND name = step3.2) AS t3_time,
+        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS t1_error,
+        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS t2_error,
+        toUInt8(anyIf(has_error, serviceName = step3.1 AND name = step3.2)) AS t3_error
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName=step1.1 AND name=step1.2 AND (contains_error_t1=0 OR has_error=true) %[12]s)
-         OR
-            (serviceName=step2.1 AND name=step2.2 AND (contains_error_t2=0 OR has_error=true) %[13]s)
-         OR
-            (serviceName=step3.1 AND name=step3.2 AND (contains_error_t3=0 OR has_error=true) %[14]s)
+            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[12]s)
+         OR (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[13]s)
+         OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[14]s)
         )
     GROUP BY trace_id
-) AS funnel
-WHERE t1_time>0;`
+    HAVING t1_time > 0 AND t2_time > t1_time AND t3_time > t2_time
+) AS funnel;
+`
 	return fmt.Sprintf(queryTemplate,
 		containsErrorT1,
 		containsErrorT2,
@@ -463,8 +461,8 @@ func BuildTwoStepFunnelTopSlowTracesQuery(
 WITH
     %[1]d AS contains_error_t1,
     %[2]d AS contains_error_t2,
-    toDateTime64(%[3]d/1e9,9) AS start_ts,
-    toDateTime64(%[4]d/1e9,9) AS end_ts,
+    toDateTime64(%[3]d/1e9, 9) AS start_ts,
+    toDateTime64(%[4]d/1e9, 9) AS end_ts,
 
     ('%[5]s','%[6]s') AS step1,
     ('%[7]s','%[8]s') AS step2
@@ -476,22 +474,23 @@ SELECT
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp,serviceName=step1.1 AND name=step1.2) AS t1_time,
-        minIf(timestamp,serviceName=step2.1 AND name=step2.2) AS t2_time,
-        count()                                                 AS span_count
+        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
+        count() AS span_count
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName=step1.1 AND name=step1.2 AND (contains_error_t1=0 OR has_error=true) %[9]s)
+            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[9]s)
          OR
-            (serviceName=step2.1 AND name=step2.2 AND (contains_error_t2=0 OR has_error=true) %[10]s)
+            (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
         )
     GROUP BY trace_id
+    HAVING t1_time > 0 AND t2_time > t1_time
 ) AS funnel
-WHERE t2_time>t1_time
 ORDER BY duration_ms DESC
-LIMIT 5;`
+LIMIT 5;
+`
 	return fmt.Sprintf(queryTemplate,
 		containsErrorT1,
 		containsErrorT2,
@@ -522,8 +521,8 @@ func BuildTwoStepFunnelTopSlowErrorTracesQuery(
 WITH
     %[1]d AS contains_error_t1,
     %[2]d AS contains_error_t2,
-    toDateTime64(%[3]d/1e9,9) AS start_ts,
-    toDateTime64(%[4]d/1e9,9) AS end_ts,
+    toDateTime64(%[3]d/1e9, 9) AS start_ts,
+    toDateTime64(%[4]d/1e9, 9) AS end_ts,
 
     ('%[5]s','%[6]s') AS step1,
     ('%[7]s','%[8]s') AS step2
@@ -535,26 +534,27 @@ SELECT
 FROM (
     SELECT
         trace_id,
-        minIf(timestamp,serviceName=step1.1 AND name=step1.2) AS t1_time,
-        minIf(timestamp,serviceName=step2.1 AND name=step2.2) AS t2_time,
-        toUInt8(anyIf(has_error,serviceName=step1.1 AND name=step1.2)) AS t1_error,
-        toUInt8(anyIf(has_error,serviceName=step2.1 AND name=step2.2)) AS t2_error,
-        count()                                                 AS span_count
+        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
+        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
+        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS t1_error,
+        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS t2_error,
+        count() AS span_count
     FROM signoz_traces.signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
-            (serviceName=step1.1 AND name=step1.2 AND (contains_error_t1=0 OR has_error=true) %[9]s)
+            (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[9]s)
          OR
-            (serviceName=step2.1 AND name=step2.2 AND (contains_error_t2=0 OR has_error=true) %[10]s)
+            (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
         )
     GROUP BY trace_id
+    HAVING t1_time > 0 AND t2_time > t1_time
 ) AS funnel
 WHERE
-    (t1_error=1 OR t2_error=1)
-    AND t2_time>t1_time
+    (t1_error = 1 OR t2_error = 1)
 ORDER BY duration_ms DESC
-LIMIT 5;`
+LIMIT 5;
+`
 	return fmt.Sprintf(queryTemplate,
 		containsErrorT1,
 		containsErrorT2,
@@ -586,49 +586,56 @@ func BuildTwoStepFunnelStepOverviewQuery(
 ) string {
 	const tpl = `
 WITH
-    toDateTime64(%[5]d/1e9,9) AS start_ts,
-    toDateTime64(%[6]d/1e9,9) AS end_ts,
-    (%[6]d - %[5]d)/1e9      AS time_window_sec,
+    toDateTime64(%[5]d / 1e9, 9) AS start_ts,
+    toDateTime64(%[6]d / 1e9, 9) AS end_ts,
+    (%[6]d - %[5]d) / 1e9 AS time_window_sec,
 
-    ('%[7]s','%[8]s')        AS step1,
-    ('%[9]s','%[10]s')       AS step2
+    ('%[7]s', '%[8]s') AS step1,
+    ('%[9]s', '%[10]s') AS step2,
 
-, funnel AS (
-    SELECT
-        trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
-        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
-        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error
-    FROM signoz_traces.signoz_index_v3
-    WHERE
-        timestamp BETWEEN start_ts AND end_ts
-        AND serviceName IN (step1.1, step2.1)
-        AND name       IN (step1.2, step2.2)
-        AND ((%[1]d = 0) OR (has_error AND serviceName = step1.1 AND name = step1.2))
-        AND ((%[2]d = 0) OR (has_error AND serviceName = step2.1 AND name = step2.2))
-        %[11]s
-        %[12]s
-    GROUP BY trace_id
-)
-
-, totals AS (
-    SELECT
-        countIf(t1_time > 0)                                        AS total_s1_spans,
-        countIf(t1_time > 0 AND t2_time > t1_time)                  AS total_s2_spans,
-        greatest(sum(s1_error), sum(s2_error))                      AS errors,
-        avg((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)      AS avg_duration,
-        quantile(%[13]s)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6) AS latency
-    FROM funnel
-)
+    %[1]d AS contains_error_t1,
+    %[2]d AS contains_error_t2
 
 SELECT
     round(total_s2_spans * 100.0 / total_s1_spans, 2) AS conversion_rate,
-    total_s2_spans / time_window_sec                  AS avg_rate,
-    errors,
+    total_s2_spans / time_window_sec AS avg_rate,
+    greatest(sum_s1_error, sum_s2_error) AS errors,
     avg_duration,
     latency
-FROM totals;`
+FROM (
+    SELECT
+        countIf(t1_time > 0) AS total_s1_spans,
+        countIf(t1_time > 0 AND t2_time > t1_time) AS total_s2_spans,
+        sum(s1_error) AS sum_s1_error,
+        sum(s2_error) AS sum_s2_error,
+
+        avgIf(
+            (toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6,
+            t1_time > 0 AND t2_time > t1_time
+        ) AS avg_duration,
+
+        quantileIf(%[13]s)(
+            (toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6,
+            t1_time > 0 AND t2_time > t1_time
+        ) AS latency
+    FROM (
+        SELECT
+            trace_id,
+            minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
+            minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
+            toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
+            toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error
+        FROM signoz_traces.signoz_index_v3
+        WHERE
+            timestamp BETWEEN start_ts AND end_ts
+            AND serviceName IN (step1.1, step2.1)
+            AND name IN (step1.2, step2.2)
+            AND ((contains_error_t1 = 0) OR (has_error AND serviceName = step1.1 AND name = step1.2)) %[11]s
+            AND ((contains_error_t2 = 0) OR (has_error AND serviceName = step2.1 AND name = step2.2)) %[12]s
+        GROUP BY trace_id
+    ) AS funnel
+) AS totals;
+`
 
 	return fmt.Sprintf(tpl,
 		containsErrorT1,
@@ -670,11 +677,11 @@ func BuildThreeStepFunnelStepOverviewQuery(
 	latencyTypeT2 string,
 	latencyTypeT3 string,
 ) string {
-	const baseTpl = `
+	const baseWithAndFunnel = `
 WITH
-    toDateTime64(%[7]d/1e9,9) AS start_ts,
-    toDateTime64(%[8]d/1e9,9) AS end_ts,
-    (%[8]d - %[7]d)/1e9       AS time_window_sec,
+    toDateTime64(%[7]d/1e9, 9) AS start_ts,
+    toDateTime64(%[8]d/1e9, 9) AS end_ts,
+    (%[8]d - %[7]d) / 1e9 AS time_window_sec,
 
     ('%[9]s','%[10]s') AS step1,
     ('%[11]s','%[12]s') AS step2,
@@ -682,76 +689,83 @@ WITH
 
     %[1]d AS contains_error_t1,
     %[2]d AS contains_error_t2,
-    %[3]d AS contains_error_t3
+    %[3]d AS contains_error_t3,
 
-, funnel AS (
-    SELECT
-        trace_id,
-        minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
-        minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
-        minIf(timestamp, serviceName = step3.1 AND name = step3.2) AS t3_time,
-        toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
-        toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error,
-        toUInt8(anyIf(has_error, serviceName = step3.1 AND name = step3.2)) AS s3_error
-    FROM signoz_traces.signoz_index_v3
-    WHERE
-        timestamp BETWEEN start_ts AND end_ts
-        AND serviceName IN (step1.1, step2.1, step3.1)
-        AND name       IN (step1.2, step2.2, step3.2)
-        AND ((contains_error_t1=0) OR (has_error AND serviceName=step1.1 AND name=step1.2)) %[15]s
-        AND ((contains_error_t2=0) OR (has_error AND serviceName=step2.1 AND name=step2.2)) %[16]s
-        AND ((contains_error_t3=0) OR (has_error AND serviceName=step3.1 AND name=step3.2)) %[17]s
-    GROUP BY trace_id
-)
+    funnel AS (
+        SELECT
+            trace_id,
+            minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
+            minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
+            minIf(timestamp, serviceName = step3.1 AND name = step3.2) AS t3_time,
+            toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
+            toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error,
+            toUInt8(anyIf(has_error, serviceName = step3.1 AND name = step3.2)) AS s3_error
+        FROM signoz_traces.signoz_index_v3
+        WHERE
+            timestamp BETWEEN start_ts AND end_ts
+            AND serviceName IN (step1.1, step2.1, step3.1)
+            AND name IN (step1.2, step2.2, step3.2)
+            AND ((contains_error_t1 = 0) OR (has_error AND serviceName = step1.1 AND name = step1.2)) %[15]s
+            AND ((contains_error_t2 = 0) OR (has_error AND serviceName = step2.1 AND name = step2.2)) %[16]s
+            AND ((contains_error_t3 = 0) OR (has_error AND serviceName = step3.1 AND name = step3.2)) %[17]s
+        GROUP BY trace_id
+    )
+`
 
-, totals AS (
+	const totals12 = `
+SELECT
+    round(if(total_s1_spans > 0, total_s2_spans * 100.0 / total_s1_spans, 0), 2) AS conversion_rate,
+    total_s2_spans / time_window_sec AS avg_rate,
+    greatest(sum_s1_error, sum_s2_error) AS errors,
+    avg_duration_12 AS avg_duration,
+    latency_12 AS latency
+FROM (
     SELECT
-        countIf(t1_time > 0)                                                     AS total_s1_spans,
-        countIf(t1_time > 0 AND t2_time > t1_time)                                AS total_s2_spans,
-        countIf(t1_time > 0 AND t2_time > t1_time AND t3_time > t2_time)          AS total_s3_spans,
-        sum(s1_error)                                                             AS sum_s1_error,
-        sum(s2_error)                                                             AS sum_s2_error,
-        sum(s3_error)                                                             AS sum_s3_error,
-        avg((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)                    AS avg_duration_12,
-        quantile(%[18]s)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6)       AS latency_12,
-        avg((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time)) / 1e6)                    AS avg_duration_23,
-        quantile(%[19]s)((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time)) / 1e6)       AS latency_23
+        countIf(t1_time > 0 AND t2_time > t1_time) AS total_s2_spans,
+        countIf(t1_time > 0 AND t2_time > t1_time) AS total_s1_spans, -- eligible only
+        sum(s1_error) AS sum_s1_error,
+        sum(s2_error) AS sum_s2_error,
+        avgIf((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6, t1_time > 0 AND t2_time > t1_time) AS avg_duration_12,
+        quantileIf(%[18]s)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6, t1_time > 0 AND t2_time > t1_time) AS latency_12
     FROM funnel
-)
+) AS totals;
 `
 
-	const select12 = `
+	const totals23 = `
 SELECT
-    round(total_s2_spans * 100.0 / total_s1_spans, 2) AS conversion_rate,
-    total_s2_spans / time_window_sec                AS avg_rate,
-    greatest(sum_s1_error, sum_s2_error)             AS errors,
-    avg_duration_12                                  AS avg_duration,
-    latency_12                                       AS latency
-FROM totals;
+    round(if(total_s2_spans > 0, total_s3_spans * 100.0 / total_s2_spans, 0), 2) AS conversion_rate,
+    total_s3_spans / time_window_sec AS avg_rate,
+    greatest(sum_s2_error, sum_s3_error) AS errors,
+    avg_duration_23 AS avg_duration,
+    latency_23 AS latency
+FROM (
+    SELECT
+        countIf(t2_time > 0 AND t3_time > t2_time) AS total_s3_spans,
+        countIf(t2_time > 0 AND t3_time > t2_time) AS total_s2_spans, -- eligible only
+        sum(s2_error) AS sum_s2_error,
+        sum(s3_error) AS sum_s3_error,
+        avgIf((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time)) / 1e6, t2_time > 0 AND t3_time > t2_time) AS avg_duration_23,
+        quantileIf(%[19]s)((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time)) / 1e6, t2_time > 0 AND t3_time > t2_time) AS latency_23
+    FROM funnel
+) AS totals;
 `
 
-	const select23 = `
-SELECT
-    round(total_s3_spans * 100.0 / total_s2_spans, 2) AS conversion_rate,
-    total_s3_spans / time_window_sec                AS avg_rate,
-    greatest(sum_s2_error, sum_s3_error)             AS errors,
-    avg_duration_23                                  AS avg_duration,
-    latency_23                                       AS latency
-FROM totals;
+	const fallback = `
+SELECT 0 AS conversion_rate, 0 AS avg_rate, 0 AS errors, 0 AS avg_duration, 0 AS latency;
 `
 
-	var selectTpl string
+	var totalsTpl string
 	switch {
 	case stepStart == 1 && stepEnd == 2:
-		selectTpl = select12
+		totalsTpl = totals12
 	case stepStart == 2 && stepEnd == 3:
-		selectTpl = select23
+		totalsTpl = totals23
 	default:
-		selectTpl = `SELECT 0 AS conversion_rate, 0 AS avg_rate, 0 AS errors, 0 AS avg_duration, 0 AS latency;`
+		totalsTpl = fallback
 	}
 
 	return fmt.Sprintf(
-		baseTpl+selectTpl,
+		baseWithAndFunnel+totalsTpl,
 		containsErrorT1,
 		containsErrorT2,
 		containsErrorT3,
