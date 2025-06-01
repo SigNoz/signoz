@@ -170,6 +170,10 @@ export function FunnelProvider({
 			handleStepUpdate(index, {
 				service_name: serviceName,
 				span_name: spanName,
+				filters: {
+					items: [],
+					op: 'AND',
+				},
 			});
 			logEvent('Trace Funnels: span added (replaced) from trace details page', {});
 		},
