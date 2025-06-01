@@ -29,11 +29,13 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
 import { getOrderByFromParams } from '../commonUtils';
 import {
+	GetK8sEntityToAggregateAttribute,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
-	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
@@ -64,7 +66,22 @@ function K8sPodsList({
 	);
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const [currentPage, setCurrentPage] = useState(1);
+	const [currentPage, setCurrentPage] = useState(() => {
+		const page = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE);
+		if (page) {
+			return parseInt(page, 10);
+		}
+		return 1;
+	});
+	const [filtersInitialised, setFiltersInitialised] = useState(false);
+
+	useEffect(() => {
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE]: currentPage.toString(),
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [currentPage]);
 
 	const [addedColumns, setAddedColumns] = useState<IEntityColumn[]>([]);
 
@@ -103,13 +120,21 @@ function K8sPodsList({
 		[currentQuery?.builder?.queryData],
 	);
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const {
 		data: groupByFiltersData,
 		isLoading: isLoadingGroupByFilters,
 	} = useGetAggregateKeys(
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: K8sEntityToAggregateAttributeMapping[K8sCategory.PODS],
+			aggregateAttribute: GetK8sEntityToAggregateAttribute(
+				K8sCategory.PODS,
+				dotMetricsEnabled,
+			),
 			aggregateOperator: 'noop',
 			searchText: '',
 			tagType: '',
@@ -123,7 +148,9 @@ function K8sPodsList({
 
 	// Reset pagination every time quick filters are changed
 	useEffect(() => {
-		setCurrentPage(1);
+		if (quickFiltersLastUpdated !== -1) {
+			setCurrentPage(1);
+		}
 	}, [quickFiltersLastUpdated]);
 
 	useEffect(() => {
@@ -184,6 +211,8 @@ function K8sPodsList({
 			queryKey: ['hostList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const createFiltersForSelectedRowData = (
@@ -238,10 +267,15 @@ function K8sPodsList({
 		isLoading: isLoadingGroupedByRowData,
 		isError: isErrorGroupedByRowData,
 		refetch: fetchGroupedByRowData,
-	} = useGetK8sPodsList(fetchGroupedByRowDataQuery as K8sPodsListPayload, {
-		queryKey: ['hostList', fetchGroupedByRowDataQuery],
-		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
-	});
+	} = useGetK8sPodsList(
+		fetchGroupedByRowDataQuery as K8sPodsListPayload,
+		{
+			queryKey: ['hostList', fetchGroupedByRowDataQuery],
+			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+		},
+		undefined,
+		dotMetricsEnabled,
+	);
 
 	const podsData = useMemo(() => data?.payload?.data?.records || [], [data]);
 	const totalCount = data?.payload?.data?.total || 0;
@@ -314,7 +348,11 @@ function K8sPodsList({
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
 			handleChangeQueryData('filters', value);
-			setCurrentPage(1);
+			if (filtersInitialised) {
+				setCurrentPage(1);
+			} else {
+				setFiltersInitialised(true);
+			}
 
 			if (value.items.length > 0) {
 				logEvent(InfraMonitoringEvents.FilterApplied, {
@@ -324,7 +362,8 @@ function K8sPodsList({
 				});
 			}
 		},
-		[handleChangeQueryData],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
 	);
 
 	const handleGroupByChange = useCallback(

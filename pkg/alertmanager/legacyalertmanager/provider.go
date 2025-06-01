@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerbatcher"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -57,16 +58,17 @@ type provider struct {
 	configStore alertmanagertypes.ConfigStore
 	batcher     *alertmanagerbatcher.Batcher
 	url         *url.URL
+	orgGetter   organization.Getter
 	orgID       string
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
+func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("legacy"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
-		return New(ctx, settings, config, sqlstore)
+		return New(ctx, settings, config, sqlstore, orgGetter)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore) (*provider, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/legacyalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 
@@ -92,7 +94,7 @@ func (provider *provider) Start(ctx context.Context) error {
 		// For the first time, we need to get the orgID from the config store.
 		// Since this is the legacy alertmanager, we get the first org from the store.
 		if provider.orgID == "" {
-			orgIDs, err := provider.configStore.ListOrgs(ctx)
+			orgIDs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
 			if err != nil {
 				provider.settings.Logger().ErrorContext(ctx, "failed to send alerts to alertmanager", "error", err)
 				continue
@@ -103,7 +105,7 @@ func (provider *provider) Start(ctx context.Context) error {
 				continue
 			}
 
-			provider.orgID = orgIDs[0]
+			provider.orgID = orgIDs[0].ID.String()
 		}
 
 		if err := provider.putAlerts(ctx, provider.orgID, alerts); err != nil {

@@ -637,9 +637,14 @@ var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
 
 var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
+var IsDotMetricsEnabled = false
+
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
+	if GetOrDefaultEnv(DotMetricsEnabled, "false") == "true" {
+		IsDotMetricsEnabled = true
+	}
 }
 
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000
@@ -665,3 +670,5 @@ const InspectMetricsMaxTimeDiff = 1800000
 func GetDefaultSiteURL() string {
 	return GetOrDefaultEnv("SIGNOZ_SITE_URL", HTTPHostPort)
 }
+
+const DotMetricsEnabled = "DOT_METRICS_ENABLED"
