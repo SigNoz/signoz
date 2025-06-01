@@ -4,7 +4,7 @@ import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import { PayloadProps, Props } from 'types/api/dashboard/lockUnlock';
 
-const unlock = async (props: Props): Promise<SuccessResponseV2<null>> => {
+const lock = async (props: Props): Promise<SuccessResponseV2<null>> => {
 	try {
 		const response = await axios.put<PayloadProps>(
 			`/dashboards/${props.id}/lock`,
@@ -20,4 +20,4 @@ const unlock = async (props: Props): Promise<SuccessResponseV2<null>> => {
 	}
 };
 
-export default unlock;
+export default lock;
