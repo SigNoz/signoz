@@ -722,7 +722,7 @@ SELECT
 FROM (
     SELECT
         countIf(t1_time > 0 AND t2_time > t1_time) AS total_s2_spans,
-        countIf(t1_time > 0 AND t2_time > t1_time) AS total_s1_spans, -- eligible only
+        countIf(t1_time > 0) AS total_s1_spans, -- eligible only
         sum(s1_error) AS sum_s1_error,
         sum(s2_error) AS sum_s2_error,
         avgIf((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6, t1_time > 0 AND t2_time > t1_time) AS avg_duration_12,
@@ -741,7 +741,7 @@ SELECT
 FROM (
     SELECT
         countIf(t2_time > 0 AND t3_time > t2_time) AS total_s3_spans,
-        countIf(t2_time > 0 AND t3_time > t2_time) AS total_s2_spans, -- eligible only
+        countIf(t2_time > 0) AS total_s2_spans, -- eligible only
         sum(s2_error) AS sum_s2_error,
         sum(s3_error) AS sum_s3_error,
         avgIf((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time)) / 1e6, t2_time > 0 AND t3_time > t2_time) AS avg_duration_23,
