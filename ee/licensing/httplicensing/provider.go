@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -222,8 +221,8 @@ func (provider *provider) Portal(ctx context.Context, organizationID valuer.UUID
 	return &licensetypes.GettableSubscription{RedirectURL: gjson.GetBytes(response, "url").String()}, nil
 }
 
-func (provider *provider) GetFeatureFlags(ctx context.Context, organizationID valuer.UUID) ([]*featuretypes.Feature, error) {
-	allFeatues := make([]*featuretypes.Feature, 0)
+func (provider *provider) GetFeatureFlags(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.Feature, error) {
+	allFeatues := make([]*licensetypes.Feature, 0)
 	license, err := provider.GetActive(ctx, organizationID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err

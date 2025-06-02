@@ -1,67 +1,71 @@
 package licensetypes
 
-import "github.com/SigNoz/signoz/pkg/types/featuretypes"
-
-const SSO = "SSO"
-const Basic = "BASIC_PLAN"
-const Enterprise = "ENTERPRISE_PLAN"
-
-var (
+const (
 	PlanNameEnterprise = "ENTERPRISE"
 	PlanNameBasic      = "BASIC"
 )
 
-var (
-	MapOldPlanKeyToNewPlanName map[string]string = map[string]string{PlanNameBasic: Basic, PlanNameEnterprise: Enterprise}
-)
-
-var (
+const (
 	LicenseStatusInvalid = "INVALID"
 )
 
-const Onboarding = "ONBOARDING"
-const ChatSupport = "CHAT_SUPPORT"
-const Gateway = "GATEWAY"
-const PremiumSupport = "PREMIUM_SUPPORT"
+const (
+	SSO               = "SSO"
+	Onboarding        = "ONBOARDING"
+	ChatSupport       = "CHAT_SUPPORT"
+	Gateway           = "GATEWAY"
+	PremiumSupport    = "PREMIUM_SUPPORT"
+	UseSpanMetrics    = "USE_SPAN_METRICS"
+	AnomalyDetection  = "ANOMALY_DETECTION"
+	DotMetricsEnabled = "DOT_METRICS_ENABLED"
+)
 
-var BasicPlan = featuretypes.FeatureSet{
-	&featuretypes.Feature{
+type Feature struct {
+	Name       string `db:"name" json:"name"`
+	Active     bool   `db:"active" json:"active"`
+	Usage      int64  `db:"usage" json:"usage"`
+	UsageLimit int64  `db:"usage_limit" json:"usage_limit"`
+	Route      string `db:"route" json:"route"`
+}
+
+var BasicPlan = []*Feature{
+	{
 		Name:       SSO,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
-		Name:       featuretypes.UseSpanMetrics,
+	{
+		Name:       UseSpanMetrics,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
+	{
 		Name:       Gateway,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
+	{
 		Name:       PremiumSupport,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
-		Name:       featuretypes.AnomalyDetection,
+	{
+		Name:       AnomalyDetection,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
-		Name:       featuretypes.TraceFunnels,
+	{
+		Name:       DotMetricsEnabled,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
@@ -69,58 +73,58 @@ var BasicPlan = featuretypes.FeatureSet{
 	},
 }
 
-var EnterprisePlan = featuretypes.FeatureSet{
-	&featuretypes.Feature{
+var EnterprisePlan = []*Feature{
+	{
 		Name:       SSO,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
-		Name:       featuretypes.UseSpanMetrics,
+	{
+		Name:       UseSpanMetrics,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
+	{
 		Name:       Onboarding,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
+	{
 		Name:       ChatSupport,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
+	{
 		Name:       Gateway,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
+	{
 		Name:       PremiumSupport,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
-		Name:       featuretypes.AnomalyDetection,
+	{
+		Name:       AnomalyDetection,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.Feature{
-		Name:       featuretypes.TraceFunnels,
+	{
+		Name:       DotMetricsEnabled,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
@@ -128,9 +132,16 @@ var EnterprisePlan = featuretypes.FeatureSet{
 	},
 }
 
-var DefaultFeatureSet = featuretypes.FeatureSet{
-	&featuretypes.Feature{
-		Name:       featuretypes.UseSpanMetrics,
+var DefaultFeatureSet = []*Feature{
+	{
+		Name:       UseSpanMetrics,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	{
+		Name:       DotMetricsEnabled,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,

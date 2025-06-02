@@ -12,7 +12,7 @@ import (
 	pkgError "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
@@ -62,17 +62,18 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	if ah.opts.PreferSpanMetrics {
 		for idx, feature := range featureSet {
-			if feature.Name == featuretypes.UseSpanMetrics {
+			if feature.Name == licensetypes.UseSpanMetrics {
 				featureSet[idx].Active = true
 			}
 		}
 	}
 
 	if constants.IsDotMetricsEnabled {
-		featureSet = append(featureSet, &featuretypes.Feature{
-			Name:   featuretypes.DotMetricsEnabled,
-			Active: true,
-		})
+		for idx, feature := range featureSet {
+			if feature.Name == licensetypes.DotMetricsEnabled {
+				featureSet[idx].Active = true
+			}
+		}
 	}
 
 	ah.Respond(w, featureSet)
@@ -80,7 +81,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 // fetchZeusFeatures makes an HTTP GET request to the /zeusFeatures endpoint
 // and returns the FeatureSet.
-func fetchZeusFeatures(url, licenseKey string) ([]*featuretypes.Feature, error) {
+func fetchZeusFeatures(url, licenseKey string) ([]*licensetypes.Feature, error) {
 	// Check if the URL is empty
 	if url == "" {
 		return nil, fmt.Errorf("url is empty")
@@ -140,13 +141,13 @@ func fetchZeusFeatures(url, licenseKey string) ([]*featuretypes.Feature, error) 
 
 type ZeusFeaturesResponse struct {
 	Status string                  `json:"status"`
-	Data   []*featuretypes.Feature `json:"data"`
+	Data   []*licensetypes.Feature `json:"data"`
 }
 
 // MergeFeatureSets merges two FeatureSet arrays with precedence to zeusFeatures.
-func MergeFeatureSets(zeusFeatures, internalFeatures []*featuretypes.Feature) []*featuretypes.Feature {
+func MergeFeatureSets(zeusFeatures, internalFeatures []*licensetypes.Feature) []*licensetypes.Feature {
 	// Create a map to store the merged features
-	featureMap := make(map[string]*featuretypes.Feature)
+	featureMap := make(map[string]*licensetypes.Feature)
 
 	// Add all features from the otherFeatures set to the map
 	for _, feature := range internalFeatures {
@@ -160,7 +161,7 @@ func MergeFeatureSets(zeusFeatures, internalFeatures []*featuretypes.Feature) []
 	}
 
 	// Convert the map back to a FeatureSet slice
-	var mergedFeatures []*featuretypes.Feature
+	var mergedFeatures []*licensetypes.Feature
 	for _, feature := range featureMap {
 		mergedFeatures = append(mergedFeatures, feature)
 	}

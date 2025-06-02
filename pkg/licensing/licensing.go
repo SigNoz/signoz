@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -32,7 +31,7 @@ type Licensing interface {
 	// Portal creates a portal session via upstream server and return the redirection link
 	Portal(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error)
 	// GetFeatureFlags fetches all the defined feature flags
-	GetFeatureFlags(ctx context.Context, organizationID valuer.UUID) ([]*featuretypes.Feature, error)
+	GetFeatureFlags(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.Feature, error)
 }
 
 type API interface {

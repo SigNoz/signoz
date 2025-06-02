@@ -61,7 +61,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
@@ -2016,14 +2016,14 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	if aH.preferSpanMetrics {
 		for idx, feature := range featureSet {
-			if feature.Name == featuretypes.UseSpanMetrics {
+			if feature.Name == licensetypes.UseSpanMetrics {
 				featureSet[idx].Active = true
 			}
 		}
 	}
 	if constants.IsDotMetricsEnabled {
-		featureSet = append(featureSet, &featuretypes.Feature{
-			Name:   featuretypes.DotMetricsEnabled,
+		featureSet = append(featureSet, &licensetypes.Feature{
+			Name:   licensetypes.DotMetricsEnabled,
 			Active: true,
 		})
 	}

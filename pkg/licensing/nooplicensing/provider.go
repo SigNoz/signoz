@@ -6,7 +6,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -60,6 +59,6 @@ func (provider *noopLicensing) GetActive(ctx context.Context, organizationID val
 	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "fetching active license is not supported")
 }
 
-func (provider *noopLicensing) GetFeatureFlags(_ context.Context, _ valuer.UUID) ([]*featuretypes.Feature, error) {
+func (provider *noopLicensing) GetFeatureFlags(_ context.Context, _ valuer.UUID) ([]*licensetypes.Feature, error) {
 	return licensetypes.DefaultFeatureSet, nil
 }
