@@ -20,8 +20,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
