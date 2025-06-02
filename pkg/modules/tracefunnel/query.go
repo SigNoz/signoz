@@ -2,11 +2,20 @@ package tracefunnel
 
 import (
 	"fmt"
+	"strings"
+
 	tracev4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
-	"strings"
 )
+
+// sanitizeClause adds AND prefix to non-empty clauses
+func sanitizeClause(clause string) string {
+	if clause == "" {
+		return ""
+	}
+	return "AND " + clause
+}
 
 func ValidateTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunneltypes.TimeRange) (*v3.ClickHouseQuery, error) {
 	var query string
@@ -28,21 +37,26 @@ func ValidateTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunn
 	}
 
 	// Build filter clauses for each step
-	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[0].Filters)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[1].Filters)
 	if err != nil {
 		return nil, err
 	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilter(funnelSteps[2].Filters)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	// Sanitize clauses
+	clauseStep1 = sanitizeClause(clauseStep1)
+	clauseStep2 = sanitizeClause(clauseStep2)
+	clauseStep3 = sanitizeClause(clauseStep3)
 
 	if len(funnel.Steps) > 2 {
 		query = BuildThreeStepFunnelValidationQuery(
@@ -107,21 +121,26 @@ func GetFunnelAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange trace
 	}
 
 	// Build filter clauses for each step
-	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[0].Filters)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[1].Filters)
 	if err != nil {
 		return nil, err
 	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilter(funnelSteps[2].Filters)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	// Sanitize clauses
+	clauseStep1 = sanitizeClause(clauseStep1)
+	clauseStep2 = sanitizeClause(clauseStep2)
+	clauseStep3 = sanitizeClause(clauseStep3)
 
 	if len(funnel.Steps) > 2 {
 		query = BuildThreeStepFunnelOverviewQuery(
@@ -215,21 +234,26 @@ func GetFunnelStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange t
 	}
 
 	// Build filter clauses for each step
-	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[0].Filters)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[1].Filters)
 	if err != nil {
 		return nil, err
 	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilter(funnelSteps[2].Filters)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	// Sanitize clauses
+	clauseStep1 = sanitizeClause(clauseStep1)
+	clauseStep2 = sanitizeClause(clauseStep2)
+	clauseStep3 = sanitizeClause(clauseStep3)
 
 	if len(funnel.Steps) > 2 {
 		query = BuildThreeStepFunnelStepOverviewQuery(
@@ -294,21 +318,26 @@ func GetStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	}
 
 	// Build filter clauses for each step
-	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[0].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[0].Filters)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[1].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[1].Filters)
 	if err != nil {
 		return nil, err
 	}
 	clauseStep3 := ""
 	if len(funnel.Steps) > 2 {
-		clauseStep3, err = tracev4.BuildTracesFilterQuery(funnelSteps[2].Filters)
+		clauseStep3, err = tracev4.BuildTracesFilter(funnelSteps[2].Filters)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	// Sanitize clauses
+	clauseStep1 = sanitizeClause(clauseStep1)
+	clauseStep2 = sanitizeClause(clauseStep2)
+	clauseStep3 = sanitizeClause(clauseStep3)
 
 	if len(funnel.Steps) > 2 {
 		query = BuildThreeStepFunnelCountQuery(
@@ -366,14 +395,18 @@ func GetSlowestTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	}
 
 	// Build filter clauses for the steps
-	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepStartOrder].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[stepStartOrder].Filters)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepEndOrder].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[stepEndOrder].Filters)
 	if err != nil {
 		return nil, err
 	}
+
+	// Sanitize clauses
+	clauseStep1 = sanitizeClause(clauseStep1)
+	clauseStep2 = sanitizeClause(clauseStep2)
 
 	query := BuildTwoStepFunnelTopSlowTracesQuery(
 		containsErrorT1,
@@ -409,14 +442,18 @@ func GetErroredTraces(funnel *tracefunneltypes.StorableFunnel, timeRange tracefu
 	}
 
 	// Build filter clauses for the steps
-	clauseStep1, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepStartOrder].Filters)
+	clauseStep1, err := tracev4.BuildTracesFilter(funnelSteps[stepStartOrder].Filters)
 	if err != nil {
 		return nil, err
 	}
-	clauseStep2, err := tracev4.BuildTracesFilterQuery(funnelSteps[stepEndOrder].Filters)
+	clauseStep2, err := tracev4.BuildTracesFilter(funnelSteps[stepEndOrder].Filters)
 	if err != nil {
 		return nil, err
 	}
+
+	// Sanitize clauses
+	clauseStep1 = sanitizeClause(clauseStep1)
+	clauseStep2 = sanitizeClause(clauseStep2)
 
 	query := BuildTwoStepFunnelTopSlowErrorTracesQuery(
 		containsErrorT1,
