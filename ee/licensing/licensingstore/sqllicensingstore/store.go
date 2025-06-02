@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -80,31 +79,6 @@ func (store *store) Update(ctx context.Context, organizationID valuer.UUID, stor
 	}
 
 	return nil
-}
-
-func (store *store) ListOrganizations(ctx context.Context) ([]valuer.UUID, error) {
-	orgIDStrs := make([]string, 0)
-	err := store.sqlstore.
-		BunDB().
-		NewSelect().
-		Model(new(types.Organization)).
-		Column("id").
-		Scan(ctx, &orgIDStrs)
-	if err != nil {
-		return nil, err
-	}
-
-	orgIDs := make([]valuer.UUID, len(orgIDStrs))
-	for idx, orgIDStr := range orgIDStrs {
-		orgID, err := valuer.NewUUID(orgIDStr)
-		if err != nil {
-			return nil, err
-		}
-		orgIDs[idx] = orgID
-	}
-
-	return orgIDs, nil
-
 }
 
 func (store *store) CreateFeature(ctx context.Context, storableFeature *featuretypes.StorableFeature) error {

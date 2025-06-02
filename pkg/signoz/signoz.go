@@ -9,7 +9,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -33,6 +36,7 @@ type SigNoz struct {
 	Zeus            zeus.Zeus
 	Licensing       licensing.Licensing
 	Emailing        emailing.Emailing
+	Sharder         sharder.Sharder
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -44,7 +48,7 @@ func New(
 	zeusConfig zeus.Config,
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	licenseConfig licensing.Config,
-	licenseProviderFactoryCb func(sqlstore.SQLStore, zeus.Zeus) factory.ProviderFactory[licensing.Licensing, licensing.Config],
+	licenseProviderFactoryCb func(sqlstore.SQLStore, zeus.Zeus, organization.Getter) factory.ProviderFactory[licensing.Licensing, licensing.Config],
 	emailingProviderFactories factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
@@ -162,19 +166,34 @@ func New(
 		return nil, err
 	}
 
+	// Initialize sharder from the available sharder provider factories
+	sharder, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Sharder,
+		NewSharderProviderFactories(),
+		config.Sharder.Provider,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize organization getter
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
+
 	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.Alertmanager,
-		NewAlertmanagerProviderFactories(sqlstore),
+		NewAlertmanagerProviderFactories(sqlstore, orgGetter),
 		config.Alertmanager.Provider,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	licensingProviderFactory := licenseProviderFactoryCb(sqlstore, zeus)
+	licensingProviderFactory := licenseProviderFactoryCb(sqlstore, zeus, orgGetter)
 	licensing, err := licensingProviderFactory.New(
 		ctx,
 		providerSettings,
@@ -185,7 +204,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules)
@@ -212,6 +231,7 @@ func New(
 		Zeus:            zeus,
 		Licensing:       licensing,
 		Emailing:        emailing,
+		Sharder:         sharder,
 		Modules:         modules,
 		Handlers:        handlers,
 	}, nil

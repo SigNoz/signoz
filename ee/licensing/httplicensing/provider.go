@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
@@ -19,23 +20,31 @@ import (
 )
 
 type provider struct {
-	store    licensetypes.Store
-	zeus     zeus.Zeus
-	config   licensing.Config
-	settings factory.ScopedProviderSettings
-	stopChan chan struct{}
+	store     licensetypes.Store
+	zeus      zeus.Zeus
+	config    licensing.Config
+	settings  factory.ScopedProviderSettings
+	orgGetter organization.Getter
+	stopChan  chan struct{}
 }
 
-func NewProviderFactory(store sqlstore.SQLStore, zeus zeus.Zeus) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
+func NewProviderFactory(store sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("http"), func(ctx context.Context, providerSettings factory.ProviderSettings, config licensing.Config) (licensing.Licensing, error) {
-		return New(ctx, providerSettings, config, store, zeus)
+		return New(ctx, providerSettings, config, store, zeus, orgGetter)
 	})
 }
 
-func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Config, sqlstore sqlstore.SQLStore, zeus zeus.Zeus) (licensing.Licensing, error) {
+func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Config, sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter) (licensing.Licensing, error) {
 	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/ee/licensing/httplicensing")
 	licensestore := sqllicensingstore.New(sqlstore)
-	return &provider{store: licensestore, zeus: zeus, config: config, settings: settings, stopChan: make(chan struct{})}, nil
+	return &provider{
+		store:     licensestore,
+		zeus:      zeus,
+		config:    config,
+		settings:  settings,
+		orgGetter: orgGetter,
+		stopChan:  make(chan struct{}),
+	}, nil
 }
 
 func (provider *provider) Start(ctx context.Context) error {
@@ -67,13 +76,13 @@ func (provider *provider) Stop(ctx context.Context) error {
 }
 
 func (provider *provider) Validate(ctx context.Context) error {
-	organizations, err := provider.store.ListOrganizations(ctx)
+	organizations, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err
 	}
 
-	for _, organizationID := range organizations {
-		err := provider.Refresh(ctx, organizationID)
+	for _, organization := range organizations {
+		err := provider.Refresh(ctx, organization.ID)
 		if err != nil {
 			return err
 		}
