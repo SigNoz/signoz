@@ -125,13 +125,12 @@ func (provider *provider) GetActive(ctx context.Context, organizationID valuer.U
 
 func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUID) error {
 	activeLicense, err := provider.GetActive(ctx, organizationID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+	if err != nil {
+		if errors.Ast(err, errors.TypeNotFound) {
+			return nil
+		}
 		provider.settings.Logger().ErrorContext(ctx, "license validation failed", "org_id", organizationID.StringValue())
 		return err
-	}
-
-	if err != nil && errors.Ast(err, errors.TypeNotFound) {
-		return nil
 	}
 
 	data, err := provider.zeus.GetLicense(ctx, activeLicense.Key)
@@ -202,18 +201,13 @@ func (provider *provider) Portal(ctx context.Context, organizationID valuer.UUID
 }
 
 func (provider *provider) GetFeatureFlags(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.Feature, error) {
-	allFeatues := make([]*licensetypes.Feature, 0)
 	license, err := provider.GetActive(ctx, organizationID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+	if err != nil {
+		if errors.Ast(err, errors.TypeNotFound) {
+			return licensetypes.BasicPlan, nil
+		}
 		return nil, err
 	}
 
-	if err != nil && errors.Ast(err, errors.TypeNotFound) {
-		allFeatues = append(allFeatues, licensetypes.BasicPlan...)
-	}
-	if license != nil {
-		allFeatues = append(allFeatues, license.Features...)
-	}
-
-	return allFeatues, nil
+	return license.Features, nil
 }
