@@ -3,8 +3,6 @@ import './Explorer.styles.scss';
 import * as Sentry from '@sentry/react';
 import { Switch } from 'antd';
 import logEvent from 'api/common/logEvent';
-import axios from 'axios';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
