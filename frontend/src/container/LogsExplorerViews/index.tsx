@@ -199,7 +199,6 @@ function LogsExplorerViews({
 				filters: {
 					...listQuery?.filters,
 					items: [
-						// why are we adding this here? only clearing active log id from the query on change should be enough.
 						...(listQuery?.filters?.items || []),
 						{
 							id: v4(),
