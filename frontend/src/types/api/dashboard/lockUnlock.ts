@@ -1,12 +1,11 @@
 import { Dashboard } from './getAll';
 
 export type Props = {
-	title: Dashboard['data']['title'];
-	uploadedGrafana: boolean;
-	version?: string;
+	id: Dashboard['id'];
+	lock: boolean;
 };
 
 export interface PayloadProps {
-	data: Dashboard;
+	data: null;
 	status: string;
 }
