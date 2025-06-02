@@ -28,16 +28,12 @@ import LogsExplorerTable from 'container/LogsExplorerTable';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import dayjs from 'dayjs';
-import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useAxiosError from 'hooks/useAxiosError';
 import useClickOutside from 'hooks/useClickOutside';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
-import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -98,7 +94,6 @@ function LogsExplorerViews({
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	chartQueryKeyRef: MutableRefObject<any>;
 }): JSX.Element {
-	const { notifications } = useNotifications();
 	const { safeNavigate } = useSafeNavigate();
 
 	// this is to respect the panel type present in the URL rather than defaulting it to list always.
@@ -140,8 +135,6 @@ function LogsExplorerViews({
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
 	const [queryId, setQueryId] = useState<string>(v4());
 	const [queryStats, setQueryStats] = useState<WsDataEvent>();
-
-	const handleAxisError = useAxiosError();
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
@@ -396,11 +389,6 @@ function LogsExplorerViews({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data?.payload]);
 
-	const {
-		mutate: updateDashboard,
-		isLoading: isUpdateDashboardLoading,
-	} = useUpdateDashboard();
-
 	const getUpdatedQueryForExport = useCallback((): Query => {
 		const updatedQuery = cloneDeep(currentQuery);
 
@@ -424,68 +412,22 @@ function LogsExplorerViews({
 					? getUpdatedQueryForExport()
 					: exportDefaultQuery;
 
-			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
-				dashboard,
-				query,
-				widgetId,
-				panelTypeParam,
-				options.selectColumns,
-			);
-
 			logEvent('Logs Explorer: Add to dashboard successful', {
 				panelType,
 				isNewDashboard,
 				dashboardName: dashboard?.data?.title,
 			});
 
-			updateDashboard(updatedDashboard, {
-				onSuccess: (data) => {
-					if (data.error) {
-						const message =
-							data.error === 'feature usage exceeded' ? (
-								<span>
-									Panel limit exceeded for {DataSource.LOGS} in community edition. Please
-									checkout our paid plans{' '}
-									<a
-										href="https://signoz.io/pricing/?utm_source=product&utm_medium=dashboard-limit"
-										rel="noreferrer noopener"
-										target="_blank"
-									>
-										here
-									</a>
-								</span>
-							) : (
-								data.error
-							);
-						notifications.error({
-							message,
-						});
-
-						return;
-					}
-
-					const dashboardEditView = generateExportToDashboardLink({
-						query,
-						panelType: panelTypeParam,
-						dashboardId: data.payload?.uuid || '',
-						widgetId,
-					});
-
-					safeNavigate(dashboardEditView);
-				},
-				onError: handleAxisError,
+			const dashboardEditView = generateExportToDashboardLink({
+				query,
+				panelType: panelTypeParam,
+				dashboardId: dashboard.uuid,
+				widgetId,
 			});
+
+			safeNavigate(dashboardEditView);
 		},
-		[
-			getUpdatedQueryForExport,
-			exportDefaultQuery,
-			options.selectColumns,
-			safeNavigate,
-			notifications,
-			panelType,
-			updateDashboard,
-			handleAxisError,
-		],
+		[getUpdatedQueryForExport, exportDefaultQuery, safeNavigate, panelType],
 	);
 
 	useEffect(() => {
@@ -811,7 +753,6 @@ function LogsExplorerViews({
 			<ExplorerOptionWrapper
 				disabled={!stagedQuery}
 				query={exportDefaultQuery}
-				isLoading={isUpdateDashboardLoading}
 				onExport={handleExport}
 				sourcepage={DataSource.LOGS}
 			/>
