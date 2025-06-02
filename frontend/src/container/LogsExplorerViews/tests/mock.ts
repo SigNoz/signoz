@@ -63,9 +63,9 @@ export const logsQueryRangeSuccessNewFormatResponse = {
 export const mockQueryBuilderContextValue = {
 	isDefaultQuery: (): boolean => false,
 	currentQuery: {
-		...initialQueriesMap.metrics,
+		...initialQueriesMap.logs,
 		builder: {
-			...initialQueriesMap.metrics.builder,
+			...initialQueriesMap.logs.builder,
 			queryData: [
 				{
 					...initialQueryBuilderFormValues,
@@ -103,9 +103,9 @@ export const mockQueryBuilderContextValue = {
 	},
 	setSupersetQuery: jest.fn(),
 	supersetQuery: {
-		...initialQueriesMap.metrics,
+		...initialQueriesMap.logs,
 		builder: {
-			...initialQueriesMap.metrics.builder,
+			...initialQueriesMap.logs.builder,
 			queryData: [
 				{
 					...initialQueryBuilderFormValues,
@@ -142,9 +142,9 @@ export const mockQueryBuilderContextValue = {
 		},
 	},
 	stagedQuery: {
-		...initialQueriesMap.metrics,
+		...initialQueriesMap.logs,
 		builder: {
-			...initialQueriesMap.metrics.builder,
+			...initialQueriesMap.logs.builder,
 			queryData: [
 				{
 					...initialQueryBuilderFormValues,
@@ -198,8 +198,8 @@ export const mockQueryBuilderContextValue = {
 	redirectWithQueryBuilderData: noop,
 	handleRunQuery: noop,
 	resetQuery: noop,
-	updateAllQueriesOperators: (): Query => initialQueriesMap.metrics,
-	updateQueriesData: (): Query => initialQueriesMap.metrics,
+	updateAllQueriesOperators: (): Query => initialQueriesMap.logs,
+	updateQueriesData: (): Query => initialQueriesMap.logs,
 	initQueryBuilderData: noop,
 	handleOnUnitsChange: noop,
 	isStagedQueryUpdated: (): boolean => false,
