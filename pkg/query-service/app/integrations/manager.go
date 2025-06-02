@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -31,8 +32,8 @@ type IntegrationSummary struct {
 }
 
 type IntegrationAssets struct {
-	Logs       LogsAssets            `json:"logs"`
-	Dashboards []types.DashboardData `json:"dashboards"`
+	Logs       LogsAssets                             `json:"logs"`
+	Dashboards []dashboardtypes.StorableDashboardData `json:"dashboards"`
 
 	Alerts []ruletypes.PostableRule `json:"alerts"`
 }
@@ -304,17 +305,22 @@ func (m *Manager) parseDashboardUuid(dashboardUuid string) (
 	return parts[1], parts[2], nil
 }
 
+func (m *Manager) IsInstalledIntegrationDashboardUuid(dashboardUuid string) bool {
+	_, _, apiErr := m.parseDashboardUuid(dashboardUuid)
+	return apiErr == nil
+}
+
 func (m *Manager) GetInstalledIntegrationDashboardById(
 	ctx context.Context,
-	orgId string,
+	orgId valuer.UUID,
 	dashboardUuid string,
-) (*types.Dashboard, *model.ApiError) {
+) (*dashboardtypes.Dashboard, *model.ApiError) {
 	integrationId, dashboardId, apiErr := m.parseDashboardUuid(dashboardUuid)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	integration, apiErr := m.GetIntegration(ctx, orgId, integrationId)
+	integration, apiErr := m.GetIntegration(ctx, orgId.StringValue(), integrationId)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -328,11 +334,10 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 	for _, dd := range integration.IntegrationDetails.Assets.Dashboards {
 		if dId, exists := dd["id"]; exists {
 			if id, ok := dId.(string); ok && id == dashboardId {
-				isLocked := 1
 				author := "integration"
-				return &types.Dashboard{
-					UUID:   m.dashboardUuid(integrationId, string(dashboardId)),
-					Locked: &isLocked,
+				return &dashboardtypes.Dashboard{
+					ID:     m.dashboardUuid(integrationId, string(dashboardId)),
+					Locked: true,
 					Data:   dd,
 					TimeAuditable: types.TimeAuditable{
 						CreatedAt: integration.Installation.InstalledAt,
@@ -342,6 +347,7 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 						CreatedBy: author,
 						UpdatedBy: author,
 					},
+					OrgID: orgId,
 				}, nil
 			}
 		}
@@ -354,24 +360,23 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 
 func (m *Manager) GetDashboardsForInstalledIntegrations(
 	ctx context.Context,
-	orgId string,
-) ([]*types.Dashboard, *model.ApiError) {
-	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx, orgId)
+	orgId valuer.UUID,
+) ([]*dashboardtypes.Dashboard, *model.ApiError) {
+	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx, orgId.StringValue())
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	result := []*types.Dashboard{}
+	result := []*dashboardtypes.Dashboard{}
 
 	for _, ii := range installedIntegrations {
 		for _, dd := range ii.Assets.Dashboards {
 			if dId, exists := dd["id"]; exists {
 				if dashboardId, ok := dId.(string); ok {
-					isLocked := 1
 					author := "integration"
-					result = append(result, &types.Dashboard{
-						UUID:   m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
-						Locked: &isLocked,
+					result = append(result, &dashboardtypes.Dashboard{
+						ID:     m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
+						Locked: true,
 						Data:   dd,
 						TimeAuditable: types.TimeAuditable{
 							CreatedAt: ii.Installation.InstalledAt,
@@ -381,6 +386,7 @@ func (m *Manager) GetDashboardsForInstalledIntegrations(
 							CreatedBy: author,
 							UpdatedBy: author,
 						},
+						OrgID: orgId,
 					})
 				}
 			}

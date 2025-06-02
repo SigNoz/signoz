@@ -76,7 +76,7 @@ function Explorer(): JSX.Element {
 			const dashboardEditView = generateExportToDashboardLink({
 				query: queryToExport || exportDefaultQuery,
 				panelType: PANEL_TYPES.TIME_SERIES,
-				dashboardId: dashboard?.uuid || '',
+				dashboardId: dashboard.id,
 				widgetId,
 			});
 

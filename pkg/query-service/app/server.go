@@ -86,6 +86,16 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore)
+	if err != nil {
+		return nil, err
+	}
+
+	cloudIntegrationsController, err := cloudintegrations.NewController(serverOptions.SigNoz.SQLStore)
+	if err != nil {
+		return nil, err
+	}
+
 	reader := clickhouseReader.NewReader(
 		serverOptions.SigNoz.SQLStore,
 		serverOptions.SigNoz.TelemetryStore,
@@ -111,16 +121,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	if err != nil {
 		return nil, err
-	}
-
-	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create integrations controller: %w", err)
-	}
-
-	cloudIntegrationsController, err := cloudintegrations.NewController(serverOptions.SigNoz.SQLStore)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create cloud provider integrations controller: %w", err)
 	}
 
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
