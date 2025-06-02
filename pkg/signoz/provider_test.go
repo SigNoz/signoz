@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -40,10 +41,15 @@ func TestNewProviderFactories(t *testing.T) {
 	})
 
 	assert.NotPanics(t, func() {
-		NewAlertmanagerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual))
+		orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil)
+		NewAlertmanagerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), orgGetter)
 	})
 
 	assert.NotPanics(t, func() {
 		NewEmailingProviderFactories()
+	})
+
+	assert.NotPanics(t, func() {
+		NewSharderProviderFactories()
 	})
 }
