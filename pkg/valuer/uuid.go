@@ -122,3 +122,13 @@ func (enum *UUID) Scan(val interface{}) error {
 	*enum = enumVal
 	return nil
 }
+
+func (enum *UUID) UnmarshalText(text []byte) error {
+	uuid, err := NewUUID(string(text))
+	if err != nil {
+		return err
+	}
+
+	*enum = uuid
+	return nil
+}

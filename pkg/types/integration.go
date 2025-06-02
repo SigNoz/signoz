@@ -145,14 +145,12 @@ func (c *AccountConfig) Scan(src any) error {
 // For serializing to db
 func (c *AccountConfig) Value() (driver.Value, error) {
 	if c == nil {
-		return nil, nil
+		return nil, fmt.Errorf("cloud account config is nil")
 	}
 
 	serialized, err := json.Marshal(c)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't serialize cloud account config to JSON: %w", err,
-		)
+		return nil, fmt.Errorf("couldn't serialize cloud account config to JSON: %w", err)
 	}
 	return serialized, nil
 }
@@ -180,7 +178,7 @@ func (r *AgentReport) Scan(src any) error {
 // For serializing to db
 func (r *AgentReport) Value() (driver.Value, error) {
 	if r == nil {
-		return nil, nil
+		return nil, fmt.Errorf("agent report is nil")
 	}
 
 	serialized, err := json.Marshal(r)
@@ -234,7 +232,7 @@ func (c *CloudServiceConfig) Scan(src any) error {
 // For serializing to db
 func (c *CloudServiceConfig) Value() (driver.Value, error) {
 	if c == nil {
-		return nil, nil
+		return nil, fmt.Errorf("cloud service config is nil")
 	}
 
 	serialized, err := json.Marshal(c)

@@ -3,14 +3,23 @@ package cloudintegrations
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sharder"
+	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
+	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -21,9 +30,16 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationModule, userModule)
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	require.NoError(err)
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
+	require.NoError(err)
+	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	emailing := emailingtest.New()
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
 	// should be able to generate connection url for
@@ -69,9 +85,17 @@ func TestAgentCheckIns(t *testing.T) {
 	sqlStore := utils.NewQueryServiceDBForTests(t)
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
-	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationModule, userModule)
+
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	require.NoError(err)
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
+	require.NoError(err)
+	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	emailing := emailingtest.New()
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
 	// An agent should be able to check in from a cloud account even
@@ -157,9 +181,16 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationModule, userModule)
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	require.NoError(err)
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
+	require.NoError(err)
+	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	emailing := emailingtest.New()
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
 	// Attempting to disconnect a non-existent account should return error
@@ -177,9 +208,16 @@ func TestConfigureService(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	userModule := impluser.NewModule(impluser.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationModule, userModule)
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	require.NoError(err)
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
+	require.NoError(err)
+	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	emailing := emailingtest.New()
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
 	// create a connected account
@@ -294,7 +332,7 @@ func makeTestConnectedAccount(t *testing.T, orgId string, controller *Controller
 	return acc
 }
 
-func createTestUser(organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Setter, userModule user.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
 	organization := types.NewOrganization("test")

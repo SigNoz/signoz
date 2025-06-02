@@ -3,6 +3,7 @@ package clickhouseprometheus
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"strconv"
 	"strings"
 
@@ -98,8 +99,14 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 	var args []any
 	conditions = append(conditions, fmt.Sprintf("metric_name = $%d", argCount+1))
 	conditions = append(conditions, "temporality IN ['Cumulative', 'Unspecified']")
-	conditions = append(conditions, "__normalized = true")
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
+
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
+	conditions = append(conditions, fmt.Sprintf("__normalized = %v", normalized))
 
 	args = append(args, metricName)
 	for _, m := range query.Matchers {

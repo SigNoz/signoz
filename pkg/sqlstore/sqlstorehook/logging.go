@@ -36,8 +36,8 @@ func (hook logging) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
 		ctx,
 		hook.level,
 		"::SQLSTORE-QUERY::",
-		"db.query.operation", event.Operation(),
-		"db.query.text", event.Query,
-		"db.duration", time.Since(event.StartTime).String(),
+		"db_query_operation", event.Operation(),
+		"db_query_text", event.Query,
+		"db_query_duration", time.Since(event.StartTime).String(),
 	)
 }

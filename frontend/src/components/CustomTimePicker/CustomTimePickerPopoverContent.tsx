@@ -7,9 +7,11 @@ import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
+	CustomTimeType,
 	LexicalContext,
 	Option,
 	RelativeDurationSuggestionOptions,
+	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { Clock, PenLine } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
@@ -35,6 +37,10 @@ interface CustomTimePickerPopoverContentProps {
 	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
 	isOpenedFromFooter: boolean;
 	setIsOpenedFromFooter: Dispatch<SetStateAction<boolean>>;
+	onTimeChange?: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	) => void;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -51,6 +57,7 @@ function CustomTimePickerPopoverContent({
 	setActiveView,
 	isOpenedFromFooter,
 	setIsOpenedFromFooter,
+	onTimeChange,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { pathname } = useLocation();
 
@@ -143,6 +150,7 @@ function CustomTimePickerPopoverContent({
 							setIsOpen={setIsOpen}
 							onCustomDateHandler={onCustomDateHandler}
 							selectedTime={selectedTime}
+							onTimeChange={onTimeChange}
 						/>
 					) : (
 						<div className="relative-times-container">
@@ -180,5 +188,9 @@ function CustomTimePickerPopoverContent({
 		</>
 	);
 }
+
+CustomTimePickerPopoverContent.defaultProps = {
+	onTimeChange: undefined,
+};
 
 export default CustomTimePickerPopoverContent;

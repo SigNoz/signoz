@@ -34,6 +34,7 @@ const getSeries = ({
 	panelType,
 	hiddenGraph,
 	isDarkMode,
+	colorMapping,
 }: GetSeriesProps): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
@@ -52,10 +53,12 @@ const getSeries = ({
 			legend || '',
 		);
 
-		const color = generateColor(
-			label,
-			isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-		);
+		const color =
+			colorMapping?.[label] ||
+			generateColor(
+				label,
+				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+			);
 
 		const pointSize = seriesList[i].values.length > 1 ? 5 : 10;
 		const showPoints = !(seriesList[i].values.length > 1);
@@ -105,6 +108,7 @@ export type GetSeriesProps = {
 	hiddenGraph?: {
 		[key: string]: boolean;
 	};
+	colorMapping?: Record<string, string>;
 };
 
 export default getSeries;

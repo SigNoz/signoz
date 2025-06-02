@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/go-redis/redismock/v8"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +30,7 @@ func (ce *CacheableEntity) UnmarshalBinary(data []byte) error {
 
 func TestSet(t *testing.T) {
 	db, mock := redismock.NewClientMock()
-	cache := WithClient(db)
+	cache := &provider{client: db, settings: factory.NewScopedProviderSettings(factorytest.NewSettings(), "github.com/SigNoz/signoz/pkg/cache/rediscache")}
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
 		Value:  1,
@@ -46,7 +48,7 @@ func TestSet(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	db, mock := redismock.NewClientMock()
-	cache := WithClient(db)
+	cache := &provider{client: db, settings: factory.NewScopedProviderSettings(factorytest.NewSettings(), "github.com/SigNoz/signoz/pkg/cache/rediscache")}
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
 		Value:  1,
@@ -75,7 +77,7 @@ func TestGet(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	db, mock := redismock.NewClientMock()
-	c := WithClient(db)
+	cache := &provider{client: db, settings: factory.NewScopedProviderSettings(factorytest.NewSettings(), "github.com/SigNoz/signoz/pkg/cache/rediscache")}
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
 		Value:  1,
@@ -84,10 +86,10 @@ func TestDelete(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 
 	mock.ExpectSet(strings.Join([]string{orgID.StringValue(), "key"}, "::"), storeCacheableEntity, 10*time.Second).RedisNil()
-	_ = c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second)
+	_ = cache.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second)
 
 	mock.ExpectDel(strings.Join([]string{orgID.StringValue(), "key"}, "::")).RedisNil()
-	c.Delete(context.Background(), orgID, "key")
+	cache.Delete(context.Background(), orgID, "key")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -96,7 +98,7 @@ func TestDelete(t *testing.T) {
 
 func TestDeleteMany(t *testing.T) {
 	db, mock := redismock.NewClientMock()
-	c := WithClient(db)
+	cache := &provider{client: db, settings: factory.NewScopedProviderSettings(factorytest.NewSettings(), "github.com/SigNoz/signoz/pkg/cache/rediscache")}
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
 		Value:  1,
@@ -105,13 +107,13 @@ func TestDeleteMany(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 
 	mock.ExpectSet(strings.Join([]string{orgID.StringValue(), "key"}, "::"), storeCacheableEntity, 10*time.Second).RedisNil()
-	_ = c.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second)
+	_ = cache.Set(context.Background(), orgID, "key", storeCacheableEntity, 10*time.Second)
 
 	mock.ExpectSet(strings.Join([]string{orgID.StringValue(), "key2"}, "::"), storeCacheableEntity, 10*time.Second).RedisNil()
-	_ = c.Set(context.Background(), orgID, "key2", storeCacheableEntity, 10*time.Second)
+	_ = cache.Set(context.Background(), orgID, "key2", storeCacheableEntity, 10*time.Second)
 
 	mock.ExpectDel(strings.Join([]string{orgID.StringValue(), "key"}, "::"), strings.Join([]string{orgID.StringValue(), "key2"}, "::")).RedisNil()
-	c.DeleteMany(context.Background(), orgID, []string{"key", "key2"})
+	cache.DeleteMany(context.Background(), orgID, []string{"key", "key2"})
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

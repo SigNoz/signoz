@@ -23,20 +23,24 @@ import {
 } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { FeatureKeys } from '../../constants/features';
+import { useAppContext } from '../../providers/App/App';
 import K8sClustersList from './Clusters/K8sClustersList';
 import {
-	ClustersQuickFiltersConfig,
-	DaemonSetsQuickFiltersConfig,
-	DeploymentsQuickFiltersConfig,
-	JobsQuickFiltersConfig,
+	GetClustersQuickFiltersConfig,
+	GetDaemonsetsQuickFiltersConfig,
+	GetDeploymentsQuickFiltersConfig,
+	GetJobsQuickFiltersConfig,
+	GetNamespaceQuickFiltersConfig,
+	GetNodesQuickFiltersConfig,
+	GetPodsQuickFiltersConfig,
+	GetStatefulsetsQuickFiltersConfig,
+	GetVolumesQuickFiltersConfig,
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategories,
-	NamespaceQuickFiltersConfig,
-	NodesQuickFiltersConfig,
-	PodsQuickFiltersConfig,
-	StatefulsetsQuickFiltersConfig,
-	VolumesQuickFiltersConfig,
 } from './constants';
 import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
@@ -50,7 +54,14 @@ import K8sVolumesList from './Volumes/K8sVolumesList';
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 
-	const [selectedCategory, setSelectedCategory] = useState(K8sCategories.PODS);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [selectedCategory, setSelectedCategory] = useState(() => {
+		const category = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY);
+		if (category) {
+			return category as keyof typeof K8sCategories;
+		}
+		return K8sCategories.PODS;
+	});
 	const [quickFiltersLastUpdated, setQuickFiltersLastUpdated] = useState(-1);
 
 	const { currentQuery } = useQueryBuilder();
@@ -65,11 +76,22 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		entityVersion: '',
 	});
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const handleFilterChange = (query: Query): void => {
 		// update the current query with the new filters
 		// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
 		handleChangeQueryData('filters', query.builder.queryData[0].filters);
 		setQuickFiltersLastUpdated(Date.now());
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS]: JSON.stringify(
+				query.builder.queryData[0].filters,
+			),
+		});
 
 		logEvent(InfraMonitoringEvents.FilterApplied, {
 			entity: InfraMonitoringEvents.K8sEntity,
@@ -94,7 +116,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			children: (
 				<QuickFilters
 					source={QuickFiltersSource.INFRA_MONITORING}
-					config={PodsQuickFiltersConfig}
+					config={GetPodsQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
 				/>
@@ -114,7 +136,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			children: (
 				<QuickFilters
 					source={QuickFiltersSource.INFRA_MONITORING}
-					config={NodesQuickFiltersConfig}
+					config={GetNodesQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
 				/>
@@ -137,7 +159,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			children: (
 				<QuickFilters
 					source={QuickFiltersSource.INFRA_MONITORING}
-					config={NamespaceQuickFiltersConfig}
+					config={GetNamespaceQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
 				/>
@@ -157,7 +179,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			children: (
 				<QuickFilters
 					source={QuickFiltersSource.INFRA_MONITORING}
-					config={ClustersQuickFiltersConfig}
+					config={GetClustersQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
 				/>
@@ -177,7 +199,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			children: (
 				<QuickFilters
 					source={QuickFiltersSource.INFRA_MONITORING}
-					config={DeploymentsQuickFiltersConfig}
+					config={GetDeploymentsQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
 				/>
@@ -197,7 +219,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			children: (
 				<QuickFilters
 					source={QuickFiltersSource.INFRA_MONITORING}
-					config={JobsQuickFiltersConfig}
+					config={GetJobsQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
 				/>
@@ -217,7 +239,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			children: (
 				<QuickFilters
 					source={QuickFiltersSource.INFRA_MONITORING}
-					config={DaemonSetsQuickFiltersConfig}
+					config={GetDaemonsetsQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
 				/>
@@ -240,7 +262,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			children: (
 				<QuickFilters
 					source={QuickFiltersSource.INFRA_MONITORING}
-					config={StatefulsetsQuickFiltersConfig}
+					config={GetStatefulsetsQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
 				/>
@@ -260,7 +282,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			children: (
 				<QuickFilters
 					source={QuickFiltersSource.INFRA_MONITORING}
-					config={VolumesQuickFiltersConfig}
+					config={GetVolumesQuickFiltersConfig(dotMetricsEnabled)}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
 				/>
@@ -295,6 +317,9 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const handleCategoryChange = (key: string | string[]): void => {
 		if (Array.isArray(key) && key.length > 0) {
 			setSelectedCategory(key[0] as string);
+			setSearchParams({
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY]: key[0] as string,
+			});
 			// Reset filters
 			handleChangeQueryData('filters', { items: [], op: 'and' });
 		}

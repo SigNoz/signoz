@@ -30,7 +30,14 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { ColumnUnit, Widgets } from 'types/api/dashboard/getAll';
+import { UseQueryResult } from 'react-query';
+import { SuccessResponse } from 'types/api';
+import {
+	ColumnUnit,
+	LegendPosition,
+	Widgets,
+} from 'types/api/dashboard/getAll';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -40,6 +47,8 @@ import {
 	panelTypeVsColumnUnitPreferences,
 	panelTypeVsCreateAlert,
 	panelTypeVsFillSpan,
+	panelTypeVsLegendColors,
+	panelTypeVsLegendPosition,
 	panelTypeVsLogScale,
 	panelTypeVsPanelTimePreferences,
 	panelTypeVsSoftMinMax,
@@ -47,6 +56,7 @@ import {
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
 } from './constants';
+import LegendColors from './LegendColors/LegendColors';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
@@ -98,6 +108,11 @@ function RightContainer({
 	setColumnUnits,
 	isLogScale,
 	setIsLogScale,
+	legendPosition,
+	setLegendPosition,
+	customLegendColors,
+	setCustomLegendColors,
+	queryResponse,
 }: RightContainerProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
@@ -128,6 +143,8 @@ function RightContainer({
 		panelTypeVsStackingChartPreferences[selectedGraph];
 	const allowPanelTimePreference =
 		panelTypeVsPanelTimePreferences[selectedGraph];
+	const allowLegendPosition = panelTypeVsLegendPosition[selectedGraph];
+	const allowLegendColors = panelTypeVsLegendColors[selectedGraph];
 
 	const allowPanelColumnPreference =
 		panelTypeVsColumnUnitPreferences[selectedGraph];
@@ -430,6 +447,40 @@ function RightContainer({
 						</Select>
 					</section>
 				)}
+
+				{allowLegendPosition && (
+					<section className="legend-position">
+						<Typography.Text className="typography">Legend Position</Typography.Text>
+						<Select
+							onChange={(value: LegendPosition): void => setLegendPosition(value)}
+							value={legendPosition}
+							style={{ width: '100%' }}
+							className="panel-type-select"
+							defaultValue={LegendPosition.BOTTOM}
+						>
+							<Option value={LegendPosition.BOTTOM}>
+								<div className="select-option">
+									<Typography.Text className="display">Bottom</Typography.Text>
+								</div>
+							</Option>
+							<Option value={LegendPosition.RIGHT}>
+								<div className="select-option">
+									<Typography.Text className="display">Right</Typography.Text>
+								</div>
+							</Option>
+						</Select>
+					</section>
+				)}
+
+				{allowLegendColors && (
+					<section className="legend-colors">
+						<LegendColors
+							customLegendColors={customLegendColors}
+							setCustomLegendColors={setCustomLegendColors}
+							queryResponse={queryResponse}
+						/>
+					</section>
+				)}
 			</section>
 
 			{allowCreateAlerts && (
@@ -495,10 +546,19 @@ interface RightContainerProps {
 	setSoftMax: Dispatch<SetStateAction<number | null>>;
 	isLogScale: boolean;
 	setIsLogScale: Dispatch<SetStateAction<boolean>>;
+	legendPosition: LegendPosition;
+	setLegendPosition: Dispatch<SetStateAction<LegendPosition>>;
+	customLegendColors: Record<string, string>;
+	setCustomLegendColors: Dispatch<SetStateAction<Record<string, string>>>;
+	queryResponse?: UseQueryResult<
+		SuccessResponse<MetricRangePayloadProps, unknown>,
+		Error
+	>;
 }
 
 RightContainer.defaultProps = {
 	selectedWidget: undefined,
+	queryResponse: null,
 };
 
 export default RightContainer;

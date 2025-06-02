@@ -3,6 +3,7 @@ package valuer
 import (
 	"database/sql"
 	"database/sql/driver"
+	"encoding"
 	"encoding/json"
 	"fmt"
 )
@@ -28,4 +29,7 @@ type Valuer interface {
 
 	// Implement fmt.Stringer to allow the value to be printed as a string
 	fmt.Stringer
+
+	// Implement encoding.TextUnmarshaler to allow the value to be unmarshalled from a string
+	encoding.TextUnmarshaler
 }

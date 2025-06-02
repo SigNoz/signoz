@@ -16,19 +16,19 @@ import (
 )
 
 var (
-	metricToUseForVolumes = "k8s_volume_available"
+	metricToUseForVolumes = GetDotMetrics("k8s_volume_available")
 
 	volumeAttrsToEnrich = []string{
-		"k8s_pod_uid",
-		"k8s_pod_name",
-		"k8s_namespace_name",
-		"k8s_node_name",
-		"k8s_statefulset_name",
-		"k8s_cluster_name",
-		"k8s_persistentvolumeclaim_name",
+		GetDotMetrics("k8s_pod_uid"),
+		GetDotMetrics("k8s_pod_name"),
+		GetDotMetrics("k8s_namespace_name"),
+		GetDotMetrics("k8s_node_name"),
+		GetDotMetrics("k8s_statefulset_name"),
+		GetDotMetrics("k8s_cluster_name"),
+		GetDotMetrics("k8s_persistentvolumeclaim_name"),
 	}
 
-	k8sPersistentVolumeClaimNameAttrKey = "k8s_persistentvolumeclaim_name"
+	k8sPersistentVolumeClaimNameAttrKey = GetDotMetrics("k8s_persistentvolumeclaim_name")
 
 	queryNamesForVolumes = map[string][]string{
 		"available":   {"A"},
@@ -42,11 +42,11 @@ var (
 	volumeQueryNames = []string{"A", "B", "C", "D", "E", "F1"}
 
 	metricNamesForVolumes = map[string]string{
-		"available":   "k8s_volume_available",
-		"capacity":    "k8s_volume_capacity",
-		"inodes":      "k8s_volume_inodes",
-		"inodes_free": "k8s_volume_inodes_free",
-		"inodes_used": "k8s_volume_inodes_used",
+		"available":   GetDotMetrics("k8s_volume_available"),
+		"capacity":    GetDotMetrics("k8s_volume_capacity"),
+		"inodes":      GetDotMetrics("k8s_volume_inodes"),
+		"inodes_free": GetDotMetrics("k8s_volume_inodes_free"),
+		"inodes_used": GetDotMetrics("k8s_volume_inodes_used"),
 	}
 )
 

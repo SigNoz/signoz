@@ -9,7 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/apdextypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
@@ -31,7 +31,7 @@ func (handler *handler) Set(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var apdexSettings types.ApdexSettings
+	var apdexSettings apdextypes.Settings
 	if err := json.NewDecoder(req.Body).Decode(&apdexSettings); err != nil {
 		render.Error(rw, err)
 		return

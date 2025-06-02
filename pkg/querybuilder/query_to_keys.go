@@ -25,7 +25,7 @@ import (
 //			FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 //		},
 //	}
-func QueryStringToKeysSelectors(query string) ([]*telemetrytypes.FieldKeySelector, error) {
+func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector {
 	lexer := grammar.NewFilterQueryLexer(antlr.NewInputStream(query))
 	keys := []*telemetrytypes.FieldKeySelector{}
 	for {
@@ -45,5 +45,5 @@ func QueryStringToKeysSelectors(query string) ([]*telemetrytypes.FieldKeySelecto
 		}
 	}
 
-	return keys, nil
+	return keys
 }

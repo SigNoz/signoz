@@ -16,10 +16,10 @@ import {
 	Typography,
 } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import updateCreditCardApi from 'api/billing/checkout';
 import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
-import manageCreditCardApi from 'api/billing/manage';
 import logEvent from 'api/common/logEvent';
+import updateCreditCardApi from 'api/v1/checkout/create';
+import manageCreditCardApi from 'api/v1/portal/create';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -31,9 +31,8 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
-import { License } from 'types/api/licenses/def';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
@@ -126,7 +125,6 @@ export default function BillingContainer(): JSX.Element {
 	const daysRemainingStr = t('days_remaining');
 	const [headerText, setHeaderText] = useState('');
 	const [billAmount, setBillAmount] = useState(0);
-	const [activeLicense, setActiveLicense] = useState<License | null>(null);
 	const [daysRemaining, setDaysRemaining] = useState(0);
 	const [isFreeTrial, setIsFreeTrial] = useState(false);
 	const [data, setData] = useState<any[]>([]);
@@ -137,11 +135,10 @@ export default function BillingContainer(): JSX.Element {
 	const {
 		user,
 		org,
-		licenses,
 		trialInfo,
-		isFetchingActiveLicenseV3,
-		activeLicenseV3,
-		activeLicenseV3FetchError,
+		isFetchingActiveLicense,
+		activeLicense,
+		activeLicenseFetchError,
 	} = useAppContext();
 	const { notifications } = useNotifications();
 
@@ -216,14 +213,9 @@ export default function BillingContainer(): JSX.Element {
 	});
 
 	useEffect(() => {
-		const activeValidLicense =
-			licenses?.licenses?.find((license) => license.isCurrent === true) || null;
-
-		setActiveLicense(activeValidLicense);
-
 		if (
-			!isFetchingActiveLicenseV3 &&
-			!activeLicenseV3FetchError &&
+			!isFetchingActiveLicense &&
+			!activeLicenseFetchError &&
 			trialInfo?.onTrial
 		) {
 			const remainingDays = getRemainingDays(trialInfo?.trialEnd);
@@ -238,12 +230,11 @@ export default function BillingContainer(): JSX.Element {
 			);
 		}
 	}, [
-		licenses?.licenses,
-		activeLicenseV3,
+		activeLicense,
 		trialInfo?.onTrial,
 		trialInfo?.trialEnd,
-		isFetchingActiveLicenseV3,
-		activeLicenseV3FetchError,
+		isFetchingActiveLicense,
+		activeLicenseFetchError,
 	]);
 
 	const columns: ColumnsType<DataType> = [
@@ -288,11 +279,11 @@ export default function BillingContainer(): JSX.Element {
 	);
 
 	const handleBillingOnSuccess = (
-		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
+		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
 	): void => {
-		if (data?.payload?.redirectURL) {
+		if (data?.data?.redirectURL) {
 			const newTab = document.createElement('a');
-			newTab.href = data.payload.redirectURL;
+			newTab.href = data.data.redirectURL;
 			newTab.target = '_blank';
 			newTab.rel = 'noopener noreferrer';
 			newTab.click();

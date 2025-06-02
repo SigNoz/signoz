@@ -5,7 +5,7 @@ import { DrawerProps } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { unescapeString } from 'container/LogDetailedView/utils';
+import { escapeHtml, unescapeString } from 'container/LogDetailedView/utils';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
@@ -177,7 +177,7 @@ function RawLogView({
 	const html = useMemo(
 		() => ({
 			__html: convert.toHtml(
-				dompurify.sanitize(unescapeString(text), {
+				dompurify.sanitize(unescapeString(escapeHtml(text)), {
 					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 				}),
 			),

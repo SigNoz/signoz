@@ -8,24 +8,24 @@ import { useEffect } from 'react';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 
 function WorkspaceAccessRestricted(): JSX.Element {
-	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
+	const { activeLicense, isFetchingActiveLicense } = useAppContext();
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3) {
-			const isTerminated = activeLicenseV3?.state === LicenseState.TERMINATED;
-			const isExpired = activeLicenseV3?.state === LicenseState.EXPIRED;
-			const isCancelled = activeLicenseV3?.state === LicenseState.CANCELLED;
+		if (!isFetchingActiveLicense) {
+			const isTerminated = activeLicense?.state === LicenseState.TERMINATED;
+			const isExpired = activeLicense?.state === LicenseState.EXPIRED;
+			const isCancelled = activeLicense?.state === LicenseState.CANCELLED;
 
 			const isWorkspaceAccessRestricted = isTerminated || isExpired || isCancelled;
 
 			if (
 				!isWorkspaceAccessRestricted ||
-				activeLicenseV3.platform === LicensePlatform.SELF_HOSTED
+				activeLicense.platform === LicensePlatform.SELF_HOSTED
 			) {
 				history.push(ROUTES.HOME);
 			}
 		}
-	}, [isFetchingActiveLicenseV3, activeLicenseV3]);
+	}, [isFetchingActiveLicense, activeLicense]);
 
 	return (
 		<div>
@@ -44,7 +44,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 				width="65%"
 			>
 				<div className="workspace-access-restricted__container">
-					{isFetchingActiveLicenseV3 || !activeLicenseV3 ? (
+					{isFetchingActiveLicense || !activeLicense ? (
 						<Skeleton />
 					) : (
 						<>
@@ -55,7 +55,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 											level={4}
 											className="workspace-access-restricted__details"
 										>
-											{activeLicenseV3.state === LicenseState.TERMINATED && (
+											{activeLicense.state === LicenseState.TERMINATED && (
 												<>
 													Your SigNoz license is terminated, please contact support at{' '}
 													<a href="mailto:cloud-support@signoz.io">
@@ -64,7 +64,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 													for a new deployment
 												</>
 											)}
-											{activeLicenseV3.state === LicenseState.EXPIRED && (
+											{activeLicense.state === LicenseState.EXPIRED && (
 												<>
 													Your SigNoz license is expired, please contact support at{' '}
 													<a href="mailto:cloud-support@signoz.io">
@@ -81,7 +81,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 													.
 												</>
 											)}
-											{activeLicenseV3.state === LicenseState.CANCELLED && (
+											{activeLicense.state === LicenseState.CANCELLED && (
 												<>
 													Your SigNoz license is cancelled, please contact support at{' '}
 													<a href="mailto:cloud-support@signoz.io">

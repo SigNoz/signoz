@@ -20,12 +20,10 @@ import {
 } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { CollapseProps } from 'antd/lib';
-import createAPIKeyApi from 'api/APIKeys/createAPIKey';
-import deleteAPIKeyApi from 'api/APIKeys/deleteAPIKey';
-import updateAPIKeyApi from 'api/APIKeys/updateAPIKey';
-import axios, { AxiosError } from 'axios';
+import createAPIKeyApi from 'api/v1/pats/create';
+import deleteAPIKeyApi from 'api/v1/pats/delete';
+import updateAPIKeyApi from 'api/v1/pats/update';
 import cx from 'classnames';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useGetAllAPIKeys } from 'hooks/APIKeys/useGetAllAPIKeys';
@@ -50,6 +48,7 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
+import APIError from 'types/api/error';
 import { APIKeyProps } from 'types/api/pat/types';
 import { USER_ROLES } from 'types/roles';
 
@@ -57,10 +56,11 @@ dayjs.extend(relativeTime);
 
 export const showErrorNotification = (
 	notifications: NotificationInstance,
-	err: Error,
+	err: APIError,
 ): void => {
 	notifications.error({
-		message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
+		message: err.getErrorCode(),
+		description: err.getErrorMessage(),
 	});
 };
 
@@ -177,22 +177,22 @@ function APIKeys(): JSX.Element {
 	} = useGetAllAPIKeys();
 
 	useEffect(() => {
-		setActiveAPIKey(APIKeys?.data.data[0]);
+		setActiveAPIKey(APIKeys?.data?.[0]);
 	}, [APIKeys]);
 
 	useEffect(() => {
-		setDataSource(APIKeys?.data.data || []);
-	}, [APIKeys?.data.data]);
+		setDataSource(APIKeys?.data || []);
+	}, [APIKeys?.data]);
 
 	useEffect(() => {
 		if (isError) {
-			showErrorNotification(notifications, error as AxiosError);
+			showErrorNotification(notifications, error as APIError);
 		}
 	}, [error, isError, notifications]);
 
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchValue(e.target.value);
-		const filteredData = APIKeys?.data?.data?.filter(
+		const filteredData = APIKeys?.data?.filter(
 			(key: APIKeyProps) =>
 				key &&
 				key.name &&
@@ -210,12 +210,12 @@ function APIKeys(): JSX.Element {
 		{
 			onSuccess: (data) => {
 				setShowNewAPIKeyDetails(true);
-				setActiveAPIKey(data.payload);
+				setActiveAPIKey(data.data);
 
 				refetchAPIKeys();
 			},
 			onError: (error) => {
-				showErrorNotification(notifications, error as AxiosError);
+				showErrorNotification(notifications, error as APIError);
 			},
 		},
 	);
@@ -228,7 +228,7 @@ function APIKeys(): JSX.Element {
 				setIsEditModalOpen(false);
 			},
 			onError: (error) => {
-				showErrorNotification(notifications, error as AxiosError);
+				showErrorNotification(notifications, error as APIError);
 			},
 		},
 	);
@@ -241,7 +241,7 @@ function APIKeys(): JSX.Element {
 				setIsDeleteModalOpen(false);
 			},
 			onError: (error) => {
-				showErrorNotification(notifications, error as AxiosError);
+				showErrorNotification(notifications, error as APIError);
 			},
 		},
 	);
@@ -445,10 +445,12 @@ function APIKeys(): JSX.Element {
 										<Col span={6}> Creator </Col>
 										<Col span={12} className="user-info">
 											<Avatar className="user-avatar" size="small">
-												{APIKey?.createdByUser?.name?.substring(0, 1)}
+												{APIKey?.createdByUser?.displayName?.substring(0, 1)}
 											</Avatar>
 
-											<Typography.Text>{APIKey.createdByUser?.name}</Typography.Text>
+											<Typography.Text>
+												{APIKey.createdByUser?.displayName}
+											</Typography.Text>
 
 											<div className="user-email">{APIKey.createdByUser?.email}</div>
 										</Col>
@@ -829,10 +831,12 @@ function APIKeys(): JSX.Element {
 
 							<Col span={16} className="user-info">
 								<Avatar className="user-avatar" size="small">
-									{activeAPIKey?.createdByUser?.name?.substring(0, 1)}
+									{activeAPIKey?.createdByUser?.displayName?.substring(0, 1)}
 								</Avatar>
 
-								<Typography.Text>{activeAPIKey?.createdByUser?.name}</Typography.Text>
+								<Typography.Text>
+									{activeAPIKey?.createdByUser?.displayName}
+								</Typography.Text>
 
 								<div className="user-email">{activeAPIKey?.createdByUser?.email}</div>
 							</Col>

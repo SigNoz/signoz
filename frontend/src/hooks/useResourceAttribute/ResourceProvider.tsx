@@ -7,6 +7,8 @@ import { encode } from 'js-base64';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { FeatureKeys } from '../../constants/features';
+import { useAppContext } from '../../providers/App/App';
 import { whilelistedKeys } from './config';
 import { ResourceContext } from './context';
 import { ResourceAttributesFilterMachine } from './machine';
@@ -18,6 +20,7 @@ import {
 import {
 	createQuery,
 	getResourceAttributeQueriesFromURL,
+	getResourceDeploymentKeys,
 	GetTagKeys,
 	GetTagValues,
 	mappingWithRoutesAndKeys,
@@ -53,6 +56,11 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		}
 	};
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const dispatchQueries = useCallback(
 		(queries: IResourceAttribute[]): void => {
 			urlQuery.set(
@@ -70,7 +78,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		actions: {
 			onSelectTagKey: () => {
 				handleLoading(true);
-				GetTagKeys()
+				GetTagKeys(dotMetricsEnabled)
 					.then((tagKeys) => {
 						const options = mappingWithRoutesAndKeys(pathname, tagKeys);
 
@@ -141,10 +149,10 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 	const handleEnvironmentChange = useCallback(
 		(environments: string[]): void => {
-			const staging = ['resource_deployment_environment', 'IN'];
+			const staging = [getResourceDeploymentKeys(dotMetricsEnabled), 'IN'];
 
 			const queriesCopy = queries.filter(
-				(query) => query.tagKey !== 'resource_deployment_environment',
+				(query) => query.tagKey !== getResourceDeploymentKeys(dotMetricsEnabled),
 			);
 
 			if (environments && Array.isArray(environments) && environments.length > 0) {
@@ -159,7 +167,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 			send('RESET');
 		},
-		[dispatchQueries, queries, send],
+		[dispatchQueries, dotMetricsEnabled, queries, send],
 	);
 
 	const handleClose = useCallback(

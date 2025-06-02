@@ -34,7 +34,7 @@ func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, er
 	var startUnixMilli, endUnixMilli int64
 
 	if r.URL.Query().Get("startUnixMilli") != "" {
-		startUnixMilli, err := strconv.ParseInt(r.URL.Query().Get("startUnixMilli"), 10, 64)
+		startUnixMilli, err = strconv.ParseInt(r.URL.Query().Get("startUnixMilli"), 10, 64)
 		if err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse startUnixMilli")
 		}

@@ -18,6 +18,13 @@ export const quickFiltersListResponse = {
 				isJSON: false,
 			},
 			{
+				key: 'duration_nano',
+				dataType: 'float64',
+				type: 'tag',
+				isColumn: false,
+				isJSON: false,
+			},
+			{
 				key: 'quantity',
 				dataType: 'float64',
 				type: 'tag',

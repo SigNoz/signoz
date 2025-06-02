@@ -5,16 +5,15 @@ import './AppLayout.styles.scss';
 
 import * as Sentry from '@sentry/react';
 import { Flex } from 'antd';
-import manageCreditCardApi from 'api/billing/manage';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
+import manageCreditCardApi from 'api/v1/portal/create';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import getUserVersion from 'api/v1/version/getVersion';
 import cx from 'classnames';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -51,8 +50,9 @@ import {
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import APIError from 'types/api/error';
 import {
 	LicenseEvent,
 	LicensePlatform,
@@ -75,8 +75,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		isLoggedIn,
 		user,
 		trialInfo,
-		activeLicenseV3,
-		isFetchingActiveLicenseV3,
+		activeLicense,
+		isFetchingActiveLicense,
 		featureFlags,
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
@@ -93,20 +93,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
 
 	const handleBillingOnSuccess = (
-		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
+		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
 	): void => {
-		if (data?.payload?.redirectURL) {
+		if (data?.data?.redirectURL) {
 			const newTab = document.createElement('a');
-			newTab.href = data.payload.redirectURL;
+			newTab.href = data.data.redirectURL;
 			newTab.target = '_blank';
 			newTab.rel = 'noopener noreferrer';
 			newTab.click();
 		}
 	};
 
-	const handleBillingOnError = (): void => {
+	const handleBillingOnError = (error: APIError): void => {
 		notifications.error({
-			message: SOMETHING_WENT_WRONG,
+			message: error.getErrorCode(),
+			description: error.getErrorMessage(),
 		});
 	};
 
@@ -260,8 +261,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (
-			!isFetchingActiveLicenseV3 &&
-			activeLicenseV3 &&
+			!isFetchingActiveLicense &&
+			activeLicense &&
 			trialInfo?.onTrial &&
 			!trialInfo?.trialConvertedToSubscription &&
 			!trialInfo?.workSpaceBlock &&
@@ -269,16 +270,16 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		) {
 			setShowTrialExpiryBanner(true);
 		}
-	}, [isFetchingActiveLicenseV3, activeLicenseV3, trialInfo]);
+	}, [isFetchingActiveLicense, activeLicense, trialInfo]);
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
-			const isTerminated = activeLicenseV3.state === LicenseState.TERMINATED;
-			const isExpired = activeLicenseV3.state === LicenseState.EXPIRED;
-			const isCancelled = activeLicenseV3.state === LicenseState.CANCELLED;
-			const isDefaulted = activeLicenseV3.state === LicenseState.DEFAULTED;
+		if (!isFetchingActiveLicense && activeLicense) {
+			const isTerminated = activeLicense.state === LicenseState.TERMINATED;
+			const isExpired = activeLicense.state === LicenseState.EXPIRED;
+			const isCancelled = activeLicense.state === LicenseState.CANCELLED;
+			const isDefaulted = activeLicense.state === LicenseState.DEFAULTED;
 			const isEvaluationExpired =
-				activeLicenseV3.state === LicenseState.EVALUATION_EXPIRED;
+				activeLicense.state === LicenseState.EVALUATION_EXPIRED;
 
 			const isWorkspaceAccessRestricted =
 				isTerminated ||
@@ -287,7 +288,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				isDefaulted ||
 				isEvaluationExpired;
 
-			const { platform } = activeLicenseV3;
+			const { platform } = activeLicense;
 
 			if (
 				isWorkspaceAccessRestricted &&
@@ -296,17 +297,17 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				setShowWorkspaceRestricted(true);
 			}
 		}
-	}, [isFetchingActiveLicenseV3, activeLicenseV3]);
+	}, [isFetchingActiveLicense, activeLicense]);
 
 	useEffect(() => {
 		if (
-			!isFetchingActiveLicenseV3 &&
-			!isNull(activeLicenseV3) &&
-			activeLicenseV3?.event_queue?.event === LicenseEvent.DEFAULT
+			!isFetchingActiveLicense &&
+			!isNull(activeLicense) &&
+			activeLicense?.event_queue?.event === LicenseEvent.DEFAULT
 		) {
 			setShowPaymentFailedWarning(true);
 		}
-	}, [activeLicenseV3, isFetchingActiveLicenseV3]);
+	}, [activeLicense, isFetchingActiveLicense]);
 
 	useEffect(() => {
 		// after logging out hide the trial expiry banner
@@ -392,7 +393,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (
 			!isFetchingFeatureFlags &&
 			(featureFlags || featureFlagsFetchError) &&
-			activeLicenseV3 &&
+			activeLicense &&
 			trialInfo
 		) {
 			let isChatSupportEnabled = false;
@@ -421,7 +422,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		isCloudUserVal,
 		isFetchingFeatureFlags,
 		isLoggedIn,
-		activeLicenseV3,
+		activeLicense,
 		trialInfo,
 	]);
 
@@ -523,14 +524,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const renderWorkspaceRestrictedBanner = (): JSX.Element => (
 		<div className="workspace-restricted-banner">
-			{activeLicenseV3?.state === LicenseState.TERMINATED && (
+			{activeLicense?.state === LicenseState.TERMINATED && (
 				<>
 					Your SigNoz license is terminated, enterprise features have been disabled.
 					Please contact support at{' '}
 					<a href="mailto:support@signoz.io">support@signoz.io</a> for new license
 				</>
 			)}
-			{activeLicenseV3?.state === LicenseState.EXPIRED && (
+			{activeLicense?.state === LicenseState.EXPIRED && (
 				<>
 					Your SigNoz license has expired. Please contact support at{' '}
 					<a href="mailto:support@signoz.io">support@signoz.io</a> for renewal to
@@ -544,7 +545,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					</a>
 				</>
 			)}
-			{activeLicenseV3?.state === LicenseState.CANCELLED && (
+			{activeLicense?.state === LicenseState.CANCELLED && (
 				<>
 					Your SigNoz license is cancelled. Please contact support at{' '}
 					<a href="mailto:support@signoz.io">support@signoz.io</a> for reactivation
@@ -559,7 +560,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				</>
 			)}
 
-			{activeLicenseV3?.state === LicenseState.DEFAULTED && (
+			{activeLicense?.state === LicenseState.DEFAULTED && (
 				<>
 					Your SigNoz license is defaulted. Please clear the bill to continue using
 					the enterprise features. Contact support at{' '}
@@ -575,7 +576,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				</>
 			)}
 
-			{activeLicenseV3?.state === LicenseState.EVALUATION_EXPIRED && (
+			{activeLicense?.state === LicenseState.EVALUATION_EXPIRED && (
 				<>
 					Your SigNoz trial has ended. Please contact support at{' '}
 					<a href="mailto:support@signoz.io">support@signoz.io</a> for next steps to
@@ -624,7 +625,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					Your bill payment has failed. Your workspace will get suspended on{' '}
 					<span>
 						{getFormattedDateWithMinutes(
-							dayjs(activeLicenseV3?.event_queue?.scheduled_at).unix() || Date.now(),
+							dayjs(activeLicense?.event_queue?.scheduled_at).unix() || Date.now(),
 						)}
 						.
 					</span>

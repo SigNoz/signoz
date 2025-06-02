@@ -1,5 +1,4 @@
 import { Divider, Space } from 'antd';
-import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
 
 import AuthDomains from './AuthDomains';
@@ -8,12 +7,7 @@ import Members from './Members';
 import PendingInvitesContainer from './PendingInvitesContainer';
 
 function OrganizationSettings(): JSX.Element {
-	const { org, featureFlags } = useAppContext();
-
-	const isNotSSO =
-		!featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
-
-	const isAuthDomain = !isNotSSO;
+	const { org } = useAppContext();
 
 	if (!org) {
 		return <div />;
@@ -31,7 +25,7 @@ function OrganizationSettings(): JSX.Element {
 			<Divider />
 			<Members />
 			<Divider />
-			{isAuthDomain && <AuthDomains />}
+			<AuthDomains />
 		</>
 	);
 }

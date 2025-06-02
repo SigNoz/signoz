@@ -15,11 +15,12 @@ import (
 )
 
 type handler struct {
-	module organization.Module
+	orgGetter organization.Getter
+	orgSetter organization.Setter
 }
 
-func NewHandler(module organization.Module) organization.Handler {
-	return &handler{module: module}
+func NewHandler(orgGetter organization.Getter, orgSetter organization.Setter) organization.Handler {
+	return &handler{orgGetter: orgGetter, orgSetter: orgSetter}
 }
 
 func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
@@ -38,7 +39,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	organization, err := handler.module.Get(ctx, orgID)
+	organization, err := handler.orgGetter.Get(ctx, orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -70,7 +71,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req.ID = orgID
-	err = handler.module.Update(ctx, req)
+	err = handler.orgSetter.Update(ctx, req)
 	if err != nil {
 		render.Error(rw, err)
 		return

@@ -11,6 +11,7 @@ import { getQueryString } from 'container/SideNav/helper';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
+	getResourceDeploymentKeys,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -92,12 +93,15 @@ function Application(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === 'resource_deployment_environment',
+				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
 			)?.tagValue;
 
 			logEvent('APM: Service detail page visited', {
@@ -155,6 +159,7 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -164,7 +169,7 @@ function Application(): JSX.Element {
 				yAxisUnit: 'ops',
 				id: SERVICE_CHART_ID.rps,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
+		[servicename, tagFilterItems, topLevelOperationsRoute, dotMetricsEnabled],
 	);
 
 	const errorPercentageWidget = useMemo(
@@ -177,6 +182,7 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -187,7 +193,7 @@ function Application(): JSX.Element {
 				id: SERVICE_CHART_ID.errorPercentage,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
+		[servicename, tagFilterItems, topLevelOperationsRoute, dotMetricsEnabled],
 	);
 
 	const stepInterval = useMemo(

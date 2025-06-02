@@ -1,6 +1,6 @@
-import { Button, Divider, Form, Modal } from 'antd';
+import { Button, Divider, Form, FormInstance, Modal } from 'antd';
 import { useAppContext } from 'providers/App/App';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionMode, ActionType, PipelineData } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
@@ -10,6 +10,7 @@ import { getEditedDataSource, getRecordIndex } from '../utils';
 import { renderPipelineForm } from './utils';
 
 function AddNewPipeline({
+	form,
 	isActionType,
 	setActionType,
 	selectedPipelineData,
@@ -17,21 +18,11 @@ function AddNewPipeline({
 	setCurrPipelineData,
 	currPipelineData,
 }: AddNewPipelineProps): JSX.Element {
-	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
 	const { user } = useAppContext();
 
 	const isEdit = isActionType === 'edit-pipeline';
 	const isAdd = isActionType === 'add-pipeline';
-
-	useEffect(() => {
-		if (isEdit) {
-			form.setFieldsValue(selectedPipelineData);
-		}
-		if (isAdd) {
-			form.resetFields();
-		}
-	}, [form, isEdit, isAdd, selectedPipelineData]);
 
 	const onFinish = (values: PipelineData): void => {
 		const newPipeLineData: PipelineData = {
@@ -135,6 +126,7 @@ function AddNewPipeline({
 }
 
 interface AddNewPipelineProps {
+	form: FormInstance<PipelineData>;
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
 	selectedPipelineData: PipelineData | undefined;

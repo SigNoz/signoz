@@ -17,12 +17,12 @@ body {
 }
 
 .u-legend {
-	max-height: 30px; // slicing the height of the widget Header height ;
+	max-height: 30px; // Default height for backward compatibility
 	overflow-y: auto;
 	overflow-x: hidden;
 
 	&::-webkit-scrollbar {
-		width: 0.3rem;
+		width: 0.5rem;
 	}
 	&::-webkit-scrollbar-corner {
 		background: transparent;
@@ -51,6 +51,313 @@ body {
 		&.u-off {
 			text-decoration: line-through;
 			text-decoration-thickness: 3px;
+		}
+	}
+
+	// Enhanced legend styles
+	&.u-legend-enhanced {
+		max-height: none; // Remove default max-height restriction
+		padding: 6px 4px; // Back to original padding
+
+		// Thin and neat scrollbar for enhanced legend
+		&::-webkit-scrollbar {
+			width: 0.25rem;
+			height: 0.25rem;
+		}
+		&::-webkit-scrollbar-thumb {
+			background: rgba(136, 136, 136, 0.4);
+			border-radius: 0.125rem;
+
+			&:hover {
+				background: rgba(136, 136, 136, 0.7);
+			}
+		}
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		// Enhanced table layout for better responsiveness
+		table {
+			width: 100%;
+			table-layout: fixed;
+		}
+
+		tbody {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 1px 2px;
+			align-items: center;
+			justify-content: flex-start;
+			width: 100%;
+		}
+
+		// Center alignment for single-line legends
+		&.u-legend-single-line tbody {
+			justify-content: center;
+		}
+
+		&.u-legend-right-aligned {
+			tbody {
+				align-items: flex-start !important;
+				justify-content: flex-start !important;
+			}
+
+			tr.u-series {
+				justify-content: flex-start !important;
+
+				th {
+					justify-content: flex-start !important;
+					text-align: left !important;
+
+					.legend-text {
+						text-align: left !important;
+					}
+				}
+			}
+		}
+
+		// Right-side legend specific styles
+		&.u-legend-right {
+			tbody {
+				flex-direction: column;
+				flex-wrap: nowrap;
+				align-items: stretch;
+				justify-content: flex-start;
+				gap: 2px;
+			}
+
+			tr.u-series {
+				width: 100%;
+
+				th {
+					display: flex;
+					align-items: center;
+					gap: 6px;
+					font-size: 12px;
+					font-weight: 600;
+					justify-content: flex-start;
+					cursor: pointer;
+					position: relative;
+					min-width: 0;
+					width: 100%;
+
+					.u-marker {
+						border-radius: 50%;
+						min-width: 11px;
+						min-height: 11px;
+						width: 11px;
+						height: 11px;
+						flex-shrink: 0;
+						cursor: pointer;
+						transition: all 0.2s ease;
+						position: relative;
+
+						&:hover {
+							transform: scale(1.2);
+							box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+						}
+
+						&:active {
+							transform: scale(0.9);
+						}
+					}
+
+					// Text container for proper ellipsis
+					.legend-text {
+						text-overflow: ellipsis;
+						overflow: hidden;
+						white-space: nowrap;
+						min-width: 0;
+						flex: 1;
+						padding-bottom: 2px;
+					}
+
+					// Tooltip styling
+					&[title] {
+						cursor: pointer;
+					}
+
+					&:hover {
+						background: rgba(255, 255, 255, 0.05);
+					}
+				}
+
+				&.u-off {
+					opacity: 0.5;
+					text-decoration: line-through;
+					text-decoration-thickness: 1px;
+
+					th {
+						&:hover {
+							opacity: 0.7;
+						}
+
+						.u-marker {
+							opacity: 0.3;
+							position: relative;
+
+							&::after {
+								content: '';
+								position: absolute;
+								top: 50%;
+								left: 50%;
+								width: 12px;
+								height: 2px;
+								background: #ff4444;
+								transform: translate(-50%, -50%) rotate(45deg);
+								border-radius: 1px;
+							}
+
+							&:hover {
+								opacity: 0.6;
+							}
+						}
+					}
+				}
+
+				// Focus styles for keyboard navigation
+				&:focus {
+					outline: 1px solid rgba(66, 165, 245, 0.8);
+					outline-offset: 1px;
+				}
+			}
+		}
+
+		// Bottom legend specific styles
+		&.u-legend-bottom {
+			tbody {
+				flex-direction: row;
+				flex-wrap: wrap;
+			}
+		}
+
+		&.u-legend-bottom tr.u-series {
+			display: flex;
+			flex: 0 0 auto;
+			min-width: fit-content;
+			max-width: 200px; // Limit width to enable truncation
+
+			th {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 12px;
+				font-weight: 600;
+				padding: 6px 10px;
+				cursor: pointer;
+				white-space: nowrap;
+				-webkit-font-smoothing: antialiased;
+				border-radius: 2px;
+				min-width: 0; // Allow shrinking
+				max-width: 100%;
+
+				&:hover {
+					background: rgba(255, 255, 255, 0.05);
+				}
+
+				.u-marker {
+					border-radius: 50%;
+					min-width: 11px;
+					min-height: 11px;
+					width: 11px;
+					height: 11px;
+					flex-shrink: 0;
+					cursor: pointer;
+					transition: all 0.2s ease;
+					position: relative;
+
+					&:hover {
+						transform: scale(1.2);
+						box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+					}
+
+					&:active {
+						transform: scale(0.9);
+					}
+				}
+
+				.legend-text {
+					text-overflow: ellipsis;
+					overflow: hidden;
+					white-space: nowrap;
+					min-width: 0;
+					flex: 1;
+					padding-bottom: 2px;
+				}
+
+				// Tooltip styling
+				&[title] {
+					cursor: pointer;
+				}
+			}
+
+			&.u-off {
+				opacity: 0.5;
+				text-decoration: line-through;
+				text-decoration-thickness: 1px;
+
+				th {
+					&:hover {
+						opacity: 0.7;
+					}
+
+					.u-marker {
+						opacity: 0.3;
+						position: relative;
+
+						&::after {
+							content: '';
+							position: absolute;
+							top: 50%;
+							left: 50%;
+							width: 12px;
+							height: 2px;
+							background: #ff4444;
+							transform: translate(-50%, -50%) rotate(45deg);
+							border-radius: 1px;
+						}
+
+						&:hover {
+							opacity: 0.6;
+						}
+					}
+				}
+			}
+
+			// Focus styles for keyboard navigation
+			&:focus {
+				outline: 1px solid rgba(66, 165, 245, 0.8);
+				outline-offset: 1px;
+			}
+		}
+	}
+}
+
+// uPlot container adjustments for right-side legend
+.uplot {
+	&.u-plot-right-legend {
+		display: flex;
+		flex-direction: row;
+
+		.u-over {
+			flex: 1;
+		}
+
+		.u-legend {
+			flex-shrink: 0;
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+	}
+
+	&.u-plot-bottom-legend {
+		display: flex;
+		flex-direction: column;
+
+		.u-legend {
+			margin-top: 10px;
+			margin-left: 0;
+			margin-right: 0;
 		}
 	}
 }
@@ -250,6 +557,94 @@ body {
 			}
 		}
 	}
+
+	// Enhanced legend light mode styles
+	.u-legend-enhanced {
+		// Light mode scrollbar styling
+		&::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.2);
+
+			&:hover {
+				background: rgba(0, 0, 0, 0.4);
+			}
+		}
+
+		&.u-legend-bottom tr.u-series {
+			th {
+				&:hover {
+					background: rgba(0, 0, 0, 0.05);
+				}
+			}
+
+			&.u-off {
+				opacity: 0.5;
+				text-decoration: line-through;
+				text-decoration-thickness: 1px;
+
+				th {
+					&:hover {
+						background: rgba(0, 0, 0, 0.08);
+						opacity: 0.7;
+					}
+
+					.u-marker {
+						opacity: 0.3;
+
+						&::after {
+							background: #cc3333;
+						}
+
+						&:hover {
+							opacity: 0.6;
+						}
+					}
+				}
+			}
+
+			// Light mode focus styles
+			&:focus {
+				outline: 1px solid rgba(25, 118, 210, 0.8);
+			}
+		}
+
+		&.u-legend-right tr.u-series {
+			th {
+				&:hover {
+					background: rgba(0, 0, 0, 0.05);
+				}
+			}
+
+			&.u-off {
+				opacity: 0.5;
+				text-decoration: line-through;
+				text-decoration-thickness: 1px;
+
+				th {
+					&:hover {
+						background: rgba(0, 0, 0, 0.08);
+						opacity: 0.7;
+					}
+
+					.u-marker {
+						opacity: 0.3;
+
+						&::after {
+							background: #cc3333;
+						}
+
+						&:hover {
+							opacity: 0.6;
+						}
+					}
+				}
+			}
+
+			// Light mode focus styles
+			&:focus {
+				outline: 1px solid rgba(25, 118, 210, 0.8);
+			}
+		}
+	}
 }
 
 .ant-notification-notice-message {
@@ -319,4 +714,31 @@ notifications	-  2050
 
 .animate-spin {
 	animation: spin 1s linear infinite;
+}
+
+// Custom legend tooltip for immediate display
+.legend-tooltip {
+	position: fixed;
+	background: var(--bg-slate-400);
+	color: var(--text-vanilla-100);
+	padding: 8px 12px;
+	border-radius: 6px;
+	font-size: 12px;
+	font-family: 'Geist Mono';
+	font-weight: 500;
+	z-index: 10000;
+	pointer-events: none;
+	white-space: nowrap;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+	border: 1px solid #374151;
+	-webkit-font-smoothing: antialiased;
+	letter-spacing: 0.025em;
+}
+
+// Light mode styling for legend tooltip
+.lightMode .legend-tooltip {
+	background: #ffffff;
+	color: #1f2937;
+	border: 1px solid #d1d5db;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }

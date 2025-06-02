@@ -369,9 +369,6 @@ type ConfigStore interface {
 	// Get returns the config for the given orgID
 	Get(context.Context, string) (*Config, error)
 
-	// ListOrgs returns the list of orgs
-	ListOrgs(context.Context) ([]string, error)
-
 	// CreateChannel creates a new channel.
 	CreateChannel(context.Context, *Channel, ...StoreOption) error
 

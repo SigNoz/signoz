@@ -3,6 +3,7 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -42,7 +43,9 @@ func (m *createQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// Create table if not exists
 	_, err = tx.NewCreateTable().

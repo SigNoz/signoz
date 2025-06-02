@@ -1,11 +1,13 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { render, screen } from '@testing-library/react';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import * as appContextHooks from 'providers/App/App';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import store from 'store';
 
 import ROUTES from '../../../../constants/routes';
+import { LicenseEvent } from '../../../../types/api/licensesV3/getActive';
 import QueryBuilder from '../QueryBuilder';
 import {
 	InspectionStep,
@@ -19,6 +21,30 @@ jest.mock('react-router-dom', () => ({
 		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
 	}),
 }));
+
+jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
+	user: {
+		role: 'admin',
+	},
+	activeLicenseV3: {
+		event_queue: {
+			created_at: '0',
+			event: LicenseEvent.NO_EVENT,
+			scheduled_at: '0',
+			status: '',
+			updated_at: '0',
+		},
+		license: {
+			license_key: 'test-license-key',
+			license_type: 'trial',
+			org_id: 'test-org-id',
+			plan_id: 'test-plan-id',
+			plan_name: 'test-plan-name',
+			plan_type: 'trial',
+			plan_version: 'test-plan-version',
+		},
+	},
+} as any);
 
 const queryClient = new QueryClient();
 

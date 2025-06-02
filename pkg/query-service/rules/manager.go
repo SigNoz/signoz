@@ -19,6 +19,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -95,6 +96,7 @@ type ManagerOptions struct {
 	PrepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	Alertmanager        alertmanager.Alertmanager
 	SQLStore            sqlstore.SQLStore
+	OrgGetter           organization.Getter
 }
 
 // The Manager manages recording and alerting rules.
@@ -116,6 +118,7 @@ type Manager struct {
 
 	alertmanager alertmanager.Alertmanager
 	sqlstore     sqlstore.SQLStore
+	orgGetter    organization.Getter
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -210,6 +213,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		prepareTestRuleFunc: o.PrepareTestRuleFunc,
 		alertmanager:        o.Alertmanager,
 		sqlstore:            o.SQLStore,
+		orgGetter:           o.OrgGetter,
 	}
 
 	return m, nil
@@ -239,14 +243,14 @@ func (m *Manager) Pause(b bool) {
 }
 
 func (m *Manager) initiate(ctx context.Context) error {
-	orgIDs, err := m.ruleStore.ListOrgs(ctx)
+	orgs, err := m.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err
 	}
 
 	var loadErrors []error
-	for _, orgID := range orgIDs {
-		storedRules, err := m.ruleStore.GetStoredRules(ctx, orgID.StringValue())
+	for _, org := range orgs {
+		storedRules, err := m.ruleStore.GetStoredRules(ctx, org.ID.StringValue())
 		if err != nil {
 			return err
 		}
@@ -279,7 +283,7 @@ func (m *Manager) initiate(ctx context.Context) error {
 				}
 			}
 			if !parsedRule.Disabled {
-				err := m.addTask(ctx, orgID, parsedRule, taskName)
+				err := m.addTask(ctx, org.ID, parsedRule, taskName)
 				if err != nil {
 					zap.L().Error("failed to load the rule definition", zap.String("name", taskName), zap.Error(err))
 				}

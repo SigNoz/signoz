@@ -3,58 +3,58 @@ package api
 import (
 	"testing"
 
-	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMergeFeatureSets(t *testing.T) {
 	tests := []struct {
 		name             string
-		zeusFeatures     basemodel.FeatureSet
-		internalFeatures basemodel.FeatureSet
-		expected         basemodel.FeatureSet
+		zeusFeatures     []*featuretypes.GettableFeature
+		internalFeatures []*featuretypes.GettableFeature
+		expected         []*featuretypes.GettableFeature
 	}{
 		{
 			name:             "empty zeusFeatures and internalFeatures",
-			zeusFeatures:     basemodel.FeatureSet{},
-			internalFeatures: basemodel.FeatureSet{},
-			expected:         basemodel.FeatureSet{},
+			zeusFeatures:     []*featuretypes.GettableFeature{},
+			internalFeatures: []*featuretypes.GettableFeature{},
+			expected:         []*featuretypes.GettableFeature{},
 		},
 		{
 			name: "non-empty zeusFeatures and empty internalFeatures",
-			zeusFeatures: basemodel.FeatureSet{
+			zeusFeatures: []*featuretypes.GettableFeature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 			},
-			internalFeatures: basemodel.FeatureSet{},
-			expected: basemodel.FeatureSet{
+			internalFeatures: []*featuretypes.GettableFeature{},
+			expected: []*featuretypes.GettableFeature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 			},
 		},
 		{
 			name:         "empty zeusFeatures and non-empty internalFeatures",
-			zeusFeatures: basemodel.FeatureSet{},
-			internalFeatures: basemodel.FeatureSet{
+			zeusFeatures: []*featuretypes.GettableFeature{},
+			internalFeatures: []*featuretypes.GettableFeature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 			},
-			expected: basemodel.FeatureSet{
+			expected: []*featuretypes.GettableFeature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 			},
 		},
 		{
 			name: "non-empty zeusFeatures and non-empty internalFeatures with no conflicts",
-			zeusFeatures: basemodel.FeatureSet{
+			zeusFeatures: []*featuretypes.GettableFeature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature3", Active: false},
 			},
-			internalFeatures: basemodel.FeatureSet{
+			internalFeatures: []*featuretypes.GettableFeature{
 				{Name: "Feature2", Active: true},
 				{Name: "Feature4", Active: false},
 			},
-			expected: basemodel.FeatureSet{
+			expected: []*featuretypes.GettableFeature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: true},
 				{Name: "Feature3", Active: false},
@@ -63,15 +63,15 @@ func TestMergeFeatureSets(t *testing.T) {
 		},
 		{
 			name: "non-empty zeusFeatures and non-empty internalFeatures with conflicts",
-			zeusFeatures: basemodel.FeatureSet{
+			zeusFeatures: []*featuretypes.GettableFeature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 			},
-			internalFeatures: basemodel.FeatureSet{
+			internalFeatures: []*featuretypes.GettableFeature{
 				{Name: "Feature1", Active: false},
 				{Name: "Feature3", Active: true},
 			},
-			expected: basemodel.FeatureSet{
+			expected: []*featuretypes.GettableFeature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 				{Name: "Feature3", Active: true},

@@ -128,6 +128,16 @@ func NewDefaultPreferenceMap() map[string]Preference {
 			IsDiscreteValues: true,
 			AllowedScopes:    []string{"user"},
 		},
+		"SIDENAV_PINNED": {
+			Key:              "SIDENAV_PINNED",
+			Name:             "Keep the primary sidenav always open",
+			Description:      "Controls whether the primary sidenav remains expanded or can be collapsed. When enabled, the sidenav will stay open and pinned to provide constant visibility of navigation options.",
+			ValueType:        "boolean",
+			DefaultValue:     false,
+			AllowedValues:    []interface{}{true, false},
+			IsDiscreteValues: true,
+			AllowedScopes:    []string{"user"},
+		},
 	}
 }
 

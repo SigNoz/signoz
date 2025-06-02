@@ -1,0 +1,818 @@
+{
+  "description": "View key AWS SNS metrics with an out of the box dashboard.",
+  "image": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDY0ICg5MzUzNykgLSBodHRwczovL3NrZXRjaC5jb20gLS0+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BV1MtU2ltcGxlLU5vdGlmaWNhdGlvbi1TZXJ2aWNlXzY0PC90aXRsZT4KICAgIDxkZXNjPkNyZWF0ZWQgd2l0aCBTa2V0Y2guPC9kZXNjPgogICAgPGRlZnM+CiAgICAgICAgPGxpbmVhckdyYWRpZW50IHgxPSIwJSIgeTE9IjEwMCUiIHgyPSIxMDAlIiB5Mj0iMCUiIGlkPSJsaW5lYXJHcmFkaWVudC0xIj4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0IwMDg0RCIgb2Zmc2V0PSIwJSI+PC9zdG9wPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRkY0RjhCIiBvZmZzZXQ9IjEwMCUiPjwvc3RvcD4KICAgICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPC9kZWZzPgogICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLzY0L0FyY2hfQVdTLVNpbXBsZS1Ob3RpZmljYXRpb24tU2VydmljZV82NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L0FwcGxpY2F0aW9uLUludGVncmF0aW9uIiBmaWxsPSJ1cmwoI2xpbmVhckdyYWRpZW50LTEpIj4KICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj48L3JlY3Q+CiAgICAgICAgPC9nPgogICAgICAgIDxwYXRoIGQ9Ik0xNywzOCBDMTguMTAzLDM4IDE5LDM4Ljg5NyAxOSw0MCBDMTksNDEuMTAzIDE4LjEwMyw0MiAxNyw0MiBDMTUuODk3LDQyIDE1LDQxLjEwMyAxNSw0MCBDMTUsMzguODk3IDE1Ljg5NywzOCAxNywzOCBMMTcsMzggWiBNNDEsNjQgQzI5LjMxNCw2NCAxOS4yODksNTUuNDY2IDE3LjE5NCw0My45OCBDMTguOTY1LDQzLjg5NCAyMC40MjcsNDIuNjU5IDIwLjg1Nyw0MSBMMjcsNDEgTDI3LDM5IEwyMC44NTcsMzkgQzIwLjQyNywzNy4zNDIgMTguOTY2LDM2LjEwNyAxNy4xOTUsMzYuMDIgQzE5LjI4NSwyNC43MSAyOS41MTEsMTYgNDEsMTYgQzQ1LjMxMywxNiA0OS44MzIsMTcuNjIyIDU0LjQyOSwyMC44MjEgTDU1LjU3MSwxOS4xNzkgQzUwLjYzMywxNS43NDMgNDUuNzMsMTQgNDEsMTQgQzI4LjI3LDE0IDE2Ljk0OSwyMy44NjUgMTUuMDYzLDM2LjUyMSBDMTMuODM5LDM3LjIwNyAxMywzOC41IDEzLDQwIEMxMyw0MS41IDEzLjgzOSw0Mi43OTMgMTUuMDYzLDQzLjQ3OCBDMTYuOTcsNTYuMzQxIDI4LjA1Niw2NiA0MSw2NiBDNDYuNDA3LDY2IDUxLjk0Miw2NC4xNTcgNTYuNTg1LDYwLjgxMSBMNTUuNDE1LDU5LjE4OSBDNTEuMTEsNjIuMjkyIDQ1Ljk5MSw2NCA0MSw2NCBMNDEsNjQgWiBNMzAuMTAxLDM2LjQ0MiBDMzEuOTU1LDM2Ljg5NSAzNC4yNzUsMzcgMzYsMzcgQzM3LjY0MiwzNyAzOS44MjMsMzYuOTA1IDQxLjYyOSwzNi41MDYgTDM3LjEwNSw0NS41NTMgQzM3LjAzNiw0NS42OTEgMzcsNDUuODQ1IDM3LDQ2IEwzNyw1MC40NTMgQzM2LjE5OSw1MC45NjQgMzQuODMzLDUxLjgxMiAzNCw1MS45ODYgTDM0LDQ2IEMzNCw0NS44NjggMzMuOTc0LDQ1LjczNyAzMy45MjMsNDUuNjE1IEwzMC4xMDEsMzYuNDQyIFogTTM2LDMzIEM0MC4wMjUsMzMgNDIuMTc0LDMzLjYwNCA0Mi44NDEsMzQgQzQyLjE3NCwzNC4zOTYgNDAuMDI1LDM1IDM2LDM1IEMzMS45NzUsMzUgMjkuODI2LDM0LjM5NiAyOS4xNTksMzQgQzI5LjgyNiwzMy42MDQgMzEuOTc1LDMzIDM2LDMzIEwzNiwzMyBaIE0zMyw1NCBMMzQsNTQgQzM0LjA0Myw1NCAzNC4wODYsNTMuOTk3IDM0LjEyOCw1My45OTIgQzM1LjM1Miw1My44MzMgMzYuOTA5LDUyLjg4NyAzOC4yNzIsNTIuMDEzIEwzOC41MzUsNTEuODQ1IEMzOC44MjQsNTEuNjYxIDM5LDUxLjM0MiAzOSw1MSBMMzksNDYuMjM2IEw0NC41NTksMzUuMTIgQzQ0LjgzMywzNC44MDEgNDUsMzQuNDM0IDQ1LDM0IEM0NSwzMS4zOSAzOS4zNjEsMzEgMzYsMzEgQzMyLjYzOSwzMSAyNywzMS4zOSAyNywzNCBDMjcsMzQuMzY2IDI3LjEyLDM0LjY4NCAyNy4zMiwzNC45NjcgTDMyLDQ2LjIgTDMyLDUzIEMzMiw1My41NTIgMzIuNDQ3LDU0IDMzLDU0IEwzMyw1NCBaIE02Miw1MyBDNjMuMTAzLDUzIDY0LDUzLjg5NyA2NCw1NSBDNjQsNTYuMTAzIDYzLjEwMyw1NyA2Miw1NyBDNjAuODk3LDU3IDYwLDU2LjEwMyA2MCw1NSBDNjAsNTMuODk3IDYwLjg5Nyw1MyA2Miw1MyBMNjIsNTMgWiBNNjIsMjMgQzYzLjEwMywyMyA2NCwyMy44OTcgNjQsMjUgQzY0LDI2LjEwMyA2My4xMDMsMjcgNjIsMjcgQzYwLjg5NywyNyA2MCwyNi4xMDMgNjAsMjUgQzYwLDIzLjg5NyA2MC44OTcsMjMgNjIsMjMgTDYyLDIzIFogTTY0LDM4IEM2NS4xMDMsMzggNjYsMzguODk3IDY2LDQwIEM2Niw0MS4xMDMgNjUuMTAzLDQyIDY0LDQyIEM2Mi44OTcsNDIgNjIsNDEuMTAzIDYyLDQwIEM2MiwzOC44OTcgNjIuODk3LDM4IDY0LDM4IEw2NCwzOCBaIE01NCw0MSBMNjAuMTQzLDQxIEM2MC41ODksNDIuNzIgNjIuMTQyLDQ0IDY0LDQ0IEM2Ni4yMDYsNDQgNjgsNDIuMjA2IDY4LDQwIEM2OCwzNy43OTQgNjYuMjA2LDM2IDY0LDM2IEM2Mi4xNDIsMzYgNjAuNTg5LDM3LjI4IDYwLjE0MywzOSBMNTQsMzkgTDU0LDI2IEw1OC4xNDMsMjYgQzU4LjU4OSwyNy43MiA2MC4xNDIsMjkgNjIsMjkgQzY0LjIwNiwyOSA2NiwyNy4yMDYgNjYsMjUgQzY2LDIyLjc5NCA2NC4yMDYsMjEgNjIsMjEgQzYwLjE0MiwyMSA1OC41ODksMjIuMjggNTguMTQzLDI0IEw1MywyNCBDNTIuNDQ3LDI0IDUyLDI0LjQ0OCA1MiwyNSBMNTIsMzkgTDQ1LDM5IEw0NSw0MSBMNTIsNDEgTDUyLDU1IEM1Miw1NS41NTIgNTIuNDQ3LDU2IDUzLDU2IEw1OC4xNDMsNTYgQzU4LjU4OSw1Ny43MiA2MC4xNDIsNTkgNjIsNTkgQzY0LjIwNiw1OSA2Niw1Ny4yMDYgNjYsNTUgQzY2LDUyLjc5NCA2NC4yMDYsNTEgNjIsNTEgQzYwLjE0Miw1MSA1OC41ODksNTIuMjggNTguMTQzLDU0IEw1NCw1NCBMNTQsNDEgWiIgaWQ9IkFXUy1TaW1wbGUtTm90aWZpY2F0aW9uLVNlcnZpY2VfSWNvbl82NF9TcXVpZCIgZmlsbD0iI0ZGRkZGRiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4=",
+  "layout": [
+    {
+      "h": 6,
+      "i": "4eb87f89-0213-4773-9b06-6aecc6701898",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "7a010b4e-ea7c-4a45-a9eb-93af650c45b4",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "2299d4e3-6c40-4bf2-a550-c7bb8a7acd38",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "16eec8b7-de1a-4039-b180-24c7a6704b6e",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 6
+    }
+  ],
+  "panelMap": {},
+  "tags": [],
+  "title": "SNS Overview",
+  "uploadedGrafana": false,
+  "variables": {
+    "51f4fa2b-89c7-47c2-9795-f32cffaab985": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "AWS Account ID",
+      "id": "51f4fa2b-89c7-47c2-9795-f32cffaab985",
+      "key": "51f4fa2b-89c7-47c2-9795-f32cffaab985",
+      "modificationUUID": "b7a6b06b-fa1f-4fb8-b70e-6bd9b350f29e",
+      "multiSelect": false,
+      "name": "Account",
+      "order": 0,
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud.account.id') AS `cloud.account.id`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_SNS_PublishSize_count' GROUP BY `cloud.account.id`",
+      "showALLOption": false,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "9faf0f4b-b245-4b3c-83a3-60cfa76dfeb0": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "Account Region",
+      "id": "9faf0f4b-b245-4b3c-83a3-60cfa76dfeb0",
+      "key": "9faf0f4b-b245-4b3c-83a3-60cfa76dfeb0",
+      "modificationUUID": "8428a5de-bfd1-4a69-9601-63e3041cd556",
+      "multiSelect": false,
+      "name": "Region",
+      "order": 1,
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud.region') AS region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_SNS_PublishSize_count' AND JSONExtractString(labels, 'cloud.account.id') IN {{.Account}} GROUP BY region",
+      "showALLOption": false,
+      "sort": "ASC",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "bfbdbcbe-a168-4d81-b108-36339e249116": {
+      "allSelected": true,
+      "customValue": "",
+      "description": "SNS Topic Name",
+      "id": "bfbdbcbe-a168-4d81-b108-36339e249116",
+      "modificationUUID": "dfed7272-16dc-4eb6-99bf-7c82fc8e04f0",
+      "multiSelect": true,
+      "name": "Topic",
+      "order": 2,
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'TopicName') AS topic\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_SNS_PublishSize_count' AND JSONExtractString(labels, 'cloud.account.id') IN {{.Account}} AND JSONExtractString(labels, 'cloud.region') IN {{.Region}}\nGROUP BY topic",
+      "showALLOption": true,
+      "sort": "ASC",
+      "textboxValue": "",
+      "type": "QUERY"
+    }
+  },
+  "version": "v4",
+  "widgets": [
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "4eb87f89-0213-4773-9b06-6aecc6701898",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_SNS_NumberOfMessagesPublished_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_SNS_NumberOfMessagesPublished_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "8fd51b53",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TopicName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TopicName",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "$Topic"
+                    ]
+                  },
+                  {
+                    "id": "b18187c3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "eebe4578",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "TopicName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "TopicName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{TopicName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "9c67615a-55f7-42da-835c-86922f2ff8bb",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Number of Messages Published",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "7a010b4e-ea7c-4a45-a9eb-93af650c45b4",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_SNS_PublishSize_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_SNS_PublishSize_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "1aa0d1a9",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TopicName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TopicName",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "$Topic"
+                    ]
+                  },
+                  {
+                    "id": "62255cff",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "17c7153e",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "TopicName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "TopicName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{TopicName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "a635a15b-dfe6-4617-a82e-29d93e27deaf",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Published Message Size",
+      "yAxisUnit": "decbytes"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "2299d4e3-6c40-4bf2-a550-c7bb8a7acd38",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_SNS_NumberOfNotificationsDelivered_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_SNS_NumberOfNotificationsDelivered_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "c96a4ac0",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TopicName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TopicName",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "$Topic"
+                    ]
+                  },
+                  {
+                    "id": "8ca86829",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "8a444f66",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "TopicName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "TopicName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{TopicName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "0d2fc26c-9b21-4dfc-b631-64b7c8d3bd71",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Number of Notifications Delivered",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "16eec8b7-de1a-4039-b180-24c7a6704b6e",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_SNS_NumberOfNotificationsFailed_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_SNS_NumberOfNotificationsFailed_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "6175f3d5",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TopicName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TopicName",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "$Topic"
+                    ]
+                  },
+                  {
+                    "id": "e2084931",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "0b05209a",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "TopicName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "TopicName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{TopicName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "526247af-6ac9-42ff-83e9-cce0e32a9e63",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Number of Notifications Failed",
+      "yAxisUnit": "none"
+    }
+  ]
+}

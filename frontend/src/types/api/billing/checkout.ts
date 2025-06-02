@@ -5,3 +5,8 @@ export interface CheckoutSuccessPayloadProps {
 export interface CheckoutRequestPayloadProps {
 	url: string;
 }
+
+export interface PayloadProps {
+	data: CheckoutSuccessPayloadProps;
+	status: string;
+}

@@ -6,7 +6,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -27,6 +27,7 @@ function LeftContainer({
 	requestData,
 	setRequestData,
 	isLoadingPanelData,
+	setQueryResponse,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 	const { selectedDashboard } = useDashboard();
@@ -48,6 +49,13 @@ function LeftContainer({
 			],
 		},
 	);
+
+	// Update parent component with query response for legend colors
+	useEffect(() => {
+		if (setQueryResponse) {
+			setQueryResponse(queryResponse);
+		}
+	}, [queryResponse, setQueryResponse]);
 
 	return (
 		<>

@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.uber.org/zap"
 )
 
 type maintenance struct {
@@ -30,7 +29,6 @@ func (r *maintenance) GetAllPlannedMaintenance(ctx context.Context, orgID string
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, err
 	}
 
@@ -137,7 +135,6 @@ func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UU
 		Where("id = ?", id.StringValue()).
 		Exec(ctx)
 	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return err
 	}
 
@@ -221,7 +218,6 @@ func (r *maintenance) EditPlannedMaintenance(ctx context.Context, maintenance ru
 
 	})
 	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return err
 	}
 

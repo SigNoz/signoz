@@ -1,7 +1,7 @@
 import './styles.scss';
 
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Card, Modal, Table, Typography } from 'antd';
+import { Card, Form, Modal, Table, Typography } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import savePipeline from 'api/pipeline/post';
@@ -95,6 +95,7 @@ function PipelineListsView({
 	pipelineData,
 	refetchPipelineLists,
 }: PipelineListsViewProps): JSX.Element {
+	const [pipelineForm] = Form.useForm<PipelineData>();
 	const { t } = useTranslation(['pipeline', 'common']);
 	const [modal, contextHolder] = Modal.useModal();
 	const { notifications } = useNotifications();
@@ -179,8 +180,9 @@ function PipelineListsView({
 		(record: PipelineData) => (): void => {
 			setActionType(ActionType.EditPipeline);
 			setSelectedPipelineData(record);
+			pipelineForm.setFieldsValue(record);
 		},
-		[setActionType],
+		[setActionType, pipelineForm],
 	);
 
 	const pipelineDeleteHandler = useCallback(
@@ -382,12 +384,13 @@ function PipelineListsView({
 
 	const addNewPipelineHandler = useCallback((): void => {
 		setActionType(ActionType.AddPipeline);
+		pipelineForm.resetFields();
 
 		logEvent('Logs: Pipelines: Clicked Add New Pipeline', {
 			source: 'signoz-ui',
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [setActionType]);
+	}, [setActionType, pipelineForm]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
 		if (isEditingActionMode) {
@@ -495,6 +498,7 @@ function PipelineListsView({
 		<>
 			{contextHolder}
 			<AddNewPipeline
+				form={pipelineForm}
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedPipelineData={selectedPipelineData}

@@ -103,4 +103,5 @@ export interface GetQueryResultsProps {
 	start?: number;
 	end?: number;
 	step?: number;
+	originalGraphType?: PANEL_TYPES;
 }

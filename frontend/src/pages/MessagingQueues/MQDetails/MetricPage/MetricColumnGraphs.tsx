@@ -4,22 +4,24 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTranslation } from 'react-i18next';
 import { Widgets } from 'types/api/dashboard/getAll';
 
+import { FeatureKeys } from '../../../../constants/features';
+import { useAppContext } from '../../../../providers/App/App';
 import MetricPageGridGraph from './MetricPageGraph';
 import {
-	averageRequestLatencyWidgetData,
-	brokerCountWidgetData,
-	brokerNetworkThroughputWidgetData,
-	bytesConsumedWidgetData,
-	consumerFetchRateWidgetData,
-	consumerGroupMemberWidgetData,
-	consumerLagByGroupWidgetData,
-	consumerOffsetWidgetData,
-	ioWaitTimeWidgetData,
-	kafkaProducerByteRateWidgetData,
-	messagesConsumedWidgetData,
-	producerFetchRequestPurgatoryWidgetData,
-	requestResponseWidgetData,
-	requestTimesWidgetData,
+	getAverageRequestLatencyWidgetData,
+	getBrokerCountWidgetData,
+	getBrokerNetworkThroughputWidgetData,
+	getBytesConsumedWidgetData,
+	getConsumerFetchRateWidgetData,
+	getConsumerGroupMemberWidgetData,
+	getConsumerLagByGroupWidgetData,
+	getConsumerOffsetWidgetData,
+	getIoWaitTimeWidgetData,
+	getKafkaProducerByteRateWidgetData,
+	getMessagesConsumedWidgetData,
+	getProducerFetchRequestPurgatoryWidgetData,
+	getRequestResponseWidgetData,
+	getRequestTimesWidgetData,
 } from './MetricPageUtil';
 
 interface MetricSectionProps {
@@ -71,15 +73,20 @@ function MetricColumnGraphs({
 }): JSX.Element {
 	const { t } = useTranslation('messagingQueues');
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const metricsData = [
 		{
 			title: t('metricGraphCategory.brokerMetrics.title'),
 			description: t('metricGraphCategory.brokerMetrics.description'),
 			graphCount: [
-				brokerCountWidgetData,
-				requestTimesWidgetData,
-				producerFetchRequestPurgatoryWidgetData,
-				brokerNetworkThroughputWidgetData,
+				getBrokerCountWidgetData(dotMetricsEnabled),
+				getRequestTimesWidgetData(dotMetricsEnabled),
+				getProducerFetchRequestPurgatoryWidgetData(dotMetricsEnabled),
+				getBrokerNetworkThroughputWidgetData(dotMetricsEnabled),
 			],
 			id: 'broker-metrics',
 		},
@@ -87,11 +94,11 @@ function MetricColumnGraphs({
 			title: t('metricGraphCategory.producerMetrics.title'),
 			description: t('metricGraphCategory.producerMetrics.description'),
 			graphCount: [
-				ioWaitTimeWidgetData,
-				requestResponseWidgetData,
-				averageRequestLatencyWidgetData,
-				kafkaProducerByteRateWidgetData,
-				bytesConsumedWidgetData,
+				getIoWaitTimeWidgetData(dotMetricsEnabled),
+				getRequestResponseWidgetData(dotMetricsEnabled),
+				getAverageRequestLatencyWidgetData(dotMetricsEnabled),
+				getKafkaProducerByteRateWidgetData(dotMetricsEnabled),
+				getBytesConsumedWidgetData(dotMetricsEnabled),
 			],
 			id: 'producer-metrics',
 		},
@@ -99,11 +106,11 @@ function MetricColumnGraphs({
 			title: t('metricGraphCategory.consumerMetrics.title'),
 			description: t('metricGraphCategory.consumerMetrics.description'),
 			graphCount: [
-				consumerOffsetWidgetData,
-				consumerGroupMemberWidgetData,
-				consumerLagByGroupWidgetData,
-				consumerFetchRateWidgetData,
-				messagesConsumedWidgetData,
+				getConsumerOffsetWidgetData(dotMetricsEnabled),
+				getConsumerGroupMemberWidgetData(dotMetricsEnabled),
+				getConsumerLagByGroupWidgetData(dotMetricsEnabled),
+				getConsumerFetchRateWidgetData(dotMetricsEnabled),
+				getMessagesConsumedWidgetData(dotMetricsEnabled),
 			],
 			id: 'consumer-metrics',
 		},

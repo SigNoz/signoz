@@ -47,6 +47,9 @@ func TestSuccess(t *testing.T) {
 
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, res.Body.Close())
+	}()
 
 	actual, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
@@ -104,6 +107,9 @@ func TestError(t *testing.T) {
 
 			res, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
+			defer func() {
+				require.NoError(t, res.Body.Close())
+			}()
 
 			actual, err := io.ReadAll(res.Body)
 			require.NoError(t, err)

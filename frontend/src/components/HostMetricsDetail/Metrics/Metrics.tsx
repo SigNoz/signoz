@@ -18,10 +18,13 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
 
 interface MetricsTabProps {
 	timeRange: {
@@ -45,9 +48,20 @@ function Metrics({
 	handleTimeChange,
 	isModalTimeSelection,
 }: MetricsTabProps): JSX.Element {
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const queryPayloads = useMemo(
-		() => getHostQueryPayload(hostName, timeRange.startTime, timeRange.endTime),
-		[hostName, timeRange.startTime, timeRange.endTime],
+		() =>
+			getHostQueryPayload(
+				hostName,
+				timeRange.startTime,
+				timeRange.endTime,
+				dotMetricsEnabled,
+			),
+		[hostName, timeRange.startTime, timeRange.endTime, dotMetricsEnabled],
 	);
 
 	const queries = useQueries(
@@ -68,6 +82,45 @@ function Metrics({
 		[queries],
 	);
 
+	const [graphTimeIntervals, setGraphTimeIntervals] = useState<
+		{
+			start: number;
+			end: number;
+		}[]
+	>(
+		new Array(queries.length).fill({
+			start: timeRange.startTime,
+			end: timeRange.endTime,
+		}),
+	);
+
+	useEffect(() => {
+		setGraphTimeIntervals(
+			new Array(queries.length).fill({
+				start: timeRange.startTime,
+				end: timeRange.endTime,
+			}),
+		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [timeRange]);
+
+	const onDragSelect = useCallback(
+		(start: number, end: number, graphIndex: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			setGraphTimeIntervals((prev) => {
+				const newIntervals = [...prev];
+				newIntervals[graphIndex] = {
+					start: Math.floor(startTimestamp / 1000),
+					end: Math.floor(endTimestamp / 1000),
+				};
+				return newIntervals;
+			});
+		},
+		[],
+	);
+
 	const options = useMemo(
 		() =>
 			queries.map(({ data }, idx) =>
@@ -78,11 +131,12 @@ function Metrics({
 					yAxisUnit: hostWidgetInfo[idx].yAxisUnit,
 					softMax: null,
 					softMin: null,
-					minTimeScale: timeRange.startTime,
-					maxTimeScale: timeRange.endTime,
+					minTimeScale: graphTimeIntervals[idx].start,
+					maxTimeScale: graphTimeIntervals[idx].end,
+					onDragSelect: (start, end) => onDragSelect(start, end, idx),
 				}),
 			),
-		[queries, isDarkMode, dimensions, timeRange.startTime, timeRange.endTime],
+		[queries, isDarkMode, dimensions, graphTimeIntervals, onDragSelect],
 	);
 
 	const renderCardContent = (
@@ -115,7 +169,7 @@ function Metrics({
 			<div className="metrics-header">
 				<div className="metrics-datetime-section">
 					<DateTimeSelectionV2
-						showAutoRefresh={false}
+						showAutoRefresh
 						showRefreshText={false}
 						hideShareModal
 						onTimeChange={handleTimeChange}

@@ -36,13 +36,14 @@ func (migration *updateOrganization) Register(migrations *migrate.Migrations) er
 }
 
 func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
-
-	// begin transaction
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback() //nolint:errcheck
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// update apdex settings table
 	if err := updateApdexSettings(ctx, tx); err != nil {

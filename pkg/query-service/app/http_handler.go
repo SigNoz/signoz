@@ -3,12 +3,15 @@ package app
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"regexp"
 	"slices"
 	"sort"
@@ -23,7 +26,7 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
@@ -52,12 +55,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
@@ -89,7 +92,6 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	reader            interfaces.Reader
 	ruleManager       *rules.Manager
-	featureFlags      interfaces.FeatureLookup
 	querier           interfaces.Querier
 	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
@@ -136,13 +138,11 @@ type APIHandler struct {
 
 	AlertmanagerAPI *alertmanager.API
 
+	LicensingAPI licensing.API
+
 	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
-
-	QuickFilters quickfilter.API
-
-	QuickFilterModule quickfilter.Usecase
 }
 
 type APIHandlerOpts struct {
@@ -154,9 +154,6 @@ type APIHandlerOpts struct {
 
 	// rule manager handles rule crud operations
 	RuleManager *rules.Manager
-
-	// feature flags querier
-	FeatureFlags interfaces.FeatureLookup
 
 	// Integrations
 	IntegrationsController *integrations.Controller
@@ -177,13 +174,11 @@ type APIHandlerOpts struct {
 
 	AlertmanagerAPI *alertmanager.API
 
+	LicensingAPI licensing.API
+
 	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
-
-	QuickFilters quickfilter.API
-
-	QuickFilterModule quickfilter.Usecase
 }
 
 // NewAPIHandler returns an APIHandler
@@ -224,7 +219,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
-		featureFlags:                  opts.FeatureFlags,
 		IntegrationsController:        opts.IntegrationsController,
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
@@ -244,10 +238,9 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		JWT:                           opts.JWT,
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
+		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
-		QuickFilters:                  opts.QuickFilters,
-		QuickFilterModule:             opts.QuickFilterModule,
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -261,7 +254,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
 
 	// TODO(nitya): remote this in later for multitenancy.
-	orgs, err := opts.Signoz.Modules.Organization.GetAll(context.Background())
+	orgs, err := opts.Signoz.Modules.OrgGetter.ListByOwnedKeyRange(context.Background())
 	if err != nil {
 		zap.L().Warn("unexpected error while fetching orgs  while initializing base api handler", zap.Error(err))
 	}
@@ -574,9 +567,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.Signoz.Handlers.Preference.UpdateOrg)).Methods(http.MethodPut)
 
 	// Quick Filters
-	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.QuickFilters.GetQuickFilters)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.AdminAccess(aH.QuickFilters.GetSignalFilters)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.QuickFilters.UpdateQuickFilters)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/orgs/me/filters", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetQuickFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSignalFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.Signoz.Handlers.QuickFilter.UpdateQuickFilters)).Methods(http.MethodPut)
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.Signoz.Handlers.User.CreateInvite)).Methods(http.MethodPost)
@@ -589,6 +582,17 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.Signoz.Handlers.User.Login)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/complete/google", am.OpenAccess(aH.receiveGoogleAuth)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.User.ListDomains)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.User.CreateDomain)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.User.UpdateDomain)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteDomain)).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/pats", am.AdminAccess(aH.Signoz.Handlers.User.CreateAPIKey)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/pats", am.AdminAccess(aH.Signoz.Handlers.User.ListAPIKeys)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(aH.Signoz.Handlers.User.UpdateAPIKey)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(aH.Signoz.Handlers.User.RevokeAPIKey)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.Signoz.Handlers.User.ListUsers)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/me", am.OpenAccess(aH.Signoz.Handlers.User.GetCurrentUserFromJWT)).Methods(http.MethodGet)
@@ -607,7 +611,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 		render.Success(rw, http.StatusOK, []any{})
 	})).Methods(http.MethodGet)
 	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
-		render.Error(rw, errorsV2.New(errorsV2.TypeUnsupported, errorsV2.CodeUnsupported, "not implemented"))
+		aH.LicensingAPI.Activate(rw, req)
 	})).Methods(http.MethodGet)
 }
 
@@ -1193,7 +1197,31 @@ func prepareQuery(r *http.Request) (string, error) {
 	if tmplErr != nil {
 		return "", tmplErr
 	}
-	return queryBuf.String(), nil
+
+	if !constants.IsDotMetricsEnabled {
+		return queryBuf.String(), nil
+	}
+
+	query = queryBuf.String()
+
+	// Now handle $var replacements (simple string replace)
+	keys := make([]string, 0, len(vars))
+	for k := range vars {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i]) > len(keys[j])
+	})
+
+	newQuery := query
+	for _, k := range keys {
+		placeholder := "$" + k
+		v := vars[k]
+		newQuery = strings.ReplaceAll(newQuery, placeholder, v)
+	}
+
+	return newQuery, nil
 }
 
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {
@@ -1979,28 +2007,29 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet, err := aH.FF().GetFeatureFlags()
+	featureSet, err := aH.Signoz.Licensing.GetFeatureFlags(r.Context())
 	if err != nil {
 		aH.HandleError(w, err, http.StatusInternalServerError)
 		return
 	}
 	if aH.preferSpanMetrics {
-		for idx := range featureSet {
-			feature := &featureSet[idx]
-			if feature.Name == model.UseSpanMetrics {
+		for idx, feature := range featureSet {
+			if feature.Name == featuretypes.UseSpanMetrics {
 				featureSet[idx].Active = true
 			}
 		}
 	}
+	if constants.IsDotMetricsEnabled {
+		featureSet = append(featureSet, &featuretypes.GettableFeature{
+			Name:   featuretypes.DotMetricsEnabled,
+			Active: true,
+		})
+	}
 	aH.Respond(w, featureSet)
 }
 
-func (aH *APIHandler) FF() interfaces.FeatureLookup {
-	return aH.featureFlags
-}
-
-func (aH *APIHandler) CheckFeature(f string) bool {
-	err := aH.FF().CheckFeature(f)
+func (aH *APIHandler) CheckFeature(ctx context.Context, key string) bool {
+	err := aH.Signoz.Licensing.CheckFeature(ctx, key)
 	return err == nil
 }
 
@@ -2032,9 +2061,9 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), &req, aH.Signoz.Alertmanager, aH.Signoz.Modules.Organization, aH.Signoz.Modules.User, aH.QuickFilterModule)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	_, errv2 := aH.Signoz.Modules.User.Register(r.Context(), &req)
+	if errv2 != nil {
+		render.Error(w, errv2)
 		return
 	}
 
@@ -2043,6 +2072,74 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	aH.SetupCompleted = true
 
 	aH.Respond(w, nil)
+}
+
+func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
+	ssoError := []byte("Login failed. Please contact your system administrator")
+	dst := make([]byte, base64.StdEncoding.EncodedLen(len(ssoError)))
+	base64.StdEncoding.Encode(dst, ssoError)
+
+	http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectURL, string(dst)), http.StatusSeeOther)
+}
+
+// receiveGoogleAuth completes google OAuth response and forwards a request
+// to front-end to sign user in
+func (aH *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) {
+	redirectUri := constants.GetDefaultSiteURL()
+	ctx := context.Background()
+
+	q := r.URL.Query()
+	if errType := q.Get("error"); errType != "" {
+		zap.L().Error("[receiveGoogleAuth] failed to login with google auth", zap.String("error", errType), zap.String("error_description", q.Get("error_description")))
+		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to login through SSO"), http.StatusMovedPermanently)
+		return
+	}
+
+	relayState := q.Get("state")
+	zap.L().Debug("[receiveGoogleAuth] relay state received", zap.String("state", relayState))
+
+	parsedState, err := url.Parse(relayState)
+	if err != nil || relayState == "" {
+		zap.L().Error("[receiveGoogleAuth] failed to process response - invalid response from IDP", zap.Error(err), zap.Any("request", r))
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+
+	// upgrade redirect url from the relay state for better accuracy
+	redirectUri = fmt.Sprintf("%s://%s%s", parsedState.Scheme, parsedState.Host, "/login")
+
+	// fetch domain by parsing relay state.
+	domain, err := aH.Signoz.Modules.User.GetDomainFromSsoResponse(ctx, parsedState)
+	if err != nil {
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+
+	// now that we have domain, use domain to fetch sso settings.
+	// prepare google callback handler using parsedState -
+	// which contains redirect URL (front-end endpoint)
+	callbackHandler, err := domain.PrepareGoogleOAuthProvider(parsedState)
+	if err != nil {
+		zap.L().Error("[receiveGoogleAuth] failed to prepare google oauth provider", zap.String("domain", domain.String()), zap.Error(err))
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+
+	identity, err := callbackHandler.HandleCallback(r)
+	if err != nil {
+		zap.L().Error("[receiveGoogleAuth] failed to process HandleCallback", zap.String("domain", domain.String()), zap.Error(err))
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+
+	nextPage, err := aH.Signoz.Modules.User.PrepareSsoRedirect(ctx, redirectUri, identity.Email, aH.JWT)
+	if err != nil {
+		zap.L().Error("[receiveGoogleAuth] failed to generate redirect URI after successful login ", zap.String("domain", domain.String()), zap.Error(err))
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+
+	http.Redirect(w, r, nextPage, http.StatusSeeOther)
 }
 
 func (aH *APIHandler) HandleError(w http.ResponseWriter, err error, statusCode int) bool {
@@ -2435,6 +2532,12 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	var kafkaConsumerFetchLatencyAvg string = "kafka_consumer_fetch_latency_avg"
+	var kafkaConsumerLag string = "kafka_consumer_group_lag"
+	if constants.IsDotMetricsEnabled {
+		kafkaConsumerLag = "kafka.consumer_group.lag"
+		kafkaConsumerFetchLatencyAvg = "kafka.consumer.fetch_latency_avg"
+	}
 
 	if !fetchLatencyState && !consumerLagState {
 		entries = append(entries, kafka.OnboardingResponse{
@@ -2445,27 +2548,28 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !fetchLatencyState {
+
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_fetch_latency_avg",
+			Attribute: kafkaConsumerFetchLatencyAvg,
 			Message:   "Metric kafka_consumer_fetch_latency_avg is not present in the given time range.",
 			Status:    "0",
 		})
 	} else {
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_fetch_latency_avg",
+			Attribute: kafkaConsumerFetchLatencyAvg,
 			Status:    "1",
 		})
 	}
 
 	if !consumerLagState {
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_group_lag",
+			Attribute: kafkaConsumerLag,
 			Message:   "Metric kafka_consumer_group_lag is not present in the given time range.",
 			Status:    "0",
 		})
 	} else {
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_group_lag",
+			Attribute: kafkaConsumerLag,
 			Status:    "1",
 		})
 	}
@@ -4259,7 +4363,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), orgID, req, true, false)
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), orgID, req, false)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -5124,4 +5228,31 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		Result: result,
 	}
 	aH.Respond(w, resp)
+}
+
+// RegisterTraceFunnelsRoutes adds trace funnels routes
+func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middleware.AuthZ) {
+	// Main trace funnels router
+	traceFunnelsRouter := router.PathPrefix("/api/v1/trace-funnels").Subrouter()
+
+	// API endpoints
+	traceFunnelsRouter.HandleFunc("/new",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.New)).
+		Methods(http.MethodPost)
+	traceFunnelsRouter.HandleFunc("/list",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.List)).
+		Methods(http.MethodGet)
+	traceFunnelsRouter.HandleFunc("/steps/update",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.UpdateSteps)).
+		Methods(http.MethodPut)
+
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.Get)).
+		Methods(http.MethodGet)
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.Delete)).
+		Methods(http.MethodDelete)
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.UpdateFunnel)).
+		Methods(http.MethodPut)
 }

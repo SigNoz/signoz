@@ -8,6 +8,21 @@
 	display: flex;
 	gap: 16px;
 	background-color: transparent;
+
+	.multi-alert-button,
+	.multi-dashboard-button {
+		min-width: 130px;
+
+		.ant-select-selector {
+			.ant-select-selection-placeholder {
+				margin-left: 0 !important;
+			}
+
+			.ant-select-arrow {
+				display: none !important;
+			}
+		}
+	}
 }
 
 .hide-update {

@@ -50,14 +50,19 @@ function PiePanelWrapper({
 		color: string;
 	}[] = [].concat(
 		...(panelData
-			.map((d) => ({
-				label: getLabelName(d.metric, d.queryName || '', d.legend || ''),
-				value: d.values?.[0]?.[1],
-				color: generateColor(
-					getLabelName(d.metric, d.queryName || '', d.legend || ''),
-					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-				),
-			}))
+			.map((d) => {
+				const label = getLabelName(d.metric, d.queryName || '', d.legend || '');
+				return {
+					label,
+					value: d.values?.[0]?.[1],
+					color:
+						widget?.customLegendColors?.[label] ||
+						generateColor(
+							label,
+							isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+						),
+				};
+			})
 			.filter((d) => d !== undefined) as never[]),
 	);
 

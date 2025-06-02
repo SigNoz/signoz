@@ -66,7 +66,8 @@ jobs:
           echo 'CI=1' > frontend/.env
           echo 'TUNNEL_URL="${{ secrets.NP_TUNNEL_URL }}"' >> frontend/.env
           echo 'TUNNEL_DOMAIN="${{ secrets.NP_TUNNEL_DOMAIN }}"' >> frontend/.env
-          echo 'USERPILOT_KEY="${{ secrets.NP_USERPILOT_KEY }}"' >> frontend/.env
+          echo 'PYLON_APP_ID="${{ secrets.NP_PYLON_APP_ID }}"' >> frontend/.env
+          echo 'APPCUES_APP_ID="${{ secrets.NP_APPCUES_APP_ID }}"' >> frontend/.env
       - name: cache-dotenv
         uses: actions/cache@v4
         with:

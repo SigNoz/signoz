@@ -16,6 +16,7 @@ import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import APIError from 'types/api/error';
@@ -42,6 +43,7 @@ function CreateAlertChannels({
 }: CreateAlertChannelsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('channels');
+	const { showErrorModal } = useErrorModal();
 
 	const [formInstance] = Form.useForm();
 
@@ -145,15 +147,12 @@ function CreateAlertChannels({
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
-			notifications.error({
-				message: (error as APIError).error.error.code,
-				description: (error as APIError).error.error.message,
-			});
+			showErrorModal(error as APIError);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareSlackRequest, t, notifications]);
+	}, [prepareSlackRequest, notifications, t, showErrorModal]);
 
 	const prepareWebhookRequest = useCallback(() => {
 		// initial api request without auth params
@@ -202,15 +201,12 @@ function CreateAlertChannels({
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
+			showErrorModal(error as APIError);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareWebhookRequest, t, notifications]);
+	}, [prepareWebhookRequest, notifications, t, showErrorModal]);
 
 	const preparePagerRequest = useCallback(() => {
 		const validationError = ValidatePagerChannel(selectedConfig as PagerChannel);
@@ -254,15 +250,12 @@ function CreateAlertChannels({
 			}
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} catch (error) {
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
+			showErrorModal(error as APIError);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
-	}, [t, notifications, preparePagerRequest]);
+	}, [preparePagerRequest, t, notifications, showErrorModal]);
 
 	const prepareOpsgenieRequest = useCallback(
 		() => ({
@@ -287,15 +280,12 @@ function CreateAlertChannels({
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
+			showErrorModal(error as APIError);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareOpsgenieRequest, t, notifications]);
+	}, [prepareOpsgenieRequest, notifications, t, showErrorModal]);
 
 	const prepareEmailRequest = useCallback(
 		() => ({
@@ -320,15 +310,12 @@ function CreateAlertChannels({
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
+			showErrorModal(error as APIError);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareEmailRequest, t, notifications]);
+	}, [prepareEmailRequest, notifications, t, showErrorModal]);
 
 	const prepareMsTeamsRequest = useCallback(
 		() => ({
@@ -353,15 +340,12 @@ function CreateAlertChannels({
 			history.replace(ROUTES.ALL_CHANNELS);
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
+			showErrorModal(error as APIError);
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareMsTeamsRequest, t, notifications]);
+	}, [prepareMsTeamsRequest, notifications, t, showErrorModal]);
 
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
@@ -459,10 +443,8 @@ function CreateAlertChannels({
 					status: 'Test success',
 				});
 			} catch (error) {
-				notifications.error({
-					message: (error as APIError).error.error.code,
-					description: (error as APIError).error.error.message,
-				});
+				showErrorModal(error as APIError);
+
 				logEvent('Alert Channel: Test notification', {
 					type: channelType,
 					sendResolvedAlert: selectedConfig?.send_resolved,

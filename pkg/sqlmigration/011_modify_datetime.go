@@ -37,7 +37,10 @@ func (migration *modifyDatetime) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback() //nolint:errcheck
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	tables := []string{"dashboards", "rules", "planned_maintenance", "ttl_status", "saved_views"}
 	columns := []string{"created_at", "updated_at"}

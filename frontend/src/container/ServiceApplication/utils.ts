@@ -28,6 +28,7 @@ export const getQueryRangeRequestData = ({
 	maxTime,
 	minTime,
 	globalSelectedInterval,
+	dotMetricsEnabled,
 }: GetQueryRangeRequestDataProps): GetQueryResultsProps[] => {
 	const requestData: GetQueryResultsProps[] = [];
 	topLevelOperations.forEach((operation) => {
@@ -35,7 +36,7 @@ export const getQueryRangeRequestData = ({
 			query: {
 				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
-				builder: serviceMetricsQuery(operation),
+				builder: serviceMetricsQuery(operation, dotMetricsEnabled),
 				clickhouse_sql: [],
 				id: uuid(),
 			},

@@ -249,8 +249,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "body <> ?",
-			expectedArgs:  []any{""},
+			expectedSQL:   "true",
 			expectedError: nil,
 		},
 		{
@@ -261,8 +260,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "body = ?",
-			expectedArgs:  []any{""},
+			expectedSQL:   "true",
 			expectedError: nil,
 		},
 		{
@@ -273,8 +271,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "timestamp <> ?",
-			expectedArgs:  []any{0},
+			expectedSQL:   "true",
 			expectedError: nil,
 		},
 		{

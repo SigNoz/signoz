@@ -32,7 +32,7 @@ function HomeChecklist({
 	onSkip: (item: ChecklistItem) => void;
 	isLoading: boolean;
 }): JSX.Element {
-	const { user, activeLicenseV3 } = useAppContext();
+	const { user, activeLicense } = useAppContext();
 
 	const [completedChecklistItems, setCompletedChecklistItems] = useState<
 		ChecklistItem[]
@@ -94,8 +94,8 @@ function HomeChecklist({
 														if (item.toRoute !== ROUTES.GET_STARTED_WITH_CLOUD) {
 															history.push(item.toRoute || '');
 														} else if (
-															activeLicenseV3 &&
-															activeLicenseV3.platform === LicensePlatform.CLOUD
+															activeLicense &&
+															activeLicense.platform === LicensePlatform.CLOUD
 														) {
 															history.push(item.toRoute || '');
 														} else {

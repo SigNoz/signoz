@@ -5,10 +5,26 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func (ah *APIHandler) ServeGatewayHTTP(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is invalid"))
+		return
+	}
+
 	validPath := false
 	for _, allowedPrefix := range gateway.AllowedPrefix {
 		if strings.HasPrefix(req.URL.Path, gateway.RoutePrefix+allowedPrefix) {
@@ -22,9 +38,9 @@ func (ah *APIHandler) ServeGatewayHTTP(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	license, err := ah.LM().GetRepo().GetActiveLicense(ctx)
+	license, err := ah.Signoz.Licensing.GetActive(ctx, orgID)
 	if err != nil {
-		RespondError(rw, err, nil)
+		render.Error(rw, err)
 		return
 	}
 

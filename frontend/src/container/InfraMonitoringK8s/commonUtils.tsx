@@ -12,9 +12,16 @@ import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useMemo } from 'react';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 
-import { getInvalidValueTooltipText, K8sCategory } from './constants';
+import {
+	getInvalidValueTooltipText,
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
+	K8sCategory,
+} from './constants';
 
 /**
  * Converts size in bytes to a human-readable string with appropriate units
@@ -249,4 +256,38 @@ export const filterDuplicateFilters = (
 	}
 
 	return uniqueFilters;
+};
+
+export const getOrderByFromParams = (
+	searchParams: URLSearchParams,
+	returnNullAsDefault = false,
+): {
+	columnName: string;
+	order: 'asc' | 'desc';
+} | null => {
+	const orderByFromParams = searchParams.get(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY,
+	);
+	if (orderByFromParams) {
+		const decoded = decodeURIComponent(orderByFromParams);
+		const parsed = JSON.parse(decoded);
+		return parsed as { columnName: string; order: 'asc' | 'desc' };
+	}
+	if (returnNullAsDefault) {
+		return null;
+	}
+	return { columnName: 'cpu', order: 'desc' };
+};
+
+export const getFiltersFromParams = (
+	searchParams: URLSearchParams,
+	queryKey: string,
+): IBuilderQuery['filters'] | null => {
+	const filtersFromParams = searchParams.get(queryKey);
+	if (filtersFromParams) {
+		const decoded = decodeURIComponent(filtersFromParams);
+		const parsed = JSON.parse(decoded);
+		return parsed as IBuilderQuery['filters'];
+	}
+	return null;
 };

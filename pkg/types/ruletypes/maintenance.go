@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
-	"go.uber.org/zap"
 )
 
 var (
@@ -73,11 +72,9 @@ func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bo
 		return false
 	}
 
-	zap.L().Info("alert found in maintenance", zap.String("alert", ruleID), zap.String("maintenance", m.Name))
 	// If alert is found, we check if it should be skipped based on the schedule
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
-		zap.L().Error("Error loading location", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
 		return false
 	}
 
@@ -85,13 +82,6 @@ func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bo
 
 	// fixed schedule
 	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
-		zap.L().Info("checking fixed schedule",
-			zap.String("rule", ruleID),
-			zap.String("maintenance", m.Name),
-			zap.Time("currentTime", currentTime),
-			zap.Time("startTime", m.Schedule.StartTime),
-			zap.Time("endTime", m.Schedule.EndTime))
-
 		startTime := m.Schedule.StartTime.In(loc)
 		endTime := m.Schedule.EndTime.In(loc)
 		if currentTime.Equal(startTime) || currentTime.Equal(endTime) ||
@@ -103,19 +93,9 @@ func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bo
 	// recurring schedule
 	if m.Schedule.Recurrence != nil {
 		start := m.Schedule.Recurrence.StartTime
-		duration := time.Duration(m.Schedule.Recurrence.Duration)
-
-		zap.L().Info("checking recurring schedule base info",
-			zap.String("rule", ruleID),
-			zap.String("maintenance", m.Name),
-			zap.Time("startTime", start),
-			zap.Duration("duration", duration))
 
 		// Make sure the recurrence has started
 		if currentTime.Before(start.In(loc)) {
-			zap.L().Info("current time is before recurrence start time",
-				zap.String("rule", ruleID),
-				zap.String("maintenance", m.Name))
 			return false
 		}
 
@@ -123,9 +103,6 @@ func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bo
 		if m.Schedule.Recurrence.EndTime != nil {
 			endTime := *m.Schedule.Recurrence.EndTime
 			if !endTime.IsZero() && currentTime.After(endTime.In(loc)) {
-				zap.L().Info("current time is after recurrence end time",
-					zap.String("rule", ruleID),
-					zap.String("maintenance", m.Name))
 				return false
 			}
 		}
@@ -235,8 +212,6 @@ func (m *GettablePlannedMaintenance) IsActive(now time.Time) bool {
 func (m *GettablePlannedMaintenance) IsUpcoming() bool {
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
-		// handle error appropriately, for example log and return false or fallback to UTC
-		zap.L().Error("Error loading timezone", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
 		return false
 	}
 	now := time.Now().In(loc)

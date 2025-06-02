@@ -1,6 +1,7 @@
 import './entityTraces.styles.scss';
 
 import logEvent from 'api/common/logEvent';
+import { VIEWS } from 'components/HostMetricsDetail/constants';
 import { getListColumns } from 'components/HostMetricsDetail/HostMetricTraces/utils';
 import { ResizeTable } from 'components/ResizeTable';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -43,7 +44,10 @@ interface Props {
 		interval: Time | CustomTimeType,
 		dateTimeRange?: [number, number],
 	) => void;
-	handleChangeTracesFilters: (value: IBuilderQuery['filters']) => void;
+	handleChangeTracesFilters: (
+		value: IBuilderQuery['filters'],
+		view: VIEWS,
+	) => void;
 	tracesFilters: IBuilderQuery['filters'];
 	selectedInterval: Time;
 	queryKey: string;
@@ -164,14 +168,16 @@ function EntityTraces({
 					{query && (
 						<QueryBuilderSearch
 							query={query}
-							onChange={handleChangeTracesFilters}
+							onChange={(value): void =>
+								handleChangeTracesFilters(value, VIEWS.TRACES)
+							}
 							disableNavigationShortcuts
 						/>
 					)}
 				</div>
 				<div className="datetime-section">
 					<DateTimeSelectionV2
-						showAutoRefresh={false}
+						showAutoRefresh
 						showRefreshText={false}
 						hideShareModal
 						isModalTimeSelection={isModalTimeSelection}

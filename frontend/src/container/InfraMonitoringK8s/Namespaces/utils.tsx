@@ -122,6 +122,11 @@ export const getK8sNamespacesListColumns = (
 	return columnsConfig as ColumnType<K8sNamespacesRowData>[];
 };
 
+const dotToUnder: Record<string, keyof K8sNamespacesData['meta']> = {
+	'k8s.namespace.name': 'k8s_namespace_name',
+	'k8s.cluster.name': 'k8s_cluster_name',
+};
+
 const getGroupByEle = (
 	namespace: K8sNamespacesData,
 	groupBy: IBuilderQuery['groupBy'],
@@ -129,7 +134,13 @@ const getGroupByEle = (
 	const groupByValues: string[] = [];
 
 	groupBy.forEach((group) => {
-		groupByValues.push(namespace.meta[group.key as keyof typeof namespace.meta]);
+		const rawKey = group.key as string;
+
+		// Choose mapped key if present, otherwise use rawKey
+		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof namespace.meta;
+		const value = namespace.meta[metaKey];
+
+		groupByValues.push(value);
 	});
 
 	return (

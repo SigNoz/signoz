@@ -17,6 +17,7 @@ type UseGetK8sDaemonSetsList = (
 	>,
 
 	headers?: Record<string, string>,
+	dotMetricsEnabled?: boolean,
 ) => UseQueryResult<
 	SuccessResponse<K8sDaemonSetsListResponse> | ErrorResponse,
 	Error
@@ -28,6 +29,7 @@ export const useGetK8sDaemonSetsList: UseGetK8sDaemonSetsList = (
 	options,
 
 	headers,
+	dotMetricsEnabled,
 ) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
@@ -45,7 +47,8 @@ export const useGetK8sDaemonSetsList: UseGetK8sDaemonSetsList = (
 		SuccessResponse<K8sDaemonSetsListResponse> | ErrorResponse,
 		Error
 	>({
-		queryFn: ({ signal }) => getK8sDaemonSetsList(requestData, signal, headers),
+		queryFn: ({ signal }) =>
+			getK8sDaemonSetsList(requestData, signal, headers, dotMetricsEnabled),
 
 		...options,
 

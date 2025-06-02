@@ -41,15 +41,15 @@ var (
 		"mode",
 		"mountpoint",
 		"type",
-		"os_type",
-		"process_cgroup",
-		"process_command",
-		"process_command_line",
-		"process_executable_name",
-		"process_executable_path",
-		"process_owner",
-		"process_parent_pid",
-		"process_pid",
+		GetDotMetrics("os_type"),
+		GetDotMetrics("process_cgroup"),
+		GetDotMetrics("process_command"),
+		GetDotMetrics("process_command_line"),
+		GetDotMetrics("process_executable_name"),
+		GetDotMetrics("process_executable_path"),
+		GetDotMetrics("process_owner"),
+		GetDotMetrics("process_parent_pid"),
+		GetDotMetrics("process_pid"),
 	}
 
 	queryNamesForTopHosts = map[string][]string{
@@ -60,17 +60,17 @@ var (
 	}
 
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
-	metricToUseForHostAttributes = "system_cpu_load_average_15m"
-	hostNameAttrKey              = "host_name"
+	metricToUseForHostAttributes = GetDotMetrics("system_cpu_load_average_15m")
+	hostNameAttrKey              = GetDotMetrics("host_name")
 	agentNameToIgnore            = "k8s-infra-otel-agent"
 	hostAttrsToEnrich            = []string{
-		"os_type",
+		GetDotMetrics("os_type"),
 	}
 	metricNamesForHosts = map[string]string{
-		"cpu":    "system_cpu_time",
-		"memory": "system_memory_usage",
-		"load15": "system_cpu_load_average_15m",
-		"wait":   "system_cpu_time",
+		"cpu":    GetDotMetrics("system_cpu_time"),
+		"memory": GetDotMetrics("system_memory_usage"),
+		"load15": GetDotMetrics("system_cpu_load_average_15m"),
+		"wait":   GetDotMetrics("system_cpu_time"),
 	}
 )
 
@@ -351,13 +351,14 @@ func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.Host
 		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_SAMPLES_V4_TABLENAME, namesStr)
 
 	query := fmt.Sprintf(`
-	SELECT DISTINCT JSONExtractString(labels, 'k8s_cluster_name') as k8s_cluster_name, JSONExtractString(labels, 'k8s_node_name') as k8s_node_name
+	SELECT DISTINCT JSONExtractString(labels, '%s') as k8s_cluster_name, JSONExtractString(labels, '%s') as k8s_node_name
 	FROM %s.%s
 	WHERE metric_name IN (%s)
 		AND unix_milli >= toUnixTimestamp(now() - INTERVAL 60 MINUTE) * 1000
-		AND JSONExtractString(labels, 'host_name') LIKE '%%-otel-agent%%'
+		AND JSONExtractString(labels, '%s') LIKE '%%-otel-agent%%'
 		AND fingerprint GLOBAL IN (%s)`,
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr, queryForRecentFingerprints)
+		GetDotMetrics("k8s_cluster_name"), GetDotMetrics("k8s_node_name"),
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr, GetDotMetrics("host_name"), queryForRecentFingerprints)
 
 	result, err := h.reader.GetListResultV3(ctx, query)
 	if err != nil {
@@ -368,13 +369,13 @@ func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.Host
 	nodeNames := make(map[string]struct{})
 
 	for _, row := range result {
-		switch v := row.Data["k8s_cluster_name"].(type) {
+		switch v := row.Data[GetDotMetrics("k8s_cluster_name")].(type) {
 		case string:
 			clusterNames[v] = struct{}{}
 		case *string:
 			clusterNames[*v] = struct{}{}
 		}
-		switch v := row.Data["k8s_node_name"].(type) {
+		switch v := row.Data[GetDotMetrics("k8s_node_name")].(type) {
 		case string:
 			nodeNames[v] = struct{}{}
 		case *string:

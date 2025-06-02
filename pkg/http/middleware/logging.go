@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"context"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -13,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
-	"go.uber.org/zap"
 )
 
 const (
@@ -21,22 +21,18 @@ const (
 )
 
 type Logging struct {
-	logger         *zap.Logger
+	logger         *slog.Logger
 	excludedRoutes map[string]struct{}
 }
 
-func NewLogging(logger *zap.Logger, excludedRoutes []string) *Logging {
-	if logger == nil {
-		panic("cannot build logging, logger is empty")
-	}
-
+func NewLogging(logger *slog.Logger, excludedRoutes []string) *Logging {
 	excludedRoutesMap := make(map[string]struct{})
 	for _, route := range excludedRoutes {
 		excludedRoutesMap[route] = struct{}{}
 	}
 
 	return &Logging{
-		logger:         logger.Named(pkgname),
+		logger:         logger.With("pkg", pkgname),
 		excludedRoutes: excludedRoutesMap,
 	}
 }
@@ -50,13 +46,13 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 			path = req.URL.Path
 		}
 
-		fields := []zap.Field{
-			zap.String(string(semconv.ClientAddressKey), req.RemoteAddr),
-			zap.String(string(semconv.UserAgentOriginalKey), req.UserAgent()),
-			zap.String(string(semconv.ServerAddressKey), host),
-			zap.String(string(semconv.ServerPortKey), port),
-			zap.Int64(string(semconv.HTTPRequestSizeKey), req.ContentLength),
-			zap.String(string(semconv.HTTPRouteKey), path),
+		fields := []any{
+			string(semconv.ClientAddressKey), req.RemoteAddr,
+			string(semconv.UserAgentOriginalKey), req.UserAgent(),
+			string(semconv.ServerAddressKey), host,
+			string(semconv.ServerPortKey), port,
+			string(semconv.HTTPRequestSizeKey), req.ContentLength,
+			string(semconv.HTTPRouteKey), path,
 		}
 
 		logCommentKVs := middleware.getLogCommentKVs(req)
@@ -73,19 +69,19 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 
 		statusCode, err := writer.StatusCode(), writer.WriteError()
 		fields = append(fields,
-			zap.Int(string(semconv.HTTPResponseStatusCodeKey), statusCode),
-			zap.Duration(string(semconv.HTTPServerRequestDurationName), time.Since(start)),
+			string(semconv.HTTPResponseStatusCodeKey), statusCode,
+			string(semconv.HTTPServerRequestDurationName), time.Since(start),
 		)
 		if err != nil {
-			fields = append(fields, zap.Error(err))
-			middleware.logger.Error(logMessage, fields...)
+			fields = append(fields, "error", err)
+			middleware.logger.ErrorContext(req.Context(), logMessage, fields...)
 		} else {
 			// when the status code is 400 or >=500, and the response body is not empty.
 			if badResponseBuffer.Len() != 0 {
-				fields = append(fields, zap.String("response.body", badResponseBuffer.String()))
+				fields = append(fields, "response.body", badResponseBuffer.String())
 			}
 
-			middleware.logger.Info(logMessage, fields...)
+			middleware.logger.InfoContext(req.Context(), logMessage, fields...)
 		}
 	})
 }

@@ -15,6 +15,7 @@ type UseGetK8sDeploymentsList = (
 		Error
 	>,
 	headers?: Record<string, string>,
+	dotMetricsEnabled?: boolean,
 ) => UseQueryResult<
 	SuccessResponse<K8sDeploymentsListResponse> | ErrorResponse,
 	Error
@@ -24,6 +25,7 @@ export const useGetK8sDeploymentsList: UseGetK8sDeploymentsList = (
 	requestData,
 	options,
 	headers,
+	dotMetricsEnabled,
 ) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
@@ -41,7 +43,8 @@ export const useGetK8sDeploymentsList: UseGetK8sDeploymentsList = (
 		SuccessResponse<K8sDeploymentsListResponse> | ErrorResponse,
 		Error
 	>({
-		queryFn: ({ signal }) => getK8sDeploymentsList(requestData, signal, headers),
+		queryFn: ({ signal }) =>
+			getK8sDeploymentsList(requestData, signal, headers, dotMetricsEnabled),
 		...options,
 		queryKey,
 	});

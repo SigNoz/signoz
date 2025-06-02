@@ -21,8 +21,10 @@ import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import { DataType } from '../TableView';
 import {
+	escapeHtml,
 	filterKeyForField,
 	jsonToDataNodes,
+	parseFieldValue,
 	recursiveParseJSON,
 	removeEscapeCharacters,
 	unescapeString,
@@ -85,7 +87,7 @@ export function TableViewActions(
 		record.field === 'body'
 			? {
 					__html: convert.toHtml(
-						dompurify.sanitize(unescapeString(record.value), {
+						dompurify.sanitize(unescapeString(escapeHtml(record.value)), {
 							FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 						}),
 					),
@@ -155,7 +157,11 @@ export function TableViewActions(
 									<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
 								)
 							}
-							onClick={onClickHandler(OPERATORS['='], fieldFilterKey, fieldData.value)}
+							onClick={onClickHandler(
+								OPERATORS['='],
+								fieldFilterKey,
+								parseFieldValue(fieldData.value),
+							)}
 						/>
 					</Tooltip>
 					<Tooltip title="Filter out value">
@@ -171,7 +177,7 @@ export function TableViewActions(
 							onClick={onClickHandler(
 								OPERATORS['!='],
 								fieldFilterKey,
-								fieldData.value,
+								parseFieldValue(fieldData.value),
 							)}
 						/>
 					</Tooltip>
