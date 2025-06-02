@@ -3,8 +3,9 @@ package httplicensing
 import (
 	"context"
 	"encoding/json"
-	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"time"
+
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 
 	"github.com/SigNoz/signoz/ee/licensing/licensingstore/sqllicensingstore"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -173,6 +174,11 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 
 	updatedStorableLicense := licensetypes.NewStorableLicenseFromLicense(activeLicense)
 	err = provider.store.Update(ctx, organizationID, updatedStorableLicense)
+	if err != nil {
+		return err
+	}
+
+	err = provider.InitFeatures(ctx, activeLicense.Features)
 	if err != nil {
 		return err
 	}
