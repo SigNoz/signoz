@@ -183,7 +183,7 @@ func HydrateFileUris(spec interface{}, fs embed.FS, basedir string) (interface{}
 				if dashboards, ok := v.([]interface{}); ok {
 					for i, dashboard := range dashboards {
 						if dashboardUri, ok := dashboard.(string); ok {
-							if constants.IsDotMetricsEnabled && strings.HasPrefix(dashboardUri, "file://") {
+							if strings.HasPrefix(dashboardUri, "file://") {
 								dashboards[i] = strings.Replace(dashboardUri, ".json", "_dot.json", 1)
 							}
 						}
