@@ -12,6 +12,7 @@ import {
 	Switch,
 	Typography,
 } from 'antd';
+import CustomDataControls from 'components/CustomDataControls/CustomDataControls';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import GraphTypes, {
@@ -113,6 +114,12 @@ function RightContainer({
 	customLegendColors,
 	setCustomLegendColors,
 	queryResponse,
+	customDataMode,
+	setCustomDataMode,
+	customXData,
+	setCustomXData,
+	customYData,
+	setCustomYData,
 }: RightContainerProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
@@ -280,6 +287,30 @@ function RightContainer({
 					rootClassName="description-input"
 				/>
 			</section>
+
+			{/* Custom Data Controls */}
+			{selectedWidget && (
+				<CustomDataControls
+					widget={{
+						...selectedWidget,
+						customDataMode,
+						customXData,
+						customYData,
+					}}
+					onUpdate={(updatedWidget: Partial<Widgets>): void => {
+						if (updatedWidget.customDataMode !== undefined) {
+							setCustomDataMode(updatedWidget.customDataMode);
+						}
+						if (updatedWidget.customXData !== undefined) {
+							setCustomXData(updatedWidget.customXData);
+						}
+						if (updatedWidget.customYData !== undefined) {
+							setCustomYData(updatedWidget.customYData);
+						}
+					}}
+				/>
+			)}
+
 			<section className="panel-config">
 				<Typography.Text className="typography">Panel Type</Typography.Text>
 				<Select
@@ -554,6 +585,12 @@ interface RightContainerProps {
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
+	customDataMode: boolean;
+	setCustomDataMode: Dispatch<SetStateAction<boolean>>;
+	customXData: number;
+	setCustomXData: Dispatch<SetStateAction<number>>;
+	customYData: number;
+	setCustomYData: Dispatch<SetStateAction<number>>;
 }
 
 RightContainer.defaultProps = {

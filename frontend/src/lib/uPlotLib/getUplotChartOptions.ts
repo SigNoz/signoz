@@ -431,9 +431,10 @@ export const getUPlotChartOptions = ({
 						// Add single global cleanup listener for this chart
 						const globalCleanupHandler = (e: MouseEvent): void => {
 							const target = e.target as HTMLElement;
+							console.log('target', target);
 							if (
-								!target.closest('.u-legend') &&
-								!target.classList.contains('legend-tooltip')
+								!target?.closest?.('.u-legend') &&
+								!target?.classList?.contains('legend-tooltip')
 							) {
 								cleanupAllTooltips();
 							}

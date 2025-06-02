@@ -32,7 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, UseQueryResult } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouteMatch } from 'react-router-dom';
-import { Dispatch } from 'redux';
+import { Dispatch as ReduxDispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
@@ -51,7 +51,7 @@ const DashboardContext = createContext<IDashboardContext>({
 	isDashboardSliderOpen: false,
 	isDashboardLocked: false,
 	handleToggleDashboardSlider: () => {},
-	handleDashboardLockToggle: () => {},
+	handleDashboardLockToggle: async () => {},
 	dashboardResponse: {} as UseQueryResult<Dashboard, unknown>,
 	selectedDashboard: {} as Dashboard,
 	dashboardId: '',
@@ -80,6 +80,13 @@ const DashboardContext = createContext<IDashboardContext>({
 	isDashboardFetching: false,
 	columnWidths: {},
 	setColumnWidths: () => {},
+	// Global custom data state
+	globalCustomDataMode: false,
+	setGlobalCustomDataMode: () => {},
+	globalCustomXData: 15,
+	setGlobalCustomXData: () => {},
+	globalCustomYData: 4,
+	setGlobalCustomYData: () => {},
 });
 
 interface Props {
@@ -146,7 +153,7 @@ export function DashboardProvider({
 
 	function setListSortOrder(sortOrder: DashboardSortOrder): void {
 		if (!isEqual(sortOrder, listSortOrder)) {
-			setListOrder(sortOrder);
+			setListOrder(sortOrder as any);
 		}
 		params.set('columnKey', sortOrder.columnKey as string);
 		params.set('order', sortOrder.order as string);
@@ -155,7 +162,7 @@ export function DashboardProvider({
 		safeNavigate({ search: params.toString() });
 	}
 
-	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const dispatch = useDispatch<ReduxDispatch<AppActions>>();
 
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -416,6 +423,13 @@ export function DashboardProvider({
 
 	const [columnWidths, setColumnWidths] = useState<WidgetColumnWidths>({});
 
+	// Global custom data state
+	const [globalCustomDataMode, setGlobalCustomDataMode] = useState<boolean>(
+		false,
+	);
+	const [globalCustomXData, setGlobalCustomXData] = useState<number>(15);
+	const [globalCustomYData, setGlobalCustomYData] = useState<number>(4);
+
 	const value: IDashboardContext = useMemo(
 		() => ({
 			toScrollWidgetId,
@@ -424,7 +438,7 @@ export function DashboardProvider({
 			handleToggleDashboardSlider,
 			handleDashboardLockToggle,
 			dashboardResponse,
-			selectedDashboard,
+			selectedDashboard: selectedDashboard as Dashboard,
 			dashboardId,
 			layouts,
 			listSortOrder,
@@ -445,6 +459,13 @@ export function DashboardProvider({
 			isDashboardFetching,
 			columnWidths,
 			setColumnWidths,
+			// Global custom data state
+			globalCustomDataMode,
+			setGlobalCustomDataMode,
+			globalCustomXData,
+			setGlobalCustomXData,
+			globalCustomYData,
+			setGlobalCustomYData,
 		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -469,6 +490,10 @@ export function DashboardProvider({
 			isDashboardFetching,
 			columnWidths,
 			setColumnWidths,
+			// Global custom data state
+			globalCustomDataMode,
+			globalCustomXData,
+			globalCustomYData,
 		],
 	);
 

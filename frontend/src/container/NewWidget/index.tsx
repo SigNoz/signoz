@@ -239,6 +239,17 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedWidget?.columnUnits || {},
 	);
 
+	// Custom data generator state
+	const [customDataMode, setCustomDataMode] = useState<boolean>(
+		selectedWidget?.customDataMode || false,
+	);
+	const [customXData, setCustomXData] = useState<number>(
+		selectedWidget?.customXData || 15,
+	);
+	const [customYData, setCustomYData] = useState<number>(
+		selectedWidget?.customYData || 4,
+	);
+
 	useEffect(() => {
 		setSelectedWidget((prev) => {
 			if (!prev) {
@@ -268,6 +279,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				legendPosition,
 				customLegendColors,
 				columnWidths: columnWidths?.[selectedWidget?.id],
+				customDataMode,
+				customXData,
+				customYData,
 			};
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -294,6 +308,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		legendPosition,
 		customLegendColors,
 		columnWidths,
+		customDataMode,
+		customXData,
+		customYData,
 	]);
 
 	const closeModal = (): void => {
@@ -503,6 +520,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 								legendPosition: selectedWidget?.legendPosition || LegendPosition.BOTTOM,
 								customLegendColors: selectedWidget?.customLegendColors || {},
+								customDataMode: selectedWidget?.customDataMode || false,
+								customXData: selectedWidget?.customXData || 15,
+								customYData: selectedWidget?.customYData || 4,
 							},
 					  ]
 					: [
@@ -532,6 +552,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 								legendPosition: selectedWidget?.legendPosition || LegendPosition.BOTTOM,
 								customLegendColors: selectedWidget?.customLegendColors || {},
+								customDataMode: selectedWidget?.customDataMode || false,
+								customXData: selectedWidget?.customXData || 15,
+								customYData: selectedWidget?.customYData || 4,
 							},
 							...afterWidgets,
 					  ],
@@ -796,6 +819,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							setSoftMin={setSoftMin}
 							softMax={softMax}
 							setSoftMax={setSoftMax}
+							customDataMode={customDataMode}
+							setCustomDataMode={setCustomDataMode}
+							customXData={customXData}
+							setCustomXData={setCustomXData}
+							customYData={customYData}
+							setCustomYData={setCustomYData}
 						/>
 					</OverlayScrollbar>
 				</RightContainerWrapper>
