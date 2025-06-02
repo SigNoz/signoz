@@ -22,7 +22,7 @@ var (
 // initializes the Zeus configuration
 func Config() zeus.Config {
 	once.Do(func() {
-		parsedURL, err := neturl.Parse(url)
+		parsedURL, err := neturl.Parse("https://api.staging.signoz.cloud")
 		if err != nil {
 			panic(fmt.Errorf("invalid zeus URL: %w", err))
 		}

@@ -28,6 +28,7 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
+import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { Userpilot } from 'userpilot';
 import { extractDomain } from 'utils/app';
 
@@ -172,10 +173,11 @@ function App(): JSX.Element {
 			!!user.email
 		) {
 			const isOnBasicPlan =
-				activeLicenseFetchError &&
-				[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
-					activeLicenseFetchError?.getHttpStatusCode(),
-				);
+				(activeLicenseFetchError &&
+					[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
+						activeLicenseFetchError?.getHttpStatusCode(),
+					)) ||
+				(activeLicense?.status && activeLicense.status === LicenseStatus.INVALID);
 			const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
 
 			if (isLoggedInState && user && user.id && user.email && !isIdentifiedUser) {
@@ -190,6 +192,10 @@ function App(): JSX.Element {
 					updatedRoutes = updatedRoutes.filter(
 						(route) => route?.path !== ROUTES.BILLING,
 					);
+
+					if (isEnterpriseSelfHostedUser) {
+						updatedRoutes.push(LIST_LICENSES);
+					}
 				}
 				// always add support route for cloud users
 				updatedRoutes = [...updatedRoutes, SUPPORT_ROUTE];
