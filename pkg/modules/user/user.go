@@ -62,6 +62,9 @@ type Module interface {
 	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error)
 	RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error
 	GetAPIKey(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.StorableAPIKeyUser, error)
+
+	// Register
+	Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin) (*types.User, error)
 }
 
 type Handler interface {

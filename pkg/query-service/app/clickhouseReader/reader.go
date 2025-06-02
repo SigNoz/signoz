@@ -6267,9 +6267,6 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 		if err == nil {
 			cachedMetadata[metricName] = metadata
 		} else {
-			if err != nil {
-				zap.L().Error("Error retrieving metrics metadata from cache", zap.String("metric_name", metricName), zap.Error(err))
-			}
 			missingMetrics = append(missingMetrics, metricName)
 		}
 	}

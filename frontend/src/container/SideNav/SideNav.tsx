@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
@@ -301,10 +302,11 @@ function SideNav(): JSX.Element {
 			}
 
 			const isOnBasicPlan =
-				activeLicenseFetchError &&
-				[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
-					activeLicenseFetchError?.getHttpStatusCode(),
-				);
+				(activeLicenseFetchError &&
+					[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
+						activeLicenseFetchError?.getHttpStatusCode(),
+					)) ||
+				(activeLicense?.status && activeLicense.status === LicenseStatus.INVALID);
 
 			if (user.role !== USER_ROLES.ADMIN || isOnBasicPlan) {
 				updatedMenuItems = updatedMenuItems.filter(
@@ -353,6 +355,7 @@ function SideNav(): JSX.Element {
 		t,
 		user.role,
 		activeLicenseFetchError,
+		activeLicense?.status,
 	]);
 
 	return (

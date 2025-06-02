@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
 	"github.com/SigNoz/signoz/pkg/factory"
 	pkglicensing "github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -133,8 +134,8 @@ func main() {
 		zeus.Config(),
 		httpzeus.NewProviderFactory(),
 		licensing.Config(24*time.Hour, 3),
-		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus) factory.ProviderFactory[pkglicensing.Licensing, pkglicensing.Config] {
-			return httplicensing.NewProviderFactory(sqlstore, zeus)
+		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus, orgGetter organization.Getter) factory.ProviderFactory[pkglicensing.Licensing, pkglicensing.Config] {
+			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter)
 		},
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),

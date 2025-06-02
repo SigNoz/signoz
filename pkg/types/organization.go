@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"hash/fnv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -20,13 +21,15 @@ type Organization struct {
 	Identifiable
 	Name        string `bun:"name,type:text,nullzero" json:"name"`
 	Alias       string `bun:"alias,type:text,nullzero" json:"alias"`
+	Key         uint32 `bun:"key,type:bigint,notnull" json:"key"`
 	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
 }
 
 func NewOrganization(displayName string) *Organization {
+	id := valuer.GenerateUUID()
 	return &Organization{
 		Identifiable: Identifiable{
-			ID: valuer.GenerateUUID(),
+			ID: id,
 		},
 		TimeAuditable: TimeAuditable{
 			CreatedAt: time.Now(),
@@ -34,22 +37,23 @@ func NewOrganization(displayName string) *Organization {
 		},
 		// Name: "default/main", TODO: take the call and uncomment this later
 		DisplayName: displayName,
+		Key:         NewOrganizationKey(id),
 	}
 }
 
-type ApdexSettings struct {
-	bun.BaseModel `bun:"table:apdex_setting"`
-	Identifiable
-	OrgID              string  `bun:"org_id,type:text" json:"orgId"`
-	ServiceName        string  `bun:"service_name,type:text" json:"serviceName"`
-	Threshold          float64 `bun:"threshold,type:float,notnull" json:"threshold"`
-	ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull" json:"excludeStatusCodes"`
+func NewOrganizationKey(orgID valuer.UUID) uint32 {
+	hasher := fnv.New32a()
+
+	// Hasher never returns err.
+	_, _ = hasher.Write([]byte(orgID.String()))
+	return hasher.Sum32()
 }
 
 type OrganizationStore interface {
 	Create(context.Context, *Organization) error
 	Get(context.Context, valuer.UUID) (*Organization, error)
 	GetAll(context.Context) ([]*Organization, error)
+	ListByKeyRange(context.Context, uint32, uint32) ([]*Organization, error)
 	Update(context.Context, *Organization) error
 	Delete(context.Context, valuer.UUID) error
 }

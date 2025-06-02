@@ -55,7 +55,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
@@ -255,7 +254,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
 
 	// TODO(nitya): remote this in later for multitenancy.
-	orgs, err := opts.Signoz.Modules.Organization.GetAll(context.Background())
+	orgs, err := opts.Signoz.Modules.OrgGetter.ListByOwnedKeyRange(context.Background())
 	if err != nil {
 		zap.L().Warn("unexpected error while fetching orgs  while initializing base api handler", zap.Error(err))
 	}
@@ -2062,9 +2061,9 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), &req, aH.Signoz.Alertmanager, aH.Signoz.Modules.Organization, aH.Signoz.Modules.User, aH.Signoz.Modules.QuickFilter)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	_, errv2 := aH.Signoz.Modules.User.Register(r.Context(), &req)
+	if errv2 != nil {
+		render.Error(w, errv2)
 		return
 	}
 
@@ -5229,4 +5228,31 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		Result: result,
 	}
 	aH.Respond(w, resp)
+}
+
+// RegisterTraceFunnelsRoutes adds trace funnels routes
+func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middleware.AuthZ) {
+	// Main trace funnels router
+	traceFunnelsRouter := router.PathPrefix("/api/v1/trace-funnels").Subrouter()
+
+	// API endpoints
+	traceFunnelsRouter.HandleFunc("/new",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.New)).
+		Methods(http.MethodPost)
+	traceFunnelsRouter.HandleFunc("/list",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.List)).
+		Methods(http.MethodGet)
+	traceFunnelsRouter.HandleFunc("/steps/update",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.UpdateSteps)).
+		Methods(http.MethodPut)
+
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.Get)).
+		Methods(http.MethodGet)
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.Delete)).
+		Methods(http.MethodDelete)
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.UpdateFunnel)).
+		Methods(http.MethodPut)
 }
