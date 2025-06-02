@@ -21,13 +21,21 @@ async function preferencesLoader<T>(config: {
 				result: await config[source](),
 			})),
 		);
-		// Find the first result with columns
-		const validResult = results.find(({ result }) => result.columns.length);
-		if (validResult) {
-			return validResult.result;
-		}
-		// fallback to default
-		return config.default();
+
+		// Find valid columns and formatting independently
+		const validColumnsResult = results.find(
+			({ result }) => result.columns?.length,
+		);
+		const validFormattingResult = results.find(({ result }) => result.formatting);
+
+		// Combine valid results or fallback to default
+		const finalResult = {
+			columns: validColumnsResult?.result.columns || config.default().columns,
+			formatting:
+				validFormattingResult?.result.formatting || config.default().formatting,
+		};
+
+		return finalResult as T;
 	};
 
 	return findValidLoader();

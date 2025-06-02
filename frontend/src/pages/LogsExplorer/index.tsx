@@ -166,26 +166,23 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	useEffect(() => {
-		const migratedQuery = migrateOptionsQuery(
-			preferences
-				? {
-						selectColumns: preferences.columns || [],
-						maxLines:
-							preferences.formatting?.maxLines || defaultOptionsQuery.maxLines,
-						format: preferences.formatting?.format || defaultOptionsQuery.format,
-						fontSize:
-							preferences.formatting?.fontSize || defaultOptionsQuery.fontSize,
-						version: preferences.formatting?.version,
-				  }
-				: defaultOptionsQuery,
-		);
+		if (!preferences) {
+			return;
+		}
+		const migratedQuery = migrateOptionsQuery({
+			selectColumns: preferences.columns || [],
+			maxLines: preferences.formatting?.maxLines || defaultOptionsQuery.maxLines,
+			format: preferences.formatting?.format || defaultOptionsQuery.format,
+			fontSize: preferences.formatting?.fontSize || defaultOptionsQuery.fontSize,
+			version: preferences.formatting?.version,
+		});
 		// Only redirect if the query was actually modified
 		if (
 			!isEqual(migratedQuery, {
-				selectColumns: preferences?.columns || [],
-				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
-				format: preferences?.formatting?.format || defaultOptionsQuery.format,
-				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
+				selectColumns: preferences?.columns,
+				maxLines: preferences?.formatting?.maxLines,
+				format: preferences?.formatting?.format,
+				fontSize: preferences?.formatting?.fontSize,
 				version: preferences?.formatting?.version,
 			})
 		) {
