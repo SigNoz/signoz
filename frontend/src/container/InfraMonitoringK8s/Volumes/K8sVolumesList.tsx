@@ -29,11 +29,13 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
 import { getOrderByFromParams } from '../commonUtils';
 import {
+	GetK8sEntityToAggregateAttribute,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
-	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
@@ -60,10 +62,26 @@ function K8sVolumesList({
 		(state) => state.globalTime,
 	);
 
-	const [currentPage, setCurrentPage] = useState(1);
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const [currentPage, setCurrentPage] = useState(() => {
+		const page = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE);
+		if (page) {
+			return parseInt(page, 10);
+		}
+		return 1;
+	});
+	const [filtersInitialised, setFiltersInitialised] = useState(false);
+
+	useEffect(() => {
+		setSearchParams({
+			...Object.fromEntries(searchParams.entries()),
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE]: currentPage.toString(),
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [currentPage]);
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
-	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
@@ -116,8 +134,15 @@ function K8sVolumesList({
 
 	// Reset pagination every time quick filters are changed
 	useEffect(() => {
-		setCurrentPage(1);
+		if (quickFiltersLastUpdated !== -1) {
+			setCurrentPage(1);
+		}
 	}, [quickFiltersLastUpdated]);
+
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
 
 	const createFiltersForSelectedRowData = (
 		selectedRowData: K8sVolumesRowData,
@@ -172,10 +197,15 @@ function K8sVolumesList({
 		isLoading: isLoadingGroupedByRowData,
 		isError: isErrorGroupedByRowData,
 		refetch: fetchGroupedByRowData,
-	} = useGetK8sVolumesList(fetchGroupedByRowDataQuery as K8sVolumesListPayload, {
-		queryKey: ['volumeList', fetchGroupedByRowDataQuery],
-		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
-	});
+	} = useGetK8sVolumesList(
+		fetchGroupedByRowDataQuery as K8sVolumesListPayload,
+		{
+			queryKey: ['volumeList', fetchGroupedByRowDataQuery],
+			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+		},
+		undefined,
+		dotMetricsEnabled,
+	);
 
 	const {
 		data: groupByFiltersData,
@@ -183,7 +213,10 @@ function K8sVolumesList({
 	} = useGetAggregateKeys(
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: K8sEntityToAggregateAttributeMapping[K8sCategory.NODES],
+			aggregateAttribute: GetK8sEntityToAggregateAttribute(
+				K8sCategory.NODES,
+				dotMetricsEnabled,
+			),
 			aggregateOperator: 'noop',
 			searchText: '',
 			tagType: '',
@@ -229,6 +262,8 @@ function K8sVolumesList({
 			queryKey: ['volumeList', query],
 			enabled: !!query,
 		},
+		undefined,
+		dotMetricsEnabled,
 	);
 
 	const volumesData = useMemo(() => data?.payload?.data?.records || [], [data]);
@@ -304,7 +339,11 @@ function K8sVolumesList({
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
 			handleChangeQueryData('filters', value);
-			setCurrentPage(1);
+			if (filtersInitialised) {
+				setCurrentPage(1);
+			} else {
+				setFiltersInitialised(true);
+			}
 
 			if (value.items.length > 0) {
 				logEvent(InfraMonitoringEvents.FilterApplied, {
@@ -314,7 +353,8 @@ function K8sVolumesList({
 				});
 			}
 		},
-		[handleChangeQueryData],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
 	);
 
 	useEffect(() => {
