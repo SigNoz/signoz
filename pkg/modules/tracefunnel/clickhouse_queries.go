@@ -175,10 +175,10 @@ WITH
 
 , totals AS (
     SELECT
-        count() AS total_s1_spans,
-        countIf(t2_time > t1_time) AS total_s2_spans,
-        sum(s1_error) AS sum_s1_error,
-        sum(s2_error) AS sum_s2_error,
+        count(DISTINCT trace_id) AS total_s1_spans,
+        count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
+        count(DISTINCT CASE WHEN s1_error = 1 THEN trace_id END) AS sum_s1_error,
+        count(DISTINCT CASE WHEN s2_error = 1 THEN trace_id END) AS sum_s2_error,
         avg((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6) AS avg_duration,
         quantile(0.99)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6) AS latency
     FROM funnel
@@ -265,13 +265,13 @@ WITH
 
 , totals AS (
     SELECT
-        countIf(t1_time > 0) AS total_s1_spans,
-        countIf(t1_time > 0 AND t2_time > t1_time) AS total_s2_spans,
-        countIf(t2_time > 0 AND t3_time > t2_time) AS total_s3_spans,
+        count(DISTINCT trace_id) AS total_s1_spans,
+        count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
+        count(DISTINCT CASE WHEN t3_time > t2_time THEN trace_id END) AS total_s3_spans,
 
-        sum(s1_error) AS sum_s1_error,
-        sum(s2_error) AS sum_s2_error,
-        sum(s3_error) AS sum_s3_error,
+        count(DISTINCT CASE WHEN s1_error = 1 THEN trace_id END) AS sum_s1_error,
+        count(DISTINCT CASE WHEN s2_error = 1 THEN trace_id END) AS sum_s2_error,
+        count(DISTINCT CASE WHEN s3_error = 1 THEN trace_id END) AS sum_s3_error,
 
         avgIf((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))/1e6, t1_time > 0 AND t2_time > t1_time) AS avg_duration_12,
         quantileIf(0.99)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))/1e6, t1_time > 0 AND t2_time > t1_time) AS latency_12,
@@ -334,10 +334,10 @@ WITH
     ('%[7]s','%[8]s') AS step2
 
 SELECT
-    count() AS total_s1_spans,
-    countIf(t1_error = 1) AS total_s1_errored_spans,
-    countIf(t2_time > t1_time) AS total_s2_spans,
-    countIf(t2_time > t1_time AND t2_error = 1) AS total_s2_errored_spans
+    count(DISTINCT trace_id) AS total_s1_spans,
+    count(DISTINCT CASE WHEN t1_error = 1 THEN trace_id END) AS total_s1_errored_spans,
+    count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
+    count(DISTINCT CASE WHEN t2_time > t1_time AND t2_error = 1 THEN trace_id END) AS total_s2_errored_spans
 FROM (
     SELECT
         trace_id,
@@ -400,12 +400,12 @@ WITH
     ('%[10]s','%[11]s') AS step3
 
 SELECT
-    count() AS total_s1_spans,
-    countIf(t1_error = 1) AS total_s1_errored_spans,
-    countIf(t2_time > t1_time) AS total_s2_spans,
-    countIf(t2_time > t1_time AND t2_error = 1) AS total_s2_errored_spans,
-    countIf(t2_time > t1_time AND t3_time > t2_time) AS total_s3_spans,
-    countIf(t2_time > t1_time AND t3_time > t2_time AND t3_error = 1) AS total_s3_errored_spans
+    count(DISTINCT trace_id) AS total_s1_spans,
+    count(DISTINCT CASE WHEN t1_error = 1 THEN trace_id END) AS total_s1_errored_spans,
+    count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
+    count(DISTINCT CASE WHEN t2_time > t1_time AND t2_error = 1 THEN trace_id END) AS total_s2_errored_spans,
+    count(DISTINCT CASE WHEN t2_time > t1_time AND t3_time > t2_time THEN trace_id END) AS total_s3_spans,
+    count(DISTINCT CASE WHEN t2_time > t1_time AND t3_time > t2_time AND t3_error = 1 THEN trace_id END) AS total_s3_errored_spans
 FROM (
     SELECT
         trace_id,
@@ -604,10 +604,10 @@ SELECT
     latency
 FROM (
     SELECT
-        countIf(t1_time > 0) AS total_s1_spans,
-        countIf(t1_time > 0 AND t2_time > t1_time) AS total_s2_spans,
-        sum(s1_error) AS sum_s1_error,
-        sum(s2_error) AS sum_s2_error,
+        count(DISTINCT trace_id) AS total_s1_spans,
+        count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
+        count(DISTINCT CASE WHEN s1_error = 1 THEN trace_id END) AS sum_s1_error,
+        count(DISTINCT CASE WHEN s2_error = 1 THEN trace_id END) AS sum_s2_error,
 
         avgIf(
             (toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6,
@@ -721,10 +721,10 @@ SELECT
     latency_12 AS latency
 FROM (
     SELECT
-        countIf(t1_time > 0 AND t2_time > t1_time) AS total_s2_spans,
-        countIf(t1_time > 0) AS total_s1_spans, -- eligible only
-        sum(s1_error) AS sum_s1_error,
-        sum(s2_error) AS sum_s2_error,
+        count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
+        count(DISTINCT trace_id) AS total_s1_spans, -- eligible only
+        count(DISTINCT CASE WHEN s1_error = 1 THEN trace_id END) AS sum_s1_error,
+        count(DISTINCT CASE WHEN s2_error = 1 THEN trace_id END) AS sum_s2_error,
         avgIf((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6, t1_time > 0 AND t2_time > t1_time) AS avg_duration_12,
         quantileIf(%[18]s)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6, t1_time > 0 AND t2_time > t1_time) AS latency_12
     FROM funnel
@@ -740,10 +740,10 @@ SELECT
     latency_23 AS latency
 FROM (
     SELECT
-        countIf(t2_time > 0 AND t3_time > t2_time) AS total_s3_spans,
-        countIf(t2_time > 0) AS total_s2_spans, -- eligible only
-        sum(s2_error) AS sum_s2_error,
-        sum(s3_error) AS sum_s3_error,
+        count(DISTINCT CASE WHEN t2_time > 0 AND t3_time > t2_time THEN trace_id END) AS total_s3_spans,
+        count(DISTINCT CASE WHEN t2_time > 0 THEN trace_id END) AS total_s2_spans, -- eligible only
+        count(DISTINCT CASE WHEN s2_error = 1 THEN trace_id END) AS sum_s2_error,
+        count(DISTINCT CASE WHEN s3_error = 1 THEN trace_id END) AS sum_s3_error,
         avgIf((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time)) / 1e6, t2_time > 0 AND t3_time > t2_time) AS avg_duration_23,
         quantileIf(%[19]s)((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time)) / 1e6, t2_time > 0 AND t3_time > t2_time) AS latency_23
     FROM funnel
