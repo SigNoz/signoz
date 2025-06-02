@@ -7,6 +7,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -176,6 +178,19 @@ func HydrateFileUris(spec interface{}, fs embed.FS, basedir string) (interface{}
 	if specMap, ok := spec.(map[string]interface{}); ok {
 		result := map[string]interface{}{}
 		for k, v := range specMap {
+			// Check if this is a dashboards slice and if dot metrics are enabled
+			if k == "dashboards" && constants.IsDotMetricsEnabled {
+				if dashboards, ok := v.([]interface{}); ok {
+					for i, dashboard := range dashboards {
+						if dashboardUri, ok := dashboard.(string); ok {
+							if strings.HasPrefix(dashboardUri, "file://") {
+								dashboards[i] = strings.Replace(dashboardUri, ".json", "_dot.json", 1)
+							}
+						}
+					}
+					v = dashboards
+				}
+			}
 			hydrated, err := HydrateFileUris(v, fs, basedir)
 			if err != nil {
 				return nil, err
@@ -200,7 +215,6 @@ func HydrateFileUris(spec interface{}, fs embed.FS, basedir string) (interface{}
 	}
 
 	return spec, nil
-
 }
 
 func readFileIfUri(fs embed.FS, maybeFileUri string, basedir string) (interface{}, error) {

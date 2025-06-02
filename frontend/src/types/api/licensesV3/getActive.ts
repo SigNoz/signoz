@@ -6,6 +6,7 @@ export enum LicenseEvent {
 export enum LicenseStatus {
 	SUSPENDED = 'SUSPENDED',
 	VALID = 'VALID',
+	INVALID = 'INVALID',
 }
 
 export enum LicenseState {

@@ -87,9 +87,6 @@ func GetActiveLicenseFromStorableLicenses(storableLicenses []*StorableLicense, o
 			return nil, err
 		}
 
-		if license.Status == "INVALID" {
-			continue
-		}
 		if activeLicense == nil &&
 			(license.ValidFrom != 0) &&
 			(license.ValidUntil == -1 || license.ValidUntil > time.Now().Unix()) {
@@ -383,7 +380,4 @@ type Store interface {
 	GetFeature(context.Context, string) (*featuretypes.StorableFeature, error)
 	GetAllFeatures(context.Context) ([]*featuretypes.StorableFeature, error)
 	UpdateFeature(context.Context, *featuretypes.StorableFeature) error
-
-	// ListOrganizations returns the list of orgs
-	ListOrganizations(context.Context) ([]valuer.UUID, error)
 }

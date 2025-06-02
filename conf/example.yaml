@@ -207,3 +207,11 @@ emailing:
       key_file_path:
       # The path to the certificate file.
       cert_file_path:
+
+##################### Sharder (experimental) #####################
+sharder:
+  # Specifies the sharder provider to use.
+  provider: noop
+  single:
+    # The org id to which this instance belongs to.
+    org_id: org_id
