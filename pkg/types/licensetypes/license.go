@@ -383,7 +383,4 @@ type Store interface {
 	GetFeature(context.Context, string) (*featuretypes.StorableFeature, error)
 	GetAllFeatures(context.Context) ([]*featuretypes.StorableFeature, error)
 	UpdateFeature(context.Context, *featuretypes.StorableFeature) error
-
-	// ListOrganizations returns the list of orgs
-	ListOrganizations(context.Context) ([]valuer.UUID, error)
 }
