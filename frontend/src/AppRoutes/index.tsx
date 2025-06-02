@@ -172,6 +172,7 @@ function App(): JSX.Element {
 			user &&
 			!!user.email
 		) {
+			// either the active API returns error with 404 or 501 and if it returns a terminated license means it's on basic plan
 			const isOnBasicPlan =
 				(activeLicenseFetchError &&
 					[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
