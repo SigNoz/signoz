@@ -259,6 +259,24 @@ export const getDataTypes = (value: unknown): DataTypes => {
 	return determineType(value);
 };
 
+// prevent html rendering in the value
+export const escapeHtml = (unsafe: string): string =>
+	unsafe
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
+
+// parse field value to remove escaping characters
+export const parseFieldValue = (value: string): string => {
+	try {
+		return JSON.parse(value);
+	} catch (error) {
+		return value;
+	}
+};
+
 // now we do not want to render colors everywhere like in tooltip and monaco editor hence we remove such codes to make
 // the log line readable
 export const removeEscapeCharacters = (str: string): string =>

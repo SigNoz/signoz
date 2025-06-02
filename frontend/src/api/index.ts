@@ -4,7 +4,11 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import loginApi from 'api/v1/login/login';
 import afterLogin from 'AppRoutes/utils';
-import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import axios, {
+	AxiosError,
+	AxiosResponse,
+	InternalAxiosRequestConfig,
+} from 'axios';
 import { ENVIRONMENT } from 'constants/env';
 import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -83,24 +87,27 @@ const interceptorRejected = async (
 						true,
 					);
 
-					const reResponse = await axios(
-						`${value.config.baseURL}${value.config.url?.substring(1)}`,
-						{
-							method: value.config.method,
-							headers: {
-								...value.config.headers,
-								Authorization: `Bearer ${response.data.accessJwt}`,
+					try {
+						const reResponse = await axios(
+							`${value.config.baseURL}${value.config.url?.substring(1)}`,
+							{
+								method: value.config.method,
+								headers: {
+									...value.config.headers,
+									Authorization: `Bearer ${response.data.accessJwt}`,
+								},
+								data: {
+									...JSON.parse(value.config.data || '{}'),
+								},
 							},
-							data: {
-								...JSON.parse(value.config.data || '{}'),
-							},
-						},
-					);
-					if (reResponse.status === 200) {
+						);
+
 						return await Promise.resolve(reResponse);
+					} catch (error) {
+						if ((error as AxiosError)?.response?.status === 401) {
+							Logout();
+						}
 					}
-					Logout();
-					return await Promise.reject(reResponse);
 				} catch (error) {
 					Logout();
 				}

@@ -25,9 +25,11 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { FeatureKeys } from '../../constants/features';
+import { useAppContext } from '../../providers/App/App';
 import HostsListControls from './HostsListControls';
 import HostsListTable from './HostsListTable';
-import { getHostListsQuery, HostsQuickFiltersConfig } from './utils';
+import { getHostListsQuery, GetHostsQuickFiltersConfig } from './utils';
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function HostsList(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -114,6 +116,11 @@ function HostsList(): JSX.Element {
 		entityVersion: '',
 	});
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
 			const isNewFilterAdded = value.items.length !== filters.items.length;
@@ -182,7 +189,7 @@ function HostsList(): JSX.Element {
 						</div>
 						<QuickFilters
 							source={QuickFiltersSource.INFRA_MONITORING}
-							config={HostsQuickFiltersConfig}
+							config={GetHostsQuickFiltersConfig(dotMetricsEnabled)}
 							handleFilterVisibilityChange={handleFilterVisibilityChange}
 							onFilterChange={handleQuickFiltersChange}
 						/>

@@ -34,11 +34,19 @@ import {
 } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { ColumnUnit, Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { SuccessResponse } from 'types/api';
+import {
+	ColumnUnit,
+	Dashboard,
+	LegendPosition,
+	Widgets,
+} from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -97,9 +105,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const isLogsQuery = currentQuery.builder.queryData.every(
-		(query) => query.dataSource === DataSource.LOGS,
-	);
+	const isLogsQuery =
+		currentQuery?.builder?.queryData?.length > 0 &&
+		currentQuery?.builder?.queryData?.every(
+			(query) => query?.dataSource === DataSource.LOGS,
+		);
 
 	const customGlobalSelectedInterval = useMemo(
 		() =>
@@ -183,6 +193,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [isLogScale, setIsLogScale] = useState<boolean>(
 		selectedWidget?.isLogScale || false,
 	);
+	const [legendPosition, setLegendPosition] = useState<LegendPosition>(
+		selectedWidget?.legendPosition || LegendPosition.BOTTOM,
+	);
+	const [customLegendColors, setCustomLegendColors] = useState<
+		Record<string, string>
+	>(selectedWidget?.customLegendColors || {});
+
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
 
@@ -248,6 +265,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				selectedLogFields,
 				selectedTracesFields,
 				isLogScale,
+				legendPosition,
+				customLegendColors,
 				columnWidths: columnWidths?.[selectedWidget?.id],
 			};
 		});
@@ -272,6 +291,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		combineHistogram,
 		stackedBarChart,
 		isLogScale,
+		legendPosition,
+		customLegendColors,
 		columnWidths,
 	]);
 
@@ -330,11 +351,18 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	// hence while changing the query contains the older value and the processing logic fails
 	const [isLoadingPanelData, setIsLoadingPanelData] = useState<boolean>(false);
 
+	// State to hold query response for sharing between left and right containers
+	const [queryResponse, setQueryResponse] = useState<
+		UseQueryResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error>
+	>(null as any);
+
 	// request data should be handled by the parent and the child components should consume the same
 	// this has been moved here from the left container
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		const updatedQuery = cloneDeep(stagedQuery || initialQueriesMap.metrics);
-		updatedQuery.builder.queryData[0].pageSize = 10;
+		if (updatedQuery?.builder?.queryData?.[0]) {
+			updatedQuery.builder.queryData[0].pageSize = 10;
+		}
 
 		if (selectedWidget) {
 			if (selectedGraph === PANEL_TYPES.LIST) {
@@ -382,7 +410,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		if (stagedQuery) {
 			setIsLoadingPanelData(false);
 			const updatedStagedQuery = cloneDeep(stagedQuery);
-			updatedStagedQuery.builder.queryData[0].pageSize = 10;
+			if (updatedStagedQuery?.builder?.queryData?.[0]) {
+				updatedStagedQuery.builder.queryData[0].pageSize = 10;
+			}
 			setRequestData((prev) => ({
 				...prev,
 				selectedTime: selectedTime.enum || prev.selectedTime,
@@ -471,6 +501,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
 								selectedLogFields: selectedWidget?.selectedLogFields || [],
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
+								legendPosition: selectedWidget?.legendPosition || LegendPosition.BOTTOM,
+								customLegendColors: selectedWidget?.customLegendColors || {},
 							},
 					  ]
 					: [
@@ -498,6 +530,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
 								selectedLogFields: selectedWidget?.selectedLogFields || [],
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
+								legendPosition: selectedWidget?.legendPosition || LegendPosition.BOTTOM,
+								customLegendColors: selectedWidget?.customLegendColors || {},
 							},
 							...afterWidgets,
 					  ],
@@ -711,6 +745,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								requestData={requestData}
 								setRequestData={setRequestData}
 								isLoadingPanelData={isLoadingPanelData}
+								setQueryResponse={setQueryResponse}
 							/>
 						)}
 					</OverlayScrollbar>
@@ -752,6 +787,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							setIsFillSpans={setIsFillSpans}
 							isLogScale={isLogScale}
 							setIsLogScale={setIsLogScale}
+							legendPosition={legendPosition}
+							setLegendPosition={setLegendPosition}
+							customLegendColors={customLegendColors}
+							setCustomLegendColors={setCustomLegendColors}
+							queryResponse={queryResponse}
 							softMin={softMin}
 							setSoftMin={setSoftMin}
 							softMax={softMax}

@@ -3,12 +3,18 @@ package integrations
 import (
 	"context"
 	"testing"
+	"time"
 
-	"github.com/SigNoz/signoz/pkg/emailing"
-	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/sharder"
+	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
 )
@@ -19,11 +25,14 @@ func TestIntegrationLifecycle(t *testing.T) {
 	mgr, store := NewTestIntegrationsManager(t)
 	ctx := context.Background()
 
-	organizationModule := implorganization.NewModule(implorganization.NewStore(store))
 	providerSettings := instrumentationtest.New().ToProviderSettings()
-	emailing, _ := noopemailing.New(context.Background(), providerSettings, emailing.Config{})
-	userModule := impluser.NewModule(impluser.NewStore(store, providerSettings), nil, emailing, providerSettings)
-	user, apiErr := createTestUser(organizationModule, userModule)
+	sharder, _ := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(store), sharder)
+	alertmanager, _ := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Provider: "signoz", Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, store, orgGetter)
+	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	emailing := emailingtest.New()
+	modules := signoz.NewModules(store, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create test user: %v", apiErr)
 	}

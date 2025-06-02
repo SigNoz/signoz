@@ -1,4 +1,5 @@
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
+import { ToggleGraphProps } from 'components/Graph/types';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
@@ -19,6 +20,7 @@ import {
 	useCallback,
 	useEffect,
 	useRef,
+	useState,
 } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useDispatch } from 'react-redux';
@@ -36,10 +38,36 @@ function WidgetGraph({
 	selectedGraph,
 }: WidgetGraphProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
+	const lineChartRef = useRef<ToggleGraphProps>();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
 	const { safeNavigate } = useSafeNavigate();
+
+	// Add legend state management similar to dashboard components
+	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
+		Array((queryResponse.data?.payload?.data?.result?.length || 0) + 1).fill(
+			true,
+		),
+	);
+
+	// Initialize graph visibility when data changes
+	useEffect(() => {
+		if (queryResponse.data?.payload?.data?.result) {
+			setGraphVisibility(
+				Array(queryResponse.data.payload.data.result.length + 1).fill(true),
+			);
+		}
+	}, [queryResponse.data?.payload?.data?.result]);
+
+	// Apply graph visibility when lineChartRef is available
+	useEffect(() => {
+		if (!lineChartRef.current) return;
+
+		graphVisibility.forEach((state, index) => {
+			lineChartRef.current?.toggleGraph(index, state);
+		});
+	}, [graphVisibility]);
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -154,6 +182,8 @@ function WidgetGraph({
 				onDragSelect={onDragSelect}
 				selectedGraph={selectedGraph}
 				onClickHandler={graphClickHandler}
+				graphVisibility={graphVisibility}
+				setGraphVisibility={setGraphVisibility}
 			/>
 		</div>
 	);

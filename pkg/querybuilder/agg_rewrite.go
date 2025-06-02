@@ -13,33 +13,41 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-type AggExprRewriterOptions struct {
-	MetadataStore    telemetrytypes.MetadataStore
-	FullTextColumn   *telemetrytypes.TelemetryFieldKey
-	FieldMapper      qbtypes.FieldMapper
-	ConditionBuilder qbtypes.ConditionBuilder
-	FilterCompiler   qbtypes.FilterCompiler
-	JsonBodyPrefix   string
-	JsonKeyToKey     qbtypes.JsonKeyToFieldFunc
-}
-
 type aggExprRewriter struct {
-	opts AggExprRewriterOptions
+	fullTextColumn   *telemetrytypes.TelemetryFieldKey
+	fieldMapper      qbtypes.FieldMapper
+	conditionBuilder qbtypes.ConditionBuilder
+	jsonBodyPrefix   string
+	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 }
 
-func NewAggExprRewriter(opts AggExprRewriterOptions) *aggExprRewriter {
-	return &aggExprRewriter{opts: opts}
+var _ qbtypes.AggExprRewriter = (*aggExprRewriter)(nil)
+
+func NewAggExprRewriter(
+	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	fieldMapper qbtypes.FieldMapper,
+	conditionBuilder qbtypes.ConditionBuilder,
+	jsonBodyPrefix string,
+	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+) *aggExprRewriter {
+	return &aggExprRewriter{
+		fullTextColumn:   fullTextColumn,
+		fieldMapper:      fieldMapper,
+		conditionBuilder: conditionBuilder,
+		jsonBodyPrefix:   jsonBodyPrefix,
+		jsonKeyToKey:     jsonKeyToKey,
+	}
 }
 
 // Rewrite parses the given aggregation expression, maps the column, and condition to
 // valid data source column and condition expression, and returns the rewritten expression
 // and the args if the parametric aggregation function is used.
-func (r *aggExprRewriter) Rewrite(ctx context.Context, expr string, opts ...qbtypes.RewriteOption) (string, []any, error) {
-
-	rctx := &qbtypes.RewriteCtx{}
-	for _, opt := range opts {
-		opt(rctx)
-	}
+func (r *aggExprRewriter) Rewrite(
+	ctx context.Context,
+	expr string,
+	rateInterval uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) (string, []any, error) {
 
 	wrapped := fmt.Sprintf("SELECT %s", expr)
 	p := chparser.NewParser(wrapped)
@@ -62,19 +70,12 @@ func (r *aggExprRewriter) Rewrite(ctx context.Context, expr string, opts ...qbty
 		return "", nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
 	}
 
-	selectors := QueryStringToKeysSelectors(expr)
-
-	keys, err := r.opts.MetadataStore.GetKeysMulti(ctx, selectors)
-	if err != nil {
-		return "", nil, err
-	}
-
 	visitor := newExprVisitor(keys,
-		r.opts.FullTextColumn,
-		r.opts.FieldMapper,
-		r.opts.ConditionBuilder,
-		r.opts.JsonBodyPrefix,
-		r.opts.JsonKeyToKey,
+		r.fullTextColumn,
+		r.fieldMapper,
+		r.conditionBuilder,
+		r.jsonBodyPrefix,
+		r.jsonKeyToKey,
 	)
 	// Rewrite the first select item (our expression)
 	if err := sel.SelectItems[0].Accept(visitor); err != nil {
@@ -82,26 +83,23 @@ func (r *aggExprRewriter) Rewrite(ctx context.Context, expr string, opts ...qbty
 	}
 
 	if visitor.isRate {
-		return fmt.Sprintf("%s/%d", sel.SelectItems[0].String(), rctx.RateInterval), visitor.chArgs, nil
+		return fmt.Sprintf("%s/%d", sel.SelectItems[0].String(), rateInterval), visitor.chArgs, nil
 	}
 	return sel.SelectItems[0].String(), visitor.chArgs, nil
 }
 
-// RewriteMultiple rewrites a slice of expressions.
-func (r *aggExprRewriter) RewriteMultiple(
+// RewriteMulti rewrites a slice of expressions.
+func (r *aggExprRewriter) RewriteMulti(
 	ctx context.Context,
 	exprs []string,
-	opts ...qbtypes.RewriteOption,
+	rateInterval uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) ([]string, [][]any, error) {
-	rctx := &qbtypes.RewriteCtx{}
-	for _, opt := range opts {
-		opt(rctx)
-	}
 	out := make([]string, len(exprs))
 	var errs []error
 	var chArgsList [][]any
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(ctx, e, opts...)
+		w, chArgs, err := r.Rewrite(ctx, e, rateInterval, keys)
 		if err != nil {
 			errs = append(errs, err)
 			out[i] = e
@@ -173,6 +171,11 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		v.isRate = true
 	}
 
+	dataType := telemetrytypes.FieldDataTypeString
+	if aggFunc.Numeric {
+		dataType = telemetrytypes.FieldDataTypeFloat64
+	}
+
 	// Handle *If functions with predicate + values
 	if aggFunc.FuncCombinator {
 		// Map the predicate (last argument)
@@ -205,11 +208,13 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		// Map each value column argument
 		for i := 0; i < len(args)-1; i++ {
 			origVal := args[i].String()
-			colName, err := v.fieldMapper.ColumnExpressionFor(context.Background(), &telemetrytypes.TelemetryFieldKey{Name: origVal}, v.fieldKeys)
+			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
+			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
-			newVal := colName
+			v.chArgs = append(v.chArgs, exprArgs...)
+			newVal := expr
 			parsedVal, err := parseFragment(newVal)
 			if err != nil {
 				return err
@@ -221,11 +226,13 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		// Non-If functions: map every argument as a column/value
 		for i, arg := range args {
 			orig := arg.String()
-			colName, err := v.fieldMapper.ColumnExpressionFor(context.Background(), &telemetrytypes.TelemetryFieldKey{Name: orig}, v.fieldKeys)
+			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
+			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", orig)
 			}
-			newCol := colName
+			v.chArgs = append(v.chArgs, exprArgs...)
+			newCol := expr
 			parsed, err := parseFragment(newCol)
 			if err != nil {
 				return err

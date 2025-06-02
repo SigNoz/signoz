@@ -5,6 +5,7 @@ export const SOURCEPAGE_VS_ROUTES: {
 } = {
 	logs: ROUTES.LOGS_EXPLORER,
 	traces: ROUTES.TRACES_EXPLORER,
+	metrics: ROUTES.METRICS_EXPLORER_EXPLORER,
 } as const;
 
 export const ROUTES_VS_SOURCEPAGE: {
@@ -12,4 +13,5 @@ export const ROUTES_VS_SOURCEPAGE: {
 } = {
 	[ROUTES.LOGS_SAVE_VIEWS]: 'logs',
 	[ROUTES.TRACES_SAVE_VIEWS]: 'traces',
+	[ROUTES.METRICS_EXPLORER_VIEWS]: 'metrics',
 } as const;
