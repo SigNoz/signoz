@@ -145,7 +145,6 @@ function Explorer(): JSX.Element {
 			<ExplorerOptionWrapper
 				disabled={!stagedQuery}
 				query={exportDefaultQuery}
-				isLoading={false}
 				sourcepage={DataSource.METRICS}
 				onExport={handleExport}
 				isOneChartPerQuery={showOneChartPerQuery}

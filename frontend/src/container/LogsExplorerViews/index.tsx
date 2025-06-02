@@ -753,7 +753,6 @@ function LogsExplorerViews({
 			<ExplorerOptionWrapper
 				disabled={!stagedQuery}
 				query={exportDefaultQuery}
-				isLoading={false}
 				onExport={handleExport}
 				sourcepage={DataSource.LOGS}
 			/>

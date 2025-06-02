@@ -22,7 +22,6 @@ import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQ
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
-import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { cloneDeep, isEmpty, set } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -37,8 +36,6 @@ import { ActionsWrapper, Container } from './styles';
 import { getTabsItems } from './utils';
 
 function TracesExplorer(): JSX.Element {
-	const { notifications } = useNotifications();
-
 	const {
 		currentQuery,
 		panelType,
@@ -121,7 +118,7 @@ function TracesExplorer(): JSX.Element {
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	const getUpdatedQueryForExport = (): Query => {
+	const getUpdatedQueryForExport = useCallback((): Query => {
 		const updatedQuery = cloneDeep(currentQuery);
 
 		set(
@@ -131,7 +128,7 @@ function TracesExplorer(): JSX.Element {
 		);
 
 		return updatedQuery;
-	};
+	}, [currentQuery, options.selectColumns]);
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
@@ -148,6 +145,12 @@ function TracesExplorer(): JSX.Element {
 					? getUpdatedQueryForExport()
 					: exportDefaultQuery;
 
+			logEvent('Traces Explorer: Add to dashboard successful', {
+				panelType,
+				isNewDashboard,
+				dashboardName: dashboard?.data?.title,
+			});
+
 			const dashboardEditView = generateExportToDashboardLink({
 				query,
 				panelType: panelTypeParam,
@@ -156,15 +159,8 @@ function TracesExplorer(): JSX.Element {
 			});
 
 			safeNavigate(dashboardEditView);
-
-			logEvent('Traces Explorer: Add to dashboard successful', {
-				panelType,
-				isNewDashboard,
-				dashboardName: dashboard?.data?.title,
-			});
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[exportDefaultQuery, notifications, panelType],
+		[exportDefaultQuery, panelType, safeNavigate, getUpdatedQueryForExport],
 	);
 
 	useShareBuilderUrl(defaultQuery);
@@ -235,11 +231,7 @@ function TracesExplorer(): JSX.Element {
 
 					<Container className="traces-explorer-views">
 						<ActionsWrapper>
-							<ExportPanel
-								query={exportDefaultQuery}
-								isLoading={false}
-								onExport={handleExport}
-							/>
+							<ExportPanel query={exportDefaultQuery} onExport={handleExport} />
 						</ActionsWrapper>
 
 						<Tabs
@@ -252,7 +244,6 @@ function TracesExplorer(): JSX.Element {
 					<ExplorerOptionWrapper
 						disabled={!stagedQuery}
 						query={exportDefaultQuery}
-						isLoading={false}
 						sourcepage={DataSource.TRACES}
 						onExport={handleExport}
 					/>
