@@ -1945,10 +1945,11 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if constants.IsDotMetricsEnabled {
-		featureSet = append(featureSet, &licensetypes.Feature{
-			Name:   licensetypes.DotMetricsEnabled,
-			Active: true,
-		})
+		for idx, feature := range featureSet {
+			if feature.Name == licensetypes.DotMetricsEnabled {
+				featureSet[idx].Active = true
+			}
+		}
 	}
 	aH.Respond(w, featureSet)
 }
