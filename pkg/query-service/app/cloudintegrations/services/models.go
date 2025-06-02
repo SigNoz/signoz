@@ -1,7 +1,7 @@
 package services
 
 import (
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 )
 
 type Metadata struct {
@@ -82,10 +82,10 @@ type AWSLogsStrategy struct {
 }
 
 type Dashboard struct {
-	Id          string               `json:"id"`
-	Url         string               `json:"url"`
-	Title       string               `json:"title"`
-	Description string               `json:"description"`
-	Image       string               `json:"image"`
-	Definition  *types.DashboardData `json:"definition,omitempty"`
+	Id          string                                `json:"id"`
+	Url         string                                `json:"url"`
+	Title       string                                `json:"title"`
+	Description string                                `json:"description"`
+	Image       string                                `json:"image"`
+	Definition  *dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
 }
