@@ -236,6 +236,12 @@ export const getK8sDaemonSetsListColumns = (
 	return columnsConfig as ColumnType<K8sDaemonSetsRowData>[];
 };
 
+const dotToUnder: Record<string, keyof K8sDaemonSetsData['meta']> = {
+	'k8s.daemonset.name': 'k8s_daemonset_name',
+	'k8s.namespace.name': 'k8s_namespace_name',
+	'k8s.cluster.name': 'k8s_cluster_name',
+};
+
 const getGroupByEle = (
 	daemonSet: K8sDaemonSetsData,
 	groupBy: IBuilderQuery['groupBy'],
@@ -243,7 +249,13 @@ const getGroupByEle = (
 	const groupByValues: string[] = [];
 
 	groupBy.forEach((group) => {
-		groupByValues.push(daemonSet.meta[group.key as keyof typeof daemonSet.meta]);
+		const rawKey = group.key as string;
+
+		// Choose mapped key if present, otherwise use rawKey
+		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof daemonSet.meta;
+		const value = daemonSet.meta[metaKey];
+
+		groupByValues.push(value);
 	});
 
 	return (

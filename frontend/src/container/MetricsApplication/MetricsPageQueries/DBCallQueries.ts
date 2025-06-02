@@ -21,6 +21,7 @@ export const databaseCallsRPS = ({
 	servicename,
 	legend,
 	tagFilterItems,
+	dotMetricsEnabled,
 }: DatabaseCallsRPSProps): QueryBuilderData => {
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
@@ -34,7 +35,7 @@ export const databaseCallsRPS = ({
 		{
 			dataType: DataTypes.String,
 			isColumn: false,
-			key: 'db_system',
+			key: dotMetricsEnabled ? WidgetKeys.Db_system : WidgetKeys.Db_system_norm,
 			type: 'tag',
 		},
 	];
@@ -43,7 +44,9 @@ export const databaseCallsRPS = ({
 			{
 				id: '',
 				key: {
-					key: WidgetKeys.Service_name,
+					key: dotMetricsEnabled
+						? WidgetKeys.Service_name
+						: WidgetKeys.Service_name_norm,
 					dataType: DataTypes.String,
 					isColumn: false,
 					type: MetricsType.Resource,
@@ -75,6 +78,7 @@ export const databaseCallsRPS = ({
 export const databaseCallsAvgDuration = ({
 	servicename,
 	tagFilterItems,
+	dotMetricsEnabled,
 }: DatabaseCallProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozDbLatencySum,
@@ -93,7 +97,9 @@ export const databaseCallsAvgDuration = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Resource,

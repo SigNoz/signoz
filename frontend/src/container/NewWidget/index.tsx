@@ -105,9 +105,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const isLogsQuery = currentQuery.builder.queryData.every(
-		(query) => query.dataSource === DataSource.LOGS,
-	);
+	const isLogsQuery =
+		currentQuery?.builder?.queryData?.length > 0 &&
+		currentQuery?.builder?.queryData?.every(
+			(query) => query?.dataSource === DataSource.LOGS,
+		);
 
 	const customGlobalSelectedInterval = useMemo(
 		() =>
@@ -358,7 +360,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	// this has been moved here from the left container
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		const updatedQuery = cloneDeep(stagedQuery || initialQueriesMap.metrics);
-		updatedQuery.builder.queryData[0].pageSize = 10;
+		if (updatedQuery?.builder?.queryData?.[0]) {
+			updatedQuery.builder.queryData[0].pageSize = 10;
+		}
 
 		if (selectedWidget) {
 			if (selectedGraph === PANEL_TYPES.LIST) {
@@ -406,7 +410,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		if (stagedQuery) {
 			setIsLoadingPanelData(false);
 			const updatedStagedQuery = cloneDeep(stagedQuery);
-			updatedStagedQuery.builder.queryData[0].pageSize = 10;
+			if (updatedStagedQuery?.builder?.queryData?.[0]) {
+				updatedStagedQuery.builder.queryData[0].pageSize = 10;
+			}
 			setRequestData((prev) => ({
 				...prev,
 				selectedTime: selectedTime.enum || prev.selectedTime,

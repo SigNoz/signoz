@@ -2,8 +2,8 @@ import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import ExplorerPage from 'container/MetricsExplorer/Explorer';
 import SummaryPage from 'container/MetricsExplorer/Summary';
-import ViewsPage from 'container/MetricsExplorer/Views';
 import { BarChart2, Compass, TowerControl } from 'lucide-react';
+import SaveView from 'pages/SaveView';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 
 export const Summary: TabRoutes = {
@@ -33,7 +33,7 @@ export const Explorer: TabRoutes = {
 };
 
 export const Views: TabRoutes = {
-	Component: ViewsPage,
+	Component: SaveView,
 	name: (
 		<div className="tab-item">
 			<TowerControl size={16} /> Views
