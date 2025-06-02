@@ -275,14 +275,16 @@ describe('PipelinePage container test', () => {
 
 	it('should have populated form fields when edit pipeline is clicked', async () => {
 		render(
-			<PipelineListsView
-				setActionType={jest.fn()}
-				isActionMode="editing-mode"
-				setActionMode={jest.fn()}
-				pipelineData={pipelineApiResponseMockData}
-				isActionType="edit-pipeline"
-				refetchPipelineLists={jest.fn()}
-			/>,
+			<PreferenceContextProvider>
+				<PipelineListsView
+					setActionType={jest.fn()}
+					isActionMode="editing-mode"
+					setActionMode={jest.fn()}
+					pipelineData={pipelineApiResponseMockData}
+					isActionType="edit-pipeline"
+					refetchPipelineLists={jest.fn()}
+				/>
+			</PreferenceContextProvider>,
 		);
 
 		// content assertion
