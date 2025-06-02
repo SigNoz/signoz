@@ -91,7 +91,10 @@ export function useFunnelStepsMetrics({
 	} = useFunnelStepsOverview(funnelId, payload);
 
 	const latencyType = useMemo(
-		() => (stepStart ? steps[stepStart]?.latency_type : LatencyOptions.P99),
+		() =>
+			stepStart
+				? steps[stepStart]?.latency_type ?? LatencyOptions.P99
+				: LatencyOptions.P99,
 		[stepStart, steps],
 	);
 
@@ -113,7 +116,7 @@ export function useFunnelStepsMetrics({
 				),
 			},
 			{
-				title: `${latencyType?.toUpperCase()} Latency`,
+				title: `${latencyType.toUpperCase()} Latency`,
 				value: getYAxisFormattedValue(
 					(sourceData.latency * 1_000_000).toString(),
 					'ns',
