@@ -161,7 +161,12 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, orgID val
 		if errv2 != nil {
 			return &model.ApiError{Typ: model.ErrorInternal, Err: errv2}
 		}
-		data, err := receiver.dashboard.GetByMetricNames(ctx, claims.OrgID, metricNames)
+
+		orgID, err := valuer.NewUUID(claims.OrgID)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+		data, err := receiver.dashboard.GetByMetricNames(ctx, orgID, metricNames)
 		if err != nil {
 			return err
 		}
@@ -334,7 +339,11 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 		if errv2 != nil {
 			return &model.ApiError{Typ: model.ErrorInternal, Err: errv2}
 		}
-		names, err := receiver.dashboard.GetByMetricNames(ctx, claims.OrgID, metricNames)
+		orgID, err := valuer.NewUUID(claims.OrgID)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+		names, err := receiver.dashboard.GetByMetricNames(ctx, orgID, metricNames)
 		if err != nil {
 			return err
 		}

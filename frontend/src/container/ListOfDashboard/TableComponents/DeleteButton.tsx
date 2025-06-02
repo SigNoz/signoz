@@ -59,7 +59,7 @@ export function DeleteButton({
 				onClick: (e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					deleteDashboardMutation.mutateAsync(undefined, {
+					deleteDashboardMutation.mutate(undefined, {
 						onSuccess: () => {
 							notifications.success({
 								message: t('dashboard:delete_dashboard_success', {

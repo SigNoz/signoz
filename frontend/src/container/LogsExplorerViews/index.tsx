@@ -421,7 +421,7 @@ function LogsExplorerViews({
 			const dashboardEditView = generateExportToDashboardLink({
 				query,
 				panelType: panelTypeParam,
-				dashboardId: dashboard.uuid,
+				dashboardId: dashboard.id,
 				widgetId,
 			});
 

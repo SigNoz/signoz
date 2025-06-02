@@ -54,7 +54,7 @@ func NewModules(
 		Preference:  implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewDefaultPreferenceMap()),
 		SavedView:   implsavedview.NewModule(sqlstore),
 		Apdex:       implapdex.NewModule(sqlstore),
-		Dashboard:   impldashboard.NewModule(sqlstore),
+		Dashboard:   impldashboard.NewModule(sqlstore, providerSettings),
 		User:        user,
 		QuickFilter: quickfilter,
 		TraceFunnel:  impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
