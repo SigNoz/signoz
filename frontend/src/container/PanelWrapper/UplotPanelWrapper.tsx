@@ -10,12 +10,19 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
+import {
+	getCustomApiResponse,
+	getCustomChartData,
+} from 'lib/uPlotLib/utils/getCustomChartData';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { cloneDeep, isEqual, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useTimezone } from 'providers/Timezone';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
@@ -35,13 +42,25 @@ function UplotPanelWrapper({
 	customTooltipElement,
 	customSeries,
 }: PanelWrapperProps): JSX.Element {
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
+	const {
+		toScrollWidgetId,
+		setToScrollWidgetId,
+		globalCustomDataMode,
+		globalCustomXData,
+		globalCustomYData,
+	} = useDashboard();
+
 	const isDarkMode = useIsDarkMode();
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const { currentQuery } = useQueryBuilder();
+
+	// Get global time for custom data generation
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const [hiddenGraph, setHiddenGraph] = useState<{ [key: string]: boolean }>();
 
@@ -56,12 +75,64 @@ function UplotPanelWrapper({
 		}
 	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 
+	// Create custom response when custom data mode is enabled (either via widget or global setting)
+	const effectiveQueryResponse = useMemo(() => {
+		// If global custom data mode is enabled, it should override widget settings
+		const isCustomDataEnabled = globalCustomDataMode || widget.customDataMode;
+
+		// When global custom data is enabled, use global values regardless of widget settings
+		let xData = null;
+		let yData = null;
+
+		if (globalCustomDataMode) {
+			// Global settings override widget settings
+			xData = globalCustomXData;
+			yData = globalCustomYData;
+		} else if (widget.customDataMode) {
+			// Only use widget settings if global is not enabled
+			xData = widget.customXData;
+			yData = widget.customYData;
+		}
+
+		if (isCustomDataEnabled && xData && yData) {
+			// Convert nanoseconds to seconds for custom data generation
+			const startTimeSeconds = Math.floor(minTime / 1000000000);
+			const endTimeSeconds = Math.floor(maxTime / 1000000000);
+
+			const customResponse = getCustomApiResponse(
+				xData,
+				yData,
+				startTimeSeconds,
+				endTimeSeconds,
+			);
+			// Return a properly structured response that matches the expected type
+			return {
+				...queryResponse,
+				data: customResponse,
+				isSuccess: true,
+				isError: false,
+				isLoading: false,
+			} as typeof queryResponse;
+		}
+		return queryResponse;
+	}, [
+		queryResponse,
+		widget.customDataMode,
+		widget.customXData,
+		widget.customYData,
+		globalCustomDataMode,
+		globalCustomXData,
+		globalCustomYData,
+		minTime,
+		maxTime,
+	]);
+
 	useEffect((): void => {
-		const { startTime, endTime } = getTimeRange(queryResponse);
+		const { startTime, endTime } = getTimeRange(effectiveQueryResponse);
 
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
-	}, [queryResponse]);
+	}, [effectiveQueryResponse]);
 
 	const containerDimensions = useResizeObserver(graphRef);
 
@@ -69,28 +140,71 @@ function UplotPanelWrapper({
 		const {
 			graphVisibilityStates: localStoredVisibilityState,
 		} = getLocalStorageGraphVisibilityState({
-			apiResponse: queryResponse.data?.payload.data.result || [],
+			apiResponse: effectiveQueryResponse.data?.payload.data.result || [],
 			name: widget.id,
 		});
 		if (setGraphVisibility) {
 			setGraphVisibility(localStoredVisibilityState);
 		}
-	}, [queryResponse.data?.payload.data.result, setGraphVisibility, widget.id]);
+	}, [
+		effectiveQueryResponse.data?.payload.data.result,
+		setGraphVisibility,
+		widget.id,
+	]);
 
-	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.BAR) {
+	if (effectiveQueryResponse.data && widget.panelTypes === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
-			queryResponse.data?.payload.data.result,
+			effectiveQueryResponse.data?.payload.data.result,
 		);
 		// eslint-disable-next-line no-param-reassign
-		queryResponse.data.payload.data.result = sortedSeriesData;
+		effectiveQueryResponse.data.payload.data.result = sortedSeriesData;
 	}
 
-	const chartData = getUPlotChartData(
-		queryResponse?.data?.payload,
+	const chartData = useMemo(() => {
+		// If global custom data mode is enabled, it should override widget settings
+		const isCustomDataEnabled = globalCustomDataMode || widget.customDataMode;
+
+		// When global custom data is enabled, use global values regardless of widget settings
+		let xData = null;
+		let yData = null;
+
+		if (globalCustomDataMode) {
+			// Global settings override widget settings
+			xData = globalCustomXData;
+			yData = globalCustomYData;
+		} else if (widget.customDataMode) {
+			// Only use widget settings if global is not enabled
+			xData = widget.customXData;
+			yData = widget.customYData;
+		}
+
+		if (isCustomDataEnabled && xData && yData) {
+			// Convert nanoseconds to seconds for custom data generation
+			const startTimeSeconds = Math.floor(minTime / 1000000000);
+			const endTimeSeconds = Math.floor(maxTime / 1000000000);
+
+			return getCustomChartData(xData, yData, startTimeSeconds, endTimeSeconds);
+		}
+		return getUPlotChartData(
+			effectiveQueryResponse?.data?.payload,
+			widget.fillSpans,
+			widget?.stackedBarChart,
+			hiddenGraph,
+		);
+	}, [
+		widget.customDataMode,
+		widget.customXData,
+		widget.customYData,
+		globalCustomDataMode,
+		globalCustomXData,
+		globalCustomYData,
+		minTime,
+		maxTime,
+		effectiveQueryResponse?.data?.payload,
 		widget.fillSpans,
 		widget?.stackedBarChart,
 		hiddenGraph,
-	);
+	]);
 
 	useEffect(() => {
 		if (widget.panelTypes === PANEL_TYPES.BAR && widget?.stackedBarChart) {
@@ -110,16 +224,22 @@ function UplotPanelWrapper({
 
 	const { timezone } = useTimezone();
 
+	// Standard click handler without performance monitoring
+	const enhancedClickHandler = useMemo(() => {
+		if (!onClickHandler) return _noop;
+		return onClickHandler;
+	}, [onClickHandler]);
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
 				id: widget?.id,
-				apiResponse: queryResponse.data?.payload,
+				apiResponse: effectiveQueryResponse.data?.payload,
 				dimensions: containerDimensions,
 				isDarkMode,
 				onDragSelect,
 				yAxisUnit: widget?.yAxisUnit,
-				onClickHandler: onClickHandler || _noop,
+				onClickHandler: enhancedClickHandler,
 				thresholds: widget.thresholds,
 				minTimeScale,
 				maxTimeScale,
@@ -150,11 +270,11 @@ function UplotPanelWrapper({
 			widget.softMin,
 			widget.panelTypes,
 			widget?.stackedBarChart,
-			queryResponse.data?.payload,
+			effectiveQueryResponse.data?.payload,
 			containerDimensions,
 			isDarkMode,
 			onDragSelect,
-			onClickHandler,
+			enhancedClickHandler,
 			minTimeScale,
 			maxTimeScale,
 			graphVisibility,
@@ -171,6 +291,14 @@ function UplotPanelWrapper({
 		],
 	);
 
+	console.log(
+		'chartData',
+		'x-axis',
+		chartData[0].length,
+		'y-axis',
+		chartData.length,
+	);
+
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<Uplot options={options} data={chartData} ref={lineChartRef} />
@@ -183,7 +311,10 @@ function UplotPanelWrapper({
 			)}
 			{isFullViewMode && setGraphVisibility && !widget?.stackedBarChart && (
 				<GraphManager
-					data={getUPlotChartData(queryResponse?.data?.payload, widget.fillSpans)}
+					data={getUPlotChartData(
+						effectiveQueryResponse?.data?.payload,
+						widget.fillSpans,
+					)}
 					name={widget.id}
 					options={options}
 					yAxisUnit={widget.yAxisUnit}

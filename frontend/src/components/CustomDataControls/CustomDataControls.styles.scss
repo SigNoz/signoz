@@ -1,0 +1,85 @@
+.custom-data-controls {
+	margin: 8px 0;
+
+	.custom-data-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 8px;
+	}
+
+	.custom-data-inputs {
+		margin-top: 8px;
+
+		.input-group {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 8px;
+
+			.input-label {
+				margin-right: 8px;
+			}
+		}
+	}
+}
+
+.global-custom-data-controls {
+	background-color: #f0f2f5;
+	border-radius: 4px;
+	padding: 10px;
+	margin-bottom: 16px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+	.ant-card-body {
+		padding: 12px;
+	}
+
+	&.dark-mode {
+		background-color: #141414;
+		border: 1px solid #303030;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+	}
+
+	&.inline-layout {
+		.custom-data-inline-container {
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 16px;
+
+			.title-switch-group {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				min-width: 180px;
+
+				.ant-typography {
+					white-space: nowrap;
+				}
+			}
+
+			.inputs-container {
+				display: flex;
+				align-items: center;
+				gap: 20px;
+
+				.input-group {
+					display: flex;
+					align-items: center;
+					margin-bottom: 0;
+
+					.input-label {
+						margin-right: 8px;
+						white-space: nowrap;
+					}
+				}
+			}
+		}
+
+		// Reduce vertical padding for the card
+		.ant-card-body {
+			padding: 8px 12px;
+		}
+	}
+}

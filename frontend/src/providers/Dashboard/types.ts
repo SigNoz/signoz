@@ -1,39 +1,40 @@
-import dayjs from 'dayjs';
+import { Dayjs } from 'dayjs';
+import { Dispatch, SetStateAction } from 'react';
 import { Layout } from 'react-grid-layout';
 import { UseQueryResult } from 'react-query';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
 export interface DashboardSortOrder {
-	columnKey: string;
-	order: string;
-	pagination: string;
-	search: string;
+	columnKey?: string | null;
+	order?: string | null;
+	pagination?: string;
+	search?: string;
 }
 
-export type WidgetColumnWidths = {
-	[widgetId: string]: Record<string, number>;
-};
+export interface WidgetColumnWidths {
+	[key: string]: Record<string, number>;
+}
 
 export interface IDashboardContext {
 	isDashboardSliderOpen: boolean;
 	isDashboardLocked: boolean;
 	handleToggleDashboardSlider: (value: boolean) => void;
-	handleDashboardLockToggle: (value: boolean) => void;
+	handleDashboardLockToggle: (value: boolean) => Promise<void>;
 	dashboardResponse: UseQueryResult<Dashboard, unknown>;
-	selectedDashboard: Dashboard | undefined;
+	selectedDashboard: Dashboard;
 	dashboardId: string;
 	layouts: Layout[];
 	panelMap: Record<string, { widgets: Layout[]; collapsed: boolean }>;
-	setPanelMap: React.Dispatch<React.SetStateAction<Record<string, any>>>;
-	listSortOrder: DashboardSortOrder;
-	setListSortOrder: (sortOrder: DashboardSortOrder) => void;
-	setLayouts: React.Dispatch<React.SetStateAction<Layout[]>>;
-	setSelectedDashboard: React.Dispatch<
-		React.SetStateAction<Dashboard | undefined>
+	setPanelMap: Dispatch<
+		SetStateAction<Record<string, { widgets: Layout[]; collapsed: boolean }>>
 	>;
-	updatedTimeRef: React.MutableRefObject<dayjs.Dayjs | null>;
+	listSortOrder: DashboardSortOrder;
+	setListSortOrder: (value: DashboardSortOrder) => void;
+	setLayouts: Dispatch<SetStateAction<Layout[]>>;
+	setSelectedDashboard: Dispatch<SetStateAction<Dashboard | undefined>>;
+	updatedTimeRef: React.MutableRefObject<Dayjs | null>;
 	toScrollWidgetId: string;
-	setToScrollWidgetId: React.Dispatch<React.SetStateAction<string>>;
+	setToScrollWidgetId: Dispatch<SetStateAction<string>>;
 	updateLocalStorageDashboardVariables: (
 		id: string,
 		selectedValue:
@@ -46,12 +47,19 @@ export interface IDashboardContext {
 		allSelected: boolean,
 	) => void;
 	variablesToGetUpdated: string[];
-	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
+	setVariablesToGetUpdated: Dispatch<SetStateAction<string[]>>;
 	dashboardQueryRangeCalled: boolean;
-	setDashboardQueryRangeCalled: (value: boolean) => void;
+	setDashboardQueryRangeCalled: Dispatch<SetStateAction<boolean>>;
 	selectedRowWidgetId: string | null;
-	setSelectedRowWidgetId: React.Dispatch<React.SetStateAction<string | null>>;
+	setSelectedRowWidgetId: Dispatch<SetStateAction<string | null>>;
 	isDashboardFetching: boolean;
 	columnWidths: WidgetColumnWidths;
-	setColumnWidths: React.Dispatch<React.SetStateAction<WidgetColumnWidths>>;
+	setColumnWidths: Dispatch<SetStateAction<WidgetColumnWidths>>;
+	// Global custom data state
+	globalCustomDataMode: boolean;
+	setGlobalCustomDataMode: Dispatch<SetStateAction<boolean>>;
+	globalCustomXData: number;
+	setGlobalCustomXData: Dispatch<SetStateAction<number>>;
+	globalCustomYData: number;
+	setGlobalCustomYData: Dispatch<SetStateAction<number>>;
 }

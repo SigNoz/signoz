@@ -12,6 +12,7 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
+import GlobalCustomDataControlsHeader from 'components/CustomDataControls/GlobalCustomDataControlsHeader';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -477,6 +478,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						</Button>
 					)}
 				</div>
+			</section>
+			<section className="global-custom-data-section">
+				<GlobalCustomDataControlsHeader />
 			</section>
 			{(tags?.length || 0) > 0 && (
 				<div className="dashboard-tags">

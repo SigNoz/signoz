@@ -118,6 +118,9 @@ export interface IBaseWidget {
 	columnWidths?: Record<string, number>;
 	legendPosition?: LegendPosition;
 	customLegendColors?: Record<string, string>;
+	customDataMode?: boolean;
+	customXData?: number; // number of data points
+	customYData?: number; // number of series
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
