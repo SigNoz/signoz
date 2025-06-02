@@ -16,6 +16,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
+	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -32,6 +34,7 @@ type Modules struct {
 	Apdex       apdex.Module
 	Dashboard   dashboard.Module
 	QuickFilter quickfilter.Module
+	TraceFunnel  tracefunnel.Module
 }
 
 func NewModules(
@@ -54,5 +57,6 @@ func NewModules(
 		Dashboard:   impldashboard.NewModule(sqlstore),
 		User:        user,
 		QuickFilter: quickfilter,
+		TraceFunnel:  impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 	}
 }
