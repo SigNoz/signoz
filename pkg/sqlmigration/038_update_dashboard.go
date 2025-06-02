@@ -34,9 +34,9 @@ type newDashboard36 struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Data   map[string]interface{} `json:"data" bun:"data,type:text,notnull"`
-	Locked bool                   `json:"isLocked" bun:"locked,notnull,default:0"`
-	OrgID  valuer.UUID            `json:"-" bun:"org_id,notnull"`
+	Data   map[string]interface{} `bun:"data,type:text,notnull"`
+	Locked bool                   `bun:"locked,notnull,default:false"`
+	OrgID  valuer.UUID            `bun:"org_id,type:text,notnull"`
 }
 
 func NewUpdateDashboardFactory(store sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
