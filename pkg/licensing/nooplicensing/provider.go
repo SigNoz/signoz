@@ -60,40 +60,6 @@ func (provider *noopLicensing) GetActive(ctx context.Context, organizationID val
 	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "fetching active license is not supported")
 }
 
-func (provider *noopLicensing) CheckFeature(ctx context.Context, key string) error {
-	feature, err := provider.GetFeatureFlag(ctx, key)
-	if err != nil {
-		return err
-	}
-
-	if feature.Active {
-		return nil
-	}
-
-	return errors.Newf(errors.TypeNotFound, licensing.ErrCodeFeatureUnavailable, "feature unavailable: %s", key)
-}
-
-func (provider *noopLicensing) GetFeatureFlag(ctx context.Context, key string) (*featuretypes.GettableFeature, error) {
-	features, err := provider.GetFeatureFlags(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for _, feature := range features {
-		if feature.Name == key {
-			return feature, nil
-		}
-	}
-	return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "no feature available with given key: %s", key)
-}
-
-func (provider *noopLicensing) GetFeatureFlags(ctx context.Context) ([]*featuretypes.GettableFeature, error) {
+func (provider *noopLicensing) GetFeatureFlags(_ context.Context, _ valuer.UUID) ([]*featuretypes.Feature, error) {
 	return licensetypes.DefaultFeatureSet, nil
-}
-
-func (provider *noopLicensing) InitFeatures(ctx context.Context, features []*featuretypes.GettableFeature) error {
-	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "init features is not supported")
-}
-
-func (provider *noopLicensing) UpdateFeatureFlag(ctx context.Context, feature *featuretypes.GettableFeature) error {
-	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "updating feature flag is not supported")
 }

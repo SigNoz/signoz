@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"io"
 	"math"
 	"net/http"
@@ -20,6 +19,8 @@ import (
 	"sync"
 	"text/template"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
@@ -2007,11 +2008,12 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet, err := aH.Signoz.Licensing.GetFeatureFlags(r.Context())
+	featureSet, err := aH.Signoz.Licensing.GetFeatureFlags(r.Context(), valuer.GenerateUUID())
 	if err != nil {
 		aH.HandleError(w, err, http.StatusInternalServerError)
 		return
 	}
+
 	if aH.preferSpanMetrics {
 		for idx, feature := range featureSet {
 			if feature.Name == featuretypes.UseSpanMetrics {
@@ -2020,17 +2022,12 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if constants.IsDotMetricsEnabled {
-		featureSet = append(featureSet, &featuretypes.GettableFeature{
+		featureSet = append(featureSet, &featuretypes.Feature{
 			Name:   featuretypes.DotMetricsEnabled,
 			Active: true,
 		})
 	}
 	aH.Respond(w, featureSet)
-}
-
-func (aH *APIHandler) CheckFeature(ctx context.Context, key string) bool {
-	err := aH.Signoz.Licensing.CheckFeature(ctx, key)
-	return err == nil
 }
 
 // getHealth is used to check the health of the service.

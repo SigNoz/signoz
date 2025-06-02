@@ -10,51 +10,51 @@ import (
 func TestMergeFeatureSets(t *testing.T) {
 	tests := []struct {
 		name             string
-		zeusFeatures     []*featuretypes.GettableFeature
-		internalFeatures []*featuretypes.GettableFeature
-		expected         []*featuretypes.GettableFeature
+		zeusFeatures     []*featuretypes.Feature
+		internalFeatures []*featuretypes.Feature
+		expected         []*featuretypes.Feature
 	}{
 		{
 			name:             "empty zeusFeatures and internalFeatures",
-			zeusFeatures:     []*featuretypes.GettableFeature{},
-			internalFeatures: []*featuretypes.GettableFeature{},
-			expected:         []*featuretypes.GettableFeature{},
+			zeusFeatures:     []*featuretypes.Feature{},
+			internalFeatures: []*featuretypes.Feature{},
+			expected:         []*featuretypes.Feature{},
 		},
 		{
 			name: "non-empty zeusFeatures and empty internalFeatures",
-			zeusFeatures: []*featuretypes.GettableFeature{
+			zeusFeatures: []*featuretypes.Feature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 			},
-			internalFeatures: []*featuretypes.GettableFeature{},
-			expected: []*featuretypes.GettableFeature{
+			internalFeatures: []*featuretypes.Feature{},
+			expected: []*featuretypes.Feature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 			},
 		},
 		{
 			name:         "empty zeusFeatures and non-empty internalFeatures",
-			zeusFeatures: []*featuretypes.GettableFeature{},
-			internalFeatures: []*featuretypes.GettableFeature{
+			zeusFeatures: []*featuretypes.Feature{},
+			internalFeatures: []*featuretypes.Feature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 			},
-			expected: []*featuretypes.GettableFeature{
+			expected: []*featuretypes.Feature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 			},
 		},
 		{
 			name: "non-empty zeusFeatures and non-empty internalFeatures with no conflicts",
-			zeusFeatures: []*featuretypes.GettableFeature{
+			zeusFeatures: []*featuretypes.Feature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature3", Active: false},
 			},
-			internalFeatures: []*featuretypes.GettableFeature{
+			internalFeatures: []*featuretypes.Feature{
 				{Name: "Feature2", Active: true},
 				{Name: "Feature4", Active: false},
 			},
-			expected: []*featuretypes.GettableFeature{
+			expected: []*featuretypes.Feature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: true},
 				{Name: "Feature3", Active: false},
@@ -63,15 +63,15 @@ func TestMergeFeatureSets(t *testing.T) {
 		},
 		{
 			name: "non-empty zeusFeatures and non-empty internalFeatures with conflicts",
-			zeusFeatures: []*featuretypes.GettableFeature{
+			zeusFeatures: []*featuretypes.Feature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 			},
-			internalFeatures: []*featuretypes.GettableFeature{
+			internalFeatures: []*featuretypes.Feature{
 				{Name: "Feature1", Active: false},
 				{Name: "Feature3", Active: true},
 			},
-			expected: []*featuretypes.GettableFeature{
+			expected: []*featuretypes.Feature{
 				{Name: "Feature1", Active: true},
 				{Name: "Feature2", Active: false},
 				{Name: "Feature3", Active: true},

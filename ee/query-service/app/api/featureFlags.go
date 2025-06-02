@@ -31,7 +31,8 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	featureSet, err := ah.Signoz.Licensing.GetFeatureFlags(r.Context())
+	// check why is this open endpoint
+	featureSet, err := ah.Signoz.Licensing.GetFeatureFlags(r.Context(), orgID)
 	if err != nil {
 		ah.HandleError(w, err, http.StatusInternalServerError)
 		return
@@ -67,12 +68,19 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if constants.IsDotMetricsEnabled {
+		featureSet = append(featureSet, &featuretypes.Feature{
+			Name:   featuretypes.DotMetricsEnabled,
+			Active: true,
+		})
+	}
+
 	ah.Respond(w, featureSet)
 }
 
 // fetchZeusFeatures makes an HTTP GET request to the /zeusFeatures endpoint
 // and returns the FeatureSet.
-func fetchZeusFeatures(url, licenseKey string) ([]*featuretypes.GettableFeature, error) {
+func fetchZeusFeatures(url, licenseKey string) ([]*featuretypes.Feature, error) {
 	// Check if the URL is empty
 	if url == "" {
 		return nil, fmt.Errorf("url is empty")
@@ -131,14 +139,14 @@ func fetchZeusFeatures(url, licenseKey string) ([]*featuretypes.GettableFeature,
 }
 
 type ZeusFeaturesResponse struct {
-	Status string                          `json:"status"`
-	Data   []*featuretypes.GettableFeature `json:"data"`
+	Status string                  `json:"status"`
+	Data   []*featuretypes.Feature `json:"data"`
 }
 
 // MergeFeatureSets merges two FeatureSet arrays with precedence to zeusFeatures.
-func MergeFeatureSets(zeusFeatures, internalFeatures []*featuretypes.GettableFeature) []*featuretypes.GettableFeature {
+func MergeFeatureSets(zeusFeatures, internalFeatures []*featuretypes.Feature) []*featuretypes.Feature {
 	// Create a map to store the merged features
-	featureMap := make(map[string]*featuretypes.GettableFeature)
+	featureMap := make(map[string]*featuretypes.Feature)
 
 	// Add all features from the otherFeatures set to the map
 	for _, feature := range internalFeatures {
@@ -152,7 +160,7 @@ func MergeFeatureSets(zeusFeatures, internalFeatures []*featuretypes.GettableFea
 	}
 
 	// Convert the map back to a FeatureSet slice
-	var mergedFeatures []*featuretypes.GettableFeature
+	var mergedFeatures []*featuretypes.Feature
 	for _, feature := range featureMap {
 		mergedFeatures = append(mergedFeatures, feature)
 	}

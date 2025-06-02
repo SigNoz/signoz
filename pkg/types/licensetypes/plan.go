@@ -25,42 +25,42 @@ const Gateway = "GATEWAY"
 const PremiumSupport = "PREMIUM_SUPPORT"
 
 var BasicPlan = featuretypes.FeatureSet{
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       SSO,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       featuretypes.UseSpanMetrics,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       Gateway,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       PremiumSupport,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       featuretypes.AnomalyDetection,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       featuretypes.TraceFunnels,
 		Active:     false,
 		Usage:      0,
@@ -70,56 +70,56 @@ var BasicPlan = featuretypes.FeatureSet{
 }
 
 var EnterprisePlan = featuretypes.FeatureSet{
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       SSO,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       featuretypes.UseSpanMetrics,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       Onboarding,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       ChatSupport,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       Gateway,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       PremiumSupport,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       featuretypes.AnomalyDetection,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       featuretypes.TraceFunnels,
 		Active:     false,
 		Usage:      0,
@@ -129,7 +129,7 @@ var EnterprisePlan = featuretypes.FeatureSet{
 }
 
 var DefaultFeatureSet = featuretypes.FeatureSet{
-	&featuretypes.GettableFeature{
+	&featuretypes.Feature{
 		Name:       featuretypes.UseSpanMetrics,
 		Active:     false,
 		Usage:      0,

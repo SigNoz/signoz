@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/SigNoz/signoz/ee/query-service/constants"
-
 	"github.com/SigNoz/signoz/ee/licensing/licensingstore/sqllicensingstore"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -89,12 +87,12 @@ func (provider *provider) Validate(ctx context.Context) error {
 		}
 	}
 
-	if len(organizations) == 0 {
-		err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
-		if err != nil {
-			return err
-		}
-	}
+	// if len(organizations) == 0 {
+	// 	err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
@@ -116,10 +114,10 @@ func (provider *provider) Activate(ctx context.Context, organizationID valuer.UU
 		return err
 	}
 
-	err = provider.InitFeatures(ctx, license.Features)
-	if err != nil {
-		return err
-	}
+	// err = provider.InitFeatures(ctx, license.Features)
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
@@ -146,22 +144,22 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 	}
 
 	if err != nil && errors.Ast(err, errors.TypeNotFound) {
-		provider.settings.Logger().DebugContext(ctx, "no active license found, defaulting to basic plan", "org_id", organizationID.StringValue())
-		err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
-		if err != nil {
-			return err
-		}
+		// provider.settings.Logger().DebugContext(ctx, "no active license found, defaulting to basic plan", "org_id", organizationID.StringValue())
+		// err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
+		// if err != nil {
+		// 	return err
+		// }
 		return nil
 	}
 
 	data, err := provider.zeus.GetLicense(ctx, activeLicense.Key)
 	if err != nil {
 		if time.Since(activeLicense.LastValidatedAt) > time.Duration(provider.config.FailureThreshold)*provider.config.PollInterval {
-			provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive poll intervals, defaulting to basic plan", "failure_threshold", provider.config.FailureThreshold, "license_id", activeLicense.ID.StringValue(), "org_id", organizationID.StringValue())
-			err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
-			if err != nil {
-				return err
-			}
+			// provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive poll intervals, defaulting to basic plan", "failure_threshold", provider.config.FailureThreshold, "license_id", activeLicense.ID.StringValue(), "org_id", organizationID.StringValue())
+			// err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
+			// if err != nil {
+			// 	return err
+			// }
 			return nil
 		}
 		return err
@@ -178,10 +176,10 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 		return err
 	}
 
-	err = provider.InitFeatures(ctx, activeLicense.Features)
-	if err != nil {
-		return err
-	}
+	// err = provider.InitFeatures(ctx, activeLicense.Features)
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
@@ -224,80 +222,19 @@ func (provider *provider) Portal(ctx context.Context, organizationID valuer.UUID
 	return &licensetypes.GettableSubscription{RedirectURL: gjson.GetBytes(response, "url").String()}, nil
 }
 
-// feature surrogate
-func (provider *provider) CheckFeature(ctx context.Context, key string) error {
-	feature, err := provider.store.GetFeature(ctx, key)
-	if err != nil {
-		return err
-	}
-	if feature.Active {
-		return nil
-	}
-	return errors.Newf(errors.TypeUnsupported, licensing.ErrCodeFeatureUnavailable, "feature unavailable: %s", key)
-}
-
-func (provider *provider) GetFeatureFlag(ctx context.Context, key string) (*featuretypes.GettableFeature, error) {
-	featureStatus, err := provider.store.GetFeature(ctx, key)
-	if err != nil {
-		return nil, err
-	}
-	return &featuretypes.GettableFeature{
-		Name:       featureStatus.Name,
-		Active:     featureStatus.Active,
-		Usage:      int64(featureStatus.Usage),
-		UsageLimit: int64(featureStatus.UsageLimit),
-		Route:      featureStatus.Route,
-	}, nil
-}
-
-func (provider *provider) GetFeatureFlags(ctx context.Context) ([]*featuretypes.GettableFeature, error) {
-	storableFeatures, err := provider.store.GetAllFeatures(ctx)
-	if err != nil {
+func (provider *provider) GetFeatureFlags(ctx context.Context, organizationID valuer.UUID) ([]*featuretypes.Feature, error) {
+	allFeatues := make([]*featuretypes.Feature, 0)
+	license, err := provider.GetActive(ctx, organizationID)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
 
-	gettableFeatures := make([]*featuretypes.GettableFeature, len(storableFeatures))
-	for idx, gettableFeature := range storableFeatures {
-		gettableFeatures[idx] = &featuretypes.GettableFeature{
-			Name:       gettableFeature.Name,
-			Active:     gettableFeature.Active,
-			Usage:      int64(gettableFeature.Usage),
-			UsageLimit: int64(gettableFeature.UsageLimit),
-			Route:      gettableFeature.Route,
-		}
+	if err != nil && errors.Ast(err, errors.TypeNotFound) {
+		allFeatues = append(allFeatues, licensetypes.BasicPlan...)
+	}
+	if license != nil {
+		allFeatues = append(allFeatues, license.Features...)
 	}
 
-	if constants.IsDotMetricsEnabled {
-		gettableFeatures = append(gettableFeatures, &featuretypes.GettableFeature{
-			Name:   featuretypes.DotMetricsEnabled,
-			Active: true,
-		})
-	}
-
-	return gettableFeatures, nil
-}
-
-func (provider *provider) InitFeatures(ctx context.Context, features []*featuretypes.GettableFeature) error {
-	featureStatus := make([]*featuretypes.StorableFeature, len(features))
-	for i, f := range features {
-		featureStatus[i] = &featuretypes.StorableFeature{
-			Name:       f.Name,
-			Active:     f.Active,
-			Usage:      int(f.Usage),
-			UsageLimit: int(f.UsageLimit),
-			Route:      f.Route,
-		}
-	}
-
-	return provider.store.InitFeatures(ctx, featureStatus)
-}
-
-func (provider *provider) UpdateFeatureFlag(ctx context.Context, feature *featuretypes.GettableFeature) error {
-	return provider.store.UpdateFeature(ctx, &featuretypes.StorableFeature{
-		Name:       feature.Name,
-		Active:     feature.Active,
-		Usage:      int(feature.Usage),
-		UsageLimit: int(feature.UsageLimit),
-		Route:      feature.Route,
-	})
+	return allFeatues, nil
 }

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"net/http/httputil"
 	"time"
@@ -84,11 +83,6 @@ func (ah *APIHandler) UM() *usage.Manager {
 
 func (ah *APIHandler) Gateway() *httputil.ReverseProxy {
 	return ah.opts.Gateway
-}
-
-func (ah *APIHandler) CheckFeature(ctx context.Context, key string) bool {
-	err := ah.Signoz.Licensing.CheckFeature(ctx, key)
-	return err == nil
 }
 
 // RegisterRoutes registers routes for this handler on the given router

@@ -31,7 +31,7 @@ type License struct {
 	Key             string
 	Data            map[string]interface{}
 	PlanName        string
-	Features        []*featuretypes.GettableFeature
+	Features        []*featuretypes.Feature
 	Status          string
 	ValidFrom       int64
 	ValidUntil      int64
@@ -124,7 +124,7 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to unmarshal license data")
 	}
 
-	var features []*featuretypes.GettableFeature
+	var features []*featuretypes.Feature
 
 	// extract id from data
 	licenseIDStr, err := extractKeyFromMapStringInterface[string](licenseData, "id")
@@ -164,7 +164,7 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 		planName = PlanNameBasic
 	}
 
-	featuresFromZeus := make([]*featuretypes.GettableFeature, 0)
+	featuresFromZeus := make([]*featuretypes.Feature, 0)
 	if _features, ok := licenseData["features"]; ok {
 		featuresData, err := json.Marshal(_features)
 		if err != nil {
@@ -232,7 +232,7 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 }
 
 func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, error) {
-	var features []*featuretypes.GettableFeature
+	var features []*featuretypes.Feature
 	// extract status from data
 	status, err := extractKeyFromMapStringInterface[string](storableLicense.Data, "status")
 	if err != nil {
@@ -253,7 +253,7 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 		planName = PlanNameBasic
 	}
 
-	featuresFromZeus := make([]*featuretypes.GettableFeature, 0)
+	featuresFromZeus := make([]*featuretypes.Feature, 0)
 	if _features, ok := storableLicense.Data["features"]; ok {
 		featuresData, err := json.Marshal(_features)
 		if err != nil {
@@ -373,11 +373,4 @@ type Store interface {
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
 	GetAll(context.Context, valuer.UUID) ([]*StorableLicense, error)
 	Update(context.Context, valuer.UUID, *StorableLicense) error
-
-	// feature surrogate
-	InitFeatures(context.Context, []*featuretypes.StorableFeature) error
-	CreateFeature(context.Context, *featuretypes.StorableFeature) error
-	GetFeature(context.Context, string) (*featuretypes.StorableFeature, error)
-	GetAllFeatures(context.Context) ([]*featuretypes.StorableFeature, error)
-	UpdateFeature(context.Context, *featuretypes.StorableFeature) error
 }
