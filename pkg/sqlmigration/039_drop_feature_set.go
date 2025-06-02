@@ -4,23 +4,20 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 )
 
-type dropFeatureSet struct {
-	store sqlstore.SQLStore
-}
+type dropFeatureSet struct{}
 
-func NewDropFeatureSetFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
+func NewDropFeatureSetFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("drop_feature_set"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-		return newDropFeatureSet(ctx, ps, c, sqlstore)
+		return newDropFeatureSet(ctx, ps, c)
 	})
 }
 
-func newDropFeatureSet(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
-	return &dropFeatureSet{store: store}, nil
+func newDropFeatureSet(_ context.Context, _ factory.ProviderSettings, _ Config) (SQLMigration, error) {
+	return &dropFeatureSet{}, nil
 }
 
 func (migration *dropFeatureSet) Register(migrations *migrate.Migrations) error {

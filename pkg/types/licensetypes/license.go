@@ -319,6 +319,10 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 
 }
 
+func (license *License) UpdateFeatures(features []*Feature) {
+	license.Features = features
+}
+
 func (license *License) Update(data []byte) error {
 	updatedLicense, err := NewLicense(data, license.OrganizationID)
 	if err != nil {

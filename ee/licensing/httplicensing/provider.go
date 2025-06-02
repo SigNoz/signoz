@@ -86,13 +86,6 @@ func (provider *provider) Validate(ctx context.Context) error {
 		}
 	}
 
-	// if len(organizations) == 0 {
-	// 	err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
 	return nil
 }
 
@@ -112,11 +105,6 @@ func (provider *provider) Activate(ctx context.Context, organizationID valuer.UU
 	if err != nil {
 		return err
 	}
-
-	// err = provider.InitFeatures(ctx, license.Features)
-	// if err != nil {
-	// 	return err
-	// }
 
 	return nil
 }
@@ -143,22 +131,19 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 	}
 
 	if err != nil && errors.Ast(err, errors.TypeNotFound) {
-		// provider.settings.Logger().DebugContext(ctx, "no active license found, defaulting to basic plan", "org_id", organizationID.StringValue())
-		// err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
-		// if err != nil {
-		// 	return err
-		// }
 		return nil
 	}
 
 	data, err := provider.zeus.GetLicense(ctx, activeLicense.Key)
 	if err != nil {
 		if time.Since(activeLicense.LastValidatedAt) > time.Duration(provider.config.FailureThreshold)*provider.config.PollInterval {
-			// provider.settings.Logger().ErrorContext(ctx, "license validation failed for consecutive poll intervals, defaulting to basic plan", "failure_threshold", provider.config.FailureThreshold, "license_id", activeLicense.ID.StringValue(), "org_id", organizationID.StringValue())
-			// err = provider.InitFeatures(ctx, licensetypes.BasicPlan)
-			// if err != nil {
-			// 	return err
-			// }
+			activeLicense.UpdateFeatures(licensetypes.BasicPlan)
+			updatedStorableLicense := licensetypes.NewStorableLicenseFromLicense(activeLicense)
+			err = provider.store.Update(ctx, organizationID, updatedStorableLicense)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		}
 		return err
@@ -174,11 +159,6 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 	if err != nil {
 		return err
 	}
-
-	// err = provider.InitFeatures(ctx, activeLicense.Features)
-	// if err != nil {
-	// 	return err
-	// }
 
 	return nil
 }
