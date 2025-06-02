@@ -10,32 +10,30 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/sync/errgroup"
 )
 
 type SummaryService struct {
 	reader       interfaces.Reader
 	rulesManager *rules.Manager
+	dashboard    dashboard.Module
 }
 
-func NewSummaryService(reader interfaces.Reader, alertManager *rules.Manager) *SummaryService {
-	return &SummaryService{reader: reader, rulesManager: alertManager}
+func NewSummaryService(reader interfaces.Reader, alertManager *rules.Manager, dashboard dashboard.Module) *SummaryService {
+	return &SummaryService{reader: reader, rulesManager: alertManager, dashboard: dashboard}
 }
 
 func (receiver *SummaryService) FilterKeys(ctx context.Context, params *metrics_explorer.FilterKeyRequest) (*metrics_explorer.FilterKeyResponse, *model.ApiError) {
 	var response metrics_explorer.FilterKeyResponse
-	keys, apiError := receiver.reader.GetAllMetricFilterAttributeKeys(
-		ctx,
-		params,
-		true,
-	)
+	keys, apiError := receiver.reader.GetAllMetricFilterAttributeKeys(ctx, params)
 	if apiError != nil {
 		return nil, apiError
 	}
@@ -48,13 +46,13 @@ func (receiver *SummaryService) FilterKeys(ctx context.Context, params *metrics_
 	return &response, nil
 }
 
-func (receiver *SummaryService) FilterValues(ctx context.Context, params *metrics_explorer.FilterValueRequest) (*metrics_explorer.FilterValueResponse, *model.ApiError) {
+func (receiver *SummaryService) FilterValues(ctx context.Context, orgID valuer.UUID, params *metrics_explorer.FilterValueRequest) (*metrics_explorer.FilterValueResponse, *model.ApiError) {
 	var response metrics_explorer.FilterValueResponse
 	switch params.FilterKey {
 	case "metric_name":
 		var filterValues []string
 		request := v3.AggregateAttributeRequest{DataSource: v3.DataSourceMetrics, SearchText: params.SearchText, Limit: params.Limit}
-		attributes, err := receiver.reader.GetMetricAggregateAttributes(ctx, &request, true, true)
+		attributes, err := receiver.reader.GetMetricAggregateAttributes(ctx, orgID, &request, true)
 		if err != nil {
 			return nil, model.InternalError(err)
 		}
@@ -87,13 +85,13 @@ func (receiver *SummaryService) FilterValues(ctx context.Context, params *metric
 	}
 }
 
-func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricName string) (metrics_explorer.MetricDetailsDTO, *model.ApiError) {
+func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, orgID valuer.UUID, metricName string) (metrics_explorer.MetricDetailsDTO, *model.ApiError) {
 	var metricDetailsDTO metrics_explorer.MetricDetailsDTO
 	g, ctx := errgroup.WithContext(ctx)
 
 	// Call 1: GetMetricMetadata
 	g.Go(func() error {
-		metadata, err := receiver.reader.GetMetricMetadata(ctx, metricName, metricName)
+		metadata, err := receiver.reader.GetMetricMetadata(ctx, orgID, metricName, metricName)
 		if err != nil {
 			return &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
@@ -146,7 +144,7 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 	})
 
 	g.Go(func() error {
-		attributes, err := receiver.reader.GetAttributesForMetricName(ctx, metricName, nil, nil)
+		attributes, err := receiver.reader.GetAttributesForMetricName(ctx, metricName, nil, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -163,7 +161,12 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		if errv2 != nil {
 			return &model.ApiError{Typ: model.ErrorInternal, Err: errv2}
 		}
-		data, err := dashboards.GetDashboardsWithMetricNames(ctx, claims.OrgID, metricNames)
+
+		orgID, err := valuer.NewUUID(claims.OrgID)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+		data, err := receiver.dashboard.GetByMetricNames(ctx, orgID, metricNames)
 		if err != nil {
 			return err
 		}
@@ -217,8 +220,8 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 	return metricDetailsDTO, nil
 }
 
-func (receiver *SummaryService) ListMetricsWithSummary(ctx context.Context, params *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
-	return receiver.reader.ListSummaryMetrics(ctx, params)
+func (receiver *SummaryService) ListMetricsWithSummary(ctx context.Context, orgID valuer.UUID, params *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
+	return receiver.reader.ListSummaryMetrics(ctx, orgID, params)
 }
 
 func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *metrics_explorer.TreeMapMetricsRequest) (*metrics_explorer.TreeMap, *model.ApiError) {
@@ -336,9 +339,13 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 		if errv2 != nil {
 			return &model.ApiError{Typ: model.ErrorInternal, Err: errv2}
 		}
-		names, apiError := dashboards.GetDashboardsWithMetricNames(ctx, claims.OrgID, metricNames)
-		if apiError != nil {
-			return apiError
+		orgID, err := valuer.NewUUID(claims.OrgID)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+		names, err := receiver.dashboard.GetByMetricNames(ctx, orgID, metricNames)
+		if err != nil {
+			return err
 		}
 		if names != nil {
 			jsonData, err := json.Marshal(names)
@@ -474,7 +481,7 @@ func (receiver *SummaryService) GetInspectMetrics(ctx context.Context, params *m
 
 	// Run the two queries concurrently using the derived context.
 	g.Go(func() error {
-		attrs, apiErr := receiver.reader.GetAttributesForMetricName(egCtx, params.MetricName, &params.Start, &params.End)
+		attrs, apiErr := receiver.reader.GetAttributesForMetricName(egCtx, params.MetricName, &params.Start, &params.End, &params.Filters)
 		if apiErr != nil {
 			return apiErr
 		}
@@ -544,7 +551,7 @@ func (receiver *SummaryService) GetInspectMetrics(ctx context.Context, params *m
 	return baseResponse, nil
 }
 
-func (receiver *SummaryService) UpdateMetricsMetadata(ctx context.Context, params *metrics_explorer.UpdateMetricsMetadataRequest) *model.ApiError {
+func (receiver *SummaryService) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, params *metrics_explorer.UpdateMetricsMetadataRequest) *model.ApiError {
 	if params.MetricType == v3.MetricTypeSum && !params.IsMonotonic && params.Temporality == v3.Cumulative {
 		params.MetricType = v3.MetricTypeGauge
 	}
@@ -557,7 +564,7 @@ func (receiver *SummaryService) UpdateMetricsMetadata(ctx context.Context, param
 		IsMonotonic: params.IsMonotonic,
 		CreatedAt:   time.Now(),
 	}
-	apiError := receiver.reader.UpdateMetricsMetadata(ctx, &metadata)
+	apiError := receiver.reader.UpdateMetricsMetadata(ctx, orgID, &metadata)
 	if apiError != nil {
 		return apiError
 	}

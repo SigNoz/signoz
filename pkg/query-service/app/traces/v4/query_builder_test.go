@@ -211,7 +211,7 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 			want: "",
 		},
 		{
-			name: "Test buildTracesFilterQuery in, nin",
+			name: "Test BuildTracesFilterQuery in, nin",
 			args: args{
 				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 					{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"GET", "POST"}, Operator: v3.FilterOperatorIn},
@@ -226,7 +226,7 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Test buildTracesFilterQuery not eq, neq, gt, lt, gte, lte",
+			name: "Test BuildTracesFilterQuery not eq, neq, gt, lt, gte, lte",
 			args: args{
 				fs: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 					{Key: v3.AttributeKey{Key: "duration", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 102, Operator: v3.FilterOperatorEqual},
@@ -274,13 +274,13 @@ func Test_buildTracesFilterQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildTracesFilterQuery(tt.args.fs)
+			got, err := BuildTracesFilterQuery(tt.args.fs)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("buildTracesFilterQuery() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("BuildTracesFilterQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("buildTracesFilterQuery() = %v, want %v", got, tt.want)
+				t.Errorf("BuildTracesFilterQuery() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -639,6 +639,56 @@ func Test_buildTracesQuery(t *testing.T) {
 				end:       1680066458000000000,
 				mq: &v3.BuilderQuery{
 					AggregateOperator: v3.AggregateOperatorNoOp,
+					Filters: &v3.FilterSet{
+						Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+							{Key: v3.AttributeKey{Key: "service.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "myService", Operator: "="},
+						},
+					},
+				},
+			},
+			want: "SELECT subQuery.serviceName, subQuery.name, count() AS span_count, subQuery.durationNano, subQuery.traceID AS traceID FROM signoz_traces.distributed_signoz_index_v3 INNER JOIN " +
+				"( SELECT * FROM (SELECT traceID, durationNano, serviceName, name FROM signoz_traces.signoz_index_v3 WHERE parentSpanID = '' AND (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND " +
+				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
+				"ORDER BY durationNano DESC LIMIT 1 BY traceID) AS inner_subquery ) AS subQuery ON signoz_traces.distributed_signoz_index_v3.traceID = subQuery.traceID WHERE (timestamp >= '1680066360726210000' AND " +
+				"timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND attributes_string['method'] = 'GET' AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE " +
+				"(seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name%myService%')) GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY " +
+				"subQuery.durationNano desc LIMIT 1 BY subQuery.traceID  LIMIT 100 settings distributed_product_mode='allow', max_memory_usage=10000000000",
+		},
+		{
+			name: "test noop trace view with span_count ordering of Traces",
+			args: args{
+				panelType: v3.PanelTypeTrace,
+				start:     1680066360726210000,
+				end:       1680066458000000000,
+				mq: &v3.BuilderQuery{
+					AggregateOperator: v3.AggregateOperatorNoOp,
+					OrderBy:           []v3.OrderBy{{ColumnName: "span_count", Order: "DESC"}},
+					Filters: &v3.FilterSet{
+						Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+							{Key: v3.AttributeKey{Key: "service.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "myService", Operator: "="},
+						},
+					},
+				},
+			},
+			want: "SELECT serviceName, name, subQuery.span_count as span_count, durationNano, trace_id as traceID from signoz_traces.distributed_signoz_index_v3 GLOBAL INNER JOIN " +
+				"( SELECT * FROM (SELECT trace_id, count() as span_count FROM signoz_traces.signoz_index_v3 WHERE (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  " +
+				"AND attributes_string['method'] = 'GET' AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE " +
+				"(seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name%myService%')) " +
+				"GROUP BY trace_id ORDER BY span_count DESC LIMIT 1 BY trace_id LIMIT 100) AS inner_subquery ) AS subQuery ON signoz_traces.distributed_signoz_index_v3.trace_id = subQuery.trace_id " +
+				"WHERE parent_span_id = '' AND (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
+				"ORDER BY subQuery.span_count DESC LIMIT 100 settings distributed_product_mode='allow', max_memory_usage=10000000000",
+		},
+		{
+			name: "test noop trace view with trace_duration ordering of Traces",
+			args: args{
+				panelType: v3.PanelTypeTrace,
+				start:     1680066360726210000,
+				end:       1680066458000000000,
+				mq: &v3.BuilderQuery{
+					AggregateOperator: v3.AggregateOperatorNoOp,
+					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "DESC"}},
 					Filters: &v3.FilterSet{
 						Items: []v3.FilterItem{
 							{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},

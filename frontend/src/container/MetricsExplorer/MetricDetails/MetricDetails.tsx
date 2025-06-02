@@ -13,9 +13,12 @@ import {
 } from 'antd';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Compass, X } from 'lucide-react';
-import { useMemo } from 'react';
+import { Compass, Crosshair, X } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 
+import { PANEL_TYPES } from '../../../constants/queryBuilder';
+import ROUTES from '../../../constants/routes';
+import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
 import { isInspectEnabled } from '../Inspect/utils';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import AllAttributes from './AllAttributes';
@@ -25,6 +28,7 @@ import { MetricDetailsProps } from './types';
 import {
 	formatNumberToCompactFormat,
 	formatTimestampToReadableDate,
+	getMetricDetailsQuery,
 } from './utils';
 
 function MetricDetails({
@@ -34,7 +38,7 @@ function MetricDetails({
 	openInspectModal,
 }: MetricDetailsProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	// const { safeNavigate } = useSafeNavigate();
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const {
 		data,
@@ -53,7 +57,10 @@ function MetricDetails({
 		return formatTimestampToReadableDate(metric.lastReceived);
 	}, [metric]);
 
-	const showInspectFeature = useMemo(() => isInspectEnabled(), []);
+	const showInspectFeature = useMemo(
+		() => isInspectEnabled(metric?.metadata?.metric_type),
+		[metric],
+	);
 
 	const isMetricDetailsLoading = isLoading || isFetching;
 
@@ -68,20 +75,28 @@ function MetricDetails({
 					hour."
 				placement="top"
 			>
-				<span>{`${timeSeriesTotal} ⎯ ${timeSeriesActive} active`}</span>
+				<span>{`${timeSeriesTotal} total ⎯ ${timeSeriesActive} active`}</span>
 			</Tooltip>
 		);
 	}, [metric]);
 
-	// const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
-	// 	if (metricName) {
-	// 		const compositeQuery = getMetricDetailsQuery(metricName);
-	// 		const encodedCompositeQuery = JSON.stringify(compositeQuery);
-	// 		safeNavigate(
-	// 			`${ROUTES.METRICS_EXPLORER_EXPLORER}?compositeQuery=${encodedCompositeQuery}`,
-	// 		);
-	// 	}
-	// }, [metricName, safeNavigate]);
+	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
+		if (metricName) {
+			const compositeQuery = getMetricDetailsQuery(
+				metricName,
+				metric?.metadata?.metric_type,
+			);
+			handleExplorerTabChange(
+				PANEL_TYPES.TIME_SERIES,
+				{
+					query: compositeQuery,
+					name: metricName,
+					id: metricName,
+				},
+				ROUTES.METRICS_EXPLORER_EXPLORER,
+			);
+		}
+	}, [metricName, handleExplorerTabChange, metric?.metadata?.metric_type]);
 
 	const isMetricDetailsError = metricDetailsError || !metric;
 
@@ -94,29 +109,30 @@ function MetricDetails({
 						<Divider type="vertical" />
 						<Typography.Text>{metric?.name}</Typography.Text>
 					</div>
-					{/* TODO: Enable this once we have fixed the redirect issue */}
-					{/* <Button
-						onClick={goToMetricsExplorerwithSelectedMetric}
-						icon={<Compass size={16} />}
-						disabled={!metricName}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						Open in Explorer
-					</Button> */}
-					{/* Show the based on the feature flag. Will remove before releasing the feature */}
-					{showInspectFeature && (
+					<div className="metric-details-header-buttons">
 						<Button
-							className="inspect-metrics-button"
-							aria-label="Inspect Metric"
-							icon={<Compass size={18} />}
-							onClick={(): void => {
-								if (metric?.name) {
-									openInspectModal(metric.name);
-								}
-							}}
-						/>
-					)}
+							onClick={goToMetricsExplorerwithSelectedMetric}
+							icon={<Compass size={16} />}
+							disabled={!metricName}
+							data-testid="open-in-explorer-button"
+						>
+							Open in Explorer
+						</Button>
+						{/* Show the based on the feature flag. Will remove before releasing the feature */}
+						{showInspectFeature && (
+							<Button
+								className="inspect-metrics-button"
+								aria-label="Inspect Metric"
+								icon={<Crosshair size={18} />}
+								onClick={(): void => {
+									if (metric?.name) {
+										openInspectModal(metric.name);
+									}
+								}}
+								data-testid="inspect-metric-button"
+							/>
+						)}
+					</div>
 				</div>
 			}
 			placement="right"
@@ -176,7 +192,11 @@ function MetricDetails({
 						refetchMetricDetails={refetchMetricDetails}
 					/>
 					{metric.attributes && (
-						<AllAttributes metricName={metric?.name} attributes={metric.attributes} />
+						<AllAttributes
+							metricName={metric?.name}
+							attributes={metric.attributes}
+							metricType={metric?.metadata?.metric_type}
+						/>
 					)}
 				</div>
 			)}

@@ -12,10 +12,11 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/SigNoz/signoz/ee/query-service/anomaly"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -53,6 +54,7 @@ type AnomalyRule struct {
 
 func NewAnomalyRule(
 	id string,
+	orgID valuer.UUID,
 	p *ruletypes.PostableRule,
 	reader interfaces.Reader,
 	cache cache.Cache,
@@ -66,7 +68,7 @@ func NewAnomalyRule(
 		p.RuleCondition.Target = &target
 	}
 
-	baseRule, err := baserules.NewBaseRule(id, p, reader, opts...)
+	baseRule, err := baserules.NewBaseRule(id, orgID, p, reader, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -158,18 +160,18 @@ func (r *AnomalyRule) GetSelectedQuery() string {
 	return r.Condition().GetSelectedQueryName()
 }
 
-func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
+func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
 
 	params, err := r.prepareQueryRange(ts)
 	if err != nil {
 		return nil, err
 	}
-	err = r.PopulateTemporality(ctx, params)
+	err = r.PopulateTemporality(ctx, orgID, params)
 	if err != nil {
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}
 
-	anomalies, err := r.provider.GetAnomalies(ctx, &anomaly.GetAnomaliesRequest{
+	anomalies, err := r.provider.GetAnomalies(ctx, orgID, &anomaly.GetAnomaliesRequest{
 		Params:      params,
 		Seasonality: r.seasonality,
 	})
@@ -204,7 +206,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 	prevState := r.State()
 
 	valueFormatter := formatter.FromUnit(r.Unit())
-	res, err := r.buildAndRunQuery(ctx, ts)
+	res, err := r.buildAndRunQuery(ctx, r.OrgID(), ts)
 
 	if err != nil {
 		return nil, err

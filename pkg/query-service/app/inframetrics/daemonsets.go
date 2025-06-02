@@ -11,22 +11,23 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
 var (
-	metricToUseForDaemonSets = "k8s_pod_cpu_utilization"
-	k8sDaemonSetNameAttrKey  = "k8s_daemonset_name"
+	metricToUseForDaemonSets = GetDotMetrics("k8s_pod_cpu_utilization")
+	k8sDaemonSetNameAttrKey  = GetDotMetrics("k8s_daemonset_name")
 
 	metricNamesForDaemonSets = map[string]string{
-		"desired_nodes":   "k8s_daemonset_desired_scheduled_nodes",
-		"available_nodes": "k8s_daemonset_current_scheduled_nodes",
+		"desired_nodes":   GetDotMetrics("k8s_daemonset_desired_scheduled_nodes"),
+		"available_nodes": GetDotMetrics("k8s_daemonset_current_scheduled_nodes"),
 	}
 
 	daemonSetAttrsToEnrich = []string{
-		"k8s_daemonset_name",
-		"k8s_namespace_name",
-		"k8s_cluster_name",
+		GetDotMetrics("k8s_daemonset_name"),
+		GetDotMetrics("k8s_namespace_name"),
+		GetDotMetrics("k8s_cluster_name"),
 	}
 
 	queryNamesForDaemonSets = map[string][]string{
@@ -198,7 +199,7 @@ func (d *DaemonSetsRepo) getMetadataAttributes(ctx context.Context, req model.Da
 	return daemonSetAttrs, nil
 }
 
-func (d *DaemonSetsRepo) getTopDaemonSetGroups(ctx context.Context, req model.DaemonSetListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (d *DaemonSetsRepo) getTopDaemonSetGroups(ctx context.Context, orgID valuer.UUID, req model.DaemonSetListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopDaemonSets(req)
 
 	queryNames := queryNamesForDaemonSets[req.OrderBy.ColumnName]
@@ -229,7 +230,7 @@ func (d *DaemonSetsRepo) getTopDaemonSetGroups(ctx context.Context, req model.Da
 		topDaemonSetGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := d.querierV2.QueryRange(ctx, topDaemonSetGroupsQueryRangeParams)
+	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, topDaemonSetGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -268,7 +269,7 @@ func (d *DaemonSetsRepo) getTopDaemonSetGroups(ctx context.Context, req model.Da
 	return topDaemonSetGroups, allDaemonSetGroups, nil
 }
 
-func (d *DaemonSetsRepo) GetDaemonSetList(ctx context.Context, req model.DaemonSetListRequest) (model.DaemonSetListResponse, error) {
+func (d *DaemonSetsRepo) GetDaemonSetList(ctx context.Context, orgID valuer.UUID, req model.DaemonSetListRequest) (model.DaemonSetListResponse, error) {
 	resp := model.DaemonSetListResponse{}
 
 	if req.Limit == 0 {
@@ -320,7 +321,7 @@ func (d *DaemonSetsRepo) GetDaemonSetList(ctx context.Context, req model.DaemonS
 		return resp, err
 	}
 
-	topDaemonSetGroups, allDaemonSetGroups, err := d.getTopDaemonSetGroups(ctx, req, query)
+	topDaemonSetGroups, allDaemonSetGroups, err := d.getTopDaemonSetGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -354,7 +355,7 @@ func (d *DaemonSetsRepo) GetDaemonSetList(ctx context.Context, req model.DaemonS
 		}
 	}
 
-	queryResponse, _, err := d.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}

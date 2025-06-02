@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -12,260 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetColumn(t *testing.T) {
+func TestConditionFor(t *testing.T) {
 	ctx := context.Background()
-	conditionBuilder := NewConditionBuilder()
-
-	testCases := []struct {
-		name          string
-		key           telemetrytypes.TelemetryFieldKey
-		expectedCol   *schema.Column
-		expectedError error
-	}{
-		{
-			name: "Resource field",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "service.name",
-				FieldContext: telemetrytypes.FieldContextResource,
-			},
-			expectedCol:   logsV2Columns["resources_string"],
-			expectedError: nil,
-		},
-		{
-			name: "Scope field - scope name",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "name",
-				FieldContext: telemetrytypes.FieldContextScope,
-			},
-			expectedCol:   logsV2Columns["scope_name"],
-			expectedError: nil,
-		},
-		{
-			name: "Scope field - scope.name",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "scope.name",
-				FieldContext: telemetrytypes.FieldContextScope,
-			},
-			expectedCol:   logsV2Columns["scope_name"],
-			expectedError: nil,
-		},
-		{
-			name: "Scope field - scope_name",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "scope_name",
-				FieldContext: telemetrytypes.FieldContextScope,
-			},
-			expectedCol:   logsV2Columns["scope_name"],
-			expectedError: nil,
-		},
-		{
-			name: "Scope field - version",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "version",
-				FieldContext: telemetrytypes.FieldContextScope,
-			},
-			expectedCol:   logsV2Columns["scope_version"],
-			expectedError: nil,
-		},
-		{
-			name: "Scope field - other scope field",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "custom.scope.field",
-				FieldContext: telemetrytypes.FieldContextScope,
-			},
-			expectedCol:   logsV2Columns["scope_string"],
-			expectedError: nil,
-		},
-		{
-			name: "Attribute field - string type",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "user.id",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			},
-			expectedCol:   logsV2Columns["attributes_string"],
-			expectedError: nil,
-		},
-		{
-			name: "Attribute field - number type",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "request.size",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeNumber,
-			},
-			expectedCol:   logsV2Columns["attributes_number"],
-			expectedError: nil,
-		},
-		{
-			name: "Attribute field - int64 type",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "request.duration",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeInt64,
-			},
-			expectedCol:   logsV2Columns["attributes_number"],
-			expectedError: nil,
-		},
-		{
-			name: "Attribute field - float64 type",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "cpu.utilization",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeFloat64,
-			},
-			expectedCol:   logsV2Columns["attributes_number"],
-			expectedError: nil,
-		},
-		{
-			name: "Attribute field - bool type",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "request.success",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeBool,
-			},
-			expectedCol:   logsV2Columns["attributes_bool"],
-			expectedError: nil,
-		},
-		{
-			name: "Log field - timestamp",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "timestamp",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			expectedCol:   logsV2Columns["timestamp"],
-			expectedError: nil,
-		},
-		{
-			name: "Log field - body",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "body",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			expectedCol:   logsV2Columns["body"],
-			expectedError: nil,
-		},
-		{
-			name: "Log field - nonexistent",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "nonexistent_field",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			expectedCol:   nil,
-			expectedError: qbtypes.ErrColumnNotFound,
-		},
-		{
-			name: "did_user_login",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "did_user_login",
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeBool,
-			},
-			expectedCol:   logsV2Columns["attributes_bool"],
-			expectedError: nil,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			col, err := conditionBuilder.GetColumn(ctx, &tc.key)
-
-			if tc.expectedError != nil {
-				assert.Equal(t, tc.expectedError, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedCol, col)
-			}
-		})
-	}
-}
-
-func TestGetFieldKeyName(t *testing.T) {
-	ctx := context.Background()
-	conditionBuilder := &conditionBuilder{}
-
-	testCases := []struct {
-		name           string
-		key            telemetrytypes.TelemetryFieldKey
-		expectedResult string
-		expectedError  error
-	}{
-		{
-			name: "Simple column type - timestamp",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "timestamp",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			expectedResult: "timestamp",
-			expectedError:  nil,
-		},
-		{
-			name: "Map column type - string attribute",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "user.id",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			},
-			expectedResult: "attributes_string['user.id']",
-			expectedError:  nil,
-		},
-		{
-			name: "Map column type - number attribute",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "request.size",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeNumber,
-			},
-			expectedResult: "attributes_number['request.size']",
-			expectedError:  nil,
-		},
-		{
-			name: "Map column type - bool attribute",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "request.success",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeBool,
-			},
-			expectedResult: "attributes_bool['request.success']",
-			expectedError:  nil,
-		},
-		{
-			name: "Map column type - resource attribute",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "service.name",
-				FieldContext: telemetrytypes.FieldContextResource,
-			},
-			expectedResult: "resources_string['service.name']",
-			expectedError:  nil,
-		},
-		{
-			name: "Non-existent column",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "nonexistent_field",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			expectedResult: "",
-			expectedError:  qbtypes.ErrColumnNotFound,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := conditionBuilder.GetTableFieldName(ctx, &tc.key)
-
-			if tc.expectedError != nil {
-				assert.Equal(t, tc.expectedError, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedResult, result)
-			}
-		})
-	}
-}
-
-func TestGetCondition(t *testing.T) {
-	ctx := context.Background()
-	conditionBuilder := NewConditionBuilder()
 
 	testCases := []struct {
 		name          string
@@ -273,6 +20,7 @@ func TestGetCondition(t *testing.T) {
 		operator      qbtypes.FilterOperator
 		value         any
 		expectedSQL   string
+		expectedArgs  []any
 		expectedError error
 	}{
 		{
@@ -284,6 +32,7 @@ func TestGetCondition(t *testing.T) {
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "error message",
 			expectedSQL:   "body = ?",
+			expectedArgs:  []any{"error message"},
 			expectedError: nil,
 		},
 		{
@@ -295,6 +44,7 @@ func TestGetCondition(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotEqual,
 			value:         uint64(1617979338000000000),
 			expectedSQL:   "timestamp <> ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
 			expectedError: nil,
 		},
 		{
@@ -306,7 +56,8 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorGreaterThan,
 			value:         float64(100),
-			expectedSQL:   "attributes_number['request.duration'] > ?",
+			expectedSQL:   "(attributes_number['request.duration'] > ? AND mapContains(attributes_number, 'request.duration') = ?)",
+			expectedArgs:  []any{float64(100), true},
 			expectedError: nil,
 		},
 		{
@@ -318,7 +69,8 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLessThan,
 			value:         float64(1024),
-			expectedSQL:   "attributes_number['request.size'] < ?",
+			expectedSQL:   "(attributes_number['request.size'] < ? AND mapContains(attributes_number, 'request.size') = ?)",
+			expectedArgs:  []any{float64(1024), true},
 			expectedError: nil,
 		},
 		{
@@ -330,6 +82,7 @@ func TestGetCondition(t *testing.T) {
 			operator:      qbtypes.FilterOperatorGreaterThanOrEq,
 			value:         uint64(1617979338000000000),
 			expectedSQL:   "timestamp >= ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
 			expectedError: nil,
 		},
 		{
@@ -341,6 +94,7 @@ func TestGetCondition(t *testing.T) {
 			operator:      qbtypes.FilterOperatorLessThanOrEq,
 			value:         uint64(1617979338000000000),
 			expectedSQL:   "timestamp <= ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
 			expectedError: nil,
 		},
 		{
@@ -351,7 +105,8 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLike,
 			value:         "%error%",
-			expectedSQL:   "body LIKE ?",
+			expectedSQL:   "LOWER(body) LIKE LOWER(?)",
+			expectedArgs:  []any{"%error%"},
 			expectedError: nil,
 		},
 		{
@@ -362,7 +117,8 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotLike,
 			value:         "%error%",
-			expectedSQL:   "body NOT LIKE ?",
+			expectedSQL:   "LOWER(body) NOT LIKE LOWER(?)",
+			expectedArgs:  []any{"%error%"},
 			expectedError: nil,
 		},
 		{
@@ -374,7 +130,8 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorILike,
 			value:         "%admin%",
-			expectedSQL:   "WHERE LOWER(attributes_string['user.id']) LIKE LOWER(?)",
+			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id') = ?)",
+			expectedArgs:  []any{"%admin%", true},
 			expectedError: nil,
 		},
 		{
@@ -387,6 +144,7 @@ func TestGetCondition(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotILike,
 			value:         "%admin%",
 			expectedSQL:   "WHERE LOWER(attributes_string['user.id']) NOT LIKE LOWER(?)",
+			expectedArgs:  []any{"%admin%"},
 			expectedError: nil,
 		},
 		{
@@ -398,7 +156,8 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorContains,
 			value:         "admin",
-			expectedSQL:   "WHERE LOWER(attributes_string['user.id']) LIKE LOWER(?)",
+			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id') = ?)",
+			expectedArgs:  []any{"%admin%", true},
 			expectedError: nil,
 		},
 		{
@@ -410,6 +169,7 @@ func TestGetCondition(t *testing.T) {
 			operator:      qbtypes.FilterOperatorBetween,
 			value:         []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedSQL:   "timestamp BETWEEN ? AND ?",
+			expectedArgs:  []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedError: nil,
 		},
 		{
@@ -443,6 +203,7 @@ func TestGetCondition(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotBetween,
 			value:         []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedSQL:   "timestamp NOT BETWEEN ? AND ?",
+			expectedArgs:  []any{uint64(1617979338000000000), uint64(1617979348000000000)},
 			expectedError: nil,
 		},
 		{
@@ -453,7 +214,8 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorIn,
 			value:         []any{"error", "fatal", "critical"},
-			expectedSQL:   "severity_text IN (?, ?, ?)",
+			expectedSQL:   "(severity_text = ? OR severity_text = ? OR severity_text = ?)",
+			expectedArgs:  []any{"error", "fatal", "critical"},
 			expectedError: nil,
 		},
 		{
@@ -475,7 +237,8 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotIn,
 			value:         []any{"debug", "info", "trace"},
-			expectedSQL:   "severity_text NOT IN (?, ?, ?)",
+			expectedSQL:   "(severity_text <> ? AND severity_text <> ? AND severity_text <> ?)",
+			expectedArgs:  []any{"debug", "info", "trace"},
 			expectedError: nil,
 		},
 		{
@@ -486,7 +249,7 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "body <> ?",
+			expectedSQL:   "true",
 			expectedError: nil,
 		},
 		{
@@ -497,7 +260,7 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "body = ?",
+			expectedSQL:   "true",
 			expectedError: nil,
 		},
 		{
@@ -508,7 +271,7 @@ func TestGetCondition(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "timestamp <> ?",
+			expectedSQL:   "true",
 			expectedError: nil,
 		},
 		{
@@ -521,6 +284,7 @@ func TestGetCondition(t *testing.T) {
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
 			expectedSQL:   "mapContains(attributes_string, 'user.id') = ?",
+			expectedArgs:  []any{true},
 			expectedError: nil,
 		},
 		{
@@ -533,6 +297,7 @@ func TestGetCondition(t *testing.T) {
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
 			expectedSQL:   "mapContains(attributes_string, 'user.id') <> ?",
+			expectedArgs:  []any{true},
 			expectedError: nil,
 		},
 		{
@@ -548,38 +313,42 @@ func TestGetCondition(t *testing.T) {
 		},
 	}
 
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.GetCondition(ctx, &tc.key, tc.operator, tc.value, sb)
+			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
 			} else {
 				require.NoError(t, err)
-				sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+				sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 				assert.Contains(t, sql, tc.expectedSQL)
+				assert.Equal(t, tc.expectedArgs, args)
 			}
 		})
 	}
 }
 
-func TestGetConditionMultiple(t *testing.T) {
+func TestConditionForMultipleKeys(t *testing.T) {
 	ctx := context.Background()
-	conditionBuilder := NewConditionBuilder()
 
 	testCases := []struct {
 		name          string
-		keys          []*telemetrytypes.TelemetryFieldKey
+		keys          []telemetrytypes.TelemetryFieldKey
 		operator      qbtypes.FilterOperator
 		value         any
 		expectedSQL   string
+		expectedArgs  []any
 		expectedError error
 	}{
 		{
 			name: "Equal operator - string",
-			keys: []*telemetrytypes.TelemetryFieldKey{
+			keys: []telemetrytypes.TelemetryFieldKey{
 				{
 					Name:         "body",
 					FieldContext: telemetrytypes.FieldContextLog,
@@ -592,16 +361,20 @@ func TestGetConditionMultiple(t *testing.T) {
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "error message",
 			expectedSQL:   "body = ? AND severity_text = ?",
+			expectedArgs:  []any{"error message", "error message"},
 			expectedError: nil,
 		},
 	}
+
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-				cond, err := conditionBuilder.GetCondition(ctx, key, tc.operator, tc.value, sb)
+				cond, err := conditionBuilder.ConditionFor(ctx, &key, tc.operator, tc.value, sb)
 				sb.Where(cond)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -619,9 +392,8 @@ func TestGetConditionMultiple(t *testing.T) {
 	}
 }
 
-func TestGetConditionJSONBodySearch(t *testing.T) {
+func TestConditionForJSONBodySearch(t *testing.T) {
 	ctx := context.Background()
-	conditionBuilder := NewConditionBuilder()
 
 	testCases := []struct {
 		name          string
@@ -638,7 +410,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         200,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') = ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ?`,
 			expectedError: nil,
 		},
 		{
@@ -648,7 +420,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         405.5,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.duration_ms'), 'Float64') = ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."duration_ms"'), 'Float64') = ?`,
 			expectedError: nil,
 		},
 		{
@@ -658,7 +430,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "GET",
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.method'), 'String') = ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."method"'), 'String') = ?`,
 			expectedError: nil,
 		},
 		{
@@ -668,7 +440,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         true,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.success'), 'Bool') = ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."success"'), 'Bool') = ?`,
 			expectedError: nil,
 		},
 		{
@@ -678,7 +450,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String') <> ?",
+			expectedSQL:   `JSON_EXISTS(body, '$."http"."status_code"')`,
 			expectedError: nil,
 		},
 		{
@@ -688,7 +460,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String') = ?",
+			expectedSQL:   `NOT JSON_EXISTS(body, '$."http"."status_code"')`,
 			expectedError: nil,
 		},
 		{
@@ -698,7 +470,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorGreaterThan,
 			value:         "200",
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') > ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') > ?`,
 			expectedError: nil,
 		},
 		{
@@ -708,7 +480,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorGreaterThan,
 			value:         200,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') > ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') > ?`,
 			expectedError: nil,
 		},
 		{
@@ -718,7 +490,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLessThan,
 			value:         "300",
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') < ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') < ?`,
 			expectedError: nil,
 		},
 		{
@@ -728,7 +500,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLessThan,
 			value:         300,
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') < ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') < ?`,
 			expectedError: nil,
 		},
 		{
@@ -738,7 +510,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorContains,
 			value:         "200",
-			expectedSQL:   "LOWER(JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String')) LIKE LOWER(?)",
+			expectedSQL:   `LOWER(JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'String')) LIKE LOWER(?)`,
 			expectedError: nil,
 		},
 		{
@@ -748,7 +520,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotContains,
 			value:         "200",
-			expectedSQL:   "LOWER(JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String')) NOT LIKE LOWER(?)",
+			expectedSQL:   `LOWER(JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'String')) NOT LIKE LOWER(?)`,
 			expectedError: nil,
 		},
 		{
@@ -758,7 +530,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorBetween,
 			value:         []any{"200", "300"},
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') BETWEEN ? AND ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') BETWEEN ? AND ?`,
 			expectedError: nil,
 		},
 		{
@@ -768,7 +540,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorBetween,
 			value:         []any{400, 500},
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') BETWEEN ? AND ?",
+			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') BETWEEN ? AND ?`,
 			expectedError: nil,
 		},
 		{
@@ -778,7 +550,7 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorIn,
 			value:         []any{"200", "300"},
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') IN (?, ?)",
+			expectedSQL:   `(JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ? OR JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ?)`,
 			expectedError: nil,
 		},
 		{
@@ -788,15 +560,18 @@ func TestGetConditionJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorIn,
 			value:         []any{401, 404, 500},
-			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') IN (?, ?, ?)",
+			expectedSQL:   `(JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ? OR JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ? OR JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'Int64') = ?)`,
 			expectedError: nil,
 		},
 	}
 
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.GetCondition(ctx, &tc.key, tc.operator, tc.value, sb)
+			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

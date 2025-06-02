@@ -18,11 +18,11 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -44,7 +44,7 @@ type PrepareTaskOptions struct {
 	ManagerOpts      *ManagerOptions
 	NotifyFunc       NotifyFunc
 	SQLStore         sqlstore.SQLStore
-	OrgID            string
+	OrgID            valuer.UUID
 }
 
 type PrepareTestRuleOptions struct {
@@ -57,6 +57,7 @@ type PrepareTestRuleOptions struct {
 	ManagerOpts      *ManagerOptions
 	NotifyFunc       NotifyFunc
 	SQLStore         sqlstore.SQLStore
+	OrgID            valuer.UUID
 }
 
 const taskNamesuffix = "webAppEditor"
@@ -95,6 +96,7 @@ type ManagerOptions struct {
 	PrepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	Alertmanager        alertmanager.Alertmanager
 	SQLStore            sqlstore.SQLStore
+	OrgGetter           organization.Getter
 }
 
 // The Manager manages recording and alerting rules.
@@ -116,6 +118,7 @@ type Manager struct {
 
 	alertmanager alertmanager.Alertmanager
 	sqlstore     sqlstore.SQLStore
+	orgGetter    organization.Getter
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -144,6 +147,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		// create a threshold rule
 		tr, err := NewThresholdRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
 			opts.Reader,
 			WithEvalDelay(opts.ManagerOpts.EvalDelay),
@@ -164,6 +168,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		// create promql rule
 		pr, err := NewPromRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
 			opts.Logger,
 			opts.Reader,
@@ -194,7 +199,6 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 	ruleStore := sqlrulestore.NewRuleStore(o.DBConn, o.SQLStore)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(o.SQLStore)
 
-	telemetry.GetInstance().SetAlertsInfoCallback(ruleStore.GetAlertsInfo)
 	m := &Manager{
 		tasks:               map[string]Task{},
 		rules:               map[string]Rule{},
@@ -209,6 +213,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		prepareTestRuleFunc: o.PrepareTestRuleFunc,
 		alertmanager:        o.Alertmanager,
 		sqlstore:            o.SQLStore,
+		orgGetter:           o.OrgGetter,
 	}
 
 	return m, nil
@@ -238,14 +243,14 @@ func (m *Manager) Pause(b bool) {
 }
 
 func (m *Manager) initiate(ctx context.Context) error {
-	orgIDs, err := m.ruleStore.ListOrgs(ctx)
+	orgs, err := m.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err
 	}
 
 	var loadErrors []error
-	for _, orgID := range orgIDs {
-		storedRules, err := m.ruleStore.GetStoredRules(ctx, orgID)
+	for _, org := range orgs {
+		storedRules, err := m.ruleStore.GetStoredRules(ctx, org.ID.StringValue())
 		if err != nil {
 			return err
 		}
@@ -278,7 +283,7 @@ func (m *Manager) initiate(ctx context.Context) error {
 				}
 			}
 			if !parsedRule.Disabled {
-				err := m.addTask(ctx, orgID, parsedRule, taskName)
+				err := m.addTask(ctx, org.ID, parsedRule, taskName)
 				if err != nil {
 					zap.L().Error("failed to load the rule definition", zap.String("name", taskName), zap.Error(err))
 				}
@@ -317,6 +322,10 @@ func (m *Manager) Stop(ctx context.Context) {
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) error {
 	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		return err
 	}
@@ -379,7 +388,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) er
 			return err
 		}
 
-		err = m.syncRuleStateWithTask(ctx, claims.OrgID, prepareTaskName(existingRule.ID.StringValue()), parsedRule)
+		err = m.syncRuleStateWithTask(ctx, orgID, prepareTaskName(existingRule.ID.StringValue()), parsedRule)
 		if err != nil {
 			return err
 		}
@@ -388,7 +397,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) er
 	})
 }
 
-func (m *Manager) editTask(_ context.Context, orgID string, rule *ruletypes.PostableRule, taskName string) error {
+func (m *Manager) editTask(_ context.Context, orgID valuer.UUID, rule *ruletypes.PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -506,6 +515,11 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		return nil, err
 	}
 
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
 	parsedRule, err := ruletypes.ParsePostableRule([]byte(ruleStr))
 	if err != nil {
 		return nil, err
@@ -559,7 +573,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		}
 
 		taskName := prepareTaskName(id.StringValue())
-		if err := m.addTask(ctx, claims.OrgID, parsedRule, taskName); err != nil {
+		if err := m.addTask(ctx, orgID, parsedRule, taskName); err != nil {
 			return err
 		}
 
@@ -575,7 +589,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 	}, nil
 }
 
-func (m *Manager) addTask(_ context.Context, orgID string, rule *ruletypes.PostableRule, taskName string) error {
+func (m *Manager) addTask(_ context.Context, orgID valuer.UUID, rule *ruletypes.PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -854,7 +868,7 @@ func (m *Manager) GetRule(ctx context.Context, idStr string) (*ruletypes.Gettabl
 // syncRuleStateWithTask ensures that the state of a stored rule matches
 // the task state. For example - if a stored rule is disabled, then
 // there is no task running against it.
-func (m *Manager) syncRuleStateWithTask(ctx context.Context, orgID string, taskName string, rule *ruletypes.PostableRule) error {
+func (m *Manager) syncRuleStateWithTask(ctx context.Context, orgID valuer.UUID, taskName string, rule *ruletypes.PostableRule) error {
 
 	if rule.Disabled {
 		// check if rule has any task running
@@ -891,6 +905,11 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleIdStr strin
 		return nil, err
 	}
 
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
 	ruleID, err := valuer.NewUUID(ruleIdStr)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -919,7 +938,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleIdStr strin
 	}
 
 	// deploy or un-deploy task according to patched (new) rule state
-	if err := m.syncRuleStateWithTask(ctx, claims.OrgID, taskName, patchedRule); err != nil {
+	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, patchedRule); err != nil {
 		zap.L().Error("failed to sync stored rule state with the task", zap.String("taskName", taskName), zap.Error(err))
 		return nil, err
 	}
@@ -937,7 +956,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleIdStr strin
 
 	err = m.ruleStore.EditRule(ctx, storedJSON, func(ctx context.Context) error { return nil })
 	if err != nil {
-		if err := m.syncRuleStateWithTask(ctx, claims.OrgID, taskName, &storedRule); err != nil {
+		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
 			zap.L().Error("failed to restore rule after patch failure", zap.String("taskName", taskName), zap.Error(err))
 		}
 		return nil, err
@@ -962,7 +981,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleIdStr strin
 
 // TestNotification prepares a dummy rule for given rule parameters and
 // sends a test notification. returns alert count and error (if any)
-func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *model.ApiError) {
+func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleStr string) (int, *model.ApiError) {
 
 	parsedRule, err := ruletypes.ParsePostableRule([]byte(ruleStr))
 
@@ -980,6 +999,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 		ManagerOpts:      m.opts,
 		NotifyFunc:       m.prepareTestNotifyFunc(),
 		SQLStore:         m.sqlstore,
+		OrgID:            orgID,
 	})
 
 	return alertCount, apiErr

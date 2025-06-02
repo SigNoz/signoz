@@ -5,13 +5,19 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 
@@ -28,6 +34,9 @@ type SigNoz struct {
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
 	Zeus            zeus.Zeus
+	Licensing       licensing.Licensing
+	Emailing        emailing.Emailing
+	Sharder         sharder.Sharder
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -35,8 +44,12 @@ type SigNoz struct {
 func New(
 	ctx context.Context,
 	config Config,
+	jwt *authtypes.JWT,
 	zeusConfig zeus.Config,
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
+	licenseConfig licensing.Config,
+	licenseProviderFactoryCb func(sqlstore.SQLStore, zeus.Zeus, organization.Getter) factory.ProviderFactory[licensing.Licensing, licensing.Config],
+	emailingProviderFactories factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
@@ -60,6 +73,18 @@ func New(
 		ctx,
 		providerSettings,
 		zeusConfig,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize emailing from the available emailing provider factories
+	emailing, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Emailing,
+		emailingProviderFactories,
+		config.Emailing.Provider(),
 	)
 	if err != nil {
 		return nil, err
@@ -141,20 +166,45 @@ func New(
 		return nil, err
 	}
 
+	// Initialize sharder from the available sharder provider factories
+	sharder, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Sharder,
+		NewSharderProviderFactories(),
+		config.Sharder.Provider,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize organization getter
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
+
 	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.Alertmanager,
-		NewAlertmanagerProviderFactories(sqlstore),
+		NewAlertmanagerProviderFactories(sqlstore, orgGetter),
 		config.Alertmanager.Provider,
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	licensingProviderFactory := licenseProviderFactoryCb(sqlstore, zeus, orgGetter)
+	licensing, err := licensingProviderFactory.New(
+		ctx,
+		providerSettings,
+		licenseConfig,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize all modules
-	modules := NewModules(sqlstore)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules)
@@ -163,6 +213,7 @@ func New(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
+		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 	)
 	if err != nil {
 		return nil, err
@@ -178,6 +229,9 @@ func New(
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
 		Zeus:            zeus,
+		Licensing:       licensing,
+		Emailing:        emailing,
+		Sharder:         sharder,
 		Modules:         modules,
 		Handlers:        handlers,
 	}, nil

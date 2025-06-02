@@ -13,6 +13,7 @@ import {
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
+	getResourceDeploymentKeys,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -28,13 +29,16 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
 import { GraphTitle, legend, MENU_ITEMS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
-import { Button } from './styles';
+import GraphControlsPanel from './Overview/GraphControlsPanel/GraphControlsPanel';
 import { IServiceName } from './types';
 import {
 	handleNonInQueryRange,
+	onViewAPIMonitoringPopupClick,
 	onViewTracePopupClick,
 	useGetAPMToTracesQueries,
 	useGraphClickHandler,
@@ -42,7 +46,7 @@ import {
 
 function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-
+	const [selectedData, setSelectedData] = useState<any>(undefined);
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 
 	const servicename = decodeURIComponent(encodedServiceName);
@@ -74,6 +78,10 @@ function External(): JSX.Element {
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
 	);
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
 
 	const externalCallErrorWidget = useMemo(
 		() =>
@@ -85,6 +93,7 @@ function External(): JSX.Element {
 						servicename,
 						legend: legend.address,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -94,7 +103,7 @@ function External(): JSX.Element {
 				yAxisUnit: '%',
 				id: GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled],
 	);
 
 	const selectedTraceTags = useMemo(
@@ -111,6 +120,7 @@ function External(): JSX.Element {
 					builder: externalCallDuration({
 						servicename,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -121,7 +131,7 @@ function External(): JSX.Element {
 				id: GraphTitle.EXTERNAL_CALL_DURATION,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled],
 	);
 
 	const errorApmToTraceQuery = useGetAPMToTracesQueries({
@@ -157,7 +167,7 @@ function External(): JSX.Element {
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === 'resource_deployment_environment',
+				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
 			)?.tagValue;
 
 			logEvent('APM: Service detail page visited', {
@@ -180,6 +190,7 @@ function External(): JSX.Element {
 						servicename,
 						legend: legend.address,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -190,7 +201,7 @@ function External(): JSX.Element {
 				id: GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled],
 	);
 
 	const externalCallDurationAddressWidget = useMemo(
@@ -203,6 +214,7 @@ function External(): JSX.Element {
 						servicename,
 						legend: legend.address,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -213,7 +225,7 @@ function External(): JSX.Element {
 				id: GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled],
 	);
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({
@@ -223,17 +235,18 @@ function External(): JSX.Element {
 
 	const { safeNavigate } = useSafeNavigate();
 
-	const onGraphClickHandler = useGraphClickHandler(setSelectedTimeStamp);
+	const onGraphClickHandler = useGraphClickHandler(
+		setSelectedTimeStamp,
+		setSelectedData,
+	);
 
 	return (
 		<>
 			<Row gutter={24}>
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
+					<GraphControlsPanel
 						id="external_call_error_percentage_button"
-						onClick={onViewTracePopupClick({
+						onViewTracesClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
@@ -241,21 +254,28 @@ function External(): JSX.Element {
 							stepInterval,
 							safeNavigate,
 						})}
-					>
-						View Traces
-					</Button>
+						onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
+							servicename,
+							timestamp: selectedTimeStamp,
+							domainName: selectedData?.address || '',
+							isError: true,
+							stepInterval: 300,
+							safeNavigate,
+						})}
+					/>
 					<Card data-testid="external_call_error_percentage">
 						<GraphContainer>
 							<Graph
 								headerMenuList={MENU_ITEMS}
 								widget={externalCallErrorWidget}
-								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
+								onClickHandler={(xValue, yValue, mouseX, mouseY, data): void => {
 									onGraphClickHandler(
 										xValue,
 										yValue,
 										mouseX,
 										mouseY,
 										'external_call_error_percentage',
+										data,
 									);
 								}}
 								onDragSelect={onDragSelect}
@@ -266,11 +286,9 @@ function External(): JSX.Element {
 				</Col>
 
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
+					<GraphControlsPanel
 						id="external_call_duration_button"
-						onClick={onViewTracePopupClick({
+						onViewTracesClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
@@ -278,22 +296,29 @@ function External(): JSX.Element {
 							stepInterval,
 							safeNavigate,
 						})}
-					>
-						View Traces
-					</Button>
+						onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
+							servicename,
+							timestamp: selectedTimeStamp,
+							domainName: selectedData?.address,
+							isError: false,
+							stepInterval: 300,
+							safeNavigate,
+						})}
+					/>
 
 					<Card data-testid="external_call_duration">
 						<GraphContainer>
 							<Graph
 								headerMenuList={MENU_ITEMS}
 								widget={externalCallDurationWidget}
-								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
+								onClickHandler={(xValue, yValue, mouseX, mouseY, data): void => {
 									onGraphClickHandler(
 										xValue,
 										yValue,
 										mouseX,
 										mouseY,
 										'external_call_duration',
+										data,
 									);
 								}}
 								onDragSelect={onDragSelect}
@@ -306,11 +331,9 @@ function External(): JSX.Element {
 
 			<Row gutter={24}>
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
+					<GraphControlsPanel
 						id="external_call_rps_by_address_button"
-						onClick={onViewTracePopupClick({
+						onViewTracesClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
@@ -318,21 +341,28 @@ function External(): JSX.Element {
 							stepInterval,
 							safeNavigate,
 						})}
-					>
-						View Traces
-					</Button>
+						onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
+							servicename,
+							timestamp: selectedTimeStamp,
+							domainName: selectedData?.address,
+							isError: false,
+							stepInterval: 300,
+							safeNavigate,
+						})}
+					/>
 					<Card data-testid="external_call_rps_by_address">
 						<GraphContainer>
 							<Graph
 								widget={externalCallRPSWidget}
 								headerMenuList={MENU_ITEMS}
-								onClickHandler={(xValue, yValue, mouseX, mouseY): Promise<void> =>
+								onClickHandler={(xValue, yValue, mouseX, mouseY, data): Promise<void> =>
 									onGraphClickHandler(
 										xValue,
 										yValue,
 										mouseX,
 										mouseY,
 										'external_call_rps_by_address',
+										data,
 									)
 								}
 								onDragSelect={onDragSelect}
@@ -343,11 +373,9 @@ function External(): JSX.Element {
 				</Col>
 
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
+					<GraphControlsPanel
 						id="external_call_duration_by_address_button"
-						onClick={onViewTracePopupClick({
+						onViewTracesClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
 							timestamp: selectedTimeStamp,
@@ -355,22 +383,29 @@ function External(): JSX.Element {
 							stepInterval,
 							safeNavigate,
 						})}
-					>
-						View Traces
-					</Button>
+						onViewAPIMonitoringClick={onViewAPIMonitoringPopupClick({
+							servicename,
+							timestamp: selectedTimeStamp,
+							domainName: selectedData?.address,
+							isError: false,
+							stepInterval: 300,
+							safeNavigate,
+						})}
+					/>
 
 					<Card data-testid="external_call_duration_by_address">
 						<GraphContainer>
 							<Graph
 								widget={externalCallDurationAddressWidget}
 								headerMenuList={MENU_ITEMS}
-								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
+								onClickHandler={(xValue, yValue, mouseX, mouseY, data): void => {
 									onGraphClickHandler(
 										xValue,
 										yValue,
 										mouseX,
 										mouseY,
 										'external_call_duration_by_address',
+										data,
 									);
 								}}
 								onDragSelect={onDragSelect}

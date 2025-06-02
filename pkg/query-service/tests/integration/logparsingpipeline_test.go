@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,8 +9,15 @@ import (
 	"runtime/debug"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -17,12 +25,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opampModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sharder"
+	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
+	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -448,6 +459,7 @@ type LogPipelinesTestBed struct {
 	agentConfMgr    *agentConf.Manager
 	opampServer     *opamp.Server
 	opampClientConn *opamp.MockOpAmpConnection
+	userModule      user.Module
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
@@ -471,17 +483,30 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		t.Fatalf("could not create a logparsingpipelines controller: %v", err)
 	}
 
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	require.NoError(t, err)
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
+	require.NoError(t, err)
+	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	emailing := emailingtest.New()
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	handlers := signoz.NewHandlers(modules)
+
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		AppDao:                        dao.DB(),
 		LogsParsingPipelineController: controller,
 		JWT:                           jwt,
+		Signoz: &signoz.SigNoz{
+			Modules:  modules,
+			Handlers: handlers,
+		},
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
-	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationModule)
+	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
@@ -502,6 +527,7 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		testUser:     user,
 		apiHandler:   apiHandler,
 		agentConfMgr: agentConfMgr,
+		userModule:   modules.User,
 	}
 }
 
@@ -539,7 +565,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 	expectedStatusCode int,
 ) *logparsingpipeline.PipelinesResponse {
 	req, err := AuthenticatedRequestForTest(
-		tb.testUser, "/api/v1/logs/pipelines", postablePipelines,
+		tb.userModule, tb.testUser, "/api/v1/logs/pipelines", postablePipelines,
 	)
 	if err != nil {
 		tb.t.Fatalf("couldn't create authenticated test request: %v", err)
@@ -594,7 +620,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQS(
 
 func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.PipelinesResponse {
 	req, err := AuthenticatedRequestForTest(
-		tb.testUser, "/api/v1/logs/pipelines/latest", nil,
+		tb.userModule, tb.testUser, "/api/v1/logs/pipelines/latest", nil,
 	)
 	if err != nil {
 		tb.t.Fatalf("couldn't create authenticated test request: %v", err)

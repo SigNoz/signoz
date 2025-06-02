@@ -19,6 +19,7 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import { useNotifications } from 'hooks/useNotifications';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
@@ -150,7 +151,12 @@ function StatusCodeBarCharts({
 			metric?: { [key: string]: string },
 			queryData?: { queryName: string; inFocusOrNot: boolean },
 		): void => {
+			const TWO_AND_HALF_MINUTES_IN_MILLISECONDS = 2.5 * 60 * 1000; // 150,000 milliseconds
 			const customFilters = getCustomFiltersForBarChart(metric);
+			const { start, end } = getStartAndEndTimesInMilliseconds(
+				xValue,
+				TWO_AND_HALF_MINUTES_IN_MILLISECONDS,
+			);
 			handleGraphClick({
 				xValue,
 				yValue,
@@ -164,6 +170,10 @@ function StatusCodeBarCharts({
 				notifications,
 				graphClick,
 				customFilters,
+				customTracesTimeRange: {
+					start,
+					end,
+				},
 			});
 		},
 		[

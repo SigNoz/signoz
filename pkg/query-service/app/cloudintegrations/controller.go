@@ -8,9 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/maps"
 )
 
@@ -27,12 +31,10 @@ func validateCloudProviderName(name string) *model.ApiError {
 
 type Controller struct {
 	accountsRepo      cloudProviderAccountsRepository
-	serviceConfigRepo serviceConfigRepository
+	serviceConfigRepo ServiceConfigDatabase
 }
 
-func NewController(sqlStore sqlstore.SQLStore) (
-	*Controller, error,
-) {
+func NewController(sqlStore sqlstore.SQLStore) (*Controller, error) {
 	accountsRepo, err := newCloudProviderAccountsRepository(sqlStore)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create cloud provider accounts repo: %w", err)
@@ -53,9 +55,7 @@ type ConnectedAccountsListResponse struct {
 	Accounts []types.Account `json:"accounts"`
 }
 
-func (c *Controller) ListConnectedAccounts(
-	ctx context.Context, orgId string, cloudProvider string,
-) (
+func (c *Controller) ListConnectedAccounts(ctx context.Context, orgId string, cloudProvider string) (
 	*ConnectedAccountsListResponse, *model.ApiError,
 ) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
@@ -101,9 +101,7 @@ type GenerateConnectionUrlResponse struct {
 	ConnectionUrl string `json:"connection_url"`
 }
 
-func (c *Controller) GenerateConnectionUrl(
-	ctx context.Context, orgId string, cloudProvider string, req GenerateConnectionUrlRequest,
-) (*GenerateConnectionUrlResponse, *model.ApiError) {
+func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cloudProvider string, req GenerateConnectionUrlRequest) (*GenerateConnectionUrlResponse, *model.ApiError) {
 	// Account connection with a simple connection URL may not be available for all providers.
 	if cloudProvider != "aws" {
 		return nil, model.BadRequest(fmt.Errorf("unsupported cloud provider: %s", cloudProvider))
@@ -117,7 +115,7 @@ func (c *Controller) GenerateConnectionUrl(
 	}
 
 	// TODO(Raj): parameterized this in follow up changes
-	agentVersion := "0.0.3"
+	agentVersion := "v0.0.4"
 
 	connectionUrl := fmt.Sprintf(
 		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?",
@@ -152,9 +150,7 @@ type AccountStatusResponse struct {
 	Status         types.AccountStatus `json:"status"`
 }
 
-func (c *Controller) GetAccountStatus(
-	ctx context.Context, orgId string, cloudProvider string, accountId string,
-) (
+func (c *Controller) GetAccountStatus(ctx context.Context, orgId string, cloudProvider string, accountId string) (
 	*AccountStatusResponse, *model.ApiError,
 ) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
@@ -193,12 +189,10 @@ type AgentCheckInResponse struct {
 type IntegrationConfigForAgent struct {
 	EnabledRegions []string `json:"enabled_regions"`
 
-	TelemetryCollectionStrategy *CloudTelemetryCollectionStrategy `json:"telemetry,omitempty"`
+	TelemetryCollectionStrategy *CompiledCollectionStrategy `json:"telemetry,omitempty"`
 }
 
-func (c *Controller) CheckInAsAgent(
-	ctx context.Context, orgId string, cloudProvider string, req AgentCheckInRequest,
-) (*AgentCheckInResponse, *model.ApiError) {
+func (c *Controller) CheckInAsAgent(ctx context.Context, orgId string, cloudProvider string, req AgentCheckInRequest) (*AgentCheckInResponse, error) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -232,7 +226,7 @@ func (c *Controller) CheckInAsAgent(
 	}
 
 	// prepare and return integration config to be consumed by agent
-	telemetryCollectionStrategy, err := NewCloudTelemetryCollectionStrategy(cloudProvider)
+	compiledStrategy, err := NewCompiledCollectionStrategy(cloudProvider)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"couldn't init telemetry collection strategy: %w", err,
@@ -241,20 +235,16 @@ func (c *Controller) CheckInAsAgent(
 
 	agentConfig := IntegrationConfigForAgent{
 		EnabledRegions:              []string{},
-		TelemetryCollectionStrategy: telemetryCollectionStrategy,
+		TelemetryCollectionStrategy: compiledStrategy,
 	}
 
 	if account.Config != nil && account.Config.EnabledRegions != nil {
 		agentConfig.EnabledRegions = account.Config.EnabledRegions
 	}
 
-	services, apiErr := listCloudProviderServices(cloudProvider)
-	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
-	}
-	svcDetailsById := map[string]*CloudServiceDetails{}
-	for _, svcDetails := range services {
-		svcDetailsById[svcDetails.Id] = &svcDetails
+	services, err := services.Map(cloudProvider)
+	if err != nil {
+		return nil, err
 	}
 
 	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
@@ -267,26 +257,19 @@ func (c *Controller) CheckInAsAgent(
 	}
 
 	// accumulate config in a fixed order to ensure same config generated across runs
-	configuredSvcIds := maps.Keys(svcConfigs)
-	slices.Sort(configuredSvcIds)
+	configuredServices := maps.Keys(svcConfigs)
+	slices.Sort(configuredServices)
 
-	for _, svcId := range configuredSvcIds {
-		svcDetails := svcDetailsById[svcId]
-		svcConfig := svcConfigs[svcId]
+	for _, svcType := range configuredServices {
+		definition, ok := services[svcType]
+		if !ok {
+			continue
+		}
+		config := svcConfigs[svcType]
 
-		if svcDetails != nil {
-			metricsEnabled := svcConfig.Metrics != nil && svcConfig.Metrics.Enabled
-			logsEnabled := svcConfig.Logs != nil && svcConfig.Logs.Enabled
-			if logsEnabled || metricsEnabled {
-				err := agentConfig.TelemetryCollectionStrategy.AddServiceStrategy(
-					svcDetails.TelemetryCollectionStrategy, logsEnabled, metricsEnabled,
-				)
-				if err != nil {
-					return nil, model.InternalError(fmt.Errorf(
-						"couldn't add service telemetry collection strategy: %w", err,
-					))
-				}
-			}
+		err := AddServiceStrategy(svcType, compiledStrategy, definition.Strategy, config)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -302,13 +285,7 @@ type UpdateAccountConfigRequest struct {
 	Config types.AccountConfig `json:"config"`
 }
 
-func (c *Controller) UpdateAccountConfig(
-	ctx context.Context,
-	orgId string,
-	cloudProvider string,
-	accountId string,
-	req UpdateAccountConfigRequest,
-) (*types.Account, *model.ApiError) {
+func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, cloudProvider string, accountId string, req UpdateAccountConfigRequest) (*types.Account, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -325,9 +302,7 @@ func (c *Controller) UpdateAccountConfig(
 	return &account, nil
 }
 
-func (c *Controller) DisconnectAccount(
-	ctx context.Context, orgId string, cloudProvider string, accountId string,
-) (*types.CloudIntegration, *model.ApiError) {
+func (c *Controller) DisconnectAccount(ctx context.Context, orgId string, cloudProvider string, accountId string) (*types.CloudIntegration, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -349,7 +324,7 @@ func (c *Controller) DisconnectAccount(
 }
 
 type ListServicesResponse struct {
-	Services []CloudServiceSummary `json:"services"`
+	Services []ServiceSummary `json:"services"`
 }
 
 func (c *Controller) ListServices(
@@ -358,12 +333,11 @@ func (c *Controller) ListServices(
 	cloudProvider string,
 	cloudAccountId *string,
 ) (*ListServicesResponse, *model.ApiError) {
-
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
 
-	services, apiErr := listCloudProviderServices(cloudProvider)
+	definitions, apiErr := services.List(cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
 	}
@@ -386,9 +360,11 @@ func (c *Controller) ListServices(
 		}
 	}
 
-	summaries := []CloudServiceSummary{}
-	for _, s := range services {
-		summary := s.CloudServiceSummary
+	summaries := []ServiceSummary{}
+	for _, def := range definitions {
+		summary := ServiceSummary{
+			Metadata: def.Metadata,
+		}
 		summary.Config = svcConfigs[summary.Id]
 
 		summaries = append(summaries, summary)
@@ -405,15 +381,18 @@ func (c *Controller) GetServiceDetails(
 	cloudProvider string,
 	serviceId string,
 	cloudAccountId *string,
-) (*CloudServiceDetails, *model.ApiError) {
-
+) (*ServiceDetails, error) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
 
-	service, apiErr := getCloudProviderService(cloudProvider, serviceId)
-	if apiErr != nil {
-		return nil, apiErr
+	definition, err := services.GetServiceDefinition(cloudProvider, serviceId)
+	if err != nil {
+		return nil, err
+	}
+
+	details := ServiceDetails{
+		Definition: *definition,
 	}
 
 	if cloudAccountId != nil {
@@ -433,7 +412,7 @@ func (c *Controller) GetServiceDetails(
 		}
 
 		if config != nil {
-			service.Config = config
+			details.Config = config
 
 			enabled := false
 			if config.Metrics != nil && config.Metrics.Enabled {
@@ -441,27 +420,39 @@ func (c *Controller) GetServiceDetails(
 			}
 
 			// add links to service dashboards, making them clickable.
-			for i, d := range service.Assets.Dashboards {
+			for i, d := range definition.Assets.Dashboards {
 				dashboardUuid := c.dashboardUuid(
 					cloudProvider, serviceId, d.Id,
 				)
 				if enabled {
-					service.Assets.Dashboards[i].Url = fmt.Sprintf(
-						"/dashboard/%s", dashboardUuid,
-					)
+					definition.Assets.Dashboards[i].Url = fmt.Sprintf("/dashboard/%s", dashboardUuid)
 				} else {
-					service.Assets.Dashboards[i].Url = ""
+					definition.Assets.Dashboards[i].Url = "" // to unset the in-memory URL if enabled once and disabled afterwards
 				}
 			}
 		}
 	}
 
-	return service, nil
+	return &details, nil
 }
 
 type UpdateServiceConfigRequest struct {
 	CloudAccountId string                   `json:"cloud_account_id"`
 	Config         types.CloudServiceConfig `json:"config"`
+}
+
+func (u *UpdateServiceConfigRequest) Validate(def *services.Definition) error {
+	if def.Id != services.S3Sync && u.Config.Logs != nil && u.Config.Logs.S3Buckets != nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "s3 buckets can only be added to service-type[%s]", services.S3Sync)
+	} else if def.Id == services.S3Sync && u.Config.Logs != nil && u.Config.Logs.S3Buckets != nil {
+		for region := range u.Config.Logs.S3Buckets {
+			if _, found := ValidAWSRegions[region]; !found {
+				return errors.NewInvalidInputf(CodeInvalidCloudRegion, "invalid cloud region: %s", region)
+			}
+		}
+	}
+
+	return nil
 }
 
 type UpdateServiceConfigResponse struct {
@@ -473,12 +464,21 @@ func (c *Controller) UpdateServiceConfig(
 	ctx context.Context,
 	orgID string,
 	cloudProvider string,
-	serviceId string,
-	req UpdateServiceConfigRequest,
-) (*UpdateServiceConfigResponse, *model.ApiError) {
-
+	serviceType string,
+	req *UpdateServiceConfigRequest,
+) (*UpdateServiceConfigResponse, error) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
+	}
+
+	// can only update config for a valid service.
+	definition, err := services.GetServiceDefinition(cloudProvider, serviceType)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := req.Validate(definition); err != nil {
+		return nil, err
 	}
 
 	// can only update config for a connected cloud account id
@@ -489,31 +489,23 @@ func (c *Controller) UpdateServiceConfig(
 		return nil, model.WrapApiError(apiErr, "couldn't find connected cloud account")
 	}
 
-	// can only update config for a valid service.
-	_, apiErr = getCloudProviderService(cloudProvider, serviceId)
-	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "unsupported service")
-	}
-
 	updatedConfig, apiErr := c.serviceConfigRepo.upsert(
-		ctx, orgID, cloudProvider, req.CloudAccountId, serviceId, req.Config,
+		ctx, orgID, cloudProvider, req.CloudAccountId, serviceType, req.Config,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't update service config")
 	}
 
 	return &UpdateServiceConfigResponse{
-		Id:     serviceId,
+		Id:     serviceType,
 		Config: *updatedConfig,
 	}, nil
 }
 
 // All dashboards that are available based on cloud integrations configuration
 // across all cloud providers
-func (c *Controller) AvailableDashboards(ctx context.Context, orgId string) (
-	[]types.Dashboard, *model.ApiError,
-) {
-	allDashboards := []types.Dashboard{}
+func (c *Controller) AvailableDashboards(ctx context.Context, orgId valuer.UUID) ([]*dashboardtypes.Dashboard, *model.ApiError) {
+	allDashboards := []*dashboardtypes.Dashboard{}
 
 	for _, provider := range []string{"aws"} {
 		providerDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, orgId, provider)
@@ -529,11 +521,8 @@ func (c *Controller) AvailableDashboards(ctx context.Context, orgId string) (
 	return allDashboards, nil
 }
 
-func (c *Controller) AvailableDashboardsForCloudProvider(
-	ctx context.Context, orgID string, cloudProvider string,
-) ([]types.Dashboard, *model.ApiError) {
-
-	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, orgID, cloudProvider)
+func (c *Controller) AvailableDashboardsForCloudProvider(ctx context.Context, orgID valuer.UUID, cloudProvider string) ([]*dashboardtypes.Dashboard, *model.ApiError) {
+	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, orgID.StringValue(), cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list connected cloud accounts")
 	}
@@ -544,7 +533,7 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 	for _, ar := range accountRecords {
 		if ar.AccountID != nil {
 			configsBySvcId, apiErr := c.serviceConfigRepo.getAllForAccount(
-				ctx, orgID, ar.ID.StringValue(),
+				ctx, orgID.StringValue(), ar.ID.StringValue(),
 			)
 			if apiErr != nil {
 				return nil, apiErr
@@ -558,21 +547,20 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 		}
 	}
 
-	allServices, apiErr := listCloudProviderServices(cloudProvider)
+	allServices, apiErr := services.List(cloudProvider)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	svcDashboards := []types.Dashboard{}
+	svcDashboards := []*dashboardtypes.Dashboard{}
 	for _, svc := range allServices {
 		serviceDashboardsCreatedAt := servicesWithAvailableMetrics[svc.Id]
 		if serviceDashboardsCreatedAt != nil {
 			for _, d := range svc.Assets.Dashboards {
-				isLocked := 1
 				author := fmt.Sprintf("%s-integration", cloudProvider)
-				svcDashboards = append(svcDashboards, types.Dashboard{
-					UUID:   c.dashboardUuid(cloudProvider, svc.Id, d.Id),
-					Locked: &isLocked,
+				svcDashboards = append(svcDashboards, &dashboardtypes.Dashboard{
+					ID:     c.dashboardUuid(cloudProvider, svc.Id, d.Id),
+					Locked: true,
 					Data:   *d.Definition,
 					TimeAuditable: types.TimeAuditable{
 						CreatedAt: *serviceDashboardsCreatedAt,
@@ -582,6 +570,7 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 						CreatedBy: author,
 						UpdatedBy: author,
 					},
+					OrgID: orgID,
 				})
 			}
 			servicesWithAvailableMetrics[svc.Id] = nil
@@ -590,11 +579,7 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 
 	return svcDashboards, nil
 }
-func (c *Controller) GetDashboardById(
-	ctx context.Context,
-	orgId string,
-	dashboardUuid string,
-) (*types.Dashboard, *model.ApiError) {
+func (c *Controller) GetDashboardById(ctx context.Context, orgId valuer.UUID, dashboardUuid string) (*dashboardtypes.Dashboard, *model.ApiError) {
 	cloudProvider, _, _, apiErr := c.parseDashboardUuid(dashboardUuid)
 	if apiErr != nil {
 		return nil, apiErr
@@ -602,38 +587,28 @@ func (c *Controller) GetDashboardById(
 
 	allDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, orgId, cloudProvider)
 	if apiErr != nil {
-		return nil, model.WrapApiError(
-			apiErr, fmt.Sprintf("couldn't list available dashboards"),
-		)
+		return nil, model.WrapApiError(apiErr, "couldn't list available dashboards")
 	}
 
 	for _, d := range allDashboards {
-		if d.UUID == dashboardUuid {
-			return &d, nil
+		if d.ID == dashboardUuid {
+			return d, nil
 		}
 	}
 
-	return nil, model.NotFoundError(fmt.Errorf(
-		"couldn't find dashboard with uuid: %s", dashboardUuid,
-	))
+	return nil, model.NotFoundError(fmt.Errorf("couldn't find dashboard with uuid: %s", dashboardUuid))
 }
 
 func (c *Controller) dashboardUuid(
 	cloudProvider string, svcId string, dashboardId string,
 ) string {
-	return fmt.Sprintf(
-		"cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId,
-	)
+	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId)
 }
 
-func (c *Controller) parseDashboardUuid(dashboardUuid string) (
-	cloudProvider string, svcId string, dashboardId string, apiErr *model.ApiError,
-) {
+func (c *Controller) parseDashboardUuid(dashboardUuid string) (cloudProvider string, svcId string, dashboardId string, apiErr *model.ApiError) {
 	parts := strings.SplitN(dashboardUuid, "--", 4)
 	if len(parts) != 4 || parts[0] != "cloud-integration" {
-		return "", "", "", model.BadRequest(fmt.Errorf(
-			"invalid cloud integration dashboard id",
-		))
+		return "", "", "", model.BadRequest(fmt.Errorf("invalid cloud integration dashboard id"))
 	}
 
 	return parts[1], parts[2], parts[3], nil

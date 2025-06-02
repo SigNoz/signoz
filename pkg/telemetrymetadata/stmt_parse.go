@@ -88,14 +88,14 @@ func (v *TelemetryFieldVisitor) VisitColumnDef(expr *parser.ColumnDef) error {
 	fieldName := defaultExprStr[startIdx+2 : endIdx]
 
 	// Create and store the TelemetryFieldKey
-	field := telemetrytypes.TelemetryFieldKey{
+	field := &telemetrytypes.TelemetryFieldKey{
 		Name:          fieldName,
 		FieldContext:  fieldContext,
 		FieldDataType: fieldDataType,
 		Materialized:  true,
 	}
 
-	v.Fields = append(v.Fields, &field)
+	v.Fields = append(v.Fields, field)
 	return nil
 }
 

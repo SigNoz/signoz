@@ -248,6 +248,46 @@ var testGetJSONFilterData = []struct {
 		},
 		Filter: "lower(body) like lower('%value%') AND JSON_EXISTS(body, '$.\"value\"') AND JSON_VALUE(body, '$.\"value\"') IN ['hello','11']",
 	},
+
+	// test !=, not exists, not in, not like, not contains
+	{
+		Name: "neq operator",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.message",
+				DataType: "string",
+				IsJSON:   true,
+			},
+			Operator: "!=",
+			Value:    "hello",
+		},
+		Filter: "JSON_VALUE(body, '$.\"message\"') != 'hello'",
+	},
+	{
+		Name: "not exists",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.message",
+				DataType: "string",
+				IsJSON:   true,
+			},
+			Operator: "nexists",
+		},
+		Filter: "NOT JSON_EXISTS(body, '$.\"message\"')",
+	},
+	{
+		Name: "not in",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.message",
+				DataType: "string",
+				IsJSON:   true,
+			},
+			Operator: "nin",
+			Value:    []interface{}{"hello", "world"},
+		},
+		Filter: "JSON_VALUE(body, '$.\"message\"') NOT IN ['hello','world']",
+	},
 }
 
 func TestGetJSONFilter(t *testing.T) {

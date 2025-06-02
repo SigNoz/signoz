@@ -9,13 +9,16 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { IField } from '../logs/fields';
 import { BaseAutocompleteData } from '../queryBuilder/queryAutocompleteResponse';
 
-export type PayloadProps = Dashboard[];
-
 export const VariableQueryTypeArr = ['QUERY', 'TEXTBOX', 'CUSTOM'] as const;
 export type TVariableQueryType = typeof VariableQueryTypeArr[number];
 
 export const VariableSortTypeArr = ['DISABLED', 'ASC', 'DESC'] as const;
 export type TSortVariableValuesType = typeof VariableSortTypeArr[number];
+
+export enum LegendPosition {
+	BOTTOM = 'bottom',
+	RIGHT = 'right',
+}
 
 export interface IDashboardVariable {
 	id: string;
@@ -45,14 +48,18 @@ export interface IDashboardVariable {
 	change?: boolean;
 }
 export interface Dashboard {
-	id: number;
-	uuid: string;
+	id: string;
 	createdAt: string;
 	updatedAt: string;
 	createdBy: string;
 	updatedBy: string;
 	data: DashboardData;
-	isLocked?: boolean;
+	locked?: boolean;
+}
+
+export interface PayloadProps {
+	data: Dashboard[];
+	status: string;
 }
 
 export interface DashboardTemplate {
@@ -64,7 +71,7 @@ export interface DashboardTemplate {
 }
 
 export interface DashboardData {
-	uuid?: string;
+	// uuid?: string;
 	description?: string;
 	tags?: string[];
 	name?: string;
@@ -111,6 +118,8 @@ export interface IBaseWidget {
 	selectedTracesFields: BaseAutocompleteData[] | null;
 	isLogScale?: boolean;
 	columnWidths?: Record<string, number>;
+	legendPosition?: LegendPosition;
+	customLegendColors?: Record<string, string>;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

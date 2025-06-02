@@ -91,7 +91,13 @@ interface QueryBuilderSearchV2Props {
 	className?: string;
 	suffixIcon?: React.ReactNode;
 	hardcodedAttributeKeys?: BaseAutocompleteData[];
+	hasPopupContainer?: boolean;
+	rootClassName?: string;
+	maxTagCount?: number | 'responsive';
 	operatorConfigKey?: OperatorConfigKeys;
+	hideSpanScopeSelector?: boolean;
+	// Determines whether to call onChange when a tag is closed
+	triggerOnChangeOnClose?: boolean;
 }
 
 export interface Option {
@@ -125,7 +131,12 @@ function QueryBuilderSearchV2(
 		suffixIcon,
 		whereClauseConfig,
 		hardcodedAttributeKeys,
+		hasPopupContainer,
+		rootClassName,
+		maxTagCount,
 		operatorConfigKey,
+		hideSpanScopeSelector,
+		triggerOnChangeOnClose,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -900,6 +911,9 @@ function QueryBuilderSearchV2(
 			onClose();
 			setSearchValue('');
 			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
+			if (triggerOnChangeOnClose) {
+				onChange(query.filters);
+			}
 		};
 
 		const tagEditHandler = (value: string): void => {
@@ -936,16 +950,14 @@ function QueryBuilderSearchV2(
 		);
 	};
 
-	const isTracesDataSource = useMemo(
-		() => query.dataSource === DataSource.TRACES,
-		[query.dataSource],
-	);
-
 	return (
 		<div className="query-builder-search-v2">
 			<Select
 				ref={selectRef}
-				getPopupContainer={popupContainer}
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...(hasPopupContainer ? { getPopupContainer: popupContainer } : {})}
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...(maxTagCount ? { maxTagCount } : {})}
 				key={queryTags.join('.')}
 				virtual={false}
 				showSearch
@@ -977,7 +989,7 @@ function QueryBuilderSearchV2(
 						: '',
 					className,
 				)}
-				rootClassName="query-builder-search"
+				rootClassName={cx('query-builder-search', rootClassName)}
 				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 				style={selectStyle}
 				onSearch={handleSearch}
@@ -1025,7 +1037,7 @@ function QueryBuilderSearchV2(
 					);
 				})}
 			</Select>
-			{isTracesDataSource && <SpanScopeSelector queryName={query.queryName} />}
+			{!hideSpanScopeSelector && <SpanScopeSelector queryName={query.queryName} />}
 		</div>
 	);
 }
@@ -1035,8 +1047,13 @@ QueryBuilderSearchV2.defaultProps = {
 	className: '',
 	suffixIcon: null,
 	whereClauseConfig: {},
+	hasPopupContainer: true,
+	rootClassName: '',
 	hardcodedAttributeKeys: undefined,
+	maxTagCount: undefined,
 	operatorConfigKey: undefined,
+	hideSpanScopeSelector: true,
+	triggerOnChangeOnClose: false,
 };
 
 export default QueryBuilderSearchV2;

@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -8,22 +9,28 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
+	"github.com/SigNoz/signoz/pkg/sharder"
+	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/signoz"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
-	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 func TestAWSIntegrationAccountLifecycle(t *testing.T) {
@@ -234,9 +241,9 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	telemetryCollectionStrategy := checkinResp.IntegrationConfig.TelemetryCollectionStrategy
 	require.Equal("aws", telemetryCollectionStrategy.Provider)
 	require.NotNil(telemetryCollectionStrategy.AWSMetrics)
-	require.Empty(telemetryCollectionStrategy.AWSMetrics.CloudwatchMetricsStreamFilters)
+	require.Empty(telemetryCollectionStrategy.AWSMetrics.StreamFilters)
 	require.NotNil(telemetryCollectionStrategy.AWSLogs)
-	require.Empty(telemetryCollectionStrategy.AWSLogs.CloudwatchLogsSubscriptions)
+	require.Empty(telemetryCollectionStrategy.AWSLogs.Subscriptions)
 
 	// helper
 	setServiceConfig := func(svcId string, metricsEnabled bool, logsEnabled bool) {
@@ -281,14 +288,14 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	require.Equal("aws", telemetryCollectionStrategy.Provider)
 	require.NotNil(telemetryCollectionStrategy.AWSMetrics)
 	metricStreamNamespaces := []string{}
-	for _, f := range telemetryCollectionStrategy.AWSMetrics.CloudwatchMetricsStreamFilters {
+	for _, f := range telemetryCollectionStrategy.AWSMetrics.StreamFilters {
 		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
 	}
 	require.Equal([]string{"AWS/EC2", "CWAgent", "AWS/RDS"}, metricStreamNamespaces)
 
 	require.NotNil(telemetryCollectionStrategy.AWSLogs)
 	logGroupPrefixes := []string{}
-	for _, f := range telemetryCollectionStrategy.AWSLogs.CloudwatchLogsSubscriptions {
+	for _, f := range telemetryCollectionStrategy.AWSLogs.Subscriptions {
 		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
 	}
 	require.Equal(1, len(logGroupPrefixes))
@@ -325,14 +332,14 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	require.Equal("aws", telemetryCollectionStrategy.Provider)
 	require.NotNil(telemetryCollectionStrategy.AWSMetrics)
 	metricStreamNamespaces = []string{}
-	for _, f := range telemetryCollectionStrategy.AWSMetrics.CloudwatchMetricsStreamFilters {
+	for _, f := range telemetryCollectionStrategy.AWSMetrics.StreamFilters {
 		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
 	}
 	require.Equal([]string{"AWS/RDS"}, metricStreamNamespaces)
 
 	require.NotNil(telemetryCollectionStrategy.AWSLogs)
 	logGroupPrefixes = []string{}
-	for _, f := range telemetryCollectionStrategy.AWSLogs.CloudwatchLogsSubscriptions {
+	for _, f := range telemetryCollectionStrategy.AWSLogs.Subscriptions {
 		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
 	}
 	require.Equal(0, len(logGroupPrefixes))
@@ -344,6 +351,7 @@ type CloudIntegrationsTestBed struct {
 	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
+	userModule     user.Module
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
@@ -357,18 +365,23 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 		t.Fatalf("could not create cloud integrations controller: %v", err)
 	}
 
-	fm := featureManager.StartManager()
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
-	modules := signoz.NewModules(testDB)
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	require.NoError(t, err)
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), sharder)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter)
+	require.NoError(t, err)
+	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	emailing := emailingtest.New()
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings, orgGetter, alertmanager)
 	handlers := signoz.NewHandlers(modules)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,
-		AppDao:                      dao.DB(),
 		CloudIntegrationsController: controller,
-		FeatureFlags:                fm,
 		JWT:                         jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
@@ -380,13 +393,12 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	}
 
 	router := app.NewRouter()
-	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	router.Use(middleware.NewAuth(jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, sharder, instrumentationtest.New().Logger()).Wrap)
 	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterCloudIntegrationsRoutes(router, am)
 
-	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
-	user, apiErr := createTestUser(organizationModule)
+	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
@@ -396,6 +408,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
+		userModule:     modules.User,
 	}
 }
 
@@ -518,7 +531,7 @@ func (tb *CloudIntegrationsTestBed) GetServicesFromQS(
 
 func (tb *CloudIntegrationsTestBed) GetServiceDetailFromQS(
 	cloudProvider string, serviceId string, cloudAccountId *string,
-) *cloudintegrations.CloudServiceDetails {
+) *cloudintegrations.ServiceDetails {
 	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services/%s", cloudProvider, serviceId)
 	if cloudAccountId != nil {
 		path = fmt.Sprintf("%s?cloud_account_id=%s", path, *cloudAccountId)
@@ -533,7 +546,7 @@ func (tb *CloudIntegrationsTestBed) GetServiceDetailFromQS(
 		`SELECT.*from.*signoz_metrics.*`,
 	).WillReturnRows(mockhouse.NewRows(metricCols, [][]any{}))
 
-	return RequestQSAndParseResp[cloudintegrations.CloudServiceDetails](
+	return RequestQSAndParseResp[cloudintegrations.ServiceDetails](
 		tb, path, nil,
 	)
 }
@@ -552,7 +565,7 @@ func (tb *CloudIntegrationsTestBed) RequestQS(
 	postData interface{},
 ) (responseDataJson []byte) {
 	req, err := AuthenticatedRequestForTest(
-		tb.testUser, path, postData,
+		tb.userModule, tb.testUser, path, postData,
 	)
 	if err != nil {
 		tb.t.Fatalf("couldn't create authenticated test request: %v", err)

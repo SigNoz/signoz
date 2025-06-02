@@ -44,9 +44,7 @@ export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 		dataIndex: 'description',
 		width: 400,
 		render: (value: string): React.ReactNode => (
-			<Tooltip title={value}>
-				<div className="metric-description-column-value">{value}</div>
-			</Tooltip>
+			<div className="metric-description-column-value">{value}</div>
 		),
 	},
 	{
@@ -154,12 +152,17 @@ function ValidateRowValueWrapper({
 	return <div>{children}</div>;
 }
 
-export const formatNumberIntoHumanReadableFormat = (num: number): string => {
+export const formatNumberIntoHumanReadableFormat = (
+	num: number,
+	addPlusSign = true,
+): string => {
 	function format(num: number, divisor: number, suffix: string): string {
 		const value = num / divisor;
 		return value % 1 === 0
-			? `${value}${suffix}+`
-			: `${value.toFixed(1).replace(/\.0$/, '')}${suffix}+`;
+			? `${value}${suffix}${addPlusSign ? '+' : ''}`
+			: `${value.toFixed(1).replace(/\.0$/, '')}${suffix}${
+					addPlusSign ? '+' : ''
+			  }`;
 	}
 
 	if (num >= 1_000_000_000) {
@@ -186,7 +189,9 @@ export const formatDataForMetricsTable = (
 		),
 		description: (
 			<ValidateRowValueWrapper value={metric.description}>
-				<Tooltip title={metric.description}>{metric.description}</Tooltip>
+				<Tooltip className="description-tooltip" title={metric.description}>
+					{metric.description}
+				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
 		metric_type: <MetricTypeRenderer type={metric.type} />,

@@ -12,7 +12,7 @@ import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
+import { StatusCodes } from 'http-status-codes';
 import history from 'lib/history';
 import {
 	AlertTriangle,
@@ -26,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { License } from 'types/api/licenses/def';
+import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
@@ -59,7 +59,13 @@ function SideNav(): JSX.Element {
 		AppReducer
 	>((state) => state.app);
 
-	const { user, featureFlags, licenses, trialInfo } = useAppContext();
+	const {
+		user,
+		featureFlags,
+		trialInfo,
+		activeLicense,
+		activeLicenseFetchError,
+	} = useAppContext();
 
 	const isOnboardingV3Enabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
@@ -69,7 +75,7 @@ function SideNav(): JSX.Element {
 
 	const userSettingsMenuItem = {
 		key: ROUTES.MY_SETTINGS,
-		label: user?.name || 'User',
+		label: user?.displayName || 'User',
 		icon: <UserCircle size={16} />,
 	};
 
@@ -96,14 +102,11 @@ function SideNav(): JSX.Element {
 
 	const { t } = useTranslation('');
 
-	const licenseStatus: string =
-		licenses?.licenses?.find((e: License) => e.isCurrent)?.status || '';
+	const licenseStatus: string = activeLicense?.status || '';
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
-	const isLicenseActive =
-		licenseStatus?.toLocaleLowerCase() ===
-		LICENSE_PLAN_STATUS.VALID.toLocaleLowerCase();
+	const isLicenseActive = licenseStatus !== '' && licenseStatus !== 'INVALID';
 
 	const onClickSignozCloud = (): void => {
 		window.open(
@@ -299,10 +302,11 @@ function SideNav(): JSX.Element {
 			}
 
 			const isOnBasicPlan =
-				licenses?.licenses?.some(
-					(license: License) =>
-						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-				) || licenses?.licenses === null;
+				(activeLicenseFetchError &&
+					[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
+						activeLicenseFetchError?.getHttpStatusCode(),
+					)) ||
+				(activeLicense?.status && activeLicense.status === LicenseStatus.INVALID);
 
 			if (user.role !== USER_ROLES.ADMIN || isOnBasicPlan) {
 				updatedMenuItems = updatedMenuItems.filter(
@@ -347,10 +351,11 @@ function SideNav(): JSX.Element {
 		isEnterpriseSelfHostedUser,
 		isCurrentVersionError,
 		isLatestVersion,
-		licenses?.licenses,
 		onClickVersionHandler,
 		t,
 		user.role,
+		activeLicenseFetchError,
+		activeLicense?.status,
 	]);
 
 	return (
@@ -443,7 +448,7 @@ function SideNav(): JSX.Element {
 							onClick={onClickShortcuts}
 						/>
 
-						{licenses && !isLicenseActive && (
+						{!isLicenseActive && (
 							<NavItem
 								key="trySignozCloud"
 								item={trySignozCloudMenuItem}

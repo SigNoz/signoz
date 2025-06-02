@@ -7,9 +7,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
+	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
+	"github.com/SigNoz/signoz/pkg/emailing/smtpemailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
+	"github.com/SigNoz/signoz/pkg/sharder"
+	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
+	"github.com/SigNoz/signoz/pkg/sharder/singlesharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
@@ -74,6 +81,15 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewUpdateIntegrationsFactory(sqlstore),
 		sqlmigration.NewUpdateOrganizationsFactory(sqlstore),
 		sqlmigration.NewDropGroupsFactory(sqlstore),
+		sqlmigration.NewCreateQuickFiltersFactory(sqlstore),
+		sqlmigration.NewUpdateQuickFiltersFactory(sqlstore),
+		sqlmigration.NewAuthRefactorFactory(sqlstore),
+		sqlmigration.NewUpdateLicenseFactory(sqlstore),
+		sqlmigration.NewMigratePATToFactorAPIKey(sqlstore),
+		sqlmigration.NewUpdateApiMonitoringFiltersFactory(sqlstore),
+		sqlmigration.NewAddKeyOrganizationFactory(sqlstore),
+		sqlmigration.NewAddTraceFunnelsFactory(sqlstore),
+		sqlmigration.NewUpdateDashboardFactory(sqlstore),
 	)
 }
 
@@ -89,9 +105,23 @@ func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore
 	)
 }
 
-func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
 	return factory.MustNewNamedMap(
-		legacyalertmanager.NewFactory(sqlstore),
-		signozalertmanager.NewFactory(sqlstore),
+		legacyalertmanager.NewFactory(sqlstore, orgGetter),
+		signozalertmanager.NewFactory(sqlstore, orgGetter),
+	)
+}
+
+func NewEmailingProviderFactories() factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]] {
+	return factory.MustNewNamedMap(
+		noopemailing.NewFactory(),
+		smtpemailing.NewFactory(),
+	)
+}
+
+func NewSharderProviderFactories() factory.NamedMap[factory.ProviderFactory[sharder.Sharder, sharder.Config]] {
+	return factory.MustNewNamedMap(
+		singlesharder.NewFactory(),
+		noopsharder.NewFactory(),
 	)
 }

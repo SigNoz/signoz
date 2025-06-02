@@ -2,9 +2,13 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import loginApi from 'api/user/login';
+import loginApi from 'api/v1/login/login';
 import afterLogin from 'AppRoutes/utils';
-import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import axios, {
+	AxiosError,
+	AxiosResponse,
+	InternalAxiosRequestConfig,
+} from 'axios';
 import { ENVIRONMENT } from 'constants/env';
 import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -71,41 +75,43 @@ const interceptorRejected = async (
 			const { response } = value;
 			// reject the refresh token error
 			if (response.status === 401 && response.config.url !== '/login') {
-				const response = await loginApi({
-					refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
-				});
+				try {
+					const response = await loginApi({
+						refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
+					});
 
-				if (response.statusCode === 200) {
 					afterLogin(
-						response.payload.userId,
-						response.payload.accessJwt,
-						response.payload.refreshJwt,
+						response.data.userId,
+						response.data.accessJwt,
+						response.data.refreshJwt,
 						true,
 					);
 
-					const reResponse = await axios(
-						`${value.config.baseURL}${value.config.url?.substring(1)}`,
-						{
-							method: value.config.method,
-							headers: {
-								...value.config.headers,
-								Authorization: `Bearer ${response.payload.accessJwt}`,
+					try {
+						const reResponse = await axios(
+							`${value.config.baseURL}${value.config.url?.substring(1)}`,
+							{
+								method: value.config.method,
+								headers: {
+									...value.config.headers,
+									Authorization: `Bearer ${response.data.accessJwt}`,
+								},
+								data: {
+									...JSON.parse(value.config.data || '{}'),
+								},
 							},
-							data: {
-								...JSON.parse(value.config.data || '{}'),
-							},
-						},
-					);
+						);
 
-					if (reResponse.status === 200) {
 						return await Promise.resolve(reResponse);
+					} catch (error) {
+						if ((error as AxiosError)?.response?.status === 401) {
+							Logout();
+						}
 					}
+				} catch (error) {
 					Logout();
-					return await Promise.reject(reResponse);
 				}
-				Logout();
 			}
-
 			// when refresh token is expired
 			if (response.status === 401 && response.config.url === '/login') {
 				Logout();

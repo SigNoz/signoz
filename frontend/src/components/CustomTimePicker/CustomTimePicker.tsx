@@ -7,9 +7,11 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
+	CustomTimeType,
 	FixedDurationSuggestionOptions,
 	Options,
 	RelativeDurationSuggestionOptions,
+	Time,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
 import { isValidTimeFormat } from 'lib/getMinMax';
@@ -56,6 +58,10 @@ interface CustomTimePickerProps {
 	setCustomDTPickerVisible?: Dispatch<SetStateAction<boolean>>;
 	onCustomDateHandler?: (dateTimeRange: DateTimeRangeType) => void;
 	handleGoLive?: () => void;
+	onTimeChange?: (
+		interval: Time | CustomTimeType,
+		dateTimeRange?: [number, number],
+	) => void;
 }
 
 function CustomTimePicker({
@@ -73,6 +79,7 @@ function CustomTimePicker({
 	setCustomDTPickerVisible,
 	onCustomDateHandler,
 	handleGoLive,
+	onTimeChange,
 }: CustomTimePickerProps): JSX.Element {
 	const [
 		selectedTimePlaceholderValue,
@@ -336,6 +343,7 @@ function CustomTimePicker({
 							setActiveView={setActiveView}
 							setIsOpenedFromFooter={setIsOpenedFromFooter}
 							isOpenedFromFooter={isOpenedFromFooter}
+							onTimeChange={onTimeChange}
 						/>
 					) : (
 						content
@@ -405,4 +413,5 @@ CustomTimePicker.defaultProps = {
 	onCustomDateHandler: noop,
 	handleGoLive: noop,
 	onCustomTimeStatusUpdate: noop,
+	onTimeChange: undefined,
 };

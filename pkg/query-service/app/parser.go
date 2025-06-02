@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -16,7 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 
 	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
@@ -26,7 +26,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -34,7 +33,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
-	"github.com/SigNoz/signoz/pkg/types"
 	chVariables "github.com/SigNoz/signoz/pkg/variables/clickhouse"
 )
 
@@ -474,128 +472,6 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	return &model.GetTTLParams{Type: typeTTL}, nil
 }
 
-func parseUserRequest(r *http.Request) (*types.User, error) {
-	var req types.User
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	return &req, nil
-}
-
-func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
-	var req model.InviteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	// Trim spaces from email
-	req.Email = strings.TrimSpace(req.Email)
-	return &req, nil
-}
-
-func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) {
-	var req model.BulkInviteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	// Validate that the request contains users
-	if len(req.Users) == 0 {
-		return nil, fmt.Errorf("no users provided for invitation")
-	}
-
-	// Trim spaces and validate each user
-	for i := range req.Users {
-		req.Users[i].Email = strings.TrimSpace(req.Users[i].Email)
-		if req.Users[i].Email == "" {
-			return nil, fmt.Errorf("email is required for each user")
-		}
-		if req.Users[i].FrontendBaseUrl == "" {
-			return nil, fmt.Errorf("frontendBaseUrl is required for each user")
-		}
-
-		_, err := authtypes.NewRole(req.Users[i].Role)
-		if err != nil {
-			return nil, fmt.Errorf("invalid role for user: %s", req.Users[i].Email)
-		}
-	}
-
-	return &req, nil
-}
-
-func parseSetApdexScoreRequest(r *http.Request) (*types.ApdexSettings, error) {
-	var req types.ApdexSettings
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	return &req, nil
-}
-
-func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
-	var req auth.RegisterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	if err := auth.ValidatePassword(req.Password); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseLoginRequest(r *http.Request) (*model.LoginRequest, error) {
-	var req model.LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseUserRoleRequest(r *http.Request) (*model.UserRole, error) {
-	var req model.UserRole
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseEditOrgRequest(r *http.Request) (*types.Organization, error) {
-	var req types.Organization
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseResetPasswordRequest(r *http.Request) (*model.ResetPasswordRequest, error) {
-	var req model.ResetPasswordRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	if err := auth.ValidatePassword(req.Password); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseChangePasswordRequest(r *http.Request) (*model.ChangePasswordRequest, error) {
-	id := mux.Vars(r)["id"]
-	var req model.ChangePasswordRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	req.UserId = id
-	if err := auth.ValidatePassword(req.NewPassword); err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
 func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequest, error) {
 	var req v3.AggregateAttributeRequest
 
@@ -1007,10 +883,23 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			}
 
 			chTransformQuery(chQuery.Query, queryRangeParams.Variables)
-			for name, value := range queryRangeParams.Variables {
-				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
-				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
-				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
+
+			keys := make([]string, 0, len(queryRangeParams.Variables))
+
+			querytemplate.AssignReservedVarsV3(queryRangeParams)
+
+			for k := range queryRangeParams.Variables {
+				keys = append(keys, k)
+			}
+
+			sort.Slice(keys, func(i, j int) bool {
+				return len(keys[i]) > len(keys[j])
+			})
+
+			for _, k := range keys {
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("$%s", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
 			}
 
 			tmpl := template.New("clickhouse-query")
@@ -1021,7 +910,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			var query bytes.Buffer
 
 			// replace go template variables
-			querytemplate.AssignReservedVarsV3(queryRangeParams)
 
 			err = tmpl.Execute(&query, queryRangeParams.Variables)
 			if err != nil {
@@ -1038,10 +926,22 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				continue
 			}
 
-			for name, value := range queryRangeParams.Variables {
-				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
-				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
-				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
+			querytemplate.AssignReservedVarsV3(queryRangeParams)
+
+			keys := make([]string, 0, len(queryRangeParams.Variables))
+
+			for k := range queryRangeParams.Variables {
+				keys = append(keys, k)
+			}
+
+			sort.Slice(keys, func(i, j int) bool {
+				return len(keys[i]) > len(keys[j])
+			})
+
+			for _, k := range keys {
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("$%s", k), fmt.Sprint(queryRangeParams.Variables[k]), -1)
 			}
 
 			tmpl := template.New("prometheus-query")
@@ -1050,9 +950,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 			}
 			var query bytes.Buffer
-
-			// replace go template variables
-			querytemplate.AssignReservedVarsV3(queryRangeParams)
 
 			err = tmpl.Execute(&query, queryRangeParams.Variables)
 			if err != nil {
