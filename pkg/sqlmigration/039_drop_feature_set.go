@@ -41,7 +41,7 @@ func (migration *dropFeatureSet) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := tx.
 		NewDropTable().
 		IfExists().
-		Table("feature_set").
+		Table("feature_status").
 		Exec(ctx); err != nil {
 		return err
 	}
