@@ -25,12 +25,6 @@ export enum LicensePlatform {
 	CLOUD = 'CLOUD',
 }
 
-// Legacy
-export const LicensePlanKey = {
-	ENTERPRISE: 'ENTERPRISE',
-	BASIC: 'BASIC',
-};
-
 export type LicenseEventQueueResModel = {
 	event: LicenseEvent;
 	status: string;
