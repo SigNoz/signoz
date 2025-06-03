@@ -8,4 +8,7 @@ export interface FeatureFlagProps {
 	route: string;
 }
 
-export type PayloadProps = FeatureFlagProps[];
+export interface PayloadProps {
+	data: FeatureFlagProps[];
+	status: string;
+}

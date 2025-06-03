@@ -5,7 +5,7 @@ import getUserVersion from 'api/v1/version/getVersion';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
-import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
+import { useGetFeatureFlag } from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
 import useGetUser from 'hooks/user/useGetUser';
 import {
