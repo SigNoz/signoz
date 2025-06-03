@@ -2,8 +2,6 @@ package implpreference
 
 import (
 	"context"
-	"database/sql"
-	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -13,266 +11,156 @@ import (
 
 // Do not take inspiration from this code, it is a work in progress. See Organization module for a better implementation.
 type module struct {
-	store      preferencetypes.Store
-	defaultMap map[string]preferencetypes.Preference
+	store     preferencetypes.Store
+	available map[preferencetypes.Name]preferencetypes.Preference
 }
 
-func NewModule(store preferencetypes.Store, defaultMap map[string]preferencetypes.Preference) preference.Module {
-	return &module{store: store, defaultMap: defaultMap}
+func NewModule(store preferencetypes.Store, available map[preferencetypes.Name]preferencetypes.Preference) preference.Module {
+	return &module{store: store, available: available}
 }
 
-func (module *module) GetOrg(ctx context.Context, preferenceID string, orgID string) (*preferencetypes.GettablePreference, error) {
-	preference, seen := module.defaultMap[preferenceID]
-	if !seen {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot find preference with id: %s", preferenceID)
-	}
-
-	isEnabled := preference.IsEnabledForScope(preferencetypes.OrgAllowedScope)
-	if !isEnabled {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "preference is not enabled at org scope: %s", preferenceID)
-	}
-
-	org, err := module.store.GetOrg(ctx, orgID, preferenceID)
+func (module *module) ListByOrg(ctx context.Context, orgID valuer.UUID) ([]*preferencetypes.GettablePreference, error) {
+	storableOrgPreferences, err := module.store.ListByOrg(ctx, orgID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return &preferencetypes.GettablePreference{
-				PreferenceID:    preferenceID,
-				PreferenceValue: preference.DefaultValue,
-			}, nil
-		}
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error in fetching the org preference: %s", preferenceID)
+		return nil, err
 	}
 
-	return &preferencetypes.GettablePreference{
-		PreferenceID:    preferenceID,
-		PreferenceValue: preference.SanitizeValue(org.PreferenceValue),
-	}, nil
+	var gettablePreferences []*preferencetypes.GettablePreference
+	for _, preference := range module.available {
+		copyOfPreference, err := preferencetypes.NewPreferenceFromAvailable(preference.Name, module.available)
+		if err != nil {
+			continue
+		}
+		for _, storableOrgPreference := range storableOrgPreferences {
+			if storableOrgPreference.Name == preference.Name {
+				gettablePreferences = append(gettablePreferences, preferencetypes.NewGettablePreference(copyOfPreference, storableOrgPreference.Value))
+				continue
+			}
+
+			gettablePreferences = append(gettablePreferences, preferencetypes.NewGettablePreference(copyOfPreference, preference.DefaultValue))
+		}
+	}
+
+	return gettablePreferences, nil
 }
 
-func (module *module) UpdateOrg(ctx context.Context, preferenceID string, preferenceValue interface{}, orgID string) error {
-	preference, seen := module.defaultMap[preferenceID]
-	if !seen {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot find preference with id: %s", preferenceID)
+func (module *module) GetByOrg(ctx context.Context, orgID valuer.UUID, name preferencetypes.Name) (*preferencetypes.GettablePreference, error) {
+	preference, err := preferencetypes.NewPreference(name, preferencetypes.ScopeOrg, module.available)
+	if err != nil {
+		return nil, err
 	}
 
-	isEnabled := preference.IsEnabledForScope(preferencetypes.OrgAllowedScope)
-	if !isEnabled {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "preference is not enabled at org scope: %s", preferenceID)
+	org, err := module.store.GetByOrg(ctx, orgID, name)
+	if err != nil {
+		if errors.As(err, errors.TypeNotFound) {
+			return preferencetypes.NewGettablePreference(preference, preference.DefaultValue), nil
+		}
+
+		return nil, err
 	}
 
-	err := preference.IsValidValue(preferenceValue)
+	return preferencetypes.NewGettablePreference(preference, org.Value), nil
+}
+
+func (module *module) UpdateByOrg(ctx context.Context, orgID valuer.UUID, name preferencetypes.Name, preferenceValue string) error {
+	preference, err := preferencetypes.NewPreference(name, preferencetypes.ScopeOrg, module.available)
 	if err != nil {
 		return err
 	}
 
-	storableValue, encodeErr := json.Marshal(preferenceValue)
-	if encodeErr != nil {
-		return errors.Wrapf(encodeErr, errors.TypeInvalidInput, errors.CodeInvalidInput, "error in encoding the preference value")
+	_, err = preferencetypes.NewPreferenceValueFromString(preference, preferenceValue)
+	if err != nil {
+		return err
 	}
 
-	org, dberr := module.store.GetOrg(ctx, orgID, preferenceID)
-	if dberr != nil && dberr != sql.ErrNoRows {
-		return errors.Wrapf(dberr, errors.TypeInternal, errors.CodeInternal, "error in getting the preference value")
+	storableOrgPreference, err := module.store.GetByOrg(ctx, orgID, name)
+	if err != nil {
+		if !errors.As(err, errors.TypeNotFound) {
+			return err
+		}
 	}
 
-	if dberr != nil {
-		org.ID = valuer.GenerateUUID()
-		org.PreferenceID = preferenceID
-		org.PreferenceValue = string(storableValue)
-		org.OrgID = orgID
-	} else {
-		org.PreferenceValue = string(storableValue)
+	if storableOrgPreference == nil {
+		storableOrgPreference = preferencetypes.NewStorableOrgPreference(preference, preferenceValue, orgID)
 	}
 
-	dberr = module.store.UpsertOrg(ctx, org)
-	if dberr != nil {
-		return errors.Wrapf(dberr, errors.TypeInternal, errors.CodeInternal, "error in setting the preference value")
+	err = module.store.UpsertByOrg(ctx, storableOrgPreference)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (module *module) GetAllOrg(ctx context.Context, orgID string) ([]*preferencetypes.PreferenceWithValue, error) {
-	allOrgs := []*preferencetypes.PreferenceWithValue{}
-	orgs, err := module.store.GetAllOrg(ctx, orgID)
+func (module *module) ListByUser(ctx context.Context, userID valuer.UUID) ([]*preferencetypes.GettablePreference, error) {
+	storableUserPreferences, err := module.store.ListByUser(ctx, userID)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error in setting all org preference values")
+		return nil, err
 	}
 
-	preferenceValueMap := map[string]interface{}{}
-	for _, preferenceValue := range orgs {
-		preferenceValueMap[preferenceValue.PreferenceID] = preferenceValue.PreferenceValue
-	}
-
-	for _, preference := range module.defaultMap {
-		isEnabledForOrgScope := preference.IsEnabledForScope(preferencetypes.OrgAllowedScope)
-		if isEnabledForOrgScope {
-			preferenceWithValue := &preferencetypes.PreferenceWithValue{}
-			preferenceWithValue.Key = preference.Key
-			preferenceWithValue.Name = preference.Name
-			preferenceWithValue.Description = preference.Description
-			preferenceWithValue.AllowedScopes = preference.AllowedScopes
-			preferenceWithValue.AllowedValues = preference.AllowedValues
-			preferenceWithValue.DefaultValue = preference.DefaultValue
-			preferenceWithValue.Range = preference.Range
-			preferenceWithValue.ValueType = preference.ValueType
-			preferenceWithValue.IsDiscreteValues = preference.IsDiscreteValues
-			value, seen := preferenceValueMap[preference.Key]
-
-			if seen {
-				preferenceWithValue.Value = value
-			} else {
-				preferenceWithValue.Value = preference.DefaultValue
+	var gettablePreferences []*preferencetypes.GettablePreference
+	for _, preference := range module.available {
+		copyOfPreference, err := preferencetypes.NewPreferenceFromAvailable(preference.Name, module.available)
+		if err != nil {
+			continue
+		}
+		for _, storableUserPreference := range storableUserPreferences {
+			if storableUserPreference.Name == preference.Name {
+				gettablePreferences = append(gettablePreferences, preferencetypes.NewGettablePreference(copyOfPreference, storableUserPreference.Value))
+				continue
 			}
 
-			preferenceWithValue.Value = preference.SanitizeValue(preferenceWithValue.Value)
-			allOrgs = append(allOrgs, preferenceWithValue)
+			gettablePreferences = append(gettablePreferences, preferencetypes.NewGettablePreference(copyOfPreference, preference.DefaultValue))
 		}
 	}
-	return allOrgs, nil
+
+	return gettablePreferences, nil
 }
 
-func (module *module) GetUser(ctx context.Context, preferenceID string, orgID string, userID string) (*preferencetypes.GettablePreference, error) {
-	preference, seen := module.defaultMap[preferenceID]
-	if !seen {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot find preference with id: %s", preferenceID)
+func (module *module) GetByUser(ctx context.Context, userID valuer.UUID, name preferencetypes.Name) (*preferencetypes.GettablePreference, error) {
+	preference, err := preferencetypes.NewPreference(name, preferencetypes.ScopeUser, module.available)
+	if err != nil {
+		return nil, err
 	}
 
-	preferenceValue := preferencetypes.GettablePreference{
-		PreferenceID:    preferenceID,
-		PreferenceValue: preference.DefaultValue,
-	}
-
-	isEnabledAtUserScope := preference.IsEnabledForScope(preferencetypes.UserAllowedScope)
-	if !isEnabledAtUserScope {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "preference is not enabled at user scope: %s", preferenceID)
-	}
-
-	isEnabledAtOrgScope := preference.IsEnabledForScope(preferencetypes.OrgAllowedScope)
-	if isEnabledAtOrgScope {
-		org, err := module.store.GetOrg(ctx, orgID, preferenceID)
-		if err != nil && err != sql.ErrNoRows {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error in fetching the org preference: %s", preferenceID)
+	storableUserPreference, err := module.store.GetByUser(ctx, userID, name)
+	if err != nil {
+		if errors.As(err, errors.TypeNotFound) {
+			return preferencetypes.NewGettablePreference(preference, preference.DefaultValue), nil
 		}
-		if err == nil {
-			preferenceValue.PreferenceValue = org.PreferenceValue
-		}
+
+		return nil, err
 	}
 
-	user, err := module.store.GetUser(ctx, userID, preferenceID)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error in fetching the user preference: %s", preferenceID)
-	}
-
-	if err == nil {
-		preferenceValue.PreferenceValue = user.PreferenceValue
-	}
-
-	return &preferencetypes.GettablePreference{
-		PreferenceID:    preferenceValue.PreferenceID,
-		PreferenceValue: preference.SanitizeValue(preferenceValue.PreferenceValue),
-	}, nil
+	return preferencetypes.NewGettablePreference(preference, storableUserPreference.Value), nil
 }
 
-func (module *module) UpdateUser(ctx context.Context, preferenceID string, preferenceValue interface{}, userID string) error {
-	preference, seen := module.defaultMap[preferenceID]
-	if !seen {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot find preference with id: %s", preferenceID)
-	}
-
-	isEnabledAtUserScope := preference.IsEnabledForScope(preferencetypes.UserAllowedScope)
-	if !isEnabledAtUserScope {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "preference is not enabled at user scope: %s", preferenceID)
-	}
-
-	err := preference.IsValidValue(preferenceValue)
+func (module *module) UpdateByUser(ctx context.Context, userID valuer.UUID, name preferencetypes.Name, preferenceValue string) error {
+	preference, err := preferencetypes.NewPreference(name, preferencetypes.ScopeUser, module.available)
 	if err != nil {
 		return err
 	}
 
-	storableValue, encodeErr := json.Marshal(preferenceValue)
-	if encodeErr != nil {
-		return errors.Wrapf(encodeErr, errors.TypeInvalidInput, errors.CodeInvalidInput, "error in encoding the preference value")
+	_, err = preferencetypes.NewPreferenceValueFromString(preference, preferenceValue)
+	if err != nil {
+		return err
 	}
 
-	user, dberr := module.store.GetUser(ctx, userID, preferenceID)
-	if dberr != nil && dberr != sql.ErrNoRows {
-		return errors.Wrapf(dberr, errors.TypeInternal, errors.CodeInternal, "error in getting the preference value")
+	storableUserPreference, err := module.store.GetByUser(ctx, userID, name)
+	if err != nil {
+		if !errors.As(err, errors.TypeNotFound) {
+			return err
+		}
 	}
 
-	if dberr != nil {
-		user.ID = valuer.GenerateUUID()
-		user.PreferenceID = preferenceID
-		user.PreferenceValue = string(storableValue)
-		user.UserID = userID
-	} else {
-		user.PreferenceValue = string(storableValue)
+	if storableUserPreference == nil {
+		storableUserPreference = preferencetypes.NewStorableUserPreference(preference, preferenceValue, userID)
 	}
 
-	dberr = module.store.UpsertUser(ctx, user)
-	if dberr != nil {
-		return errors.Wrapf(dberr, errors.TypeInternal, errors.CodeInternal, "error in setting the preference value")
+	err = module.store.UpsertByUser(ctx, storableUserPreference)
+	if err != nil {
+		return err
 	}
 
 	return nil
-}
-
-func (module *module) GetAllUser(ctx context.Context, orgID string, userID string) ([]*preferencetypes.PreferenceWithValue, error) {
-	allUsers := []*preferencetypes.PreferenceWithValue{}
-
-	orgs, err := module.store.GetAllOrg(ctx, orgID)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error in setting all org preference values")
-	}
-
-	preferenceOrgValueMap := map[string]interface{}{}
-	for _, preferenceValue := range orgs {
-		preferenceOrgValueMap[preferenceValue.PreferenceID] = preferenceValue.PreferenceValue
-	}
-
-	users, err := module.store.GetAllUser(ctx, userID)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error in setting all user preference values")
-	}
-
-	preferenceUserValueMap := map[string]interface{}{}
-	for _, preferenceValue := range users {
-		preferenceUserValueMap[preferenceValue.PreferenceID] = preferenceValue.PreferenceValue
-	}
-
-	for _, preference := range module.defaultMap {
-		isEnabledForUserScope := preference.IsEnabledForScope(preferencetypes.UserAllowedScope)
-
-		if isEnabledForUserScope {
-			preferenceWithValue := &preferencetypes.PreferenceWithValue{}
-			preferenceWithValue.Key = preference.Key
-			preferenceWithValue.Name = preference.Name
-			preferenceWithValue.Description = preference.Description
-			preferenceWithValue.AllowedScopes = preference.AllowedScopes
-			preferenceWithValue.AllowedValues = preference.AllowedValues
-			preferenceWithValue.DefaultValue = preference.DefaultValue
-			preferenceWithValue.Range = preference.Range
-			preferenceWithValue.ValueType = preference.ValueType
-			preferenceWithValue.IsDiscreteValues = preference.IsDiscreteValues
-			preferenceWithValue.Value = preference.DefaultValue
-
-			isEnabledForOrgScope := preference.IsEnabledForScope(preferencetypes.OrgAllowedScope)
-			if isEnabledForOrgScope {
-				value, seen := preferenceOrgValueMap[preference.Key]
-				if seen {
-					preferenceWithValue.Value = value
-				}
-			}
-
-			value, seen := preferenceUserValueMap[preference.Key]
-
-			if seen {
-				preferenceWithValue.Value = value
-			}
-
-			preferenceWithValue.Value = preference.SanitizeValue(preferenceWithValue.Value)
-			allUsers = append(allUsers, preferenceWithValue)
-		}
-	}
-	return allUsers, nil
 }

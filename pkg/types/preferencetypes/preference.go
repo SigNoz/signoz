@@ -2,298 +2,204 @@ package preferencetypes
 
 import (
 	"context"
-	"strings"
+	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
-type GettablePreference struct {
-	PreferenceID    string      `json:"preference_id" db:"preference_id"`
-	PreferenceValue interface{} `json:"preference_value" db:"preference_value"`
-}
-
-type UpdatablePreference struct {
-	PreferenceValue interface{} `json:"preference_value" db:"preference_value"`
+type Preference struct {
+	Name             Name      `json:"name"`
+	Description      string    `json:"description"`
+	ValueType        ValueType `json:"valueType"`
+	DefaultValue     any       `json:"defaultValue"`
+	AllowedValues    []any     `json:"allowedValues"`
+	IsDiscreteValues bool      `json:"isDiscreteValues"`
+	Range            Range     `json:"range"`
+	AllowedScopes    []Scope   `json:"allowedScopes"`
 }
 
 type StorableOrgPreference struct {
 	bun.BaseModel `bun:"table:org_preference"`
 	types.Identifiable
-	PreferenceID    string `bun:"preference_id,type:text,notnull"`
-	PreferenceValue string `bun:"preference_value,type:text,notnull"`
-	OrgID           string `bun:"org_id,type:text,notnull"`
+	Name  Name        `bun:"preference_id,type:text,notnull"`
+	Value string      `bun:"preference_value,type:text,notnull"`
+	OrgID valuer.UUID `bun:"org_id,type:text,notnull"`
 }
 
 type StorableUserPreference struct {
 	bun.BaseModel `bun:"table:user_preference"`
 	types.Identifiable
-	PreferenceID    string `bun:"preference_id,type:text,notnull"`
-	PreferenceValue string `bun:"preference_value,type:text,notnull"`
-	UserID          string `bun:"user_id,type:text,notnull"`
+	Name   Name        `bun:"preference_id,type:text,notnull"`
+	Value  string      `bun:"preference_value,type:text,notnull"`
+	UserID valuer.UUID `bun:"user_id,type:text,notnull"`
 }
 
-type Preference struct {
-	Key              string        `json:"key"`
-	Name             string        `json:"name"`
-	Description      string        `json:"description"`
-	ValueType        string        `json:"valueType"`
-	DefaultValue     interface{}   `json:"defaultValue"`
-	AllowedValues    []interface{} `json:"allowedValues"`
-	IsDiscreteValues bool          `json:"isDiscreteValues"`
-	Range            Range         `json:"range"`
-	AllowedScopes    []string      `json:"allowedScopes"`
+type GettablePreference struct {
+	*Preference
+	Value any `json:"preference_value"`
 }
 
-func NewDefaultPreferenceMap() map[string]Preference {
-	return map[string]Preference{
-		"ORG_ONBOARDING": {
-			Key:              "ORG_ONBOARDING",
-			Name:             "Organisation Onboarding",
+type UpdatablePreference struct {
+	Value string `json:"preference_value"`
+}
+
+func NewAvailablePreference() map[Name]Preference {
+	return map[Name]Preference{
+		NameOrgOnboarding: {
+			Name:             NameOrgOnboarding,
 			Description:      "Organisation Onboarding",
-			ValueType:        "boolean",
+			ValueType:        ValueTypeBoolean,
 			DefaultValue:     false,
-			AllowedValues:    []interface{}{true, false},
+			AllowedValues:    []any{true, false},
 			IsDiscreteValues: true,
-			AllowedScopes:    []string{"org"},
+			AllowedScopes:    []Scope{ScopeOrg},
 		},
-		"WELCOME_CHECKLIST_DO_LATER": {
-			Key:              "WELCOME_CHECKLIST_DO_LATER",
-			Name:             "Welcome Checklist Do Later",
+		NameWelcomeChecklistDoLater: {
+			Name:             NameWelcomeChecklistDoLater,
 			Description:      "Welcome Checklist Do Later",
-			ValueType:        "boolean",
+			ValueType:        ValueTypeBoolean,
 			DefaultValue:     false,
-			AllowedValues:    []interface{}{true, false},
+			AllowedValues:    []any{true, false},
 			IsDiscreteValues: true,
-			AllowedScopes:    []string{"user"},
+			AllowedScopes:    []Scope{ScopeUser},
 		},
-		"WELCOME_CHECKLIST_SEND_LOGS_SKIPPED": {
-			Key:              "WELCOME_CHECKLIST_SEND_LOGS_SKIPPED",
-			Name:             "Welcome Checklist Send Logs Skipped",
+		NameWelcomeChecklistSendLogsSkipped: {
+			Name:             NameWelcomeChecklistSendLogsSkipped,
 			Description:      "Welcome Checklist Send Logs Skipped",
-			ValueType:        "boolean",
+			ValueType:        ValueTypeBoolean,
 			DefaultValue:     false,
-			AllowedValues:    []interface{}{true, false},
+			AllowedValues:    []any{true, false},
 			IsDiscreteValues: true,
-			AllowedScopes:    []string{"user"},
+			AllowedScopes:    []Scope{ScopeUser},
 		},
-		"WELCOME_CHECKLIST_SEND_TRACES_SKIPPED": {
-			Key:              "WELCOME_CHECKLIST_SEND_TRACES_SKIPPED",
-			Name:             "Welcome Checklist Send Traces Skipped",
+		NameWelcomeChecklistSendTracesSkipped: {
+			Name:             NameWelcomeChecklistSendTracesSkipped,
 			Description:      "Welcome Checklist Send Traces Skipped",
-			ValueType:        "boolean",
+			ValueType:        ValueTypeBoolean,
 			DefaultValue:     false,
-			AllowedValues:    []interface{}{true, false},
+			AllowedValues:    []any{true, false},
 			IsDiscreteValues: true,
-			AllowedScopes:    []string{"user"},
+			AllowedScopes:    []Scope{ScopeUser},
 		},
-		"WELCOME_CHECKLIST_SEND_INFRA_METRICS_SKIPPED": {
-			Key:              "WELCOME_CHECKLIST_SEND_INFRA_METRICS_SKIPPED",
-			Name:             "Welcome Checklist Send Infra Metrics Skipped",
+		NameWelcomeChecklistSendInfraMetricsSkipped: {
+			Name:             NameWelcomeChecklistSendInfraMetricsSkipped,
 			Description:      "Welcome Checklist Send Infra Metrics Skipped",
-			ValueType:        "boolean",
+			ValueType:        ValueTypeBoolean,
 			DefaultValue:     false,
-			AllowedValues:    []interface{}{true, false},
+			AllowedValues:    []any{true, false},
 			IsDiscreteValues: true,
-			AllowedScopes:    []string{"user"},
+			AllowedScopes:    []Scope{ScopeUser},
 		},
-		"WELCOME_CHECKLIST_SETUP_DASHBOARDS_SKIPPED": {
-			Key:              "WELCOME_CHECKLIST_SETUP_DASHBOARDS_SKIPPED",
-			Name:             "Welcome Checklist Setup Dashboards Skipped",
+		NameWelcomeChecklistSetupDashboardsSkipped: {
+			Name:             NameWelcomeChecklistSetupDashboardsSkipped,
 			Description:      "Welcome Checklist Setup Dashboards Skipped",
-			ValueType:        "boolean",
+			ValueType:        ValueTypeBoolean,
 			DefaultValue:     false,
-			AllowedValues:    []interface{}{true, false},
+			AllowedValues:    []any{true, false},
 			IsDiscreteValues: true,
-			AllowedScopes:    []string{"user"},
+			AllowedScopes:    []Scope{ScopeUser},
 		},
-		"WELCOME_CHECKLIST_SETUP_ALERTS_SKIPPED": {
-			Key:              "WELCOME_CHECKLIST_SETUP_ALERTS_SKIPPED",
-			Name:             "Welcome Checklist Setup Alerts Skipped",
+		NameWelcomeChecklistSetupAlertsSkipped: {
+			Name:             NameWelcomeChecklistSetupAlertsSkipped,
 			Description:      "Welcome Checklist Setup Alerts Skipped",
-			ValueType:        "boolean",
+			ValueType:        ValueTypeBoolean,
 			DefaultValue:     false,
-			AllowedValues:    []interface{}{true, false},
+			AllowedValues:    []any{true, false},
 			IsDiscreteValues: true,
-			AllowedScopes:    []string{"user"},
+			AllowedScopes:    []Scope{ScopeUser},
 		},
-		"WELCOME_CHECKLIST_SETUP_SAVED_VIEW_SKIPPED": {
-			Key:              "WELCOME_CHECKLIST_SETUP_SAVED_VIEW_SKIPPED",
-			Name:             "Welcome Checklist Setup Saved View Skipped",
+		NameWelcomeChecklistSetupSavedViewSkipped: {
+			Name:             NameWelcomeChecklistSetupSavedViewSkipped,
 			Description:      "Welcome Checklist Setup Saved View Skipped",
-			ValueType:        "boolean",
+			ValueType:        ValueTypeBoolean,
 			DefaultValue:     false,
-			AllowedValues:    []interface{}{true, false},
+			AllowedValues:    []any{true, false},
 			IsDiscreteValues: true,
-			AllowedScopes:    []string{"user"},
+			AllowedScopes:    []Scope{ScopeUser},
 		},
-		"SIDENAV_PINNED": {
-			Key:              "SIDENAV_PINNED",
-			Name:             "Keep the primary sidenav always open",
+		NameSidenavPinned: {
+			Name:             NameSidenavPinned,
 			Description:      "Controls whether the primary sidenav remains expanded or can be collapsed. When enabled, the sidenav will stay open and pinned to provide constant visibility of navigation options.",
-			ValueType:        "boolean",
+			ValueType:        ValueTypeBoolean,
 			DefaultValue:     false,
-			AllowedValues:    []interface{}{true, false},
+			AllowedValues:    []any{true, false},
 			IsDiscreteValues: true,
-			AllowedScopes:    []string{"user"},
+			AllowedScopes:    []Scope{ScopeUser},
 		},
 	}
 }
 
-func (p *Preference) ErrorValueTypeMismatch() error {
-	return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "the preference value is not of expected type: %s", p.ValueType)
+func NewPreference(name Name, scope Scope, available map[Name]Preference) (*Preference, error) {
+	preference, ok := available[name]
+	if !ok {
+		return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "the preference does not exist: %s", name)
+	}
+
+	if !slices.Contains(preference.AllowedScopes, scope) {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "the preference is not allowed for the given scope: %s", scope)
+	}
+
+	return &Preference{
+		Name:             name,
+		Description:      preference.Description,
+		ValueType:        preference.ValueType,
+		DefaultValue:     preference.DefaultValue,
+		AllowedValues:    preference.AllowedValues,
+		IsDiscreteValues: preference.IsDiscreteValues,
+		Range:            preference.Range,
+		AllowedScopes:    preference.AllowedScopes,
+	}, nil
 }
 
-func (p *Preference) checkIfInAllowedValues(preferenceValue interface{}) (bool, error) {
-
-	switch p.ValueType {
-	case PreferenceValueTypeInteger:
-		_, ok := preferenceValue.(int64)
-		if !ok {
-			return false, p.ErrorValueTypeMismatch()
-		}
-	case PreferenceValueTypeFloat:
-		_, ok := preferenceValue.(float64)
-		if !ok {
-			return false, p.ErrorValueTypeMismatch()
-		}
-	case PreferenceValueTypeString:
-		_, ok := preferenceValue.(string)
-		if !ok {
-			return false, p.ErrorValueTypeMismatch()
-		}
-	case PreferenceValueTypeBoolean:
-		_, ok := preferenceValue.(bool)
-		if !ok {
-			return false, p.ErrorValueTypeMismatch()
-		}
+func NewPreferenceFromAvailable(name Name, available map[Name]Preference) (*Preference, error) {
+	preference, ok := available[name]
+	if !ok {
+		return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "the preference does not exist: %s", name)
 	}
-	isInAllowedValues := false
-	for _, value := range p.AllowedValues {
-		switch p.ValueType {
-		case PreferenceValueTypeInteger:
-			allowedValue, ok := value.(int64)
-			if !ok {
-				return false, p.ErrorValueTypeMismatch()
-			}
 
-			if allowedValue == preferenceValue {
-				isInAllowedValues = true
-			}
-		case PreferenceValueTypeFloat:
-			allowedValue, ok := value.(float64)
-			if !ok {
-				return false, p.ErrorValueTypeMismatch()
-			}
-
-			if allowedValue == preferenceValue {
-				isInAllowedValues = true
-			}
-		case PreferenceValueTypeString:
-			allowedValue, ok := value.(string)
-			if !ok {
-				return false, p.ErrorValueTypeMismatch()
-			}
-
-			if allowedValue == preferenceValue {
-				isInAllowedValues = true
-			}
-		case PreferenceValueTypeBoolean:
-			allowedValue, ok := value.(bool)
-			if !ok {
-				return false, p.ErrorValueTypeMismatch()
-			}
-
-			if allowedValue == preferenceValue {
-				isInAllowedValues = true
-			}
-		}
-	}
-	return isInAllowedValues, nil
+	return &Preference{
+		Name:             name,
+		Description:      preference.Description,
+		ValueType:        preference.ValueType,
+		DefaultValue:     preference.DefaultValue,
+		AllowedValues:    preference.AllowedValues,
+		IsDiscreteValues: preference.IsDiscreteValues,
+		Range:            preference.Range,
+		AllowedScopes:    preference.AllowedScopes,
+	}, nil
 }
 
-func (p *Preference) IsValidValue(preferenceValue interface{}) error {
-	typeSafeValue := preferenceValue
-	switch p.ValueType {
-	case PreferenceValueTypeInteger:
-		val, ok := preferenceValue.(int64)
-		if !ok {
-			floatVal, ok := preferenceValue.(float64)
-			if !ok || floatVal != float64(int64(floatVal)) {
-				return p.ErrorValueTypeMismatch()
-			}
-			val = int64(floatVal)
-			typeSafeValue = val
-		}
-		if !p.IsDiscreteValues {
-			if val < p.Range.Min || val > p.Range.Max {
-				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "the preference value is not in the range specified, min: %v , max: %v", p.Range.Min, p.Range.Max)
-			}
-		}
-	case PreferenceValueTypeString:
-		_, ok := preferenceValue.(string)
-		if !ok {
-			return p.ErrorValueTypeMismatch()
-		}
-	case PreferenceValueTypeFloat:
-		_, ok := preferenceValue.(float64)
-		if !ok {
-			return p.ErrorValueTypeMismatch()
-		}
-	case PreferenceValueTypeBoolean:
-		_, ok := preferenceValue.(bool)
-		if !ok {
-			return p.ErrorValueTypeMismatch()
-		}
+func NewGettablePreference(preference *Preference, value any) *GettablePreference {
+	return &GettablePreference{
+		Preference: preference,
+		Value:      value,
 	}
-
-	// check the validity of the value being part of allowed values or the range specified if any
-	if p.IsDiscreteValues {
-		if p.AllowedValues != nil {
-			isInAllowedValues, valueMisMatchErr := p.checkIfInAllowedValues(typeSafeValue)
-
-			if valueMisMatchErr != nil {
-				return valueMisMatchErr
-			}
-			if !isInAllowedValues {
-				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "the preference value is not in the list of allowedValues: %v", p.AllowedValues)
-			}
-		}
-	}
-	return nil
 }
 
-func (p *Preference) IsEnabledForScope(scope string) bool {
-	isPreferenceEnabledForGivenScope := false
-	if p.AllowedScopes != nil {
-		for _, allowedScope := range p.AllowedScopes {
-			if allowedScope == strings.ToLower(scope) {
-				isPreferenceEnabledForGivenScope = true
-			}
-		}
+func NewStorableOrgPreference(preference *Preference, value string, orgID valuer.UUID) *StorableOrgPreference {
+	return &StorableOrgPreference{
+		Name:  preference.Name,
+		Value: value,
+		OrgID: orgID,
 	}
-	return isPreferenceEnabledForGivenScope
 }
 
-func (p *Preference) SanitizeValue(preferenceValue interface{}) interface{} {
-	switch p.ValueType {
-	case PreferenceValueTypeBoolean:
-		if preferenceValue == "1" || preferenceValue == true || preferenceValue == "true" {
-			return true
-		} else {
-			return false
-		}
-	default:
-		return preferenceValue
+func NewStorableUserPreference(preference *Preference, value string, userID valuer.UUID) *StorableUserPreference {
+	return &StorableUserPreference{
+		Name:   preference.Name,
+		Value:  value,
+		UserID: userID,
 	}
 }
 
 type Store interface {
-	GetOrg(context.Context, string, string) (*StorableOrgPreference, error)
-	GetAllOrg(context.Context, string) ([]*StorableOrgPreference, error)
-	UpsertOrg(context.Context, *StorableOrgPreference) error
-	GetUser(context.Context, string, string) (*StorableUserPreference, error)
-	GetAllUser(context.Context, string) ([]*StorableUserPreference, error)
-	UpsertUser(context.Context, *StorableUserPreference) error
+	GetByOrg(context.Context, valuer.UUID, Name) (*StorableOrgPreference, error)
+	ListByOrg(context.Context, valuer.UUID) ([]*StorableOrgPreference, error)
+	UpsertByOrg(context.Context, *StorableOrgPreference) error
+	GetByUser(context.Context, valuer.UUID, Name) (*StorableUserPreference, error)
+	ListByUser(context.Context, valuer.UUID) ([]*StorableUserPreference, error)
+	UpsertByUser(context.Context, *StorableUserPreference) error
 }

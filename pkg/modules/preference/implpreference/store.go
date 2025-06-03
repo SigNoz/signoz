@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type store struct {
@@ -15,14 +16,14 @@ func NewStore(db sqlstore.SQLStore) preferencetypes.Store {
 	return &store{store: db}
 }
 
-func (store *store) GetOrg(ctx context.Context, orgID string, preferenceID string) (*preferencetypes.StorableOrgPreference, error) {
+func (store *store) GetByOrg(ctx context.Context, orgID valuer.UUID, name preferencetypes.Name) (*preferencetypes.StorableOrgPreference, error) {
 	orgPreference := new(preferencetypes.StorableOrgPreference)
 	err := store.
 		store.
 		BunDB().
 		NewSelect().
 		Model(orgPreference).
-		Where("preference_id = ?", preferenceID).
+		Where("preference_id = ?", name).
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 
@@ -33,7 +34,7 @@ func (store *store) GetOrg(ctx context.Context, orgID string, preferenceID strin
 	return orgPreference, nil
 }
 
-func (store *store) GetAllOrg(ctx context.Context, orgID string) ([]*preferencetypes.StorableOrgPreference, error) {
+func (store *store) ListByOrg(ctx context.Context, orgID valuer.UUID) ([]*preferencetypes.StorableOrgPreference, error) {
 	orgPreferences := make([]*preferencetypes.StorableOrgPreference, 0)
 	err := store.
 		store.
@@ -50,7 +51,7 @@ func (store *store) GetAllOrg(ctx context.Context, orgID string) ([]*preferencet
 	return orgPreferences, nil
 }
 
-func (store *store) UpsertOrg(ctx context.Context, orgPreference *preferencetypes.StorableOrgPreference) error {
+func (store *store) UpsertByOrg(ctx context.Context, orgPreference *preferencetypes.StorableOrgPreference) error {
 	_, err := store.
 		store.
 		BunDB().
@@ -65,17 +66,16 @@ func (store *store) UpsertOrg(ctx context.Context, orgPreference *preferencetype
 	return nil
 }
 
-func (store *store) GetUser(ctx context.Context, userID string, preferenceID string) (*preferencetypes.StorableUserPreference, error) {
+func (store *store) GetByUser(ctx context.Context, userID valuer.UUID, name preferencetypes.Name) (*preferencetypes.StorableUserPreference, error) {
 	userPreference := new(preferencetypes.StorableUserPreference)
+
 	err := store.
 		store.
 		BunDB().
 		NewSelect().
 		Model(userPreference).
-		Where("preference_id = ?", preferenceID).
 		Where("user_id = ?", userID).
 		Scan(ctx)
-
 	if err != nil {
 		return userPreference, err
 	}
@@ -83,7 +83,7 @@ func (store *store) GetUser(ctx context.Context, userID string, preferenceID str
 	return userPreference, nil
 }
 
-func (store *store) GetAllUser(ctx context.Context, userID string) ([]*preferencetypes.StorableUserPreference, error) {
+func (store *store) ListByUser(ctx context.Context, userID valuer.UUID) ([]*preferencetypes.StorableUserPreference, error) {
 	userPreferences := make([]*preferencetypes.StorableUserPreference, 0)
 	err := store.
 		store.
@@ -100,7 +100,7 @@ func (store *store) GetAllUser(ctx context.Context, userID string) ([]*preferenc
 	return userPreferences, nil
 }
 
-func (store *store) UpsertUser(ctx context.Context, userPreference *preferencetypes.StorableUserPreference) error {
+func (store *store) UpsertByUser(ctx context.Context, userPreference *preferencetypes.StorableUserPreference) error {
 	_, err := store.
 		store.
 		BunDB().
