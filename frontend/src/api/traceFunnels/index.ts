@@ -167,8 +167,8 @@ interface UpdateFunnelDescriptionPayload {
 export const saveFunnelDescription = async (
 	payload: UpdateFunnelDescriptionPayload,
 ): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
-	const response: AxiosResponse = await axios.post(
-		`${FUNNELS_BASE_PATH}/save`,
+	const response: AxiosResponse = await axios.put(
+		`${FUNNELS_BASE_PATH}/${payload.funnel_id}`,
 		payload,
 	);
 

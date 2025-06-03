@@ -160,8 +160,6 @@ function GridCardGraph({
 		};
 	});
 
-	// TODO [vikrantgupta25] remove this useEffect with refactor as this is prone to race condition
-	// this is added to tackle the case of async communication between VariableItem.tsx and GridCard.tsx
 	useEffect(() => {
 		if (variablesToGetUpdated.length > 0) {
 			queryClient.cancelQueries([
