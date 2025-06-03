@@ -2,7 +2,7 @@ package querybuildertypesv5
 
 import (
 	"math"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -55,8 +55,14 @@ func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit int) []*Tim
 	}
 
 	// Sort the series based on the order criteria
-	sort.SliceStable(series, func(i, j int) bool {
-		return compareSeries(series[i], series[j], effectiveOrderBy, seriesValues, seriesLabels)
+	slices.SortStableFunc(series, func(i, j *TimeSeries) int {
+		if compareSeries(i, j, effectiveOrderBy, seriesValues, seriesLabels) {
+			return -1
+		}
+		if compareSeries(j, i, effectiveOrderBy, seriesValues, seriesLabels) {
+			return 1
+		}
+		return 0
 	})
 
 	// Apply limit if specified

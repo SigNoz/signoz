@@ -2,7 +2,7 @@ package querybuildertypesv5
 
 import (
 	"math"
-	"sort"
+	"slices"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -319,7 +319,7 @@ func median(values []float64) float64 {
 		return math.NaN()
 	}
 
-	sort.Float64s(values)
+	slices.Sort(values)
 	medianIndex := len(values) / 2
 	if len(values)%2 == 0 {
 		return (values[medianIndex-1] + values[medianIndex]) / 2
