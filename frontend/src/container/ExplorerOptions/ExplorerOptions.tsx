@@ -316,6 +316,7 @@ function ExplorerOptions({
 	};
 
 	const onUpdateQueryHandler = (): void => {
+		console.log('uncaught ued', updatedExtraData);
 		updateViewAsync(
 			{
 				compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
@@ -524,6 +525,14 @@ function ExplorerOptions({
 				color,
 				selectColumns: options.selectColumns,
 				version: 1,
+				...// pass this only for logs
+				(sourcepage === DataSource.LOGS
+					? {
+							format: options?.format,
+							maxLines: options?.maxLines,
+							fontSize: options?.fontSize,
+					  }
+					: {}),
 			}),
 			notifications,
 			panelType: panelType || PANEL_TYPES.LIST,

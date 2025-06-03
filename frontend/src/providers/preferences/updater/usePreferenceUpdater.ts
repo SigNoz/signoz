@@ -46,7 +46,7 @@ export function usePreferenceUpdater({
 }: {
 	dataSource: DataSource;
 	mode: string;
-	setReSync: Dispatch<SetStateAction<number>>;
+	setReSync: Dispatch<SetStateAction<boolean>>;
 	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>;
 }): {
 	updateColumns: (newColumns: BaseAutocompleteData[]) => void;
@@ -63,11 +63,11 @@ export function usePreferenceUpdater({
 	return {
 		updateColumns: (newColumns: BaseAutocompleteData[]): void => {
 			updater.updateColumns(newColumns, mode);
-			setReSync((prev: number) => prev + 1);
+			setReSync(true);
 		},
 		updateFormatting: (newFormatting: FormattingOptions): void => {
 			updater.updateFormatting(newFormatting, mode);
-			setReSync((prev: number) => prev + 1);
+			setReSync(true);
 		},
 	};
 }

@@ -58,9 +58,11 @@ async function tracesPreferencesLoader(): Promise<{
 export function usePreferenceLoader({
 	dataSource,
 	reSync,
+	setReSync,
 }: {
 	dataSource: DataSource;
-	reSync: number;
+	reSync: boolean;
+	setReSync: (value: boolean) => void;
 }): {
 	preferences: Preferences | null;
 	loading: boolean;
@@ -89,10 +91,18 @@ export function usePreferenceLoader({
 				setError(e as Error);
 			} finally {
 				setLoading(false);
+				// Reset reSync back to false after loading is complete
+				if (reSync) {
+					setReSync(false);
+				}
 			}
 		}
-		loadPreferences();
-	}, [dataSource, reSync]);
+
+		// Only load preferences on initial mount or when reSync is true
+		if (loading || reSync) {
+			loadPreferences();
+		}
+	}, [dataSource, reSync, setReSync, loading]);
 
 	return { preferences, loading, error };
 }

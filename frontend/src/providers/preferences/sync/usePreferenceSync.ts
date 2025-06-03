@@ -56,10 +56,11 @@ export function usePreferenceSync({
 
 	// We are using a reSync state because we have URL updates as well as local storage updates
 	// and we want to make sure we are always using the latest preferences
-	const [reSync, setReSync] = useState(0);
+	const [reSync, setReSync] = useState(false);
 	const { preferences, loading, error } = usePreferenceLoader({
 		dataSource,
 		reSync,
+		setReSync,
 	});
 
 	const { updateColumns, updateFormatting } = usePreferenceUpdater({
