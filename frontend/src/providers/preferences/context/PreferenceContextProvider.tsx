@@ -1,15 +1,13 @@
-import { PreferenceContextValue } from 'providers/preferences/types';
+import useUrlQuery from 'hooks/useUrlQuery';
+import {
+	PreferenceContextValue,
+	PreferenceMode,
+} from 'providers/preferences/types';
 import React, { createContext, useContext, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceSync } from '../sync/usePreferenceSync';
-
-// This will help in identifying the mode of the preference context
-// savedView - when the preference is loaded from a saved view
-// direct - when the preference is loaded from a direct query
-
-export type PreferenceMode = 'savedView' | 'direct';
 
 const PreferenceContext = createContext<PreferenceContextValue | undefined>(
 	undefined,
@@ -21,7 +19,7 @@ export function PreferenceContextProvider({
 	children: React.ReactNode;
 }): JSX.Element {
 	const location = useLocation();
-	const params = new URLSearchParams(location.search);
+	const params = useUrlQuery();
 
 	let savedViewId = '';
 	const viewKeyParam = params.get('viewKey');
@@ -42,7 +40,7 @@ export function PreferenceContextProvider({
 		updateColumns,
 		updateFormatting,
 	} = usePreferenceSync({
-		mode: savedViewId ? 'savedView' : 'direct',
+		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
 		savedViewId: savedViewId || undefined,
 		dataSource,
 	});
@@ -52,7 +50,7 @@ export function PreferenceContextProvider({
 			preferences,
 			loading,
 			error,
-			mode: savedViewId ? 'savedView' : 'direct',
+			mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
 			savedViewId: savedViewId || undefined,
 			dataSource,
 			updateColumns,

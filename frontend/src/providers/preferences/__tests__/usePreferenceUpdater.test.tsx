@@ -52,7 +52,7 @@ describe('usePreferenceUpdater', () => {
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
 				dataSource: DataSource.LOGS,
-				mode: 'direct' as PreferenceMode,
+				mode: PreferenceMode.DIRECT,
 				setReSync,
 				setSavedViewPreferences,
 			}),
@@ -78,7 +78,7 @@ describe('usePreferenceUpdater', () => {
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
 				dataSource: DataSource.LOGS,
-				mode: 'direct' as PreferenceMode,
+				mode: PreferenceMode.DIRECT,
 				setReSync,
 				setSavedViewPreferences,
 			}),
@@ -89,7 +89,10 @@ describe('usePreferenceUpdater', () => {
 		});
 
 		// Should call the logs updater
-		expect(mockUpdateColumns).toHaveBeenCalledWith(newColumns, 'direct');
+		expect(mockUpdateColumns).toHaveBeenCalledWith(
+			newColumns,
+			PreferenceMode.DIRECT,
+		);
 		expect(setReSync).toHaveBeenCalled();
 	});
 
@@ -106,7 +109,7 @@ describe('usePreferenceUpdater', () => {
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
 				dataSource: DataSource.LOGS,
-				mode: 'direct' as PreferenceMode,
+				mode: PreferenceMode.DIRECT,
 				setReSync,
 				setSavedViewPreferences,
 			}),
@@ -117,7 +120,10 @@ describe('usePreferenceUpdater', () => {
 		});
 
 		// Should call the logs updater
-		expect(mockUpdateFormatting).toHaveBeenCalledWith(newFormatting, 'direct');
+		expect(mockUpdateFormatting).toHaveBeenCalledWith(
+			newFormatting,
+			PreferenceMode.DIRECT,
+		);
 		expect(setReSync).toHaveBeenCalled();
 	});
 
@@ -136,7 +142,7 @@ describe('usePreferenceUpdater', () => {
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
 				dataSource: DataSource.TRACES,
-				mode: 'direct' as PreferenceMode,
+				mode: PreferenceMode.DIRECT,
 				setReSync,
 				setSavedViewPreferences,
 			}),
@@ -147,7 +153,10 @@ describe('usePreferenceUpdater', () => {
 		});
 
 		// Should call the traces updater
-		expect(mockUpdateColumns).toHaveBeenCalledWith(newColumns, 'direct');
+		expect(mockUpdateColumns).toHaveBeenCalledWith(
+			newColumns,
+			PreferenceMode.DIRECT,
+		);
 		expect(setReSync).toHaveBeenCalled();
 	});
 
@@ -164,7 +173,7 @@ describe('usePreferenceUpdater', () => {
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
 				dataSource: DataSource.TRACES,
-				mode: 'direct' as PreferenceMode,
+				mode: PreferenceMode.DIRECT,
 				setReSync,
 				setSavedViewPreferences,
 			}),
@@ -175,7 +184,10 @@ describe('usePreferenceUpdater', () => {
 		});
 
 		// Should call the traces updater
-		expect(mockUpdateFormatting).toHaveBeenCalledWith(newFormatting, 'direct');
+		expect(mockUpdateFormatting).toHaveBeenCalledWith(
+			newFormatting,
+			PreferenceMode.DIRECT,
+		);
 		expect(setReSync).toHaveBeenCalled();
 	});
 
@@ -186,7 +198,7 @@ describe('usePreferenceUpdater', () => {
 		const { result } = renderHook(() =>
 			usePreferenceUpdater({
 				dataSource: DataSource.LOGS,
-				mode: 'direct' as PreferenceMode,
+				mode: PreferenceMode.DIRECT,
 				setReSync,
 				setSavedViewPreferences,
 			}),

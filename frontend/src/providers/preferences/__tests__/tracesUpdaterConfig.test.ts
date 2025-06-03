@@ -6,6 +6,7 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import getTracesUpdaterConfig from '../configs/tracesUpdaterConfig';
+import { PreferenceMode } from '../types';
 
 // Mock setLocalStorageKey
 const mockSetLocalStorageKey = jest.fn();
@@ -54,7 +55,7 @@ describe('tracesUpdaterConfig', () => {
 			mockSetSavedViewPreferences,
 		);
 
-		tracesUpdaterConfig.updateColumns(mockColumns, 'direct');
+		tracesUpdaterConfig.updateColumns(mockColumns, PreferenceMode.DIRECT);
 
 		// Should redirect with the updated columns
 		expect(mockRedirectWithOptionsData).toHaveBeenCalledWith({
@@ -88,7 +89,7 @@ describe('tracesUpdaterConfig', () => {
 			mockSetSavedViewPreferences,
 		);
 
-		tracesUpdaterConfig.updateColumns(mockColumns, 'direct');
+		tracesUpdaterConfig.updateColumns(mockColumns, PreferenceMode.DIRECT);
 
 		// Should set localStorage with the updated columns while preserving other props
 		expect(mockSetLocalStorageKey).toHaveBeenCalledWith(
@@ -106,7 +107,7 @@ describe('tracesUpdaterConfig', () => {
 			mockSetSavedViewPreferences,
 		);
 
-		tracesUpdaterConfig.updateColumns(mockColumns, 'savedView');
+		tracesUpdaterConfig.updateColumns(mockColumns, PreferenceMode.SAVED_VIEW);
 
 		// Should not redirect or modify localStorage in savedView mode
 		expect(mockRedirectWithOptionsData).not.toHaveBeenCalled();

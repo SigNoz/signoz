@@ -72,7 +72,7 @@ describe('logsUpdaterConfig', () => {
 			maxLines: 2,
 		});
 
-		logsUpdater.updateColumns(newColumns, 'direct' as PreferenceMode);
+		logsUpdater.updateColumns(newColumns, PreferenceMode.DIRECT);
 
 		// Should update URL
 		expect(redirectWithOptionsData).toHaveBeenCalledWith({
@@ -106,7 +106,7 @@ describe('logsUpdaterConfig', () => {
 			},
 		];
 
-		logsUpdater.updateColumns(newColumns, 'savedView' as PreferenceMode);
+		logsUpdater.updateColumns(newColumns, PreferenceMode.SAVED_VIEW);
 
 		// Should not update URL in savedView mode
 		expect(redirectWithOptionsData).not.toHaveBeenCalled();
@@ -153,7 +153,7 @@ describe('logsUpdaterConfig', () => {
 			format: 'table',
 		});
 
-		logsUpdater.updateFormatting(newFormatting, 'direct' as PreferenceMode);
+		logsUpdater.updateFormatting(newFormatting, PreferenceMode.DIRECT);
 
 		// Should always update URL for both modes
 		expect(redirectWithOptionsData).toHaveBeenCalledWith({
@@ -206,7 +206,7 @@ describe('logsUpdaterConfig', () => {
 			format: 'table',
 		});
 
-		logsUpdater.updateFormatting(newFormatting, 'savedView' as PreferenceMode);
+		logsUpdater.updateFormatting(newFormatting, PreferenceMode.SAVED_VIEW);
 
 		// Should not override localStorage in savedView mode
 		const storedData = JSON.parse(
@@ -231,7 +231,7 @@ describe('logsUpdaterConfig', () => {
 
 		// No initial localStorage data
 
-		logsUpdater.updateFormatting(newFormatting, 'direct' as PreferenceMode);
+		logsUpdater.updateFormatting(newFormatting, PreferenceMode.DIRECT);
 
 		// Should create localStorage entry
 		const storedData = JSON.parse(

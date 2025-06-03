@@ -5,7 +5,7 @@ import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 import { Dispatch, SetStateAction } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { Preferences } from '../types';
+import { PreferenceMode, Preferences } from '../types';
 
 // --- TRACES preferences updater config ---
 const getTracesUpdaterConfig = (
@@ -17,7 +17,7 @@ const getTracesUpdaterConfig = (
 } => ({
 	updateColumns: (newColumns: BaseAutocompleteData[], mode: string): void => {
 		// remove the formatting props
-		if (mode === 'savedView') {
+		if (mode === PreferenceMode.SAVED_VIEW) {
 			setSavedViewPreferences({
 				columns: newColumns,
 				formatting: {
@@ -29,7 +29,7 @@ const getTracesUpdaterConfig = (
 			});
 		}
 
-		if (mode === 'direct') {
+		if (mode === PreferenceMode.DIRECT) {
 			// just need to update the columns see for remove props
 			redirectWithOptionsData({
 				...defaultOptionsQuery,

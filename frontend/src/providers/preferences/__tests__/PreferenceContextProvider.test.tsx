@@ -1,6 +1,10 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { render, screen } from '@testing-library/react';
-import { FormattingOptions, Preferences } from 'providers/preferences/types';
+import {
+	FormattingOptions,
+	PreferenceMode,
+	Preferences,
+} from 'providers/preferences/types';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
@@ -59,7 +63,7 @@ describe('PreferenceContextProvider', () => {
 			</MemoryRouter>,
 		);
 
-		expect(screen.getByTestId('mode')).toHaveTextContent('direct');
+		expect(screen.getByTestId('mode')).toHaveTextContent(PreferenceMode.DIRECT);
 		expect(screen.getByTestId('dataSource')).toHaveTextContent('logs');
 		expect(screen.getByTestId('loading')).toHaveTextContent('false');
 		expect(screen.getByTestId('error')).toHaveTextContent('null');
@@ -126,7 +130,7 @@ describe('PreferenceContextProvider', () => {
 			</MemoryRouter>,
 		);
 
-		expect(screen.getByTestId('mode')).toHaveTextContent('direct');
+		expect(screen.getByTestId('mode')).toHaveTextContent(PreferenceMode.DIRECT);
 		expect(console.error).toHaveBeenCalled();
 
 		// Restore console.error

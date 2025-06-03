@@ -5,7 +5,7 @@ import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 import { Dispatch, SetStateAction } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { FormattingOptions, Preferences } from '../types';
+import { FormattingOptions, PreferenceMode, Preferences } from '../types';
 
 // --- LOGS preferences updater config ---
 const getLogsUpdaterConfig = (
@@ -16,7 +16,7 @@ const getLogsUpdaterConfig = (
 	updateFormatting: (newFormatting: FormattingOptions, mode: string) => void;
 } => ({
 	updateColumns: (newColumns: BaseAutocompleteData[], mode: string): void => {
-		if (mode === 'savedView') {
+		if (mode === PreferenceMode.SAVED_VIEW) {
 			setSavedViewPreferences({
 				columns: newColumns,
 				formatting: {
@@ -28,7 +28,7 @@ const getLogsUpdaterConfig = (
 			});
 		}
 
-		if (mode === 'direct') {
+		if (mode === PreferenceMode.DIRECT) {
 			// just need to update the columns see for remove props
 			redirectWithOptionsData({
 				...defaultOptionsQuery,
@@ -44,7 +44,7 @@ const getLogsUpdaterConfig = (
 		}
 	},
 	updateFormatting: (newFormatting: FormattingOptions, mode: string): void => {
-		if (mode === 'savedView') {
+		if (mode === PreferenceMode.SAVED_VIEW) {
 			setSavedViewPreferences((prev) => {
 				if (!prev) return { columns: [], formatting: newFormatting };
 				return {
@@ -54,7 +54,7 @@ const getLogsUpdaterConfig = (
 			});
 		}
 
-		if (mode === 'direct') {
+		if (mode === PreferenceMode.DIRECT) {
 			redirectWithOptionsData({
 				...defaultOptionsQuery,
 				...newFormatting,

@@ -71,7 +71,9 @@ export function usePreferenceSync({
 
 	return {
 		preferences:
-			mode === 'savedView' && savedViewId ? savedViewPreferences : preferences,
+			mode === PreferenceMode.SAVED_VIEW && savedViewId
+				? savedViewPreferences
+				: preferences,
 		loading,
 		error,
 		updateColumns,

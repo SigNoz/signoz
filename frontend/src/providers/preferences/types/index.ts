@@ -3,7 +3,10 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
-export type PreferenceMode = 'savedView' | 'direct';
+export enum PreferenceMode {
+	SAVED_VIEW = 'savedView',
+	DIRECT = 'direct',
+}
 
 export interface PreferenceContextValue {
 	preferences: Preferences | null;
