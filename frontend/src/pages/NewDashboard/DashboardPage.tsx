@@ -19,9 +19,9 @@ function DashboardPage(): JSX.Element {
 		: 'Something went wrong';
 
 	useEffect(() => {
-		const dashboardTitle = dashboardResponse.data?.data.title;
+		const dashboardTitle = dashboardResponse.data?.data.data.title;
 		document.title = dashboardTitle || document.title;
-	}, [dashboardResponse.data?.data.title, isFetching]);
+	}, [dashboardResponse.data?.data.data.title, isFetching]);
 
 	if (isError && !isFetching && errorMessage === ErrorType.NotFound) {
 		return <NotFound />;
