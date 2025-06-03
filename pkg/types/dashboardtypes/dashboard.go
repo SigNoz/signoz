@@ -214,7 +214,7 @@ func (dashboard *Dashboard) CanLockUnlock(ctx context.Context, updatedBy string)
 		return err
 	}
 
-	if dashboard.CreatedBy != updatedBy || claims.Role != types.RoleAdmin {
+	if dashboard.CreatedBy != updatedBy && claims.Role != types.RoleAdmin {
 		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}
 	return nil
