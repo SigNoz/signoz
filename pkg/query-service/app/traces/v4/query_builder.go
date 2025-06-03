@@ -153,7 +153,6 @@ func BuildTracesFilter(fs *v3.FilterSet) (string, error) {
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
-
 			val := item.Value
 			// generate the key
 			columnName := getColumnName(item.Key)
@@ -199,9 +198,7 @@ func BuildTracesFilter(fs *v3.FilterSet) (string, error) {
 			}
 		}
 	}
-	queryString := strings.Join(conditions, " AND ")
-
-	return queryString, nil
+	return strings.Join(conditions, " AND "), nil
 }
 
 func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey) (string, error) {

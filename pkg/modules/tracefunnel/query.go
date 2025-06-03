@@ -9,10 +9,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 )
 
-// sanitizeClause adds AND prefix to non-empty clauses
+// sanitizeClause adds AND prefix to non-empty clauses if not already present
 func sanitizeClause(clause string) string {
 	if clause == "" {
 		return ""
+	}
+	// Check if clause already starts with AND
+	if strings.HasPrefix(strings.TrimSpace(clause), "AND") {
+		return clause
 	}
 	return "AND " + clause
 }
