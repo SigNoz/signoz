@@ -36,7 +36,7 @@ export const K8sCategories = {
 	VOLUMES: 'volumes',
 };
 
-export const K8sEntityToAggregateAttributeMapping = {
+export const underscoreMap = {
 	[K8sCategory.HOSTS]: 'system_cpu_load_average_15m',
 	[K8sCategory.PODS]: 'k8s_pod_cpu_utilization',
 	[K8sCategory.NODES]: 'k8s_node_cpu_utilization',
@@ -50,469 +50,654 @@ export const K8sEntityToAggregateAttributeMapping = {
 	[K8sCategory.VOLUMES]: 'k8s_volume_capacity',
 };
 
-export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Pod',
-		attributeKey: {
-			key: 'k8s_pod_name',
-			dataType: DataTypes.String,
-			type: 'tag',
-			isColumn: false,
-			isJSON: false,
-			id: 'k8s_pod_name--string--tag--true',
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Namespace',
-		attributeKey: {
-			key: 'k8s_namespace_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: false,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Node',
-		attributeKey: {
-			key: 'k8s_node_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-			id: 'k8s.node.name--string--resource--true',
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: false,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Cluster',
-		attributeKey: {
-			key: 'k8s_cluster_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: false,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Deployment',
-		attributeKey: {
-			key: 'k8s_deployment_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: false,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Statefulset',
-		attributeKey: {
-			key: 'k8s_statefulset_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: false,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'DaemonSet',
-		attributeKey: {
-			key: 'k8s_daemonset_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: false,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Job',
-		attributeKey: {
-			key: 'k8s_job_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: false,
-	},
-];
+export const dotMap = {
+	[K8sCategory.HOSTS]: 'system.cpu.load_average.15m',
+	[K8sCategory.PODS]: 'k8s.pod.cpu.utilization',
+	[K8sCategory.NODES]: 'k8s.node.cpu.utilization',
+	[K8sCategory.NAMESPACES]: 'k8s.pod.cpu.utilization',
+	[K8sCategory.CLUSTERS]: 'k8s.node.cpu.utilization',
+	[K8sCategory.DEPLOYMENTS]: 'k8s.pod.cpu.utilization',
+	[K8sCategory.STATEFULSETS]: 'k8s.pod.cpu.utilization',
+	[K8sCategory.DAEMONSETS]: 'k8s.pod.cpu.utilization',
+	[K8sCategory.CONTAINERS]: 'k8s.pod.cpu.utilization',
+	[K8sCategory.JOBS]: 'k8s.job.desired_successful_pods',
+	[K8sCategory.VOLUMES]: 'k8s.volume.capacity',
+};
 
-export const NodesQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Node Name',
-		attributeKey: {
-			key: 'k8s_node_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Cluster Name',
-		attributeKey: {
-			key: 'k8s_cluster_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-];
+export function GetK8sEntityToAggregateAttribute(
+	category: K8sCategory,
+	dotMetricsEnabled: boolean,
+): string {
+	return dotMetricsEnabled ? dotMap[category] : underscoreMap[category];
+}
 
-export const NamespaceQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Namespace Name',
-		attributeKey: {
-			key: 'k8s_namespace_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Cluster Name',
-		attributeKey: {
-			key: 'k8s_cluster_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-];
+export function GetPodsQuickFiltersConfig(
+	dotMetricsEnabled: boolean,
+): IQuickFiltersConfig[] {
+	const podKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
+	const namespaceKey = dotMetricsEnabled
+		? 'k8s.namespace.name'
+		: 'k8s_namespace_name';
+	const nodeKey = dotMetricsEnabled ? 'k8s.node.name' : 'k8s_node_name';
+	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
+	const deploymentKey = dotMetricsEnabled
+		? 'k8s.deployment.name'
+		: 'k8s_deployment_name';
+	const statefulsetKey = dotMetricsEnabled
+		? 'k8s.statefulset.name'
+		: 'k8s_statefulset_name';
+	const daemonsetKey = dotMetricsEnabled
+		? 'k8s.daemonset.name'
+		: 'k8s_daemonset_name';
+	const jobKey = dotMetricsEnabled ? 'k8s.job.name' : 'k8s_job_name';
 
-export const ClustersQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Cluster Name',
-		attributeKey: {
-			key: 'k8s_cluster_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-];
+	// Define aggregate attribute (metric) name
+	const cpuUtilizationMetric = dotMetricsEnabled
+		? 'k8s.pod.cpu.utilization'
+		: 'k8s_pod_cpu_utilization';
 
-export const ContainersQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Container',
-		attributeKey: {
-			key: 'k8s_container_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
+	return [
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Pod',
+			attributeKey: {
+				key: podKey,
+				dataType: DataTypes.String,
+				type: 'tag',
+				isColumn: false,
+				isJSON: false,
+				id: `${podKey}--string--tag--true`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilizationMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
 		},
-		defaultOpen: true,
-	},
-];
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Namespace',
+			attributeKey: {
+				key: namespaceKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${namespaceKey}--string--resource--false`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilizationMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: false,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Node',
+			attributeKey: {
+				key: nodeKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${nodeKey}--string--resource--false`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilizationMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: false,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Cluster',
+			attributeKey: {
+				key: clusterKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${clusterKey}--string--resource--false`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilizationMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: false,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Deployment',
+			attributeKey: {
+				key: deploymentKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${deploymentKey}--string--resource--false`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilizationMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: false,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Statefulset',
+			attributeKey: {
+				key: statefulsetKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${statefulsetKey}--string--resource--false`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilizationMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: false,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'DaemonSet',
+			attributeKey: {
+				key: daemonsetKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${daemonsetKey}--string--resource--false`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilizationMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: false,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Job',
+			attributeKey: {
+				key: jobKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${jobKey}--string--resource--false`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilizationMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: false,
+		},
+	];
+}
 
-export const VolumesQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'PVC Volume Claim Name',
-		attributeKey: {
-			key: 'k8s_persistentvolumeclaim_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_volume_capacity',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Namespace Name',
-		attributeKey: {
-			key: 'k8s_namespace_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_volume_capacity',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Cluster Name',
-		attributeKey: {
-			key: 'k8s_cluster_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_volume_capacity',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-];
+export function GetNodesQuickFiltersConfig(
+	dotMetricsEnabled: boolean,
+): IQuickFiltersConfig[] {
+	// Define attribute keys
+	const nodeKey = dotMetricsEnabled ? 'k8s.node.name' : 'k8s_node_name';
+	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
 
-export const DeploymentsQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Deployment Name',
-		attributeKey: {
-			key: 'k8s_deployment_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Namespace Name',
-		attributeKey: {
-			key: 'k8s_namespace_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Cluster Name',
-		attributeKey: {
-			key: 'k8s_cluster_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-];
+	// Define aggregate metric name for node CPU utilization
+	const cpuUtilMetric = dotMetricsEnabled
+		? 'k8s.node.cpu.utilization'
+		: 'k8s_node_cpu_utilization';
 
-export const StatefulsetsQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Statefulset Name',
-		attributeKey: {
-			key: 'k8s_statefulset_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
+	return [
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Node Name',
+			attributeKey: {
+				key: nodeKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${nodeKey}--string--resource--true`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
 		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Namespace Name',
-		attributeKey: {
-			key: 'k8s_namespace_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Cluster Name',
+			attributeKey: {
+				key: clusterKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${clusterKey}--string--resource--true`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
 		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Cluster Name',
-		attributeKey: {
-			key: 'k8s_cluster_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-];
+	];
+}
 
-export const DaemonSetsQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'DaemonSet Name',
-		attributeKey: {
-			key: 'k8s_daemonset_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Namespace Name',
-		attributeKey: {
-			key: 'k8s_namespace_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Cluster Name',
-		attributeKey: {
-			key: 'k8s_cluster_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
-		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-];
+export function GetNamespaceQuickFiltersConfig(
+	dotMetricsEnabled: boolean,
+): IQuickFiltersConfig[] {
+	const namespaceKey = dotMetricsEnabled
+		? 'k8s.namespace.name'
+		: 'k8s_namespace_name';
+	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
+	const cpuUtilMetric = dotMetricsEnabled
+		? 'k8s.pod.cpu.utilization'
+		: 'k8s_pod_cpu_utilization';
 
-export const JobsQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Job Name',
-		attributeKey: {
-			key: 'k8s_job_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
+	return [
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Namespace Name',
+			attributeKey: {
+				key: namespaceKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${namespaceKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
 		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Namespace Name',
-		attributeKey: {
-			key: 'k8s_namespace_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Cluster Name',
+			attributeKey: {
+				key: clusterKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${clusterKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
 		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Cluster Name',
-		attributeKey: {
-			key: 'k8s_cluster_name',
-			dataType: DataTypes.String,
-			type: 'resource',
-			isColumn: false,
-			isJSON: false,
+	];
+}
+
+export function GetClustersQuickFiltersConfig(
+	dotMetricsEnabled: boolean,
+): IQuickFiltersConfig[] {
+	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
+	const cpuUtilMetric = dotMetricsEnabled
+		? 'k8s.node.cpu.utilization'
+		: 'k8s_node_cpu_utilization';
+
+	return [
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Cluster Name',
+			attributeKey: {
+				key: clusterKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${clusterKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: cpuUtilMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
 		},
-		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
-		dataSource: DataSource.METRICS,
-		defaultOpen: true,
-	},
-];
+	];
+}
+
+export function GetContainersQuickFiltersConfig(
+	dotMetricsEnabled: boolean,
+): IQuickFiltersConfig[] {
+	const containerKey = dotMetricsEnabled
+		? 'k8s.container.name'
+		: 'k8s_container_name';
+
+	return [
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Container',
+			attributeKey: {
+				key: containerKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${containerKey}--string--resource`,
+			},
+			defaultOpen: true,
+		},
+	];
+}
+
+export function GetVolumesQuickFiltersConfig(
+	dotMetricsEnabled: boolean,
+): IQuickFiltersConfig[] {
+	const pvcKey = dotMetricsEnabled
+		? 'k8s.persistentvolumeclaim.name'
+		: 'k8s_persistentvolumeclaim_name';
+	const namespaceKey = dotMetricsEnabled
+		? 'k8s.namespace.name'
+		: 'k8s_namespace_name';
+	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
+	const volumeMetric = dotMetricsEnabled
+		? 'k8s.volume.capacity'
+		: 'k8s_volume_capacity';
+
+	return [
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'PVC Volume Claim Name',
+			attributeKey: {
+				key: pvcKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${pvcKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: volumeMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Namespace Name',
+			attributeKey: {
+				key: namespaceKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${namespaceKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: volumeMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Cluster Name',
+			attributeKey: {
+				key: clusterKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${clusterKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: volumeMetric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+	];
+}
+
+export function GetDeploymentsQuickFiltersConfig(
+	dotMetricsEnabled: boolean,
+): IQuickFiltersConfig[] {
+	const deployKey = dotMetricsEnabled
+		? 'k8s.deployment.name'
+		: 'k8s_deployment_name';
+	const namespaceKey = dotMetricsEnabled
+		? 'k8s.namespace.name'
+		: 'k8s_namespace_name';
+	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
+	const metric = dotMetricsEnabled
+		? 'k8s.pod.cpu.utilization'
+		: 'k8s_pod_cpu_utilization';
+
+	return [
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Deployment Name',
+			attributeKey: {
+				key: deployKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${deployKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Namespace Name',
+			attributeKey: {
+				key: namespaceKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${namespaceKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Cluster Name',
+			attributeKey: {
+				key: clusterKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${clusterKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+	];
+}
+
+export function GetStatefulsetsQuickFiltersConfig(
+	dotMetricsEnabled: boolean,
+): IQuickFiltersConfig[] {
+	const ssKey = dotMetricsEnabled
+		? 'k8s.statefulset.name'
+		: 'k8s_statefulset_name';
+	const namespaceKey = dotMetricsEnabled
+		? 'k8s.namespace.name'
+		: 'k8s_namespace_name';
+	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
+	const metric = dotMetricsEnabled
+		? 'k8s.pod.cpu.utilization'
+		: 'k8s_pod_cpu_utilization';
+
+	return [
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Statefulset Name',
+			attributeKey: {
+				key: ssKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${ssKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Namespace Name',
+			attributeKey: {
+				key: namespaceKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${namespaceKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Cluster Name',
+			attributeKey: {
+				key: clusterKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${clusterKey}--string--resource`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metric,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+	];
+}
+
+export function GetDaemonsetsQuickFiltersConfig(
+	dotMetricsEnabled: boolean,
+): IQuickFiltersConfig[] {
+	const nameKey = dotMetricsEnabled
+		? 'k8s.daemonset.name'
+		: 'k8s_daemonset_name';
+	const namespaceKey = dotMetricsEnabled
+		? 'k8s.namespace.name'
+		: 'k8s_namespace_name';
+	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
+	const metricName = dotMetricsEnabled
+		? 'k8s.pod.cpu.utilization'
+		: 'k8s_pod_cpu_utilization';
+
+	return [
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'DaemonSet Name',
+			attributeKey: {
+				key: nameKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${nameKey}--string--resource--true`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metricName,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Namespace Name',
+			attributeKey: {
+				key: namespaceKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metricName,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Cluster Name',
+			attributeKey: {
+				key: clusterKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metricName,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+	];
+}
+
+export function GetJobsQuickFiltersConfig(
+	dotMetricsEnabled: boolean,
+): IQuickFiltersConfig[] {
+	const nameKey = dotMetricsEnabled ? 'k8s.job.name' : 'k8s_job_name';
+	const namespaceKey = dotMetricsEnabled
+		? 'k8s.namespace.name'
+		: 'k8s_namespace_name';
+	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
+	const metricName = dotMetricsEnabled
+		? 'k8s.pod.cpu.utilization'
+		: 'k8s_pod_cpu_utilization';
+
+	return [
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Job Name',
+			attributeKey: {
+				key: nameKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+				id: `${nameKey}--string--resource--true`,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metricName,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Namespace Name',
+			attributeKey: {
+				key: namespaceKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metricName,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Cluster Name',
+			attributeKey: {
+				key: clusterKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+			},
+			aggregateOperator: 'noop',
+			aggregateAttribute: metricName,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+	];
+}
 
 export const getInvalidValueTooltipText = (
 	entity: K8sCategory,

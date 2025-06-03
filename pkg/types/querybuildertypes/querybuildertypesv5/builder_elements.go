@@ -2,6 +2,8 @@ package querybuildertypesv5
 
 import (
 	"encoding/json"
+	"math"
+	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -135,6 +137,168 @@ var (
 	ReduceToMedian  = ReduceTo{valuer.NewString("median")}
 )
 
+// FunctionReduceTo applies the reduceTo operator to a time series and returns a new series with the reduced value
+// reduceTo can be one of: last, sum, avg, min, max, count, median
+// if reduceTo is not recognized, the function returns the original series
+func FunctionReduceTo(result *TimeSeries, reduceTo ReduceTo) *TimeSeries {
+	if len(result.Values) == 0 {
+		return result
+	}
+
+	var reducedValue float64
+	var reducedTimestamp int64
+
+	switch reduceTo {
+	case ReduceToLast:
+		// Take the last point's value and timestamp
+		lastPoint := result.Values[len(result.Values)-1]
+		reducedValue = lastPoint.Value
+		reducedTimestamp = lastPoint.Timestamp
+
+	case ReduceToSum:
+		// Sum all values, use last timestamp
+		var sum float64
+		for _, point := range result.Values {
+			if !math.IsNaN(point.Value) {
+				sum += point.Value
+			}
+		}
+		reducedValue = sum
+		reducedTimestamp = result.Values[len(result.Values)-1].Timestamp
+
+	case ReduceToAvg:
+		// Calculate average of all values, use last timestamp
+		var sum float64
+		var count int
+		for _, point := range result.Values {
+			if !math.IsNaN(point.Value) {
+				sum += point.Value
+				count++
+			}
+		}
+		if count > 0 {
+			reducedValue = sum / float64(count)
+		} else {
+			reducedValue = math.NaN()
+		}
+		reducedTimestamp = result.Values[len(result.Values)-1].Timestamp
+
+	case ReduceToMin:
+		// Find minimum value, use its timestamp
+		var min float64 = math.Inf(1)
+		var minTimestamp int64
+		for _, point := range result.Values {
+			if !math.IsNaN(point.Value) && point.Value < min {
+				min = point.Value
+				minTimestamp = point.Timestamp
+			}
+		}
+		if math.IsInf(min, 1) {
+			reducedValue = math.NaN()
+			reducedTimestamp = result.Values[len(result.Values)-1].Timestamp
+		} else {
+			reducedValue = min
+			reducedTimestamp = minTimestamp
+		}
+
+	case ReduceToMax:
+		// Find maximum value, use its timestamp
+		var max float64 = math.Inf(-1)
+		var maxTimestamp int64
+		for _, point := range result.Values {
+			if !math.IsNaN(point.Value) && point.Value > max {
+				max = point.Value
+				maxTimestamp = point.Timestamp
+			}
+		}
+		if math.IsInf(max, -1) {
+			reducedValue = math.NaN()
+			reducedTimestamp = result.Values[len(result.Values)-1].Timestamp
+		} else {
+			reducedValue = max
+			reducedTimestamp = maxTimestamp
+		}
+
+	case ReduceToCount:
+		// Count non-NaN values, use last timestamp
+		var count float64
+		for _, point := range result.Values {
+			if !math.IsNaN(point.Value) {
+				count++
+			}
+		}
+		reducedValue = count
+		reducedTimestamp = result.Values[len(result.Values)-1].Timestamp
+
+	case ReduceToMedian:
+		// Calculate median of all non-NaN values
+		// maintain pair of value and timestamp and sort by value
+		var values []struct {
+			Value     float64
+			Timestamp int64
+		}
+		for _, point := range result.Values {
+			if !math.IsNaN(point.Value) {
+				values = append(values, struct {
+					Value     float64
+					Timestamp int64
+				}{
+					Value:     point.Value,
+					Timestamp: point.Timestamp,
+				})
+			}
+		}
+
+		if len(values) == 0 {
+			reducedValue = math.NaN()
+			reducedTimestamp = result.Values[len(result.Values)-1].Timestamp
+		} else {
+			slices.SortFunc(values, func(i, j struct {
+				Value     float64
+				Timestamp int64
+			}) int {
+				if i.Value < j.Value {
+					return -1
+				}
+				if i.Value > j.Value {
+					return 1
+				}
+				return 0
+			})
+
+			if len(values)%2 == 0 {
+				// Even number of values - average of middle two
+				mid := len(values) / 2
+				reducedValue = (values[mid-1].Value + values[mid].Value) / 2
+				reducedTimestamp = (values[mid-1].Timestamp + values[mid].Timestamp) / 2
+			} else {
+				// Odd number of values - middle value
+				reducedValue = values[len(values)/2].Value
+				reducedTimestamp = values[len(values)/2].Timestamp
+			}
+		}
+
+	case ReduceToUnknown:
+		fallthrough
+	default:
+		// No reduction, return original series
+		return result
+	}
+
+	// Create new TimeSeries with single reduced point
+	reducedSeries := &TimeSeries{
+		Labels: result.Labels, // Preserve original labels
+		Values: []*TimeSeriesValue{
+			{
+				Timestamp: reducedTimestamp,
+				Value:     reducedValue,
+			},
+		},
+	}
+
+	return reducedSeries
+}
+
 type TraceAggregation struct {
 	// aggregation expression - example: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
@@ -205,17 +369,19 @@ type SecondaryAggregation struct {
 	LimitBy LimitBy `json:"limitBy,omitempty"`
 }
 
+type FunctionArg struct {
+	// name of the argument
+	Name string `json:"name,omitempty"`
+	// value of the argument
+	Value string `json:"value"`
+}
+
 type Function struct {
 	// name of the function
-	Name string `json:"name"`
+	Name FunctionName `json:"name"`
 
 	// args is the arguments to the function
-	Args []struct {
-		// name of the argument
-		Name string `json:"name,omitempty"`
-		// value of the argument
-		Value string `json:"value"`
-	} `json:"args,omitempty"`
+	Args []FunctionArg `json:"args,omitempty"`
 }
 
 type LimitBy struct {

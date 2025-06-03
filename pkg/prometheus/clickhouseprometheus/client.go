@@ -3,11 +3,14 @@ package clickhouseprometheus
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"math"
 	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	promValue "github.com/prometheus/prometheus/model/value"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/storage/remote"
@@ -98,8 +101,14 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 	var args []any
 	conditions = append(conditions, fmt.Sprintf("metric_name = $%d", argCount+1))
 	conditions = append(conditions, "temporality IN ['Cumulative', 'Unspecified']")
-	conditions = append(conditions, "__normalized = true")
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
+
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
+	conditions = append(conditions, fmt.Sprintf("__normalized = %v", normalized))
 
 	args = append(args, metricName)
 	for _, m := range query.Matchers {
@@ -181,9 +190,10 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 	var fingerprint, prevFingerprint uint64
 	var timestampMs int64
 	var value float64
+	var flags uint32
 
 	for rows.Next() {
-		if err := rows.Scan(&metricName, &fingerprint, &timestampMs, &value); err != nil {
+		if err := rows.Scan(&metricName, &fingerprint, &timestampMs, &value, &flags); err != nil {
 			return nil, err
 		}
 
@@ -199,6 +209,10 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 			ts = &prompb.TimeSeries{
 				Labels: labels,
 			}
+		}
+
+		if flags&1 == 1 {
+			value = math.Float64frombits(promValue.StaleNaN)
 		}
 
 		// add samples to current time series

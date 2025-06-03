@@ -31,5 +31,4 @@ type RuleStore interface {
 	GetStoredRules(context.Context, string) ([]*Rule, error)
 	GetStoredRule(context.Context, valuer.UUID) (*Rule, error)
 	GetRuleUUID(context.Context, int) (*RuleHistory, error)
-	ListOrgs(context.Context) ([]valuer.UUID, error)
 }
