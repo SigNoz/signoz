@@ -90,10 +90,10 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	for _, v := range matrix {
 		var s qbv5.TimeSeries
 		lbls := make([]*qbv5.Label, 0, len(v.Metric))
-		for k, v := range v.Metric.Copy().Map() {
+		for name, value := range v.Metric.Copy().Map() {
 			lbls = append(lbls, &qbv5.Label{
-				Key:   telemetrytypes.TelemetryFieldKey{Name: k},
-				Value: v,
+				Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+				Value: value,
 			})
 		}
 
@@ -112,7 +112,7 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	warnings, _ := res.Warnings.AsStrings(q.query.Query, 10, 0)
 
 	return &qbv5.Result{
-		Type: qbv5.RequestTypeTimeSeries,
+		Type: q.requestType,
 		Value: []*qbv5.TimeSeriesData{
 			{
 				QueryName: q.query.Name,
