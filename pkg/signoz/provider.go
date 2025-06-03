@@ -90,6 +90,7 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewAddKeyOrganizationFactory(sqlstore),
 		sqlmigration.NewAddTraceFunnelsFactory(sqlstore),
 		sqlmigration.NewUpdateDashboardFactory(sqlstore),
+		sqlmigration.NewDropFeatureSetFactory(),
 	)
 }
 

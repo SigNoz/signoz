@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -76,84 +75,6 @@ func (store *store) Update(ctx context.Context, organizationID valuer.UUID, stor
 		Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to update license with ID: %s", storableLicense.ID)
-	}
-
-	return nil
-}
-
-func (store *store) CreateFeature(ctx context.Context, storableFeature *featuretypes.StorableFeature) error {
-	_, err := store.
-		sqlstore.
-		BunDB().
-		NewInsert().
-		Model(storableFeature).
-		Exec(ctx)
-	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "feature with name:%s already exists", storableFeature.Name)
-	}
-
-	return nil
-}
-
-func (store *store) GetFeature(ctx context.Context, key string) (*featuretypes.StorableFeature, error) {
-	storableFeature := new(featuretypes.StorableFeature)
-	err := store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Model(storableFeature).
-		Where("name = ?", key).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "feature with name:%s does not exist", key)
-	}
-
-	return storableFeature, nil
-}
-
-func (store *store) GetAllFeatures(ctx context.Context) ([]*featuretypes.StorableFeature, error) {
-	storableFeatures := make([]*featuretypes.StorableFeature, 0)
-	err := store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Model(&storableFeatures).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "features do not exist")
-	}
-
-	return storableFeatures, nil
-}
-
-func (store *store) InitFeatures(ctx context.Context, storableFeatures []*featuretypes.StorableFeature) error {
-	_, err := store.
-		sqlstore.
-		BunDB().
-		NewInsert().
-		Model(&storableFeatures).
-		On("CONFLICT (name) DO UPDATE").
-		Set("active = EXCLUDED.active").
-		Set("usage = EXCLUDED.usage").
-		Set("usage_limit = EXCLUDED.usage_limit").
-		Set("route = EXCLUDED.route").
-		Exec(ctx)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to initialise features")
-	}
-
-	return nil
-}
-
-func (store *store) UpdateFeature(ctx context.Context, storableFeature *featuretypes.StorableFeature) error {
-	_, err := store.
-		sqlstore.
-		BunDB().
-		NewUpdate().
-		Model(storableFeature).
-		Exec(ctx)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to update feature with key: %s", storableFeature.Name)
 	}
 
 	return nil

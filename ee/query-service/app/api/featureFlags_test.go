@@ -3,78 +3,79 @@ package api
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMergeFeatureSets(t *testing.T) {
 	tests := []struct {
 		name             string
-		zeusFeatures     []*featuretypes.GettableFeature
-		internalFeatures []*featuretypes.GettableFeature
-		expected         []*featuretypes.GettableFeature
+		zeusFeatures     []*licensetypes.Feature
+		internalFeatures []*licensetypes.Feature
+		expected         []*licensetypes.Feature
 	}{
 		{
 			name:             "empty zeusFeatures and internalFeatures",
-			zeusFeatures:     []*featuretypes.GettableFeature{},
-			internalFeatures: []*featuretypes.GettableFeature{},
-			expected:         []*featuretypes.GettableFeature{},
+			zeusFeatures:     []*licensetypes.Feature{},
+			internalFeatures: []*licensetypes.Feature{},
+			expected:         []*licensetypes.Feature{},
 		},
 		{
 			name: "non-empty zeusFeatures and empty internalFeatures",
-			zeusFeatures: []*featuretypes.GettableFeature{
-				{Name: "Feature1", Active: true},
-				{Name: "Feature2", Active: false},
+			zeusFeatures: []*licensetypes.Feature{
+				{Name: valuer.NewString("Feature1"), Active: true},
+				{Name: valuer.NewString("Feature2"), Active: false},
 			},
-			internalFeatures: []*featuretypes.GettableFeature{},
-			expected: []*featuretypes.GettableFeature{
-				{Name: "Feature1", Active: true},
-				{Name: "Feature2", Active: false},
+			internalFeatures: []*licensetypes.Feature{},
+			expected: []*licensetypes.Feature{
+				{Name: valuer.NewString("Feature1"), Active: true},
+				{Name: valuer.NewString("Feature2"), Active: false},
 			},
 		},
 		{
 			name:         "empty zeusFeatures and non-empty internalFeatures",
-			zeusFeatures: []*featuretypes.GettableFeature{},
-			internalFeatures: []*featuretypes.GettableFeature{
-				{Name: "Feature1", Active: true},
-				{Name: "Feature2", Active: false},
+			zeusFeatures: []*licensetypes.Feature{},
+			internalFeatures: []*licensetypes.Feature{
+				{Name: valuer.NewString("Feature1"), Active: true},
+				{Name: valuer.NewString("Feature2"), Active: false},
 			},
-			expected: []*featuretypes.GettableFeature{
-				{Name: "Feature1", Active: true},
-				{Name: "Feature2", Active: false},
+			expected: []*licensetypes.Feature{
+				{Name: valuer.NewString("Feature1"), Active: true},
+				{Name: valuer.NewString("Feature2"), Active: false},
 			},
 		},
 		{
 			name: "non-empty zeusFeatures and non-empty internalFeatures with no conflicts",
-			zeusFeatures: []*featuretypes.GettableFeature{
-				{Name: "Feature1", Active: true},
-				{Name: "Feature3", Active: false},
+			zeusFeatures: []*licensetypes.Feature{
+				{Name: valuer.NewString("Feature1"), Active: true},
+				{Name: valuer.NewString("Feature3"), Active: false},
 			},
-			internalFeatures: []*featuretypes.GettableFeature{
-				{Name: "Feature2", Active: true},
-				{Name: "Feature4", Active: false},
+			internalFeatures: []*licensetypes.Feature{
+				{Name: valuer.NewString("Feature2"), Active: true},
+				{Name: valuer.NewString("Feature4"), Active: false},
 			},
-			expected: []*featuretypes.GettableFeature{
-				{Name: "Feature1", Active: true},
-				{Name: "Feature2", Active: true},
-				{Name: "Feature3", Active: false},
-				{Name: "Feature4", Active: false},
+			expected: []*licensetypes.Feature{
+				{Name: valuer.NewString("Feature1"), Active: true},
+				{Name: valuer.NewString("Feature2"), Active: true},
+				{Name: valuer.NewString("Feature3"), Active: false},
+				{Name: valuer.NewString("Feature4"), Active: false},
 			},
 		},
 		{
 			name: "non-empty zeusFeatures and non-empty internalFeatures with conflicts",
-			zeusFeatures: []*featuretypes.GettableFeature{
-				{Name: "Feature1", Active: true},
-				{Name: "Feature2", Active: false},
+			zeusFeatures: []*licensetypes.Feature{
+				{Name: valuer.NewString("Feature1"), Active: true},
+				{Name: valuer.NewString("Feature2"), Active: false},
 			},
-			internalFeatures: []*featuretypes.GettableFeature{
-				{Name: "Feature1", Active: false},
-				{Name: "Feature3", Active: true},
+			internalFeatures: []*licensetypes.Feature{
+				{Name: valuer.NewString("Feature1"), Active: false},
+				{Name: valuer.NewString("Feature3"), Active: true},
 			},
-			expected: []*featuretypes.GettableFeature{
-				{Name: "Feature1", Active: true},
-				{Name: "Feature2", Active: false},
-				{Name: "Feature3", Active: true},
+			expected: []*licensetypes.Feature{
+				{Name: valuer.NewString("Feature1"), Active: true},
+				{Name: valuer.NewString("Feature2"), Active: false},
+				{Name: valuer.NewString("Feature3"), Active: true},
 			},
 		},
 	}
