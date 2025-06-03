@@ -62,7 +62,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
@@ -550,7 +550,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v2/traces/waterfall/{traceId}", am.ViewAccess(aH.GetWaterfallSpansForTraceWithMetadata)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/features", am.ViewAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodPost)
@@ -1931,30 +1931,27 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet, err := aH.Signoz.Licensing.GetFeatureFlags(r.Context())
+	featureSet, err := aH.Signoz.Licensing.GetFeatureFlags(r.Context(), valuer.GenerateUUID())
 	if err != nil {
 		aH.HandleError(w, err, http.StatusInternalServerError)
 		return
 	}
+
 	if aH.preferSpanMetrics {
 		for idx, feature := range featureSet {
-			if feature.Name == featuretypes.UseSpanMetrics {
+			if feature.Name == licensetypes.UseSpanMetrics {
 				featureSet[idx].Active = true
 			}
 		}
 	}
 	if constants.IsDotMetricsEnabled {
-		featureSet = append(featureSet, &featuretypes.GettableFeature{
-			Name:   featuretypes.DotMetricsEnabled,
-			Active: true,
-		})
+		for idx, feature := range featureSet {
+			if feature.Name == licensetypes.DotMetricsEnabled {
+				featureSet[idx].Active = true
+			}
+		}
 	}
 	aH.Respond(w, featureSet)
-}
-
-func (aH *APIHandler) CheckFeature(ctx context.Context, key string) bool {
-	err := aH.Signoz.Licensing.CheckFeature(ctx, key)
-	return err == nil
 }
 
 // getHealth is used to check the health of the service.
