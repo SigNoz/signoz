@@ -4,21 +4,21 @@ import "github.com/SigNoz/signoz/pkg/valuer"
 
 var (
 	// Feature Key
-	SSO               = valuer.NewString("SSO")
-	Onboarding        = valuer.NewString("ONBOARDING")
-	ChatSupport       = valuer.NewString("CHAT_SUPPORT")
-	Gateway           = valuer.NewString("GATEWAY")
-	PremiumSupport    = valuer.NewString("PREMIUM_SUPPORT")
-	UseSpanMetrics    = valuer.NewString("USE_SPAN_METRICS")
-	AnomalyDetection  = valuer.NewString("ANOMALY_DETECTION")
-	DotMetricsEnabled = valuer.NewString("DOT_METRICS_ENABLED")
+	SSO               = valuer.NewString("sso")
+	Onboarding        = valuer.NewString("onboarding")
+	ChatSupport       = valuer.NewString("chat_support")
+	Gateway           = valuer.NewString("gateway")
+	PremiumSupport    = valuer.NewString("premium_support")
+	UseSpanMetrics    = valuer.NewString("use_span_metrics")
+	AnomalyDetection  = valuer.NewString("anomaly_detection")
+	DotMetricsEnabled = valuer.NewString("dot_metrics_enabled")
 
 	// License State
-	LicenseStatusInvalid = valuer.NewString("INVALID")
+	LicenseStatusInvalid = valuer.NewString("invalid")
 
 	// Plan
-	PlanNameEnterprise = valuer.NewString("ENTERPRISE")
-	PlanNameBasic      = valuer.NewString("BASIC")
+	PlanNameEnterprise = valuer.NewString("enterprise")
+	PlanNameBasic      = valuer.NewString("basic")
 )
 
 type Feature struct {
