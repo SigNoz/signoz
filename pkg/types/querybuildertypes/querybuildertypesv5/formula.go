@@ -133,14 +133,14 @@ func (fe *FormulaEvaluator) EvaluateFormula(timeSeriesData map[string]*TimeSerie
 	var resultSeries []*TimeSeries
 	var wg sync.WaitGroup
 	resultChan := make(chan *TimeSeries, len(uniqueLabelSets))
-	semaphore := make(chan struct{}, 4) // Limit concurrency
+	maxSeries := make(chan struct{}, 4)
 
 	for _, labelSet := range uniqueLabelSets {
 		wg.Add(1)
 		go func(labels []*Label) {
 			defer wg.Done()
-			semaphore <- struct{}{}
-			defer func() { <-semaphore }()
+			maxSeries <- struct{}{}
+			defer func() { <-maxSeries }()
 
 			series := fe.evaluateForLabelSet(labels, lookup)
 			if series != nil && len(series.Values) > 0 {
@@ -280,36 +280,6 @@ func (fe *FormulaEvaluator) isSubset(labels1, labels2 []*Label) bool {
 			return false
 		}
 	}
-	return true
-}
-
-// labelsEqual compares two label sets for equality
-func (fe *FormulaEvaluator) labelsEqual(labels1, labels2 []*Label) bool {
-	if len(labels1) != len(labels2) {
-		return false
-	}
-
-	// Create maps for comparison
-	map1 := make(map[string]any)
-	map2 := make(map[string]any)
-
-	for _, label := range labels1 {
-		map1[label.Key.Name] = label.Value
-	}
-	for _, label := range labels2 {
-		map2[label.Key.Name] = label.Value
-	}
-
-	if len(map1) != len(map2) {
-		return false
-	}
-
-	for k, v1 := range map1 {
-		if v2, exists := map2[k]; !exists || v1 != v2 {
-			return false
-		}
-	}
-
 	return true
 }
 
