@@ -26,7 +26,7 @@ type Feature struct {
 	Active     bool          `json:"active"`
 	Usage      int64         `json:"usage"`
 	UsageLimit int64         `json:"usage_limit"`
-	Route      string        `son:"route"`
+	Route      string        `json:"route"`
 }
 
 var BasicPlan = []*Feature{
