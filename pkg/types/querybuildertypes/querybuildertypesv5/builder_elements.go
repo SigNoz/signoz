@@ -3,7 +3,7 @@ package querybuildertypesv5
 import (
 	"encoding/json"
 	"math"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -253,8 +253,17 @@ func FunctionReduceTo(result *TimeSeries, reduceTo ReduceTo) *TimeSeries {
 			reducedValue = math.NaN()
 			reducedTimestamp = result.Values[len(result.Values)-1].Timestamp
 		} else {
-			sort.Slice(values, func(i, j int) bool {
-				return values[i].Value < values[j].Value
+			slices.SortFunc(values, func(i, j struct {
+				Value     float64
+				Timestamp int64
+			}) int {
+				if i.Value < j.Value {
+					return -1
+				}
+				if i.Value > j.Value {
+					return 1
+				}
+				return 0
 			})
 
 			if len(values)%2 == 0 {
