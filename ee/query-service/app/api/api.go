@@ -96,13 +96,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// note: add ee override methods first
 
 	// routes available only in ee version
-
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(ah.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
-
-	// invite
-	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.Signoz.Handlers.User.GetInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(ah.Signoz.Handlers.User.AcceptInvite)).Methods(http.MethodPost)
 
 	// paid plans specific routes
 	router.HandleFunc("/api/v1/complete/saml", am.OpenAccess(ah.receiveSAML)).Methods(http.MethodPost)
@@ -113,9 +107,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/checkout", am.AdminAccess(ah.LicensingAPI.Checkout)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/billing", am.AdminAccess(ah.getBilling)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/portal", am.AdminAccess(ah.LicensingAPI.Portal)).Methods(http.MethodPost)
-
-	router.HandleFunc("/api/v1/dashboards/{uuid}/lock", am.EditAccess(ah.lockDashboard)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{uuid}/unlock", am.EditAccess(ah.unlockDashboard)).Methods(http.MethodPut)
 
 	// v3
 	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.LicensingAPI.Activate)).Methods(http.MethodPost)

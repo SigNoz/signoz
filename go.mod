@@ -26,7 +26,6 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.0
-	github.com/gosimple/slug v1.10.0
 	github.com/huandu/go-sqlbuilder v1.35.0
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/jmoiron/sqlx v1.3.4
@@ -138,7 +137,6 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
-	github.com/gosimple/unidecode v1.0.0 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.24.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
