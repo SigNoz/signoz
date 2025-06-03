@@ -3,7 +3,6 @@ package querybuildertypesv5
 import (
 	"fmt"
 	"math"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -221,8 +220,14 @@ func (fe *FormulaEvaluator) buildSeriesKey(variable string, seriesIndex int, lab
 	// Sort labels by key name for consistent ordering
 	sortedLabels := make([]*Label, len(labels))
 	copy(sortedLabels, labels)
-	sort.Slice(sortedLabels, func(i, j int) bool {
-		return sortedLabels[i].Key.Name < sortedLabels[j].Key.Name
+	slices.SortFunc(sortedLabels, func(i, j *Label) int {
+		if i.Key.Name < j.Key.Name {
+			return -1
+		}
+		if i.Key.Name > j.Key.Name {
+			return 1
+		}
+		return 0
 	})
 
 	for _, label := range sortedLabels {
@@ -242,8 +247,14 @@ func (fe *FormulaEvaluator) findUniqueLabelSets(lookup *seriesLookup) [][]*Label
 	}
 
 	// sort the label sets by the number of labels in descending order
-	sort.Slice(allLabelSets, func(i, j int) bool {
-		return len(allLabelSets[i]) > len(allLabelSets[j])
+	slices.SortFunc(allLabelSets, func(i, j []*Label) int {
+		if len(i) > len(j) {
+			return -1
+		}
+		if len(i) < len(j) {
+			return 1
+		}
+		return 0
 	})
 
 	// Find unique label sets using proper label comparison
