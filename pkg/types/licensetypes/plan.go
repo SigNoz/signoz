@@ -1,31 +1,32 @@
 package licensetypes
 
-const (
-	PlanNameEnterprise = "ENTERPRISE"
-	PlanNameBasic      = "BASIC"
-)
+import "github.com/SigNoz/signoz/pkg/valuer"
 
-const (
-	LicenseStatusInvalid = "INVALID"
-)
+var (
+	// Feature Key
+	SSO               = valuer.NewString("SSO")
+	Onboarding        = valuer.NewString("ONBOARDING")
+	ChatSupport       = valuer.NewString("CHAT_SUPPORT")
+	Gateway           = valuer.NewString("GATEWAY")
+	PremiumSupport    = valuer.NewString("PREMIUM_SUPPORT")
+	UseSpanMetrics    = valuer.NewString("USE_SPAN_METRICS")
+	AnomalyDetection  = valuer.NewString("ANOMALY_DETECTION")
+	DotMetricsEnabled = valuer.NewString("DOT_METRICS_ENABLED")
 
-const (
-	SSO               = "SSO"
-	Onboarding        = "ONBOARDING"
-	ChatSupport       = "CHAT_SUPPORT"
-	Gateway           = "GATEWAY"
-	PremiumSupport    = "PREMIUM_SUPPORT"
-	UseSpanMetrics    = "USE_SPAN_METRICS"
-	AnomalyDetection  = "ANOMALY_DETECTION"
-	DotMetricsEnabled = "DOT_METRICS_ENABLED"
+	// License State
+	LicenseStatusInvalid = valuer.NewString("INVALID")
+
+	// Plan
+	PlanNameEnterprise = valuer.NewString("ENTERPRISE")
+	PlanNameBasic      = valuer.NewString("BASIC")
 )
 
 type Feature struct {
-	Name       string `db:"name" json:"name"`
-	Active     bool   `db:"active" json:"active"`
-	Usage      int64  `db:"usage" json:"usage"`
-	UsageLimit int64  `db:"usage_limit" json:"usage_limit"`
-	Route      string `db:"route" json:"route"`
+	Name       valuer.String `json:"name"`
+	Active     bool          `json:"active"`
+	Usage      int64         `json:"usage"`
+	UsageLimit int64         `json:"usage_limit"`
+	Route      string        `son:"route"`
 }
 
 var BasicPlan = []*Feature{

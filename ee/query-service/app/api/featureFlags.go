@@ -150,13 +150,13 @@ func MergeFeatureSets(zeusFeatures, internalFeatures []*licensetypes.Feature) []
 
 	// Add all features from the otherFeatures set to the map
 	for _, feature := range internalFeatures {
-		featureMap[feature.Name] = feature
+		featureMap[feature.Name.StringValue()] = feature
 	}
 
 	// Add all features from the zeusFeatures set to the map
 	// If a feature already exists (i.e., same name), the zeusFeature will overwrite it
 	for _, feature := range zeusFeatures {
-		featureMap[feature.Name] = feature
+		featureMap[feature.Name.StringValue()] = feature
 	}
 
 	// Convert the map back to a FeatureSet slice

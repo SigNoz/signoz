@@ -29,9 +29,9 @@ type License struct {
 	ID              valuer.UUID
 	Key             string
 	Data            map[string]interface{}
-	PlanName        string
+	PlanName        valuer.String
 	Features        []*Feature
-	Status          string
+	Status          valuer.String
 	ValidFrom       int64
 	ValidUntil      int64
 	CreatedAt       time.Time
@@ -144,20 +144,22 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 	delete(licenseData, "key")
 
 	// extract status from data
-	status, err := extractKeyFromMapStringInterface[string](licenseData, "status")
+	statusStr, err := extractKeyFromMapStringInterface[string](licenseData, "status")
 	if err != nil {
 		return nil, err
 	}
+	status := valuer.NewString(statusStr)
 
 	planMap, err := extractKeyFromMapStringInterface[map[string]any](licenseData, "plan")
 	if err != nil {
 		return nil, err
 	}
 
-	planName, err := extractKeyFromMapStringInterface[string](planMap, "name")
+	planNameStr, err := extractKeyFromMapStringInterface[string](planMap, "name")
 	if err != nil {
 		return nil, err
 	}
+	planName := valuer.NewString(planNameStr)
 	// if license status is invalid then default it to basic
 	if status == LicenseStatusInvalid {
 		planName = PlanNameBasic
@@ -233,20 +235,22 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, error) {
 	var features []*Feature
 	// extract status from data
-	status, err := extractKeyFromMapStringInterface[string](storableLicense.Data, "status")
+	statusStr, err := extractKeyFromMapStringInterface[string](storableLicense.Data, "status")
 	if err != nil {
 		return nil, err
 	}
+	status := valuer.NewString(statusStr)
 
 	planMap, err := extractKeyFromMapStringInterface[map[string]any](storableLicense.Data, "plan")
 	if err != nil {
 		return nil, err
 	}
 
-	planName, err := extractKeyFromMapStringInterface[string](planMap, "name")
+	planNameStr, err := extractKeyFromMapStringInterface[string](planMap, "name")
 	if err != nil {
 		return nil, err
 	}
+	planName := valuer.NewString(planNameStr)
 	// if license status is invalid then default it to basic
 	if status == LicenseStatusInvalid {
 		planName = PlanNameBasic

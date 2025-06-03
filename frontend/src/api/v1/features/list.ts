@@ -9,7 +9,7 @@ import {
 
 const list = async (): Promise<SuccessResponseV2<FeatureFlagProps[]>> => {
 	try {
-		const response = await axios.get<PayloadProps>(`/featureFlags`);
+		const response = await axios.get<PayloadProps>(`/features`);
 
 		return {
 			httpStatusCode: response.status,
