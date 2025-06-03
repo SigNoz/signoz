@@ -4,25 +4,32 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Module interface {
-	Create(ctx context.Context, orgID string, email string, data map[string]interface{}) (*types.Dashboard, error)
+	Create(ctx context.Context, orgID valuer.UUID, createdBy string, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
 
-	List(ctx context.Context, orgID string) ([]*types.Dashboard, error)
+	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error)
 
-	Delete(ctx context.Context, orgID, uuid string) error
+	List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 
-	Get(ctx context.Context, orgID, uuid string) (*types.Dashboard, error)
+	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboard) (*dashboardtypes.Dashboard, error)
 
-	GetByMetricNames(ctx context.Context, orgID string, metricNames []string) (map[string][]map[string]string, error)
+	LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, lock bool) error
 
-	Update(ctx context.Context, orgID, userEmail, uuid string, data map[string]interface{}) (*types.Dashboard, error)
+	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
-	LockUnlock(ctx context.Context, orgID, uuid string, lock bool) error
+	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
 }
 
 type Handler interface {
+	Create(http.ResponseWriter, *http.Request)
+
+	Update(http.ResponseWriter, *http.Request)
+
+	LockUnlock(http.ResponseWriter, *http.Request)
+
 	Delete(http.ResponseWriter, *http.Request)
 }

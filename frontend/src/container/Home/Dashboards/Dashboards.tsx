@@ -33,7 +33,7 @@ export default function Dashboards({
 	useEffect(() => {
 		if (!dashboardsList) return;
 
-		const sortedDashboards = dashboardsList.sort((a, b) => {
+		const sortedDashboards = dashboardsList.data.sort((a, b) => {
 			const aUpdateAt = new Date(a.updatedAt).getTime();
 			const bUpdateAt = new Date(b.updatedAt).getTime();
 			return bUpdateAt - aUpdateAt;
@@ -103,7 +103,7 @@ export default function Dashboards({
 		<div className="home-dashboards-list-container home-data-item-container">
 			<div className="dashboards-list">
 				{sortedDashboards.slice(0, 5).map((dashboard) => {
-					const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.uuid}`;
+					const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;
 
 					const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
 						event.stopPropagation();
@@ -134,7 +134,7 @@ export default function Dashboards({
 							<div className="dashboard-item-name-container home-data-item-name-container">
 								<img
 									src={
-										dashboard.id % 2 === 0
+										Math.random() % 2 === 0
 											? '/Icons/eight-ball.svg'
 											: '/Icons/circus-tent.svg'
 									}

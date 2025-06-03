@@ -127,7 +127,7 @@ function QuerySection({
 			panelType: selectedWidget.panelTypes,
 			queryType: currentQuery.queryType,
 			widgetId: selectedWidget.id,
-			dashboardId: selectedDashboard?.uuid,
+			dashboardId: selectedDashboard?.id,
 			dashboardName: selectedDashboard?.data.title,
 			isNewPanel,
 		});

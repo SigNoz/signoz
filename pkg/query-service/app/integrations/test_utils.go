@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
@@ -30,7 +31,7 @@ func NewTestIntegrationsManager(t *testing.T) (*Manager, sqlstore.SQLStore) {
 	}, testDB
 }
 
-func createTestUser(organizationModule organization.Module, userModule user.Module) (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Setter, userModule user.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
 	organization := types.NewOrganization("test")
@@ -121,7 +122,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []types.DashboardData{},
+				Dashboards: []dashboardtypes.StorableDashboardData{},
 				Alerts:     []ruletypes.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
@@ -189,7 +190,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []types.DashboardData{},
+				Dashboards: []dashboardtypes.StorableDashboardData{},
 				Alerts:     []ruletypes.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
