@@ -628,10 +628,11 @@ FROM (
         FROM signoz_traces.signoz_index_v3
         WHERE
             timestamp BETWEEN start_ts AND end_ts
-            AND serviceName IN (step1.1, step2.1)
-            AND name IN (step1.2, step2.2)
-            AND ((contains_error_t1 = 0) OR (has_error AND serviceName = step1.1 AND name = step1.2)) %[11]s
-            AND ((contains_error_t2 = 0) OR (has_error AND serviceName = step2.1 AND name = step2.2)) %[12]s
+            AND (
+                (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[11]s)
+             OR
+                (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[12]s)
+            )
         GROUP BY trace_id
     ) AS funnel
 ) AS totals;
@@ -703,11 +704,11 @@ WITH
         FROM signoz_traces.signoz_index_v3
         WHERE
             timestamp BETWEEN start_ts AND end_ts
-            AND serviceName IN (step1.1, step2.1, step3.1)
-            AND name IN (step1.2, step2.2, step3.2)
-            AND ((contains_error_t1 = 0) OR (has_error AND serviceName = step1.1 AND name = step1.2)) %[15]s
-            AND ((contains_error_t2 = 0) OR (has_error AND serviceName = step2.1 AND name = step2.2)) %[16]s
-            AND ((contains_error_t3 = 0) OR (has_error AND serviceName = step3.1 AND name = step3.2)) %[17]s
+            AND (
+                (serviceName = step1.1 AND name = step1.2 AND (contains_error_t1 = 0 OR has_error = true) %[15]s)
+             OR (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[16]s)
+             OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[17]s)
+            )
         GROUP BY trace_id
     )
 `
@@ -722,7 +723,7 @@ SELECT
 FROM (
     SELECT
         count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
-        count(DISTINCT trace_id) AS total_s1_spans, -- eligible only
+        count(DISTINCT trace_id) AS total_s1_spans,
         count(DISTINCT CASE WHEN s1_error = 1 THEN trace_id END) AS sum_s1_error,
         count(DISTINCT CASE WHEN s2_error = 1 THEN trace_id END) AS sum_s2_error,
         avgIf((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6, t1_time > 0 AND t2_time > t1_time) AS avg_duration_12,
@@ -741,7 +742,7 @@ SELECT
 FROM (
     SELECT
         count(DISTINCT CASE WHEN t2_time > 0 AND t3_time > t2_time THEN trace_id END) AS total_s3_spans,
-        count(DISTINCT CASE WHEN t2_time > 0 THEN trace_id END) AS total_s2_spans, -- eligible only
+        count(DISTINCT CASE WHEN t2_time > 0 THEN trace_id END) AS total_s2_spans,
         count(DISTINCT CASE WHEN s2_error = 1 THEN trace_id END) AS sum_s2_error,
         count(DISTINCT CASE WHEN s3_error = 1 THEN trace_id END) AS sum_s3_error,
         avgIf((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time)) / 1e6, t2_time > 0 AND t3_time > t2_time) AS avg_duration_23,
