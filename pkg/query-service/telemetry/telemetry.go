@@ -107,6 +107,30 @@ const SCHEDULE_START_TIME = "04:00" // 4 AM UTC
 const RATE_LIMIT_CHECK_DURATION = 1 * time.Minute
 const RATE_LIMIT_VALUE = 1
 
+type Telemetry struct {
+	ossOperator   analytics.Client
+	saasOperator  analytics.Client
+	ipAddress     string
+	userEmail     string
+	isEnabled     bool
+	isAnonymous   bool
+	reader        interfaces.Reader
+	sqlStore      sqlstore.SQLStore
+	companyDomain string
+	minRandInt    int
+	maxRandInt    int
+	rateLimits    map[string]int8
+	activeUser    map[string]int8
+	patTokenUser  bool
+	mutex         sync.RWMutex
+
+	alertsInfoCallback     func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)
+	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
+	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
+	dashboardsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)
+	savedViewsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)
+}
+
 var telemetry *Telemetry
 var once sync.Once
 
@@ -188,47 +212,33 @@ func (t *Telemetry) AddActiveLogsUser() {
 	t.mutex.Unlock()
 }
 
-type Telemetry struct {
-	ossOperator   analytics.Client
-	saasOperator  analytics.Client
-	ipAddress     string
-	userEmail     string
-	isEnabled     bool
-	isAnonymous   bool
-	reader        interfaces.Reader
-	sqlStore      sqlstore.SQLStore
-	companyDomain string
-	minRandInt    int
-	maxRandInt    int
-	rateLimits    map[string]int8
-	activeUser    map[string]int8
-	patTokenUser  bool
-	mutex         sync.RWMutex
-
-	alertsInfoCallback     func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)
-	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
-	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
-	dashboardsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)
-	savedViewsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)
-}
-
 func (t *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.alertsInfoCallback = callback
 }
 
 func (t *Telemetry) SetUserCountCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (int, error)) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.userCountCallback = callback
 }
 
 func (t *Telemetry) SetGetUsersCallback(callback func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.getUsersCallback = callback
 }
 
 func (t *Telemetry) SetSavedViewsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.savedViewsInfoCallback = callback
 }
 
 func (t *Telemetry) SetDashboardsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.dashboardsInfoCallback = callback
 }
 
@@ -580,7 +590,6 @@ func (t *Telemetry) IdentifyUser(user *types.User) {
 }
 
 func (t *Telemetry) SendIdentifyEvent(data map[string]interface{}, userEmail string) {
-
 	if !t.isTelemetryEnabled() || t.isTelemetryAnonymous() {
 		return
 	}
@@ -613,7 +622,6 @@ func (t *Telemetry) SendIdentifyEvent(data map[string]interface{}, userEmail str
 }
 
 func (t *Telemetry) SendGroupEvent(data map[string]interface{}, userEmail string) {
-
 	if !t.isTelemetryEnabled() || t.isTelemetryAnonymous() {
 		return
 	}
@@ -648,18 +656,26 @@ func (t *Telemetry) SendGroupEvent(data map[string]interface{}, userEmail string
 }
 
 func (t *Telemetry) SetUserEmail(email string) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.userEmail = email
 }
 
 func (t *Telemetry) SetPatTokenUser() {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.patTokenUser = true
 }
 
 func (t *Telemetry) GetUserEmail() string {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 	return t.userEmail
 }
 
 func (t *Telemetry) SetSaasOperator(saasOperatorKey string) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	if saasOperatorKey == "" {
 		return
 	}
@@ -667,7 +683,8 @@ func (t *Telemetry) SetSaasOperator(saasOperatorKey string) {
 }
 
 func (t *Telemetry) SetCompanyDomain(email string) {
-
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	email_split := strings.Split(email, "@")
 	if len(email_split) != 2 {
 		t.companyDomain = email
@@ -677,6 +694,8 @@ func (t *Telemetry) SetCompanyDomain(email string) {
 }
 
 func (t *Telemetry) getCompanyDomain() string {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 	return t.companyDomain
 }
 
@@ -774,31 +793,42 @@ func (t *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 }
 
 func (t *Telemetry) isTelemetryAnonymous() bool {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 	return t.isAnonymous
 }
 
 func (t *Telemetry) SetTelemetryAnonymous(value bool) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.isAnonymous = value
 }
 
 func (t *Telemetry) isTelemetryEnabled() bool {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 	return t.isEnabled
 }
 
 func (t *Telemetry) SetTelemetryEnabled(value bool) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.isEnabled = value
 }
 
 func (t *Telemetry) SetReader(reader interfaces.Reader) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.reader = reader
 }
 
 func (t *Telemetry) SetSqlStore(store sqlstore.SQLStore) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.sqlStore = store
 }
 
 func GetInstance() *Telemetry {
-
 	once.Do(func() {
 		createTelemetry()
 	})
