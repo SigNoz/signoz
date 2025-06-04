@@ -102,11 +102,11 @@ export function updateStepInterval(
 	return {
 		...query,
 		builder: {
-			...query.builder,
+			...query?.builder,
 			queryData: [
-				...query.builder.queryData.map((queryData) => ({
+				...(query?.builder?.queryData ?? []).map((queryData) => ({
 					...queryData,
-					stepInterval: stepIntervalPoints || queryData.stepInterval || 60,
+					stepInterval: stepIntervalPoints || queryData?.stepInterval || 60,
 				})),
 			],
 		},

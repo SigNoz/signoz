@@ -399,12 +399,14 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	};
 
 	const handleDragStop: ItemCallback = (_, oldItem, newItem): void => {
-		if (currentPanelMap[oldItem.i]) {
+		if (oldItem?.i && currentPanelMap?.[oldItem.i]) {
 			const differenceY = newItem.y - oldItem.y;
-			const widgetsInsideRow = currentPanelMap[oldItem.i].widgets.map((w) => ({
-				...w,
-				y: w.y + differenceY,
-			}));
+			const widgetsInsideRow = (currentPanelMap[oldItem.i]?.widgets ?? []).map(
+				(w) => ({
+					...w,
+					y: w.y + differenceY,
+				}),
+			);
 			setCurrentPanelMap((prev) => ({
 				...prev,
 				[oldItem.i]: {

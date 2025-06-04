@@ -280,7 +280,7 @@ export const parseFieldValue = (value: string): string => {
 // now we do not want to render colors everywhere like in tooltip and monaco editor hence we remove such codes to make
 // the log line readable
 export const removeEscapeCharacters = (str: string): string =>
-	str
+	(str ?? '')
 		.replace(/\\x1[bB][[0-9;]*m/g, '')
 		.replace(/\\u001[bB][[0-9;]*m/g, '')
 		.replace(/\\x[0-9A-Fa-f]{2}/g, '')
@@ -292,7 +292,7 @@ export const removeEscapeCharacters = (str: string): string =>
 //
 // so we need to remove this escapes to render the color properly
 export const unescapeString = (str: string): string =>
-	str
+	(str ?? '')
 		.replace(/\\n/g, '\n') // Replaces escaped newlines
 		.replace(/\\r/g, '\r') // Replaces escaped carriage returns
 		.replace(/\\t/g, '\t') // Replaces escaped tabs
