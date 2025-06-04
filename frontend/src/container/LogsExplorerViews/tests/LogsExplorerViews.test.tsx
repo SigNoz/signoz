@@ -4,7 +4,7 @@ import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQuery
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
+import { ExplorerViews, SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { VirtuosoMockContext } from 'react-virtuoso';
@@ -127,8 +127,7 @@ const renderer = (): RenderResult =>
 		>
 			<PreferenceContextProvider>
 				<LogsExplorerViews
-					selectedView={SELECTED_VIEWS.SEARCH}
-					showFrequencyChart
+					selectedView={ExplorerViews.LIST}
 					setIsLoadingQueries={(): void => {}}
 					listQueryKeyRef={{ current: {} }}
 					chartQueryKeyRef={{ current: {} }}
@@ -203,6 +202,25 @@ describe('LogsExplorerViews -', () => {
 			activeLogId: ACTIVE_LOG_ID,
 		});
 
+		lodsQueryServerRequest();
+		render(
+			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue}>
+				<LogsExplorerViews
+					selectedView={ExplorerViews.LIST}
+					setIsLoadingQueries={(): void => {}}
+					listQueryKeyRef={{ current: {} }}
+					chartQueryKeyRef={{ current: {} }}
+				/>
+			</QueryBuilderContext.Provider>,
+		);
+
+		// Get the query data from the first call to useGetExplorerQueryRange
+		const {
+			queryData,
+		} = (useGetExplorerQueryRange as jest.Mock).mock.calls[0][0].builder;
+		const firstQuery = queryData[0];
+
+		// Get the original number of filters from mock data
 		const originalFiltersLength =
 			mockQueryBuilderContextValue.currentQuery.builder.queryData[0].filters?.items
 				.length || 0;

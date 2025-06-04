@@ -8,11 +8,11 @@
 	.ant-collapse-header-text {
 		color: var(--bg-vanilla-400);
 		font-family: Inter;
-		font-size: 14px;
+		font-size: 12px;
 		font-style: normal;
 		font-weight: 400;
-		line-height: 18px;
-		letter-spacing: -0.07px;
+		line-height: 16px;
+		letter-spacing: -0.065px;
 		text-transform: capitalize;
 	}
 
@@ -24,11 +24,11 @@
 			.ant-input-group-addon {
 				color: var(--bg-vanilla-400);
 				font-family: 'Space Mono', monospace;
-				font-size: 12px;
+				font-size: 11px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 16px;
-				letter-spacing: 0.48px;
+				letter-spacing: 0.44px;
 				padding: 0 6px;
 			}
 
@@ -37,11 +37,11 @@
 
 				color: var(--bg-vanilla-400);
 				font-family: 'Space Mono', monospace;
-				font-size: 12px;
+				font-size: 11px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 16px;
-				letter-spacing: 0.48px;
+				letter-spacing: 0.44px;
 			}
 		}
 	}
@@ -54,7 +54,8 @@
 }
 
 .filter-header {
-	padding: 16px 8px 16px 12px;
+	padding: 4px 8px;
+
 	.filter-title {
 		display: flex;
 		gap: 6px;
