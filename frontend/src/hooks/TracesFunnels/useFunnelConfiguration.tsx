@@ -84,7 +84,8 @@ export default function useFunnelConfiguration({
 					step.service_name !== nextStep.service_name ||
 					step.span_name !== nextStep.span_name ||
 					!isEqual(step.filters, nextStep.filters) ||
-					step.has_errors !== nextStep.has_errors
+					step.has_errors !== nextStep.has_errors ||
+					step.latency_pointer !== nextStep.latency_pointer
 				);
 			});
 		},
