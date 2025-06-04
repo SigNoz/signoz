@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -11,7 +11,8 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { memo, useEffect, useMemo } from 'react';
+import { ArrowUp10, Minus } from 'lucide-react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
@@ -29,6 +30,7 @@ interface TracesViewProps {
 
 function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
+	const [orderDirection, setOrderDirection] = useState<string>('asc');
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
@@ -92,11 +94,32 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 							here
 						</Typography.Link>
 					</Typography>
-					<TraceExplorerControls
-						isLoading={isLoading}
-						totalCount={responseData?.length || 0}
-						perPageOptions={PER_PAGE_OPTIONS}
-					/>
+
+					<div className="trace-explorer-controls">
+						<div className="order-by-container">
+							<div className="order-by-label">
+								Order by <Minus size={14} /> <ArrowUp10 size={14} />
+							</div>
+
+							<Select
+								placeholder="Select order by"
+								className="order-by-select"
+								style={{ width: 100 }}
+								value={orderDirection}
+								onChange={(value): void => setOrderDirection(value)}
+								options={[
+									{ label: 'Ascending', value: 'asc' },
+									{ label: 'Descending', value: 'desc' },
+								]}
+							/>
+						</div>
+
+						<TraceExplorerControls
+							isLoading={isLoading}
+							totalCount={responseData?.length || 0}
+							perPageOptions={PER_PAGE_OPTIONS}
+						/>
+					</div>
 				</ActionsContainer>
 			)}
 
