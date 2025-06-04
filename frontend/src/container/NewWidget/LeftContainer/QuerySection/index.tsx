@@ -1,10 +1,10 @@
 import './QuerySection.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Select, Tabs, Typography } from 'antd';
+import { Button, Tabs, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
-import QueryBuilderV2 from 'components/QueryBuilderV2/QueryBuilderV2';
+import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
@@ -27,14 +27,13 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
@@ -48,10 +47,6 @@ function QuerySection({
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
-
-	const [selectedDataSource, setSelectedDataSource] = useState<DataSource>(
-		DataSource.METRICS,
-	);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -148,6 +143,11 @@ function QuerySection({
 		return config;
 	}, []);
 
+	const queryComponents = useMemo(
+		(): QueryBuilderProps['queryComponents'] => ({}),
+		[],
+	);
+
 	const items = useMemo(() => {
 		const supportedQueryTypes = PANEL_TYPE_TO_QUERY_TYPES[selectedGraph] || [];
 
@@ -157,20 +157,12 @@ function QuerySection({
 				label: 'Query Builder',
 				component: (
 					<div className="query-builder-v2-container">
-						<Select
-							onChange={setSelectedDataSource}
-							value={selectedDataSource}
-							options={Object.values(DataSource).map((dataSource) => ({
-								label: dataSource,
-								value: dataSource,
-							}))}
-						/>
 						<QueryBuilderV2
 							panelType={selectedGraph}
 							filterConfigs={filterConfigs}
 							version={selectedDashboard?.data?.version || 'v3'}
 							isListViewPanel={selectedGraph === PANEL_TYPES.LIST}
-							source={selectedDataSource}
+							queryComponents={queryComponents}
 						/>
 					</div>
 				),
@@ -203,11 +195,11 @@ function QuerySection({
 			children: queryTypeComponents[queryType].component,
 		}));
 	}, [
+		queryComponents,
 		selectedGraph,
 		filterConfigs,
 		selectedDashboard?.data?.version,
 		isDarkMode,
-		selectedDataSource,
 	]);
 
 	useEffect(() => {

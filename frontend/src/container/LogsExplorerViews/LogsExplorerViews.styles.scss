@@ -80,10 +80,54 @@
 					position: relative;
 				}
 			}
+		}
+
+		.logs-actions-container {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 8px;
+
+			height: 40px;
+			padding: 4px 8px;
+			width: 100%;
+
+			border-top: 1px solid var(--Slate-500, #161922);
+			border-bottom: 1px solid var(--Slate-500, #161922);
+			box-shadow: 0px 8px 6px 0px #0b0c0e;
+
+			.tab-options {
+				display: flex;
+				flex: 1;
+				justify-content: space-between;
+				align-items: center;
+
+				.tab-options-left {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+				}
+
+				.tab-options-right {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+				}
+
+				.frequency-chart-view-controller {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+				}
+			}
+
 			.query-stats {
 				display: flex;
 				align-items: center;
 				gap: 12px;
+
+				align-self: flex-end;
+
 				.rows {
 					color: var(--bg-vanilla-400);
 					font-family: 'Geist Mono';
@@ -110,13 +154,6 @@
 					letter-spacing: 0.36px;
 				}
 			}
-		}
-
-		.logs-actions-container {
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			gap: 8px;
 
 			.ant-btn {
 				border: none;
@@ -186,6 +223,14 @@
 					background: var(--bg-robin-400);
 				}
 			}
+		}
+
+		.logs-actions-container {
+			.tab-options {
+				border-top: 1px solid var(--text-vanilla-300);
+				border-bottom: 1px solid var(--text-vanilla-300);
+			}
+
 			.query-stats {
 				.rows {
 					color: var(--bg-ink-400);

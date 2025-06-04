@@ -1,3 +1,5 @@
+import './TimeSeriesView.styles.scss';
+
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
