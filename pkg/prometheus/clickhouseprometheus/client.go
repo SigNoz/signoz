@@ -170,7 +170,7 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 	argCount := len(args)
 
 	query := fmt.Sprintf(`
-		SELECT metric_name, fingerprint, unix_milli, value
+		SELECT metric_name, fingerprint, unix_milli, value, flags
 			FROM %s.%s
 			WHERE metric_name = $1 AND fingerprint GLOBAL IN (%s) AND unix_milli >= $%s AND unix_milli <= $%s ORDER BY fingerprint, unix_milli;`,
 		databaseName, distributedSamplesV4, subQuery, strconv.Itoa(argCount+2), strconv.Itoa(argCount+3))
