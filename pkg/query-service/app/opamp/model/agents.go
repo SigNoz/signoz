@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	signozTypes "github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server/types"
 	"github.com/pkg/errors"
@@ -49,7 +50,7 @@ func (agents *Agents) RemoveConnection(conn types.Connection) {
 
 	for instanceId := range agents.connections[conn] {
 		agent := agents.agentsById[instanceId]
-		agent.CurrentStatus = signozTypes.AgentStatusDisconnected
+		agent.CurrentStatus = opamptypes.AgentStatusDisconnected
 		agent.TerminatedAt = time.Now()
 		_ = agent.Upsert()
 		delete(agents.agentsById, instanceId)
@@ -79,7 +80,7 @@ func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection, o
 	// This is for single org mode
 	if orgId == "SIGNOZ##DEFAULT##ORG##ID" {
 		err := agents.store.BunDB().NewSelect().
-			Model((*signozTypes.Organization)(nil)).
+			Model(new(signozTypes.Organization)).
 			ColumnExpr("id").
 			Limit(1).
 			Scan(context.Background(), &orgId)

@@ -34,6 +34,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
@@ -138,7 +139,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		"pipelines config history should not be empty after 1st configuration",
 	)
 	require.Equal(
-		types.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
+		opamptypes.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
 		"pipelines deployment should be in progress after 1st configuration",
 	)
 
@@ -150,7 +151,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, getPipelinesResp,
 	)
 	require.Equal(
-		types.Deployed,
+		opamptypes.Deployed,
 		getPipelinesResp.History[0].DeployStatus,
 		"pipeline deployment should be complete after acknowledgment from opamp client",
 	)
@@ -170,7 +171,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		"there should be 2 history entries after posting pipelines config for the 2nd time",
 	)
 	require.Equal(
-		types.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
+		opamptypes.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
 		"deployment should be in progress for latest pipeline config",
 	)
 
@@ -182,7 +183,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, getPipelinesResp,
 	)
 	require.Equal(
-		types.Deployed,
+		opamptypes.Deployed,
 		getPipelinesResp.History[0].DeployStatus,
 		"deployment for latest pipeline config should be complete after acknowledgment from opamp client",
 	)
@@ -237,7 +238,7 @@ func TestLogPipelinesHistory(t *testing.T) {
 	testbed.PostPipelinesToQS(postablePipelines)
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 	require.Equal(1, len(getPipelinesResp.History))
-	require.Equal(types.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
+	require.Equal(opamptypes.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
 
 	postablePipelines.Pipelines[0].Config = append(
 		postablePipelines.Pipelines[0].Config,
@@ -256,8 +257,8 @@ func TestLogPipelinesHistory(t *testing.T) {
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 
 	require.Equal(2, len(getPipelinesResp.History))
-	require.Equal(types.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
-	require.Equal(types.DeployStatusUnknown, getPipelinesResp.History[1].DeployStatus)
+	require.Equal(opamptypes.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
+	require.Equal(opamptypes.DeployStatusUnknown, getPipelinesResp.History[1].DeployStatus)
 }
 
 func TestLogPipelinesValidation(t *testing.T) {

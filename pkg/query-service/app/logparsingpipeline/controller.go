@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
@@ -41,10 +42,10 @@ func NewLogParsingPipelinesController(
 
 // PipelinesResponse is used to prepare http response for pipelines config related requests
 type PipelinesResponse struct {
-	*types.AgentConfigVersion
+	*opamptypes.AgentConfigVersion
 
 	Pipelines []pipelinetypes.GettablePipeline `json:"pipelines"`
-	History   []types.AgentConfigVersion       `json:"history"`
+	History   []opamptypes.AgentConfigVersion  `json:"history"`
 }
 
 // ApplyPipelines stores new or changed pipelines and initiates a new config update
@@ -88,7 +89,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	}
 
 	// prepare config by calling gen func
-	cfg, err := agentConf.StartNewVersion(ctx, claims.OrgID, claims.UserID, types.ElementTypeLogPipelines, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, claims.OrgID, claims.UserID, opamptypes.ElementTypeLogPipelines, elements)
 	if err != nil || cfg == nil {
 		return nil, err
 	}
@@ -217,9 +218,9 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 		return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version %v", errors))
 	}
 
-	var configVersion *types.AgentConfigVersion
+	var configVersion *opamptypes.AgentConfigVersion
 	if version >= 0 {
-		cv, err := agentConf.GetConfigVersion(ctx, orgId, types.ElementTypeLogPipelines, version)
+		cv, err := agentConf.GetConfigVersion(ctx, orgId, opamptypes.ElementTypeLogPipelines, version)
 		if err != nil {
 			zap.L().Error("failed to get config for version", zap.Int("version", version), zap.Error(err))
 			return nil, model.WrapApiError(err, "failed to get config for given version")
@@ -270,7 +271,7 @@ func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatur
 func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	orgId string,
 	currentConfYaml []byte,
-	configVersion *types.AgentConfigVersion,
+	configVersion *opamptypes.AgentConfigVersion,
 ) (
 	recommendedConfYaml []byte,
 	serializedSettingsUsed string,

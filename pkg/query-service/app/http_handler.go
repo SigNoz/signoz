@@ -63,6 +63,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
@@ -4101,8 +4102,6 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, res)
 }
 
-const logPipelines = "log_pipelines"
-
 func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	versionString := mux.Vars(r)["version"]
 
@@ -4178,7 +4177,7 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
 ) {
 	// get lateset agent config
 	latestVersion := -1
-	lastestConfig, err := agentConf.GetLatestVersion(ctx, orgID, logPipelines)
+	lastestConfig, err := agentConf.GetLatestVersion(ctx, orgID, opamptypes.ElementTypeLogPipelines)
 	if err != nil && err.Type() != model.ErrorNotFound {
 		return nil, model.WrapApiError(err, "failed to get latest agent config version")
 	}
@@ -4194,7 +4193,7 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
-	history, err := agentConf.GetConfigHistory(ctx, orgID, logPipelines, limit)
+	history, err := agentConf.GetConfigHistory(ctx, orgID, opamptypes.ElementTypeLogPipelines, limit)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get config history")
 	}
@@ -4213,7 +4212,7 @@ func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID stri
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
-	history, err := agentConf.GetConfigHistory(ctx, orgID, logPipelines, limit)
+	history, err := agentConf.GetConfigHistory(ctx, orgID, opamptypes.ElementTypeLogPipelines, limit)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to retrieve agent config history")
 	}

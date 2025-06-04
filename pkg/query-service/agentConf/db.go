@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -21,9 +22,9 @@ type Repo struct {
 }
 
 func (r *Repo) GetConfigHistory(
-	ctx context.Context, orgId string, typ types.ElementTypeDef, limit int,
-) ([]types.AgentConfigVersion, *model.ApiError) {
-	var c []types.AgentConfigVersion
+	ctx context.Context, orgId string, typ opamptypes.ElementTypeDef, limit int,
+) ([]opamptypes.AgentConfigVersion, *model.ApiError) {
+	var c []opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
 		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
@@ -40,10 +41,10 @@ func (r *Repo) GetConfigHistory(
 		return nil, model.InternalError(err)
 	}
 
-	incompleteStatuses := []types.DeployStatus{types.DeployInitiated, types.Deploying}
+	incompleteStatuses := []opamptypes.DeployStatus{opamptypes.DeployInitiated, opamptypes.Deploying}
 	for idx := 1; idx < len(c); idx++ {
 		if slices.Contains(incompleteStatuses, c[idx].DeployStatus) {
-			c[idx].DeployStatus = types.DeployStatusUnknown
+			c[idx].DeployStatus = opamptypes.DeployStatusUnknown
 		}
 	}
 
@@ -51,9 +52,9 @@ func (r *Repo) GetConfigHistory(
 }
 
 func (r *Repo) GetConfigVersion(
-	ctx context.Context, orgId string, typ types.ElementTypeDef, v int,
-) (*types.AgentConfigVersion, *model.ApiError) {
-	var c types.AgentConfigVersion
+	ctx context.Context, orgId string, typ opamptypes.ElementTypeDef, v int,
+) (*opamptypes.AgentConfigVersion, *model.ApiError) {
+	var c opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
 		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
@@ -76,9 +77,9 @@ func (r *Repo) GetConfigVersion(
 }
 
 func (r *Repo) GetLatestVersion(
-	ctx context.Context, orgId string, typ types.ElementTypeDef,
-) (*types.AgentConfigVersion, *model.ApiError) {
-	var c types.AgentConfigVersion
+	ctx context.Context, orgId string, typ opamptypes.ElementTypeDef,
+) (*opamptypes.AgentConfigVersion, *model.ApiError) {
+	var c opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
 		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
@@ -100,18 +101,18 @@ func (r *Repo) GetLatestVersion(
 }
 
 func (r *Repo) insertConfig(
-	ctx context.Context, orgId string, userId string, c *types.AgentConfigVersion, elements []string,
+	ctx context.Context, orgId string, userId string, c *opamptypes.AgentConfigVersion, elements []string,
 ) (fnerr *model.ApiError) {
 
-	if string(c.ElementType) == "" {
+	if c.ElementType.StringValue() == "" {
 		return model.BadRequest(fmt.Errorf(
 			"element type is required for creating agent config version",
 		))
 	}
 
 	// allowing empty elements for logs - use case is deleting all pipelines
-	if len(elements) == 0 && c.ElementType != types.ElementTypeLogPipelines {
-		zap.L().Error("insert config called with no elements ", zap.String("ElementType", string(c.ElementType)))
+	if len(elements) == 0 && c.ElementType != opamptypes.ElementTypeLogPipelines {
+		zap.L().Error("insert config called with no elements ", zap.String("ElementType", c.ElementType.StringValue()))
 		return model.BadRequest(fmt.Errorf("config must have atleast one element"))
 	}
 
@@ -119,7 +120,7 @@ func (r *Repo) insertConfig(
 		// the version can not be set by the user, we want to auto-assign the versions
 		// in a monotonically increasing order starting with 1. hence, we reject insert
 		// requests with version anything other than 0. here, 0 indicates un-assigned
-		zap.L().Error("invalid version assignment while inserting agent config", zap.Int("version", c.Version), zap.String("ElementType", string(c.ElementType)))
+		zap.L().Error("invalid version assignment while inserting agent config", zap.Int("version", c.Version), zap.String("ElementType", c.ElementType.StringValue()))
 		return model.BadRequest(fmt.Errorf(
 			"user defined versions are not supported in the agent config",
 		))
@@ -132,7 +133,7 @@ func (r *Repo) insertConfig(
 	}
 
 	if configVersion != nil {
-		c.Version = types.UpdateVersion(configVersion.Version)
+		c.Version = opamptypes.UpdateVersion(configVersion.Version)
 	} else {
 		// first version
 		c.Version = 1
@@ -141,14 +142,14 @@ func (r *Repo) insertConfig(
 	defer func() {
 		if fnerr != nil {
 			// remove all the damage (invalid rows from db)
-			r.store.BunDB().NewDelete().Model(new(types.AgentConfigVersion)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
-			r.store.BunDB().NewDelete().Model(new(types.AgentConfigElement)).Where("version_id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
+			r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigVersion)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
+			r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigElement)).Where("version_id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
 		}
 	}()
 
 	// insert config
 	_, dbErr := r.store.BunDB().NewInsert().
-		Model(&types.AgentConfigVersion{
+		Model(&opamptypes.AgentConfigVersion{
 			OrgID:        orgId,
 			Identifiable: types.Identifiable{ID: c.ID},
 			Version:      c.Version,
@@ -170,11 +171,11 @@ func (r *Repo) insertConfig(
 	}
 
 	for _, e := range elements {
-		agentConfigElement := &types.AgentConfigElement{
+		agentConfigElement := &opamptypes.AgentConfigElement{
 			OrgID:        orgId,
 			Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 			VersionID:    c.ID.StringValue(),
-			ElementType:  string(c.ElementType),
+			ElementType:  c.ElementType.StringValue(),
 			ElementID:    e,
 		}
 		_, dbErr = r.store.BunDB().NewInsert().Model(agentConfigElement).Exec(ctx)
@@ -188,7 +189,7 @@ func (r *Repo) insertConfig(
 
 func (r *Repo) updateDeployStatus(ctx context.Context,
 	orgId string,
-	elementType types.ElementTypeDef,
+	elementType opamptypes.ElementTypeDef,
 	version int,
 	status string,
 	result string,
@@ -202,7 +203,7 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 	}
 
 	_, err := r.store.BunDB().NewUpdate().
-		Model(new(types.AgentConfigVersion)).
+		Model(new(opamptypes.AgentConfigVersion)).
 		Set("deploy_status = ?", status).
 		Set("deploy_result = ?", result).
 		Set("last_hash = COALESCE(?, last_hash)", lastHash).
@@ -224,7 +225,7 @@ func (r *Repo) updateDeployStatusByHash(
 ) *model.ApiError {
 
 	_, err := r.store.BunDB().NewUpdate().
-		Model(new(types.AgentConfigVersion)).
+		Model(new(opamptypes.AgentConfigVersion)).
 		Set("deploy_status = ?", status).
 		Set("deploy_result = ?", result).
 		Where("last_hash = ?", confighash).

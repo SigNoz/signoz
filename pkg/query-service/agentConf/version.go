@@ -1,10 +1,10 @@
 package agentConf
 
-import "github.com/SigNoz/signoz/pkg/types"
+import "github.com/SigNoz/signoz/pkg/types/opamptypes"
 
 type ConfigElements struct {
 	VersionID   string
 	Version     int
-	ElementType types.ElementTypeDef
+	ElementType opamptypes.ElementTypeDef
 	ElementId   string
 }

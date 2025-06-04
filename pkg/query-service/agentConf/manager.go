@@ -13,7 +13,7 @@ import (
 	tsp "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -101,7 +101,7 @@ func (m *Manager) RecommendAgentConfig(orgId string, currentConfYaml []byte) (
 	settingVersionsUsed := []string{}
 
 	for _, feature := range m.agentFeatures {
-		featureType := types.ElementTypeDef(feature.AgentFeatureType())
+		featureType := opamptypes.NewElementTypeDef(string(feature.AgentFeatureType()))
 		latestConfig, apiErr := GetLatestVersion(context.Background(), orgId, featureType)
 		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
 			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
@@ -133,7 +133,7 @@ func (m *Manager) RecommendAgentConfig(orgId string, currentConfYaml []byte) (
 			orgId,
 			featureType,
 			configVersion,
-			string(types.DeployInitiated),
+			opamptypes.DeployInitiated.StringValue(),
 			"Deployment has started",
 			configId,
 			serializedSettingsUsed,
@@ -163,10 +163,10 @@ func (m *Manager) ReportConfigDeploymentStatus(
 ) {
 	featureConfigIds := strings.Split(configId, ",")
 	for _, featureConfId := range featureConfigIds {
-		newStatus := string(types.Deployed)
+		newStatus := opamptypes.Deployed.StringValue()
 		message := "Deployment was successful"
 		if err != nil {
-			newStatus = string(types.DeployFailed)
+			newStatus = opamptypes.DeployFailed.StringValue()
 			message = fmt.Sprintf("%s: %s", agentId, err.Error())
 		}
 		_ = m.updateDeployStatusByHash(
@@ -176,30 +176,30 @@ func (m *Manager) ReportConfigDeploymentStatus(
 }
 
 func GetLatestVersion(
-	ctx context.Context, orgId string, elementType types.ElementTypeDef,
-) (*types.AgentConfigVersion, *model.ApiError) {
+	ctx context.Context, orgId string, elementType opamptypes.ElementTypeDef,
+) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 	return m.GetLatestVersion(ctx, orgId, elementType)
 }
 
 func GetConfigVersion(
-	ctx context.Context, orgId string, elementType types.ElementTypeDef, version int,
-) (*types.AgentConfigVersion, *model.ApiError) {
+	ctx context.Context, orgId string, elementType opamptypes.ElementTypeDef, version int,
+) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 	return m.GetConfigVersion(ctx, orgId, elementType, version)
 }
 
 func GetConfigHistory(
-	ctx context.Context, orgId string, typ types.ElementTypeDef, limit int,
-) ([]types.AgentConfigVersion, *model.ApiError) {
+	ctx context.Context, orgId string, typ opamptypes.ElementTypeDef, limit int,
+) ([]opamptypes.AgentConfigVersion, *model.ApiError) {
 	return m.GetConfigHistory(ctx, orgId, typ, limit)
 }
 
 // StartNewVersion launches a new config version for given set of elements
 func StartNewVersion(
-	ctx context.Context, orgId string, userId string, eleType types.ElementTypeDef, elementIds []string,
-) (*types.AgentConfigVersion, *model.ApiError) {
+	ctx context.Context, orgId string, userId string, eleType opamptypes.ElementTypeDef, elementIds []string,
+) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 
 	// create a new version
-	cfg := types.NewAgentConfigVersion(orgId, eleType)
+	cfg := opamptypes.NewAgentConfigVersion(orgId, eleType)
 
 	// insert new config and elements into database
 	err := m.insertConfig(ctx, orgId, userId, cfg, elementIds)
@@ -216,7 +216,7 @@ func NotifyConfigUpdate(ctx context.Context) {
 	m.notifyConfigUpdateSubscribers()
 }
 
-func Redeploy(ctx context.Context, orgId string, typ types.ElementTypeDef, version int) *model.ApiError {
+func Redeploy(ctx context.Context, orgId string, typ opamptypes.ElementTypeDef, version int) *model.ApiError {
 
 	configVersion, err := GetConfigVersion(ctx, orgId, typ, version)
 	if err != nil {
@@ -229,7 +229,7 @@ func Redeploy(ctx context.Context, orgId string, typ types.ElementTypeDef, versi
 		return model.BadRequest(fmt.Errorf("the config version can not be redeployed"))
 	}
 	switch typ {
-	case types.ElementTypeSamplingRules:
+	case opamptypes.ElementTypeSamplingRules:
 		var config *tsp.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConfig), &config); err != nil {
 			zap.L().Debug("failed to read last conf correctly", zap.Error(err))
@@ -248,8 +248,8 @@ func Redeploy(ctx context.Context, orgId string, typ types.ElementTypeDef, versi
 			return model.InternalError(fmt.Errorf("failed to deploy the config"))
 		}
 
-		m.updateDeployStatus(ctx, orgId, types.ElementTypeSamplingRules, version, string(types.DeployInitiated), "Deployment started", configHash, configVersion.LastConfig)
-	case types.ElementTypeDropRules:
+		m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeSamplingRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, configVersion.LastConfig)
+	case opamptypes.ElementTypeDropRules:
 		var filterConfig *filterprocessor.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConfig), &filterConfig); err != nil {
 			zap.L().Error("failed to read last conf correctly", zap.Error(err))
@@ -266,7 +266,7 @@ func Redeploy(ctx context.Context, orgId string, typ types.ElementTypeDef, versi
 			return err
 		}
 
-		m.updateDeployStatus(ctx, orgId, types.ElementTypeSamplingRules, version, string(types.DeployInitiated), "Deployment started", configHash, configVersion.LastConfig)
+		m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeSamplingRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, configVersion.LastConfig)
 	}
 
 	return nil
@@ -297,7 +297,7 @@ func UpsertFilterProcessor(ctx context.Context, orgId string, version int, confi
 		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
-	m.updateDeployStatus(ctx, orgId, types.ElementTypeDropRules, version, string(types.DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeDropRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }
 
@@ -308,7 +308,7 @@ func UpsertFilterProcessor(ctx context.Context, orgId string, version int, confi
 // but can be improved in future to accept continuous request status updates from opamp
 func (m *Manager) OnConfigUpdate(orgId string, agentId string, hash string, err error) {
 
-	status := string(types.Deployed)
+	status := opamptypes.Deployed.StringValue()
 
 	message := "Deployment was successful"
 
@@ -317,7 +317,7 @@ func (m *Manager) OnConfigUpdate(orgId string, agentId string, hash string, err 
 	}()
 
 	if err != nil {
-		status = string(types.DeployFailed)
+		status = opamptypes.DeployFailed.StringValue()
 		message = fmt.Sprintf("%s: %s", agentId, err.Error())
 	}
 
@@ -348,6 +348,6 @@ func UpsertSamplingProcessor(ctx context.Context, orgId string, version int, con
 		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
-	m.updateDeployStatus(ctx, orgId, types.ElementTypeSamplingRules, version, string(types.DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeSamplingRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }

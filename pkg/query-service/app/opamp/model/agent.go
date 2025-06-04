@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -18,7 +19,7 @@ import (
 )
 
 type Agent struct {
-	types.StorableAgent
+	opamptypes.StorableAgent
 	remoteConfig *protobufs.AgentRemoteConfig
 	Status       *protobufs.AgentToServer
 
@@ -45,7 +46,7 @@ func New(store sqlstore.SQLStore, orgID string, ID string, conn opampTypes.Conne
 		agentId = valuer.GenerateUUID()
 	}
 
-	return &Agent{StorableAgent: types.StorableAgent{OrgID: orgID, Identifiable: types.Identifiable{ID: agentId}, StartedAt: time.Now(), CurrentStatus: types.AgentStatusConnected}, conn: conn, store: store}
+	return &Agent{StorableAgent: opamptypes.StorableAgent{OrgID: orgID, Identifiable: types.Identifiable{ID: agentId}, StartedAt: time.Now(), CurrentStatus: opamptypes.AgentStatusConnected}, conn: conn, store: store}
 }
 
 // Upsert inserts or updates the agent in the database.
