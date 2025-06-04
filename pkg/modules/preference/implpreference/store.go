@@ -75,6 +75,7 @@ func (store *store) GetByUser(ctx context.Context, userID valuer.UUID, name pref
 		BunDB().
 		NewSelect().
 		Model(userPreference).
+		Where("preference_id = ?", name).
 		Where("user_id = ?", userID).
 		Scan(ctx)
 	if err != nil {

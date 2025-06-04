@@ -37,7 +37,15 @@ func (module *module) ListByOrg(ctx context.Context, orgID valuer.UUID) ([]*pref
 
 		for _, storableOrgPreference := range storableOrgPreferences {
 			if storableOrgPreference.Name == preference.Name {
-				_ = preference.UpdateValue(storableOrgPreference.Value)
+				value, err := preferencetypes.NewValueFromString(storableOrgPreference.Value, preference.ValueType)
+				if err != nil {
+					return nil, err
+				}
+
+				err = preference.UpdateValue(value)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 
@@ -55,13 +63,18 @@ func (module *module) GetByOrg(ctx context.Context, orgID valuer.UUID, name pref
 
 	storableOrgPreference, err := module.store.GetByOrg(ctx, orgID, name)
 	if err != nil {
-		if !errors.As(err, errors.TypeNotFound) {
+		if !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
 	}
 
 	if storableOrgPreference != nil {
-		err = preference.UpdateValue(storableOrgPreference.Value)
+		value, err := preferencetypes.NewValueFromString(storableOrgPreference.Value, preference.ValueType)
+		if err != nil {
+			return nil, err
+		}
+
+		err = preference.UpdateValue(value)
 		if err != nil {
 			return nil, err
 		}
@@ -70,8 +83,13 @@ func (module *module) GetByOrg(ctx context.Context, orgID valuer.UUID, name pref
 	return preferencetypes.NewGettablePreference(preference), nil
 }
 
-func (module *module) UpdateByOrg(ctx context.Context, orgID valuer.UUID, name preferencetypes.Name, value any) error {
+func (module *module) UpdateByOrg(ctx context.Context, orgID valuer.UUID, name preferencetypes.Name, input any) error {
 	preference, err := preferencetypes.NewPreference(name, preferencetypes.ScopeOrg, module.available)
+	if err != nil {
+		return err
+	}
+
+	value, err := preferencetypes.NewValue(input, preference.ValueType)
 	if err != nil {
 		return err
 	}
@@ -83,7 +101,7 @@ func (module *module) UpdateByOrg(ctx context.Context, orgID valuer.UUID, name p
 
 	storableOrgPreference, err := module.store.GetByOrg(ctx, orgID, name)
 	if err != nil {
-		if !errors.As(err, errors.TypeNotFound) {
+		if !errors.Ast(err, errors.TypeNotFound) {
 			return err
 		}
 	}
@@ -123,7 +141,15 @@ func (module *module) ListByUser(ctx context.Context, userID valuer.UUID) ([]*pr
 
 		for _, storableUserPreference := range storableUserPreferences {
 			if storableUserPreference.Name == preference.Name {
-				_ = preference.UpdateValue(storableUserPreference.Value)
+				value, err := preferencetypes.NewValueFromString(storableUserPreference.Value, preference.ValueType)
+				if err != nil {
+					return nil, err
+				}
+
+				err = preference.UpdateValue(value)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 
@@ -141,7 +167,7 @@ func (module *module) GetByUser(ctx context.Context, userID valuer.UUID, name pr
 
 	storableUserPreference, err := module.store.GetByUser(ctx, userID, name)
 	if err != nil {
-		if !errors.As(err, errors.TypeNotFound) {
+		if !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
 
@@ -149,7 +175,12 @@ func (module *module) GetByUser(ctx context.Context, userID valuer.UUID, name pr
 	}
 
 	if storableUserPreference != nil {
-		err = preference.UpdateValue(storableUserPreference.Value)
+		value, err := preferencetypes.NewValueFromString(storableUserPreference.Value, preference.ValueType)
+		if err != nil {
+			return nil, err
+		}
+
+		err = preference.UpdateValue(value)
 		if err != nil {
 			return nil, err
 		}
@@ -158,8 +189,13 @@ func (module *module) GetByUser(ctx context.Context, userID valuer.UUID, name pr
 	return preferencetypes.NewGettablePreference(preference), nil
 }
 
-func (module *module) UpdateByUser(ctx context.Context, userID valuer.UUID, name preferencetypes.Name, value any) error {
+func (module *module) UpdateByUser(ctx context.Context, userID valuer.UUID, name preferencetypes.Name, input any) error {
 	preference, err := preferencetypes.NewPreference(name, preferencetypes.ScopeUser, module.available)
+	if err != nil {
+		return err
+	}
+
+	value, err := preferencetypes.NewValue(input, preference.ValueType)
 	if err != nil {
 		return err
 	}
@@ -171,7 +207,7 @@ func (module *module) UpdateByUser(ctx context.Context, userID valuer.UUID, name
 
 	storableUserPreference, err := module.store.GetByUser(ctx, userID, name)
 	if err != nil {
-		if !errors.As(err, errors.TypeNotFound) {
+		if !errors.Ast(err, errors.TypeNotFound) {
 			return err
 		}
 	}
