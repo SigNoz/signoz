@@ -291,7 +291,7 @@ export function DashboardProvider({
 			},
 			onSuccess: (data: SuccessResponseV2<Dashboard>) => {
 				const updatedDashboardData = transformDashboardVariables(data?.data);
-				const updatedDate = dayjs(updatedDashboardData.updatedAt);
+				const updatedDate = dayjs(updatedDashboardData?.updatedAt);
 
 				setIsDashboardLocked(updatedDashboardData?.locked || false);
 
@@ -303,7 +303,9 @@ export function DashboardProvider({
 
 					dashboardRef.current = updatedDashboardData;
 
-					setLayouts(sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)));
+					setLayouts(
+						sortLayout(getUpdatedLayout(updatedDashboardData?.data.layout)),
+					);
 
 					setPanelMap(defaultTo(updatedDashboardData?.data?.panelMap, {}));
 				}
@@ -312,7 +314,7 @@ export function DashboardProvider({
 					updatedTimeRef.current !== null &&
 					updatedDate.isAfter(updatedTimeRef.current) &&
 					isVisible &&
-					dashboardRef.current?.id === updatedDashboardData.id
+					dashboardRef.current?.id === updatedDashboardData?.id
 				) {
 					// show modal when state is out of sync
 					const modal = onModal.confirm({
@@ -339,20 +341,20 @@ export function DashboardProvider({
 
 							dashboardRef.current = updatedDashboardData;
 
-							updatedTimeRef.current = dayjs(updatedDashboardData.updatedAt);
+							updatedTimeRef.current = dayjs(updatedDashboardData?.updatedAt);
 
 							setLayouts(
-								sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)),
+								sortLayout(getUpdatedLayout(updatedDashboardData?.data.layout)),
 							);
 
-							setPanelMap(defaultTo(updatedDashboardData.data.panelMap, {}));
+							setPanelMap(defaultTo(updatedDashboardData?.data.panelMap, {}));
 						},
 					});
 
 					modalRef.current = modal;
 				} else {
 					// normal flow
-					updatedTimeRef.current = dayjs(updatedDashboardData.updatedAt);
+					updatedTimeRef.current = dayjs(updatedDashboardData?.updatedAt);
 
 					dashboardRef.current = updatedDashboardData;
 
@@ -363,14 +365,14 @@ export function DashboardProvider({
 					if (
 						!isEqual(
 							[omitBy(layouts, (value): boolean => isUndefined(value))[0]],
-							updatedDashboardData.data.layout,
+							updatedDashboardData?.data.layout,
 						)
 					) {
 						setLayouts(
-							sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)),
+							sortLayout(getUpdatedLayout(updatedDashboardData?.data.layout)),
 						);
 
-						setPanelMap(defaultTo(updatedDashboardData.data.panelMap, {}));
+						setPanelMap(defaultTo(updatedDashboardData?.data.panelMap, {}));
 					}
 				}
 			},

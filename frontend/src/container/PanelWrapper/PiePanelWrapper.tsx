@@ -54,7 +54,7 @@ function PiePanelWrapper({
 				const label = getLabelName(d.metric, d.queryName || '', d.legend || '');
 				return {
 					label,
-					value: d.values?.[0]?.[1],
+					value: d?.values?.[0]?.[1],
 					color:
 						widget?.customLegendColors?.[label] ||
 						generateColor(
