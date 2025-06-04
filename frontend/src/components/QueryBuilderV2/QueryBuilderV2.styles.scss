@@ -5,10 +5,12 @@
 
 	width: 100%;
 
+	border-bottom: 1px solid var(--bg-slate-400);
+	border-top: 1px solid var(--bg-slate-400);
+
 	font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
 		'Helvetica Neue', sans-serif;
 
-	border: 1px solid var(--bg-slate-400);
 	border-right: none;
 	border-left: none;
 
@@ -85,6 +87,27 @@
 						transparent 4px,
 						transparent 8px
 					);
+				}
+			}
+		}
+	}
+
+	.where-clause-view {
+		.qb-content-section {
+			.qb-elements-container {
+				margin-left: 0px;
+
+				.code-mirror-where-clause,
+				.query-aggregation-container,
+				.query-add-ons,
+				.metrics-aggregation-section-content {
+					&::before {
+						display: none;
+					}
+
+					&::after {
+						display: none;
+					}
 				}
 			}
 		}

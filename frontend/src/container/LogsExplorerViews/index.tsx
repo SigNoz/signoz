@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
-import { Button, Switch, Typography } from 'antd';
+import { Button, Select, Switch, Typography } from 'antd';
 import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
 import logEvent from 'api/common/logEvent';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
@@ -46,7 +46,7 @@ import {
 	omit,
 	set,
 } from 'lodash-es';
-import { Sliders } from 'lucide-react';
+import { ArrowUp10, Minus, Sliders } from 'lucide-react';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -137,6 +137,8 @@ function LogsExplorerViewsContainer({
 	const [queryId, setQueryId] = useState<string>(v4());
 	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
+
+	const [orderDirection, setOrderDirection] = useState<string>('asc');
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
@@ -656,6 +658,23 @@ function LogsExplorerViewsContainer({
 						<div className="tab-options-right">
 							{selectedPanelType === PANEL_TYPES.LIST && (
 								<>
+									<div className="order-by-container">
+										<div className="order-by-label">
+											Order by <Minus size={14} /> <ArrowUp10 size={14} />
+										</div>
+
+										<Select
+											placeholder="Select order by"
+											className="order-by-select"
+											style={{ width: 100 }}
+											value={orderDirection}
+											onChange={(value): void => setOrderDirection(value)}
+											options={[
+												{ label: 'Ascending', value: 'asc' },
+												{ label: 'Descending', value: 'desc' },
+											]}
+										/>
+									</div>
 									<Download
 										data={flattenLogData}
 										isLoading={isFetching}
@@ -663,7 +682,7 @@ function LogsExplorerViewsContainer({
 									/>
 									<div className="format-options-container" ref={menuRef}>
 										<Button
-											className="periscope-btn"
+											className="periscope-btn ghost"
 											onClick={handleToggleShowFormatOptions}
 											icon={<Sliders size={14} />}
 											data-testid="periscope-btn"
