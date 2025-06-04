@@ -832,6 +832,8 @@ export function QueryBuilderProvider({
 					),
 				);
 			}
+			// Remove Hidden Filters from URL query parameters on query change
+			urlQuery.delete(QueryParams.activeLogId);
 
 			const generatedUrl = redirectingUrl
 				? `${redirectingUrl}?${urlQuery}`
