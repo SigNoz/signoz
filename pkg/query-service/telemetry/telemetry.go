@@ -134,15 +134,8 @@ var telemetry *Telemetry
 var once sync.Once
 
 func (t *Telemetry) IsSampled() bool {
-
-	random_number := t.minRandInt + rand.Intn(t.maxRandInt-t.minRandInt) + 1
-
-	if (random_number % t.maxRandInt) == 0 {
-		return true
-	} else {
-		return false
-	}
-
+	randomNumber := t.minRandInt + rand.Intn(t.maxRandInt-t.minRandInt) + 1
+	return randomNumber%t.maxRandInt == 0
 }
 
 func (t *Telemetry) CheckQueryInfo(postData *v3.QueryRangeParamsV3) QueryInfoResult {
@@ -534,7 +527,6 @@ func createTelemetry() {
 
 // Get preferred outbound ip of this machine
 func getOutboundIP() string {
-
 	ip := []byte(IP_NOT_FOUND_PLACEHOLDER)
 	resp, err := http.Get("https://api.ipify.org?format=text")
 
@@ -684,11 +676,11 @@ func (t *Telemetry) SetSaasOperator(saasOperatorKey string) {
 func (t *Telemetry) SetCompanyDomain(email string) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	email_split := strings.Split(email, "@")
-	if len(email_split) != 2 {
+	emailSplit := strings.Split(email, "@")
+	if len(emailSplit) != 2 {
 		t.companyDomain = email
 	}
-	t.companyDomain = email_split[1]
+	t.companyDomain = emailSplit[1]
 
 }
 
@@ -707,7 +699,6 @@ func (t *Telemetry) checkEvents(event string) bool {
 }
 
 func (t *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, rateLimitFlag bool, viaEventsAPI bool) {
-
 	// ignore telemetry for default user
 	if userEmail == DEFAULT_CLOUD_EMAIL || t.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
 		return
