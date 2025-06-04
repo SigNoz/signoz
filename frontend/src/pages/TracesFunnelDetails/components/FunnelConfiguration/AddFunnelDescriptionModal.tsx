@@ -41,6 +41,7 @@ function AddFunnelDescriptionModal({
 			{
 				funnel_id: funnelId,
 				description,
+				timestamp: Date.now(),
 			},
 			{
 				onSuccess: () => {
