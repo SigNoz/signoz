@@ -1,3 +1,5 @@
+import './ListView.styles.scss';
+
 import logEvent from 'api/common/logEvent';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -167,12 +169,14 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	return (
 		<Container>
 			{transformedQueryTableData.length !== 0 && (
-				<TraceExplorerControls
-					isLoading={isFetching}
-					totalCount={totalCount}
-					config={config}
-					perPageOptions={PER_PAGE_OPTIONS}
-				/>
+				<div className="trace-explorer-controls">
+					<TraceExplorerControls
+						isLoading={isFetching}
+						totalCount={totalCount}
+						config={config}
+						perPageOptions={PER_PAGE_OPTIONS}
+					/>
+				</div>
 			)}
 
 			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}

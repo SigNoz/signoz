@@ -1,108 +1,119 @@
 import './QueryBuilderV2.styles.scss';
 
-import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { Formula } from 'container/QueryBuilder/components/Formula';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
-import { memo, useMemo } from 'react';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { memo, useEffect, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { LogsQB } from './Logs/LogsQB';
-import MetricsQB from './Metrics/MetricsQB';
 import { QueryBuilderV2Provider } from './QueryBuilderV2Context';
-import TracesQB from './Traces/TracesQB';
+import QueryFooter from './QueryV2/QueryFooter/QueryFooter';
+import { QueryV2 } from './QueryV2/QueryV2';
 
-export type QueryBuilderV2Props = {
-	source: DataSource;
-	panelType: PANEL_TYPES;
-	filterConfigs: QueryBuilderProps['filterConfigs'];
-	isListViewPanel: boolean;
-	version: string;
-};
-
-const QueryBuilderV2Main = memo(function QueryBuilderV2Main({
-	source,
-	panelType,
-	filterConfigs,
-	isListViewPanel,
+export const QueryBuilderV2 = memo(function QueryBuilderV2({
+	config,
+	panelType: newPanelType,
+	filterConfigs = {},
+	queryComponents,
+	isListViewPanel = false,
+	showFunctions = false,
 	version,
-}: QueryBuilderV2Props): JSX.Element {
-	const isMetricsDataSource = source === DataSource.METRICS;
-	const isLogsDataSource = source === DataSource.LOGS;
-	const isTracesDataSource = source === DataSource.TRACES;
+}: QueryBuilderProps): JSX.Element {
+	const {
+		currentQuery,
+		addNewBuilderQuery,
+		addNewFormula,
+		handleSetConfig,
+		panelType,
+		initialDataSource,
+	} = useQueryBuilder();
 
-	const listViewLogFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
-		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: true, isDisabled: true },
-			having: { isHidden: true, isDisabled: true },
-			filters: {
-				customKey: 'body',
-				customOp: OPERATORS.CONTAINS,
-			},
-		};
+	console.log('isListViewPanel', isListViewPanel, showFunctions);
 
-		return config;
-	}, []);
-
-	const listViewTracesFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
-		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: true, isDisabled: true },
-			having: { isHidden: true, isDisabled: true },
-			limit: { isHidden: true, isDisabled: true },
-			filters: {
-				customKey: 'body',
-				customOp: OPERATORS.CONTAINS,
-			},
-		};
-
-		return config;
-	}, []);
-
-	return (
-		<div className="query-builder-v2">
-			{isMetricsDataSource ? (
-				<MetricsQB
-					source={DataSource.METRICS}
-					filterConfigs={filterConfigs}
-					panelType={panelType}
-					version={version}
-					isListViewPanel={isListViewPanel}
-				/>
-			) : null}
-			{isLogsDataSource ? (
-				<LogsQB
-					source={DataSource.LOGS}
-					filterConfigs={listViewLogFilterConfigs}
-					panelType={panelType}
-					version={version}
-					isListViewPanel={isListViewPanel}
-				/>
-			) : null}
-			{isTracesDataSource ? (
-				<TracesQB
-					source={DataSource.TRACES}
-					filterConfigs={listViewTracesFilterConfigs}
-					panelType={panelType}
-					version={version}
-					isListViewPanel={isListViewPanel}
-				/>
-			) : null}
-		</div>
+	const currentDataSource = useMemo(
+		() =>
+			(config && config.queryVariant === 'static' && config.initialDataSource) ||
+			null,
+		[config],
 	);
-});
 
-function QueryBuilderV2(props: QueryBuilderV2Props): JSX.Element {
-	const { source, panelType, filterConfigs, isListViewPanel, version } = props;
+	useEffect(() => {
+		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
+			if (newPanelType === PANEL_TYPES.BAR) {
+				handleSetConfig(PANEL_TYPES.BAR, DataSource.METRICS);
+				return;
+			}
+			handleSetConfig(newPanelType, currentDataSource);
+		}
+	}, [
+		handleSetConfig,
+		panelType,
+		initialDataSource,
+		currentDataSource,
+		newPanelType,
+	]);
 
 	return (
 		<QueryBuilderV2Provider>
-			<QueryBuilderV2Main
-				source={source}
-				panelType={panelType}
-				filterConfigs={filterConfigs}
-				isListViewPanel={isListViewPanel}
-				version={version}
-			/>
+			<div className="query-builder-v2">
+				<div className="qb-content-container">
+					{currentQuery.builder.queryData.map((query, index) => (
+						<QueryV2
+							key={query.queryName}
+							index={index}
+							query={query}
+							filterConfigs={filterConfigs}
+							queryComponents={queryComponents}
+							version={version}
+							isAvailableToDisable={false}
+							showSpanScopeSelector
+							queryVariant={config?.queryVariant || 'dropdown'}
+						/>
+					))}
+
+					{currentQuery.builder.queryFormulas.length > 0 && (
+						<div className="qb-formulas-container">
+							{currentQuery.builder.queryFormulas.map((formula, index) => {
+								const query =
+									currentQuery.builder.queryData[index] ||
+									currentQuery.builder.queryData[0];
+
+								return (
+									<div key={formula.queryName} className="qb-formula">
+										<Formula
+											filterConfigs={filterConfigs}
+											query={query}
+											formula={formula}
+											index={index}
+											isAdditionalFilterEnable={false}
+										/>
+									</div>
+								);
+							})}
+						</div>
+					)}
+
+					<QueryFooter
+						addNewBuilderQuery={addNewBuilderQuery}
+						addNewFormula={addNewFormula}
+					/>
+				</div>
+
+				<div className="query-names-section">
+					{currentQuery.builder.queryData.map((query) => (
+						<div key={query.queryName} className="query-name">
+							{query.queryName}
+						</div>
+					))}
+
+					{currentQuery.builder.queryFormulas.map((formula) => (
+						<div key={formula.queryName} className="formula-name">
+							{formula.queryName}
+						</div>
+					))}
+				</div>
+			</div>
 		</QueryBuilderV2Provider>
 	);
-}
-
-export default QueryBuilderV2;
+});

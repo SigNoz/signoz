@@ -1,13 +1,12 @@
 import './LogsExplorerQuerySection.styles.scss';
 
-import QueryBuilderV2 from 'components/QueryBuilderV2/QueryBuilderV2';
+import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import {
 	initialQueriesMap,
 	OPERATORS,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import ExplorerOrderBy from 'container/ExplorerOrderBy';
-import { QueryBuilder } from 'container/QueryBuilder';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
@@ -16,8 +15,8 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import {
+	ExplorerViews,
 	prepareQueryWithDefaultTimestamp,
-	SELECTED_VIEWS,
 } from 'pages/LogsExplorer/utils';
 import { memo, useCallback, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -26,7 +25,7 @@ import { DataSource } from 'types/common/queryBuilder';
 function LogExplorerQuerySection({
 	selectedView,
 }: {
-	selectedView: SELECTED_VIEWS;
+	selectedView: ExplorerViews;
 }): JSX.Element {
 	const { currentQuery, updateAllQueriesOperators } = useQueryBuilder();
 
@@ -89,7 +88,7 @@ function LogExplorerQuerySection({
 
 	return (
 		<>
-			{selectedView === SELECTED_VIEWS.SEARCH && (
+			{selectedView === ExplorerViews.LIST && (
 				<div className="qb-search-view-container">
 					<QueryBuilderSearchV2
 						query={query}
@@ -99,22 +98,15 @@ function LogExplorerQuerySection({
 				</div>
 			)}
 
-			{selectedView === SELECTED_VIEWS.QUERY_BUILDER && (
-				<QueryBuilder
-					panelType={panelTypes}
+			{(selectedView === ExplorerViews.TABLE ||
+				selectedView === ExplorerViews.TIMESERIES ||
+				selectedView === ExplorerViews.CLICKHOUSE) && (
+				<QueryBuilderV2
+					isListViewPanel={panelTypes === PANEL_TYPES.LIST}
 					config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
+					panelType={panelTypes}
 					filterConfigs={filterConfigs}
 					queryComponents={queryComponents}
-					version="v3" // setting this to v3 as we this is rendered in logs explorer
-				/>
-			)}
-
-			{selectedView === SELECTED_VIEWS.QUERY_BUILDER_V2 && (
-				<QueryBuilderV2
-					source={DataSource.LOGS}
-					isListViewPanel={panelTypes === PANEL_TYPES.LIST}
-					panelType={panelTypes}
-					filterConfigs={filterConfigs}
 					version="v3" // setting this to v3 as we this is rendered in logs explorer
 				/>
 			)}

@@ -25,14 +25,16 @@
 			width: 14px;
 		}
 
-		.ant-btn {
+		.explorer-view-option {
 			display: flex;
 			align-items: center;
 			justify-content: center;
+			flex-direction: row;
 			border: none;
 			padding: 9px;
 			box-shadow: none;
 			border-radius: 0;
+			gap: 8px;
 
 			&.active-tab {
 				background-color: var(--bg-slate-400);
@@ -42,9 +44,6 @@
 				background-color: #121317;
 				opacity: 0.6;
 			}
-		}
-		.action-btn + .action-btn {
-			border-left: 1px solid var(--bg-slate-400);
 		}
 	}
 
