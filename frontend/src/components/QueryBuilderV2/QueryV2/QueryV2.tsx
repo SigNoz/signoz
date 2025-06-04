@@ -17,16 +17,20 @@ import QuerySearch from './QuerySearch/QuerySearch';
 
 export const QueryV2 = memo(function QueryV2({
 	index,
+	queryVariant,
 	query,
 	filterConfigs,
+	queryComponents,
 	isListViewPanel = false,
 	version,
 	showSpanScopeSelector = false,
-	source,
-}: QueryProps & { source: DataSource }): JSX.Element {
+}: QueryProps): JSX.Element {
 	const { cloneQuery } = useQueryBuilder();
 
 	const showFunctions = query?.functions?.length > 0;
+	const { dataSource } = query;
+
+	console.log('queryComponents', queryComponents);
 
 	const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -34,6 +38,7 @@ export const QueryV2 = memo(function QueryV2({
 		handleChangeQueryData,
 		handleDeleteQuery,
 		handleQueryFunctionsUpdates,
+		handleChangeDataSource,
 	} = useQueryOperations({
 		index,
 		query,
@@ -61,7 +66,7 @@ export const QueryV2 = memo(function QueryV2({
 					<div className="query-actions-container">
 						<div className="query-actions-left-container">
 							<QBEntityOptions
-								isMetricsDataSource={source === DataSource.METRICS}
+								isMetricsDataSource={dataSource === DataSource.METRICS}
 								showFunctions={
 									(version && version === ENTITY_VERSION_V4) ||
 									query.dataSource === DataSource.LOGS ||
@@ -81,6 +86,8 @@ export const QueryV2 = memo(function QueryV2({
 								showCloneOption={false}
 								isListViewPanel={isListViewPanel}
 								index={index}
+								queryVariant={queryVariant}
+								onChangeDataSource={handleChangeDataSource}
 							/>
 						</div>
 
@@ -111,7 +118,7 @@ export const QueryV2 = memo(function QueryV2({
 
 				<div className="qb-elements-container">
 					<div className="qb-search-container">
-						{source === DataSource.METRICS && (
+						{dataSource === DataSource.METRICS && (
 							<div className="metrics-select-container">
 								<MetricsSelect query={query} index={0} version="v4" />
 							</div>
@@ -129,9 +136,9 @@ export const QueryV2 = memo(function QueryV2({
 						</div>
 					</div>
 
-					<QueryAggregation source={source} />
+					<QueryAggregation source={dataSource} />
 
-					{source === DataSource.METRICS && (
+					{dataSource === DataSource.METRICS && (
 						<MetricsAggregateSection query={query} index={0} version="v4" />
 					)}
 

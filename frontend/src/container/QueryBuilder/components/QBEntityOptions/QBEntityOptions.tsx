@@ -22,6 +22,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { DataSourceDropdown } from '..';
 import QueryFunctions from '../QueryFunctions/QueryFunctions';
 
 interface QBEntityOptionsProps {
@@ -40,8 +41,11 @@ interface QBEntityOptionsProps {
 	showCloneOption?: boolean;
 	isListViewPanel?: boolean;
 	index?: number;
+	queryVariant?: 'dropdown' | 'static';
+	onChangeDataSource?: (value: DataSource) => void;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function QBEntityOptions({
 	query,
 	isMetricsDataSource,
@@ -58,6 +62,8 @@ export default function QBEntityOptions({
 	showCloneOption,
 	onCloneQuery,
 	index,
+	queryVariant,
+	onChangeDataSource,
 }: QBEntityOptionsProps): JSX.Element {
 	const handleCloneEntity = (): void => {
 		if (isFunction(onCloneQuery)) {
@@ -117,6 +123,21 @@ export default function QBEntityOptions({
 								{entityData.queryName}
 							</Button>
 
+							{queryVariant === 'dropdown' && (
+								<div className="query-data-source">
+									<DataSourceDropdown
+										onChange={(value): void => {
+											if (onChangeDataSource) {
+												onChangeDataSource(value);
+											}
+										}}
+										value={query?.dataSource || DataSource.METRICS}
+										isListViewPanel={isListViewPanel}
+										className="query-data-source-dropdown"
+									/>
+								</div>
+							)}
+
 							{showFunctions &&
 								(isMetricsDataSource || isLogsDataSource) &&
 								query &&
@@ -161,4 +182,6 @@ QBEntityOptions.defaultProps = {
 	onDelete: noop,
 	showDeleteButton: false,
 	showCloneOption: true,
+	queryVariant: 'static',
+	onChangeDataSource: noop,
 };
