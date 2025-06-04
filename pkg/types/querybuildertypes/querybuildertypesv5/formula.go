@@ -123,7 +123,8 @@ func NewFormulaEvaluator(expressionStr string, canDefaultZero map[string]bool) (
 
 	// 1k timestamps is very generous, we don't expect to have more than 300
 	evaluator.timestampPool.New = func() any {
-		return make([]int64, 0, 1000)
+		s := make([]int64, 0, 1000)
+		return &s
 	}
 	evaluator.valuesPool.New = func() any {
 		return make(map[string]any, len(evaluator.variables))
@@ -409,9 +410,12 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 	}
 
 	// Convert timestamps to sorted slice
-	timestamps := fe.timestampPool.Get().([]int64)
-	timestamps = timestamps[:0]
-	defer fe.timestampPool.Put(&timestamps)
+	tsPtr := fe.timestampPool.Get().(*[]int64)
+	timestamps := (*tsPtr)[:0]
+	defer func() {
+		*tsPtr = timestamps[:0]
+		fe.timestampPool.Put(tsPtr)
+	}()
 
 	for ts := range allTimestamps {
 		timestamps = append(timestamps, ts)
