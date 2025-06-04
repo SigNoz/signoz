@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// Do not take inspiration from this code, it is a work in progress. See Organization module for a better implementation.
 type module struct {
 	store     preferencetypes.Store
 	available map[preferencetypes.Name]preferencetypes.Preference
