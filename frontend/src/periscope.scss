@@ -22,6 +22,8 @@
 	&.ghost {
 		box-shadow: none;
 		border: none;
+		background: transparent;
+		color: var(--bg-vanilla-400, #c0c1c3);
 	}
 
 	cursor: pointer;
@@ -31,6 +33,12 @@
 		background-color: var(--bg-robin-500) !important;
 		border: none;
 		box-shadow: 0 2px 0 rgba(62, 86, 245, 0.09);
+	}
+
+	&.secondary {
+		border-radius: 3px;
+		border: 1px solid var(--Slate-300, #242834);
+		background: var(--Ink-200, #23262e);
 	}
 
 	&:disabled {
@@ -85,12 +93,12 @@
 		font-size: 12px;
 
 		color: var(--bg-vanilla-400);
-		font-size: 11px;
+		font-size: 12px;
 		font-style: normal;
 		font-weight: 500;
 		line-height: 18px;
 		letter-spacing: 0.56px;
-		text-transform: uppercase;
+
 		max-width: 150px;
 		min-width: 120px;
 		white-space: nowrap;

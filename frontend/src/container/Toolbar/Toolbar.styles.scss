@@ -1,12 +1,23 @@
 .toolbar {
-	display: grid;
-	grid-template-columns: 3fr auto auto;
-	padding: 8px 16px;
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+
+	border-top: 1px solid var(--bg-slate-400);
+	border-bottom: 1px solid var(--bg-slate-400);
+
+	padding: 0px 8px;
 	gap: 8px;
+
+	.rightActions {
+		margin: 4px 0;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
 
 	.timeRange {
 		display: flex;
-		padding-right: 8px;
 		align-items: center;
 		gap: 16px;
 	}

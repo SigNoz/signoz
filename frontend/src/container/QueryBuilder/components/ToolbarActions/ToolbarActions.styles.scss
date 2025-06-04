@@ -19,6 +19,8 @@
 		border: 1px solid var(--bg-slate-400);
 		background: var(--bg-ink-300);
 		flex-direction: row;
+		border-bottom: none;
+		margin-bottom: -1px;
 
 		.prom-ql-icon {
 			height: 14px;
@@ -33,16 +35,34 @@
 			border: none;
 			padding: 9px;
 			box-shadow: none;
-			border-radius: 0;
+			border-radius: 0px;
+			border-left: 1px solid var(--bg-slate-400);
+			border-bottom: 1px solid var(--bg-slate-400);
+
 			gap: 8px;
 
 			&.active-tab {
-				background-color: var(--bg-slate-400);
+				background-color: var(--bg-ink-500);
+				border-bottom: 1px solid var(--bg-ink-500);
+
+				&:hover {
+					background-color: var(--bg-ink-500) !important;
+				}
 			}
 
 			&:disabled {
-				background-color: #121317;
+				background-color: var(--bg-ink-300);
 				opacity: 0.6;
+			}
+
+			&:first-child {
+				border-left: 1px solid transparent;
+			}
+
+			&:hover {
+				background-color: transparent !important;
+				border-left: 1px solid transparent !important;
+				color: var(--bg-vanilla-100);
 			}
 		}
 	}
