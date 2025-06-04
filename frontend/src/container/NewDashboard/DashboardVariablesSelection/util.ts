@@ -117,6 +117,9 @@ export const buildParentDependencyGraph = (
 	Object.entries(graph).forEach(([node, children]) => {
 		// For each child, add the current node as its parent
 		children.forEach((child) => {
+			if (!parentGraph[child]) {
+				parentGraph[child] = [];
+			}
 			parentGraph[child].push(node);
 		});
 	});
