@@ -30,7 +30,7 @@ export const getChartData = (
 	};
 	const chartLabels: ChartData<'line'>['labels'] = [];
 
-	Object.keys(allDataPoints).forEach((timestamp) => {
+	Object.keys(allDataPoints ?? {}).forEach((timestamp) => {
 		const key = allDataPoints[timestamp];
 		if (key.value) {
 			chartDataset.data.push(key.value);

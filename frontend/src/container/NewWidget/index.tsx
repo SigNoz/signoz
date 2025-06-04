@@ -144,7 +144,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				widgetId: selectedWidget?.id,
 				dashboardName: selectedDashboard?.data.title,
 				isNewPanel: !!isWidgetNotPresent,
-				dataSource: currentQuery.builder.queryData?.[0]?.dataSource,
+				dataSource: currentQuery?.builder?.queryData?.[0]?.dataSource,
 			});
 			logEventCalledRef.current = true;
 		}
@@ -372,7 +372,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					tableParams: {
 						pagination: {
 							offset: 0,
-							limit: updatedQuery.builder.queryData[0].limit || 0,
+							limit: updatedQuery?.builder?.queryData?.[0]?.limit || 0,
 						},
 					},
 				};
@@ -601,7 +601,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			dashboardName: selectedDashboard?.data.title,
 			queryType: currentQuery.queryType,
 			isNewPanel: isUndefined(selectWidget),
-			dataSource: currentQuery.builder.queryData?.[0]?.dataSource,
+			dataSource: currentQuery?.builder?.queryData?.[0]?.dataSource,
 		});
 		setSaveModal(true);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -609,7 +609,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const isNewTraceLogsAvailable =
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
-		currentQuery.builder.queryData.find(
+		currentQuery?.builder?.queryData?.find(
 			(query) => query.dataSource !== DataSource.METRICS,
 		) !== undefined;
 
@@ -620,7 +620,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		}
 
 		const isTraceOrLogsQueryBuilder =
-			currentQuery.builder.queryData.find(
+			currentQuery?.builder?.queryData?.find(
 				(query) =>
 					query.dataSource === DataSource.TRACES ||
 					query.dataSource === DataSource.LOGS,
@@ -632,7 +632,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 		return isNewTraceLogsAvailable;
 	}, [
-		currentQuery.builder.queryData,
+		currentQuery?.builder?.queryData,
 		selectedWidget?.id,
 		isNewTraceLogsAvailable,
 	]);
@@ -661,7 +661,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	useEffect(() => {
 		if (selectedGraph === PANEL_TYPES.LIST) {
-			const initialDataSource = currentQuery.builder.queryData[0].dataSource;
+			const initialDataSource = currentQuery?.builder?.queryData?.[0]?.dataSource;
 			if (initialDataSource === DataSource.LOGS) {
 				// we do not need selected log columns in the request data as the entire response contains all the necessary data
 				setRequestData((prev) => ({
