@@ -31,7 +31,6 @@
 
 .qb-search-view-container {
 	padding: 8px;
-	border: 1px solid var(--Slate-400, #1d212d) !important;
 
 	display: flex;
 	flex-direction: row;
@@ -40,8 +39,8 @@
 
 	.ant-select-selector {
 		border-radius: 2px;
-		border: 1px solid var(--Slate-400, #1d212d) !important;
-		background: var(--Ink-300, #16181d) !important;
+		border: 1px solid var(--bg-slate-400) !important;
+		background: var(--bg-ink-300) !important;
 		height: 34px !important;
 		box-sizing: border-box !important;
 	}
@@ -83,7 +82,6 @@
 
 	.trace-explorer {
 		width: 100%;
-		border-left: 1px solid var(--bg-slate-400);
 		background: var(--bg-ink-500);
 
 		> .ant-card-body {

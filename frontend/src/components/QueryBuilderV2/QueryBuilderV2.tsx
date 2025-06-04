@@ -18,6 +18,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	queryComponents,
 	isListViewPanel = false,
 	showFunctions = false,
+	showOnlyWhereClause = false,
 	version,
 }: QueryBuilderProps): JSX.Element {
 	const {
@@ -67,12 +68,13 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							queryComponents={queryComponents}
 							version={version}
 							isAvailableToDisable={false}
-							showSpanScopeSelector
+							showSpanScopeSelector={initialDataSource === DataSource.TRACES}
 							queryVariant={config?.queryVariant || 'dropdown'}
+							showOnlyWhereClause={showOnlyWhereClause}
 						/>
 					))}
 
-					{currentQuery.builder.queryFormulas.length > 0 && (
+					{!showOnlyWhereClause && currentQuery.builder.queryFormulas.length > 0 && (
 						<div className="qb-formulas-container">
 							{currentQuery.builder.queryFormulas.map((formula, index) => {
 								const query =
@@ -94,25 +96,29 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 						</div>
 					)}
 
-					<QueryFooter
-						addNewBuilderQuery={addNewBuilderQuery}
-						addNewFormula={addNewFormula}
-					/>
+					{!showOnlyWhereClause && (
+						<QueryFooter
+							addNewBuilderQuery={addNewBuilderQuery}
+							addNewFormula={addNewFormula}
+						/>
+					)}
 				</div>
 
-				<div className="query-names-section">
-					{currentQuery.builder.queryData.map((query) => (
-						<div key={query.queryName} className="query-name">
-							{query.queryName}
-						</div>
-					))}
+				{!showOnlyWhereClause && (
+					<div className="query-names-section">
+						{currentQuery.builder.queryData.map((query) => (
+							<div key={query.queryName} className="query-name">
+								{query.queryName}
+							</div>
+						))}
 
-					{currentQuery.builder.queryFormulas.map((formula) => (
-						<div key={formula.queryName} className="formula-name">
-							{formula.queryName}
-						</div>
-					))}
-				</div>
+						{currentQuery.builder.queryFormulas.map((formula) => (
+							<div key={formula.queryName} className="formula-name">
+								{formula.queryName}
+							</div>
+						))}
+					</div>
+				)}
 			</div>
 		</QueryBuilderV2Provider>
 	);

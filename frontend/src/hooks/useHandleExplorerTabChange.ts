@@ -58,7 +58,7 @@ export const useHandleExplorerTabChange = (): {
 			currentQueryData?: ICurrentQueryData,
 			redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
 		) => {
-			console.log('type', type);
+			console.log('hook - type', type);
 
 			const newPanelType = type as PANEL_TYPES;
 

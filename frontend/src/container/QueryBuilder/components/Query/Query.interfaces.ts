@@ -10,4 +10,5 @@ export type QueryProps = {
 	showFunctions?: boolean;
 	version: string;
 	showSpanScopeSelector?: boolean;
+	showOnlyWhereClause?: boolean;
 } & Pick<QueryBuilderProps, 'filterConfigs' | 'queryComponents'>;

@@ -1,17 +1,10 @@
 import './QueryAggregation.styles.scss';
 
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
-import { DataSource } from 'types/common/queryBuilder';
 
 import QueryAggregationSelect from './QueryAggregationSelect';
 
-function QueryAggregationOptions({
-	source,
-}: {
-	source: DataSource;
-}): JSX.Element {
-	console.log('source', source);
-
+function QueryAggregationOptions(): JSX.Element {
 	return (
 		<div className="query-aggregation-container">
 			<QueryAggregationSelect />

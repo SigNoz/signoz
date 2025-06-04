@@ -8,18 +8,15 @@ import {
 } from 'constants/queryBuilder';
 import ExplorerOrderBy from 'container/ExplorerOrderBy';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
-import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import {
 	ExplorerViews,
 	prepareQueryWithDefaultTimestamp,
 } from 'pages/LogsExplorer/utils';
 import { memo, useCallback, useMemo } from 'react';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 function LogExplorerQuerySection({
@@ -27,9 +24,7 @@ function LogExplorerQuerySection({
 }: {
 	selectedView: ExplorerViews;
 }): JSX.Element {
-	const { currentQuery, updateAllQueriesOperators } = useQueryBuilder();
-
-	const query = currentQuery?.builder?.queryData[0] || null;
+	const { updateAllQueriesOperators } = useQueryBuilder();
 
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 	const defaultValue = useMemo(() => {
@@ -58,13 +53,6 @@ function LogExplorerQuerySection({
 		return config;
 	}, [panelTypes]);
 
-	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
-		query,
-		filterConfigs,
-		entityVersion: '',
-	});
-
 	const renderOrderBy = useCallback(
 		({ query, onChange }: OrderByFilterProps): JSX.Element => (
 			<ExplorerOrderBy query={query} onChange={onChange} />
@@ -79,38 +67,16 @@ function LogExplorerQuerySection({
 		[panelTypes, renderOrderBy],
 	);
 
-	const handleChangeTagFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
-			handleChangeQueryData('filters', value);
-		},
-		[handleChangeQueryData],
-	);
-
 	return (
-		<>
-			{selectedView === ExplorerViews.LIST && (
-				<div className="qb-search-view-container">
-					<QueryBuilderSearchV2
-						query={query}
-						onChange={handleChangeTagFilters}
-						whereClauseConfig={filterConfigs?.filters}
-					/>
-				</div>
-			)}
-
-			{(selectedView === ExplorerViews.TABLE ||
-				selectedView === ExplorerViews.TIMESERIES ||
-				selectedView === ExplorerViews.CLICKHOUSE) && (
-				<QueryBuilderV2
-					isListViewPanel={panelTypes === PANEL_TYPES.LIST}
-					config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
-					panelType={panelTypes}
-					filterConfigs={filterConfigs}
-					queryComponents={queryComponents}
-					version="v3" // setting this to v3 as we this is rendered in logs explorer
-				/>
-			)}
-		</>
+		<QueryBuilderV2
+			isListViewPanel={panelTypes === PANEL_TYPES.LIST}
+			config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
+			panelType={panelTypes}
+			filterConfigs={filterConfigs}
+			queryComponents={queryComponents}
+			showOnlyWhereClause={selectedView === ExplorerViews.LIST}
+			version="v3" // setting this to v3 as we this is rendered in logs explorer
+		/>
 	);
 }
 
