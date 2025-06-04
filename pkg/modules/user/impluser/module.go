@@ -11,8 +11,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -22,20 +24,22 @@ import (
 )
 
 type Module struct {
-	store    types.UserStore
-	jwt      *authtypes.JWT
-	emailing emailing.Emailing
-	settings factory.ScopedProviderSettings
+	store     types.UserStore
+	jwt       *authtypes.JWT
+	emailing  emailing.Emailing
+	settings  factory.ScopedProviderSettings
+	orgSetter organization.Setter
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings) user.Module {
+func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter) user.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
-		store:    store,
-		jwt:      jwt,
-		emailing: emailing,
-		settings: settings,
+		store:     store,
+		jwt:       jwt,
+		emailing:  emailing,
+		settings:  settings,
+		orgSetter: orgSetter,
 	}
 }
 
@@ -537,4 +541,37 @@ func (m *Module) ListDomains(ctx context.Context, orgID valuer.UUID) ([]*types.G
 
 func (m *Module) UpdateDomain(ctx context.Context, domain *types.GettableOrgDomain) error {
 	return m.store.UpdateDomain(ctx, domain)
+}
+
+func (m *Module) Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin) (*types.User, error) {
+	if req.Email == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "email is required")
+	}
+
+	if req.Password == "" {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password is required")
+	}
+
+	organization := types.NewOrganization(req.OrgDisplayName)
+	err := m.orgSetter.Create(ctx, organization)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	user, err := types.NewUser(req.Name, req.Email, types.RoleAdmin.String(), organization.ID.StringValue())
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	password, err := types.NewFactorPassword(req.Password)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	user, err = m.CreateUserWithPassword(ctx, user, password)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	return user, nil
 }

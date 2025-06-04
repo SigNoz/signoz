@@ -49,12 +49,12 @@ export const useGetQueryRange: UseGetQueryRange = (
 				...requestData.query.builder,
 				queryData: [
 					{
-						...requestData.query.builder.queryData[0],
+						...requestData?.query?.builder?.queryData[0],
 						orderBy: [
-							...requestData.query.builder.queryData[0].orderBy,
+							...(requestData?.query?.builder?.queryData[0]?.orderBy || []),
 							{
 								columnName: 'id',
-								order: requestData.query.builder.queryData[0].orderBy[0].order,
+								order: requestData?.query?.builder?.queryData[0]?.orderBy[0]?.order,
 							},
 						],
 					},

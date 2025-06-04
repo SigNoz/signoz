@@ -62,6 +62,8 @@ function LogsExplorerChart({
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			urlQuery.delete(QueryParams.relativeTime);
+			// Remove Hidden Filters from URL query parameters on time change
+			urlQuery.delete(QueryParams.activeLogId);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
 		},

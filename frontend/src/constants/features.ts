@@ -1,14 +1,12 @@
-// keep this consistent with backend constants.go
+// keep this consistent with backend plan.go
 export enum FeatureKeys {
-	SSO = 'SSO',
-	USE_SPAN_METRICS = 'USE_SPAN_METRICS',
-	ONBOARDING = 'ONBOARDING',
-	CHAT_SUPPORT = 'CHAT_SUPPORT',
-	GATEWAY = 'GATEWAY',
-	PREMIUM_SUPPORT = 'PREMIUM_SUPPORT',
-	ANOMALY_DETECTION = 'ANOMALY_DETECTION',
-	ONBOARDING_V3 = 'ONBOARDING_V3',
-	THIRD_PARTY_API = 'THIRD_PARTY_API',
-	TRACE_FUNNELS = 'TRACE_FUNNELS',
-	DOT_METRICS_ENABLED = 'DOT_METRICS_ENABLED',
+	SSO = 'sso',
+	USE_SPAN_METRICS = 'use_span_metrics',
+	ONBOARDING = 'onboarding',
+	CHAT_SUPPORT = 'chat_support',
+	GATEWAY = 'gateway',
+	PREMIUM_SUPPORT = 'premium_support',
+	ANOMALY_DETECTION = 'anomaly_detection',
+	ONBOARDING_V3 = 'onboarding_v3',
+	DOT_METRICS_ENABLED = 'dot_metrics_enabled',
 }

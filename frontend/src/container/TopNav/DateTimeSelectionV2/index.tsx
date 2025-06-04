@@ -377,6 +377,8 @@ function DateTimeSelection({
 			urlQuery.delete('endTime');
 
 			urlQuery.set(QueryParams.relativeTime, value);
+			// Remove Hidden Filters from URL query parameters on time change
+			urlQuery.delete(QueryParams.activeLogId);
 
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
@@ -669,9 +671,7 @@ function DateTimeSelection({
 			urlQuery.set(QueryParams.endTime, endTime);
 			urlQuery.delete(QueryParams.relativeTime);
 		}
-
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-
 		safeNavigate(generatedUrl);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);

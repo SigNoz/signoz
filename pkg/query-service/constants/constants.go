@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 )
 
 const (
@@ -65,16 +64,6 @@ func UseMetricsPreAggregation() bool {
 }
 
 var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
-
-var DEFAULT_FEATURE_SET = []*featuretypes.GettableFeature{
-	&featuretypes.GettableFeature{
-		Name:       featuretypes.UseSpanMetrics,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-}
 
 func GetEvalDelay() time.Duration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
@@ -138,10 +127,12 @@ var GroupByColMap = map[string]struct{}{
 
 const (
 	SIGNOZ_METRIC_DBNAME                       = "signoz_metrics"
+	SIGNOZ_SAMPLES_V4_LOCAL_TABLENAME          = "samples_v4"
 	SIGNOZ_SAMPLES_V4_TABLENAME                = "distributed_samples_v4"
 	SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME         = "distributed_samples_v4_agg_5m"
 	SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME        = "distributed_samples_v4_agg_30m"
 	SIGNOZ_EXP_HISTOGRAM_TABLENAME             = "distributed_exp_hist"
+	SIGNOZ_EXP_HISTOGRAM_LOCAL_TABLENAME       = "exp_hist"
 	SIGNOZ_TRACE_DBNAME                        = "signoz_traces"
 	SIGNOZ_SPAN_INDEX_TABLENAME                = "distributed_signoz_index_v2"
 	SIGNOZ_SPAN_INDEX_V3                       = "distributed_signoz_index_v3"

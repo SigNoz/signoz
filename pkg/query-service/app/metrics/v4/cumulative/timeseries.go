@@ -120,6 +120,7 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 
 	tableName := helpers.WhichSamplesTableToUse(start, end, mq)
 
+	samplesTableFilter = helpers.AddFlagsFilters(samplesTableFilter, tableName)
 	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT fingerprint, %s" +
