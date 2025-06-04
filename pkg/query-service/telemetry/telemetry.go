@@ -204,6 +204,18 @@ func (t *Telemetry) AddActiveLogsUser() {
 	t.mutex.Unlock()
 }
 
+func (t *Telemetry) GetActiveUser() map[string]int8 {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+	return t.activeUser
+}
+
+func (t *Telemetry) SetActiveUser(activeUser map[string]int8) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.activeUser = activeUser
+}
+
 func (t *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -468,28 +480,29 @@ func createTelemetry() {
 
 	// Define active user function
 	activeUserFunc := func() {
-		if telemetry.activeUser["logs"] != 0 {
+		activeUser := telemetry.GetActiveUser()
+		if activeUser["logs"] != 0 {
 			getLogsInfoInLastHeartBeatInterval, err := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(ctx, ACTIVE_USER_DURATION)
 			if err != nil && getLogsInfoInLastHeartBeatInterval == 0 {
-				telemetry.activeUser["logs"] = 0
+				activeUser["logs"] = 0
 			}
 		}
-		if telemetry.activeUser["metrics"] != 0 {
+		if activeUser["metrics"] != 0 {
 			getSamplesInfoInLastHeartBeatInterval, err := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(ctx, ACTIVE_USER_DURATION)
 			if err != nil && getSamplesInfoInLastHeartBeatInterval == 0 {
-				telemetry.activeUser["metrics"] = 0
+				activeUser["metrics"] = 0
 			}
 		}
-		if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
-			telemetry.activeUser["any"] = 1
+		if (activeUser["traces"] != 0) || (activeUser["metrics"] != 0) || (activeUser["logs"] != 0) {
+			activeUser["any"] = 1
 		}
 		telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{
-			"traces":  telemetry.activeUser["traces"],
-			"metrics": telemetry.activeUser["metrics"],
-			"logs":    telemetry.activeUser["logs"],
-			"any":     telemetry.activeUser["any"]},
+			"traces":  activeUser["traces"],
+			"metrics": activeUser["metrics"],
+			"logs":    activeUser["logs"],
+			"any":     activeUser["any"]},
 			"", true, false)
-		telemetry.activeUser = map[string]int8{"traces": 0, "metrics": 0, "logs": 0, "any": 0}
+		telemetry.SetActiveUser(map[string]int8{"traces": 0, "metrics": 0, "logs": 0, "any": 0})
 	}
 
 	// Calculate next run time based on duration and start time
