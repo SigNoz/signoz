@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"net/http/httputil"
 	"time"
@@ -86,17 +85,12 @@ func (ah *APIHandler) Gateway() *httputil.ReverseProxy {
 	return ah.opts.Gateway
 }
 
-func (ah *APIHandler) CheckFeature(ctx context.Context, key string) bool {
-	err := ah.Signoz.Licensing.CheckFeature(ctx, key)
-	return err == nil
-}
-
 // RegisterRoutes registers routes for this handler on the given router
 func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// note: add ee override methods first
 
 	// routes available only in ee version
-	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/features", am.ViewAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
 
 	// paid plans specific routes
 	router.HandleFunc("/api/v1/complete/saml", am.OpenAccess(ah.receiveSAML)).Methods(http.MethodPost)

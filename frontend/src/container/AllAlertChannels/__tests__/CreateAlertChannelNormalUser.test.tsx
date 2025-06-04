@@ -316,7 +316,6 @@ describe('Create Alert Channel (Normal User)', () => {
 				expect(screen.getByText('Microsoft Teams')).toBeInTheDocument();
 			});
 
-			// TODO[vikrantgupta25]: check with Shaheer
 			it.skip('Should check if the upgrade plan message is shown', () => {
 				expect(screen.getByText('Upgrade to a Paid Plan')).toBeInTheDocument();
 				expect(
