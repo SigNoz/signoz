@@ -17,6 +17,7 @@ var (
 	NameWelcomeChecklistSetupAlertsSkipped      = Name{valuer.NewString("welcome_checklist_setup_alerts_skipped")}
 	NameWelcomeChecklistSetupSavedViewSkipped   = Name{valuer.NewString("welcome_checklist_setup_saved_view_skipped")}
 	NameSidenavPinned                           = Name{valuer.NewString("sidenav_pinned")}
+	NameNavShortcuts                            = Name{valuer.NewString("nav_shortcuts")}
 )
 
 type Name struct{ valuer.String }
@@ -33,6 +34,7 @@ func NewName(name string) (Name, error) {
 			NameWelcomeChecklistSetupAlertsSkipped.StringValue(),
 			NameWelcomeChecklistSetupSavedViewSkipped.StringValue(),
 			NameSidenavPinned.StringValue(),
+			NameNavShortcuts.StringValue(),
 		},
 		name,
 	)

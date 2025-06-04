@@ -196,7 +196,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 		setUpdatingOrgOnboardingStatus(true);
 		updateOrgPreference({
-			preferenceID: 'ORG_ONBOARDING',
+			preferenceID: 'org_onboarding',
 			value: true,
 		});
 	};

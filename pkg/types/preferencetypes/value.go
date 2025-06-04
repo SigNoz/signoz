@@ -1,8 +1,7 @@
 package preferencetypes
 
 import (
-	"encoding/json"
-	"strconv"
+	"reflect"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -24,74 +23,102 @@ type Range struct {
 	Max int64 `json:"max"`
 }
 
-func NewPreferenceValueFromString(preference *Preference, value string) (any, error) {
+func (preference *Preference) UpdateValue(value any) error {
 	switch preference.ValueType {
 	case ValueTypeInteger:
-		val, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			return nil, err
+		val, ok := value.(int64)
+		if !ok {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not an integer")
 		}
 
 		if !preference.IsDiscreteValues {
 			if val < preference.Range.Min || val > preference.Range.Max {
-				return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not in the range specified, min: %d , max: %d", preference.Range.Min, preference.Range.Max)
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not in the range specified, min: %d , max: %d", preference.Range.Min, preference.Range.Max)
 			}
 		}
 
 		if len(preference.AllowedValues) > 0 {
+			found := false
 			for _, allowedValue := range preference.AllowedValues {
-				if allowedValue == val {
-					return val, nil
+				allowedVal, ok := allowedValue.(int64)
+				if ok && allowedVal == val {
+					found = true
+					break
 				}
 			}
-			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not one of the allowed values: %v", preference.AllowedValues)
+			if !found {
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not one of the allowed values: %v", preference.AllowedValues)
+			}
 		}
 
-		return val, nil
+		preference.Value = val
+		return nil
 	case ValueTypeFloat:
-		val, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			return nil, err
+		val, ok := value.(float64)
+		if !ok {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not a float")
 		}
 
 		if len(preference.AllowedValues) > 0 {
+			found := false
 			for _, allowedValue := range preference.AllowedValues {
-				if allowedValue == val {
-					return val, nil
+				allowedVal, ok := allowedValue.(float64)
+				if ok && allowedVal == val {
+					found = true
+					break
 				}
 			}
-			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not one of the allowed values: %v", preference.AllowedValues)
+
+			if !found {
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not one of the allowed values: %v", preference.AllowedValues)
+			}
 		}
 
-		return val, nil
+		preference.Value = val
+		return nil
 	case ValueTypeString:
 		if len(preference.AllowedValues) > 0 {
+			found := false
 			for _, allowedValue := range preference.AllowedValues {
-				if allowedValue == value {
-					return value, nil
+				allowedVal, ok := allowedValue.(string)
+				if ok && allowedVal == value {
+					found = true
+					break
 				}
 			}
 
-			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not in the list of allowedValues: %v", preference.AllowedValues)
+			if !found {
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not in the list of allowedValues: %v", preference.AllowedValues)
+			}
 		}
-		return value, nil
+
+		preference.Value = value
+		return nil
 	case ValueTypeBoolean:
-		return strconv.ParseBool(value)
+		val, ok := value.(bool)
+		if !ok {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not a boolean")
+		}
+
+		preference.Value = val
+		return nil
 	case ValueTypeArray:
-		var arr []any
-		err := json.Unmarshal([]byte(value), &arr)
-		if err != nil {
-			return nil, err
+		valType := reflect.TypeOf(value)
+		if valType.Kind() != reflect.Slice && valType.Kind() != reflect.Array {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not an array")
 		}
-		return arr, nil
+
+		preference.Value = reflect.ValueOf(value).Interface()
+		return nil
 	case ValueTypeObject:
-		var obj map[string]any
-		err := json.Unmarshal([]byte(value), &obj)
-		if err != nil {
-			return nil, err
+		val, ok := value.(map[string]any)
+		if !ok {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not an object")
 		}
-		return obj, nil
+
+		preference.Value = val
+		return nil
 	default:
-		return nil, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "the preference value type is not supported: %s", preference.ValueType)
+		return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "the preference value type is not supported: %s", preference.ValueType)
 	}
 }

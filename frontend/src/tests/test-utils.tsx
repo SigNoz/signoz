@@ -217,8 +217,7 @@ export function getAppContextMock(
 		featureFlagsFetchError: null,
 		orgPreferences: [
 			{
-				key: 'ORG_ONBOARDING',
-				name: 'Organisation Onboarding',
+				name: 'org_onboarding',
 				description: 'Organisation Onboarding',
 				valueType: 'boolean',
 				defaultValue: false,

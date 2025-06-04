@@ -10,7 +10,6 @@ export interface User {
 }
 
 export interface OrgPreference {
-	key: string;
 	name: string;
 	description: string;
 	valueType: string;
@@ -22,7 +21,6 @@ export interface OrgPreference {
 }
 
 export interface UserPreference {
-	key: string;
 	name: string;
 	description: string;
 	valueType: string;

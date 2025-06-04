@@ -185,7 +185,7 @@ export default function Home(): JSX.Element {
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = userPreferences?.find(
-			(preference) => preference.key === 'WELCOME_CHECKLIST_DO_LATER',
+			(preference) => preference.name === 'welcome_checklist_do_later',
 		)?.value;
 
 		const updatedChecklistItems = cloneDeep(checklistItems);
@@ -194,7 +194,7 @@ export default function Home(): JSX.Element {
 			const newItem = { ...item };
 			newItem.isSkipped =
 				userPreferences?.find(
-					(preference) => preference.key === item.skippedPreferenceKey,
+					(preference) => preference.name === item.skippedPreferenceKey,
 				)?.value || false;
 			return newItem;
 		});
@@ -239,7 +239,7 @@ export default function Home(): JSX.Element {
 		setUpdatingUserPreferences(true);
 
 		updateUserPreference({
-			preferenceID: 'WELCOME_CHECKLIST_DO_LATER',
+			preferenceID: 'welcome_checklist_do_later',
 			value: true,
 		});
 	};

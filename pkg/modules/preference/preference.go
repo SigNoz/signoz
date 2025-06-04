@@ -16,7 +16,7 @@ type Module interface {
 	GetByOrg(context.Context, valuer.UUID, preferencetypes.Name) (*preferencetypes.GettablePreference, error)
 
 	// Updates the preference for the given organization
-	UpdateByOrg(context.Context, valuer.UUID, preferencetypes.Name, string) error
+	UpdateByOrg(context.Context, valuer.UUID, preferencetypes.Name, any) error
 
 	// Returns all preferences for the given user
 	ListByUser(context.Context, valuer.UUID) ([]*preferencetypes.GettablePreference, error)
@@ -25,7 +25,7 @@ type Module interface {
 	GetByUser(context.Context, valuer.UUID, preferencetypes.Name) (*preferencetypes.GettablePreference, error)
 
 	// Updates the preference for the given user
-	UpdateByUser(context.Context, valuer.UUID, preferencetypes.Name, string) error
+	UpdateByUser(context.Context, valuer.UUID, preferencetypes.Name, any) error
 }
 
 type Handler interface {
