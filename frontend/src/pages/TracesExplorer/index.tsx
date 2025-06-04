@@ -1,12 +1,10 @@
 import './TracesExplorer.styles.scss';
 
-import { FilterOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
-import { Button, Card, Tabs, Tooltip } from 'antd';
+import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
-import QueryBuilderV2 from 'components/QueryBuilderV2/QueryBuilderV2';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -15,10 +13,16 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import ExportPanel from 'container/ExportPanel';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
+import TimeSeriesView from 'container/TimeSeriesView';
+import Toolbar from 'container/Toolbar/Toolbar';
+import ListView from 'container/TracesExplorer/ListView';
+// import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import QuerySection from 'container/TracesExplorer/QuerySection';
+import TableView from 'container/TracesExplorer/TableView';
+import TracesView from 'container/TracesExplorer/TracesView';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
@@ -34,9 +38,6 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
-
-import { ActionsWrapper, Container } from './styles';
-import { getTabsItems } from './utils';
 
 function TracesExplorer(): JSX.Element {
 	const {
@@ -57,11 +58,10 @@ function TracesExplorer(): JSX.Element {
 	});
 
 	const currentPanelType = useGetPanelTypesQueryParam();
+	const currentTab = panelType || PANEL_TYPES.LIST;
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const { safeNavigate } = useSafeNavigate();
-
-	const currentTab = panelType || PANEL_TYPES.LIST;
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
@@ -105,11 +105,6 @@ function TracesExplorer(): JSX.Element {
 			},
 		};
 	}, [updateAllQueriesOperators]);
-
-	const tabsItems = getTabsItems({
-		isListViewDisabled: isMultipleQueries || isGroupByExist,
-		isFilterApplied: !isEmpty(listQuery?.filters.items),
-	});
 
 	const exportDefaultQuery = useMemo(
 		() =>
@@ -184,14 +179,60 @@ function TracesExplorer(): JSX.Element {
 		handleExplorerTabChange,
 		currentPanelType,
 	]);
+
 	const [isOpen, setOpen] = useState<boolean>(true);
 	const logEventCalledRef = useRef(false);
+
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
 			logEvent('Traces Explorer: Page visited', {});
 			logEventCalledRef.current = true;
 		}
 	}, []);
+
+	const toolbarViews = useMemo(
+		() => ({
+			list: {
+				name: 'list',
+				label: 'List',
+				show: true,
+				key: 'list',
+			},
+			timeseries: {
+				name: 'timeseries',
+				label: 'Timeseries',
+				disabled: false,
+				show: true,
+				key: 'timeseries',
+			},
+			trace: {
+				name: 'trace',
+				label: 'Trace',
+				disabled: false,
+				show: true,
+				key: 'trace',
+			},
+			table: {
+				name: 'table',
+				label: 'Table',
+				disabled: false,
+				show: true,
+				key: 'table',
+			},
+			clickhouse: {
+				name: 'clickhouse',
+				label: 'Clickhouse',
+				disabled: false,
+				show: false,
+				key: 'clickhouse',
+			},
+		}),
+		[],
+	);
+
+	const isFilterApplied = useMemo(() => !isEmpty(listQuery?.filters.items), [
+		listQuery,
+	]);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
@@ -206,55 +247,87 @@ function TracesExplorer(): JSX.Element {
 						}}
 					/>
 				</Card>
-				<Card
+				<div
 					className={cx('trace-explorer', {
 						'filters-expanded': isOpen,
 					})}
 				>
-					<div className={`trace-explorer-header ${isOpen ? 'single-child' : ''}`}>
-						{!isOpen && (
-							<Tooltip title="Expand filters" placement="right">
-								<Button
-									onClick={(): void => setOpen(!isOpen)}
-									className="filter-outlined-btn"
-									data-testid="filter-uncollapse-btn"
-								>
-									<FilterOutlined />
-								</Button>
-							</Tooltip>
-						)}
-						<div className="trace-explorer-run-query">
-							<RightToolbarActions onStageRunQuery={handleRunQuery} />
-							<DateTimeSelector showAutoRefresh />
-						</div>
+					<div className="trace-explorer-header">
+						<Toolbar
+							showAutoRefresh
+							leftActions={
+								<LeftToolbarActions
+									showFilter={isOpen}
+									handleFilterVisibilityChange={(): void => setOpen(!isOpen)}
+									items={toolbarViews}
+									selectedView={
+										currentTab === PANEL_TYPES.TIME_SERIES ? 'timeseries' : currentTab
+									}
+									onChangeSelectedView={(view): void => {
+										if (view === 'timeseries') {
+											handleExplorerTabChange(PANEL_TYPES.TIME_SERIES);
+											// setSelectedView(PANEL_TYPES.TIME_SERIES);
+										} else {
+											handleExplorerTabChange((view as unknown) as PANEL_TYPES);
+											// setSelectedView((view as unknown) as PANEL_TYPES);
+										}
+									}}
+								/>
+							}
+							rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
+							// showOldCTA={false}
+						/>
 					</div>
 					<ExplorerCard sourcepage={DataSource.TRACES}>
-						{/* <QuerySection /> */}
-						<QueryBuilderV2
-							source={DataSource.TRACES}
-							query={currentQuery.builder.queryData[0]}
-						/>
+						<div className="query-section-container">
+							<QuerySection selectedView={currentTab} />
+						</div>
 					</ExplorerCard>
 
-					<Container className="traces-explorer-views">
-						<ActionsWrapper>
-							<ExportPanel query={exportDefaultQuery} onExport={handleExport} />
-						</ActionsWrapper>
+					<div className="traces-explorer-views">
+						<div className="traces-explorer-export-panel">
+							<ExportPanel
+								query={exportDefaultQuery}
+								isLoading={false}
+								onExport={handleExport}
+							/>
+						</div>
 
-						<Tabs
-							defaultActiveKey={currentTab}
-							activeKey={currentTab}
-							items={tabsItems}
-							onChange={handleExplorerTabChange}
-						/>
-					</Container>
+						{currentTab === PANEL_TYPES.LIST && (
+							<div className="trace-explorer-list-view">
+								<ListView isFilterApplied={isFilterApplied} />
+							</div>
+						)}
+
+						{currentTab === PANEL_TYPES.TRACE && (
+							<div className="trace-explorer-traces-view">
+								<TracesView isFilterApplied={isFilterApplied} />
+							</div>
+						)}
+
+						{currentTab === PANEL_TYPES.TIME_SERIES && (
+							<div className="trace-explorer-time-series-view">
+								<TimeSeriesView
+									dataSource={DataSource.TRACES}
+									isFilterApplied={isFilterApplied}
+								/>
+							</div>
+						)}
+
+						{currentTab === PANEL_TYPES.TABLE && (
+							<div className="trace-explorer-table-view">
+								<TableView />
+							</div>
+						)}
+					</div>
+
 					<ExplorerOptionWrapper
 						disabled={!stagedQuery}
 						query={exportDefaultQuery}
 						sourcepage={DataSource.TRACES}
 						onExport={handleExport}
 					/>
-				</Card>
+				</div>
 			</div>
 		</Sentry.ErrorBoundary>
 	);

@@ -8,8 +8,9 @@ import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
-import LogsExplorerViews from 'container/LogsExplorerViews';
+import LogsExplorerViewsContainer from 'container/LogsExplorerViews';
 import {
 	defaultLogsSelectedColumns,
 	defaultOptionsQuery,
@@ -20,6 +21,7 @@ import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -27,13 +29,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { WrapperStyled } from './styles';
-import { SELECTED_VIEWS } from './utils';
+import { ExplorerViews } from './utils';
 
 function LogsExplorer(): JSX.Element {
-	const [showFrequencyChart, setShowFrequencyChart] = useState(true);
-	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
-		SELECTED_VIEWS.QUERY_BUILDER_V2,
+	const [selectedView, setSelectedView] = useState<ExplorerViews>(
+		ExplorerViews.LIST,
 	);
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
@@ -45,7 +45,9 @@ function LogsExplorer(): JSX.Element {
 		return true;
 	});
 
-	const { handleRunQuery, currentQuery } = useQueryBuilder();
+	const { handleRunQuery, handleSetConfig } = useQueryBuilder();
+
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const listQueryKeyRef = useRef<any>();
 
@@ -53,13 +55,19 @@ function LogsExplorer(): JSX.Element {
 
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
 
-	const handleToggleShowFrequencyChart = (): void => {
-		setShowFrequencyChart(!showFrequencyChart);
-	};
+	const handleChangeSelectedView = useCallback(
+		(view: ExplorerViews): void => {
+			if (selectedView === ExplorerViews.LIST) {
+				handleSetConfig(PANEL_TYPES.LIST, DataSource.LOGS);
+			}
 
-	const handleChangeSelectedView = (view: SELECTED_VIEWS): void => {
-		setSelectedView(view);
-	};
+			setSelectedView(view);
+			handleExplorerTabChange(
+				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
+			);
+		},
+		[handleSetConfig, handleExplorerTabChange, selectedView],
+	);
 
 	const handleFilterVisibilityChange = (): void => {
 		setLocalStorageApi(
@@ -68,19 +76,6 @@ function LogsExplorer(): JSX.Element {
 		);
 		setShowFilters((prev) => !prev);
 	};
-
-	// Switch to query builder view if there are more than 1 queries
-	useEffect(() => {
-		if (currentQuery.builder.queryData.length > 1) {
-			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER_V2);
-		}
-		if (
-			currentQuery.builder.queryData.length === 1 &&
-			currentQuery.builder.queryData?.[0]?.groupBy?.length > 0
-		) {
-			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER_V2);
-		}
-	}, [currentQuery.builder.queryData, currentQuery.builder.queryData.length]);
 
 	const {
 		queryData: optionsQueryData,
@@ -171,42 +166,44 @@ function LogsExplorer(): JSX.Element {
 		}
 	}, [migrateOptionsQuery, optionsQueryData, redirectWithOptionsData]);
 
-	const isMultipleQueries = useMemo(
-		() =>
-			currentQuery.builder.queryData?.length > 1 ||
-			currentQuery.builder.queryFormulas?.length > 0,
-		[currentQuery],
-	);
-
-	const isGroupByPresent = useMemo(
-		() =>
-			currentQuery.builder.queryData?.length === 1 &&
-			currentQuery.builder.queryData?.[0]?.groupBy?.length > 0,
-		[currentQuery.builder.queryData],
-	);
-
 	const toolbarViews = useMemo(
 		() => ({
-			search: {
-				name: 'search',
-				label: 'Search',
-				disabled: isMultipleQueries || isGroupByPresent,
+			list: {
+				name: 'list',
+				label: 'List',
 				show: true,
+				key: 'list',
 			},
-			queryBuilder: {
-				name: 'query-builder',
-				label: 'Query Builder',
+			timeseries: {
+				name: 'timeseries',
+				label: 'Timeseries',
 				disabled: false,
 				show: true,
+				key: 'timeseries',
+			},
+			trace: {
+				name: 'trace',
+				label: 'Trace',
+				disabled: false,
+				show: false,
+				key: 'trace',
+			},
+			table: {
+				name: 'table',
+				label: 'Table',
+				disabled: false,
+				show: true,
+				key: 'table',
 			},
 			clickhouse: {
 				name: 'clickhouse',
 				label: 'Clickhouse',
 				disabled: false,
 				show: false,
+				key: 'clickhouse',
 			},
 		}),
-		[isGroupByPresent, isMultipleQueries],
+		[],
 	);
 
 	return (
@@ -232,8 +229,6 @@ function LogsExplorer(): JSX.Element {
 								items={toolbarViews}
 								selectedView={selectedView}
 								onChangeSelectedView={handleChangeSelectedView}
-								onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
-								showFrequencyChart={showFrequencyChart}
 							/>
 						}
 						rightActions={
@@ -247,24 +242,21 @@ function LogsExplorer(): JSX.Element {
 						showOldCTA
 					/>
 
-					<WrapperStyled>
-						<div className="log-explorer-query-container">
-							<div>
-								<ExplorerCard sourcepage={DataSource.LOGS}>
-									<LogExplorerQuerySection selectedView={selectedView} />
-								</ExplorerCard>
-							</div>
-							<div className="logs-explorer-views">
-								<LogsExplorerViews
-									selectedView={selectedView}
-									showFrequencyChart={showFrequencyChart}
-									listQueryKeyRef={listQueryKeyRef}
-									chartQueryKeyRef={chartQueryKeyRef}
-									setIsLoadingQueries={setIsLoadingQueries}
-								/>
-							</div>
+					<div className="log-explorer-query-container">
+						<div>
+							<ExplorerCard sourcepage={DataSource.LOGS}>
+								<LogExplorerQuerySection selectedView={selectedView} />
+							</ExplorerCard>
 						</div>
-					</WrapperStyled>
+						<div className="logs-explorer-views">
+							<LogsExplorerViewsContainer
+								selectedView={selectedView}
+								listQueryKeyRef={listQueryKeyRef}
+								chartQueryKeyRef={chartQueryKeyRef}
+								setIsLoadingQueries={setIsLoadingQueries}
+							/>
+						</div>
+					</div>
 				</section>
 			</div>
 		</Sentry.ErrorBoundary>

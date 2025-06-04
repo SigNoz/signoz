@@ -4,7 +4,7 @@ import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQuery
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, RenderResult } from 'tests/test-utils';
@@ -106,8 +106,7 @@ const renderer = (): RenderResult =>
 			value={{ viewportHeight: 300, itemHeight: 100 }}
 		>
 			<LogsExplorerViews
-				selectedView={SELECTED_VIEWS.SEARCH}
-				showFrequencyChart
+				selectedView={ExplorerViews.LIST}
 				setIsLoadingQueries={(): void => {}}
 				listQueryKeyRef={{ current: {} }}
 				chartQueryKeyRef={{ current: {} }}
@@ -185,8 +184,7 @@ describe('LogsExplorerViews -', () => {
 		render(
 			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue}>
 				<LogsExplorerViews
-					selectedView={SELECTED_VIEWS.SEARCH}
-					showFrequencyChart
+					selectedView={ExplorerViews.LIST}
 					setIsLoadingQueries={(): void => {}}
 					listQueryKeyRef={{ current: {} }}
 					chartQueryKeyRef={{ current: {} }}
