@@ -263,7 +263,6 @@ function LogsExplorer(): JSX.Element {
 								isLoadingQueries={isLoadingQueries}
 							/>
 						}
-						showOldCTA
 					/>
 
 					<div className="log-explorer-query-container">
