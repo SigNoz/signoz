@@ -66,14 +66,14 @@ var testCases = []struct {
 	{
 		Name: "body.log.message exists",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "body.log.message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "checkbody", Operator: "exists"},
+			{Key: v3.AttributeKey{Key: "body.log.message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
 		}},
 		Expr: `"log.message" in fromJSON(body)`,
 	},
 	{
 		Name: "body.log.message not exists",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "body.log.message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "checkbody", Operator: "nexists"},
+			{Key: v3.AttributeKey{Key: "body.log.message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
 		}},
 		Expr: `"log.message" not in fromJSON(body)`,
 	},
