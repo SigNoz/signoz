@@ -5,7 +5,7 @@ import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOpti
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
-import { GripVertical, HardHat, PencilLine } from 'lucide-react';
+import { HardHat, PencilLine } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo, useState } from 'react';
 import { FunnelStepData } from 'types/api/traceFunnels';
@@ -74,11 +74,17 @@ function FunnelStep({
 			<Form form={form}>
 				<div className="funnel-step__header">
 					<div className="funnel-step-details">
-						{stepData.name ? (
-							<div className="funnel-step-details__title">{stepData.name}</div>
-						) : (
-							<div className="funnel-step-details__title">Step {index + 1}</div>
-						)}
+						<div className="funnel-step-details__title-container">
+							{/* TODO(shaheer): uncomment after adding support for dragging the steps */}
+							{/* <div className="drag-icon">
+								<GripVertical size={14} color="var(--bg-slate-200)" />
+							</div> */}
+							{stepData.name ? (
+								<div className="funnel-step-details__title">{stepData.name}</div>
+							) : (
+								<div className="funnel-step-details__title">Step {index + 1}</div>
+							)}
+						</div>
 						{!!stepData.description && (
 							<div className="funnel-step-details__description">
 								{stepData.description}
@@ -112,9 +118,6 @@ function FunnelStep({
 					</div>
 				</div>
 				<div className="funnel-step__content">
-					<div className="drag-icon">
-						<GripVertical size={14} color="var(--bg-slate-200)" />
-					</div>
 					<div className="filters">
 						<div className="filters__service-and-span">
 							<div className="service">

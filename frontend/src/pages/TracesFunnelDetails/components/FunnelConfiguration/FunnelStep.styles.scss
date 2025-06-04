@@ -33,6 +33,16 @@
 			display: flex;
 			flex-direction: column;
 			gap: 4px;
+			&__title-container {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				.drag-icon {
+					cursor: grab;
+					display: flex;
+					align-items: center;
+				}
+			}
 			&__title {
 				color: var(--bg-vanilla-400);
 				font-size: 14px;
@@ -74,9 +84,7 @@
 			margin: 0;
 			width: 100%;
 		}
-		.drag-icon {
-			cursor: grab;
-		}
+
 		.filters {
 			display: flex;
 			flex-direction: column;
