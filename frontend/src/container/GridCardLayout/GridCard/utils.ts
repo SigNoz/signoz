@@ -31,7 +31,9 @@ export const getLocalStorageGraphVisibilityState = ({
 	name: string;
 }): GraphVisibilityLegendEntryProps => {
 	const visibilityStateAndLegendEntry: GraphVisibilityLegendEntryProps = {
-		graphVisibilityStates: Array(apiResponse.length + 1).fill(true),
+		graphVisibilityStates: Array(
+			(Array.isArray(apiResponse) ? apiResponse.length : 0) + 1,
+		).fill(true),
 		legendEntry: [
 			{
 				label: 'Timestamp',
