@@ -45,6 +45,7 @@ export default function useFunnelConfiguration({
 		initialSteps,
 		hasIncompleteStepFields,
 		handleRestoreSteps,
+		handleRunFunnel,
 	} = useFunnelContext();
 
 	// State management
@@ -78,6 +79,7 @@ export default function useFunnelConfiguration({
 			if (prevSteps.length !== nextSteps.length) return true;
 			return prevSteps.some((step, index) => {
 				const nextStep = nextSteps[index];
+				console.log({ step, nextStep });
 				return (
 					step.service_name !== nextStep.service_name ||
 					step.span_name !== nextStep.span_name ||
@@ -86,6 +88,15 @@ export default function useFunnelConfiguration({
 				);
 			});
 		},
+		[],
+	);
+
+	const hasFunnelLatencyTypeChanged = useCallback(
+		(prevSteps: FunnelStepData[], nextSteps: FunnelStepData[]): boolean =>
+			prevSteps.some((step, index) => {
+				const nextStep = nextSteps[index];
+				return step.latency_type !== nextStep.latency_type;
+			}),
 		[],
 	);
 
@@ -131,8 +142,12 @@ export default function useFunnelConfiguration({
 						(step) => step.service_name === '' || step.span_name === '',
 					);
 
-					// Only validate if service_name or span_name changed
-					if (
+					if (hasFunnelLatencyTypeChanged(lastValidatedSteps, debouncedSteps)) {
+						handleRunFunnel();
+						setLastValidatedSteps(debouncedSteps);
+					}
+					// Only validate if funnel steps definitions
+					else if (
 						!hasIncompleteStepFields &&
 						hasFunnelStepDefinitionsChanged(lastValidatedSteps, debouncedSteps)
 					) {
