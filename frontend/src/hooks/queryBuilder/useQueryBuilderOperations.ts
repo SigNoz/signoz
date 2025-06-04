@@ -13,6 +13,7 @@ import {
 	metricsHistogramSpaceAggregateOperatorOptions,
 	metricsSumSpaceAggregateOperatorOptions,
 	metricsUnknownSpaceAggregateOperatorOptions,
+	metricsUnknownTimeAggregateOperatorOptions,
 } from 'constants/queryBuilderOperators';
 import {
 	listViewInitialLogQuery,
@@ -147,12 +148,18 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleMetricAggregateAtributeTypes = useCallback(
 		(aggregateAttribute: BaseAutocompleteData): any => {
-			const newOperators = getMetricsOperatorsByAttributeType({
-				dataSource: DataSource.METRICS,
-				panelType: panelType || PANEL_TYPES.TIME_SERIES,
-				aggregateAttributeType:
-					(aggregateAttribute.type as ATTRIBUTE_TYPES) || ATTRIBUTE_TYPES.GAUGE,
-			});
+			// operators for unknown metric
+			const isUnknownMetric =
+				isEmpty(aggregateAttribute.type) && !isEmpty(aggregateAttribute.key);
+
+			const newOperators = isUnknownMetric
+				? metricsUnknownTimeAggregateOperatorOptions
+				: getMetricsOperatorsByAttributeType({
+						dataSource: DataSource.METRICS,
+						panelType: panelType || PANEL_TYPES.TIME_SERIES,
+						aggregateAttributeType:
+							(aggregateAttribute.type as ATTRIBUTE_TYPES) || ATTRIBUTE_TYPES.GAUGE,
+				  });
 
 			switch (aggregateAttribute.type) {
 				case ATTRIBUTE_TYPES.SUM:
