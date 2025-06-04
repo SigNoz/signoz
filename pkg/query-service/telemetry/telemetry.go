@@ -85,16 +85,16 @@ var OSS_EVENTS_LIST = map[string]struct{}{
 }
 
 type QueryInfoResult struct {
-	LogsUsed              bool
-	MetricsUsed           bool
-	TracesUsed            bool
-	FilterApplied         bool
-	GroupByApplied        bool
 	AggregateOperator     v3.AggregateOperator
 	AggregateAttributeKey string
 	QueryType             v3.QueryType
 	PanelType             v3.PanelType
 	NumberOfQueries       int
+	LogsUsed              bool
+	MetricsUsed           bool
+	TracesUsed            bool
+	FilterApplied         bool
+	GroupByApplied        bool
 }
 
 const api_key = "9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr"
@@ -108,27 +108,26 @@ const RATE_LIMIT_CHECK_DURATION = 1 * time.Minute
 const RATE_LIMIT_VALUE = 1
 
 type Telemetry struct {
-	ossOperator   analytics.Client
-	saasOperator  analytics.Client
-	ipAddress     string
-	userEmail     string
-	isEnabled     bool
-	isAnonymous   bool
-	reader        interfaces.Reader
-	sqlStore      sqlstore.SQLStore
-	companyDomain string
-	minRandInt    int
-	maxRandInt    int
-	rateLimits    map[string]int8
-	activeUser    map[string]int8
-	patTokenUser  bool
-	mutex         sync.RWMutex
-
-	alertsInfoCallback     func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)
-	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
+	reader                 interfaces.Reader
+	saasOperator           analytics.Client
+	ossOperator            analytics.Client
+	sqlStore               sqlstore.SQLStore
 	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
 	dashboardsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)
 	savedViewsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)
+	alertsInfoCallback     func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)
+	rateLimits             map[string]int8
+	activeUser             map[string]int8
+	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
+	userEmail              string
+	companyDomain          string
+	ipAddress              string
+	maxRandInt             int
+	minRandInt             int
+	mutex                  sync.RWMutex
+	patTokenUser           bool
+	isAnonymous            bool
+	isEnabled              bool
 }
 
 var telemetry *Telemetry
