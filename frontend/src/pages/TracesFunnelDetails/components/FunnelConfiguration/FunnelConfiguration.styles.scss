@@ -13,7 +13,8 @@
 
 	&__header {
 		display: flex;
-		justify-content: flex-start;
+		align-items: center;
+		justify-content: space-between;
 		padding: 14px 16px;
 		border-bottom: 1px solid var(--bg-slate-400);
 		&-right {
