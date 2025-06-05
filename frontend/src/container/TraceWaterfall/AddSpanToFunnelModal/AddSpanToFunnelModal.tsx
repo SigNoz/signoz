@@ -144,6 +144,8 @@ function AddSpanToFunnelModal({
 	const handleBack = (): void => {
 		setActiveView(ModalView.LIST);
 		setSelectedFunnelId(undefined);
+		setIsUnsavedChanges(false);
+		setTriggerSave(false);
 	};
 
 	const handleCreateNewClick = (): void => {
@@ -154,8 +156,6 @@ function AddSpanToFunnelModal({
 		setTriggerSave(true);
 		// Reset trigger after a brief moment to allow the save to be processed
 		setTimeout(() => setTriggerSave(false), 100);
-
-		// onClose();
 	};
 
 	const handleDiscard = (): void => {

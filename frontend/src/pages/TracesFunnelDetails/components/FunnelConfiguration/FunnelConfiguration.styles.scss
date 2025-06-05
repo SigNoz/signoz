@@ -2,7 +2,6 @@
 	&__steps-wrapper {
 		display: flex;
 		flex-direction: column;
-		justify-content: space-between;
 		justify-content: flex-start;
 		&.funnel-details-page {
 			height: calc(
@@ -14,8 +13,7 @@
 
 	&__header {
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
+		justify-content: flex-start;
 		padding: 14px 16px;
 		border-bottom: 1px solid var(--bg-slate-400);
 		&-right {

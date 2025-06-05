@@ -85,7 +85,6 @@ export default function useFunnelConfiguration({
 			if (prevSteps.length !== nextSteps.length) return true;
 			return prevSteps.some((step, index) => {
 				const nextStep = nextSteps[index];
-				console.log({ step, nextStep });
 				return (
 					step.service_name !== nextStep.service_name ||
 					step.span_name !== nextStep.span_name ||
