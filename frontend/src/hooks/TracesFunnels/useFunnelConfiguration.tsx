@@ -126,11 +126,18 @@ export default function useFunnelConfiguration({
 	);
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		if (
-			!disableAutoSave ||
-			(disableAutoSave && triggerAutoSave) ||
-			(hasStepsChanged() && !hasIncompleteStepFields)
-		) {
+		// Determine if we should save based on the mode
+		let shouldSave = false;
+
+		if (disableAutoSave) {
+			// Manual save mode: only save when explicitly triggered
+			shouldSave = triggerAutoSave;
+		} else {
+			// Auto-save mode: save when steps have changed and no incomplete fields
+			shouldSave = hasStepsChanged() && !hasIncompleteStepFields;
+		}
+
+		if (shouldSave) {
 			updateStepsMutation.mutate(getUpdatePayload(), {
 				onSuccess: (data) => {
 					const updatedFunnelSteps = data?.payload?.steps;
@@ -139,13 +146,16 @@ export default function useFunnelConfiguration({
 
 					queryClient.setQueryData(
 						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.funnel_id],
-						(oldData: any) => ({
-							...oldData,
-							payload: {
-								...oldData.payload,
-								steps: updatedFunnelSteps,
-							},
-						}),
+						(oldData: any) => {
+							if (!oldData?.payload) return oldData;
+							return {
+								...oldData,
+								payload: {
+									...oldData.payload,
+									steps: updatedFunnelSteps,
+								},
+							};
+						},
 					);
 
 					lastSavedStepsStateRef.current = updatedFunnelSteps;
@@ -212,6 +222,7 @@ export default function useFunnelConfiguration({
 		validateStepsQueryKey,
 		triggerAutoSave,
 		showNotifications,
+		disableAutoSave,
 	]);
 
 	return {
