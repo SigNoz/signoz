@@ -36,6 +36,7 @@ import { isArray } from 'lodash-es';
 import {
 	Check,
 	ChevronDown,
+	ChevronsDown,
 	ChevronUp,
 	Cog,
 	Ellipsis,
@@ -46,7 +47,14 @@ import {
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	MouseEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -144,6 +152,45 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
 		[],
 	);
+
+	const [hasScroll, setHasScroll] = useState(false);
+	const navTopSectionRef = useRef<HTMLDivElement>(null);
+
+	const checkScroll = useCallback((): void => {
+		if (navTopSectionRef.current) {
+			const { scrollHeight, clientHeight, scrollTop } = navTopSectionRef.current;
+			const isAtBottom = scrollHeight - clientHeight - scrollTop <= 8;
+			setHasScroll(scrollHeight > clientHeight + 24 && !isAtBottom); // 24px - buffer height to show show more
+		}
+	}, []);
+
+	useEffect(() => {
+		checkScroll();
+		window.addEventListener('resize', checkScroll);
+
+		// Create a MutationObserver to watch for content changes
+		const observer = new MutationObserver(checkScroll);
+		const navTopSection = navTopSectionRef.current;
+
+		if (navTopSection) {
+			observer.observe(navTopSection, {
+				childList: true,
+				subtree: true,
+				attributes: true,
+			});
+
+			// Add scroll event listener
+			navTopSection.addEventListener('scroll', checkScroll);
+		}
+
+		return (): void => {
+			window.removeEventListener('resize', checkScroll);
+			observer.disconnect();
+			if (navTopSection) {
+				navTopSection.removeEventListener('scroll', checkScroll);
+			}
+		};
+	}, [checkScroll]);
 
 	useEffect(() => {
 		const navShortcuts = (userPreferences?.find(
@@ -416,7 +463,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		} else if (isEnterpriseSelfHostedUser) {
 			setLicenseTag('Enterprise');
 		} else if (isCommunityEnterpriseUser) {
-			setLicenseTag('Enterprise');
+			setLicenseTag('Free');
 		} else if (isCommunityUser) {
 			setLicenseTag('Community');
 		}
@@ -635,6 +682,20 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		</>
 	);
 
+	// Check scroll when menu items change
+	useEffect(() => {
+		checkScroll();
+	}, [checkScroll, pinnedMenuItems, moreMenuItems]);
+
+	const handleScrollForMore = (): void => {
+		if (navTopSectionRef.current) {
+			navTopSectionRef.current.scrollTo({
+				top: navTopSectionRef.current.scrollHeight,
+				behavior: 'smooth',
+			});
+		}
+	};
+
 	const handleHelpSupportMenuItemClick = (info: SidebarItem): void => {
 		const item = helpSupportDropdownMenuItems.find(
 			(item) => item.key === info.key,
@@ -751,66 +812,60 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							</div>
 
 							{licenseTag && (
-								<Tooltip
-									title={
-										// eslint-disable-next-line no-nested-ternary
-										isCommunityUser
-											? 'You are running the community version of SigNoz. You have to install the Enterprise edition in order enable Enterprise features.'
-											: isCommunityEnterpriseUser
-											? 'You do not have an active license present. Add an active license to enable Enterprise features.'
-											: ''
-									}
-									placement="bottomRight"
+								<div
+									className={cx(
+										'brand-title-section',
+										isCommunityEnterpriseUser && 'community-enterprise-user',
+										isCloudUser && 'cloud-user',
+										showVersionUpdateNotification && 'version-update-notification',
+									)}
 								>
-									<div
-										className={cx(
-											'brand-title-section',
-											isCommunityEnterpriseUser && 'community-enterprise-user',
-											isCloudUser && 'cloud-user',
-											showVersionUpdateNotification && 'version-update-notification',
-										)}
-									>
-										<span className="license-type"> {licenseTag} </span>
+									<span className="license-type"> {licenseTag} </span>
 
-										{currentVersion && (
-											<Tooltip
-												placement="bottomLeft"
-												overlayClassName="version-tooltip-overlay"
-												arrow={false}
-												overlay={
-													showVersionUpdateNotification && (
-														<div className="version-update-notification-tooltip">
-															<div className="version-update-notification-tooltip-title">
-																There&apos;s a new version available.
-															</div>
-
-															<div className="version-update-notification-tooltip-content">
-																{latestVersion}
-															</div>
+									{currentVersion && (
+										<Tooltip
+											placement="bottomLeft"
+											overlayClassName="version-tooltip-overlay"
+											arrow={false}
+											overlay={
+												showVersionUpdateNotification && (
+													<div className="version-update-notification-tooltip">
+														<div className="version-update-notification-tooltip-title">
+															There&apos;s a new version available.
 														</div>
-													)
-												}
-											>
-												<div className="version-container">
-													<span className="version" onClick={onClickVersionHandler}>
-														{currentVersion}
-													</span>
 
-													{showVersionUpdateNotification && (
-														<span className="version-update-notification-dot-icon" />
-													)}
-												</div>
-											</Tooltip>
-										)}
-									</div>
-								</Tooltip>
+														<div className="version-update-notification-tooltip-content">
+															{latestVersion}
+														</div>
+													</div>
+												)
+											}
+										>
+											<div className="version-container">
+												<span className="version" onClick={onClickVersionHandler}>
+													{currentVersion}
+												</span>
+
+												{showVersionUpdateNotification && (
+													<span className="version-update-notification-dot-icon" />
+												)}
+											</div>
+										</Tooltip>
+									)}
+								</div>
 							)}
 						</div>
 					</div>
 				</div>
 
-				<div className={cx(`nav-wrapper`, isCloudUser && 'nav-wrapper-cloud')}>
-					<div className="nav-top-section">
+				<div
+					className={cx(
+						`nav-wrapper`,
+						isCloudUser && 'nav-wrapper-cloud',
+						hasScroll && 'scroll-available',
+					)}
+				>
+					<div className={cx('nav-top-section')} ref={navTopSectionRef}>
 						{isCloudUser && user?.role !== USER_ROLES.VIEWER && (
 							<div className="get-started-nav-items">
 								<Button
@@ -824,7 +879,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									}}
 								>
 									<PackagePlus size={16} />
-
 									<div className="license tag nav-item-label"> New source </div>
 								</Button>
 							</div>
@@ -910,6 +964,16 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 								</div>
 							</div>
 						)}
+
+						<div className="scroll-for-more-container">
+							<div className="scroll-for-more" onClick={handleScrollForMore}>
+								<div className="scroll-for-more-icon">
+									<ChevronsDown size={16} />
+								</div>
+
+								<div className="scroll-for-more-label">Scroll for more</div>
+							</div>
+						</div>
 					</div>
 
 					<div className="nav-bottom-section">
