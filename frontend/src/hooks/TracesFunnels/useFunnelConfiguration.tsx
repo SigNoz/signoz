@@ -137,7 +137,7 @@ export default function useFunnelConfiguration({
 			shouldSave = hasStepsChanged() && !hasIncompleteStepFields;
 		}
 
-		if (shouldSave) {
+		if (shouldSave && !isEqual(debouncedSteps, lastValidatedSteps)) {
 			updateStepsMutation.mutate(getUpdatePayload(), {
 				onSuccess: (data) => {
 					const updatedFunnelSteps = data?.payload?.steps;
