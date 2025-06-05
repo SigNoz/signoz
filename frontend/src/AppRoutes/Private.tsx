@@ -78,7 +78,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const checkFirstTimeUser = useCallback((): boolean => {
 		const users = usersData?.data || [];
 
-		const remainingUsers = users.filter(
+		const remainingUsers = (Array.isArray(users) ? users : []).filter(
 			(user) => user.email !== 'admin@signoz.cloud',
 		);
 

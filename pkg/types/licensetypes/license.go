@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -30,9 +29,9 @@ type License struct {
 	ID              valuer.UUID
 	Key             string
 	Data            map[string]interface{}
-	PlanName        string
-	Features        []*featuretypes.GettableFeature
-	Status          string
+	PlanName        valuer.String
+	Features        []*Feature
+	Status          valuer.String
 	ValidFrom       int64
 	ValidUntil      int64
 	CreatedAt       time.Time
@@ -124,7 +123,7 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to unmarshal license data")
 	}
 
-	var features []*featuretypes.GettableFeature
+	var features []*Feature
 
 	// extract id from data
 	licenseIDStr, err := extractKeyFromMapStringInterface[string](licenseData, "id")
@@ -145,26 +144,28 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 	delete(licenseData, "key")
 
 	// extract status from data
-	status, err := extractKeyFromMapStringInterface[string](licenseData, "status")
+	statusStr, err := extractKeyFromMapStringInterface[string](licenseData, "status")
 	if err != nil {
 		return nil, err
 	}
+	status := valuer.NewString(statusStr)
 
 	planMap, err := extractKeyFromMapStringInterface[map[string]any](licenseData, "plan")
 	if err != nil {
 		return nil, err
 	}
 
-	planName, err := extractKeyFromMapStringInterface[string](planMap, "name")
+	planNameStr, err := extractKeyFromMapStringInterface[string](planMap, "name")
 	if err != nil {
 		return nil, err
 	}
+	planName := valuer.NewString(planNameStr)
 	// if license status is invalid then default it to basic
 	if status == LicenseStatusInvalid {
 		planName = PlanNameBasic
 	}
 
-	featuresFromZeus := make([]*featuretypes.GettableFeature, 0)
+	featuresFromZeus := make([]*Feature, 0)
 	if _features, ok := licenseData["features"]; ok {
 		featuresData, err := json.Marshal(_features)
 		if err != nil {
@@ -232,28 +233,30 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 }
 
 func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, error) {
-	var features []*featuretypes.GettableFeature
+	var features []*Feature
 	// extract status from data
-	status, err := extractKeyFromMapStringInterface[string](storableLicense.Data, "status")
+	statusStr, err := extractKeyFromMapStringInterface[string](storableLicense.Data, "status")
 	if err != nil {
 		return nil, err
 	}
+	status := valuer.NewString(statusStr)
 
 	planMap, err := extractKeyFromMapStringInterface[map[string]any](storableLicense.Data, "plan")
 	if err != nil {
 		return nil, err
 	}
 
-	planName, err := extractKeyFromMapStringInterface[string](planMap, "name")
+	planNameStr, err := extractKeyFromMapStringInterface[string](planMap, "name")
 	if err != nil {
 		return nil, err
 	}
+	planName := valuer.NewString(planNameStr)
 	// if license status is invalid then default it to basic
 	if status == LicenseStatusInvalid {
 		planName = PlanNameBasic
 	}
 
-	featuresFromZeus := make([]*featuretypes.GettableFeature, 0)
+	featuresFromZeus := make([]*Feature, 0)
 	if _features, ok := storableLicense.Data["features"]; ok {
 		featuresData, err := json.Marshal(_features)
 		if err != nil {
@@ -320,6 +323,10 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 
 }
 
+func (license *License) UpdateFeatures(features []*Feature) {
+	license.Features = features
+}
+
 func (license *License) Update(data []byte) error {
 	updatedLicense, err := NewLicense(data, license.OrganizationID)
 	if err != nil {
@@ -373,11 +380,4 @@ type Store interface {
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
 	GetAll(context.Context, valuer.UUID) ([]*StorableLicense, error)
 	Update(context.Context, valuer.UUID, *StorableLicense) error
-
-	// feature surrogate
-	InitFeatures(context.Context, []*featuretypes.StorableFeature) error
-	CreateFeature(context.Context, *featuretypes.StorableFeature) error
-	GetFeature(context.Context, string) (*featuretypes.StorableFeature, error)
-	GetAllFeatures(context.Context) ([]*featuretypes.StorableFeature, error)
-	UpdateFeature(context.Context, *featuretypes.StorableFeature) error
 }

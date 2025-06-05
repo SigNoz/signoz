@@ -68,6 +68,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		render.Error(rw, err)
+		return
 	}
 
 	req.ID = orgID

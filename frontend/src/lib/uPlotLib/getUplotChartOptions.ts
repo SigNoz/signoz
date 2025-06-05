@@ -432,18 +432,19 @@ export const getUPlotChartOptions = ({
 						const globalCleanupHandler = (e: MouseEvent): void => {
 							const target = e.target as HTMLElement;
 							if (
-								!target.closest('.u-legend') &&
-								!target.classList.contains('legend-tooltip')
+								target &&
+								!target?.closest?.('.u-legend') &&
+								!target?.classList?.contains?.('legend-tooltip')
 							) {
 								cleanupAllTooltips();
 							}
 						};
-						document.addEventListener('mousemove', globalCleanupHandler);
+						document?.addEventListener('mousemove', globalCleanupHandler);
 
 						// Store cleanup function for potential removal later
 						(self as any)._tooltipCleanup = (): void => {
 							cleanupAllTooltips();
-							document.removeEventListener('mousemove', globalCleanupHandler);
+							document?.removeEventListener('mousemove', globalCleanupHandler);
 						};
 
 						const seriesEls = legend.querySelectorAll('.u-series');
@@ -484,7 +485,7 @@ export const getUPlotChartOptions = ({
 									const isTextTruncated = (): boolean => {
 										// For right-side legends, check if text overflows the container
 										if (legendPosition === LegendPosition.RIGHT) {
-											return textSpan.scrollWidth > textSpan.clientWidth;
+											return textSpan?.scrollWidth > textSpan?.clientWidth;
 										}
 										// For bottom legends, check if text is longer than reasonable display length
 										return legendText.length > 20;
@@ -526,9 +527,11 @@ export const getUPlotChartOptions = ({
 										`;
 
 										// Position tooltip near cursor
-										const rect = (e.target as HTMLElement).getBoundingClientRect();
-										tooltipElement.style.left = `${e.clientX + 10}px`;
-										tooltipElement.style.top = `${rect.top - 35}px`;
+										const rect = (e.target as HTMLElement)?.getBoundingClientRect?.();
+										if (rect) {
+											tooltipElement.style.left = `${e.clientX + 10}px`;
+											tooltipElement.style.top = `${rect.top - 35}px`;
+										}
 
 										document.body.appendChild(tooltipElement);
 									}, 15);
@@ -556,7 +559,7 @@ export const getUPlotChartOptions = ({
 
 								// Helper function to handle stack chart logic
 								const handleStackChart = (): void => {
-									setHiddenGraph((prev) => {
+									setHiddenGraph?.((prev) => {
 										if (isUndefined(prev)) {
 											return { [index]: true };
 										}
@@ -570,7 +573,7 @@ export const getUPlotChartOptions = ({
 								// Marker click handler - checkbox behavior (toggle individual series)
 								if (currentMarker) {
 									currentMarker.addEventListener('click', (e) => {
-										e.stopPropagation(); // Prevent event bubbling to text handler
+										e.stopPropagation?.(); // Prevent event bubbling to text handler
 
 										if (stackChart) {
 											handleStackChart();
@@ -583,7 +586,7 @@ export const getUPlotChartOptions = ({
 													index + 1
 												];
 
-												saveLegendEntriesToLocalStorage({
+												saveLegendEntriesToLocalStorage?.({
 													options: self,
 													graphVisibilityState: newGraphVisibilityStates,
 													name: id || '',
@@ -597,7 +600,7 @@ export const getUPlotChartOptions = ({
 								// Text click handler - show only/show all behavior (existing behavior)
 								if (textElement) {
 									textElement.addEventListener('click', (e) => {
-										e.stopPropagation(); // Prevent event bubbling
+										e.stopPropagation?.(); // Prevent event bubbling
 
 										if (stackChart) {
 											handleStackChart();
@@ -619,7 +622,7 @@ export const getUPlotChartOptions = ({
 													newGraphVisibilityStates.fill(false);
 													newGraphVisibilityStates[index + 1] = true;
 												}
-												saveLegendEntriesToLocalStorage({
+												saveLegendEntriesToLocalStorage?.({
 													options: self,
 													graphVisibilityState: newGraphVisibilityStates,
 													name: id || '',

@@ -186,6 +186,14 @@ func HydrateFileUris(spec interface{}, fs embed.FS, basedir string) (interface{}
 							if strings.HasPrefix(dashboardUri, "file://") {
 								dashboards[i] = strings.Replace(dashboardUri, ".json", "_dot.json", 1)
 							}
+						} else if dashBoardMap, ok := dashboard.(map[string]interface{}); ok {
+							if dashboardUri, ok := dashBoardMap["definition"].(string); ok {
+								if strings.HasPrefix(dashboardUri, "file://") {
+									dashboardUri = strings.Replace(dashboardUri, ".json", "_dot.json", 1)
+								}
+								dashBoardMap["definition"] = dashboardUri
+							}
+							dashboards[i] = dashBoardMap
 						}
 					}
 					v = dashboards
