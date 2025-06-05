@@ -1,6 +1,7 @@
 import './FunnelConfiguration.styles.scss';
 
 import { Button, Divider, Tooltip } from 'antd';
+import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import useFunnelConfiguration from 'hooks/TracesFunnels/useFunnelConfiguration';
 import { PencilLine } from 'lucide-react';
@@ -80,15 +81,21 @@ function FunnelConfiguration({
 					</div>
 				</div>
 			)}
-			<div className="funnel-configuration__steps-wrapper">
+			<div
+				className={cx('funnel-configuration__steps-wrapper', {
+					'funnel-details-page': !isTraceDetailsPage,
+				})}
+			>
 				<OverlayScrollbar>
 					<>
-						<div className="funnel-configuration__description-wrapper">
-							<div className="funnel-title">{funnel.funnel_name}</div>
-							<div className="funnel-description">
-								{funnel?.description ?? 'No description added.'}
+						{!isTraceDetailsPage && (
+							<div className="funnel-configuration__description-wrapper">
+								<div className="funnel-title">{funnel.funnel_name}</div>
+								<div className="funnel-description">
+									{funnel?.description ?? 'No description added.'}
+								</div>
 							</div>
-						</div>
+						)}
 						<div className="funnel-configuration__steps">
 							{!isTraceDetailsPage && <StepsHeader />}
 							<StepsContent isTraceDetailsPage={isTraceDetailsPage} span={span} />
