@@ -19,6 +19,7 @@ export interface SidebarItem {
 	isExternal?: boolean;
 	url?: string;
 	isEnabled?: boolean;
+	itemKey?: string;
 }
 
 export enum SecondaryMenuItemKey {
