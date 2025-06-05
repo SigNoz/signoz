@@ -880,7 +880,7 @@
                 }
               ],
               "having": [],
-              "legend": " {{NodeName}} ",
+              "legend": "{{NodeName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
