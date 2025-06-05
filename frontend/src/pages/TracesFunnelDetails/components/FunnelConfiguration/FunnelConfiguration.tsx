@@ -20,15 +20,24 @@ interface FunnelConfigurationProps {
 	funnel: FunnelData;
 	isTraceDetailsPage?: boolean;
 	span?: Span;
+	disableAutoSave?: boolean;
+	triggerAutoSave?: boolean;
+	showNotifications?: boolean;
 }
 
 function FunnelConfiguration({
 	funnel,
 	isTraceDetailsPage,
 	span,
+	disableAutoSave,
+	triggerAutoSave,
+	showNotifications,
 }: FunnelConfigurationProps): JSX.Element {
 	const { isPopoverOpen, setIsPopoverOpen, steps } = useFunnelConfiguration({
 		funnel,
+		disableAutoSave,
+		triggerAutoSave,
+		showNotifications,
 	});
 	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState<boolean>(
 		false,
@@ -106,6 +115,9 @@ function FunnelConfiguration({
 FunnelConfiguration.defaultProps = {
 	isTraceDetailsPage: false,
 	span: undefined,
+	disableAutoSave: false,
+	triggerAutoSave: false,
+	showNotifications: false,
 };
 
 export default memo(FunnelConfiguration);

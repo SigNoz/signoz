@@ -36,8 +36,14 @@ const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function useFunnelConfiguration({
 	funnel,
+	disableAutoSave = false,
+	triggerAutoSave = false,
+	showNotifications = false,
 }: {
 	funnel: FunnelData;
+	disableAutoSave?: boolean;
+	triggerAutoSave?: boolean;
+	showNotifications?: boolean;
 }): UseFunnelConfiguration {
 	const { notifications } = useNotifications();
 	const {
@@ -118,8 +124,13 @@ export default function useFunnelConfiguration({
 		() => [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnel.funnel_id, selectedTime],
 		[funnel.funnel_id, selectedTime],
 	);
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		if (hasStepsChanged() && !hasIncompleteStepFields) {
+		if (
+			!disableAutoSave ||
+			(disableAutoSave && triggerAutoSave) ||
+			(hasStepsChanged() && !hasIncompleteStepFields)
+		) {
 			updateStepsMutation.mutate(getUpdatePayload(), {
 				onSuccess: (data) => {
 					const updatedFunnelSteps = data?.payload?.steps;
@@ -155,9 +166,17 @@ export default function useFunnelConfiguration({
 						queryClient.refetchQueries(validateStepsQueryKey);
 						setLastValidatedSteps(debouncedSteps);
 					}
+
+					// Show success notification only when requested
+					if (showNotifications) {
+						notifications.success({
+							message: 'Success',
+							description: 'Funnel configuration updated successfully',
+						});
+					}
 				},
 
-				onError: () => {
+				onError: (error: any) => {
 					handleRestoreSteps(lastSavedStepsStateRef.current);
 					queryClient.setQueryData(
 						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.funnel_id],
@@ -169,6 +188,16 @@ export default function useFunnelConfiguration({
 							},
 						}),
 					);
+
+					// Show error notification only when requested
+					if (showNotifications) {
+						notifications.error({
+							message: 'Failed to update funnel',
+							description:
+								error?.message ||
+								'An error occurred while updating the funnel configuration',
+						});
+					}
 				},
 			});
 		}
@@ -181,6 +210,8 @@ export default function useFunnelConfiguration({
 		lastValidatedSteps,
 		queryClient,
 		validateStepsQueryKey,
+		triggerAutoSave,
+		showNotifications,
 	]);
 
 	return {
