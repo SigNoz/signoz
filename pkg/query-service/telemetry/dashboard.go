@@ -16,7 +16,7 @@ import (
 func GetDashboardsInfo(ctx context.Context, sqlstore sqlstore.SQLStore) (*model.DashboardsInfo, error) {
 	dashboardsInfo := model.DashboardsInfo{}
 	// fetch dashboards from dashboard db
-	dashboards := []dashboardtypes.Dashboard{}
+	dashboards := []dashboardtypes.StorableDashboard{}
 	err := sqlstore.BunDB().NewSelect().Model(&dashboards).Scan(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
