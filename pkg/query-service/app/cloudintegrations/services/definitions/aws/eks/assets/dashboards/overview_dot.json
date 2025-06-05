@@ -94,7 +94,7 @@
       "multiSelect": false,
       "name": "Cluster",
       "order": 2,
-      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'ClusterName') AS table FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name like '%aws_EKS%' AND JSONExtractString(labels, 'cloud.account.id') IN {{.Account}}  AND JSONExtractString(labels, 'cloud.region') IN {{.Region}} and table != '' GROUP BY table\n",
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'ClusterName') AS cluster_name FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name like '%aws_EKS%' AND JSONExtractString(labels, 'cloud.account.id') IN {{.Account}}  AND JSONExtractString(labels, 'cloud.region') IN {{.Region}} and cluster_name != '' GROUP BY cluster_name\n",
       "showALLOption": false,
       "sort": "ASC",
       "textboxValue": "",
