@@ -25,10 +25,12 @@ import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
+import { USER_PREFERENCES } from 'constants/userPreferences';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
+import { isArray } from 'lodash-es';
 import {
 	Check,
 	ChevronDown,
@@ -46,7 +48,7 @@ import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { LicenseStatus } from 'types/api/licensesV3/getActive';
+// import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
@@ -105,24 +107,56 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		AppReducer
 	>((state) => state.app);
 
-	const { user, featureFlags, trialInfo, isLoggedIn } = useAppContext();
+	const {
+		user,
+		featureFlags,
+		trialInfo,
+		isLoggedIn,
+		userPreferences,
+	} = useAppContext();
 
 	const [
 		helpSupportDropdownMenuItems,
 		setHelpSupportDropdownMenuItems,
 	] = useState<SidebarItem[]>(DefaultHelpSupportDropdownMenuItems);
 
-	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>(
-		defaultMoreMenuItems.filter((item) => item.isPinned),
-	);
+	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>([]);
 
 	const [tempPinnedMenuItems, setTempPinnedMenuItems] = useState<SidebarItem[]>(
 		[],
 	);
 
 	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
-		defaultMoreMenuItems,
+		[],
 	);
+
+	useEffect(() => {
+		const navShortcuts = (userPreferences?.find(
+			(preference) => preference.name === USER_PREFERENCES.NAV_SHORTCUTS,
+		)?.value as unknown) as string[];
+
+		if (navShortcuts && isArray(navShortcuts) && navShortcuts.length > 0) {
+			// nav shortcuts is array of strings
+			const pinnedItems = navShortcuts.map((shortcut) =>
+				defaultMoreMenuItems.find((item) => item.itemKey === shortcut),
+			);
+
+			setPinnedMenuItems(
+				pinnedItems.filter((item): item is SidebarItem => item !== undefined) || [],
+			);
+
+			setSecondaryMenuItems(
+				defaultMoreMenuItems.filter((item) => !pinnedItems.includes(item)) || [],
+			);
+		} else {
+			setPinnedMenuItems(
+				defaultMoreMenuItems.filter((item) => item.isPinned) || [],
+			);
+			setSecondaryMenuItems(
+				defaultMoreMenuItems.filter((item) => !item.isPinned) || [],
+			);
+		}
+	}, [userPreferences]);
 
 	const isOnboardingV3Enabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,

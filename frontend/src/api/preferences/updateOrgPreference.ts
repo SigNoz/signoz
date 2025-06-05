@@ -13,7 +13,7 @@ const updateOrgPreference = async (
 	const response = await axios.put(
 		`/org/preferences/${preferencePayload.preferenceID}`,
 		{
-			preference_value: preferencePayload.value,
+			value: preferencePayload.value,
 		},
 	);
 

@@ -13,7 +13,7 @@ const updateUserPreference = async (
 	const response = await axios.put(
 		`/user/preferences/${preferencePayload.preferenceID}`,
 		{
-			preference_value: preferencePayload.value,
+			value: preferencePayload.value,
 		},
 	);
 
