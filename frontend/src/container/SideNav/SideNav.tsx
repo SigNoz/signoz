@@ -205,7 +205,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				)
 				.filter((item): item is SidebarItem => item !== undefined);
 
-			// Set pinned items
+			// Set pinned items in the order they were stored
 			setPinnedMenuItems(pinnedItems);
 
 			// Set secondary items with proper isPinned state
@@ -284,10 +284,79 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	};
 
+	const updateNavShortcutsPreference = useCallback(
+		(items: SidebarItem[]): void => {
+			const navShortcuts = items
+				.map((item) => item.itemKey)
+				.filter(Boolean) as string[];
+
+			updateUserPreferenceMutation(
+				{
+					preferenceID: USER_PREFERENCES.NAV_SHORTCUTS,
+					value: navShortcuts,
+				},
+				{
+					onSuccess: (response) => {
+						if (response.payload) {
+							updateUserPreferenceInContext({
+								key: USER_PREFERENCES.NAV_SHORTCUTS,
+								name: USER_PREFERENCES.NAV_SHORTCUTS,
+								description: USER_PREFERENCES.NAV_SHORTCUTS,
+								valueType: 'array',
+								defaultValue: false,
+								allowedValues: [],
+								isDiscreteValues: false,
+								allowedScopes: ['user'],
+								value: navShortcuts as any,
+							});
+						}
+					},
+				},
+			);
+		},
+		[updateUserPreferenceInContext, updateUserPreferenceMutation],
+	);
+
+	const onTogglePin = useCallback(
+		(item: SidebarItem): void => {
+			// Update secondary menu items first with new isPinned state
+			setSecondaryMenuItems((prevItems) =>
+				prevItems.map((i) => ({
+					...i,
+					isPinned: i.key === item.key ? !i.isPinned : i.isPinned,
+				})),
+			);
+
+			// Update pinned menu items
+			setPinnedMenuItems((prevItems) => {
+				const isCurrentlyPinned = prevItems.some((i) => i.key === item.key);
+				if (isCurrentlyPinned) {
+					return prevItems.filter((i) => i.key !== item.key);
+				}
+				return [item, ...prevItems];
+			});
+
+			// Get the updated pinned menu items for preference update
+			const updatedPinnedItems = pinnedMenuItems.some((i) => i.key === item.key)
+				? pinnedMenuItems.filter((i) => i.key !== item.key)
+				: [item, ...pinnedMenuItems];
+
+			// Update user preference with the ordered list of item keys
+			updateNavShortcutsPreference(updatedPinnedItems);
+		},
+		[pinnedMenuItems, updateNavShortcutsPreference],
+	);
+
 	const handleReorderShortcutNavItems = (): void => {
 		setPinnedMenuItems(tempPinnedMenuItems);
+
+		// Update user preference with the new order
+		updateNavShortcutsPreference(tempPinnedMenuItems);
+
 		setIsReorderShortcutNavItemsModalOpen(false);
 	};
+
+	const sensors = useSensors(useSensor(PointerSensor));
 
 	const hideReorderShortcutNavItemsModal = (): void => {
 		setIsReorderShortcutNavItemsModalOpen(false);
@@ -330,67 +399,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			history.push(onboaringRoute);
 		}
 	};
-
-	const onTogglePin = useCallback(
-		(item: SidebarItem): void => {
-			// Update secondary menu items first with new isPinned state
-			setSecondaryMenuItems((prevItems) =>
-				prevItems.map((i) => ({
-					...i,
-					isPinned: i.key === item.key ? !i.isPinned : i.isPinned,
-				})),
-			);
-
-			// Update pinned menu items
-			setPinnedMenuItems((prevItems) => {
-				const isCurrentlyPinned = prevItems.some((i) => i.key === item.key);
-				if (isCurrentlyPinned) {
-					return prevItems.filter((i) => i.key !== item.key);
-				}
-				return [item, ...prevItems];
-			});
-
-			// Get the updated pinned menu items for preference update
-			const updatedPinnedItems = pinnedMenuItems.some((i) => i.key === item.key)
-				? pinnedMenuItems.filter((i) => i.key !== item.key)
-				: [item, ...pinnedMenuItems];
-
-			// Update user preference
-			const navShortcuts = updatedPinnedItems
-				.map((item) => item.itemKey)
-				.filter(Boolean) as string[];
-			updateUserPreferenceMutation(
-				{
-					preferenceID: USER_PREFERENCES.NAV_SHORTCUTS,
-					value: navShortcuts,
-				},
-				{
-					onSuccess: (response) => {
-						if (response.payload) {
-							updateUserPreferenceInContext({
-								key: USER_PREFERENCES.NAV_SHORTCUTS,
-								name: USER_PREFERENCES.NAV_SHORTCUTS,
-								description: USER_PREFERENCES.NAV_SHORTCUTS,
-								valueType: 'array',
-								defaultValue: false,
-								allowedValues: [],
-								isDiscreteValues: false,
-								allowedScopes: ['user'],
-								value: navShortcuts as any,
-							});
-						}
-					},
-				},
-			);
-		},
-		[
-			pinnedMenuItems,
-			updateUserPreferenceInContext,
-			updateUserPreferenceMutation,
-		],
-	);
-
-	const sensors = useSensors(useSensor(PointerSensor));
 
 	const onClickHandler = useCallback(
 		(key: string, event: MouseEvent | null) => {
@@ -567,83 +575,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			deregisterShortcut(GlobalShortcuts.NavigateToMessagingQueues);
 		};
 	}, [deregisterShortcut, onClickHandler, registerShortcut]);
-
-	// // eslint-disable-next-line sonarjs/cognitive-complexity
-	// useEffect(() => {
-	// 	let updatedMenuItems = defaultMenuItems;
-	// 	let updatedUserManagementItems: UserManagementMenuItems[] = [
-	// 		manageLicenseMenuItem,
-	// 	];
-
-	// 	if (isCloudUser || isEnterpriseSelfHostedUser) {
-	// 		const isOnboardingEnabled =
-	// 			featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
-	// 				?.active || false;
-
-	// 		if (!isOnboardingEnabled) {
-	// 			updatedMenuItems = updatedMenuItems.filter(
-	// 				(item) =>
-	// 					item.key !== ROUTES.GET_STARTED &&
-	// 					item.key !== ROUTES.ONBOARDING &&
-	// 					item.key !== ROUTES.GET_STARTED_WITH_CLOUD,
-	// 			);
-	// 		}
-
-	// 		const isOnBasicPlan =
-	// 			(activeLicenseFetchError &&
-	// 				[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
-	// 					activeLicenseFetchError?.getHttpStatusCode(),
-	// 				)) ||
-	// 			(activeLicense?.status && activeLicense.status === LicenseStatus.INVALID);
-
-	// 		if (user.role !== USER_ROLES.ADMIN || isOnBasicPlan) {
-	// 			updatedMenuItems = updatedMenuItems.filter(
-	// 				(item) => item.key !== ROUTES.BILLING,
-	// 			);
-	// 		}
-
-	// 		updatedUserManagementItems = [helpSupportMenuItem];
-
-	// 		// Show manage license menu item for EE cloud users with a active license
-	// 		if (isEnterpriseSelfHostedUser) {
-	// 			updatedUserManagementItems.push(manageLicenseMenuItem);
-	// 		}
-	// 	} else {
-	// 		updatedMenuItems = updatedMenuItems.filter(
-	// 			(item) => item.key !== ROUTES.INTEGRATIONS && item.key !== ROUTES.BILLING,
-	// 		);
-	// 		const versionMenuItem = {
-	// 			key: SecondaryMenuItemKey.Version,
-	// 			label: !isCurrentVersionError ? currentVersion : t('n_a'),
-	// 			icon: !isLatestVersion ? (
-	// 				<AlertTriangle color={Color.BG_CHERRY_600} size={16} />
-	// 			) : (
-	// 				<CheckSquare color={Color.BG_FOREST_500} size={16} />
-	// 			),
-	// 			onClick: onClickVersionHandler,
-	// 		};
-
-	// 		updatedUserManagementItems = [versionMenuItem, slackSupportMenuItem];
-
-	// 		if (isCommunityEnterpriseUser) {
-	// 			updatedUserManagementItems.push(manageLicenseMenuItem);
-	// 		}
-	// 	}
-	// 	setMenuItems(updatedMenuItems);
-	// }, [
-	// 	isCommunityEnterpriseUser,
-	// 	currentVersion,
-	// 	featureFlags,
-	// 	isCloudUser,
-	// 	isEnterpriseSelfHostedUser,
-	// 	isCurrentVersionError,
-	// 	isLatestVersion,
-	// 	onClickVersionHandler,
-	// 	t,
-	// 	user.role,
-	// 	activeLicenseFetchError,
-	// 	activeLicense?.status,
-	// ]);
 
 	const isPinnedItem = useMemo(
 		() => (item: SidebarItem): boolean =>
