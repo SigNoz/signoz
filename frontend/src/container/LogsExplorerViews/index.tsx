@@ -188,6 +188,26 @@ function LogsExplorerViews({
 				},
 			],
 			legend: '{{severity_text}}',
+			...(activeLogId && {
+				filters: {
+					...listQuery?.filters,
+					items: [
+						...(listQuery?.filters?.items || []),
+						{
+							id: v4(),
+							key: {
+								key: 'id',
+								type: '',
+								dataType: DataTypes.String,
+								isColumn: true,
+							},
+							op: OPERATORS['<='],
+							value: activeLogId,
+						},
+					],
+					op: 'AND',
+				},
+			}),
 		};
 
 		const modifiedQuery: Query = {
@@ -202,7 +222,7 @@ function LogsExplorerViews({
 		};
 
 		return modifiedQuery;
-	}, [stagedQuery, listQuery]);
+	}, [stagedQuery, listQuery, activeLogId]);
 
 	const exportDefaultQuery = useMemo(
 		() =>
@@ -287,12 +307,12 @@ function LogsExplorerViews({
 			});
 
 			// Add filter for activeLogId if present
-			let updatedFilters = paginateData.filters;
+			let updatedFilters = params.filters;
 			if (activeLogId) {
 				updatedFilters = {
-					...paginateData.filters,
+					...params.filters,
 					items: [
-						...(paginateData.filters?.items || []),
+						...(params.filters?.items || []),
 						{
 							id: v4(),
 							key: {

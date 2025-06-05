@@ -185,7 +185,7 @@ function VariableItem({
 
 				if (details.error) {
 					let message = details.error;
-					if (details.error.includes('Syntax error:')) {
+					if ((details.error ?? '').toString().includes('Syntax error:')) {
 						message =
 							'Please make sure query is valid and dependent variables are selected';
 					}

@@ -81,6 +81,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		configStore: configStore,
 		batcher:     alertmanagerbatcher.New(settings.Logger(), alertmanagerbatcher.NewConfig()),
 		url:         config.Legacy.ApiURL,
+		orgGetter:   orgGetter,
 	}, nil
 }
 
