@@ -23,6 +23,7 @@
 
 	.brand-container {
 		padding: 8px 18px;
+		max-width: 100%;
 	}
 
 	.brand-company-meta {
@@ -33,6 +34,9 @@
 	.brand {
 		display: flex;
 		align-items: center;
+
+		max-width: 100%;
+		overflow: hidden;
 
 		gap: 32px;
 		height: 32px;
@@ -111,7 +115,7 @@
 
 				cursor: pointer;
 
-				max-width: 100px;
+				max-width: 60px;
 
 				overflow: hidden;
 				text-overflow: ellipsis;
@@ -132,12 +136,6 @@
 				.version {
 					cursor: default;
 				}
-			}
-
-			&.community-enterprise-user {
-				color: var(--bg-sakura-500);
-				background: rgba(255, 113, 113, 0.1);
-				border: 1px solid var(--bg-sakura-500);
 			}
 
 			&.version-update-notification {
@@ -192,6 +190,13 @@
 		flex-direction: column;
 		justify-content: space-between;
 
+		.nav-item,
+		.nav-dropdown-item,
+		.nav-title-section,
+		.nav-items-section {
+			width: 100%;
+		}
+
 		.nav-top-section {
 			display: flex;
 			flex-direction: column;
@@ -199,11 +204,24 @@
 			overflow-y: auto;
 			overflow-x: hidden;
 
+			position: relative;
+
+			&::-webkit-scrollbar {
+				width: 0.1rem;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background: var(--bg-robin-500);
+				border-radius: 0.5rem;
+			}
+
 			.primary-nav-items {
 				display: flex;
 				flex-direction: column;
-				overflow-y: auto;
-				overflow-x: hidden;
 
 				&::-webkit-scrollbar {
 					width: 0.1rem;
@@ -311,6 +329,49 @@
 					}
 				}
 			}
+
+			.scroll-for-more-container {
+				display: none;
+
+				position: sticky;
+				width: 100%;
+				bottom: 12px;
+				bottom: 8px;
+				margin-left: 50px;
+
+				.scroll-for-more {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					flex-direction: row;
+					gap: 8px;
+
+					cursor: pointer;
+
+					width: auto;
+
+					.scroll-for-more-label {
+						display: none;
+					}
+
+					.scroll-for-more-icon {
+						color: var(--bg-vanilla-400);
+
+						// add animation to the chevrons down icon
+						svg {
+							animation: pulse 1s infinite;
+						}
+					}
+				}
+			}
+
+			.primary-nav-items,
+			.shortcut-nav-items,
+			.more-nav-items {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+			}
 		}
 
 		.nav-bottom-section {
@@ -325,6 +386,7 @@
 			.secondary-nav-items {
 				display: flex;
 				flex-direction: column;
+				align-items: center;
 				flex-shrink: 0;
 				overflow-y: auto;
 				overflow-x: hidden;
@@ -357,6 +419,12 @@
 						color: var(--bg-slate-300);
 					}
 				}
+			}
+		}
+
+		&.scroll-available {
+			.nav-bottom-section {
+				border-top: 1px solid var(--Slate-500, #161922);
 			}
 		}
 	}
@@ -467,8 +535,6 @@
 					display: flex;
 					flex-direction: column;
 					flex-shrink: 0;
-					overflow-y: auto;
-					overflow-x: hidden;
 
 					.nav-section-title {
 						.nav-section-title-text {
@@ -508,11 +574,72 @@
 						display: block;
 					}
 				}
+
+				.scroll-for-more-container {
+					display: none;
+
+					.scroll-for-more {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						flex-direction: row;
+						gap: 3px;
+						border-radius: 20px;
+						background: var(--Slate-400, #1d212d);
+
+						/* Drop Shadow */
+						box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
+							0px 66px 18px 0px rgba(0, 0, 0, 0.01),
+							0px 37px 22px 0px rgba(0, 0, 0, 0.03),
+							0px 17px 17px 0px rgba(0, 0, 0, 0.04),
+							0px 4px 9px 0px rgba(0, 0, 0, 0.04);
+
+						padding: 4px 12px 4px 10px;
+
+						cursor: pointer;
+
+						width: 140px;
+
+						.scroll-for-more-label {
+							color: var(--Vanilla-400, #c0c1c3);
+							font-family: Inter;
+							font-size: 12px;
+							font-style: normal;
+							font-weight: 400;
+							line-height: 18px; /* 150% */
+							letter-spacing: -0.06px;
+
+							display: block;
+						}
+
+						.scroll-for-more-icon {
+							display: flex;
+							color: var(--bg-vanilla-400);
+
+							// add animation to the chevrons down icon
+							svg {
+								animation: pulse 1s infinite;
+							}
+						}
+					}
+				}
+
+				.primary-nav-items,
+				.shortcut-nav-items,
+				.more-nav-items {
+					display: flex;
+					flex-direction: column;
+					align-items: flex-start;
+				}
 			}
 
 			.nav-bottom-section {
 				.secondary-nav-items {
 					width: 240px;
+
+					display: flex;
+					flex-direction: column;
+					align-items: flex-start;
 				}
 			}
 		}
@@ -567,8 +694,6 @@
 					display: flex;
 					flex-direction: column;
 					flex-shrink: 0;
-					overflow-y: auto;
-					overflow-x: hidden;
 
 					.nav-section-title {
 						.nav-section-title-text {
@@ -608,11 +733,72 @@
 						display: block;
 					}
 				}
+
+				.scroll-for-more-container {
+					display: none;
+
+					.scroll-for-more {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						flex-direction: row;
+						gap: 3px;
+						border-radius: 20px;
+						background: var(--Slate-400, #1d212d);
+
+						/* Drop Shadow */
+						box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
+							0px 66px 18px 0px rgba(0, 0, 0, 0.01),
+							0px 37px 22px 0px rgba(0, 0, 0, 0.03),
+							0px 17px 17px 0px rgba(0, 0, 0, 0.04),
+							0px 4px 9px 0px rgba(0, 0, 0, 0.04);
+
+						padding: 4px 12px 4px 10px;
+
+						cursor: pointer;
+
+						width: 140px;
+
+						.scroll-for-more-label {
+							display: block;
+
+							color: var(--Vanilla-400, #c0c1c3);
+							font-family: Inter;
+							font-size: 12px;
+							font-style: normal;
+							font-weight: 400;
+							line-height: 18px; /* 150% */
+							letter-spacing: -0.06px;
+						}
+
+						.scroll-for-more-icon {
+							display: flex;
+							color: var(--bg-vanilla-400);
+
+							// add animation to the chevrons down icon
+							svg {
+								animation: pulse 1s infinite;
+							}
+						}
+					}
+				}
+
+				.primary-nav-items,
+				.shortcut-nav-items,
+				.more-nav-items {
+					display: flex;
+					flex-direction: column;
+					align-items: flex-start;
+				}
 			}
 
 			.nav-bottom-section {
 				.secondary-nav-items {
 					width: 240px;
+
+					display: flex;
+					flex-direction: column;
+					align-items: flex-start;
 				}
 			}
 		}
@@ -634,6 +820,16 @@
 		.nav-item-beta,
 		.nav-item-new {
 			display: block;
+		}
+	}
+
+	.nav-wrapper {
+		&.scroll-available {
+			.nav-top-section {
+				.scroll-for-more-container {
+					display: inline-block !important;
+				}
+			}
 		}
 	}
 }
@@ -886,12 +1082,6 @@
 				.version {
 					color: var(--bg-ink-400);
 				}
-
-				&.community-enterprise-user {
-					color: var(--bg-sakura-500);
-					background: rgba(255, 113, 113, 0.1);
-					border: 1px solid var(--bg-sakura-500);
-				}
 			}
 		}
 
@@ -1070,5 +1260,15 @@
 	}
 	100% {
 		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+	}
+}
+
+// pulse for the scroll for more icon
+@keyframes pulse {
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
 	}
 }
