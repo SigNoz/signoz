@@ -5,8 +5,8 @@ import { Button, Skeleton, Spin } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { Cone, Play, RefreshCcw } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useEffect, useMemo } from 'react';
-import { useIsFetching, useIsMutating, useQueryClient } from 'react-query';
+import { useMemo } from 'react';
+import { useIsFetching, useIsMutating } from 'react-query';
 
 const useFunnelResultsLoading = (): boolean => {
 	const { funnelId } = useFunnelContext();
@@ -57,25 +57,11 @@ function ValidTracesCount(): JSX.Element {
 		hasIncompleteStepFields,
 		validTracesCount,
 		funnelId,
-		selectedTime,
 	} = useFunnelContext();
-	const queryClient = useQueryClient();
-	const validationQueryKey = useMemo(
-		() => [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId, selectedTime],
-		[funnelId, selectedTime],
-	);
-	const validationStatus = queryClient.getQueryData(validationQueryKey);
 
-	useEffect(() => {
-		// Show loading state immediately when fields become valid
-		if (hasIncompleteStepFields && validationStatus !== 'pending') {
-			queryClient.setQueryData(validationQueryKey, 'pending');
-		}
-	}, [
-		hasIncompleteStepFields,
-		queryClient,
-		validationQueryKey,
-		validationStatus,
+	const isFunnelUpdateMutating = useIsMutating([
+		REACT_QUERY_KEY.UPDATE_FUNNEL_STEPS,
+		funnelId,
 	]);
 
 	if (hasAllEmptyStepFields) {
@@ -92,7 +78,7 @@ function ValidTracesCount(): JSX.Element {
 		);
 	}
 
-	if (isValidateStepsLoading || validationStatus === 'pending') {
+	if (isValidateStepsLoading || isFunnelUpdateMutating) {
 		return <Skeleton.Button size="small" />;
 	}
 
