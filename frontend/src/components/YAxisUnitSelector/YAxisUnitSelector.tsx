@@ -37,7 +37,7 @@ function YAxisUnitSelector({
 	};
 
 	return (
-		<div className="y-axis-unit-selector">
+		<div className="y-axis-unit-selector-component">
 			<Select
 				showSearch
 				value={universalUnit}
