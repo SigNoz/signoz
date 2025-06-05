@@ -28,7 +28,7 @@ function MySettings(): JSX.Element {
 		if (userPreferences) {
 			setSideNavPinned(
 				userPreferences.find(
-					(preference) => preference.key === USER_PREFERENCES.SIDENAV_PINNED,
+					(preference) => preference.name === USER_PREFERENCES.SIDENAV_PINNED,
 				)?.value as boolean,
 			);
 		}
@@ -82,7 +82,7 @@ function MySettings(): JSX.Element {
 
 		// Update the context immediately
 		const save = {
-			key: USER_PREFERENCES.SIDENAV_PINNED,
+			name: USER_PREFERENCES.SIDENAV_PINNED,
 			value: checked,
 		};
 		updateUserPreferenceInContext(save as UserPreference);
@@ -98,7 +98,7 @@ function MySettings(): JSX.Element {
 					// Revert the state if the API call fails
 					setSideNavPinned(!checked);
 					updateUserPreferenceInContext({
-						key: USER_PREFERENCES.SIDENAV_PINNED,
+						name: USER_PREFERENCES.SIDENAV_PINNED,
 						value: !checked,
 					} as UserPreference);
 					showErrorNotification(notifications, error as AxiosError);

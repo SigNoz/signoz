@@ -548,7 +548,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	);
 
 	const sideNavPinned = userPreferences?.find(
-		(preference) => preference.key === USER_PREFERENCES.SIDENAV_PINNED,
+		(preference) => preference.name === USER_PREFERENCES.SIDENAV_PINNED,
 	)?.value as boolean;
 
 	return (

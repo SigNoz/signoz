@@ -245,7 +245,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		key: ROUTES.INTEGRATIONS,
 		label: 'Integrations',
 		icon: <Unplug size={16} />,
-		isEnabled: false,
+		isEnabled: true,
 		itemKey: 'integrations',
 	},
 	{
