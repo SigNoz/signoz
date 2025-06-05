@@ -20,6 +20,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Dropdown, MenuProps, Modal, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
+import updateUserPreference from 'api/preferences/updateUserPreference';
 import { Logout } from 'api/utils';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
@@ -29,6 +30,7 @@ import { USER_PREFERENCES } from 'constants/userPreferences';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isArray } from 'lodash-es';
 import {
@@ -45,13 +47,14 @@ import {
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-// import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
+import { showErrorNotification } from 'utils/error';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
@@ -113,7 +116,19 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		trialInfo,
 		isLoggedIn,
 		userPreferences,
+		updateUserPreferenceInContext,
 	} = useAppContext();
+
+	const { notifications } = useNotifications();
+
+	const { mutate: updateUserPreferenceMutation } = useMutation(
+		updateUserPreference,
+		{
+			onError: (error: Error) => {
+				showErrorNotification(notifications, error);
+			},
+		},
+	);
 
 	const [
 		helpSupportDropdownMenuItems,
@@ -137,23 +152,37 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 		if (navShortcuts && isArray(navShortcuts) && navShortcuts.length > 0) {
 			// nav shortcuts is array of strings
-			const pinnedItems = navShortcuts.map((shortcut) =>
-				defaultMoreMenuItems.find((item) => item.itemKey === shortcut),
-			);
+			const pinnedItems = navShortcuts
+				.map((shortcut) =>
+					defaultMoreMenuItems.find((item) => item.itemKey === shortcut),
+				)
+				.filter((item): item is SidebarItem => item !== undefined);
 
-			setPinnedMenuItems(
-				pinnedItems.filter((item): item is SidebarItem => item !== undefined) || [],
-			);
+			// Set pinned items
+			setPinnedMenuItems(pinnedItems);
 
+			// Set secondary items with proper isPinned state
 			setSecondaryMenuItems(
-				defaultMoreMenuItems.filter((item) => !pinnedItems.includes(item)) || [],
+				defaultMoreMenuItems.map((item) => ({
+					...item,
+					isPinned: pinnedItems.some((pinned) => pinned.itemKey === item.itemKey),
+				})),
 			);
 		} else {
-			setPinnedMenuItems(
-				defaultMoreMenuItems.filter((item) => item.isPinned) || [],
+			// Set default pinned items
+			const defaultPinnedItems = defaultMoreMenuItems.filter(
+				(item) => item.isPinned,
 			);
+			setPinnedMenuItems(defaultPinnedItems);
+
+			// Set secondary items with proper isPinned state
 			setSecondaryMenuItems(
-				defaultMoreMenuItems.filter((item) => !item.isPinned) || [],
+				defaultMoreMenuItems.map((item) => ({
+					...item,
+					isPinned: defaultPinnedItems.some(
+						(pinned) => pinned.itemKey === item.itemKey,
+					),
+				})),
 			);
 		}
 	}, [userPreferences]);
@@ -255,23 +284,64 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	};
 
-	const onTogglePin = useCallback((item: SidebarItem): void => {
-		setSecondaryMenuItems((prevItems) =>
-			prevItems.map((i) => {
-				if (i.key === item.key) {
-					return { ...i, isPinned: !i.isPinned };
-				}
-				return i;
-			}),
-		);
+	const onTogglePin = useCallback(
+		(item: SidebarItem): void => {
+			// Update secondary menu items first with new isPinned state
+			setSecondaryMenuItems((prevItems) =>
+				prevItems.map((i) => ({
+					...i,
+					isPinned: i.key === item.key ? !i.isPinned : i.isPinned,
+				})),
+			);
 
-		setPinnedMenuItems((prevItems) => {
-			if (prevItems?.some((i) => i.key === item.key)) {
-				return prevItems?.filter((i) => i.key !== item.key);
-			}
-			return [item, ...(prevItems || [])];
-		});
-	}, []);
+			// Update pinned menu items
+			setPinnedMenuItems((prevItems) => {
+				const isCurrentlyPinned = prevItems.some((i) => i.key === item.key);
+				if (isCurrentlyPinned) {
+					return prevItems.filter((i) => i.key !== item.key);
+				}
+				return [item, ...prevItems];
+			});
+
+			// Get the updated pinned menu items for preference update
+			const updatedPinnedItems = pinnedMenuItems.some((i) => i.key === item.key)
+				? pinnedMenuItems.filter((i) => i.key !== item.key)
+				: [item, ...pinnedMenuItems];
+
+			// Update user preference
+			const navShortcuts = updatedPinnedItems
+				.map((item) => item.itemKey)
+				.filter(Boolean) as string[];
+			updateUserPreferenceMutation(
+				{
+					preferenceID: USER_PREFERENCES.NAV_SHORTCUTS,
+					value: navShortcuts,
+				},
+				{
+					onSuccess: (response) => {
+						if (response.payload) {
+							updateUserPreferenceInContext({
+								key: USER_PREFERENCES.NAV_SHORTCUTS,
+								name: USER_PREFERENCES.NAV_SHORTCUTS,
+								description: USER_PREFERENCES.NAV_SHORTCUTS,
+								valueType: 'array',
+								defaultValue: false,
+								allowedValues: [],
+								isDiscreteValues: false,
+								allowedScopes: ['user'],
+								value: navShortcuts as any,
+							});
+						}
+					},
+				},
+			);
+		},
+		[
+			pinnedMenuItems,
+			updateUserPreferenceInContext,
+			updateUserPreferenceMutation,
+		],
+	);
 
 	const sensors = useSensors(useSensor(PointerSensor));
 
@@ -535,7 +605,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	);
 
 	const moreMenuItems = useMemo(
-		() => secondaryMenuItems.filter((i) => !i.isPinned),
+		() => secondaryMenuItems.filter((i) => !i.isPinned && i.isEnabled),
 		[secondaryMenuItems],
 	);
 
