@@ -123,7 +123,12 @@ func (preference *Preference) UpdateValue(value Value) error {
 	}
 
 	if preference.ValueType == ValueTypeString && len(preference.AllowedValues) > 0 {
-		if !slices.Contains(preference.AllowedValues, value.stringValue) {
+		goStringValue, ok := value.goValue.(string)
+		if !ok {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value %v is not a string", value.goValue)
+		}
+
+		if !slices.Contains(preference.AllowedValues, goStringValue) {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not in the allowed values: %s", value.stringValue)
 		}
 	}
