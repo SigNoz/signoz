@@ -85,16 +85,16 @@ var OSS_EVENTS_LIST = map[string]struct{}{
 }
 
 type QueryInfoResult struct {
-	LogsUsed              bool
-	MetricsUsed           bool
-	TracesUsed            bool
-	FilterApplied         bool
-	GroupByApplied        bool
 	AggregateOperator     v3.AggregateOperator
 	AggregateAttributeKey string
 	QueryType             v3.QueryType
 	PanelType             v3.PanelType
 	NumberOfQueries       int
+	LogsUsed              bool
+	MetricsUsed           bool
+	TracesUsed            bool
+	FilterApplied         bool
+	GroupByApplied        bool
 }
 
 const api_key = "9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr"
@@ -107,22 +107,38 @@ const SCHEDULE_START_TIME = "04:00" // 4 AM UTC
 const RATE_LIMIT_CHECK_DURATION = 1 * time.Minute
 const RATE_LIMIT_VALUE = 1
 
+type Telemetry struct {
+	reader                 interfaces.Reader
+	saasOperator           analytics.Client
+	ossOperator            analytics.Client
+	sqlStore               sqlstore.SQLStore
+	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
+	dashboardsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)
+	savedViewsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)
+	alertsInfoCallback     func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)
+	rateLimits             map[string]int8
+	activeUser             map[string]int8
+	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
+	userEmail              string
+	companyDomain          string
+	ipAddress              string
+	maxRandInt             int
+	minRandInt             int
+	mutex                  sync.RWMutex
+	patTokenUser           bool
+	isAnonymous            bool
+	isEnabled              bool
+}
+
 var telemetry *Telemetry
 var once sync.Once
 
-func (a *Telemetry) IsSampled() bool {
-
-	random_number := a.minRandInt + rand.Intn(a.maxRandInt-a.minRandInt) + 1
-
-	if (random_number % a.maxRandInt) == 0 {
-		return true
-	} else {
-		return false
-	}
-
+func (t *Telemetry) IsSampled() bool {
+	randomNumber := t.minRandInt + rand.Intn(t.maxRandInt-t.minRandInt) + 1
+	return randomNumber%t.maxRandInt == 0
 }
 
-func (telemetry *Telemetry) CheckQueryInfo(postData *v3.QueryRangeParamsV3) QueryInfoResult {
+func (t *Telemetry) CheckQueryInfo(postData *v3.QueryRangeParamsV3) QueryInfoResult {
 	queryInfoResult := QueryInfoResult{}
 	if postData != nil && postData.CompositeQuery != nil {
 		queryInfoResult.PanelType = postData.CompositeQuery.PanelType
@@ -172,64 +188,62 @@ func (telemetry *Telemetry) CheckQueryInfo(postData *v3.QueryRangeParamsV3) Quer
 	return queryInfoResult
 }
 
-func (telemetry *Telemetry) AddActiveTracesUser() {
-	telemetry.mutex.Lock()
-	telemetry.activeUser["traces"] = 1
-	telemetry.mutex.Unlock()
+func (t *Telemetry) AddActiveTracesUser() {
+	t.mutex.Lock()
+	t.activeUser["traces"] = 1
+	t.mutex.Unlock()
 }
-func (telemetry *Telemetry) AddActiveMetricsUser() {
-	telemetry.mutex.Lock()
-	telemetry.activeUser["metrics"] = 1
-	telemetry.mutex.Unlock()
+func (t *Telemetry) AddActiveMetricsUser() {
+	t.mutex.Lock()
+	t.activeUser["metrics"] = 1
+	t.mutex.Unlock()
 }
-func (telemetry *Telemetry) AddActiveLogsUser() {
-	telemetry.mutex.Lock()
-	telemetry.activeUser["logs"] = 1
-	telemetry.mutex.Unlock()
-}
-
-type Telemetry struct {
-	ossOperator   analytics.Client
-	saasOperator  analytics.Client
-	ipAddress     string
-	userEmail     string
-	isEnabled     bool
-	isAnonymous   bool
-	reader        interfaces.Reader
-	sqlStore      sqlstore.SQLStore
-	companyDomain string
-	minRandInt    int
-	maxRandInt    int
-	rateLimits    map[string]int8
-	activeUser    map[string]int8
-	patTokenUser  bool
-	mutex         sync.RWMutex
-
-	alertsInfoCallback     func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)
-	userCountCallback      func(ctx context.Context, store sqlstore.SQLStore) (int, error)
-	getUsersCallback       func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)
-	dashboardsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)
-	savedViewsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)
+func (t *Telemetry) AddActiveLogsUser() {
+	t.mutex.Lock()
+	t.activeUser["logs"] = 1
+	t.mutex.Unlock()
 }
 
-func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)) {
-	a.alertsInfoCallback = callback
+func (t *Telemetry) GetActiveUser() map[string]int8 {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+	return t.activeUser
 }
 
-func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (int, error)) {
-	a.userCountCallback = callback
+func (t *Telemetry) SetActiveUser(activeUser map[string]int8) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.activeUser = activeUser
 }
 
-func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)) {
-	a.getUsersCallback = callback
+func (t *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.alertsInfoCallback = callback
 }
 
-func (a *Telemetry) SetSavedViewsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)) {
-	a.savedViewsInfoCallback = callback
+func (t *Telemetry) SetUserCountCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (int, error)) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.userCountCallback = callback
 }
 
-func (a *Telemetry) SetDashboardsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)) {
-	a.dashboardsInfoCallback = callback
+func (t *Telemetry) SetGetUsersCallback(callback func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.getUsersCallback = callback
+}
+
+func (t *Telemetry) SetSavedViewsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.savedViewsInfoCallback = callback
+}
+
+func (t *Telemetry) SetDashboardsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.dashboardsInfoCallback = callback
 }
 
 func createTelemetry() {
@@ -466,28 +480,29 @@ func createTelemetry() {
 
 	// Define active user function
 	activeUserFunc := func() {
-		if telemetry.activeUser["logs"] != 0 {
+		activeUser := telemetry.GetActiveUser()
+		if activeUser["logs"] != 0 {
 			getLogsInfoInLastHeartBeatInterval, err := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(ctx, ACTIVE_USER_DURATION)
 			if err != nil && getLogsInfoInLastHeartBeatInterval == 0 {
-				telemetry.activeUser["logs"] = 0
+				activeUser["logs"] = 0
 			}
 		}
-		if telemetry.activeUser["metrics"] != 0 {
+		if activeUser["metrics"] != 0 {
 			getSamplesInfoInLastHeartBeatInterval, err := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(ctx, ACTIVE_USER_DURATION)
 			if err != nil && getSamplesInfoInLastHeartBeatInterval == 0 {
-				telemetry.activeUser["metrics"] = 0
+				activeUser["metrics"] = 0
 			}
 		}
-		if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
-			telemetry.activeUser["any"] = 1
+		if (activeUser["traces"] != 0) || (activeUser["metrics"] != 0) || (activeUser["logs"] != 0) {
+			activeUser["any"] = 1
 		}
 		telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{
-			"traces":  telemetry.activeUser["traces"],
-			"metrics": telemetry.activeUser["metrics"],
-			"logs":    telemetry.activeUser["logs"],
-			"any":     telemetry.activeUser["any"]},
+			"traces":  activeUser["traces"],
+			"metrics": activeUser["metrics"],
+			"logs":    activeUser["logs"],
+			"any":     activeUser["any"]},
 			"", true, false)
-		telemetry.activeUser = map[string]int8{"traces": 0, "metrics": 0, "logs": 0, "any": 0}
+		telemetry.SetActiveUser(map[string]int8{"traces": 0, "metrics": 0, "logs": 0, "any": 0})
 	}
 
 	// Calculate next run time based on duration and start time
@@ -525,7 +540,6 @@ func createTelemetry() {
 
 // Get preferred outbound ip of this machine
 func getOutboundIP() string {
-
 	ip := []byte(IP_NOT_FOUND_PLACEHOLDER)
 	resp, err := http.Get("https://api.ipify.org?format=text")
 
@@ -542,169 +556,177 @@ func getOutboundIP() string {
 	return string(ip)
 }
 
-func (a *Telemetry) IdentifyUser(user *types.User) {
+func (t *Telemetry) IdentifyUser(user *types.User) {
 	if user.Email == DEFAULT_CLOUD_EMAIL {
 		return
 	}
-	a.SetCompanyDomain(user.Email)
-	a.SetUserEmail(user.Email)
-	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
+	t.SetCompanyDomain(user.Email)
+	t.SetUserEmail(user.Email)
+	if !t.isTelemetryEnabled() || t.isTelemetryAnonymous() {
 		return
 	}
 
-	if a.saasOperator != nil {
-		_ = a.saasOperator.Enqueue(analytics.Identify{
-			UserId: a.userEmail,
+	if t.saasOperator != nil {
+		_ = t.saasOperator.Enqueue(analytics.Identify{
+			UserId: t.userEmail,
 			Traits: analytics.NewTraits().SetName(user.DisplayName).SetEmail(user.Email).Set("role", user.Role),
 		})
 
-		_ = a.saasOperator.Enqueue(analytics.Group{
-			UserId:  a.userEmail,
-			GroupId: a.getCompanyDomain(),
-			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
+		_ = t.saasOperator.Enqueue(analytics.Group{
+			UserId:  t.userEmail,
+			GroupId: t.getCompanyDomain(),
+			Traits:  analytics.NewTraits().Set("company_domain", t.getCompanyDomain()),
 		})
 	}
 
-	if a.ossOperator != nil {
-		_ = a.ossOperator.Enqueue(analytics.Identify{
-			UserId: a.ipAddress,
-			Traits: analytics.NewTraits().SetName(user.DisplayName).SetEmail(user.Email).Set("ip", a.ipAddress),
+	if t.ossOperator != nil {
+		_ = t.ossOperator.Enqueue(analytics.Identify{
+			UserId: t.ipAddress,
+			Traits: analytics.NewTraits().SetName(user.DisplayName).SetEmail(user.Email).Set("ip", t.ipAddress),
 		})
 		// Updating a groups properties
-		_ = a.ossOperator.Enqueue(analytics.Group{
-			UserId:  a.ipAddress,
-			GroupId: a.getCompanyDomain(),
-			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
+		_ = t.ossOperator.Enqueue(analytics.Group{
+			UserId:  t.ipAddress,
+			GroupId: t.getCompanyDomain(),
+			Traits:  analytics.NewTraits().Set("company_domain", t.getCompanyDomain()),
 		})
 	}
 }
 
-func (a *Telemetry) SendIdentifyEvent(data map[string]interface{}, userEmail string) {
-
-	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
+func (t *Telemetry) SendIdentifyEvent(data map[string]interface{}, userEmail string) {
+	if !t.isTelemetryEnabled() || t.isTelemetryAnonymous() {
 		return
 	}
 	// ignore telemetry for default user
-	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
+	if userEmail == DEFAULT_CLOUD_EMAIL || t.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
 		return
 	}
 
 	if userEmail != "" {
-		a.SetUserEmail(userEmail)
-		a.SetCompanyDomain(userEmail)
+		t.SetUserEmail(userEmail)
+		t.SetCompanyDomain(userEmail)
 	}
 	traits := analytics.NewTraits()
 
 	for k, v := range data {
 		traits.Set(k, v)
 	}
-	if a.saasOperator != nil {
-		_ = a.saasOperator.Enqueue(analytics.Identify{
-			UserId: a.GetUserEmail(),
+	if t.saasOperator != nil {
+		_ = t.saasOperator.Enqueue(analytics.Identify{
+			UserId: t.GetUserEmail(),
 			Traits: traits,
 		})
 	}
-	if a.ossOperator != nil {
-		_ = a.ossOperator.Enqueue(analytics.Identify{
-			UserId: a.ipAddress,
+	if t.ossOperator != nil {
+		_ = t.ossOperator.Enqueue(analytics.Identify{
+			UserId: t.ipAddress,
 			Traits: traits,
 		})
 	}
 }
 
-func (a *Telemetry) SendGroupEvent(data map[string]interface{}, userEmail string) {
-
-	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
+func (t *Telemetry) SendGroupEvent(data map[string]interface{}, userEmail string) {
+	if !t.isTelemetryEnabled() || t.isTelemetryAnonymous() {
 		return
 	}
 	// ignore telemetry for default user
-	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
+	if userEmail == DEFAULT_CLOUD_EMAIL || t.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
 		return
 	}
 
 	if userEmail != "" {
-		a.SetUserEmail(userEmail)
-		a.SetCompanyDomain(userEmail)
+		t.SetUserEmail(userEmail)
+		t.SetCompanyDomain(userEmail)
 	}
 	traits := analytics.NewTraits()
 
 	for k, v := range data {
 		traits.Set(k, v)
 	}
-	if a.saasOperator != nil {
-		_ = a.saasOperator.Enqueue(analytics.Group{
-			UserId:  a.GetUserEmail(),
-			GroupId: a.getCompanyDomain(),
+	if t.saasOperator != nil {
+		_ = t.saasOperator.Enqueue(analytics.Group{
+			UserId:  t.GetUserEmail(),
+			GroupId: t.getCompanyDomain(),
 			Traits:  traits,
 		})
 	}
-	if a.ossOperator != nil {
-		_ = a.ossOperator.Enqueue(analytics.Group{
-			UserId:  a.ipAddress,
-			GroupId: a.getCompanyDomain(),
+	if t.ossOperator != nil {
+		_ = t.ossOperator.Enqueue(analytics.Group{
+			UserId:  t.ipAddress,
+			GroupId: t.getCompanyDomain(),
 			Traits:  traits,
 		})
 	}
 }
 
-func (a *Telemetry) SetUserEmail(email string) {
-	a.userEmail = email
+func (t *Telemetry) SetUserEmail(email string) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.userEmail = email
 }
 
-func (a *Telemetry) SetPatTokenUser() {
-	a.patTokenUser = true
+func (t *Telemetry) SetPatTokenUser() {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.patTokenUser = true
 }
 
-func (a *Telemetry) GetUserEmail() string {
-	return a.userEmail
+func (t *Telemetry) GetUserEmail() string {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+	return t.userEmail
 }
 
-func (a *Telemetry) SetSaasOperator(saasOperatorKey string) {
+func (t *Telemetry) SetSaasOperator(saasOperatorKey string) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	if saasOperatorKey == "" {
 		return
 	}
-	a.saasOperator = analytics.New(saasOperatorKey)
+	t.saasOperator = analytics.New(saasOperatorKey)
 }
 
-func (a *Telemetry) SetCompanyDomain(email string) {
-
-	email_split := strings.Split(email, "@")
-	if len(email_split) != 2 {
-		a.companyDomain = email
+func (t *Telemetry) SetCompanyDomain(email string) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	emailSplit := strings.Split(email, "@")
+	if len(emailSplit) != 2 {
+		t.companyDomain = email
 	}
-	a.companyDomain = email_split[1]
+	t.companyDomain = emailSplit[1]
 
 }
 
-func (a *Telemetry) getCompanyDomain() string {
-	return a.companyDomain
+func (t *Telemetry) getCompanyDomain() string {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+	return t.companyDomain
 }
 
-func (a *Telemetry) checkEvents(event string) bool {
+func (t *Telemetry) checkEvents(event string) bool {
 	sendEvent := true
-	if event == TELEMETRY_EVENT_USER && a.isTelemetryAnonymous() {
+	if event == TELEMETRY_EVENT_USER && t.isTelemetryAnonymous() {
 		sendEvent = false
 	}
 	return sendEvent
 }
 
-func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, rateLimitFlag bool, viaEventsAPI bool) {
-
+func (t *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, rateLimitFlag bool, viaEventsAPI bool) {
 	// ignore telemetry for default user
-	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
+	if userEmail == DEFAULT_CLOUD_EMAIL || t.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
 		return
 	}
 
 	if userEmail != "" {
-		a.SetUserEmail(userEmail)
-		a.SetCompanyDomain(userEmail)
+		t.SetUserEmail(userEmail)
+		t.SetCompanyDomain(userEmail)
 	}
 
-	if !a.isTelemetryEnabled() {
+	if !t.isTelemetryEnabled() {
 		return
 	}
 
-	ok := a.checkEvents(event)
+	ok := t.checkEvents(event)
 	if !ok {
 		return
 	}
@@ -716,9 +738,9 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	if rateLimitFlag {
 		telemetry.mutex.Lock()
-		limit := a.rateLimits[event]
+		limit := t.rateLimits[event]
 		if limit < RATE_LIMIT_VALUE {
-			a.rateLimits[event] += 1
+			t.rateLimits[event] += 1
 			telemetry.mutex.Unlock()
 		} else {
 			telemetry.mutex.Unlock()
@@ -730,28 +752,28 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 	properties := analytics.NewProperties()
 	properties.Set("version", version.Info.Version())
 	properties.Set("deploymentType", getDeploymentType())
-	properties.Set("companyDomain", a.getCompanyDomain())
+	properties.Set("companyDomain", t.getCompanyDomain())
 
 	for k, v := range data {
 		properties.Set(k, v)
 	}
 
-	userId := a.ipAddress
-	if a.isTelemetryAnonymous() || userId == IP_NOT_FOUND_PLACEHOLDER {
+	userId := t.ipAddress
+	if t.isTelemetryAnonymous() || userId == IP_NOT_FOUND_PLACEHOLDER {
 		userId = "anonymous"
 	}
 
 	// check if event is part of SAAS_EVENTS_LIST
 	_, isSaaSEvent := SAAS_EVENTS_LIST[event]
 
-	if a.saasOperator != nil && a.GetUserEmail() != "" && (isSaaSEvent || viaEventsAPI) {
-		_ = a.saasOperator.Enqueue(analytics.Track{
+	if t.saasOperator != nil && t.GetUserEmail() != "" && (isSaaSEvent || viaEventsAPI) {
+		_ = t.saasOperator.Enqueue(analytics.Track{
 			Event:      event,
-			UserId:     a.GetUserEmail(),
+			UserId:     t.GetUserEmail(),
 			Properties: properties,
 			Context: &analytics.Context{
 				Extra: map[string]interface{}{
-					"groupId": a.getCompanyDomain(),
+					"groupId": t.getCompanyDomain(),
 				},
 			},
 		})
@@ -759,46 +781,57 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	_, isOSSEvent := OSS_EVENTS_LIST[event]
 
-	if a.ossOperator != nil && isOSSEvent {
-		_ = a.ossOperator.Enqueue(analytics.Track{
+	if t.ossOperator != nil && isOSSEvent {
+		_ = t.ossOperator.Enqueue(analytics.Track{
 			Event:      event,
 			UserId:     userId,
 			Properties: properties,
 			Context: &analytics.Context{
 				Extra: map[string]interface{}{
-					"groupId": a.getCompanyDomain(),
+					"groupId": t.getCompanyDomain(),
 				},
 			},
 		})
 	}
 }
 
-func (a *Telemetry) isTelemetryAnonymous() bool {
-	return a.isAnonymous
+func (t *Telemetry) isTelemetryAnonymous() bool {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+	return t.isAnonymous
 }
 
-func (a *Telemetry) SetTelemetryAnonymous(value bool) {
-	a.isAnonymous = value
+func (t *Telemetry) SetTelemetryAnonymous(value bool) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.isAnonymous = value
 }
 
-func (a *Telemetry) isTelemetryEnabled() bool {
-	return a.isEnabled
+func (t *Telemetry) isTelemetryEnabled() bool {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+	return t.isEnabled
 }
 
-func (a *Telemetry) SetTelemetryEnabled(value bool) {
-	a.isEnabled = value
+func (t *Telemetry) SetTelemetryEnabled(value bool) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.isEnabled = value
 }
 
-func (a *Telemetry) SetReader(reader interfaces.Reader) {
-	a.reader = reader
+func (t *Telemetry) SetReader(reader interfaces.Reader) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.reader = reader
 }
 
-func (a *Telemetry) SetSqlStore(store sqlstore.SQLStore) {
-	a.sqlStore = store
+func (t *Telemetry) SetSqlStore(store sqlstore.SQLStore) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.sqlStore = store
 }
 
 func GetInstance() *Telemetry {
-
 	once.Do(func() {
 		createTelemetry()
 	})
