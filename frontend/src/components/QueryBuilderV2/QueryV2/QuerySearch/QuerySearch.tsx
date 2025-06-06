@@ -1051,7 +1051,7 @@ function QuerySearch(): JSX.Element {
 			/>
 
 			{query && (
-				<Card size="small">
+				<div className="query-text-preview-container">
 					<Space direction="vertical" size={4}>
 						<Text className="query-text-preview-title">searchExpr</Text>
 						<Text className="query-text-preview">{query}</Text>
@@ -1085,7 +1085,7 @@ function QuerySearch(): JSX.Element {
 							))}
 						</div>
 					</div>
-				</Card>
+				</div>
 			)}
 
 			{showExamples && (
