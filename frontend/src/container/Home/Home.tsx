@@ -29,8 +29,8 @@ import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
-import { DataSource } from 'types/common/queryBuilder';
 import { UserPreference } from 'types/api/preferences/preference';
+import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { popupContainer } from 'utils/selectPopupContainer';
 
