@@ -103,6 +103,100 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid trace operator query with simple expression",
+			jsonData: `{
+				"schemaVersion": "v1",
+				"start": 1640995200000,
+				"end": 1640998800000,
+				"requestType": "time_series",
+				"compositeQuery": {
+					"queries": [
+						{
+							"name": "A",
+							"type": "builder_query",
+							"spec": {
+								"signal": "traces",
+								"filter": {
+									"expression": "service.name = 'checkoutservice'"
+								}
+							}
+						},
+						{
+							"name": "B",
+							"type": "builder_query",
+							"spec": {
+								"signal": "traces",
+								"filter": {
+									"expression": "hasError = true"
+								}
+							}
+						},
+						{
+							"name": "T1",
+							"type": "builder_trace_operator",
+							"spec": {
+								"name": "trace_flow_analysis",
+								"expression": "A => B",
+								"traceFilters": {
+									"trace_duration": {
+										"operator": 3,
+										"value": "200ms"
+									}
+								},
+								"limit": 100
+							}
+						}
+					]
+				}
+			}`,
+			expected: QueryRangeRequest{
+				SchemaVersion: "v1",
+				Start:         1640995200000,
+				End:           1640998800000,
+				RequestType:   RequestTypeTimeSeries,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Name: "A",
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[TraceAggregation]{
+								Signal: telemetrytypes.SignalTraces,
+								Filter: &Filter{
+									Expression: "service.name = 'checkoutservice'",
+								},
+							},
+						},
+						{
+							Name: "B",
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[TraceAggregation]{
+								Signal: telemetrytypes.SignalTraces,
+								Filter: &Filter{
+									Expression: "hasError = true",
+								},
+							},
+						},
+						{
+							Name: "T1",
+							Type: QueryTypeTraceOperator,
+							Spec: QueryBuilderTraceOperator{
+								Name:       "trace_flow_analysis",
+								Expression: "A => B",
+								TraceFilters: &TraceFilters{
+									TraceDuration: &TraceFilterCondition{
+										Operator: FilterOperatorGreaterThan,
+										Value:    "200ms",
+									},
+								},
+								Limit: 100,
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "valid log builder query",
 			jsonData: `{
 				"schemaVersion": "v2",
