@@ -221,7 +221,7 @@ export function getAppContextMock(
 				description: 'Organisation Onboarding',
 				valueType: 'boolean',
 				defaultValue: false,
-				allowedValues: [true, false],
+				allowedValues: ["true", "false"],
 				allowedScopes: ['org'],
 				value: false,
 			},
