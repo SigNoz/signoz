@@ -11,18 +11,27 @@ import (
 )
 
 type Preference struct {
-	Name             Name      `json:"name"`
-	Description      string    `json:"description"`
-	ValueType        ValueType `json:"valueType"`
-	DefaultValue     Value     `json:"defaultValue"`
-	AllowedValues    []any     `json:"allowedValues"`
-	IsDiscreteValues bool      `json:"isDiscreteValues"`
-	Range            Range     `json:"range"`
-	AllowedScopes    []Scope   `json:"allowedScopes"`
-	Value            Value     `json:"value"`
-}
+	// name of the preference
+	Name Name `json:"name"`
 
-type GettablePreference = Preference
+	// description of the preference, will be shown to the user
+	Description string `json:"description"`
+
+	// type of the preference value
+	ValueType ValueType `json:"valueType"`
+
+	// default value of the preference
+	DefaultValue Value `json:"defaultValue"`
+
+	// Allowed scopes of the preference, can be scoped to org or user
+	AllowedScopes []Scope `json:"allowedScopes"`
+
+	// allowed values of the preference, applicable only to string value type
+	AllowedValues []string `json:"allowedValues"`
+
+	// actual value of the preference, equal to the default value initially
+	Value Value `json:"value"`
+}
 
 type UpdatablePreference struct {
 	Value any `json:"value"`
@@ -47,104 +56,94 @@ type StorableUserPreference struct {
 func NewAvailablePreference() map[Name]Preference {
 	return map[Name]Preference{
 		NameOrgOnboarding: {
-			Name:             NameOrgOnboarding,
-			Description:      "Organisation Onboarding",
-			ValueType:        ValueTypeBoolean,
-			DefaultValue:     MustNewValue(false, ValueTypeBoolean),
-			AllowedValues:    []any{true, false},
-			IsDiscreteValues: true,
-			AllowedScopes:    []Scope{ScopeOrg},
-			Value:            MustNewValue(false, ValueTypeBoolean),
+			Name:          NameOrgOnboarding,
+			Description:   "Organisation Onboarding",
+			ValueType:     ValueTypeBoolean,
+			DefaultValue:  MustNewValue(false, ValueTypeBoolean),
+			AllowedScopes: []Scope{ScopeOrg},
+			AllowedValues: []string{},
+			Value:         MustNewValue(false, ValueTypeBoolean),
 		},
 		NameWelcomeChecklistDoLater: {
-			Name:             NameWelcomeChecklistDoLater,
-			Description:      "Welcome Checklist Do Later",
-			ValueType:        ValueTypeBoolean,
-			DefaultValue:     MustNewValue(false, ValueTypeBoolean),
-			AllowedValues:    []any{true, false},
-			IsDiscreteValues: true,
-			AllowedScopes:    []Scope{ScopeUser},
-			Value:            MustNewValue(false, ValueTypeBoolean),
+			Name:          NameWelcomeChecklistDoLater,
+			Description:   "Welcome Checklist Do Later",
+			ValueType:     ValueTypeBoolean,
+			DefaultValue:  MustNewValue(false, ValueTypeBoolean),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue(false, ValueTypeBoolean),
 		},
 		NameWelcomeChecklistSendLogsSkipped: {
-			Name:             NameWelcomeChecklistSendLogsSkipped,
-			Description:      "Welcome Checklist Send Logs Skipped",
-			ValueType:        ValueTypeBoolean,
-			DefaultValue:     MustNewValue(false, ValueTypeBoolean),
-			AllowedValues:    []any{true, false},
-			IsDiscreteValues: true,
-			AllowedScopes:    []Scope{ScopeUser},
-			Value:            MustNewValue(false, ValueTypeBoolean),
+			Name:          NameWelcomeChecklistSendLogsSkipped,
+			Description:   "Welcome Checklist Send Logs Skipped",
+			ValueType:     ValueTypeBoolean,
+			DefaultValue:  MustNewValue(false, ValueTypeBoolean),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue(false, ValueTypeBoolean),
 		},
 		NameWelcomeChecklistSendTracesSkipped: {
-			Name:             NameWelcomeChecklistSendTracesSkipped,
-			Description:      "Welcome Checklist Send Traces Skipped",
-			ValueType:        ValueTypeBoolean,
-			DefaultValue:     MustNewValue(false, ValueTypeBoolean),
-			AllowedValues:    []any{true, false},
-			IsDiscreteValues: true,
-			AllowedScopes:    []Scope{ScopeUser},
-			Value:            MustNewValue(false, ValueTypeBoolean),
+			Name:          NameWelcomeChecklistSendTracesSkipped,
+			Description:   "Welcome Checklist Send Traces Skipped",
+			ValueType:     ValueTypeBoolean,
+			DefaultValue:  MustNewValue(false, ValueTypeBoolean),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue(false, ValueTypeBoolean),
 		},
 		NameWelcomeChecklistSendInfraMetricsSkipped: {
-			Name:             NameWelcomeChecklistSendInfraMetricsSkipped,
-			Description:      "Welcome Checklist Send Infra Metrics Skipped",
-			ValueType:        ValueTypeBoolean,
-			DefaultValue:     MustNewValue(false, ValueTypeBoolean),
-			AllowedValues:    []any{true, false},
-			IsDiscreteValues: true,
-			AllowedScopes:    []Scope{ScopeUser},
-			Value:            MustNewValue(false, ValueTypeBoolean),
+			Name:          NameWelcomeChecklistSendInfraMetricsSkipped,
+			Description:   "Welcome Checklist Send Infra Metrics Skipped",
+			ValueType:     ValueTypeBoolean,
+			DefaultValue:  MustNewValue(false, ValueTypeBoolean),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue(false, ValueTypeBoolean),
 		},
 		NameWelcomeChecklistSetupDashboardsSkipped: {
-			Name:             NameWelcomeChecklistSetupDashboardsSkipped,
-			Description:      "Welcome Checklist Setup Dashboards Skipped",
-			ValueType:        ValueTypeBoolean,
-			DefaultValue:     MustNewValue(false, ValueTypeBoolean),
-			AllowedValues:    []any{true, false},
-			IsDiscreteValues: true,
-			AllowedScopes:    []Scope{ScopeUser},
-			Value:            MustNewValue(false, ValueTypeBoolean),
+			Name:          NameWelcomeChecklistSetupDashboardsSkipped,
+			Description:   "Welcome Checklist Setup Dashboards Skipped",
+			ValueType:     ValueTypeBoolean,
+			DefaultValue:  MustNewValue(false, ValueTypeBoolean),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue(false, ValueTypeBoolean),
 		},
 		NameWelcomeChecklistSetupAlertsSkipped: {
-			Name:             NameWelcomeChecklistSetupAlertsSkipped,
-			Description:      "Welcome Checklist Setup Alerts Skipped",
-			ValueType:        ValueTypeBoolean,
-			DefaultValue:     MustNewValue(false, ValueTypeBoolean),
-			AllowedValues:    []any{true, false},
-			IsDiscreteValues: true,
-			AllowedScopes:    []Scope{ScopeUser},
-			Value:            MustNewValue(false, ValueTypeBoolean),
+			Name:          NameWelcomeChecklistSetupAlertsSkipped,
+			Description:   "Welcome Checklist Setup Alerts Skipped",
+			ValueType:     ValueTypeBoolean,
+			DefaultValue:  MustNewValue(false, ValueTypeBoolean),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue(false, ValueTypeBoolean),
 		},
 		NameWelcomeChecklistSetupSavedViewSkipped: {
-			Name:             NameWelcomeChecklistSetupSavedViewSkipped,
-			Description:      "Welcome Checklist Setup Saved View Skipped",
-			ValueType:        ValueTypeBoolean,
-			DefaultValue:     MustNewValue(false, ValueTypeBoolean),
-			AllowedValues:    []any{true, false},
-			IsDiscreteValues: true,
-			AllowedScopes:    []Scope{ScopeUser},
-			Value:            MustNewValue(false, ValueTypeBoolean),
+			Name:          NameWelcomeChecklistSetupSavedViewSkipped,
+			Description:   "Welcome Checklist Setup Saved View Skipped",
+			ValueType:     ValueTypeBoolean,
+			DefaultValue:  MustNewValue(false, ValueTypeBoolean),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue(false, ValueTypeBoolean),
 		},
 		NameSidenavPinned: {
-			Name:             NameSidenavPinned,
-			Description:      "Controls whether the primary sidenav remains expanded or can be collapsed. When enabled, the sidenav will stay open and pinned to provide constant visibility of navigation options.",
-			ValueType:        ValueTypeBoolean,
-			DefaultValue:     MustNewValue(false, ValueTypeBoolean),
-			AllowedValues:    []any{true, false},
-			IsDiscreteValues: true,
-			AllowedScopes:    []Scope{ScopeUser},
-			Value:            MustNewValue(false, ValueTypeBoolean),
+			Name:          NameSidenavPinned,
+			Description:   "Controls whether the primary sidenav remains expanded or can be collapsed. When enabled, the sidenav will stay open and pinned to provide constant visibility of navigation options.",
+			ValueType:     ValueTypeBoolean,
+			DefaultValue:  MustNewValue(false, ValueTypeBoolean),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue(false, ValueTypeBoolean),
 		},
 		NameNavShortcuts: {
-			Name:             NameNavShortcuts,
-			Description:      "A list of shortcuts to be shown in the navigation.",
-			ValueType:        ValueTypeArray,
-			DefaultValue:     MustNewValue([]any{}, ValueTypeArray),
-			AllowedValues:    []any{},
-			AllowedScopes:    []Scope{ScopeUser},
-			IsDiscreteValues: false,
-			Value:            MustNewValue([]any{}, ValueTypeArray),
+			Name:          NameNavShortcuts,
+			Description:   "A list of shortcuts to be shown in the navigation.",
+			ValueType:     ValueTypeArray,
+			DefaultValue:  MustNewValue([]any{}, ValueTypeArray),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue([]any{}, ValueTypeArray),
 		},
 	}
 }
@@ -160,20 +159,13 @@ func NewPreference(name Name, scope Scope, available map[Name]Preference) (*Pref
 	}
 
 	return &Preference{
-		Name:             name,
-		Description:      preference.Description,
-		ValueType:        preference.ValueType,
-		DefaultValue:     preference.DefaultValue,
-		AllowedValues:    preference.AllowedValues,
-		IsDiscreteValues: preference.IsDiscreteValues,
-		Range:            preference.Range,
-		AllowedScopes:    preference.AllowedScopes,
-		Value:            preference.DefaultValue,
+		Name:          name,
+		Description:   preference.Description,
+		ValueType:     preference.ValueType,
+		DefaultValue:  preference.DefaultValue,
+		AllowedScopes: preference.AllowedScopes,
+		Value:         preference.DefaultValue,
 	}, nil
-}
-
-func NewGettablePreference(preference *Preference) *GettablePreference {
-	return preference
 }
 
 func NewStorableOrgPreference(preference *Preference, value Value, orgID valuer.UUID) (*StorableOrgPreference, error) {

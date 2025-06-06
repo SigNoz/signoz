@@ -6,8 +6,8 @@ import { Alert, Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
-import getAllUserPreferences from 'api/preferences/getAllUserPreference';
-import updateUserPreferenceAPI from 'api/preferences/updateUserPreference';
+import listUserPreferences from 'api/v1/user/preferences/list';
+import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import Header from 'components/Header/Header';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
@@ -30,7 +30,7 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { DataSource } from 'types/common/queryBuilder';
-import { UserPreference } from 'types/reducer/app';
+import { UserPreference } from 'types/api/preferences/preference';
 import { USER_ROLES } from 'types/roles';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -206,13 +206,13 @@ export default function Home(): JSX.Element {
 
 	// Fetch User Preferences
 	const { refetch: refetchUserPreferences } = useQuery({
-		queryFn: () => getAllUserPreferences(),
+		queryFn: () => listUserPreferences(),
 		queryKey: ['getUserPreferences'],
 		enabled: true,
 		refetchOnWindowFocus: false,
 		onSuccess: (response) => {
-			if (response.payload && response.payload.data) {
-				processUserPreferences(response.payload.data);
+			if (response.data) {
+				processUserPreferences(response.data);
 			}
 
 			setLoadingUserPreferences(false);
@@ -239,7 +239,7 @@ export default function Home(): JSX.Element {
 		setUpdatingUserPreferences(true);
 
 		updateUserPreference({
-			preferenceID: 'welcome_checklist_do_later',
+			name: 'welcome_checklist_do_later',
 			value: true,
 		});
 	};
@@ -249,7 +249,7 @@ export default function Home(): JSX.Element {
 			setUpdatingUserPreferences(true);
 
 			updateUserPreference({
-				preferenceID: item.skippedPreferenceKey,
+				name: item.skippedPreferenceKey,
 				value: true,
 			});
 		}

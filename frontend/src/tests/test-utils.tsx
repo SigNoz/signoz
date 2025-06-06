@@ -222,7 +222,6 @@ export function getAppContextMock(
 				valueType: 'boolean',
 				defaultValue: false,
 				allowedValues: [true, false],
-				isDiscreteValues: true,
 				allowedScopes: ['org'],
 				value: false,
 			},

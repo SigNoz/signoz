@@ -4,7 +4,7 @@ import { LicenseResModel, TrialInfo } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import { UserResponse as User } from 'types/api/user/getUser';
 import { PayloadProps } from 'types/api/user/getVersion';
-import { OrgPreference } from 'types/reducer/app';
+import { OrgPreference } from 'types/api/preferences/preference';
 
 export interface IAppContext {
 	user: IUser;

@@ -21,19 +21,20 @@ func NewModule(store preferencetypes.Store, available map[preferencetypes.Name]p
 	}
 }
 
-func (module *module) ListByOrg(ctx context.Context, orgID valuer.UUID) ([]*preferencetypes.GettablePreference, error) {
+func (module *module) ListByOrg(ctx context.Context, orgID valuer.UUID) ([]*preferencetypes.Preference, error) {
 	storableOrgPreferences, err := module.store.ListByOrg(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	var gettablePreferences []*preferencetypes.GettablePreference
+	preferences := make([]*preferencetypes.Preference, 0)
 	for _, availablePreference := range module.available {
 		preference, err := preferencetypes.NewPreference(availablePreference.Name, preferencetypes.ScopeOrg, module.available)
 		if err != nil {
 			continue
 		}
 
+		// update the preference value from the storable preference
 		for _, storableOrgPreference := range storableOrgPreferences {
 			if storableOrgPreference.Name == preference.Name {
 				value, err := preferencetypes.NewValueFromString(storableOrgPreference.Value, preference.ValueType)
@@ -48,13 +49,13 @@ func (module *module) ListByOrg(ctx context.Context, orgID valuer.UUID) ([]*pref
 			}
 		}
 
-		gettablePreferences = append(gettablePreferences, preferencetypes.NewGettablePreference(preference))
+		preferences = append(preferences, preference)
 	}
 
-	return gettablePreferences, nil
+	return preferences, nil
 }
 
-func (module *module) GetByOrg(ctx context.Context, orgID valuer.UUID, name preferencetypes.Name) (*preferencetypes.GettablePreference, error) {
+func (module *module) GetByOrg(ctx context.Context, orgID valuer.UUID, name preferencetypes.Name) (*preferencetypes.Preference, error) {
 	preference, err := preferencetypes.NewPreference(name, preferencetypes.ScopeOrg, module.available)
 	if err != nil {
 		return nil, err
@@ -79,7 +80,7 @@ func (module *module) GetByOrg(ctx context.Context, orgID valuer.UUID, name pref
 		}
 	}
 
-	return preferencetypes.NewGettablePreference(preference), nil
+	return preference, nil
 }
 
 func (module *module) UpdateByOrg(ctx context.Context, orgID valuer.UUID, name preferencetypes.Name, input any) error {
@@ -125,19 +126,20 @@ func (module *module) UpdateByOrg(ctx context.Context, orgID valuer.UUID, name p
 	return nil
 }
 
-func (module *module) ListByUser(ctx context.Context, userID valuer.UUID) ([]*preferencetypes.GettablePreference, error) {
+func (module *module) ListByUser(ctx context.Context, userID valuer.UUID) ([]*preferencetypes.Preference, error) {
 	storableUserPreferences, err := module.store.ListByUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	var gettablePreferences []*preferencetypes.GettablePreference
+	preferences := make([]*preferencetypes.Preference, 0)
 	for _, availablePreference := range module.available {
 		preference, err := preferencetypes.NewPreference(availablePreference.Name, preferencetypes.ScopeUser, module.available)
 		if err != nil {
 			continue
 		}
 
+		// update the preference value from the storable preference
 		for _, storableUserPreference := range storableUserPreferences {
 			if storableUserPreference.Name == preference.Name {
 				value, err := preferencetypes.NewValueFromString(storableUserPreference.Value, preference.ValueType)
@@ -152,13 +154,13 @@ func (module *module) ListByUser(ctx context.Context, userID valuer.UUID) ([]*pr
 			}
 		}
 
-		gettablePreferences = append(gettablePreferences, preferencetypes.NewGettablePreference(preference))
+		preferences = append(preferences, preference)
 	}
 
-	return gettablePreferences, nil
+	return preferences, nil
 }
 
-func (module *module) GetByUser(ctx context.Context, userID valuer.UUID, name preferencetypes.Name) (*preferencetypes.GettablePreference, error) {
+func (module *module) GetByUser(ctx context.Context, userID valuer.UUID, name preferencetypes.Name) (*preferencetypes.Preference, error) {
 	preference, err := preferencetypes.NewPreference(name, preferencetypes.ScopeUser, module.available)
 	if err != nil {
 		return nil, err
@@ -185,7 +187,7 @@ func (module *module) GetByUser(ctx context.Context, userID valuer.UUID, name pr
 		}
 	}
 
-	return preferencetypes.NewGettablePreference(preference), nil
+	return preference, nil
 }
 
 func (module *module) UpdateByUser(ctx context.Context, userID valuer.UUID, name preferencetypes.Name, input any) error {

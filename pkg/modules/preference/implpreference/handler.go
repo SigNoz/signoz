@@ -52,9 +52,9 @@ func (handler *handler) GetByOrg(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nameString, ok := mux.Vars(r)["preferenceId"]
+	nameString, ok := mux.Vars(r)["name"]
 	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is required"))
 		return
 	}
 
@@ -83,9 +83,9 @@ func (handler *handler) UpdateByOrg(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nameString, ok := mux.Vars(r)["preferenceId"]
+	nameString, ok := mux.Vars(r)["name"]
 	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is required"))
 		return
 	}
 
@@ -140,9 +140,9 @@ func (handler *handler) GetByUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nameString, ok := mux.Vars(r)["preferenceId"]
+	nameString, ok := mux.Vars(r)["name"]
 	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is required"))
 		return
 	}
 
@@ -171,9 +171,9 @@ func (handler *handler) UpdateByUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nameString, ok := mux.Vars(r)["preferenceId"]
+	nameString, ok := mux.Vars(r)["name"]
 	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is required"))
 		return
 	}
 
