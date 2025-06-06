@@ -11,7 +11,6 @@ import { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { Wrench } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -25,7 +24,11 @@ function SettingsPage(): JSX.Element {
 	const { pathname, search } = useLocation();
 
 	const { user, featureFlags, trialInfo } = useAppContext();
-	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
+	const {
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityEnterpriseUser,
+	} = useGetTenantLicense();
 
 	const [settingsMenuItems, setSettingsMenuItems] = useState<SidebarItem[]>(
 		defaultSettingsMenuItems,
@@ -48,57 +51,90 @@ function SettingsPage(): JSX.Element {
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		console.log('isCloudUser', isCloudUser);
-		console.log('isEnterpriseSelfHostedUser', isEnterpriseSelfHostedUser);
-		console.log('isAdmin', isAdmin);
-		console.log('isEditor', isEditor);
+		setSettingsMenuItems((prevItems) => {
+			let updatedItems = [...prevItems];
 
-		if (isAdmin) {
-			const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
-				...item,
-				isEnabled:
-					item.key === ROUTES.BILLING ||
-					item.key === ROUTES.INTEGRATIONS ||
-					item.key === ROUTES.CUSTOM_DOMAIN_SETTINGS ||
-					item.key === ROUTES.API_KEYS ||
-					item.key === ROUTES.INGESTION_SETTINGS ||
-					item.key === ROUTES.ORG_SETTINGS
-						? true
-						: item.isEnabled,
-			}));
+			if (isCloudUser) {
+				if (isAdmin) {
+					updatedItems = updatedItems.map((item) => ({
+						...item,
+						isEnabled:
+							item.key === ROUTES.BILLING ||
+							item.key === ROUTES.INTEGRATIONS ||
+							item.key === ROUTES.CUSTOM_DOMAIN_SETTINGS ||
+							item.key === ROUTES.API_KEYS ||
+							item.key === ROUTES.INGESTION_SETTINGS ||
+							item.key === ROUTES.ORG_SETTINGS
+								? true
+								: item.isEnabled,
+					}));
+				}
 
-			console.log('updatedSettingsMenuItems', cloneDeep(updatedSettingsMenuItems));
+				if (isEditor) {
+					updatedItems = updatedItems.map((item) => ({
+						...item,
+						isEnabled:
+							item.key === ROUTES.INGESTION_SETTINGS ||
+							item.key === ROUTES.INTEGRATIONS
+								? true
+								: item.isEnabled,
+					}));
+				}
+			}
 
-			setSettingsMenuItems(updatedSettingsMenuItems);
-		}
+			if (isEnterpriseSelfHostedUser) {
+				if (isAdmin) {
+					updatedItems = updatedItems.map((item) => ({
+						...item,
+						isEnabled:
+							item.key === ROUTES.BILLING ||
+							item.key === ROUTES.INTEGRATIONS ||
+							item.key === ROUTES.API_KEYS ||
+							item.key === ROUTES.ORG_SETTINGS
+								? true
+								: item.isEnabled,
+					}));
+				}
 
-		if (isEditor) {
-			const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
-				...item,
-				isEnabled:
-					item.key === ROUTES.INGESTION_SETTINGS || item.key === ROUTES.INTEGRATIONS
-						? true
-						: item.isEnabled,
-			}));
+				if (isEditor) {
+					// eslint-disable-next-line sonarjs/no-identical-functions
+					updatedItems = updatedItems.map((item) => ({
+						...item,
+						isEnabled: item.key === ROUTES.INTEGRATIONS ? true : item.isEnabled,
+					}));
+				}
+			}
 
-			setSettingsMenuItems(updatedSettingsMenuItems);
-		}
+			if (!isCloudUser && !isEnterpriseSelfHostedUser) {
+				if (isAdmin) {
+					updatedItems = updatedItems.map((item) => ({
+						...item,
+						isEnabled:
+							item.key === ROUTES.API_KEYS || item.key === ROUTES.ORG_SETTINGS
+								? true
+								: item.isEnabled,
+					}));
+				}
 
-		if (!isCloudUser && !isEnterpriseSelfHostedUser) {
-			// disable billing and integrations for non-cloud users
-			const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
-				...item,
-				isEnabled:
-					item.key === ROUTES.BILLING || item.key === ROUTES.INTEGRATIONS
-						? false
-						: item.isEnabled,
-			}));
+				// disable billing and integrations for non-cloud users
+				updatedItems = updatedItems.map((item) => ({
+					...item,
+					isEnabled:
+						item.key === ROUTES.BILLING || item.key === ROUTES.INTEGRATIONS
+							? false
+							: item.isEnabled,
+				}));
+			}
 
-			setSettingsMenuItems(updatedSettingsMenuItems);
-		}
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isAdmin, isCloudUser, isEnterpriseSelfHostedUser]);
+			return updatedItems;
+		});
+	}, [
+		isAdmin,
+		isEditor,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityEnterpriseUser,
+	]);
 
 	const routes = useMemo(
 		() =>
@@ -159,8 +195,6 @@ function SettingsPage(): JSX.Element {
 
 		return pathname === key;
 	};
-
-	console.log('routes', routes);
 
 	return (
 		<div className="settings-page">
