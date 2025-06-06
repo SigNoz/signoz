@@ -59,6 +59,7 @@ var dotMetricMap = map[string]string{
 	"k8s_volume_capacity":                   "k8s.volume.capacity",
 	"k8s_volume_inodes":                     "k8s.volume.inodes",
 	"k8s_volume_inodes_free":                "k8s.volume.inodes.free",
+	"system_disk_usage":                     "system.filesystem.usage",
 	// add additional mappings as needed
 
 	"k8s_pod_uid":              "k8s.pod.uid",

@@ -71,6 +71,7 @@ var (
 		"memory": GetDotMetrics("system_memory_usage"),
 		"load15": GetDotMetrics("system_cpu_load_average_15m"),
 		"wait":   GetDotMetrics("system_cpu_time"),
+		"disk":   GetDotMetrics("system_disk_usage"),
 	}
 )
 
