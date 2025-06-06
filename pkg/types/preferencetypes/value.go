@@ -129,7 +129,7 @@ func (preference *Preference) UpdateValue(value Value) error {
 		}
 
 		if !slices.Contains(preference.AllowedValues, goStringValue) {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value is not in the allowed values: %s", value.stringValue)
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "value %s is not in the allowed values: %v", goStringValue, preference.AllowedValues)
 		}
 	}
 
