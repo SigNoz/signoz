@@ -34,7 +34,7 @@ type Modules struct {
 	Apdex       apdex.Module
 	Dashboard   dashboard.Module
 	QuickFilter quickfilter.Module
-	TraceFunnel  tracefunnel.Module
+	TraceFunnel tracefunnel.Module
 }
 
 func NewModules(
@@ -51,12 +51,12 @@ func NewModules(
 	return Modules{
 		OrgGetter:   orgGetter,
 		OrgSetter:   orgSetter,
-		Preference:  implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewDefaultPreferenceMap()),
+		Preference:  implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
 		SavedView:   implsavedview.NewModule(sqlstore),
 		Apdex:       implapdex.NewModule(sqlstore),
 		Dashboard:   impldashboard.NewModule(sqlstore, providerSettings),
 		User:        user,
 		QuickFilter: quickfilter,
-		TraceFunnel:  impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
+		TraceFunnel: impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 	}
 }

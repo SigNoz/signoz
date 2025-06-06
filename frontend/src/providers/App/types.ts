@@ -1,10 +1,10 @@
 import APIError from 'types/api/error';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import { LicenseResModel, TrialInfo } from 'types/api/licensesV3/getActive';
+import { OrgPreference } from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
 import { UserResponse as User } from 'types/api/user/getUser';
 import { PayloadProps } from 'types/api/user/getVersion';
-import { OrgPreference } from 'types/reducer/app';
 
 export interface IAppContext {
 	user: IUser;

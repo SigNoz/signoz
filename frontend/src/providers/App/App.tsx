@@ -1,6 +1,6 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
 import { Logout } from 'api/utils';
+import listOrgPreferences from 'api/v1/org/preferences/list';
 import getUserVersion from 'api/v1/version/getVersion';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
@@ -25,8 +25,8 @@ import {
 	LicenseState,
 	TrialInfo,
 } from 'types/api/licensesV3/getActive';
+import { OrgPreference } from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
-import { OrgPreference } from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
 import { IAppContext, IUser } from './types';
@@ -147,7 +147,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		isFetching: isFetchingOrgPreferences,
 		error: orgPreferencesFetchError,
 	} = useQuery({
-		queryFn: () => getAllOrgPreferences(),
+		queryFn: () => listOrgPreferences(),
 		queryKey: ['getOrgPreferences', 'app-context'],
 		enabled: !!isLoggedIn && !!user.email && user.role === USER_ROLES.ADMIN,
 	});
@@ -162,9 +162,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		if (
 			!isFetchingOrgPreferences &&
 			orgPreferencesData &&
-			orgPreferencesData.payload
+			orgPreferencesData.data
 		) {
-			setOrgPreferences(orgPreferencesData.payload.data);
+			setOrgPreferences(orgPreferencesData.data);
 		}
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
 
