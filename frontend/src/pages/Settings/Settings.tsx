@@ -11,6 +11,7 @@ import { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Wrench } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -47,6 +48,11 @@ function SettingsPage(): JSX.Element {
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
+		console.log('isCloudUser', isCloudUser);
+		console.log('isEnterpriseSelfHostedUser', isEnterpriseSelfHostedUser);
+		console.log('isAdmin', isAdmin);
+		console.log('isEditor', isEditor);
+
 		if (isAdmin) {
 			const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
 				...item,
@@ -61,13 +67,18 @@ function SettingsPage(): JSX.Element {
 						: item.isEnabled,
 			}));
 
+			console.log('updatedSettingsMenuItems', cloneDeep(updatedSettingsMenuItems));
+
 			setSettingsMenuItems(updatedSettingsMenuItems);
 		}
 
 		if (isEditor) {
 			const updatedSettingsMenuItems = settingsMenuItems.map((item) => ({
 				...item,
-				isEnabled: item.key === ROUTES.INGESTION_SETTINGS ? true : item.isEnabled,
+				isEnabled:
+					item.key === ROUTES.INGESTION_SETTINGS || item.key === ROUTES.INTEGRATIONS
+						? true
+						: item.isEnabled,
 			}));
 
 			setSettingsMenuItems(updatedSettingsMenuItems);
@@ -148,6 +159,8 @@ function SettingsPage(): JSX.Element {
 
 		return pathname === key;
 	};
+
+	console.log('routes', routes);
 
 	return (
 		<div className="settings-page">

@@ -248,6 +248,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const [licenseTag, setLicenseTag] = useState('');
 	const isAdmin = user.role === USER_ROLES.ADMIN;
+	const isEditor = user.role === USER_ROLES.EDITOR;
 
 	const userSettingsMenuItem = {
 		key: ROUTES.SETTINGS,
@@ -446,7 +447,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					key: 'workspace',
 					label: 'Workspace Settings',
 				},
-				...(isEnterpriseSelfHostedUser
+				...(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser
 					? [
 							{
 								key: 'license',
@@ -462,7 +463,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					),
 				},
 			].filter(Boolean),
-		[isEnterpriseSelfHostedUser, user.email],
+		[isEnterpriseSelfHostedUser, isCommunityEnterpriseUser, user.email],
 	);
 
 	useEffect(() => {
@@ -674,7 +675,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (isCloudUser || isEnterpriseSelfHostedUser) {
+		if ((isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor)) {
 			// enable integrations for cloud users
 			setSecondaryMenuItems((prevItems) =>
 				prevItems.map((item) => ({

@@ -57,7 +57,7 @@ export const getRoutes = (
 		settings.push(...apiKeys(t));
 	}
 
-	if (isCloudUser && isAdmin) {
+	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
 		settings.push(...customDomainSettings(t), ...billingSettings(t));
 	}
 

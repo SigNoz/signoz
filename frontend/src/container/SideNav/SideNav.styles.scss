@@ -206,17 +206,10 @@
 
 			position: relative;
 
-			&::-webkit-scrollbar {
-				width: 0.1rem;
-			}
-
-			&::-webkit-scrollbar-track {
-				background: transparent;
-			}
-
+			&::-webkit-scrollbar,
+			&::-webkit-scrollbar-track,
 			&::-webkit-scrollbar-thumb {
-				background: var(--bg-robin-500);
-				border-radius: 0.5rem;
+				display: none;
 			}
 
 			.primary-nav-items {

@@ -193,11 +193,12 @@ function App(): JSX.Element {
 					updatedRoutes = updatedRoutes.filter(
 						(route) => route?.path !== ROUTES.BILLING,
 					);
-
-					if (isEnterpriseSelfHostedUser) {
-						updatedRoutes.push(LIST_LICENSES);
-					}
 				}
+
+				if (isEnterpriseSelfHostedUser) {
+					updatedRoutes.push(LIST_LICENSES);
+				}
+
 				// always add support route for cloud users
 				updatedRoutes = [...updatedRoutes, SUPPORT_ROUTE];
 			} else {
