@@ -21,11 +21,6 @@ var (
 
 type ValueType struct{ valuer.String }
 
-type Range struct {
-	Min int64 `json:"min"`
-	Max int64 `json:"max"`
-}
-
 type Value struct {
 	goValue     any
 	stringValue string
