@@ -1,3 +1,5 @@
+import './CreateAlertChannels.styles.scss';
+
 import { Form } from 'antd';
 import createEmail from 'api/channels/createEmail';
 import createMsTeamsApi from 'api/channels/createMsTeams';
@@ -477,26 +479,28 @@ function CreateAlertChannels({
 	);
 
 	return (
-		<FormAlertChannels
-			{...{
-				formInstance,
-				onTypeChangeHandler,
-				setSelectedConfig,
-				type,
-				onTestHandler,
-				onSaveHandler,
-				savingState,
-				testingState,
-				title: t('page_title_create'),
-				initialValue: {
+		<div className="create-alert-channels-container">
+			<FormAlertChannels
+				{...{
+					formInstance,
+					onTypeChangeHandler,
+					setSelectedConfig,
 					type,
-					...selectedConfig,
-					...PagerInitialConfig,
-					...OpsgenieInitialConfig,
-					...EmailInitialConfig,
-				},
-			}}
-		/>
+					onTestHandler,
+					onSaveHandler,
+					savingState,
+					testingState,
+					title: t('page_title_create'),
+					initialValue: {
+						type,
+						...selectedConfig,
+						...PagerInitialConfig,
+						...OpsgenieInitialConfig,
+						...EmailInitialConfig,
+					},
+				}}
+			/>
+		</div>
 	);
 }
 

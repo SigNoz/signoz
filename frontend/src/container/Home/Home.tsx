@@ -12,6 +12,7 @@ import Header from 'components/Header/Header';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
@@ -185,7 +186,8 @@ export default function Home(): JSX.Element {
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = userPreferences?.find(
-			(preference) => preference.key === 'WELCOME_CHECKLIST_DO_LATER',
+			(preference) =>
+				preference.name === ORG_PREFERENCES.WELCOME_CHECKLIST_DO_LATER,
 		)?.value;
 
 		const updatedChecklistItems = cloneDeep(checklistItems);
@@ -194,7 +196,7 @@ export default function Home(): JSX.Element {
 			const newItem = { ...item };
 			newItem.isSkipped =
 				userPreferences?.find(
-					(preference) => preference.key === item.skippedPreferenceKey,
+					(preference) => preference.name === item.skippedPreferenceKey,
 				)?.value || false;
 			return newItem;
 		});
@@ -239,7 +241,7 @@ export default function Home(): JSX.Element {
 		setUpdatingUserPreferences(true);
 
 		updateUserPreference({
-			preferenceID: 'WELCOME_CHECKLIST_DO_LATER',
+			preferenceID: ORG_PREFERENCES.WELCOME_CHECKLIST_DO_LATER,
 			value: true,
 		});
 	};

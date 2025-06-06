@@ -1,5 +1,7 @@
-import { Tabs } from 'antd';
+import './Licenses.styles.scss';
+
 import Spinner from 'components/Spinner';
+import { Wrench } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useTranslation } from 'react-i18next';
 
@@ -13,16 +15,19 @@ function Licenses(): JSX.Element {
 		return <Spinner tip={t('loading_licenses')} height="90vh" />;
 	}
 
-	const tabs = [
-		{
-			label: t('tab_current_license'),
-			key: 'licenses',
-			children: <ApplyLicenseForm licenseRefetch={activeLicenseRefetch} />,
-		},
-	];
-
 	return (
-		<Tabs destroyInactiveTabPane defaultActiveKey="licenses" items={tabs} />
+		<div className="licenses-page">
+			<header className="licenses-page-header">
+				<div className="licenses-page-header-title">
+					<Wrench size={16} />
+					License
+				</div>
+			</header>
+
+			<div className="licenses-page-content-container">
+				<ApplyLicenseForm licenseRefetch={activeLicenseRefetch} />
+			</div>
+		</div>
 	);
 }
 

@@ -18,6 +18,7 @@ import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
+import { USER_PREFERENCES } from 'constants/userPreferences';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
@@ -27,7 +28,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { INTEGRATION_TYPES } from 'pages/Integrations/utils';
 import { useAppContext } from 'providers/App/App';
 import {
 	ReactNode,
@@ -41,7 +41,7 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
 import { useDispatch } from 'react-redux';
-import { matchPath, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import {
@@ -80,6 +80,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		featureFlags,
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
+		userPreferences,
 	} = useAppContext();
 
 	const { notifications } = useNotifications();
@@ -330,53 +331,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		});
 	}, [manageCreditCard]);
 
-	const isHome = (): boolean => routeKey === 'HOME';
-
-	const isLogsView = (): boolean =>
-		routeKey === 'LOGS' ||
-		routeKey === 'LOGS_EXPLORER' ||
-		routeKey === 'LOGS_PIPELINES' ||
-		routeKey === 'LOGS_SAVE_VIEWS';
-
-	const isApiMonitoringView = (): boolean => routeKey === 'API_MONITORING';
-
-	const isExceptionsView = (): boolean => routeKey === 'ALL_ERROR';
-
-	const isTracesView = (): boolean =>
-		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
-
-	const isMessagingQueues = (): boolean =>
-		routeKey === 'MESSAGING_QUEUES_KAFKA' ||
-		routeKey === 'MESSAGING_QUEUES_KAFKA_DETAIL' ||
-		routeKey === 'MESSAGING_QUEUES_CELERY_TASK' ||
-		routeKey === 'MESSAGING_QUEUES_OVERVIEW';
-
-	const isCloudIntegrationPage = (): boolean =>
-		routeKey === 'INTEGRATIONS' &&
-		new URLSearchParams(window.location.search).get('integration') ===
-			INTEGRATION_TYPES.AWS_INTEGRATION;
-
-	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
-	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
-	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
-	const isInfraMonitoring = (): boolean =>
-		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS' ||
-		routeKey === 'INFRASTRUCTURE_MONITORING_KUBERNETES';
-	const isTracesFunnels = (): boolean => routeKey === 'TRACES_FUNNELS';
-	const isTracesFunnelDetails = (): boolean =>
-		!!matchPath(pathname, ROUTES.TRACES_FUNNELS_DETAIL);
-
-	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
-
-	const isDashboardView = (): boolean =>
-		isPathMatch(/^\/dashboard\/[a-zA-Z0-9_-]+$/);
-
-	const isDashboardWidgetView = (): boolean =>
-		isPathMatch(/^\/dashboard\/[a-zA-Z0-9_-]+\/new$/);
-
-	const isTraceDetailsView = (): boolean =>
-		isPathMatch(/^\/trace\/[a-zA-Z0-9]+(\?.*)?$/);
-
 	useEffect(() => {
 		if (isDarkMode) {
 			document.body.classList.remove('lightMode');
@@ -593,6 +547,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		</div>
 	);
 
+	const sideNavPinned = userPreferences?.find(
+		(preference) => preference.name === USER_PREFERENCES.SIDENAV_PINNED,
+	)?.value as boolean;
+
 	return (
 		<Layout className={cx(isDarkMode ? 'darkMode dark' : 'lightMode')}>
 			<Helmet>
@@ -645,9 +603,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			)}
 
 			<Flex
-				className={cx('app-layout', isDarkMode ? 'darkMode dark' : 'lightMode')}
+				className={cx(
+					'app-layout',
+					isDarkMode ? 'darkMode dark' : 'lightMode',
+					sideNavPinned ? 'side-nav-pinned' : '',
+				)}
 			>
-				{isToDisplayLayout && !renderFullScreen && <SideNav />}
+				{isToDisplayLayout && !renderFullScreen && (
+					<SideNav isPinned={sideNavPinned} />
+				)}
 				<div
 					className={cx('app-content', {
 						'full-screen-content': renderFullScreen,
@@ -657,32 +621,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar>
-								<ChildrenContainer
-									style={{
-										margin:
-											isHome() ||
-											isLogsView() ||
-											isTracesView() ||
-											isDashboardView() ||
-											isDashboardWidgetView() ||
-											isDashboardListView() ||
-											isAlertHistory() ||
-											isAlertOverview() ||
-											isMessagingQueues() ||
-											isCloudIntegrationPage() ||
-											isInfraMonitoring() ||
-											isApiMonitoringView() ||
-											isExceptionsView()
-												? 0
-												: '0 1rem',
-
-										...(isTraceDetailsView() ||
-										isTracesFunnels() ||
-										isTracesFunnelDetails()
-											? { margin: 0 }
-											: {}),
-									}}
-								>
+								<ChildrenContainer>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}
 									{children}
 								</ChildrenContainer>

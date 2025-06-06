@@ -14,19 +14,19 @@ function OrganizationSettings(): JSX.Element {
 	}
 
 	return (
-		<>
+		<div className="organization-settings-container">
 			<Space direction="vertical">
 				{org.map((e, index) => (
 					<DisplayName key={e.id} id={e.id} index={index} />
 				))}
 			</Space>
-			<Divider />
+
 			<PendingInvitesContainer />
-			<Divider />
+
 			<Members />
 			<Divider />
 			<AuthDomains />
-		</>
+		</div>
 	);
 }
 

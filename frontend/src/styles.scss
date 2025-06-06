@@ -671,37 +671,14 @@ notifications	-  2050
 
 */
 
-@font-face {
-	font-family: 'Geist Mono';
-	src: local('Geist Mono'),
-		url('../public/fonts/GeistMonoVF.woff2') format('woff');
-	/* Add other formats if needed (e.g., woff2, truetype, opentype, svg) */
-}
+/* Import fonts from CDN */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
-@font-face {
-	font-family: 'Inter';
-	src: url('../public/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
-	font-weight: 300 700;
-	font-style: normal;
-}
-@font-face {
-	font-family: 'Work Sans';
-	src: url('../public/fonts/WorkSans-VariableFont_wght.ttf') format('truetype');
-	font-weight: 500;
-	font-style: normal;
-}
-@font-face {
-	font-family: 'Space Mono';
-	src: url('../public/fonts/SpaceMono-Regular.ttf') format('truetype');
-	font-weight: normal;
-	font-style: normal;
-}
-@font-face {
-	font-family: 'Fira Code';
-	src: url('../public/fonts/FiraCode-VariableFont_wght.ttf') format('truetype');
-	font-weight: 300 700;
-	font-style: normal;
-}
+/* Remove the old Geist Mono font-face declarations since we're using Google Fonts */
 
 @keyframes spin {
 	from {
@@ -741,4 +718,20 @@ notifications	-  2050
 	color: #1f2937;
 	border: 1px solid #d1d5db;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.metrics-application-container,
+.service-metric-table-container,
+.service-traces-table-container {
+	padding: 0px 8px;
+}
+
+.ap-dex-settings-popover-content {
+	display: flex;
+	width: 100%;
+	justify-content: flex-end;
+}
+
+.service-map-container {
+	padding: 0px 8px;
 }
