@@ -330,6 +330,8 @@
 		background-color: #f5f5f5;
 		border-left: 4px solid #1890ff;
 
+		display: none;
+
 		.triplet-info {
 			margin-left: 16px;
 			display: inline-flex;
@@ -378,6 +380,10 @@
 			border-left-color: #eb2f96; // magenta
 			background-color: rgba(235, 47, 150, 0.1);
 		}
+	}
+
+	.query-text-preview-container {
+		display: none;
 	}
 }
 
