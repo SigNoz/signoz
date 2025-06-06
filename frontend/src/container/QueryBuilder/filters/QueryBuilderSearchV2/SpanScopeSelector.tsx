@@ -73,7 +73,7 @@ function SpanScopeSelector({ queryName }: SpanScopeSelectorProps): JSX.Element {
 	};
 
 	useEffect(() => {
-		const queryData = currentQuery.builder.queryData.find(
+		const queryData = (currentQuery?.builder?.queryData || [])?.find(
 			(item) => item.queryName === queryName,
 		);
 		const filters = queryData?.filters?.items;
