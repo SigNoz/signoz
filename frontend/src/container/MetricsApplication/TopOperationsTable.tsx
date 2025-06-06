@@ -1,7 +1,7 @@
 import './TopOperationsTable.styles.scss';
 
 import { SearchOutlined } from '@ant-design/icons';
-import { InputRef, Tooltip, Typography } from 'antd';
+import { InputRef, Switch, Tooltip, Typography } from 'antd';
 import { ColumnsType, ColumnType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
@@ -29,6 +29,8 @@ import {
 function TopOperationsTable({
 	data,
 	isLoading,
+	isEntryPoint,
+	onEntryPointToggle,
 }: TopOperationsTableProps): JSX.Element {
 	const searchInput = useRef<InputRef>(null);
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
@@ -176,18 +178,30 @@ function TopOperationsTable({
 
 	return (
 		<div className="top-operation">
-			<div className="top-operation--download">
-				<Download
-					data={downloadableData}
-					isLoading={isLoading}
-					fileName={`top-operations-${servicename}`}
-				/>
+			<div className="top-operation__controls">
+				<div className="top-operation__download">
+					<Download
+						data={downloadableData}
+						isLoading={isLoading}
+						fileName={`top-operations-${servicename}`}
+					/>
+				</div>
+				<div className="top-operation__entry-point">
+					<Switch
+						checked={isEntryPoint}
+						onChange={onEntryPointToggle}
+						size="small"
+					/>
+					<span className="top-operation__entry-point-label">Entry Point Spans</span>
+				</div>
 			</div>
 			<ResizeTable
 				columns={columns}
 				loading={isLoading}
 				showHeader
-				title={(): string => 'Key Operations'}
+				title={(): string =>
+					isEntryPoint ? 'Key Entry Point Operations' : 'Key Operations'
+				}
 				tableLayout="fixed"
 				dataSource={data}
 				rowKey="name"
@@ -209,6 +223,8 @@ export interface TopOperationList {
 interface TopOperationsTableProps {
 	data: TopOperationList[];
 	isLoading: boolean;
+	isEntryPoint: boolean;
+	onEntryPointToggle: (checked: boolean) => void;
 }
 
 export default TopOperationsTable;
