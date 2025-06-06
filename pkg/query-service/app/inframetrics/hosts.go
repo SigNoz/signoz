@@ -514,6 +514,9 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 			if wait, ok := row.Data["F3"].(float64); ok {
 				record.Wait = wait
 			}
+			if diskUsage, ok := row.Data["F4"].(float64); ok {
+				record.DiskUsage = diskUsage
+			}
 			if load15, ok := row.Data["G"].(float64); ok {
 				record.Load15 = load15
 			}
