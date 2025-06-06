@@ -1,6 +1,6 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import listOrgPreferences from 'api/v1/org/preferences/list';
 import { Logout } from 'api/utils';
+import listOrgPreferences from 'api/v1/org/preferences/list';
 import getUserVersion from 'api/v1/version/getVersion';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
@@ -25,8 +25,8 @@ import {
 	LicenseState,
 	TrialInfo,
 } from 'types/api/licensesV3/getActive';
-import { Organization } from 'types/api/user/getOrganization';
 import { OrgPreference } from 'types/api/preferences/preference';
+import { Organization } from 'types/api/user/getOrganization';
 import { USER_ROLES } from 'types/roles';
 
 import { IAppContext, IUser } from './types';

@@ -2,11 +2,8 @@ import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { Props, PayloadProps } from 'types/api/preferences/get';
-import {
-	OrgPreference,
-	UserPreference,
-} from 'types/api/preferences/preference';
+import { PayloadProps, Props } from 'types/api/preferences/get';
+import { OrgPreference } from 'types/api/preferences/preference';
 
 const getPreference = async (
 	props: Props,
