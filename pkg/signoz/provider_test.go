@@ -7,8 +7,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,10 +48,19 @@ func TestNewProviderFactories(t *testing.T) {
 	})
 
 	assert.NotPanics(t, func() {
+		NewRulerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual))
+	})
+
+	assert.NotPanics(t, func() {
 		NewEmailingProviderFactories()
 	})
 
 	assert.NotPanics(t, func() {
 		NewSharderProviderFactories()
+	})
+
+	assert.NotPanics(t, func() {
+		orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil)
+		NewStatsReporterProviderFactories([]statsreporter.StatsCollector{}, orgGetter, nil, version.Build{})
 	})
 }

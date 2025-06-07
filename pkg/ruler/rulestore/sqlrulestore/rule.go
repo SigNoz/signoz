@@ -6,16 +6,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/jmoiron/sqlx"
 )
 
 type rule struct {
-	*sqlx.DB
 	sqlstore sqlstore.SQLStore
 }
 
-func NewRuleStore(db *sqlx.DB, store sqlstore.SQLStore) ruletypes.RuleStore {
-	return &rule{sqlstore: store, DB: db}
+func NewRuleStore(store sqlstore.SQLStore) ruletypes.RuleStore {
+	return &rule{sqlstore: store}
 }
 
 func (r *rule) CreateRule(ctx context.Context, storedRule *ruletypes.Rule, cb func(context.Context, valuer.UUID) error) (valuer.UUID, error) {

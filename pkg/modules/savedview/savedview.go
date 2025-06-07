@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -18,6 +19,8 @@ type Module interface {
 	UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view v3.SavedView) error
 
 	DeleteView(ctx context.Context, orgID string, uuid valuer.UUID) error
+
+	statsreporter.StatsCollector
 }
 
 type Handler interface {

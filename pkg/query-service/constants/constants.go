@@ -18,8 +18,10 @@ const (
 	OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
 )
 
+// Deprecated: Use the new analytics service instead
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
+// Deprecated: Use the new analytics service instead
 func IsOSSTelemetryEnabled() bool {
 	ossSegmentKey := GetOrDefaultEnv("OSS_TELEMETRY_ENABLED", "true")
 	return ossSegmentKey == "true"
@@ -27,6 +29,7 @@ func IsOSSTelemetryEnabled() bool {
 
 const MaxAllowedPointsInTimeSeries = 300
 
+// Deprecated: Use the new analytics service instead
 func IsTelemetryEnabled() bool {
 	if testing.Testing() {
 		return false
@@ -48,8 +51,10 @@ const SpanSearchScopeRoot = "isroot"
 const SpanSearchScopeEntryPoint = "isentrypoint"
 const OrderBySpanCount = "span_count"
 
+// Deprecated: Use the new statsreporter service instead
 var TELEMETRY_HEART_BEAT_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_HEART_BEAT_DURATION_MINUTES", 720)
 
+// Deprecated: Use the new statsreporter service instead
 var TELEMETRY_ACTIVE_USER_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_ACTIVE_USER_DURATION_MINUTES", 360)
 
 // Deprecated: Use the new emailing service instead
