@@ -150,9 +150,9 @@ func NewSharderProviderFactories() factory.NamedMap[factory.ProviderFactory[shar
 	)
 }
 
-func NewStatsReporterProviderFactories(collectors []statsreporter.StatsCollector, orgGetter organization.Getter, analytics analytics.Analytics, build version.Build) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
+func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, analytics analytics.Analytics, build version.Build) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
 	return factory.MustNewNamedMap(
-		analyticsstatsreporter.NewFactory(collectors, orgGetter, analytics, build),
+		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, analytics, build),
 		noopstatsreporter.NewFactory(),
 	)
 }
