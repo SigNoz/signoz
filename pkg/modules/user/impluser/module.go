@@ -139,8 +139,11 @@ func (m *Module) CreateUserWithPassword(ctx context.Context, user *types.User, p
 		analyticstypes.Identify{
 			UserId: user.ID.String(),
 			Traits: analyticstypes.
-				NewTraitsFromMap(map[string]any{analyticstypes.KeyDisplayName: user.DisplayName}).
-				SetEmail(user.Email),
+				NewTraits().
+				SetName(user.DisplayName).
+				SetEmail(user.Email).
+				Set("role", user.Role).
+				SetCreatedAt(user.CreatedAt),
 		},
 		analyticstypes.Group{
 			UserId:  user.ID.String(),
@@ -149,6 +152,11 @@ func (m *Module) CreateUserWithPassword(ctx context.Context, user *types.User, p
 		analyticstypes.Track{
 			UserId: user.ID.String(),
 			Event:  "User Created",
+			Properties: analyticstypes.NewPropertiesFromMap(map[string]any{
+				"role":  user.Role,
+				"email": user.Email,
+				"name":  user.DisplayName,
+			}),
 			Context: &analyticstypes.Context{
 				Extra: map[string]interface{}{
 					analyticstypes.KeyGroupID: user.OrgID,
@@ -169,8 +177,11 @@ func (m *Module) CreateUser(ctx context.Context, user *types.User) error {
 		analyticstypes.Identify{
 			UserId: user.ID.String(),
 			Traits: analyticstypes.
-				NewTraitsFromMap(map[string]any{analyticstypes.KeyDisplayName: user.DisplayName}).
-				SetEmail(user.Email),
+				NewTraits().
+				SetName(user.DisplayName).
+				SetEmail(user.Email).
+				Set("role", user.Role).
+				SetCreatedAt(user.CreatedAt),
 		},
 		analyticstypes.Group{
 			UserId:  user.ID.String(),
@@ -179,6 +190,11 @@ func (m *Module) CreateUser(ctx context.Context, user *types.User) error {
 		analyticstypes.Track{
 			UserId: user.ID.String(),
 			Event:  "User Created",
+			Properties: analyticstypes.NewPropertiesFromMap(map[string]any{
+				"role":  user.Role,
+				"email": user.Email,
+				"name":  user.DisplayName,
+			}),
 			Context: &analyticstypes.Context{
 				Extra: map[string]interface{}{
 					analyticstypes.KeyGroupID: user.OrgID,

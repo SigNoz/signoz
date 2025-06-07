@@ -133,15 +133,17 @@ func (provider *provider) Report(ctx context.Context) error {
 				GroupId: org.ID.String(),
 				Traits: analyticstypes.
 					NewTraitsFromMap(stats).
-					SetName(org.Name).
-					Set(analyticstypes.KeyDisplayName, org.DisplayName),
+					SetName(org.DisplayName).
+					SetUsername(org.Name).
+					SetCreatedAt(org.CreatedAt),
 			},
 			analyticstypes.Identify{
 				UserId: org.ID.String(),
 				Traits: analyticstypes.
 					NewTraits().
-					SetName(org.Name).
-					Set(analyticstypes.KeyDisplayName, org.DisplayName),
+					SetName(org.DisplayName).
+					SetUsername(org.Name).
+					SetCreatedAt(org.CreatedAt),
 			},
 		)
 	}
