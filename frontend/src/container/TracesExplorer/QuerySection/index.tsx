@@ -1,19 +1,15 @@
-import { Button } from 'antd';
+import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOrderBy from 'container/ExplorerOrderBy';
-import { QueryBuilder } from 'container/QueryBuilder';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo, useCallback, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { ButtonWrapper, Container } from './styles';
+import { Container } from './styles';
 
 function QuerySection(): JSX.Element {
-	const { handleRunQuery } = useQueryBuilder();
-
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
@@ -45,22 +41,16 @@ function QuerySection(): JSX.Element {
 
 	return (
 		<Container>
-			<QueryBuilder
-				panelType={panelTypes}
-				config={{
-					queryVariant: 'static',
-					initialDataSource: DataSource.TRACES,
-				}}
-				filterConfigs={filterConfigs}
+			<QueryBuilderV2
+				isListViewPanel={panelTypes === PANEL_TYPES.LIST}
+				config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
 				queryComponents={queryComponents}
-				version="v3" // setting this to v3 as we this is rendered in logs explorer
-				actions={
-					<ButtonWrapper>
-						<Button onClick={(): void => handleRunQuery()} type="primary">
-							Run Query
-						</Button>
-					</ButtonWrapper>
+				panelType={panelTypes}
+				filterConfigs={filterConfigs}
+				showOnlyWhereClause={
+					panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE
 				}
+				version="v3" // setting this to v3 as we this is rendered in logs explorer
 			/>
 		</Container>
 	);

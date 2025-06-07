@@ -23,7 +23,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, isEqual } from 'lodash-es';
 import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -358,13 +358,23 @@ export const useQueryOperations: UseQueryOperations = ({
 				panelType: panelType || PANEL_TYPES.TIME_SERIES,
 			});
 
-			if (JSON.stringify(operators) === JSON.stringify(initialOperators)) return;
-
-			setOperators(initialOperators);
+			if (
+				!operators ||
+				operators.length === 0 ||
+				!isEqual(operators, initialOperators)
+			) {
+				setOperators(initialOperators);
+			}
 		}
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dataSource, initialDataSource, panelType, operators, entityVersion]);
+	}, [
+		dataSource,
+		initialDataSource,
+		panelType,
+		entityVersion,
+		query,
+		operators,
+		handleMetricAggregateAtributeTypes,
+	]);
 
 	useEffect(() => {
 		const additionalFilters = getNewListOfAdditionalFilters(dataSource, true);
