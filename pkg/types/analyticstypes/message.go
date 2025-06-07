@@ -4,6 +4,10 @@ import (
 	segment "github.com/segmentio/analytics-go/v3"
 )
 
+const (
+	ContextKeyGroupID string = "groupId"
+)
+
 type Message = segment.Message
 type Group = segment.Group
 type Identify = segment.Identify
@@ -18,4 +22,22 @@ func NewTraits() Traits {
 
 func NewProperties() Properties {
 	return segment.NewProperties()
+}
+
+func NewPropertiesFromMap(m map[string]any) Properties {
+	properties := NewProperties()
+	for k, v := range m {
+		properties.Set(k, v)
+	}
+
+	return properties
+}
+
+func NewTraitsFromMap(m map[string]any) Traits {
+	traits := NewTraits()
+	for k, v := range m {
+		traits.Set(k, v)
+	}
+
+	return traits
 }

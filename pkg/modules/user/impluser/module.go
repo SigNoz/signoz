@@ -575,3 +575,12 @@ func (m *Module) Register(ctx context.Context, req *types.PostableRegisterOrgAnd
 
 	return user, nil
 }
+
+func (m *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	count, err := m.store.CountByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]any{"user.count": count}, nil
+}

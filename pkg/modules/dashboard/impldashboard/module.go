@@ -207,3 +207,12 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 
 	return result, nil
 }
+
+func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	dashboards, err := module.store.List(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewStatsFromStorableDashboards(dashboards), nil
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -22,6 +23,8 @@ type Module interface {
 	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
 	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
+
+	statsreporter.StatsCollector
 }
 
 type Handler interface {
