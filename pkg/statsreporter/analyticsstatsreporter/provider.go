@@ -120,7 +120,6 @@ func (provider *provider) Report(ctx context.Context) error {
 					Extra: map[string]interface{}{
 						analyticstypes.ContextKeyGroupID: org.ID.String(),
 					},
-					Traits: analyticstypes.NewTraitsFromMap(stats),
 				},
 			},
 			analyticstypes.Group{
