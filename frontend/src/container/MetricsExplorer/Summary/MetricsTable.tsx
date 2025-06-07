@@ -12,7 +12,7 @@ import { Info } from 'lucide-react';
 import { useCallback } from 'react';
 
 import { MetricsListItemRowData, MetricsTableProps } from './types';
-import { metricsTableColumns } from './utils';
+import { getMetricsTableColumns } from './utils';
 
 function MetricsTable({
 	isLoading,
@@ -24,6 +24,7 @@ function MetricsTable({
 	setOrderBy,
 	totalCount,
 	openMetricDetails,
+	queryFilters,
 }: MetricsTableProps): JSX.Element {
 	const handleTableChange: TableProps<MetricsListItemRowData>['onChange'] = useCallback(
 		(
@@ -74,7 +75,7 @@ function MetricsTable({
 					),
 				}}
 				dataSource={data}
-				columns={metricsTableColumns}
+				columns={getMetricsTableColumns(queryFilters)}
 				locale={{
 					emptyText: isLoading ? null : (
 						<div

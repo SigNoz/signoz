@@ -15,6 +15,7 @@ export interface MetricsTableProps {
 	setOrderBy: Dispatch<SetStateAction<OrderByPayload>>;
 	totalCount: number;
 	openMetricDetails: (metricName: string) => void;
+	queryFilters: TagFilter;
 }
 
 export interface MetricsSearchProps {
