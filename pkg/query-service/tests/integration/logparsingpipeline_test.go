@@ -23,7 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
-	opampModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
@@ -34,7 +34,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -46,8 +48,12 @@ import (
 )
 
 func TestLogPipelinesLifecycle(t *testing.T) {
-	testbed := NewLogPipelinesTestBed(t, nil)
+	agentID := valuer.GenerateUUID().String()
+	testbed := NewLogPipelinesTestBed(t, nil, agentID)
 	require := require.New(t)
+
+	orgID, err := utils.GetTestOrgId(testbed.store)
+	require.Nil(err)
 
 	getPipelinesResp := testbed.GetPipelinesFromQS()
 	require.Equal(
@@ -119,7 +125,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, createPipelinesResp,
 	)
 	testbed.assertPipelinesSentToOpampClient(createPipelinesResp.Pipelines)
-	testbed.assertNewAgentGetsPipelinesOnConnection(createPipelinesResp.Pipelines)
+	testbed.assertNewAgentGetsPipelinesOnConnection(orgID, createPipelinesResp.Pipelines)
 
 	// Should be able to get the configured pipelines.
 	getPipelinesResp = testbed.GetPipelinesFromQS()
@@ -133,19 +139,19 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		"pipelines config history should not be empty after 1st configuration",
 	)
 	require.Equal(
-		agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
+		opamptypes.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
 		"pipelines deployment should be in progress after 1st configuration",
 	)
 
 	// Deployment status should get updated after acknowledgement from opamp client
-	testbed.simulateOpampClientAcknowledgementForLatestConfig()
+	testbed.simulateOpampClientAcknowledgementForLatestConfig(agentID)
 
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 	assertPipelinesResponseMatchesPostedPipelines(
 		t, postablePipelines, getPipelinesResp,
 	)
 	require.Equal(
-		agentConf.Deployed,
+		opamptypes.Deployed,
 		getPipelinesResp.History[0].DeployStatus,
 		"pipeline deployment should be complete after acknowledgment from opamp client",
 	)
@@ -157,7 +163,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, updatePipelinesResp,
 	)
 	testbed.assertPipelinesSentToOpampClient(updatePipelinesResp.Pipelines)
-	testbed.assertNewAgentGetsPipelinesOnConnection(updatePipelinesResp.Pipelines)
+	testbed.assertNewAgentGetsPipelinesOnConnection(orgID, updatePipelinesResp.Pipelines)
 
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 	require.Equal(
@@ -165,19 +171,19 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		"there should be 2 history entries after posting pipelines config for the 2nd time",
 	)
 	require.Equal(
-		agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
+		opamptypes.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
 		"deployment should be in progress for latest pipeline config",
 	)
 
 	// Deployment status should get updated again on receiving msg from client.
-	testbed.simulateOpampClientAcknowledgementForLatestConfig()
+	testbed.simulateOpampClientAcknowledgementForLatestConfig(agentID)
 
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 	assertPipelinesResponseMatchesPostedPipelines(
 		t, postablePipelines, getPipelinesResp,
 	)
 	require.Equal(
-		agentConf.Deployed,
+		opamptypes.Deployed,
 		getPipelinesResp.History[0].DeployStatus,
 		"deployment for latest pipeline config should be complete after acknowledgment from opamp client",
 	)
@@ -185,7 +191,8 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 
 func TestLogPipelinesHistory(t *testing.T) {
 	require := require.New(t)
-	testbed := NewLogPipelinesTestBed(t, nil)
+	agentID := valuer.GenerateUUID().String()
+	testbed := NewLogPipelinesTestBed(t, nil, agentID)
 
 	// Only the latest config version can be "IN_PROGRESS",
 	// other incomplete deployments should have status "UNKNOWN"
@@ -231,7 +238,7 @@ func TestLogPipelinesHistory(t *testing.T) {
 	testbed.PostPipelinesToQS(postablePipelines)
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 	require.Equal(1, len(getPipelinesResp.History))
-	require.Equal(agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
+	require.Equal(opamptypes.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
 
 	postablePipelines.Pipelines[0].Config = append(
 		postablePipelines.Pipelines[0].Config,
@@ -250,8 +257,8 @@ func TestLogPipelinesHistory(t *testing.T) {
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 
 	require.Equal(2, len(getPipelinesResp.History))
-	require.Equal(agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
-	require.Equal(agentConf.DeployStatusUnknown, getPipelinesResp.History[1].DeployStatus)
+	require.Equal(opamptypes.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
+	require.Equal(opamptypes.DeployStatusUnknown, getPipelinesResp.History[1].DeployStatus)
 }
 
 func TestLogPipelinesValidation(t *testing.T) {
@@ -388,7 +395,8 @@ func TestLogPipelinesValidation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			testbed := NewLogPipelinesTestBed(t, nil)
+			agentID := valuer.GenerateUUID().String()
+			testbed := NewLogPipelinesTestBed(t, nil, agentID)
 			testbed.PostPipelinesToQSExpectingStatusCode(
 				pipelinetypes.PostablePipelines{
 					Pipelines: []pipelinetypes.PostablePipeline{tc.Pipeline},
@@ -459,6 +467,7 @@ type LogPipelinesTestBed struct {
 	agentConfMgr    *agentConf.Manager
 	opampServer     *opamp.Server
 	opampClientConn *opamp.MockOpAmpConnection
+	store           sqlstore.SQLStore
 	userModule      user.Module
 }
 
@@ -467,9 +476,6 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	if sqlStore == nil {
 		sqlStore = utils.NewQueryServiceDBForTests(t)
 	}
-
-	// create test org
-	// utils.CreateTestOrg(t, sqlStore)
 
 	ic, err := integrations.NewController(sqlStore)
 	if err != nil {
@@ -506,17 +512,18 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
+	// organizationModule := implorganization.NewModule(implorganization.NewStore(store))
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
 
 	// Mock an available opamp agent
-	testDB, err := opampModel.InitDB(sqlStore.SQLxDB())
+	// testDB, err := opampModel.InitDB(sqlStore.SQLxDB())
 	require.Nil(t, err, "failed to init opamp model")
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB: testDB,
+		Store: sqlStore,
 		AgentFeatures: []agentConf.AgentFeature{
 			apiHandler.LogsParsingPipelineController,
 		}})
@@ -527,15 +534,21 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		testUser:     user,
 		apiHandler:   apiHandler,
 		agentConfMgr: agentConfMgr,
+		store:        sqlStore,
 		userModule:   modules.User,
 	}
 }
 
-func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipelinesTestBed {
+func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore, agentID string) *LogPipelinesTestBed {
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
+	orgID, err := utils.GetTestOrgId(testbed.store)
+	require.Nil(t, err)
+
+	model.InitDB(testbed.store)
+
 	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
-	err := opampServer.Start(opamp.GetAvailableLocalAddress())
+	err = opampServer.Start(opamp.GetAvailableLocalAddress())
 	require.Nil(t, err, "failed to start opamp server")
 
 	t.Cleanup(func() {
@@ -546,9 +559,19 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipeline
 	opampServer.OnMessage(
 		opampClientConnection,
 		&protobufs.AgentToServer{
-			InstanceUid: "test",
+			InstanceUid: agentID,
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
+			},
+			AgentDescription: &protobufs.AgentDescription{
+				IdentifyingAttributes: []*protobufs.KeyValue{
+					{
+						Key: "orgId",
+						Value: &protobufs.AnyValue{
+							Value: &protobufs.AnyValue_StringValue{StringValue: orgID},
+						},
+					},
+				},
 			},
 		},
 	)
@@ -741,10 +764,10 @@ func assertPipelinesRecommendedInRemoteConfig(
 	}
 }
 
-func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig() {
+func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig(agentID string) {
 	lastMsg := tb.opampClientConn.LatestMsgFromServer()
 	tb.opampServer.OnMessage(tb.opampClientConn, &protobufs.AgentToServer{
-		InstanceUid: "test",
+		InstanceUid: agentID,
 		EffectiveConfig: &protobufs.EffectiveConfig{
 			ConfigMap: lastMsg.RemoteConfig.Config,
 		},
@@ -756,6 +779,7 @@ func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig
 }
 
 func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
+	orgID string,
 	pipelines []pipelinetypes.GettablePipeline,
 ) {
 	newAgentConn := &opamp.MockOpAmpConnection{}
@@ -765,6 +789,16 @@ func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
 			InstanceUid: uuid.NewString(),
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
+			},
+			AgentDescription: &protobufs.AgentDescription{
+				IdentifyingAttributes: []*protobufs.KeyValue{
+					{
+						Key: "orgId",
+						Value: &protobufs.AnyValue{
+							Value: &protobufs.AnyValue_StringValue{StringValue: orgID},
+						},
+					},
+				},
 			},
 		},
 	)
