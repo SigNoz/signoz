@@ -1,13 +1,11 @@
 import './FunnelStep.styles.scss';
 
-import { Button, Divider, Dropdown, Form, Space, Switch, Tooltip } from 'antd';
-import { MenuProps } from 'antd/lib';
+import { Button, Divider, Form, Switch, Tooltip } from 'antd';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
-import { ChevronDown, GripVertical, HardHat, PencilLine } from 'lucide-react';
-import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
+import { HardHat, PencilLine } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo, useState } from 'react';
 import { FunnelStepData } from 'types/api/traceFunnels';
@@ -37,16 +35,17 @@ function FunnelStep({
 		false,
 	);
 
-	const latencyPointerItems: MenuProps['items'] = LatencyPointers.map(
-		(option) => ({
-			key: option.value,
-			label: option.key,
-			style:
-				option.value === stepData.latency_pointer
-					? { backgroundColor: 'var(--bg-slate-100)' }
-					: {},
-		}),
-	);
+	// temporarily hide latency pointer, as it breaks some edge cases (ref: https://signoz-team.slack.com/archives/C089MNX4Y90/p1748600682066499?thread_ts=1748599673.171759&cid=C089MNX4Y90)
+	// const latencyPointerItems: MenuProps['items'] = LatencyPointers.map(
+	// 	(option) => ({
+	// 		key: option.value,
+	// 		label: option.key,
+	// 		style:
+	// 			option.value === stepData.latency_pointer
+	// 				? { backgroundColor: 'var(--bg-slate-100)' }
+	// 				: {},
+	// 	}),
+	// );
 
 	const updatedCurrentQuery = useMemo(
 		() => ({
@@ -75,11 +74,17 @@ function FunnelStep({
 			<Form form={form}>
 				<div className="funnel-step__header">
 					<div className="funnel-step-details">
-						{stepData.name ? (
-							<div className="funnel-step-details__title">{stepData.name}</div>
-						) : (
-							<div className="funnel-step-details__title">Step {index + 1}</div>
-						)}
+						<div className="funnel-step-details__title-container">
+							{/* TODO(shaheer): uncomment after adding support for dragging the steps */}
+							{/* <div className="drag-icon">
+								<GripVertical size={14} color="var(--bg-slate-200)" />
+							</div> */}
+							{stepData.name ? (
+								<div className="funnel-step-details__title">{stepData.name}</div>
+							) : (
+								<div className="funnel-step-details__title">Step {index + 1}</div>
+							)}
+						</div>
 						{!!stepData.description && (
 							<div className="funnel-step-details__description">
 								{stepData.description}
@@ -113,9 +118,6 @@ function FunnelStep({
 					</div>
 				</div>
 				<div className="funnel-step__content">
-					<div className="drag-icon">
-						<GripVertical size={14} color="var(--bg-slate-200)" />
-					</div>
 					<div className="filters">
 						<div className="filters__service-and-span">
 							<div className="service">
@@ -176,7 +178,8 @@ function FunnelStep({
 						/>
 						<div className="error__label">Errors</div>
 					</div>
-					<div className="latency-pointer">
+					{/* temporarily hide latency pointer, as it breaks some edge cases (ref: https://signoz-team.slack.com/archives/C089MNX4Y90/p1748600682066499?thread_ts=1748599673.171759&cid=C089MNX4Y90) */}
+					{/* <div className="latency-pointer">
 						<div className="latency-pointer__label">Latency pointer</div>
 						<Dropdown
 							menu={{
@@ -197,7 +200,7 @@ function FunnelStep({
 								<ChevronDown size={14} color="var(--bg-vanilla-400)" />
 							</Space>
 						</Dropdown>
-					</div>
+					</div> */}
 				</div>
 			</Form>
 		</div>

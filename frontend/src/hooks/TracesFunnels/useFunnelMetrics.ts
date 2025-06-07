@@ -49,11 +49,7 @@ export function useFunnelMetrics({
 			},
 			{
 				title: `P99 Latency`,
-				value: getYAxisFormattedValue(
-					// TODO(shaheer): remove p99_latency once we have support for latency
-					(sourceData.latency ?? sourceData.p99_latency).toString(),
-					'ms',
-				),
+				value: getYAxisFormattedValue(sourceData.latency.toString(), 'ms'),
 			},
 		];
 	}, [overviewData?.payload?.data]);
@@ -95,7 +91,10 @@ export function useFunnelStepsMetrics({
 	} = useFunnelStepsOverview(funnelId, payload);
 
 	const latencyType = useMemo(
-		() => (stepStart ? steps[stepStart]?.latency_type : LatencyOptions.P99),
+		() =>
+			stepStart
+				? steps[stepStart]?.latency_type ?? LatencyOptions.P99
+				: LatencyOptions.P99,
 		[stepStart, steps],
 	);
 
@@ -117,10 +116,9 @@ export function useFunnelStepsMetrics({
 				),
 			},
 			{
-				title: `${latencyType?.toUpperCase()} Latency`,
+				title: `${latencyType.toUpperCase()} Latency`,
 				value: getYAxisFormattedValue(
-					// TODO(shaheer): remove p99_latency once we have support for latency
-					((sourceData.latency ?? sourceData.p99_latency) * 1_000_000).toString(),
+					(sourceData.latency * 1_000_000).toString(),
 					'ns',
 				),
 			},

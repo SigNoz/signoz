@@ -36,8 +36,14 @@ const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function useFunnelConfiguration({
 	funnel,
+	disableAutoSave = false,
+	triggerAutoSave = false,
+	showNotifications = false,
 }: {
 	funnel: FunnelData;
+	disableAutoSave?: boolean;
+	triggerAutoSave?: boolean;
+	showNotifications?: boolean;
 }): UseFunnelConfiguration {
 	const { notifications } = useNotifications();
 	const {
@@ -45,6 +51,7 @@ export default function useFunnelConfiguration({
 		initialSteps,
 		hasIncompleteStepFields,
 		handleRestoreSteps,
+		handleRunFunnel,
 	} = useFunnelContext();
 
 	// State management
@@ -82,10 +89,20 @@ export default function useFunnelConfiguration({
 					step.service_name !== nextStep.service_name ||
 					step.span_name !== nextStep.span_name ||
 					!isEqual(step.filters, nextStep.filters) ||
-					step.has_errors !== nextStep.has_errors
+					step.has_errors !== nextStep.has_errors ||
+					step.latency_pointer !== nextStep.latency_pointer
 				);
 			});
 		},
+		[],
+	);
+
+	const hasFunnelLatencyTypeChanged = useCallback(
+		(prevSteps: FunnelStepData[], nextSteps: FunnelStepData[]): boolean =>
+			prevSteps.some((step, index) => {
+				const nextStep = nextSteps[index];
+				return step.latency_type !== nextStep.latency_type;
+			}),
 		[],
 	);
 
@@ -106,8 +123,20 @@ export default function useFunnelConfiguration({
 		() => [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnel.funnel_id, selectedTime],
 		[funnel.funnel_id, selectedTime],
 	);
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		if (hasStepsChanged() && !hasIncompleteStepFields) {
+		// Determine if we should save based on the mode
+		let shouldSave = false;
+
+		if (disableAutoSave) {
+			// Manual save mode: only save when explicitly triggered
+			shouldSave = triggerAutoSave;
+		} else {
+			// Auto-save mode: save when steps have changed and no incomplete fields
+			shouldSave = hasStepsChanged() && !hasIncompleteStepFields;
+		}
+
+		if (shouldSave && !isEqual(debouncedSteps, lastValidatedSteps)) {
 			updateStepsMutation.mutate(getUpdatePayload(), {
 				onSuccess: (data) => {
 					const updatedFunnelSteps = data?.payload?.steps;
@@ -116,13 +145,16 @@ export default function useFunnelConfiguration({
 
 					queryClient.setQueryData(
 						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.funnel_id],
-						(oldData: any) => ({
-							...oldData,
-							payload: {
-								...oldData.payload,
-								steps: updatedFunnelSteps,
-							},
-						}),
+						(oldData: any) => {
+							if (!oldData?.payload) return oldData;
+							return {
+								...oldData,
+								payload: {
+									...oldData.payload,
+									steps: updatedFunnelSteps,
+								},
+							};
+						},
 					);
 
 					lastSavedStepsStateRef.current = updatedFunnelSteps;
@@ -131,17 +163,29 @@ export default function useFunnelConfiguration({
 						(step) => step.service_name === '' || step.span_name === '',
 					);
 
-					// Only validate if service_name or span_name changed
-					if (
+					if (hasFunnelLatencyTypeChanged(lastValidatedSteps, debouncedSteps)) {
+						handleRunFunnel();
+						setLastValidatedSteps(debouncedSteps);
+					}
+					// Only validate if funnel steps definitions
+					else if (
 						!hasIncompleteStepFields &&
 						hasFunnelStepDefinitionsChanged(lastValidatedSteps, debouncedSteps)
 					) {
 						queryClient.refetchQueries(validateStepsQueryKey);
 						setLastValidatedSteps(debouncedSteps);
 					}
+
+					// Show success notification only when requested
+					if (showNotifications) {
+						notifications.success({
+							message: 'Success',
+							description: 'Funnel configuration updated successfully',
+						});
+					}
 				},
 
-				onError: () => {
+				onError: (error: any) => {
 					handleRestoreSteps(lastSavedStepsStateRef.current);
 					queryClient.setQueryData(
 						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.funnel_id],
@@ -153,6 +197,16 @@ export default function useFunnelConfiguration({
 							},
 						}),
 					);
+
+					// Show error notification only when requested
+					if (showNotifications) {
+						notifications.error({
+							message: 'Failed to update funnel',
+							description:
+								error?.message ||
+								'An error occurred while updating the funnel configuration',
+						});
+					}
 				},
 			});
 		}
@@ -165,6 +219,9 @@ export default function useFunnelConfiguration({
 		lastValidatedSteps,
 		queryClient,
 		validateStepsQueryKey,
+		triggerAutoSave,
+		showNotifications,
+		disableAutoSave,
 	]);
 
 	return {

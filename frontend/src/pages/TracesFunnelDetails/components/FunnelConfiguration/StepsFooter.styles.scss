@@ -48,6 +48,13 @@
 		&--run {
 			background-color: var(--bg-robin-500);
 		}
+		&--updating {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			color: var(--bg-vanilla-400);
+			font-size: 12px;
+		}
 	}
 }
 

@@ -3,7 +3,7 @@ import './FunnelResults.styles.scss';
 import Spinner from 'components/Spinner';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useQueryClient } from 'react-query';
+import { useIsMutating } from 'react-query';
 
 import EmptyFunnelResults from './EmptyFunnelResults';
 import FunnelGraph from './FunnelGraph';
@@ -18,14 +18,11 @@ function FunnelResults(): JSX.Element {
 		hasAllEmptyStepFields,
 		hasFunnelBeenExecuted,
 		funnelId,
-		selectedTime,
 	} = useFunnelContext();
-	const queryClient = useQueryClient();
 
-	const validateQueryData = queryClient.getQueryData([
-		REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS,
+	const isFunnelUpdateMutating = useIsMutating([
+		REACT_QUERY_KEY.UPDATE_FUNNEL_STEPS,
 		funnelId,
-		selectedTime,
 	]);
 
 	if (hasAllEmptyStepFields) return <EmptyFunnelResults />;
@@ -38,7 +35,7 @@ function FunnelResults(): JSX.Element {
 			/>
 		);
 
-	if (isValidateStepsLoading || validateQueryData === 'pending') {
+	if (isValidateStepsLoading || isFunnelUpdateMutating) {
 		return <Spinner size="large" />;
 	}
 

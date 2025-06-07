@@ -2,8 +2,13 @@
 	&__steps-wrapper {
 		display: flex;
 		flex-direction: column;
-		justify-content: space-between;
-		height: 100%;
+		justify-content: flex-start;
+		&.funnel-details-page {
+			height: calc(
+				100vh - 170px
+			); // 64px bottom bar + 61px configuration header + 45px page navbar
+			overflow: auto;
+		}
 	}
 
 	&__header {
@@ -38,13 +43,26 @@
 			}
 		}
 	}
+	&__description-wrapper {
+		padding: 16px 16px 0 16px;
+		.funnel {
+			&-title {
+				color: var(--bg-vanilla-500);
+				font-size: 16px;
+				font-weight: 500;
+				line-height: 24px; /* 150% */
+				letter-spacing: -0.08px;
+			}
+			&-description {
+				color: var(--bg-vanilla-400);
+				font-size: 12px;
+				line-height: 18px; /* 150% */
+				letter-spacing: -0.06px;
+			}
+		}
+	}
 
 	&__description {
-		padding: 16px 16px 0 16px;
-		color: var(--bg-vanilla-400);
-		font-size: 12px;
-		line-height: 18px; /* 150% */
-		letter-spacing: -0.06px;
 	}
 
 	.funnel-item__action-icon {
