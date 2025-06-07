@@ -24,7 +24,6 @@ export const QueryV2 = memo(function QueryV2({
 	filterConfigs,
 	isListViewPanel = false,
 	version,
-	showSpanScopeSelector = false,
 	showOnlyWhereClause = false,
 }: QueryProps): JSX.Element {
 	const { cloneQuery, panelType } = useQueryBuilder();
@@ -67,6 +66,10 @@ export const QueryV2 = memo(function QueryV2({
 				panelType === PANEL_TYPES.VALUE),
 		[dataSource, panelType],
 	);
+
+	const showSpanScopeSelector = useMemo(() => dataSource === DataSource.TRACES, [
+		dataSource,
+	]);
 
 	return (
 		<div className={cx('query-v2', { 'where-clause-view': showOnlyWhereClause })}>
@@ -147,10 +150,20 @@ export const QueryV2 = memo(function QueryV2({
 						</div>
 					</div>
 
-					{!showOnlyWhereClause && <QueryAggregation />}
+					{!showOnlyWhereClause && (
+						<QueryAggregation
+							dataSource={dataSource}
+							panelType={panelType || undefined}
+						/>
+					)}
 
 					{!showOnlyWhereClause && dataSource === DataSource.METRICS && (
-						<MetricsAggregateSection query={query} index={0} version="v4" />
+						<MetricsAggregateSection
+							panelType={panelType}
+							query={query}
+							index={0}
+							version="v4"
+						/>
 					)}
 
 					{!showOnlyWhereClause && (
@@ -159,6 +172,7 @@ export const QueryV2 = memo(function QueryV2({
 							version="v3"
 							isListViewPanel={false}
 							showReduceTo={showReduceTo}
+							panelType={panelType}
 						/>
 					)}
 				</div>

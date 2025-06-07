@@ -2,12 +2,13 @@ import './QueryAddOns.styles.scss';
 
 import { Button, Radio, RadioChangeEvent } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter';
 import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { BarChart2, ScrollText, X } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -19,37 +20,46 @@ interface AddOn {
 	key: string;
 }
 
-const ADD_ONS: Record<string, AddOn> = {
-	GROUP_BY: {
+const ADD_ONS_KEYS = {
+	GROUP_BY: 'group_by',
+	HAVING: 'having',
+	ORDER_BY: 'order_by',
+	LIMIT: 'limit',
+	LEGEND_FORMAT: 'legend_format',
+};
+
+const ADD_ONS = [
+	{
 		icon: <BarChart2 size={14} />,
 		label: 'Group By',
 		key: 'group_by',
 	},
-	HAVING: {
+	{
 		icon: <ScrollText size={14} />,
 		label: 'Having',
 		key: 'having',
 	},
-	ORDER_BY: {
+	{
 		icon: <ScrollText size={14} />,
 		label: 'Order By',
 		key: 'order_by',
 	},
-	LIMIT: {
+	{
 		icon: <ScrollText size={14} />,
 		label: 'Limit',
 		key: 'limit',
 	},
-	LEGEND_FORMAT: {
+	{
 		icon: <ScrollText size={14} />,
 		label: 'Legend format',
 		key: 'legend_format',
 	},
-	REDUCE_TO: {
-		icon: <ScrollText size={14} />,
-		label: 'Reduce to',
-		key: 'reduce_to',
-	},
+];
+
+const REDUCE_TO = {
+	icon: <ScrollText size={14} />,
+	label: 'Reduce to',
+	key: 'reduce_to',
 };
 
 function QueryAddOns({
@@ -57,12 +67,16 @@ function QueryAddOns({
 	version,
 	isListViewPanel,
 	showReduceTo,
+	panelType,
 }: {
 	query: IBuilderQuery;
 	version: string;
 	isListViewPanel: boolean;
 	showReduceTo: boolean;
+	panelType: PANEL_TYPES | null;
 }): JSX.Element {
+	const [addOns, setAddOns] = useState<AddOn[]>(ADD_ONS);
+
 	const [selectedViews, setSelectedViews] = useState<AddOn[]>([]);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -70,6 +84,24 @@ function QueryAddOns({
 		query,
 		entityVersion: '',
 	});
+
+	useEffect(() => {
+		if (panelType === PANEL_TYPES.VALUE) {
+			// Filter out all add-ons except legend format
+			setAddOns((prevAddOns) =>
+				prevAddOns.filter((addOn) => addOn.key === ADD_ONS_KEYS.LEGEND_FORMAT),
+			);
+		} else {
+			setAddOns(Object.values(ADD_ONS));
+		}
+
+		// add reduce to if showReduceTo is true
+		if (showReduceTo) {
+			setAddOns((prevAddOns) => [...prevAddOns, REDUCE_TO]);
+		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [panelType]);
 
 	const handleOptionClick = (e: RadioChangeEvent): void => {
 		if (selectedViews.find((view) => view.key === e.target.value.key)) {
@@ -222,24 +254,22 @@ function QueryAddOns({
 					onChange={handleOptionClick}
 					value={selectedViews}
 				>
-					{Object.values(ADD_ONS)
-						.filter((addOn) => addOn.key !== 'reduce_to' || showReduceTo)
-						.map((addOn) => (
-							<Radio.Button
-								key={addOn.label}
-								className={
-									selectedViews.find((view) => view.key === addOn.key)
-										? 'selected-view tab'
-										: 'tab'
-								}
-								value={addOn}
-							>
-								<div className="add-on-tab-title">
-									{addOn.icon}
-									{addOn.label}
-								</div>
-							</Radio.Button>
-						))}
+					{addOns.map((addOn) => (
+						<Radio.Button
+							key={addOn.label}
+							className={
+								selectedViews.find((view) => view.key === addOn.key)
+									? 'selected-view tab'
+									: 'tab'
+							}
+							value={addOn}
+						>
+							<div className="add-on-tab-title">
+								{addOn.icon}
+								{addOn.label}
+							</div>
+						</Radio.Button>
+					))}
 				</Radio.Group>
 			</div>
 		</div>
