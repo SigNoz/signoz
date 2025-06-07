@@ -12,10 +12,10 @@ import (
 type provider struct {
 	settings factory.ScopedProviderSettings
 	client   segment.Client
-	startC   chan struct{}
+	stopC    chan struct{}
 }
 
-func NewProviderFactory() factory.ProviderFactory[analytics.Analytics, analytics.Config] {
+func NewFactory() factory.ProviderFactory[analytics.Analytics, analytics.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("segment"), New)
 }
 
@@ -24,13 +24,13 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	return &provider{
 		settings: settings,
-		client:   segment.New(config.Key),
-		startC:   make(chan struct{}),
+		client:   segment.New(config.Segment.Key),
+		stopC:    make(chan struct{}),
 	}, nil
 }
 
 func (provider *provider) Start(_ context.Context) error {
-	<-provider.startC
+	<-provider.stopC
 	return nil
 }
 
@@ -43,7 +43,11 @@ func (provider *provider) Send(ctx context.Context, messages ...analyticstypes.M
 	}
 }
 
-func (provider *provider) Stop(_ context.Context) error {
-	close(provider.startC)
+func (provider *provider) Stop(ctx context.Context) error {
+	if err := provider.client.Close(); err != nil {
+		provider.settings.Logger().WarnContext(ctx, "unable to close segment client", "err", err)
+	}
+
+	close(provider.stopC)
 	return nil
 }

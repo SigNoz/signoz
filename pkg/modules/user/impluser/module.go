@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -17,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/analyticstypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -29,10 +31,11 @@ type Module struct {
 	emailing  emailing.Emailing
 	settings  factory.ScopedProviderSettings
 	orgSetter organization.Setter
+	analytics analytics.Analytics
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter) user.Module {
+func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) user.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -40,6 +43,7 @@ func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emai
 		emailing:  emailing,
 		settings:  settings,
 		orgSetter: orgSetter,
+		analytics: analytics,
 	}
 }
 
@@ -126,17 +130,80 @@ func (m *Module) GetInviteByEmailInOrg(ctx context.Context, orgID string, email 
 }
 
 func (m *Module) CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error) {
-
 	user, err := m.store.CreateUserWithPassword(ctx, user, password)
 	if err != nil {
 		return nil, err
 	}
 
+	m.analytics.Send(ctx,
+		analyticstypes.Identify{
+			UserId: user.ID.String(),
+			Traits: analyticstypes.
+				NewTraits().
+				SetName(user.DisplayName).
+				SetEmail(user.Email).
+				Set("role", user.Role).
+				SetCreatedAt(user.CreatedAt),
+		},
+		analyticstypes.Group{
+			UserId:  user.ID.String(),
+			GroupId: user.OrgID,
+		},
+		analyticstypes.Track{
+			UserId: user.ID.String(),
+			Event:  "User Created",
+			Properties: analyticstypes.NewPropertiesFromMap(map[string]any{
+				"role":  user.Role,
+				"email": user.Email,
+				"name":  user.DisplayName,
+			}),
+			Context: &analyticstypes.Context{
+				Extra: map[string]interface{}{
+					analyticstypes.KeyGroupID: user.OrgID,
+				},
+			},
+		},
+	)
+
 	return user, nil
 }
 
 func (m *Module) CreateUser(ctx context.Context, user *types.User) error {
-	return m.store.CreateUser(ctx, user)
+	if err := m.store.CreateUser(ctx, user); err != nil {
+		return err
+	}
+
+	m.analytics.Send(ctx,
+		analyticstypes.Identify{
+			UserId: user.ID.String(),
+			Traits: analyticstypes.
+				NewTraits().
+				SetName(user.DisplayName).
+				SetEmail(user.Email).
+				Set("role", user.Role).
+				SetCreatedAt(user.CreatedAt),
+		},
+		analyticstypes.Group{
+			UserId:  user.ID.String(),
+			GroupId: user.OrgID,
+		},
+		analyticstypes.Track{
+			UserId: user.ID.String(),
+			Event:  "User Created",
+			Properties: analyticstypes.NewPropertiesFromMap(map[string]any{
+				"role":  user.Role,
+				"email": user.Email,
+				"name":  user.DisplayName,
+			}),
+			Context: &analyticstypes.Context{
+				Extra: map[string]interface{}{
+					analyticstypes.KeyGroupID: user.OrgID,
+				},
+			},
+		},
+	)
+
+	return nil
 }
 
 func (m *Module) GetUserByID(ctx context.Context, orgID string, id string) (*types.GettableUser, error) {
@@ -574,4 +641,13 @@ func (m *Module) Register(ctx context.Context, req *types.PostableRegisterOrgAnd
 	}
 
 	return user, nil
+}
+
+func (m *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	count, err := m.store.CountByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]any{"user.count": count}, nil
 }

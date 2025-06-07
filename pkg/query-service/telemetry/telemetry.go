@@ -613,7 +613,6 @@ func (a *Telemetry) SendIdentifyEvent(data map[string]interface{}, userEmail str
 }
 
 func (a *Telemetry) SendGroupEvent(data map[string]interface{}, userEmail string) {
-
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}

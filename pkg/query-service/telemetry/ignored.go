@@ -1,13 +1,5 @@
 package telemetry
 
-func EnabledPaths() map[string]struct{} {
-	enabledPaths := map[string]struct{}{
-		"/api/v1/channels": {},
-	}
-
-	return enabledPaths
-}
-
 func ignoreEvents(event string, attributes map[string]interface{}) bool {
 
 	if event == TELEMETRY_EVENT_ACTIVE_USER {

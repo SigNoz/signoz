@@ -471,3 +471,12 @@ func (provider *provider) SetDefaultConfig(ctx context.Context, orgID string) er
 
 	return provider.configStore.Set(ctx, config)
 }
+
+func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	channels, err := provider.configStore.ListChannels(ctx, orgID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return alertmanagertypes.NewStatsFromChannels(channels), nil
+}

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -65,6 +66,8 @@ type Module interface {
 
 	// Register
 	Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin) (*types.User, error)
+
+	statsreporter.StatsCollector
 }
 
 type Handler interface {
