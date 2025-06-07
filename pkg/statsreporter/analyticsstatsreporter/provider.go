@@ -123,6 +123,11 @@ func (provider *provider) Report(ctx context.Context) error {
 					Traits: analyticstypes.NewTraitsFromMap(stats),
 				},
 			},
+			analyticstypes.Group{
+				UserId:  org.ID.String(),
+				GroupId: org.ID.String(),
+				Traits:  analyticstypes.NewTraitsFromMap(stats),
+			},
 		)
 	}
 
