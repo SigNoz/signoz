@@ -134,7 +134,7 @@
 		"uuid": "^8.3.2",
 		"web-vitals": "^0.2.4",
 		"webpack": "5.94.0",
-		"webpack-dev-server": "^4.15.2",
+		"webpack-dev-server": "^5.2.1",
 		"webpack-retry-chunk-load-plugin": "3.1.1",
 		"xstate": "^4.31.0"
 	},
@@ -235,7 +235,7 @@
 		"ts-node": "^10.2.1",
 		"typescript-plugin-css-modules": "5.0.1",
 		"webpack-bundle-analyzer": "^4.5.0",
-		"webpack-cli": "^4.9.2"
+		"webpack-cli": "^5.1.4"
 	},
 	"lint-staged": {
 		"*.(js|jsx|ts|tsx)": [
