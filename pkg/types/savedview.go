@@ -24,7 +24,7 @@ type SavedView struct {
 func NewStatsFromSavedViews(savedViews []*SavedView) map[string]any {
 	stats := make(map[string]any)
 	for _, savedView := range savedViews {
-		key := "savedview.source." + strings.ToLower(string(savedView.SourcePage))
+		key := "savedview.source." + strings.ToLower(string(savedView.SourcePage)) + ".count"
 		if _, ok := stats[key]; !ok {
 			stats[key] = int64(1)
 		} else {

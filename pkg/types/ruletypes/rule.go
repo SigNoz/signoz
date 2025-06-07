@@ -28,7 +28,14 @@ func NewStatsFromRules(rules []*Rule) map[string]any {
 			continue
 		}
 
-		key := "rule.type." + strings.ToLower(string(gettableRule.RuleType))
+		key := "rule.type." + strings.TrimSuffix(strings.ToLower(string(gettableRule.RuleType)), "_rule") + ".count"
+		if _, ok := stats[key]; !ok {
+			stats[key] = int64(1)
+		} else {
+			stats[key] = stats[key].(int64) + 1
+		}
+
+		key = "alert.type." + strings.TrimSuffix(strings.ToLower(string(gettableRule.AlertType)), "_BASED_ALERT") + ".count"
 		if _, ok := stats[key]; !ok {
 			stats[key] = int64(1)
 		} else {
