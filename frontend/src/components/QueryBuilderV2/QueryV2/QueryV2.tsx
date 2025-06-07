@@ -168,6 +168,7 @@ export const QueryV2 = memo(function QueryV2({
 
 					{!showOnlyWhereClause && (
 						<QueryAddOns
+							index={index}
 							query={query}
 							version="v3"
 							isListViewPanel={false}
