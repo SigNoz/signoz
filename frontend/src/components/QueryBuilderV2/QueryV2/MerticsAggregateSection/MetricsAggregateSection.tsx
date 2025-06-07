@@ -7,20 +7,20 @@ import SpaceAggregationOptions from 'container/QueryBuilder/components/SpaceAggr
 import { GroupByFilter, OperatorsSelect } from 'container/QueryBuilder/filters';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Info } from 'lucide-react';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	query,
 	index,
 	version,
+	panelType,
 }: {
 	query: IBuilderQuery;
 	index: number;
 	version: string;
+	panelType: PANEL_TYPES | null;
 }): JSX.Element {
-	const panelType = PANEL_TYPES.LIST; //  hardcoded for now
-
 	const {
 		operators,
 		spaceAggregationOptions,
@@ -33,14 +33,21 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 		entityVersion: version,
 	});
 
-	// console.log('operators', cloneDeep(operators));
-
 	const handleChangeGroupByKeys = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
 			handleChangeQueryData('groupBy', value);
 		},
 		[handleChangeQueryData],
 	);
+
+	const showAggregationInterval = useMemo(() => {
+		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
+		if (panelType === PANEL_TYPES.VALUE) {
+			return false;
+		}
+
+		return true;
+	}, [panelType]);
 
 	const disableOperatorSelector =
 		!query?.aggregateAttribute.key || query?.aggregateAttribute.key === '';
@@ -71,19 +78,21 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 						</div>
 					</div>
 
-					<div className="metrics-aggregation-section-content-item">
-						<div className="metrics-aggregation-section-content-item-label">
-							aggregated every
-						</div>
+					{showAggregationInterval && (
+						<div className="metrics-aggregation-section-content-item">
+							<div className="metrics-aggregation-section-content-item-label">
+								aggregated every
+							</div>
 
-						<div className="metrics-aggregation-section-content-item-value">
-							<InputWithLabel
-								label="Seconds"
-								placeholder="Enter a number"
-								labelAfter
-							/>
+							<div className="metrics-aggregation-section-content-item-value">
+								<InputWithLabel
+									label="Seconds"
+									placeholder="Enter a number"
+									labelAfter
+								/>
+							</div>
 						</div>
-					</div>
+					)}
 				</div>
 			</div>
 
