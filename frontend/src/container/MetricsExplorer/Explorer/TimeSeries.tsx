@@ -13,7 +13,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { AlertTriangle } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useQueries, useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -34,6 +34,8 @@ function TimeSeries({
 	metricNames,
 	metrics,
 	setIsMetricDetailsOpen,
+	yAxisUnit,
+	setYAxisUnit,
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 	const { notifications } = useNotifications();
@@ -72,24 +74,6 @@ function TimeSeries({
 				: [stagedQuery || initialQueriesMap[DataSource.METRICS]],
 		[showOneChartPerQuery, stagedQuery],
 	);
-
-	const [yAxisUnit, setYAxisUnit] = useState<string>('');
-
-	useEffect(() => {
-		if (metricUnits.length === 0) {
-			setYAxisUnit('');
-			return;
-		}
-		if (metricUnits.length === 1) {
-			setYAxisUnit(metricUnits[0]);
-			return;
-		}
-		if (areAllMetricUnitsSame) {
-			setYAxisUnit(metricUnits[0]);
-			return;
-		}
-		setYAxisUnit('');
-	}, [metricUnits, areAllMetricUnitsSame]);
 
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({

@@ -18,6 +18,8 @@ export interface TimeSeriesProps {
 	metricNames: string[];
 	metrics: (MetricDetails | undefined)[];
 	setIsMetricDetailsOpen: (isOpen: boolean) => void;
+	yAxisUnit: string;
+	setYAxisUnit: (unit: string) => void;
 }
 
 export interface RelatedMetricsProps {
