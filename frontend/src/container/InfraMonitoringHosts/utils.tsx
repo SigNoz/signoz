@@ -1,7 +1,8 @@
 import './InfraMonitoring.styles.scss';
 
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, TabsProps, Tag } from 'antd';
+import { Progress, TabsProps, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	HostData,
@@ -29,6 +30,7 @@ export interface HostRowData {
 	wait: string;
 	load15: number;
 	active: React.ReactNode;
+	diskUsage: React.ReactNode;
 }
 
 export interface HostsListTableProps {
@@ -93,9 +95,24 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		align: 'right',
 	},
 	{
-		title: <div className="column-header-right">Memory Usage</div>,
+		title: (
+			<div className="column-header-right memory-usage-header">
+				Memory Usage
+				<Tooltip title="Memory usage shown excludes cached memory">
+					<InfoCircleOutlined />
+				</Tooltip>
+			</div>
+		),
 		dataIndex: 'memory',
 		key: 'memory',
+		width: 100,
+		sorter: true,
+		align: 'right',
+	},
+	{
+		title: <div className="column-header-right">Disk Usage</div>,
+		dataIndex: 'diskUsage',
+		key: 'diskUsage',
 		width: 100,
 		sorter: true,
 		align: 'right',
@@ -164,6 +181,22 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 		),
 		wait: `${Number((host.wait * 100).toFixed(1))}%`,
 		load15: host.load15,
+		diskUsage: (
+			<div className="progress-container">
+				<Progress
+					percent={Number((host.diskUsage * 100).toFixed(1))}
+					strokeLinecap="butt"
+					size="small"
+					strokeColor={((): string => {
+						const diskUsagePercent = Number((host.diskUsage * 100).toFixed(1));
+						if (diskUsagePercent >= 90) return Color.BG_SAKURA_500;
+						if (diskUsagePercent >= 70) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
+					className="progress-bar"
+				/>
+			</div>
+		),
 	}));
 
 export const HostsQuickFiltersConfig: IQuickFiltersConfig[] = [
