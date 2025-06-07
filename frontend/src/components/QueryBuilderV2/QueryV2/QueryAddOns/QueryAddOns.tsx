@@ -68,19 +68,21 @@ function QueryAddOns({
 	isListViewPanel,
 	showReduceTo,
 	panelType,
+	index,
 }: {
 	query: IBuilderQuery;
 	version: string;
 	isListViewPanel: boolean;
 	showReduceTo: boolean;
 	panelType: PANEL_TYPES | null;
+	index: number;
 }): JSX.Element {
 	const [addOns, setAddOns] = useState<AddOn[]>(ADD_ONS);
 
 	const [selectedViews, setSelectedViews] = useState<AddOn[]>([]);
 
 	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
+		index,
 		query,
 		entityVersion: '',
 	});
