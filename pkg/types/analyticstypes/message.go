@@ -5,9 +5,7 @@ import (
 )
 
 const (
-	KeyGroupID     string = "groupId"
-	KeyName        string = "name"
-	KeyDisplayName string = "displayName"
+	KeyGroupID string = "groupId"
 )
 
 type Message = segment.Message
