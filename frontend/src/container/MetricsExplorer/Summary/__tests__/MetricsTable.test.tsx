@@ -183,7 +183,7 @@ describe('MetricsTable', () => {
 		);
 
 		fireEvent.click(screen.getByText('Metric 1'));
-		expect(mockOpenMetricDetails).toHaveBeenCalledWith('metric1');
+		expect(mockOpenMetricDetails).toHaveBeenCalledWith('metric1', 'list');
 	});
 
 	it('calls setOrderBy when column header is clicked', () => {

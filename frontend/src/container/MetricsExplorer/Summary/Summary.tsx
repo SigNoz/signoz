@@ -1,6 +1,7 @@
 import './Summary.styles.scss';
 
 import * as Sentry from '@sentry/react';
+import logEvent from 'api/common/logEvent';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
@@ -9,7 +10,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
@@ -17,6 +18,7 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import InspectModal from '../Inspect';
 import MetricDetails from '../MetricDetails';
 import {
@@ -63,6 +65,12 @@ function Summary(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
+	useEffect(() => {
+		logEvent(MetricsExplorerEvents.TimeUpdated, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+		});
+	}, [maxTime, minTime]);
+
 	const { currentQuery, updateAllQueriesOperators } = useQueryBuilder();
 
 	const defaultQuery = useMemo(() => {
@@ -87,6 +95,12 @@ function Summary(): JSX.Element {
 	}, [updateAllQueriesOperators]);
 
 	useShareBuilderUrl(defaultQuery);
+
+	useEffect(() => {
+		logEvent(MetricsExplorerEvents.TabChanged, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+		});
+	}, []);
 
 	// This is used to avoid the filters from being serialized with the id
 	const currentQueryFiltersString = useMemo(() => {
@@ -186,6 +200,9 @@ function Summary(): JSX.Element {
 				[COMPOSITE_QUERY_KEY]: JSON.stringify(compositeQuery),
 			});
 			setCurrentPage(1);
+			logEvent(MetricsExplorerEvents.FilterApplied, {
+				[MetricsExplorerEventKeys.Tab]: 'summary',
+			});
 		},
 		[handleChangeQueryData, currentQuery, setSearchParams],
 	);
@@ -214,6 +231,14 @@ function Summary(): JSX.Element {
 	const onPaginationChange = (page: number, pageSize: number): void => {
 		setCurrentPage(page);
 		setPageSize(pageSize);
+		logEvent(MetricsExplorerEvents.PageNumberChanged, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+			[MetricsExplorerEventKeys.PageNumber]: page,
+		});
+		logEvent(MetricsExplorerEvents.PageSizeChanged, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+			[MetricsExplorerEventKeys.PageSize]: pageSize,
+		});
 	};
 
 	const formattedMetricsData = useMemo(
@@ -221,12 +246,19 @@ function Summary(): JSX.Element {
 		[metricsData],
 	);
 
-	const openMetricDetails = (metricName: string): void => {
+	const openMetricDetails = (
+		metricName: string,
+		view: 'list' | 'treemap',
+	): void => {
 		setSelectedMetricName(metricName);
 		setIsMetricDetailsOpen(true);
 		setSearchParams({
 			[IS_METRIC_DETAILS_OPEN_KEY]: 'true',
 			[SELECTED_METRIC_NAME_KEY]: metricName,
+		});
+		logEvent(MetricsExplorerEvents.MetricClicked, {
+			[MetricsExplorerEventKeys.MetricName]: metricName,
+			[MetricsExplorerEventKeys.View]: view,
 		});
 	};
 
@@ -262,6 +294,23 @@ function Summary(): JSX.Element {
 		});
 	};
 
+	const handleSetHeatmapView = (view: TreemapViewType): void => {
+		setHeatmapView(view);
+		logEvent(MetricsExplorerEvents.TreemapViewChanged, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+			[MetricsExplorerEventKeys.ViewType]: view,
+		});
+	};
+
+	const handleSetOrderBy = (orderBy: OrderByPayload): void => {
+		setOrderBy(orderBy);
+		logEvent(MetricsExplorerEvents.OrderByApplied, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+			[MetricsExplorerEventKeys.ColumnName]: orderBy.columnName,
+			[MetricsExplorerEventKeys.Order]: orderBy.order,
+		});
+	};
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
@@ -272,7 +321,7 @@ function Summary(): JSX.Element {
 					isError={isProportionViewError}
 					viewType={heatmapView}
 					openMetricDetails={openMetricDetails}
-					setHeatmapView={setHeatmapView}
+					setHeatmapView={handleSetHeatmapView}
 				/>
 				<MetricsTable
 					isLoading={isMetricsLoading || isMetricsFetching}
@@ -281,7 +330,7 @@ function Summary(): JSX.Element {
 					pageSize={pageSize}
 					currentPage={currentPage}
 					onPaginationChange={onPaginationChange}
-					setOrderBy={setOrderBy}
+					setOrderBy={handleSetOrderBy}
 					totalCount={metricsData?.payload?.data?.total || 0}
 					openMetricDetails={openMetricDetails}
 				/>
