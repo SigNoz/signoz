@@ -118,14 +118,24 @@ func (provider *provider) Report(ctx context.Context) error {
 				Properties: analyticstypes.NewPropertiesFromMap(stats),
 				Context: &analyticstypes.Context{
 					Extra: map[string]interface{}{
-						analyticstypes.ContextKeyGroupID: org.ID.String(),
+						analyticstypes.KeyGroupID: org.ID.String(),
 					},
 				},
 			},
 			analyticstypes.Group{
 				UserId:  org.ID.String(),
 				GroupId: org.ID.String(),
-				Traits:  analyticstypes.NewTraitsFromMap(stats),
+				Traits: analyticstypes.
+					NewTraitsFromMap(stats).
+					SetName(org.Name).
+					Set(analyticstypes.KeyDisplayName, org.DisplayName),
+			},
+			analyticstypes.Identify{
+				UserId: org.ID.String(),
+				Traits: analyticstypes.
+					NewTraits().
+					SetName(org.Name).
+					Set(analyticstypes.KeyDisplayName, org.DisplayName),
 			},
 		)
 	}
