@@ -98,7 +98,7 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		title: (
 			<div className="column-header-right memory-usage-header">
 				Memory Usage
-				<Tooltip title="Memory usage shown excludes cached memory">
+				<Tooltip title="Excluding cache memory">
 					<InfoCircleOutlined />
 				</Tooltip>
 			</div>
