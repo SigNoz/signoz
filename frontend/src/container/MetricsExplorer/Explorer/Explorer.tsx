@@ -71,6 +71,18 @@ function Explorer(): JSX.Element {
 		false,
 	);
 	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
+	const [yAxisUnit, setYAxisUnit] = useState<string>('');
+
+	useEffect(() => {
+		if (units.length === 0) {
+			setYAxisUnit('');
+		} else if (units.length === 1 && units[0] !== '') {
+			setYAxisUnit(units[0]);
+		} else if (areAllMetricUnitsSame && units[0] !== '') {
+			setYAxisUnit(units[0]);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [JSON.stringify(units), areAllMetricUnitsSame]);
 
 	useEffect(() => {
 		if (units.length > 1 && !areAllMetricUnitsSame) {
@@ -89,15 +101,20 @@ function Explorer(): JSX.Element {
 		});
 	};
 
-	const exportDefaultQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				currentQuery || initialQueriesMap[DataSource.METRICS],
-				PANEL_TYPES.TIME_SERIES,
-				DataSource.METRICS,
-			),
-		[currentQuery, updateAllQueriesOperators],
-	);
+	const exportDefaultQuery = useMemo(() => {
+		const query = updateAllQueriesOperators(
+			currentQuery || initialQueriesMap[DataSource.METRICS],
+			PANEL_TYPES.TIME_SERIES,
+			DataSource.METRICS,
+		);
+		if (yAxisUnit) {
+			return {
+				...query,
+				unit: yAxisUnit,
+			};
+		}
+		return query;
+	}, [currentQuery, updateAllQueriesOperators, yAxisUnit]);
 
 	useShareBuilderUrl(exportDefaultQuery);
 
@@ -111,8 +128,16 @@ function Explorer(): JSX.Element {
 
 			const widgetId = uuid();
 
+			let query = queryToExport || exportDefaultQuery;
+			if (yAxisUnit) {
+				query = {
+					...query,
+					unit: yAxisUnit,
+				};
+			}
+
 			const dashboardEditView = generateExportToDashboardLink({
-				query: queryToExport || exportDefaultQuery,
+				query,
 				panelType: PANEL_TYPES.TIME_SERIES,
 				dashboardId: dashboard.id,
 				widgetId,
@@ -120,7 +145,7 @@ function Explorer(): JSX.Element {
 
 			safeNavigate(dashboardEditView);
 		},
-		[exportDefaultQuery, safeNavigate],
+		[exportDefaultQuery, safeNavigate, yAxisUnit],
 	);
 
 	const splitedQueries = useMemo(
@@ -187,6 +212,8 @@ function Explorer(): JSX.Element {
 							metricNames={metricNames}
 							metrics={metrics}
 							setIsMetricDetailsOpen={setIsMetricDetailsOpen}
+							yAxisUnit={yAxisUnit}
+							setYAxisUnit={setYAxisUnit}
 						/>
 					)}
 					{/* TODO: Enable once we have resolved all related metrics issues */}
