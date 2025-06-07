@@ -3,6 +3,7 @@
 	border-top: 1px solid var(--bg-slate-400);
 	border-bottom: 1px solid var(--bg-slate-400);
 	background: var(--bg-ink-400);
+	width: 100%;
 
 	// height: 280px;
 	// overflow: hidden;
@@ -120,6 +121,9 @@
 			// height: 100%;
 
 			scroll-snap-type: y mandatory;
+			&-row {
+				width: 100%;
+			}
 
 			.query,
 			.formula {
