@@ -68,7 +68,6 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							queryComponents={queryComponents}
 							version={version}
 							isAvailableToDisable={false}
-							showSpanScopeSelector={initialDataSource === DataSource.TRACES}
 							queryVariant={config?.queryVariant || 'dropdown'}
 							showOnlyWhereClause={showOnlyWhereClause}
 						/>
