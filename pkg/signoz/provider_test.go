@@ -61,6 +61,7 @@ func TestNewProviderFactories(t *testing.T) {
 
 	assert.NotPanics(t, func() {
 		orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil)
-		NewStatsReporterProviderFactories([]statsreporter.StatsCollector{}, orgGetter, nil, version.Build{})
+		telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherEqual)
+		NewStatsReporterProviderFactories(telemetryStore, []statsreporter.StatsCollector{}, orgGetter, nil, version.Build{})
 	})
 }
