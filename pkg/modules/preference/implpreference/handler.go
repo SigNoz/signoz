@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
@@ -22,7 +23,7 @@ func NewHandler(module preference.Module) preference.Handler {
 	return &handler{module: module}
 }
 
-func (handler *handler) GetOrg(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) ListByOrg(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -32,65 +33,7 @@ func (handler *handler) GetOrg(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, ok := mux.Vars(r)["preferenceId"]
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required"))
-		return
-	}
-
-	preference, err := handler.module.GetOrg(ctx, id, claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, preference)
-}
-
-func (handler *handler) UpdateOrg(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	id, ok := mux.Vars(r)["preferenceId"]
-	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required"))
-		return
-	}
-
-	req := new(preferencetypes.UpdatablePreference)
-
-	err = json.NewDecoder(r.Body).Decode(req)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	err = handler.module.UpdateOrg(ctx, id, req.PreferenceValue, claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusNoContent, nil)
-}
-
-func (handler *handler) GetAllOrg(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	preferences, err := handler.module.GetAllOrg(ctx, claims.OrgID)
+	preferences, err := handler.module.ListByOrg(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -99,7 +42,7 @@ func (handler *handler) GetAllOrg(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, preferences)
 }
 
-func (handler *handler) GetUser(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) GetByOrg(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -109,13 +52,19 @@ func (handler *handler) GetUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, ok := mux.Vars(r)["preferenceId"]
+	nameString, ok := mux.Vars(r)["name"]
 	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is required"))
 		return
 	}
 
-	preference, err := handler.module.GetUser(ctx, id, claims.OrgID, claims.UserID)
+	name, err := preferencetypes.NewName(nameString)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	preference, err := handler.module.GetByOrg(ctx, valuer.MustNewUUID(claims.OrgID), name)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -124,7 +73,7 @@ func (handler *handler) GetUser(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, preference)
 }
 
-func (handler *handler) UpdateUser(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) UpdateByOrg(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -134,9 +83,15 @@ func (handler *handler) UpdateUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, ok := mux.Vars(r)["preferenceId"]
+	nameString, ok := mux.Vars(r)["name"]
 	if !ok {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is required"))
+		return
+	}
+
+	name, err := preferencetypes.NewName(nameString)
+	if err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -147,7 +102,7 @@ func (handler *handler) UpdateUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.UpdateUser(ctx, id, req.PreferenceValue, claims.UserID)
+	err = handler.module.UpdateByOrg(ctx, valuer.MustNewUUID(claims.OrgID), name, req.Value)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -156,7 +111,7 @@ func (handler *handler) UpdateUser(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (handler *handler) GetAllUser(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) ListByUser(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -166,11 +121,80 @@ func (handler *handler) GetAllUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	preferences, err := handler.module.GetAllUser(ctx, claims.OrgID, claims.UserID)
+	preferences, err := handler.module.ListByUser(ctx, valuer.MustNewUUID(claims.UserID))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
 	render.Success(rw, http.StatusOK, preferences)
+}
+
+func (handler *handler) GetByUser(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	nameString, ok := mux.Vars(r)["name"]
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is required"))
+		return
+	}
+
+	name, err := preferencetypes.NewName(nameString)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	preference, err := handler.module.GetByUser(ctx, valuer.MustNewUUID(claims.UserID), name)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, preference)
+}
+
+func (handler *handler) UpdateByUser(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	nameString, ok := mux.Vars(r)["name"]
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is required"))
+		return
+	}
+
+	name, err := preferencetypes.NewName(nameString)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(preferencetypes.UpdatablePreference)
+	err = json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.UpdateByUser(ctx, valuer.MustNewUUID(claims.UserID), name, req.Value)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
 }

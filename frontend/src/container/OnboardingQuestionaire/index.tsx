@@ -3,8 +3,8 @@ import './OnboardingQuestionaire.styles.scss';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
 import updateProfileAPI from 'api/onboarding/updateProfile';
-import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
-import updateOrgPreferenceAPI from 'api/preferences/updateOrgPreference';
+import listOrgPreferences from 'api/v1/org/preferences/list';
+import updateOrgPreferenceAPI from 'api/v1/org/preferences/name/update';
 import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
@@ -108,13 +108,13 @@ function OnboardingQuestionaire(): JSX.Element {
 	}, []);
 
 	const { refetch: refetchOrgPreferences } = useQuery({
-		queryFn: () => getAllOrgPreferences(),
+		queryFn: () => listOrgPreferences(),
 		queryKey: ['getOrgPreferences'],
 		enabled: false,
 		refetchOnWindowFocus: false,
 		onSuccess: (response) => {
-			if (response.payload && response.payload.data) {
-				updateOrgPreferences(response.payload.data);
+			if (response.data) {
+				updateOrgPreferences(response.data);
 			}
 
 			setUpdatingOrgOnboardingStatus(false);
@@ -196,7 +196,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 		setUpdatingOrgOnboardingStatus(true);
 		updateOrgPreference({
-			preferenceID: 'ORG_ONBOARDING',
+			name: 'org_onboarding',
 			value: true,
 		});
 	};
