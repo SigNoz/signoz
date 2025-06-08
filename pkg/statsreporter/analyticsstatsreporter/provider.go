@@ -45,9 +45,9 @@ type provider struct {
 	stopC chan struct{}
 }
 
-func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, build version.Build) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
+func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, build version.Build, analyticsConfig analytics.Config) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("analytics"), func(ctx context.Context, settings factory.ProviderSettings, config statsreporter.Config) (statsreporter.StatsReporter, error) {
-		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, build)
+		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, build, analyticsConfig)
 	})
 }
 
@@ -59,10 +59,11 @@ func New(
 	collectors []statsreporter.StatsCollector,
 	orgGetter organization.Getter,
 	build version.Build,
+	analyticsConfig analytics.Config,
 ) (statsreporter.StatsReporter, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/statsreporter/analyticsstatsreporter")
 	deployment := version.NewDeployment()
-	analytics, err := segmentanalytics.New(ctx, providerSettings, analytics.Config{Enabled: true})
+	analytics, err := segmentanalytics.New(ctx, providerSettings, analyticsConfig)
 	if err != nil {
 		return nil, err
 	}
