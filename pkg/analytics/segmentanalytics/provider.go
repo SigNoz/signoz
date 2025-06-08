@@ -22,13 +22,16 @@ func NewFactory() factory.ProviderFactory[analytics.Analytics, analytics.Config]
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config analytics.Config) (analytics.Analytics, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/analytics/segmentanalytics")
 
-	segment.NewWithConfig(config.Segment.Key, segment.Config{
+	client, err := segment.NewWithConfig(config.Segment.Key, segment.Config{
 		Logger: newSegmentLogger(settings),
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &provider{
 		settings: settings,
-		client:   segment.New(config.Segment.Key),
+		client:   client,
 		stopC:    make(chan struct{}),
 	}, nil
 }
