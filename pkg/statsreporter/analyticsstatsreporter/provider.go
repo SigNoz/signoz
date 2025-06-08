@@ -81,7 +81,11 @@ func New(
 }
 
 func (provider *provider) Start(ctx context.Context) error {
-	go provider.analytics.Start(ctx)
+	go func() {
+		if err := provider.analytics.Start(ctx); err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "failed to start analytics", "error", err)
+		}
+	}()
 
 	ticker := time.NewTicker(provider.config.Interval)
 	defer ticker.Stop()
