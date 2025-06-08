@@ -244,6 +244,7 @@ func New(
 		modules.Dashboard,
 		modules.SavedView,
 		modules.User,
+		licensing,
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories
@@ -251,7 +252,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.StatsReporter,
-		NewStatsReporterProviderFactories(telemetrystore, statsCollectors, orgGetter, analytics, version.Info),
+		NewStatsReporterProviderFactories(telemetrystore, statsCollectors, orgGetter, version.Info),
 		config.StatsReporter.Provider(),
 	)
 	if err != nil {
@@ -261,6 +262,7 @@ func New(
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
+		factory.NewNamedService(factory.MustNewName("analytics"), analytics),
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -44,9 +45,9 @@ type provider struct {
 	stopC chan struct{}
 }
 
-func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, analytics analytics.Analytics, build version.Build) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
+func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, build version.Build) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("analytics"), func(ctx context.Context, settings factory.ProviderSettings, config statsreporter.Config) (statsreporter.StatsReporter, error) {
-		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, analytics, build)
+		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, build)
 	})
 }
 
@@ -57,11 +58,14 @@ func New(
 	telemetryStore telemetrystore.TelemetryStore,
 	collectors []statsreporter.StatsCollector,
 	orgGetter organization.Getter,
-	analytics analytics.Analytics,
 	build version.Build,
 ) (statsreporter.StatsReporter, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/statsreporter/analyticsstatsreporter")
 	deployment := version.NewDeployment()
+	analytics, err := segmentanalytics.New(ctx, providerSettings, analytics.Config{Enabled: true})
+	if err != nil {
+		return nil, err
+	}
 
 	return &provider{
 		settings:       settings,
@@ -77,6 +81,8 @@ func New(
 }
 
 func (provider *provider) Start(ctx context.Context) error {
+	go provider.analytics.Start(ctx)
+
 	ticker := time.NewTicker(provider.config.Interval)
 	defer ticker.Stop()
 
@@ -153,6 +159,10 @@ func (provider *provider) Report(ctx context.Context) error {
 
 func (provider *provider) Stop(ctx context.Context) error {
 	close(provider.stopC)
+	if err := provider.analytics.Stop(ctx); err != nil {
+		provider.settings.Logger().ErrorContext(ctx, "failed to stop analytics", "error", err)
+	}
+
 	return nil
 }
 

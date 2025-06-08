@@ -1,6 +1,8 @@
 package analyticstypes
 
 import (
+	"strings"
+
 	segment "github.com/segmentio/analytics-go/v3"
 )
 
@@ -27,7 +29,7 @@ func NewProperties() Properties {
 func NewPropertiesFromMap(m map[string]any) Properties {
 	properties := NewProperties()
 	for k, v := range m {
-		properties.Set(k, v)
+		properties.Set(strings.ReplaceAll(k, ".", "_"), v)
 	}
 
 	return properties
@@ -36,7 +38,7 @@ func NewPropertiesFromMap(m map[string]any) Properties {
 func NewTraitsFromMap(m map[string]any) Traits {
 	traits := NewTraits()
 	for k, v := range m {
-		traits.Set(k, v)
+		traits.Set(strings.ReplaceAll(k, ".", "_"), v)
 	}
 
 	return traits
