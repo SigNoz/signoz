@@ -1,6 +1,8 @@
 package segmentanalytics
 
 import (
+	"context"
+
 	"github.com/SigNoz/signoz/pkg/factory"
 	segment "github.com/segmentio/analytics-go/v3"
 )
@@ -16,9 +18,9 @@ func newSegmentLogger(settings factory.ScopedProviderSettings) segment.Logger {
 }
 
 func (logger *logger) Logf(format string, args ...interface{}) {
-	logger.settings.Logger().Info(format, args...)
+	logger.settings.Logger().InfoContext(context.TODO(), format, args...)
 }
 
 func (logger *logger) Errorf(format string, args ...interface{}) {
-	logger.settings.Logger().Error(format, args...)
+	logger.settings.Logger().ErrorContext(context.TODO(), format, args...)
 }
