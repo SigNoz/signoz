@@ -18,9 +18,9 @@ func newSegmentLogger(settings factory.ScopedProviderSettings) segment.Logger {
 }
 
 func (logger *logger) Logf(format string, args ...interface{}) {
-	logger.settings.Logger().InfoContext(context.TODO(), format, args...)
+	logger.settings.Logger().InfoContext(context.TODO(), format, args...) //nolint:sloglint
 }
 
 func (logger *logger) Errorf(format string, args ...interface{}) {
-	logger.settings.Logger().ErrorContext(context.TODO(), format, args...)
+	logger.settings.Logger().ErrorContext(context.TODO(), format, args...) //nolint:sloglint
 }
