@@ -36,7 +36,7 @@ function LogsExplorer(): JSX.Element {
 	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
 		SELECTED_VIEWS.SEARCH,
 	);
-	const { preferences } = usePreferenceContext();
+	const { preferences, loading: preferencesLoading } = usePreferenceContext();
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
@@ -166,11 +166,11 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	useEffect(() => {
-		if (!preferences) {
+		if (!preferences || preferencesLoading) {
 			return;
 		}
 		const migratedQuery = migrateOptionsQuery({
-			selectColumns: preferences.columns || [],
+			selectColumns: preferences.columns || defaultLogsSelectedColumns,
 			maxLines: preferences.formatting?.maxLines || defaultOptionsQuery.maxLines,
 			format: preferences.formatting?.format || defaultOptionsQuery.format,
 			fontSize: preferences.formatting?.fontSize || defaultOptionsQuery.fontSize,
@@ -188,7 +188,12 @@ function LogsExplorer(): JSX.Element {
 		) {
 			redirectWithOptionsData(migratedQuery);
 		}
-	}, [migrateOptionsQuery, preferences, redirectWithOptionsData]);
+	}, [
+		migrateOptionsQuery,
+		preferences,
+		redirectWithOptionsData,
+		preferencesLoading,
+	]);
 
 	const isMultipleQueries = useMemo(
 		() =>

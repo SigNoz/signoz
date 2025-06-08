@@ -119,7 +119,6 @@ function LogsExplorerViews({
 
 	// Context
 	const {
-		initialDataSource,
 		currentQuery,
 		stagedQuery,
 		panelType,
@@ -151,7 +150,7 @@ function LogsExplorerViews({
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.LOGS,
+		dataSource: DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 

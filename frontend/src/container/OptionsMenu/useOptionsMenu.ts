@@ -101,7 +101,9 @@ const useOptionsMenu = ({
 	);
 
 	const initialSelectedColumns = useMemo(() => {
-		if (!isFetchedInitialAttributes) return [];
+		if (!isFetchedInitialAttributes) {
+			return [];
+		}
 
 		const attributesData = initialAttributesResult?.reduce(
 			(acc, attributeResponse) => {
@@ -182,17 +184,21 @@ const useOptionsMenu = ({
 	}, [dataSource, searchedAttributesData?.payload?.attributeKeys]);
 
 	const initialOptionsQuery: OptionsQuery = useMemo(() => {
-		const defaultColumns =
-			dataSource === DataSource.TRACES
-				? defaultTraceSelectedColumns
-				: defaultOptionsQuery.selectColumns;
+		let defaultColumns = defaultOptionsQuery.selectColumns;
+		if (dataSource === DataSource.TRACES) {
+			defaultColumns = defaultTraceSelectedColumns;
+		} else if (dataSource === DataSource.LOGS) {
+			defaultColumns = defaultLogsSelectedColumns;
+		}
+
+		const finalSelectColumns = initialOptions?.selectColumns
+			? initialSelectedColumns
+			: defaultColumns;
 
 		return {
 			...defaultOptionsQuery,
 			...initialOptions,
-			selectColumns: initialOptions?.selectColumns
-				? initialSelectedColumns
-				: defaultColumns,
+			selectColumns: finalSelectColumns,
 		};
 	}, [dataSource, initialOptions, initialSelectedColumns]);
 
@@ -317,10 +323,7 @@ const useOptionsMenu = ({
 
 			updateFormatting({
 				maxLines: value as number,
-				format:
-					preferences?.formatting?.format === 'list'
-						? 'table'
-						: preferences?.formatting?.format || defaultOptionsQuery.format,
+				format: preferences?.formatting?.format || defaultOptionsQuery.format,
 				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
 			});
 			handleRedirectWithOptionsData(optionsData);
@@ -340,10 +343,7 @@ const useOptionsMenu = ({
 
 			updateFormatting({
 				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
-				format:
-					preferences?.formatting?.format === 'list'
-						? 'table'
-						: preferences?.formatting?.format || defaultOptionsQuery.format,
+				format: preferences?.formatting?.format || defaultOptionsQuery.format,
 				fontSize: value,
 			});
 			handleRedirectWithOptionsData(optionsData);
@@ -403,7 +403,9 @@ const useOptionsMenu = ({
 	);
 
 	useEffect(() => {
-		if (optionsQuery || !isFetchedInitialAttributes) return;
+		if (optionsQuery || !isFetchedInitialAttributes) {
+			return;
+		}
 
 		redirectWithOptionsData(initialOptionsQuery);
 	}, [

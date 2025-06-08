@@ -316,7 +316,6 @@ function ExplorerOptions({
 	};
 
 	const onUpdateQueryHandler = (): void => {
-		console.log('uncaught ued', updatedExtraData);
 		updateViewAsync(
 			{
 				compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
