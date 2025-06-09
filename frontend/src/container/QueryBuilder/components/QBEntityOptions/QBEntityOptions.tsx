@@ -139,6 +139,7 @@ export default function QBEntityOptions({
 							)}
 
 							{showFunctions &&
+								!isListViewPanel &&
 								(isMetricsDataSource || isLogsDataSource) &&
 								query &&
 								onQueryFunctionsUpdates && (
@@ -161,7 +162,7 @@ export default function QBEntityOptions({
 					)}
 				</div>
 
-				{showDeleteButton && (
+				{showDeleteButton && !isListViewPanel && (
 					<Button className="periscope-btn ghost" onClick={onDelete}>
 						<Trash2 size={14} />
 					</Button>
