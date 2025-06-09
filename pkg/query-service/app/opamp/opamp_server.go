@@ -88,7 +88,7 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 	agentID := msg.InstanceUid
 
 	// find the orgID, if nothing is found keep it empty.
-	// the find or create agent will will return an error if orgID is empty
+	// the find or create agent will return an error if orgID is empty
 	// thus retry will happen
 	orgID := ""
 	orgIDs, err := srv.agents.OrgGetter.ListByOwnedKeyRange(context.Background())
