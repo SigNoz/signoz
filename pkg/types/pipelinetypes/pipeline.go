@@ -14,6 +14,21 @@ import (
 	"github.com/uptrace/bun"
 )
 
+type JSONMappingType = string
+
+const (
+	Date     JSONMappingType = "date" // TODO: (Piyush): problems in introducing datetime parser since we also need to accept the timeformat
+	Host     JSONMappingType = "host"
+	Service  JSONMappingType = "service"
+	Severity JSONMappingType = "severity"
+	TraceID  JSONMappingType = "trace_id"
+	SpanID   JSONMappingType = "span_id"
+	Message  JSONMappingType = "message"
+)
+
+var validMappingLevels = []string{"trace", "debug", "info", "warn", "error", "fatal"}
+var validMappingVariableTypes = []string{Host, Service, Severity, TraceID, SpanID, Message}
+
 type StoreablePipeline struct {
 	bun.BaseModel `bun:"table:pipelines,alias:p"`
 
@@ -91,9 +106,56 @@ type PipelineOperator struct {
 	Layout     string `json:"layout,omitempty" yaml:"layout,omitempty"`
 	LayoutType string `json:"layout_type,omitempty" yaml:"layout_type,omitempty"`
 
+	// json_parser fields
+	EnableFlattening   bool   `json:"enable_flattening,omitempty" yaml:"enable_flattening,omitempty"`
+	MaxFlatteningDepth int    `json:"-" yaml:"max_flattening_depth,omitempty"` // MaxFlatteningDepth is not configurable from User's side
+	EnablePaths        bool   `json:"enable_paths,omitempty" yaml:"enable_paths,omitempty"`
+	PathPrefix         string `json:"path_prefix,omitempty" yaml:"path_prefix,omitempty"`
+	// TODO: (Piyush) Discuss about this with Nitya for performance issues
+	MaxPermissibleKeysAfterFlattening int `json:"-" yaml:"max_permissible_keys,omitempty"` // MaxPermissibleKeysAfterFlattening is not configurable from User's side
+
+	// Used in Severity Parsing and JSON Flattening mapping
+	Mapping map[string][]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 	// severity parser fields
-	SeverityMapping       map[string][]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
-	OverwriteSeverityText bool                `json:"overwrite_text,omitempty" yaml:"overwrite_text,omitempty"`
+	OverwriteSeverityText bool `json:"overwrite_text,omitempty" yaml:"overwrite_text,omitempty"`
+}
+
+func (op PipelineOperator) MarshalJSON() ([]byte, error) {
+	type Alias PipelineOperator
+
+	p := Alias(op)
+	if p.TraceParser != nil {
+		if p.TraceId != nil && len(p.TraceId.ParseFrom) < 1 {
+			p.TraceId = nil
+		}
+		if p.SpanId != nil && len(p.SpanId.ParseFrom) < 1 {
+			p.SpanId = nil
+		}
+		if p.TraceFlags != nil && len(p.TraceFlags.ParseFrom) < 1 {
+			p.TraceFlags = nil
+		}
+	}
+
+	return json.Marshal(p)
+}
+
+func (op PipelineOperator) MarshalYAML() (interface{}, error) {
+	type Alias PipelineOperator
+	alias := Alias(op)
+
+	if alias.TraceParser != nil {
+		if alias.TraceParser.TraceId != nil && len(alias.TraceParser.TraceId.ParseFrom) < 1 {
+			alias.TraceParser.TraceId = nil
+		}
+		if alias.TraceParser.SpanId != nil && len(alias.TraceParser.SpanId.ParseFrom) < 1 {
+			alias.TraceParser.SpanId = nil
+		}
+		if alias.TraceParser.TraceFlags != nil && len(alias.TraceParser.TraceFlags.ParseFrom) < 1 {
+			alias.TraceParser.TraceFlags = nil
+		}
+	}
+
+	return alias, nil
 }
 
 type TimestampParser struct {
@@ -206,6 +268,12 @@ func isValidOperator(op PipelineOperator) error {
 		if op.ParseFrom == "" && op.ParseTo == "" {
 			return fmt.Errorf("parse from and parse to of %s json operator cannot be empty", op.ID)
 		}
+
+		for k := range op.Mapping {
+			if !slices.Contains(validMappingVariableTypes, strings.ToLower(k)) {
+				return fmt.Errorf("%s is not a valid mapping type in processor %s", k, op.ID)
+			}
+		}
 	case "grok_parser":
 		if op.Pattern == "" {
 			return fmt.Errorf("pattern of %s grok operator cannot be empty", op.ID)
@@ -306,8 +374,7 @@ func isValidOperator(op PipelineOperator) error {
 			return fmt.Errorf("parse from of severity parsing processor %s cannot be empty", op.ID)
 		}
 
-		validMappingLevels := []string{"trace", "debug", "info", "warn", "error", "fatal"}
-		for k := range op.SeverityMapping {
+		for k := range op.Mapping {
 			if !slices.Contains(validMappingLevels, strings.ToLower(k)) {
 				return fmt.Errorf("%s is not a valid severity in processor %s", k, op.ID)
 			}
