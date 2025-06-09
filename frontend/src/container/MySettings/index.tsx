@@ -2,7 +2,7 @@ import './MySettings.styles.scss';
 
 import { Radio, RadioChangeEvent, Switch, Tag } from 'antd';
 import logEvent from 'api/common/logEvent';
-import updateUserPreference from 'api/preferences/updateUserPreference';
+import updateUserPreference from 'api/v1/user/preferences/name/update';
 import { AxiosError } from 'axios';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
@@ -11,7 +11,7 @@ import { Moon, Sun } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { UserPreference } from 'types/reducer/app';
+import { UserPreference } from 'types/api/preferences/preference';
 import { showErrorNotification } from 'utils/error';
 
 import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
@@ -97,7 +97,7 @@ function MySettings(): JSX.Element {
 		// Make the API call in the background
 		updateUserPreferenceMutation(
 			{
-				preferenceID: USER_PREFERENCES.SIDENAV_PINNED,
+				name: USER_PREFERENCES.SIDENAV_PINNED,
 				value: checked,
 			},
 			{

@@ -20,8 +20,8 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Dropdown, MenuProps, Modal, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
-import updateUserPreference from 'api/preferences/updateUserPreference';
 import { Logout } from 'api/utils';
+import updateUserPreference from 'api/v1/user/preferences/name/update';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
@@ -293,22 +293,20 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 			updateUserPreferenceMutation(
 				{
-					preferenceID: USER_PREFERENCES.NAV_SHORTCUTS,
+					name: USER_PREFERENCES.NAV_SHORTCUTS,
 					value: navShortcuts,
 				},
 				{
 					onSuccess: (response) => {
-						if (response.payload) {
+						if (response.data) {
 							updateUserPreferenceInContext({
-								key: USER_PREFERENCES.NAV_SHORTCUTS,
 								name: USER_PREFERENCES.NAV_SHORTCUTS,
 								description: USER_PREFERENCES.NAV_SHORTCUTS,
 								valueType: 'array',
 								defaultValue: false,
 								allowedValues: [],
-								isDiscreteValues: false,
 								allowedScopes: ['user'],
-								value: navShortcuts as any,
+								value: navShortcuts,
 							});
 						}
 					},
