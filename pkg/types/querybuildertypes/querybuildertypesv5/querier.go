@@ -1,7 +1,11 @@
 package querybuildertypesv5
 
-import "context"
+import (
+	"context"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
 type Querier interface {
-	QueryRange(ctx context.Context, req QueryRangeRequest) (QueryRangeResponse, error)
+	QueryRange(ctx context.Context, orgID valuer.UUID, req *QueryRangeRequest) (*QueryRangeResponse, error)
 }
