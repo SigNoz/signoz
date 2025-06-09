@@ -2,6 +2,8 @@ package signoz
 
 import (
 	"context"
+	"log/slog"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -12,12 +14,20 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
+	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 
@@ -33,12 +43,107 @@ type SigNoz struct {
 	TelemetryStore  telemetrystore.TelemetryStore
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
+	Querier         qbtypes.Querier
 	Zeus            zeus.Zeus
 	Licensing       licensing.Licensing
 	Emailing        emailing.Emailing
 	Sharder         sharder.Sharder
 	Modules         Modules
 	Handlers        Handlers
+}
+
+func newQuerier(
+	logger *slog.Logger,
+	telemetrystore telemetrystore.TelemetryStore,
+	prometheus prometheus.Prometheus,
+	cache cache.Cache,
+) (qbtypes.Querier, error) {
+
+	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
+		logger,
+		telemetrystore,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanIndexV3TableName,
+		telemetrymetrics.DBName,
+		telemetrymetrics.AttributesMetadataTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2TableName,
+		telemetrylogs.TagAttributesV2TableName,
+		telemetrymetadata.DBName,
+		telemetrymetadata.AttributesMetadataLocalTableName,
+	)
+	traceFieldMapper := telemetrytraces.NewFieldMapper()
+	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
+
+	resourceFilterFieldMapper := resourcefilter.NewFieldMapper()
+	resourceFilterConditionBuilder := resourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
+	resourceFilterStmtBuilder := resourcefilter.NewTraceResourceFilterStatementBuilder(
+		resourceFilterFieldMapper,
+		resourceFilterConditionBuilder,
+		telemetryMetadataStore,
+	)
+
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(nil, traceFieldMapper, traceConditionBuilder, "", nil)
+	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
+		logger,
+		telemetryMetadataStore,
+		traceFieldMapper,
+		traceConditionBuilder,
+		resourceFilterStmtBuilder,
+		traceAggExprRewriter,
+	)
+
+	logFieldMapper := telemetrylogs.NewFieldMapper()
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
+	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
+		resourceFilterFieldMapper,
+		resourceFilterConditionBuilder,
+		telemetryMetadataStore,
+	)
+	logAggExprRewriter := querybuilder.NewAggExprRewriter(
+		telemetrylogs.DefaultFullTextColumn,
+		logFieldMapper,
+		logConditionBuilder,
+		telemetrylogs.BodyJSONStringSearchPrefix,
+		telemetrylogs.GetBodyJSONKey,
+	)
+	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
+		logger,
+		telemetryMetadataStore,
+		logFieldMapper,
+		logConditionBuilder,
+		logResourceFilterStmtBuilder,
+		logAggExprRewriter,
+		telemetrylogs.DefaultFullTextColumn,
+		telemetrylogs.BodyJSONStringSearchPrefix,
+		telemetrylogs.GetBodyJSONKey,
+	)
+
+	metricFieldMapper := telemetrymetrics.NewFieldMapper()
+	metricConditionBuilder := telemetrymetrics.NewConditionBuilder(metricFieldMapper)
+	metricStmtBuilder := telemetrymetrics.NewMetricQueryStatementBuilder(
+		logger,
+		telemetryMetadataStore,
+		metricFieldMapper,
+		metricConditionBuilder,
+	)
+
+	// Create bucket cache for querier
+	bucketCache := querier.NewBucketCache(logger.With(slog.String("component", "bucket-cache")), cache, 15*time.Minute, 5*time.Minute)
+
+	querier := querier.NewQuerier(
+		logger,
+		telemetrystore,
+		telemetryMetadataStore,
+		prometheus,
+		traceStmtBuilder,
+		logStmtBuilder,
+		metricStmtBuilder,
+		bucketCache,
+	)
+
+	return querier, nil
 }
 
 func New(
@@ -150,6 +255,11 @@ func New(
 		return nil, err
 	}
 
+	querier, err := newQuerier(instrumentation.Logger(), telemetrystore, prometheus, cache)
+	if err != nil {
+		return nil, err
+	}
+
 	// Run migrations on the sqlstore
 	sqlmigrations, err := sqlmigration.New(
 		ctx,
@@ -228,6 +338,7 @@ func New(
 		TelemetryStore:  telemetrystore,
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
+		Querier:         querier,
 		Zeus:            zeus,
 		Licensing:       licensing,
 		Emailing:        emailing,
