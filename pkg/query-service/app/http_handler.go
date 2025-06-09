@@ -660,7 +660,13 @@ func Intersection(a, b []int) (c []int) {
 }
 
 func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
 	ruleResponse, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -990,9 +996,15 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 }
 
 func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
 	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
+	err = json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
@@ -1002,13 +1014,13 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), ruleID, &params)
+	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), id.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	rule, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err == nil {
 		for idx := range res.Items {
 			lbls := make(map[string]string)
@@ -1036,21 +1048,27 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 }
 
 func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
-	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), ruleID, &params)
+	params := model.QueryRuleStateHistory{}
+	err = json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), id.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	rule, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err == nil {
 		for idx := range res {
 			lbls := make(map[string]string)
@@ -1330,7 +1348,12 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 
 // patchRule updates only requested changes in the rule
 func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
 
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -1351,7 +1374,12 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
 
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)

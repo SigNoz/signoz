@@ -103,17 +103,3 @@ func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.Ru
 	}
 	return rule, nil
 }
-
-func (r *rule) GetRuleUUID(ctx context.Context, ruleID int) (*ruletypes.RuleHistory, error) {
-	ruleHistory := new(ruletypes.RuleHistory)
-	err := r.sqlstore.
-		BunDB().
-		NewSelect().
-		Model(ruleHistory).
-		Where("rule_id = ?", ruleID).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return ruleHistory, nil
-}
