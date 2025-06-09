@@ -91,6 +91,7 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewAddTraceFunnelsFactory(sqlstore),
 		sqlmigration.NewUpdateDashboardFactory(sqlstore),
 		sqlmigration.NewDropFeatureSetFactory(),
+		sqlmigration.NewDropDeprecatedTablesFactory(),
 	)
 }
 

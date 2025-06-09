@@ -18,17 +18,10 @@ type Rule struct {
 	OrgID   string `bun:"org_id,type:text"`
 }
 
-type RuleHistory struct {
-	bun.BaseModel `bun:"table:rule_history"`
-	RuleID        int         `bun:"rule_id"`
-	RuleUUID      valuer.UUID `bun:"rule_uuid"`
-}
-
 type RuleStore interface {
 	CreateRule(context.Context, *Rule, func(context.Context, valuer.UUID) error) (valuer.UUID, error)
 	EditRule(context.Context, *Rule, func(context.Context) error) error
 	DeleteRule(context.Context, valuer.UUID, func(context.Context) error) error
 	GetStoredRules(context.Context, string) ([]*Rule, error)
 	GetStoredRule(context.Context, valuer.UUID) (*Rule, error)
-	GetRuleUUID(context.Context, int) (*RuleHistory, error)
 }
