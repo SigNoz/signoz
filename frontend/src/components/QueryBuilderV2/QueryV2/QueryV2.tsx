@@ -104,28 +104,30 @@ export const QueryV2 = memo(function QueryV2({
 								/>
 							</div>
 
-							<Dropdown
-								className="query-actions-dropdown"
-								menu={{
-									items: [
-										{
-											label: 'Clone',
-											key: 'clone-query',
-											icon: <Copy size={14} />,
-											onClick: handleCloneEntity,
-										},
-										{
-											label: 'Delete',
-											key: 'delete-query',
-											icon: <Trash size={14} />,
-											onClick: handleDeleteQuery,
-										},
-									],
-								}}
-								placement="bottomRight"
-							>
-								<Ellipsis size={16} />
-							</Dropdown>
+							{!isListViewPanel && (
+								<Dropdown
+									className="query-actions-dropdown"
+									menu={{
+										items: [
+											{
+												label: 'Clone',
+												key: 'clone-query',
+												icon: <Copy size={14} />,
+												onClick: handleCloneEntity,
+											},
+											{
+												label: 'Delete',
+												key: 'delete-query',
+												icon: <Trash size={14} />,
+												onClick: handleDeleteQuery,
+											},
+										],
+									}}
+									placement="bottomRight"
+								>
+									<Ellipsis size={16} />
+								</Dropdown>
+							)}
 						</div>
 					</div>
 				)}
@@ -150,7 +152,7 @@ export const QueryV2 = memo(function QueryV2({
 						</div>
 					</div>
 
-					{!showOnlyWhereClause && (
+					{!showOnlyWhereClause && !isListViewPanel && (
 						<QueryAggregation
 							dataSource={dataSource}
 							panelType={panelType || undefined}
@@ -171,7 +173,7 @@ export const QueryV2 = memo(function QueryV2({
 							index={index}
 							query={query}
 							version="v3"
-							isListViewPanel={false}
+							isListViewPanel={isListViewPanel}
 							showReduceTo={showReduceTo}
 							panelType={panelType}
 						/>
