@@ -1,8 +1,7 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
-import getAllUserPreferences from 'api/preferences/getAllUserPreference';
 import { Logout } from 'api/utils';
 import listOrgPreferences from 'api/v1/org/preferences/list';
+import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/getVersion';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
@@ -27,7 +26,10 @@ import {
 	LicenseState,
 	TrialInfo,
 } from 'types/api/licensesV3/getActive';
-import { OrgPreference } from 'types/api/preferences/preference';
+import {
+	OrgPreference,
+	UserPreference,
+} from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
 import { USER_ROLES } from 'types/roles';
 
@@ -180,7 +182,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		data: userPreferencesData,
 		isFetching: isFetchingUserPreferences,
 	} = useQuery({
-		queryFn: () => getAllUserPreferences(),
+		queryFn: () => listUserPreferences(),
 		queryKey: ['getAllUserPreferences', 'app-context'],
 		enabled: !!isLoggedIn && !!user.email,
 	});
@@ -188,10 +190,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	useEffect(() => {
 		if (
 			userPreferencesData &&
-			userPreferencesData.payload &&
+			userPreferencesData.data &&
 			!isFetchingUserPreferences
 		) {
-			setUserPreferences(userPreferencesData.payload.data);
+			setUserPreferences(userPreferencesData.data);
 		}
 	}, [userPreferencesData, isFetchingUserPreferences, isLoggedIn]);
 
@@ -205,7 +207,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const updateUserPreferenceInContext = useCallback(
 		(userPreference: UserPreference): void => {
 			setUserPreferences((prev) => {
-				const index = prev?.findIndex((e) => e.key === userPreference.key);
+				const index = prev?.findIndex((e) => e.name === userPreference.name);
 				if (index !== undefined) {
 					return [
 						...(prev?.slice(0, index) || []),
