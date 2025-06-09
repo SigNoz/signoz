@@ -12,6 +12,7 @@ function InputWithLabel({
 	type,
 	onClose,
 	labelAfter,
+	onChange,
 }: {
 	label: string;
 	initialValue?: string | number;
@@ -19,10 +20,16 @@ function InputWithLabel({
 	type?: string;
 	onClose?: () => void;
 	labelAfter?: boolean;
+	onChange: (value: string) => void;
 }): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>(
 		initialValue ? initialValue.toString() : '',
 	);
+
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+		setInputValue(e.target.value);
+		onChange?.(e.target.value);
+	};
 
 	return (
 		<div
@@ -36,7 +43,7 @@ function InputWithLabel({
 				placeholder={placeholder}
 				type={type}
 				value={inputValue}
-				onChange={(e): void => setInputValue(e.target.value)}
+				onChange={handleChange}
 			/>
 			{labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
 			{onClose && (
