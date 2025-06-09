@@ -88,6 +88,16 @@ function QueryAddOns({
 	});
 
 	useEffect(() => {
+		if (isListViewPanel) {
+			setAddOns([]);
+
+			setSelectedViews([
+				ADD_ONS.find((addOn) => addOn.key === ADD_ONS_KEYS.ORDER_BY) as AddOn,
+			]);
+
+			return;
+		}
+
 		if (panelType === PANEL_TYPES.VALUE) {
 			// Filter out all add-ons except legend format
 			setAddOns((prevAddOns) =>
@@ -103,7 +113,7 @@ function QueryAddOns({
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [panelType]);
+	}, [panelType, isListViewPanel]);
 
 	const handleOptionClick = (e: RadioChangeEvent): void => {
 		if (selectedViews.find((view) => view.key === e.target.value.key)) {
