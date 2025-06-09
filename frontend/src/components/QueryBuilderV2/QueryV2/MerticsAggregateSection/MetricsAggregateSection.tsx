@@ -40,6 +40,13 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 		[handleChangeQueryData],
 	);
 
+	const handleChangeAggregateEvery = useCallback(
+		(value: string) => {
+			handleChangeQueryData('stepInterval', Number(value));
+		},
+		[handleChangeQueryData],
+	);
+
 	const showAggregationInterval = useMemo(() => {
 		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
 		if (panelType === PANEL_TYPES.VALUE) {
@@ -86,6 +93,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 
 							<div className="metrics-aggregation-section-content-item-value">
 								<InputWithLabel
+									onChange={handleChangeAggregateEvery}
 									label="Seconds"
 									placeholder="Enter a number"
 									labelAfter
