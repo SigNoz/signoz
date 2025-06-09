@@ -70,6 +70,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							isAvailableToDisable={false}
 							queryVariant={config?.queryVariant || 'dropdown'}
 							showOnlyWhereClause={showOnlyWhereClause}
+							isListViewPanel={isListViewPanel}
 						/>
 					))}
 
@@ -95,7 +96,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 						</div>
 					)}
 
-					{!showOnlyWhereClause && (
+					{!showOnlyWhereClause && !isListViewPanel && (
 						<QueryFooter
 							addNewBuilderQuery={addNewBuilderQuery}
 							addNewFormula={addNewFormula}
@@ -103,7 +104,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 					)}
 				</div>
 
-				{!showOnlyWhereClause && (
+				{!showOnlyWhereClause && !isListViewPanel && (
 					<div className="query-names-section">
 						{currentQuery.builder.queryData.map((query) => (
 							<div key={query.queryName} className="query-name">
