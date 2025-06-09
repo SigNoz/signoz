@@ -9,6 +9,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Copy, Ellipsis, Trash } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import MetricsAggregateSection from './MerticsAggregateSection/MetricsAggregateSection';
@@ -18,6 +19,7 @@ import QueryAggregation from './QueryAggregation/QueryAggregation';
 import QuerySearch from './QuerySearch/QuerySearch';
 
 export const QueryV2 = memo(function QueryV2({
+	ref,
 	index,
 	queryVariant,
 	query,
@@ -25,7 +27,7 @@ export const QueryV2 = memo(function QueryV2({
 	isListViewPanel = false,
 	version,
 	showOnlyWhereClause = false,
-}: QueryProps): JSX.Element {
+}: QueryProps & { ref: React.RefObject<HTMLDivElement> }): JSX.Element {
 	const { cloneQuery, panelType } = useQueryBuilder();
 
 	const showFunctions = query?.functions?.length > 0;
@@ -71,8 +73,18 @@ export const QueryV2 = memo(function QueryV2({
 		dataSource,
 	]);
 
+	const handleChangeAggregateEvery = useCallback(
+		(value: IBuilderQuery['stepInterval']) => {
+			handleChangeQueryData('stepInterval', value);
+		},
+		[handleChangeQueryData],
+	);
+
 	return (
-		<div className={cx('query-v2', { 'where-clause-view': showOnlyWhereClause })}>
+		<div
+			className={cx('query-v2', { 'where-clause-view': showOnlyWhereClause })}
+			ref={ref}
+		>
 			<div className="qb-content-section">
 				{!showOnlyWhereClause && (
 					<div className="qb-header-container">
@@ -156,6 +168,7 @@ export const QueryV2 = memo(function QueryV2({
 						<QueryAggregation
 							dataSource={dataSource}
 							panelType={panelType || undefined}
+							onAggregationIntervalChange={handleChangeAggregateEvery}
 						/>
 					)}
 
