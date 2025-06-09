@@ -145,17 +145,8 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	ctx context.Context, orgID string, version int,
 ) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
+
 	result := []pipelinetypes.GettablePipeline{}
-
-	// todo(nitya): remove this once we fix agents in multitenancy
-	defaultOrgID, err := ic.GetDefaultOrgID(ctx)
-	if err != nil {
-		// we don't want to fail the request if we can't get the default org ID
-		// we will just return an empty list of pipelines
-		zap.L().Warn("failed to get default org ID", zap.Error(err))
-		return result, nil
-	}
-
 	if version >= 0 {
 		savedPipelines, errors := ic.getPipelinesByVersion(ctx, orgID, version)
 		if errors != nil {
@@ -165,7 +156,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 		result = savedPipelines
 	}
 
-	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx, defaultOrgID)
+	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx, orgID)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
 			apiErr, "could not get pipelines for installed integrations",
