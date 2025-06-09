@@ -455,7 +455,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	endBucket := end / querybuilder.NsToSeconds
 
-	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.LE("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
+	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.L("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 
 	return warnings, nil
 }

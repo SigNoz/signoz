@@ -18,11 +18,10 @@ const (
 )
 
 type metricQueryStatementBuilder struct {
-	logger          *slog.Logger
-	metadataStore   telemetrytypes.MetadataStore
-	fm              qbtypes.FieldMapper
-	cb              qbtypes.ConditionBuilder
-	aggExprRewriter qbtypes.AggExprRewriter
+	logger        *slog.Logger
+	metadataStore telemetrytypes.MetadataStore
+	fm            qbtypes.FieldMapper
+	cb            qbtypes.ConditionBuilder
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*metricQueryStatementBuilder)(nil)
@@ -32,14 +31,12 @@ func NewMetricQueryStatementBuilder(
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	aggExprRewriter qbtypes.AggExprRewriter,
 ) *metricQueryStatementBuilder {
 	return &metricQueryStatementBuilder{
-		logger:          logger,
-		metadataStore:   metadataStore,
-		fm:              fieldMapper,
-		cb:              conditionBuilder,
-		aggExprRewriter: aggExprRewriter,
+		logger:        logger,
+		metadataStore: metadataStore,
+		fm:            fieldMapper,
+		cb:            conditionBuilder,
 	}
 }
 

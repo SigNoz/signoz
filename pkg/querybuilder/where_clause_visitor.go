@@ -28,6 +28,7 @@ type filterExpressionVisitor struct {
 	jsonBodyPrefix     string
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	skipResourceFilter bool
+	skipFullTextFilter bool
 }
 
 type FilterExprVisitorOpts struct {
@@ -39,6 +40,7 @@ type FilterExprVisitorOpts struct {
 	JsonBodyPrefix     string
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	SkipResourceFilter bool
+	SkipFullTextFilter bool
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor
@@ -52,6 +54,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		jsonBodyPrefix:     opts.JsonBodyPrefix,
 		jsonKeyToKey:       opts.JsonKeyToKey,
 		skipResourceFilter: opts.SkipResourceFilter,
+		skipFullTextFilter: opts.SkipFullTextFilter,
 	}
 }
 
@@ -230,6 +233,10 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 
 	// Handle standalone key/value as a full text search term
 	if ctx.GetChildCount() == 1 {
+		if v.skipFullTextFilter {
+			return ""
+		}
+
 		if v.fullTextColumn == nil {
 			v.errors = append(v.errors, errors.Newf(
 				errors.TypeInvalidInput,
@@ -450,6 +457,10 @@ func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) 
 
 // VisitFullText handles standalone quoted strings for full-text search
 func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
+
+	if v.skipFullTextFilter {
+		return ""
+	}
 
 	var text string
 

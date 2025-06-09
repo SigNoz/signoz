@@ -24,6 +24,10 @@ type logQueryStatementBuilder struct {
 	cb                        qbtypes.ConditionBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
+
+	fullTextColumn *telemetrytypes.TelemetryFieldKey
+	jsonBodyPrefix string
+	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*logQueryStatementBuilder)(nil)
@@ -35,6 +39,9 @@ func NewLogQueryStatementBuilder(
 	conditionBuilder qbtypes.ConditionBuilder,
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
+	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	jsonBodyPrefix string,
+	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *logQueryStatementBuilder {
 	return &logQueryStatementBuilder{
 		logger:                    logger,
@@ -43,6 +50,9 @@ func NewLogQueryStatementBuilder(
 		cb:                        conditionBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
+		fullTextColumn:            fullTextColumn,
+		jsonBodyPrefix:            jsonBodyPrefix,
+		jsonKeyToKey:              jsonKeyToKey,
 	}
 }
 
@@ -102,7 +112,7 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 	for idx := range query.Order {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
 			Name:          query.Order[idx].Key.Name,
-			Signal:        telemetrytypes.SignalTraces,
+			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  query.Order[idx].Key.FieldContext,
 			FieldDataType: query.Order[idx].Key.FieldDataType,
 		})
@@ -413,6 +423,9 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 		ConditionBuilder:   b.cb,
 		FieldKeys:          keys,
 		SkipResourceFilter: true,
+		FullTextColumn:     b.fullTextColumn,
+		JsonBodyPrefix:     b.jsonBodyPrefix,
+		JsonKeyToKey:       b.jsonKeyToKey,
 	})
 
 	if err != nil {
@@ -427,7 +440,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	endBucket := end / querybuilder.NsToSeconds
 
-	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.LE("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
+	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.L("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 
 	return warnings, nil
 }

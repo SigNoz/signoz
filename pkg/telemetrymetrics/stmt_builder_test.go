@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -193,14 +192,11 @@ func TestStatementBuilder(t *testing.T) {
 	}
 	mockMetadataStore.KeysMap = keys
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(nil, fm, cb, "", nil)
-
 	statementBuilder := NewMetricQueryStatementBuilder(
 		slog.Default(),
 		mockMetadataStore,
 		fm,
 		cb,
-		aggExprRewriter,
 	)
 
 	for _, c := range cases {
