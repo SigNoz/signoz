@@ -12,6 +12,8 @@ import {
 	metricsGaugeSpaceAggregateOperatorOptions,
 	metricsHistogramSpaceAggregateOperatorOptions,
 	metricsSumSpaceAggregateOperatorOptions,
+	metricsUnknownSpaceAggregateOperatorOptions,
+	metricsUnknownTimeAggregateOperatorOptions,
 } from 'constants/queryBuilderOperators';
 import {
 	listViewInitialLogQuery,
@@ -21,6 +23,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
+import { isEmpty } from 'lodash-es';
 import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -145,12 +148,18 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleMetricAggregateAtributeTypes = useCallback(
 		(aggregateAttribute: BaseAutocompleteData): any => {
-			const newOperators = getMetricsOperatorsByAttributeType({
-				dataSource: DataSource.METRICS,
-				panelType: panelType || PANEL_TYPES.TIME_SERIES,
-				aggregateAttributeType:
-					(aggregateAttribute.type as ATTRIBUTE_TYPES) || ATTRIBUTE_TYPES.GAUGE,
-			});
+			// operators for unknown metric
+			const isUnknownMetric =
+				isEmpty(aggregateAttribute.type) && !isEmpty(aggregateAttribute.key);
+
+			const newOperators = isUnknownMetric
+				? metricsUnknownTimeAggregateOperatorOptions
+				: getMetricsOperatorsByAttributeType({
+						dataSource: DataSource.METRICS,
+						panelType: panelType || PANEL_TYPES.TIME_SERIES,
+						aggregateAttributeType:
+							(aggregateAttribute.type as ATTRIBUTE_TYPES) || ATTRIBUTE_TYPES.GAUGE,
+				  });
 
 			switch (aggregateAttribute.type) {
 				case ATTRIBUTE_TYPES.SUM:
@@ -168,7 +177,7 @@ export const useQueryOperations: UseQueryOperations = ({
 					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
 					break;
 				default:
-					setSpaceAggregationOptions(metricsGaugeSpaceAggregateOperatorOptions);
+					setSpaceAggregationOptions(metricsUnknownSpaceAggregateOperatorOptions);
 					break;
 			}
 
@@ -202,6 +211,21 @@ export const useQueryOperations: UseQueryOperations = ({
 				}
 
 				newQuery.spaceAggregation = '';
+
+				// Handled query with unknown metric to avoid 400 and 500 errors
+				// With metric value typed and not available then - time - 'avg', space - 'avg'
+				// If not typed - time - 'rate', space - 'sum', op - 'count'
+				if (isEmpty(newQuery.aggregateAttribute.type)) {
+					if (!isEmpty(newQuery.aggregateAttribute.key)) {
+						newQuery.aggregateOperator = MetricAggregateOperator.AVG;
+						newQuery.timeAggregation = MetricAggregateOperator.AVG;
+						newQuery.spaceAggregation = MetricAggregateOperator.AVG;
+					} else {
+						newQuery.aggregateOperator = MetricAggregateOperator.COUNT;
+						newQuery.timeAggregation = MetricAggregateOperator.RATE;
+						newQuery.spaceAggregation = MetricAggregateOperator.SUM;
+					}
+				}
 			}
 
 			handleSetQueryData(index, newQuery);
