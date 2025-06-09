@@ -105,7 +105,7 @@ func (provider *provider) Start(ctx context.Context) error {
 }
 
 func (provider *provider) Report(ctx context.Context) error {
-	orgs, err := provider.orgGetter.List(ctx)
+	orgs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err
 	}
