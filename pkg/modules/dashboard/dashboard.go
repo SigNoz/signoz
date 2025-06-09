@@ -4,12 +4,13 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Module interface {
-	Create(ctx context.Context, orgID valuer.UUID, createdBy string, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
+	Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
 
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error)
 
@@ -22,6 +23,8 @@ type Module interface {
 	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
 	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
+
+	statsreporter.StatsCollector
 }
 
 type Handler interface {

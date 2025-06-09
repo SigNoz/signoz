@@ -102,7 +102,9 @@ func (od *GettableOrgDomain) GetSAMLIdpURL() string {
 
 func (od *GettableOrgDomain) GetSAMLCert() string {
 	if od.SamlConfig != nil {
-		return od.SamlConfig.SamlCert
+		// remove any whitespaces from the cert
+		cert := strings.ReplaceAll(od.SamlConfig.SamlCert, " ", "")
+		return cert
 	}
 	return ""
 }

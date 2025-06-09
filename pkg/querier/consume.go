@@ -227,6 +227,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		}
 	}
 	if maxAgg < 0 {
+		//nolint:nilnil
 		return nil, nil // empty result-set
 	}
 

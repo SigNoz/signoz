@@ -30,7 +30,7 @@ type querier struct {
 
 var _ qbtypes.Querier = (*querier)(nil)
 
-func NewQuerier(
+func New(
 	logger *slog.Logger,
 	telemetryStore telemetrystore.TelemetryStore,
 	metadataStore telemetrytypes.MetadataStore,
