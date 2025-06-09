@@ -1,10 +1,10 @@
 import './QueryBuilderV2.styles.scss';
 
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import { Formula } from 'container/QueryBuilder/components/Formula';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderV2Provider } from './QueryBuilderV2Context';
@@ -17,7 +17,6 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	filterConfigs = {},
 	queryComponents,
 	isListViewPanel = false,
-	showFunctions = false,
 	showOnlyWhereClause = false,
 	version,
 }: QueryBuilderProps): JSX.Element {
@@ -30,7 +29,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		initialDataSource,
 	} = useQueryBuilder();
 
-	console.log('isListViewPanel', isListViewPanel, showFunctions);
+	const containerRef = useRef(null);
 
 	const currentDataSource = useMemo(
 		() =>
@@ -55,16 +54,60 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		newPanelType,
 	]);
 
+	const listViewLogFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
+		const config: QueryBuilderProps['filterConfigs'] = {
+			stepInterval: { isHidden: true, isDisabled: true },
+			having: { isHidden: true, isDisabled: true },
+			filters: {
+				customKey: 'body',
+				customOp: OPERATORS.CONTAINS,
+			},
+		};
+
+		return config;
+	}, []);
+
+	const listViewTracesFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
+		const config: QueryBuilderProps['filterConfigs'] = {
+			stepInterval: { isHidden: true, isDisabled: true },
+			having: { isHidden: true, isDisabled: true },
+			limit: { isHidden: true, isDisabled: true },
+			filters: {
+				customKey: 'body',
+				customOp: OPERATORS.CONTAINS,
+			},
+		};
+
+		return config;
+	}, []);
+
+	const queryFilterConfigs = useMemo(() => {
+		if (isListViewPanel) {
+			return currentQuery.builder.queryData[0].dataSource === DataSource.TRACES
+				? listViewTracesFilterConfigs
+				: listViewLogFilterConfigs;
+		}
+
+		return filterConfigs;
+	}, [
+		isListViewPanel,
+		filterConfigs,
+		currentQuery.builder.queryData,
+		listViewLogFilterConfigs,
+		listViewTracesFilterConfigs,
+	]);
+
 	return (
 		<QueryBuilderV2Provider>
 			<div className="query-builder-v2">
 				<div className="qb-content-container">
 					{currentQuery.builder.queryData.map((query, index) => (
 						<QueryV2
+							ref={containerRef}
 							key={query.queryName}
 							index={index}
 							query={query}
-							filterConfigs={filterConfigs}
+							filterConfigs={queryFilterConfigs}
 							queryComponents={queryComponents}
 							version={version}
 							isAvailableToDisable={false}
