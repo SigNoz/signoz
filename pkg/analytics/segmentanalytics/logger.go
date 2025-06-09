@@ -18,9 +18,11 @@ func newSegmentLogger(settings factory.ScopedProviderSettings) segment.Logger {
 }
 
 func (logger *logger) Logf(format string, args ...interface{}) {
+	// the no lint directive is needed because the segmentlogger is not a slog.Logger
 	logger.settings.Logger().InfoContext(context.TODO(), format, args...) //nolint:sloglint
 }
 
 func (logger *logger) Errorf(format string, args ...interface{}) {
+	// the no lint directive is needed because the segment logger is not a slog.Logger
 	logger.settings.Logger().ErrorContext(context.TODO(), format, args...) //nolint:sloglint
 }
