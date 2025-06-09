@@ -243,13 +243,12 @@ const (
 		"scope_string "
 	TracesExplorerViewSQLSelectWithSubQuery = "(SELECT traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s ORDER BY durationNano DESC LIMIT 1 BY traceID"
-	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
-		"span_count, subQuery.durationNano, subQuery.traceID AS traceID FROM %s.%s INNER JOIN ( SELECT * FROM "
-	TracesExplorerViewSQLSelectAfterSubQuery = "AS inner_subquery ) AS subQuery ON %s.%s.traceID = subQuery.traceID WHERE %s %s " +
+	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName as `subQuery.serviceName`, subQuery.name as `subQuery.name`, count() AS " +
+		"span_count, subQuery.durationNano as `subQuery.durationNano`, subQuery.traceID FROM " +
+		"(SELECT traceID AS dist_traceID, timestamp, ts_bucket_start FROM %s.%s WHERE %s%s) as dist_table " +
+		"INNER JOIN ( SELECT * FROM "
+	TracesExplorerViewSQLSelectAfterSubQuery = " AS inner_subquery ) AS subQuery ON dist_table.dist_traceID = subQuery.traceID " +
 		"GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc LIMIT 1 BY subQuery.traceID "
-	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
-		"span_count, subQuery.durationNano, traceID FROM %s.%s GLOBAL INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
-		"BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;"
 	TracesExplorerSpanCountWithSubQuery  = "(SELECT trace_id, count() as span_count FROM %s.%s WHERE %s %s GROUP BY trace_id ORDER BY span_count DESC LIMIT 1 BY trace_id"
 	TraceExplorerSpanCountBeforeSubQuery = "SELECT serviceName, name, subQuery.span_count as span_count, durationNano, trace_id as traceID from %s.%s GLOBAL INNER JOIN ( SELECT * FROM "
 	TraceExplorerSpanCountAfterSubQuery  = "AS inner_subquery ) AS subQuery ON %s.%s.trace_id = subQuery.trace_id WHERE parent_span_id = '' AND %s ORDER BY subQuery.span_count DESC"

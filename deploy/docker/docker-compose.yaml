@@ -10,7 +10,7 @@ x-common: &common
 x-clickhouse-defaults: &clickhouse-defaults
   !!merge <<: *common
   # addding non LTS version due to this fix https://github.com/ClickHouse/ClickHouse/commit/32caf8716352f45c1b617274c7508c86b7d1afab
-  image: clickhouse/clickhouse-server:24.1.2-alpine
+  image: clickhouse/clickhouse-server:25.5-alpine
   tty: true
   labels:
     signoz.io/scrape: "true"
@@ -123,7 +123,7 @@ services:
       - sqlite:/var/lib/signoz/
     environment:
       - SIGNOZ_ALERTMANAGER_PROVIDER=signoz
-      - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000/?user=default&password=clickhouse
       - SIGNOZ_SQLSTORE_SQLITE_PATH=/var/lib/signoz/signoz.db
       - DASHBOARDS_PATH=/root/config/dashboards
       - STORAGE=clickhouse
