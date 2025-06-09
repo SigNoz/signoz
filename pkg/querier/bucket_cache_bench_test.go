@@ -167,7 +167,7 @@ func BenchmarkBucketCache_MergeTimeSeriesValues(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				result := bc.mergeTimeSeriesValues(buckets)
+				result := bc.mergeTimeSeriesValues(context.Background(), buckets)
 				_ = result
 			}
 		})
