@@ -65,7 +65,7 @@
                  Execute: PASSWORD=$(base64 < /dev/urandom | head -c8); echo "$PASSWORD"; echo -n "$PASSWORD" | sha1sum | tr -d '-' | xxd -r -p | sha1sum | tr -d '-'
                  In first line will be password and in second - corresponding double SHA1.
             -->
-            <password></password>
+            <password>clickhouse</password>
 
             <!-- List of networks with open access.
 
@@ -89,6 +89,8 @@
             -->
             <networks>
                 <ip>::/0</ip>
+                <ip>127.0.0.1</ip>
+                <ip>0.0.0.0/0</ip>
             </networks>
 
             <!-- Settings profile for user. -->
@@ -98,7 +100,7 @@
             <quota>default</quota>
 
             <!-- User can create other users and grant rights to them. -->
-            <!-- <access_management>1</access_management> -->
+            <access_management>1</access_management>
         </default>
     </users>
 
