@@ -2,6 +2,7 @@ import '../MySettings.styles.scss';
 import './UserInfo.styles.scss';
 
 import { Button, Input, Modal, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import changeMyPassword from 'api/v1/factor_password/changeMyPassword';
 import editUser from 'api/v1/user/id/update';
 import { useNotifications } from 'hooks/useNotifications';
@@ -97,6 +98,16 @@ function UserInfo(): JSX.Element {
 		currentPassword === updatePassword;
 
 	const onSaveHandler = async (): Promise<void> => {
+		logEvent('Account Settings: Name Updated', {
+			name: changedName,
+		});
+		logEvent(
+			'Account Settings: Name Updated',
+			{
+				name: changedName,
+			},
+			'identify',
+		);
 		try {
 			setIsLoading(true);
 			await editUser({

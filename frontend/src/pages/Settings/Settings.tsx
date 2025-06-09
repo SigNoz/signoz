@@ -1,5 +1,6 @@
 import './Settings.styles.scss';
 
+import logEvent from 'api/common/logEvent';
 import RouteTab from 'components/RouteTab';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
@@ -217,6 +218,10 @@ function SettingsPage(): JSX.Element {
 								isDisabled={false}
 								showIcon={false}
 								onClick={(event): void => {
+									logEvent('Settings V2: Menu clicked', {
+										menuLabel: item.label,
+										menuRoute: item.key,
+									});
 									handleMenuItemClick((event as unknown) as MouseEvent, item);
 								}}
 							/>

@@ -349,6 +349,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	);
 
 	const handleReorderShortcutNavItems = (): void => {
+		logEvent('Sidebar V2: Save shortcuts clicked', {
+			shortcuts: tempPinnedMenuItems.map((item) => item.key),
+		});
 		setPinnedMenuItems(tempPinnedMenuItems);
 
 		// Update user preference with the new order
@@ -533,7 +536,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		} else if (item) {
 			onClickHandler(item?.key as string, event);
 		}
-		logEvent('Sidebar: Menu clicked', {
+		logEvent('Sidebar V2: Menu clicked', {
 			menuRoute: item?.key,
 			menuLabel: item?.label,
 		});
@@ -604,7 +607,20 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						item.key !== ROUTES.BILLING &&
 						item.key !== ROUTES.SETTINGS
 					}
-					onTogglePin={allowPin ? onTogglePin : undefined}
+					onTogglePin={
+						allowPin
+							? (item): void => {
+									logEvent(
+										`Sidebar V2: Menu item ${item.isPinned ? 'unpinned' : 'pinned'}`,
+										{
+											menuRoute: item.key,
+											menuLabel: item.label,
+										},
+									);
+									onTogglePin(item);
+							  }
+							: undefined
+					}
 					onClick={(event): void => {
 						handleMenuItemClick(event, item);
 					}}
@@ -637,6 +653,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			window.open(item.url, '_blank');
 		}
 
+		logEvent('Help Popover: Item clicked', {
+			menuRoute: item?.key,
+			menuLabel: item?.label,
+		});
+
 		switch (item?.key) {
 			case ROUTES.SHORTCUTS:
 				history.push(ROUTES.SHORTCUTS);
@@ -657,6 +678,22 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	};
 
 	const handleSettingsMenuItemClick = (info: SidebarItem): void => {
+		const item = userSettingsDropdownMenuItems.find(
+			(item) => item?.key === info.key,
+		);
+		let menuLabel = '';
+		if (
+			item &&
+			!('type' in item && item.type === 'divider') &&
+			typeof item.label === 'string'
+		) {
+			menuLabel = item.label;
+		}
+
+		logEvent('Settings Popover: Item clicked', {
+			menuRoute: item?.key,
+			menuLabel,
+		});
 		switch (info.key) {
 			case 'account':
 				history.push(ROUTES.MY_SETTINGS);
@@ -833,6 +870,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										<div
 											className="nav-section-title-icon reorder"
 											onClick={(): void => {
+												logEvent('Sidebar V2: Manage shortcuts clicked', {});
 												setIsReorderShortcutNavItemsModalOpen(true);
 											}}
 										>
@@ -869,6 +907,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									<div
 										className="nav-section-title"
 										onClick={(): void => {
+											logEvent('Sidebar V2: More menu clicked', {
+												action: isMoreMenuCollapsed ? 'expand' : 'collapse',
+											});
 											setIsMoreMenuCollapsed(!isMoreMenuCollapsed);
 										}}
 									>
@@ -959,11 +1000,17 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				title={<span className="title">Manage Shortcuts</span>}
 				open={isReorderShortcutNavItemsModalOpen}
 				closable
-				onCancel={hideReorderShortcutNavItemsModal}
+				onCancel={(): void => {
+					logEvent('Sidebar V2: Manage shortcuts dismissed', {});
+					hideReorderShortcutNavItemsModal();
+				}}
 				footer={[
 					<Button
 						key="cancel"
-						onClick={hideReorderShortcutNavItemsModal}
+						onClick={(): void => {
+							logEvent('Sidebar V2: Manage shortcuts dismissed', {});
+							hideReorderShortcutNavItemsModal();
+						}}
 						className="periscope-btn cancel-btn secondary-btn"
 						icon={<X size={16} />}
 					>

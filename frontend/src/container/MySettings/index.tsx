@@ -1,6 +1,7 @@
 import './MySettings.styles.scss';
 
 import { Radio, RadioChangeEvent, Switch, Tag } from 'antd';
+import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/preferences/updateUserPreference';
 import { AxiosError } from 'axios';
 import { USER_PREFERENCES } from 'constants/userPreferences';
@@ -72,11 +73,17 @@ function MySettings(): JSX.Element {
 	const [theme, setTheme] = useState(isDarkMode ? 'dark' : 'light');
 
 	const handleThemeChange = ({ target: { value } }: RadioChangeEvent): void => {
+		logEvent('Account Settings: Theme Changed', {
+			theme: value,
+		});
 		setTheme(value);
 		toggleTheme();
 	};
 
 	const handleSideNavPinnedChange = (checked: boolean): void => {
+		logEvent('Account Settings: Sidebar Pinned Changed', {
+			pinned: checked,
+		});
 		// Optimistically update the UI
 		setSideNavPinned(checked);
 
