@@ -2,6 +2,7 @@ package querybuildertypesv5
 
 import (
 	"encoding/json"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"testing"
 	"time"
 
@@ -137,13 +138,15 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							"spec": {
 								"name": "trace_flow_analysis",
 								"expression": "A => B",
-								"traceFilters": {
-									"trace_duration": {
-										"operator": 3,
-										"value": "200ms"
-									}
+								"filter": {
+									"expression": "trace_duration > 200ms AND span_count >= 5"
 								},
-								"limit": 100
+								"orderBy": {
+									"field": "trace_duration",
+									"direction": "desc"
+								},
+								"limit": 100,
+								"page_token": "eyJsYXN0X3RyYWNlX2lkIjoiYWJjZGVmIn0="
 							}
 						}
 					]
@@ -182,13 +185,299 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							Spec: QueryBuilderTraceOperator{
 								Name:       "trace_flow_analysis",
 								Expression: "A => B",
-								TraceFilters: &TraceFilters{
-									TraceDuration: &TraceFilterCondition{
-										Operator: FilterOperatorGreaterThan,
-										Value:    "200ms",
+								Filter: &Filter{
+									Expression: "trace_duration > 200ms AND span_count >= 5",
+								},
+								OrderBy: &TraceOrderBy{
+									Field:     TraceOrderByTraceDuration,
+									Direction: OrderDirectionDesc,
+								},
+								Limit:     100,
+								PageToken: "eyJsYXN0X3RyYWNlX2lkIjoiYWJjZGVmIn0=",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid trace operator with complex expression and span_count ordering",
+			jsonData: `{
+				"schemaVersion": "v1",
+				"start": 1640995200000,
+				"end": 1640998800000,
+				"requestType": "time_series",
+				"compositeQuery": {
+					"queries": [
+						{
+							"name": "A",
+							"type": "builder_query",
+							"spec": {
+								"signal": "traces",
+								"filter": {
+									"expression": "service.name = 'frontend'"
+								}
+							}
+						},
+						{
+							"name": "B",
+							"type": "builder_query",
+							"spec": {
+								"signal": "traces",
+								"filter": {
+									"expression": "hasError = true"
+								}
+							}
+						},
+						{
+							"name": "C",
+							"type": "builder_query",
+							"spec": {
+								"signal": "traces",
+								"filter": {
+									"expression": "response_status_code = '200'"
+								}
+							}
+						},
+						{
+							"name": "T2",
+							"type": "builder_trace_operator",
+							"spec": {
+								"name": "complex_trace_analysis",
+								"expression": "A => (B && NOT C)",
+								"filter": {
+									"expression": "trace_duration BETWEEN 100ms AND 5s AND span_count IN (5, 10, 15)"
+								},
+								"orderBy": {
+									"field": "span_count",
+									"direction": "asc"
+								},
+								"limit": 50,
+								"functions": [
+									{
+										"name": "absolute",
+										"args": []
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			expected: QueryRangeRequest{
+				SchemaVersion: "v1",
+				Start:         1640995200000,
+				End:           1640998800000,
+				RequestType:   RequestTypeTimeSeries,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Name: "A",
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[TraceAggregation]{
+								Signal: telemetrytypes.SignalTraces,
+								Filter: &Filter{
+									Expression: "service.name = 'frontend'",
+								},
+							},
+						},
+						{
+							Name: "B",
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[TraceAggregation]{
+								Signal: telemetrytypes.SignalTraces,
+								Filter: &Filter{
+									Expression: "hasError = true",
+								},
+							},
+						},
+						{
+							Name: "C",
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[TraceAggregation]{
+								Signal: telemetrytypes.SignalTraces,
+								Filter: &Filter{
+									Expression: "response_status_code = '200'",
+								},
+							},
+						},
+						{
+							Name: "T2",
+							Type: QueryTypeTraceOperator,
+							Spec: QueryBuilderTraceOperator{
+								Name:       "complex_trace_analysis",
+								Expression: "A => (B && NOT C)",
+								Filter: &Filter{
+									Expression: "trace_duration BETWEEN 100ms AND 5s AND span_count IN (5, 10, 15)",
+								},
+								OrderBy: &TraceOrderBy{
+									Field:     TraceOrderBySpanCount,
+									Direction: OrderDirectionAsc,
+								},
+								Limit: 50,
+								Functions: []Function{
+									{
+										Name: FunctionNameAbsolute,
+										Args: []FunctionArg{},
 									},
 								},
-								Limit: 100,
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid trace operator with NOT expression",
+			jsonData: `{
+				"schemaVersion": "v1",
+				"start": 1640995200000,
+				"end": 1640998800000,
+				"requestType": "time_series",
+				"compositeQuery": {
+					"queries": [
+						{
+							"name": "A",
+							"type": "builder_query",
+							"spec": {
+								"signal": "traces",
+								"filter": {
+									"expression": "service.name = 'frontend'"
+								}
+							}
+						},
+						{
+							"name": "T3",
+							"type": "builder_trace_operator",
+							"spec": {
+								"name": "not_trace_analysis",
+								"expression": "NOT A",
+								"filter": {
+									"expression": "trace_duration < 1s"
+								},
+								"disabled": false
+							}
+						}
+					]
+				}
+			}`,
+			expected: QueryRangeRequest{
+				SchemaVersion: "v1",
+				Start:         1640995200000,
+				End:           1640998800000,
+				RequestType:   RequestTypeTimeSeries,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Name: "A",
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[TraceAggregation]{
+								Signal: telemetrytypes.SignalTraces,
+								Filter: &Filter{
+									Expression: "service.name = 'frontend'",
+								},
+							},
+						},
+						{
+							Name: "T3",
+							Type: QueryTypeTraceOperator,
+							Spec: QueryBuilderTraceOperator{
+								Name:       "not_trace_analysis",
+								Expression: "NOT A",
+								Filter: &Filter{
+									Expression: "trace_duration < 1s",
+								},
+								Disabled: false,
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "trace operator with binary NOT (exclusion)",
+			jsonData: `{
+				"schemaVersion": "v1",
+				"start": 1640995200000,
+				"end": 1640998800000,
+				"requestType": "time_series",
+				"compositeQuery": {
+					"queries": [
+						{
+							"name": "A",
+							"type": "builder_query",
+							"spec": {
+								"signal": "traces",
+								"filter": {
+									"expression": "service.name = 'frontend'"
+								}
+							}
+						},
+						{
+							"name": "B",
+							"type": "builder_query",
+							"spec": {
+								"signal": "traces",
+								"filter": {
+									"expression": "hasError = true"
+								}
+							}
+						},
+						{
+							"name": "T4",
+							"type": "builder_trace_operator",
+							"spec": {
+								"name": "exclusion_analysis",
+								"expression": "A NOT B",
+								"filter": {
+									"expression": "span_count > 3"
+								},
+								"limit": 75
+							}
+						}
+					]
+				}
+			}`,
+			expected: QueryRangeRequest{
+				SchemaVersion: "v1",
+				Start:         1640995200000,
+				End:           1640998800000,
+				RequestType:   RequestTypeTimeSeries,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Name: "A",
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[TraceAggregation]{
+								Signal: telemetrytypes.SignalTraces,
+								Filter: &Filter{
+									Expression: "service.name = 'frontend'",
+								},
+							},
+						},
+						{
+							Name: "B",
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[TraceAggregation]{
+								Signal: telemetrytypes.SignalTraces,
+								Filter: &Filter{
+									Expression: "hasError = true",
+								},
+							},
+						},
+						{
+							Name: "T4",
+							Type: QueryTypeTraceOperator,
+							Spec: QueryBuilderTraceOperator{
+								Name:       "exclusion_analysis",
+								Expression: "A NOT B",
+								Filter: &Filter{
+									Expression: "span_count > 3",
+								},
+								Limit: 75,
 							},
 						},
 					},
@@ -769,6 +1058,411 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 
 			if tt.expected.Variables != nil {
 				assert.Equal(t, tt.expected.Variables, req.Variables)
+			}
+		})
+	}
+}
+
+func TestParseTraceExpression(t *testing.T) {
+	tests := []struct {
+		name        string
+		expression  string
+		expectError bool
+		checkResult func(t *testing.T, result *TraceOperand)
+	}{
+		{
+			name:        "simple query reference",
+			expression:  "A",
+			expectError: false,
+			checkResult: func(t *testing.T, result *TraceOperand) {
+				assert.NotNil(t, result.QueryRef)
+				assert.Equal(t, "A", result.QueryRef.Name)
+				assert.Nil(t, result.Operator)
+			},
+		},
+		{
+			name:        "simple implication",
+			expression:  "A => B",
+			expectError: false,
+			checkResult: func(t *testing.T, result *TraceOperand) {
+				assert.NotNil(t, result.Operator)
+				assert.Equal(t, TraceOperatorDirectDescendant, *result.Operator)
+				assert.NotNil(t, result.Left)
+				assert.NotNil(t, result.Right)
+				assert.Equal(t, "A", result.Left.QueryRef.Name)
+				assert.Equal(t, "B", result.Right.QueryRef.Name)
+			},
+		},
+		{
+			name:        "and operation",
+			expression:  "A && B",
+			expectError: false,
+			checkResult: func(t *testing.T, result *TraceOperand) {
+				assert.NotNil(t, result.Operator)
+				assert.Equal(t, TraceOperatorAnd, *result.Operator)
+				assert.Equal(t, "A", result.Left.QueryRef.Name)
+				assert.Equal(t, "B", result.Right.QueryRef.Name)
+			},
+		},
+		{
+			name:        "or operation",
+			expression:  "A || B",
+			expectError: false,
+			checkResult: func(t *testing.T, result *TraceOperand) {
+				assert.NotNil(t, result.Operator)
+				assert.Equal(t, TraceOperatorOr, *result.Operator)
+				assert.Equal(t, "A", result.Left.QueryRef.Name)
+				assert.Equal(t, "B", result.Right.QueryRef.Name)
+			},
+		},
+		{
+			name:        "unary NOT operation",
+			expression:  "NOT A",
+			expectError: false,
+			checkResult: func(t *testing.T, result *TraceOperand) {
+				assert.NotNil(t, result.Operator)
+				assert.Equal(t, TraceOperatorNot, *result.Operator)
+				assert.NotNil(t, result.Left)
+				assert.Nil(t, result.Right)
+				assert.Equal(t, "A", result.Left.QueryRef.Name)
+			},
+		},
+		{
+			name:        "binary NOT operation",
+			expression:  "A NOT B",
+			expectError: false,
+			checkResult: func(t *testing.T, result *TraceOperand) {
+				assert.NotNil(t, result.Operator)
+				assert.Equal(t, TraceOperatorExclude, *result.Operator)
+				assert.NotNil(t, result.Left)
+				assert.NotNil(t, result.Right)
+				assert.Equal(t, "A", result.Left.QueryRef.Name)
+				assert.Equal(t, "B", result.Right.QueryRef.Name)
+			},
+		},
+		{
+			name:        "complex expression with precedence",
+			expression:  "A => B && C || D",
+			expectError: false,
+			checkResult: func(t *testing.T, result *TraceOperand) {
+				// Should parse as: A => (B && (C || D)) due to precedence: NOT > || > && > =>
+				// The parsing finds operators from lowest precedence first
+				assert.NotNil(t, result.Operator)
+				assert.Equal(t, TraceOperatorDirectDescendant, *result.Operator)
+				assert.Equal(t, "A", result.Left.QueryRef.Name)
+
+				// Right side should be an AND operation (next lowest precedence after =>)
+				assert.NotNil(t, result.Right.Operator)
+				assert.Equal(t, TraceOperatorAnd, *result.Right.Operator)
+			},
+		},
+		{
+			name:        "simple parentheses",
+			expression:  "(A)",
+			expectError: false,
+			checkResult: func(t *testing.T, result *TraceOperand) {
+				assert.NotNil(t, result.QueryRef)
+				assert.Equal(t, "A", result.QueryRef.Name)
+				assert.Nil(t, result.Operator)
+			},
+		},
+		{
+			name:        "parentheses expression",
+			expression:  "A => (B || C)",
+			expectError: false,
+			checkResult: func(t *testing.T, result *TraceOperand) {
+				assert.NotNil(t, result.Operator)
+				assert.Equal(t, TraceOperatorDirectDescendant, *result.Operator)
+				assert.Equal(t, "A", result.Left.QueryRef.Name)
+
+				// Right side should be an OR operation
+				assert.NotNil(t, result.Right.Operator)
+				assert.Equal(t, TraceOperatorOr, *result.Right.Operator)
+				assert.Equal(t, "B", result.Right.Left.QueryRef.Name)
+				assert.Equal(t, "C", result.Right.Right.QueryRef.Name)
+			},
+		},
+		{
+			name:        "nested NOT with parentheses",
+			expression:  "NOT (A && B)",
+			expectError: false,
+			checkResult: func(t *testing.T, result *TraceOperand) {
+				assert.NotNil(t, result.Operator)
+				assert.Equal(t, TraceOperatorNot, *result.Operator)
+				assert.Nil(t, result.Right) // Unary operator
+
+				// Left side should be an AND operation
+				assert.NotNil(t, result.Left.Operator)
+				assert.Equal(t, TraceOperatorAnd, *result.Left.Operator)
+			},
+		},
+		{
+			name:        "invalid query reference with numbers",
+			expression:  "123",
+			expectError: true,
+		},
+		{
+			name:        "invalid query reference with special chars",
+			expression:  "A-B",
+			expectError: true,
+		},
+		{
+			name:        "empty expression",
+			expression:  "",
+			expectError: true,
+		},
+
+		{
+			name:        "expression with extra whitespace",
+			expression:  "  A   =>   B  ",
+			expectError: false,
+			checkResult: func(t *testing.T, result *TraceOperand) {
+				assert.NotNil(t, result.Operator)
+				assert.Equal(t, TraceOperatorDirectDescendant, *result.Operator)
+				assert.Equal(t, "A", result.Left.QueryRef.Name)
+				assert.Equal(t, "B", result.Right.QueryRef.Name)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := parseTraceExpression(tt.expression)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			if tt.checkResult != nil {
+				tt.checkResult(t, result)
+			}
+		})
+	}
+}
+
+func TestQueryBuilderTraceOperator_ValidateTraceOperator(t *testing.T) {
+	tests := []struct {
+		name          string
+		traceOperator QueryBuilderTraceOperator
+		queries       []QueryEnvelope
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name: "valid trace operator with trace queries",
+			traceOperator: QueryBuilderTraceOperator{
+				Name:       "test_operator",
+				Expression: "A => B",
+				Filter: &Filter{
+					Expression: "trace_duration > 200ms",
+				},
+				OrderBy: &TraceOrderBy{
+					Field:     TraceOrderByTraceDuration,
+					Direction: OrderDirectionDesc,
+				},
+				Limit: 100,
+			},
+			queries: []QueryEnvelope{
+				{
+					Name: "A",
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+				{
+					Name: "B",
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "empty expression",
+			traceOperator: QueryBuilderTraceOperator{
+				Name:       "test_operator",
+				Expression: "",
+			},
+			queries:       []QueryEnvelope{},
+			expectError:   true,
+			errorContains: "expression cannot be empty",
+		},
+		{
+			name: "referenced query does not exist",
+			traceOperator: QueryBuilderTraceOperator{
+				Name:       "test_operator",
+				Expression: "A => B",
+			},
+			queries: []QueryEnvelope{
+				{
+					Name: "A",
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+			},
+			expectError:   true,
+			errorContains: "referenced query 'B' does not exist",
+		},
+		{
+			name: "referenced query is not trace signal",
+			traceOperator: QueryBuilderTraceOperator{
+				Name:       "test_operator",
+				Expression: "A => B",
+			},
+			queries: []QueryEnvelope{
+				{
+					Name: "A",
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+				{
+					Name: "B",
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[LogAggregation]{
+						Signal: telemetrytypes.SignalLogs,
+					},
+				},
+			},
+			expectError:   true,
+			errorContains: "referenced query 'B' must be a trace query, but found signal '{logs}'",
+		},
+		{
+			name: "invalid orderBy field",
+			traceOperator: QueryBuilderTraceOperator{
+				Name:       "test_operator",
+				Expression: "A",
+				OrderBy: &TraceOrderBy{
+					Field:     TraceOrderByField{valuer.NewString("invalid_field")},
+					Direction: OrderDirectionAsc,
+				},
+			},
+			queries: []QueryEnvelope{
+				{
+					Name: "A",
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+			},
+			expectError:   true,
+			errorContains: "orderBy field must be either 'span_count' or 'trace_duration'",
+		},
+		{
+			name: "invalid pagination limit",
+			traceOperator: QueryBuilderTraceOperator{
+				Name:       "test_operator",
+				Expression: "A",
+				Limit:      -1,
+			},
+			queries: []QueryEnvelope{
+				{
+					Name: "A",
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+			},
+			expectError:   true,
+			errorContains: "limit must be non-negative",
+		},
+		{
+			name: "limit exceeds maximum",
+			traceOperator: QueryBuilderTraceOperator{
+				Name:       "test_operator",
+				Expression: "A",
+				Limit:      15000,
+			},
+			queries: []QueryEnvelope{
+				{
+					Name: "A",
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+			},
+			expectError:   true,
+			errorContains: "limit cannot exceed 10000",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.traceOperator.ValidateTraceOperator(tt.queries)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateUniqueTraceOperator(t *testing.T) {
+	tests := []struct {
+		name          string
+		queries       []QueryEnvelope
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name: "no trace operators",
+			queries: []QueryEnvelope{
+				{Name: "A", Type: QueryTypeBuilder},
+				{Name: "B", Type: QueryTypeFormula},
+			},
+			expectError: false,
+		},
+		{
+			name: "single trace operator",
+			queries: []QueryEnvelope{
+				{Name: "A", Type: QueryTypeBuilder},
+				{Name: "T1", Type: QueryTypeTraceOperator},
+				{Name: "B", Type: QueryTypeFormula},
+			},
+			expectError: false,
+		},
+		{
+			name: "multiple trace operators",
+			queries: []QueryEnvelope{
+				{Name: "A", Type: QueryTypeBuilder},
+				{Name: "T1", Type: QueryTypeTraceOperator},
+				{Name: "T2", Type: QueryTypeTraceOperator},
+				{Name: "B", Type: QueryTypeFormula},
+			},
+			expectError:   true,
+			errorContains: "only one trace operator is allowed per request, found 2 trace operators: [T1 T2]",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateUniqueTraceOperator(tt.queries)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

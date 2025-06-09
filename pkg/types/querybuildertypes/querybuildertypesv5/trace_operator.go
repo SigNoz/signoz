@@ -21,32 +21,43 @@ var (
 	TraceOperatorExclude            = TraceOperatorType{valuer.NewString("NOT")}
 )
 
-// TraceFilterCondition represents a condition for trace-level filtering
-type TraceFilterCondition struct {
-	Operator FilterOperator `json:"operator"`
-	Value    string         `json:"value,omitempty"`
-	Values   []string       `json:"values,omitempty"`
+// TraceOrderByField defines the allowed fields for trace operator ordering
+type TraceOrderByField struct{ valuer.String }
+
+var (
+	TraceOrderBySpanCount     = TraceOrderByField{valuer.NewString("span_count")}
+	TraceOrderByTraceDuration = TraceOrderByField{valuer.NewString("trace_duration")}
+)
+
+// TraceOrderBy represents ordering for trace operators
+type TraceOrderBy struct {
+	Field     TraceOrderByField `json:"field"`
+	Direction OrderDirection    `json:"direction"`
 }
 
-// TraceFilters represents trace-level conditions
-type TraceFilters struct {
-	SpanCount     *TraceFilterCondition `json:"span_count,omitempty"`
-	TraceDuration *TraceFilterCondition `json:"trace_duration,omitempty"`
-}
-
-// QueryBuilderTraceOperator represents a trace operator query
+// QueryBuilderTraceOperator represents a trace operator query (AIP-158 and AIP-160 compliant)
 type QueryBuilderTraceOperator struct {
 	Name     string `json:"name"`
 	Disabled bool   `json:"disabled,omitempty"`
 
+	// The expression string that will be parsed server-side
 	Expression string `json:"expression"`
 
-	TraceFilters *TraceFilters `json:"traceFilters,omitempty"`
+	// AIP-160 compliant filter for trace-level conditions
+	Filter *Filter `json:"filter,omitempty"`
 
+	// Trace-specific ordering (only span_count and trace_duration allowed)
+	OrderBy *TraceOrderBy `json:"orderBy,omitempty"`
+
+	// AIP-158 compliant pagination
+	Limit     int    `json:"limit,omitempty"`
+	PageToken string `json:"page_token,omitempty"`
+
+	// Other post-processing options
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
-	Order        []OrderBy                          `json:"order,omitempty"`
-	Limit        int                                `json:"limit,omitempty"`
+	Functions    []Function                         `json:"functions,omitempty"`
 
+	// Internal parsed representation (not exposed in JSON)
 	ParsedExpression *TraceOperand `json:"-"`
 }
 
@@ -92,8 +103,13 @@ func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelop
 		return err
 	}
 
-	// Validate trace filters
-	if err := q.ValidateTraceFilters(); err != nil {
+	// Validate orderBy field if present
+	if err := q.ValidateOrderBy(); err != nil {
+		return err
+	}
+
+	// Validate pagination parameters
+	if err := q.ValidatePagination(); err != nil {
 		return err
 	}
 
@@ -116,22 +132,79 @@ func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelop
 	return q.validateOperand(q.ParsedExpression, querySignals)
 }
 
-// ValidateTraceFilters validates all trace filter conditions
-func (q *QueryBuilderTraceOperator) ValidateTraceFilters() error {
-	if q.TraceFilters == nil {
+// ValidateOrderBy validates the orderBy field
+func (q *QueryBuilderTraceOperator) ValidateOrderBy() error {
+	if q.OrderBy == nil {
 		return nil
 	}
 
-	if q.TraceFilters.TraceDuration != nil {
-		if err := validateTraceFilterCondition(q.TraceFilters.TraceDuration, "trace_duration"); err != nil {
-			return err
+	// Validate field is one of the allowed values
+	if q.OrderBy.Field != TraceOrderBySpanCount && q.OrderBy.Field != TraceOrderByTraceDuration {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"orderBy field must be either 'span_count' or 'trace_duration', got '%s'",
+			q.OrderBy.Field,
+		)
+	}
+
+	// Validate direction
+	if q.OrderBy.Direction != OrderDirectionAsc && q.OrderBy.Direction != OrderDirectionDesc {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"orderBy direction must be either 'asc' or 'desc', got '%s'",
+			q.OrderBy.Direction,
+		)
+	}
+
+	return nil
+}
+
+// ValidatePagination validates pagination parameters (AIP-158 compliance)
+func (q *QueryBuilderTraceOperator) ValidatePagination() error {
+	if q.Limit < 0 {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"limit must be non-negative, got %d",
+			q.Limit,
+		)
+	}
+
+	// For production use, you might want to enforce maximum limits
+	if q.Limit > 10000 {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"limit cannot exceed 10000, got %d",
+			q.Limit,
+		)
+	}
+
+	return nil
+}
+
+// ValidateUniqueTraceOperator ensures only one trace operator exists in queries
+func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
+	traceOperatorCount := 0
+	var traceOperatorNames []string
+
+	for _, query := range queries {
+		if query.Type == QueryTypeTraceOperator {
+			traceOperatorCount++
+			traceOperatorNames = append(traceOperatorNames, query.Name)
 		}
 	}
 
-	if q.TraceFilters.SpanCount != nil {
-		if err := validateTraceFilterCondition(q.TraceFilters.SpanCount, "span_count"); err != nil {
-			return err
-		}
+	if traceOperatorCount > 1 {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"only one trace operator is allowed per request, found %d trace operators: %v",
+			traceOperatorCount,
+			traceOperatorNames,
+		)
 	}
 
 	return nil
@@ -172,88 +245,6 @@ func (q *QueryBuilderTraceOperator) validateOperand(operand *TraceOperand, query
 	}
 	if err := q.validateOperand(operand.Right, querySignals); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-// validateTraceFilterCondition validates a trace filter condition
-func validateTraceFilterCondition(condition *TraceFilterCondition, fieldName string) error {
-	if condition == nil {
-		return nil
-	}
-
-	switch condition.Operator {
-	case FilterOperatorEqual, FilterOperatorNotEqual,
-		FilterOperatorGreaterThan, FilterOperatorGreaterThanOrEq,
-		FilterOperatorLessThan, FilterOperatorLessThanOrEq:
-		if condition.Value == "" {
-			return errors.WrapInvalidInputf(
-				nil,
-				errors.CodeInvalidInput,
-				"%s filter requires a non-empty value",
-				fieldName,
-			)
-		}
-		if len(condition.Values) > 0 {
-			return errors.WrapInvalidInputf(
-				nil,
-				errors.CodeInvalidInput,
-				"%s filter should use 'value' field for single-value operators",
-				fieldName,
-			)
-		}
-
-	case FilterOperatorBetween, FilterOperatorNotBetween:
-		if len(condition.Values) != 2 {
-			return errors.WrapInvalidInputf(
-				nil,
-				errors.CodeInvalidInput,
-				"%s filter with 'between' operator requires exactly 2 values, got %d",
-				fieldName,
-				len(condition.Values),
-			)
-		}
-		for i, value := range condition.Values {
-			if value == "" {
-				return errors.WrapInvalidInputf(
-					nil,
-					errors.CodeInvalidInput,
-					"%s filter: value %d cannot be empty",
-					fieldName,
-					i+1,
-				)
-			}
-		}
-
-	case FilterOperatorIn, FilterOperatorNotIn:
-		if len(condition.Values) == 0 {
-			return errors.WrapInvalidInputf(
-				nil,
-				errors.CodeInvalidInput,
-				"%s filter with 'in' operator requires at least 1 value",
-				fieldName,
-			)
-		}
-		for i, value := range condition.Values {
-			if value == "" {
-				return errors.WrapInvalidInputf(
-					nil,
-					errors.CodeInvalidInput,
-					"%s filter: value %d cannot be empty",
-					fieldName,
-					i+1,
-				)
-			}
-		}
-
-	default:
-		return errors.WrapInvalidInputf(
-			nil,
-			errors.CodeInvalidInput,
-			"unsupported operator for %s filter",
-			fieldName,
-		)
 	}
 
 	return nil
@@ -304,8 +295,6 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 			switch strings.TrimSpace(op) {
 			case "=>":
 				opType = TraceOperatorDirectDescendant
-			case "->":
-				opType = TraceOperatorIndirectDescendant
 			case "&&":
 				opType = TraceOperatorAnd
 			case "||":
@@ -340,20 +329,35 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 // findOperatorPosition finds the position of an operator, respecting parentheses
 func findOperatorPosition(expr, op string) int {
 	depth := 0
-	for i := len(expr) - len(op); i >= 0; i-- {
-		if expr[i] == ')' {
+	opLen := len(op)
+
+	// Scan from right to left to find the rightmost operator at depth 0
+	for i := len(expr) - 1; i >= 0; i-- {
+		char := expr[i]
+
+		// Update depth based on parentheses (scanning right to left)
+		if char == ')' {
 			depth++
-		} else if expr[i] == '(' {
+		} else if char == '(' {
 			depth--
-		} else if depth == 0 && strings.HasPrefix(expr[i:], op) {
-			// Check it's not part of another operator
-			if i > 0 && expr[i-1] == '=' && op == ">" {
-				continue
+		}
+
+		// Only check for operators when we're at depth 0 (outside parentheses)
+		// and make sure we have enough characters for the operator
+		if depth == 0 && i+opLen <= len(expr) {
+			// Check if the substring matches our operator
+			if expr[i:i+opLen] == op {
+				// For " NOT " (binary), ensure proper spacing
+				if op == " NOT " {
+					// Make sure it's properly space-padded
+					if i > 0 && i+opLen < len(expr) {
+						return i
+					}
+				} else {
+					// For other operators (=>, &&, ||), return immediately
+					return i
+				}
 			}
-			if i+len(op) < len(expr) && expr[i+len(op)] == '=' && op != "=>" {
-				continue
-			}
-			return i
 		}
 	}
 	return -1
