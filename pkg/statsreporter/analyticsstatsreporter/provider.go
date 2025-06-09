@@ -96,9 +96,8 @@ func (provider *provider) Start(ctx context.Context) error {
 		case <-provider.stopC:
 			return nil
 		case <-ticker.C:
-			err := provider.Report(ctx)
-			if err != nil {
-				provider.settings.Logger().ErrorContext(ctx, "failed to report stats", "error", err)
+			if err := provider.Report(ctx); err != nil {
+				provider.settings.Logger().WarnContext(ctx, "failed to report stats", "error", err)
 			}
 		}
 	}
@@ -165,9 +164,8 @@ func (provider *provider) Report(ctx context.Context) error {
 func (provider *provider) Stop(ctx context.Context) error {
 	close(provider.stopC)
 	// report stats on stop
-	err := provider.Report(ctx)
-	if err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to report stats", "error", err)
+	if err := provider.Report(ctx); err != nil {
+		provider.settings.Logger().WarnContext(ctx, "failed to report stats", "error", err)
 	}
 
 	if err := provider.analytics.Stop(ctx); err != nil {
