@@ -130,9 +130,6 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	testDB := utils.NewQueryServiceDBForTests(t)
 	utils.CreateTestOrg(t, testDB)
 
-	orgID, err := utils.GetTestOrgId(testDB)
-	require.Nil(err)
-
 	agentID := valuer.GenerateUUID().String()
 
 	integrationsTB := NewIntegrationsTestBed(t, testDB)
@@ -192,7 +189,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(lastPipeline))
 
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(orgID, getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 
 	// After saving a user created pipeline, pipelines response should include
 	// both user created pipelines and pipelines for installed integrations.
@@ -237,7 +234,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
 	require.Equal(1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines))
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(orgID, getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 
 	// Reordering integration pipelines should be possible.
 	postable := postableFromPipelines(getPipelinesResp.Pipelines)
@@ -254,7 +251,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
 
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(orgID, getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 
 	// enabling/disabling integration pipelines should be possible.
 	require.True(firstPipeline.Enabled)
@@ -272,7 +269,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require.False(firstPipeline.Enabled)
 
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(orgID, getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 
 	// should not be able to edit integrations pipeline.
 	require.Greater(len(postable.Pipelines[0].Config), 0)
@@ -311,7 +308,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 		"Pipelines for uninstalled integrations should get removed from pipelines list",
 	)
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(orgID, getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 }
 
 func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {

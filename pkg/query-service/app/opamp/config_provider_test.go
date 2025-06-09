@@ -1,11 +1,16 @@
 package opamp
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sharder"
+	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/knadh/koanf"
@@ -49,16 +54,6 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: initialAgentConf(),
 			},
-			AgentDescription: &protobufs.AgentDescription{
-				IdentifyingAttributes: []*protobufs.KeyValue{
-					{
-						Key: "orgId",
-						Value: &protobufs.AnyValue{
-							Value: &protobufs.AnyValue_StringValue{StringValue: orgID},
-						},
-					},
-				},
-			},
 		},
 	)
 	lastAgent1Msg := agent1Conn.LatestMsgFromServer()
@@ -81,16 +76,6 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 			InstanceUid: agent2Id,
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: initialAgentConf(),
-			},
-			AgentDescription: &protobufs.AgentDescription{
-				IdentifyingAttributes: []*protobufs.KeyValue{
-					{
-						Key: "orgId",
-						Value: &protobufs.AnyValue{
-							Value: &protobufs.AnyValue_StringValue{StringValue: orgID},
-						},
-					},
-				},
 			},
 		},
 	)
@@ -193,12 +178,17 @@ type testbed struct {
 
 func newTestbed(t *testing.T) *testbed {
 	testDB := utils.NewQueryServiceDBForTests(t)
-	model.InitDB(testDB)
+
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	require.Nil(t, err)
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), sharder)
+	model.InitDB(testDB, orgGetter)
 	testConfigProvider := NewMockAgentConfigProvider()
 	opampServer := InitializeServer(nil, testConfigProvider)
 
 	// create a test org
-	err := utils.CreateTestOrg(t, testDB)
+	err = utils.CreateTestOrg(t, testDB)
 	if err != nil {
 		t.Fatalf("could not create test org: %v", err)
 	}

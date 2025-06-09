@@ -52,9 +52,6 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	testbed := NewLogPipelinesTestBed(t, nil, agentID)
 	require := require.New(t)
 
-	orgID, err := utils.GetTestOrgId(testbed.store)
-	require.Nil(err)
-
 	getPipelinesResp := testbed.GetPipelinesFromQS()
 	require.Equal(
 		0, len(getPipelinesResp.Pipelines),
@@ -125,7 +122,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, createPipelinesResp,
 	)
 	testbed.assertPipelinesSentToOpampClient(createPipelinesResp.Pipelines)
-	testbed.assertNewAgentGetsPipelinesOnConnection(orgID, createPipelinesResp.Pipelines)
+	testbed.assertNewAgentGetsPipelinesOnConnection(createPipelinesResp.Pipelines)
 
 	// Should be able to get the configured pipelines.
 	getPipelinesResp = testbed.GetPipelinesFromQS()
@@ -163,7 +160,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, updatePipelinesResp,
 	)
 	testbed.assertPipelinesSentToOpampClient(updatePipelinesResp.Pipelines)
-	testbed.assertNewAgentGetsPipelinesOnConnection(orgID, updatePipelinesResp.Pipelines)
+	testbed.assertNewAgentGetsPipelinesOnConnection(updatePipelinesResp.Pipelines)
 
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 	require.Equal(
@@ -519,7 +516,6 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	}
 
 	// Mock an available opamp agent
-	// testDB, err := opampModel.InitDB(sqlStore.SQLxDB())
 	require.Nil(t, err, "failed to init opamp model")
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
@@ -542,10 +538,11 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore, agentID string) *LogPipelinesTestBed {
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
-	orgID, err := utils.GetTestOrgId(testbed.store)
-	require.Nil(t, err)
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(testbed.store), sharder)
 
-	model.InitDB(testbed.store)
+	model.InitDB(testbed.store, orgGetter)
 
 	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
 	err = opampServer.Start(opamp.GetAvailableLocalAddress())
@@ -562,16 +559,6 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore, agentID stri
 			InstanceUid: agentID,
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
-			},
-			AgentDescription: &protobufs.AgentDescription{
-				IdentifyingAttributes: []*protobufs.KeyValue{
-					{
-						Key: "orgId",
-						Value: &protobufs.AnyValue{
-							Value: &protobufs.AnyValue_StringValue{StringValue: orgID},
-						},
-					},
-				},
 			},
 		},
 	)
@@ -779,7 +766,6 @@ func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig
 }
 
 func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
-	orgID string,
 	pipelines []pipelinetypes.GettablePipeline,
 ) {
 	newAgentConn := &opamp.MockOpAmpConnection{}
@@ -789,16 +775,6 @@ func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
 			InstanceUid: uuid.NewString(),
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
-			},
-			AgentDescription: &protobufs.AgentDescription{
-				IdentifyingAttributes: []*protobufs.KeyValue{
-					{
-						Key: "orgId",
-						Value: &protobufs.AnyValue{
-							Value: &protobufs.AnyValue_StringValue{StringValue: orgID},
-						},
-					},
-				},
 			},
 		},
 	)

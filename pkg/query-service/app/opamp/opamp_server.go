@@ -87,17 +87,16 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
 	agentID := msg.InstanceUid
 
-	var orgId string
-	if msg.AgentDescription != nil && msg.AgentDescription.IdentifyingAttributes != nil {
-		for _, attr := range msg.AgentDescription.IdentifyingAttributes {
-			if attr.Key == "orgId" {
-				orgId = attr.Value.GetStringValue()
-				break
-			}
-		}
+	// find the orgID, if nothing is found keep it empty.
+	// the find or create agent will will return an error if orgID is empty
+	// thus retry will happen
+	orgID := ""
+	orgIDs, err := srv.agents.OrgGetter.ListByOwnedKeyRange(context.Background())
+	if err == nil && len(orgIDs) == 1 {
+		orgID = orgIDs[0].ID.String()
 	}
 
-	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn, orgId)
+	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn, orgID)
 	if err != nil {
 		zap.L().Error("Failed to find or create agent", zap.String("agentID", agentID), zap.Error(err))
 

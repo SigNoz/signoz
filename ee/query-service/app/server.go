@@ -122,7 +122,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate opamp
-	opAmpModel.InitDB(serverOptions.SigNoz.SQLStore)
+	opAmpModel.InitDB(serverOptions.SigNoz.SQLStore, serverOptions.SigNoz.Modules.OrgGetter)
 
 	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore)
 	if err != nil {

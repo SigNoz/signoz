@@ -1,13 +1,12 @@
 package model
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	signozTypes "github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server/types"
@@ -25,6 +24,7 @@ type Agents struct {
 	agentsById  map[string]*Agent
 	connections map[types.Connection]map[string]bool
 	store       sqlstore.SQLStore
+	OrgGetter   organization.Getter
 }
 
 func (a *Agents) Count() int {
@@ -32,13 +32,14 @@ func (a *Agents) Count() int {
 }
 
 // Initialize the database and create schema if needed
-func InitDB(sqlStore sqlstore.SQLStore) {
+func InitDB(sqlStore sqlstore.SQLStore, orgGetter organization.Getter) {
 
 	AllAgents = Agents{
 		agentsById:  make(map[string]*Agent),
 		connections: make(map[types.Connection]map[string]bool),
 		mux:         sync.RWMutex{},
 		store:       sqlStore,
+		OrgGetter:   orgGetter,
 	}
 }
 
@@ -75,18 +76,6 @@ func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection, o
 
 	if ok && agent != nil {
 		return agent, false, nil
-	}
-
-	// This is for single org mode
-	if orgId == "SIGNOZ##DEFAULT##ORG##ID" {
-		err := agents.store.BunDB().NewSelect().
-			Model(new(signozTypes.Organization)).
-			ColumnExpr("id").
-			Limit(1).
-			Scan(context.Background(), &orgId)
-		if err != nil {
-			return nil, false, err
-		}
 	}
 
 	if !ok && orgId == "" {
