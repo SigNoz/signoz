@@ -153,6 +153,20 @@ function QueryAddOns({
 		[selectedViews],
 	);
 
+	const handleChangeQueryLegend = useCallback(
+		(value: string) => {
+			handleChangeQueryData('legend', value);
+		},
+		[handleChangeQueryData],
+	);
+
+	const handleChangeLimit = useCallback(
+		(value: string) => {
+			handleChangeQueryData('limit', Number(value) || null);
+		},
+		[handleChangeQueryData],
+	);
+
 	return (
 		<div className="query-add-ons">
 			{selectedViews.length > 0 && (
@@ -199,6 +213,7 @@ function QueryAddOns({
 						<div className="add-on-content">
 							<InputWithLabel
 								label="Limit"
+								onChange={handleChangeLimit}
 								placeholder="Enter limit"
 								onClose={(): void => {
 									setSelectedViews(selectedViews.filter((view) => view.key !== 'limit'));
@@ -249,6 +264,7 @@ function QueryAddOns({
 							<InputWithLabel
 								label="Legend format"
 								placeholder="Write legend format"
+								onChange={handleChangeQueryLegend}
 								onClose={(): void => {
 									setSelectedViews(
 										selectedViews.filter((view) => view.key !== 'legend_format'),
