@@ -146,6 +146,22 @@ func GetChannelByName(channels Channels, name string) (int, *Channel, error) {
 	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with name %s", name)
 }
 
+func NewStatsFromChannels(channels Channels) map[string]any {
+	stats := make(map[string]any)
+	for _, channel := range channels {
+		key := "alertmanager.channel.type." + channel.Type
+
+		if _, ok := stats[key]; !ok {
+			stats[key] = int64(1)
+		} else {
+			stats[key] = stats[key].(int64) + 1
+		}
+	}
+
+	stats["alertmanager.channel.count"] = int64(len(channels))
+	return stats
+}
+
 func (c *Channel) Update(receiver Receiver) error {
 	channel := NewChannelFromReceiver(receiver, c.OrgID)
 	if channel == nil {
