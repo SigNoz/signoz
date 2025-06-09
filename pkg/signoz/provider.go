@@ -4,6 +4,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/legacyalertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/analytics/noopanalytics"
+	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
@@ -14,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
+	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sharder/singlesharder"
@@ -21,13 +26,24 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/statsreporter/analyticsstatsreporter"
+	"github.com/SigNoz/signoz/pkg/statsreporter/noopstatsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
+	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
 	"github.com/SigNoz/signoz/pkg/web/routerweb"
 )
+
+func NewAnalyticsProviderFactories() factory.NamedMap[factory.ProviderFactory[analytics.Analytics, analytics.Config]] {
+	return factory.MustNewNamedMap(
+		noopanalytics.NewFactory(),
+		segmentanalytics.NewFactory(),
+	)
+}
 
 func NewCacheProviderFactories() factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]] {
 	return factory.MustNewNamedMap(
@@ -114,6 +130,12 @@ func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter orga
 	)
 }
 
+func NewRulerProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
+	return factory.MustNewNamedMap(
+		signozruler.NewFactory(sqlstore),
+	)
+}
+
 func NewEmailingProviderFactories() factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]] {
 	return factory.MustNewNamedMap(
 		noopemailing.NewFactory(),
@@ -125,5 +147,12 @@ func NewSharderProviderFactories() factory.NamedMap[factory.ProviderFactory[shar
 	return factory.MustNewNamedMap(
 		singlesharder.NewFactory(),
 		noopsharder.NewFactory(),
+	)
+}
+
+func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
+	return factory.MustNewNamedMap(
+		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, build, analyticsConfig),
+		noopstatsreporter.NewFactory(),
 	)
 }
