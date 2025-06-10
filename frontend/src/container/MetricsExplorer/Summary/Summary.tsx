@@ -1,18 +1,20 @@
 import './Summary.styles.scss';
 
 import * as Sentry from '@sentry/react';
+import logEvent from 'api/common/logEvent';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetMetricsTreeMap } from 'hooks/metricsExplorer/useGetMetricsTreeMap';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import InspectModal from '../Inspect';
 import MetricDetails from '../MetricDetails';
 import {
@@ -69,6 +71,18 @@ function Summary(): JSX.Element {
 			op: 'AND',
 		};
 	}, [searchParams]);
+
+	useEffect(() => {
+		logEvent(MetricsExplorerEvents.TabChanged, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+		});
+	}, []);
+
+	useEffect(() => {
+		logEvent(MetricsExplorerEvents.TimeUpdated, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+		});
+	}, [maxTime, minTime]);
 
 	// This is used to avoid the filters from being serialized with the id
 	const queryFiltersWithoutId = useMemo(() => {
@@ -154,6 +168,9 @@ function Summary(): JSX.Element {
 				[SUMMARY_FILTERS_KEY]: JSON.stringify(value),
 			});
 			setCurrentPage(1);
+			logEvent(MetricsExplorerEvents.FilterApplied, {
+				[MetricsExplorerEventKeys.Tab]: 'summary',
+			});
 		},
 		[setSearchParams, searchParams],
 	);
@@ -169,6 +186,14 @@ function Summary(): JSX.Element {
 	const onPaginationChange = (page: number, pageSize: number): void => {
 		setCurrentPage(page);
 		setPageSize(pageSize);
+		logEvent(MetricsExplorerEvents.PageNumberChanged, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+			[MetricsExplorerEventKeys.PageNumber]: page,
+		});
+		logEvent(MetricsExplorerEvents.PageSizeChanged, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+			[MetricsExplorerEventKeys.PageSize]: pageSize,
+		});
 	};
 
 	const formattedMetricsData = useMemo(
@@ -176,13 +201,20 @@ function Summary(): JSX.Element {
 		[metricsData],
 	);
 
-	const openMetricDetails = (metricName: string): void => {
+	const openMetricDetails = (
+		metricName: string,
+		view: 'list' | 'treemap',
+	): void => {
 		setSelectedMetricName(metricName);
 		setIsMetricDetailsOpen(true);
 		setSearchParams({
 			...Object.fromEntries(searchParams.entries()),
 			[IS_METRIC_DETAILS_OPEN_KEY]: 'true',
 			[SELECTED_METRIC_NAME_KEY]: metricName,
+		});
+		logEvent(MetricsExplorerEvents.MetricClicked, {
+			[MetricsExplorerEventKeys.MetricName]: metricName,
+			[MetricsExplorerEventKeys.View]: view,
 		});
 	};
 
@@ -217,6 +249,23 @@ function Summary(): JSX.Element {
 		});
 	};
 
+	const handleSetHeatmapView = (view: TreemapViewType): void => {
+		setHeatmapView(view);
+		logEvent(MetricsExplorerEvents.TreemapViewChanged, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+			[MetricsExplorerEventKeys.ViewType]: view,
+		});
+	};
+
+	const handleSetOrderBy = (orderBy: OrderByPayload): void => {
+		setOrderBy(orderBy);
+		logEvent(MetricsExplorerEvents.OrderByApplied, {
+			[MetricsExplorerEventKeys.Tab]: 'summary',
+			[MetricsExplorerEventKeys.ColumnName]: orderBy.columnName,
+			[MetricsExplorerEventKeys.Order]: orderBy.order,
+		});
+	};
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
@@ -227,7 +276,7 @@ function Summary(): JSX.Element {
 					isError={isProportionViewError}
 					viewType={heatmapView}
 					openMetricDetails={openMetricDetails}
-					setHeatmapView={setHeatmapView}
+					setHeatmapView={handleSetHeatmapView}
 				/>
 				<MetricsTable
 					isLoading={isMetricsLoading || isMetricsFetching}
@@ -236,7 +285,7 @@ function Summary(): JSX.Element {
 					pageSize={pageSize}
 					currentPage={currentPage}
 					onPaginationChange={onPaginationChange}
-					setOrderBy={setOrderBy}
+					setOrderBy={handleSetOrderBy}
 					totalCount={metricsData?.payload?.data?.total || 0}
 					openMetricDetails={openMetricDetails}
 					queryFilters={queryFilters}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -18,28 +19,26 @@ const (
 )
 
 type metricQueryStatementBuilder struct {
-	logger          *slog.Logger
-	metadataStore   telemetrytypes.MetadataStore
-	fm              qbtypes.FieldMapper
-	cb              qbtypes.ConditionBuilder
-	aggExprRewriter qbtypes.AggExprRewriter
+	logger        *slog.Logger
+	metadataStore telemetrytypes.MetadataStore
+	fm            qbtypes.FieldMapper
+	cb            qbtypes.ConditionBuilder
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*metricQueryStatementBuilder)(nil)
 
 func NewMetricQueryStatementBuilder(
-	logger *slog.Logger,
+	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	aggExprRewriter qbtypes.AggExprRewriter,
 ) *metricQueryStatementBuilder {
+	metricsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetrics")
 	return &metricQueryStatementBuilder{
-		logger:          logger,
-		metadataStore:   metadataStore,
-		fm:              fieldMapper,
-		cb:              conditionBuilder,
-		aggExprRewriter: aggExprRewriter,
+		logger:        metricsSettings.Logger(),
+		metadataStore: metadataStore,
+		fm:            fieldMapper,
+		cb:            conditionBuilder,
 	}
 }
 
