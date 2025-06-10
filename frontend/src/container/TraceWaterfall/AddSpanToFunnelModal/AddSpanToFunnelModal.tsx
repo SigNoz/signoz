@@ -20,14 +20,7 @@ import {
 	useFunnelContext,
 } from 'pages/TracesFunnels/FunnelContext';
 import { filterFunnelsByQuery } from 'pages/TracesFunnels/utils';
-import {
-	ChangeEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { FunnelData } from 'types/api/traceFunnels';
 
@@ -42,14 +35,14 @@ function FunnelDetailsView({
 	triggerAutoSave,
 	showNotifications,
 	onChangesDetected,
-	setDiscardHandler,
+	triggerDiscard,
 }: {
 	funnel: FunnelData;
 	span: Span;
 	triggerAutoSave: boolean;
 	showNotifications: boolean;
 	onChangesDetected: (hasChanges: boolean) => void;
-	setDiscardHandler: (handler: () => void) => void;
+	triggerDiscard: boolean;
 }): JSX.Element {
 	const { handleRestoreSteps, steps } = useFunnelContext();
 
@@ -61,17 +54,12 @@ function FunnelDetailsView({
 		}
 	}, [steps, funnel.steps, onChangesDetected]);
 
-	const handleDiscardWithRestore = useCallback((): void => {
-		// Restore to the original funnel steps
-		if (funnel.steps) {
+	// Handle discard when triggered from parent
+	useEffect(() => {
+		if (triggerDiscard && funnel.steps) {
 			handleRestoreSteps(funnel.steps);
 		}
-	}, [funnel.steps, handleRestoreSteps]);
-
-	// Pass the discard handler to the parent component
-	useEffect(() => {
-		setDiscardHandler(handleDiscardWithRestore);
-	}, [setDiscardHandler, handleDiscardWithRestore]);
+	}, [triggerDiscard, funnel.steps, handleRestoreSteps]);
 
 	return (
 		<div className="add-span-to-funnel-modal__details">
@@ -111,7 +99,7 @@ function AddSpanToFunnelModal({
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
 	const [triggerSave, setTriggerSave] = useState<boolean>(false);
 	const [isUnsavedChanges, setIsUnsavedChanges] = useState<boolean>(false);
-	const discardHandlerRef = useRef<(() => void) | null>(null);
+	const [triggerDiscard, setTriggerDiscard] = useState<boolean>(false);
 
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchQuery(e.target.value);
@@ -159,14 +147,10 @@ function AddSpanToFunnelModal({
 	};
 
 	const handleDiscard = (): void => {
-		if (discardHandlerRef.current) {
-			discardHandlerRef.current();
-		}
+		setTriggerDiscard(true);
+		// Reset trigger after a brief moment
+		setTimeout(() => setTriggerDiscard(false), 100);
 	};
-
-	const handleDiscardHandlerReady = useCallback((handler: () => void) => {
-		discardHandlerRef.current = handler;
-	}, []);
 
 	const renderListView = (): JSX.Element => (
 		<div className="add-span-to-funnel-modal">
@@ -232,7 +216,7 @@ function AddSpanToFunnelModal({
 									triggerAutoSave={triggerSave}
 									showNotifications
 									onChangesDetected={setIsUnsavedChanges}
-									setDiscardHandler={handleDiscardHandlerReady}
+									triggerDiscard={triggerDiscard}
 								/>
 							</FunnelProvider>
 						)}
