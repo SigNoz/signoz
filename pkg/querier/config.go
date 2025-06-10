@@ -37,7 +37,7 @@ func (c Config) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "cacheTTL must be positive, got %v", c.CacheTTL)
 	}
 	if c.FluxInterval <= 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "fluxInterval must be positive, got %v", c.FluxInterval)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "FluxInterval must be positive, got %v", c.FluxInterval)
 	}
 	if c.MaxConcurrentQueries <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "maxConcurrentQueries must be positive, got %v", c.MaxConcurrentQueries)
