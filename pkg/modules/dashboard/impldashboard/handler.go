@@ -46,7 +46,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, req)
+	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.ID), req)
 	if err != nil {
 		render.Error(rw, err)
 		return
