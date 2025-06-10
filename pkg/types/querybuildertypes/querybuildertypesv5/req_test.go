@@ -27,9 +27,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "time_series",
 				"compositeQuery": {
 					"queries": [{
-						"name": "A",
 						"type": "builder_query",
 						"spec": {
+							"name": "A",
 							"signal": "traces",
 							"aggregations": [{
 								"expression": "count()",
@@ -65,9 +65,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				RequestType:   RequestTypeTimeSeries,
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{{
-						Name: "A",
 						Type: QueryTypeBuilder,
 						Spec: QueryBuilderQuery[TraceAggregation]{
+							Name:   "A",
 							Signal: telemetrytypes.SignalTraces,
 							Aggregations: []TraceAggregation{{
 								Expression: "count()",
@@ -111,9 +111,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "raw",
 				"compositeQuery": {
 					"queries": [{
-						"name": "B",
 						"type": "builder_query",
 						"spec": {
+							"name": "B",
 							"signal": "logs",
 							"stepInterval": "30s",
 							"filter": {
@@ -136,9 +136,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				RequestType:   RequestTypeRaw,
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{{
-						Name: "B",
 						Type: QueryTypeBuilder,
 						Spec: QueryBuilderQuery[LogAggregation]{
+							Name:         "B",
 							Signal:       telemetrytypes.SignalLogs,
 							StepInterval: Step{Duration: 30 * time.Second},
 							Filter: &Filter{
@@ -165,9 +165,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "time_series",
 				"compositeQuery": {
 					"queries": [{
-						"name": "C",
 						"type": "builder_query",
 						"spec": {
+							"name": "C",
 							"signal": "metrics",
 							"aggregations": [{
 								"metricName": "http_requests_total",
@@ -191,9 +191,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				RequestType:   RequestTypeTimeSeries,
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{{
-						Name: "C",
 						Type: QueryTypeBuilder,
 						Spec: QueryBuilderQuery[MetricAggregation]{
+							Name:   "C",
 							Signal: telemetrytypes.SignalMetrics,
 							Aggregations: []MetricAggregation{{
 								MetricName:       "http_requests_total",
@@ -223,7 +223,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "time_series",
 				"compositeQuery": {
 					"queries": [{
-						"name": "F1",
 						"type": "builder_formula",
 						"spec": {
 							"name": "error_rate",
@@ -243,7 +242,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				RequestType:   RequestTypeTimeSeries,
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{{
-						Name: "F1",
 						Type: QueryTypeFormula,
 						Spec: QueryBuilderFormula{
 							Name:       "error_rate",
@@ -267,7 +265,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "time_series",
 				"compositeQuery": {
 					"queries": [{
-						"name": "F1",
 						"type": "builder_formula",
 						"spec": {
 							"name": "error_rate",
@@ -289,7 +286,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				RequestType:   RequestTypeTimeSeries,
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{{
-						Name: "F1",
 						Type: QueryTypeFormula,
 						Spec: QueryBuilderFormula{
 							Name:       "error_rate",
@@ -314,7 +310,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "scalar",
 				"compositeQuery": {
 					"queries": [{
-						"name": "J1",
 						"type": "builder_join",
 						"spec": {
 							"name": "join_traces_logs",
@@ -335,7 +330,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				RequestType:   RequestTypeScalar,
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{{
-						Name: "J1",
 						Type: QueryTypeJoin,
 						Spec: QueryBuilderJoin{
 							Name:         "join_traces_logs",
@@ -360,7 +354,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "time_series",
 				"compositeQuery": {
 					"queries": [{
-						"name": "P1",
 						"type": "promql",
 						"spec": {
 							"name": "cpu_usage",
@@ -377,7 +370,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				RequestType:   RequestTypeTimeSeries,
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{{
-						Name: "P1",
 						Type: QueryTypePromQL,
 						Spec: PromQuery{
 							Name:     "cpu_usage",
@@ -398,7 +390,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "raw",
 				"compositeQuery": {
 					"queries": [{
-						"name": "CH1",
 						"type": "clickhouse_sql",
 						"spec": {
 							"name": "custom_query",
@@ -415,7 +406,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				RequestType:   RequestTypeRaw,
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{{
-						Name: "CH1",
 						Type: QueryTypeClickHouseSQL,
 						Spec: ClickHouseQuery{
 							Name:     "custom_query",
@@ -437,9 +427,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"compositeQuery": {
 					"queries": [
 						{
-							"name": "A",
 							"type": "builder_query",
 							"spec": {
+								"name": "A",
 								"signal": "traces",
 								"aggregations": [{"expression": "count()"}],
 								"disabled": false
@@ -464,16 +454,15 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{
 						{
-							Name: "A",
 							Type: QueryTypeBuilder,
 							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:         "A",
 								Signal:       telemetrytypes.SignalTraces,
 								Aggregations: []TraceAggregation{{Expression: "count()"}},
 								Disabled:     false,
 							},
 						},
 						{
-							Name: "B",
 							Type: QueryTypeFormula,
 							Spec: QueryBuilderFormula{
 								Name:       "rate",
@@ -494,9 +483,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "time_series",
 				"compositeQuery": {
 					"queries": [{
-						"name": "A",
 						"type": "builder_query",
 						"spec": {
+							"name": "A",
 							"signal": "metrics",
 							"aggregations": [{"metricName": "test"}],
 							"stepInterval": "5m"
@@ -511,9 +500,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				RequestType:   RequestTypeTimeSeries,
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{{
-						Name: "A",
 						Type: QueryTypeBuilder,
 						Spec: QueryBuilderQuery[MetricAggregation]{
+							Name:         "A",
 							Signal:       telemetrytypes.SignalMetrics,
 							Aggregations: []MetricAggregation{{MetricName: "test"}},
 							StepInterval: Step{Duration: 5 * time.Minute},
@@ -607,7 +596,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 
 			for i, expectedQuery := range tt.expected.CompositeQuery.Queries {
 				actualQuery := req.CompositeQuery.Queries[i]
-				assert.Equal(t, expectedQuery.Name, actualQuery.Name)
 				assert.Equal(t, expectedQuery.Type, actualQuery.Type)
 
 				switch expectedQuery.Type {
@@ -616,6 +604,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 					case QueryBuilderQuery[TraceAggregation]:
 						actualSpec, ok := actualQuery.Spec.(QueryBuilderQuery[TraceAggregation])
 						require.True(t, ok, "Expected TraceBuilderQuery but got %T", actualQuery.Spec)
+						assert.Equal(t, expectedSpec.Name, actualSpec.Name)
 						assert.Equal(t, expectedSpec.Signal, actualSpec.Signal)
 						assert.Equal(t, expectedSpec.StepInterval, actualSpec.StepInterval)
 						assert.Equal(t, expectedSpec.Disabled, actualSpec.Disabled)
@@ -623,6 +612,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 					case QueryBuilderQuery[LogAggregation]:
 						actualSpec, ok := actualQuery.Spec.(QueryBuilderQuery[LogAggregation])
 						require.True(t, ok, "Expected LogBuilderQuery but got %T", actualQuery.Spec)
+						assert.Equal(t, expectedSpec.Name, actualSpec.Name)
 						assert.Equal(t, expectedSpec.Signal, actualSpec.Signal)
 						assert.Equal(t, expectedSpec.StepInterval, actualSpec.StepInterval)
 						assert.Equal(t, expectedSpec.Disabled, actualSpec.Disabled)
@@ -630,6 +620,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 					case QueryBuilderQuery[MetricAggregation]:
 						actualSpec, ok := actualQuery.Spec.(QueryBuilderQuery[MetricAggregation])
 						require.True(t, ok, "Expected MetricBuilderQuery but got %T", actualQuery.Spec)
+						assert.Equal(t, expectedSpec.Name, actualSpec.Name)
 						assert.Equal(t, expectedSpec.Signal, actualSpec.Signal)
 						assert.Equal(t, expectedSpec.StepInterval, actualSpec.StepInterval)
 						assert.Equal(t, expectedSpec.Disabled, actualSpec.Disabled)
@@ -647,6 +638,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 					expectedSpec := expectedQuery.Spec.(QueryBuilderFormula)
 					actualSpec, ok := actualQuery.Spec.(QueryBuilderFormula)
 					require.True(t, ok, "Expected QueryBuilderFormula but got %T", actualQuery.Spec)
+					assert.Equal(t, expectedSpec.Name, actualSpec.Name)
 					assert.Equal(t, expectedSpec.Expression, actualSpec.Expression)
 					assert.Equal(t, expectedSpec.Name, actualSpec.Name)
 				case QueryTypeJoin:
@@ -654,21 +646,23 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 					actualSpec, ok := actualQuery.Spec.(QueryBuilderJoin)
 					require.True(t, ok, "Expected QueryBuilderJoin but got %T", actualQuery.Spec)
 					assert.Equal(t, expectedSpec.Name, actualSpec.Name)
+					assert.Equal(t, expectedSpec.Left.Name, actualSpec.Left.Name)
+					assert.Equal(t, expectedSpec.Right.Name, actualSpec.Right.Name)
 					assert.Equal(t, expectedSpec.Type, actualSpec.Type)
 					assert.Equal(t, expectedSpec.On, actualSpec.On)
 				case QueryTypePromQL:
 					expectedSpec := expectedQuery.Spec.(PromQuery)
 					actualSpec, ok := actualQuery.Spec.(PromQuery)
 					require.True(t, ok, "Expected PromQuery but got %T", actualQuery.Spec)
-					assert.Equal(t, expectedSpec.Query, actualSpec.Query)
 					assert.Equal(t, expectedSpec.Name, actualSpec.Name)
+					assert.Equal(t, expectedSpec.Query, actualSpec.Query)
 					assert.Equal(t, expectedSpec.Disabled, actualSpec.Disabled)
 				case QueryTypeClickHouseSQL:
 					expectedSpec := expectedQuery.Spec.(ClickHouseQuery)
 					actualSpec, ok := actualQuery.Spec.(ClickHouseQuery)
 					require.True(t, ok, "Expected ClickHouseQuery but got %T", actualQuery.Spec)
-					assert.Equal(t, expectedSpec.Query, actualSpec.Query)
 					assert.Equal(t, expectedSpec.Name, actualSpec.Name)
+					assert.Equal(t, expectedSpec.Query, actualSpec.Query)
 					assert.Equal(t, expectedSpec.Disabled, actualSpec.Disabled)
 				}
 			}
