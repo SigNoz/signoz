@@ -73,7 +73,7 @@ function createBaseSpec(
 				  }))
 				: undefined,
 		limit: isEmpty(queryData.limit) ? undefined : queryData.limit,
-		offset: requestType === 'scalar' ? queryData.offset : undefined,
+		offset: requestType === 'raw' ? queryData.offset : undefined,
 		order:
 			queryData.orderBy.length > 0
 				? queryData.orderBy.map((order: any) => ({
@@ -98,6 +98,7 @@ function createBaseSpec(
 					name: column.key,
 					fieldDataType: column?.dataType,
 					fieldContext: column?.type,
+					id: column.id,
 			  })),
 	};
 }
@@ -124,7 +125,7 @@ function convertBuilderQueriesToV5(
 						queryData.aggregations?.length > 0
 							? queryData.aggregations
 							: [{ expression: 'count()' }],
-					limit: baseSpec?.limit ?? requestType === 'scalar' ? 10 : undefined,
+					limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
 				};
 				break;
 			case 'logs':
@@ -136,7 +137,7 @@ function convertBuilderQueriesToV5(
 						queryData.aggregations?.length > 0
 							? queryData.aggregations
 							: [{ expression: 'count()' }],
-					limit: baseSpec?.limit ?? requestType === 'scalar' ? 10 : undefined,
+					limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
 				};
 				break;
 			case 'metrics':
@@ -154,7 +155,7 @@ function convertBuilderQueriesToV5(
 						},
 					],
 					reduceTo: queryData.reduceTo,
-					limit: baseSpec?.limit ?? requestType === 'scalar' ? 10 : undefined,
+					limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
 				};
 				break;
 		}

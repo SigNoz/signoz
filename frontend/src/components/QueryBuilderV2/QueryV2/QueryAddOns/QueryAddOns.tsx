@@ -253,11 +253,13 @@ function QueryAddOns({
 										isListViewPanel={isListViewPanel}
 									/>
 								</div>
-								<Button
-									className="close-btn periscope-btn ghost"
-									icon={<X size={16} />}
-									onClick={(): void => handleRemoveView('order_by')}
-								/>
+								{!isListViewPanel && (
+									<Button
+										className="close-btn periscope-btn ghost"
+										icon={<X size={16} />}
+										onClick={(): void => handleRemoveView('order_by')}
+									/>
+								)}
 							</div>
 						</div>
 					)}
