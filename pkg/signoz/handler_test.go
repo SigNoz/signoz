@@ -33,7 +33,7 @@ func TestNewHandlers(t *testing.T) {
 	require.NoError(t, err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, nil)
 
 	handlers := NewHandlers(modules)
 

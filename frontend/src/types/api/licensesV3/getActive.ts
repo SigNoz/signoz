@@ -6,6 +6,7 @@ export enum LicenseEvent {
 export enum LicenseStatus {
 	SUSPENDED = 'SUSPENDED',
 	VALID = 'VALID',
+	INVALID = 'INVALID',
 }
 
 export enum LicenseState {
@@ -23,12 +24,6 @@ export enum LicensePlatform {
 	SELF_HOSTED = 'SELF_HOSTED',
 	CLOUD = 'CLOUD',
 }
-
-// Legacy
-export const LicensePlanKey = {
-	ENTERPRISE: 'ENTERPRISE',
-	BASIC: 'BASIC',
-};
 
 export type LicenseEventQueueResModel = {
 	event: LicenseEvent;

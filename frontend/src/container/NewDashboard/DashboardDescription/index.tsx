@@ -12,7 +12,6 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -44,11 +43,8 @@ import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
-import {
-	Dashboard,
-	DashboardData,
-	IDashboardVariable,
-} from 'types/api/dashboard/getAll';
+import { DashboardData, IDashboardVariable } from 'types/api/dashboard/getAll';
+import { Props } from 'types/api/dashboard/update';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
@@ -65,10 +61,9 @@ interface DashboardDescriptionProps {
 
 export function sanitizeDashboardData(
 	selectedData: DashboardData,
-): Omit<DashboardData, 'uuid'> {
+): DashboardData {
 	if (!selectedData?.variables) {
-		const { uuid, ...rest } = selectedData;
-		return rest;
+		return selectedData;
 	}
 
 	const updatedVariables = Object.entries(selectedData.variables).reduce(
@@ -80,9 +75,8 @@ export function sanitizeDashboardData(
 		{} as Record<string, IDashboardVariable>,
 	);
 
-	const { uuid, ...restData } = selectedData;
 	return {
-		...restData,
+		...selectedData,
 		variables: updatedVariables,
 	};
 }
@@ -108,7 +102,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const selectedData = selectedDashboard
 		? {
 				...selectedDashboard.data,
-				uuid: selectedDashboard.uuid,
+				uuid: selectedDashboard.id,
 		  }
 		: ({} as DashboardData);
 
@@ -162,7 +156,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		setSelectedRowWidgetId(null);
 		handleToggleDashboardSlider(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
-			dashboardId: selectedDashboard?.uuid,
+			dashboardId: selectedDashboard?.id,
 			dashboardName: selectedDashboard?.data.title,
 			numberOfPanels: selectedDashboard?.data.widgets?.length,
 		});
@@ -178,8 +172,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		if (!selectedDashboard) {
 			return;
 		}
-		const updatedDashboard = {
-			...selectedDashboard,
+		const updatedDashboard: Props = {
+			id: selectedDashboard.id,
+
 			data: {
 				...selectedDashboard.data,
 				title: updatedTitle,
@@ -191,13 +186,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					message: 'Dashboard renamed successfully',
 				});
 				setIsRenameDashboardOpen(false);
-				if (updatedDashboard.payload)
-					setSelectedDashboard(updatedDashboard.payload);
+				if (updatedDashboard.data) setSelectedDashboard(updatedDashboard.data);
 			},
 			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
 				setIsRenameDashboardOpen(true);
 			},
 		});
@@ -251,8 +242,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 			}
 		}
 
-		const updatedDashboard: Dashboard = {
-			...selectedDashboard,
+		const updatedDashboard: Props = {
+			id: selectedDashboard.id,
+
 			data: {
 				...selectedDashboard.data,
 				layout: [
@@ -279,27 +271,20 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					},
 				],
 			},
-			uuid: selectedDashboard.uuid,
 		};
 
 		updateDashboardMutation.mutate(updatedDashboard, {
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			onSuccess: (updatedDashboard) => {
-				if (updatedDashboard.payload) {
-					if (updatedDashboard.payload.data.layout)
-						setLayouts(sortLayout(updatedDashboard.payload.data.layout));
-					setSelectedDashboard(updatedDashboard.payload);
-					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
+				if (updatedDashboard.data) {
+					if (updatedDashboard.data.data.layout)
+						setLayouts(sortLayout(updatedDashboard.data.data.layout));
+					setSelectedDashboard(updatedDashboard.data);
+					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
 				}
 
 				setIsPanelNameModalOpen(false);
 				setSectionName(DEFAULT_ROW_NAME);
-			},
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
 			},
 		});
 	}
@@ -445,7 +430,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 									<DeleteButton
 										createdBy={selectedDashboard?.createdBy || ''}
 										name={selectedDashboard?.data.title || ''}
-										id={String(selectedDashboard?.uuid) || ''}
+										id={String(selectedDashboard?.id) || ''}
 										isLocked={isDashboardLocked}
 										routeToListPage
 									/>

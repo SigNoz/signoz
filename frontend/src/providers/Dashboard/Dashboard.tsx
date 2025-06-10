@@ -1,14 +1,12 @@
 /* eslint-disable no-nested-ternary */
 import { Modal } from 'antd';
-import getDashboard from 'api/dashboard/get';
-import lockDashboardApi from 'api/dashboard/lockDashboard';
-import unlockDashboardApi from 'api/dashboard/unlockDashboard';
+import getDashboard from 'api/v1/dashboards/id/get';
+import locked from 'api/v1/dashboards/id/lock';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
-import useAxiosError from 'hooks/useAxiosError';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -18,6 +16,7 @@ import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
 import omitBy from 'lodash-es/omitBy';
 import { useAppContext } from 'providers/App/App';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import {
 	createContext,
 	PropsWithChildren,
@@ -36,7 +35,9 @@ import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
+import { SuccessResponseV2 } from 'types/api';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
@@ -52,7 +53,10 @@ const DashboardContext = createContext<IDashboardContext>({
 	isDashboardLocked: false,
 	handleToggleDashboardSlider: () => {},
 	handleDashboardLockToggle: () => {},
-	dashboardResponse: {} as UseQueryResult<Dashboard, unknown>,
+	dashboardResponse: {} as UseQueryResult<
+		SuccessResponseV2<Dashboard>,
+		APIError
+	>,
 	selectedDashboard: {} as Dashboard,
 	dashboardId: '',
 	layouts: [],
@@ -115,6 +119,8 @@ export function DashboardProvider({
 		path: ROUTES.ALL_DASHBOARD,
 		exact: true,
 	});
+
+	const { showErrorModal } = useErrorModal();
 
 	// added extra checks here in case wrong values appear use the default values rather than empty dashboards
 	const supportedOrderColumnKeys = ['createdAt', 'updatedAt'];
@@ -270,18 +276,24 @@ export function DashboardProvider({
 				setIsDashboardFetching(true);
 				try {
 					return await getDashboard({
-						uuid: dashboardId,
+						id: dashboardId,
 					});
+				} catch (error) {
+					showErrorModal(error as APIError);
+					return;
 				} finally {
 					setIsDashboardFetching(false);
 				}
 			},
 			refetchOnWindowFocus: false,
-			onSuccess: (data) => {
-				const updatedDashboardData = transformDashboardVariables(data);
-				const updatedDate = dayjs(updatedDashboardData.updatedAt);
+			onError: (error) => {
+				showErrorModal(error as APIError);
+			},
+			onSuccess: (data: SuccessResponseV2<Dashboard>) => {
+				const updatedDashboardData = transformDashboardVariables(data?.data);
+				const updatedDate = dayjs(updatedDashboardData?.updatedAt);
 
-				setIsDashboardLocked(updatedDashboardData?.isLocked || false);
+				setIsDashboardLocked(updatedDashboardData?.locked || false);
 
 				// on first render
 				if (updatedTimeRef.current === null) {
@@ -291,7 +303,9 @@ export function DashboardProvider({
 
 					dashboardRef.current = updatedDashboardData;
 
-					setLayouts(sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)));
+					setLayouts(
+						sortLayout(getUpdatedLayout(updatedDashboardData?.data.layout)),
+					);
 
 					setPanelMap(defaultTo(updatedDashboardData?.data?.panelMap, {}));
 				}
@@ -300,7 +314,7 @@ export function DashboardProvider({
 					updatedTimeRef.current !== null &&
 					updatedDate.isAfter(updatedTimeRef.current) &&
 					isVisible &&
-					dashboardRef.current?.id === updatedDashboardData.id
+					dashboardRef.current?.id === updatedDashboardData?.id
 				) {
 					// show modal when state is out of sync
 					const modal = onModal.confirm({
@@ -327,20 +341,20 @@ export function DashboardProvider({
 
 							dashboardRef.current = updatedDashboardData;
 
-							updatedTimeRef.current = dayjs(updatedDashboardData.updatedAt);
+							updatedTimeRef.current = dayjs(updatedDashboardData?.updatedAt);
 
 							setLayouts(
-								sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)),
+								sortLayout(getUpdatedLayout(updatedDashboardData?.data.layout)),
 							);
 
-							setPanelMap(defaultTo(updatedDashboardData.data.panelMap, {}));
+							setPanelMap(defaultTo(updatedDashboardData?.data.panelMap, {}));
 						},
 					});
 
 					modalRef.current = modal;
 				} else {
 					// normal flow
-					updatedTimeRef.current = dayjs(updatedDashboardData.updatedAt);
+					updatedTimeRef.current = dayjs(updatedDashboardData?.updatedAt);
 
 					dashboardRef.current = updatedDashboardData;
 
@@ -351,14 +365,14 @@ export function DashboardProvider({
 					if (
 						!isEqual(
 							[omitBy(layouts, (value): boolean => isUndefined(value))[0]],
-							updatedDashboardData.data.layout,
+							updatedDashboardData?.data.layout,
 						)
 					) {
 						setLayouts(
-							sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)),
+							sortLayout(getUpdatedLayout(updatedDashboardData?.data.layout)),
 						);
 
-						setPanelMap(defaultTo(updatedDashboardData.data.panelMap, {}));
+						setPanelMap(defaultTo(updatedDashboardData?.data.panelMap, {}));
 					}
 				}
 			},
@@ -387,29 +401,25 @@ export function DashboardProvider({
 		setIsDashboardSlider(value);
 	};
 
-	const handleError = useAxiosError();
-
-	const { mutate: lockDashboard } = useMutation(lockDashboardApi, {
-		onSuccess: () => {
+	const { mutate: lockDashboard } = useMutation(locked, {
+		onSuccess: (_, props) => {
 			setIsDashboardSlider(false);
-			setIsDashboardLocked(true);
+			setIsDashboardLocked(props.lock);
 		},
-		onError: handleError,
-	});
-
-	const { mutate: unlockDashboard } = useMutation(unlockDashboardApi, {
-		onSuccess: () => {
-			setIsDashboardLocked(false);
+		onError: (error) => {
+			showErrorModal(error as APIError);
 		},
-		onError: handleError,
 	});
 
 	const handleDashboardLockToggle = async (value: boolean): Promise<void> => {
 		if (selectedDashboard) {
-			if (value) {
-				lockDashboard(selectedDashboard);
-			} else {
-				unlockDashboard(selectedDashboard);
+			try {
+				await lockDashboard({
+					id: selectedDashboard.id,
+					lock: value,
+				});
+			} catch (error) {
+				showErrorModal(error as APIError);
 			}
 		}
 	};
