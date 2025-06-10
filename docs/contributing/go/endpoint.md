@@ -4,7 +4,7 @@ This guide outlines the recommended approach for designing endpoints, with a foc
 
 ## How do we design an endpoint?
 
-### Understand the core entities and their relationships.
+### Understand the core entities and their relationships
 
 Start with understanding the core entities and their relationships. For example:
 
@@ -40,6 +40,8 @@ v1/
 │   └── 123/
 │       └── users/
 ```
+
+> 💡 **Note**: There are various ways to structure endpoints. Some prefer to use singular resource names instead of `me` endpoints. Others prefer to use singular resource names for all endpoints. We have, however, chosen to standardize our endpoints in the manner described above.
 
 ## What should I remember?
 
