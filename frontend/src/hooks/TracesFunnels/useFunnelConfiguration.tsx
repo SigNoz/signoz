@@ -103,9 +103,15 @@ export default function useFunnelConfiguration({
 			}
 		}
 
-		// Save incomplete steps to localStorage
+		// Save incomplete steps to localStorage only if last saved steps don't have complete service/span names
 		if (!disableAutoSave && hasIncompleteStepFields && hasStepsChanged()) {
-			setSavedIncompleteSteps(debouncedSteps);
+			const lastSavedStepsAreComplete = lastSavedStepsStateRef.current.every(
+				(step) => step.service_name !== '' && step.span_name !== '',
+			);
+
+			if (!lastSavedStepsAreComplete) {
+				setSavedIncompleteSteps(debouncedSteps);
+			}
 		}
 	}, [
 		debouncedSteps,
