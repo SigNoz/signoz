@@ -27,7 +27,7 @@ function DeleteFunnelStep({
 			onCancel={onClose}
 			rootClassName="funnel-modal delete-funnel-modal"
 			cancelText="Cancel"
-			okText="Delete Funnel"
+			okText="Delete Step"
 			okButtonProps={{
 				icon: <Trash2 size={14} />,
 				type: 'primary',
