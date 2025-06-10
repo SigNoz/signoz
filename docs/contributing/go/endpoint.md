@@ -41,7 +41,7 @@ v1/
 │       └── users/
 ```
 
-> 💡 **Note**: There are various ways to structure endpoints. Some prefer to use singular resource names instead of `me` endpoints. Others prefer to use singular resource names for all endpoints. We have, however, chosen to standardize our endpoints in the manner described above.
+> 💡 **Note**: There are various ways to structure endpoints. Some prefer to use singular resource names instead of `me`. Others prefer to use singular resource names for all endpoints. We have, however, chosen to standardize our endpoints in the manner described above.
 
 ## What should I remember?
 
