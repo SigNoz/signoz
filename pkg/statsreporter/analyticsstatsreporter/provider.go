@@ -96,9 +96,8 @@ func (provider *provider) Start(ctx context.Context) error {
 		case <-provider.stopC:
 			return nil
 		case <-ticker.C:
-			err := provider.Report(ctx)
-			if err != nil {
-				provider.settings.Logger().ErrorContext(ctx, "failed to report stats", "error", err)
+			if err := provider.Report(ctx); err != nil {
+				provider.settings.Logger().WarnContext(ctx, "failed to report stats", "error", err)
 			}
 		}
 	}
@@ -130,7 +129,7 @@ func (provider *provider) Report(ctx context.Context) error {
 		provider.analytics.Send(
 			ctx,
 			analyticstypes.Track{
-				UserId:     org.ID.String(),
+				UserId:     "stats_" + org.ID.String(),
 				Event:      "Stats Reported",
 				Properties: analyticstypes.NewPropertiesFromMap(stats),
 				Context: &analyticstypes.Context{
@@ -140,7 +139,7 @@ func (provider *provider) Report(ctx context.Context) error {
 				},
 			},
 			analyticstypes.Group{
-				UserId:  org.ID.String(),
+				UserId:  "stats_" + org.ID.String(),
 				GroupId: org.ID.String(),
 				Traits: analyticstypes.
 					NewTraitsFromMap(stats).
@@ -149,7 +148,7 @@ func (provider *provider) Report(ctx context.Context) error {
 					SetCreatedAt(org.CreatedAt),
 			},
 			analyticstypes.Identify{
-				UserId: org.ID.String(),
+				UserId: "stats_" + org.ID.String(),
 				Traits: analyticstypes.
 					NewTraits().
 					SetName(org.DisplayName).
@@ -164,6 +163,11 @@ func (provider *provider) Report(ctx context.Context) error {
 
 func (provider *provider) Stop(ctx context.Context) error {
 	close(provider.stopC)
+	// report stats on stop
+	if err := provider.Report(ctx); err != nil {
+		provider.settings.Logger().WarnContext(ctx, "failed to report stats", "error", err)
+	}
+
 	if err := provider.analytics.Stop(ctx); err != nil {
 		provider.settings.Logger().ErrorContext(ctx, "failed to stop analytics", "error", err)
 	}
