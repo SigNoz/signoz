@@ -206,13 +206,15 @@ describe('LogsExplorerViews -', () => {
 		lodsQueryServerRequest();
 		render(
 			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue}>
-				<LogsExplorerViews
-					selectedView={SELECTED_VIEWS.SEARCH}
-					showFrequencyChart
-					setIsLoadingQueries={(): void => {}}
-					listQueryKeyRef={{ current: {} }}
-					chartQueryKeyRef={{ current: {} }}
-				/>
+				<PreferenceContextProvider>
+					<LogsExplorerViews
+						selectedView={SELECTED_VIEWS.SEARCH}
+						showFrequencyChart
+						setIsLoadingQueries={(): void => {}}
+						listQueryKeyRef={{ current: {} }}
+						chartQueryKeyRef={{ current: {} }}
+					/>
+				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
 		);
 

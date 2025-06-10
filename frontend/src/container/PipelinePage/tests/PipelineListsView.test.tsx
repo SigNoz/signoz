@@ -20,6 +20,18 @@ jest.mock('uplot', () => {
 	};
 });
 
+// Mock useUrlQuery hook
+const mockUrlQuery = {
+	get: jest.fn(),
+	set: jest.fn(),
+	toString: jest.fn(() => ''),
+};
+
+jest.mock('hooks/useUrlQuery', () => ({
+	__esModule: true,
+	default: jest.fn(() => mockUrlQuery),
+}));
+
 const samplePipelinePreviewResponse = {
 	isLoading: false,
 	logs: [
