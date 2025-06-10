@@ -24,27 +24,12 @@ func (a *Analytics) Wrap(next http.Handler) http.Handler {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		queryRangeData, metadataExists := a.extractQueryRangeData(path, r)
+		_, _ = a.extractQueryRangeData(path, r)
 		a.getActiveLogs(path, r)
 
 		badResponseBuffer := new(bytes.Buffer)
 		writer := newBadResponseLoggingWriter(w, badResponseBuffer)
 		next.ServeHTTP(writer, r)
-
-		data := map[string]interface{}{"path": path, "statusCode": writer.StatusCode()}
-		if metadataExists {
-			for key, value := range queryRangeData {
-				data[key] = value
-			}
-		}
-
-		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			claims, err := authtypes.ClaimsFromContext(r.Context())
-			if err == nil {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, claims.Email, true, false)
-			}
-		}
-
 	})
 
 }

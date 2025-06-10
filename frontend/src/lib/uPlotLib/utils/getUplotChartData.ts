@@ -31,7 +31,9 @@ function fillMissingXAxisTimestamps(timestampArr: number[], data: any[]): any {
 
 	// Fill missing timestamps with null values
 	processedData.forEach((entry: { values: (number | null)[][] }) => {
-		const existingTimestamps = new Set(entry.values.map((value) => value[0]));
+		const existingTimestamps = new Set(
+			(entry.values ?? []).map((value) => value[0]),
+		);
 
 		const missingTimestamps = Array.from(allTimestampsSet).filter(
 			(timestamp) => !existingTimestamps.has(timestamp),

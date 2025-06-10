@@ -3,7 +3,11 @@ import {
 	metricsOperatorsByType,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { metricsEmptyTimeAggregateOperatorOptions } from 'constants/queryBuilderOperators';
+import {
+	metricsEmptyTimeAggregateOperatorOptions,
+	metricsUnknownTimeAggregateOperatorOptions,
+} from 'constants/queryBuilderOperators';
+import { isEmpty } from 'lodash-es';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
@@ -25,6 +29,10 @@ export const getMetricsOperatorsByAttributeType = ({
 		if (aggregateAttributeType === ATTRIBUTE_TYPES.GAUGE) {
 			return metricsOperatorsByType.Gauge;
 		}
+	}
+
+	if (dataSource === DataSource.METRICS && isEmpty(aggregateAttributeType)) {
+		return metricsUnknownTimeAggregateOperatorOptions;
 	}
 
 	return metricsEmptyTimeAggregateOperatorOptions;

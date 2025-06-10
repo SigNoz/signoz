@@ -22,10 +22,6 @@ func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.Organizat
 	return module.store.Get(ctx, id)
 }
 
-func (module *getter) List(ctx context.Context) ([]*types.Organization, error) {
-	return module.store.GetAll(ctx)
-}
-
 func (module *getter) ListByOwnedKeyRange(ctx context.Context) ([]*types.Organization, error) {
 	start, end, err := module.sharder.GetMyOwnedKeyRange(ctx)
 	if err != nil {

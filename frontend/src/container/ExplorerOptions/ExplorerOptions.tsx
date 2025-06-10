@@ -24,6 +24,10 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
+import {
+	MetricsExplorerEventKeys,
+	MetricsExplorerEvents,
+} from 'container/MetricsExplorer/events';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import {
 	defaultLogsSelectedColumns,
@@ -140,7 +144,9 @@ function ExplorerOptions({
 				panelType,
 			});
 		} else if (isMetricsExplorer) {
-			logEvent('Metrics Explorer: Save view clicked', {
+			logEvent(MetricsExplorerEvents.SaveViewClicked, {
+				[MetricsExplorerEventKeys.Tab]: 'explorer',
+				[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,
 				panelType,
 			});
 		}
@@ -184,8 +190,10 @@ function ExplorerOptions({
 					panelType,
 				});
 			} else if (isMetricsExplorer) {
-				logEvent('Metrics Explorer: Create alert', {
+				logEvent(MetricsExplorerEvents.AddToAlertClicked, {
 					panelType,
+					[MetricsExplorerEventKeys.Tab]: 'explorer',
+					[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,
 				});
 			}
 
@@ -218,11 +226,14 @@ function ExplorerOptions({
 				panelType,
 			});
 		} else if (isMetricsExplorer) {
-			logEvent('Metrics Explorer: Add to dashboard clicked', {
+			logEvent(MetricsExplorerEvents.AddToDashboardClicked, {
 				panelType,
+				[MetricsExplorerEventKeys.Tab]: 'explorer',
+				[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,
 			});
 		}
 		setIsExport(true);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isLogsExplorer, isMetricsExplorer, panelType, setIsExport, sourcepage]);
 
 	const {

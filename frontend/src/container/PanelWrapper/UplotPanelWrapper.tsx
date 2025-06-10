@@ -75,7 +75,11 @@ function UplotPanelWrapper({
 		if (setGraphVisibility) {
 			setGraphVisibility(localStoredVisibilityState);
 		}
-	}, [queryResponse.data?.payload.data.result, setGraphVisibility, widget.id]);
+	}, [
+		queryResponse?.data?.payload?.data?.result,
+		setGraphVisibility,
+		widget.id,
+	]);
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
