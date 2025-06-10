@@ -335,7 +335,7 @@ func BenchmarkBucketCache_FilterResultToTimeRange(b *testing.B) {
 }
 
 // Helper function to create benchmark bucket cache
-func createBenchmarkBucketCache(tb testing.TB) qbtypes.BucketCache {
+func createBenchmarkBucketCache(tb testing.TB) BucketCache {
 	config := cache.Config{
 		Provider: "memory",
 		Memory: cache.Memory{
