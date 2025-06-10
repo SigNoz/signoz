@@ -105,7 +105,16 @@ function QueryAddOns({
 				prevAddOns.filter((addOn) => addOn.key === ADD_ONS_KEYS.LEGEND_FORMAT),
 			);
 		} else {
-			setAddOns(Object.values(ADD_ONS));
+			let filteredAddOns = Object.values(ADD_ONS);
+
+			// Filter out group_by for metrics data source
+			if (query.dataSource === DataSource.METRICS) {
+				filteredAddOns = filteredAddOns.filter(
+					(addOn) => addOn.key !== ADD_ONS_KEYS.GROUP_BY,
+				);
+			}
+
+			setAddOns(filteredAddOns);
 		}
 
 		// add reduce to if showReduceTo is true
@@ -114,7 +123,7 @@ function QueryAddOns({
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [panelType, isListViewPanel]);
+	}, [panelType, isListViewPanel, query.dataSource]);
 
 	const handleOptionClick = (e: RadioChangeEvent): void => {
 		if (selectedViews.find((view) => view.key === e.target.value.key)) {

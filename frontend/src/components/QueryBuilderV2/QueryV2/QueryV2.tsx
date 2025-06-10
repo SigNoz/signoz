@@ -187,14 +187,16 @@ export const QueryV2 = memo(function QueryV2({
 						</div>
 					</div>
 
-					{!showOnlyWhereClause && !isListViewPanel && (
-						<QueryAggregation
-							dataSource={dataSource}
-							panelType={panelType || undefined}
-							onAggregationIntervalChange={handleChangeAggregateEvery}
-							onChange={handleChangeAggregation}
-						/>
-					)}
+					{!showOnlyWhereClause &&
+						!isListViewPanel &&
+						dataSource !== DataSource.METRICS && (
+							<QueryAggregation
+								dataSource={dataSource}
+								panelType={panelType || undefined}
+								onAggregationIntervalChange={handleChangeAggregateEvery}
+								onChange={handleChangeAggregation}
+							/>
+						)}
 
 					{!showOnlyWhereClause && dataSource === DataSource.METRICS && (
 						<MetricsAggregateSection
