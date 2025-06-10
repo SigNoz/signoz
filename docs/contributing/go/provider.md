@@ -1,33 +1,35 @@
 # Provider
 
-SigNoz is built on the provider pattern. This is a pattern where the code is organized into providers, each of which is responsible for a specific part of the application. Think of providers as core application components/adapter components/infrastructure components that are responsible for integrating with external services. Most frameworks make a distinction between the app layer and the infrastructure layer. We don't do that and instead have everything exposed as providers at the top level in `pkg/` directory.
+SigNoz is built on the provider pattern, a design approach where code is organized into providers that handle specific application responsibilities. Providers act as adapter components that integrate with external services and deliver required functionality to the application.
+
+> 💡 **Note**: Coming from a DDD background? Providers are similar (not exactly the same) to adapter/infrastructure services.
 
 ## How to create a new provider?
 
-To create a new provider, you need to create a new directory in the `pkg/` directory. The directory name should be the name of the provider. The provider package can be broken down into 3 parts:
+To create a new provider, create a directory in the `pkg/` directory named after your provider. The provider package consists of four key components:
 
-- Interface: `pkg/<name>/<name>.go` - This file contains the interface of the provider. Dependent packages should import this interface to use the provider.
-- Config: `pkg/<name>/config.go` - This file contains the configuration of the provider. This needs to implement the `factory.Config` interface which can be found at [factory/config.go](/pkg/factory/config.go).
-- Implementation: `pkg/<name>/<implname><name>/provider.go` - This file contains the implementation of the provider. It needs to implement a `NewProvider` function (and of course the interface itself) that returns a `factory.Provider` interface which can be found at [factory/provider.go](/pkg/factory/provider.go).
-- Test/Mock: `pkg/<name>/<name>test.go` - This file contains the mocks for the provider. This is typically used by dependent packages to get a mock of the provider for unit testing.
+- **Interface** (`pkg/<name>/<name>.go`): Defines the provider's interface. Other packages should import this interface to use the provider.
+- **Config** (`pkg/<name>/config.go`): Contains provider configuration, implementing the `factory.Config` interface from [factory/config.go](/pkg/factory/config.go).
+- **Implementation** (`pkg/<name>/<implname><name>/provider.go`): Contains the provider implementation, including a `NewProvider` function that returns a `factory.Provider` interface from [factory/provider.go](/pkg/factory/provider.go).
+- **Test/Mock** (`pkg/<name>/<name>test.go`): Provides mocks for the provider, typically used by dependent packages for unit testing.
 
-For instance, [prometheus](/pkg/prometheus) is a provider that is responsible for giving a prometheus engine to the application:
+For example, the [prometheus](/pkg/prometheus) provider delivers a prometheus engine to the application:
 
-- `pkg/prometheus/prometheus.go` - This file contains the interface of prometheus.
-- `pkg/prometheus/config.go` - This file contains the configuration of prometheus.
-- `pkg/prometheus/clickhouseprometheus/provider.go` - This file contains the implementation of the provider powered by clickhouse.
-- `pkg/prometheus/prometheustest/provider.go` - This file contains the mocks for prometheus.
+- `pkg/prometheus/prometheus.go` - Interface definition
+- `pkg/prometheus/config.go` - Configuration
+- `pkg/prometheus/clickhouseprometheus/provider.go` - Clickhouse-powered implementation
+- `pkg/prometheus/prometheustest/provider.go` - Mock implementation
 
 ## How to wire it up?
 
-The package `pkg/signoz` contains the inversion of control container that is responsible for wiring up the providers. It is responsible for instantiating, configuring, and assembling the aforementioned providers. The container gets its instructions on what objects to instantiate, configure, and assemble by reading configuration metadata.
+The `pkg/signoz` package contains the inversion of control container responsible for wiring providers. It handles instantiation, configuration, and assembly of providers based on configuration metadata.
 
 > 💡 **Note**: Coming from a Java background? Providers are similar to Spring beans.
 
-Wiring up a provider can be broken down into 2 steps:
+Wiring up a provider involves three steps:
 
 1. Wiring up the configuration
-Add the config defined at `pkg/<name>/config.go` to the `pkg/signoz/config.Config` struct and in new factories
+Add your config from `pkg/<name>/config.go` to the `pkg/signoz/config.Config` struct and in new factories:
 
 ```go
 type Config struct {
@@ -46,7 +48,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, ....) 
 ```
 
 2. Wiring up the provider
-Add the available provider implementations in `pkg/signoz/provider.go`:
+Add available provider implementations in `pkg/signoz/provider.go`:
 
 ```go
 func NewMyProviderFactories() factory.NamedMap[factory.ProviderFactory[myprovider.MyProvider, myprovider.Config]] {
@@ -57,7 +59,7 @@ func NewMyProviderFactories() factory.NamedMap[factory.ProviderFactory[myprovide
 }
 ```
 
-Now instantiate the provider in `pkg/signoz/signoz.go` and add it as part of the SigNoz struct:
+3. Instantiate the provider by adding it to the `SigNoz` struct in `pkg/signoz/signoz.go`:
 
 ```go
 type SigNoz struct {
@@ -78,7 +80,7 @@ func New(...) (*SigNoz, error) {
 
 ## How to use it?
 
-To use a provider, you need to import the interface of the provider. For instance, to use the prometheus provider, you need to import the `pkg/prometheus/prometheus.go` file.
+To use a provider, import its interface. For example, to use the prometheus provider, import `pkg/prometheus/prometheus.go`:
 
 ```go
 import "github.com/SigNoz/signoz/pkg/prometheus/prometheus"
@@ -91,12 +93,14 @@ func CreateSomething(ctx context.Context, prometheus prometheus.Prometheus) {
 ```
 
 ## Why do we need this?
-As with any dependency injection framework, providers are a way to decouple the codebase from the underlying implementation details. This is particularly useful in a large codebase like SigNoz where we have a lot of dependencies and we want to be able to swap out the implementation details without having to change the codebase. Particularly for SigNoz, we also get the following benefits:
 
-- Config is defined with each provider and wired up in a single place. This makes it easier to understand the configuration of the application and to use different methods to supply the configuration to the application. For instance, we support env based and file based configuration.
+Like any dependency injection framework, providers decouple the codebase from implementation details. This is especially valuable in SigNoz's large codebase, where we need to swap implementations without changing dependent code. The provider pattern offers several benefits:
 
-- We can easily mock the provider for unit testing. There is a single consistent pattern for finding the mocks for a provider.
+- Configuration is **defined with each provider and centralized in one place**, making it easier to understand and manage through various methods (environment variables, config files, etc.)
+- Provider mocking is **straightforward for unit testing**, with a consistent pattern for locating mocks
+- **Multiple implementations** of the same provider are **supported**, as demonstrated by our sqlstore provider
 
-- We can have multiple implementations of the same provider. For instance, we have multiple implementations of the sqlstore provider.
+## What should I remember?
 
-> 💡 **Note**: Even if it is strongly felt that a particular provider will only have one implementation, it is still a good idea to create a provider interface and a provider implementation. This makes it easier to add new implementations in the future.
+- Use the provider pattern wherever applicable.
+- Always create a provider **irrespective of the number of implementations**. This makes it easier to add new implementations in the future.
