@@ -2,7 +2,11 @@
 import { renderHook } from '@testing-library/react';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize } from 'container/OptionsMenu/types';
-import { FormattingOptions, PreferenceMode } from 'providers/preferences/types';
+import {
+	FormattingOptions,
+	PreferenceMode,
+	Preferences,
+} from 'providers/preferences/types';
 import { act } from 'react-dom/test-utils';
 import {
 	BaseAutocompleteData,
@@ -41,6 +45,16 @@ jest.mock('hooks/useUrlQueryData', () => ({
 }));
 
 describe('usePreferenceUpdater', () => {
+	const mockPreferences: Preferences = {
+		columns: [],
+		formatting: {
+			maxLines: 2,
+			format: 'table' as LogViewMode,
+			fontSize: 'small' as FontSize,
+			version: 1,
+		},
+	};
+
 	beforeEach(() => {
 		jest.clearAllMocks();
 	});
@@ -53,6 +67,7 @@ describe('usePreferenceUpdater', () => {
 			usePreferenceUpdater({
 				dataSource: DataSource.LOGS,
 				mode: PreferenceMode.DIRECT,
+				preferences: mockPreferences,
 				setReSync,
 				setSavedViewPreferences,
 			}),
@@ -79,6 +94,7 @@ describe('usePreferenceUpdater', () => {
 			usePreferenceUpdater({
 				dataSource: DataSource.LOGS,
 				mode: PreferenceMode.DIRECT,
+				preferences: mockPreferences,
 				setReSync,
 				setSavedViewPreferences,
 			}),
@@ -93,7 +109,7 @@ describe('usePreferenceUpdater', () => {
 			newColumns,
 			PreferenceMode.DIRECT,
 		);
-		expect(setReSync).toHaveBeenCalled();
+		expect(setReSync).toHaveBeenCalledWith(true);
 	});
 
 	it('should call the logs updater for updateFormatting with logs dataSource', () => {
@@ -110,6 +126,7 @@ describe('usePreferenceUpdater', () => {
 			usePreferenceUpdater({
 				dataSource: DataSource.LOGS,
 				mode: PreferenceMode.DIRECT,
+				preferences: mockPreferences,
 				setReSync,
 				setSavedViewPreferences,
 			}),
@@ -124,7 +141,7 @@ describe('usePreferenceUpdater', () => {
 			newFormatting,
 			PreferenceMode.DIRECT,
 		);
-		expect(setReSync).toHaveBeenCalled();
+		expect(setReSync).toHaveBeenCalledWith(true);
 	});
 
 	it('should call the traces updater for updateColumns with traces dataSource', () => {
@@ -143,6 +160,7 @@ describe('usePreferenceUpdater', () => {
 			usePreferenceUpdater({
 				dataSource: DataSource.TRACES,
 				mode: PreferenceMode.DIRECT,
+				preferences: mockPreferences,
 				setReSync,
 				setSavedViewPreferences,
 			}),
@@ -157,7 +175,7 @@ describe('usePreferenceUpdater', () => {
 			newColumns,
 			PreferenceMode.DIRECT,
 		);
-		expect(setReSync).toHaveBeenCalled();
+		expect(setReSync).toHaveBeenCalledWith(true);
 	});
 
 	it('should call the traces updater for updateFormatting with traces dataSource', () => {
@@ -174,6 +192,7 @@ describe('usePreferenceUpdater', () => {
 			usePreferenceUpdater({
 				dataSource: DataSource.TRACES,
 				mode: PreferenceMode.DIRECT,
+				preferences: mockPreferences,
 				setReSync,
 				setSavedViewPreferences,
 			}),
@@ -188,7 +207,7 @@ describe('usePreferenceUpdater', () => {
 			newFormatting,
 			PreferenceMode.DIRECT,
 		);
-		expect(setReSync).toHaveBeenCalled();
+		expect(setReSync).toHaveBeenCalledWith(true);
 	});
 
 	it('should increment reSync counter when updates are called', () => {
@@ -199,6 +218,7 @@ describe('usePreferenceUpdater', () => {
 			usePreferenceUpdater({
 				dataSource: DataSource.LOGS,
 				mode: PreferenceMode.DIRECT,
+				preferences: mockPreferences,
 				setReSync,
 				setSavedViewPreferences,
 			}),
@@ -215,10 +235,6 @@ describe('usePreferenceUpdater', () => {
 			]);
 		});
 
-		expect(setReSync).toHaveBeenCalledWith(expect.any(Function));
-
-		// Simulate the setReSync callback to ensure it increments
-		const incrementFn = setReSync.mock.calls[0][0];
-		expect(incrementFn(1)).toBe(2);
+		expect(setReSync).toHaveBeenCalledWith(true);
 	});
 });

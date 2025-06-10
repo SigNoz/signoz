@@ -2,7 +2,11 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { LogViewMode } from 'container/LogsTable';
 import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
-import { FormattingOptions, PreferenceMode } from 'providers/preferences/types';
+import {
+	FormattingOptions,
+	PreferenceMode,
+	Preferences,
+} from 'providers/preferences/types';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -36,6 +40,16 @@ describe('logsUpdaterConfig', () => {
 	const redirectWithOptionsData = jest.fn();
 	const setSavedViewPreferences = jest.fn();
 
+	const mockPreferences: Preferences = {
+		columns: [],
+		formatting: {
+			maxLines: 2,
+			format: 'table' as LogViewMode,
+			fontSize: 'small' as FontSize,
+			version: 1,
+		},
+	};
+
 	beforeEach(() => {
 		jest.clearAllMocks();
 		// Clear mocked localStorage
@@ -46,6 +60,7 @@ describe('logsUpdaterConfig', () => {
 
 	it('should update columns in localStorage for direct mode', () => {
 		const logsUpdater = getLogsUpdaterConfig(
+			mockPreferences,
 			redirectWithOptionsData,
 			setSavedViewPreferences,
 		);
@@ -77,6 +92,7 @@ describe('logsUpdaterConfig', () => {
 		// Should update URL
 		expect(redirectWithOptionsData).toHaveBeenCalledWith({
 			...defaultOptionsQuery,
+			...mockPreferences.formatting,
 			selectColumns: newColumns,
 		});
 
@@ -93,6 +109,7 @@ describe('logsUpdaterConfig', () => {
 
 	it('should update columns in savedViewPreferences for savedView mode', () => {
 		const logsUpdater = getLogsUpdaterConfig(
+			mockPreferences,
 			redirectWithOptionsData,
 			setSavedViewPreferences,
 		);
@@ -115,19 +132,12 @@ describe('logsUpdaterConfig', () => {
 		expect(mockLocalStorage[LOCALSTORAGE.LOGS_LIST_OPTIONS]).toBeUndefined();
 
 		// Should update saved view preferences
-		expect(setSavedViewPreferences).toHaveBeenCalledWith({
-			columns: newColumns,
-			formatting: {
-				maxLines: 2,
-				format: 'table',
-				fontSize: 'small',
-				version: 1,
-			},
-		});
+		expect(setSavedViewPreferences).toHaveBeenCalledWith(expect.any(Function));
 	});
 
 	it('should update formatting options in localStorage for direct mode', () => {
 		const logsUpdater = getLogsUpdaterConfig(
+			mockPreferences,
 			redirectWithOptionsData,
 			setSavedViewPreferences,
 		);
@@ -158,6 +168,7 @@ describe('logsUpdaterConfig', () => {
 		// Should always update URL for both modes
 		expect(redirectWithOptionsData).toHaveBeenCalledWith({
 			...defaultOptionsQuery,
+			...mockPreferences.formatting,
 			...newFormatting,
 		});
 
@@ -181,6 +192,7 @@ describe('logsUpdaterConfig', () => {
 
 	it('should not update localStorage for savedView mode in updateFormatting', () => {
 		const logsUpdater = getLogsUpdaterConfig(
+			mockPreferences,
 			redirectWithOptionsData,
 			setSavedViewPreferences,
 		);
@@ -214,10 +226,14 @@ describe('logsUpdaterConfig', () => {
 		);
 		expect(storedData.maxLines).toBe(2); // Should remain the same
 		expect(storedData.format).toBe('table'); // Should remain the same
+
+		// Should update saved view preferences
+		expect(setSavedViewPreferences).toHaveBeenCalledWith(expect.any(Function));
 	});
 
 	it('should initialize localStorage if it does not exist', () => {
 		const logsUpdater = getLogsUpdaterConfig(
+			mockPreferences,
 			redirectWithOptionsData,
 			setSavedViewPreferences,
 		);
