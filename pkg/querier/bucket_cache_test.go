@@ -3,12 +3,12 @@ package querier
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -75,8 +75,7 @@ func ptr[T any](v T) *T {
 // createTestBucketCache creates a test bucket cache
 func createTestBucketCache(t *testing.T) *bucketCache {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	return NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval).(*bucketCache)
+	return NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval).(*bucketCache)
 }
 
 func createTestTimeSeries(queryName string, startMs, endMs uint64, step uint64) *qbtypes.TimeSeriesData {
@@ -121,8 +120,7 @@ func createTestTimeSeries(queryName string, startMs, endMs uint64, step uint64) 
 
 func TestBucketCache_GetMissRanges_EmptyCache(t *testing.T) {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	bc := NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
 
 	query := &mockQuery{
 		fingerprint: "test-query",
@@ -140,8 +138,7 @@ func TestBucketCache_GetMissRanges_EmptyCache(t *testing.T) {
 
 func TestBucketCache_Put_And_Get(t *testing.T) {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	bc := NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
 
 	// Create a query and result
 	query := &mockQuery{
@@ -184,8 +181,7 @@ func TestBucketCache_Put_And_Get(t *testing.T) {
 
 func TestBucketCache_PartialHit(t *testing.T) {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	bc := NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
 
 	// First query: cache data for 1000-3000ms
 	query1 := &mockQuery{
@@ -222,8 +218,7 @@ func TestBucketCache_PartialHit(t *testing.T) {
 
 func TestBucketCache_MultipleBuckets(t *testing.T) {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	bc := NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
 
 	// Cache multiple non-contiguous ranges
 	query1 := &mockQuery{
@@ -273,8 +268,7 @@ func TestBucketCache_MultipleBuckets(t *testing.T) {
 
 func TestBucketCache_FluxInterval(t *testing.T) {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	bc := NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
 
 	// Try to cache data too close to current time
 	currentMs := uint64(time.Now().UnixMilli())
@@ -305,8 +299,7 @@ func TestBucketCache_FluxInterval(t *testing.T) {
 
 func TestBucketCache_MergeTimeSeriesResults(t *testing.T) {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	bc := NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
 
 	// Create time series with same labels but different time ranges
 	series1 := &qbtypes.TimeSeries{
@@ -418,8 +411,7 @@ func TestBucketCache_MergeTimeSeriesResults(t *testing.T) {
 
 func TestBucketCache_RawData(t *testing.T) {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	bc := NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
 
 	// Test with raw data type
 	query := &mockQuery{
@@ -467,8 +459,7 @@ func TestBucketCache_RawData(t *testing.T) {
 
 func TestBucketCache_ScalarData(t *testing.T) {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	bc := NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
 
 	query := &mockQuery{
 		fingerprint: "test-query",
@@ -508,8 +499,7 @@ func TestBucketCache_ScalarData(t *testing.T) {
 
 func TestBucketCache_EmptyFingerprint(t *testing.T) {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	bc := NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
 
 	// Query with empty fingerprint should generate a fallback key
 	query := &mockQuery{
@@ -534,8 +524,7 @@ func TestBucketCache_EmptyFingerprint(t *testing.T) {
 
 func TestBucketCache_FindMissingRanges_EdgeCases(t *testing.T) {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	bc := NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval).(*bucketCache)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval).(*bucketCache)
 
 	// Test with buckets that have gaps and overlaps
 	buckets := []*cachedBucket{
@@ -562,8 +551,7 @@ func TestBucketCache_FindMissingRanges_EdgeCases(t *testing.T) {
 
 func TestBucketCache_ConcurrentAccess(t *testing.T) {
 	memCache := createTestCache(t)
-	logger := slog.Default()
-	bc := NewBucketCache(logger, memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
 
 	// Test concurrent puts and gets
 	done := make(chan bool)

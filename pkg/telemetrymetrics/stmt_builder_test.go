@@ -2,10 +2,10 @@ package telemetrymetrics
 
 import (
 	"context"
-	"log/slog"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -193,7 +193,7 @@ func TestStatementBuilder(t *testing.T) {
 	mockMetadataStore.KeysMap = keys
 
 	statementBuilder := NewMetricQueryStatementBuilder(
-		slog.Default(),
+		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
 		fm,
 		cb,

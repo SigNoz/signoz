@@ -2,10 +2,10 @@ package telemetrylogs
 
 import (
 	"context"
-	"log/slog"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -83,7 +83,7 @@ func TestStatementBuilder(t *testing.T) {
 	require.NoError(t, err)
 
 	statementBuilder := NewLogQueryStatementBuilder(
-		slog.Default(),
+		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
 		fm,
 		cb,

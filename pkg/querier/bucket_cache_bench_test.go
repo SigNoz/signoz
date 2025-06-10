@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -345,7 +345,7 @@ func createBenchmarkBucketCache(tb testing.TB) qbtypes.BucketCache {
 	}
 	memCache, err := cachetest.New(config)
 	require.NoError(tb, err)
-	return NewBucketCache(slog.Default(), memCache, time.Hour, 5*time.Minute)
+	return NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, time.Hour, 5*time.Minute)
 }
 
 // Helper function to create benchmark result
