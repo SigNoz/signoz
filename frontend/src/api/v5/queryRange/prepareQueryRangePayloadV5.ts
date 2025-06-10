@@ -1,9 +1,13 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { QueryFunctionProps } from 'types/api/queryBuilder/queryBuilderData';
 import {
+	BaseBuilderQuery,
 	QueryEnvelope,
 	QueryRangePayloadV5,
 	RequestType,
@@ -48,7 +52,10 @@ function getSignalType(dataSource: string): 'traces' | 'logs' | 'metrics' {
 /**
  * Creates base spec for builder queries
  */
-function createBaseSpec(queryData: any): any {
+function createBaseSpec(
+	queryData: any,
+	requestType: RequestType,
+): BaseBuilderQuery {
 	return {
 		stepInterval: queryData.stepInterval,
 		disabled: queryData.disabled,
@@ -65,9 +72,9 @@ function createBaseSpec(queryData: any): any {
 						materialized: item?.materialized,
 				  }))
 				: undefined,
-		limit: isEmpty(queryData.limit) ? 100 : queryData.limit,
-		offset: queryData.offset,
-		orderBy:
+		limit: isEmpty(queryData.limit) ? undefined : queryData.limit,
+		offset: requestType === 'scalar' ? queryData.offset : undefined,
+		order:
 			queryData.orderBy.length > 0
 				? queryData.orderBy.map((order: any) => ({
 						key: {
@@ -78,6 +85,20 @@ function createBaseSpec(queryData: any): any {
 				: undefined,
 		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
 		having: isEmpty(queryData.having) ? undefined : queryData.having,
+		functions: isEmpty(queryData.functions)
+			? undefined
+			: queryData.functions.map((func: QueryFunctionProps) => ({
+					name: func.name,
+					args: func.args,
+					namedArgs: func.namedArgs,
+			  })),
+		selectFields: isEmpty(queryData.selectColumns)
+			? undefined
+			: queryData.selectColumns.map((column: BaseAutocompleteData) => ({
+					name: column.key,
+					fieldDataType: column?.dataType,
+					fieldContext: column?.type,
+			  })),
 	};
 }
 
@@ -86,11 +107,12 @@ function createBaseSpec(queryData: any): any {
  */
 function convertBuilderQueriesToV5(
 	builderQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
+	requestType: RequestType,
 ): QueryEnvelope[] {
 	return Object.entries(builderQueries).map(([queryName, queryData]) => {
 		const signal = getSignalType(queryData.dataSource);
-		const baseSpec = createBaseSpec(queryData);
-		let spec: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+		const baseSpec = createBaseSpec(queryData, requestType);
+		let spec: any;
 
 		switch (signal) {
 			case 'traces':
@@ -102,6 +124,7 @@ function convertBuilderQueriesToV5(
 						queryData.aggregations?.length > 0
 							? queryData.aggregations
 							: [{ expression: 'count()' }],
+					limit: baseSpec?.limit ?? requestType === 'scalar' ? 10 : undefined,
 				};
 				break;
 			case 'logs':
@@ -113,6 +136,7 @@ function convertBuilderQueriesToV5(
 						queryData.aggregations?.length > 0
 							? queryData.aggregations
 							: [{ expression: 'count()' }],
+					limit: baseSpec?.limit ?? requestType === 'scalar' ? 10 : undefined,
 				};
 				break;
 			case 'metrics':
@@ -121,10 +145,16 @@ function convertBuilderQueriesToV5(
 					name: queryName,
 					signal: 'metrics' as const,
 					...baseSpec,
-					aggregations:
-						queryData.aggregations?.length > 0
-							? queryData.aggregations
-							: [{ expression: 'count()' }],
+					aggregations: [
+						{
+							metricName: queryData?.metricName || '',
+							temporality: queryData?.temporality || '',
+							timeAggregation: queryData?.timeAggregation || '',
+							spaceAggregation: queryData?.spaceAggregation || '',
+						},
+					],
+					reduceTo: queryData.reduceTo,
+					limit: baseSpec?.limit ?? requestType === 'scalar' ? 10 : undefined,
 				};
 				break;
 		}
@@ -186,7 +216,9 @@ function convertFormulasToV5(
 		spec: {
 			name: queryName,
 			expression: formulaData.expression || '',
-			functions: formulaData.functions || [],
+			functions: formulaData.functions,
+			disabled: formulaData.disabled,
+			legend: formulaData.legend,
 		},
 	}));
 }
@@ -239,7 +271,10 @@ export const prepareQueryRangePayloadV5 = ({
 			};
 
 			// Convert builder queries
-			const builderQueries = convertBuilderQueriesToV5(currentQueryData.data);
+			const builderQueries = convertBuilderQueriesToV5(
+				currentQueryData.data,
+				requestType,
+			);
 
 			// Convert formulas as separate query type
 			const formulaQueries = convertFormulasToV5(currentFormulas.data);

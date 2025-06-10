@@ -169,23 +169,11 @@ export interface LogAggregation {
 	alias?: string;
 }
 
-export interface MetricTableHints {
-	timeSeriesTableName?: string;
-	samplesTableName?: string;
-}
-
-export interface MetricValueFilter {
-	value: number;
-}
-
 export interface MetricAggregation {
 	metricName: string;
-	type?: MetricType;
 	temporality: Temporality;
 	timeAggregation: TimeAggregation;
 	spaceAggregation: SpaceAggregation;
-	tableHints?: MetricTableHints;
-	valueFilter?: MetricValueFilter;
 }
 
 export interface SecondaryAggregation {
