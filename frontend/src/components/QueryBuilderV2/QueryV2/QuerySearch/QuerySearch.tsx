@@ -61,8 +61,11 @@ const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
 	},
 );
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
-function QuerySearch(): JSX.Element {
+function QuerySearch({
+	onChange,
+}: {
+	onChange: (value: string) => void;
+}): JSX.Element {
 	const [query, setQuery] = useState<string>('');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
 		{ label: 'error', type: 'value' },
@@ -343,6 +346,7 @@ function QuerySearch(): JSX.Element {
 	const handleChange = (value: string): void => {
 		setQuery(value);
 		handleQueryChange(value);
+		onChange(value);
 	};
 
 	const handleQueryValidation = (newQuery: string): void => {

@@ -11,10 +11,12 @@ function QueryAggregationOptions({
 	dataSource,
 	panelType,
 	onAggregationIntervalChange,
+	onChange,
 }: {
 	dataSource: DataSource;
 	panelType?: string;
 	onAggregationIntervalChange: (value: number) => void;
+	onChange?: (value: string) => void;
 }): JSX.Element {
 	const showAggregationInterval = useMemo(() => {
 		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
@@ -36,7 +38,7 @@ function QueryAggregationOptions({
 	return (
 		<div className="query-aggregation-container">
 			<div className="aggregation-container">
-				<QueryAggregationSelect />
+				<QueryAggregationSelect onChange={onChange} />
 
 				{showAggregationInterval && (
 					<div className="query-aggregation-interval">
@@ -62,6 +64,7 @@ function QueryAggregationOptions({
 
 QueryAggregationOptions.defaultProps = {
 	panelType: null,
+	onChange: undefined,
 };
 
 export default QueryAggregationOptions;
