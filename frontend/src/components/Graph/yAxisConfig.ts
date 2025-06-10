@@ -1,4 +1,6 @@
 import { formattedValueToString, getValueFormat } from '@grafana/data';
+import { UniversalUnitToGrafanaUnit } from 'components/YAxisUnitSelector/constants';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 
 export const getYAxisFormattedValue = (
 	value: string,
@@ -46,10 +48,33 @@ export const getYAxisFormattedValue = (
 	return `${parseFloat(value)}`;
 };
 
-export const getToolTipValue = (value: string, format?: string): string => {
+export const getToolTipValue = (
+	value: string,
+	format?: string,
+	usingUniversalUnits?: boolean,
+): string => {
+	const universalMappingExists =
+		usingUniversalUnits && format && format in UniversalUnitToGrafanaUnit;
+	const universalMappingNotFound =
+		usingUniversalUnits && format && !(format in UniversalUnitToGrafanaUnit);
+
+	let processedFormat = universalMappingExists
+		? UniversalUnitToGrafanaUnit[format as UniversalYAxisUnit]
+		: format;
+	// If using universal units but a compatible mapping is not found, use `short` for numeric formatting
+	if (universalMappingNotFound) {
+		processedFormat = 'short';
+	}
 	try {
-		return formattedValueToString(
-			getValueFormat(format)(parseFloat(value), undefined, undefined, undefined),
+		return (
+			formattedValueToString(
+				getValueFormat(processedFormat)(
+					parseFloat(value),
+					undefined,
+					undefined,
+					undefined,
+				),
+			) + (universalMappingNotFound ? ` ${format}` : '')
 		);
 	} catch (error) {
 		console.error(error);
