@@ -34,13 +34,13 @@ func newConfig() factory.Config {
 // Validate validates the configuration
 func (c Config) Validate() error {
 	if c.CacheTTL <= 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "cacheTTL must be positive, got %v", c.CacheTTL)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "cache_ttl must be positive, got %v", c.CacheTTL)
 	}
 	if c.FluxInterval <= 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "FluxInterval must be positive, got %v", c.FluxInterval)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "flux_interval must be positive, got %v", c.FluxInterval)
 	}
 	if c.MaxConcurrentQueries <= 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "maxConcurrentQueries must be positive, got %v", c.MaxConcurrentQueries)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "max_concurrent_queries must be positive, got %v", c.MaxConcurrentQueries)
 	}
 	return nil
 }
