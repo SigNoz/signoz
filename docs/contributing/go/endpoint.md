@@ -4,13 +4,13 @@ This guide outlines the recommended approach for designing endpoints, with a foc
 
 ## How do we design an endpoint?
 
-1. Understand the core entities and their relationships.
+### Understand the core entities and their relationships.
 
 Start with understanding the core entities and their relationships. For example:
 
 - **Organization**: an organization can have multiple users
 
-2. Structure Endpoints RESTfully
+### Structure Endpoints RESTfully
 
 Endpoints should reflect the resource hierarchy and follow RESTful conventions. Use clear, **pluralized resource names** and versioning. For example:
 
