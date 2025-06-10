@@ -305,16 +305,17 @@ function convertV5DataByType(
 export function convertV5ResponseToLegacy(
 	v5Response: SuccessResponse<MetricRangePayloadV5>,
 	legendMap: Record<string, string>,
-	formatForWeb?: boolean,
+	// formatForWeb?: boolean,
 ): SuccessResponse<MetricRangePayloadV3> {
 	const { payload } = v5Response;
 	const v5Data = payload?.data;
 
+	// todo - sagar
 	// If formatForWeb is true, return as-is (like existing logic)
 	// Exception: scalar data should always be converted to table format
-	if (formatForWeb && v5Data?.type !== 'scalar') {
-		return v5Response as any;
-	}
+	// if (formatForWeb && v5Data?.type !== 'scalar') {
+	// 	return v5Response as any;
+	// }
 
 	// Convert based on V5 response type
 	const convertedData = convertV5DataByType(v5Data, legendMap);
