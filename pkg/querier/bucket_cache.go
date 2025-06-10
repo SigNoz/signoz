@@ -70,12 +70,12 @@ func (bc *bucketCache) GetMissRanges(
 	// Get query window
 	startMs, endMs := q.Window()
 
-	bc.logger.DebugContext(ctx, "getting miss ranges", "fingerprint", q.Fingerprint(), "startMs", startMs, "endMs", endMs)
+	bc.logger.DebugContext(ctx, "getting miss ranges", "fingerprint", q.Fingerprint(), "start", startMs, "end", endMs)
 
 	// Generate cache key
 	cacheKey := bc.generateCacheKey(q)
 
-	bc.logger.DebugContext(ctx, "cache key", "cacheKey", cacheKey)
+	bc.logger.DebugContext(ctx, "cache key", "cache_key", cacheKey)
 
 	// Try to get cached data
 	var data cachedData
@@ -94,7 +94,7 @@ func (bc *bucketCache) GetMissRanges(
 
 	// Find missing ranges with step alignment
 	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs)
-	bc.logger.DebugContext(ctx, "missing ranges", "missing", missing, "stepMs", stepMs)
+	bc.logger.DebugContext(ctx, "missing ranges", "missing", missing, "step", stepMs)
 
 	// If no cached data overlaps with requested range, return empty result
 	if len(data.Buckets) == 0 {
@@ -128,9 +128,9 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	// If the entire range is within flux interval, skip caching
 	if startMs >= fluxBoundary {
 		bc.logger.DebugContext(ctx, "entire range within flux interval, skipping cache",
-			"startMs", startMs,
-			"endMs", endMs,
-			"fluxBoundary", fluxBoundary)
+			"start", startMs,
+			"end", endMs,
+			"flux_boundary", fluxBoundary)
 		return
 	}
 
@@ -139,8 +139,8 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	if endMs > fluxBoundary {
 		cachableEndMs = fluxBoundary
 		bc.logger.DebugContext(ctx, "adjusting end time to exclude flux interval",
-			"originalEndMs", endMs,
-			"cachableEndMs", cachableEndMs)
+			"original_end", endMs,
+			"cachable_end", cachableEndMs)
 	}
 
 	// Generate cache key
