@@ -165,12 +165,6 @@ alertmanager:
       # Retention of the notification logs.
       retention: 120h
 
-
-##################### Analytics #####################
-analytics:
-  # Whether to enable analytics.
-  enabled: false
-
 ##################### Emailing #####################
 emailing:
   # Whether to enable emailing.
@@ -207,3 +201,26 @@ emailing:
       key_file_path:
       # The path to the certificate file.
       cert_file_path:
+
+##################### Sharder (experimental) #####################
+sharder:
+  # Specifies the sharder provider to use.
+  provider: noop
+  single:
+    # The org id to which this instance belongs to.
+    org_id: org_id
+
+##################### Analytics #####################
+analytics:
+  # Whether to enable analytics.
+  enabled: false
+  segment:
+    # The key to use for segment.
+    key: ""
+
+##################### StatsReporter #####################
+statsreporter:
+  # Whether to enable stats reporter. This is used to provide valuable insights to the SigNoz team. It does not collect any sensitive/PII data.
+  enabled: true
+  # The interval at which the stats are collected.
+  interval: 6h

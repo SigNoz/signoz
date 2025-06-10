@@ -75,7 +75,11 @@ function UplotPanelWrapper({
 		if (setGraphVisibility) {
 			setGraphVisibility(localStoredVisibilityState);
 		}
-	}, [queryResponse.data?.payload.data.result, setGraphVisibility, widget.id]);
+	}, [
+		queryResponse?.data?.payload?.data?.result,
+		setGraphVisibility,
+		widget.id,
+	]);
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
@@ -138,6 +142,9 @@ function UplotPanelWrapper({
 				timezone: timezone.value,
 				customSeries,
 				isLogScale: widget?.isLogScale,
+				colorMapping: widget?.customLegendColors,
+				enhancedLegend: true, // Enable enhanced legend
+				legendPosition: widget?.legendPosition,
 			}),
 		[
 			widget?.id,
@@ -163,6 +170,8 @@ function UplotPanelWrapper({
 			timezone.value,
 			customSeries,
 			widget?.isLogScale,
+			widget?.legendPosition,
+			widget?.customLegendColors,
 		],
 	);
 

@@ -155,10 +155,10 @@ export default function Support(): JSX.Element {
 				page: pathname,
 			});
 			setIsAddCreditCardModalOpen(true);
-		} else if (window.Intercom) {
+		} else if (window.pylon) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			window.Intercom('show');
+			window.Pylon('show');
 		}
 	};
 

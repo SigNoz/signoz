@@ -5,7 +5,7 @@ import (
 )
 
 func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
-	return map[string][]*telemetrytypes.TelemetryFieldKey{
+	keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"service.name": {
 			{
 				Name:          "service.name",
@@ -35,4 +35,10 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 			},
 		},
 	}
+	for _, keys := range keysMap {
+		for _, key := range keys {
+			key.Signal = telemetrytypes.SignalTraces
+		}
+	}
+	return keysMap
 }

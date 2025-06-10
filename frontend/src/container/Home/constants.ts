@@ -3,15 +3,15 @@ import ROUTES from 'constants/routes';
 import { ChecklistItem } from './HomeChecklist/HomeChecklist';
 
 export const checkListStepToPreferenceKeyMap = {
-	WILL_DO_LATER: 'WELCOME_CHECKLIST_DO_LATER',
-	SEND_LOGS: 'WELCOME_CHECKLIST_SEND_LOGS_SKIPPED',
-	SEND_TRACES: 'WELCOME_CHECKLIST_SEND_TRACES_SKIPPED',
-	SEND_INFRA_METRICS: 'WELCOME_CHECKLIST_SEND_INFRA_METRICS_SKIPPED',
-	SETUP_DASHBOARDS: 'WELCOME_CHECKLIST_SETUP_DASHBOARDS_SKIPPED',
-	SETUP_ALERTS: 'WELCOME_CHECKLIST_SETUP_ALERTS_SKIPPED',
-	SETUP_SAVED_VIEWS: 'WELCOME_CHECKLIST_SETUP_SAVED_VIEW_SKIPPED',
-	SETUP_WORKSPACE: 'WELCOME_CHECKLIST_SETUP_WORKSPACE_SKIPPED',
-	ADD_DATA_SOURCE: 'WELCOME_CHECKLIST_ADD_DATA_SOURCE_SKIPPED',
+	WILL_DO_LATER: 'welcome_checklist_do_later',
+	SEND_LOGS: 'welcome_checklist_send_logs_skipped',
+	SEND_TRACES: 'welcome_checklist_send_traces_skipped',
+	SEND_INFRA_METRICS: 'welcome_checklist_send_infra_metrics_skipped',
+	SETUP_DASHBOARDS: 'welcome_checklist_setup_dashboards_skipped',
+	SETUP_ALERTS: 'welcome_checklist_setup_alerts_skipped',
+	SETUP_SAVED_VIEWS: 'welcome_checklist_setup_saved_view_skipped',
+	SETUP_WORKSPACE: 'welcome_checklist_setup_workspace_skipped',
+	ADD_DATA_SOURCE: 'welcome_checklist_add_data_source_skipped',
 };
 
 export const DOCS_LINKS = {

@@ -5,6 +5,7 @@ import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
+import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import React, { ReactElement } from 'react';
@@ -216,13 +217,11 @@ export function getAppContextMock(
 		featureFlagsFetchError: null,
 		orgPreferences: [
 			{
-				key: 'ORG_ONBOARDING',
-				name: 'Organisation Onboarding',
+				name: 'org_onboarding',
 				description: 'Organisation Onboarding',
 				valueType: 'boolean',
 				defaultValue: false,
-				allowedValues: [true, false],
-				isDiscreteValues: true,
+				allowedValues: ['true', 'false'],
 				allowedScopes: ['org'],
 				value: false,
 			},
@@ -234,10 +233,16 @@ export function getAppContextMock(
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
 		activeLicenseRefetch: jest.fn(),
+		versionData: {
+			version: '1.0.0',
+			ee: 'Y',
+			setupCompleted: true,
+		},
 		...appContextOverrides,
 	};
 }
-function AllTheProviders({
+
+export function AllTheProviders({
 	children,
 	role, // Accept the role as a prop
 	appContextOverrides,
@@ -248,18 +253,19 @@ function AllTheProviders({
 }): ReactElement {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<ResourceProvider>
-				<Provider store={mockStored(role)}>
-					<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
-						<BrowserRouter>
-							{/* Use the mock store with the provided role */}
-							<TimezoneProvider>
-								<QueryBuilderProvider>{children}</QueryBuilderProvider>
-							</TimezoneProvider>
-						</BrowserRouter>
-					</AppContext.Provider>
-				</Provider>
-			</ResourceProvider>
+			<Provider store={mockStored(role)}>
+				<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
+					<ResourceProvider>
+						<ErrorModalProvider>
+							<BrowserRouter>
+								<TimezoneProvider>
+									<QueryBuilderProvider>{children}</QueryBuilderProvider>
+								</TimezoneProvider>
+							</BrowserRouter>
+						</ErrorModalProvider>
+					</ResourceProvider>
+				</AppContext.Provider>
+			</Provider>
 		</QueryClientProvider>
 	);
 }

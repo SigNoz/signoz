@@ -8,13 +8,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/analyticstypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -22,20 +26,24 @@ import (
 )
 
 type Module struct {
-	store    types.UserStore
-	jwt      *authtypes.JWT
-	emailing emailing.Emailing
-	settings factory.ScopedProviderSettings
+	store     types.UserStore
+	jwt       *authtypes.JWT
+	emailing  emailing.Emailing
+	settings  factory.ScopedProviderSettings
+	orgSetter organization.Setter
+	analytics analytics.Analytics
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings) user.Module {
+func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) user.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
-		store:    store,
-		jwt:      jwt,
-		emailing: emailing,
-		settings: settings,
+		store:     store,
+		jwt:       jwt,
+		emailing:  emailing,
+		settings:  settings,
+		orgSetter: orgSetter,
+		analytics: analytics,
 	}
 }
 
@@ -122,17 +130,80 @@ func (m *Module) GetInviteByEmailInOrg(ctx context.Context, orgID string, email 
 }
 
 func (m *Module) CreateUserWithPassword(ctx context.Context, user *types.User, password *types.FactorPassword) (*types.User, error) {
-
 	user, err := m.store.CreateUserWithPassword(ctx, user, password)
 	if err != nil {
 		return nil, err
 	}
 
+	m.analytics.Send(ctx,
+		analyticstypes.Identify{
+			UserId: user.ID.String(),
+			Traits: analyticstypes.
+				NewTraits().
+				SetName(user.DisplayName).
+				SetEmail(user.Email).
+				Set("role", user.Role).
+				SetCreatedAt(user.CreatedAt),
+		},
+		analyticstypes.Group{
+			UserId:  user.ID.String(),
+			GroupId: user.OrgID,
+		},
+		analyticstypes.Track{
+			UserId: user.ID.String(),
+			Event:  "User Created",
+			Properties: analyticstypes.NewPropertiesFromMap(map[string]any{
+				"role":  user.Role,
+				"email": user.Email,
+				"name":  user.DisplayName,
+			}),
+			Context: &analyticstypes.Context{
+				Extra: map[string]interface{}{
+					analyticstypes.KeyGroupID: user.OrgID,
+				},
+			},
+		},
+	)
+
 	return user, nil
 }
 
 func (m *Module) CreateUser(ctx context.Context, user *types.User) error {
-	return m.store.CreateUser(ctx, user)
+	if err := m.store.CreateUser(ctx, user); err != nil {
+		return err
+	}
+
+	m.analytics.Send(ctx,
+		analyticstypes.Identify{
+			UserId: user.ID.String(),
+			Traits: analyticstypes.
+				NewTraits().
+				SetName(user.DisplayName).
+				SetEmail(user.Email).
+				Set("role", user.Role).
+				SetCreatedAt(user.CreatedAt),
+		},
+		analyticstypes.Group{
+			UserId:  user.ID.String(),
+			GroupId: user.OrgID,
+		},
+		analyticstypes.Track{
+			UserId: user.ID.String(),
+			Event:  "User Created",
+			Properties: analyticstypes.NewPropertiesFromMap(map[string]any{
+				"role":  user.Role,
+				"email": user.Email,
+				"name":  user.DisplayName,
+			}),
+			Context: &analyticstypes.Context{
+				Extra: map[string]interface{}{
+					analyticstypes.KeyGroupID: user.OrgID,
+				},
+			},
+		},
+	)
+
+	return nil
 }
 
 func (m *Module) GetUserByID(ctx context.Context, orgID string, id string) (*types.GettableUser, error) {
@@ -537,4 +608,46 @@ func (m *Module) ListDomains(ctx context.Context, orgID valuer.UUID) ([]*types.G
 
 func (m *Module) UpdateDomain(ctx context.Context, domain *types.GettableOrgDomain) error {
 	return m.store.UpdateDomain(ctx, domain)
+}
+
+func (m *Module) Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin) (*types.User, error) {
+	if req.Email == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "email is required")
+	}
+
+	if req.Password == "" {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password is required")
+	}
+
+	organization := types.NewOrganization(req.OrgDisplayName)
+	err := m.orgSetter.Create(ctx, organization)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	user, err := types.NewUser(req.Name, req.Email, types.RoleAdmin.String(), organization.ID.StringValue())
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	password, err := types.NewFactorPassword(req.Password)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	user, err = m.CreateUserWithPassword(ctx, user, password)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	return user, nil
+}
+
+func (m *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	count, err := m.store.CountByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]any{"user.count": count}, nil
 }

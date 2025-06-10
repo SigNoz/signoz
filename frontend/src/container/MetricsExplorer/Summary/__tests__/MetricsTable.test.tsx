@@ -4,6 +4,7 @@ import * as useQueryBuilderOperationsHooks from 'hooks/queryBuilder/useQueryBuil
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import MetricsTable from '../MetricsTable';
 import { MetricsListItemRowData } from '../types';
@@ -28,6 +29,11 @@ const mockData: MetricsListItemRowData[] = [
 		timeseries: 20,
 	},
 ];
+
+const mockQueryFilters: TagFilter = {
+	items: [],
+	op: 'AND',
+};
 
 jest.mock('react-router-dom-v5-compat', () => {
 	const actual = jest.requireActual('react-router-dom-v5-compat');
@@ -76,6 +82,7 @@ describe('MetricsTable', () => {
 						setOrderBy={jest.fn()}
 						totalCount={2}
 						openMetricDetails={jest.fn()}
+						queryFilters={mockQueryFilters}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -99,6 +106,7 @@ describe('MetricsTable', () => {
 						setOrderBy={jest.fn()}
 						totalCount={2}
 						openMetricDetails={jest.fn()}
+						queryFilters={mockQueryFilters}
 						isLoading
 					/>
 				</Provider>
@@ -122,6 +130,7 @@ describe('MetricsTable', () => {
 						setOrderBy={jest.fn()}
 						totalCount={2}
 						openMetricDetails={jest.fn()}
+						queryFilters={mockQueryFilters}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -149,6 +158,7 @@ describe('MetricsTable', () => {
 						setOrderBy={jest.fn()}
 						totalCount={2}
 						openMetricDetails={jest.fn()}
+						queryFilters={mockQueryFilters}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -177,6 +187,7 @@ describe('MetricsTable', () => {
 						setOrderBy={jest.fn()}
 						totalCount={2}
 						openMetricDetails={mockOpenMetricDetails}
+						queryFilters={mockQueryFilters}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -201,6 +212,7 @@ describe('MetricsTable', () => {
 						setOrderBy={mockSetOrderBy}
 						totalCount={2}
 						openMetricDetails={jest.fn()}
+						queryFilters={mockQueryFilters}
 					/>
 				</Provider>
 			</MemoryRouter>,

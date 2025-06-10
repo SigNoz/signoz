@@ -75,7 +75,7 @@ function MetricDetails({
 					hour."
 				placement="top"
 			>
-				<span>{`${timeSeriesTotal} ⎯ ${timeSeriesActive} active`}</span>
+				<span>{`${timeSeriesTotal} total ⎯ ${timeSeriesActive} active`}</span>
 			</Tooltip>
 		);
 	}, [metric]);

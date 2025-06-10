@@ -17,16 +17,19 @@ export interface GetAllConfigOptionsResponse {
 
 export function useGetAllConfigOptions(
 	props: ConfigOptions,
+	dotMetricsEnabled: boolean,
 ): GetAllConfigOptionsResponse {
 	const { attributeKey, searchText } = props;
 
 	const { data, isLoading } = useQuery(
 		['attributesValues', attributeKey, searchText],
-		async () => {
+		async (): Promise<DefaultOptionType[]> => {
 			const { payload } = await getAttributesValues({
 				aggregateOperator: 'avg',
 				dataSource: DataSource.METRICS,
-				aggregateAttribute: 'kafka_consumer_group_lag',
+				aggregateAttribute: dotMetricsEnabled
+					? 'kafka.consumer_group.lag'
+					: 'kafka_consumer_group_lag',
 				attributeKey,
 				searchText: searchText ?? '',
 				filterAttributeKeyDataType: DataTypes.String,

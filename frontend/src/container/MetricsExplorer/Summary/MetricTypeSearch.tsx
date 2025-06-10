@@ -1,26 +1,23 @@
 import { Button, Menu, Popover, Tooltip } from 'antd';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Search } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
-	COMPOSITE_QUERY_KEY,
 	METRIC_TYPE_LABEL_MAP,
 	METRIC_TYPE_VALUES_MAP,
+	SUMMARY_FILTERS_KEY,
 } from './constants';
 
-function MetricTypeSearch(): JSX.Element {
-	const { currentQuery } = useQueryBuilder();
-	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
-		query: currentQuery.builder.queryData[0],
-		entityVersion: '',
-	});
+function MetricTypeSearch({
+	queryFilters,
+}: {
+	queryFilters: TagFilter;
+}): JSX.Element {
+	const [searchParams, setSearchParams] = useSearchParams();
 
-	const [, setSearchParams] = useSearchParams();
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
 	const menuItems = useMemo(
@@ -40,9 +37,9 @@ function MetricTypeSearch(): JSX.Element {
 	const handleSelect = useCallback(
 		(selectedMetricType: string): void => {
 			if (selectedMetricType !== 'all') {
-				const newFilter = {
+				const newFilters = {
 					items: [
-						...currentQuery.builder.queryData[0].filters.items,
+						...queryFilters.items,
 						{
 							id: 'metric_type',
 							op: '=',
@@ -56,49 +53,23 @@ function MetricTypeSearch(): JSX.Element {
 					],
 					op: 'AND',
 				};
-				const compositeQuery = {
-					...currentQuery,
-					builder: {
-						...currentQuery.builder,
-						queryData: [
-							{
-								...currentQuery.builder.queryData[0],
-								filters: newFilter,
-							},
-						],
-					},
-				};
-				handleChangeQueryData('filters', newFilter);
 				setSearchParams({
-					[COMPOSITE_QUERY_KEY]: JSON.stringify(compositeQuery),
+					...Object.fromEntries(searchParams.entries()),
+					[SUMMARY_FILTERS_KEY]: JSON.stringify(newFilters),
 				});
 			} else {
-				const newFilter = {
-					items: currentQuery.builder.queryData[0].filters.items.filter(
-						(item) => item.id !== 'metric_type',
-					),
+				const newFilters = {
+					items: queryFilters.items.filter((item) => item.id !== 'metric_type'),
 					op: 'AND',
 				};
-				const compositeQuery = {
-					...currentQuery,
-					builder: {
-						...currentQuery.builder,
-						queryData: [
-							{
-								...currentQuery.builder.queryData[0],
-								filters: newFilter,
-							},
-						],
-					},
-				};
-				handleChangeQueryData('filters', newFilter);
 				setSearchParams({
-					[COMPOSITE_QUERY_KEY]: JSON.stringify(compositeQuery),
+					...Object.fromEntries(searchParams.entries()),
+					[SUMMARY_FILTERS_KEY]: JSON.stringify(newFilters),
 				});
 			}
 			setIsPopoverOpen(false);
 		},
-		[currentQuery, handleChangeQueryData, setSearchParams],
+		[queryFilters.items, setSearchParams, searchParams],
 	);
 
 	const menu = (

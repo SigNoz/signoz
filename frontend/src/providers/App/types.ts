@@ -1,9 +1,10 @@
 import APIError from 'types/api/error';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import { LicenseResModel, TrialInfo } from 'types/api/licensesV3/getActive';
+import { OrgPreference } from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
 import { UserResponse as User } from 'types/api/user/getUser';
-import { OrgPreference } from 'types/reducer/app';
+import { PayloadProps } from 'types/api/user/getVersion';
 
 export interface IAppContext {
 	user: IUser;
@@ -25,6 +26,7 @@ export interface IAppContext {
 	updateUser: (user: IUser) => void;
 	updateOrgPreferences: (orgPreferences: OrgPreference[]) => void;
 	updateOrg(orgId: string, updatedOrgName: string): void;
+	versionData: PayloadProps | null;
 }
 
 // User

@@ -1,3 +1,13 @@
+import {
+	initialQueriesMap,
+	initialQueryBuilderFormValues,
+	OPERATORS,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
+import { noop } from 'lodash-es';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
+
 export const logsQueryRangeSuccessNewFormatResponse = {
 	data: {
 		result: [],
@@ -48,4 +58,149 @@ export const logsQueryRangeSuccessNewFormatResponse = {
 			},
 		},
 	},
+};
+
+export const mockQueryBuilderContextValue = {
+	isDefaultQuery: (): boolean => false,
+	currentQuery: {
+		...initialQueriesMap.logs,
+		builder: {
+			...initialQueriesMap.logs.builder,
+			queryData: [
+				{
+					...initialQueryBuilderFormValues,
+					filters: {
+						items: [
+							{
+								id: '1',
+								key: {
+									key: 'service',
+									type: '',
+									dataType: DataTypes.String,
+									isColumn: true,
+								},
+								op: OPERATORS['='],
+								value: 'frontend',
+							},
+							{
+								id: '2',
+								key: {
+									key: 'log_level',
+									type: '',
+									dataType: DataTypes.String,
+									isColumn: true,
+								},
+								op: OPERATORS['='],
+								value: 'INFO',
+							},
+						],
+						op: 'AND',
+					},
+				},
+				initialQueryBuilderFormValues,
+			],
+		},
+	},
+	setSupersetQuery: jest.fn(),
+	supersetQuery: {
+		...initialQueriesMap.logs,
+		builder: {
+			...initialQueriesMap.logs.builder,
+			queryData: [
+				{
+					...initialQueryBuilderFormValues,
+					filters: {
+						items: [
+							{
+								id: '1',
+								key: {
+									key: 'service',
+									type: '',
+									dataType: DataTypes.String,
+									isColumn: true,
+								},
+								op: OPERATORS['='],
+								value: 'frontend',
+							},
+							{
+								id: '2',
+								key: {
+									key: 'log_level',
+									type: '',
+									dataType: DataTypes.String,
+									isColumn: true,
+								},
+								op: OPERATORS['='],
+								value: 'INFO',
+							},
+						],
+						op: 'AND',
+					},
+				},
+				initialQueryBuilderFormValues,
+			],
+		},
+	},
+	stagedQuery: {
+		...initialQueriesMap.logs,
+		builder: {
+			...initialQueriesMap.logs.builder,
+			queryData: [
+				{
+					...initialQueryBuilderFormValues,
+					filters: {
+						items: [
+							{
+								id: '1',
+								key: {
+									key: 'service',
+									type: '',
+									dataType: DataTypes.String,
+									isColumn: true,
+								},
+								op: OPERATORS['='],
+								value: 'frontend',
+							},
+							{
+								id: '2',
+								key: {
+									key: 'log_level',
+									type: '',
+									dataType: DataTypes.String,
+									isColumn: true,
+								},
+								op: OPERATORS['='],
+								value: 'INFO',
+							},
+						],
+						op: 'AND',
+					},
+				},
+				initialQueryBuilderFormValues,
+			],
+		},
+	},
+	initialDataSource: null,
+	panelType: PANEL_TYPES.TIME_SERIES,
+	isEnabledQuery: false,
+	lastUsedQuery: 0,
+	setLastUsedQuery: noop,
+	handleSetQueryData: noop,
+	handleSetFormulaData: noop,
+	handleSetQueryItemData: noop,
+	handleSetConfig: noop,
+	removeQueryBuilderEntityByIndex: noop,
+	removeQueryTypeItemByIndex: noop,
+	addNewBuilderQuery: noop,
+	cloneQuery: noop,
+	addNewFormula: noop,
+	addNewQueryItem: noop,
+	redirectWithQueryBuilderData: noop,
+	handleRunQuery: noop,
+	resetQuery: noop,
+	updateAllQueriesOperators: (): Query => initialQueriesMap.logs,
+	updateQueriesData: (): Query => initialQueriesMap.logs,
+	initQueryBuilderData: noop,
+	handleOnUnitsChange: noop,
+	isStagedQueryUpdated: (): boolean => false,
 };

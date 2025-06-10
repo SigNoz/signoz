@@ -2,6 +2,8 @@ package ruletypes
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -18,10 +20,31 @@ type Rule struct {
 	OrgID   string `bun:"org_id,type:text"`
 }
 
-type RuleHistory struct {
-	bun.BaseModel `bun:"table:rule_history"`
-	RuleID        int         `bun:"rule_id"`
-	RuleUUID      valuer.UUID `bun:"rule_uuid"`
+func NewStatsFromRules(rules []*Rule) map[string]any {
+	stats := make(map[string]any)
+	for _, rule := range rules {
+		gettableRule := &GettableRule{}
+		if err := json.Unmarshal([]byte(rule.Data), gettableRule); err != nil {
+			continue
+		}
+
+		key := "rule.type." + strings.TrimSuffix(strings.ToLower(string(gettableRule.RuleType)), "_rule") + ".count"
+		if _, ok := stats[key]; !ok {
+			stats[key] = int64(1)
+		} else {
+			stats[key] = stats[key].(int64) + 1
+		}
+
+		key = "alert.type." + strings.TrimSuffix(strings.ToLower(string(gettableRule.AlertType)), "_based_alert") + ".count"
+		if _, ok := stats[key]; !ok {
+			stats[key] = int64(1)
+		} else {
+			stats[key] = stats[key].(int64) + 1
+		}
+	}
+
+	stats["rule.count"] = int64(len(rules))
+	return stats
 }
 
 type RuleStore interface {
@@ -30,6 +53,4 @@ type RuleStore interface {
 	DeleteRule(context.Context, valuer.UUID, func(context.Context) error) error
 	GetStoredRules(context.Context, string) ([]*Rule, error)
 	GetStoredRule(context.Context, valuer.UUID) (*Rule, error)
-	GetRuleUUID(context.Context, int) (*RuleHistory, error)
-	ListOrgs(context.Context) ([]valuer.UUID, error)
 }

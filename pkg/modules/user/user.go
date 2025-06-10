@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -62,6 +63,11 @@ type Module interface {
 	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error)
 	RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error
 	GetAPIKey(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.StorableAPIKeyUser, error)
+
+	// Register
+	Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin) (*types.User, error)
+
+	statsreporter.StatsCollector
 }
 
 type Handler interface {

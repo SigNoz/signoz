@@ -146,7 +146,17 @@ export const OperatorSchema: IOption[] = OperatorConversions.map(
 	}),
 );
 
-export const GetTagKeys = async (): Promise<IOption[]> => {
+export const getResourceDeploymentKeys = (
+	dotMetricsEnabled: boolean,
+): string => {
+	if (dotMetricsEnabled) return 'resource_deployment.environment';
+	return 'resource_deployment_environment';
+};
+
+export const GetTagKeys = async (
+	dotMetricsEnabled: boolean,
+): Promise<IOption[]> => {
+	const resourceDeploymentKey = getResourceDeploymentKeys(dotMetricsEnabled);
 	const { payload } = await getResourceAttributesTagKeys({
 		metricName: 'signoz_calls_total',
 		match: 'resource_',
@@ -159,17 +169,19 @@ export const GetTagKeys = async (): Promise<IOption[]> => {
 		payload.data.attributeKeys?.map((attributeKey) => attributeKey.key) || [];
 
 	return keys
-		.filter((tagKey: string) => tagKey !== 'resource_deployment_environment')
+		.filter((tagKey: string) => tagKey !== resourceDeploymentKey)
 		.map((tagKey: string) => ({
 			label: convertMetricKeyToTrace(tagKey),
 			value: tagKey,
 		}));
 };
 
-export const getEnvironmentTagKeys = async (): Promise<IOption[]> => {
+export const getEnvironmentTagKeys = async (
+	dotMetricsEnabled: boolean,
+): Promise<IOption[]> => {
 	const { payload } = await getResourceAttributesTagKeys({
 		metricName: 'signoz_calls_total',
-		match: 'resource_deployment_environment',
+		match: getResourceDeploymentKeys(dotMetricsEnabled),
 	});
 	if (!payload || !payload?.data) {
 		return [];
@@ -182,9 +194,11 @@ export const getEnvironmentTagKeys = async (): Promise<IOption[]> => {
 	}));
 };
 
-export const getEnvironmentTagValues = async (): Promise<IOption[]> => {
+export const getEnvironmentTagValues = async (
+	dotMetricsEnabled: boolean,
+): Promise<IOption[]> => {
 	const { payload } = await getResourceAttributesTagValues({
-		tagKey: 'resource_deployment_environment',
+		tagKey: getResourceDeploymentKeys(dotMetricsEnabled),
 		metricName: 'signoz_calls_total',
 	});
 
