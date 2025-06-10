@@ -10,6 +10,7 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { BarChart2, ScrollText, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
 
 import HavingFilter from './HavingFilter/HavingFilter';
@@ -167,6 +168,15 @@ function QueryAddOns({
 		[handleChangeQueryData],
 	);
 
+	const handleChangeHaving = useCallback(
+		(value: string) => {
+			(handleChangeQueryData as HandleChangeQueryDataV5)('having', {
+				expression: value,
+			});
+		},
+		[handleChangeQueryData],
+	);
+
 	return (
 		<div className="query-add-ons">
 			{selectedViews.length > 0 && (
@@ -204,6 +214,7 @@ function QueryAddOns({
 												selectedViews.filter((view) => view.key !== 'having'),
 											);
 										}}
+										onChange={handleChangeHaving}
 									/>
 								</div>
 							</div>

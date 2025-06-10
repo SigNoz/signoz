@@ -1,0 +1,286 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
+import { isEmpty } from 'lodash-es';
+import {
+	QueryEnvelope,
+	QueryRangePayloadV5,
+	RequestType,
+} from 'types/api/v5/queryRange';
+import { EQueryType } from 'types/common/dashboard';
+
+type PrepareQueryRangePayloadV5Result = {
+	queryPayload: QueryRangePayloadV5;
+	legendMap: Record<string, string>;
+};
+
+/**
+ * Maps panel types to V5 request types
+ */
+function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
+	switch (panelType) {
+		case PANEL_TYPES.TIME_SERIES:
+		case PANEL_TYPES.BAR:
+			return 'time_series';
+		case PANEL_TYPES.TABLE:
+		case PANEL_TYPES.PIE:
+		case PANEL_TYPES.VALUE:
+			return 'scalar';
+		case PANEL_TYPES.LIST:
+			return 'raw';
+		case PANEL_TYPES.HISTOGRAM:
+			return 'distribution';
+		default:
+			return '';
+	}
+}
+
+/**
+ * Gets signal type from data source
+ */
+function getSignalType(dataSource: string): 'traces' | 'logs' | 'metrics' {
+	if (dataSource === 'traces') return 'traces';
+	if (dataSource === 'logs') return 'logs';
+	return 'metrics';
+}
+
+/**
+ * Creates base spec for builder queries
+ */
+function createBaseSpec(queryData: any): any {
+	return {
+		stepInterval: queryData.stepInterval,
+		disabled: queryData.disabled,
+		filter: queryData.filter,
+		groupBy:
+			queryData.groupBy?.length > 0
+				? queryData.groupBy.map((item: any) => ({
+						name: item.key,
+						fieldDataType: item?.dataType,
+						fieldContext: item?.type,
+						description: item?.description,
+						unit: item?.unit,
+						signal: item?.signal,
+						materialized: item?.materialized,
+				  }))
+				: undefined,
+		limit: isEmpty(queryData.limit) ? 100 : queryData.limit,
+		offset: queryData.offset,
+		orderBy:
+			queryData.orderBy.length > 0
+				? queryData.orderBy.map((order: any) => ({
+						key: {
+							name: order.columnName,
+						},
+						direction: order.order,
+				  }))
+				: undefined,
+		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
+		having: isEmpty(queryData.having) ? undefined : queryData.having,
+	};
+}
+
+/**
+ * Converts query builder data to V5 builder queries
+ */
+function convertBuilderQueriesToV5(
+	builderQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
+): QueryEnvelope[] {
+	return Object.entries(builderQueries).map(([queryName, queryData]) => {
+		const signal = getSignalType(queryData.dataSource);
+		const baseSpec = createBaseSpec(queryData);
+		let spec: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+		switch (signal) {
+			case 'traces':
+				spec = {
+					name: queryName,
+					signal: 'traces' as const,
+					...baseSpec,
+					aggregations:
+						queryData.aggregations?.length > 0
+							? queryData.aggregations
+							: [{ expression: 'count()' }],
+				};
+				break;
+			case 'logs':
+				spec = {
+					name: queryName,
+					signal: 'logs' as const,
+					...baseSpec,
+					aggregations:
+						queryData.aggregations?.length > 0
+							? queryData.aggregations
+							: [{ expression: 'count()' }],
+				};
+				break;
+			case 'metrics':
+			default:
+				spec = {
+					name: queryName,
+					signal: 'metrics' as const,
+					...baseSpec,
+					aggregations:
+						queryData.aggregations?.length > 0
+							? queryData.aggregations
+							: [{ expression: 'count()' }],
+				};
+				break;
+		}
+
+		return {
+			name: queryName,
+			type: 'builder_query' as const,
+			spec,
+		};
+	});
+}
+
+/**
+ * Converts PromQL queries to V5 format
+ */
+function convertPromQueriesToV5(
+	promQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
+): QueryEnvelope[] {
+	return Object.entries(promQueries).map(([queryName, queryData]) => ({
+		name: queryName,
+		type: 'promql' as const,
+		spec: {
+			name: queryName,
+			query: queryData.query,
+			disabled: queryData.disabled || false,
+			step: queryData.stepInterval,
+			stats: false, // PromQL specific field
+		},
+	}));
+}
+
+/**
+ * Converts ClickHouse queries to V5 format
+ */
+function convertClickHouseQueriesToV5(
+	chQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
+): QueryEnvelope[] {
+	return Object.entries(chQueries).map(([queryName, queryData]) => ({
+		name: queryName,
+		type: 'clickhouse_sql' as const,
+		spec: {
+			name: queryName,
+			query: queryData.query,
+			disabled: queryData.disabled || false,
+			// ClickHouse doesn't have step or stats like PromQL
+		},
+	}));
+}
+
+/**
+ * Converts query formulas to V5 format
+ */
+function convertFormulasToV5(
+	formulas: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
+): QueryEnvelope[] {
+	return Object.entries(formulas).map(([queryName, formulaData]) => ({
+		name: queryName,
+		type: 'builder_formula' as const,
+		spec: {
+			name: queryName,
+			expression: formulaData.expression || '',
+			functions: formulaData.functions || [],
+		},
+	}));
+}
+
+/**
+ * Helper function to reduce query arrays to objects
+ */
+function reduceQueriesToObject(
+	queryArray: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
+): { queries: Record<string, any>; legends: Record<string, string> } {
+	// eslint-disable-line @typescript-eslint/no-explicit-any
+	const legends: Record<string, string> = {};
+	const queries = queryArray.reduce((acc, queryItem) => {
+		if (!queryItem.query) return acc;
+		acc[queryItem.name] = queryItem;
+		legends[queryItem.name] = queryItem.legend;
+		return acc;
+	}, {} as Record<string, any>); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+	return { queries, legends };
+}
+
+/**
+ * Prepares V5 query range payload from GetQueryResultsProps
+ */
+export const prepareQueryRangePayloadV5 = ({
+	query,
+	globalSelectedInterval,
+	graphType,
+	selectedTime,
+	tableParams,
+	variables = {},
+	start: startTime,
+	end: endTime,
+}: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
+	let legendMap: Record<string, string> = {};
+	const requestType = mapPanelTypeToRequestType(graphType);
+	let queries: QueryEnvelope[] = [];
+
+	switch (query.queryType) {
+		case EQueryType.QUERY_BUILDER: {
+			const { queryData: data, queryFormulas } = query.builder;
+			const currentQueryData = mapQueryDataToApi(data, 'queryName', tableParams);
+			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
+
+			// Combine legend maps
+			legendMap = {
+				...currentQueryData.newLegendMap,
+				...currentFormulas.newLegendMap,
+			};
+
+			// Convert builder queries
+			const builderQueries = convertBuilderQueriesToV5(currentQueryData.data);
+
+			// Convert formulas as separate query type
+			const formulaQueries = convertFormulasToV5(currentFormulas.data);
+
+			// Combine both types
+			queries = [...builderQueries, ...formulaQueries];
+			break;
+		}
+		case EQueryType.PROM: {
+			const promQueries = reduceQueriesToObject(query[query.queryType]);
+			queries = convertPromQueriesToV5(promQueries.queries);
+			legendMap = promQueries.legends;
+			break;
+		}
+		case EQueryType.CLICKHOUSE: {
+			const chQueries = reduceQueriesToObject(query[query.queryType]);
+			queries = convertClickHouseQueriesToV5(chQueries.queries);
+			legendMap = chQueries.legends;
+			break;
+		}
+		default:
+			break;
+	}
+
+	// Calculate time range
+	const { start, end } = getStartEndRangeTime({
+		type: selectedTime,
+		interval: globalSelectedInterval,
+	});
+
+	// Create V5 payload
+	const queryPayload: QueryRangePayloadV5 = {
+		schemaVersion: 'v1',
+		start: startTime ? startTime * 1e3 : parseInt(start, 10) * 1e3,
+		end: endTime ? endTime * 1e3 : parseInt(end, 10) * 1e3,
+		requestType,
+		compositeQuery: {
+			queries,
+		},
+		variables,
+	};
+
+	return { legendMap, queryPayload };
+};

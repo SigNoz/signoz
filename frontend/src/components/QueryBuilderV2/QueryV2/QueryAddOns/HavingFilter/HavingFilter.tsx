@@ -67,7 +67,13 @@ const conjunctions = [
 	{ label: 'OR', value: 'OR' },
 ];
 
-function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
+function HavingFilter({
+	onClose,
+	onChange,
+}: {
+	onClose: () => void;
+	onChange: (value: string) => void;
+}): JSX.Element {
 	const { aggregationOptions } = useQueryBuilderV2Context();
 	const [input, setInput] = useState('');
 	const [isFocused, setIsFocused] = useState(false);
@@ -76,7 +82,11 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 
 	const [options, setOptions] = useState<{ label: string; value: string }[]>([]);
 
-	// Effect to handle focus state and trigger suggestions
+	const handleChange = (value: string): void => {
+		setInput(value);
+		onChange(value);
+	};
+
 	useEffect(() => {
 		if (isFocused && editorRef.current && options.length > 0) {
 			startCompletion(editorRef.current);
@@ -237,9 +247,10 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 			<div className="having-filter-select-container">
 				<CodeMirror
 					value={input}
+					onChange={handleChange}
 					theme={copilot}
-					onChange={setInput}
 					className="having-filter-select-editor"
+					width="100%"
 					extensions={[
 						havingAutocomplete,
 						javascript({ jsx: false, typescript: false }),

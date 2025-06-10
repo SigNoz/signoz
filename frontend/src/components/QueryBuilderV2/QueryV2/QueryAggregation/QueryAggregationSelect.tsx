@@ -113,7 +113,11 @@ function getFunctionContextAtCursor(
 }
 
 // eslint-disable-next-line react/no-this-in-sfc
-function QueryAggregationSelect(): JSX.Element {
+function QueryAggregationSelect({
+	onChange,
+}: {
+	onChange?: (value: string) => void;
+}): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const { setAggregationOptions } = useQueryBuilderV2Context();
 	const queryData = currentQuery.builder.queryData[0];
@@ -416,7 +420,10 @@ function QueryAggregationSelect(): JSX.Element {
 		<div className="query-aggregation-select-container">
 			<CodeMirror
 				value={input}
-				onChange={setInput}
+				onChange={(value): void => {
+					setInput(value);
+					onChange?.(value);
+				}}
 				className="query-aggregation-select-editor"
 				theme={copilot}
 				extensions={[
@@ -457,5 +464,9 @@ function QueryAggregationSelect(): JSX.Element {
 		</div>
 	);
 }
+
+QueryAggregationSelect.defaultProps = {
+	onChange: undefined,
+};
 
 export default QueryAggregationSelect;
