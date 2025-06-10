@@ -17,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
+	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
@@ -154,5 +156,11 @@ func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetrySt
 	return factory.MustNewNamedMap(
 		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, build, analyticsConfig),
 		noopstatsreporter.NewFactory(),
+	)
+}
+
+func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
+	return factory.MustNewNamedMap(
+		signozquerier.NewFactory(telemetryStore, prometheus, cache),
 	)
 }
