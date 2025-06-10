@@ -6,46 +6,46 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  *
  * @template T The type of the value to be stored.
  * @param {string} key The localStorage key.
- * @param {T | (() => T)} initialValue The initial value to use if no value is found in localStorage,
+ * @param {T | (() => T)} defaultValue The default value to use if no value is found in localStorage,
  * @returns {[T, (value: T | ((prevState: T) => T)) => void, () => void]}
  * A tuple containing:
  * - The current value from state (and localStorage).
  * - A function to set the value (updates state and localStorage).
- * - A function to remove the value from localStorage and reset state to initialValue.
+ * - A function to remove the value from localStorage and reset state to defaultValue.
  */
 export function useLocalStorage<T>(
 	key: string,
-	initialValue: T | (() => T),
+	defaultValue: T | (() => T),
 ): [T, (value: T | ((prevState: T) => T)) => void, () => void] {
-	// Stabilize the initialValue to prevent unnecessary re-renders
-	const initialValueRef = useRef<T | (() => T)>(initialValue);
+	// Stabilize the defaultValue to prevent unnecessary re-renders
+	const defaultValueRef = useRef<T | (() => T)>(defaultValue);
 
-	// Update the ref if initialValue changes (for cases where it's intentionally dynamic)
+	// Update the ref if defaultValue changes (for cases where it's intentionally dynamic)
 	useEffect(() => {
-		if (initialValueRef.current !== initialValue) {
-			initialValueRef.current = initialValue;
+		if (defaultValueRef.current !== defaultValue) {
+			defaultValueRef.current = defaultValue;
 		}
-	}, [initialValue]);
+	}, [defaultValue]);
 
-	// This function resolves the initialValue if it's a function,
+	// This function resolves the defaultValue if it's a function,
 	// and handles potential errors during localStorage access or JSON parsing.
 	const readValueFromStorage = useCallback((): T => {
-		const resolvedInitialValue =
-			initialValueRef.current instanceof Function
-				? (initialValueRef.current as () => T)()
-				: initialValueRef.current;
+		const resolveddefaultValue =
+			defaultValueRef.current instanceof Function
+				? (defaultValueRef.current as () => T)()
+				: defaultValueRef.current;
 
 		try {
 			const item = window.localStorage.getItem(key);
-			// If item exists, parse it, otherwise return the resolved initial value.
+			// If item exists, parse it, otherwise return the resolved default value.
 			if (item) {
 				return JSON.parse(item) as T;
 			}
 		} catch (error) {
-			// Log error and fall back to initial value if reading/parsing fails.
+			// Log error and fall back to default value if reading/parsing fails.
 			console.warn(`Error reading localStorage key "${key}":`, error);
 		}
-		return resolvedInitialValue;
+		return resolveddefaultValue;
 	}, [key]);
 
 	// Initialize state by reading from localStorage.
@@ -75,11 +75,11 @@ export function useLocalStorage<T>(
 	const removeValue = useCallback(() => {
 		try {
 			window.localStorage.removeItem(key);
-			// Reset state to the (potentially resolved) initialValue.
+			// Reset state to the (potentially resolved) defaultValue.
 			setStoredValue(
-				initialValueRef.current instanceof Function
-					? (initialValueRef.current as () => T)()
-					: initialValueRef.current,
+				defaultValueRef.current instanceof Function
+					? (defaultValueRef.current as () => T)()
+					: defaultValueRef.current,
 			);
 		} catch (error) {
 			console.warn(`Error removing localStorage key "${key}":`, error);
@@ -87,7 +87,7 @@ export function useLocalStorage<T>(
 	}, [key]);
 
 	// useEffect to update the storedValue if the key changes,
-	// or if the initialValue prop changes causing readValueFromStorage to change.
+	// or if the defaultValue prop changes causing readValueFromStorage to change.
 	// This ensures the hook reflects the correct localStorage item if its key prop dynamically changes.
 	useEffect(() => {
 		setStoredValue(readValueFromStorage());
