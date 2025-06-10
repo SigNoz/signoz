@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * A React hook for interacting with localStorage.
@@ -17,11 +17,23 @@ export function useLocalStorage<T>(
 	key: string,
 	initialValue: T | (() => T),
 ): [T, (value: T | ((prevState: T) => T)) => void, () => void] {
+	// Stabilize the initialValue to prevent unnecessary re-renders
+	const initialValueRef = useRef<T | (() => T)>(initialValue);
+
+	// Update the ref if initialValue changes (for cases where it's intentionally dynamic)
+	useEffect(() => {
+		if (initialValueRef.current !== initialValue) {
+			initialValueRef.current = initialValue;
+		}
+	}, [initialValue]);
+
 	// This function resolves the initialValue if it's a function,
 	// and handles potential errors during localStorage access or JSON parsing.
 	const readValueFromStorage = useCallback((): T => {
 		const resolvedInitialValue =
-			initialValue instanceof Function ? initialValue() : initialValue;
+			initialValueRef.current instanceof Function
+				? (initialValueRef.current as () => T)()
+				: initialValueRef.current;
 
 		try {
 			const item = window.localStorage.getItem(key);
@@ -34,7 +46,7 @@ export function useLocalStorage<T>(
 			console.warn(`Error reading localStorage key "${key}":`, error);
 		}
 		return resolvedInitialValue;
-	}, [key, initialValue]);
+	}, [key]);
 
 	// Initialize state by reading from localStorage.
 	const [storedValue, setStoredValue] = useState<T>(readValueFromStorage);
@@ -65,12 +77,14 @@ export function useLocalStorage<T>(
 			window.localStorage.removeItem(key);
 			// Reset state to the (potentially resolved) initialValue.
 			setStoredValue(
-				initialValue instanceof Function ? initialValue() : initialValue,
+				initialValueRef.current instanceof Function
+					? (initialValueRef.current as () => T)()
+					: initialValueRef.current,
 			);
 		} catch (error) {
 			console.warn(`Error removing localStorage key "${key}":`, error);
 		}
-	}, [key, initialValue]);
+	}, [key]);
 
 	// useEffect to update the storedValue if the key changes,
 	// or if the initialValue prop changes causing readValueFromStorage to change.

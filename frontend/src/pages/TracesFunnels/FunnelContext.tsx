@@ -170,6 +170,10 @@ export function FunnelProvider({
 			handleStepUpdate(index, {
 				service_name: serviceName,
 				span_name: spanName,
+				filters: {
+					items: [],
+					op: 'AND',
+				},
 			});
 			logEvent('Trace Funnels: span added (replaced) from trace details page', {});
 		},
@@ -188,6 +192,11 @@ export function FunnelProvider({
 		}
 		queryClient.refetchQueries([
 			REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW,
+			funnelId,
+			selectedTime,
+		]);
+		queryClient.refetchQueries([
+			REACT_QUERY_KEY.GET_FUNNEL_STEPS_OVERVIEW,
 			funnelId,
 			selectedTime,
 		]);
