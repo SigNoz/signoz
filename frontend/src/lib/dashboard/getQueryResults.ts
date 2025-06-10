@@ -52,19 +52,18 @@ export async function GetMetricQueryRange(
 			legendMap,
 			props.formatForWeb,
 		);
+	} else {
+		const legacyResult = prepareQueryRangePayload(props);
+		legendMap = legacyResult.legendMap;
+
+		response = await getMetricsQueryRange(
+			legacyResult.queryPayload,
+			version || 'v3',
+			signal,
+			headers,
+		);
 	}
 
-	const legacyResult = prepareQueryRangePayload(props);
-	// const legacyLegendMap = legacyResult.legendMap;
-
-	const response1 = await getMetricsQueryRange(
-		legacyResult.queryPayload,
-		version || 'v3',
-		signal,
-		headers,
-	);
-
-	console.log('response', response, response1);
 	if (response.statusCode >= 400) {
 		let error = `API responded with ${response.statusCode} -  ${response.error} status: ${response.message}`;
 		if (response.body && !isEmpty(response.body)) {
