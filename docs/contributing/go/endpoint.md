@@ -5,6 +5,7 @@ This guide outlines the recommended approach for designing endpoints, with a foc
 ## How do we design an endpoint?
 
 1. Understand the core entities and their relationships.
+
 Start with understanding the core entities and their relationships. For example:
 
 - **Organization**: an organization can have multiple users
