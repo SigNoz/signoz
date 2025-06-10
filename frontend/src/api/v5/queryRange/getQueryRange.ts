@@ -21,8 +21,6 @@ export const getQueryRangeV5 = async (
 				headers,
 			});
 
-			console.log('response', response);
-
 			return {
 				statusCode: 200,
 				error: null,
