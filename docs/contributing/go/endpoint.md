@@ -19,7 +19,7 @@ Endpoints should reflect the resource hierarchy and follow RESTful conventions. 
 - `DELETE /v1/organizations/:id` — Delete an organization by id
 - `PUT /v1/organizations/:id` — Update an organization by id
 - `GET /v1/organizations/:id/users` — Get all users in an organization
-- `GET /v1/organizations/me/users` — Get all user in my organization
+- `GET /v1/organizations/me/users` — Get all users in my organization
 
 Think in terms of resource navigation in a file system. For example, to find your organization, you would navigate to the root of the file system and then to the `organizations` directory. To find a user in an organization, you would navigate to the `organizations` directory and then to the `id` directory.
 
