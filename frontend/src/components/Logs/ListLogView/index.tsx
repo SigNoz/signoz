@@ -7,7 +7,7 @@ import cx from 'classnames';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { unescapeString } from 'container/LogDetailedView/utils';
+import { escapeHtml, unescapeString } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
@@ -58,7 +58,7 @@ function LogGeneralField({
 	const html = useMemo(
 		() => ({
 			__html: convert.toHtml(
-				dompurify.sanitize(unescapeString(fieldValue), {
+				dompurify.sanitize(unescapeString(escapeHtml(fieldValue)), {
 					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 				}),
 			),

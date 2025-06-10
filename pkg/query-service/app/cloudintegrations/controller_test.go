@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/analytics/analyticstest"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -38,7 +39,8 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	require.NoError(err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	analytics := analyticstest.New()
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
@@ -94,7 +96,8 @@ func TestAgentCheckIns(t *testing.T) {
 	require.NoError(err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	analytics := analyticstest.New()
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
@@ -189,7 +192,8 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	require.NoError(err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	analytics := analyticstest.New()
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
@@ -216,7 +220,8 @@ func TestConfigureService(t *testing.T) {
 	require.NoError(err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	analytics := analyticstest.New()
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
