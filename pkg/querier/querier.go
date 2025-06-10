@@ -105,9 +105,9 @@ func (q *querier) run(ctx context.Context, orgID valuer.UUID, qs map[string]qbty
 		// Skip cache if NoCache is set, or if cache is not available
 		if req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" {
 			if req.NoCache {
-				q.logger.Debug("NoCache flag set, bypassing cache", slog.String("query", name))
+				q.logger.DebugContext(ctx, "NoCache flag set, bypassing cache", slog.String("query", name))
 			} else {
-				q.logger.Info("no bucket cache or fingerprint, executing query", slog.String("fingerprint", query.Fingerprint()))
+				q.logger.InfoContext(ctx, "no bucket cache or fingerprint, executing query", slog.String("fingerprint", query.Fingerprint()))
 			}
 			result, err := query.Execute(ctx)
 			if err != nil {
@@ -217,7 +217,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	for _, err := range errors {
 		if err != nil {
 			// If any query failed, fall back to full execution
-			q.logger.Error("parallel query execution failed", slog.Any("error", err))
+			q.logger.ErrorContext(ctx, "parallel query execution failed", slog.Any("error", err))
 			result, err := query.Execute(ctx)
 			if err != nil {
 				return nil, err

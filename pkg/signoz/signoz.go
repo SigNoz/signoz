@@ -135,7 +135,6 @@ func newQuerier(
 
 	// Create bucket cache for querier
 	// TODO: make settings configurable
-	//nolint:kv-only
 	bucketCache := querier.NewBucketCache(logger.With(slog.String("component", "bucket-cache")), cache, 15*time.Minute, 5*time.Minute)
 
 	querier := querier.New(
