@@ -94,7 +94,7 @@ func CreateSomething(ctx context.Context, prometheus prometheus.Prometheus) {
 
 ## Why do we need this?
 
-Like any dependency injection framework, providers decouple the codebase from implementation details. This is especially valuable in SigNoz's large codebase, where we need to swap implementations without changing dependent code. The provider pattern offers several benefits:
+Like any dependency injection framework, providers decouple the codebase from implementation details. This is especially valuable in SigNoz's large codebase, where we need to swap implementations without changing dependent code. The provider pattern offers several benefits apart from the obvious one of decoupling:
 
 - Configuration is **defined with each provider and centralized in one place**, making it easier to understand and manage through various methods (environment variables, config files, etc.)
 - Provider mocking is **straightforward for unit testing**, with a consistent pattern for locating mocks
