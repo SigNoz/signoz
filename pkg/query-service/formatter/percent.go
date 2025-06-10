@@ -22,7 +22,7 @@ func toPercentUnit(value float64, decimals DecimalCount) string {
 
 func (f *percentFormatter) Format(value float64, unit string) string {
 	switch unit {
-	case "percent":
+	case "percent", "%":
 		return toPercent(value, nil)
 	case "percentunit":
 		return toPercentUnit(value, nil)
