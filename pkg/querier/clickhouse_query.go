@@ -38,8 +38,11 @@ func newchSQLQuery(
 	}
 }
 
-// TODO: use the same query hash scheme as ClickHouse
-func (q *chSQLQuery) Fingerprint() string      { return q.query.Query }
+func (q *chSQLQuery) Fingerprint() string {
+	// No caching for CH queries for now
+	return ""
+}
+
 func (q *chSQLQuery) Window() (uint64, uint64) { return q.fromMS, q.toMS }
 
 func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
@@ -61,7 +64,7 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	defer rows.Close()
 
 	// TODO: map the errors from ClickHouse to our error types
-	payload, err := consume(rows, q.kind)
+	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name)
 	if err != nil {
 		return nil, err
 	}
