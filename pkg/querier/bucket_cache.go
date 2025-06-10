@@ -15,7 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// bucketCache implements the qbtypes.BucketCache interface
+// bucketCache implements the BucketCache interface
 type bucketCache struct {
 	cache        cache.Cache
 	logger       *slog.Logger
@@ -23,10 +23,10 @@ type bucketCache struct {
 	fluxInterval time.Duration
 }
 
-var _ qbtypes.BucketCache = (*bucketCache)(nil)
+var _ BucketCache = (*bucketCache)(nil)
 
-// NewBucketCache creates a new qbtypes.BucketCache implementation
-func NewBucketCache(settings factory.ProviderSettings, cache cache.Cache, cacheTTL time.Duration, fluxInterval time.Duration) qbtypes.BucketCache {
+// NewBucketCache creates a new BucketCache implementation
+func NewBucketCache(settings factory.ProviderSettings, cache cache.Cache, cacheTTL time.Duration, fluxInterval time.Duration) BucketCache {
 	cacheSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier/bucket_cache")
 	return &bucketCache{
 		cache:        cache,

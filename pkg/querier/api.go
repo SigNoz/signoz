@@ -11,10 +11,10 @@ import (
 )
 
 type API struct {
-	querier qbtypes.Querier
+	querier Querier
 }
 
-func NewAPI(querier qbtypes.Querier) *API {
+func NewAPI(querier Querier) *API {
 	return &API{querier: querier}
 }
 

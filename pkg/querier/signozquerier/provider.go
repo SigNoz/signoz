@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 // NewFactory creates a new factory for the signoz querier provider
@@ -22,14 +21,14 @@ func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 	cache cache.Cache,
-) factory.ProviderFactory[qbtypes.Querier, querier.Config] {
+) factory.ProviderFactory[querier.Querier, querier.Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("signoz"),
 		func(
 			ctx context.Context,
 			settings factory.ProviderSettings,
 			cfg querier.Config,
-		) (qbtypes.Querier, error) {
+		) (querier.Querier, error) {
 			return newProvider(ctx, settings, cfg, telemetryStore, prometheus, cache)
 		},
 	)
@@ -42,7 +41,7 @@ func newProvider(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 	cache cache.Cache,
-) (qbtypes.Querier, error) {
+) (querier.Querier, error) {
 
 	// Create telemetry metadata store
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(

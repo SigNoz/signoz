@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
@@ -20,7 +21,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 
@@ -36,7 +36,7 @@ type SigNoz struct {
 	TelemetryStore  telemetrystore.TelemetryStore
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
-	Querier         qbtypes.Querier
+	Querier         querier.Querier
 	Rules           ruler.Ruler
 	Zeus            zeus.Zeus
 	Licensing       licensing.Licensing

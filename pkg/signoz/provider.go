@@ -34,7 +34,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
@@ -160,7 +159,7 @@ func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetrySt
 	)
 }
 
-func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache) factory.NamedMap[factory.ProviderFactory[qbtypes.Querier, querier.Config]] {
+func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
 		signozquerier.NewFactory(telemetryStore, prometheus, cache),
 	)
