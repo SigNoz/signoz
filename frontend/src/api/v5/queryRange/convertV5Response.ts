@@ -316,8 +316,6 @@ export function convertV5ResponseToLegacy(
 		return v5Response as any;
 	}
 
-	console.log('v5Data', v5Data);
-
 	// Convert based on V5 response type
 	const convertedData = convertV5DataByType(v5Data, legendMap);
 
