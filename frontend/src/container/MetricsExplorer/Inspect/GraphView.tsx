@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button, Skeleton, Switch, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -8,6 +9,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { METRIC_TYPE_TO_COLOR_MAP, METRIC_TYPE_TO_ICON_MAP } from './constants';
 import GraphPopover from './GraphPopover';
@@ -203,7 +205,14 @@ function GraphView({
 				<div className="view-toggle-button">
 					<Switch
 						checked={viewType === 'graph'}
-						onChange={(checked): void => setViewType(checked ? 'graph' : 'table')}
+						onChange={(checked): void => {
+							const newViewType = checked ? 'graph' : 'table';
+							setViewType(newViewType);
+							logEvent(MetricsExplorerEvents.InspectViewChanged, {
+								[MetricsExplorerEventKeys.Tab]: 'inspect',
+								[MetricsExplorerEventKeys.InspectView]: newViewType,
+							});
+						}}
 					/>
 					<Typography.Text>
 						{viewType === 'graph' ? 'Graph View' : 'Table View'}

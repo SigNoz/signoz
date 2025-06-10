@@ -75,6 +75,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/version"
+
+	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 )
 
 type status string
@@ -144,6 +146,8 @@ type APIHandler struct {
 
 	FieldsAPI *fields.API
 
+	QuerierAPI *querierAPI.API
+
 	Signoz *signoz.SigNoz
 }
 
@@ -179,6 +183,8 @@ type APIHandlerOpts struct {
 	LicensingAPI licensing.API
 
 	FieldsAPI *fields.API
+
+	QuerierAPI *querierAPI.API
 
 	Signoz *signoz.SigNoz
 }
@@ -243,6 +249,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		FieldsAPI:                     opts.FieldsAPI,
+		QuerierAPI:                    opts.QuerierAPI,
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -471,6 +478,11 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *middlew
 	subRouter := router.PathPrefix("/api/v4").Subrouter()
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV4)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterQueryRangeV5Routes(router *mux.Router, am *middleware.AuthZ) {
+	subRouter := router.PathPrefix("/api/v5").Subrouter()
+	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QuerierAPI.QueryRange)).Methods(http.MethodPost)
 }
 
 // todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
