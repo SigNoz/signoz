@@ -18,14 +18,23 @@ const getLogsUpdaterConfig = (
 } => ({
 	updateColumns: (newColumns: BaseAutocompleteData[], mode: string): void => {
 		if (mode === PreferenceMode.SAVED_VIEW) {
-			setSavedViewPreferences({
-				columns: newColumns,
-				formatting: {
-					maxLines: 2,
-					format: 'table',
-					fontSize: 'small' as FontSize,
-					version: 1,
-				},
+			setSavedViewPreferences((prev) => {
+				if (!prev) {
+					return {
+						columns: newColumns,
+						formatting: {
+							maxLines: 2,
+							format: 'table',
+							fontSize: 'small' as FontSize,
+							version: 1,
+						},
+					};
+				}
+
+				return {
+					...prev,
+					columns: newColumns,
+				};
 			});
 		}
 
