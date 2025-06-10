@@ -324,7 +324,7 @@ export const Query = memo(function Query({
 	]);
 
 	const disableOperatorSelector =
-		!query?.aggregateAttribute?.key || query?.aggregateAttribute?.key === '';
+		!query?.aggregateAttribute.key || query?.aggregateAttribute.key === '';
 
 	const isVersionV4 = version && version === ENTITY_VERSION_V4;
 
