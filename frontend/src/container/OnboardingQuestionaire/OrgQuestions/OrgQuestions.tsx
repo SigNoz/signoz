@@ -70,7 +70,9 @@ function OrgQuestions({
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
-	const [usesOtel, setUsesOtel] = useState<boolean | null>(null);
+	const [usesOtel, setUsesOtel] = useState<boolean | null>(
+		orgDetails?.usesOtel || null,
+	);
 
 	const handleOrgNameUpdate = async (): Promise<void> => {
 		/* Early bailout if orgData is not set or if the organisation name is not set or if the organisation name is empty or if the organisation name is the same as the one in the orgData */
