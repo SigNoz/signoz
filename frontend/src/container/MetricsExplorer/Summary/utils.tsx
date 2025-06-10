@@ -18,18 +18,21 @@ import {
 	Gauge,
 } from 'lucide-react';
 import { useMemo } from 'react';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { METRIC_TYPE_LABEL_MAP } from './constants';
 import MetricNameSearch from './MetricNameSearch';
 import MetricTypeSearch from './MetricTypeSearch';
 import { MetricsListItemRowData, TreemapTile, TreemapViewType } from './types';
 
-export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
+export const getMetricsTableColumns = (
+	queryFilters: TagFilter,
+): ColumnType<MetricsListItemRowData>[] => [
 	{
 		title: (
 			<div className="metric-name-column-header">
 				<span className="metric-name-column-header-text">METRIC</span>
-				<MetricNameSearch />
+				<MetricNameSearch queryFilters={queryFilters} />
 			</div>
 		),
 		dataIndex: 'metric_name',
@@ -51,7 +54,7 @@ export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 		title: (
 			<div className="metric-type-column-header">
 				<span className="metric-type-column-header-text">TYPE</span>
-				<MetricTypeSearch />
+				<MetricTypeSearch queryFilters={queryFilters} />
 			</div>
 		),
 		dataIndex: 'metric_type',

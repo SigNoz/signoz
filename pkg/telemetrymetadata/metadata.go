@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -40,7 +41,7 @@ type telemetryMetaStore struct {
 }
 
 func NewTelemetryMetaStore(
-	logger *slog.Logger,
+	settings factory.ProviderSettings,
 	telemetrystore telemetrystore.TelemetryStore,
 	tracesDBName string,
 	tracesFieldsTblName string,

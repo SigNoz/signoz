@@ -323,6 +323,13 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 
 }
 
+func NewStatsFromLicense(license *License) map[string]any {
+	return map[string]any{
+		"license.plan": license.PlanName.StringValue(),
+		"license.id":   license.ID.StringValue(),
+	}
+}
+
 func (license *License) UpdateFeatures(features []*Feature) {
 	license.Features = features
 }
