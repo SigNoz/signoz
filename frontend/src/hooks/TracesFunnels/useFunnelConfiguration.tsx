@@ -1,5 +1,7 @@
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useDebounce from 'hooks/useDebounce';
+import { useLocalStorage } from 'hooks/useLocalStorage';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEqual } from 'lodash-es';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
@@ -71,6 +73,15 @@ export default function useFunnelConfiguration({
 
 	// Derived state
 	const lastSavedStepsStateRef = useRef<FunnelStepData[]>(steps);
+	const hasRestoredFromLocalStorage = useRef(false);
+
+	// localStorage hook for incomplete steps
+	const localStorageKey = `${LOCALSTORAGE.FUNNEL_INCOMPLETE_STEPS}_${funnel.funnel_id}`;
+	const [
+		savedIncompleteSteps,
+		setSavedIncompleteSteps,
+		clearSavedIncompleteSteps,
+	] = useLocalStorage<FunnelStepData[] | null>(localStorageKey, null);
 
 	const hasStepsChanged = useCallback(() => {
 		const normalizedLastSavedSteps = normalizeSteps(
@@ -79,6 +90,33 @@ export default function useFunnelConfiguration({
 		const normalizedDebouncedSteps = normalizeSteps(debouncedSteps);
 		return !isEqual(normalizedDebouncedSteps, normalizedLastSavedSteps);
 	}, [debouncedSteps]);
+
+	// Handle localStorage for incomplete steps
+	useEffect(() => {
+		// Restore from localStorage on first run if steps are incomplete
+		if (!hasRestoredFromLocalStorage.current && hasIncompleteStepFields) {
+			const savedSteps = savedIncompleteSteps;
+			if (savedSteps) {
+				handleRestoreSteps(savedSteps);
+				hasRestoredFromLocalStorage.current = true;
+				return;
+			}
+		}
+
+		// Save incomplete steps to localStorage
+		if (!disableAutoSave && hasIncompleteStepFields && hasStepsChanged()) {
+			setSavedIncompleteSteps(debouncedSteps);
+		}
+	}, [
+		debouncedSteps,
+		hasIncompleteStepFields,
+		disableAutoSave,
+		funnel.funnel_id,
+		hasStepsChanged,
+		handleRestoreSteps,
+		setSavedIncompleteSteps,
+		savedIncompleteSteps,
+	]);
 
 	const hasFunnelStepDefinitionsChanged = useCallback(
 		(prevSteps: FunnelStepData[], nextSteps: FunnelStepData[]): boolean => {
@@ -142,6 +180,9 @@ export default function useFunnelConfiguration({
 					const updatedFunnelSteps = data?.payload?.steps;
 
 					if (!updatedFunnelSteps) return;
+
+					// Clear localStorage since steps are now complete and saved successfully
+					clearSavedIncompleteSteps();
 
 					queryClient.setQueryData(
 						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.funnel_id],
@@ -222,6 +263,8 @@ export default function useFunnelConfiguration({
 		triggerAutoSave,
 		showNotifications,
 		disableAutoSave,
+		savedIncompleteSteps,
+		clearSavedIncompleteSteps,
 	]);
 
 	return {
