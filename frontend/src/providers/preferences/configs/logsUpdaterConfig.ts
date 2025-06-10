@@ -9,6 +9,7 @@ import { FormattingOptions, PreferenceMode, Preferences } from '../types';
 
 // --- LOGS preferences updater config ---
 const getLogsUpdaterConfig = (
+	preferences: Preferences | null,
 	redirectWithOptionsData: (options: OptionsQuery) => void,
 	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>,
 ): {
@@ -32,6 +33,7 @@ const getLogsUpdaterConfig = (
 			// just need to update the columns see for remove props
 			redirectWithOptionsData({
 				...defaultOptionsQuery,
+				...preferences?.formatting,
 				selectColumns: newColumns,
 			});
 
@@ -57,6 +59,7 @@ const getLogsUpdaterConfig = (
 		if (mode === PreferenceMode.DIRECT) {
 			redirectWithOptionsData({
 				...defaultOptionsQuery,
+				...preferences?.formatting,
 				...newFormatting,
 			});
 

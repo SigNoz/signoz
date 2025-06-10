@@ -66,6 +66,7 @@ export function usePreferenceSync({
 	const { updateColumns, updateFormatting } = usePreferenceUpdater({
 		dataSource,
 		mode,
+		preferences,
 		setReSync,
 		setSavedViewPreferences,
 	});

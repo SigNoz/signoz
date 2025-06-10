@@ -18,6 +18,7 @@ const metricsUpdater = {
 };
 
 const getUpdaterConfig = (
+	preferences: Preferences | null,
 	redirectWithOptionsData: (options: OptionsQuery) => void,
 	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>,
 ): Record<
@@ -28,6 +29,7 @@ const getUpdaterConfig = (
 	}
 > => ({
 	[DataSource.LOGS]: getLogsUpdaterConfig(
+		preferences,
 		redirectWithOptionsData,
 		setSavedViewPreferences,
 	),
@@ -41,11 +43,13 @@ const getUpdaterConfig = (
 export function usePreferenceUpdater({
 	dataSource,
 	mode,
+	preferences,
 	setReSync,
 	setSavedViewPreferences,
 }: {
 	dataSource: DataSource;
 	mode: string;
+	preferences: Preferences | null;
 	setReSync: Dispatch<SetStateAction<boolean>>;
 	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>;
 }): {
@@ -56,6 +60,7 @@ export function usePreferenceUpdater({
 		redirectWithQuery: redirectWithOptionsData,
 	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 	const updater = getUpdaterConfig(
+		preferences,
 		redirectWithOptionsData,
 		setSavedViewPreferences,
 	)[dataSource];
