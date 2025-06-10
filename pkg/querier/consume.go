@@ -22,11 +22,11 @@ var (
 // consume reads every row and shapes it into the payload expected for the
 // given request type.
 //
-// * Time-series - []*qbtypes.TimeSeriesData
-// * Scalar      - []*qbtypes.ScalarData
-// * Raw         - []*qbtypes.RawData
-// * Distribution- []*qbtypes.DistributionData
-func consume(rows driver.Rows, kind qbtypes.RequestType) (any, error) {
+// * Time-series - *qbtypes.TimeSeriesData
+// * Scalar      - *qbtypes.ScalarData
+// * Raw         - *qbtypes.RawData
+// * Distribution- *qbtypes.DistributionData
+func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
 		err     error
@@ -34,18 +34,18 @@ func consume(rows driver.Rows, kind qbtypes.RequestType) (any, error) {
 
 	switch kind {
 	case qbtypes.RequestTypeTimeSeries:
-		payload, err = readAsTimeSeries(rows)
+		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeScalar:
-		payload, err = readAsScalar(rows)
+		payload, err = readAsScalar(rows, queryName)
 	case qbtypes.RequestTypeRaw:
-		payload, err = readAsRaw(rows)
+		payload, err = readAsRaw(rows, queryName)
 		// TODO: add support for other request types
 	}
 
 	return payload, err
 }
 
-func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
+func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
 
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
@@ -65,6 +65,43 @@ func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
 	}
 	seriesMap := map[sKey]*qbtypes.TimeSeries{}
 
+	stepMs := uint64(step.Duration.Milliseconds())
+
+	// Helper function to check if a timestamp represents a partial value
+	isPartialValue := func(timestamp int64) bool {
+		if stepMs == 0 || queryWindow == nil {
+			return false
+		}
+
+		timestampMs := uint64(timestamp)
+
+		// For the first interval, check if query start is misaligned
+		// The first complete interval starts at the first timestamp >= queryWindow.From that is aligned to step
+		firstCompleteInterval := queryWindow.From
+		if queryWindow.From%stepMs != 0 {
+			// Round up to next step boundary
+			firstCompleteInterval = ((queryWindow.From / stepMs) + 1) * stepMs
+		}
+
+		// If timestamp is before the first complete interval, it's partial
+		if timestampMs < firstCompleteInterval {
+			return true
+		}
+
+		// For the last interval, check if it would extend beyond query end
+		if timestampMs+stepMs > queryWindow.To {
+			return queryWindow.To%stepMs != 0
+		}
+
+		return false
+	}
+
+	// Pre-allocate for labels based on column count
+	lblValsCapacity := len(colNames) - 1 // -1 for timestamp
+	if lblValsCapacity < 0 {
+		lblValsCapacity = 0
+	}
+
 	for rows.Next() {
 		if err := rows.Scan(slots...); err != nil {
 			return nil, err
@@ -72,8 +109,8 @@ func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
 
 		var (
 			ts            int64
-			lblVals       []string
-			lblObjs       []*qbtypes.Label
+			lblVals       = make([]string, 0, lblValsCapacity)
+			lblObjs       = make([]*qbtypes.Label, 0, lblValsCapacity)
 			aggValues     = map[int]float64{} // all __result_N in this row
 			fallbackValue float64             // value when NO __result_N columns exist
 			fallbackSeen  bool
@@ -175,6 +212,7 @@ func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
 			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
 				Timestamp: ts,
 				Value:     val,
+				Partial:   isPartialValue(ts),
 			})
 		}
 	}
@@ -189,6 +227,7 @@ func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
 		}
 	}
 	if maxAgg < 0 {
+		//nolint:nilnil
 		return nil, nil // empty result-set
 	}
 
@@ -210,9 +249,10 @@ func readAsTimeSeries(rows driver.Rows) ([]*qbtypes.TimeSeriesData, error) {
 		}
 	}
 
-	return []*qbtypes.TimeSeriesData{{
+	return &qbtypes.TimeSeriesData{
+		QueryName:    queryName,
 		Aggregations: nonEmpty,
-	}}, nil
+	}, nil
 }
 
 func numericKind(k reflect.Kind) bool {
@@ -226,12 +266,13 @@ func numericKind(k reflect.Kind) bool {
 	}
 }
 
-func readAsScalar(rows driver.Rows) (*qbtypes.ScalarData, error) {
+func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 
 	cd := make([]*qbtypes.ColumnDescriptor, len(colNames))
 
+	var aggIndex int64
 	for i, name := range colNames {
 		colType := qbtypes.ColumnTypeGroup
 		if aggRe.MatchString(name) {
@@ -239,18 +280,24 @@ func readAsScalar(rows driver.Rows) (*qbtypes.ScalarData, error) {
 		}
 		cd[i] = &qbtypes.ColumnDescriptor{
 			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: name},
-			AggregationIndex:  int64(i),
+			QueryName:         queryName,
+			AggregationIndex:  aggIndex,
 			Type:              colType,
 		}
+		if colType == qbtypes.ColumnTypeAggregation {
+			aggIndex++
+		}
+	}
+
+	// Pre-allocate scan slots once
+	scan := make([]any, len(colTypes))
+	for i := range scan {
+		scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
 	}
 
 	var data [][]any
 
 	for rows.Next() {
-		scan := make([]any, len(colTypes))
-		for i := range scan {
-			scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
-		}
 		if err := rows.Scan(scan...); err != nil {
 			return nil, err
 		}
@@ -277,7 +324,7 @@ func readAsScalar(rows driver.Rows) (*qbtypes.ScalarData, error) {
 	}, nil
 }
 
-func readAsRaw(rows driver.Rows) (*qbtypes.RawData, error) {
+func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
@@ -337,35 +384,37 @@ func readAsRaw(rows driver.Rows) (*qbtypes.RawData, error) {
 	}
 
 	return &qbtypes.RawData{
-		Rows: outRows,
+		QueryName: queryName,
+		Rows:      outRows,
 	}, nil
 }
 
+// numericAsFloat converts numeric types to float64 efficiently
 func numericAsFloat(v any) float64 {
 	switch x := v.(type) {
 	case float64:
 		return x
-	case float32:
-		return float64(x)
 	case int64:
 		return float64(x)
+	case float32:
+		return float64(x)
 	case int32:
-		return float64(x)
-	case int16:
-		return float64(x)
-	case int8:
-		return float64(x)
-	case int:
 		return float64(x)
 	case uint64:
 		return float64(x)
 	case uint32:
 		return float64(x)
+	case int:
+		return float64(x)
+	case uint:
+		return float64(x)
+	case int16:
+		return float64(x)
+	case int8:
+		return float64(x)
 	case uint16:
 		return float64(x)
 	case uint8:
-		return float64(x)
-	case uint:
 		return float64(x)
 	default:
 		return math.NaN()

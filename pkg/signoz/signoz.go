@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
@@ -35,6 +36,7 @@ type SigNoz struct {
 	TelemetryStore  telemetrystore.TelemetryStore
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
+	Querier         querier.Querier
 	Rules           ruler.Ruler
 	Zeus            zeus.Zeus
 	Licensing       licensing.Licensing
@@ -166,6 +168,18 @@ func New(
 		return nil, err
 	}
 
+	// Initialize querier from the available querier provider factories
+	querier, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Querier,
+		NewQuerierProviderFactories(telemetrystore, prometheus, cache),
+		config.Querier.Provider(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Run migrations on the sqlstore
 	sqlmigrations, err := sqlmigration.New(
 		ctx,
@@ -280,6 +294,7 @@ func New(
 		TelemetryStore:  telemetrystore,
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
+		Querier:         querier,
 		Zeus:            zeus,
 		Licensing:       licensing,
 		Emailing:        emailing,

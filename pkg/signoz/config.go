@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
@@ -67,6 +68,9 @@ type Config struct {
 	// Alertmanager config
 	Alertmanager alertmanager.Config `mapstructure:"alertmanager" yaml:"alertmanager"`
 
+	// Querier config
+	Querier querier.Config `mapstructure:"querier"`
+
 	// Ruler config
 	Ruler ruler.Config `mapstructure:"ruler"`
 
@@ -102,6 +106,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 		telemetrystore.NewConfigFactory(),
 		prometheus.NewConfigFactory(),
 		alertmanager.NewConfigFactory(),
+		querier.NewConfigFactory(),
 		ruler.NewConfigFactory(),
 		emailing.NewConfigFactory(),
 		sharder.NewConfigFactory(),
