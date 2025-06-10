@@ -59,7 +59,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		FluxInterval:                  opts.FluxInterval,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		LicensingAPI:                  httplicensing.NewLicensingAPI(signoz.Licensing),
-		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore, signoz.Instrumentation.Logger()),
+		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Querier),
 	})

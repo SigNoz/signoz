@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -27,13 +28,14 @@ type metricQueryStatementBuilder struct {
 var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*metricQueryStatementBuilder)(nil)
 
 func NewMetricQueryStatementBuilder(
-	logger *slog.Logger,
+	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 ) *metricQueryStatementBuilder {
+	metricsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetrics")
 	return &metricQueryStatementBuilder{
-		logger:        logger,
+		logger:        metricsSettings.Logger(),
 		metadataStore: metadataStore,
 		fm:            fieldMapper,
 		cb:            conditionBuilder,

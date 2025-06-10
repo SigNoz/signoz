@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -31,7 +32,7 @@ type querier struct {
 var _ qbtypes.Querier = (*querier)(nil)
 
 func New(
-	logger *slog.Logger,
+	settings factory.ProviderSettings,
 	telemetryStore telemetrystore.TelemetryStore,
 	metadataStore telemetrytypes.MetadataStore,
 	promEngine prometheus.Prometheus,
@@ -40,8 +41,9 @@ func New(
 	metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	bucketCache qbtypes.BucketCache,
 ) *querier {
+	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
 	return &querier{
-		logger:            logger,
+		logger:            querierSettings.Logger(),
 		telemetryStore:    telemetryStore,
 		metadataStore:     metadataStore,
 		promEngine:        promEngine,
@@ -105,9 +107,9 @@ func (q *querier) run(ctx context.Context, orgID valuer.UUID, qs map[string]qbty
 		// Skip cache if NoCache is set, or if cache is not available
 		if req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" {
 			if req.NoCache {
-				q.logger.DebugContext(ctx, "NoCache flag set, bypassing cache", slog.String("query", name))
+				q.logger.DebugContext(ctx, "NoCache flag set, bypassing cache", "query", name)
 			} else {
-				q.logger.InfoContext(ctx, "no bucket cache or fingerprint, executing query", slog.String("fingerprint", query.Fingerprint()))
+				q.logger.InfoContext(ctx, "no bucket cache or fingerprint, executing query", "fingerprint", query.Fingerprint())
 			}
 			result, err := query.Execute(ctx)
 			if err != nil {
@@ -217,7 +219,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	for _, err := range errors {
 		if err != nil {
 			// If any query failed, fall back to full execution
-			q.logger.ErrorContext(ctx, "parallel query execution failed", slog.Any("error", err))
+			q.logger.ErrorContext(ctx, "parallel query execution failed", "error", err)
 			result, err := query.Execute(ctx)
 			if err != nil {
 				return nil, err

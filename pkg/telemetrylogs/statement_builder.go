@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -33,7 +34,7 @@ type logQueryStatementBuilder struct {
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*logQueryStatementBuilder)(nil)
 
 func NewLogQueryStatementBuilder(
-	logger *slog.Logger,
+	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
@@ -43,8 +44,10 @@ func NewLogQueryStatementBuilder(
 	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *logQueryStatementBuilder {
+	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
+
 	return &logQueryStatementBuilder{
-		logger:                    logger,
+		logger:                    logsSettings.Logger(),
 		metadataStore:             metadataStore,
 		fm:                        fieldMapper,
 		cb:                        conditionBuilder,

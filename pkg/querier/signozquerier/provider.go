@@ -2,7 +2,6 @@ package signozquerier
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -44,11 +43,10 @@ func newProvider(
 	prometheus prometheus.Prometheus,
 	cache cache.Cache,
 ) (qbtypes.Querier, error) {
-	logger := settings.Logger
 
 	// Create telemetry metadata store
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
-		logger,
+		settings,
 		telemetryStore,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,
@@ -76,7 +74,7 @@ func newProvider(
 
 	traceAggExprRewriter := querybuilder.NewAggExprRewriter(nil, traceFieldMapper, traceConditionBuilder, "", nil)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
-		logger,
+		settings,
 		telemetryMetadataStore,
 		traceFieldMapper,
 		traceConditionBuilder,
@@ -100,7 +98,7 @@ func newProvider(
 		telemetrylogs.GetBodyJSONKey,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
-		logger,
+		settings,
 		telemetryMetadataStore,
 		logFieldMapper,
 		logConditionBuilder,
@@ -115,7 +113,7 @@ func newProvider(
 	metricFieldMapper := telemetrymetrics.NewFieldMapper()
 	metricConditionBuilder := telemetrymetrics.NewConditionBuilder(metricFieldMapper)
 	metricStmtBuilder := telemetrymetrics.NewMetricQueryStatementBuilder(
-		logger,
+		settings,
 		telemetryMetadataStore,
 		metricFieldMapper,
 		metricConditionBuilder,
@@ -123,7 +121,7 @@ func newProvider(
 
 	// Create bucket cache
 	bucketCache := querier.NewBucketCache(
-		logger.With(slog.String("component", "bucket-cache")),
+		settings,
 		cache,
 		cfg.CacheTTL,
 		cfg.FluxInterval,
@@ -131,7 +129,7 @@ func newProvider(
 
 	// Create and return the querier
 	return querier.New(
-		logger,
+		settings,
 		telemetryStore,
 		telemetryMetadataStore,
 		prometheus,

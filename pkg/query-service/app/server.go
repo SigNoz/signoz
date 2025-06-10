@@ -150,7 +150,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		JWT:                           serverOptions.Jwt,
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
 		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
-		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore, serverOptions.SigNoz.Instrumentation.Logger()),
+		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.Instrumentation.ToProviderSettings(), serverOptions.SigNoz.TelemetryStore),
 		Signoz:                        serverOptions.SigNoz,
 		QuerierAPI:                    querierAPI.NewAPI(serverOptions.SigNoz.Querier),
 	})
