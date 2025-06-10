@@ -59,51 +59,51 @@ func FromDataRateUnit(u Unit) float64 {
 	switch u {
 	case "binBps": // bytes/sec(IEC)
 		return BytePerSecond
-	case "Bps": // bytes/sec(SI)
+	case "Bps", "By/s": // bytes/sec(SI)
 		return BytePerSecond
 	case "binbps": // bits/sec(IEC)
 		return BitPerSecond
-	case "bps": // bits/sec(SI)
+	case "bps", "bit/s": // bits/sec(SI)
 		return BitPerSecond
 	case "KiBs": // kibibytes/sec
 		return KibibytePerSecond
 	case "Kibits": // kibibits/sec
 		return KibibitPerSecond
-	case "KBs": // kilobytes/sec
+	case "KBs", "kBy/s": // kilobytes/sec
 		return KilobytePerSecond
-	case "Kbits": // kilobits/sec
+	case "Kbits", "kbit/s": // kilobits/sec
 		return KilobitPerSecond
 	case "MiBs": // mebibytes/sec
 		return MebibytePerSecond
 	case "Mibits": // mebibits/sec
 		return MebibitPerSecond
-	case "MBs": // megabytes/sec
+	case "MBs", "MBy/s": // megabytes/sec
 		return MegabytePerSecond
-	case "Mbits": // megabits/sec
+	case "Mbits", "Mbit/s": // megabits/sec
 		return MegabitPerSecond
 	case "GiBs": // gibibytes/sec
 		return GibibytePerSecond
 	case "Gibits": // gibibits/sec
 		return GibibitPerSecond
-	case "GBs": // gigabytes/sec
+	case "GBs", "GBy/s": // gigabytes/sec
 		return GigabytePerSecond
-	case "Gbits": // gigabits/sec
+	case "Gbits", "Gbit/s": // gigabits/sec
 		return GigabitPerSecond
 	case "TiBs": // tebibytes/sec
 		return TebibytePerSecond
 	case "Tibits": // tebibits/sec
 		return TebibitPerSecond
-	case "TBs": // terabytes/sec
+	case "TBs", "TBy/s": // terabytes/sec
 		return TerabytePerSecond
-	case "Tbits": // terabits/sec
+	case "Tbits", "Tbit/s": // terabits/sec
 		return TerabitPerSecond
 	case "PiBs": // pebibytes/sec
 		return PebibytePerSecond
 	case "Pibits": // pebibits/sec
 		return PebibitPerSecond
-	case "PBs": // petabytes/sec
+	case "PBs", "PBy/s": // petabytes/sec
 		return PetabytePerSecond
-	case "Pbits": // petabits/sec
+	case "Pbits", "Pbit/s": // petabits/sec
 		return PetabitPerSecond
 	default:
 		return 1

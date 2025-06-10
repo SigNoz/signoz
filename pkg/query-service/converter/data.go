@@ -60,7 +60,7 @@ func (*dataConverter) Name() string {
 
 func FromDataUnit(u Unit) float64 {
 	switch u {
-	case "bytes": // base 2
+	case "bytes", "By": // base 2
 		return Byte
 	case "decbytes": // base 10
 		return Byte
@@ -68,23 +68,23 @@ func FromDataUnit(u Unit) float64 {
 		return Bit
 	case "decbits": // base 10
 		return Bit
-	case "kbytes": // base 2
+	case "kbytes", "kBy": // base 2
 		return Kibibyte
 	case "decKbytes", "deckbytes": // base 10
 		return Kilobyte
-	case "mbytes": // base 2
+	case "mbytes", "MBy": // base 2
 		return Mebibyte
 	case "decMbytes", "decmbytes": // base 10
 		return Megabyte
-	case "gbytes": // base 2
+	case "gbytes", "GBy": // base 2
 		return Gibibyte
 	case "decGbytes", "decgbytes": // base 10
 		return Gigabyte
-	case "tbytes": // base 2
+	case "tbytes", "TBy": // base 2
 		return Tebibyte
 	case "decTbytes", "dectbytes": // base 10
 		return Terabyte
-	case "pbytes": // base 2
+	case "pbytes", "PBy": // base 2
 		return Pebibyte
 	case "decPbytes", "decpbytes": // base 10
 		return Petabyte
