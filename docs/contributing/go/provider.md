@@ -11,7 +11,7 @@ To create a new provider, create a directory in the `pkg/` directory named after
 - **Interface** (`pkg/<name>/<name>.go`): Defines the provider's interface. Other packages should import this interface to use the provider.
 - **Config** (`pkg/<name>/config.go`): Contains provider configuration, implementing the `factory.Config` interface from [factory/config.go](/pkg/factory/config.go).
 - **Implementation** (`pkg/<name>/<implname><name>/provider.go`): Contains the provider implementation, including a `NewProvider` function that returns a `factory.Provider` interface from [factory/provider.go](/pkg/factory/provider.go).
-- **Test/Mock** (`pkg/<name>/<name>test.go`): Provides mocks for the provider, typically used by dependent packages for unit testing.
+- **Mock** (`pkg/<name>/<name>test.go`): Provides mocks for the provider, typically used by dependent packages for unit testing.
 
 For example, the [prometheus](/pkg/prometheus) provider delivers a prometheus engine to the application:
 
@@ -53,7 +53,7 @@ Add available provider implementations in `pkg/signoz/provider.go`:
 ```go
 func NewMyProviderFactories() factory.NamedMap[factory.ProviderFactory[myprovider.MyProvider, myprovider.Config]] {
 	return factory.MustNewNamedMap(
-		myproviderone.NewFactory(),
+        myproviderone.NewFactory(),
         myprovidertwo.NewFactory(),
 	)
 }
