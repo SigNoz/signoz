@@ -2,6 +2,7 @@ package querier
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -31,8 +32,13 @@ func newPromqlQuery(
 }
 
 func (q *promqlQuery) Fingerprint() string {
-	// TODO: Implement this
-	return ""
+	parts := []string{
+		"promql",
+		q.query.Query,
+		q.query.Step.Duration.String(),
+	}
+
+	return strings.Join(parts, "&")
 }
 
 func (q *promqlQuery) Window() (uint64, uint64) {
@@ -113,13 +119,11 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 
 	return &qbv5.Result{
 		Type: q.requestType,
-		Value: []*qbv5.TimeSeriesData{
-			{
-				QueryName: q.query.Name,
-				Aggregations: []*qbv5.AggregationBucket{
-					{
-						Series: series,
-					},
+		Value: &qbv5.TimeSeriesData{
+			QueryName: q.query.Name,
+			Aggregations: []*qbv5.AggregationBucket{
+				{
+					Series: series,
 				},
 			},
 		},
