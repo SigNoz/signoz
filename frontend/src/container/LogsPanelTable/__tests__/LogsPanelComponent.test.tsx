@@ -5,6 +5,7 @@ import { logsPaginationQueryRangeSuccessResponse } from 'mocks-server/__mockdata
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { I18nextProvider } from 'react-i18next';
 import i18n from 'ReactI18';
 import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
@@ -108,11 +109,13 @@ describe('LogsPanelComponent', () => {
 		render(
 			<I18nextProvider i18n={i18n}>
 				<DashboardProvider>
-					<NewWidget
-						selectedGraph={PANEL_TYPES.LIST}
-						fillSpans={undefined}
-						yAxisUnit={undefined}
-					/>
+					<PreferenceContextProvider>
+						<NewWidget
+							selectedGraph={PANEL_TYPES.LIST}
+							fillSpans={undefined}
+							yAxisUnit={undefined}
+						/>
+					</PreferenceContextProvider>
 				</DashboardProvider>
 			</I18nextProvider>,
 		);
