@@ -37,7 +37,7 @@ var (
 	// when the query requests for almost 1 day, but not exactly 1 day, we need to add an offset to the end time
 	// to make sure that we are using the correct table
 	// this is because the start gets adjusted to the nearest step interval and uses the 5m table for 4m step interval
-	// leading to time series that doesn't best repsent the rate of change
+	// leading to time series that doesn't best represent the rate of change
 	offsetBucket = uint64(60 * time.Minute.Milliseconds())
 )
 
