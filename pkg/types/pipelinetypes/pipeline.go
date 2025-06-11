@@ -17,17 +17,27 @@ import (
 type JSONMappingType = string
 
 const (
-	Date     JSONMappingType = "date" // TODO: (Piyush): problems in introducing datetime parser since we also need to accept the timeformat
-	Host     JSONMappingType = "host"
-	Service  JSONMappingType = "service"
-	Severity JSONMappingType = "severity"
-	TraceID  JSONMappingType = "trace_id"
-	SpanID   JSONMappingType = "span_id"
-	Message  JSONMappingType = "message"
+	Date       JSONMappingType = "date" // TODO: (Piyush): problems in introducing datetime parser since we also need to accept the timeformat
+	Host       JSONMappingType = "host"
+	Service    JSONMappingType = "service"
+	Severity   JSONMappingType = "severity"
+	TraceID    JSONMappingType = "trace_id"
+	SpanID     JSONMappingType = "span_id"
+	Message    JSONMappingType = "message"
+	TraceFlags JSONMappingType = "trace_flags"
 )
 
+var DefaultSeverityMapping = map[string][]string{
+	"trace": {"TRACE", "Trace", "trace"},
+	"debug": {"DEBUG", "Debug", "debug"},
+	"info":  {"INFO", "Info", "info"},
+	"warn":  {"WARN", "Warn", "warn"},
+	"error": {"ERROR", "Error", "error"},
+	"fatal": {"FATAL", "Fatal", "fatal"},
+}
+
 var validMappingLevels = []string{"trace", "debug", "info", "warn", "error", "fatal"}
-var validMappingVariableTypes = []string{Host, Service, Severity, TraceID, SpanID, Message}
+var validMappingVariableTypes = []string{Host, Service, Severity, TraceID, SpanID, TraceFlags, Message}
 
 type StoreablePipeline struct {
 	bun.BaseModel `bun:"table:pipelines,alias:p"`

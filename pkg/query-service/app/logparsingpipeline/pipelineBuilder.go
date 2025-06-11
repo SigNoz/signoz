@@ -220,6 +220,7 @@ func getOperators(ops []pipelinetypes.PipelineOperator) ([]pipelinetypes.Pipelin
 	return filteredOp, nil
 }
 
+// processJSONParser converts simple JSON parser operator into multiple operators for JSONMapping of default variables
 func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.PipelineOperator, error) {
 	if parent.Type != "json_parser" {
 		return nil, errors.NewUnexpectedf(CodeInvalidOperatorType, "operator type received %s", parent.Type)
@@ -232,8 +233,8 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		)
 	}
 	parent.If = fmt.Sprintf(
-		`%s && ((type(%s) == "string" && %s matches "^\\s*{.*}\\s*$" ) || type(%s) == "map")`,
-		parseFromNotNilCheck, parent.ParseFrom, parent.ParseFrom, parent.ParseFrom,
+		`%s && ((type(%s) == "string" && isJSON(%s) && type(fromJSON(%s)) == "map" ) || type(%s) == "map")`,
+		parseFromNotNilCheck, parent.ParseFrom, parent.ParseFrom, parent.ParseFrom, parent.ParseFrom,
 	)
 	if parent.EnableFlattening {
 		parent.MaxFlatteningDepth = 3 // TODO: (Piyush) Variablise this constant
@@ -248,7 +249,9 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	children := []pipelinetypes.PipelineOperator{}
 
 	// JSONMapping: host
-	keywords := mapping[pipelinetypes.Host]
+	// cloning since the same function is used when saving pipelines hence reversing the same array inplace
+	// ends up with saving mapping in a reversed order in database
+	keywords := slices.Clone(mapping[pipelinetypes.Host])
 	slices.Reverse(keywords)
 	for _, keyword := range keywords {
 		operator := pipelinetypes.PipelineOperator{
@@ -270,7 +273,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	}
 
 	// JSONMapping: service
-	keywords = mapping[pipelinetypes.Service]
+	keywords = slices.Clone(mapping[pipelinetypes.Service])
 	slices.Reverse(keywords)
 	for _, keyword := range keywords {
 		operator := pipelinetypes.PipelineOperator{
@@ -292,7 +295,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	}
 
 	// JSONMapping: trace_id
-	keywords = mapping[pipelinetypes.TraceID]
+	keywords = slices.Clone(mapping[pipelinetypes.TraceID])
 	slices.Reverse(keywords)
 	for _, keyword := range keywords {
 		operator := pipelinetypes.PipelineOperator{
@@ -310,7 +313,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	}
 
 	// JSONMapping: span_id
-	keywords = mapping[pipelinetypes.SpanID]
+	keywords = slices.Clone(mapping[pipelinetypes.SpanID])
 	slices.Reverse(keywords)
 	for _, keyword := range keywords {
 		operator := pipelinetypes.PipelineOperator{
@@ -327,8 +330,26 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		children = append(children, operator)
 	}
 
+	// JSONMapping: trace_flags
+	keywords = slices.Clone(mapping[pipelinetypes.TraceFlags])
+	slices.Reverse(keywords)
+	for _, keyword := range keywords {
+		operator := pipelinetypes.PipelineOperator{
+			Type:    "trace_parser",
+			ID:      uuid.NewString(),
+			OnError: signozstanzahelper.SendOnErrorQuiet,
+			TraceParser: &pipelinetypes.TraceParser{
+				TraceFlags: &pipelinetypes.ParseFrom{
+					ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
+				},
+			},
+		}
+
+		children = append(children, operator)
+	}
+
 	// JSONMapping: severity
-	keywords = mapping[pipelinetypes.Severity]
+	keywords = slices.Clone(mapping[pipelinetypes.Severity])
 	slices.Reverse(keywords)
 	for _, keyword := range keywords {
 		operator := pipelinetypes.PipelineOperator{
@@ -349,19 +370,12 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 			parseFromNotNilCheck, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom,
 		)
 
-		operator.Mapping = map[string][]string{
-			"trace": {"trace"},
-			"debug": {"debug"},
-			"info":  {"info"},
-			"warn":  {"warn"},
-			"error": {"error"},
-			"fatal": {"fatal"},
-		}
+		operator.Mapping = pipelinetypes.DefaultSeverityMapping
 		children = append(children, operator)
 	}
 
 	// JSONMapping: body
-	keywords = mapping[pipelinetypes.Message]
+	keywords = slices.Clone(mapping[pipelinetypes.Message])
 	slices.Reverse(keywords)
 	for _, keyword := range keywords {
 		operator := pipelinetypes.PipelineOperator{
@@ -381,6 +395,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		children = append(children, operator)
 	}
 
+	// removed mapping reference so it doesn't appear in Collector's config
 	parent.Mapping = nil
 	return append(append([]pipelinetypes.PipelineOperator{}, *parent), children...), nil
 }
