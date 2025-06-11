@@ -2,10 +2,7 @@ package logparsingpipeline
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
-	"runtime/debug"
 	"strings"
 	"testing"
 	"time"
@@ -19,7 +16,6 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 )
 
 var prepareProcessorTestData = []struct {
@@ -844,118 +840,4 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 
 	_, test2Exists := result[0].Attributes_string["test2"]
 	require.False(test2Exists)
-}
-
-var payload = `{
-    "createdBy": "piyush@signoz.io",
-    "updatedBy": "",
-    "createdAt": "2025-06-09T10:08:36.877424Z",
-    "updatedAt": "0001-01-01T00:00:00Z",
-    "id": "01975429-d40d-7678-a62e-fd133925588d",
-    "orderId": 1,
-    "enabled": true,
-    "name": "test pipeline stefanini-innovation",
-    "alias": "testpipelinestefanini-innovation",
-    "description": "",
-    "filter": {
-        "op": "AND",
-        "items": [
-            {
-                "key": {
-                    "key": "body",
-                    "dataType": "string",
-                    "type": "",
-                    "isColumn": true,
-                    "isJSON": false
-                },
-                "value": ".*",
-                "op": "regex"
-            }
-        ]
-    },
-    "config": [
-        {
-            "type": "copy",
-            "id": "e8635bdb-844a-4ce9-aa72-eeaabe46c243",
-            "output": "293f3207-d4cf-46aa-ba2e-4b02c40ff208",
-            "orderId": 1,
-            "enabled": true,
-            "name": "Copy Service",
-            "from": "attributes.service.name",
-            "to": "resource.service.name"
-        },
-        {
-            "type": "json_parser",
-            "id": "293f3207-d4cf-46aa-ba2e-4b02c40ff208",
-            "orderId": 1,
-            "enabled": true,
-            "name": "Parse JSON",
-            "parse_to": "attributes",
-            "parse_from": "body",
-            "enable_flattening": true,
-            "enable_paths": true,
-            "path_prefix": "",
-            "mapping": {
-                "date": [
-                    ""
-                ],
-                "host": [
-                    "host",
-                    "hostname",
-                    "syslog.hostname"
-                ],
-                "service": [
-                    "service",
-                    "syslog.appname",
-                    "dd.service"
-                ],
-                "severity": [
-                    "status",
-                    "severity",
-                    "level",
-                    "syslog.severity"
-                ],
-                "trace_id": [
-                    "trace_id"
-                ],
-                "span_id": [
-                    "span_id"
-                ],
-                "message": [
-                    "message",
-                    "msg",
-                    "log"
-                ]
-            }
-        },
-        {
-            "type": "add",
-            "id": "7c5f7903-11df-4863-8e7e-1ebfc8e2bd94",
-            "orderId": 3,
-            "enabled": true,
-            "name": "Add Value",
-            "field": "attributes.key",
-            "value": "value"
-        }
-    ]
-}`
-
-func TestRandom(t *testing.T) {
-	pipeline := pipelinetypes.GettablePipeline{}
-	err := json.Unmarshal([]byte(payload), &pipeline)
-	if err != nil {
-		panic(err)
-	}
-
-	defer func() {
-		err := recover()
-		if err != nil {
-			fmt.Println(string(debug.Stack()))
-		}
-		panic("")
-	}()
-	signozPipelineProcessors, signozPipelineProcNames, err := PreparePipelineProcessor([]pipelinetypes.GettablePipeline{pipeline})
-	fmt.Println(signozPipelineProcNames)
-	yaml.NewEncoder(os.Stdout).Encode(signozPipelineProcessors)
-	panic(err)
 }
