@@ -146,7 +146,7 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 										label:
 											'No aggregation functions available. Please add aggregation functions first.',
 										type: 'text',
-										apply: '',
+										apply: (): boolean => true,
 									},
 								],
 							};
