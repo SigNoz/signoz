@@ -6,6 +6,7 @@ import {
 	CompletionContext,
 	completionKeymap,
 	CompletionResult,
+	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
 import { copilot } from '@uiw/codemirror-theme-copilot';
@@ -50,6 +51,17 @@ const havingOperators = [
 	},
 ];
 
+// Add common value suggestions
+const commonValues = [
+	{ label: '0', value: '0' },
+	{ label: '1', value: '1' },
+	{ label: '5', value: '5' },
+	{ label: '10', value: '10' },
+	{ label: '50', value: '50' },
+	{ label: '100', value: '100' },
+	{ label: '1000', value: '1000' },
+];
+
 const conjunctions = [
 	{ label: 'AND', value: 'AND' },
 	{ label: 'OR', value: 'OR' },
@@ -58,92 +70,151 @@ const conjunctions = [
 function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 	const { aggregationOptions } = useQueryBuilderV2Context();
 	const [input, setInput] = useState('');
+	const [isFocused, setIsFocused] = useState(false);
 
 	const editorRef = useRef<EditorView | null>(null);
 
 	const [options, setOptions] = useState<{ label: string; value: string }[]>([]);
 
+	// Effect to handle focus state and trigger suggestions
 	useEffect(() => {
-		const options = [];
+		if (isFocused && editorRef.current && options.length > 0) {
+			startCompletion(editorRef.current);
+		}
+	}, [isFocused, options]);
 
+	// Update options when aggregation options change
+	useEffect(() => {
+		const newOptions = [];
 		for (let i = 0; i < aggregationOptions.length; i++) {
 			const opt = aggregationOptions[i];
-
 			for (let j = 0; j < havingOperators.length; j++) {
 				const operator = havingOperators[j];
-
-				options.push({
-					label: `${opt.func}(${opt.arg}) ${operator.label} `,
+				newOptions.push({
+					label: `${opt.func}(${opt.arg}) ${operator.label}`,
 					value: `${opt.func}(${opt.arg}) ${operator.label} `,
+					apply: (
+						view: EditorView,
+						completion: { label: string; value: string },
+						from: number,
+						to: number,
+					): void => {
+						view.dispatch({
+							changes: { from, to, insert: completion.value },
+							selection: { anchor: from + completion.value.length },
+						});
+						// Trigger value suggestions immediately after operator
+						setTimeout(() => {
+							startCompletion(view);
+						}, 0);
+					},
 				});
 			}
 		}
-
-		setOptions(options);
+		setOptions(newOptions);
 	}, [aggregationOptions]);
 
 	// Helper to check if a string is a number
 	const isNumber = (token: string): boolean => /^-?\d+(\.\d+)?$/.test(token);
 
-	const havingAutocomplete = useMemo(() => {
-		const isKeyOperator = (token: string): boolean =>
-			options.some((opt) => token.startsWith(opt.value));
-
-		return autocompletion({
-			override: [
-				(context: CompletionContext): CompletionResult | null => {
-					const text = context.state.sliceDoc(0, context.pos);
-					const trimmedText = text.trim();
-					const tokens = trimmedText.split(/\s+/).filter(Boolean);
-
-					// Suggest key/operator pairs and ( for grouping
-					if (
-						tokens.length === 0 ||
-						conjunctions.some((c) => tokens[tokens.length - 1] === c.value) ||
-						tokens[tokens.length - 1] === '('
-					) {
-						return {
-							from: context.pos,
-							options,
-						};
-					}
-					if (isKeyOperator(tokens[tokens.length - 1])) {
-						return {
-							from: context.pos,
-							options: [{ label: 'Enter a number value', type: 'text', apply: '' }],
-						};
-					}
-					// Suggest ) for grouping after a value and a space, if there are unmatched (
-					if (
-						tokens.length > 0 &&
-						isNumber(tokens[tokens.length - 1]) &&
-						text.endsWith(' ')
-					) {
-						return {
-							from: context.pos,
-							options: conjunctions,
-						};
-					}
-					// Suggest conjunctions after a closing parenthesis and a space
-					if (
-						tokens.length > 0 &&
-						tokens[tokens.length - 1] === ')' &&
-						text.endsWith(' ')
-					) {
-						return {
-							from: context.pos,
-							options: conjunctions,
-						};
-					}
-					return null;
-				},
-			],
-			defaultKeymap: true,
-			closeOnBlur: false,
-			maxRenderedOptions: 50,
-			activateOnTyping: true,
+	// Helper to check if we're after an operator
+	const isAfterOperator = (tokens: string[]): boolean => {
+		if (tokens.length === 0) return false;
+		const lastToken = tokens[tokens.length - 1];
+		// Check if the last token ends with any operator (with or without space)
+		return havingOperators.some((op) => {
+			const opWithSpace = `${op.value} `;
+			return lastToken.endsWith(op.value) || lastToken.endsWith(opWithSpace);
 		});
-	}, [options]);
+	};
+
+	const havingAutocomplete = useMemo(
+		() =>
+			autocompletion({
+				override: [
+					(context: CompletionContext): CompletionResult | null => {
+						const text = context.state.sliceDoc(0, context.pos);
+						const trimmedText = text.trim();
+						const tokens = trimmedText.split(/\s+/).filter(Boolean);
+
+						// Handle empty state when no aggregation options are available
+						if (options.length === 0) {
+							return {
+								from: context.pos,
+								options: [
+									{
+										label:
+											'No aggregation functions available. Please add aggregation functions first.',
+										type: 'text',
+										apply: '',
+									},
+								],
+							};
+						}
+
+						// Suggest key/operator pairs and ( for grouping
+						if (
+							tokens.length === 0 ||
+							conjunctions.some((c) => tokens[tokens.length - 1] === c.value) ||
+							tokens[tokens.length - 1] === '('
+						) {
+							return {
+								from: context.pos,
+								options,
+							};
+						}
+
+						// Show value suggestions after operator
+						if (isAfterOperator(tokens)) {
+							return {
+								from: context.pos,
+								options: [
+									...commonValues,
+									{
+										label: 'Enter a custom number value',
+										type: 'text',
+										apply: (): boolean =>
+											// Don't insert any text, just let the user type
+											true,
+									},
+								],
+							};
+						}
+
+						// Suggest ) for grouping after a value and a space, if there are unmatched (
+						if (
+							tokens.length > 0 &&
+							isNumber(tokens[tokens.length - 1]) &&
+							text.endsWith(' ')
+						) {
+							return {
+								from: context.pos,
+								options: conjunctions,
+							};
+						}
+
+						// Suggest conjunctions after a closing parenthesis and a space
+						if (
+							tokens.length > 0 &&
+							tokens[tokens.length - 1] === ')' &&
+							text.endsWith(' ')
+						) {
+							return {
+								from: context.pos,
+								options: conjunctions,
+							};
+						}
+
+						return null;
+					},
+				],
+				defaultKeymap: true,
+				closeOnBlur: false,
+				maxRenderedOptions: 50,
+				activateOnTyping: true,
+			}),
+		[options],
+	);
 
 	return (
 		<div className="having-filter-container">
@@ -171,7 +242,18 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 						autocompletion: true,
 						completionKeymap: true,
 					}}
-					ref={editorRef}
+					onCreateEditor={(view: EditorView): void => {
+						editorRef.current = view;
+					}}
+					onFocus={(): void => {
+						setIsFocused(true);
+						if (editorRef.current) {
+							startCompletion(editorRef.current);
+						}
+					}}
+					onBlur={(): void => {
+						setIsFocused(false);
+					}}
 				/>
 				<Button
 					className="close-btn periscope-btn ghost"
