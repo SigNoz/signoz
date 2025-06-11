@@ -17,27 +17,29 @@ import (
 type JSONMappingType = string
 
 const (
-	Date       JSONMappingType = "date" // TODO: (Piyush): problems in introducing datetime parser since we also need to accept the timeformat
-	Host       JSONMappingType = "host"
-	Service    JSONMappingType = "service"
-	Severity   JSONMappingType = "severity"
-	TraceID    JSONMappingType = "trace_id"
-	SpanID     JSONMappingType = "span_id"
-	Message    JSONMappingType = "message"
-	TraceFlags JSONMappingType = "trace_flags"
+	Date        JSONMappingType = "date" // TODO: (Piyush): problems in introducing datetime parser since we also need to accept the timeformat
+	Host        JSONMappingType = "host"
+	Service     JSONMappingType = "service"
+	Environment JSONMappingType = "environment"
+	Severity    JSONMappingType = "severity"
+	TraceID     JSONMappingType = "trace_id"
+	SpanID      JSONMappingType = "span_id"
+	TraceFlags  JSONMappingType = "trace_flags"
+	Message     JSONMappingType = "message"
 )
 
 var DefaultSeverityMapping = map[string][]string{
-	"trace": {"TRACE", "Trace", "trace"},
-	"debug": {"DEBUG", "Debug", "debug"},
+	"trace": {"TRACE", "Trace", "trace", "trc", "Trc"},
+	"debug": {"DEBUG", "Debug", "debug", "dbg", "Dbg"},
 	"info":  {"INFO", "Info", "info"},
-	"warn":  {"WARN", "Warn", "warn"},
-	"error": {"ERROR", "Error", "error"},
-	"fatal": {"FATAL", "Fatal", "fatal"},
+	"warn":  {"WARN", "Warn", "warn", "warning", "Warning", "wrn", "Wrn"},
+	"error": {"ERROR", "Error", "error", "err", "Err", "ERR", "fail", "Fail", "FAIL"},
+	"fatal": {"FATAL", "Fatal", "fatal", "critical", "Critical", "CRITICAL", "crit", "Crit", "CRIT",
+		"panic", "Panic", "PANIC"},
 }
 
 var validMappingLevels = []string{"trace", "debug", "info", "warn", "error", "fatal"}
-var validMappingVariableTypes = []string{Host, Service, Severity, TraceID, SpanID, TraceFlags, Message}
+var validMappingVariableTypes = []string{Host, Service, Environment, Severity, TraceID, SpanID, TraceFlags, Message}
 
 type StoreablePipeline struct {
 	bun.BaseModel `bun:"table:pipelines,alias:p"`

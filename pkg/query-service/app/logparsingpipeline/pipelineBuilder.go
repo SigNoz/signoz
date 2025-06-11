@@ -248,59 +248,60 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	mapping := parent.Mapping
 	children := []pipelinetypes.PipelineOperator{}
 
+	// cloning since the same function is used when saving pipelines (POST request) hence reversing
+	// the same array inplace ends up with saving mapping in a reversed order in database
+	cloneAndReverse := func(input []string) []string {
+		cloned := slices.Clone(input)
+		slices.Reverse(cloned)
+
+		return cloned
+	}
+
+	generateID := func() string {
+		return fmt.Sprintf("%s-json-exploded", uuid.NewString()) // json-exploded helps in identifying processors part of JSON Parser
+	}
+
+	// reusable move operator function
+	generateMoveOperators := func(keywords []string, to string) error {
+		for _, keyword := range cloneAndReverse(keywords) {
+			operator := pipelinetypes.PipelineOperator{
+				Type:    "move",
+				ID:      generateID(),
+				OnError: signozstanzahelper.SendOnErrorQuiet,
+				From:    fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
+				To:      to,
+			}
+
+			err := fromNotNilCheck(&operator)
+			if err != nil {
+				return fmt.Errorf(
+					"couldn't generate nil check for From field of %s op %s: %w", operator.Type, operator.Name, err,
+				)
+			}
+
+			children = append(children, operator)
+		}
+
+		return nil
+	}
+
 	// JSONMapping: host
-	// cloning since the same function is used when saving pipelines hence reversing the same array inplace
-	// ends up with saving mapping in a reversed order in database
-	keywords := slices.Clone(mapping[pipelinetypes.Host])
-	slices.Reverse(keywords)
-	for _, keyword := range keywords {
-		operator := pipelinetypes.PipelineOperator{
-			Type:    "move",
-			ID:      uuid.NewString(),
-			OnError: signozstanzahelper.SendOnErrorQuiet,
-			From:    fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
-			To:      `resource["host.name"]`,
-		}
-
-		err := fromNotNilCheck(&operator)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"couldn't generate nil check for From field of %s op %s: %w", operator.Type, operator.Name, err,
-			)
-		}
-
-		children = append(children, operator)
+	err = generateMoveOperators(mapping[pipelinetypes.Host], `resource["host.name"]`)
+	if err != nil {
+		return nil, err
 	}
 
 	// JSONMapping: service
-	keywords = slices.Clone(mapping[pipelinetypes.Service])
-	slices.Reverse(keywords)
-	for _, keyword := range keywords {
-		operator := pipelinetypes.PipelineOperator{
-			Type:    "move",
-			ID:      uuid.NewString(),
-			OnError: signozstanzahelper.SendOnErrorQuiet,
-			From:    fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
-			To:      `resource["service.name"]`,
-		}
-
-		err := fromNotNilCheck(&operator)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"couldn't generate nil check for From field of %s op %s: %w", operator.Type, operator.Name, err,
-			)
-		}
-
-		children = append(children, operator)
+	err = generateMoveOperators(mapping[pipelinetypes.Service], `resource["service.name"]`)
+	if err != nil {
+		return nil, err
 	}
 
 	// JSONMapping: trace_id
-	keywords = slices.Clone(mapping[pipelinetypes.TraceID])
-	slices.Reverse(keywords)
-	for _, keyword := range keywords {
+	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.TraceID]) {
 		operator := pipelinetypes.PipelineOperator{
 			Type:    "trace_parser",
-			ID:      uuid.NewString(),
+			ID:      generateID(),
 			OnError: signozstanzahelper.SendOnErrorQuiet,
 			TraceParser: &pipelinetypes.TraceParser{
 				TraceId: &pipelinetypes.ParseFrom{
@@ -313,12 +314,10 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	}
 
 	// JSONMapping: span_id
-	keywords = slices.Clone(mapping[pipelinetypes.SpanID])
-	slices.Reverse(keywords)
-	for _, keyword := range keywords {
+	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.SpanID]) {
 		operator := pipelinetypes.PipelineOperator{
 			Type:    "trace_parser",
-			ID:      uuid.NewString(),
+			ID:      generateID(),
 			OnError: signozstanzahelper.SendOnErrorQuiet,
 			TraceParser: &pipelinetypes.TraceParser{
 				SpanId: &pipelinetypes.ParseFrom{
@@ -331,12 +330,10 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	}
 
 	// JSONMapping: trace_flags
-	keywords = slices.Clone(mapping[pipelinetypes.TraceFlags])
-	slices.Reverse(keywords)
-	for _, keyword := range keywords {
+	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.TraceFlags]) {
 		operator := pipelinetypes.PipelineOperator{
 			Type:    "trace_parser",
-			ID:      uuid.NewString(),
+			ID:      generateID(),
 			OnError: signozstanzahelper.SendOnErrorQuiet,
 			TraceParser: &pipelinetypes.TraceParser{
 				TraceFlags: &pipelinetypes.ParseFrom{
@@ -349,12 +346,10 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	}
 
 	// JSONMapping: severity
-	keywords = slices.Clone(mapping[pipelinetypes.Severity])
-	slices.Reverse(keywords)
-	for _, keyword := range keywords {
+	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.Severity]) {
 		operator := pipelinetypes.PipelineOperator{
 			Type:      "severity_parser",
-			ID:        uuid.NewString(),
+			ID:        generateID(),
 			OnError:   signozstanzahelper.SendOnErrorQuiet,
 			ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
 		}
@@ -374,25 +369,16 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		children = append(children, operator)
 	}
 
-	// JSONMapping: body
-	keywords = slices.Clone(mapping[pipelinetypes.Message])
-	slices.Reverse(keywords)
-	for _, keyword := range keywords {
-		operator := pipelinetypes.PipelineOperator{
-			Type:    "move",
-			ID:      uuid.NewString(),
-			OnError: signozstanzahelper.SendOnErrorQuiet,
-			From:    fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
-			To:      `body`,
-		}
+	// JSONMapping: environment
+	err = generateMoveOperators(mapping[pipelinetypes.Environment], `resource["deployment.environment.name"]`)
+	if err != nil {
+		return nil, err
+	}
 
-		err := fromNotNilCheck(&operator)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"couldn't generate nil check for From field of %s op %s: %w", operator.Type, operator.Name, err,
-			)
-		}
-		children = append(children, operator)
+	// JSONMapping: body
+	err = generateMoveOperators(mapping[pipelinetypes.Message], `body`)
+	if err != nil {
+		return nil, err
 	}
 
 	// removed mapping reference so it doesn't appear in Collector's config
@@ -400,7 +386,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	return append(append([]pipelinetypes.PipelineOperator{}, *parent), children...), nil
 }
 
-// TODO: (Piyush) remove this garbage
+// TODO: (Piyush) remove this in future
 func cleanTraceParser(operator *pipelinetypes.PipelineOperator) {
 	if operator.TraceId != nil && len(operator.TraceId.ParseFrom) < 1 {
 		operator.TraceId = nil
