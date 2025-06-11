@@ -120,8 +120,8 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 								"expression": "severity_text = 'ERROR'"
 							},
 							"selectFields": [{
-								"key": "body",
-								"type": "log"
+								"name": "body",
+								"fieldContext": "log"
 							}],
 							"limit": 50,
 							"offset": 10
@@ -177,8 +177,8 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}],
 							"stepInterval": 120,
 							"groupBy": [{
-								"key": "method",
-								"type": "tag"
+								"name": "method",
+								"fieldContext": "tag"
 							}]
 						}
 					}]
@@ -436,10 +436,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"name": "B",
 							"type": "builder_formula",
 							"spec": {
-								"name": "rate",
+								"name": "B",
 								"expression": "A * 100"
 							}
 						}
@@ -465,7 +464,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 						{
 							Type: QueryTypeFormula,
 							Spec: QueryBuilderFormula{
-								Name:       "rate",
+								Name:       "B",
 								Expression: "A * 100",
 							},
 						},

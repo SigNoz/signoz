@@ -22,7 +22,7 @@ type filterExpressionVisitor struct {
 	conditionBuilder   qbtypes.ConditionBuilder
 	warnings           []string
 	fieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
-	errors             []error
+	errors             []string
 	builder            *sqlbuilder.SelectBuilder
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
 	jsonBodyPrefix     string
@@ -90,10 +90,12 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 		combinedErrors := errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"found %d syntax errors while parsing the filter expression: %v",
+			"found %d syntax errors while parsing the filter expression",
 			len(parserErrorListener.SyntaxErrors),
-			parserErrorListener.SyntaxErrors,
 		)
+		for _, err := range parserErrorListener.SyntaxErrors {
+			combinedErrors = combinedErrors.WithAdditional(err.Error())
+		}
 		return nil, nil, combinedErrors
 	}
 
@@ -105,10 +107,12 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*sqlbuilder.W
 		combinedErrors := errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"found %d errors while parsing the search expression: %v",
+			"found %d errors while parsing the search expression",
 			len(visitor.errors),
-			visitor.errors,
 		)
+		for _, err := range visitor.errors {
+			combinedErrors = combinedErrors.WithAdditional(err)
+		}
 		return nil, nil, combinedErrors
 	}
 
@@ -238,11 +242,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		}
 
 		if v.fullTextColumn == nil {
-			v.errors = append(v.errors, errors.Newf(
-				errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"full text search is not supported",
-			))
+			v.errors = append(v.errors, "full text search is not supported")
 			return ""
 		}
 		child := ctx.GetChild(0)
@@ -251,7 +251,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			keyText := keyCtx.GetText()
 			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, keyText, v.builder)
 			if err != nil {
-				v.errors = append(v.errors, errors.WrapInternalf(err, errors.CodeInternal, "failed to build full text search condition"))
+				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
 			}
 			return cond
@@ -266,12 +266,12 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			} else if valCtx.KEY() != nil {
 				text = valCtx.KEY().GetText()
 			} else {
-				v.errors = append(v.errors, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported value type: %s", valCtx.GetText()))
+				v.errors = append(v.errors, fmt.Sprintf("unsupported value type: %s", valCtx.GetText()))
 				return ""
 			}
 			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, text, v.builder)
 			if err != nil {
-				v.errors = append(v.errors, errors.WrapInternalf(err, errors.CodeInternal, "failed to build full text search condition"))
+				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
 			}
 			return cond
@@ -419,7 +419,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		for _, key := range keys {
 			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, value, v.builder)
 			if err != nil {
-				v.errors = append(v.errors, errors.WrapInternalf(err, errors.CodeInternal, "failed to build condition"))
+				v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
 				return ""
 			}
 			conds = append(conds, condition)
@@ -471,16 +471,12 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 	}
 
 	if v.fullTextColumn == nil {
-		v.errors = append(v.errors, errors.Newf(
-			errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"full text search is not supported",
-		))
+		v.errors = append(v.errors, "full text search is not supported")
 		return ""
 	}
 	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, text, v.builder)
 	if err != nil {
-		v.errors = append(v.errors, errors.WrapInternalf(err, errors.CodeInternal, "failed to build full text search condition"))
+		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ""
 	}
 	return cond
@@ -498,34 +494,19 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		functionName = "hasAll"
 	} else {
 		// Default fallback
-		v.errors = append(v.errors, errors.Newf(
-			errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"unknown function `%s`",
-			ctx.GetText(),
-		))
+		v.errors = append(v.errors, fmt.Sprintf("unknown function `%s`", ctx.GetText()))
 		return ""
 	}
 	params := v.Visit(ctx.FunctionParamList()).([]any)
 
 	if len(params) < 2 {
-		v.errors = append(v.errors, errors.Newf(
-			errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"function `%s` expects key and value parameters",
-			functionName,
-		))
+		v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key and value parameters", functionName))
 		return ""
 	}
 
 	keys, ok := params[0].([]*telemetrytypes.TelemetryFieldKey)
 	if !ok {
-		v.errors = append(v.errors, errors.Newf(
-			errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"function `%s` expects key parameter to be a field key",
-			functionName,
-		))
+		v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key parameter to be a field key", functionName))
 		return ""
 	}
 	value := params[1:]
@@ -536,12 +517,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		if strings.HasPrefix(key.Name, v.jsonBodyPrefix) {
 			fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
 		} else {
-			v.errors = append(v.errors, errors.Newf(
-				errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"function `%s` supports only body JSON search",
-				functionName,
-			))
+			v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search", functionName))
 			return ""
 		}
 
@@ -603,12 +579,7 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 	} else if ctx.NUMBER() != nil {
 		number, err := strconv.ParseFloat(ctx.NUMBER().GetText(), 64)
 		if err != nil {
-			v.errors = append(v.errors, errors.Newf(
-				errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"failed to parse number %s",
-				ctx.NUMBER().GetText(),
-			))
+			v.errors = append(v.errors, fmt.Sprintf("failed to parse number %s", ctx.NUMBER().GetText()))
 			return ""
 		}
 		return number
@@ -648,19 +619,11 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 
 	if len(fieldKeysForName) == 0 {
 		if strings.HasPrefix(fieldKey.Name, v.jsonBodyPrefix) && v.jsonBodyPrefix != "" && keyName == "" {
-			v.errors = append(v.errors, errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"missing key for body json search - expected key of the form `body.key` (ex: `body.status`)",
-			))
+			v.errors = append(v.errors, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
 		} else {
 			// TODO(srikanthccv): do we want to return an error here?
 			// should we infer the type and auto-magically build a key for expression?
-			v.errors = append(v.errors, errors.Newf(
-				errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"key `%s` not found",
-				fieldKey.Name,
-			))
+			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found", fieldKey.Name))
 		}
 	}
 

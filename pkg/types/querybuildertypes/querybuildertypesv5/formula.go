@@ -24,6 +24,17 @@ type QueryBuilderFormula struct {
 	Functions []Function `json:"functions,omitempty"`
 }
 
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+func (f *QueryBuilderFormula) UnmarshalJSON(data []byte) error {
+	type Alias QueryBuilderFormula
+	var temp Alias
+	if err := UnmarshalJSONWithContext(data, &temp, "formula spec"); err != nil {
+		return err
+	}
+	*f = QueryBuilderFormula(temp)
+	return nil
+}
+
 // small container to store the query name and index or alias reference
 // for a variable in the formula expression
 // read below for more details on aggregation references
