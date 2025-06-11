@@ -6,8 +6,10 @@ import {
 	CustomTimeType,
 	Time as TimeV2,
 } from 'container/TopNav/DateTimeSelectionV2/config';
+import { normalizeSteps } from 'hooks/TracesFunnels/useFunnelConfiguration';
 import { useValidateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import { isEqual } from 'lodash-es';
 import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
 import {
 	createContext,
@@ -39,6 +41,9 @@ interface FunnelContextType {
 	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
 	handleStepRemoval: (index: number) => void;
 	handleRunFunnel: () => void;
+	handleSaveFunnel: () => void;
+	triggerSave: boolean;
+	hasUnsavedChanges: boolean;
 	validationResponse:
 		| SuccessResponse<ValidateFunnelResponse>
 		| ErrorResponse
@@ -82,6 +87,15 @@ export function FunnelProvider({
 	const funnel = data?.payload;
 	const initialSteps = funnel?.steps?.length ? funnel.steps : initialStepsData;
 	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
+	const [triggerSave, setTriggerSave] = useState<boolean>(false);
+
+	// Check if there are unsaved changes by comparing with initial steps from API
+	const hasUnsavedChanges = useMemo(() => {
+		const normalizedCurrentSteps = normalizeSteps(steps);
+		const normalizedInitialSteps = normalizeSteps(initialSteps);
+		return !isEqual(normalizedCurrentSteps, normalizedInitialSteps);
+	}, [steps, initialSteps]);
+
 	const { hasIncompleteStepFields, hasAllEmptyStepFields } = useMemo(
 		() => ({
 			hasAllEmptyStepFields: steps.every(
@@ -200,6 +214,12 @@ export function FunnelProvider({
 		]);
 	}, [funnelId, queryClient, selectedTime, validTracesCount]);
 
+	const handleSaveFunnel = useCallback(() => {
+		setTriggerSave(true);
+		// Reset the trigger after a brief moment to allow useFunnelConfiguration to pick it up
+		setTimeout(() => setTriggerSave(false), 100);
+	}, []);
+
 	const value = useMemo<FunnelContextType>(
 		() => ({
 			funnelId,
@@ -214,12 +234,15 @@ export function FunnelProvider({
 			handleAddStep: addNewStep,
 			handleStepRemoval,
 			handleRunFunnel,
+			handleSaveFunnel,
+			triggerSave,
 			validationResponse,
 			isValidateStepsLoading: isValidationLoading || isValidationFetching,
 			hasIncompleteStepFields,
 			hasAllEmptyStepFields,
 			handleReplaceStep,
 			handleRestoreSteps,
+			hasUnsavedChanges,
 		}),
 		[
 			funnelId,
@@ -233,6 +256,8 @@ export function FunnelProvider({
 			addNewStep,
 			handleStepRemoval,
 			handleRunFunnel,
+			handleSaveFunnel,
+			triggerSave,
 			validationResponse,
 			isValidationLoading,
 			isValidationFetching,
@@ -240,6 +265,7 @@ export function FunnelProvider({
 			hasAllEmptyStepFields,
 			handleReplaceStep,
 			handleRestoreSteps,
+			hasUnsavedChanges,
 		],
 	);
 

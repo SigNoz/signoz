@@ -15,10 +15,11 @@ interface UseFunnelConfiguration {
 	isPopoverOpen: boolean;
 	setIsPopoverOpen: (isPopoverOpen: boolean) => void;
 	steps: FunnelStepData[];
+	isSaving: boolean;
 }
 
 // Add this helper function
-const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
+export const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
 	if (steps.some((step) => !step.filters)) return steps;
 
 	return steps.map((step) => ({
@@ -76,11 +77,11 @@ export default function useFunnelConfiguration({
 	const hasRestoredFromLocalStorage = useRef(false);
 
 	// localStorage hook for incomplete steps
-	const localStorageKey = `${LOCALSTORAGE.FUNNEL_INCOMPLETE_STEPS}_${funnel.funnel_id}`;
+	const localStorageKey = `${LOCALSTORAGE.FUNNEL_STEPS}_${funnel.funnel_id}`;
 	const [
-		savedIncompleteSteps,
-		setSavedIncompleteSteps,
-		clearSavedIncompleteSteps,
+		localStorageSavedSteps,
+		setLocalStorageSavedSteps,
+		clearLocalStorageSavedSteps,
 	] = useLocalStorage<FunnelStepData[] | null>(localStorageKey, null);
 
 	const hasStepsChanged = useCallback(() => {
@@ -94,8 +95,8 @@ export default function useFunnelConfiguration({
 	// Handle localStorage for incomplete steps
 	useEffect(() => {
 		// Restore from localStorage on first run if steps are incomplete
-		if (!hasRestoredFromLocalStorage.current && hasIncompleteStepFields) {
-			const savedSteps = savedIncompleteSteps;
+		if (!hasRestoredFromLocalStorage.current) {
+			const savedSteps = localStorageSavedSteps;
 			if (savedSteps) {
 				handleRestoreSteps(savedSteps);
 				hasRestoredFromLocalStorage.current = true;
@@ -104,24 +105,17 @@ export default function useFunnelConfiguration({
 		}
 
 		// Save incomplete steps to localStorage only if last saved steps don't have complete service/span names
-		if (!disableAutoSave && hasIncompleteStepFields && hasStepsChanged()) {
-			const lastSavedStepsAreComplete = lastSavedStepsStateRef.current.every(
-				(step) => step.service_name !== '' && step.span_name !== '',
-			);
-
-			if (!lastSavedStepsAreComplete) {
-				setSavedIncompleteSteps(debouncedSteps);
-			}
+		if (hasStepsChanged()) {
+			setLocalStorageSavedSteps(debouncedSteps);
 		}
 	}, [
 		debouncedSteps,
-		hasIncompleteStepFields,
 		disableAutoSave,
 		funnel.funnel_id,
 		hasStepsChanged,
 		handleRestoreSteps,
-		setSavedIncompleteSteps,
-		savedIncompleteSteps,
+		localStorageSavedSteps,
+		setLocalStorageSavedSteps,
 	]);
 
 	const hasFunnelStepDefinitionsChanged = useCallback(
@@ -188,7 +182,7 @@ export default function useFunnelConfiguration({
 					if (!updatedFunnelSteps) return;
 
 					// Clear localStorage since steps are now complete and saved successfully
-					clearSavedIncompleteSteps();
+					clearLocalStorageSavedSteps();
 
 					queryClient.setQueryData(
 						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.funnel_id],
@@ -269,13 +263,14 @@ export default function useFunnelConfiguration({
 		triggerAutoSave,
 		showNotifications,
 		disableAutoSave,
-		savedIncompleteSteps,
-		clearSavedIncompleteSteps,
+		localStorageSavedSteps,
+		clearLocalStorageSavedSteps,
 	]);
 
 	return {
 		isPopoverOpen,
 		setIsPopoverOpen,
 		steps,
+		isSaving: updateStepsMutation.isLoading,
 	};
 }

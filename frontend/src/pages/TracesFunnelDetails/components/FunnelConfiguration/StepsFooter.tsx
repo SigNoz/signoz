@@ -2,12 +2,13 @@ import './StepsFooter.styles.scss';
 
 import { Button, Skeleton } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { Cone, Play } from 'lucide-react';
+import { Cone, Save } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useIsMutating } from 'react-query';
 
 interface StepsFooterProps {
 	stepsCount: number;
+	isSaving: boolean;
 }
 
 function ValidTracesCount(): JSX.Element {
@@ -53,8 +54,12 @@ function ValidTracesCount(): JSX.Element {
 	return <span className="steps-footer__valid-traces">Valid traces found</span>;
 }
 
-function StepsFooter({ stepsCount }: StepsFooterProps): JSX.Element {
-	const { validTracesCount, handleRunFunnel } = useFunnelContext();
+function StepsFooter({ stepsCount, isSaving }: StepsFooterProps): JSX.Element {
+	const {
+		hasIncompleteStepFields,
+		handleSaveFunnel,
+		hasUnsavedChanges,
+	} = useFunnelContext();
 
 	return (
 		<div className="steps-footer">
@@ -66,13 +71,14 @@ function StepsFooter({ stepsCount }: StepsFooterProps): JSX.Element {
 			</div>
 			<div className="steps-footer__right">
 				<Button
-					disabled={validTracesCount === 0}
-					onClick={handleRunFunnel}
+					disabled={hasIncompleteStepFields || !hasUnsavedChanges}
+					onClick={handleSaveFunnel}
 					type="primary"
 					className="steps-footer__button steps-footer__button--run"
-					icon={<Play size={16} />}
+					icon={<Save size={16} />}
+					loading={isSaving}
 				>
-					Run funnel
+					Save funnel
 				</Button>
 			</div>
 		</div>
