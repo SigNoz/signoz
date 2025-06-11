@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -32,10 +33,11 @@ type Module struct {
 	settings  factory.ScopedProviderSettings
 	orgSetter organization.Setter
 	analytics analytics.Analytics
+	licensing licensing.Licensing
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) user.Module {
+func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics, licensing licensing.Licensing) user.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -44,6 +46,7 @@ func NewModule(store types.UserStore, jwt *authtypes.JWT, emailing emailing.Emai
 		settings:  settings,
 		orgSetter: orgSetter,
 		analytics: analytics,
+		licensing: licensing,
 	}
 }
 
@@ -164,6 +167,14 @@ func (m *Module) CreateUserWithPassword(ctx context.Context, user *types.User, p
 			},
 		},
 	)
+
+	license, err := m.licensing.GetActive(ctx, valuer.MustNewUUID(user.OrgID))
+	if err == nil {
+		m.analytics.Send(ctx, analyticstypes.Group{
+			UserId:  user.ID.String(),
+			GroupId: license.ID.StringValue(),
+		})
+	}
 
 	return user, nil
 }
