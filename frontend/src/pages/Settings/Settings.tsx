@@ -25,11 +25,7 @@ function SettingsPage(): JSX.Element {
 	const { pathname, search } = useLocation();
 
 	const { user, featureFlags, trialInfo } = useAppContext();
-	const {
-		isCloudUser,
-		isEnterpriseSelfHostedUser,
-		isCommunityEnterpriseUser,
-	} = useGetTenantLicense();
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [settingsMenuItems, setSettingsMenuItems] = useState<SidebarItem[]>(
 		defaultSettingsMenuItems,
@@ -129,13 +125,7 @@ function SettingsPage(): JSX.Element {
 
 			return updatedItems;
 		});
-	}, [
-		isAdmin,
-		isEditor,
-		isCloudUser,
-		isEnterpriseSelfHostedUser,
-		isCommunityEnterpriseUser,
-	]);
+	}, [isAdmin, isEditor, isCloudUser, isEnterpriseSelfHostedUser]);
 
 	const routes = useMemo(
 		() =>
