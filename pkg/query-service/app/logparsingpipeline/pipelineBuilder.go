@@ -257,8 +257,8 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		return cloned
 	}
 
-	generateID := func() string {
-		return fmt.Sprintf("%s-json-exploded", uuid.NewString()) // json-exploded helps in identifying processors part of JSON Parser
+	generateCustomID := func() string {
+		return fmt.Sprintf("%s-json-parser", uuid.NewString()) // json-parser helps in identifying processors part of JSON Parser
 	}
 
 	// reusable move operator function
@@ -266,7 +266,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		for _, keyword := range cloneAndReverse(keywords) {
 			operator := pipelinetypes.PipelineOperator{
 				Type:    "move",
-				ID:      generateID(),
+				ID:      generateCustomID(),
 				OnError: signozstanzahelper.SendOnErrorQuiet,
 				From:    fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
 				To:      to,
@@ -301,7 +301,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.TraceID]) {
 		operator := pipelinetypes.PipelineOperator{
 			Type:    "trace_parser",
-			ID:      generateID(),
+			ID:      generateCustomID(),
 			OnError: signozstanzahelper.SendOnErrorQuiet,
 			TraceParser: &pipelinetypes.TraceParser{
 				TraceId: &pipelinetypes.ParseFrom{
@@ -317,7 +317,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.SpanID]) {
 		operator := pipelinetypes.PipelineOperator{
 			Type:    "trace_parser",
-			ID:      generateID(),
+			ID:      generateCustomID(),
 			OnError: signozstanzahelper.SendOnErrorQuiet,
 			TraceParser: &pipelinetypes.TraceParser{
 				SpanId: &pipelinetypes.ParseFrom{
@@ -333,7 +333,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.TraceFlags]) {
 		operator := pipelinetypes.PipelineOperator{
 			Type:    "trace_parser",
-			ID:      generateID(),
+			ID:      generateCustomID(),
 			OnError: signozstanzahelper.SendOnErrorQuiet,
 			TraceParser: &pipelinetypes.TraceParser{
 				TraceFlags: &pipelinetypes.ParseFrom{
@@ -349,7 +349,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.Severity]) {
 		operator := pipelinetypes.PipelineOperator{
 			Type:      "severity_parser",
-			ID:        generateID(),
+			ID:        generateCustomID(),
 			OnError:   signozstanzahelper.SendOnErrorQuiet,
 			ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
 		}

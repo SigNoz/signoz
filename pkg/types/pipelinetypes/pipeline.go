@@ -17,7 +17,6 @@ import (
 type JSONMappingType = string
 
 const (
-	Date        JSONMappingType = "date" // TODO: (Piyush): problems in introducing datetime parser since we also need to accept the timeformat
 	Host        JSONMappingType = "host"
 	Service     JSONMappingType = "service"
 	Environment JSONMappingType = "environment"
@@ -123,8 +122,6 @@ type PipelineOperator struct {
 	MaxFlatteningDepth int    `json:"-" yaml:"max_flattening_depth,omitempty"` // MaxFlatteningDepth is not configurable from User's side
 	EnablePaths        bool   `json:"enable_paths,omitempty" yaml:"enable_paths,omitempty"`
 	PathPrefix         string `json:"path_prefix,omitempty" yaml:"path_prefix,omitempty"`
-	// TODO: (Piyush) Discuss about this with Nitya for performance issues
-	MaxPermissibleKeysAfterFlattening int `json:"-" yaml:"max_permissible_keys,omitempty"` // MaxPermissibleKeysAfterFlattening is not configurable from User's side
 
 	// Used in Severity Parsing and JSON Flattening mapping
 	Mapping map[string][]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
