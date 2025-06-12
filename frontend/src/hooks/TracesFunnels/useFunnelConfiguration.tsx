@@ -75,7 +75,7 @@ export default function useFunnelConfiguration({
 	const lastSavedStepsStateRef = useRef<FunnelStepData[]>(steps);
 	const hasRestoredFromLocalStorage = useRef(false);
 
-	// localStorage hook for incomplete steps
+	// localStorage hook for funnel steps
 	const localStorageKey = `${LOCALSTORAGE.FUNNEL_STEPS}_${funnel.funnel_id}`;
 	const [
 		localStorageSavedSteps,
@@ -91,9 +91,9 @@ export default function useFunnelConfiguration({
 		return !isEqual(normalizedDebouncedSteps, normalizedLastSavedSteps);
 	}, [debouncedSteps]);
 
-	// Handle localStorage for incomplete steps
+	// Handle localStorage for funnel steps
 	useEffect(() => {
-		// Restore from localStorage on first run if steps are incomplete
+		// Restore from localStorage on first run if
 		if (!hasRestoredFromLocalStorage.current) {
 			const savedSteps = localStorageSavedSteps;
 			if (savedSteps) {
@@ -103,7 +103,7 @@ export default function useFunnelConfiguration({
 			}
 		}
 
-		// Save incomplete steps to localStorage only if last saved steps don't have complete service/span names
+		// Save steps to localStorage
 		if (hasStepsChanged()) {
 			setLocalStorageSavedSteps(debouncedSteps);
 		}
@@ -160,7 +160,7 @@ export default function useFunnelConfiguration({
 			// Manual save mode: only save when explicitly triggered
 			shouldSave = triggerAutoSave;
 		} else {
-			// Auto-save mode: save when steps have changed and no incomplete fields
+			// Auto-save mode: save when steps have changed
 			shouldSave = hasStepsChanged() && !hasIncompleteStepFields;
 		}
 
@@ -171,7 +171,7 @@ export default function useFunnelConfiguration({
 
 					if (!updatedFunnelSteps) return;
 
-					// Clear localStorage since steps are now complete and saved successfully
+					// Clear localStorage since steps are saved successfully
 					clearLocalStorageSavedSteps();
 
 					queryClient.setQueryData(
