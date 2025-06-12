@@ -7,8 +7,6 @@ import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQ
 import { memo, useCallback, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { Container } from './styles';
-
 function QuerySection(): JSX.Element {
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
@@ -40,19 +38,17 @@ function QuerySection(): JSX.Element {
 	}, [panelTypes, renderOrderBy]);
 
 	return (
-		<Container>
-			<QueryBuilderV2
-				isListViewPanel={panelTypes === PANEL_TYPES.LIST}
-				config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
-				queryComponents={queryComponents}
-				panelType={panelTypes}
-				filterConfigs={filterConfigs}
-				showOnlyWhereClause={
-					panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE
-				}
-				version="v3" // setting this to v3 as we this is rendered in logs explorer
-			/>
-		</Container>
+		<QueryBuilderV2
+			isListViewPanel={panelTypes === PANEL_TYPES.LIST}
+			config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
+			queryComponents={queryComponents}
+			panelType={panelTypes}
+			filterConfigs={filterConfigs}
+			showOnlyWhereClause={
+				panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE
+			}
+			version="v3" // setting this to v3 as we this is rendered in logs explorer
+		/>
 	);
 }
 

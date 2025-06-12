@@ -13,6 +13,7 @@ import {
 	CompletionContext,
 	completionKeymap,
 	CompletionResult,
+	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
 import { RangeSetBuilder } from '@codemirror/state';
@@ -28,7 +29,7 @@ import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
@@ -122,12 +123,29 @@ function QueryAggregationSelect(): JSX.Element {
 		{ func: string; arg: string }[]
 	>([]);
 	const editorRef = useRef<EditorView | null>(null);
+	const [isFocused, setIsFocused] = useState(false);
+
+	// Helper function to safely start completion
+	const safeStartCompletion = useCallback((): void => {
+		requestAnimationFrame(() => {
+			if (editorRef.current) {
+				startCompletion(editorRef.current);
+			}
+		});
+	}, []);
 
 	// Update cursor position on every editor update
 	const handleUpdate = (update: { view: EditorView }): void => {
 		const pos = update.view.state.selection.main.from;
 		setCursorPos(pos);
 	};
+
+	// Effect to handle focus state and trigger suggestions
+	useEffect(() => {
+		if (isFocused) {
+			safeStartCompletion();
+		}
+	}, [isFocused, safeStartCompletion]);
 
 	// Extract all valid function-argument pairs from the input
 	useEffect(() => {
@@ -245,6 +263,11 @@ function QueryAggregationSelect(): JSX.Element {
 					changes: { from, to, insert: insertText },
 					selection: { anchor: cursorPos },
 				});
+
+				// Trigger suggestions after a small delay
+				setTimeout(() => {
+					safeStartCompletion();
+				}, 50);
 			},
 		}),
 	);
@@ -263,14 +286,20 @@ function QueryAggregationSelect(): JSX.Element {
 						from: number,
 						to: number,
 					): void => {
+						// Insert the selected key followed by ') '
 						view.dispatch({
-							changes: { from, to, insert: completion.label },
-							selection: { anchor: from + completion.label.length },
+							changes: { from, to, insert: `${completion.label}) ` },
+							selection: { anchor: from + completion.label.length + 2 }, // Position cursor after ') '
 						});
+
+						// Trigger next suggestions after a small delay
+						setTimeout(() => {
+							safeStartCompletion();
+						}, 50);
 					},
 				}),
 			) || [],
-		[aggregateAttributeData],
+		[aggregateAttributeData, safeStartCompletion],
 	);
 
 	const aggregatorAutocomplete = useMemo(
@@ -349,21 +378,27 @@ function QueryAggregationSelect(): JSX.Element {
 							};
 						}
 
-						// Before returning operatorCompletions, filter out 'count' if already present in the input (case-insensitive, direct text check)
+						// Show operator suggestions if no function context or not accepting args
 						if (!funcName || !operatorArgMeta[funcName]?.acceptsArgs) {
 							// Check if 'count(' is present in the current input (case-insensitive)
 							const hasCount = text.toLowerCase().includes('count(');
 							const availableOperators = hasCount
 								? operatorCompletions.filter((op) => op.label.toLowerCase() !== 'count')
 								: operatorCompletions;
+
+							// Get the word before cursor if any
 							const word = context.matchBefore(/[\w\d_]+/);
-							if (!word && !context.explicit) {
-								return null;
+
+							// Show suggestions if:
+							// 1. There's a word match
+							// 2. The input is empty (cursor at start)
+							// 3. The user explicitly triggered completion
+							if (word || cursorPos === 0 || context.explicit) {
+								return {
+									from: word ? word.from : cursorPos,
+									options: availableOperators,
+								};
 							}
-							return {
-								from: word ? word.from : context.pos,
-								options: availableOperators,
-							};
 						}
 
 						return null;
@@ -383,7 +418,6 @@ function QueryAggregationSelect(): JSX.Element {
 				value={input}
 				onChange={setInput}
 				className="query-aggregation-select-editor"
-				width="100%"
 				theme={copilot}
 				extensions={[
 					chipPlugin,
@@ -404,7 +438,16 @@ function QueryAggregationSelect(): JSX.Element {
 					completionKeymap: true,
 				}}
 				onUpdate={handleUpdate}
-				ref={editorRef}
+				onCreateEditor={(view: EditorView): void => {
+					editorRef.current = view;
+				}}
+				onFocus={(): void => {
+					setIsFocused(true);
+					safeStartCompletion();
+				}}
+				onBlur={(): void => {
+					setIsFocused(false);
+				}}
 			/>
 		</div>
 	);

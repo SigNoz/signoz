@@ -17,6 +17,7 @@
 	.qb-content-container {
 		display: flex;
 		flex-direction: column;
+		width: calc(100% - 44px);
 
 		flex: 1;
 
