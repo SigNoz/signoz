@@ -121,10 +121,10 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 	const isAfterOperator = (tokens: string[]): boolean => {
 		if (tokens.length === 0) return false;
 		const lastToken = tokens[tokens.length - 1];
-		// Check if the last token ends with any operator (with or without space)
+		// Check if the last token is exactly an operator or ends with an operator and space
 		return havingOperators.some((op) => {
 			const opWithSpace = `${op.value} `;
-			return lastToken.endsWith(op.value) || lastToken.endsWith(opWithSpace);
+			return lastToken === op.value || lastToken.endsWith(opWithSpace);
 		});
 	};
 
@@ -152,6 +152,21 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 							};
 						}
 
+						// Show value suggestions after operator - this should take precedence
+						if (isAfterOperator(tokens)) {
+							return {
+								from: context.pos,
+								options: [
+									...commonValues,
+									{
+										label: 'Enter a custom number value',
+										type: 'text',
+										apply: (): boolean => true,
+									},
+								],
+							};
+						}
+
 						// Suggest key/operator pairs and ( for grouping
 						if (
 							tokens.length === 0 ||
@@ -164,21 +179,18 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 							};
 						}
 
-						// Show value suggestions after operator
-						if (isAfterOperator(tokens)) {
-							return {
-								from: context.pos,
-								options: [
-									...commonValues,
-									{
-										label: 'Enter a custom number value',
-										type: 'text',
-										apply: (): boolean =>
-											// Don't insert any text, just let the user type
-											true,
-									},
-								],
-							};
+						// Show suggestions when typing
+						if (tokens.length > 0) {
+							const lastToken = tokens[tokens.length - 1];
+							const filteredOptions = options.filter((opt) =>
+								opt.label.toLowerCase().includes(lastToken.toLowerCase()),
+							);
+							if (filteredOptions.length > 0) {
+								return {
+									from: context.pos - lastToken.length,
+									options: filteredOptions,
+								};
+							}
 						}
 
 						// Suggest ) for grouping after a value and a space, if there are unmatched (
@@ -205,12 +217,16 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 							};
 						}
 
-						return null;
+						// Show all options if no other condition matches
+						return {
+							from: context.pos,
+							options,
+						};
 					},
 				],
 				defaultKeymap: true,
 				closeOnBlur: false,
-				maxRenderedOptions: 50,
+				maxRenderedOptions: 200,
 				activateOnTyping: true,
 			}),
 		[options],
@@ -218,11 +234,11 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 
 	return (
 		<div className="having-filter-container">
-			<div className="query-aggregation-select-container">
+			<div className="having-filter-select-container">
 				<CodeMirror
 					value={input}
 					onChange={setInput}
-					className="query-aggregation-select-editor"
+					className="having-filter-select-editor"
 					width="100%"
 					theme={copilot}
 					extensions={[
