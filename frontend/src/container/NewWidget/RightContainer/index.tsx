@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './RightContainer.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import type { InputRef } from 'antd';
 import {
 	AutoComplete,
@@ -19,7 +20,14 @@ import GraphTypes, {
 } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { ConciergeBell, LineChart, Plus, Spline } from 'lucide-react';
+import {
+	ConciergeBell,
+	LineChart,
+	PanelRightClose,
+	PanelRightOpen,
+	Plus,
+	Spline,
+} from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
@@ -117,6 +125,7 @@ function RightContainer({
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
 	const [autoCompleteOpen, setAutoCompleteOpen] = useState(false);
+	const [isPanelDetailsOpen, setIsPanelDetailsOpen] = useState(true);
 	const [cursorPos, setCursorPos] = useState(0);
 	const inputRef = useRef<InputRef>(null);
 
@@ -228,281 +237,312 @@ function RightContainer({
 	}, [currentQuery]);
 
 	const softMinHandler = useCallback(
-		(value: number | null) => {
+		(value: number | null): void => {
 			setSoftMin(value);
 		},
 		[setSoftMin],
 	);
 
 	const softMaxHandler = useCallback(
-		(value: number | null) => {
+		(value: number | null): void => {
 			setSoftMax(value);
 		},
 		[setSoftMax],
 	);
 
 	return (
-		<div className="right-container">
+		<div
+			className={`right-container ${
+				isPanelDetailsOpen ? 'expanded' : 'minimized'
+			}`}
+		>
 			<section className="header">
-				<div className="purple-dot" />
-				<Typography.Text className="header-text">Panel details</Typography.Text>
-			</section>
-			<section className="name-description">
-				<Typography.Text className="typography">Name</Typography.Text>
-				<AutoComplete
-					options={dashboardVariables}
-					value={inputValue}
-					onChange={onInputChange}
-					onSelect={onSelect}
-					filterOption={filterOption}
-					style={{ width: '100%' }}
-					getPopupContainer={popupContainer}
-					placeholder="Enter the panel name here..."
-					open={autoCompleteOpen}
-				>
-					<Input
-						rootClassName="name-input"
-						ref={inputRef}
-						onSelect={handleInputCursor}
-						onClick={handleInputCursor}
-						onBlur={(): void => setAutoCompleteOpen(false)}
+				{isPanelDetailsOpen ? (
+					<PanelRightClose
+						onClick={(): void => setIsPanelDetailsOpen(false)}
+						color={Color.BG_ROBIN_400}
+						className="hide-button"
+						size={16}
 					/>
-				</AutoComplete>
-				<Typography.Text className="typography">Description</Typography.Text>
-				<TextArea
-					placeholder="Enter the panel description here..."
-					bordered
-					allowClear
-					value={description}
-					onChange={(event): void =>
-						onChangeHandler(setDescription, event.target.value)
-					}
-					rootClassName="description-input"
-				/>
-			</section>
-			<section className="panel-config">
-				<Typography.Text className="typography">Panel Type</Typography.Text>
-				<Select
-					onChange={setGraphHandler}
-					value={selectedGraph}
-					style={{ width: '100%' }}
-					className="panel-type-select"
-					data-testid="panel-change-select"
-				>
-					{graphTypes.map((item) => (
-						<Option key={item.name} value={item.name}>
-							<div className="select-option">
-								<div className="icon">{item.icon}</div>
-								<Typography.Text className="display">{item.display}</Typography.Text>
-							</div>
-						</Option>
-					))}
-				</Select>
-
-				{allowFillSpans && (
-					<Space className="fill-gaps">
-						<Typography className="fill-gaps-text">Fill gaps</Typography>
-						<Switch
-							checked={isFillSpans}
-							size="small"
-							onChange={(checked): void => setIsFillSpans(checked)}
-						/>
-					</Space>
+				) : (
+					<PanelRightOpen
+						onClick={(): void => setIsPanelDetailsOpen(true)}
+						color={Color.BG_ROBIN_400}
+						className="hide-button"
+						size={16}
+					/>
 				)}
-
-				{allowPanelTimePreference && (
+				{isPanelDetailsOpen && (
 					<>
-						<Typography.Text className="panel-time-text">
-							Panel Time Preference
-						</Typography.Text>
-						<TimePreference
-							{...{
-								selectedTime,
-								setSelectedTime,
-							}}
-						/>
+						<div className="purple-dot" />
+						<Typography.Text className="header-text">Panel details</Typography.Text>
 					</>
 				)}
-
-				{allowPanelColumnPreference && (
-					<ColumnUnitSelector
-						columnUnits={columnUnits}
-						setColumnUnits={setColumnUnits}
-					/>
-				)}
-
-				{allowYAxisUnit && (
-					<YAxisUnitSelector
-						defaultValue={yAxisUnit}
-						onSelect={setYAxisUnit}
-						fieldLabel={
-							selectedGraphType === PanelDisplay.VALUE ||
-							selectedGraphType === PanelDisplay.PIE
-								? 'Unit'
-								: 'Y Axis Unit'
-						}
-					/>
-				)}
-				{allowSoftMinMax && (
-					<section className="soft-min-max">
-						<section className="container">
-							<Typography.Text className="text">Soft Min</Typography.Text>
-							<InputNumber
-								type="number"
-								value={softMin}
-								onChange={softMinHandler}
-								rootClassName="input"
-							/>
-						</section>
-						<section className="container">
-							<Typography.Text className="text">Soft Max</Typography.Text>
-							<InputNumber
-								value={softMax}
-								type="number"
-								rootClassName="input"
-								onChange={softMaxHandler}
-							/>
-						</section>
-					</section>
-				)}
-
-				{allowStackingBarChart && (
-					<section className="stack-chart">
-						<Typography.Text className="label">Stack series</Typography.Text>
-						<Switch
-							checked={stackedBarChart}
-							size="small"
-							onChange={(checked): void => setStackedBarChart(checked)}
-						/>
-					</section>
-				)}
-
-				{allowBucketConfig && (
-					<section className="bucket-config">
-						<Typography.Text className="label">Number of buckets</Typography.Text>
-						<InputNumber
-							value={bucketCount || null}
-							type="number"
-							min={0}
-							rootClassName="bucket-input"
-							placeholder="Default: 30"
-							onChange={(val): void => {
-								setBucketCount(val || 0);
-							}}
-						/>
-						<Typography.Text className="label bucket-size-label">
-							Bucket width
-						</Typography.Text>
-						<InputNumber
-							value={bucketWidth || null}
-							type="number"
-							precision={2}
-							placeholder="Default: Auto"
-							step={0.1}
-							min={0.0}
-							rootClassName="bucket-input"
-							onChange={(val): void => {
-								setBucketWidth(val || 0);
-							}}
-						/>
-						<section className="combine-hist">
-							<Typography.Text className="label">
-								Merge all series into one
-							</Typography.Text>
-							<Switch
-								checked={combineHistogram}
-								size="small"
-								onChange={(checked): void => setCombineHistogram(checked)}
-							/>
-						</section>
-					</section>
-				)}
-
-				{allowLogScale && (
-					<section className="log-scale">
-						<Typography.Text className="typography">Y Axis Scale</Typography.Text>
-						<Select
-							onChange={(value): void => setIsLogScale(value === LogScale.LOGARITHMIC)}
-							value={isLogScale ? LogScale.LOGARITHMIC : LogScale.LINEAR}
-							style={{ width: '100%' }}
-							className="panel-type-select"
-							defaultValue={LogScale.LINEAR}
-						>
-							<Option value={LogScale.LINEAR}>
-								<div className="select-option">
-									<div className="icon">
-										<LineChart size={16} />
-									</div>
-									<Typography.Text className="display">Linear</Typography.Text>
-								</div>
-							</Option>
-							<Option value={LogScale.LOGARITHMIC}>
-								<div className="select-option">
-									<div className="icon">
-										<Spline size={16} />
-									</div>
-									<Typography.Text className="display">Logarithmic</Typography.Text>
-								</div>
-							</Option>
-						</Select>
-					</section>
-				)}
-
-				{allowLegendPosition && (
-					<section className="legend-position">
-						<Typography.Text className="typography">Legend Position</Typography.Text>
-						<Select
-							onChange={(value: LegendPosition): void => setLegendPosition(value)}
-							value={legendPosition}
-							style={{ width: '100%' }}
-							className="panel-type-select"
-							defaultValue={LegendPosition.BOTTOM}
-						>
-							<Option value={LegendPosition.BOTTOM}>
-								<div className="select-option">
-									<Typography.Text className="display">Bottom</Typography.Text>
-								</div>
-							</Option>
-							<Option value={LegendPosition.RIGHT}>
-								<div className="select-option">
-									<Typography.Text className="display">Right</Typography.Text>
-								</div>
-							</Option>
-						</Select>
-					</section>
-				)}
-
-				{allowLegendColors && (
-					<section className="legend-colors">
-						<LegendColors
-							customLegendColors={customLegendColors}
-							setCustomLegendColors={setCustomLegendColors}
-							queryResponse={queryResponse}
-						/>
-					</section>
-				)}
 			</section>
+			{isPanelDetailsOpen && (
+				<>
+					<section className="name-description">
+						<Typography.Text className="typography">Name</Typography.Text>
+						<AutoComplete
+							options={dashboardVariables}
+							value={inputValue}
+							onChange={onInputChange}
+							onSelect={onSelect}
+							filterOption={filterOption}
+							style={{ width: '100%' }}
+							getPopupContainer={popupContainer}
+							placeholder="Enter the panel name here..."
+							open={autoCompleteOpen}
+						>
+							<Input
+								rootClassName="name-input"
+								ref={inputRef}
+								onSelect={handleInputCursor}
+								onClick={handleInputCursor}
+								onBlur={(): void => setAutoCompleteOpen(false)}
+							/>
+						</AutoComplete>
+						<Typography.Text className="typography">Description</Typography.Text>
+						<TextArea
+							placeholder="Enter the panel description here..."
+							bordered
+							allowClear
+							value={description}
+							onChange={(event): void =>
+								onChangeHandler(setDescription, event.target.value)
+							}
+							rootClassName="description-input"
+						/>
+					</section>
+					<section className="panel-config">
+						<Typography.Text className="typography">Panel Type</Typography.Text>
+						<Select
+							onChange={setGraphHandler}
+							value={selectedGraph}
+							style={{ width: '100%' }}
+							className="panel-type-select"
+							data-testid="panel-change-select"
+						>
+							{graphTypes.map((item) => (
+								<Option key={item.name} value={item.name}>
+									<div className="select-option">
+										<div className="icon">{item.icon}</div>
+										<Typography.Text className="display">{item.display}</Typography.Text>
+									</div>
+								</Option>
+							))}
+						</Select>
 
-			{allowCreateAlerts && (
-				<section className="alerts" onClick={onCreateAlertsHandler}>
-					<div className="left-section">
-						<ConciergeBell size={14} className="bell-icon" />
-						<Typography.Text className="alerts-text">Alerts</Typography.Text>
-					</div>
-					<Plus size={14} className="plus-icon" />
-				</section>
-			)}
+						{allowFillSpans && (
+							<Space className="fill-gaps">
+								<Typography className="fill-gaps-text">Fill gaps</Typography>
+								<Switch
+									checked={isFillSpans}
+									size="small"
+									onChange={(checked): void => setIsFillSpans(checked)}
+								/>
+							</Space>
+						)}
 
-			{allowThreshold && (
-				<section>
-					<ThresholdSelector
-						thresholds={thresholds}
-						setThresholds={setThresholds}
-						yAxisUnit={yAxisUnit}
-						selectedGraph={selectedGraph}
-						columnUnits={columnUnits}
-					/>
-				</section>
+						{allowPanelTimePreference && (
+							<>
+								<Typography.Text className="panel-time-text">
+									Panel Time Preference
+								</Typography.Text>
+								<TimePreference
+									{...{
+										selectedTime,
+										setSelectedTime,
+									}}
+								/>
+							</>
+						)}
+
+						{allowPanelColumnPreference && (
+							<ColumnUnitSelector
+								columnUnits={columnUnits}
+								setColumnUnits={setColumnUnits}
+							/>
+						)}
+
+						{allowYAxisUnit && (
+							<YAxisUnitSelector
+								defaultValue={yAxisUnit}
+								onSelect={setYAxisUnit}
+								fieldLabel={
+									selectedGraphType === PanelDisplay.VALUE ||
+									selectedGraphType === PanelDisplay.PIE
+										? 'Unit'
+										: 'Y Axis Unit'
+								}
+							/>
+						)}
+						{allowSoftMinMax && (
+							<section className="soft-min-max">
+								<section className="container">
+									<Typography.Text className="text">Soft Min</Typography.Text>
+									<InputNumber
+										type="number"
+										value={softMin}
+										onChange={softMinHandler}
+										rootClassName="input"
+									/>
+								</section>
+								<section className="container">
+									<Typography.Text className="text">Soft Max</Typography.Text>
+									<InputNumber
+										value={softMax}
+										type="number"
+										rootClassName="input"
+										onChange={softMaxHandler}
+									/>
+								</section>
+							</section>
+						)}
+
+						{allowStackingBarChart && (
+							<section className="stack-chart">
+								<Typography.Text className="label">Stack series</Typography.Text>
+								<Switch
+									checked={stackedBarChart}
+									size="small"
+									onChange={(checked): void => setStackedBarChart(checked)}
+								/>
+							</section>
+						)}
+
+						{allowBucketConfig && (
+							<section className="bucket-config">
+								<Typography.Text className="label">Number of buckets</Typography.Text>
+								<InputNumber
+									value={bucketCount || null}
+									type="number"
+									min={0}
+									rootClassName="bucket-input"
+									placeholder="Default: 30"
+									onChange={(val): void => {
+										setBucketCount(val || 0);
+									}}
+								/>
+								<Typography.Text className="label bucket-size-label">
+									Bucket width
+								</Typography.Text>
+								<InputNumber
+									value={bucketWidth || null}
+									type="number"
+									precision={2}
+									placeholder="Default: Auto"
+									step={0.1}
+									min={0.0}
+									rootClassName="bucket-input"
+									onChange={(val): void => {
+										setBucketWidth(val || 0);
+									}}
+								/>
+								<section className="combine-hist">
+									<Typography.Text className="label">
+										Merge all series into one
+									</Typography.Text>
+									<Switch
+										checked={combineHistogram}
+										size="small"
+										onChange={(checked): void => setCombineHistogram(checked)}
+									/>
+								</section>
+							</section>
+						)}
+
+						{allowLogScale && (
+							<section className="log-scale">
+								<Typography.Text className="typography">Y Axis Scale</Typography.Text>
+								<Select
+									onChange={(value): void =>
+										setIsLogScale(value === LogScale.LOGARITHMIC)
+									}
+									value={isLogScale ? LogScale.LOGARITHMIC : LogScale.LINEAR}
+									style={{ width: '100%' }}
+									className="panel-type-select"
+									defaultValue={LogScale.LINEAR}
+								>
+									<Option value={LogScale.LINEAR}>
+										<div className="select-option">
+											<div className="icon">
+												<LineChart size={16} />
+											</div>
+											<Typography.Text className="display">Linear</Typography.Text>
+										</div>
+									</Option>
+									<Option value={LogScale.LOGARITHMIC}>
+										<div className="select-option">
+											<div className="icon">
+												<Spline size={16} />
+											</div>
+											<Typography.Text className="display">Logarithmic</Typography.Text>
+										</div>
+									</Option>
+								</Select>
+							</section>
+						)}
+
+						{allowLegendPosition && (
+							<section className="legend-position">
+								<Typography.Text className="typography">
+									Legend Position
+								</Typography.Text>
+								<Select
+									onChange={(value: LegendPosition): void => setLegendPosition(value)}
+									value={legendPosition}
+									style={{ width: '100%' }}
+									className="panel-type-select"
+									defaultValue={LegendPosition.BOTTOM}
+								>
+									<Option value={LegendPosition.BOTTOM}>
+										<div className="select-option">
+											<Typography.Text className="display">Bottom</Typography.Text>
+										</div>
+									</Option>
+									<Option value={LegendPosition.RIGHT}>
+										<div className="select-option">
+											<Typography.Text className="display">Right</Typography.Text>
+										</div>
+									</Option>
+								</Select>
+							</section>
+						)}
+
+						{allowLegendColors && (
+							<section className="legend-colors">
+								<LegendColors
+									customLegendColors={customLegendColors}
+									setCustomLegendColors={setCustomLegendColors}
+									queryResponse={queryResponse}
+								/>
+							</section>
+						)}
+					</section>
+
+					{allowCreateAlerts && (
+						<section className="alerts" onClick={onCreateAlertsHandler}>
+							<div className="left-section">
+								<ConciergeBell size={14} className="bell-icon" />
+								<Typography.Text className="alerts-text">Alerts</Typography.Text>
+							</div>
+							<Plus size={14} className="plus-icon" />
+						</section>
+					)}
+
+					{allowThreshold && (
+						<section>
+							<ThresholdSelector
+								thresholds={thresholds}
+								setThresholds={setThresholds}
+								yAxisUnit={yAxisUnit}
+								selectedGraph={selectedGraph}
+								columnUnits={columnUnits}
+							/>
+						</section>
+					)}
+				</>
 			)}
 		</div>
 	);
