@@ -2,7 +2,7 @@ import './StepsFooter.styles.scss';
 
 import { Button, Skeleton } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { Cone, Save } from 'lucide-react';
+import { Check, Cone } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useIsMutating } from 'react-query';
 
@@ -75,7 +75,7 @@ function StepsFooter({ stepsCount, isSaving }: StepsFooterProps): JSX.Element {
 					onClick={handleSaveFunnel}
 					type="primary"
 					className="steps-footer__button steps-footer__button--run"
-					icon={<Save size={16} />}
+					icon={<Check size={14} />}
 					loading={isSaving}
 				>
 					Save funnel
