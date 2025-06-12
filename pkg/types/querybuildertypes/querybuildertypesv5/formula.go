@@ -20,6 +20,15 @@ type QueryBuilderFormula struct {
 	// expression to apply to the query
 	Expression string `json:"expression"`
 
+	// order by keys and directions
+	Order []OrderBy `json:"order,omitempty"`
+
+	// limit the maximum number of rows to return
+	Limit int `json:"limit,omitempty"`
+
+	// having clause to apply to the query
+	Having *Having `json:"having,omitempty"`
+
 	// functions to apply to the formula result
 	Functions []Function `json:"functions,omitempty"`
 }

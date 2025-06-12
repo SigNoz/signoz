@@ -159,7 +159,7 @@ func TestBucketCache_Put_And_Get(t *testing.T) {
 	}
 
 	// Store in cache
-	bc.Put(context.Background(), valuer.UUID{}, query, result)
+	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{}, result)
 
 	// Wait a bit for cache to be written
 	time.Sleep(10 * time.Millisecond)
@@ -193,7 +193,7 @@ func TestBucketCache_PartialHit(t *testing.T) {
 		Type:  qbtypes.RequestTypeTimeSeries,
 		Value: createTestTimeSeries("A", 1000, 3000, 1000),
 	}
-	bc.Put(context.Background(), valuer.UUID{}, query1, result1)
+	bc.Put(context.Background(), valuer.UUID{}, query1, qbtypes.Step{}, result1)
 
 	// Wait for cache write
 	time.Sleep(10 * time.Millisecond)
@@ -226,7 +226,7 @@ func TestBucketCache_MultipleBuckets(t *testing.T) {
 		startMs:     1000,
 		endMs:       2000,
 	}
-	bc.Put(context.Background(), valuer.UUID{}, query1, &qbtypes.Result{
+	bc.Put(context.Background(), valuer.UUID{}, query1, qbtypes.Step{}, &qbtypes.Result{
 		Type:  qbtypes.RequestTypeTimeSeries,
 		Value: createTestTimeSeries("A", 1000, 2000, 100),
 	})
@@ -236,7 +236,7 @@ func TestBucketCache_MultipleBuckets(t *testing.T) {
 		startMs:     3000,
 		endMs:       4000,
 	}
-	bc.Put(context.Background(), valuer.UUID{}, query2, &qbtypes.Result{
+	bc.Put(context.Background(), valuer.UUID{}, query2, qbtypes.Step{}, &qbtypes.Result{
 		Type:  qbtypes.RequestTypeTimeSeries,
 		Value: createTestTimeSeries("A", 3000, 4000, 100),
 	})
@@ -284,7 +284,7 @@ func TestBucketCache_FluxInterval(t *testing.T) {
 	}
 
 	// This should not be cached due to flux interval
-	bc.Put(context.Background(), valuer.UUID{}, query, result)
+	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{}, result)
 
 	// Wait a bit
 	time.Sleep(10 * time.Millisecond)
@@ -354,7 +354,7 @@ func TestBucketCache_MergeTimeSeriesResults(t *testing.T) {
 		startMs:     1000,
 		endMs:       3000,
 	}
-	bc.Put(context.Background(), valuer.UUID{}, query1, &qbtypes.Result{
+	bc.Put(context.Background(), valuer.UUID{}, query1, qbtypes.Step{}, &qbtypes.Result{
 		Type: qbtypes.RequestTypeTimeSeries,
 		Value: &qbtypes.TimeSeriesData{
 			QueryName: "A",
@@ -370,7 +370,7 @@ func TestBucketCache_MergeTimeSeriesResults(t *testing.T) {
 		startMs:     3000,
 		endMs:       5000,
 	}
-	bc.Put(context.Background(), valuer.UUID{}, query2, &qbtypes.Result{
+	bc.Put(context.Background(), valuer.UUID{}, query2, qbtypes.Step{}, &qbtypes.Result{
 		Type: qbtypes.RequestTypeTimeSeries,
 		Value: &qbtypes.TimeSeriesData{
 			QueryName: "A",
@@ -445,7 +445,7 @@ func TestBucketCache_RawData(t *testing.T) {
 		Value: rawData,
 	}
 
-	bc.Put(context.Background(), valuer.UUID{}, query, result)
+	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{}, result)
 	time.Sleep(10 * time.Millisecond)
 
 	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000})
@@ -485,7 +485,7 @@ func TestBucketCache_ScalarData(t *testing.T) {
 		Value: scalarData,
 	}
 
-	bc.Put(context.Background(), valuer.UUID{}, query, result)
+	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{}, result)
 	time.Sleep(10 * time.Millisecond)
 
 	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000})
@@ -513,7 +513,7 @@ func TestBucketCache_EmptyFingerprint(t *testing.T) {
 		Value: createTestTimeSeries("A", 1000, 5000, 1000),
 	}
 
-	bc.Put(context.Background(), valuer.UUID{}, query, result)
+	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{}, result)
 	time.Sleep(10 * time.Millisecond)
 
 	// Should still be able to retrieve
@@ -568,7 +568,7 @@ func TestBucketCache_ConcurrentAccess(t *testing.T) {
 				Type:  qbtypes.RequestTypeTimeSeries,
 				Value: createTestTimeSeries(fmt.Sprintf("Q%d", id), query.startMs, query.endMs, 100),
 			}
-			bc.Put(context.Background(), valuer.UUID{}, query, result)
+			bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{}, result)
 			done <- true
 		}(i)
 	}
@@ -628,7 +628,7 @@ func TestBucketCache_GetMissRanges_FluxInterval(t *testing.T) {
 		},
 	}
 
-	bc.Put(ctx, orgID, query, cachedResult)
+	bc.Put(ctx, orgID, query, qbtypes.Step{}, cachedResult)
 
 	// Get miss ranges
 	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000})
@@ -690,7 +690,7 @@ func TestBucketCache_Put_FluxIntervalTrimming(t *testing.T) {
 	}
 
 	// Put the result
-	bc.Put(ctx, orgID, query, result)
+	bc.Put(ctx, orgID, query, qbtypes.Step{}, result)
 
 	// Retrieve cached data
 	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000})
@@ -760,7 +760,7 @@ func TestBucketCache_Put_EntireRangeInFluxInterval(t *testing.T) {
 	}
 
 	// Put the result - should not cache anything
-	bc.Put(ctx, orgID, query, result)
+	bc.Put(ctx, orgID, query, qbtypes.Step{}, result)
 
 	// Try to get cached data - should have no cached data
 	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000})
@@ -878,7 +878,7 @@ func TestBucketCache_EmptyDataHandling(t *testing.T) {
 			}
 
 			// Put the result
-			bc.Put(ctx, orgID, query, tt.result)
+			bc.Put(ctx, orgID, query, qbtypes.Step{}, tt.result)
 
 			// Wait a bit for cache to be written
 			time.Sleep(10 * time.Millisecond)
@@ -944,7 +944,7 @@ func TestBucketCache_PartialValues(t *testing.T) {
 	}
 
 	// Put the result
-	bc.Put(ctx, orgID, query, result)
+	bc.Put(ctx, orgID, query, qbtypes.Step{}, result)
 
 	// Wait for cache to be written
 	time.Sleep(10 * time.Millisecond)
@@ -1014,7 +1014,7 @@ func TestBucketCache_AllPartialValues(t *testing.T) {
 	}
 
 	// Put the result
-	bc.Put(ctx, orgID, query, result)
+	bc.Put(ctx, orgID, query, qbtypes.Step{}, result)
 
 	// Wait for cache to be written
 	time.Sleep(10 * time.Millisecond)
@@ -1075,7 +1075,7 @@ func TestBucketCache_FilteredCachedResults(t *testing.T) {
 	}
 
 	// Cache the wide range
-	bc.Put(ctx, orgID, query1, result1)
+	bc.Put(ctx, orgID, query1, qbtypes.Step{}, result1)
 	time.Sleep(10 * time.Millisecond)
 
 	// Now query for a smaller range (2000-3500ms)
@@ -1246,7 +1246,7 @@ func TestBucketCache_PartialValueDetection(t *testing.T) {
 		}
 
 		// Put the result
-		bc.Put(ctx, orgID, query, result)
+		bc.Put(ctx, orgID, query, qbtypes.Step{}, result)
 		time.Sleep(10 * time.Millisecond)
 
 		// Get cached data
@@ -1300,7 +1300,7 @@ func TestBucketCache_PartialValueDetection(t *testing.T) {
 		}
 
 		// Put the result
-		bc.Put(ctx, orgID, query, result)
+		bc.Put(ctx, orgID, query, qbtypes.Step{}, result)
 		time.Sleep(10 * time.Millisecond)
 
 		// Get cached data
@@ -1352,7 +1352,7 @@ func TestBucketCache_PartialValueDetection(t *testing.T) {
 		}
 
 		// Put the result
-		bc.Put(ctx, orgID, query, result)
+		bc.Put(ctx, orgID, query, qbtypes.Step{}, result)
 		time.Sleep(10 * time.Millisecond)
 
 		// Get cached data
@@ -1409,7 +1409,7 @@ func TestBucketCache_NoCache(t *testing.T) {
 	}
 
 	// Put the result in cache
-	bc.Put(ctx, orgID, query, result)
+	bc.Put(ctx, orgID, query, qbtypes.Step{}, result)
 	time.Sleep(10 * time.Millisecond)
 
 	// Verify data is cached

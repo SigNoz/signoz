@@ -44,6 +44,7 @@ func Success(rw http.ResponseWriter, httpCode int, data interface{}) {
 	}
 
 	rw.WriteHeader(httpCode)
+	rw.Header().Set("Content-Type", "application/json")
 	_, _ = rw.Write(body)
 }
 

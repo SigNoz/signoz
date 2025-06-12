@@ -12,7 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"golang.org/x/exp/maps"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -133,13 +132,43 @@ func (q *querier) run(ctx context.Context, orgID valuer.UUID, qs map[string]qbty
 		}
 	}
 
+	// Apply postprocessing
+	processedResults, err := q.PostProcessResults(results, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert results to slice for response
+	resultSlice := make([]any, 0, len(processedResults))
+	for _, query := range req.CompositeQuery.Queries {
+		var queryName string
+		switch spec := query.Spec.(type) {
+		case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+			queryName = spec.Name
+		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+			queryName = spec.Name
+		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+			queryName = spec.Name
+		case qbtypes.QueryBuilderFormula:
+			queryName = spec.Name
+		case qbtypes.PromQuery:
+			queryName = spec.Name
+		case qbtypes.ClickHouseQuery:
+			queryName = spec.Name
+		}
+
+		if result, ok := processedResults[queryName]; ok {
+			resultSlice = append(resultSlice, result)
+		}
+	}
+
 	return &qbtypes.QueryRangeResponse{
 		Type: req.RequestType,
 		Data: struct {
 			Results  []any    `json:"results"`
 			Warnings []string `json:"warnings"`
 		}{
-			Results:  maps.Values(results),
+			Results:  resultSlice,
 			Warnings: warnings,
 		},
 		Meta: struct {
@@ -159,6 +188,22 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	// Get cached data and missing ranges
 	cachedResult, missingRanges := q.bucketCache.GetMissRanges(ctx, orgID, query, step)
 
+	// Debug: Log cached result
+	if cachedResult != nil {
+		if tsData, ok := cachedResult.Value.(*qbtypes.TimeSeriesData); ok {
+			totalSeries := 0
+			seriesPerBucket := make(map[int]int)
+			for _, agg := range tsData.Aggregations {
+				totalSeries += len(agg.Series)
+				seriesPerBucket[agg.Index] = len(agg.Series)
+			}
+			q.logger.DebugContext(ctx, "received cached result",
+				"total_series", totalSeries,
+				"series_per_bucket", seriesPerBucket,
+				"missing_ranges", len(missingRanges))
+		}
+	}
+
 	// If no missing ranges, return cached result
 	if len(missingRanges) == 0 && cachedResult != nil {
 		return cachedResult, nil
@@ -173,7 +218,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 				return nil, err
 			}
 			// Store in cache for future use
-			q.bucketCache.Put(ctx, orgID, query, result)
+			q.bucketCache.Put(ctx, orgID, query, step, result)
 			return result, nil
 		}
 	}
@@ -182,6 +227,10 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	freshResults := make([]*qbtypes.Result, len(missingRanges))
 	errors := make([]error, len(missingRanges))
 	totalStats := qbtypes.ExecStats{}
+
+	q.logger.DebugContext(ctx, "executing queries for missing ranges",
+		"missing_ranges_count", len(missingRanges),
+		"ranges", missingRanges)
 
 	sem := make(chan struct{}, 4)
 	var wg sync.WaitGroup
@@ -224,7 +273,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 			if err != nil {
 				return nil, err
 			}
-			q.bucketCache.Put(ctx, orgID, query, result)
+			q.bucketCache.Put(ctx, orgID, query, step, result)
 			return result, nil
 		}
 	}
@@ -247,8 +296,21 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	mergedResult.Stats.BytesScanned += totalStats.BytesScanned
 	mergedResult.Stats.DurationMS += totalStats.DurationMS
 
+	// Debug: Log before storing in cache
+	if tsData, ok := mergedResult.Value.(*qbtypes.TimeSeriesData); ok {
+		totalSeries := 0
+		seriesPerBucket := make(map[int]int)
+		for _, agg := range tsData.Aggregations {
+			totalSeries += len(agg.Series)
+			seriesPerBucket[agg.Index] = len(agg.Series)
+		}
+		q.logger.DebugContext(ctx, "storing merged result in cache",
+			"total_series", totalSeries,
+			"series_per_bucket", seriesPerBucket)
+	}
+
 	// Store merged result in cache
-	q.bucketCache.Put(ctx, orgID, query, mergedResult)
+	q.bucketCache.Put(ctx, orgID, query, step, mergedResult)
 
 	return mergedResult, nil
 }
@@ -273,8 +335,29 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 
 // mergeResults merges cached result with fresh results
 func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) *qbtypes.Result {
-	if cached == nil && len(fresh) == 1 {
-		return fresh[0]
+	if cached == nil {
+		if len(fresh) == 1 {
+			return fresh[0]
+		}
+		if len(fresh) == 0 {
+			return nil
+		}
+		// If cached is nil but we have multiple fresh results, we need to merge them
+		// We need to merge all fresh results properly to avoid duplicates
+		merged := &qbtypes.Result{
+			Type:     fresh[0].Type,
+			Stats:    fresh[0].Stats,
+			Warnings: fresh[0].Warnings,
+		}
+
+		// Merge all fresh results including the first one
+		switch merged.Type {
+		case qbtypes.RequestTypeTimeSeries:
+			// Pass nil as cached value to ensure proper merging of all fresh results
+			merged.Value = q.mergeTimeSeriesResults(nil, fresh)
+		}
+
+		return merged
 	}
 
 	// Start with cached result
@@ -315,29 +398,83 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 // mergeTimeSeriesResults merges time series data
 func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, freshResults []*qbtypes.Result) *qbtypes.TimeSeriesData {
 
-	// Map to store merged series by query name and series key
+	// Map to store merged series by aggregation index and series key
 	seriesMap := make(map[int]map[string]*qbtypes.TimeSeries)
+	// Map to store aggregation bucket metadata
+	bucketMetadata := make(map[int]*qbtypes.AggregationBucket)
 
-	for _, aggBucket := range cachedValue.Aggregations {
-		if seriesMap[aggBucket.Index] == nil {
-			seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
+	// Debug: Log input data
+	if q.logger != nil {
+		cachedCount := 0
+		cachedSeriesDetails := make(map[int][]string)
+		if cachedValue != nil && cachedValue.Aggregations != nil {
+			for _, agg := range cachedValue.Aggregations {
+				cachedCount += len(agg.Series)
+				for _, s := range agg.Series {
+					key := qbtypes.GetUniqueSeriesKey(s.Labels)
+					cachedSeriesDetails[agg.Index] = append(cachedSeriesDetails[agg.Index], key)
+				}
+			}
 		}
-		for _, series := range aggBucket.Series {
-			key := qbtypes.GetUniqueSeriesKey(series.Labels)
-			seriesMap[aggBucket.Index][key] = series
+		q.logger.Debug("mergeTimeSeriesResults called",
+			"cached_series_count", cachedCount,
+			"cached_series_details", cachedSeriesDetails,
+			"fresh_results_count", len(freshResults))
+	}
+
+	// Process cached data if available
+	if cachedValue != nil && cachedValue.Aggregations != nil {
+		for _, aggBucket := range cachedValue.Aggregations {
+			if seriesMap[aggBucket.Index] == nil {
+				seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
+			}
+			if bucketMetadata[aggBucket.Index] == nil {
+				bucketMetadata[aggBucket.Index] = aggBucket
+			}
+			for _, series := range aggBucket.Series {
+				key := qbtypes.GetUniqueSeriesKey(series.Labels)
+				if existingSeries, ok := seriesMap[aggBucket.Index][key]; ok {
+					// Merge values from duplicate series in cached data, avoiding duplicate timestamps
+					timestampMap := make(map[int64]bool)
+					for _, v := range existingSeries.Values {
+						timestampMap[v.Timestamp] = true
+					}
+
+					// Only add values with new timestamps
+					for _, v := range series.Values {
+						if !timestampMap[v.Timestamp] {
+							existingSeries.Values = append(existingSeries.Values, v)
+						}
+					}
+				} else {
+					// Create a copy to avoid modifying the cached data
+					seriesCopy := &qbtypes.TimeSeries{
+						Labels: series.Labels,
+						Values: make([]*qbtypes.TimeSeriesValue, len(series.Values)),
+					}
+					copy(seriesCopy.Values, series.Values)
+					seriesMap[aggBucket.Index][key] = seriesCopy
+				}
+			}
 		}
 	}
 
 	// Add fresh series
 	for _, result := range freshResults {
 		freshTS, ok := result.Value.(*qbtypes.TimeSeriesData)
-		if !ok {
+		if !ok || freshTS == nil || freshTS.Aggregations == nil {
 			continue
 		}
 
 		for _, aggBucket := range freshTS.Aggregations {
 			if seriesMap[aggBucket.Index] == nil {
 				seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
+			}
+			// Prefer fresh metadata over cached metadata
+			if aggBucket.Alias != "" || aggBucket.Meta.Unit != "" {
+				bucketMetadata[aggBucket.Index] = aggBucket
+			} else if bucketMetadata[aggBucket.Index] == nil {
+				bucketMetadata[aggBucket.Index] = aggBucket
 			}
 		}
 
@@ -346,8 +483,19 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 				key := qbtypes.GetUniqueSeriesKey(series.Labels)
 
 				if existingSeries, ok := seriesMap[aggBucket.Index][key]; ok {
-					// Merge values
-					existingSeries.Values = append(existingSeries.Values, series.Values...)
+					// Merge values, avoiding duplicate timestamps
+					// Create a map to track existing timestamps
+					timestampMap := make(map[int64]bool)
+					for _, v := range existingSeries.Values {
+						timestampMap[v.Timestamp] = true
+					}
+
+					// Only add values with new timestamps
+					for _, v := range series.Values {
+						if !timestampMap[v.Timestamp] {
+							existingSeries.Values = append(existingSeries.Values, v)
+						}
+					}
 				} else {
 					// New series
 					seriesMap[aggBucket.Index][key] = series
@@ -357,8 +505,16 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 	}
 
 	result := &qbtypes.TimeSeriesData{
-		QueryName:    cachedValue.QueryName,
 		Aggregations: []*qbtypes.AggregationBucket{},
+	}
+
+	// Set QueryName from cached or first fresh result
+	if cachedValue != nil {
+		result.QueryName = cachedValue.QueryName
+	} else if len(freshResults) > 0 {
+		if freshTS, ok := freshResults[0].Value.(*qbtypes.TimeSeriesData); ok && freshTS != nil {
+			result.QueryName = freshTS.QueryName
+		}
 	}
 
 	for index, series := range seriesMap {
@@ -377,10 +533,38 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 			aggSeries = append(aggSeries, s)
 		}
 
-		result.Aggregations = append(result.Aggregations, &qbtypes.AggregationBucket{
+		// Preserve bucket metadata from either cached or fresh results
+		bucket := &qbtypes.AggregationBucket{
 			Index:  index,
 			Series: aggSeries,
-		})
+		}
+		if metadata, ok := bucketMetadata[index]; ok {
+			bucket.Alias = metadata.Alias
+			bucket.Meta = metadata.Meta
+		}
+
+		result.Aggregations = append(result.Aggregations, bucket)
+	}
+
+	// Debug: Log output data
+	if q.logger != nil {
+		finalCount := 0
+		finalSeriesDetails := make(map[int][]string)
+		for _, agg := range result.Aggregations {
+			finalCount += len(agg.Series)
+			for _, s := range agg.Series {
+				key := qbtypes.GetUniqueSeriesKey(s.Labels)
+				// Also log the actual label values for debugging
+				labelDetails := make([]string, 0, len(s.Labels))
+				for _, l := range s.Labels {
+					labelDetails = append(labelDetails, fmt.Sprintf("%s=%v", l.Key.Name, l.Value))
+				}
+				finalSeriesDetails[agg.Index] = append(finalSeriesDetails[agg.Index], fmt.Sprintf("key=%s,labels=%v", key, labelDetails))
+			}
+		}
+		q.logger.Debug("mergeTimeSeriesResults returning",
+			"final_series_count", finalCount,
+			"final_series_details", finalSeriesDetails)
 	}
 
 	return result

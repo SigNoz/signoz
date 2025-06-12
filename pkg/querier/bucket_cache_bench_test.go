@@ -30,7 +30,7 @@ func BenchmarkBucketCache_GetMissRanges(b *testing.B) {
 			endMs:       uint64((i + 1) * 10000),
 		}
 		result := createBenchmarkResult(query.startMs, query.endMs, 1000)
-		bc.Put(ctx, orgID, query, result)
+		bc.Put(ctx, orgID, query, qbtypes.Step{}, result)
 	}
 
 	// Create test queries with varying cache hit patterns
@@ -121,7 +121,7 @@ func BenchmarkBucketCache_Put(b *testing.B) {
 
 			for i := 0; i < b.N; i++ {
 				for j := 0; j < tc.numQueries; j++ {
-					bc.Put(ctx, orgID, queries[j], results[j])
+					bc.Put(ctx, orgID, queries[j], qbtypes.Step{}, results[j])
 				}
 			}
 		})
@@ -259,7 +259,7 @@ func BenchmarkBucketCache_ConcurrentOperations(b *testing.B) {
 			endMs:       uint64((i + 1) * 10000),
 		}
 		result := createBenchmarkResult(query.startMs, query.endMs, 1000)
-		bc.Put(ctx, orgID, query, result)
+		bc.Put(ctx, orgID, query, qbtypes.Step{}, result)
 	}
 
 	b.ResetTimer()
@@ -284,7 +284,7 @@ func BenchmarkBucketCache_ConcurrentOperations(b *testing.B) {
 					endMs:       uint64((i + 1) * 10000),
 				}
 				result := createBenchmarkResult(query.startMs, query.endMs, 1000)
-				bc.Put(ctx, orgID, query, result)
+				bc.Put(ctx, orgID, query, qbtypes.Step{}, result)
 			case 2: // Partial read
 				query := &mockQuery{
 					fingerprint: fmt.Sprintf("concurrent-query-%d", i%100),

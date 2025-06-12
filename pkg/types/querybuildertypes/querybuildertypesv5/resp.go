@@ -99,8 +99,8 @@ type TimeSeriesValue struct {
 	Partial bool `json:"partial,omitempty"`
 
 	// for the heatmap type chart
-	Values []float64 `json:"values,omitempty"`
-	Bucket *Bucket   `json:"bucket,omitempty"`
+	// Values []float64 `json:"values,omitempty"`
+	Bucket *Bucket `json:"bucket,omitempty"`
 }
 
 type Bucket struct {

@@ -176,7 +176,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				lblVals = append(lblVals, *val)
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
-					Value: val,
+					Value: *val, // Dereference to get the actual string value
 				})
 
 			default:
