@@ -7,10 +7,10 @@ import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/Grou
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter';
 import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { isEmpty } from 'lodash-es';
 import { BarChart2, ScrollText, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
 
 import HavingFilter from './HavingFilter/HavingFilter';
@@ -179,7 +179,7 @@ function QueryAddOns({
 
 	const handleChangeHaving = useCallback(
 		(value: string) => {
-			(handleChangeQueryData as HandleChangeQueryDataV5)('having', {
+			handleChangeQueryData('havingExpression', {
 				expression: value,
 			});
 		},
@@ -224,6 +224,7 @@ function QueryAddOns({
 											);
 										}}
 										onChange={handleChangeHaving}
+										queryData={query}
 									/>
 								</div>
 							</div>
@@ -234,6 +235,7 @@ function QueryAddOns({
 							<InputWithLabel
 								label="Limit"
 								onChange={handleChangeLimit}
+								initialValue={query?.limit ?? undefined}
 								placeholder="Enter limit"
 								onClose={(): void => {
 									setSelectedViews(selectedViews.filter((view) => view.key !== 'limit'));
@@ -287,6 +289,7 @@ function QueryAddOns({
 								label="Legend format"
 								placeholder="Write legend format"
 								onChange={handleChangeQueryLegend}
+								initialValue={isEmpty(query?.legend) ? undefined : query?.legend}
 								onClose={(): void => {
 									setSelectedViews(
 										selectedViews.filter((view) => view.key !== 'legend_format'),

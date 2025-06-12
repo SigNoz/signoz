@@ -5,14 +5,29 @@ import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { QueryFunctionProps } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	QueryFunctionProps,
+} from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BaseBuilderQuery,
+	FieldContext,
+	FieldDataType,
+	FunctionName,
+	GroupByKey,
+	LogAggregation,
+	MetricAggregation,
+	OrderBy,
 	QueryEnvelope,
+	QueryFunction,
 	QueryRangePayloadV5,
+	QueryType,
 	RequestType,
+	TelemetryFieldKey,
+	TraceAggregation,
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
 
 type PrepareQueryRangePayloadV5Result = {
 	queryPayload: QueryRangePayloadV5;
@@ -53,7 +68,7 @@ function getSignalType(dataSource: string): 'traces' | 'logs' | 'metrics' {
  * Creates base spec for builder queries
  */
 function createBaseSpec(
-	queryData: any,
+	queryData: IBuilderQuery,
 	requestType: RequestType,
 ): BaseBuilderQuery {
 	return {
@@ -62,45 +77,98 @@ function createBaseSpec(
 		filter: queryData.filter,
 		groupBy:
 			queryData.groupBy?.length > 0
-				? queryData.groupBy.map((item: any) => ({
-						name: item.key,
-						fieldDataType: item?.dataType,
-						fieldContext: item?.type,
-						description: item?.description,
-						unit: item?.unit,
-						signal: item?.signal,
-						materialized: item?.materialized,
-				  }))
+				? queryData.groupBy.map(
+						(item: any): GroupByKey => ({
+							name: item.key,
+							fieldDataType: item?.dataType,
+							fieldContext: item?.type,
+							description: item?.description,
+							unit: item?.unit,
+							signal: item?.signal,
+							materialized: item?.materialized,
+						}),
+				  )
 				: undefined,
-		limit: isEmpty(queryData.limit) ? undefined : queryData.limit,
+		limit: isEmpty(queryData.limit) ? undefined : queryData.limit ?? undefined,
 		offset: requestType === 'raw' ? queryData.offset : undefined,
 		order:
 			queryData.orderBy.length > 0
-				? queryData.orderBy.map((order: any) => ({
-						key: {
-							name: order.columnName,
-						},
-						direction: order.order,
-				  }))
+				? queryData.orderBy.map(
+						(order: any): OrderBy => ({
+							key: {
+								name: order.columnName,
+							},
+							direction: order.order,
+						}),
+				  )
 				: undefined,
-		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
-		having: isEmpty(queryData.having) ? undefined : queryData.having,
+		// legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
+		having: isEmpty(queryData.havingExpression)
+			? undefined
+			: queryData?.havingExpression,
 		functions: isEmpty(queryData.functions)
 			? undefined
-			: queryData.functions.map((func: QueryFunctionProps) => ({
-					name: func.name,
-					args: func.args,
-					namedArgs: func.namedArgs,
-			  })),
+			: queryData.functions.map(
+					(func: QueryFunctionProps): QueryFunction => ({
+						name: func.name as FunctionName,
+						args: func.args.map((arg) => ({
+							// name: arg.name,
+							value: arg,
+						})),
+					}),
+			  ),
 		selectFields: isEmpty(queryData.selectColumns)
 			? undefined
-			: queryData.selectColumns.map((column: BaseAutocompleteData) => ({
-					name: column.key,
-					fieldDataType: column?.dataType,
-					fieldContext: column?.type,
-					id: column.id,
-			  })),
+			: queryData.selectColumns?.map(
+					(column: BaseAutocompleteData): TelemetryFieldKey => ({
+						name: column.key,
+						fieldDataType: column?.dataType as FieldDataType,
+						fieldContext: column?.type as FieldContext,
+					}),
+			  ),
 	};
+}
+// Utility to parse aggregation expressions with optional alias
+export function parseAggregations(
+	expression: string,
+): { expression: string; alias?: string }[] {
+	const result: { expression: string; alias?: string }[] = [];
+	const regex = /([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+([a-zA-Z0-9_]+))?/g;
+	let match = regex.exec(expression);
+	while (match !== null) {
+		const expr = match[1];
+		const alias = match[2];
+		if (alias) {
+			result.push({ expression: expr, alias });
+		} else {
+			result.push({ expression: expr });
+		}
+		match = regex.exec(expression);
+	}
+	return result;
+}
+
+function createAggregation(
+	queryData: any,
+): TraceAggregation[] | LogAggregation[] | MetricAggregation[] {
+	if (queryData.dataSource === DataSource.METRICS) {
+		return [
+			{
+				metricName: queryData?.aggregateAttribute?.key,
+				temporality: queryData?.aggregateAttribute?.temporality,
+				timeAggregation: queryData?.timeAggregation,
+				spaceAggregation: queryData?.spaceAggregation,
+			},
+		];
+	}
+
+	if (queryData.aggregations?.length > 0) {
+		return isEmpty(parseAggregations(queryData.aggregations?.[0].expression))
+			? [{ expression: 'count()' }]
+			: parseAggregations(queryData.aggregations?.[0].expression);
+	}
+
+	return [{ expression: 'count()' }];
 }
 
 /**
@@ -110,62 +178,52 @@ function convertBuilderQueriesToV5(
 	builderQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 	requestType: RequestType,
 ): QueryEnvelope[] {
-	return Object.entries(builderQueries).map(([queryName, queryData]) => {
-		const signal = getSignalType(queryData.dataSource);
-		const baseSpec = createBaseSpec(queryData, requestType);
-		let spec: any;
+	return Object.entries(builderQueries).map(
+		([queryName, queryData]): QueryEnvelope => {
+			const signal = getSignalType(queryData.dataSource);
+			const baseSpec = createBaseSpec(queryData, requestType);
+			let spec: QueryEnvelope['spec'];
 
-		switch (signal) {
-			case 'traces':
-				spec = {
-					name: queryName,
-					signal: 'traces' as const,
-					...baseSpec,
-					aggregations:
-						queryData.aggregations?.length > 0
-							? queryData.aggregations
-							: [{ expression: 'count()' }],
-					limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
-				};
-				break;
-			case 'logs':
-				spec = {
-					name: queryName,
-					signal: 'logs' as const,
-					...baseSpec,
-					aggregations:
-						queryData.aggregations?.length > 0
-							? queryData.aggregations
-							: [{ expression: 'count()' }],
-					limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
-				};
-				break;
-			case 'metrics':
-			default:
-				spec = {
-					name: queryName,
-					signal: 'metrics' as const,
-					...baseSpec,
-					aggregations: [
-						{
-							metricName: queryData?.metricName || '',
-							temporality: queryData?.temporality || '',
-							timeAggregation: queryData?.timeAggregation || '',
-							spaceAggregation: queryData?.spaceAggregation || '',
-						},
-					],
-					reduceTo: queryData.reduceTo,
-					limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
-				};
-				break;
-		}
+			const aggregations = createAggregation(queryData);
 
-		return {
-			name: queryName,
-			type: 'builder_query' as const,
-			spec,
-		};
-	});
+			switch (signal) {
+				case 'traces':
+					spec = {
+						name: queryName,
+						signal: 'traces' as const,
+						...baseSpec,
+						aggregations: aggregations as TraceAggregation[],
+						limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
+					};
+					break;
+				case 'logs':
+					spec = {
+						name: queryName,
+						signal: 'logs' as const,
+						...baseSpec,
+						aggregations: aggregations as LogAggregation[],
+						limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
+					};
+					break;
+				case 'metrics':
+				default:
+					spec = {
+						name: queryName,
+						signal: 'metrics' as const,
+						...baseSpec,
+						aggregations: aggregations as MetricAggregation[],
+						// reduceTo: queryData.reduceTo,
+						limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
+					};
+					break;
+			}
+
+			return {
+				type: 'builder_query' as QueryType,
+				spec,
+			};
+		},
+	);
 }
 
 /**
@@ -174,17 +232,18 @@ function convertBuilderQueriesToV5(
 function convertPromQueriesToV5(
 	promQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): QueryEnvelope[] {
-	return Object.entries(promQueries).map(([queryName, queryData]) => ({
-		name: queryName,
-		type: 'promql' as const,
-		spec: {
-			name: queryName,
-			query: queryData.query,
-			disabled: queryData.disabled || false,
-			step: queryData.stepInterval,
-			stats: false, // PromQL specific field
-		},
-	}));
+	return Object.entries(promQueries).map(
+		([queryName, queryData]): QueryEnvelope => ({
+			type: 'promql' as QueryType,
+			spec: {
+				name: queryName,
+				query: queryData.query,
+				disabled: queryData.disabled || false,
+				step: queryData.stepInterval,
+				stats: false, // PromQL specific field
+			},
+		}),
+	);
 }
 
 /**
@@ -193,16 +252,17 @@ function convertPromQueriesToV5(
 function convertClickHouseQueriesToV5(
 	chQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): QueryEnvelope[] {
-	return Object.entries(chQueries).map(([queryName, queryData]) => ({
-		name: queryName,
-		type: 'clickhouse_sql' as const,
-		spec: {
-			name: queryName,
-			query: queryData.query,
-			disabled: queryData.disabled || false,
-			// ClickHouse doesn't have step or stats like PromQL
-		},
-	}));
+	return Object.entries(chQueries).map(
+		([queryName, queryData]): QueryEnvelope => ({
+			type: 'clickhouse_sql' as QueryType,
+			spec: {
+				name: queryName,
+				query: queryData.query,
+				disabled: queryData.disabled || false,
+				// ClickHouse doesn't have step or stats like PromQL
+			},
+		}),
+	);
 }
 
 /**
@@ -211,17 +271,16 @@ function convertClickHouseQueriesToV5(
 function convertFormulasToV5(
 	formulas: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): QueryEnvelope[] {
-	return Object.entries(formulas).map(([queryName, formulaData]) => ({
-		name: queryName,
-		type: 'builder_formula' as const,
-		spec: {
-			name: queryName,
-			expression: formulaData.expression || '',
-			functions: formulaData.functions,
-			disabled: formulaData.disabled,
-			legend: formulaData.legend,
-		},
-	}));
+	return Object.entries(formulas).map(
+		([queryName, formulaData]): QueryEnvelope => ({
+			type: 'builder_formula' as QueryType,
+			spec: {
+				name: queryName,
+				expression: formulaData.expression || '',
+				functions: formulaData.functions,
+			},
+		}),
+	);
 }
 
 /**

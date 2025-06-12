@@ -3,6 +3,7 @@ import './QueryAggregation.styles.scss';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useMemo } from 'react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import QueryAggregationSelect from './QueryAggregationSelect';
@@ -12,11 +13,13 @@ function QueryAggregationOptions({
 	panelType,
 	onAggregationIntervalChange,
 	onChange,
+	queryData,
 }: {
 	dataSource: DataSource;
 	panelType?: string;
 	onAggregationIntervalChange: (value: number) => void;
 	onChange?: (value: string) => void;
+	queryData: IBuilderQuery;
 }): JSX.Element {
 	const showAggregationInterval = useMemo(() => {
 		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
@@ -37,27 +40,25 @@ function QueryAggregationOptions({
 
 	return (
 		<div className="query-aggregation-container">
-			<div className="aggregation-container">
-				<QueryAggregationSelect onChange={onChange} />
+			<QueryAggregationSelect onChange={onChange} queryData={queryData} />
 
-				{showAggregationInterval && (
-					<div className="query-aggregation-interval">
-						<div className="query-aggregation-interval-label">every</div>
-						<div className="query-aggregation-interval-input-container">
-							<InputWithLabel
-								initialValue="60"
-								className="query-aggregation-interval-input"
-								label="Seconds"
-								placeholder="60"
-								type="number"
-								onChange={handleAggregationIntervalChange}
-								labelAfter
-								onClose={(): void => {}}
-							/>
-						</div>
+			{showAggregationInterval && (
+				<div className="query-aggregation-interval">
+					<div className="query-aggregation-interval-label">every</div>
+					<div className="query-aggregation-interval-input-container">
+						<InputWithLabel
+							initialValue={queryData.stepInterval ? queryData.stepInterval : '60'}
+							className="query-aggregation-interval-input"
+							label="Seconds"
+							placeholder="60"
+							type="number"
+							onChange={handleAggregationIntervalChange}
+							labelAfter
+							onClose={(): void => {}}
+						/>
 					</div>
-				)}
-			</div>
+				</div>
+			)}
 		</div>
 	);
 }

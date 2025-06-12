@@ -28,10 +28,10 @@ import CodeMirror, {
 import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
@@ -115,13 +115,16 @@ function getFunctionContextAtCursor(
 // eslint-disable-next-line react/no-this-in-sfc
 function QueryAggregationSelect({
 	onChange,
+	queryData,
 }: {
 	onChange?: (value: string) => void;
+	queryData: IBuilderQuery;
 }): JSX.Element {
-	const { currentQuery } = useQueryBuilder();
 	const { setAggregationOptions } = useQueryBuilderV2Context();
-	const queryData = currentQuery.builder.queryData[0];
-	const [input, setInput] = useState('');
+
+	const [input, setInput] = useState(
+		queryData?.aggregations?.map((i: any) => i.expression).join(' ') || '',
+	);
 	const [cursorPos, setCursorPos] = useState(0);
 	const [functionArgPairs, setFunctionArgPairs] = useState<
 		{ func: string; arg: string }[]

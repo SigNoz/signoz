@@ -175,7 +175,7 @@ export const QueryV2 = memo(function QueryV2({
 
 						<div className="qb-search-filter-container">
 							<div className="query-search-container">
-								<QuerySearch onChange={handleSearchChange} />
+								<QuerySearch onChange={handleSearchChange} queryData={query} />
 							</div>
 
 							{showSpanScopeSelector && (
@@ -195,6 +195,7 @@ export const QueryV2 = memo(function QueryV2({
 								panelType={panelType || undefined}
 								onAggregationIntervalChange={handleChangeAggregateEvery}
 								onChange={handleChangeAggregation}
+								queryData={query}
 							/>
 						)}
 
