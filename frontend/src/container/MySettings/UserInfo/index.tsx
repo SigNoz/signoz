@@ -188,7 +188,7 @@ function UserInfo(): JSX.Element {
 						icon={<Check size={16} />}
 						onClick={onSaveHandler}
 						disabled={isLoading}
-						data-testid="save-view-btn"
+						data-testid="update-name-btn"
 					>
 						Update name
 					</Button>,
@@ -213,11 +213,13 @@ function UserInfo(): JSX.Element {
 				footer={[
 					<Button
 						key="submit"
-						type="primary"
+						className={`periscope-btn ${
+							isResetPasswordDisabled ? 'secondary' : 'primary'
+						}`}
 						icon={<Check size={16} />}
 						onClick={onChangePasswordClickHandler}
 						disabled={isLoading || isResetPasswordDisabled}
-						data-testid="save-view-btn"
+						data-testid="reset-password-btn"
 					>
 						Reset password
 					</Button>,

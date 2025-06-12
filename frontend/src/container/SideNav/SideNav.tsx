@@ -1019,7 +1019,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						type="primary"
 						icon={<Check size={16} />}
 						onClick={handleReorderShortcutNavItems}
-						data-testid="save-view-btn"
+						data-testid="save-changes-btn"
 					>
 						Save Changes
 					</Button>,
