@@ -288,7 +288,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 			err := fromNotNilCheck(&operator)
 			if err != nil {
 				return fmt.Errorf(
-					"couldn't generate nil check for From field of %s op %s: %w", operator.Type, operator.Name, err,
+					"couldn't generate nil check for From field of %s op %s on field %s: %w", operator.Type, operator.Type, operator.From, err,
 				)
 			}
 
