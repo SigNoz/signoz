@@ -40,24 +40,26 @@ function QueryAggregationOptions({
 
 	return (
 		<div className="query-aggregation-container">
-			<QueryAggregationSelect onChange={onChange} queryData={queryData} />
+			<div className="aggregation-container">
+				<QueryAggregationSelect onChange={onChange} queryData={queryData} />
 
-			{showAggregationInterval && (
-				<div className="query-aggregation-interval">
-					<div className="query-aggregation-interval-label">every</div>
-					<div className="query-aggregation-interval-input-container">
-						<InputWithLabel
-							initialValue={queryData.stepInterval ? queryData.stepInterval : '60'}
-							label="Seconds"
-							placeholder="60"
-							type="number"
-							onChange={handleAggregationIntervalChange}
-							labelAfter
-							onClose={(): void => {}}
-						/>
+				{showAggregationInterval && (
+					<div className="query-aggregation-interval">
+						<div className="query-aggregation-interval-label">every</div>
+						<div className="query-aggregation-interval-input-container">
+							<InputWithLabel
+								initialValue={queryData.stepInterval ? queryData.stepInterval : '60'}
+								label="Seconds"
+								placeholder="60"
+								type="number"
+								onChange={handleAggregationIntervalChange}
+								labelAfter
+								onClose={(): void => {}}
+							/>
+						</div>
 					</div>
-				</div>
-			)}
+				)}
+			</div>
 		</div>
 	);
 }
