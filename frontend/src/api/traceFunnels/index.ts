@@ -292,6 +292,7 @@ export const getFunnelErrorTraces = async (
 export interface FunnelStepsPayload {
 	start_time: number;
 	end_time: number;
+	steps: FunnelStepData[];
 }
 
 export interface FunnelStepGraphMetrics {

@@ -7,6 +7,7 @@ import {
 	FunnelOverviewResponse,
 	FunnelStepsOverviewPayload,
 	FunnelStepsOverviewResponse,
+	FunnelStepsPayload,
 	FunnelStepsResponse,
 	getFunnelById,
 	getFunnelErrorTraces,
@@ -216,25 +217,17 @@ export const useFunnelErrorTraces = (
 
 export function useFunnelStepsGraphData(
 	funnelId: string,
+	payload: FunnelStepsPayload,
 ): UseQueryResult<SuccessResponse<FunnelStepsResponse> | ErrorResponse, Error> {
-	const {
-		startTime,
-		endTime,
-		selectedTime,
-		validTracesCount,
-	} = useFunnelContext();
+	const { selectedTime, validTracesCount } = useFunnelContext();
 
 	return useQuery({
-		queryFn: ({ signal }) =>
-			getFunnelSteps(
-				funnelId,
-				{ start_time: startTime, end_time: endTime },
-				signal,
-			),
+		queryFn: ({ signal }) => getFunnelSteps(funnelId, payload, signal),
 		queryKey: [
 			REACT_QUERY_KEY.GET_FUNNEL_STEPS_GRAPH_DATA,
 			funnelId,
 			selectedTime,
+			payload.steps,
 		],
 		enabled: !!funnelId && validTracesCount > 0,
 	});
