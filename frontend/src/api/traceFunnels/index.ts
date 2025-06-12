@@ -185,6 +185,7 @@ export interface FunnelOverviewPayload {
 	end_time: number;
 	step_start?: number;
 	step_end?: number;
+	steps: FunnelStepData[];
 }
 
 export interface FunnelOverviewResponse {

@@ -172,8 +172,7 @@ export const useFunnelOverview = (
 			REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW,
 			funnelId,
 			selectedTime,
-			payload.step_start ?? '',
-			payload.step_end ?? '',
+			payload.steps,
 		],
 		enabled: !!funnelId && validTracesCount > 0,
 	});
