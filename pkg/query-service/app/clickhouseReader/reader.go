@@ -6257,7 +6257,22 @@ func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context, orgID val
 
 func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]*model.UpdateMetricsMetadata, *model.ApiError) {
 	cachedMetadata := make(map[string]*model.UpdateMetricsMetadata)
-	var missingMetrics []string
+
+	preCacheLoaded := new(model.CacheLoaded)
+	err := r.cache.Get(ctx, orgID, constants.METRICS_UPDATED_METADATA_CACHE_LOADED_KEY, preCacheLoaded, false)
+	if err != nil {
+		*preCacheLoaded = false
+		zap.L().Warn("Failed to get cached metrics updated metadata", zap.Error(err))
+	}
+
+	if !*preCacheLoaded {
+		r.PreloadMetricsMetadata(ctx, orgID)
+		*preCacheLoaded = true
+		err := r.cache.Set(ctx, orgID, constants.METRICS_UPDATED_METADATA_CACHE_LOADED_KEY, preCacheLoaded, -1)
+		if err != nil {
+			zap.L().Warn("Failed to set cached metrics updated metadata", zap.Error(err))
+		}
+	}
 
 	// First, try retrieving each metric from cache.
 	for _, metricName := range metricNames {
@@ -6266,48 +6281,8 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 		err := r.cache.Get(ctx, orgID, cacheKey, metadata, true)
 		if err == nil {
 			cachedMetadata[metricName] = metadata
-		} else {
-			missingMetrics = append(missingMetrics, metricName)
 		}
 	}
-
-	// If there are any metrics missing in the cache, query them from the database.
-	if len(missingMetrics) > 0 {
-		// Join the missing metric names; ensure proper quoting if needed.
-		metricList := "'" + strings.Join(metricNames, "', '") + "'"
-		query := fmt.Sprintf(`SELECT metric_name, type, description, temporality, is_monotonic, unit
-			FROM %s.%s 
-			WHERE metric_name IN (%s);`, signozMetricDBName, signozUpdatedMetricsMetadataTable, metricList)
-
-		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-		rows, err := r.db.Query(valueCtx, query)
-		if err != nil {
-			return cachedMetadata, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metrics metadata: %v", err)}
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			metadata := new(model.UpdateMetricsMetadata)
-			if err := rows.Scan(
-				&metadata.MetricName,
-				&metadata.MetricType,
-				&metadata.Description,
-				&metadata.Temporality,
-				&metadata.IsMonotonic,
-				&metadata.Unit,
-			); err != nil {
-				return cachedMetadata, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error scanning metrics metadata: %v", err)}
-			}
-
-			// Cache the result for future requests.
-			cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metadata.MetricName
-			if cacheErr := r.cache.Set(ctx, orgID, cacheKey, metadata, -1); cacheErr != nil {
-				zap.L().Error("Failed to store metrics metadata in cache", zap.String("metric_name", metadata.MetricName), zap.Error(cacheErr))
-			}
-			cachedMetadata[metadata.MetricName] = metadata
-		}
-	}
-
 	return cachedMetadata, nil
 }
 
