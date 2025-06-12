@@ -6233,30 +6233,30 @@ func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricNam
 	return hasLE, nil
 }
 
-func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context, orgID valuer.UUID) []error {
+func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context, orgID valuer.UUID) ([]string, *model.ApiError) {
 	var allMetricsMetadata []model.UpdateMetricsMetadata
-	var errorList []error
+	var errorMetricsList []string
 	// Fetch all rows from ClickHouse
 	query := fmt.Sprintf(`SELECT metric_name, type, description , temporality, is_monotonic, unit
 		FROM %s.%s;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	err := r.db.Select(valueCtx, &allMetricsMetadata, query)
 	if err != nil {
-		errorList = append(errorList, err)
-		return errorList
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: fmt.Errorf("error in getting updated metadata: %v", err)}
 	}
 	for _, m := range allMetricsMetadata {
 		err := r.cache.Set(ctx, orgID, constants.UpdatedMetricsMetadataCachePrefix+m.MetricName, &m, -1)
 		if err != nil {
-			errorList = append(errorList, err)
+			errorMetricsList = append(errorMetricsList, m.MetricName)
 		}
 	}
 
-	return errorList
+	return errorMetricsList, nil
 }
 
 func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]*model.UpdateMetricsMetadata, *model.ApiError) {
 	cachedMetadata := make(map[string]*model.UpdateMetricsMetadata)
+	var missingMetrics []string
 
 	preCacheLoaded := new(model.CacheLoaded)
 	err := r.cache.Get(ctx, orgID, constants.METRICS_UPDATED_METADATA_CACHE_LOADED_KEY, preCacheLoaded, false)
@@ -6266,7 +6266,13 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 	}
 
 	if !*preCacheLoaded {
-		r.PreloadMetricsMetadata(ctx, orgID)
+		preLoadErrorList, apiErr := r.PreloadMetricsMetadata(ctx, orgID)
+		if apiErr != nil {
+			return nil, apiErr
+		}
+		if preLoadErrorList != nil && len(preLoadErrorList) > 0 {
+			missingMetrics = append(missingMetrics, preLoadErrorList...)
+		}
 		*preCacheLoaded = true
 		err := r.cache.Set(ctx, orgID, constants.METRICS_UPDATED_METADATA_CACHE_LOADED_KEY, preCacheLoaded, -1)
 		if err != nil {
@@ -6281,6 +6287,44 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 		err := r.cache.Get(ctx, orgID, cacheKey, metadata, true)
 		if err == nil {
 			cachedMetadata[metricName] = metadata
+		} else if !errorsV2.Ast(err, errorsV2.TypeNotFound) {
+			missingMetrics = append(missingMetrics, metricName)
+		}
+	}
+
+	if len(missingMetrics) > 0 {
+		// Join the missing metric names; ensure proper quoting if needed.
+		metricList := "'" + strings.Join(metricNames, "', '") + "'"
+		query := fmt.Sprintf(`SELECT metric_name, type, description, temporality, is_monotonic, unit
+			FROM %s.%s 
+			WHERE metric_name IN (%s);`, signozMetricDBName, signozUpdatedMetricsMetadataTable, metricList)
+
+		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+		rows, err := r.db.Query(valueCtx, query)
+		if err != nil {
+			return cachedMetadata, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metrics metadata: %v", err)}
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			metadata := new(model.UpdateMetricsMetadata)
+			if err := rows.Scan(
+				&metadata.MetricName,
+				&metadata.MetricType,
+				&metadata.Description,
+				&metadata.Temporality,
+				&metadata.IsMonotonic,
+				&metadata.Unit,
+			); err != nil {
+				return cachedMetadata, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error scanning metrics metadata: %v", err)}
+			}
+
+			// Cache the result for future requests.
+			cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metadata.MetricName
+			if cacheErr := r.cache.Set(ctx, orgID, cacheKey, metadata, -1); cacheErr != nil {
+				zap.L().Error("Failed to store metrics metadata in cache", zap.String("metric_name", metadata.MetricName), zap.Error(cacheErr))
+			}
+			cachedMetadata[metadata.MetricName] = metadata
 		}
 	}
 	return cachedMetadata, nil
