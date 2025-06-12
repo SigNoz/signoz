@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
@@ -840,4 +841,147 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 
 	_, test2Exists := result[0].Attributes_string["test2"]
 	require.False(test2Exists)
+}
+
+func TestProcessJSONParser_WithFlatteningAndMapping(t *testing.T) {
+	parserID := uuid.NewString()
+	outputID := uuid.NewString()
+
+	parent := &pipelinetypes.PipelineOperator{
+		Type:             "json_parser",
+		ID:               parserID,
+		Name:             "Parse JSON",
+		OrderId:          1,
+		Enabled:          true,
+		ParseFrom:        "body",
+		ParseTo:          "attributes",
+		Output:           outputID,
+		EnableFlattening: true,
+		EnablePaths:      false,
+		PathPrefix:       "",
+		Mapping: map[string][]string{
+			pipelinetypes.Host:        {"host", "hostname"},
+			pipelinetypes.Service:     {"service", "syslog.appname"},
+			pipelinetypes.Severity:    {"status", "severity", "level", "syslog.severity"},
+			pipelinetypes.TraceID:     {"trace_id"},
+			pipelinetypes.SpanID:      {"span_id"},
+			pipelinetypes.Message:     {"message", "msg", "log"},
+			pipelinetypes.TraceFlags:  {"flags"},
+			pipelinetypes.Environment: {"service.env"},
+		},
+	}
+
+	// Total children generated = sum(len(mapping values)) + severity_parser + trace_parser ops
+	expectedMoveOps := len(parent.Mapping[pipelinetypes.Host]) +
+		len(parent.Mapping[pipelinetypes.Service]) +
+		len(parent.Mapping[pipelinetypes.Message]) +
+		len(parent.Mapping[pipelinetypes.Environment])
+	expectedTraceOps := len(parent.Mapping[pipelinetypes.TraceID]) +
+		len(parent.Mapping[pipelinetypes.SpanID]) +
+		len(parent.Mapping[pipelinetypes.TraceFlags])
+	expectedSeverityOps := len(parent.Mapping[pipelinetypes.Severity]) // severity_parser
+
+	totalOps := expectedMoveOps + expectedTraceOps + expectedSeverityOps
+
+	ops, err := processJSONParser(parent)
+	require.NoError(t, err)
+	require.NotEmpty(t, ops)
+
+	// Parent is always first
+	parentOp := ops[0]
+	require.Equal(t, "json_parser", parentOp.Type)
+	require.Equal(t, 3, parentOp.MaxFlatteningDepth)
+	require.Nil(t, parentOp.Mapping) // Mapping should be removed
+	require.Nil(t, parent.Mapping)   // Mapping should be removed
+	require.Contains(t, parentOp.If, `isJSON(body)`)
+	require.Contains(t, parentOp.If, `type(body)`)
+
+	require.Equal(t, 1+totalOps, len(ops))
+
+	var traceParserCount, moveCount, severityParserCount int
+	for _, op := range ops[1:] {
+		require.NotEmpty(t, op.ID)
+
+		switch op.Type {
+		case "move":
+			require.NotEmpty(t, op.From)
+			require.NotEmpty(t, op.To)
+			moveCount++
+		case "trace_parser":
+			require.NotNil(t, op.TraceParser)
+			traceParserCount++
+		case "severity_parser":
+			require.NotEmpty(t, op.ParseFrom)
+			require.NotEmpty(t, op.If)
+			severityParserCount++
+		default:
+			t.Errorf("unexpected operator type: %s", op.Type)
+		}
+	}
+
+	require.Equal(t, expectedMoveOps, moveCount)
+	require.Equal(t, expectedTraceOps, traceParserCount)
+	require.Equal(t, expectedSeverityOps, severityParserCount)
+}
+
+func TestProcessJSONParser_WithoutMapping(t *testing.T) {
+	parent := &pipelinetypes.PipelineOperator{
+		Type:             "json_parser",
+		ID:               uuid.NewString(),
+		Name:             "Parse JSON",
+		OrderId:          1,
+		Enabled:          true,
+		ParseFrom:        "body",
+		ParseTo:          "attributes",
+		EnableFlattening: true,
+		EnablePaths:      true,
+		PathPrefix:       "parsed",
+		Mapping:          nil, // No mapping
+	}
+
+	ops, err := processJSONParser(parent)
+	require.NoError(t, err)
+	require.Len(t, ops, 1) // Only the parent operator should exist
+
+	op := ops[0]
+	require.Equal(t, "json_parser", op.Type)
+	require.Equal(t, 3, op.MaxFlatteningDepth)
+	require.True(t, op.EnableFlattening)
+	require.True(t, op.EnablePaths)
+	require.Equal(t, "parsed", op.PathPrefix)
+	require.Contains(t, op.If, `isJSON(body)`)
+}
+
+func TestProcessJSONParser_Simple(t *testing.T) {
+	parent := &pipelinetypes.PipelineOperator{
+		Type:      "json_parser",
+		ID:        uuid.NewString(),
+		Name:      "Parse JSON",
+		OrderId:   1,
+		Enabled:   true,
+		ParseFrom: "body",
+		ParseTo:   "attributes",
+	}
+
+	ops, err := processJSONParser(parent)
+	require.NoError(t, err)
+	require.Len(t, ops, 1) // Only the parent operator should exist
+
+	op := ops[0]
+	require.Equal(t, "json_parser", op.Type)
+	require.Equal(t, 0, op.MaxFlatteningDepth)
+	require.False(t, op.EnableFlattening)
+	require.False(t, op.EnablePaths)
+	require.Equal(t, "", op.PathPrefix)
+	require.Contains(t, op.If, `isJSON(body)`)
+}
+
+func TestProcessJSONParser_InvalidType(t *testing.T) {
+	parent := &pipelinetypes.PipelineOperator{
+		Type: "copy", // Invalid type
+	}
+
+	_, err := processJSONParser(parent)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "operator type received copy")
 }

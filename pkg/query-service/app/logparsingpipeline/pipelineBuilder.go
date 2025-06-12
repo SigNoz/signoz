@@ -194,16 +194,10 @@ func getOperators(ops []pipelinetypes.PipelineOperator) ([]pipelinetypes.Pipelin
 				}
 				// TODO(Raj): Maybe add support for gotime too eventually
 			} else if operator.Type == "severity_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				err := processSeverityParser(&operator)
 				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of severity parser %s: %w", operator.Name, err,
-					)
+					return nil, err
 				}
-				operator.If = fmt.Sprintf(
-					`%s && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
-					parseFromNotNilCheck, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom,
-				)
 			}
 
 			filteredOp = append(filteredOp, operator)
@@ -218,6 +212,25 @@ func getOperators(ops []pipelinetypes.PipelineOperator) ([]pipelinetypes.Pipelin
 		}
 	}
 	return filteredOp, nil
+}
+
+func processSeverityParser(operator *pipelinetypes.PipelineOperator) error {
+	if operator.Type != "severity_parser" {
+		return errors.NewUnexpectedf(CodeInvalidOperatorType, "operator type received %s", operator.Type)
+	}
+
+	parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+	if err != nil {
+		return errors.WrapInvalidInputf(err, CodeFieldNilCheckType,
+			"couldn't generate nil check for parseFrom of severity parser %s", operator.Name,
+		)
+	}
+	operator.If = fmt.Sprintf(
+		`%s && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
+		parseFromNotNilCheck, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom,
+	)
+
+	return nil
 }
 
 // processJSONParser converts simple JSON parser operator into multiple operators for JSONMapping of default variables
@@ -353,17 +366,10 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 			OnError:   signozstanzahelper.SendOnErrorQuiet,
 			ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
 		}
-
-		parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+		err := processSeverityParser(&operator)
 		if err != nil {
-			return nil, fmt.Errorf(
-				"couldn't generate nil check for parseFrom of severity parser %s: %w", operator.Name, err,
-			)
+			return nil, err
 		}
-		operator.If = fmt.Sprintf(
-			`%s && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
-			parseFromNotNilCheck, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom,
-		)
 
 		operator.Mapping = pipelinetypes.DefaultSeverityMapping
 		children = append(children, operator)
