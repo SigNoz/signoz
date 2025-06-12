@@ -1,45 +1,61 @@
 import { Color } from '@signozhq/design-tokens';
 import { render } from '@testing-library/react';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { TreemapViewType } from '../types';
 import {
 	formatDataForMetricsTable,
-	metricsTableColumns,
+	getMetricsTableColumns,
 	MetricTypeRenderer,
 } from '../utils';
 
 describe('metricsTableColumns', () => {
+	const mockQueryFilters: TagFilter = {
+		items: [],
+		op: 'AND',
+	};
+
 	it('should have correct column definitions', () => {
-		expect(metricsTableColumns).toHaveLength(6);
+		expect(getMetricsTableColumns(mockQueryFilters)).toHaveLength(6);
 
 		// Metric Name column
-		expect(metricsTableColumns[0].dataIndex).toBe('metric_name');
-		expect(metricsTableColumns[0].width).toBe(400);
-		expect(metricsTableColumns[0].sorter).toBe(false);
+		expect(getMetricsTableColumns(mockQueryFilters)[0].dataIndex).toBe(
+			'metric_name',
+		);
+		expect(getMetricsTableColumns(mockQueryFilters)[0].width).toBe(400);
+		expect(getMetricsTableColumns(mockQueryFilters)[0].sorter).toBe(false);
 
 		// Description column
-		expect(metricsTableColumns[1].dataIndex).toBe('description');
-		expect(metricsTableColumns[1].width).toBe(400);
+		expect(getMetricsTableColumns(mockQueryFilters)[1].dataIndex).toBe(
+			'description',
+		);
+		expect(getMetricsTableColumns(mockQueryFilters)[1].width).toBe(400);
 
 		// Type column
-		expect(metricsTableColumns[2].dataIndex).toBe('metric_type');
-		expect(metricsTableColumns[2].width).toBe(150);
-		expect(metricsTableColumns[2].sorter).toBe(false);
+		expect(getMetricsTableColumns(mockQueryFilters)[2].dataIndex).toBe(
+			'metric_type',
+		);
+		expect(getMetricsTableColumns(mockQueryFilters)[2].width).toBe(150);
+		expect(getMetricsTableColumns(mockQueryFilters)[2].sorter).toBe(false);
 
 		// Unit column
-		expect(metricsTableColumns[3].dataIndex).toBe('unit');
-		expect(metricsTableColumns[3].width).toBe(150);
+		expect(getMetricsTableColumns(mockQueryFilters)[3].dataIndex).toBe('unit');
+		expect(getMetricsTableColumns(mockQueryFilters)[3].width).toBe(150);
 
 		// Samples column
-		expect(metricsTableColumns[4].dataIndex).toBe(TreemapViewType.SAMPLES);
-		expect(metricsTableColumns[4].width).toBe(150);
-		expect(metricsTableColumns[4].sorter).toBe(true);
+		expect(getMetricsTableColumns(mockQueryFilters)[4].dataIndex).toBe(
+			TreemapViewType.SAMPLES,
+		);
+		expect(getMetricsTableColumns(mockQueryFilters)[4].width).toBe(150);
+		expect(getMetricsTableColumns(mockQueryFilters)[4].sorter).toBe(true);
 
 		// Time Series column
-		expect(metricsTableColumns[5].dataIndex).toBe(TreemapViewType.TIMESERIES);
-		expect(metricsTableColumns[5].width).toBe(150);
-		expect(metricsTableColumns[5].sorter).toBe(true);
+		expect(getMetricsTableColumns(mockQueryFilters)[5].dataIndex).toBe(
+			TreemapViewType.TIMESERIES,
+		);
+		expect(getMetricsTableColumns(mockQueryFilters)[5].width).toBe(150);
+		expect(getMetricsTableColumns(mockQueryFilters)[5].sorter).toBe(true);
 	});
 
 	describe('MetricTypeRenderer', () => {

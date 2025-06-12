@@ -95,7 +95,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			usersData.data
 		) {
 			const isOnboardingComplete = orgPreferences?.find(
-				(preference: Record<string, any>) => preference.key === 'ORG_ONBOARDING',
+				(preference: Record<string, any>) => preference.name === 'org_onboarding',
 			)?.value;
 
 			const isFirstUser = checkFirstTimeUser();

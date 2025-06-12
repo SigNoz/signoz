@@ -211,3 +211,16 @@ func (provider *provider) GetFeatureFlags(ctx context.Context, organizationID va
 
 	return license.Features, nil
 }
+
+func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	activeLicense, err := provider.GetActive(ctx, orgID)
+	if err != nil {
+		if errors.Ast(err, errors.TypeNotFound) {
+			return map[string]any{}, nil
+		}
+
+		return nil, err
+	}
+
+	return licensetypes.NewStatsFromLicense(activeLicense), nil
+}

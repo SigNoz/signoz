@@ -1,5 +1,6 @@
 import { Button, Collapse, Input, Select, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import logEvent from 'api/common/logEvent';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { UpdateMetricMetadataProps } from 'api/metricsExplorer/updateMetricMetadata';
@@ -11,6 +12,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
+import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {
 	METRIC_TYPE_LABEL_MAP,
 	METRIC_TYPE_VALUES_MAP,
@@ -170,6 +172,11 @@ function Metadata({
 			{
 				onSuccess: (response): void => {
 					if (response?.statusCode === 200) {
+						logEvent(MetricsExplorerEvents.MetricMetadataUpdated, {
+							[MetricsExplorerEventKeys.MetricName]: metricName,
+							[MetricsExplorerEventKeys.Tab]: 'summary',
+							[MetricsExplorerEventKeys.Modal]: 'metric-details',
+						});
 						notifications.success({
 							message: 'Metadata updated successfully',
 						});

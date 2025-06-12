@@ -8,8 +8,6 @@ import (
 )
 
 type QueryEnvelope struct {
-	// Name is the unique identifier for the query.
-	Name string `json:"name"`
 	// Type is the type of the query.
 	Type QueryType `json:"type"` // "builder_query" | "builder_formula" | "builder_sub_query" | "builder_join" | "promql" | "clickhouse_sql"
 	// Spec is the deferred decoding of the query if any.
@@ -27,7 +25,6 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid query envelope")
 	}
 
-	q.Name = shadow.Name
 	q.Type = shadow.Type
 
 	// 2. Decode the spec based on the Type.
@@ -116,4 +113,14 @@ type QueryRangeRequest struct {
 	CompositeQuery CompositeQuery `json:"compositeQuery"`
 	// Variables is the variables to use for the request.
 	Variables map[string]any `json:"variables,omitempty"`
+
+	// NoCache is a flag to disable caching for the request.
+	NoCache bool `json:"noCache,omitempty"`
+
+	FormatOptions *FormatOptions `json:"formatOptions,omitempty"`
+}
+
+type FormatOptions struct {
+	FillGaps               bool `json:"fillGaps,omitempty"`
+	FormatTableResultForUI bool `json:"formatTableResultForUI,omitempty"`
 }

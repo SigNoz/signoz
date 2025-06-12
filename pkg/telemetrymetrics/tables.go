@@ -33,6 +33,12 @@ var (
 	sixHoursInMilliseconds = uint64(time.Hour.Milliseconds() * 6)
 	oneDayInMilliseconds   = uint64(time.Hour.Milliseconds() * 24)
 	oneWeekInMilliseconds  = uint64(oneDayInMilliseconds * 7)
+
+	// when the query requests for almost 1 day, but not exactly 1 day, we need to add an offset to the end time
+	// to make sure that we are using the correct table
+	// this is because the start gets adjusted to the nearest step interval and uses the 5m table for 4m step interval
+	// leading to time series that doesn't best represent the rate of change
+	offsetBucket = uint64(60 * time.Minute.Milliseconds())
 )
 
 func WhichTSTableToUse(
@@ -119,9 +125,9 @@ func WhichSamplesTableToUse(
 		return SamplesV4TableName
 	}
 
-	if end-start < oneDayInMilliseconds {
+	if end-start < oneDayInMilliseconds+offsetBucket {
 		return SamplesV4TableName
-	} else if end-start < oneWeekInMilliseconds {
+	} else if end-start < oneWeekInMilliseconds+offsetBucket {
 		return SamplesV4Agg5mTableName
 	} else {
 		return SamplesV4Agg30mTableName
