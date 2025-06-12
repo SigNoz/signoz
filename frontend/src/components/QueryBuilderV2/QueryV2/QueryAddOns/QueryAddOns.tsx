@@ -99,13 +99,14 @@ function QueryAddOns({
 			return;
 		}
 
+		let filteredAddOns: AddOn[];
 		if (panelType === PANEL_TYPES.VALUE) {
 			// Filter out all add-ons except legend format
-			setAddOns((prevAddOns) =>
-				prevAddOns.filter((addOn) => addOn.key === ADD_ONS_KEYS.LEGEND_FORMAT),
+			filteredAddOns = ADD_ONS.filter(
+				(addOn) => addOn.key === ADD_ONS_KEYS.LEGEND_FORMAT,
 			);
 		} else {
-			let filteredAddOns = Object.values(ADD_ONS);
+			filteredAddOns = Object.values(ADD_ONS);
 
 			// Filter out group_by for metrics data source
 			if (query.dataSource === DataSource.METRICS) {
@@ -113,15 +114,21 @@ function QueryAddOns({
 					(addOn) => addOn.key !== ADD_ONS_KEYS.GROUP_BY,
 				);
 			}
-
-			setAddOns(filteredAddOns);
 		}
 
 		// add reduce to if showReduceTo is true
 		if (showReduceTo) {
-			setAddOns((prevAddOns) => [...prevAddOns, REDUCE_TO]);
+			filteredAddOns = [...filteredAddOns, REDUCE_TO];
 		}
 
+		setAddOns(filteredAddOns);
+
+		// Filter selectedViews to only include add-ons present in filteredAddOns
+		setSelectedViews((prevSelectedViews) =>
+			prevSelectedViews.filter((view) =>
+				filteredAddOns.some((addOn) => addOn.key === view.key),
+			),
+		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [panelType, isListViewPanel, query.dataSource]);
 

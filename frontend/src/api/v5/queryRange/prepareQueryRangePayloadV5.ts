@@ -74,7 +74,7 @@ function createBaseSpec(
 	return {
 		stepInterval: queryData.stepInterval,
 		disabled: queryData.disabled,
-		filter: queryData.filter,
+		filter: queryData?.filter?.expression ? queryData.filter : undefined,
 		groupBy:
 			queryData.groupBy?.length > 0
 				? queryData.groupBy.map(
