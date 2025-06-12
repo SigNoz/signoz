@@ -75,7 +75,7 @@ function TracesExplorer(): JSX.Element {
 
 	const isGroupByExist = useMemo(() => {
 		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
-			(acc, query) => acc + query.groupBy.length,
+			(acc, query) => acc + (query?.groupBy?.length || 0),
 			0,
 		);
 
