@@ -22,12 +22,3 @@ func (c *UpdateMetricsMetadata) MarshalBinary() (data []byte, err error) {
 func (c *UpdateMetricsMetadata) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, c)
 }
-
-type CacheLoaded bool
-
-func (c *CacheLoaded) MarshalBinary() (data []byte, err error) {
-	return json.Marshal(c)
-}
-func (c *CacheLoaded) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, c)
-}
