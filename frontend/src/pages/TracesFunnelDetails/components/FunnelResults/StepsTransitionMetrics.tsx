@@ -1,5 +1,6 @@
 import { useFunnelStepsMetrics } from 'hooks/TracesFunnels/useFunnelMetrics';
 import { useParams } from 'react-router-dom';
+import { FunnelStepData } from 'types/api/traceFunnels';
 
 import FunnelMetricsTable from './FunnelMetricsTable';
 import { StepTransition } from './StepsTransitionResults';
@@ -9,6 +10,7 @@ interface StepsTransitionMetricsProps {
 	transitions: StepTransition[];
 	startStep?: number;
 	endStep?: number;
+	steps: FunnelStepData[];
 }
 
 function StepsTransitionMetrics({
@@ -16,6 +18,7 @@ function StepsTransitionMetrics({
 	transitions,
 	startStep,
 	endStep,
+	steps,
 }: StepsTransitionMetricsProps): JSX.Element {
 	const { funnelId } = useParams<{ funnelId: string }>();
 	const currentTransition = transitions.find(
@@ -26,6 +29,7 @@ function StepsTransitionMetrics({
 		funnelId: funnelId || '',
 		stepStart: startStep,
 		stepEnd: endStep,
+		steps,
 	});
 
 	if (!currentTransition) {

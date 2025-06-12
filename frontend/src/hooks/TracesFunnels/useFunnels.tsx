@@ -192,6 +192,7 @@ export const useFunnelSlowTraces = (
 			selectedTime,
 			payload.step_start ?? '',
 			payload.step_end ?? '',
+			payload.steps,
 		],
 		enabled: !!funnelId && validTracesCount > 0,
 	});
@@ -210,6 +211,7 @@ export const useFunnelErrorTraces = (
 			selectedTime,
 			payload.step_start ?? '',
 			payload.step_end ?? '',
+			payload.steps,
 		],
 		enabled: !!funnelId && validTracesCount > 0,
 	});

@@ -2,7 +2,7 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { MetricItem } from 'pages/TracesFunnelDetails/components/FunnelResults/FunnelMetricsTable';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo } from 'react';
-import { LatencyOptions } from 'types/api/traceFunnels';
+import { FunnelStepData, LatencyOptions } from 'types/api/traceFunnels';
 
 import { useFunnelOverview, useFunnelStepsOverview } from './useFunnels';
 
@@ -10,6 +10,7 @@ interface FunnelMetricsParams {
 	funnelId: string;
 	stepStart?: number;
 	stepEnd?: number;
+	steps: FunnelStepData[];
 }
 
 export function useFunnelMetrics({
@@ -69,13 +70,14 @@ export function useFunnelStepsMetrics({
 	funnelId,
 	stepStart,
 	stepEnd,
+	steps,
 }: FunnelMetricsParams): {
 	isLoading: boolean;
 	isError: boolean;
 	metricsData: MetricItem[];
 	conversionRate: number;
 } {
-	const { startTime, endTime, steps } = useFunnelContext();
+	const { startTime, endTime } = useFunnelContext();
 
 	const payload = {
 		start_time: startTime,

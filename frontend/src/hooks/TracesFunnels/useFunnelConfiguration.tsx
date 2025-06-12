@@ -54,7 +54,6 @@ export default function useFunnelConfiguration({
 		initialSteps,
 		hasIncompleteStepFields,
 		handleRestoreSteps,
-		handleRunFunnel,
 	} = useFunnelContext();
 
 	// State management
@@ -135,15 +134,6 @@ export default function useFunnelConfiguration({
 		[],
 	);
 
-	const hasFunnelLatencyTypeChanged = useCallback(
-		(prevSteps: FunnelStepData[], nextSteps: FunnelStepData[]): boolean =>
-			prevSteps.some((step, index) => {
-				const nextStep = nextSteps[index];
-				return step.latency_type !== nextStep.latency_type;
-			}),
-		[],
-	);
-
 	// Mutation payload preparation
 	const getUpdatePayload = useCallback(
 		() => ({
@@ -204,12 +194,8 @@ export default function useFunnelConfiguration({
 						(step) => step.service_name === '' || step.span_name === '',
 					);
 
-					if (hasFunnelLatencyTypeChanged(lastValidatedSteps, debouncedSteps)) {
-						handleRunFunnel();
-						setLastValidatedSteps(debouncedSteps);
-					}
 					// Only validate if funnel steps definitions
-					else if (
+					if (
 						!hasIncompleteStepFields &&
 						hasFunnelStepDefinitionsChanged(lastValidatedSteps, debouncedSteps)
 					) {
