@@ -82,6 +82,7 @@ export function useFunnelStepsMetrics({
 		end_time: endTime,
 		step_start: stepStart,
 		step_end: stepEnd,
+		steps,
 	};
 
 	const {

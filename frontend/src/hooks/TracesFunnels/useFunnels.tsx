@@ -249,6 +249,7 @@ export const useFunnelStepsOverview = (
 			selectedTime,
 			payload.step_start ?? '',
 			payload.step_end ?? '',
+			payload.steps,
 		],
 		enabled: !!funnelId && validTracesCount > 0,
 	});
