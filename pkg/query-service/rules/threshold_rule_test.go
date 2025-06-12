@@ -1223,7 +1223,6 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 
 	for idx, c := range cases {
 		rows := cmock.NewRows(cols, c.values)
-		//telemetryStore.Mock().ExpectQuery(".*").WillReturnError(fmt.Errorf("error"))
 		// We are testing the eval logic after the query is run
 		// so we don't care about the query string here
 		queryString := "SELECT any"
