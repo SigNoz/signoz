@@ -3,6 +3,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import getAll from 'api/v1/user/get';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
@@ -95,7 +96,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			usersData.data
 		) {
 			const isOnboardingComplete = orgPreferences?.find(
-				(preference: Record<string, any>) => preference.name === 'org_onboarding',
+				(preference: Record<string, any>) =>
+					preference.key === ORG_PREFERENCES.ORG_ONBOARDING,
 			)?.value;
 
 			const isFirstUser = checkFirstTimeUser();
