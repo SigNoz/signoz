@@ -12,6 +12,7 @@ import Header from 'components/Header/Header';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
@@ -184,18 +185,25 @@ export default function Home(): JSX.Element {
 	);
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
-		const checklistSkipped = userPreferences?.find(
-			(preference) => preference.name === 'welcome_checklist_do_later',
-		)?.value;
+		const checklistSkipped = Boolean(
+			userPreferences?.find(
+				(preference) =>
+					preference.name === ORG_PREFERENCES.WELCOME_CHECKLIST_DO_LATER,
+			)?.value,
+		);
 
 		const updatedChecklistItems = cloneDeep(checklistItems);
 
 		const newChecklistItems = updatedChecklistItems.map((item) => {
 			const newItem = { ...item };
-			newItem.isSkipped =
+
+			const isSkipped = Boolean(
 				userPreferences?.find(
 					(preference) => preference.name === item.skippedPreferenceKey,
-				)?.value || false;
+				)?.value,
+			);
+
+			newItem.isSkipped = isSkipped || false;
 			return newItem;
 		});
 
@@ -239,7 +247,7 @@ export default function Home(): JSX.Element {
 		setUpdatingUserPreferences(true);
 
 		updateUserPreference({
-			name: 'welcome_checklist_do_later',
+			name: ORG_PREFERENCES.WELCOME_CHECKLIST_DO_LATER,
 			value: true,
 		});
 	};
