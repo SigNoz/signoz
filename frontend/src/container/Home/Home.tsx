@@ -185,19 +185,25 @@ export default function Home(): JSX.Element {
 	);
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
-		const checklistSkipped = userPreferences?.find(
-			(preference) =>
-				preference.name === ORG_PREFERENCES.WELCOME_CHECKLIST_DO_LATER,
-		)?.value;
+		const checklistSkipped = Boolean(
+			userPreferences?.find(
+				(preference) =>
+					preference.name === ORG_PREFERENCES.WELCOME_CHECKLIST_DO_LATER,
+			)?.value,
+		);
 
 		const updatedChecklistItems = cloneDeep(checklistItems);
 
 		const newChecklistItems = updatedChecklistItems.map((item) => {
 			const newItem = { ...item };
-			newItem.isSkipped =
+
+			const isSkipped = Boolean(
 				userPreferences?.find(
 					(preference) => preference.name === item.skippedPreferenceKey,
-				)?.value || false;
+				)?.value,
+			);
+
+			newItem.isSkipped = isSkipped || false;
 			return newItem;
 		});
 
