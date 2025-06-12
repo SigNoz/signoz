@@ -47,11 +47,7 @@ export async function GetMetricQueryRange(
 		);
 
 		// Convert V5 response to legacy format for components
-		response = convertV5ResponseToLegacy(
-			v5Response,
-			legendMap,
-			props.formatForWeb,
-		);
+		response = convertV5ResponseToLegacy(v5Response, legendMap);
 	} else {
 		const legacyResult = prepareQueryRangePayload(props);
 		legendMap = legacyResult.legendMap;
