@@ -148,8 +148,8 @@ export interface QueryRef {
 }
 
 export interface FunctionArg {
-	name: string;
-	value: string;
+	name?: string;
+	value: string | number;
 }
 
 export interface QueryFunction {
@@ -267,7 +267,6 @@ export interface ClickHouseQuery {
 // ===================== Query Envelope =====================
 
 export interface QueryEnvelope {
-	name: string;
 	type: QueryType;
 	spec:
 		| BuilderQuery // Will be same for both builder_query and builder_sub_query
@@ -387,12 +386,6 @@ export interface QueryRangeResponseV5 {
 	type: RequestType;
 	data: QueryRangeDataV5;
 	meta: ExecStats;
-}
-
-export interface ErrorResponseV5 {
-	error: string;
-	message: string;
-	details?: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 // ===================== Payload Types for API Functions =====================

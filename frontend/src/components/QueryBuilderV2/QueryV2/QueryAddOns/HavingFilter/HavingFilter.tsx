@@ -15,6 +15,7 @@ import { Button } from 'antd';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 const havingOperators = [
 	{
@@ -70,12 +71,16 @@ const conjunctions = [
 function HavingFilter({
 	onClose,
 	onChange,
+	queryData,
 }: {
 	onClose: () => void;
 	onChange: (value: string) => void;
+	queryData: IBuilderQuery;
 }): JSX.Element {
 	const { aggregationOptions } = useQueryBuilderV2Context();
-	const [input, setInput] = useState('');
+	const [input, setInput] = useState(
+		queryData?.havingExpression?.expression || '',
+	);
 	const [isFocused, setIsFocused] = useState(false);
 
 	const editorRef = useRef<EditorView | null>(null);
