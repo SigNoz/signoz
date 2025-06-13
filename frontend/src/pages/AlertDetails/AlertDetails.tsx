@@ -1,9 +1,9 @@
 import './AlertDetails.styles.scss';
 
 import { Breadcrumb, Button, Divider } from 'antd';
+import { Empty } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
-import NotFound from 'components/NotFound';
 import RouteTab from 'components/RouteTab';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
@@ -90,7 +90,11 @@ function AlertDetails(): JSX.Element {
 		!isValidRuleId ||
 		(alertDetailsResponse && alertDetailsResponse.statusCode !== 200)
 	) {
-		return <NotFound />;
+		return (
+			<div className="alert-empty-card">
+				<Empty description="Alert Rule not found" />
+			</div>
+		);
 	}
 
 	const handleTabChange = (route: string): void => {
