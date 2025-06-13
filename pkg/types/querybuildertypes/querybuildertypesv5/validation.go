@@ -3,6 +3,7 @@ package querybuildertypesv5
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -85,11 +86,17 @@ func ValidateFunctionName(name FunctionName) error {
 		return nil
 	}
 
+	// Format valid functions as comma-separated string
+	var validFunctionNames []string
+	for _, fn := range validFunctions {
+		validFunctionNames = append(validFunctionNames, fn.StringValue())
+	}
+
 	return errors.NewInvalidInputf(
 		errors.CodeInvalidInput,
 		"invalid function name: %s",
 		name.StringValue(),
-	).WithAdditional(fmt.Sprintf("valid functions are: %v", validFunctions))
+	).WithAdditional(fmt.Sprintf("valid functions are: %s", strings.Join(validFunctionNames, ", ")))
 }
 
 // Validate performs preliminary validation on QueryBuilderQuery

@@ -1237,7 +1237,7 @@ func TestBucketCache_PartialValueDetection(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 
 		// Get cached data
-		cached, _ := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1 * time.Second * time.Millisecond})
+		cached, _ := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
 
 		// Should have cached data
 		assert.NotNil(t, cached)
@@ -1291,7 +1291,7 @@ func TestBucketCache_PartialValueDetection(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 
 		// Get cached data
-		cached, _ := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1 * time.Second * time.Millisecond})
+		cached, _ := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
 
 		// Should have cached data
 		assert.NotNil(t, cached)
@@ -1343,7 +1343,7 @@ func TestBucketCache_PartialValueDetection(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 
 		// Get cached data
-		cached, _ := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1 * time.Second * time.Millisecond})
+		cached, _ := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
 
 		// Should have cached data
 		assert.NotNil(t, cached)
