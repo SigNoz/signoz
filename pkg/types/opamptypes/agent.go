@@ -68,19 +68,20 @@ var (
 type AgentConfigVersion struct {
 	bun.BaseModel `bun:"table:agent_config_version,alias:acv"`
 
-	types.TimeAuditable
-	types.UserAuditable
-
-	CreatedByName string `json:"createdByName" bun:"created_by_name,scanonly"` // check if we can remove this,
+	// this is only for reading
+	// keeping it here since we query the actual data from users table
+	CreatedByName string `json:"createdByName" bun:"created_by_name,scanonly"`
 
 	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
 	OrgID          string       `json:"orgId" bun:"org_id,type:text"`
 	Version        int          `json:"version" bun:"version,default:1,unique:element_version_idx"`
 	ElementType    ElementType  `json:"elementType" bun:"element_type,notnull,type:varchar(120),unique:element_version_idx"`
 	DeployStatus   DeployStatus `json:"deployStatus" bun:"deploy_status,notnull,type:varchar(80),default:'DIRTY'"`
 	DeploySequence int          `json:"deploySequence" bun:"deploy_sequence"`
-	DeployResult   string       `json:"deployResult" bun:"deploy_result,type:text"` // check if I can create a map in backend
-	Hash           string       `json:"lastHash" bun:"hash,type:text"`              // check if we need to store this.
+	DeployResult   string       `json:"deployResult" bun:"deploy_result,type:text"` // keeping this as agentConf/manager.go has some context with this
+	Hash           string       `json:"lastHash" bun:"hash,type:text"`
 	Config         string       `json:"lastConfig" bun:"config,type:text"`
 }
 

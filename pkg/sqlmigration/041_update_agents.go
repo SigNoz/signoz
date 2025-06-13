@@ -60,12 +60,9 @@ type existingAgentConfigVersions41 struct {
 type newAgentConfigVersion41 struct {
 	bun.BaseModel `bun:"table:agent_config_version"`
 
-	CreatedByName string `json:"createdByName" bun:"created_by_name,scanonly"` // check if we can remove this,
-
+	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-
-	types.Identifiable
 	OrgID          string                  `json:"orgId" bun:"org_id,type:text"`
 	Version        int                     `json:"version" bun:"version,default:1,unique:element_version_idx"`
 	ElementType    opamptypes.ElementType  `json:"elementType" bun:"element_type,notnull,type:varchar(120),unique:element_version_idx"`
@@ -262,7 +259,7 @@ func (migration *updateAgents) CopyOldAgentToNewAgent(ctx context.Context, tx bu
 	newAgents := make([]*newAgent41, 0)
 	for _, existingAgent := range existingAgents {
 		newAgents = append(newAgents, &newAgent41{
-			Identifiable: types.Identifiable{ID: valuer.MustNewUUID(existingAgent.AgentID)},
+			Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: existingAgent.StartedAt,
 				UpdatedAt: existingAgent.StartedAt,
