@@ -5,6 +5,7 @@ import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_qu
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, RenderResult } from 'tests/test-utils';
@@ -87,6 +88,25 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
+// Mock usePreferenceSync
+jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
+	usePreferenceSync: (): any => ({
+		preferences: {
+			columns: [],
+			formatting: {
+				maxLines: 2,
+				format: 'table',
+				fontSize: 'small',
+				version: 1,
+			},
+		},
+		loading: false,
+		error: null,
+		updateColumns: jest.fn(),
+		updateFormatting: jest.fn(),
+	}),
+}));
+
 jest.mock('hooks/logs/useCopyLogLink', () => ({
 	useCopyLogLink: jest.fn().mockReturnValue({
 		activeLogId: ACTIVE_LOG_ID,
@@ -105,13 +125,15 @@ const renderer = (): RenderResult =>
 		<VirtuosoMockContext.Provider
 			value={{ viewportHeight: 300, itemHeight: 100 }}
 		>
-			<LogsExplorerViews
-				selectedView={SELECTED_VIEWS.SEARCH}
-				showFrequencyChart
-				setIsLoadingQueries={(): void => {}}
-				listQueryKeyRef={{ current: {} }}
-				chartQueryKeyRef={{ current: {} }}
-			/>
+			<PreferenceContextProvider>
+				<LogsExplorerViews
+					selectedView={SELECTED_VIEWS.SEARCH}
+					showFrequencyChart
+					setIsLoadingQueries={(): void => {}}
+					listQueryKeyRef={{ current: {} }}
+					chartQueryKeyRef={{ current: {} }}
+				/>
+			</PreferenceContextProvider>
 		</VirtuosoMockContext.Provider>,
 	);
 
@@ -184,13 +206,15 @@ describe('LogsExplorerViews -', () => {
 		lodsQueryServerRequest();
 		render(
 			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue}>
-				<LogsExplorerViews
-					selectedView={SELECTED_VIEWS.SEARCH}
-					showFrequencyChart
-					setIsLoadingQueries={(): void => {}}
-					listQueryKeyRef={{ current: {} }}
-					chartQueryKeyRef={{ current: {} }}
-				/>
+				<PreferenceContextProvider>
+					<LogsExplorerViews
+						selectedView={SELECTED_VIEWS.SEARCH}
+						showFrequencyChart
+						setIsLoadingQueries={(): void => {}}
+						listQueryKeyRef={{ current: {} }}
+						chartQueryKeyRef={{ current: {} }}
+					/>
+				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
 		);
 

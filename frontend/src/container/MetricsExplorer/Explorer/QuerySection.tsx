@@ -1,10 +1,13 @@
 import { Button } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { ButtonWrapper } from 'container/TracesExplorer/QuerySection/styles';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DataSource } from 'types/common/queryBuilder';
+
+import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 
 function QuerySection(): JSX.Element {
 	const { handleRunQuery } = useQueryBuilder();
@@ -19,7 +22,15 @@ function QuerySection(): JSX.Element {
 				version="v4"
 				actions={
 					<ButtonWrapper>
-						<Button onClick={(): void => handleRunQuery()} type="primary">
+						<Button
+							onClick={(): void => {
+								handleRunQuery();
+								logEvent(MetricsExplorerEvents.QueryBuilderQueryChanged, {
+									[MetricsExplorerEventKeys.Tab]: 'explorer',
+								});
+							}}
+							type="primary"
+						>
 							Run Query
 						</Button>
 					</ButtonWrapper>

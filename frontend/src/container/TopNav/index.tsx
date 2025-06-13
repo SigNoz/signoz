@@ -1,3 +1,5 @@
+import './TopNav.styles.scss';
+
 import { Col, Row, Space } from 'antd';
 import ROUTES from 'constants/routes';
 import { useMemo } from 'react';
@@ -43,7 +45,7 @@ function TopNav(): JSX.Element | null {
 	}
 
 	return !isRouteToSkip ? (
-		<Row style={{ marginBottom: '1rem' }}>
+		<div className="top-nav-container">
 			<Col span={24} style={{ marginTop: '1rem' }}>
 				<Row justify="end">
 					<Space align="center" size={16} direction="horizontal">
@@ -54,7 +56,7 @@ function TopNav(): JSX.Element | null {
 					</Space>
 				</Row>
 			</Col>
-		</Row>
+		</div>
 	) : null;
 }
 

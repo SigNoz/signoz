@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -58,8 +59,9 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		FluxInterval:                  opts.FluxInterval,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		LicensingAPI:                  httplicensing.NewLicensingAPI(signoz.Licensing),
-		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore, signoz.Instrumentation.Logger()),
+		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
+		QuerierAPI:                    querierAPI.NewAPI(signoz.Querier),
 	})
 
 	if err != nil {
