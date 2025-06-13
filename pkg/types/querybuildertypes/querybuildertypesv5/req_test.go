@@ -113,9 +113,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"compositeQuery": {
 					"queries": [
 						{
-							"name": "A",
 							"type": "builder_query",
 							"spec": {
+								"name": "A",
 								"signal": "traces",
 								"filter": {
 									"expression": "service.name = 'checkoutservice'"
@@ -123,9 +123,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"name": "B",
 							"type": "builder_query",
 							"spec": {
+								"name": "B",
 								"signal": "traces",
 								"filter": {
 									"expression": "hasError = true"
@@ -133,7 +133,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"name": "T1",
 							"type": "builder_trace_operator",
 							"spec": {
 								"name": "trace_flow_analysis",
@@ -160,9 +159,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{
 						{
-							Name: "A",
 							Type: QueryTypeBuilder,
 							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:   "A",
 								Signal: telemetrytypes.SignalTraces,
 								Filter: &Filter{
 									Expression: "service.name = 'checkoutservice'",
@@ -170,9 +169,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							},
 						},
 						{
-							Name: "B",
 							Type: QueryTypeBuilder,
 							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:   "B",
 								Signal: telemetrytypes.SignalTraces,
 								Filter: &Filter{
 									Expression: "hasError = true",
@@ -180,7 +179,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							},
 						},
 						{
-							Name: "T1",
 							Type: QueryTypeTraceOperator,
 							Spec: QueryBuilderTraceOperator{
 								Name:       "trace_flow_analysis",
@@ -211,9 +209,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"compositeQuery": {
 					"queries": [
 						{
-							"name": "A",
 							"type": "builder_query",
 							"spec": {
+								"name": "A",
 								"signal": "traces",
 								"filter": {
 									"expression": "service.name = 'frontend'"
@@ -221,9 +219,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"name": "B",
 							"type": "builder_query",
 							"spec": {
+								"name": "B",
 								"signal": "traces",
 								"filter": {
 									"expression": "hasError = true"
@@ -231,9 +229,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"name": "C",
 							"type": "builder_query",
 							"spec": {
+								"name": "C",
 								"signal": "traces",
 								"filter": {
 									"expression": "response_status_code = '200'"
@@ -241,7 +239,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"name": "T2",
 							"type": "builder_trace_operator",
 							"spec": {
 								"name": "complex_trace_analysis",
@@ -273,9 +270,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{
 						{
-							Name: "A",
 							Type: QueryTypeBuilder,
 							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:   "A",
 								Signal: telemetrytypes.SignalTraces,
 								Filter: &Filter{
 									Expression: "service.name = 'frontend'",
@@ -283,9 +280,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							},
 						},
 						{
-							Name: "B",
 							Type: QueryTypeBuilder,
 							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:   "B",
 								Signal: telemetrytypes.SignalTraces,
 								Filter: &Filter{
 									Expression: "hasError = true",
@@ -293,9 +290,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							},
 						},
 						{
-							Name: "C",
 							Type: QueryTypeBuilder,
 							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:   "C",
 								Signal: telemetrytypes.SignalTraces,
 								Filter: &Filter{
 									Expression: "response_status_code = '200'",
@@ -303,7 +300,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							},
 						},
 						{
-							Name: "T2",
 							Type: QueryTypeTraceOperator,
 							Spec: QueryBuilderTraceOperator{
 								Name:       "complex_trace_analysis",
@@ -339,9 +335,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"compositeQuery": {
 					"queries": [
 						{
-							"name": "A",
 							"type": "builder_query",
 							"spec": {
+								"name": "A",
 								"signal": "traces",
 								"filter": {
 									"expression": "service.name = 'frontend'"
@@ -349,7 +345,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"name": "T3",
 							"type": "builder_trace_operator",
 							"spec": {
 								"name": "not_trace_analysis",
@@ -371,9 +366,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{
 						{
-							Name: "A",
 							Type: QueryTypeBuilder,
 							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:   "A",
 								Signal: telemetrytypes.SignalTraces,
 								Filter: &Filter{
 									Expression: "service.name = 'frontend'",
@@ -381,7 +376,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							},
 						},
 						{
-							Name: "T3",
 							Type: QueryTypeTraceOperator,
 							Spec: QueryBuilderTraceOperator{
 								Name:       "not_trace_analysis",
@@ -407,9 +401,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"compositeQuery": {
 					"queries": [
 						{
-							"name": "A",
 							"type": "builder_query",
 							"spec": {
+								"name": "A",
 								"signal": "traces",
 								"filter": {
 									"expression": "service.name = 'frontend'"
@@ -417,9 +411,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"name": "B",
 							"type": "builder_query",
 							"spec": {
+								"name": "B",
 								"signal": "traces",
 								"filter": {
 									"expression": "hasError = true"
@@ -427,7 +421,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"name": "T4",
 							"type": "builder_trace_operator",
 							"spec": {
 								"name": "exclusion_analysis",
@@ -449,9 +442,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				CompositeQuery: CompositeQuery{
 					Queries: []QueryEnvelope{
 						{
-							Name: "A",
 							Type: QueryTypeBuilder,
 							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:   "A",
 								Signal: telemetrytypes.SignalTraces,
 								Filter: &Filter{
 									Expression: "service.name = 'frontend'",
@@ -459,9 +452,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							},
 						},
 						{
-							Name: "B",
 							Type: QueryTypeBuilder,
 							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:   "B",
 								Signal: telemetrytypes.SignalTraces,
 								Filter: &Filter{
 									Expression: "hasError = true",
@@ -469,7 +462,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							},
 						},
 						{
-							Name: "T4",
 							Type: QueryTypeTraceOperator,
 							Spec: QueryBuilderTraceOperator{
 								Name:       "exclusion_analysis",
@@ -503,8 +495,8 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 								"expression": "severity_text = 'ERROR'"
 							},
 							"selectFields": [{
-								"key": "body",
-								"type": "log"
+								"name": "body",
+								"fieldContext": "log"
 							}],
 							"limit": 50,
 							"offset": 10
@@ -560,8 +552,8 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}],
 							"stepInterval": 120,
 							"groupBy": [{
-								"key": "method",
-								"type": "tag"
+								"name": "method",
+								"fieldContext": "attribute"
 							}]
 						}
 					}]
@@ -653,7 +645,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							"name": "error_rate",
 							"expression": "A / B * 100",
 							"functions": [{
-								"name": "cut_off_min",
+								"name": "cutOffMin",
 								"args": [{
 									"value": "0.3"
 								}]
@@ -819,7 +811,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"name": "B",
 							"type": "builder_formula",
 							"spec": {
 								"name": "rate",
@@ -909,7 +900,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "time_series",
 				"compositeQuery": {
 					"queries": [{
-						"name": "A",
 						"type": "unknown_type",
 						"spec": {}
 					}]
@@ -926,9 +916,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "time_series",
 				"compositeQuery": {
 					"queries": [{
-						"name": "A",
 						"type": "builder_query",
 						"spec": {
+							"name": "A",
 							"signal": "unknown_signal",
 							"aggregations": []
 						}
@@ -946,9 +936,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				"requestType": "time_series",
 				"compositeQuery": {
 					"queries": [{
-						"name": "A",
 						"type": "builder_query",
 						"spec": {
+							"name": "A",
 							"signal": "traces",
 							"aggregations": [],
 							"stepInterval": "invalid_duration"
@@ -1033,6 +1023,19 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 					assert.Equal(t, expectedSpec.Right.Name, actualSpec.Right.Name)
 					assert.Equal(t, expectedSpec.Type, actualSpec.Type)
 					assert.Equal(t, expectedSpec.On, actualSpec.On)
+				case QueryTypeTraceOperator:
+					expectedSpec := expectedQuery.Spec.(QueryBuilderTraceOperator)
+					actualSpec, ok := actualQuery.Spec.(QueryBuilderTraceOperator)
+					require.True(t, ok, "Expected QueryBuilderTraceOperator but got %T", actualQuery.Spec)
+					assert.Equal(t, expectedSpec.Name, actualSpec.Name)
+					assert.Equal(t, expectedSpec.Expression, actualSpec.Expression)
+					assert.Equal(t, expectedSpec.Limit, actualSpec.Limit)
+					assert.Equal(t, expectedSpec.PageToken, actualSpec.PageToken)
+					if expectedSpec.OrderBy != nil {
+						assert.NotNil(t, actualSpec.OrderBy)
+						assert.Equal(t, expectedSpec.OrderBy.Field, actualSpec.OrderBy.Field)
+						assert.Equal(t, expectedSpec.OrderBy.Direction, actualSpec.OrderBy.Direction)
+					}
 				case QueryTypePromQL:
 					expectedSpec := expectedQuery.Spec.(PromQuery)
 					actualSpec, ok := actualQuery.Spec.(PromQuery)
@@ -1262,16 +1265,16 @@ func TestQueryBuilderTraceOperator_ValidateTraceOperator(t *testing.T) {
 			},
 			queries: []QueryEnvelope{
 				{
-					Name: "A",
 					Type: QueryTypeBuilder,
 					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "A",
 						Signal: telemetrytypes.SignalTraces,
 					},
 				},
 				{
-					Name: "B",
 					Type: QueryTypeBuilder,
 					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "B",
 						Signal: telemetrytypes.SignalTraces,
 					},
 				},
@@ -1296,15 +1299,15 @@ func TestQueryBuilderTraceOperator_ValidateTraceOperator(t *testing.T) {
 			},
 			queries: []QueryEnvelope{
 				{
-					Name: "A",
 					Type: QueryTypeBuilder,
 					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "A",
 						Signal: telemetrytypes.SignalTraces,
 					},
 				},
 			},
 			expectError:   true,
-			errorContains: "referenced query 'B' does not exist",
+			errorContains: "query 'B' referenced in trace operator expression does not exist or is not a trace query",
 		},
 		{
 			name: "referenced query is not trace signal",
@@ -1314,22 +1317,22 @@ func TestQueryBuilderTraceOperator_ValidateTraceOperator(t *testing.T) {
 			},
 			queries: []QueryEnvelope{
 				{
-					Name: "A",
 					Type: QueryTypeBuilder,
 					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "A",
 						Signal: telemetrytypes.SignalTraces,
 					},
 				},
 				{
-					Name: "B",
 					Type: QueryTypeBuilder,
 					Spec: QueryBuilderQuery[LogAggregation]{
+						Name:   "B",
 						Signal: telemetrytypes.SignalLogs,
 					},
 				},
 			},
 			expectError:   true,
-			errorContains: "referenced query 'B' must be a trace query, but found signal '{logs}'",
+			errorContains: "query 'B' referenced in trace operator expression does not exist or is not a trace query",
 		},
 		{
 			name: "invalid orderBy field",
@@ -1343,9 +1346,9 @@ func TestQueryBuilderTraceOperator_ValidateTraceOperator(t *testing.T) {
 			},
 			queries: []QueryEnvelope{
 				{
-					Name: "A",
 					Type: QueryTypeBuilder,
 					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "A",
 						Signal: telemetrytypes.SignalTraces,
 					},
 				},
@@ -1362,9 +1365,9 @@ func TestQueryBuilderTraceOperator_ValidateTraceOperator(t *testing.T) {
 			},
 			queries: []QueryEnvelope{
 				{
-					Name: "A",
 					Type: QueryTypeBuilder,
 					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "A",
 						Signal: telemetrytypes.SignalTraces,
 					},
 				},
@@ -1381,15 +1384,99 @@ func TestQueryBuilderTraceOperator_ValidateTraceOperator(t *testing.T) {
 			},
 			queries: []QueryEnvelope{
 				{
-					Name: "A",
 					Type: QueryTypeBuilder,
 					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "A",
 						Signal: telemetrytypes.SignalTraces,
 					},
 				},
 			},
 			expectError:   true,
 			errorContains: "limit cannot exceed 10000",
+		},
+		{
+			name: "valid returnSpansFrom",
+			traceOperator: QueryBuilderTraceOperator{
+				Name:            "test_operator",
+				Expression:      "A => B",
+				ReturnSpansFrom: "A",
+			},
+			queries: []QueryEnvelope{
+				{
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+				{
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "B",
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "returnSpansFrom references non-existent query",
+			traceOperator: QueryBuilderTraceOperator{
+				Name:            "test_operator",
+				Expression:      "A => B",
+				ReturnSpansFrom: "C",
+			},
+			queries: []QueryEnvelope{
+				{
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+				{
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "B",
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+			},
+			expectError:   true,
+			errorContains: "returnSpansFrom references query 'C' which does not exist or is not a trace query",
+		},
+		{
+			name: "returnSpansFrom references query not in expression",
+			traceOperator: QueryBuilderTraceOperator{
+				Name:            "test_operator",
+				Expression:      "A => B",
+				ReturnSpansFrom: "C",
+			},
+			queries: []QueryEnvelope{
+				{
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+				{
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "B",
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+				{
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[TraceAggregation]{
+						Name:   "C",
+						Signal: telemetrytypes.SignalTraces,
+					},
+				},
+			},
+			expectError:   true,
+			errorContains: "returnSpansFrom references query 'C' which is not used in the expression",
 		},
 	}
 
@@ -1419,27 +1506,42 @@ func TestValidateUniqueTraceOperator(t *testing.T) {
 		{
 			name: "no trace operators",
 			queries: []QueryEnvelope{
-				{Name: "A", Type: QueryTypeBuilder},
-				{Name: "B", Type: QueryTypeFormula},
+				{Type: QueryTypeBuilder},
+				{Type: QueryTypeFormula},
 			},
 			expectError: false,
 		},
 		{
 			name: "single trace operator",
 			queries: []QueryEnvelope{
-				{Name: "A", Type: QueryTypeBuilder},
-				{Name: "T1", Type: QueryTypeTraceOperator},
-				{Name: "B", Type: QueryTypeFormula},
+				{Type: QueryTypeBuilder},
+				{
+					Type: QueryTypeTraceOperator,
+					Spec: QueryBuilderTraceOperator{
+						Name: "T1",
+					},
+				},
+				{Type: QueryTypeFormula},
 			},
 			expectError: false,
 		},
 		{
 			name: "multiple trace operators",
 			queries: []QueryEnvelope{
-				{Name: "A", Type: QueryTypeBuilder},
-				{Name: "T1", Type: QueryTypeTraceOperator},
-				{Name: "T2", Type: QueryTypeTraceOperator},
-				{Name: "B", Type: QueryTypeFormula},
+				{Type: QueryTypeBuilder},
+				{
+					Type: QueryTypeTraceOperator,
+					Spec: QueryBuilderTraceOperator{
+						Name: "T1",
+					},
+				},
+				{
+					Type: QueryTypeTraceOperator,
+					Spec: QueryBuilderTraceOperator{
+						Name: "T2",
+					},
+				},
+				{Type: QueryTypeFormula},
 			},
 			expectError:   true,
 			errorContains: "only one trace operator is allowed per request, found 2 trace operators: [T1 T2]",

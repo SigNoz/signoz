@@ -46,6 +46,9 @@ type QueryBuilderTraceOperator struct {
 	// AIP-160 compliant filter for trace-level conditions
 	Filter *Filter `json:"filter,omitempty"`
 
+	// User-configurable span return strategy - which query's spans to return
+	ReturnSpansFrom string `json:"returnSpansFrom,omitempty"`
+
 	// Trace-specific ordering (only span_count and trace_duration allowed)
 	OrderBy *TraceOrderBy `json:"orderBy,omitempty"`
 
@@ -64,12 +67,17 @@ type QueryBuilderTraceOperator struct {
 // TraceOperand represents the internal parsed tree structure
 type TraceOperand struct {
 	// For leaf nodes - reference to a query
-	QueryRef *QueryRef `json:"-"`
+	QueryRef *TraceOperatorQueryRef `json:"-"`
 
 	// For nested operations
 	Operator *TraceOperatorType `json:"-"`
 	Left     *TraceOperand      `json:"-"`
 	Right    *TraceOperand      `json:"-"`
+}
+
+// TraceOperatorQueryRef represents a reference to another query
+type TraceOperatorQueryRef struct {
+	Name string `json:"name"`
 }
 
 // ParseExpression parses the expression string into a tree structure
@@ -113,23 +121,80 @@ func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelop
 		return err
 	}
 
-	// Create a map of query names to their signal types
-	querySignals := make(map[string]telemetrytypes.Signal)
+	// Create a map of query names to track if they exist and their signal type
+	availableQueries := make(map[string]telemetrytypes.Signal)
+
+	// Only collect trace queries
 	for _, query := range queries {
-		if query.Type == QueryTypeBuilder || query.Type == QueryTypeSubQuery {
+		if query.Type == QueryTypeBuilder {
 			switch spec := query.Spec.(type) {
 			case QueryBuilderQuery[TraceAggregation]:
-				querySignals[query.Name] = spec.Signal
-			case QueryBuilderQuery[LogAggregation]:
-				querySignals[query.Name] = spec.Signal
-			case QueryBuilderQuery[MetricAggregation]:
-				querySignals[query.Name] = spec.Signal
+				if spec.Signal == telemetrytypes.SignalTraces {
+					availableQueries[spec.Name] = spec.Signal
+				}
 			}
 		}
 	}
 
-	// Validate all operands in the parsed tree
-	return q.validateOperand(q.ParsedExpression, querySignals)
+	// Get all query names referenced in the expression
+	referencedQueries := q.collectReferencedQueries(q.ParsedExpression)
+
+	// Validate that all referenced queries exist and are trace queries
+	for _, queryName := range referencedQueries {
+		signal, exists := availableQueries[queryName]
+		if !exists {
+			return errors.WrapInvalidInputf(
+				nil,
+				errors.CodeInvalidInput,
+				"query '%s' referenced in trace operator expression does not exist or is not a trace query",
+				queryName,
+			)
+		}
+
+		// This check is redundant since we only add trace queries to availableQueries, but keeping for clarity
+		if signal != telemetrytypes.SignalTraces {
+			return errors.WrapInvalidInputf(
+				nil,
+				errors.CodeInvalidInput,
+				"query '%s' must be a trace query, but found signal '%s'",
+				queryName,
+				signal,
+			)
+		}
+	}
+
+	// Validate ReturnSpansFrom if specified
+	if q.ReturnSpansFrom != "" {
+		if _, exists := availableQueries[q.ReturnSpansFrom]; !exists {
+			return errors.WrapInvalidInputf(
+				nil,
+				errors.CodeInvalidInput,
+				"returnSpansFrom references query '%s' which does not exist or is not a trace query",
+				q.ReturnSpansFrom,
+			)
+		}
+
+		// Ensure the query is referenced in the expression
+		found := false
+		for _, queryName := range referencedQueries {
+			if queryName == q.ReturnSpansFrom {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return errors.WrapInvalidInputf(
+				nil,
+				errors.CodeInvalidInput,
+				"returnSpansFrom references query '%s' which is not used in the expression '%s'",
+				q.ReturnSpansFrom,
+				q.Expression,
+			)
+		}
+	}
+
+	return nil
 }
 
 // ValidateOrderBy validates the orderBy field
@@ -185,6 +250,35 @@ func (q *QueryBuilderTraceOperator) ValidatePagination() error {
 	return nil
 }
 
+// collectReferencedQueries collects all query names referenced in the expression tree
+func (q *QueryBuilderTraceOperator) collectReferencedQueries(operand *TraceOperand) []string {
+	if operand == nil {
+		return nil
+	}
+
+	var queries []string
+
+	if operand.QueryRef != nil {
+		queries = append(queries, operand.QueryRef.Name)
+	}
+
+	// Recursively collect from children
+	queries = append(queries, q.collectReferencedQueries(operand.Left)...)
+	queries = append(queries, q.collectReferencedQueries(operand.Right)...)
+
+	// Remove duplicates
+	seen := make(map[string]bool)
+	unique := []string{}
+	for _, q := range queries {
+		if !seen[q] {
+			seen[q] = true
+			unique = append(unique, q)
+		}
+	}
+
+	return unique
+}
+
 // ValidateUniqueTraceOperator ensures only one trace operator exists in queries
 func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	traceOperatorCount := 0
@@ -192,8 +286,11 @@ func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 
 	for _, query := range queries {
 		if query.Type == QueryTypeTraceOperator {
-			traceOperatorCount++
-			traceOperatorNames = append(traceOperatorNames, query.Name)
+			// Extract the name from the trace operator spec
+			if spec, ok := query.Spec.(QueryBuilderTraceOperator); ok {
+				traceOperatorCount++
+				traceOperatorNames = append(traceOperatorNames, spec.Name)
+			}
 		}
 	}
 
@@ -257,7 +354,10 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 
 	// Handle parentheses
 	if strings.HasPrefix(expr, "(") && strings.HasSuffix(expr, ")") {
-		return parseTraceExpression(expr[1 : len(expr)-1])
+		// Check if parentheses are balanced
+		if isBalancedParentheses(expr[1 : len(expr)-1]) {
+			return parseTraceExpression(expr[1 : len(expr)-1])
+		}
 	}
 
 	// Handle unary NOT operator (prefix)
@@ -273,7 +373,8 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 		}, nil
 	}
 
-	// Find binary operators with lowest precedence first
+	// Find binary operators with lowest precedence first (=> has lowest precedence)
+	// Order: => (lowest) < && < || < NOT (highest)
 	operators := []string{"=>", "&&", "||", " NOT "}
 
 	for _, op := range operators {
@@ -322,8 +423,24 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 	}
 
 	return &TraceOperand{
-		QueryRef: &QueryRef{Name: expr},
+		QueryRef: &TraceOperatorQueryRef{Name: expr},
 	}, nil
+}
+
+// isBalancedParentheses checks if parentheses are balanced in the expression
+func isBalancedParentheses(expr string) bool {
+	depth := 0
+	for _, char := range expr {
+		if char == '(' {
+			depth++
+		} else if char == ')' {
+			depth--
+			if depth < 0 {
+				return false
+			}
+		}
+	}
+	return depth == 0
 }
 
 // findOperatorPosition finds the position of an operator, respecting parentheses
