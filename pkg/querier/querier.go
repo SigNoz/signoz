@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"strconv"
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -54,6 +55,53 @@ func New(
 	}
 }
 
+// extractShiftFromBuilderQuery extracts the shift value from timeShift function if present
+func extractShiftFromBuilderQuery[T any](spec qbtypes.QueryBuilderQuery[T]) int64 {
+	for _, fn := range spec.Functions {
+		if fn.Name == qbtypes.FunctionNameTimeShift && len(fn.Args) > 0 {
+			switch v := fn.Args[0].Value.(type) {
+			case float64:
+				return int64(v)
+			case int64:
+				return v
+			case int:
+				return int64(v)
+			case string:
+				if shiftFloat, err := strconv.ParseFloat(v, 64); err == nil {
+					return int64(shiftFloat)
+				}
+			}
+		}
+	}
+	return 0
+}
+
+// adjustTimeRangeForShift adjusts the time range based on the shift value from timeShift function
+func adjustTimeRangeForShift[T any](spec qbtypes.QueryBuilderQuery[T], tr qbtypes.TimeRange, kind qbtypes.RequestType) qbtypes.TimeRange {
+	// Only apply time shift for time series and scalar queries
+	// Raw/list queries don't support timeshift
+	if kind != qbtypes.RequestTypeTimeSeries && kind != qbtypes.RequestTypeScalar {
+		return tr
+	}
+
+	// Use the ShiftBy field if it's already populated, otherwise extract it
+	shiftBy := spec.ShiftBy
+	if shiftBy == 0 {
+		shiftBy = extractShiftFromBuilderQuery(spec)
+	}
+
+	if shiftBy == 0 {
+		return tr
+	}
+
+	// ShiftBy is in seconds, convert to milliseconds and shift backward in time
+	shiftMS := shiftBy * 1000
+	return qbtypes.TimeRange{
+		From: tr.From - uint64(shiftMS),
+		To:   tr.To - uint64(shiftMS),
+	}
+}
+
 func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
 
 	queries := make(map[string]qbtypes.Query)
@@ -79,15 +127,21 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		case qbtypes.QueryTypeBuilder:
 			switch spec := query.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-				bq := newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
+				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
+				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
+				bq := newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, spec, timeRange, req.RequestType)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-				bq := newBuilderQuery(q.telemetryStore, q.logStmtBuilder, spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
+				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
+				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
+				bq := newBuilderQuery(q.telemetryStore, q.logStmtBuilder, spec, timeRange, req.RequestType)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
-				bq := newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
+				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
+				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
+				bq := newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			default:
@@ -173,7 +227,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 				return nil, err
 			}
 			// Store in cache for future use
-			q.bucketCache.Put(ctx, orgID, query, result)
+			q.bucketCache.Put(ctx, orgID, query, step, result)
 			return result, nil
 		}
 	}
@@ -182,6 +236,10 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	freshResults := make([]*qbtypes.Result, len(missingRanges))
 	errors := make([]error, len(missingRanges))
 	totalStats := qbtypes.ExecStats{}
+
+	q.logger.DebugContext(ctx, "executing queries for missing ranges",
+		"missing_ranges_count", len(missingRanges),
+		"ranges", missingRanges)
 
 	sem := make(chan struct{}, 4)
 	var wg sync.WaitGroup
@@ -224,7 +282,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 			if err != nil {
 				return nil, err
 			}
-			q.bucketCache.Put(ctx, orgID, query, result)
+			q.bucketCache.Put(ctx, orgID, query, step, result)
 			return result, nil
 		}
 	}
@@ -248,7 +306,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	mergedResult.Stats.DurationMS += totalStats.DurationMS
 
 	// Store merged result in cache
-	q.bucketCache.Put(ctx, orgID, query, mergedResult)
+	q.bucketCache.Put(ctx, orgID, query, step, mergedResult)
 
 	return mergedResult, nil
 }
@@ -261,11 +319,17 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 	case *chSQLQuery:
 		return newchSQLQuery(q.telemetryStore, qt.query, qt.args, timeRange, qt.kind)
 	case *builderQuery[qbtypes.TraceAggregation]:
-		return newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, qt.spec, timeRange, qt.kind)
+		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
+		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
+		return newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, qt.spec, adjustedTimeRange, qt.kind)
 	case *builderQuery[qbtypes.LogAggregation]:
-		return newBuilderQuery(q.telemetryStore, q.logStmtBuilder, qt.spec, timeRange, qt.kind)
+		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
+		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
+		return newBuilderQuery(q.telemetryStore, q.logStmtBuilder, qt.spec, adjustedTimeRange, qt.kind)
 	case *builderQuery[qbtypes.MetricAggregation]:
-		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, qt.spec, timeRange, qt.kind)
+		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
+		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
+		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, qt.spec, adjustedTimeRange, qt.kind)
 	default:
 		return nil
 	}
@@ -273,8 +337,29 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 
 // mergeResults merges cached result with fresh results
 func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) *qbtypes.Result {
-	if cached == nil && len(fresh) == 1 {
-		return fresh[0]
+	if cached == nil {
+		if len(fresh) == 1 {
+			return fresh[0]
+		}
+		if len(fresh) == 0 {
+			return nil
+		}
+		// If cached is nil but we have multiple fresh results, we need to merge them
+		// We need to merge all fresh results properly to avoid duplicates
+		merged := &qbtypes.Result{
+			Type:     fresh[0].Type,
+			Stats:    fresh[0].Stats,
+			Warnings: fresh[0].Warnings,
+		}
+
+		// Merge all fresh results including the first one
+		switch merged.Type {
+		case qbtypes.RequestTypeTimeSeries:
+			// Pass nil as cached value to ensure proper merging of all fresh results
+			merged.Value = q.mergeTimeSeriesResults(nil, fresh)
+		}
+
+		return merged
 	}
 
 	// Start with cached result
@@ -315,29 +400,64 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 // mergeTimeSeriesResults merges time series data
 func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, freshResults []*qbtypes.Result) *qbtypes.TimeSeriesData {
 
-	// Map to store merged series by query name and series key
+	// Map to store merged series by aggregation index and series key
 	seriesMap := make(map[int]map[string]*qbtypes.TimeSeries)
+	// Map to store aggregation bucket metadata
+	bucketMetadata := make(map[int]*qbtypes.AggregationBucket)
 
-	for _, aggBucket := range cachedValue.Aggregations {
-		if seriesMap[aggBucket.Index] == nil {
-			seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
-		}
-		for _, series := range aggBucket.Series {
-			key := qbtypes.GetUniqueSeriesKey(series.Labels)
-			seriesMap[aggBucket.Index][key] = series
+	// Process cached data if available
+	if cachedValue != nil && cachedValue.Aggregations != nil {
+		for _, aggBucket := range cachedValue.Aggregations {
+			if seriesMap[aggBucket.Index] == nil {
+				seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
+			}
+			if bucketMetadata[aggBucket.Index] == nil {
+				bucketMetadata[aggBucket.Index] = aggBucket
+			}
+			for _, series := range aggBucket.Series {
+				key := qbtypes.GetUniqueSeriesKey(series.Labels)
+				if existingSeries, ok := seriesMap[aggBucket.Index][key]; ok {
+					// Merge values from duplicate series in cached data, avoiding duplicate timestamps
+					timestampMap := make(map[int64]bool)
+					for _, v := range existingSeries.Values {
+						timestampMap[v.Timestamp] = true
+					}
+
+					// Only add values with new timestamps
+					for _, v := range series.Values {
+						if !timestampMap[v.Timestamp] {
+							existingSeries.Values = append(existingSeries.Values, v)
+						}
+					}
+				} else {
+					// Create a copy to avoid modifying the cached data
+					seriesCopy := &qbtypes.TimeSeries{
+						Labels: series.Labels,
+						Values: make([]*qbtypes.TimeSeriesValue, len(series.Values)),
+					}
+					copy(seriesCopy.Values, series.Values)
+					seriesMap[aggBucket.Index][key] = seriesCopy
+				}
+			}
 		}
 	}
 
 	// Add fresh series
 	for _, result := range freshResults {
 		freshTS, ok := result.Value.(*qbtypes.TimeSeriesData)
-		if !ok {
+		if !ok || freshTS == nil || freshTS.Aggregations == nil {
 			continue
 		}
 
 		for _, aggBucket := range freshTS.Aggregations {
 			if seriesMap[aggBucket.Index] == nil {
 				seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
+			}
+			// Prefer fresh metadata over cached metadata
+			if aggBucket.Alias != "" || aggBucket.Meta.Unit != "" {
+				bucketMetadata[aggBucket.Index] = aggBucket
+			} else if bucketMetadata[aggBucket.Index] == nil {
+				bucketMetadata[aggBucket.Index] = aggBucket
 			}
 		}
 
@@ -346,8 +466,19 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 				key := qbtypes.GetUniqueSeriesKey(series.Labels)
 
 				if existingSeries, ok := seriesMap[aggBucket.Index][key]; ok {
-					// Merge values
-					existingSeries.Values = append(existingSeries.Values, series.Values...)
+					// Merge values, avoiding duplicate timestamps
+					// Create a map to track existing timestamps
+					timestampMap := make(map[int64]bool)
+					for _, v := range existingSeries.Values {
+						timestampMap[v.Timestamp] = true
+					}
+
+					// Only add values with new timestamps
+					for _, v := range series.Values {
+						if !timestampMap[v.Timestamp] {
+							existingSeries.Values = append(existingSeries.Values, v)
+						}
+					}
 				} else {
 					// New series
 					seriesMap[aggBucket.Index][key] = series
@@ -357,8 +488,16 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 	}
 
 	result := &qbtypes.TimeSeriesData{
-		QueryName:    cachedValue.QueryName,
 		Aggregations: []*qbtypes.AggregationBucket{},
+	}
+
+	// Set QueryName from cached or first fresh result
+	if cachedValue != nil {
+		result.QueryName = cachedValue.QueryName
+	} else if len(freshResults) > 0 {
+		if freshTS, ok := freshResults[0].Value.(*qbtypes.TimeSeriesData); ok && freshTS != nil {
+			result.QueryName = freshTS.QueryName
+		}
 	}
 
 	for index, series := range seriesMap {
@@ -377,10 +516,17 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 			aggSeries = append(aggSeries, s)
 		}
 
-		result.Aggregations = append(result.Aggregations, &qbtypes.AggregationBucket{
+		// Preserve bucket metadata from either cached or fresh results
+		bucket := &qbtypes.AggregationBucket{
 			Index:  index,
 			Series: aggSeries,
-		})
+		}
+		if metadata, ok := bucketMetadata[index]; ok {
+			bucket.Alias = metadata.Alias
+			bucket.Meta = metadata.Meta
+		}
+
+		result.Aggregations = append(result.Aggregations, bucket)
 	}
 
 	return result
