@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { FeatureKeys } from 'constants/features';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { AppContext } from 'providers/App/App';
@@ -217,7 +218,7 @@ export function getAppContextMock(
 		featureFlagsFetchError: null,
 		orgPreferences: [
 			{
-				name: 'org_onboarding',
+				name: ORG_PREFERENCES.ORG_ONBOARDING,
 				description: 'Organisation Onboarding',
 				valueType: 'boolean',
 				defaultValue: false,
@@ -226,6 +227,8 @@ export function getAppContextMock(
 				value: false,
 			},
 		],
+		userPreferences: [],
+		updateUserPreferenceInContext: jest.fn(),
 		isFetchingOrgPreferences: false,
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,

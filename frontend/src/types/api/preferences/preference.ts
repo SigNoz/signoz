@@ -2,18 +2,18 @@ export interface OrgPreference {
 	name: string;
 	description: string;
 	valueType: string;
-	defaultValue: boolean;
+	defaultValue: unknown;
 	allowedValues: string[];
 	allowedScopes: string[];
-	value: boolean;
+	value: unknown;
 }
 
 export interface UserPreference {
 	name: string;
 	description: string;
 	valueType: string;
-	defaultValue: boolean;
+	defaultValue: unknown;
 	allowedValues: string[];
 	allowedScopes: string[];
-	value: boolean;
+	value: unknown;
 }

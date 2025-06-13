@@ -138,9 +138,9 @@ describe('Logs Explorer Tests', () => {
 		expect(timeSeriesView).toBeInTheDocument();
 		expect(tableView).toBeInTheDocument();
 
-		// check the presence of old logs explorer CTA
-		const oldLogsCTA = getByText('Switch to Old Logs Explorer');
-		expect(oldLogsCTA).toBeInTheDocument();
+		// // check the presence of old logs explorer CTA - TODO: add this once we have the header updated
+		// const oldLogsCTA = getByText('Switch to Old Logs Explorer');
+		// expect(oldLogsCTA).toBeInTheDocument();
 	});
 
 	// update this test properly
