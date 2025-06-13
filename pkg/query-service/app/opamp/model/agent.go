@@ -46,7 +46,7 @@ func New(store sqlstore.SQLStore, orgID string, ID string, conn opampTypes.Conne
 		agentId = valuer.GenerateUUID()
 	}
 
-	return &Agent{StorableAgent: opamptypes.StorableAgent{OrgID: orgID, Identifiable: types.Identifiable{ID: agentId}, StartedAt: time.Now(), CurrentStatus: opamptypes.AgentStatusConnected}, conn: conn, store: store}
+	return &Agent{StorableAgent: opamptypes.StorableAgent{OrgID: orgID, Identifiable: types.Identifiable{ID: agentId}, TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()}, Status: opamptypes.AgentStatusConnected}, conn: conn, store: store}
 }
 
 // Upsert inserts or updates the agent in the database.
@@ -57,9 +57,9 @@ func (agent *Agent) Upsert() error {
 	_, err := agent.store.BunDB().NewInsert().
 		Model(&agent.StorableAgent).
 		On("CONFLICT (org_id, id) DO UPDATE").
-		Set("started_at = EXCLUDED.started_at").
-		Set("effective_config = EXCLUDED.effective_config").
-		Set("current_status = EXCLUDED.current_status").
+		Set("updated_at = EXCLUDED.updated_at").
+		Set("config = EXCLUDED.config").
+		Set("status = EXCLUDED.status").
 		Exec(context.Background())
 	if err != nil {
 		return err
@@ -154,7 +154,7 @@ func (agent *Agent) updateHealth(newStatus *protobufs.AgentToServer) {
 	agent.Status.Health = newStatus.Health
 
 	if agent.Status != nil && agent.Status.Health != nil && agent.Status.Health.Healthy {
-		agent.StartedAt = time.Unix(0, int64(agent.Status.Health.StartTimeUnixNano)).UTC()
+		agent.TimeAuditable.UpdatedAt = time.Unix(0, int64(agent.Status.Health.StartTimeUnixNano)).UTC()
 	}
 }
 
@@ -185,10 +185,10 @@ func (agent *Agent) updateEffectiveConfig(newStatus *protobufs.AgentToServer, re
 			agent.Status.EffectiveConfig = newStatus.EffectiveConfig
 
 			// Convert to string for displaying purposes.
-			agent.EffectiveConfig = ""
+			agent.Config = ""
 			// There should be only one config in the map.
 			for _, cfg := range newStatus.EffectiveConfig.ConfigMap.ConfigMap {
-				agent.EffectiveConfig = string(cfg.Body)
+				agent.Config = string(cfg.Body)
 			}
 		}
 	}
@@ -273,7 +273,7 @@ func (agent *Agent) processStatusUpdate(
 }
 
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
-	recommendedConfig, confId, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.EffectiveConfig))
+	recommendedConfig, confId, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.Config))
 	if err != nil {
 		zap.L().Error("could not generate config recommendation for agent", zap.String("agentID", agent.ID.StringValue()), zap.Error(err))
 		return false

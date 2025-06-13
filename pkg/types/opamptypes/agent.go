@@ -17,29 +17,29 @@ const (
 )
 
 type StorableAgent struct {
-	bun.BaseModel `bun:"table:agents"`
+	bun.BaseModel `bun:"table:agent"`
 
 	types.Identifiable
-	OrgID           string      `json:"orgId" yaml:"orgId" bun:"org_id,type:text"`
-	StartedAt       time.Time   `json:"startedAt" yaml:"startedAt" bun:"started_at,type:datetime,notnull"`
-	TerminatedAt    time.Time   `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at,type:datetime"`
-	CurrentStatus   AgentStatus `json:"currentStatus" yaml:"currentStatus" bun:"current_status,type:text,notnull"`
-	EffectiveConfig string      `bun:"effective_config,type:text,notnull"`
+	types.TimeAuditable
+	OrgID        string      `json:"orgId" yaml:"orgId" bun:"org_id,type:text"`
+	TerminatedAt time.Time   `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at,type:datetime"`
+	Status       AgentStatus `json:"currentStatus" yaml:"currentStatus" bun:"status,type:text,notnull"`
+	Config       string      `bun:"config,type:text,notnull"`
 }
 
-type ElementTypeDef struct{ valuer.String }
+type ElementType struct{ valuer.String }
 
 var (
-	ElementTypeSamplingRules = ElementTypeDef{valuer.NewString("sampling_rules")}
-	ElementTypeDropRules     = ElementTypeDef{valuer.NewString("drop_rules")}
-	ElementTypeLogPipelines  = ElementTypeDef{valuer.NewString("log_pipelines")}
-	ElementTypeLbExporter    = ElementTypeDef{valuer.NewString("lb_exporter")}
+	ElementTypeSamplingRules = ElementType{valuer.NewString("sampling_rules")}
+	ElementTypeDropRules     = ElementType{valuer.NewString("drop_rules")}
+	ElementTypeLogPipelines  = ElementType{valuer.NewString("log_pipelines")}
+	ElementTypeLbExporter    = ElementType{valuer.NewString("lb_exporter")}
 )
 
-// NewElementTypeDef creates a new ElementTypeDef from a string value.
-// Returns the corresponding ElementTypeDef constant if the string matches,
-// otherwise returns an empty ElementTypeDef.
-func NewElementTypeDef(value string) ElementTypeDef {
+// NewElementType creates a new ElementType from a string value.
+// Returns the corresponding ElementType constant if the string matches,
+// otherwise returns an empty ElementType.
+func NewElementType(value string) ElementType {
 	switch valuer.NewString(value) {
 	case ElementTypeSamplingRules.String:
 		return ElementTypeSamplingRules
@@ -50,7 +50,7 @@ func NewElementTypeDef(value string) ElementTypeDef {
 	case ElementTypeLbExporter.String:
 		return ElementTypeLbExporter
 	default:
-		return ElementTypeDef{valuer.NewString("")}
+		return ElementType{valuer.NewString("")}
 	}
 }
 
@@ -66,38 +66,32 @@ var (
 )
 
 type AgentConfigVersion struct {
-	bun.BaseModel `bun:"table:agent_config_versions,alias:acv"`
+	bun.BaseModel `bun:"table:agent_config_version,alias:acv"`
 
 	types.TimeAuditable
 	types.UserAuditable
 
-	CreatedByName string `json:"createdByName" bun:"created_by_name,scanonly"`
+	CreatedByName string `json:"createdByName" bun:"created_by_name,scanonly"` // check if we can remove this,
 
 	types.Identifiable
-	OrgID          string         `json:"orgId" bun:"org_id,type:text"`
-	Version        int            `json:"version" bun:"version,default:1,unique:element_version_idx"`
-	Active         bool           `json:"active" bun:"active"`
-	IsValid        bool           `json:"is_valid" bun:"is_valid"`
-	Disabled       bool           `json:"disabled" bun:"disabled"`
-	ElementType    ElementTypeDef `json:"elementType" bun:"element_type,notnull,type:varchar(120),unique:element_version_idx"`
-	DeployStatus   DeployStatus   `json:"deployStatus" bun:"deploy_status,notnull,type:varchar(80),default:'DIRTY'"`
-	DeploySequence int            `json:"deploySequence" bun:"deploy_sequence"`
-	DeployResult   string         `json:"deployResult" bun:"deploy_result,type:text"`
-	LastHash       string         `json:"lastHash" bun:"last_hash,type:text"`
-	LastConfig     string         `json:"lastConfig" bun:"last_config,type:text"`
+	OrgID          string       `json:"orgId" bun:"org_id,type:text"`
+	Version        int          `json:"version" bun:"version,default:1,unique:element_version_idx"`
+	ElementType    ElementType  `json:"elementType" bun:"element_type,notnull,type:varchar(120),unique:element_version_idx"`
+	DeployStatus   DeployStatus `json:"deployStatus" bun:"deploy_status,notnull,type:varchar(80),default:'DIRTY'"`
+	DeploySequence int          `json:"deploySequence" bun:"deploy_sequence"`
+	DeployResult   string       `json:"deployResult" bun:"deploy_result,type:text"` // check if I can create a map in backend
+	Hash           string       `json:"lastHash" bun:"hash,type:text"`              // check if we need to store this.
+	Config         string       `json:"lastConfig" bun:"config,type:text"`
 }
 
-func NewAgentConfigVersion(orgId string, typeDef ElementTypeDef) *AgentConfigVersion {
+func NewAgentConfigVersion(orgId string, elementType ElementType) *AgentConfigVersion {
 	return &AgentConfigVersion{
 		OrgID:        orgId,
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
-		ElementType:  typeDef,
-		Active:       false,
-		IsValid:      false,
-		Disabled:     false,
+		ElementType:  elementType,
 		DeployStatus: PendingDeploy,
-		LastHash:     "",
-		LastConfig:   "{}",
+		Hash:         "",
+		Config:       "{}",
 	}
 }
 
@@ -106,15 +100,11 @@ func UpdateVersion(v int) int {
 }
 
 type AgentConfigElement struct {
-	bun.BaseModel `bun:"table:agent_config_elements"`
+	bun.BaseModel `bun:"table:agent_config_element"`
 
 	types.Identifiable
-	OrgID       string    `bun:"org_id,type:text"`
-	CreatedBy   string    `bun:"created_by,type:text"`
-	CreatedAt   time.Time `bun:"created_at,default:CURRENT_TIMESTAMP"`
-	UpdatedBy   string    `bun:"updated_by,type:text"`
-	UpdatedAt   time.Time `bun:"updated_at,default:CURRENT_TIMESTAMP"`
-	ElementID   string    `bun:"element_id,type:text,notnull,unique:agent_config_elements_u1"`
-	ElementType string    `bun:"element_type,type:varchar(120),notnull,unique:agent_config_elements_u1"`
-	VersionID   string    `bun:"version_id,type:text,notnull,unique:agent_config_elements_u1"`
+	types.TimeAuditable
+	ElementID   string `bun:"element_id,type:text,notnull,unique:agent_config_elements_u1"`
+	ElementType string `bun:"element_type,type:varchar(120),notnull,unique:agent_config_elements_u1"`
+	VersionID   string `bun:"version_id,type:text,notnull,unique:agent_config_elements_u1"`
 }

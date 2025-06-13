@@ -78,7 +78,7 @@ func UpsertControlProcessors(
 // addIngestionControlToAgent adds ingestion contorl rules to agent config
 func addIngestionControlToAgent(agent *model.Agent, signal string, processors map[string]interface{}, withLB bool) (string, error) {
 	confHash := ""
-	config := agent.EffectiveConfig
+	config := agent.Config
 	c, err := yaml.Parser().Unmarshal([]byte(config))
 	if err != nil {
 		return confHash, err
@@ -106,7 +106,7 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 		return confHash, err
 	}
 	confHash = string(hash.Sum(nil))
-	agent.EffectiveConfig = string(configR)
+	agent.Config = string(configR)
 	err = agent.Upsert()
 	if err != nil {
 		return confHash, err

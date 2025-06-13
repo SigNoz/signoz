@@ -20,7 +20,7 @@ type AgentFeature interface {
 	) (
 		recommendedConfYaml []byte,
 
-		// stored as agent_config_versions.last_config in current agentConf model
+		// stored as agent_config_version.config in current agentConf model
 		// TODO(Raj): maybe refactor agentConf further and clean this up
 		serializedSettingsUsed string,
 

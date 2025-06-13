@@ -119,7 +119,7 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 		zap.L().Debug(
 			"New agent added", zap.Bool("canLb", agent.CanLB),
 			zap.String("ID", agent.ID.StringValue()),
-			zap.Any("status", agent.CurrentStatus),
+			zap.Any("status", agent.Status),
 		)
 	}
 

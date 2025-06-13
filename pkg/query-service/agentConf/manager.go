@@ -101,7 +101,7 @@ func (m *Manager) RecommendAgentConfig(orgId string, currentConfYaml []byte) (
 	settingVersionsUsed := []string{}
 
 	for _, feature := range m.agentFeatures {
-		featureType := opamptypes.NewElementTypeDef(string(feature.AgentFeatureType()))
+		featureType := opamptypes.NewElementType(string(feature.AgentFeatureType()))
 		latestConfig, apiErr := GetLatestVersion(context.Background(), orgId, featureType)
 		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
 			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
@@ -176,26 +176,26 @@ func (m *Manager) ReportConfigDeploymentStatus(
 }
 
 func GetLatestVersion(
-	ctx context.Context, orgId string, elementType opamptypes.ElementTypeDef,
+	ctx context.Context, orgId string, elementType opamptypes.ElementType,
 ) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 	return m.GetLatestVersion(ctx, orgId, elementType)
 }
 
 func GetConfigVersion(
-	ctx context.Context, orgId string, elementType opamptypes.ElementTypeDef, version int,
+	ctx context.Context, orgId string, elementType opamptypes.ElementType, version int,
 ) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 	return m.GetConfigVersion(ctx, orgId, elementType, version)
 }
 
 func GetConfigHistory(
-	ctx context.Context, orgId string, typ opamptypes.ElementTypeDef, limit int,
+	ctx context.Context, orgId string, typ opamptypes.ElementType, limit int,
 ) ([]opamptypes.AgentConfigVersion, *model.ApiError) {
 	return m.GetConfigHistory(ctx, orgId, typ, limit)
 }
 
 // StartNewVersion launches a new config version for given set of elements
 func StartNewVersion(
-	ctx context.Context, orgId string, userId string, eleType opamptypes.ElementTypeDef, elementIds []string,
+	ctx context.Context, orgId string, userId string, eleType opamptypes.ElementType, elementIds []string,
 ) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 
 	// create a new version
@@ -216,7 +216,7 @@ func NotifyConfigUpdate(ctx context.Context) {
 	m.notifyConfigUpdateSubscribers()
 }
 
-func Redeploy(ctx context.Context, orgId string, typ opamptypes.ElementTypeDef, version int) *model.ApiError {
+func Redeploy(ctx context.Context, orgId string, typ opamptypes.ElementType, version int) *model.ApiError {
 
 	configVersion, err := GetConfigVersion(ctx, orgId, typ, version)
 	if err != nil {
@@ -224,14 +224,14 @@ func Redeploy(ctx context.Context, orgId string, typ opamptypes.ElementTypeDef, 
 		return model.WrapApiError(err, "failed to fetch details of the config version")
 	}
 
-	if configVersion == nil || (configVersion != nil && configVersion.LastConfig == "") {
+	if configVersion == nil || (configVersion != nil && configVersion.Config == "") {
 		zap.L().Debug("config version has no conf yaml", zap.Any("configVersion", configVersion))
 		return model.BadRequest(fmt.Errorf("the config version can not be redeployed"))
 	}
 	switch typ {
 	case opamptypes.ElementTypeSamplingRules:
 		var config *tsp.Config
-		if err := yaml.Unmarshal([]byte(configVersion.LastConfig), &config); err != nil {
+		if err := yaml.Unmarshal([]byte(configVersion.Config), &config); err != nil {
 			zap.L().Debug("failed to read last conf correctly", zap.Error(err))
 			return model.BadRequest(fmt.Errorf("failed to read the stored config correctly"))
 		}
@@ -248,10 +248,10 @@ func Redeploy(ctx context.Context, orgId string, typ opamptypes.ElementTypeDef, 
 			return model.InternalError(fmt.Errorf("failed to deploy the config"))
 		}
 
-		m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeSamplingRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, configVersion.LastConfig)
+		m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeSamplingRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, configVersion.Config)
 	case opamptypes.ElementTypeDropRules:
 		var filterConfig *filterprocessor.Config
-		if err := yaml.Unmarshal([]byte(configVersion.LastConfig), &filterConfig); err != nil {
+		if err := yaml.Unmarshal([]byte(configVersion.Config), &filterConfig); err != nil {
 			zap.L().Error("failed to read last conf correctly", zap.Error(err))
 			return model.InternalError(fmt.Errorf("failed to read the stored config correctly"))
 		}
@@ -266,7 +266,7 @@ func Redeploy(ctx context.Context, orgId string, typ opamptypes.ElementTypeDef, 
 			return err
 		}
 
-		m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeSamplingRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, configVersion.LastConfig)
+		m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeSamplingRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, configVersion.Config)
 	}
 
 	return nil

@@ -22,15 +22,15 @@ type Repo struct {
 }
 
 func (r *Repo) GetConfigHistory(
-	ctx context.Context, orgId string, typ opamptypes.ElementTypeDef, limit int,
+	ctx context.Context, orgId string, typ opamptypes.ElementType, limit int,
 ) ([]opamptypes.AgentConfigVersion, *model.ApiError) {
 	var c []opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
+		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
 		ColumnExpr("COALESCE(created_by, '') as created_by").
 		ColumnExpr(`COALESCE((SELECT display_name FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
-		ColumnExpr("COALESCE(last_hash, '') as last_hash, COALESCE(last_config, '{}') as last_config").
+		ColumnExpr("COALESCE(hash, '') as hash, COALESCE(config, '{}') as config").
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
 		OrderExpr("acv.created_at DESC, acv.version DESC").
@@ -52,15 +52,15 @@ func (r *Repo) GetConfigHistory(
 }
 
 func (r *Repo) GetConfigVersion(
-	ctx context.Context, orgId string, typ opamptypes.ElementTypeDef, v int,
+	ctx context.Context, orgId string, typ opamptypes.ElementType, v int,
 ) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 	var c opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
+		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
 		ColumnExpr("COALESCE(created_by, '') as created_by").
 		ColumnExpr(`COALESCE((SELECT display_name FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
-		ColumnExpr("COALESCE(last_hash, '') as last_hash, COALESCE(last_config, '{}') as last_config").
+		ColumnExpr("COALESCE(hash, '') as hash, COALESCE(config, '{}') as config").
 		Where("acv.element_type = ?", typ).
 		Where("acv.version = ?", v).
 		Where("acv.org_id = ?", orgId).
@@ -77,17 +77,17 @@ func (r *Repo) GetConfigVersion(
 }
 
 func (r *Repo) GetLatestVersion(
-	ctx context.Context, orgId string, typ opamptypes.ElementTypeDef,
+	ctx context.Context, orgId string, typ opamptypes.ElementType,
 ) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 	var c opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
+		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
 		ColumnExpr("COALESCE(created_by, '') as created_by").
 		ColumnExpr(`COALESCE((SELECT display_name FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
-		Where("version = (SELECT MAX(version) FROM agent_config_versions WHERE acv.element_type = ?)", typ).
+		Where("version = (SELECT MAX(version) FROM agent_config_version WHERE acv.element_type = ?)", typ).
 		Scan(ctx)
 
 	if err != nil {
@@ -143,7 +143,7 @@ func (r *Repo) insertConfig(
 		if fnerr != nil {
 			// remove all the damage (invalid rows from db)
 			r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigVersion)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
-			r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigElement)).Where("version_id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
+			r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigElement)).Where("version_id = ?", c.ID).Exec(ctx)
 		}
 	}()
 
@@ -157,9 +157,6 @@ func (r *Repo) insertConfig(
 				CreatedBy: userId,
 			},
 			ElementType:  c.ElementType,
-			Active:       false, // default value
-			IsValid:      false, // default value
-			Disabled:     false, // default value
 			DeployStatus: c.DeployStatus,
 			DeployResult: c.DeployResult,
 		}).
@@ -172,7 +169,6 @@ func (r *Repo) insertConfig(
 
 	for _, e := range elements {
 		agentConfigElement := &opamptypes.AgentConfigElement{
-			OrgID:        orgId,
 			Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 			VersionID:    c.ID.StringValue(),
 			ElementType:  c.ElementType.StringValue(),
@@ -189,7 +185,7 @@ func (r *Repo) insertConfig(
 
 func (r *Repo) updateDeployStatus(ctx context.Context,
 	orgId string,
-	elementType opamptypes.ElementTypeDef,
+	elementType opamptypes.ElementType,
 	version int,
 	status string,
 	result string,
@@ -206,8 +202,8 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 		Model(new(opamptypes.AgentConfigVersion)).
 		Set("deploy_status = ?", status).
 		Set("deploy_result = ?", result).
-		Set("last_hash = COALESCE(?, last_hash)", lastHash).
-		Set("last_config = ?", lastconf).
+		Set("hash = COALESCE(?, hash)", lastHash).
+		Set("config = ?", lastconf).
 		Where("version = ?", version).
 		Where("element_type = ?", elementType).
 		Where("org_id = ?", orgId).
@@ -228,7 +224,7 @@ func (r *Repo) updateDeployStatusByHash(
 		Model(new(opamptypes.AgentConfigVersion)).
 		Set("deploy_status = ?", status).
 		Set("deploy_result = ?", result).
-		Where("last_hash = ?", confighash).
+		Where("hash = ?", confighash).
 		Where("org_id = ?", orgId).
 		Exec(ctx)
 	if err != nil {

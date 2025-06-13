@@ -102,11 +102,11 @@ func (r *Repo) getPipelinesByVersion(
 	storablePipelines := []pipelinetypes.StoreablePipeline{}
 	err := r.sqlStore.BunDB().NewSelect().
 		Model(&storablePipelines).
-		Join("JOIN agent_config_elements e ON p.id = e.element_id").
-		Join("JOIN agent_config_versions v ON v.id = e.version_id").
-		Where("e.element_type = ?", logPipelines). // TODO: nitya - add org_id to this as well
-		Where("v.version = ?", version).           // TODO: nitya - add org_id to this as well
-		Where("p.org_id = ?", orgID).
+		Join("JOIN agent_config_element e ON p.id = e.element_id").
+		Join("JOIN agent_config_version v ON v.id = e.version_id").
+		Where("e.element_type = ?", logPipelines).
+		Where("v.version = ?", version).
+		Where("v.org_id = ?", orgID).
 		Order("p.order_id ASC").
 		Scan(ctx)
 	if err != nil {

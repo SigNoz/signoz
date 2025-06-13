@@ -51,8 +51,8 @@ func (agents *Agents) RemoveConnection(conn types.Connection) {
 
 	for instanceId := range agents.connections[conn] {
 		agent := agents.agentsById[instanceId]
-		agent.CurrentStatus = opamptypes.AgentStatusDisconnected
-		agent.TerminatedAt = time.Now()
+		agent.StorableAgent.Status = opamptypes.AgentStatusDisconnected
+		agent.StorableAgent.TerminatedAt = time.Now()
 		_ = agent.Upsert()
 		delete(agents.agentsById, instanceId)
 	}
@@ -115,7 +115,7 @@ func (agents *Agents) RecommendLatestConfigToAll(
 	for _, agent := range agents.GetAllAgents() {
 		newConfig, confId, err := provider.RecommendAgentConfig(
 			agent.OrgID,
-			[]byte(agent.EffectiveConfig),
+			[]byte(agent.Config),
 		)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf(
@@ -124,7 +124,7 @@ func (agents *Agents) RecommendLatestConfigToAll(
 		}
 
 		// Recommendation is same as current config
-		if string(newConfig) == agent.EffectiveConfig {
+		if string(newConfig) == agent.Config {
 			zap.L().Info(
 				"Recommended config same as current effective config for agent", zap.String("agentID", agent.ID.StringValue()),
 			)
