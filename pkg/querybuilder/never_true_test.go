@@ -1,7 +1,6 @@
 package querybuilder
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 )
@@ -318,7 +317,6 @@ func TestComplexNestedContradictions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			contradictions, err := DetectContradictions(tt.query)
-			fmt.Println("contradictions", contradictions)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -381,14 +379,12 @@ func TestExpressionLevelHandling(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			contradictions, err := DetectContradictions(tt.query)
-			fmt.Println("contradictions", contradictions)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
 			hasContradiction := len(contradictions) > 0
-			fmt.Println("length of contradictions", len(contradictions))
 
 			if hasContradiction != tt.hasContradiction {
 				t.Errorf("Test: %s\nDescription: %s\nExpected hasContradiction=%v, got %v\nContradictions: %v",

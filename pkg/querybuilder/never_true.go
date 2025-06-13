@@ -375,11 +375,19 @@ func (d *LogicalContradictionDetector) extractValueList(ctx grammar.IValueListCo
 func (d *LogicalContradictionDetector) addConstraint(constraint FieldConstraint) {
 	constraints := d.currentConstraints()
 
-	// For positive operators that imply existence, we could add an implicit EXISTS constraint
+	// For positive operators that imply existence, add an implicit EXISTS constraint
 	// This mirrors the behavior of AddDefaultExistsFilter in the FilterOperator type
 	if constraint.Operator.AddDefaultExistsFilter() && !isNegativeOperator(constraint.Operator) {
 		// The field must exist for positive predicates
-		// This helps detect contradictions like: field = "value" AND NOT field EXISTS
+		// This helps detect contradictions like: field = "value" AND field NOT EXISTS
+		existsConstraint := FieldConstraint{
+			Field:    constraint.Field,
+			Operator: qbtypes.FilterOperatorExists,
+		}
+		constraints.Constraints[constraint.Field] = append(
+			constraints.Constraints[constraint.Field],
+			existsConstraint,
+		)
 	}
 
 	constraints.Constraints[constraint.Field] = append(
