@@ -307,46 +307,6 @@ func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	return nil
 }
 
-// validateOperand recursively validates operands
-func (q *QueryBuilderTraceOperator) validateOperand(operand *TraceOperand, querySignals map[string]telemetrytypes.Signal) error {
-	if operand == nil {
-		return nil
-	}
-
-	if operand.QueryRef != nil {
-		// Validate query reference
-		signal, exists := querySignals[operand.QueryRef.Name]
-		if !exists {
-			return errors.WrapInvalidInputf(
-				nil,
-				errors.CodeInvalidInput,
-				"referenced query '%s' does not exist",
-				operand.QueryRef.Name,
-			)
-		}
-
-		if signal != telemetrytypes.SignalTraces {
-			return errors.WrapInvalidInputf(
-				nil,
-				errors.CodeInvalidInput,
-				"referenced query '%s' must be a trace query, but found signal '%s'",
-				operand.QueryRef.Name,
-				signal,
-			)
-		}
-	}
-
-	// Validate children
-	if err := q.validateOperand(operand.Left, querySignals); err != nil {
-		return err
-	}
-	if err := q.validateOperand(operand.Right, querySignals); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // parseTraceExpression parses an expression string into a tree structure
 // Handles precedence: NOT (highest) > || > && > => (lowest)
 func parseTraceExpression(expr string) (*TraceOperand, error) {
