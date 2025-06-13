@@ -1680,7 +1680,9 @@ export const getHostQueryPayload = (
 	const diskPendingKey = dotMetricsEnabled
 		? 'system.disk.pending_operations'
 		: 'system_disk_pending_operations';
-
+	const diskUsageKey = dotMetricsEnabled
+		? 'system.filesystem.usage'
+		: 'system_filesystem_usage';
 	return [
 		{
 			selectedTime: 'GLOBAL_TIME',
@@ -1836,6 +1838,90 @@ export const getHostQueryPayload = (
 										},
 										op: '=',
 										value: hostName,
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'state--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'state',
+									type: 'tag',
+								},
+							],
+							having: [],
+							legend: '{{state}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'A',
+							reduceTo: 'avg',
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'avg',
+						},
+					],
+					queryFormulas: [],
+				},
+				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				id: '40218bfb-a9b7-4974-aead-5bf666e139bf',
+				promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				queryType: EQueryType.QUERY_BUILDER,
+			},
+			variables: {},
+			formatForWeb: false,
+			start,
+			end,
+		},
+		{
+			selectedTime: 'GLOBAL_TIME',
+			graphType: PANEL_TYPES.TIME_SERIES,
+			query: {
+				builder: {
+					queryData: [
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'system_filesystem_usage--float64--Gauge--true',
+								isColumn: true,
+								isJSON: false,
+								key: diskUsageKey,
+								type: 'Gauge',
+							},
+							aggregateOperator: 'avg',
+							dataSource: DataSource.METRICS,
+							disabled: false,
+							expression: 'A',
+							filters: {
+								items: [
+									{
+										id: 'disk_f1',
+										key: {
+											dataType: DataTypes.String,
+											id: 'host_name--string--tag--false',
+											isColumn: false,
+											isJSON: false,
+											key: hostNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: hostName,
+									},
+									{
+										id: 'disk_f2',
+										key: {
+											dataType: DataTypes.String,
+											id: 'mountpoint--string--tag--false',
+											isColumn: false,
+											isJSON: false,
+											key: 'mountpoint',
+											type: 'tag',
+										},
+										op: '=',
+										value: '/',
 									},
 								],
 								op: 'AND',
@@ -2463,7 +2549,7 @@ export const getHostQueryPayload = (
 							functions: [],
 							groupBy: [],
 							having: [],
-							legend: '',
+							legend: 'system disk io',
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
@@ -2712,6 +2798,7 @@ export const nodeWidgetInfo = [
 export const hostWidgetInfo = [
 	{ title: 'CPU Usage', yAxisUnit: 'percentunit' },
 	{ title: 'Memory Usage', yAxisUnit: 'bytes' },
+	{ title: 'Disk Usage', yAxisUnit: 'bytes' },
 	{ title: 'System Load Average', yAxisUnit: '' },
 	{ title: 'Network usage (bytes)', yAxisUnit: 'bytes' },
 	{ title: 'Network usage (packet/s)', yAxisUnit: 'pps' },
