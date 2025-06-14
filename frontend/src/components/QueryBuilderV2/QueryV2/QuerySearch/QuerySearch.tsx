@@ -779,10 +779,10 @@ function QuerySearch(): JSX.Element {
 	// Add back the generateOptions function and useEffect
 	const generateOptions = (data: any): any[] =>
 		Object.values(data.keys).flatMap((items: any) =>
-			items.map(({ name, fieldDataType, fieldContext }: any) => ({
+			items.map(({ name, fieldDataType }: any) => ({
 				label: name,
 				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
-				info: fieldContext,
+				info: '',
 				details: '',
 			})),
 		);
