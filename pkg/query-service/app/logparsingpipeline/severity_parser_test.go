@@ -8,18 +8,21 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSeverityParsingProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelinetypes.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -34,11 +37,11 @@ func TestSeverityParsingProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{},
+			Config: []pipelinetypes.PipelineOperator{},
 		},
 	}
 
-	var severityParserOp PipelineOperator
+	var severityParserOp pipelinetypes.PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{
 			"orderId": 1,
@@ -152,27 +155,29 @@ func TestNoCollectorErrorsFromSeverityParserForMismatchedLogs(t *testing.T) {
 			},
 		},
 	}
-	makeTestPipeline := func(config []PipelineOperator) Pipeline {
-		return Pipeline{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
-			Filter:  testPipelineFilter,
-			Config:  config,
+	makeTestPipeline := func(config []pipelinetypes.PipelineOperator) pipelinetypes.GettablePipeline {
+		return pipelinetypes.GettablePipeline{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
+			Filter: testPipelineFilter,
+			Config: config,
 		}
 	}
 
 	type pipelineTestCase struct {
 		Name           string
-		Operator       PipelineOperator
+		Operator       pipelinetypes.PipelineOperator
 		NonMatchingLog model.SignozLog
 	}
 
 	testCases := []pipelineTestCase{
 		{
 			"severity parser should ignore logs with missing field",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:        "severity",
 				Type:      "severity_parser",
 				Enabled:   true,
@@ -188,7 +193,7 @@ func TestNoCollectorErrorsFromSeverityParserForMismatchedLogs(t *testing.T) {
 			}),
 		}, {
 			"severity parser should ignore logs with invalid values.",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:        "severity",
 				Type:      "severity_parser",
 				Enabled:   true,
@@ -207,7 +212,7 @@ func TestNoCollectorErrorsFromSeverityParserForMismatchedLogs(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		testPipelines := []Pipeline{makeTestPipeline([]PipelineOperator{testCase.Operator})}
+		testPipelines := []pipelinetypes.GettablePipeline{makeTestPipeline([]pipelinetypes.PipelineOperator{testCase.Operator})}
 
 		result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 			context.Background(),

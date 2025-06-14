@@ -3,12 +3,14 @@ package app
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"regexp"
 	"slices"
 	"sort"
@@ -18,27 +20,30 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/traceFunnels"
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/apis/fields"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/prometheus/promql"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/prometheus/prometheus/promql"
 
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
-	"github.com/SigNoz/signoz/pkg/query-service/app/explorer"
 	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
@@ -46,31 +51,32 @@ import (
 	logsv4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
 	metricsv3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
 	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
 	"go.uber.org/zap"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
-	"github.com/SigNoz/signoz/pkg/query-service/version"
+	"github.com/SigNoz/signoz/pkg/version"
+
+	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 )
 
 type status string
@@ -89,10 +95,7 @@ func NewRouter() *mux.Router {
 // APIHandler implements the query service public API
 type APIHandler struct {
 	reader            interfaces.Reader
-	skipConfig        *model.SkipConfig
-	appDao            dao.ModelDao
 	ruleManager       *rules.Manager
-	featureFlags      interfaces.FeatureLookup
 	querier           interfaces.Querier
 	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
@@ -119,9 +122,6 @@ type APIHandler struct {
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
 
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
-
 	hostsRepo      *inframetrics.HostsRepo
 	processesRepo  *inframetrics.ProcessesRepo
 	podsRepo       *inframetrics.PodsRepo
@@ -142,6 +142,12 @@ type APIHandler struct {
 
 	AlertmanagerAPI *alertmanager.API
 
+	LicensingAPI licensing.API
+
+	FieldsAPI *fields.API
+
+	QuerierAPI *querierAPI.API
+
 	Signoz *signoz.SigNoz
 }
 
@@ -150,18 +156,10 @@ type APIHandlerOpts struct {
 	// business data reader e.g. clickhouse
 	Reader interfaces.Reader
 
-	SkipConfig *model.SkipConfig
-
 	PreferSpanMetrics bool
-
-	// dao layer to perform crud on app objects like dashboard, alerts etc
-	AppDao dao.ModelDao
 
 	// rule manager handles rule crud operations
 	RuleManager *rules.Manager
-
-	// feature flags querier
-	FeatureFlags interfaces.FeatureLookup
 
 	// Integrations
 	IntegrationsController *integrations.Controller
@@ -178,14 +176,15 @@ type APIHandlerOpts struct {
 	// Querier Influx Interval
 	FluxInterval time.Duration
 
-	// Use Logs New schema
-	UseLogsNewSchema bool
-
-	UseTraceNewSchema bool
-
 	JWT *authtypes.JWT
 
 	AlertmanagerAPI *alertmanager.API
+
+	LicensingAPI licensing.API
+
+	FieldsAPI *fields.API
+
+	QuerierAPI *querierAPI.API
 
 	Signoz *signoz.SigNoz
 }
@@ -193,23 +192,17 @@ type APIHandlerOpts struct {
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	querierOpts := querier.QuerierOptions{
-		Reader:            opts.Reader,
-		Cache:             opts.Cache,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FluxInterval:      opts.FluxInterval,
-		FeatureLookup:     opts.FeatureFlags,
-		UseLogsNewSchema:  opts.UseLogsNewSchema,
-		UseTraceNewSchema: opts.UseTraceNewSchema,
+		Reader:       opts.Reader,
+		Cache:        opts.Cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		FluxInterval: opts.FluxInterval,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:            opts.Reader,
-		Cache:             opts.Cache,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FluxInterval:      opts.FluxInterval,
-		FeatureLookup:     opts.FeatureFlags,
-		UseLogsNewSchema:  opts.UseLogsNewSchema,
-		UseTraceNewSchema: opts.UseTraceNewSchema,
+		Reader:       opts.Reader,
+		Cache:        opts.Cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		FluxInterval: opts.FluxInterval,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
@@ -226,23 +219,19 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
-	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
+	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager, opts.Signoz.Modules.Dashboard)
+	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
-		appDao:                        opts.AppDao,
-		skipConfig:                    opts.SkipConfig,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
-		featureFlags:                  opts.FeatureFlags,
 		IntegrationsController:        opts.IntegrationsController,
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
-		UseLogsNewSchema:              opts.UseLogsNewSchema,
-		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		hostsRepo:                     hostsRepo,
 		processesRepo:                 processesRepo,
 		podsRepo:                      podsRepo,
@@ -257,37 +246,36 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		JWT:                           opts.JWT,
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
+		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
+		FieldsAPI:                     opts.FieldsAPI,
+		QuerierAPI:                    opts.QuerierAPI,
 	}
 
-	logsQueryBuilder := logsv3.PrepareLogsQuery
-	if opts.UseLogsNewSchema {
-		logsQueryBuilder = logsv4.PrepareLogsQuery
-	}
-
-	tracesQueryBuilder := tracesV3.PrepareTracesQuery
-	if opts.UseTraceNewSchema {
-		tracesQueryBuilder = tracesV4.PrepareTracesQuery
-	}
+	logsQueryBuilder := logsv4.PrepareLogsQuery
+	tracesQueryBuilder := tracesV4.PrepareTracesQuery
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		BuildTraceQuery:  tracesQueryBuilder,
 		BuildLogQuery:    logsQueryBuilder,
 	}
-	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
+	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
 
-	// check if at least one user is created
-	hasUsers, err := aH.appDao.GetUsersWithOpts(context.Background(), 1)
-	if err.Error() != "" {
-		// raise warning but no panic as this is a recoverable condition
-		zap.L().Warn("unexpected error while fetch user count while initializing base api handler", zap.Error(err))
+	// TODO(nitya): remote this in later for multitenancy.
+	orgs, err := opts.Signoz.Modules.OrgGetter.ListByOwnedKeyRange(context.Background())
+	if err != nil {
+		zap.L().Warn("unexpected error while fetching orgs  while initializing base api handler", zap.Error(err))
 	}
-	if len(hasUsers) != 0 {
-		// first user is already created, we can mark the app ready for general use.
-		// this means, we disable self-registration and expect new users
-		// to signup signoz through invite link only.
-		aH.SetupCompleted = true
+	// if the first org with the first user is created then the setup is complete.
+	if len(orgs) == 1 {
+		users, err := opts.Signoz.Modules.User.ListUsers(context.Background(), orgs[0].ID.String())
+		if err != nil {
+			zap.L().Warn("unexpected error while fetch user count while initializing base api handler", zap.Error(err))
+		}
+		if len(users) > 0 {
+			aH.SetupCompleted = true
+		}
 	}
 
 	aH.Upgrader = &websocket.Upgrader{
@@ -388,7 +376,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	}
 }
 
-func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v3").Subrouter()
 	subRouter.HandleFunc("/autocomplete/aggregate_attributes", am.ViewAccess(
 		withCacheControl(AutoCompleteCacheControlAge, aH.autocompleteAggregateAttributes))).Methods(http.MethodGet)
@@ -414,7 +402,14 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
 }
 
-func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterFieldsRoutes(router *mux.Router, am *middleware.AuthZ) {
+	subRouter := router.PathPrefix("/api/v1").Subrouter()
+
+	subRouter.HandleFunc("/fields/keys", am.ViewAccess(aH.FieldsAPI.GetFieldsKeys)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields/values", am.ViewAccess(aH.FieldsAPI.GetFieldsValues)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *middleware.AuthZ) {
 	hostsSubRouter := router.PathPrefix("/api/v1/hosts").Subrouter()
 	hostsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getHostAttributeKeys)).Methods(http.MethodGet)
 	hostsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getHostAttributeValues)).Methods(http.MethodGet)
@@ -474,15 +469,20 @@ func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMid
 	infraOnboardingSubRouter.HandleFunc("/k8s/status", am.ViewAccess(aH.getK8sInfraOnboardingStatus)).Methods(http.MethodGet)
 }
 
-func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/ws").Subrouter()
 	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 }
 
-func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v4").Subrouter()
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV4)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterQueryRangeV5Routes(router *mux.Router, am *middleware.AuthZ) {
+	subRouter := router.PathPrefix("/api/v5").Subrouter()
+	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QuerierAPI.QueryRange)).Methods(http.MethodPost)
 }
 
 // todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
@@ -496,7 +496,7 @@ func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
 }
 
 // RegisterRoutes registers routes for this handler on the given router
-func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels", am.ViewAccess(aH.AlertmanagerAPI.ListChannels)).Methods(http.MethodGet)
@@ -526,34 +526,35 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", am.ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.List)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/{id}", am.ViewAccess(aH.Get)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Update)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Delete)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/dashboards/{id}/lock", am.EditAccess(aH.Signoz.Handlers.Dashboard.LockUnlock)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.getSavedViews)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views", am.EditAccess(aH.createSavedViews)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.getSavedView)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.updateSavedView)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.Signoz.Handlers.SavedView.List)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/views", am.EditAccess(aH.Signoz.Handlers.SavedView.Create)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.Signoz.Handlers.SavedView.Get)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Update)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Delete)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
 
-	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", am.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/entry_point_operations", am.ViewAccess(aH.getEntryPointOps)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", am.ViewAccess(aH.getUsage)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.setApdexSettings)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.Signoz.Handlers.Apdex.Set)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.Signoz.Handlers.Apdex.Get)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
@@ -561,7 +562,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v2/traces/waterfall/{traceId}", am.ViewAccess(aH.GetWaterfallSpansForTraceWithMetadata)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/features", am.ViewAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodPost)
@@ -572,52 +573,63 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
-	// === Preference APIs ===
+	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.Signoz.Handlers.Preference.ListByUser)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/preferences/{name}", am.ViewAccess(aH.Signoz.Handlers.Preference.GetByUser)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/preferences/{name}", am.ViewAccess(aH.Signoz.Handlers.Preference.UpdateByUser)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.Signoz.Handlers.Preference.ListByOrg)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/preferences/{name}", am.AdminAccess(aH.Signoz.Handlers.Preference.GetByOrg)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/preferences/{name}", am.AdminAccess(aH.Signoz.Handlers.Preference.UpdateByOrg)).Methods(http.MethodPut)
 
-	// user actions
-	router.HandleFunc("/api/v1/user/preferences", am.ViewAccess(aH.getAllUserPreferences)).Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.getUserPreference)).Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/user/preferences/{preferenceId}", am.ViewAccess(aH.updateUserPreference)).Methods(http.MethodPut)
-
-	// org actions
-	router.HandleFunc("/api/v1/org/preferences", am.AdminAccess(aH.getAllOrgPreferences)).Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.getOrgPreference)).Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.updateOrgPreference)).Methods(http.MethodPut)
+	// Quick Filters
+	router.HandleFunc("/api/v1/orgs/me/filters", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetQuickFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSignalFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.Signoz.Handlers.QuickFilter.UpdateQuickFilters)).Methods(http.MethodPut)
 
 	// === Authentication APIs ===
-	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/invite/bulk", am.AdminAccess(aH.inviteUsers)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.getInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/{email}", am.AdminAccess(aH.revokeInvite)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.listPendingInvites)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.Signoz.Handlers.User.CreateInvite)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/bulk", am.AdminAccess(aH.Signoz.Handlers.User.CreateBulkInvite)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.Signoz.Handlers.User.GetInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteInvite)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.Signoz.Handlers.User.ListInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/accept", am.OpenAccess(aH.Signoz.Handlers.User.AcceptInvite)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.loginUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.precheckLogin)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.Signoz.Handlers.User.Login)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.Signoz.Handlers.User.LoginPrecheck)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/complete/google", am.OpenAccess(aH.receiveGoogleAuth)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.listUsers)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.getUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.editUser)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.User.ListDomains)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/domains", am.AdminAccess(aH.Signoz.Handlers.User.CreateDomain)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.User.UpdateDomain)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/domains/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteDomain)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/rbac/role/{id}", am.SelfAccess(aH.getRole)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rbac/role/{id}", am.AdminAccess(aH.editRole)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/pats", am.AdminAccess(aH.Signoz.Handlers.User.CreateAPIKey)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/pats", am.AdminAccess(aH.Signoz.Handlers.User.ListAPIKeys)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(aH.Signoz.Handlers.User.UpdateAPIKey)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/pats/{id}", am.AdminAccess(aH.Signoz.Handlers.User.RevokeAPIKey)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/org", am.AdminAccess(aH.getOrgs)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/{id}", am.AdminAccess(aH.getOrg)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/{id}", am.AdminAccess(aH.editOrg)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/orgUsers/{id}", am.AdminAccess(aH.getOrgUsers)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.Signoz.Handlers.User.ListUsers)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/me", am.OpenAccess(aH.Signoz.Handlers.User.GetCurrentUserFromJWT)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.GetUser)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.Signoz.Handlers.User.UpdateUser)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.Signoz.Handlers.User.DeleteUser)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.changePassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Get)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.Signoz.Handlers.Organization.Update)).Methods(http.MethodPut)
+
+	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.Signoz.Handlers.User.GetResetPasswordToken)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.Signoz.Handlers.User.ResetPassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.Signoz.Handlers.User.ChangePassword)).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v3/licenses", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
+		render.Success(rw, http.StatusOK, []any{})
+	})).Methods(http.MethodGet)
+	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
+		aH.LicensingAPI.Activate(rw, req)
+	})).Methods(http.MethodGet)
 }
 
-func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddleware) {
+func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/metrics/filters/keys",
 		am.ViewAccess(ah.FilterKeysSuggestion)).
 		Methods(http.MethodGet)
@@ -660,7 +672,13 @@ func Intersection(a, b []int) (c []int) {
 }
 
 func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
 	ruleResponse, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -670,7 +688,7 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 }
 
 // populateTemporality adds the temporality to the query if it is not present
-func (aH *APIHandler) PopulateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+func (aH *APIHandler) PopulateTemporality(ctx context.Context, orgID valuer.UUID, qp *v3.QueryRangeParamsV3) error {
 
 	aH.temporalityMux.Lock()
 	defer aH.temporalityMux.Unlock()
@@ -701,7 +719,7 @@ func (aH *APIHandler) PopulateTemporality(ctx context.Context, qp *v3.QueryRange
 		}
 	}
 
-	nameToTemporality, err := aH.reader.FetchTemporality(ctx, missingTemporality)
+	nameToTemporality, err := aH.reader.FetchTemporality(ctx, orgID, missingTemporality)
 	if err != nil {
 		return err
 	}
@@ -725,9 +743,15 @@ func (aH *APIHandler) PopulateTemporality(ctx context.Context, qp *v3.QueryRange
 }
 
 func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Request) {
-	schedules, err := aH.ruleManager.RuleDB().GetAllPlannedMaintenance(r.Context())
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
+	schedules, err := aH.ruleManager.MaintenanceStore().GetAllPlannedMaintenance(r.Context(), claims.OrgID)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -735,7 +759,7 @@ func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Reque
 	// Since the number of schedules is expected to be small, this should be fine
 
 	if r.URL.Query().Get("active") != "" {
-		activeSchedules := make([]rules.PlannedMaintenance, 0)
+		activeSchedules := make([]*ruletypes.GettablePlannedMaintenance, 0)
 		active, _ := strconv.ParseBool(r.URL.Query().Get("active"))
 		for _, schedule := range schedules {
 			now := time.Now().In(time.FixedZone(schedule.Schedule.Timezone, 0))
@@ -747,7 +771,7 @@ func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Reque
 	}
 
 	if r.URL.Query().Get("recurring") != "" {
-		recurringSchedules := make([]rules.PlannedMaintenance, 0)
+		recurringSchedules := make([]*ruletypes.GettablePlannedMaintenance, 0)
 		recurring, _ := strconv.ParseBool(r.URL.Query().Get("recurring"))
 		for _, schedule := range schedules {
 			if schedule.IsRecurring() == recurring {
@@ -761,62 +785,83 @@ func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Reque
 }
 
 func (aH *APIHandler) getDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	schedule, err := aH.ruleManager.RuleDB().GetPlannedMaintenanceByID(r.Context(), id)
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		return
+	}
+
+	schedule, err := aH.ruleManager.MaintenanceStore().GetPlannedMaintenanceByID(r.Context(), id)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 	aH.Respond(w, schedule)
 }
 
 func (aH *APIHandler) createDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
-	var schedule rules.PlannedMaintenance
+	var schedule ruletypes.GettablePlannedMaintenance
 	err := json.NewDecoder(r.Body).Decode(&schedule)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 	if err := schedule.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 
-	_, err = aH.ruleManager.RuleDB().CreatePlannedMaintenance(r.Context(), schedule)
+	_, err = aH.ruleManager.MaintenanceStore().CreatePlannedMaintenance(r.Context(), schedule)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 	aH.Respond(w, nil)
 }
 
 func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	var schedule rules.PlannedMaintenance
-	err := json.NewDecoder(r.Body).Decode(&schedule)
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		return
+	}
+
+	var schedule ruletypes.GettablePlannedMaintenance
+	err = json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 	if err := schedule.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
-	_, err = aH.ruleManager.RuleDB().EditPlannedMaintenance(r.Context(), schedule, id)
+
+	err = aH.ruleManager.MaintenanceStore().EditPlannedMaintenance(r.Context(), schedule, id)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
+
 	aH.Respond(w, nil)
 }
 
 func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	_, err := aH.ruleManager.RuleDB().DeletePlannedMaintenance(r.Context(), id)
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
+
+	err = aH.ruleManager.MaintenanceStore().DeletePlannedMaintenance(r.Context(), id)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	aH.Respond(w, nil)
 }
 
@@ -920,12 +965,12 @@ func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.
 	aH.Respond(w, stateItems)
 }
 
-func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule) ([]v3.FilterItem, []v3.AttributeKey, map[string]v3.AttributeKey) {
+func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.GettableRule) ([]v3.FilterItem, []v3.AttributeKey, map[string]v3.AttributeKey) {
 	filterItems := []v3.FilterItem{}
 	groupBy := []v3.AttributeKey{}
 	keys := make(map[string]v3.AttributeKey)
 
-	if rule.AlertType == rules.AlertTypeLogs {
+	if rule.AlertType == ruletypes.AlertTypeLogs {
 		logFields, err := aH.reader.GetLogFields(ctx)
 		if err == nil {
 			params := &v3.QueryRangeParamsV3{
@@ -935,7 +980,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule
 		} else {
 			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
 		}
-	} else if rule.AlertType == rules.AlertTypeTraces {
+	} else if rule.AlertType == ruletypes.AlertTypeTraces {
 		traceFields, err := aH.reader.GetSpanAttributeKeys(ctx)
 		if err == nil {
 			keys = traceFields
@@ -944,7 +989,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule
 		}
 	}
 
-	if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
+	if rule.AlertType == ruletypes.AlertTypeLogs || rule.AlertType == ruletypes.AlertTypeTraces {
 		if rule.RuleCondition.CompositeQuery != nil {
 			if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
 				selectedQuery := rule.RuleCondition.GetSelectedQueryName()
@@ -963,9 +1008,15 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule
 }
 
 func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
 	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
+	err = json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
@@ -975,13 +1026,13 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), ruleID, &params)
+	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), id.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	rule, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err == nil {
 		for idx := range res.Items {
 			lbls := make(map[string]string)
@@ -997,9 +1048,9 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
 			// to get the correct query range
 			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
-			if rule.AlertType == rules.AlertTypeLogs {
+			if rule.AlertType == ruletypes.AlertTypeLogs {
 				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
-			} else if rule.AlertType == rules.AlertTypeTraces {
+			} else if rule.AlertType == ruletypes.AlertTypeTraces {
 				res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}
@@ -1009,21 +1060,27 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 }
 
 func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
-	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), ruleID, &params)
+	params := model.QueryRuleStateHistory{}
+	err = json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), id.StringValue(), &params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	rule, err := aH.ruleManager.GetRule(r.Context(), ruleID)
+	rule, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err == nil {
 		for idx := range res {
 			lbls := make(map[string]string)
@@ -1035,9 +1092,9 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
 			end := time.Unix(params.End/1000, 0)
 			start := time.Unix(params.Start/1000, 0)
-			if rule.AlertType == rules.AlertTypeLogs {
+			if rule.AlertType == ruletypes.AlertTypeLogs {
 				res[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
-			} else if rule.AlertType == rules.AlertTypeTraces {
+			} else if rule.AlertType == ruletypes.AlertTypeTraces {
 				res[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}
@@ -1057,95 +1114,6 @@ func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 	// todo(amol): need to add sorter
 
 	aH.Respond(w, rules)
-}
-
-func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
-
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	allDashboards, err := dashboards.GetDashboards(r.Context(), claims.OrgID)
-	if err != nil {
-		RespondError(w, err, nil)
-		return
-	}
-
-	ic := aH.IntegrationsController
-	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context())
-	if err != nil {
-		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(err))
-	} else {
-		allDashboards = append(allDashboards, installedIntegrationDashboards...)
-	}
-
-	cloudIntegrationDashboards, err := aH.CloudIntegrationsController.AvailableDashboards(r.Context())
-	if err != nil {
-		zap.L().Error("failed to get cloud dashboards", zap.Error(err))
-	} else {
-		allDashboards = append(allDashboards, cloudIntegrationDashboards...)
-	}
-
-	tagsFromReq, ok := r.URL.Query()["tags"]
-	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
-		aH.Respond(w, allDashboards)
-		return
-	}
-
-	tags2Dash := make(map[string][]int)
-	for i := 0; i < len(allDashboards); i++ {
-		tags, ok := (allDashboards)[i].Data["tags"].([]interface{})
-		if !ok {
-			continue
-		}
-
-		tagsArray := make([]string, len(tags))
-		for i, v := range tags {
-			tagsArray[i] = v.(string)
-		}
-
-		for _, tag := range tagsArray {
-			tags2Dash[tag] = append(tags2Dash[tag], i)
-		}
-
-	}
-
-	inter := make([]int, len(allDashboards))
-	for i := range inter {
-		inter[i] = i
-	}
-
-	for _, tag := range tagsFromReq {
-		inter = Intersection(inter, tags2Dash[tag])
-	}
-
-	filteredDashboards := []types.Dashboard{}
-	for _, val := range inter {
-		dash := (allDashboards)[val]
-		filteredDashboards = append(filteredDashboards, dash)
-	}
-
-	aH.Respond(w, filteredDashboards)
-
-}
-func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
-
-	uuid := mux.Vars(r)["uuid"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	err := dashboards.DeleteDashboard(r.Context(), claims.OrgID, uuid, aH.featureFlags)
-
-	if err != nil {
-		RespondError(w, err, nil)
-		return
-	}
-
-	aH.Respond(w, nil)
-
 }
 
 func prepareQuery(r *http.Request) (string, error) {
@@ -1190,7 +1158,139 @@ func prepareQuery(r *http.Request) (string, error) {
 	if tmplErr != nil {
 		return "", tmplErr
 	}
-	return queryBuf.String(), nil
+
+	if !constants.IsDotMetricsEnabled {
+		return queryBuf.String(), nil
+	}
+
+	query = queryBuf.String()
+
+	// Now handle $var replacements (simple string replace)
+	keys := make([]string, 0, len(vars))
+	for k := range vars {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i]) > len(keys[j])
+	})
+
+	newQuery := query
+	for _, k := range keys {
+		placeholder := "$" + k
+		v := vars[k]
+		newQuery = strings.ReplaceAll(newQuery, placeholder, v)
+	}
+
+	return newQuery, nil
+}
+
+func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+
+	dashboard := new(dashboardtypes.Dashboard)
+	if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(id) {
+		cloudintegrationDashboard, apiErr := aH.CloudIntegrationsController.GetDashboardById(ctx, orgID, id)
+		if apiErr != nil {
+			render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
+			return
+		}
+		dashboard = cloudintegrationDashboard
+	} else if aH.IntegrationsController.IsInstalledIntegrationDashboardID(id) {
+		integrationDashboard, apiErr := aH.IntegrationsController.GetInstalledIntegrationDashboardById(ctx, orgID, id)
+		if apiErr != nil {
+			render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
+			return
+		}
+		dashboard = integrationDashboard
+	} else {
+		dashboardID, err := valuer.NewUUID(id)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		sqlDashboard, err := aH.Signoz.Modules.Dashboard.Get(ctx, orgID, dashboardID)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		dashboard = sqlDashboard
+	}
+
+	gettableDashboard, err := dashboardtypes.NewGettableDashboardFromDashboard(dashboard)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, gettableDashboard)
+}
+
+func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboards := make([]*dashboardtypes.Dashboard, 0)
+	sqlDashboards, err := aH.Signoz.Modules.Dashboard.List(ctx, orgID)
+	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
+		render.Error(rw, err)
+		return
+	}
+	if sqlDashboards != nil {
+		dashboards = append(dashboards, sqlDashboards...)
+	}
+
+	installedIntegrationDashboards, apiErr := aH.IntegrationsController.GetDashboardsForInstalledIntegrations(ctx, orgID)
+	if apiErr != nil {
+		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(apiErr))
+	} else {
+		dashboards = append(dashboards, installedIntegrationDashboards...)
+	}
+
+	cloudIntegrationDashboards, apiErr := aH.CloudIntegrationsController.AvailableDashboards(ctx, orgID)
+	if apiErr != nil {
+		zap.L().Error("failed to get dashboards for cloud integrations", zap.Error(apiErr))
+	} else {
+		dashboards = append(dashboards, cloudIntegrationDashboards...)
+	}
+
+	gettableDashboards, err := dashboardtypes.NewGettableDashboardsFromDashboards(dashboards)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	render.Success(rw, http.StatusOK, gettableDashboards)
 }
 
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {
@@ -1208,113 +1308,17 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 	aH.Respond(w, dashboardVars)
 }
 
-func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
-
-	uuid := mux.Vars(r)["uuid"]
-
-	var postData map[string]interface{}
-	err := json.NewDecoder(r.Body).Decode(&postData)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
-		return
-	}
-	err = dashboards.IsPostDataSane(&postData)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
-		return
-	}
-
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), claims.OrgID, claims.Email, uuid, postData, aH.featureFlags)
-	if apiError != nil {
-		RespondError(w, apiError, nil)
-		return
-	}
-
-	aH.Respond(w, dashboard)
-
-}
-
-func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
-
-	uuid := mux.Vars(r)["uuid"]
-
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	dashboard, apiError := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
-
-	if apiError != nil {
-		if apiError.Type() != model.ErrorNotFound {
-			RespondError(w, apiError, nil)
-			return
-		}
-
-		if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(uuid) {
-			dashboard, apiError = aH.CloudIntegrationsController.GetDashboardById(
-				r.Context(), uuid,
-			)
-			if apiError != nil {
-				RespondError(w, apiError, nil)
-				return
-			}
-
-		} else {
-			dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
-				r.Context(), uuid,
-			)
-			if apiError != nil {
-				RespondError(w, apiError, nil)
-				return
-			}
-
-		}
-
-	}
-
-	aH.Respond(w, dashboard)
-
-}
-
-func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
-
-	var postData map[string]interface{}
-
-	err := json.NewDecoder(r.Body).Decode(&postData)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
-		return
-	}
-
-	err = dashboards.IsPostDataSane(&postData)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
-		return
-	}
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	dash, apiErr := dashboards.CreateDashboard(r.Context(), claims.OrgID, claims.Email, postData, aH.featureFlags)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, dash)
-
-}
-
 func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
-
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -1326,7 +1330,7 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	alertCount, apiRrr := aH.ruleManager.TestNotification(ctx, string(body))
+	alertCount, apiRrr := aH.ruleManager.TestNotification(ctx, orgID, string(body))
 	if apiRrr != nil {
 		RespondError(w, apiRrr, nil)
 		return
@@ -1356,7 +1360,12 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 
 // patchRule updates only requested changes in the rule
 func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
 
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -1377,7 +1386,12 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
 
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -1553,20 +1567,19 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 		"email":   email,
 		"message": message,
 	}
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if ok {
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 == nil {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, claims.Email, true, false)
 	}
 }
 
 func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
-
 	request, err := parseRegisterEventRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if ok {
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 == nil {
 		switch request.EventType {
 		case model.TrackEvent:
 			telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
@@ -1596,6 +1609,22 @@ func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
 
 	aH.WriteJSON(w, r, result)
 
+}
+
+func (aH *APIHandler) getEntryPointOps(w http.ResponseWriter, r *http.Request) {
+	query, err := parseGetTopOperationsRequest(r)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	result, apiErr := aH.reader.GetEntryPointOperations(r.Context(), query)
+	if apiErr != nil {
+		render.Error(w, apiErr)
+		return
+	}
+
+	render.Success(w, http.StatusOK, result)
 }
 
 func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
@@ -1654,7 +1683,7 @@ func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Requ
 		end = time.Unix(0, endEpochInt)
 	}
 
-	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end, services)
+	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), start, end, services)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -1670,7 +1699,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetServices(r.Context(), query, aH.skipConfig)
+	result, apiErr := aH.reader.GetServices(r.Context(), query)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1678,8 +1707,8 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"number": len(*result),
 	}
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if ok {
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 == nil {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, claims.Email, true, false)
 	}
 
@@ -1717,14 +1746,13 @@ func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
-
 	params, err := ParseSearchTracesParams(r)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
 		return
 	}
 
-	result, err := aH.reader.SearchTraces(r.Context(), params, nil)
+	result, err := aH.reader.SearchTraces(r.Context(), params)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1734,6 +1762,16 @@ func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 	traceID := mux.Vars(r)["traceId"]
 	if traceID == "" {
 		RespondError(w, model.BadRequest(errors.New("traceID is required")), nil)
@@ -1741,13 +1779,13 @@ func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWrite
 	}
 
 	req := new(model.GetWaterfallSpansForTraceWithMetadataParams)
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	result, apiErr := aH.reader.GetWaterfallSpansForTraceWithMetadata(r.Context(), traceID, req)
+	result, apiErr := aH.reader.GetWaterfallSpansForTraceWithMetadata(r.Context(), orgID, traceID, req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -1757,6 +1795,17 @@ func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWrite
 }
 
 func (aH *APIHandler) GetFlamegraphSpansForTrace(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	traceID := mux.Vars(r)["traceId"]
 	if traceID == "" {
 		RespondError(w, model.BadRequest(errors.New("traceID is required")), nil)
@@ -1764,13 +1813,13 @@ func (aH *APIHandler) GetFlamegraphSpansForTrace(w http.ResponseWriter, r *http.
 	}
 
 	req := new(model.GetFlamegraphSpansForTraceParams)
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
-	result, apiErr := aH.reader.GetFlamegraphSpansForTrace(r.Context(), traceID, req)
+	result, apiErr := aH.reader.GetFlamegraphSpansForTrace(r.Context(), orgID, traceID, req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -1859,8 +1908,15 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
+		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+		return
+	}
+
 	// Context is not used here as TTL is long duration DB operation
-	result, apiErr := aH.reader.SetTTL(context.Background(), ttlParams)
+	result, apiErr := aH.reader.SetTTL(context.Background(), claims.OrgID, ttlParams)
 	if apiErr != nil {
 		if apiErr.Typ == model.ErrorConflict {
 			aH.HandleError(w, apiErr.Err, http.StatusConflict)
@@ -1880,7 +1936,14 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetTTL(r.Context(), ttlParams)
+	ctx := r.Context()
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
+		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+		return
+	}
+
+	result, apiErr := aH.reader.GetTTL(r.Context(), claims.OrgID, ttlParams)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1898,9 +1961,8 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
-	version := version.GetVersion()
 	versionResponse := model.GetVersionResponse{
-		Version:        version,
+		Version:        version.Info.Version(),
 		EE:             "Y",
 		SetupCompleted: aH.SetupCompleted,
 	}
@@ -1909,29 +1971,27 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet, err := aH.FF().GetFeatureFlags()
+	featureSet, err := aH.Signoz.Licensing.GetFeatureFlags(r.Context(), valuer.GenerateUUID())
 	if err != nil {
 		aH.HandleError(w, err, http.StatusInternalServerError)
 		return
 	}
+
 	if aH.preferSpanMetrics {
-		for idx := range featureSet {
-			feature := &featureSet[idx]
-			if feature.Name == model.UseSpanMetrics {
+		for idx, feature := range featureSet {
+			if feature.Name == licensetypes.UseSpanMetrics {
+				featureSet[idx].Active = true
+			}
+		}
+	}
+	if constants.IsDotMetricsEnabled {
+		for idx, feature := range featureSet {
+			if feature.Name == licensetypes.DotMetricsEnabled {
 				featureSet[idx].Active = true
 			}
 		}
 	}
 	aH.Respond(w, featureSet)
-}
-
-func (aH *APIHandler) FF() interfaces.FeatureLookup {
-	return aH.featureFlags
-}
-
-func (aH *APIHandler) CheckFeature(f string) bool {
-	err := aH.FF().CheckFeature(f)
-	return err == nil
 }
 
 // getHealth is used to check the health of the service.
@@ -1950,497 +2010,98 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, map[string]string{"status": "ok"})
 }
 
-// inviteUser is used to invite a user. It is used by an admin api.
-func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
-	req, err := parseInviteRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	resp, err := auth.Invite(r.Context(), req)
-	if err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
-		return
-	}
-	aH.WriteJSON(w, r, resp)
-}
-
-func (aH *APIHandler) inviteUsers(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	req, err := parseInviteUsersRequest(r)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	response, err := auth.InviteUsers(ctx, req)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	// Check the response status and set the appropriate HTTP status code
-	if response.Status == "failure" {
-		w.WriteHeader(http.StatusBadRequest) // 400 Bad Request for failure
-	} else if response.Status == "partial_success" {
-		w.WriteHeader(http.StatusPartialContent) // 206 Partial Content
-	} else {
-		w.WriteHeader(http.StatusOK) // 200 OK for success
-	}
-
-	aH.WriteJSON(w, r, response)
-}
-
-// getInvite returns the invite object details for the given invite token. We do not need to
-// protect this API because invite token itself is meant to be private.
-func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
-	token := mux.Vars(r)["token"]
-
-	resp, err := auth.GetInvite(context.Background(), token)
-	if err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorNotFound}, nil)
-		return
-	}
-	aH.WriteJSON(w, r, resp)
-}
-
-// revokeInvite is used to revoke an invite.
-func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
-	email := mux.Vars(r)["email"]
-
-	if err := auth.RevokeInvite(r.Context(), email); err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
-		return
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "invite revoked successfully"})
-}
-
-// listPendingInvites is used to list the pending invites.
-func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
-		return
-	}
-	invites, err := dao.DB().GetInvites(ctx, claims.OrgID)
-	if err != nil {
-		RespondError(w, err, nil)
-		return
-	}
-
-	// TODO(Ahsan): Querying org name based on orgId for each invite is not a good idea. Either
-	// we should include org name field in the invite table, or do a join query.
-	var resp []*model.InvitationResponseObject
-	for _, inv := range invites {
-
-		org, apiErr := dao.DB().GetOrg(ctx, inv.OrgID)
-		if apiErr != nil {
-			RespondError(w, apiErr, nil)
-		}
-		resp = append(resp, &model.InvitationResponseObject{
-			Name:         inv.Name,
-			Email:        inv.Email,
-			Token:        inv.Token,
-			CreatedAt:    inv.CreatedAt.Unix(),
-			Role:         inv.Role,
-			Organization: org.Name,
-		})
-	}
-	aH.WriteJSON(w, r, resp)
-}
-
-// Register extends registerUser for non-internal packages
-func (aH *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
-	aH.registerUser(w, r)
-}
-
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
-	req, err := parseRegisterRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
+	if aH.SetupCompleted {
+		RespondError(w, &model.ApiError{Err: errors.New("self-registration is disabled"), Typ: model.ErrorBadData}, nil)
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	var req types.PostableRegisterOrgAndAdmin
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorBadData}, nil)
 		return
 	}
 
-	if !aH.SetupCompleted {
-		// since the first user is now created, we can disable self-registration as
-		// from here onwards, we expect admin (owner) to invite other users.
-		aH.SetupCompleted = true
+	_, errv2 := aH.Signoz.Modules.User.Register(r.Context(), &req)
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
 	}
+
+	// since the first user is now created, we can disable self-registration as
+	// from here onwards, we expect admin (owner) to invite other users.
+	aH.SetupCompleted = true
 
 	aH.Respond(w, nil)
 }
 
-func (aH *APIHandler) precheckLogin(w http.ResponseWriter, r *http.Request) {
+func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
+	ssoError := []byte("Login failed. Please contact your system administrator")
+	dst := make([]byte, base64.StdEncoding.EncodedLen(len(ssoError)))
+	base64.StdEncoding.Encode(dst, ssoError)
 
-	email := r.URL.Query().Get("email")
-	sourceUrl := r.URL.Query().Get("ref")
-
-	resp, apierr := aH.appDao.PrecheckLogin(context.Background(), email, sourceUrl)
-	if apierr != nil {
-		RespondError(w, apierr, resp)
-		return
-	}
-
-	aH.Respond(w, resp)
+	http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectURL, string(dst)), http.StatusSeeOther)
 }
 
-func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
-	req, err := parseLoginRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	// c, err := r.Cookie("refresh-token")
-	// if err != nil {
-	// 	if err != http.ErrNoCookie {
-	// 		w.WriteHeader(http.StatusBadRequest)
-	// 		return
-	// 	}
-	// }
-
-	// if c != nil {
-	// 	req.RefreshToken = c.Value
-	// }
-
-	resp, err := auth.Login(context.Background(), req, aH.JWT)
-	if aH.HandleError(w, err, http.StatusUnauthorized) {
-		return
-	}
-
-	// http.SetCookie(w, &http.Cookie{
-	// 	Name:     "refresh-token",
-	// 	Value:    resp.RefreshJwt,
-	// 	Expires:  time.Unix(resp.RefreshJwtExpiry, 0),
-	// 	HttpOnly: true,
-	// })
-
-	aH.WriteJSON(w, r, resp)
-}
-
-func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := dao.DB().GetUsers(context.Background())
-	if err != nil {
-		zap.L().Error("[listUsers] Failed to query list of users", zap.Error(err))
-		RespondError(w, err, nil)
-		return
-	}
-	// mask the password hash
-	for i := range users {
-		users[i].Password = ""
-	}
-	aH.WriteJSON(w, r, users)
-}
-
-func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
+// receiveGoogleAuth completes google OAuth response and forwards a request
+// to front-end to sign user in
+func (aH *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) {
+	redirectUri := constants.GetDefaultSiteURL()
 	ctx := context.Background()
-	user, err := dao.DB().GetUser(ctx, id)
+
+	q := r.URL.Query()
+	if errType := q.Get("error"); errType != "" {
+		zap.L().Error("[receiveGoogleAuth] failed to login with google auth", zap.String("error", errType), zap.String("error_description", q.Get("error_description")))
+		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to login through SSO"), http.StatusMovedPermanently)
+		return
+	}
+
+	relayState := q.Get("state")
+	zap.L().Debug("[receiveGoogleAuth] relay state received", zap.String("state", relayState))
+
+	parsedState, err := url.Parse(relayState)
+	if err != nil || relayState == "" {
+		zap.L().Error("[receiveGoogleAuth] failed to process response - invalid response from IDP", zap.Error(err), zap.Any("request", r))
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+
+	// upgrade redirect url from the relay state for better accuracy
+	redirectUri = fmt.Sprintf("%s://%s%s", parsedState.Scheme, parsedState.Host, "/login")
+
+	// fetch domain by parsing relay state.
+	domain, err := aH.Signoz.Modules.User.GetDomainFromSsoResponse(ctx, parsedState)
 	if err != nil {
-		zap.L().Error("[getUser] Failed to query user", zap.Error(err))
-		RespondError(w, err, "Failed to get user")
-		return
-	}
-	if user == nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: errors.New("user not found"),
-		}, nil)
+		handleSsoError(w, r, redirectUri)
 		return
 	}
 
-	// No need to send password hash for the user object.
-	user.Password = ""
-	aH.WriteJSON(w, r, user)
-}
-
-// editUser only changes the user's Name and ProfilePictureURL. It is intentionally designed
-// to not support update of orgId, Password, createdAt for the sucurity reasons.
-func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	update, err := parseUserRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	ctx := context.Background()
-	old, apiErr := dao.DB().GetUser(ctx, id)
-	if apiErr != nil {
-		zap.L().Error("[editUser] Failed to query user", zap.Error(err))
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	if len(update.Name) > 0 {
-		old.Name = update.Name
-	}
-	if len(update.ProfilePictureURL) > 0 {
-		old.ProfilePictureURL = update.ProfilePictureURL
-	}
-
-	_, apiErr = dao.DB().EditUser(ctx, &types.User{
-		ID:       old.ID,
-		Name:     old.Name,
-		OrgID:    old.OrgID,
-		Email:    old.Email,
-		Password: old.Password,
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: old.CreatedAt,
-		},
-		ProfilePictureURL: old.ProfilePictureURL,
-	})
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "user updated successfully"})
-}
-
-func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	// Query for the user's group, and the admin's group. If the user belongs to the admin group
-	// and is the last user then don't let the deletion happen. Otherwise, the system will become
-	// admin less and hence inaccessible.
-	ctx := context.Background()
-	user, apiErr := dao.DB().GetUser(ctx, id)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get user's group")
-		return
-	}
-
-	if user == nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorNotFound,
-			Err: errors.New("no user found"),
-		}, nil)
-		return
-	}
-
-	adminGroup, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get admin group")
-		return
-	}
-	adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, adminGroup.ID)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get admin group users")
-		return
-	}
-
-	if user.GroupID == adminGroup.ID && len(adminUsers) == 1 {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: errors.New("cannot delete the last admin user")}, nil)
-		return
-	}
-
-	err := dao.DB().DeleteUser(ctx, id)
+	// now that we have domain, use domain to fetch sso settings.
+	// prepare google callback handler using parsedState -
+	// which contains redirect URL (front-end endpoint)
+	callbackHandler, err := domain.PrepareGoogleOAuthProvider(parsedState)
 	if err != nil {
-		RespondError(w, err, "Failed to delete user")
+		zap.L().Error("[receiveGoogleAuth] failed to prepare google oauth provider", zap.String("domain", domain.String()), zap.Error(err))
+		handleSsoError(w, r, redirectUri)
 		return
 	}
-	aH.WriteJSON(w, r, map[string]string{"data": "user deleted successfully"})
-}
 
-func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	user, err := dao.DB().GetUser(context.Background(), id)
+	identity, err := callbackHandler.HandleCallback(r)
 	if err != nil {
-		RespondError(w, err, "Failed to get user's group")
+		zap.L().Error("[receiveGoogleAuth] failed to process HandleCallback", zap.String("domain", domain.String()), zap.Error(err))
+		handleSsoError(w, r, redirectUri)
 		return
 	}
-	if user == nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorNotFound,
-			Err: errors.New("no user found"),
-		}, nil)
-		return
-	}
-	group, err := dao.DB().GetGroup(context.Background(), user.GroupID)
+
+	nextPage, err := aH.Signoz.Modules.User.PrepareSsoRedirect(ctx, redirectUri, identity.Email, aH.JWT)
 	if err != nil {
-		RespondError(w, err, "Failed to get group")
+		zap.L().Error("[receiveGoogleAuth] failed to generate redirect URI after successful login ", zap.String("domain", domain.String()), zap.Error(err))
+		handleSsoError(w, r, redirectUri)
 		return
 	}
 
-	aH.WriteJSON(w, r, &model.UserRole{UserId: id, GroupName: group.Name})
+	http.Redirect(w, r, nextPage, http.StatusSeeOther)
 }
-
-func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	req, err := parseUserRoleRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	ctx := context.Background()
-	newGroup, apiErr := dao.DB().GetGroupByName(ctx, req.GroupName)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get user's group")
-		return
-	}
-
-	if newGroup == nil {
-		RespondError(w, apiErr, "Specified group is not present")
-		return
-	}
-
-	user, apiErr := dao.DB().GetUser(ctx, id)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch user group")
-		return
-	}
-
-	// Make sure that the request is not demoting the last admin user.
-	if user.GroupID == auth.AuthCacheObj.AdminGroupId {
-		adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, auth.AuthCacheObj.AdminGroupId)
-		if apiErr != nil {
-			RespondError(w, apiErr, "Failed to fetch adminUsers")
-			return
-		}
-
-		if len(adminUsers) == 1 {
-			RespondError(w, &model.ApiError{
-				Err: errors.New("cannot demote the last admin"),
-				Typ: model.ErrorInternal}, nil)
-			return
-		}
-	}
-
-	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.ID, newGroup.ID)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to add user to group")
-		return
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "user group updated successfully"})
-}
-
-func (aH *APIHandler) getOrgs(w http.ResponseWriter, r *http.Request) {
-	orgs, apiErr := dao.DB().GetOrgs(context.Background())
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch orgs from the DB")
-		return
-	}
-	aH.WriteJSON(w, r, orgs)
-}
-
-func (aH *APIHandler) getOrg(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	org, apiErr := dao.DB().GetOrg(context.Background(), id)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch org from the DB")
-		return
-	}
-	aH.WriteJSON(w, r, org)
-}
-
-func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	req, err := parseEditOrgRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	req.ID = id
-	if apiErr := dao.DB().EditOrg(context.Background(), req); apiErr != nil {
-		RespondError(w, apiErr, "Failed to update org in the DB")
-		return
-	}
-
-	data := map[string]interface{}{
-		"hasOptedUpdates":  req.HasOptedUpdates,
-		"isAnonymous":      req.IsAnonymous,
-		"organizationName": req.Name,
-	}
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		zap.L().Error("failed to get user email from jwt")
-	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, claims.Email, true, false)
-
-	aH.WriteJSON(w, r, map[string]string{"data": "org updated successfully"})
-}
-
-func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	users, apiErr := dao.DB().GetUsersByOrg(context.Background(), id)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch org users from the DB")
-		return
-	}
-	// mask the password hash
-	for i := range users {
-		users[i].Password = ""
-	}
-	aH.WriteJSON(w, r, users)
-}
-
-func (aH *APIHandler) getResetPasswordToken(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	resp, err := auth.CreateResetPasswordToken(context.Background(), id)
-	if err != nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: err}, "Failed to create reset token entry in the DB")
-		return
-	}
-	aH.WriteJSON(w, r, resp)
-}
-
-func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
-	req, err := parseResetPasswordRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	if err := auth.ResetPassword(context.Background(), req); err != nil {
-		zap.L().Error("resetPassword failed", zap.Error(err))
-		if aH.HandleError(w, err, http.StatusInternalServerError) {
-			return
-		}
-
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "password reset successfully"})
-}
-
-func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
-	req, err := parseChangePasswordRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	if apiErr := auth.ChangePassword(context.Background(), req); apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-
-	}
-	aH.WriteJSON(w, r, map[string]string{"data": "password changed successfully"})
-}
-
-// func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
-// 	// vars := mux.Vars(r)
-
-// 	query, err := parseApplicationPercentileRequest(r)
-// 	if aH.HandleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
-
-// 	result, err := aH.reader.GetApplicationPercentiles(context.Background(), query)
-// 	if aH.HandleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
-// 	aH.WriteJSON(w, r, result)
-// }
 
 func (aH *APIHandler) HandleError(w http.ResponseWriter, err error, statusCode int) bool {
 	if err == nil {
@@ -2475,7 +2136,7 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 }
 
 // RegisterMessagingQueuesRoutes adds messaging-queues routes
-func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// Main messaging queues router
 	messagingQueuesRouter := router.PathPrefix("/api/v1/messaging-queues").Subrouter()
@@ -2517,7 +2178,7 @@ func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *Auth
 }
 
 // RegisterThirdPartyApiRoutes adds third-party-api integration routes
-func (aH *APIHandler) RegisterThirdPartyApiRoutes(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterThirdPartyApiRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// Main messaging queues router
 	thirdPartyApiRouter := router.PathPrefix("/api/v1/third-party-apis").Subrouter()
@@ -2776,11 +2437,18 @@ func (aH *APIHandler) onboardConsumers(
 	aH.Respond(w, entries)
 }
 
-func (aH *APIHandler) onboardKafka(
+func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	w http.ResponseWriter, r *http.Request,
-
-) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -2796,7 +2464,7 @@ func (aH *APIHandler) onboardKafka(
 		return
 	}
 
-	results, errQueriesByName, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	results, errQueriesByName, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2825,6 +2493,12 @@ func (aH *APIHandler) onboardKafka(
 			}
 		}
 	}
+	var kafkaConsumerFetchLatencyAvg string = "kafka_consumer_fetch_latency_avg"
+	var kafkaConsumerLag string = "kafka_consumer_group_lag"
+	if constants.IsDotMetricsEnabled {
+		kafkaConsumerLag = "kafka.consumer_group.lag"
+		kafkaConsumerFetchLatencyAvg = "kafka.consumer.fetch_latency_avg"
+	}
 
 	if !fetchLatencyState && !consumerLagState {
 		entries = append(entries, kafka.OnboardingResponse{
@@ -2835,27 +2509,28 @@ func (aH *APIHandler) onboardKafka(
 	}
 
 	if !fetchLatencyState {
+
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_fetch_latency_avg",
+			Attribute: kafkaConsumerFetchLatencyAvg,
 			Message:   "Metric kafka_consumer_fetch_latency_avg is not present in the given time range.",
 			Status:    "0",
 		})
 	} else {
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_fetch_latency_avg",
+			Attribute: kafkaConsumerFetchLatencyAvg,
 			Status:    "1",
 		})
 	}
 
 	if !consumerLagState {
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_group_lag",
+			Attribute: kafkaConsumerLag,
 			Message:   "Metric kafka_consumer_group_lag is not present in the given time range.",
 			Status:    "0",
 		})
 	} else {
 		entries = append(entries, kafka.OnboardingResponse{
-			Attribute: "kafka_consumer_group_lag",
+			Attribute: kafkaConsumerLag,
 			Status:    "1",
 		})
 	}
@@ -2863,9 +2538,18 @@ func (aH *APIHandler) onboardKafka(
 	aH.Respond(w, entries)
 }
 
-func (aH *APIHandler) getNetworkData(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getNetworkData(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	attributeCache := &kafka.Clients{
 		Hash: make(map[string]struct{}),
 	}
@@ -2892,7 +2576,7 @@ func (aH *APIHandler) getNetworkData(
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2928,7 +2612,7 @@ func (aH *APIHandler) getNetworkData(
 		return
 	}
 
-	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
@@ -2962,9 +2646,18 @@ func (aH *APIHandler) getNetworkData(
 	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) getProducerData(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	// parse the query params to retrieve the messaging queue struct
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
@@ -2990,7 +2683,7 @@ func (aH *APIHandler) getProducerData(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3004,9 +2697,18 @@ func (aH *APIHandler) getProducerData(
 	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) getConsumerData(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3031,7 +2733,7 @@ func (aH *APIHandler) getConsumerData(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3046,9 +2748,18 @@ func (aH *APIHandler) getConsumerData(
 }
 
 // s1
-func (aH *APIHandler) getPartitionOverviewLatencyData(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3073,7 +2784,7 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3088,9 +2799,18 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(
 }
 
 // s1
-func (aH *APIHandler) getConsumerPartitionLatencyData(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3115,7 +2835,7 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3133,11 +2853,19 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(
 // fetch traces
 // cache attributes
 // fetch byte rate metrics
-func (aH *APIHandler) getProducerThroughputOverview(
-	w http.ResponseWriter, r *http.Request,
-) {
-	messagingQueue, apiErr := ParseKafkaQueueBody(r)
+func (aH *APIHandler) getProducerThroughputOverview(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
 		RespondError(w, apiErr, nil)
@@ -3164,7 +2892,7 @@ func (aH *APIHandler) getProducerThroughputOverview(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), producerQueryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, producerQueryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3198,7 +2926,7 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		return
 	}
 
-	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
@@ -3236,9 +2964,18 @@ func (aH *APIHandler) getProducerThroughputOverview(
 }
 
 // s3 p details
-func (aH *APIHandler) getProducerThroughputDetails(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3263,7 +3000,7 @@ func (aH *APIHandler) getProducerThroughputDetails(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3278,9 +3015,18 @@ func (aH *APIHandler) getProducerThroughputDetails(
 }
 
 // s3 c overview
-func (aH *APIHandler) getConsumerThroughputOverview(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3305,7 +3051,7 @@ func (aH *APIHandler) getConsumerThroughputOverview(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3320,9 +3066,18 @@ func (aH *APIHandler) getConsumerThroughputOverview(
 }
 
 // s3 c details
-func (aH *APIHandler) getConsumerThroughputDetails(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3347,7 +3102,7 @@ func (aH *APIHandler) getConsumerThroughputDetails(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3365,9 +3120,18 @@ func (aH *APIHandler) getConsumerThroughputDetails(
 // needs logic to parse duration
 // needs logic to get the percentage
 // show 10 traces
-func (aH *APIHandler) getProducerConsumerEval(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
@@ -3392,7 +3156,7 @@ func (aH *APIHandler) getProducerConsumerEval(
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -3405,141 +3169,8 @@ func (aH *APIHandler) getProducerConsumerEval(
 	aH.Respond(w, resp)
 }
 
-// Preferences
-
-func (aH *APIHandler) getUserPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-
-	preference, apiErr := preferences.GetUserPreference(
-		r.Context(), preferenceId, claims.OrgID, claims.UserID,
-	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
-}
-
-func (aH *APIHandler) updateUserPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	req := preferences.UpdatePreference{}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, claims.UserID)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
-}
-
-func (aH *APIHandler) getAllUserPreferences(
-	w http.ResponseWriter, r *http.Request,
-) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	preference, apiErr := preferences.GetAllUserPreferences(
-		r.Context(), claims.OrgID, claims.UserID,
-	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
-}
-
-func (aH *APIHandler) getOrgPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	preference, apiErr := preferences.GetOrgPreference(
-		r.Context(), preferenceId, claims.OrgID,
-	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
-}
-
-func (aH *APIHandler) updateOrgPreference(
-	w http.ResponseWriter, r *http.Request,
-) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	req := preferences.UpdatePreference{}
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, claims.OrgID)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
-}
-
-func (aH *APIHandler) getAllOrgPreferences(
-	w http.ResponseWriter, r *http.Request,
-) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	preference, apiErr := preferences.GetAllOrgPreferences(
-		r.Context(), claims.OrgID,
-	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
-}
-
 // RegisterIntegrationRoutes Registers all Integrations
-func (aH *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
 
 	subRouter.HandleFunc(
@@ -3571,9 +3202,14 @@ func (aH *APIHandler) ListIntegrations(
 	for k, values := range r.URL.Query() {
 		params[k] = values[0]
 	}
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
 
 	resp, apiErr := aH.IntegrationsController.ListIntegrations(
-		r.Context(), params,
+		r.Context(), claims.OrgID, params,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch integrations")
@@ -3586,8 +3222,13 @@ func (aH *APIHandler) GetIntegration(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
 	integration, apiErr := aH.IntegrationsController.GetIntegration(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch integration details")
@@ -3597,12 +3238,26 @@ func (aH *APIHandler) GetIntegration(
 	aH.Respond(w, integration)
 }
 
-func (aH *APIHandler) GetIntegrationConnectionStatus(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) GetIntegrationConnectionStatus(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	integrationId := mux.Vars(r)["integrationId"]
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
 	isInstalled, apiErr := aH.IntegrationsController.IsIntegrationInstalled(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "failed to check if integration is installed")
@@ -3616,7 +3271,7 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(
 	}
 
 	connectionTests, apiErr := aH.IntegrationsController.GetIntegrationConnectionTests(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "failed to fetch integration connection tests")
@@ -3630,7 +3285,7 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(
 	}
 
 	connectionStatus, apiErr := aH.calculateConnectionStatus(
-		r.Context(), connectionTests, lookbackSeconds,
+		r.Context(), orgID, connectionTests, lookbackSeconds,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to calculate integration connection status")
@@ -3642,6 +3297,7 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(
 
 func (aH *APIHandler) calculateConnectionStatus(
 	ctx context.Context,
+	orgID valuer.UUID,
 	connectionTests *integrations.IntegrationConnectionTests,
 	lookbackSeconds int64,
 ) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
@@ -3658,9 +3314,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 	go func() {
 		defer wg.Done()
 
-		logsConnStatus, apiErr := aH.calculateLogsConnectionStatus(
-			ctx, connectionTests.Logs, lookbackSeconds,
-		)
+		logsConnStatus, apiErr := aH.calculateLogsConnectionStatus(ctx, orgID, connectionTests.Logs, lookbackSeconds)
 
 		resultLock.Lock()
 		defer resultLock.Unlock()
@@ -3725,11 +3379,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 	return result, nil
 }
 
-func (aH *APIHandler) calculateLogsConnectionStatus(
-	ctx context.Context,
-	logsConnectionTest *integrations.LogsConnectionTest,
-	lookbackSeconds int64,
-) (*integrations.SignalConnectionStatus, *model.ApiError) {
+func (aH *APIHandler) calculateLogsConnectionStatus(ctx context.Context, orgID valuer.UUID, logsConnectionTest *integrations.LogsConnectionTest, lookbackSeconds int64) (*integrations.SignalConnectionStatus, *model.ApiError) {
 	if logsConnectionTest == nil {
 		return nil, nil
 	}
@@ -3767,9 +3417,7 @@ func (aH *APIHandler) calculateLogsConnectionStatus(
 			},
 		},
 	}
-	queryRes, _, err := aH.querier.QueryRange(
-		ctx, qrParams,
-	)
+	queryRes, _, err := aH.querier.QueryRange(ctx, orgID, qrParams)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"could not query for integration connection status: %w", err,
@@ -3804,9 +3452,7 @@ func (aH *APIHandler) calculateLogsConnectionStatus(
 	return nil, nil
 }
 
-func (aH *APIHandler) InstallIntegration(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request) {
 	req := integrations.InstallIntegrationRequest{}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -3815,8 +3461,14 @@ func (aH *APIHandler) InstallIntegration(
 		return
 	}
 
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	integration, apiErr := aH.IntegrationsController.Install(
-		r.Context(), &req,
+		r.Context(), claims.OrgID, &req,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3826,9 +3478,7 @@ func (aH *APIHandler) InstallIntegration(
 	aH.Respond(w, integration)
 }
 
-func (aH *APIHandler) UninstallIntegration(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) UninstallIntegration(w http.ResponseWriter, r *http.Request) {
 	req := integrations.UninstallIntegrationRequest{}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -3837,7 +3487,13 @@ func (aH *APIHandler) UninstallIntegration(
 		return
 	}
 
-	apiErr := aH.IntegrationsController.Uninstall(r.Context(), &req)
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
+	apiErr := aH.IntegrationsController.Uninstall(r.Context(), claims.OrgID, &req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -3847,7 +3503,7 @@ func (aH *APIHandler) UninstallIntegration(
 }
 
 // cloud provider integrations
-func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v1/cloud-integrations").Subrouter()
 
 	subRouter.HandleFunc(
@@ -3893,8 +3549,14 @@ func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
 ) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.ListConnectedAccounts(
-		r.Context(), cloudProvider,
+		r.Context(), claims.OrgID, cloudProvider,
 	)
 
 	if apiErr != nil {
@@ -3915,8 +3577,14 @@ func (aH *APIHandler) CloudIntegrationsGenerateConnectionUrl(
 		return
 	}
 
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.GenerateConnectionUrl(
-		r.Context(), cloudProvider, req,
+		r.Context(), claims.OrgID, cloudProvider, req,
 	)
 
 	if apiErr != nil {
@@ -3933,8 +3601,14 @@ func (aH *APIHandler) CloudIntegrationsGetAccountStatus(
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	accountId := mux.Vars(r)["accountId"]
 
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.GetAccountStatus(
-		r.Context(), cloudProvider, accountId,
+		r.Context(), claims.OrgID, cloudProvider, accountId,
 	)
 
 	if apiErr != nil {
@@ -3955,12 +3629,18 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(
 		return
 	}
 
-	result, apiErr := aH.CloudIntegrationsController.CheckInAsAgent(
-		r.Context(), cloudProvider, req,
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
+	result, err := aH.CloudIntegrationsController.CheckInAsAgent(
+		r.Context(), claims.OrgID, cloudProvider, req,
 	)
 
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -3979,8 +3659,14 @@ func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(
 		return
 	}
 
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.UpdateAccountConfig(
-		r.Context(), cloudProvider, accountId, req,
+		r.Context(), claims.OrgID, cloudProvider, accountId, req,
 	)
 
 	if apiErr != nil {
@@ -3997,8 +3683,14 @@ func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	accountId := mux.Vars(r)["accountId"]
 
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.DisconnectAccount(
-		r.Context(), cloudProvider, accountId,
+		r.Context(), claims.OrgID, cloudProvider, accountId,
 	)
 
 	if apiErr != nil {
@@ -4021,8 +3713,14 @@ func (aH *APIHandler) CloudIntegrationsListServices(
 		cloudAccountId = &cloudAccountIdQP
 	}
 
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.ListServices(
-		r.Context(), cloudProvider, cloudAccountId,
+		r.Context(), claims.OrgID, cloudProvider, cloudAccountId,
 	)
 
 	if apiErr != nil {
@@ -4035,6 +3733,17 @@ func (aH *APIHandler) CloudIntegrationsListServices(
 func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 	w http.ResponseWriter, r *http.Request,
 ) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	serviceId := mux.Vars(r)["serviceId"]
 
@@ -4045,18 +3754,24 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 		cloudAccountId = &cloudAccountIdQP
 	}
 
-	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
-		r.Context(), cloudProvider, serviceId, cloudAccountId,
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
+	resp, err := aH.CloudIntegrationsController.GetServiceDetails(
+		r.Context(), claims.OrgID, cloudProvider, serviceId, cloudAccountId,
 	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
 	// Add connection status for the 2 signals.
 	if cloudAccountId != nil {
 		connStatus, apiErr := aH.calculateCloudIntegrationServiceConnectionStatus(
-			r.Context(), cloudProvider, *cloudAccountId, resp,
+			r.Context(), orgID, cloudProvider, *cloudAccountId, resp,
 		)
 		if apiErr != nil {
 			RespondError(w, apiErr, nil)
@@ -4070,10 +3785,11 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 
 func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 	ctx context.Context,
+	orgID valuer.UUID,
 	cloudProvider string,
 	cloudAccountId string,
-	svcDetails *cloudintegrations.CloudServiceDetails,
-) (*cloudintegrations.CloudServiceConnectionStatus, *model.ApiError) {
+	svcDetails *cloudintegrations.ServiceDetails,
+) (*cloudintegrations.ServiceConnectionStatus, *model.ApiError) {
 	if cloudProvider != "aws" {
 		// TODO(Raj): Make connection check generic for all providers in a follow up change
 		return nil, model.BadRequest(
@@ -4081,14 +3797,14 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 		)
 	}
 
-	telemetryCollectionStrategy := svcDetails.TelemetryCollectionStrategy
+	telemetryCollectionStrategy := svcDetails.Strategy
 	if telemetryCollectionStrategy == nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"service doesn't have telemetry collection strategy: %s", svcDetails.Id,
 		))
 	}
 
-	result := &cloudintegrations.CloudServiceConnectionStatus{}
+	result := &cloudintegrations.ServiceConnectionStatus{}
 	errors := []*model.ApiError{}
 	var resultLock sync.Mutex
 
@@ -4122,7 +3838,7 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 			defer wg.Done()
 
 			logsConnStatus, apiErr := aH.calculateAWSIntegrationSvcLogsConnectionStatus(
-				ctx, cloudAccountId, telemetryCollectionStrategy.AWSLogs,
+				ctx, orgID, cloudAccountId, telemetryCollectionStrategy.AWSLogs,
 			)
 
 			resultLock.Lock()
@@ -4148,10 +3864,10 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 	ctx context.Context,
 	cloudAccountId string,
-	strategy *cloudintegrations.AWSMetricsCollectionStrategy,
-	metricsCollectedBySvc []cloudintegrations.CollectedMetric,
+	strategy *services.AWSMetricsStrategy,
+	metricsCollectedBySvc []services.CollectedMetric,
 ) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
-	if strategy == nil || len(strategy.CloudwatchMetricsStreamFilters) < 1 {
+	if strategy == nil || len(strategy.StreamFilters) < 1 {
 		return nil, nil
 	}
 
@@ -4160,7 +3876,7 @@ func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 		"cloud_account_id": cloudAccountId,
 	}
 
-	metricsNamespace := strategy.CloudwatchMetricsStreamFilters[0].Namespace
+	metricsNamespace := strategy.StreamFilters[0].Namespace
 	metricsNamespaceParts := strings.Split(metricsNamespace, "/")
 
 	if len(metricsNamespaceParts) >= 2 {
@@ -4196,14 +3912,15 @@ func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 
 func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 	ctx context.Context,
+	orgID valuer.UUID,
 	cloudAccountId string,
-	strategy *cloudintegrations.AWSLogsCollectionStrategy,
+	strategy *services.AWSLogsStrategy,
 ) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
-	if strategy == nil || len(strategy.CloudwatchLogsSubscriptions) < 1 {
+	if strategy == nil || len(strategy.Subscriptions) < 1 {
 		return nil, nil
 	}
 
-	logGroupNamePrefix := strategy.CloudwatchLogsSubscriptions[0].LogGroupNamePrefix
+	logGroupNamePrefix := strategy.Subscriptions[0].LogGroupNamePrefix
 	if len(logGroupNamePrefix) < 1 {
 		return nil, nil
 	}
@@ -4254,7 +3971,7 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 		},
 	}
 	queryRes, _, err := aH.querier.QueryRange(
-		ctx, qrParams,
+		ctx, orgID, qrParams,
 	)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
@@ -4285,12 +4002,18 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 		return
 	}
 
-	result, apiErr := aH.CloudIntegrationsController.UpdateServiceConfig(
-		r.Context(), cloudProvider, serviceId, req,
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
+	result, err := aH.CloudIntegrationsController.UpdateServiceConfig(
+		r.Context(), claims.OrgID, cloudProvider, serviceId, &req,
 	)
 
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -4298,7 +4021,7 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 }
 
 // logs
-func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
 	subRouter.HandleFunc("", am.ViewAccess(aH.getLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/tail", am.ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
@@ -4462,6 +4185,11 @@ func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 }
 
 func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
@@ -4473,9 +4201,9 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 	var apierr *model.ApiError
 
 	if version != -1 {
-		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), version)
+		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), claims.OrgID, version)
 	} else {
-		payload, apierr = aH.listLogsPipelines(context.Background())
+		payload, apierr = aH.listLogsPipelines(context.Background(), claims.OrgID)
 	}
 
 	if apierr != nil {
@@ -4486,7 +4214,7 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 }
 
 // listLogsPipelines lists logs piplines for latest version
-func (aH *APIHandler) listLogsPipelines(ctx context.Context) (
+func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	// get lateset agent config
@@ -4516,7 +4244,7 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context) (
 }
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
-func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (
+func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID string, version int) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
@@ -4536,8 +4264,13 @@ func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version in
 }
 
 func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
 
-	req := logparsingpipeline.PostablePipelines{}
+	req := pipelinetypes.PostablePipelines{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -4546,7 +4279,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	createPipeline := func(
 		ctx context.Context,
-		postable []logparsingpipeline.PostablePipeline,
+		postable []pipelinetypes.PostablePipeline,
 	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 		if len(postable) == 0 {
 			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
@@ -4557,7 +4290,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 			return nil, validationErr
 		}
 
-		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
+		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, claims.OrgID, postable)
 	}
 
 	res, err := createPipeline(r.Context(), req.Pipelines)
@@ -4569,114 +4302,18 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 	aH.Respond(w, res)
 }
 
-func (aH *APIHandler) getSavedViews(w http.ResponseWriter, r *http.Request) {
-	// get sourcePage, name, and category from the query params
-	sourcePage := r.URL.Query().Get("sourcePage")
-	name := r.URL.Query().Get("name")
-	category := r.URL.Query().Get("category")
-
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	queries, err := explorer.GetViewsForFilters(r.Context(), claims.OrgID, sourcePage, name, category)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	aH.Respond(w, queries)
-}
-
-func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
-	var view v3.SavedView
-	err := json.NewDecoder(r.Body).Decode(&view)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-	// validate the query
-	if err := view.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	uuid, err := explorer.CreateView(r.Context(), claims.OrgID, view)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, uuid)
-}
-
-func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
-	viewID := mux.Vars(r)["viewId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	view, err := explorer.GetView(r.Context(), claims.OrgID, viewID)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, view)
-}
-
-func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
-	viewID := mux.Vars(r)["viewId"]
-	var view v3.SavedView
-	err := json.NewDecoder(r.Body).Decode(&view)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-	// validate the query
-	if err := view.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	err = explorer.UpdateView(r.Context(), claims.OrgID, viewID, view)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, view)
-}
-
-func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
-
-	viewID := mux.Vars(r)["viewId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	err := explorer.DeleteView(r.Context(), claims.OrgID, viewID)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, nil)
-}
-
 func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	var response *v3.AggregateAttributeResponse
 	req, err := parseAggregateAttributeRequest(r)
 
@@ -4687,7 +4324,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, true, false)
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), orgID, req, false)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -4849,9 +4486,18 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 }
 
 func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	var result []*v3.Result
-	var err error
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
@@ -4874,11 +4520,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		if aH.UseTraceNewSchema {
-			tracesV4.Enrich(queryRangeParams, spanKeys)
-		} else {
-			tracesV3.Enrich(queryRangeParams, spanKeys)
-		}
+		tracesV4.Enrich(queryRangeParams, spanKeys)
 
 	}
 
@@ -4920,7 +4562,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams)
+	result, errQuriesByName, err = aH.querier.QueryRange(ctx, orgID, queryRangeParams)
 
 	if err != nil {
 		queryErrors := map[string]string{}
@@ -4987,8 +4629,8 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 
 		if len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0) {
 
-			claims, ok := authtypes.ClaimsFromContext(r.Context())
-			if ok {
+			claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+			if errv2 == nil {
 				queryInfoResult := telemetry.GetInstance().CheckQueryInfo(queryRangeParams)
 				if queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed {
 
@@ -5064,6 +4706,17 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 }
 
 func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
@@ -5073,7 +4726,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add temporality for each metric
-	temporalityErr := aH.PopulateTemporality(r.Context(), queryRangeParams)
+	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
 		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
@@ -5237,94 +4890,24 @@ func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
-	if aH.UseLogsNewSchema {
-		aH.liveTailLogsV2(w, r)
-		return
-	}
-
-	// get the param from url and add it to body
-	stringReader := strings.NewReader(r.URL.Query().Get("q"))
-	r.Body = io.NopCloser(stringReader)
-
-	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
-	if apiErrorObj != nil {
-		zap.L().Error(apiErrorObj.Err.Error())
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	var err error
-	var queryString string
-	switch queryRangeParams.CompositeQuery.QueryType {
-	case v3.QueryTypeBuilder:
-		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
-			logsFields, err := aH.reader.GetLogFields(r.Context())
-			if err != nil {
-				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, nil)
-				return
-			}
-			// get the fields if any logs query is present
-			fields := model.GetLogFieldsV3(r.Context(), queryRangeParams, logsFields)
-			logsv3.Enrich(queryRangeParams, fields)
-		}
-
-		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-			return
-		}
-
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	// create the client
-	client := &model.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
-	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
-
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(200)
-
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
-		RespondError(w, &err, "streaming is not supported")
-		return
-	}
-	// flush the headers
-	flusher.Flush()
-	for {
-		select {
-		case log := <-client.Logs:
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
-			flusher.Flush()
-		case <-client.Done:
-			zap.L().Debug("done!")
-			return
-		case err := <-client.Error:
-			zap.L().Error("error occurred", zap.Error(err))
-			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
-			flusher.Flush()
-			return
-		}
-	}
-
+	aH.liveTailLogsV2(w, r)
 }
 
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	metricName := r.URL.Query().Get("metricName")
 	serviceName := r.URL.Query().Get("serviceName")
-	metricMetadata, err := aH.reader.GetMetricMetadata(r.Context(), metricName, serviceName)
+	metricMetadata, err := aH.reader.GetMetricMetadata(r.Context(), orgID, metricName, serviceName)
 	if err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return
@@ -5334,9 +4917,18 @@ func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) 
 }
 
 func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	var result []*v3.Result
-	var err error
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
@@ -5359,11 +4951,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		if aH.UseTraceNewSchema {
-			tracesV4.Enrich(queryRangeParams, spanKeys)
-		} else {
-			tracesV3.Enrich(queryRangeParams, spanKeys)
-		}
+		tracesV4.Enrich(queryRangeParams, spanKeys)
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -5382,7 +4970,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 
 	if err != nil {
 		queryErrors := map[string]string{}
@@ -5415,6 +5003,17 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 }
 
 func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
@@ -5425,7 +5024,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams.Version = "v4"
 
 	// add temporality for each metric
-	temporalityErr := aH.PopulateTemporality(r.Context(), queryRangeParams)
+	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
 		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
@@ -5491,6 +5090,17 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -5508,14 +5118,19 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
 
-	result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+	result, err = postprocess.PostProcessResult(result, queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
 
 	if !thirdPartyQueryRequest.ShowIp {
 		result = thirdPartyApi.FilterResponse(result)
@@ -5528,8 +5143,18 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
-	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
+	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
 		RespondError(w, apiErr, nil)
@@ -5547,7 +5172,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQuriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQuriesByName)
@@ -5567,544 +5192,28 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterTraceFunnelsRoutes adds trace funnels routes
-func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *AuthMiddleware) {
-
-	// Main messaging queues router
+func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middleware.AuthZ) {
+	// Main trace funnels router
 	traceFunnelsRouter := router.PathPrefix("/api/v1/trace-funnels").Subrouter()
 
 	// API endpoints
-	traceFunnelsRouter.HandleFunc("/new-funnel", aH.handleNewFunnel).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/steps/update", aH.handleUpdateFunnelStep).Methods("PUT")
-	traceFunnelsRouter.HandleFunc("/list", aH.handleListFunnels).Methods("GET")
-	traceFunnelsRouter.HandleFunc("/get/{funnel_id}", aH.handleGetFunnel).Methods("GET")
-	traceFunnelsRouter.HandleFunc("/delete/{funnel_id}", aH.handleDeleteFunnel).Methods("DELETE")
-	traceFunnelsRouter.HandleFunc("/save", aH.handleSaveFunnel).Methods("POST")
-
-	//// Analytics endpoints
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", aH.handleValidateTraces).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", aH.handleFunnelAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", aH.handleStepAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", func(w http.ResponseWriter, r *http.Request) {
-		aH.handleSlowTraces(w, r, false)
-	}).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", func(w http.ResponseWriter, r *http.Request) {
-		aH.handleSlowTraces(w, r, true)
-	}).Methods("POST")
-
-}
-
-// handleNewFunnel creates a new funnel without steps
-// Steps should be added separately using the update endpoint
-func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
-	var req traceFunnels.NewFunnelRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		http.Error(w, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-	userID := claims.UserID
-	orgID := claims.OrgID
-
-	// Validate timestamp is provided and in milliseconds format
-	if err := traceFunnels.ValidateTimestamp(req.Timestamp, "creation_timestamp"); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Check for name collision in the SQLite database
-	var count int
-
-	err := aH.Signoz.SQLStore.SQLDB().QueryRow(
-		"SELECT COUNT(*) FROM saved_views WHERE name = ? AND created_by = ? AND category = 'funnel'",
-		req.Name, userID,
-	).Scan(&count)
-
-	if err != nil {
-		zap.L().Error("Error checking for funnel name collision in SQLite: %v", zap.Error(err))
-	} else if count > 0 {
-		http.Error(w, fmt.Sprintf("funnel with name '%s' already exists for user '%s' in the database", req.Name, userID), http.StatusBadRequest)
-		return
-	}
-
-	funnel := &traceFunnels.Funnel{
-		ID:        uuid.New().String(),
-		Name:      req.Name,
-		CreatedAt: req.Timestamp * 1000000, // Convert milliseconds to nanoseconds for internal storage
-		CreatedBy: userID,
-		OrgID:     orgID,
-		Steps:     make([]traceFunnels.FunnelStep, 0),
-	}
-
-	funnelData, err := json.Marshal(funnel)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to marshal funnel data: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	createdAt := time.Unix(0, funnel.CreatedAt).UTC().Format(time.RFC3339)
-
-	// Insert new funnel
-	_, err = aH.Signoz.SQLStore.SQLDB().Exec(
-		"INSERT INTO saved_views (uuid, name, category, created_by, updated_by, source_page, data, created_at, updated_at, org_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		funnel.ID, funnel.Name, "funnel", userID, userID, "trace-funnels", string(funnelData), createdAt, createdAt, orgID,
-	)
-
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to save funnel to database: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	response := traceFunnels.NewFunnelResponse{
-		ID:        funnel.ID,
-		Name:      funnel.Name,
-		CreatedAt: funnel.CreatedAt / 1000000,
-		CreatedBy: funnel.CreatedBy,
-		OrgID:     orgID,
-	}
-	json.NewEncoder(w).Encode(response)
-}
-
-// handleUpdateFunnelStep adds or updates steps for an existing funnel
-// Steps are identified by their step_order, which must be unique within a funnel
-func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Request) {
-	var req traceFunnels.FunnelStepRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		http.Error(w, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-	userID := claims.UserID
-
-	if err := traceFunnels.ValidateTimestamp(req.Timestamp, "updated_timestamp"); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	aH.Signoz.SQLStore.SQLxDB()
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-
-	funnel, err := dbClient.GetFunnelFromDB(req.FunnelID)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
-		return
-	}
-
-	// Process each step in the request
-	for i := range req.Steps {
-		if req.Steps[i].StepOrder < 1 {
-			req.Steps[i].StepOrder = int64(i + 1) // Default to sequential ordering if not specified
-		}
-	}
-
-	if err := traceFunnels.ValidateFunnelSteps(req.Steps); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Normalize step orders
-	req.Steps = traceFunnels.NormalizeFunnelSteps(req.Steps)
-
-	// Update the funnel with new steps
-	funnel.Steps = req.Steps
-	funnel.UpdatedAt = req.Timestamp * 1000000
-	funnel.UpdatedBy = userID
-
-	funnelData, err := json.Marshal(funnel)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to marshal funnel data: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	updatedAt := time.Unix(0, funnel.UpdatedAt).UTC().Format(time.RFC3339)
-
-	_, err = aH.Signoz.SQLStore.SQLDB().Exec(
-		"UPDATE saved_views SET data = ?, updated_by = ?, updated_at = ? WHERE uuid = ? AND category = 'funnel'",
-		string(funnelData), userID, updatedAt, req.FunnelID,
-	)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to update funnel in database: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	response := map[string]interface{}{
-		"id":                 funnel.ID,
-		"funnel_name":        funnel.Name,
-		"creation_timestamp": funnel.CreatedAt / 1000000,
-		"user_id":            funnel.CreatedBy,
-		"org_id":             funnel.OrgID,
-		"updated_timestamp":  req.Timestamp,
-		"updated_by":         userID,
-		"steps":              funnel.Steps,
-	}
-
-	json.NewEncoder(w).Encode(response)
-}
-
-func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) {
-	orgID := r.URL.Query().Get("org_id")
-
-	var dbFunnels []*traceFunnels.Funnel
-	var err error
-
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-
-	if orgID != "" {
-		dbFunnels, err = dbClient.ListFunnelsFromDB(orgID)
-	} else {
-		dbFunnels, err = dbClient.ListAllFunnelsFromDB()
-	}
-
-	if err != nil {
-		http.Error(w, fmt.Sprintf("error fetching funnels from database: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	// Convert to response format with additional metadata
-	response := make([]map[string]interface{}, 0, len(dbFunnels))
-	for _, f := range dbFunnels {
-		funnelInfo := map[string]interface{}{
-			"id":                 f.ID,
-			"funnel_name":        f.Name,
-			"creation_timestamp": f.CreatedAt / 1000000,
-			"user_id":            f.CreatedBy,
-			"org_id":             f.OrgID,
-		}
-
-		if f.UpdatedAt > 0 {
-			funnelInfo["updated_timestamp"] = f.UpdatedAt / 1000000
-		}
-		if f.UpdatedBy != "" {
-			funnelInfo["updated_by"] = f.UpdatedBy
-		}
-
-		var extraData, tags string
-		err := aH.Signoz.SQLStore.SQLDB().QueryRow(
-			"SELECT IFNULL(extra_data, ''), IFNULL(tags, '') FROM saved_views WHERE uuid = ? AND category = 'funnel'",
-			f.ID,
-		).Scan(&extraData, &tags)
-
-		if err == nil && tags != "" {
-			funnelInfo["tags"] = tags
-		}
-
-		if err == nil && extraData != "" {
-			var extraDataMap map[string]interface{}
-			if err := json.Unmarshal([]byte(extraData), &extraDataMap); err == nil {
-				if description, ok := extraDataMap["description"].(string); ok {
-					funnelInfo["description"] = description
-				}
-			}
-		}
-
-		response = append(response, funnelInfo)
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
-}
-
-func (aH *APIHandler) handleGetFunnel(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	funnelID := vars["funnel_id"]
-
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	funnel, err := dbClient.GetFunnelFromDB(funnelID)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
-		return
-	}
-
-	var extraData, tags string
-
-	err = aH.Signoz.SQLStore.SQLDB().QueryRow(
-		"SELECT IFNULL(extra_data, ''), IFNULL(tags, '') FROM saved_views WHERE uuid = ? AND category = 'funnel'",
-		funnel.ID,
-	).Scan(&extraData, &tags)
-
-	response := map[string]interface{}{
-		"id":                 funnel.ID,
-		"funnel_name":        funnel.Name,
-		"creation_timestamp": funnel.CreatedAt / 1000000,
-		"user_id":            funnel.CreatedBy,
-		"org_id":             funnel.OrgID,
-		"steps":              funnel.Steps,
-	}
-
-	if funnel.UpdatedAt > 0 {
-		response["updated_timestamp"] = funnel.UpdatedAt / 1000000
-	}
-	if funnel.UpdatedBy != "" {
-		response["updated_by"] = funnel.UpdatedBy
-	}
-
-	if err == nil && tags != "" {
-		response["tags"] = tags
-	}
-
-	if err == nil && extraData != "" {
-		var extraDataMap map[string]interface{}
-		if err := json.Unmarshal([]byte(extraData), &extraDataMap); err == nil {
-			if description, ok := extraDataMap["description"].(string); ok {
-				response["description"] = description
-			}
-		}
-	}
-
-	json.NewEncoder(w).Encode(response)
-}
-
-func (aH *APIHandler) handleDeleteFunnel(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	funnelID := vars["funnel_id"]
-
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	err := dbClient.DeleteFunnelFromDB(funnelID)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to delete funnel: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
-}
-
-// handleSaveFunnel saves a funnel to the SQLite database
-// Only requires funnel_id and optional description
-func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
-	var req traceFunnels.SaveFunnelRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	funnel, err := dbClient.GetFunnelFromDB(req.FunnelID)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
-		return
-	}
-
-	updateTimestamp := req.Timestamp
-	if updateTimestamp == 0 {
-		updateTimestamp = time.Now().UnixMilli()
-	} else {
-		if !traceFunnels.ValidateTimestampIsMilliseconds(updateTimestamp) {
-			http.Error(w, "timestamp must be in milliseconds format (13 digits)", http.StatusBadRequest)
-			return
-		}
-	}
-
-	funnel.UpdatedAt = updateTimestamp * 1000000 // Convert ms to ns
-
-	if req.UserID != "" {
-		funnel.UpdatedBy = req.UserID
-	}
-	extraData := ""
-	if req.Description != "" {
-		descriptionJSON, err := json.Marshal(map[string]string{"description": req.Description})
-		if err != nil {
-			http.Error(w, "failed to marshal description: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		extraData = string(descriptionJSON)
-	}
-
-	orgID := req.OrgID
-	if orgID == "" {
-		orgID = funnel.OrgID
-	}
-
-	if err := dbClient.SaveFunnel(funnel, funnel.UpdatedBy, orgID, req.Tags, extraData); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	var createdAt, updatedAt, tags, extraDataFromDB string
-	err = aH.Signoz.SQLStore.SQLDB().QueryRow(
-		"SELECT created_at, updated_at, IFNULL(tags, ''), IFNULL(extra_data, '') FROM saved_views WHERE uuid = ? AND category = 'funnel'",
-		funnel.ID,
-	).Scan(&createdAt, &updatedAt, &tags, &extraDataFromDB)
-
-	if err != nil {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{
-			"status": "success",
-			"id":     funnel.ID,
-			"name":   funnel.Name,
-		})
-		return
-	}
-
-	response := map[string]string{
-		"status":     "success",
-		"id":         funnel.ID,
-		"name":       funnel.Name,
-		"created_at": createdAt,
-		"updated_at": updatedAt,
-		"created_by": funnel.CreatedBy,
-		"updated_by": funnel.UpdatedBy,
-		"org_id":     funnel.OrgID,
-	}
-
-	if tags != "" {
-		response["tags"] = tags
-	}
-
-	if extraDataFromDB != "" {
-		var extraDataMap map[string]interface{}
-		if err := json.Unmarshal([]byte(extraDataFromDB), &extraDataMap); err == nil {
-			if description, ok := extraDataMap["description"].(string); ok {
-				response["description"] = description
-			}
-		}
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
-}
-
-func (aH *APIHandler) handleValidateTraces(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	funnelID := vars["funnel_id"]
-
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	funnel, err := dbClient.GetFunnelFromDB(funnelID)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
-		return
-	}
-
-	var timeRange traceFunnels.TimeRange
-	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if len(funnel.Steps) < 2 {
-		http.Error(w, "funnel must have at least 2 steps", http.StatusBadRequest)
-		return
-	}
-
-	chq, err := traceFunnels.ValidateTraces(funnel, timeRange)
-
-	if err != nil {
-		zap.L().Error(err.Error())
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
-		return
-	}
-
-	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
-	aH.Respond(w, results)
-}
-
-// Analytics handlers
-func (aH *APIHandler) handleFunnelAnalytics(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	funnelID := vars["funnel_id"]
-
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-
-	funnel, err := dbClient.GetFunnelFromDB(funnelID)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
-		return
-	}
-
-	var timeRange traceFunnels.TimeRange
-	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	chq, err := traceFunnels.ValidateTracesWithLatency(funnel, timeRange)
-	if err != nil {
-		zap.L().Error(err.Error())
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
-		return
-	}
-
-	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
-	aH.Respond(w, results)
-}
-
-func (aH *APIHandler) handleStepAnalytics(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	funnelID := vars["funnel_id"]
-
-	// Get funnel directly from SQLite database
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	funnel, err := dbClient.GetFunnelFromDB(funnelID)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
-		return
-	}
-
-	var timeRange traceFunnels.TimeRange
-	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	chq, err := traceFunnels.GetStepAnalytics(funnel, timeRange)
-	if err != nil {
-		zap.L().Error(err.Error())
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
-		return
-	}
-
-	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
-	aH.Respond(w, results)
-}
-
-func (aH *APIHandler) handleSlowTraces(w http.ResponseWriter, r *http.Request, withErrors bool) {
-	vars := mux.Vars(r)
-	funnelID := vars["funnel_id"]
-
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	funnel, err := dbClient.GetFunnelFromDB(funnelID)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
-		return
-	}
-
-	var req traceFunnels.StepTransitionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	stepAExists, stepBExists := false, false
-	for _, step := range funnel.Steps {
-		if step.StepOrder == req.StepAOrder {
-			stepAExists = true
-		}
-		if step.StepOrder == req.StepBOrder {
-			stepBExists = true
-		}
-	}
-
-	if !stepAExists || !stepBExists {
-		http.Error(w, fmt.Sprintf("One or both steps not found. Step A Order: %d, Step B Order: %d", req.StepAOrder, req.StepBOrder), http.StatusBadRequest)
-		return
-	}
-
-	chq, err := traceFunnels.GetSlowestTraces(funnel, req.StepAOrder, req.StepBOrder, req.TimeRange, withErrors)
-	if err != nil {
-		zap.L().Error(err.Error())
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
-		return
-	}
-
-	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
-	aH.Respond(w, results)
+	traceFunnelsRouter.HandleFunc("/new",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.New)).
+		Methods(http.MethodPost)
+	traceFunnelsRouter.HandleFunc("/list",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.List)).
+		Methods(http.MethodGet)
+	traceFunnelsRouter.HandleFunc("/steps/update",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.UpdateSteps)).
+		Methods(http.MethodPut)
+
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.Get)).
+		Methods(http.MethodGet)
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.Delete)).
+		Methods(http.MethodDelete)
+	traceFunnelsRouter.HandleFunc("/{funnel_id}",
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.UpdateFunnel)).
+		Methods(http.MethodPut)
 }

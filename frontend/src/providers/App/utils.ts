@@ -17,13 +17,11 @@ function getUserDefaults(): IUser {
 		refreshJwt,
 		id: userId,
 		email: '',
-		name: '',
-		profilePictureURL: '',
+		displayName: '',
 		createdAt: 0,
 		organization: '',
 		orgId: '',
 		role: 'VIEWER',
-		groupId: '',
 	};
 }
 

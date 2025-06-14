@@ -1,0 +1,52 @@
+[tool.poetry]
+name = "integration"
+version = "0.1.0"
+description = ""
+authors = ["grandwizard28 <vibhupandey28@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+pytest = "^8.3.5"
+psycopg2 = "^2.9.10"
+testcontainers = "^4.10.0"
+black = "^25.1.0"
+clickhouse-driver = "^0.2.9"
+requests = "^2.32.3"
+wiremock = "^2.6.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pylint = "^3.3.6"
+isort = "^6.0.1"
+autoflake = "^2.3.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+python_files = "src/**/**.py"
+log_cli = true
+log_format = "%(asctime)s [%(levelname)s] (%(filename)s:%(lineno)s) %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+addopts = "-ra"
+
+[tool.pylint.main]
+ignore = [".venv"]
+
+[tool.pylint.format]
+max-line-length = "88"
+
+[tool.pylint."messages control"]
+disable = ["missing-module-docstring", "missing-function-docstring", "missing-class-docstring"]
+
+[tool.isort]
+profile = "black"
+
+[tool.autoflake]
+recursive = true
+remove-all-unused-imports = true
+remove-unused-variables = true
+exclude = [".venv/**"]
+in-place = true

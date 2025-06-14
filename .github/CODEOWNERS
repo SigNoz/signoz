@@ -2,7 +2,7 @@
 # Owners are automatically requested for review for PRs that changes code
 # that they own.
 
-/frontend/ @YounixM
+/frontend/ @SigNoz/frontend @YounixM
 /frontend/src/container/MetricsApplication @srikanthccv
 /frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
 /deploy/ @SigNoz/devops
@@ -11,3 +11,5 @@
 /pkg/errors/ @grandwizard28
 /pkg/factory/ @grandwizard28
 /pkg/types/ @grandwizard28
+.golangci.yml @grandwizard28
+**/(zeus|licensing|sqlmigration)/ @vikrantgupta25

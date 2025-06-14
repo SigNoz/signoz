@@ -18,14 +18,10 @@ const (
 	OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
 )
 
-type ContextKey string
-
-const ContextUserKey ContextKey = "user"
-
-var ConfigSignozIo = "https://config.signoz.io/api/v1"
-
+// Deprecated: Use the new analytics service instead
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
+// Deprecated: Use the new analytics service instead
 func IsOSSTelemetryEnabled() bool {
 	ossSegmentKey := GetOrDefaultEnv("OSS_TELEMETRY_ENABLED", "true")
 	return ossSegmentKey == "true"
@@ -33,6 +29,7 @@ func IsOSSTelemetryEnabled() bool {
 
 const MaxAllowedPointsInTimeSeries = 300
 
+// Deprecated: Use the new analytics service instead
 func IsTelemetryEnabled() bool {
 	if testing.Testing() {
 		return false
@@ -50,30 +47,18 @@ const TraceTTL = "traces"
 const MetricsTTL = "metrics"
 const LogsTTL = "logs"
 
-const DurationSort = "DurationSort"
-const TimestampSort = "TimestampSort"
-const PreferRPM = "PreferRPM"
-
 const SpanSearchScopeRoot = "isroot"
 const SpanSearchScopeEntryPoint = "isentrypoint"
+const OrderBySpanCount = "span_count"
 
+// Deprecated: Use the new statsreporter service instead
 var TELEMETRY_HEART_BEAT_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_HEART_BEAT_DURATION_MINUTES", 720)
 
+// Deprecated: Use the new statsreporter service instead
 var TELEMETRY_ACTIVE_USER_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_ACTIVE_USER_DURATION_MINUTES", 360)
 
-var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email_template.html")
-
-var OTLPTarget = GetOrDefaultEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
-var LogExportBatchSize = GetOrDefaultEnv("OTEL_BLRP_MAX_EXPORT_BATCH_SIZE", "512")
-
-// [Deprecated] SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.
-var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
-
-var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
-
-var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
-
-var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
+// Deprecated: Use the new emailing service instead
+var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email.gotmpl")
 
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
 var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
@@ -83,68 +68,7 @@ func UseMetricsPreAggregation() bool {
 	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "true") == "true"
 }
 
-func EnableHostsInfraMonitoring() bool {
-	return GetOrDefaultEnv("ENABLE_INFRA_METRICS", "true") == "true"
-}
-
 var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
-
-func IsDurationSortFeatureEnabled() bool {
-	isDurationSortFeatureEnabledStr := DurationSortFeature
-	isDurationSortFeatureEnabledBool, err := strconv.ParseBool(isDurationSortFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return isDurationSortFeatureEnabledBool
-}
-
-func IsTimestampSortFeatureEnabled() bool {
-	isTimestampSortFeatureEnabledStr := TimestampSortFeature
-	isTimestampSortFeatureEnabledBool, err := strconv.ParseBool(isTimestampSortFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return isTimestampSortFeatureEnabledBool
-}
-
-func IsPreferRPMFeatureEnabled() bool {
-	preferRPMFeatureEnabledStr := PreferRPMFeature
-	preferRPMFeatureEnabledBool, err := strconv.ParseBool(preferRPMFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return preferRPMFeatureEnabledBool
-}
-
-var DEFAULT_FEATURE_SET = model.FeatureSet{
-	model.Feature{
-		Name:       DurationSort,
-		Active:     IsDurationSortFeatureEnabled(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	}, model.Feature{
-		Name:       TimestampSort,
-		Active:     IsTimestampSortFeatureEnabled(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	model.Feature{
-		Name:       model.UseSpanMetrics,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	model.Feature{
-		Name:       PreferRPM,
-		Active:     IsPreferRPMFeatureEnabled(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-}
 
 func GetEvalDelay() time.Duration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
@@ -208,10 +132,12 @@ var GroupByColMap = map[string]struct{}{
 
 const (
 	SIGNOZ_METRIC_DBNAME                       = "signoz_metrics"
+	SIGNOZ_SAMPLES_V4_LOCAL_TABLENAME          = "samples_v4"
 	SIGNOZ_SAMPLES_V4_TABLENAME                = "distributed_samples_v4"
 	SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME         = "distributed_samples_v4_agg_5m"
 	SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME        = "distributed_samples_v4_agg_30m"
 	SIGNOZ_EXP_HISTOGRAM_TABLENAME             = "distributed_exp_hist"
+	SIGNOZ_EXP_HISTOGRAM_LOCAL_TABLENAME       = "exp_hist"
 	SIGNOZ_TRACE_DBNAME                        = "signoz_traces"
 	SIGNOZ_SPAN_INDEX_TABLENAME                = "distributed_signoz_index_v2"
 	SIGNOZ_SPAN_INDEX_V3                       = "distributed_signoz_index_v3"
@@ -329,6 +255,9 @@ const (
 	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
 		"span_count, subQuery.durationNano, traceID FROM %s.%s GLOBAL INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
 		"BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;"
+	TracesExplorerSpanCountWithSubQuery  = "(SELECT trace_id, count() as span_count FROM %s.%s WHERE %s %s GROUP BY trace_id ORDER BY span_count DESC LIMIT 1 BY trace_id"
+	TraceExplorerSpanCountBeforeSubQuery = "SELECT serviceName, name, subQuery.span_count as span_count, durationNano, trace_id as traceID from %s.%s GLOBAL INNER JOIN ( SELECT * FROM "
+	TraceExplorerSpanCountAfterSubQuery  = "AS inner_subquery ) AS subQuery ON %s.%s.trace_id = subQuery.trace_id WHERE parent_span_id = '' AND %s ORDER BY subQuery.span_count DESC"
 )
 
 // ReservedColumnTargetAliases identifies result value from a user
@@ -704,9 +633,14 @@ var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
 
 var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
+var IsDotMetricsEnabled = false
+
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
+	if GetOrDefaultEnv(DotMetricsEnabled, "false") == "true" {
+		IsDotMetricsEnabled = true
+	}
 }
 
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000
@@ -728,3 +662,9 @@ var MaterializedDataTypeMap = map[string]string{
 }
 
 const InspectMetricsMaxTimeDiff = 1800000
+
+func GetDefaultSiteURL() string {
+	return GetOrDefaultEnv("SIGNOZ_SITE_URL", HTTPHostPort)
+}
+
+const DotMetricsEnabled = "DOT_METRICS_ENABLED"

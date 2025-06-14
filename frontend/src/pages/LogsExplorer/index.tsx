@@ -6,7 +6,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource } from 'components/QuickFilters/types';
+import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
@@ -23,18 +23,21 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WrapperStyled } from './styles';
-import { LogsQuickFiltersConfig, SELECTED_VIEWS } from './utils';
+import { SELECTED_VIEWS } from './utils';
 
 function LogsExplorer(): JSX.Element {
 	const [showFrequencyChart, setShowFrequencyChart] = useState(true);
 	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
 		SELECTED_VIEWS.SEARCH,
 	);
+	const { preferences, loading: preferencesLoading } = usePreferenceContext();
+
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
 			LOCALSTORAGE.SHOW_LOGS_QUICK_FILTERS,
@@ -83,7 +86,6 @@ function LogsExplorer(): JSX.Element {
 	}, [currentQuery.builder.queryData, currentQuery.builder.queryData.length]);
 
 	const {
-		queryData: optionsQueryData,
 		redirectWithQuery: redirectWithOptionsData,
 	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
@@ -164,12 +166,34 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	useEffect(() => {
-		const migratedQuery = migrateOptionsQuery(optionsQueryData);
+		if (!preferences || preferencesLoading) {
+			return;
+		}
+		const migratedQuery = migrateOptionsQuery({
+			selectColumns: preferences.columns || defaultLogsSelectedColumns,
+			maxLines: preferences.formatting?.maxLines || defaultOptionsQuery.maxLines,
+			format: preferences.formatting?.format || defaultOptionsQuery.format,
+			fontSize: preferences.formatting?.fontSize || defaultOptionsQuery.fontSize,
+			version: preferences.formatting?.version,
+		});
 		// Only redirect if the query was actually modified
-		if (!isEqual(migratedQuery, optionsQueryData)) {
+		if (
+			!isEqual(migratedQuery, {
+				selectColumns: preferences?.columns,
+				maxLines: preferences?.formatting?.maxLines,
+				format: preferences?.formatting?.format,
+				fontSize: preferences?.formatting?.fontSize,
+				version: preferences?.formatting?.version,
+			})
+		) {
 			redirectWithOptionsData(migratedQuery);
 		}
-	}, [migrateOptionsQuery, optionsQueryData, redirectWithOptionsData]);
+	}, [
+		migrateOptionsQuery,
+		preferences,
+		redirectWithOptionsData,
+		preferencesLoading,
+	]);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -215,8 +239,9 @@ function LogsExplorer(): JSX.Element {
 				{showFilters && (
 					<section className={cx('log-quick-filter-left-section')}>
 						<QuickFilters
+							className="qf-logs-explorer"
+							signal={SignalType.LOGS}
 							source={QuickFiltersSource.LOGS_EXPLORER}
-							config={LogsQuickFiltersConfig}
 							handleFilterVisibilityChange={handleFilterVisibilityChange}
 						/>
 					</section>

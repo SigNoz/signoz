@@ -1,5 +1,8 @@
 import { FORMULA_REGEXP } from 'constants/regExp';
+import { isEmpty, isEqual } from 'lodash-es';
 import { Layout } from 'react-grid-layout';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export const removeUndefinedValuesFromLayout = (layout: Layout[]): Layout[] =>
 	layout.map((obj) =>
@@ -24,4 +27,88 @@ export function extractQueryNamesFromExpression(expression: string): string[] {
 
 	// Extract matches and deduplicate
 	return [...new Set(expression.match(queryNameRegex) || [])];
+}
+
+export const hasColumnWidthsChanged = (
+	columnWidths: Record<string, Record<string, number>>,
+	selectedDashboard?: Dashboard,
+): boolean => {
+	// If no column widths stored, no changes
+	if (isEmpty(columnWidths) || !selectedDashboard) return false;
+
+	// Check each widget's column widths
+	return Object.keys(columnWidths).some((widgetId) => {
+		const dashboardWidget = selectedDashboard?.data?.widgets?.find(
+			(widget) => widget.id === widgetId,
+		) as Widgets;
+
+		const newWidths = columnWidths[widgetId];
+		const existingWidths = dashboardWidget?.columnWidths;
+
+		// If both are empty/undefined, no change
+		if (isEmpty(newWidths) || isEmpty(existingWidths)) return false;
+
+		// Compare stored column widths with dashboard widget's column widths
+		return !isEqual(newWidths, existingWidths);
+	});
+};
+
+/**
+ * Calculates the step interval in uPlot points (1 minute = 60 points)
+ * based on the time duration between two timestamps in nanoseconds.
+ *
+ * Conversion logic:
+ * - <= 1 hr     → 1 min (60 points)
+ * - <= 3 hr     → 2 min (120 points)
+ * - <= 5 hr     → 3 min (180 points)
+ * - >  5 hr     → max 80 bars, ceil((end-start)/80), rounded to nearest multiple of 5 min
+ *
+ * @param startNano - start time in nanoseconds
+ * @param endNano - end time in nanoseconds
+ * @returns stepInterval in uPlot points
+ */
+export function getStepIntervalPoints(
+	startNano: number,
+	endNano: number,
+): number {
+	const startMs = startNano;
+	const endMs = endNano;
+	const durationMs = endMs - startMs;
+	const durationMin = durationMs / (60 * 1000); // convert to minutes
+
+	if (durationMin <= 60) {
+		return 60; // 1 min
+	}
+	if (durationMin <= 180) {
+		return 120; // 2 min
+	}
+	if (durationMin <= 300) {
+		return 180; // 3 min
+	}
+
+	const totalPoints = Math.ceil(durationMs / (1000 * 60)); // total minutes
+	const interval = Math.ceil(totalPoints / 80); // at most 80 bars
+	const roundedInterval = Math.ceil(interval / 5) * 5; // round up to nearest 5
+	return roundedInterval * 60; // convert min to points
+}
+
+export function updateStepInterval(
+	query: Query,
+	minTime: number,
+	maxTime: number,
+): Query {
+	const stepIntervalPoints = getStepIntervalPoints(minTime, maxTime);
+
+	return {
+		...query,
+		builder: {
+			...query?.builder,
+			queryData: [
+				...(query?.builder?.queryData ?? []).map((queryData) => ({
+					...queryData,
+					stepInterval: stepIntervalPoints || queryData?.stepInterval || 60,
+				})),
+			],
+		},
+	};
 }

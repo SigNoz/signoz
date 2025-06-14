@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -248,6 +248,7 @@ func (q TagType) Validate() error {
 type FilterAttributeKeyRequest struct {
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
+	TagType            TagType           `json:"tagType"`
 	AggregateAttribute string            `json:"aggregateAttribute"`
 	SearchText         string            `json:"searchText"`
 	Limit              int               `json:"limit"`
@@ -1412,7 +1413,7 @@ func (p *Point) UnmarshalJSON(data []byte) error {
 // The source page name is used to identify the page that initiated the query
 // The source page could be "traces", "logs", "metrics".
 type SavedView struct {
-	UUID           string          `json:"uuid,omitempty"`
+	ID             valuer.UUID     `json:"id,omitempty"`
 	Name           string          `json:"name"`
 	Category       string          `json:"category"`
 	CreatedAt      time.Time       `json:"createdAt"`
@@ -1432,9 +1433,6 @@ func (eq *SavedView) Validate() error {
 		return fmt.Errorf("composite query is required")
 	}
 
-	if eq.UUID == "" {
-		eq.UUID = uuid.New().String()
-	}
 	return eq.CompositeQuery.Validate()
 }
 
@@ -1478,5 +1476,4 @@ type URLShareableOptions struct {
 type QBOptions struct {
 	GraphLimitQtype string
 	IsLivetailQuery bool
-	PreferRPM       bool
 }

@@ -35,13 +35,15 @@ func (migration *updatePatAndOrgDomains) Register(migrations *migrate.Migrations
 }
 
 func (migration *updatePatAndOrgDomains) Up(ctx context.Context, db *bun.DB) error {
-
 	// begin transaction
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// get all org ids
 	var orgIDs []string
@@ -66,16 +68,16 @@ func (migration *updatePatAndOrgDomains) Up(ctx context.Context, db *bun.DB) err
 		}
 	}
 
-	if err := updateOrgId(ctx, tx, "org_domains"); err != nil {
+	if err := updateOrgId(ctx, tx); err != nil {
 		return err
 	}
 
 	// change created_at and updated_at from integer to timestamp
 	for _, table := range []string{"personal_access_tokens", "org_domains"} {
-		if err := migration.store.Dialect().MigrateIntToTimestamp(ctx, tx, table, "created_at"); err != nil {
+		if err := migration.store.Dialect().IntToTimestamp(ctx, tx, table, "created_at"); err != nil {
 			return err
 		}
-		if err := migration.store.Dialect().MigrateIntToTimestamp(ctx, tx, table, "updated_at"); err != nil {
+		if err := migration.store.Dialect().IntToTimestamp(ctx, tx, table, "updated_at"); err != nil {
 			return err
 		}
 	}
@@ -96,7 +98,7 @@ func (migration *updatePatAndOrgDomains) Down(ctx context.Context, db *bun.DB) e
 	return nil
 }
 
-func updateOrgId(ctx context.Context, tx bun.Tx, table string) error {
+func updateOrgId(ctx context.Context, tx bun.Tx) error {
 	if _, err := tx.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel `bun:"table:org_domains_new"`

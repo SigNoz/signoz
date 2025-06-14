@@ -324,7 +324,7 @@ export const Query = memo(function Query({
 	]);
 
 	const disableOperatorSelector =
-		!query?.aggregateAttribute.key || query?.aggregateAttribute.key === '';
+		!query?.aggregateAttribute?.key || query?.aggregateAttribute?.key === '';
 
 	const isVersionV4 = version && version === ENTITY_VERSION_V4;
 
@@ -453,11 +453,12 @@ export const Query = memo(function Query({
 										</Col>
 									)}
 									<Col flex="1" className="qb-search-container">
-										{query.dataSource === DataSource.LOGS ? (
+										{[DataSource.LOGS, DataSource.TRACES].includes(query.dataSource) ? (
 											<QueryBuilderSearchV2
 												query={query}
 												onChange={handleChangeTagFilters}
 												whereClauseConfig={filterConfigs?.filters}
+												hideSpanScopeSelector={query.dataSource !== DataSource.TRACES}
 											/>
 										) : (
 											<QueryBuilderSearch

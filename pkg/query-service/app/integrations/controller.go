@@ -5,20 +5,19 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Controller struct {
 	mgr *Manager
 }
 
-func NewController(sqlStore sqlstore.SQLStore) (
-	*Controller, error,
-) {
-	mgr, err := NewManager(sqlStore.SQLxDB())
+func NewController(sqlStore sqlstore.SQLStore) (*Controller, error) {
+	mgr, err := NewManager(sqlStore)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create integrations manager: %w", err)
 	}
@@ -34,11 +33,7 @@ type IntegrationsListResponse struct {
 	// Pagination details to come later
 }
 
-func (c *Controller) ListIntegrations(
-	ctx context.Context, params map[string]string,
-) (
-	*IntegrationsListResponse, *model.ApiError,
-) {
+func (c *Controller) ListIntegrations(ctx context.Context, orgId string, params map[string]string) (*IntegrationsListResponse, *model.ApiError) {
 	var filters *IntegrationsFilter
 	if isInstalledFilter, exists := params["is_installed"]; exists {
 		isInstalled := !(isInstalledFilter == "false")
@@ -47,7 +42,7 @@ func (c *Controller) ListIntegrations(
 		}
 	}
 
-	integrations, apiErr := c.mgr.ListIntegrations(ctx, filters)
+	integrations, apiErr := c.mgr.ListIntegrations(ctx, orgId, filters)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -57,17 +52,12 @@ func (c *Controller) ListIntegrations(
 	}, nil
 }
 
-func (c *Controller) GetIntegration(
-	ctx context.Context, integrationId string,
-) (*Integration, *model.ApiError) {
-	return c.mgr.GetIntegration(ctx, integrationId)
+func (c *Controller) GetIntegration(ctx context.Context, orgId string, integrationId string) (*Integration, *model.ApiError) {
+	return c.mgr.GetIntegration(ctx, orgId, integrationId)
 }
 
-func (c *Controller) IsIntegrationInstalled(
-	ctx context.Context,
-	integrationId string,
-) (bool, *model.ApiError) {
-	installation, apiErr := c.mgr.getInstalledIntegration(ctx, integrationId)
+func (c *Controller) IsIntegrationInstalled(ctx context.Context, orgId string, integrationId string) (bool, *model.ApiError) {
+	installation, apiErr := c.mgr.getInstalledIntegration(ctx, orgId, integrationId)
 	if apiErr != nil {
 		return false, apiErr
 	}
@@ -75,10 +65,8 @@ func (c *Controller) IsIntegrationInstalled(
 	return isInstalled, nil
 }
 
-func (c *Controller) GetIntegrationConnectionTests(
-	ctx context.Context, integrationId string,
-) (*IntegrationConnectionTests, *model.ApiError) {
-	return c.mgr.GetIntegrationConnectionTests(ctx, integrationId)
+func (c *Controller) GetIntegrationConnectionTests(ctx context.Context, orgId string, integrationId string) (*IntegrationConnectionTests, *model.ApiError) {
+	return c.mgr.GetIntegrationConnectionTests(ctx, orgId, integrationId)
 }
 
 type InstallIntegrationRequest struct {
@@ -86,11 +74,9 @@ type InstallIntegrationRequest struct {
 	Config        map[string]interface{} `json:"config"`
 }
 
-func (c *Controller) Install(
-	ctx context.Context, req *InstallIntegrationRequest,
-) (*IntegrationsListItem, *model.ApiError) {
+func (c *Controller) Install(ctx context.Context, orgId string, req *InstallIntegrationRequest) (*IntegrationsListItem, *model.ApiError) {
 	res, apiErr := c.mgr.InstallIntegration(
-		ctx, req.IntegrationId, req.Config,
+		ctx, orgId, req.IntegrationId, req.Config,
 	)
 	if apiErr != nil {
 		return nil, apiErr
@@ -103,9 +89,7 @@ type UninstallIntegrationRequest struct {
 	IntegrationId string `json:"integration_id"`
 }
 
-func (c *Controller) Uninstall(
-	ctx context.Context, req *UninstallIntegrationRequest,
-) *model.ApiError {
+func (c *Controller) Uninstall(ctx context.Context, orgId string, req *UninstallIntegrationRequest) *model.ApiError {
 	if len(req.IntegrationId) < 1 {
 		return model.BadRequest(fmt.Errorf(
 			"integration_id is required",
@@ -113,7 +97,7 @@ func (c *Controller) Uninstall(
 	}
 
 	apiErr := c.mgr.UninstallIntegration(
-		ctx, req.IntegrationId,
+		ctx, orgId, req.IntegrationId,
 	)
 	if apiErr != nil {
 		return apiErr
@@ -122,20 +106,18 @@ func (c *Controller) Uninstall(
 	return nil
 }
 
-func (c *Controller) GetPipelinesForInstalledIntegrations(
-	ctx context.Context,
-) ([]logparsingpipeline.Pipeline, *model.ApiError) {
-	return c.mgr.GetPipelinesForInstalledIntegrations(ctx)
+func (c *Controller) GetPipelinesForInstalledIntegrations(ctx context.Context, orgId string) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
+	return c.mgr.GetPipelinesForInstalledIntegrations(ctx, orgId)
 }
 
-func (c *Controller) GetDashboardsForInstalledIntegrations(
-	ctx context.Context,
-) ([]types.Dashboard, *model.ApiError) {
-	return c.mgr.GetDashboardsForInstalledIntegrations(ctx)
+func (c *Controller) GetDashboardsForInstalledIntegrations(ctx context.Context, orgId valuer.UUID) ([]*dashboardtypes.Dashboard, *model.ApiError) {
+	return c.mgr.GetDashboardsForInstalledIntegrations(ctx, orgId)
 }
 
-func (c *Controller) GetInstalledIntegrationDashboardById(
-	ctx context.Context, dashboardUuid string,
-) (*types.Dashboard, *model.ApiError) {
-	return c.mgr.GetInstalledIntegrationDashboardById(ctx, dashboardUuid)
+func (c *Controller) GetInstalledIntegrationDashboardById(ctx context.Context, orgId valuer.UUID, dashboardUuid string) (*dashboardtypes.Dashboard, *model.ApiError) {
+	return c.mgr.GetInstalledIntegrationDashboardById(ctx, orgId, dashboardUuid)
+}
+
+func (c *Controller) IsInstalledIntegrationDashboardID(dashboardUuid string) bool {
+	return c.mgr.IsInstalledIntegrationDashboardUuid(dashboardUuid)
 }

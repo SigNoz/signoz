@@ -9,6 +9,7 @@ import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import dompurify from 'dompurify';
 import { isEmpty } from 'lodash-es';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
@@ -20,8 +21,10 @@ import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import { DataType } from '../TableView';
 import {
+	escapeHtml,
 	filterKeyForField,
 	jsonToDataNodes,
+	parseFieldValue,
 	recursiveParseJSON,
 	removeEscapeCharacters,
 	unescapeString,
@@ -84,7 +87,7 @@ export function TableViewActions(
 		record.field === 'body'
 			? {
 					__html: convert.toHtml(
-						dompurify.sanitize(unescapeString(record.value), {
+						dompurify.sanitize(unescapeString(escapeHtml(record.value)), {
 							FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 						}),
 					),
@@ -142,7 +145,7 @@ export function TableViewActions(
 			<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
 				{renderFieldContent()}
 			</CopyClipboardHOC>
-			{!isListViewPanel && (
+			{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 				<span className="action-btn">
 					<Tooltip title="Filter for value">
 						<Button
@@ -154,7 +157,11 @@ export function TableViewActions(
 									<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
 								)
 							}
-							onClick={onClickHandler(OPERATORS['='], fieldFilterKey, fieldData.value)}
+							onClick={onClickHandler(
+								OPERATORS['='],
+								fieldFilterKey,
+								parseFieldValue(fieldData.value),
+							)}
 						/>
 					</Tooltip>
 					<Tooltip title="Filter out value">
@@ -170,7 +177,7 @@ export function TableViewActions(
 							onClick={onClickHandler(
 								OPERATORS['!='],
 								fieldFilterKey,
-								fieldData.value,
+								parseFieldValue(fieldData.value),
 							)}
 						/>
 					</Tooltip>

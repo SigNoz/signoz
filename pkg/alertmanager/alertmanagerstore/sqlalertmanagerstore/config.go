@@ -3,11 +3,11 @@ package sqlalertmanagerstore
 import (
 	"context"
 	"database/sql"
-	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/tidwall/gjson"
 	"github.com/uptrace/bun"
 )
@@ -67,23 +67,6 @@ func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config, 
 	}, opts...)
 }
 
-func (store *config) ListOrgs(ctx context.Context) ([]string, error) {
-	var orgIDs []string
-
-	err := store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Table("organizations").
-		ColumnExpr("id").
-		Scan(ctx, &orgIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	return orgIDs, nil
-}
-
 func (store *config) CreateChannel(ctx context.Context, channel *alertmanagertypes.Channel, opts ...alertmanagertypes.StoreOption) error {
 	return store.wrap(ctx, func(ctx context.Context) error {
 		if _, err := store.
@@ -99,7 +82,7 @@ func (store *config) CreateChannel(ctx context.Context, channel *alertmanagertyp
 	}, opts...)
 }
 
-func (store *config) GetChannelByID(ctx context.Context, orgID string, id int) (*alertmanagertypes.Channel, error) {
+func (store *config) GetChannelByID(ctx context.Context, orgID string, id valuer.UUID) (*alertmanagertypes.Channel, error) {
 	channel := new(alertmanagertypes.Channel)
 
 	err := store.
@@ -108,11 +91,11 @@ func (store *config) GetChannelByID(ctx context.Context, orgID string, id int) (
 		NewSelect().
 		Model(channel).
 		Where("org_id = ?", orgID).
-		Where("id = ?", id).
+		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", id)
+			return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %s", id.StringValue())
 		}
 		return nil, err
 	}
@@ -136,7 +119,7 @@ func (store *config) UpdateChannel(ctx context.Context, orgID string, channel *a
 	}, opts...)
 }
 
-func (store *config) DeleteChannelByID(ctx context.Context, orgID string, id int, opts ...alertmanagertypes.StoreOption) error {
+func (store *config) DeleteChannelByID(ctx context.Context, orgID string, id valuer.UUID, opts ...alertmanagertypes.StoreOption) error {
 	return store.wrap(ctx, func(ctx context.Context) error {
 		channel := new(alertmanagertypes.Channel)
 
@@ -146,7 +129,7 @@ func (store *config) DeleteChannelByID(ctx context.Context, orgID string, id int
 			NewDelete().
 			Model(channel).
 			Where("org_id = ?", orgID).
-			Where("id = ?", id).
+			Where("id = ?", id.StringValue()).
 			Exec(ctx); err != nil {
 			return err
 		}
@@ -190,9 +173,9 @@ func (store *config) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.
 
 func (store *config) GetMatchers(ctx context.Context, orgID string) (map[string][]string, error) {
 	type matcher struct {
-		bun.BaseModel `bun:"table:rules"`
-		ID            int    `bun:"id,pk"`
-		Data          string `bun:"data"`
+		bun.BaseModel `bun:"table:rule"`
+		ID            valuer.UUID `bun:"id,pk"`
+		Data          string      `bun:"data"`
 	}
 
 	matchers := []matcher{}
@@ -212,7 +195,7 @@ func (store *config) GetMatchers(ctx context.Context, orgID string) (map[string]
 	for _, matcher := range matchers {
 		receivers := gjson.Get(matcher.Data, "preferredChannels").Array()
 		for _, receiver := range receivers {
-			matchersMap[strconv.Itoa(matcher.ID)] = append(matchersMap[strconv.Itoa(matcher.ID)], receiver.String())
+			matchersMap[matcher.ID.StringValue()] = append(matchersMap[matcher.ID.StringValue()], receiver.String())
 		}
 	}
 

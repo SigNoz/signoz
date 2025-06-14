@@ -18,18 +18,21 @@ import {
 	Gauge,
 } from 'lucide-react';
 import { useMemo } from 'react';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { METRIC_TYPE_LABEL_MAP } from './constants';
 import MetricNameSearch from './MetricNameSearch';
 import MetricTypeSearch from './MetricTypeSearch';
 import { MetricsListItemRowData, TreemapTile, TreemapViewType } from './types';
 
-export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
+export const getMetricsTableColumns = (
+	queryFilters: TagFilter,
+): ColumnType<MetricsListItemRowData>[] => [
 	{
 		title: (
 			<div className="metric-name-column-header">
 				<span className="metric-name-column-header-text">METRIC</span>
-				<MetricNameSearch />
+				<MetricNameSearch queryFilters={queryFilters} />
 			</div>
 		),
 		dataIndex: 'metric_name',
@@ -44,16 +47,14 @@ export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 		dataIndex: 'description',
 		width: 400,
 		render: (value: string): React.ReactNode => (
-			<Tooltip title={value}>
-				<div className="metric-description-column-value">{value}</div>
-			</Tooltip>
+			<div className="metric-description-column-value">{value}</div>
 		),
 	},
 	{
 		title: (
 			<div className="metric-type-column-header">
 				<span className="metric-type-column-header-text">TYPE</span>
-				<MetricTypeSearch />
+				<MetricTypeSearch queryFilters={queryFilters} />
 			</div>
 		),
 		dataIndex: 'metric_type',
@@ -154,12 +155,17 @@ function ValidateRowValueWrapper({
 	return <div>{children}</div>;
 }
 
-export const formatNumberIntoHumanReadableFormat = (num: number): string => {
+export const formatNumberIntoHumanReadableFormat = (
+	num: number,
+	addPlusSign = true,
+): string => {
 	function format(num: number, divisor: number, suffix: string): string {
 		const value = num / divisor;
 		return value % 1 === 0
-			? `${value}${suffix}+`
-			: `${value.toFixed(1).replace(/\.0$/, '')}${suffix}+`;
+			? `${value}${suffix}${addPlusSign ? '+' : ''}`
+			: `${value.toFixed(1).replace(/\.0$/, '')}${suffix}${
+					addPlusSign ? '+' : ''
+			  }`;
 	}
 
 	if (num >= 1_000_000_000) {
@@ -186,7 +192,9 @@ export const formatDataForMetricsTable = (
 		),
 		description: (
 			<ValidateRowValueWrapper value={metric.description}>
-				<Tooltip title={metric.description}>{metric.description}</Tooltip>
+				<Tooltip className="description-tooltip" title={metric.description}>
+					{metric.description}
+				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
 		metric_type: <MetricTypeRenderer type={metric.type} />,

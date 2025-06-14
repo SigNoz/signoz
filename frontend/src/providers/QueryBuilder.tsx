@@ -764,10 +764,7 @@ export function QueryBuilderProvider({
 	);
 
 	const { safeNavigate } = useSafeNavigate({
-		preventSameUrlNavigation: !(
-			initialDataSource === DataSource.LOGS ||
-			initialDataSource === DataSource.TRACES
-		),
+		preventSameUrlNavigation: false,
 	});
 
 	const redirectWithQueryBuilderData = useCallback(
@@ -835,6 +832,8 @@ export function QueryBuilderProvider({
 					),
 				);
 			}
+			// Remove Hidden Filters from URL query parameters on query change
+			urlQuery.delete(QueryParams.activeLogId);
 
 			const generatedUrl = redirectingUrl
 				? `${redirectingUrl}?${urlQuery}`

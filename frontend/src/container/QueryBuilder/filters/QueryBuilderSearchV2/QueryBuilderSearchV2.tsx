@@ -5,6 +5,7 @@ import { Select, Spin, Tag, Tooltip } from 'antd';
 import cx from 'classnames';
 import {
 	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
+	OperatorConfigKeys,
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 	QUERY_BUILDER_SEARCH_VALUES,
@@ -62,7 +63,9 @@ import {
 	getTagToken,
 	isInNInOperator,
 } from '../QueryBuilderSearch/utils';
+import { filterByOperatorConfig } from '../utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
+import SpanScopeSelector from './SpanScopeSelector';
 import Suggestions from './Suggestions';
 
 export interface ITag {
@@ -87,6 +90,14 @@ interface QueryBuilderSearchV2Props {
 	placeholder?: string;
 	className?: string;
 	suffixIcon?: React.ReactNode;
+	hardcodedAttributeKeys?: BaseAutocompleteData[];
+	hasPopupContainer?: boolean;
+	rootClassName?: string;
+	maxTagCount?: number | 'responsive';
+	operatorConfigKey?: OperatorConfigKeys;
+	hideSpanScopeSelector?: boolean;
+	// Determines whether to call onChange when a tag is closed
+	triggerOnChangeOnClose?: boolean;
 }
 
 export interface Option {
@@ -119,6 +130,13 @@ function QueryBuilderSearchV2(
 		className,
 		suffixIcon,
 		whereClauseConfig,
+		hardcodedAttributeKeys,
+		hasPopupContainer,
+		rootClassName,
+		maxTagCount,
+		operatorConfigKey,
+		hideSpanScopeSelector,
+		triggerOnChangeOnClose,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -233,7 +251,7 @@ function QueryBuilderSearchV2(
 		},
 		{
 			queryKey: [searchParams],
-			enabled: isQueryEnabled && !isLogsDataSource,
+			enabled: isQueryEnabled && !isLogsDataSource && !hardcodedAttributeKeys,
 		},
 	);
 
@@ -288,7 +306,8 @@ function QueryBuilderSearchV2(
 				if (
 					isObject(parsedValue) &&
 					parsedValue?.key &&
-					parsedValue?.key?.split(' ').length > 1
+					parsedValue?.key?.split(' ').length > 1 &&
+					isLogsDataSource
 				) {
 					setTags((prev) => [
 						...prev,
@@ -403,7 +422,13 @@ function QueryBuilderSearchV2(
 				}
 			}
 		},
-		[currentFilterItem?.key, currentFilterItem?.op, currentState, searchValue],
+		[
+			currentFilterItem?.key,
+			currentFilterItem?.op,
+			currentState,
+			isLogsDataSource,
+			searchValue,
+		],
 	);
 
 	const handleSearch = useCallback((value: string) => {
@@ -674,13 +699,42 @@ function QueryBuilderSearchV2(
 						value: key,
 					})) || []),
 				]);
-			} else {
+			} else if (hardcodedAttributeKeys) {
+				const filteredKeys = hardcodedAttributeKeys.filter((key) =>
+					key.key
+						.toLowerCase()
+						.includes((searchValue?.split(' ')[0] || '').toLowerCase()),
+				);
 				setDropdownOptions(
-					data?.payload?.attributeKeys?.map((key) => ({
+					filteredKeys.map((key) => ({
 						label: key.key,
 						value: key,
-					})) || [],
+					})),
 				);
+			} else {
+				setDropdownOptions([
+					// Add user typed option if it doesn't exist in the payload
+					...(tagKey.trim().length > 0 &&
+					!data?.payload?.attributeKeys?.some((val) => val.key === tagKey)
+						? [
+								{
+									label: tagKey,
+									value: {
+										key: tagKey,
+										dataType: DataTypes.EMPTY,
+										type: '',
+										isColumn: false,
+										isJSON: false,
+									},
+								},
+						  ]
+						: []),
+					// Map existing attribute keys from payload
+					...(data?.payload?.attributeKeys?.map((key) => ({
+						label: key.key,
+						value: key,
+					})) || []),
+				]);
 			}
 		}
 		if (currentState === DropdownState.OPERATOR) {
@@ -703,15 +757,11 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
-				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
-				setDropdownOptions(operatorOptions);
 			} else if (strippedKey.endsWith('[*]') && strippedKey.startsWith('body.')) {
 				operatorOptions = [OPERATORS.HAS, OPERATORS.NHAS].map((operator) => ({
 					label: operator,
 					value: operator,
 				}));
-				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
-				setDropdownOptions(operatorOptions);
 			} else {
 				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES.universal.map(
 					(operator) => ({
@@ -725,9 +775,12 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
-				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
-				setDropdownOptions(operatorOptions);
 			}
+			const filterOperatorOptions = filterByOperatorConfig(
+				operatorOptions,
+				operatorConfigKey,
+			);
+			setDropdownOptions([{ label: '', value: '' }, ...filterOperatorOptions]);
 		}
 
 		if (currentState === DropdownState.ATTRIBUTE_VALUE) {
@@ -752,6 +805,7 @@ function QueryBuilderSearchV2(
 			);
 		}
 	}, [
+		hardcodedAttributeKeys,
 		attributeValues?.payload,
 		currentFilterItem?.key?.dataType,
 		currentState,
@@ -759,6 +813,7 @@ function QueryBuilderSearchV2(
 		isLogsDataSource,
 		searchValue,
 		suggestionsData?.payload?.attributes,
+		operatorConfigKey,
 	]);
 
 	// keep the query in sync with the selected tags in logs explorer page
@@ -856,6 +911,9 @@ function QueryBuilderSearchV2(
 			onClose();
 			setSearchValue('');
 			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
+			if (triggerOnChangeOnClose) {
+				onChange(query.filters);
+			}
 		};
 
 		const tagEditHandler = (value: string): void => {
@@ -896,7 +954,10 @@ function QueryBuilderSearchV2(
 		<div className="query-builder-search-v2">
 			<Select
 				ref={selectRef}
-				getPopupContainer={popupContainer}
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...(hasPopupContainer ? { getPopupContainer: popupContainer } : {})}
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...(maxTagCount ? { maxTagCount } : {})}
 				key={queryTags.join('.')}
 				virtual={false}
 				showSearch
@@ -928,7 +989,7 @@ function QueryBuilderSearchV2(
 						: '',
 					className,
 				)}
-				rootClassName="query-builder-search"
+				rootClassName={cx('query-builder-search', rootClassName)}
 				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 				style={selectStyle}
 				onSearch={handleSearch}
@@ -949,6 +1010,7 @@ function QueryBuilderSearchV2(
 						exampleQueries={suggestionsData?.payload?.example_queries || []}
 						tags={tags}
 						currentFilterItem={currentFilterItem}
+						isLogsDataSource={isLogsDataSource}
 					/>
 				)}
 			>
@@ -975,6 +1037,9 @@ function QueryBuilderSearchV2(
 					);
 				})}
 			</Select>
+			{!hideSpanScopeSelector && (
+				<SpanScopeSelector query={query} onChange={onChange} />
+			)}
 		</div>
 	);
 }
@@ -984,6 +1049,13 @@ QueryBuilderSearchV2.defaultProps = {
 	className: '',
 	suffixIcon: null,
 	whereClauseConfig: {},
+	hasPopupContainer: true,
+	rootClassName: '',
+	hardcodedAttributeKeys: undefined,
+	maxTagCount: undefined,
+	operatorConfigKey: undefined,
+	hideSpanScopeSelector: true,
+	triggerOnChangeOnClose: false,
 };
 
 export default QueryBuilderSearchV2;

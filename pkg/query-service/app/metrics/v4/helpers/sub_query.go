@@ -14,6 +14,12 @@ var (
 	sixHoursInMilliseconds = time.Hour.Milliseconds() * 6
 	oneDayInMilliseconds   = time.Hour.Milliseconds() * 24
 	oneWeekInMilliseconds  = oneDayInMilliseconds * 7
+
+	// when the query requests for almost 1 day, but not exactly 1 day, we need to add an offset to the end time
+	// to make sure that we are using the correct table
+	// this is because the start gets adjusted to the nearest step interval and uses the 5m table for 4m step interval
+	// leading to time series that doesn't best represent the rate of change
+	offsetBucket = 60 * time.Minute.Milliseconds()
 )
 
 func whichTSTableToUse(start, end int64, mq *v3.BuilderQuery) (int64, int64, string) {
@@ -104,7 +110,7 @@ func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 		return constants.SIGNOZ_SAMPLES_V4_TABLENAME
 	}
 
-	if end-start < oneDayInMilliseconds {
+	if end-start < oneDayInMilliseconds+offsetBucket {
 		// if we are dealing with delta metrics and interval is greater than 5 minutes, we can use the 5m aggregated table
 		// why would interval be greater than 5 minutes?
 		// we allow people to configure the step interval so we can make use of this
@@ -115,7 +121,7 @@ func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 			return constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME
 		}
 		return constants.SIGNOZ_SAMPLES_V4_TABLENAME
-	} else if end-start < oneWeekInMilliseconds {
+	} else if end-start < oneWeekInMilliseconds+offsetBucket {
 		return constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME
 	} else {
 		return constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME
@@ -263,7 +269,11 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 
 	conditions = append(conditions, fmt.Sprintf("metric_name IN %s", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key)))
 	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
-	conditions = append(conditions, "__normalized = true")
+	if constants.IsDotMetricsEnabled {
+		conditions = append(conditions, "__normalized = false")
+	} else {
+		conditions = append(conditions, "__normalized = true")
+	}
 
 	start, end, tableName := whichTSTableToUse(start, end, mq)
 
@@ -351,7 +361,11 @@ func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (stri
 
 	conditions = append(conditions, fmt.Sprintf("metric_name IN %s", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key)))
 	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
-	conditions = append(conditions, "__normalized = true")
+	if constants.IsDotMetricsEnabled {
+		conditions = append(conditions, "__normalized = false")
+	} else {
+		conditions = append(conditions, "__normalized = true")
+	}
 
 	start, end, tableName := whichTSTableToUse(start, end, mq)
 
@@ -427,4 +441,11 @@ func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (stri
 	)
 
 	return filterSubQuery, nil
+}
+
+func AddFlagsFilters(samplesTableFilter string, tableName string) string {
+	if tableName == constants.SIGNOZ_SAMPLES_V4_TABLENAME || tableName == constants.SIGNOZ_SAMPLES_V4_LOCAL_TABLENAME || tableName == constants.SIGNOZ_EXP_HISTOGRAM_TABLENAME || tableName == constants.SIGNOZ_EXP_HISTOGRAM_LOCAL_TABLENAME {
+		samplesTableFilter = fmt.Sprintf("%s AND %s", samplesTableFilter, "bitAnd(flags, 1) = 0")
+	}
+	return samplesTableFilter
 }

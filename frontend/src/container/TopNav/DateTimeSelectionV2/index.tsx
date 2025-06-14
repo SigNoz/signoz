@@ -75,6 +75,8 @@ function DateTimeSelection({
 	isModalTimeSelection = false,
 	onTimeChange,
 	modalSelectedInterval,
+	modalInitialStartTime,
+	modalInitialEndTime,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 	const { safeNavigate } = useSafeNavigate();
@@ -93,6 +95,36 @@ function DateTimeSelection({
 	const [isValidteRelativeTime, setIsValidteRelativeTime] = useState(false);
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 	const [isURLCopied, setIsURLCopied] = useState(false);
+
+	// Prioritize props for initial modal time, fallback to URL params
+	let initialModalStartTime = 0;
+	if (modalInitialStartTime !== undefined) {
+		initialModalStartTime = modalInitialStartTime;
+	} else if (searchStartTime) {
+		initialModalStartTime = parseInt(searchStartTime, 10);
+	}
+
+	let initialModalEndTime = 0;
+	if (modalInitialEndTime !== undefined) {
+		initialModalEndTime = modalInitialEndTime;
+	} else if (searchEndTime) {
+		initialModalEndTime = parseInt(searchEndTime, 10);
+	}
+
+	const [modalStartTime, setModalStartTime] = useState<number>(
+		initialModalStartTime,
+	);
+	const [modalEndTime, setModalEndTime] = useState<number>(initialModalEndTime);
+
+	// Effect to update modal time state when props change
+	useEffect(() => {
+		if (modalInitialStartTime !== undefined) {
+			setModalStartTime(modalInitialStartTime);
+		}
+		if (modalInitialEndTime !== undefined) {
+			setModalEndTime(modalInitialEndTime);
+		}
+	}, [modalInitialStartTime, modalInitialEndTime]);
 
 	const {
 		localstorageStartTime,
@@ -212,7 +244,6 @@ function DateTimeSelection({
 
 			const startString = startTime.format(format);
 			const endString = endTime.format(format);
-
 			return `${startString} - ${endString}`;
 		}
 		return timeInterval;
@@ -346,6 +377,8 @@ function DateTimeSelection({
 			urlQuery.delete('endTime');
 
 			urlQuery.set(QueryParams.relativeTime, value);
+			// Remove Hidden Filters from URL query parameters on time change
+			urlQuery.delete(QueryParams.activeLogId);
 
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
@@ -382,13 +415,6 @@ function DateTimeSelection({
 			onSelectHandler(defaultRelativeTime);
 		}
 	}, [defaultRelativeTime, onSelectHandler]);
-
-	const [modalStartTime, setModalStartTime] = useState<number>(
-		searchStartTime ? parseInt(searchStartTime, 10) : 0,
-	);
-	const [modalEndTime, setModalEndTime] = useState<number>(
-		searchEndTime ? parseInt(searchEndTime, 10) : 0,
-	);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
@@ -645,9 +671,7 @@ function DateTimeSelection({
 			urlQuery.set(QueryParams.endTime, endTime);
 			urlQuery.delete(QueryParams.relativeTime);
 		}
-
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-
 		safeNavigate(generatedUrl);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
@@ -811,6 +835,7 @@ function DateTimeSelection({
 						onCustomDateHandler={onCustomDateHandler}
 						customDateTimeVisible={customDateTimeVisible}
 						setCustomDTPickerVisible={setCustomDTPickerVisible}
+						onTimeChange={onTimeChange}
 					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (
@@ -864,6 +889,8 @@ interface DateTimeSelectionV2Props {
 		dateTimeRange?: [number, number],
 	) => void;
 	modalSelectedInterval?: Time;
+	modalInitialStartTime?: number;
+	modalInitialEndTime?: number;
 }
 
 DateTimeSelection.defaultProps = {
@@ -875,6 +902,8 @@ DateTimeSelection.defaultProps = {
 	isModalTimeSelection: false,
 	onTimeChange: (): void => {},
 	modalSelectedInterval: RelativeTimeMap['5m'] as Time,
+	modalInitialStartTime: undefined,
+	modalInitialEndTime: undefined,
 };
 interface DispatchProps {
 	updateTimeInterval: (

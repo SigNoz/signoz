@@ -1,12 +1,13 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
 import { Logout } from 'api/utils';
+import listOrgPreferences from 'api/v1/org/preferences/list';
+import listUserPreferences from 'api/v1/user/preferences/list';
+import getUserVersion from 'api/v1/version/getVersion';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
-import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
+import { useGetFeatureFlag } from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
-import useLicense from 'hooks/useLicense';
 import useGetUser from 'hooks/user/useGetUser';
 import {
 	createContext,
@@ -19,14 +20,17 @@ import {
 } from 'react';
 import { useQuery } from 'react-query';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
-import { PayloadProps as LicensesResModel } from 'types/api/licenses/getAll';
 import {
+	LicensePlatform,
+	LicenseResModel,
 	LicenseState,
-	LicenseV3ResModel,
 	TrialInfo,
 } from 'types/api/licensesV3/getActive';
+import {
+	OrgPreference,
+	UserPreference,
+} from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
-import { OrgPreference } from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
 import { IAppContext, IUser } from './types';
@@ -37,18 +41,19 @@ export const AppContext = createContext<IAppContext | undefined>(undefined);
 export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	// on load of the provider set the user defaults with access jwt , refresh jwt and user id from local storage
 	const [user, setUser] = useState<IUser>(() => getUserDefaults());
-	const [licenses, setLicenses] = useState<LicensesResModel | null>(null);
-	const [
-		activeLicenseV3,
-		setActiveLicenseV3,
-	] = useState<LicenseV3ResModel | null>(null);
-
+	const [activeLicense, setActiveLicense] = useState<LicenseResModel | null>(
+		null,
+	);
 	const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
-
 	const [featureFlags, setFeatureFlags] = useState<FeatureFlags[] | null>(null);
 	const [orgPreferences, setOrgPreferences] = useState<OrgPreference[] | null>(
 		null,
 	);
+
+	const [userPreferences, setUserPreferences] = useState<
+		UserPreference[] | null
+	>(null);
+
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	);
@@ -70,10 +75,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		error: userFetchError,
 	} = useGetUser(user.id, isLoggedIn);
 	useEffect(() => {
-		if (!isFetchingUser && userData && userData.payload) {
+		if (!isFetchingUser && userData && userData.data) {
 			setUser((prev) => ({
 				...prev,
-				...userData.payload,
+				...userData.data,
 			}));
 			setOrg((prev) => {
 				if (!prev) {
@@ -81,23 +86,19 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					return [
 						{
 							createdAt: 0,
-							hasOptedUpdates: false,
-							id: userData.payload.orgId,
-							isAnonymous: false,
-							name: userData.payload.organization,
+							id: userData.data.orgId,
+							displayName: userData.data.organization,
 						},
 					];
 				}
 				// else mutate the existing entry
-				const orgIndex = prev.findIndex((e) => e.id === userData.payload.orgId);
+				const orgIndex = prev.findIndex((e) => e.id === userData.data.orgId);
 				const updatedOrg: Organization[] = [
 					...prev.slice(0, orgIndex),
 					{
 						createdAt: 0,
-						hasOptedUpdates: false,
-						id: userData.payload.orgId,
-						isAnonymous: false,
-						name: userData.payload.organization,
+						id: userData.data.orgId,
+						displayName: userData.data.organization,
 					},
 					...prev.slice(orgIndex + 1, prev.length),
 				];
@@ -106,58 +107,40 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	}, [userData, isFetchingUser]);
 
-	// fetcher for licenses v2
-	// license will be fetched if we are in logged in state
-	const {
-		data: licenseData,
-		isFetching: isFetchingLicenses,
-		error: licensesFetchError,
-		refetch: licensesRefetch,
-	} = useLicense(isLoggedIn);
-	useEffect(() => {
-		if (!isFetchingLicenses && licenseData && licenseData.payload) {
-			setLicenses(licenseData.payload);
-		}
-	}, [licenseData, isFetchingLicenses]);
-
 	// fetcher for licenses v3
 	const {
-		data: activeLicenseV3Data,
-		isFetching: isFetchingActiveLicenseV3,
-		error: activeLicenseV3FetchError,
+		data: activeLicenseData,
+		isFetching: isFetchingActiveLicense,
+		error: activeLicenseFetchError,
+		refetch: activeLicenseRefetch,
 	} = useActiveLicenseV3(isLoggedIn);
 	useEffect(() => {
-		if (
-			!isFetchingActiveLicenseV3 &&
-			activeLicenseV3Data &&
-			activeLicenseV3Data.payload
-		) {
-			setActiveLicenseV3(activeLicenseV3Data.payload);
+		if (!isFetchingActiveLicense && activeLicenseData && activeLicenseData.data) {
+			setActiveLicense(activeLicenseData.data);
 
 			const isOnTrial = dayjs(
-				activeLicenseV3Data.payload.free_until || Date.now(),
+				activeLicenseData.data.free_until || Date.now(),
 			).isAfter(dayjs());
 
 			const trialInfo: TrialInfo = {
-				trialStart: activeLicenseV3Data.payload.valid_from,
-				trialEnd: dayjs(
-					activeLicenseV3Data.payload.free_until || Date.now(),
-				).unix(),
+				trialStart: activeLicenseData.data.valid_from,
+				trialEnd: dayjs(activeLicenseData.data.free_until || Date.now()).unix(),
 				onTrial: isOnTrial,
 				workSpaceBlock:
-					activeLicenseV3Data.payload.state === LicenseState.EVALUATION_EXPIRED,
+					activeLicenseData.data.state === LicenseState.EVALUATION_EXPIRED &&
+					activeLicenseData.data.platform === LicensePlatform.CLOUD,
 				trialConvertedToSubscription:
-					activeLicenseV3Data.payload.state !== LicenseState.ISSUED &&
-					activeLicenseV3Data.payload.state !== LicenseState.EVALUATING &&
-					activeLicenseV3Data.payload.state !== LicenseState.EVALUATION_EXPIRED,
+					activeLicenseData.data.state !== LicenseState.ISSUED &&
+					activeLicenseData.data.state !== LicenseState.EVALUATING &&
+					activeLicenseData.data.state !== LicenseState.EVALUATION_EXPIRED,
 				gracePeriodEnd: dayjs(
-					activeLicenseV3Data.payload.event_queue.scheduled_at || Date.now(),
+					activeLicenseData.data.event_queue.scheduled_at || Date.now(),
 				).unix(),
 			};
 
 			setTrialInfo(trialInfo);
 		}
-	}, [activeLicenseV3Data, isFetchingActiveLicenseV3]);
+	}, [activeLicenseData, isFetchingActiveLicense]);
 
 	// fetcher for feature flags
 	const {
@@ -173,20 +156,46 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		isFetching: isFetchingOrgPreferences,
 		error: orgPreferencesFetchError,
 	} = useQuery({
-		queryFn: () => getAllOrgPreferences(),
+		queryFn: () => listOrgPreferences(),
 		queryKey: ['getOrgPreferences', 'app-context'],
 		enabled: !!isLoggedIn && !!user.email && user.role === USER_ROLES.ADMIN,
+	});
+
+	const { data: versionData } = useQuery({
+		queryFn: getUserVersion,
+		queryKey: ['getUserVersion', user?.accessJwt],
+		enabled: isLoggedIn,
 	});
 
 	useEffect(() => {
 		if (
 			!isFetchingOrgPreferences &&
 			orgPreferencesData &&
-			orgPreferencesData.payload
+			orgPreferencesData.data
 		) {
-			setOrgPreferences(orgPreferencesData.payload.data);
+			setOrgPreferences(orgPreferencesData.data);
 		}
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
+
+	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
+	const {
+		data: userPreferencesData,
+		isFetching: isFetchingUserPreferences,
+	} = useQuery({
+		queryFn: () => listUserPreferences(),
+		queryKey: ['getAllUserPreferences', 'app-context'],
+		enabled: !!isLoggedIn && !!user.email,
+	});
+
+	useEffect(() => {
+		if (
+			userPreferencesData &&
+			userPreferencesData.data &&
+			!isFetchingUserPreferences
+		) {
+			setUserPreferences(userPreferencesData.data);
+		}
+	}, [userPreferencesData, isFetchingUserPreferences, isLoggedIn]);
 
 	function updateUser(user: IUser): void {
 		setUser((prev) => ({
@@ -194,6 +203,23 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			...user,
 		}));
 	}
+
+	const updateUserPreferenceInContext = useCallback(
+		(userPreference: UserPreference): void => {
+			setUserPreferences((prev) => {
+				const index = prev?.findIndex((e) => e.name === userPreference.name);
+				if (index !== undefined) {
+					return [
+						...(prev?.slice(0, index) || []),
+						userPreference,
+						...(prev?.slice(index + 1, prev.length) || []),
+					];
+				}
+				return prev;
+			});
+		},
+		[],
+	);
 
 	function updateOrgPreferences(orgPreferences: OrgPreference[]): void {
 		setOrgPreferences(orgPreferences);
@@ -207,10 +233,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					...org.slice(0, orgIndex),
 					{
 						createdAt: 0,
-						hasOptedUpdates: false,
 						id: orgId,
-						isAnonymous: false,
-						name: updatedOrgName,
+						displayName: updatedOrgName,
 					},
 					...org.slice(orgIndex + 1, org.length),
 				];
@@ -246,9 +270,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	useGlobalEventListener('LOGOUT', () => {
 		setIsLoggedIn(false);
 		setUser(getUserDefaults());
-		setActiveLicenseV3(null);
+		setActiveLicense(null);
 		setTrialInfo(null);
-		setLicenses(null);
 		setFeatureFlags(null);
 		setOrgPreferences(null);
 		setOrg(null);
@@ -258,49 +281,49 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const value: IAppContext = useMemo(
 		() => ({
 			user,
-			licenses,
-			activeLicenseV3,
+			userPreferences,
 			featureFlags,
 			trialInfo,
 			orgPreferences,
 			isLoggedIn,
 			org,
 			isFetchingUser,
-			isFetchingLicenses,
-			isFetchingActiveLicenseV3,
+			isFetchingActiveLicense,
 			isFetchingFeatureFlags,
 			isFetchingOrgPreferences,
 			userFetchError,
-			licensesFetchError,
-			activeLicenseV3FetchError,
+			activeLicenseFetchError,
 			featureFlagsFetchError,
 			orgPreferencesFetchError,
-			licensesRefetch,
+			activeLicense,
+			activeLicenseRefetch,
 			updateUser,
 			updateOrgPreferences,
+			updateUserPreferenceInContext,
 			updateOrg,
+			versionData: versionData?.payload || null,
 		}),
 		[
 			trialInfo,
-			activeLicenseV3,
-			activeLicenseV3FetchError,
+			activeLicense,
+			activeLicenseFetchError,
+			userPreferences,
 			featureFlags,
 			featureFlagsFetchError,
-			isFetchingActiveLicenseV3,
+			isFetchingActiveLicense,
 			isFetchingFeatureFlags,
-			isFetchingLicenses,
 			isFetchingOrgPreferences,
 			isFetchingUser,
 			isLoggedIn,
-			licenses,
-			licensesFetchError,
-			licensesRefetch,
 			org,
 			orgPreferences,
+			activeLicenseRefetch,
 			orgPreferencesFetchError,
+			updateUserPreferenceInContext,
 			updateOrg,
 			user,
 			userFetchError,
+			versionData,
 		],
 	);
 	return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

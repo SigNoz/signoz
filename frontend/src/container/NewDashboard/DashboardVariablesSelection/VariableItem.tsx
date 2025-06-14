@@ -7,7 +7,7 @@
 import './DashboardVariableSelection.styles.scss';
 
 import { orange } from '@ant-design/colors';
-import { WarningOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import {
 	Checkbox,
 	Input,
@@ -229,7 +229,7 @@ function VariableItem({
 
 				if (details.error) {
 					let message = details.error;
-					if (details.error.includes('Syntax error:')) {
+					if ((details.error ?? '').toString().includes('Syntax error:')) {
 						message =
 							'Please make sure query is valid and dependent variables are selected';
 					}
@@ -405,7 +405,13 @@ function VariableItem({
 		<div className="variable-item">
 			<Typography.Text className="variable-name" ellipsis>
 				${variableData.name}
+				{variableData.description && (
+					<Tooltip title={variableData.description}>
+						<InfoCircleOutlined className="info-icon" />
+					</Tooltip>
+				)}
 			</Typography.Text>
+
 			<div className="variable-value">
 				{variableData.type === 'TEXTBOX' ? (
 					<Input
@@ -456,7 +462,7 @@ function VariableItem({
 									<span>+ {omittedValues.length} </span>
 								</Tooltip>
 							)}
-							allowClear
+							allowClear={selectValue !== ALL_SELECT_VALUE && selectValue !== 'ALL'}
 						>
 							{enableSelectAll && (
 								<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>

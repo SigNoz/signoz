@@ -5,6 +5,7 @@ import (
 
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type HourlyProvider struct {
@@ -28,17 +29,16 @@ func NewHourlyProvider(opts ...GenericProviderOption[*HourlyProvider]) *HourlyPr
 	}
 
 	hp.querierV2 = querierV2.NewQuerier(querierV2.QuerierOptions{
-		Reader:        hp.reader,
-		Cache:         hp.cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  hp.fluxInterval,
-		FeatureLookup: hp.ff,
+		Reader:       hp.reader,
+		Cache:        hp.cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		FluxInterval: hp.fluxInterval,
 	})
 
 	return hp
 }
 
-func (p *HourlyProvider) GetAnomalies(ctx context.Context, req *GetAnomaliesRequest) (*GetAnomaliesResponse, error) {
+func (p *HourlyProvider) GetAnomalies(ctx context.Context, orgID valuer.UUID, req *GetAnomaliesRequest) (*GetAnomaliesResponse, error) {
 	req.Seasonality = SeasonalityHourly
-	return p.getAnomalies(ctx, req)
+	return p.getAnomalies(ctx, orgID, req)
 }

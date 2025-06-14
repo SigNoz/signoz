@@ -33,10 +33,10 @@ jobs:
           echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> .env
           echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> .env
           echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> .env
-          echo 'CUSTOMERIO_ID="${{ secrets.CUSTOMERIO_ID }}"' >> .env
-          echo 'CUSTOMERIO_SITE_ID="${{ secrets.CUSTOMERIO_SITE_ID }}"' >> .env
+          echo 'PYLON_APP_ID="${{ secrets.PYLON_APP_ID }}"' >> .env
+          echo 'APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> .env
       - name: build-frontend
-        run: make build-frontend-static
+        run:  make js-build
       - name: upload-frontend-artifact
         uses: actions/upload-artifact@v4
         with:
@@ -72,7 +72,7 @@ jobs:
       - name: setup-go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.23"
       - name: cross-compilation-tools
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -135,7 +135,7 @@ jobs:
       - name: setup-go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.23"
 
       # copy the caches from build
       - name: get-sha

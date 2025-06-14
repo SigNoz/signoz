@@ -61,7 +61,6 @@
 			font-weight: 400;
 			line-height: 18px; /* 128.571% */
 			letter-spacing: -0.07px;
-			margin-bottom: 16px;
 		}
 
 		.description-input {
@@ -157,6 +156,26 @@
 				letter-spacing: 0.52px;
 				text-transform: uppercase;
 			}
+		}
+
+		.log-scale {
+			margin-top: 16px;
+			display: flex;
+			justify-content: space-between;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.legend-position {
+			margin-top: 16px;
+			display: flex;
+			justify-content: space-between;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.legend-colors {
+			margin-top: 16px;
 		}
 
 		.panel-time-text {

@@ -1,9 +1,11 @@
+import * as Sentry from '@sentry/react';
 import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
+import UserpilotRouteTracker from 'components/UserpilotRouteTracker/UserpilotRouteTracker';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
@@ -11,21 +13,26 @@ import AppLayout from 'container/AppLayout';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
+import { StatusCodes } from 'http-status-codes';
 import history from 'lib/history';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import AlertRuleProvider from 'providers/Alert';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
+import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
+import { LicenseStatus } from 'types/api/licensesV3/getActive';
+import { Userpilot } from 'userpilot';
 import { extractDomain } from 'utils/app';
 
+import { Home } from './pageComponents';
 import PrivateRoute from './Private';
 import defaultRoutes, {
 	AppRoutes,
@@ -36,16 +43,14 @@ import defaultRoutes, {
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
 	const {
-		licenses,
 		user,
 		isFetchingUser,
-		isFetchingLicenses,
 		isFetchingFeatureFlags,
 		trialInfo,
-		activeLicenseV3,
-		isFetchingActiveLicenseV3,
+		activeLicense,
+		isFetchingActiveLicense,
+		activeLicenseFetchError,
 		userFetchError,
-		licensesFetchError,
 		featureFlagsFetchError,
 		isLoggedIn: isLoggedInState,
 		featureFlags,
@@ -55,26 +60,25 @@ function App(): JSX.Element {
 
 	const { hostname, pathname } = window.location;
 
-	const {
-		isCloudUser: isCloudUserVal,
-		isEECloudUser: isEECloudUserVal,
-	} = useGetTenantLicense();
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
+
+	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
 			// wait for the required data to be loaded before doing init for anything!
-			if (!isFetchingActiveLicenseV3 && activeLicenseV3 && org) {
+			if (!isFetchingActiveLicense && activeLicense && org) {
 				const orgName =
-					org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
+					org && Array.isArray(org) && org.length > 0 ? org[0].displayName : '';
 
-				const { name, email, role } = user;
+				const { displayName, email, role } = user;
 
 				const domain = extractDomain(email);
 				const hostNameParts = hostname.split('.');
 
 				const identifyPayload = {
 					email,
-					name,
+					name: displayName,
 					company_name: orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -100,10 +104,36 @@ function App(): JSX.Element {
 				if (domain) {
 					logEvent('Domain Identified', groupTraits, 'group');
 				}
+				if (window && window.Appcues) {
+					window.Appcues.identify(email, {
+						name: displayName,
+
+						tenant_id: hostNameParts[0],
+						data_region: hostNameParts[1],
+						tenant_url: hostname,
+						company_domain: domain,
+
+						companyName: orgName,
+						email,
+						paidUser: !!trialInfo?.trialConvertedToSubscription,
+					});
+				}
+
+				Userpilot.identify(email, {
+					email,
+					name: displayName,
+					orgName,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
+					source: 'signoz-ui',
+					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
+				});
 
 				posthog?.identify(email, {
 					email,
-					name,
+					name: displayName,
 					orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -122,24 +152,12 @@ function App(): JSX.Element {
 					source: 'signoz-ui',
 					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
 				});
-
-				if (
-					window.cioanalytics &&
-					typeof window.cioanalytics.identify === 'function'
-				) {
-					window.cioanalytics.reset();
-					window.cioanalytics.identify(email, {
-						name: user.name,
-						email,
-						role: user.role,
-					});
-				}
 			}
 		},
 		[
 			hostname,
-			isFetchingActiveLicenseV3,
-			activeLicenseV3,
+			isFetchingActiveLicense,
+			activeLicense,
 			org,
 			trialInfo?.trialConvertedToSubscription,
 		],
@@ -148,18 +166,19 @@ function App(): JSX.Element {
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		if (
-			!isFetchingLicenses &&
-			licenses &&
+			!isFetchingActiveLicense &&
+			(activeLicense || activeLicenseFetchError) &&
 			!isFetchingUser &&
 			user &&
 			!!user.email
 		) {
+			// either the active API returns error with 404 or 501 and if it returns a terminated license means it's on basic plan
 			const isOnBasicPlan =
-				licenses.licenses?.some(
-					(license) =>
-						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-				) || licenses.licenses === null;
-
+				(activeLicenseFetchError &&
+					[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
+						activeLicenseFetchError?.getHttpStatusCode(),
+					)) ||
+				(activeLicense?.status && activeLicense.status === LicenseStatus.INVALID);
 			const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
 
 			if (isLoggedInState && user && user.id && user.email && !isIdentifiedUser) {
@@ -168,13 +187,18 @@ function App(): JSX.Element {
 
 			let updatedRoutes = defaultRoutes;
 			// if the user is a cloud user
-			if (isCloudUserVal || isEECloudUserVal) {
+			if (isCloudUser || isEnterpriseSelfHostedUser) {
 				// if the user is on basic plan then remove billing
 				if (isOnBasicPlan) {
 					updatedRoutes = updatedRoutes.filter(
 						(route) => route?.path !== ROUTES.BILLING,
 					);
 				}
+
+				if (isEnterpriseSelfHostedUser) {
+					updatedRoutes.push(LIST_LICENSES);
+				}
+
 				// always add support route for cloud users
 				updatedRoutes = [...updatedRoutes, SUPPORT_ROUTE];
 			} else {
@@ -189,25 +213,27 @@ function App(): JSX.Element {
 	}, [
 		isLoggedInState,
 		user,
-		licenses,
-		isCloudUserVal,
-		isFetchingLicenses,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isFetchingActiveLicense,
 		isFetchingUser,
-		isEECloudUserVal,
+		activeLicense,
+		activeLicenseFetchError,
 	]);
 
 	useEffect(() => {
 		if (pathname === ROUTES.ONBOARDING) {
-			window.Intercom('update', {
-				hide_default_launcher: true,
-			});
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			window.Pylon('hideChatBubble');
 		} else {
-			window.Intercom('update', {
-				hide_default_launcher: false,
-			});
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			window.Pylon('showChatBubble');
 		}
 	}, [pathname]);
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		// feature flag shouldn't be loading and featureFlags or fetchError any one of this should be true indicating that req is complete
 		// licenses should also be present. there is no check for licenses for loading and error as that is mandatory if not present then routing
@@ -215,8 +241,7 @@ function App(): JSX.Element {
 		if (
 			!isFetchingFeatureFlags &&
 			(featureFlags || featureFlagsFetchError) &&
-			licenses &&
-			activeLicenseV3 &&
+			activeLicense &&
 			trialInfo
 		) {
 			let isChatSupportEnabled = false;
@@ -233,12 +258,19 @@ function App(): JSX.Element {
 			const showAddCreditCardModal =
 				!isPremiumSupportEnabled && !trialInfo?.trialConvertedToSubscription;
 
-			if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
-				window.Intercom('boot', {
-					app_id: process.env.INTERCOM_APP_ID,
-					email: user?.email || '',
-					name: user?.name || '',
-				});
+			if (
+				isLoggedInState &&
+				isChatSupportEnabled &&
+				!showAddCreditCardModal &&
+				(isCloudUser || isEnterpriseSelfHostedUser)
+			) {
+				window.pylon = {
+					chat_settings: {
+						app_id: process.env.PYLON_APP_ID,
+						email: user.email,
+						name: user.displayName,
+					},
+				};
 			}
 		}
 	}, [
@@ -249,81 +281,127 @@ function App(): JSX.Element {
 		featureFlags,
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
-		licenses,
-		activeLicenseV3,
+		activeLicense,
 		trialInfo,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
 	]);
 
 	useEffect(() => {
-		if (!isFetchingUser && isCloudUserVal && user && user.email) {
+		if (!isFetchingUser && isCloudUser && user && user.email) {
 			enableAnalytics(user);
 		}
-	}, [user, isFetchingUser, isCloudUserVal, enableAnalytics]);
+	}, [user, isFetchingUser, isCloudUser, enableAnalytics]);
+
+	useEffect(() => {
+		if (isCloudUser || isEnterpriseSelfHostedUser) {
+			if (process.env.POSTHOG_KEY) {
+				posthog.init(process.env.POSTHOG_KEY, {
+					api_host: 'https://us.i.posthog.com',
+					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+				});
+			}
+
+			if (process.env.USERPILOT_KEY) {
+				Userpilot.initialize(process.env.USERPILOT_KEY);
+			}
+
+			if (!isSentryInitialized) {
+				Sentry.init({
+					dsn: process.env.SENTRY_DSN,
+					tunnel: process.env.TUNNEL_URL,
+					environment: 'production',
+					integrations: [
+						Sentry.browserTracingIntegration(),
+						Sentry.replayIntegration({
+							maskAllText: false,
+							blockAllMedia: false,
+						}),
+					],
+					// Performance Monitoring
+					tracesSampleRate: 1.0, //  Capture 100% of the transactions
+					// Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+					tracePropagationTargets: [],
+					// Session Replay
+					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
+					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+				});
+
+				setIsSentryInitialized(true);
+			}
+		} else {
+			posthog.reset();
+			Sentry.close();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isCloudUser, isEnterpriseSelfHostedUser]);
 
 	// if the user is in logged in state
 	if (isLoggedInState) {
 		// if the setup calls are loading then return a spinner
-		if (isFetchingLicenses || isFetchingUser || isFetchingFeatureFlags) {
+		if (isFetchingActiveLicense || isFetchingUser || isFetchingFeatureFlags) {
 			return <Spinner tip="Loading..." />;
 		}
 
 		// if the required calls fails then return a something went wrong error
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
-		if (
-			(userFetchError || licensesFetchError) &&
-			pathname !== ROUTES.SOMETHING_WENT_WRONG
-		) {
+		if (userFetchError && pathname !== ROUTES.SOMETHING_WENT_WRONG) {
 			history.replace(ROUTES.SOMETHING_WENT_WRONG);
 		}
 
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
 		if (
-			(!licenses || !user.email || !featureFlags) &&
+			(!activeLicense || !user.email || !featureFlags) &&
 			!userFetchError &&
-			!licensesFetchError
+			!activeLicenseFetchError
 		) {
 			return <Spinner tip="Loading..." />;
 		}
 	}
 
 	return (
-		<ConfigProvider theme={themeConfig}>
-			<Router history={history}>
-				<CompatRouter>
-					<NotificationProvider>
-						<PrivateRoute>
-							<ResourceProvider>
-								<QueryBuilderProvider>
-									<DashboardProvider>
-										<KeyboardHotkeysProvider>
-											<AlertRuleProvider>
-												<AppLayout>
-													<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-														<Switch>
-															{routes.map(({ path, component, exact }) => (
-																<Route
-																	key={`${path}`}
-																	exact={exact}
-																	path={path}
-																	component={component}
-																/>
-															))}
-
-															<Route path="*" component={NotFound} />
-														</Switch>
-													</Suspense>
-												</AppLayout>
-											</AlertRuleProvider>
-										</KeyboardHotkeysProvider>
-									</DashboardProvider>
-								</QueryBuilderProvider>
-							</ResourceProvider>
-						</PrivateRoute>
-					</NotificationProvider>
-				</CompatRouter>
-			</Router>
-		</ConfigProvider>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+			<ConfigProvider theme={themeConfig}>
+				<Router history={history}>
+					<CompatRouter>
+						<UserpilotRouteTracker />
+						<NotificationProvider>
+							<ErrorModalProvider>
+								<PrivateRoute>
+									<ResourceProvider>
+										<QueryBuilderProvider>
+											<DashboardProvider>
+												<KeyboardHotkeysProvider>
+													<AlertRuleProvider>
+														<AppLayout>
+															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+																<Switch>
+																	{routes.map(({ path, component, exact }) => (
+																		<Route
+																			key={`${path}`}
+																			exact={exact}
+																			path={path}
+																			component={component}
+																		/>
+																	))}
+																	<Route exact path="/" component={Home} />
+																	<Route path="*" component={NotFound} />
+																</Switch>
+															</Suspense>
+														</AppLayout>
+													</AlertRuleProvider>
+												</KeyboardHotkeysProvider>
+											</DashboardProvider>
+										</QueryBuilderProvider>
+									</ResourceProvider>
+								</PrivateRoute>
+							</ErrorModalProvider>
+						</NotificationProvider>
+					</CompatRouter>
+				</Router>
+			</ConfigProvider>
+		</Sentry.ErrorBoundary>
 	);
 }
 

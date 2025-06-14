@@ -11,6 +11,7 @@ import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { isEmpty } from 'lodash-es';
 import { Atom, Play, Terminal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,7 +36,6 @@ function QuerySection({
 	const { t } = useTranslation('alerts');
 	const [currentTab, setCurrentTab] = useState(queryCategory);
 
-	// TODO[vikrantgupta25] : check if this is still required ??
 	const handleQueryCategoryChange = (queryType: string): void => {
 		setQueryCategory(queryType as EQueryType);
 		setCurrentTab(queryType as EQueryType);
@@ -156,7 +156,7 @@ function QuerySection({
 											runQuery();
 											logEvent('Alert: Stage and run query', {
 												dataSource: ALERTS_DATA_SOURCE_MAP[alertType],
-												isNewRule: !ruleId || ruleId === 0,
+												isNewRule: !ruleId || isEmpty(ruleId),
 												ruleId,
 												queryType: queryCategory,
 											});
@@ -230,7 +230,7 @@ interface QuerySectionProps {
 	runQuery: VoidFunction;
 	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
-	ruleId: number;
+	ruleId: string;
 }
 
 export default QuerySection;

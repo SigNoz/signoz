@@ -3,11 +3,12 @@ import './OnboardingQuestionaire.styles.scss';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
 import updateProfileAPI from 'api/onboarding/updateProfile';
-import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
-import updateOrgPreferenceAPI from 'api/preferences/updateOrgPreference';
+import listOrgPreferences from 'api/v1/org/preferences/list';
+import updateOrgPreferenceAPI from 'api/v1/org/preferences/name/update';
 import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingInvitesContainer';
 import { useNotifications } from 'hooks/useNotifications';
@@ -94,7 +95,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 			setOrgDetails({
 				...orgDetails,
-				organisationName: org[0].name,
+				organisationName: org[0].displayName,
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -108,13 +109,13 @@ function OnboardingQuestionaire(): JSX.Element {
 	}, []);
 
 	const { refetch: refetchOrgPreferences } = useQuery({
-		queryFn: () => getAllOrgPreferences(),
+		queryFn: () => listOrgPreferences(),
 		queryKey: ['getOrgPreferences'],
 		enabled: false,
 		refetchOnWindowFocus: false,
 		onSuccess: (response) => {
-			if (response.payload && response.payload.data) {
-				updateOrgPreferences(response.payload.data);
+			if (response.data) {
+				updateOrgPreferences(response.data);
 			}
 
 			setUpdatingOrgOnboardingStatus(false);
@@ -196,7 +197,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 		setUpdatingOrgOnboardingStatus(true);
 		updateOrgPreference({
-			preferenceID: 'ORG_ONBOARDING',
+			name: ORG_PREFERENCES.ORG_ONBOARDING,
 			value: true,
 		});
 	};

@@ -3,13 +3,33 @@ import { LicensePlatform } from 'types/api/licensesV3/getActive';
 
 export const useGetTenantLicense = (): {
 	isCloudUser: boolean;
-	isEECloudUser: boolean;
+	isEnterpriseSelfHostedUser: boolean;
+	isCommunityUser: boolean;
+	isCommunityEnterpriseUser: boolean;
 } => {
-	const { activeLicenseV3 } = useAppContext();
+	const { activeLicense, activeLicenseFetchError } = useAppContext();
 
-	return {
-		isCloudUser: activeLicenseV3?.platform === LicensePlatform.CLOUD || false,
-		isEECloudUser:
-			activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED || false,
+	const responsePayload = {
+		isCloudUser: activeLicense?.platform === LicensePlatform.CLOUD || false,
+		isEnterpriseSelfHostedUser:
+			activeLicense?.platform === LicensePlatform.SELF_HOSTED || false,
+		isCommunityUser: false,
+		isCommunityEnterpriseUser: false,
 	};
+
+	if (
+		activeLicenseFetchError &&
+		activeLicenseFetchError.getHttpStatusCode() === 404
+	) {
+		responsePayload.isCommunityEnterpriseUser = true;
+	}
+
+	if (
+		activeLicenseFetchError &&
+		activeLicenseFetchError.getHttpStatusCode() === 501
+	) {
+		responsePayload.isCommunityUser = true;
+	}
+
+	return responsePayload;
 };

@@ -82,7 +82,7 @@ function OldLogsExplorer(): JSX.Element {
 	};
 
 	return (
-		<>
+		<div className="old-logs-explorer">
 			<SpaceContainer
 				split={<Divider type="vertical" />}
 				align="center"
@@ -144,7 +144,7 @@ function OldLogsExplorer(): JSX.Element {
 			</Row>
 
 			<LogDetailedView />
-		</>
+		</div>
 	);
 }
 

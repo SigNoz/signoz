@@ -38,12 +38,27 @@
 	}
 
 	&.link {
-		color: var(--bg-vanilla-400);
+		color: var(--Vanilla-400, #c0c1c3);
+
 		border: none;
 		box-shadow: none;
 		background: transparent;
-		font-size: 11px;
+		font-size: 12px;
 		font-weight: 400;
+		letter-spacing: -0.07px;
+		line-height: 20px;
+
+		&:hover {
+			color: var(--bg-vanilla-100) !important;
+			background-color: transparent !important;
+		}
+	}
+
+	&.success {
+		color: var(--bg-forest-400) !important;
+		border-radius: 2px;
+		border: 1px solid rgba(37, 225, 146, 0.1);
+		background: rgba(37, 225, 146, 0.1) !important;
 	}
 }
 

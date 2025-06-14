@@ -6,6 +6,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import isEqual from 'lodash-es/isEqual';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	DeleteViewHandlerProps,
@@ -27,11 +28,11 @@ export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 	viewKey,
 	data,
 ) => {
-	const selectedView = data?.find((view) => view.uuid === viewKey);
+	const selectedView = data?.find((view) => view.id === viewKey);
 	if (selectedView) {
-		const { compositeQuery, name, uuid, extraData } = selectedView;
+		const { compositeQuery, name, id, extraData } = selectedView;
 		const query = mapQueryDataFromApi(compositeQuery);
-		return { query, name, uuid, panelType: compositeQuery.panelType, extraData };
+		return { query, name, id, panelType: compositeQuery.panelType, extraData };
 	}
 	return undefined;
 };
@@ -106,7 +107,11 @@ export const isQueryUpdatedInView = ({
 		!isEqual(
 			options?.selectColumns,
 			extraData && JSON.parse(extraData)?.selectColumns,
-		)
+		) ||
+		(stagedQuery?.builder?.queryData?.[0]?.dataSource === DataSource.LOGS &&
+			(!isEqual(options?.format, extraData && JSON.parse(extraData)?.format) ||
+				!isEqual(options?.maxLines, extraData && JSON.parse(extraData)?.maxLines) ||
+				!isEqual(options?.fontSize, extraData && JSON.parse(extraData)?.fontSize)))
 	);
 };
 

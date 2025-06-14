@@ -1,0 +1,865 @@
+{
+  "id": "ecs",
+  "title": "ECS",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": true
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "aws_ECS_CPUUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_CPUUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_CPUUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_CPUUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuReserved_count",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuReserved_max",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuReserved_min",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuReserved_sum",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuUtilized_count",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuUtilized_max",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuUtilized_min",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerCpuUtilized_sum",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerInstanceCount_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerInstanceCount_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerInstanceCount_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerInstanceCount_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryReserved_count",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryReserved_max",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryReserved_min",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryReserved_sum",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryUtilized_count",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryUtilized_max",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryUtilized_min",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerMemoryUtilized_sum",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerNetworkRxBytes_count",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerNetworkRxBytes_max",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerNetworkRxBytes_min",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerNetworkRxBytes_sum",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerNetworkTxBytes_count",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerNetworkTxBytes_max",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerNetworkTxBytes_min",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerNetworkTxBytes_sum",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerStorageReadBytes_count",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerStorageReadBytes_max",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerStorageReadBytes_min",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerStorageReadBytes_sum",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerStorageWriteBytes_count",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerStorageWriteBytes_max",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerStorageWriteBytes_min",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ContainerStorageWriteBytes_sum",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_CpuReserved_count",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_CpuReserved_max",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_CpuReserved_min",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_CpuReserved_sum",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_CpuUtilized_count",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_CpuUtilized_max",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_CpuUtilized_min",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_CpuUtilized_sum",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_DeploymentCount_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_DeploymentCount_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_DeploymentCount_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_DeploymentCount_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_DesiredTaskCount_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_DesiredTaskCount_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_DesiredTaskCount_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_DesiredTaskCount_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_EphemeralStorageReserved_count",
+        "unit": "Gigabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_EphemeralStorageReserved_max",
+        "unit": "Gigabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_EphemeralStorageReserved_min",
+        "unit": "Gigabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_EphemeralStorageReserved_sum",
+        "unit": "Gigabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_EphemeralStorageUtilized_count",
+        "unit": "Gigabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_EphemeralStorageUtilized_max",
+        "unit": "Gigabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_EphemeralStorageUtilized_min",
+        "unit": "Gigabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_EphemeralStorageUtilized_sum",
+        "unit": "Gigabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_MemoryReserved_count",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_MemoryReserved_max",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_MemoryReserved_min",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_MemoryReserved_sum",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_MemoryUtilized_count",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_MemoryUtilized_max",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_MemoryUtilized_min",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_MemoryUtilized_sum",
+        "unit": "Megabytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_NetworkRxBytes_count",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_NetworkRxBytes_max",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_NetworkRxBytes_min",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_NetworkRxBytes_sum",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_NetworkTxBytes_count",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_NetworkTxBytes_max",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_NetworkTxBytes_min",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_NetworkTxBytes_sum",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_PendingTaskCount_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_PendingTaskCount_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_PendingTaskCount_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_PendingTaskCount_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_RunningTaskCount_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_RunningTaskCount_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_RunningTaskCount_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_RunningTaskCount_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ServiceCount_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ServiceCount_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ServiceCount_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_ServiceCount_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_StorageReadBytes_count",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_StorageReadBytes_max",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_StorageReadBytes_min",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_StorageReadBytes_sum",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_StorageWriteBytes_count",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_StorageWriteBytes_max",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_StorageWriteBytes_min",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_StorageWriteBytes_sum",
+        "unit": "Bytes\/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskCount_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskCount_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskCount_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskCount_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskCpuUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskCpuUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskCpuUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskCpuUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskEphemeralStorageUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskEphemeralStorageUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskEphemeralStorageUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskEphemeralStorageUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskMemoryUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskMemoryUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskMemoryUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskMemoryUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskSetCount_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskSetCount_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskSetCount_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_ContainerInsights_TaskSetCount_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_ECS_MemoryUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Account ID",
+        "path": "resources.cloud.account.id",
+        "type": "string"
+      },
+      {
+        "name": "Log Group Name",
+        "path": "resources.aws.cloudwatch.log_group_name",
+        "type": "string"
+      },
+      {
+        "name": "Log Stream Name",
+        "path": "resources.aws.cloudwatch.log_stream_name",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/ECS"
+        },
+        {
+          "Namespace": "ECS/ContainerInsights"
+        }
+      ]
+    },
+    "aws_logs": {
+      "cloudwatch_logs_subscriptions": [
+        {
+          "log_group_name_prefix": "/ecs",
+          "filter_pattern": ""
+        },
+        {
+          "log_group_name_prefix": "/aws/ecs/containerinsights",
+          "filter_pattern": ""
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "AWS ECS Overview",
+        "description": "Overview of ECS",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      },
+      {
+        "id": "containerinsights",
+        "title": "ECS ContainerInsights",
+        "description": "Overview of ECS ContainerInsights",
+        "image": "file://assets/dashboards/containerinsights.png",
+        "definition": "file://assets/dashboards/containerinsights.json"
+      }
+    ]
+  }
+}

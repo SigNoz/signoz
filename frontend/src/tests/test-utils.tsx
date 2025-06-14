@@ -1,10 +1,12 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { FeatureKeys } from 'constants/features';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
+import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import React, { ReactElement } from 'react';
@@ -105,7 +107,8 @@ export function getAppContextMock(
 	appContextOverrides?: Partial<IAppContext>,
 ): IAppContext {
 	return {
-		activeLicenseV3: {
+		activeLicense: {
+			key: 'test-key',
 			event_queue: {
 				created_at: '0',
 				event: LicenseEvent.NO_EVENT,
@@ -138,126 +141,31 @@ export function getAppContextMock(
 			trialConvertedToSubscription: false,
 			gracePeriodEnd: -1,
 		},
-		isFetchingActiveLicenseV3: false,
-		activeLicenseV3FetchError: null,
+		isFetchingActiveLicense: false,
+		activeLicenseFetchError: null,
 		user: {
 			accessJwt: 'some-token',
 			refreshJwt: 'some-refresh-token',
 			id: 'some-user-id',
 			email: 'does-not-matter@signoz.io',
-			name: 'John Doe',
-			profilePictureURL: '',
+			displayName: 'John Doe',
 			createdAt: 1732544623,
 			organization: 'Nightswatch',
 			orgId: 'does-not-matter-id',
 			role: role as ROLES,
-			groupId: 'does-not-matter-groupId',
 		},
 		org: [
 			{
 				createdAt: 0,
-				hasOptedUpdates: false,
 				id: 'does-not-matter-id',
-				isAnonymous: false,
-				name: 'Pentagon',
+				displayName: 'Pentagon',
 			},
 		],
 		isFetchingUser: false,
 		userFetchError: null,
-		licenses: {
-			licenses: [
-				{
-					key: 'does-not-matter',
-					isCurrent: true,
-					planKey: 'ENTERPRISE_PLAN',
-					ValidFrom: new Date(),
-					ValidUntil: new Date(),
-					status: 'VALID',
-				},
-			],
-		},
-		isFetchingLicenses: false,
-		licensesFetchError: null,
 		featureFlags: [
 			{
 				name: FeatureKeys.SSO,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.OSS,
-				active: false,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.DISABLE_UPSELL,
-				active: false,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.SMART_TRACE_DETAIL,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.CUSTOM_METRICS_FUNCTION,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.QUERY_BUILDER_PANELS,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.QUERY_BUILDER_ALERTS,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.ALERT_CHANNEL_SLACK,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.ALERT_CHANNEL_WEBHOOK,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.ALERT_CHANNEL_PAGERDUTY,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.ALERT_CHANNEL_OPSGENIE,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.ALERT_CHANNEL_MSTEAMS,
 				active: true,
 				usage: 0,
 				usage_limit: -1,
@@ -292,20 +200,6 @@ export function getAppContextMock(
 				route: '',
 			},
 			{
-				name: FeatureKeys.DurationSort,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.TimestampSort,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
 				name: FeatureKeys.ONBOARDING,
 				active: true,
 				usage: 0,
@@ -324,28 +218,34 @@ export function getAppContextMock(
 		featureFlagsFetchError: null,
 		orgPreferences: [
 			{
-				key: 'ORG_ONBOARDING',
-				name: 'Organisation Onboarding',
+				name: ORG_PREFERENCES.ORG_ONBOARDING,
 				description: 'Organisation Onboarding',
 				valueType: 'boolean',
 				defaultValue: false,
-				allowedValues: [true, false],
-				isDiscreteValues: true,
+				allowedValues: ['true', 'false'],
 				allowedScopes: ['org'],
 				value: false,
 			},
 		],
+		userPreferences: [],
+		updateUserPreferenceInContext: jest.fn(),
 		isFetchingOrgPreferences: false,
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
 		updateUser: jest.fn(),
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
-		licensesRefetch: jest.fn(),
+		activeLicenseRefetch: jest.fn(),
+		versionData: {
+			version: '1.0.0',
+			ee: 'Y',
+			setupCompleted: true,
+		},
 		...appContextOverrides,
 	};
 }
-function AllTheProviders({
+
+export function AllTheProviders({
 	children,
 	role, // Accept the role as a prop
 	appContextOverrides,
@@ -356,18 +256,19 @@ function AllTheProviders({
 }): ReactElement {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<ResourceProvider>
-				<Provider store={mockStored(role)}>
-					<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
-						<BrowserRouter>
-							{/* Use the mock store with the provided role */}
-							<TimezoneProvider>
-								<QueryBuilderProvider>{children}</QueryBuilderProvider>
-							</TimezoneProvider>
-						</BrowserRouter>
-					</AppContext.Provider>
-				</Provider>
-			</ResourceProvider>
+			<Provider store={mockStored(role)}>
+				<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
+					<ResourceProvider>
+						<ErrorModalProvider>
+							<BrowserRouter>
+								<TimezoneProvider>
+									<QueryBuilderProvider>{children}</QueryBuilderProvider>
+								</TimezoneProvider>
+							</BrowserRouter>
+						</ErrorModalProvider>
+					</ResourceProvider>
+				</AppContext.Provider>
+			</Provider>
 		</QueryClientProvider>
 	);
 }

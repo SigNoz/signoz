@@ -14,14 +14,35 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerbatcher"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/tidwall/gjson"
 )
 
 type postableAlert struct {
 	*alertmanagertypes.PostableAlert
 	Receivers []string `json:"receivers"`
+}
+
+func (pa *postableAlert) MarshalJSON() ([]byte, error) {
+	// Marshal the embedded PostableAlert to get its JSON representation.
+	alertJSON, err := json.Marshal(pa.PostableAlert)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal that JSON into a map so we can add extra fields.
+	var m map[string]interface{}
+	if err := json.Unmarshal(alertJSON, &m); err != nil {
+		return nil, err
+	}
+
+	// Add the Receivers field.
+	m["receivers"] = pa.Receivers
+
+	return json.Marshal(m)
 }
 
 const (
@@ -37,16 +58,17 @@ type provider struct {
 	configStore alertmanagertypes.ConfigStore
 	batcher     *alertmanagerbatcher.Batcher
 	url         *url.URL
+	orgGetter   organization.Getter
 	orgID       string
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
+func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("legacy"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
-		return New(ctx, settings, config, sqlstore)
+		return New(ctx, settings, config, sqlstore, orgGetter)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore) (*provider, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/legacyalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 
@@ -59,6 +81,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		configStore: configStore,
 		batcher:     alertmanagerbatcher.New(settings.Logger(), alertmanagerbatcher.NewConfig()),
 		url:         config.Legacy.ApiURL,
+		orgGetter:   orgGetter,
 	}, nil
 }
 
@@ -72,7 +95,7 @@ func (provider *provider) Start(ctx context.Context) error {
 		// For the first time, we need to get the orgID from the config store.
 		// Since this is the legacy alertmanager, we get the first org from the store.
 		if provider.orgID == "" {
-			orgIDs, err := provider.configStore.ListOrgs(ctx)
+			orgIDs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
 			if err != nil {
 				provider.settings.Logger().ErrorContext(ctx, "failed to send alerts to alertmanager", "error", err)
 				continue
@@ -83,7 +106,7 @@ func (provider *provider) Start(ctx context.Context) error {
 				continue
 			}
 
-			provider.orgID = orgIDs[0]
+			provider.orgID = orgIDs[0].ID.String()
 		}
 
 		if err := provider.putAlerts(ctx, provider.orgID, alerts); err != nil {
@@ -148,7 +171,7 @@ func (provider *provider) putAlerts(ctx context.Context, orgID string, alerts al
 
 		receivers := cfg.ReceiverNamesFromRuleID(ruleID)
 		if len(receivers) == 0 {
-			provider.settings.Logger().WarnContext(ctx, "cannot find receivers for alert, skipping sending alert to alertmanager", "ruleID", ruleID, "alert", alert)
+			provider.settings.Logger().WarnContext(ctx, "cannot find receivers for alert, skipping sending alert to alertmanager", "rule_id", ruleID, "alert", alert)
 			continue
 		}
 
@@ -269,11 +292,11 @@ func (provider *provider) ListAllChannels(ctx context.Context) ([]*alertmanagert
 	return channels, nil
 }
 
-func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID int) (*alertmanagertypes.Channel, error) {
+func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID valuer.UUID) (*alertmanagertypes.Channel, error) {
 	return provider.configStore.GetChannelByID(ctx, orgID, channelID)
 }
 
-func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id int) error {
+func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id valuer.UUID) error {
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -378,7 +401,7 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	}))
 }
 
-func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID int) error {
+func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID valuer.UUID) error {
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
 	if err != nil {
 		return err
@@ -447,4 +470,13 @@ func (provider *provider) SetDefaultConfig(ctx context.Context, orgID string) er
 	}
 
 	return provider.configStore.Set(ctx, config)
+}
+
+func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	channels, err := provider.configStore.ListChannels(ctx, orgID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return alertmanagertypes.NewStatsFromChannels(channels), nil
 }

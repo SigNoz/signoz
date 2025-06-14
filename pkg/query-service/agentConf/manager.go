@@ -106,9 +106,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
 		}
 
-		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(
-			recommendation, latestConfig,
-		)
+		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(recommendation, latestConfig)
 		if apiErr != nil {
 			return nil, "", errors.Wrap(apiErr.ToError(), fmt.Sprintf(
 				"failed to generate agent config recommendation for %s", featureType,

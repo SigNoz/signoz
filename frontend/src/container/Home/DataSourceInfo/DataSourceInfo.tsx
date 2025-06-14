@@ -19,14 +19,17 @@ function DataSourceInfo({
 	dataSentToSigNoz: boolean;
 	isLoading: boolean;
 }): JSX.Element {
-	const { activeLicenseV3 } = useAppContext();
+	const { activeLicense } = useAppContext();
 
 	const notSendingData = !dataSentToSigNoz;
+
+	const isEnabled =
+		activeLicense && activeLicense.platform === LicensePlatform.CLOUD;
 
 	const {
 		data: deploymentsData,
 		isError: isErrorDeploymentsData,
-	} = useGetDeploymentsData();
+	} = useGetDeploymentsData(isEnabled || false);
 
 	const [region, setRegion] = useState<string>('');
 	const [url, setUrl] = useState<string>('');
@@ -85,8 +88,8 @@ function DataSourceInfo({
 									logEvent('Homepage: Connect dataSource clicked', {});
 
 									if (
-										activeLicenseV3 &&
-										activeLicenseV3.platform === LicensePlatform.CLOUD
+										activeLicense &&
+										activeLicense.platform === LicensePlatform.CLOUD
 									) {
 										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 									} else {
@@ -102,8 +105,8 @@ function DataSourceInfo({
 										logEvent('Homepage: Connect dataSource clicked', {});
 
 										if (
-											activeLicenseV3 &&
-											activeLicenseV3.platform === LicensePlatform.CLOUD
+											activeLicense &&
+											activeLicense.platform === LicensePlatform.CLOUD
 										) {
 											history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 										} else {

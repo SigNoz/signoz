@@ -47,9 +47,10 @@ export const TracesFunnels = Loadable(
 		import(/* webpackChunkName: "Traces Funnels" */ 'pages/TracesModulePage'),
 );
 export const TracesFunnelDetails = Loadable(
+	// eslint-disable-next-line sonarjs/no-identical-functions
 	() =>
 		import(
-			/* webpackChunkName: "Traces Funnel Details" */ 'pages/TracesFunnelDetails'
+			/* webpackChunkName: "Traces Funnel Details" */ 'pages/TracesModulePage'
 		),
 );
 
@@ -127,12 +128,11 @@ export const AlertOverview = Loadable(
 );
 
 export const CreateAlertChannelAlerts = Loadable(
-	() =>
-		import(/* webpackChunkName: "Create Channels" */ 'pages/AlertChannelCreate'),
+	() => import(/* webpackChunkName: "Create Channels" */ 'pages/Settings'),
 );
 
 export const EditAlertChannelsAlerts = Loadable(
-	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/ChannelsEdit'),
+	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/Settings'),
 );
 
 export const AllAlertChannels = Loadable(
@@ -164,7 +164,7 @@ export const APIKeys = Loadable(
 );
 
 export const MySettings = Loadable(
-	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
+	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
 );
 
 export const CustomDomainSettings = Loadable(
@@ -221,7 +221,7 @@ export const LogsIndexToFields = Loadable(
 );
 
 export const BillingPage = Loadable(
-	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Billing'),
+	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Settings'),
 );
 
 export const SupportPage = Loadable(
@@ -248,7 +248,7 @@ export const WorkspaceAccessRestricted = Loadable(
 );
 
 export const ShortcutsPage = Loadable(
-	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
+	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Settings'),
 );
 
 export const InstalledIntegrations = Loadable(
@@ -294,4 +294,8 @@ export const CeleryOverview = Loadable(
 export const MetricsExplorer = Loadable(
 	() =>
 		import(/* webpackChunkName: "MetricsExplorer" */ 'pages/MetricsExplorer'),
+);
+
+export const ApiMonitoring = Loadable(
+	() => import(/* webpackChunkName: "ApiMonitoring" */ 'pages/ApiMonitoring'),
 );

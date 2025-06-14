@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import TrimmedText from '../TrimmedText/TrimmedText';
 
 type KeyValueLabelProps = {
-	badgeKey: string;
+	badgeKey: string | React.ReactNode;
 	badgeValue: string;
 	maxCharacters?: number;
 };
@@ -25,7 +25,11 @@ export default function KeyValueLabel({
 	return (
 		<div className="key-value-label">
 			<div className="key-value-label__key">
-				<TrimmedText text={badgeKey} maxCharacters={maxCharacters} />
+				{typeof badgeKey === 'string' ? (
+					<TrimmedText text={badgeKey} maxCharacters={maxCharacters} />
+				) : (
+					badgeKey
+				)}
 			</div>
 			{isUrl ? (
 				<a

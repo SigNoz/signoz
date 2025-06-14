@@ -1,23 +1,71 @@
 package types
 
 import (
+	"context"
+	"hash/fnv"
+	"time"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
-// TODO: check constraints are not working
+var (
+	ErrOrganizationAlreadyExists = errors.MustNewCode("organization_already_exists")
+	ErrOrganizationNotFound      = errors.MustNewCode("organization_not_found")
+)
+
 type Organization struct {
 	bun.BaseModel `bun:"table:organizations"`
-
 	TimeAuditable
-	ID              string `bun:"id,pk,type:text" json:"id"`
-	Name            string `bun:"name,type:text,notnull" json:"name"`
-	IsAnonymous     bool   `bun:"is_anonymous,notnull,default:0,CHECK(is_anonymous IN (0,1))" json:"isAnonymous"`
-	HasOptedUpdates bool   `bun:"has_opted_updates,notnull,default:1,CHECK(has_opted_updates IN (0,1))" json:"hasOptedUpdates"`
+	Identifiable
+	Name        string `bun:"name,type:text,nullzero" json:"name"`
+	Alias       string `bun:"alias,type:text,nullzero" json:"alias"`
+	Key         uint32 `bun:"key,type:bigint,notnull" json:"key"`
+	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
 }
 
-type ApdexSettings struct {
-	OrgID              string  `bun:"org_id,pk,type:text" json:"orgId"`
-	ServiceName        string  `bun:"service_name,pk,type:text" json:"serviceName"`
-	Threshold          float64 `bun:"threshold,type:float,notnull" json:"threshold"`
-	ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull" json:"excludeStatusCodes"`
+func NewOrganization(displayName string) *Organization {
+	id := valuer.GenerateUUID()
+	return &Organization{
+		Identifiable: Identifiable{
+			ID: id,
+		},
+		TimeAuditable: TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		// Name: "default/main", TODO: take the call and uncomment this later
+		DisplayName: displayName,
+		Key:         NewOrganizationKey(id),
+	}
+}
+
+func NewOrganizationKey(orgID valuer.UUID) uint32 {
+	hasher := fnv.New32a()
+
+	// Hasher never returns err.
+	_, _ = hasher.Write([]byte(orgID.String()))
+	return hasher.Sum32()
+}
+
+type TTLSetting struct {
+	bun.BaseModel `bun:"table:ttl_setting"`
+	Identifiable
+	TimeAuditable
+	TransactionID  string `bun:"transaction_id,type:text,notnull"`
+	TableName      string `bun:"table_name,type:text,notnull"`
+	TTL            int    `bun:"ttl,notnull,default:0"`
+	ColdStorageTTL int    `bun:"cold_storage_ttl,notnull,default:0"`
+	Status         string `bun:"status,type:text,notnull"`
+	OrgID          string `json:"-" bun:"org_id,notnull"`
+}
+
+type OrganizationStore interface {
+	Create(context.Context, *Organization) error
+	Get(context.Context, valuer.UUID) (*Organization, error)
+	GetAll(context.Context) ([]*Organization, error)
+	ListByKeyRange(context.Context, uint32, uint32) ([]*Organization, error)
+	Update(context.Context, *Organization) error
+	Delete(context.Context, valuer.UUID) error
 }

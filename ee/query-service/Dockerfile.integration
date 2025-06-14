@@ -1,0 +1,36 @@
+FROM golang:1.23-bullseye
+
+ARG OS="linux"
+ARG TARGETARCH
+ARG ZEUSURL
+
+# This path is important for stacktraces
+WORKDIR $GOPATH/src/github.com/signoz/signoz
+WORKDIR /root
+
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
+		g++ \
+		gcc \
+		libc6-dev \
+		make \
+		pkg-config \
+	; \
+	rm -rf /var/lib/apt/lists/*
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY ./ee/ ./ee/
+COPY ./pkg/ ./pkg/
+COPY ./templates/email /root/templates
+
+COPY Makefile Makefile
+RUN TARGET_DIR=/root ARCHS=${TARGETARCH} ZEUS_URL=${ZEUSURL} LICENSE_URL=${ZEUSURL}/api/v1 make go-build-enterprise-race
+RUN mv /root/linux-${TARGETARCH}/signoz /root/signoz
+
+RUN chmod 755 /root /root/signoz
+
+ENTRYPOINT ["/root/signoz"]

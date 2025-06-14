@@ -11,19 +11,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
-type Analytics struct {
-	logger *zap.Logger
-}
+type Analytics struct{}
 
-func NewAnalytics(logger *zap.Logger) *Analytics {
-	if logger == nil {
-		panic("cannot build analytics middleware, logger is empty")
-	}
-
-	return &Analytics{logger: logger}
+func NewAnalytics() *Analytics {
+	return &Analytics{}
 }
 
 func (a *Analytics) Wrap(next http.Handler) http.Handler {
@@ -31,27 +24,12 @@ func (a *Analytics) Wrap(next http.Handler) http.Handler {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		queryRangeData, metadataExists := a.extractQueryRangeData(path, r)
+		_, _ = a.extractQueryRangeData(path, r)
 		a.getActiveLogs(path, r)
 
 		badResponseBuffer := new(bytes.Buffer)
 		writer := newBadResponseLoggingWriter(w, badResponseBuffer)
 		next.ServeHTTP(writer, r)
-
-		data := map[string]interface{}{"path": path, "statusCode": writer.StatusCode()}
-		if metadataExists {
-			for key, value := range queryRangeData {
-				data[key] = value
-			}
-		}
-
-		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			claims, ok := authtypes.ClaimsFromContext(r.Context())
-			if ok {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, claims.Email, true, false)
-			}
-		}
-
 	})
 
 }
@@ -94,22 +72,10 @@ func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[str
 
 	referrer := r.Header.Get("Referer")
 
-	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
-	if err != nil {
-		a.logger.Error("error while matching the referrer", zap.Error(err))
-	}
-	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
-	if err != nil {
-		a.logger.Error("error while matching the alert: ", zap.Error(err))
-	}
-	logsExplorerMatched, err := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
-	if err != nil {
-		a.logger.Error("error while matching the logs explorer: ", zap.Error(err))
-	}
-	traceExplorerMatched, err := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
-	if err != nil {
-		a.logger.Error("error while matching the trace explorer: ", zap.Error(err))
-	}
+	dashboardMatched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	alertMatched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+	logsExplorerMatched, _ := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
+	traceExplorerMatched, _ := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
 
 	queryInfoResult := telemetry.GetInstance().CheckQueryInfo(postData)
 
@@ -134,8 +100,8 @@ func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[str
 		data["queryType"] = queryInfoResult.QueryType
 		data["panelType"] = queryInfoResult.PanelType
 
-		claims, ok := authtypes.ClaimsFromContext(r.Context())
-		if ok {
+		claims, err := authtypes.ClaimsFromContext(r.Context())
+		if err == nil {
 			// switch case to set data["screen"] based on the referrer
 			switch {
 			case dashboardMatched:

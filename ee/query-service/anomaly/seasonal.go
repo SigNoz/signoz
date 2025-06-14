@@ -5,11 +5,12 @@ import (
 	"math"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
@@ -38,12 +39,6 @@ func WithKeyGenerator[T BaseProvider](keyGenerator cache.KeyGenerator) GenericPr
 	}
 }
 
-func WithFeatureLookup[T BaseProvider](ff interfaces.FeatureLookup) GenericProviderOption[T] {
-	return func(p T) {
-		p.GetBaseSeasonalProvider().ff = ff
-	}
-}
-
 func WithReader[T BaseProvider](reader interfaces.Reader) GenericProviderOption[T] {
 	return func(p T) {
 		p.GetBaseSeasonalProvider().reader = reader
@@ -56,7 +51,6 @@ type BaseSeasonalProvider struct {
 	fluxInterval time.Duration
 	cache        cache.Cache
 	keyGenerator cache.KeyGenerator
-	ff           interfaces.FeatureLookup
 }
 
 func (p *BaseSeasonalProvider) getQueryParams(req *GetAnomaliesRequest) *anomalyQueryParams {
@@ -66,9 +60,9 @@ func (p *BaseSeasonalProvider) getQueryParams(req *GetAnomaliesRequest) *anomaly
 	return prepareAnomalyQueryParams(req.Params, req.Seasonality)
 }
 
-func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQueryParams) (*anomalyQueryResults, error) {
+func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID, params *anomalyQueryParams) (*anomalyQueryResults, error) {
 	zap.L().Info("fetching results for current period", zap.Any("currentPeriodQuery", params.CurrentPeriodQuery))
-	currentPeriodResults, _, err := p.querierV2.QueryRange(ctx, params.CurrentPeriodQuery)
+	currentPeriodResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.CurrentPeriodQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +73,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 	}
 
 	zap.L().Info("fetching results for past period", zap.Any("pastPeriodQuery", params.PastPeriodQuery))
-	pastPeriodResults, _, err := p.querierV2.QueryRange(ctx, params.PastPeriodQuery)
+	pastPeriodResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.PastPeriodQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +84,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 	}
 
 	zap.L().Info("fetching results for current season", zap.Any("currentSeasonQuery", params.CurrentSeasonQuery))
-	currentSeasonResults, _, err := p.querierV2.QueryRange(ctx, params.CurrentSeasonQuery)
+	currentSeasonResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.CurrentSeasonQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +95,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 	}
 
 	zap.L().Info("fetching results for past season", zap.Any("pastSeasonQuery", params.PastSeasonQuery))
-	pastSeasonResults, _, err := p.querierV2.QueryRange(ctx, params.PastSeasonQuery)
+	pastSeasonResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.PastSeasonQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +106,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 	}
 
 	zap.L().Info("fetching results for past 2 season", zap.Any("past2SeasonQuery", params.Past2SeasonQuery))
-	past2SeasonResults, _, err := p.querierV2.QueryRange(ctx, params.Past2SeasonQuery)
+	past2SeasonResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.Past2SeasonQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +117,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, params *anomalyQu
 	}
 
 	zap.L().Info("fetching results for past 3 season", zap.Any("past3SeasonQuery", params.Past3SeasonQuery))
-	past3SeasonResults, _, err := p.querierV2.QueryRange(ctx, params.Past3SeasonQuery)
+	past3SeasonResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.Past3SeasonQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -313,6 +307,9 @@ func (p *BaseSeasonalProvider) getScore(
 	series, prevSeries, weekSeries, weekPrevSeries, past2SeasonSeries, past3SeasonSeries *v3.Series, value float64, idx int,
 ) float64 {
 	expectedValue := p.getExpectedValue(series, prevSeries, weekSeries, weekPrevSeries, past2SeasonSeries, past3SeasonSeries, idx)
+	if expectedValue < 0 {
+		expectedValue = p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)
+	}
 	return (value - expectedValue) / p.getStdDev(weekSeries)
 }
 
@@ -339,9 +336,9 @@ func (p *BaseSeasonalProvider) getAnomalyScores(
 	return anomalyScoreSeries
 }
 
-func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, req *GetAnomaliesRequest) (*GetAnomaliesResponse, error) {
+func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UUID, req *GetAnomaliesRequest) (*GetAnomaliesResponse, error) {
 	anomalyParams := p.getQueryParams(req)
-	anomalyQueryResults, err := p.getResults(ctx, anomalyParams)
+	anomalyQueryResults, err := p.getResults(ctx, orgID, anomalyParams)
 	if err != nil {
 		return nil, err
 	}

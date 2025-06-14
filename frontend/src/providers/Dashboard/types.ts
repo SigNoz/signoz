@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import { Layout } from 'react-grid-layout';
 import { UseQueryResult } from 'react-query';
+import { SuccessResponseV2 } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
 export interface DashboardSortOrder {
@@ -10,12 +11,16 @@ export interface DashboardSortOrder {
 	search: string;
 }
 
+export type WidgetColumnWidths = {
+	[widgetId: string]: Record<string, number>;
+};
+
 export interface IDashboardContext {
 	isDashboardSliderOpen: boolean;
 	isDashboardLocked: boolean;
 	handleToggleDashboardSlider: (value: boolean) => void;
 	handleDashboardLockToggle: (value: boolean) => void;
-	dashboardResponse: UseQueryResult<Dashboard, unknown>;
+	dashboardResponse: UseQueryResult<SuccessResponseV2<Dashboard>, unknown>;
 	selectedDashboard: Dashboard | undefined;
 	dashboardId: string;
 	layouts: Layout[];
@@ -48,4 +53,6 @@ export interface IDashboardContext {
 	selectedRowWidgetId: string | null;
 	setSelectedRowWidgetId: React.Dispatch<React.SetStateAction<string | null>>;
 	isDashboardFetching: boolean;
+	columnWidths: WidgetColumnWidths;
+	setColumnWidths: React.Dispatch<React.SetStateAction<WidgetColumnWidths>>;
 }

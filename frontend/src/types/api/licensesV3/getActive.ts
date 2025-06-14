@@ -6,6 +6,7 @@ export enum LicenseEvent {
 export enum LicenseStatus {
 	SUSPENDED = 'SUSPENDED',
 	VALID = 'VALID',
+	INVALID = 'INVALID',
 }
 
 export enum LicenseState {
@@ -24,13 +25,7 @@ export enum LicensePlatform {
 	CLOUD = 'CLOUD',
 }
 
-// Legacy
-export const LicensePlanKey = {
-	ENTERPRISE: 'ENTERPRISE',
-	BASIC: 'BASIC',
-};
-
-export type LicenseV3EventQueueResModel = {
+export type LicenseEventQueueResModel = {
 	event: LicenseEvent;
 	status: string;
 	scheduled_at: string;
@@ -38,10 +33,11 @@ export type LicenseV3EventQueueResModel = {
 	updated_at: string;
 };
 
-export type LicenseV3ResModel = {
+export type LicenseResModel = {
+	key: string;
 	status: LicenseStatus;
 	state: LicenseState;
-	event_queue: LicenseV3EventQueueResModel;
+	event_queue: LicenseEventQueueResModel;
 	platform: LicensePlatform;
 	created_at: string;
 	plan: {
@@ -67,3 +63,8 @@ export type TrialInfo = {
 	trialConvertedToSubscription: boolean;
 	gracePeriodEnd: number;
 };
+
+export interface PayloadProps {
+	data: LicenseEventQueueResModel;
+	status: string;
+}

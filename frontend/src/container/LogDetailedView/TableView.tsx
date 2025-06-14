@@ -13,6 +13,7 @@ import AddToQueryHOC, {
 import { ResizeTable } from 'components/ResizeTable';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
@@ -33,9 +34,6 @@ import { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
 import { TableViewActions } from './TableView/TableViewActions';
 import { filterKeyForField, findKeyPath, flattenObject } from './utils';
-
-// Fields which should be restricted from adding it to query
-const RESTRICTED_FIELDS = ['timestamp'];
 
 interface TableViewProps {
 	logData: ILog;
@@ -249,7 +247,7 @@ function TableView({
 				}
 
 				const fieldFilterKey = filterKeyForField(field);
-				if (!RESTRICTED_FIELDS.includes(fieldFilterKey)) {
+				if (!RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey)) {
 					return (
 						<AddToQueryHOC
 							fieldKey={fieldFilterKey}

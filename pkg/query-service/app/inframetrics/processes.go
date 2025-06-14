@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
@@ -20,15 +21,15 @@ var (
 		"memory": {"C"},
 	}
 
-	processPIDAttrKey       = "process_pid"
+	processPIDAttrKey       = GetDotMetrics("process_pid")
 	metricNamesForProcesses = map[string]string{
-		"cpu":    "process_cpu_time",
-		"memory": "process_memory_usage",
+		"cpu":    GetDotMetrics("process_cpu_time"),
+		"memory": GetDotMetrics("process_memory_usage"),
 	}
-	metricToUseForProcessAttributes = "process_memory_usage"
-	processNameAttrKey              = "process_executable_name"
-	processCMDAttrKey               = "process_command"
-	processCMDLineAttrKey           = "process_command_line"
+	metricToUseForProcessAttributes = GetDotMetrics("process_memory_usage")
+	processNameAttrKey              = GetDotMetrics("process_executable_name")
+	processCMDAttrKey               = GetDotMetrics("process_command")
+	processCMDLineAttrKey           = GetDotMetrics("process_command_line")
 )
 
 type ProcessesRepo struct {
@@ -43,7 +44,7 @@ func NewProcessesRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *P
 func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = "process_memory_usage"
+	req.AggregateAttribute = GetDotMetrics("process_memory_usage")
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -68,7 +69,7 @@ func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.Filt
 
 func (p *ProcessesRepo) GetProcessAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = "process_memory_usage"
+	req.AggregateAttribute = GetDotMetrics("process_memory_usage")
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -84,7 +85,7 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 	req model.ProcessListRequest) (map[string]map[string]string, error) {
 	processAttrs := map[string]map[string]string{}
 
-	keysToAdd := []string{"process_pid", "process_executable_name", "process_command", "process_command_line"}
+	keysToAdd := []string{GetDotMetrics("process_pid"), GetDotMetrics("process_executable_name"), GetDotMetrics("process_command"), GetDotMetrics("process_command_line")}
 	for _, key := range keysToAdd {
 		hasKey := false
 		for _, groupByKey := range req.GroupBy {
@@ -142,7 +143,7 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 	return processAttrs, nil
 }
 
-func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, req model.ProcessListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, orgID valuer.UUID, req model.ProcessListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopProcesses(req)
 
 	queryNames := queryNamesForTopProcesses[req.OrderBy.ColumnName]
@@ -170,7 +171,7 @@ func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, req model.Proce
 		topProcessGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, topProcessGroupsQueryRangeParams)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topProcessGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -209,7 +210,7 @@ func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, req model.Proce
 	return topProcessGroups, allProcessGroups, nil
 }
 
-func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessListRequest) (model.ProcessListResponse, error) {
+func (p *ProcessesRepo) GetProcessList(ctx context.Context, orgID valuer.UUID, req model.ProcessListRequest) (model.ProcessListResponse, error) {
 	resp := model.ProcessListResponse{}
 	if req.Limit == 0 {
 		req.Limit = 10
@@ -249,7 +250,7 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 		return resp, err
 	}
 
-	topProcessGroups, allProcessGroups, err := p.getTopProcessGroups(ctx, req, query)
+	topProcessGroups, allProcessGroups, err := p.getTopProcessGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -283,7 +284,7 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, req model.ProcessLis
 		}
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}

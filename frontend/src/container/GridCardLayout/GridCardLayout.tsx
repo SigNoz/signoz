@@ -6,7 +6,6 @@ import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
@@ -14,7 +13,6 @@ import { DEFAULT_ROW_NAME } from 'container/NewDashboard/DashboardDescription/ut
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo, isUndefined } from 'lodash-es';
@@ -36,7 +34,8 @@ import { ItemCallback, Layout } from 'react-grid-layout';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
-import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/dashboard/getAll';
+import { Props } from 'types/api/dashboard/update';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -44,7 +43,10 @@ import { EditMenuAction, ViewMenuAction } from './config';
 import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import GridCard from './GridCard';
 import { Card, CardContainer, ReactGridLayout } from './styles';
-import { removeUndefinedValuesFromLayout } from './utils';
+import {
+	hasColumnWidthsChanged,
+	removeUndefinedValuesFromLayout,
+} from './utils';
 import { MenuItemKeys } from './WidgetHeader/contants';
 import { WidgetRowHeader } from './WidgetRow';
 
@@ -68,6 +70,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		setDashboardQueryRangeCalled,
 		setSelectedRowWidgetId,
 		isDashboardFetching,
+		columnWidths,
 	} = useDashboard();
 	const { data } = selectedDashboard || {};
 	const { pathname } = useLocation();
@@ -103,7 +106,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const updateDashboardMutation = useUpdateDashboard();
 
-	const { notifications } = useNotifications();
 	const urlQuery = useUrlQuery();
 
 	let permissions: ComponentTypes[] = ['save_layout', 'add_panel'];
@@ -154,41 +156,45 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data)) {
 			logEvent('Dashboard Detail: Opened', {
-				dashboardId: data.uuid,
+				dashboardId: selectedDashboard?.id,
 				dashboardName: data.title,
 				numberOfPanels: data.widgets?.length,
 				numberOfVariables: Object.keys(data?.variables || {}).length || 0,
 			});
 			logEventCalledRef.current = true;
 		}
-	}, [data]);
+	}, [data, selectedDashboard?.id]);
+
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) return;
 
-		const updatedDashboard: Dashboard = {
-			...selectedDashboard,
+		const updatedDashboard: Props = {
+			id: selectedDashboard.id,
 			data: {
 				...selectedDashboard.data,
 				panelMap: { ...currentPanelMap },
 				layout: dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
+				widgets: selectedDashboard?.data?.widgets?.map((widget) => {
+					if (columnWidths?.[widget.id]) {
+						return {
+							...widget,
+							columnWidths: columnWidths[widget.id],
+						};
+					}
+					return widget;
+				}),
 			},
-			uuid: selectedDashboard.uuid,
 		};
 
 		updateDashboardMutation.mutate(updatedDashboard, {
 			onSuccess: (updatedDashboard) => {
 				setSelectedRowWidgetId(null);
-				if (updatedDashboard.payload) {
-					if (updatedDashboard.payload.data.layout)
-						setLayouts(sortLayout(updatedDashboard.payload.data.layout));
-					setSelectedDashboard(updatedDashboard.payload);
-					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
+				if (updatedDashboard.data) {
+					if (updatedDashboard.data.data.layout)
+						setLayouts(sortLayout(updatedDashboard.data.data.layout));
+					setSelectedDashboard(updatedDashboard.data);
+					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
 				}
-			},
-			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
 			},
 		});
 	};
@@ -227,20 +233,31 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (
+			isDashboardLocked ||
+			!saveLayoutPermission ||
+			updateDashboardMutation.isLoading ||
+			isDashboardFetching
+		) {
+			return;
+		}
+
+		const shouldSaveLayout =
 			dashboardLayout &&
 			Array.isArray(dashboardLayout) &&
 			dashboardLayout.length > 0 &&
-			!isEqual(layouts, dashboardLayout) &&
-			!isDashboardLocked &&
-			saveLayoutPermission &&
-			!updateDashboardMutation.isLoading &&
-			!isDashboardFetching
-		) {
+			!isEqual(layouts, dashboardLayout);
+
+		const shouldSaveColumnWidths =
+			dashboardLayout &&
+			Array.isArray(dashboardLayout) &&
+			dashboardLayout.length > 0 &&
+			hasColumnWidthsChanged(columnWidths, selectedDashboard);
+
+		if (shouldSaveLayout || shouldSaveColumnWidths) {
 			onSaveHandler();
 		}
-
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dashboardLayout]);
+	}, [dashboardLayout, columnWidths]);
 
 	const onSettingsModalSubmit = (): void => {
 		const newTitle = form.getFieldValue('title');
@@ -261,32 +278,24 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 		updatedWidgets?.push(currentWidget);
 
-		const updatedSelectedDashboard: Dashboard = {
-			...selectedDashboard,
+		const updatedSelectedDashboard: Props = {
+			id: selectedDashboard.id,
 			data: {
 				...selectedDashboard.data,
 				widgets: updatedWidgets,
 			},
-			uuid: selectedDashboard.uuid,
 		};
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
-				if (setSelectedDashboard && updatedDashboard.payload) {
-					setSelectedDashboard(updatedDashboard.payload);
+				if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+				if (setSelectedDashboard && updatedDashboard.data) {
+					setSelectedDashboard(updatedDashboard.data);
 				}
-				if (setPanelMap)
-					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
+				if (setPanelMap) setPanelMap(updatedDashboard.data?.data?.panelMap || {});
 				form.setFieldValue('title', '');
 				setIsSettingsModalOpen(false);
 				setCurrentSelectRowId(null);
-			},
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
 			},
 		});
 	};
@@ -390,12 +399,14 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	};
 
 	const handleDragStop: ItemCallback = (_, oldItem, newItem): void => {
-		if (currentPanelMap[oldItem.i]) {
+		if (oldItem?.i && currentPanelMap?.[oldItem.i]) {
 			const differenceY = newItem.y - oldItem.y;
-			const widgetsInsideRow = currentPanelMap[oldItem.i].widgets.map((w) => ({
-				...w,
-				y: w.y + differenceY,
-			}));
+			const widgetsInsideRow = (currentPanelMap[oldItem.i]?.widgets ?? []).map(
+				(w) => ({
+					...w,
+					y: w.y + differenceY,
+				}),
+			);
 			setCurrentPanelMap((prev) => ({
 				...prev,
 				[oldItem.i]: {
@@ -422,33 +433,25 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		const updatedPanelMap = { ...currentPanelMap };
 		delete updatedPanelMap[currentSelectRowId];
 
-		const updatedSelectedDashboard: Dashboard = {
-			...selectedDashboard,
+		const updatedSelectedDashboard: Props = {
+			id: selectedDashboard.id,
 			data: {
 				...selectedDashboard.data,
 				widgets: updatedWidgets,
 				layout: updatedLayout,
 				panelMap: updatedPanelMap,
 			},
-			uuid: selectedDashboard.uuid,
 		};
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
-				if (setSelectedDashboard && updatedDashboard.payload) {
-					setSelectedDashboard(updatedDashboard.payload);
+				if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+				if (setSelectedDashboard && updatedDashboard.data) {
+					setSelectedDashboard(updatedDashboard.data);
 				}
-				if (setPanelMap)
-					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
+				if (setPanelMap) setPanelMap(updatedDashboard.data?.data?.panelMap || {});
 				setIsDeleteModalOpen(false);
 				setCurrentSelectRowId(null);
-			},
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
 			},
 		});
 	};

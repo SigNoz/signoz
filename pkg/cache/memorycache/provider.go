@@ -2,17 +2,22 @@ package memorycache
 
 import (
 	"context"
-	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	go_cache "github.com/patrickmn/go-cache"
 )
 
 type provider struct {
-	cc *go_cache.Cache
+	cc       *go_cache.Cache
+	config   cache.Config
+	settings factory.ScopedProviderSettings
 }
 
 func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
@@ -20,82 +25,59 @@ func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
 }
 
 func New(ctx context.Context, settings factory.ProviderSettings, config cache.Config) (cache.Cache, error) {
-	return &provider{cc: go_cache.New(config.Memory.TTL, config.Memory.CleanupInterval)}, nil
+	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/cache/memorycache")
+	return &provider{cc: go_cache.New(config.Memory.TTL, config.Memory.CleanupInterval), settings: scopedProviderSettings, config: config}, nil
 }
 
-// Connect does nothing
-func (c *provider) Connect(_ context.Context) error {
-	return nil
-}
-
-// Store stores the data in the cache
-func (c *provider) Store(_ context.Context, cacheKey string, data cache.CacheableEntity, ttl time.Duration) error {
+func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) error {
 	// check if the data being passed is a pointer and is not nil
-	rv := reflect.ValueOf(data)
-	if rv.Kind() != reflect.Pointer || rv.IsNil() {
-		return cache.WrapCacheableEntityErrors(reflect.TypeOf(data), "inmemory")
+	err := cachetypes.ValidatePointer(data, "inmemory")
+	if err != nil {
+		return err
 	}
 
-	c.cc.Set(cacheKey, data, ttl)
+	if ttl == 0 {
+		provider.settings.Logger().WarnContext(ctx, "zero value for TTL found. defaulting to the base TTL", "cache_key", cacheKey, "default_ttl", provider.config.Memory.TTL)
+	}
+	provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), data, ttl)
 	return nil
 }
 
-// Retrieve retrieves the data from the cache
-func (c *provider) Retrieve(_ context.Context, cacheKey string, dest cache.CacheableEntity, allowExpired bool) (cache.RetrieveStatus, error) {
+func (provider *provider) Get(_ context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable, allowExpired bool) error {
 	// check if the destination being passed is a pointer and is not nil
-	dstv := reflect.ValueOf(dest)
-	if dstv.Kind() != reflect.Pointer || dstv.IsNil() {
-		return cache.RetrieveStatusError, cache.WrapCacheableEntityErrors(reflect.TypeOf(dest), "inmemory")
+	err := cachetypes.ValidatePointer(dest, "inmemory")
+	if err != nil {
+		return err
 	}
 
 	// check if the destination value is settable
+	dstv := reflect.ValueOf(dest)
 	if !dstv.Elem().CanSet() {
-		return cache.RetrieveStatusError, fmt.Errorf("destination value is not settable, %s", dstv.Elem())
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "destination value is not settable, %s", dstv.Elem())
 	}
 
-	data, found := c.cc.Get(cacheKey)
+	data, found := provider.cc.Get(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 	if !found {
-		return cache.RetrieveStatusKeyMiss, nil
+		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "key miss")
 	}
 
 	// check the type compatbility between the src and dest
 	srcv := reflect.ValueOf(data)
 	if !srcv.Type().AssignableTo(dstv.Type()) {
-		return cache.RetrieveStatusError, fmt.Errorf("src type is not assignable to dst type")
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "src type is not assignable to dst type")
 	}
 
 	// set the value to from src to dest
 	dstv.Elem().Set(srcv.Elem())
-	return cache.RetrieveStatusHit, nil
+	return nil
 }
 
-// SetTTL sets the TTL for the cache entry
-func (c *provider) SetTTL(_ context.Context, cacheKey string, ttl time.Duration) {
-	item, found := c.cc.Get(cacheKey)
-	if !found {
-		return
-	}
-	_ = c.cc.Replace(cacheKey, item, ttl)
+func (provider *provider) Delete(_ context.Context, orgID valuer.UUID, cacheKey string) {
+	provider.cc.Delete(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 }
 
-// Remove removes the cache entry
-func (c *provider) Remove(_ context.Context, cacheKey string) {
-	c.cc.Delete(cacheKey)
-}
-
-// BulkRemove removes the cache entries
-func (c *provider) BulkRemove(_ context.Context, cacheKeys []string) {
+func (provider *provider) DeleteMany(_ context.Context, orgID valuer.UUID, cacheKeys []string) {
 	for _, cacheKey := range cacheKeys {
-		c.cc.Delete(cacheKey)
+		provider.cc.Delete(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 	}
-}
-
-// Close does nothing
-func (c *provider) Close(_ context.Context) error {
-	return nil
-}
-
-// Configuration returns the cache configuration
-func (c *provider) Configuration() *cache.Memory {
-	return nil
 }

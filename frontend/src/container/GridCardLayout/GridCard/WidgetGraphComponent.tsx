@@ -1,20 +1,24 @@
 import '../GridCardLayout.styles.scss';
 
-import { Skeleton, Typography } from 'antd';
+import { Skeleton, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
+import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import {
+	getCustomTimeRangeWindowSweepInMS,
+	getStartAndEndTimesInMilliseconds,
+} from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
@@ -26,7 +30,7 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { Props } from 'types/api/dashboard/update';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
@@ -50,11 +54,14 @@ function WidgetGraphComponent({
 	setRequestData,
 	onClickHandler,
 	onDragSelect,
+	customOnDragSelect,
 	customTooltipElement,
 	openTracesButton,
 	onOpenTraceBtnClick,
 	customSeries,
 	customErrorMessage,
+	customOnRowClick,
+	customTimeRangeWindowForCoRelation,
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -111,28 +118,22 @@ function WidgetGraphComponent({
 		const updatedLayout =
 			selectedDashboard.data.layout?.filter((e) => e.i !== widget.id) || [];
 
-		const updatedSelectedDashboard: Dashboard = {
-			...selectedDashboard,
+		const updatedSelectedDashboard: Props = {
 			data: {
 				...selectedDashboard.data,
 				widgets: updatedWidgets,
 				layout: updatedLayout,
 			},
-			uuid: selectedDashboard.uuid,
+			id: selectedDashboard.id,
 		};
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
-				if (setSelectedDashboard && updatedDashboard.payload) {
-					setSelectedDashboard(updatedDashboard.payload);
+				if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+				if (setSelectedDashboard && updatedDashboard.data) {
+					setSelectedDashboard(updatedDashboard.data);
 				}
 				setDeleteModal(false);
-			},
-			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
 			},
 		});
 	};
@@ -158,7 +159,8 @@ function WidgetGraphComponent({
 
 		updateDashboardMutation.mutateAsync(
 			{
-				...selectedDashboard,
+				id: selectedDashboard.id,
+
 				data: {
 					...selectedDashboard.data,
 					layout,
@@ -175,9 +177,9 @@ function WidgetGraphComponent({
 			},
 			{
 				onSuccess: (updatedDashboard) => {
-					if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
-					if (setSelectedDashboard && updatedDashboard.payload) {
-						setSelectedDashboard(updatedDashboard.payload);
+					if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+					if (setSelectedDashboard && updatedDashboard.data) {
+						setSelectedDashboard(updatedDashboard.data);
 					}
 					notifications.success({
 						message: 'Panel cloned successfully, redirecting to new copy.',
@@ -244,7 +246,11 @@ function WidgetGraphComponent({
 
 	const graphClick = useGraphClickToShowButton({
 		graphRef: currentGraphRef?.current ? currentGraphRef : graphRef,
-		isButtonEnabled: (widget?.query?.builder?.queryData ?? []).some(
+		isButtonEnabled: (widget?.query?.builder?.queryData &&
+		Array.isArray(widget.query.builder.queryData)
+			? widget.query.builder.queryData
+			: []
+		).some(
 			(q) =>
 				q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
 		),
@@ -261,6 +267,13 @@ function WidgetGraphComponent({
 		metric?: { [key: string]: string },
 		queryData?: { queryName: string; inFocusOrNot: boolean },
 	): void => {
+		const customTracesTimeRange = getCustomTimeRangeWindowSweepInMS(
+			customTimeRangeWindowForCoRelation,
+		);
+		const { start, end } = getStartAndEndTimesInMilliseconds(
+			xValue,
+			customTracesTimeRange,
+		);
 		handleGraphClick({
 			xValue,
 			yValue,
@@ -273,8 +286,16 @@ function WidgetGraphComponent({
 			navigateToExplorer,
 			notifications,
 			graphClick,
+			...(customTimeRangeWindowForCoRelation
+				? { customTracesTimeRange: { start, end } }
+				: {}),
 		});
 	};
+
+	const { truncatedText, fullText } = useGetResolvedText({
+		text: widget.title as string,
+		maxLength: 100,
+	});
 
 	return (
 		<div
@@ -309,7 +330,11 @@ function WidgetGraphComponent({
 			</Modal>
 
 			<Modal
-				title={widget?.title || 'View'}
+				title={
+					<Tooltip title={fullText} placement="top">
+						<span>{truncatedText || fullText || 'View'}</span>
+					</Tooltip>
+				}
 				footer={[]}
 				centered
 				open={isFullViewOpen}
@@ -327,6 +352,7 @@ function WidgetGraphComponent({
 					onToggleModelHandler={onToggleModelHandler}
 					tableProcessedDataRef={tableProcessedDataRef}
 					onClickHandler={onClickHandler ?? graphClickHandler}
+					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
 				/>
 			</Modal>
@@ -378,6 +404,7 @@ function WidgetGraphComponent({
 						openTracesButton={openTracesButton}
 						onOpenTraceBtnClick={onOpenTraceBtnClick}
 						customSeries={customSeries}
+						customOnRowClick={customOnRowClick}
 					/>
 				</div>
 			)}
@@ -389,6 +416,7 @@ WidgetGraphComponent.defaultProps = {
 	yAxisUnit: undefined,
 	setLayout: undefined,
 	onClickHandler: undefined,
+	customTimeRangeWindowForCoRelation: undefined,
 };
 
 export default WidgetGraphComponent;

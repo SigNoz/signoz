@@ -5,10 +5,15 @@ import { ROLES, USER_ROLES } from 'types/roles';
 import {
 	alertChannels,
 	apiKeys,
+	billingSettings,
+	createAlertChannels,
 	customDomainSettings,
+	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
+	keyboardShortcuts,
 	multiIngestionSettings,
+	mySettings,
 	organizationSettings,
 } from './config';
 
@@ -17,8 +22,8 @@ export const getRoutes = (
 	isCurrentOrgSettings: boolean,
 	isGatewayEnabled: boolean,
 	isWorkspaceBlocked: boolean,
-	isCloudAccount: boolean,
-	isEECloudAccount: boolean,
+	isCloudUser: boolean,
+	isEnterpriseSelfHostedUser: boolean,
 	t: TFunction,
 ): RouteTabProps['routes'] => {
 	const settings = [];
@@ -42,19 +47,26 @@ export const getRoutes = (
 		settings.push(...multiIngestionSettings(t));
 	}
 
-	if (isCloudAccount && !isGatewayEnabled) {
+	if (isCloudUser && !isGatewayEnabled) {
 		settings.push(...ingestionSettings(t));
 	}
 
 	settings.push(...alertChannels(t));
 
-	if ((isCloudAccount || isEECloudAccount) && isAdmin) {
+	if (isAdmin) {
 		settings.push(...apiKeys(t));
 	}
 
-	if (isCloudAccount && isAdmin) {
-		settings.push(...customDomainSettings(t));
+	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
+		settings.push(...customDomainSettings(t), ...billingSettings(t));
 	}
+
+	settings.push(
+		...mySettings(t),
+		...createAlertChannels(t),
+		...editAlertChannels(t),
+		...keyboardShortcuts(t),
+	);
 
 	return settings;
 };

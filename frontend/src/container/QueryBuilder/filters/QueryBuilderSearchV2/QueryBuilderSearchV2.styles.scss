@@ -1,3 +1,19 @@
+.query-builder-search {
+	.content {
+		.suggested-filters {
+			color: var(--bg-slate-50);
+			font-family: Inter;
+			font-size: 11px;
+			font-style: normal;
+			font-weight: 600;
+			line-height: 18px;
+			letter-spacing: 0.88px;
+			text-transform: uppercase;
+			padding: 12px 0px 8px 14px;
+		}
+	}
+}
+
 .query-builder-search-v2 {
 	display: flex;
 	gap: 4px;
@@ -10,6 +26,11 @@
 		.content {
 			.rc-virtual-list-holder {
 				height: 115px;
+			}
+			&.non-logs-data-source {
+				.rc-virtual-list-holder {
+					height: 256px;
+				}
 			}
 		}
 	}
@@ -280,6 +301,12 @@
 
 .lightMode {
 	.query-builder-search-v2 {
+		.ant-select-selector {
+			border-color: var(--bg-vanilla-300) !important;
+			background-color: var(--bg-vanilla-100) !important;
+			color: var(--bg-ink-200);
+		}
+
 		.content {
 			.operator-for {
 				.operator-for-text {

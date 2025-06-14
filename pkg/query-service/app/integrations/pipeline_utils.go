@@ -3,8 +3,8 @@ package integrations
 import (
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 )
 
 const IntegrationPipelineIdSeparator string = "--"
@@ -20,7 +20,7 @@ func AliasForIntegrationPipeline(
 
 // Returns ptr to integration_id string if `p` is a pipeline for an installed integration.
 // Returns null otherwise.
-func IntegrationIdForPipeline(p logparsingpipeline.Pipeline) *string {
+func IntegrationIdForPipeline(p pipelinetypes.GettablePipeline) *string {
 	if strings.HasPrefix(p.Alias, constants.IntegrationPipelineIdPrefix) {
 		parts := strings.Split(p.Alias, IntegrationPipelineIdSeparator)
 		if len(parts) < 2 {

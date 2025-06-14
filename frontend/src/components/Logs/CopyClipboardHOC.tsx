@@ -18,6 +18,7 @@ function CopyClipboardHOC({
 
 			notifications.success({
 				message: notificationMessage,
+				key: notificationMessage,
 			});
 		}
 	}, [value, notifications, entityKey]);

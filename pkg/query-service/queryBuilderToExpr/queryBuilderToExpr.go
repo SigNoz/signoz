@@ -63,8 +63,14 @@ func Parse(filters *v3.FilterSet) (string, error) {
 		// 	filter = fmt.Sprintf("%s %s list%s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
 
 		case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
-			filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], getTypeName(v.Key.Type))
-
+			// accustom log filters like `body.log.message EXISTS` into EXPR language
+			// where User is attempting to check for keys present in JSON log body
+			key, found := strings.CutPrefix(v.Key.Key, "body.")
+			if found {
+				filter = fmt.Sprintf("%s %s %s", exprFormattedValue(key), logOperatorsToExpr[v.Operator], "fromJSON(body)")
+			} else {
+				filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], getTypeName(v.Key.Type))
+			}
 		default:
 			filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
 

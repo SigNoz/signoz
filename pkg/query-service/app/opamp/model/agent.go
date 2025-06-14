@@ -251,6 +251,9 @@ func (agent *Agent) processStatusUpdate(
 	if agentDescrChanged {
 		// Agent description is changed.
 
+		//Get the default org ID
+		// agent.
+
 		// We need to recalculate the config.
 		configChanged = agent.updateRemoteConfig(configProvider)
 	}

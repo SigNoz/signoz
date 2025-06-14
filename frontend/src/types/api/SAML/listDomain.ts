@@ -44,4 +44,7 @@ export interface Props {
 	orgId: Organization['id'];
 }
 
-export type PayloadProps = AuthDomain[];
+export interface PayloadProps {
+	data: AuthDomain[];
+	status: string;
+}

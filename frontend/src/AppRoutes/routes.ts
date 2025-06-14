@@ -7,11 +7,9 @@ import {
 	AlertOverview,
 	AllAlertChannels,
 	AllErrors,
-	APIKeys,
-	BillingPage,
+	ApiMonitoring,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
-	CustomDomainSettings,
 	DashboardPage,
 	DashboardWidget,
 	EditAlertChannelsAlerts,
@@ -19,7 +17,6 @@ import {
 	ErrorDetails,
 	Home,
 	InfrastructureMonitoring,
-	IngestionSettings,
 	InstalledIntegrations,
 	LicensePage,
 	ListAllALertsPage,
@@ -30,12 +27,10 @@ import {
 	LogsIndexToFields,
 	LogsSaveViews,
 	MetricsExplorer,
-	MySettings,
 	NewDashboardPage,
 	OldLogsExplorer,
 	Onboarding,
 	OnboardingV2,
-	OrganizationSettings,
 	OrgOnboarding,
 	PasswordReset,
 	PipelinePage,
@@ -44,7 +39,6 @@ import {
 	ServicesTablePage,
 	ServiceTopLevelOperationsPage,
 	SettingsPage,
-	ShortcutsPage,
 	SignupPage,
 	SomethingWentWrong,
 	StatusPage,
@@ -149,7 +143,7 @@ const routes: AppRoutes[] = [
 	},
 	{
 		path: ROUTES.SETTINGS,
-		exact: true,
+		exact: false,
 		component: SettingsPage,
 		isPrivate: true,
 		key: 'SETTINGS',
@@ -295,41 +289,6 @@ const routes: AppRoutes[] = [
 		key: 'VERSION',
 	},
 	{
-		path: ROUTES.ORG_SETTINGS,
-		exact: true,
-		component: OrganizationSettings,
-		isPrivate: true,
-		key: 'ORG_SETTINGS',
-	},
-	{
-		path: ROUTES.INGESTION_SETTINGS,
-		exact: true,
-		component: IngestionSettings,
-		isPrivate: true,
-		key: 'INGESTION_SETTINGS',
-	},
-	{
-		path: ROUTES.API_KEYS,
-		exact: true,
-		component: APIKeys,
-		isPrivate: true,
-		key: 'API_KEYS',
-	},
-	{
-		path: ROUTES.MY_SETTINGS,
-		exact: true,
-		component: MySettings,
-		isPrivate: true,
-		key: 'MY_SETTINGS',
-	},
-	{
-		path: ROUTES.CUSTOM_DOMAIN_SETTINGS,
-		exact: true,
-		component: CustomDomainSettings,
-		isPrivate: true,
-		key: 'CUSTOM_DOMAIN_SETTINGS',
-	},
-	{
 		path: ROUTES.LOGS,
 		exact: true,
 		component: Logs,
@@ -393,13 +352,6 @@ const routes: AppRoutes[] = [
 		isPrivate: false,
 	},
 	{
-		path: ROUTES.BILLING,
-		exact: true,
-		component: BillingPage,
-		key: 'BILLING',
-		isPrivate: true,
-	},
-	{
 		path: ROUTES.WORKSPACE_LOCKED,
 		exact: true,
 		component: WorkspaceBlocked,
@@ -419,13 +371,6 @@ const routes: AppRoutes[] = [
 		component: WorkspaceAccessRestricted,
 		isPrivate: true,
 		key: 'WORKSPACE_ACCESS_RESTRICTED',
-	},
-	{
-		path: ROUTES.SHORTCUTS,
-		exact: true,
-		component: ShortcutsPage,
-		isPrivate: true,
-		key: 'SHORTCUTS',
 	},
 	{
 		path: ROUTES.INTEGRATIONS,
@@ -497,6 +442,13 @@ const routes: AppRoutes[] = [
 		key: 'METRICS_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.API_MONITORING,
+		exact: true,
+		component: ApiMonitoring,
+		key: 'API_MONITORING',
+		isPrivate: true,
+	},
 ];
 
 export const SUPPORT_ROUTE: AppRoutes = {
@@ -523,6 +475,7 @@ export const oldRoutes = [
 	'/traces-save-views',
 	'/settings/access-tokens',
 	'/messaging-queues',
+	'/alerts/edit',
 ];
 
 export const oldNewRoutesMapping: Record<string, string> = {
@@ -533,6 +486,7 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/traces-save-views': '/traces/saved-views',
 	'/settings/access-tokens': '/settings/api-keys',
 	'/messaging-queues': '/messaging-queues/overview',
+	'/alerts/edit': '/alerts/overview',
 };
 
 export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [

@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
@@ -20,6 +21,9 @@ type Service struct {
 	// configStore is the config store for the alertmanager service
 	configStore alertmanagertypes.ConfigStore
 
+	// organization is the organization module for the alertmanager service
+	orgGetter organization.Getter
+
 	// settings is the settings for the alertmanager service
 	settings factory.ScopedProviderSettings
 
@@ -30,11 +34,19 @@ type Service struct {
 	serversMtx sync.RWMutex
 }
 
-func New(ctx context.Context, settings factory.ScopedProviderSettings, config alertmanagerserver.Config, stateStore alertmanagertypes.StateStore, configStore alertmanagertypes.ConfigStore) *Service {
+func New(
+	ctx context.Context,
+	settings factory.ScopedProviderSettings,
+	config alertmanagerserver.Config,
+	stateStore alertmanagertypes.StateStore,
+	configStore alertmanagertypes.ConfigStore,
+	orgGetter organization.Getter,
+) *Service {
 	service := &Service{
 		config:      config,
 		stateStore:  stateStore,
 		configStore: configStore,
+		orgGetter:   orgGetter,
 		settings:    settings,
 		servers:     make(map[string]*alertmanagerserver.Server),
 		serversMtx:  sync.RWMutex{},
@@ -44,38 +56,38 @@ func New(ctx context.Context, settings factory.ScopedProviderSettings, config al
 }
 
 func (service *Service) SyncServers(ctx context.Context) error {
-	orgIDs, err := service.configStore.ListOrgs(ctx)
+	orgs, err := service.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err
 	}
 
 	service.serversMtx.Lock()
-	for _, orgID := range orgIDs {
-		config, err := service.getConfig(ctx, orgID)
+	for _, org := range orgs {
+		config, err := service.getConfig(ctx, org.ID.StringValue())
 		if err != nil {
-			service.settings.Logger().Error("failed to get alertmanager config for org", "orgID", orgID, "error", err)
+			service.settings.Logger().ErrorContext(ctx, "failed to get alertmanager config for org", "org_id", org.ID.StringValue(), "error", err)
 			continue
 		}
 
 		// If the server is not present, create it and sync the config
-		if _, ok := service.servers[orgID]; !ok {
-			server, err := service.newServer(ctx, orgID)
+		if _, ok := service.servers[org.ID.StringValue()]; !ok {
+			server, err := service.newServer(ctx, org.ID.StringValue())
 			if err != nil {
-				service.settings.Logger().Error("failed to create alertmanager server", "orgID", orgID, "error", err)
+				service.settings.Logger().ErrorContext(ctx, "failed to create alertmanager server", "org_id", org.ID.StringValue(), "error", err)
 				continue
 			}
 
-			service.servers[orgID] = server
+			service.servers[org.ID.StringValue()] = server
 		}
 
-		if service.servers[orgID].Hash() == config.StoreableConfig().Hash {
-			service.settings.Logger().Debug("skipping alertmanager sync for org", "orgID", orgID, "hash", config.StoreableConfig().Hash)
+		if service.servers[org.ID.StringValue()].Hash() == config.StoreableConfig().Hash {
+			service.settings.Logger().DebugContext(ctx, "skipping alertmanager sync for org", "org_id", org.ID.StringValue(), "hash", config.StoreableConfig().Hash)
 			continue
 		}
 
-		err = service.servers[orgID].SetConfig(ctx, config)
+		err = service.servers[org.ID.StringValue()].SetConfig(ctx, config)
 		if err != nil {
-			service.settings.Logger().Error("failed to set config for alertmanager server", "orgID", orgID, "error", err)
+			service.settings.Logger().ErrorContext(ctx, "failed to set config for alertmanager server", "org_id", org.ID.StringValue(), "error", err)
 			continue
 		}
 	}
@@ -142,7 +154,7 @@ func (service *Service) Stop(ctx context.Context) error {
 	for _, server := range service.servers {
 		if err := server.Stop(ctx); err != nil {
 			errs = append(errs, err)
-			service.settings.Logger().Error("failed to stop alertmanager server", "error", err)
+			service.settings.Logger().ErrorContext(ctx, "failed to stop alertmanager server", "error", err)
 		}
 	}
 
@@ -158,6 +170,17 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore)
 	if err != nil {
 		return nil, err
+	}
+
+	beforeCompareAndSelectHash := config.StoreableConfig().Hash
+	config, err = service.compareAndSelectConfig(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+
+	if beforeCompareAndSelectHash == config.StoreableConfig().Hash {
+		service.settings.Logger().DebugContext(ctx, "skipping config store update for org", "org_id", orgID, "hash", config.StoreableConfig().Hash)
+		return server, nil
 	}
 
 	err = service.configStore.Set(ctx, config)
@@ -189,6 +212,38 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 	}
 
 	return config, nil
+}
+
+func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConfig *alertmanagertypes.Config) (*alertmanagertypes.Config, error) {
+	channels, err := service.configStore.ListChannels(ctx, incomingConfig.StoreableConfig().OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	matchers, err := service.configStore.GetMatchers(ctx, incomingConfig.StoreableConfig().OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := alertmanagertypes.NewConfigFromChannels(service.config.Global, service.config.Route, channels, incomingConfig.StoreableConfig().OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	for ruleID, receivers := range matchers {
+		err = config.CreateRuleIDMatcher(ruleID, receivers)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if incomingConfig.StoreableConfig().Hash != config.StoreableConfig().Hash {
+		service.settings.Logger().InfoContext(ctx, "mismatch found, updating config to match channels and matchers")
+		return config, nil
+	}
+
+	return incomingConfig, nil
+
 }
 
 // getServer returns the server for the given orgID. It should be called with the lock held.

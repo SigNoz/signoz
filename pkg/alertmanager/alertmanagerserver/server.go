@@ -66,7 +66,7 @@ type Server struct {
 
 func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore) (*Server, error) {
 	server := &Server{
-		logger:     logger.With("pkg", "github.com/SigNoz/pkg/alertmanager/alertmanagerserver"),
+		logger:     logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
 		registry:   registry,
 		srvConfig:  srvConfig,
 		orgID:      orgID,

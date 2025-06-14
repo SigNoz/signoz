@@ -134,6 +134,11 @@ export const useContextLogData = ({
 			enabled: !!requestData,
 			onSuccess: handleSuccess,
 		},
+		undefined, // params
+		false, // isDependentOnQB
+		undefined, // keyRef
+		undefined, // headers
+		'custom', // selectedTimeInterval
 	);
 
 	const handleShowNextLines = useCallback(() => {

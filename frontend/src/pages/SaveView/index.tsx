@@ -17,6 +17,10 @@ import {
 } from 'components/ExplorerCard/utils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
+import {
+	MetricsExplorerEventKeys,
+	MetricsExplorerEvents,
+} from 'container/MetricsExplorer/events';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useUpdateView } from 'hooks/saveViews/useUpdateView';
@@ -81,7 +85,7 @@ function SaveView(): JSX.Element {
 	};
 
 	const handleEditModelOpen = (view: ViewProps, color: string): void => {
-		setActiveViewKey(view.uuid);
+		setActiveViewKey(view.id);
 		setColor(color);
 		setActiveViewName(view.name);
 		setNewViewName(view.name);
@@ -155,6 +159,10 @@ function SaveView(): JSX.Element {
 				logEvent('Logs Views: Views visited', {
 					number: viewsData?.data?.data?.length,
 				});
+			} else if (sourcepage === DataSource.METRICS) {
+				logEvent(MetricsExplorerEvents.TabChanged, {
+					[MetricsExplorerEventKeys.Tab]: 'views',
+				});
 			}
 			logEventCalledRef.current = true;
 		}
@@ -176,6 +184,9 @@ function SaveView(): JSX.Element {
 					});
 					hideEditViewModal();
 					refetchAllView();
+					logEvent(MetricsExplorerEvents.ViewEdited, {
+						[MetricsExplorerEventKeys.Tab]: 'views',
+					});
 				},
 				onError: (err) => {
 					showErrorNotification(notifications, err);
@@ -188,11 +199,11 @@ function SaveView(): JSX.Element {
 
 	const handleRedirectQuery = (view: ViewProps): void => {
 		const currentViewDetails = getViewDetailsUsingViewKey(
-			view.uuid,
+			view.id,
 			viewsData?.data.data,
 		);
 		if (!currentViewDetails) return;
-		const { query, name, uuid, panelType: currentPanelType } = currentViewDetails;
+		const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
 		if (sourcepage) {
 			handleExplorerTabChange(
@@ -200,10 +211,14 @@ function SaveView(): JSX.Element {
 				{
 					query,
 					name,
-					uuid,
+					id,
 				},
 				SOURCEPAGE_VS_ROUTES[sourcepage],
 			);
+			logEvent(MetricsExplorerEvents.OpenInExplorerClicked, {
+				[MetricsExplorerEventKeys.Tab]: 'views',
+				[MetricsExplorerEventKeys.ViewName]: name,
+			});
 		}
 	};
 
@@ -258,7 +273,7 @@ function SaveView(): JSX.Element {
 									className={isEditDeleteSupported ? '' : 'hidden'}
 									color={Color.BG_CHERRY_500}
 									data-testid="delete-view"
-									onClick={(): void => handleDeleteModelOpen(view.uuid, view.name)}
+									onClick={(): void => handleDeleteModelOpen(view.id, view.name)}
 								/>
 							</div>
 						</div>

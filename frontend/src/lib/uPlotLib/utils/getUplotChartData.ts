@@ -4,6 +4,7 @@ import { cloneDeep, isUndefined } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 
+import { normalizePlotValue } from './dataUtils';
 import { generateColor } from './generateColor';
 
 function getXAxisTimestamps(seriesList: QueryData[]): number[] {
@@ -30,7 +31,9 @@ function fillMissingXAxisTimestamps(timestampArr: number[], data: any[]): any {
 
 	// Fill missing timestamps with null values
 	processedData.forEach((entry: { values: (number | null)[][] }) => {
-		const existingTimestamps = new Set(entry.values.map((value) => value[0]));
+		const existingTimestamps = new Set(
+			(entry.values ?? []).map((value) => value[0]),
+		);
 
 		const missingTimestamps = Array.from(allTimestampsSet).filter(
 			(timestamp) => !existingTimestamps.has(timestamp),
@@ -43,16 +46,8 @@ function fillMissingXAxisTimestamps(timestampArr: number[], data: any[]): any {
 		});
 
 		entry.values.forEach((v) => {
-			if (Number.isNaN(v[1])) {
-				const replaceValue = null;
-				// eslint-disable-next-line no-param-reassign
-				v[1] = replaceValue;
-			} else if (v[1] !== null) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
-				// eslint-disable-next-line no-param-reassign
-				v[1] = parseFloat(v[1]);
-			}
+			// eslint-disable-next-line no-param-reassign
+			v[1] = normalizePlotValue(v[1]);
 		});
 
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment

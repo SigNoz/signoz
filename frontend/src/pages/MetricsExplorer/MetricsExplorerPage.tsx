@@ -2,27 +2,34 @@ import './MetricsExplorerPage.styles.scss';
 
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import history from 'lib/history';
-import { useLayoutEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useLocation } from 'react-use';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { Explorer, Summary } from './constants';
+import { Explorer, Summary, Views } from './constants';
 
 function MetricsExplorerPage(): JSX.Element {
 	const { pathname } = useLocation();
 
-	const routes: TabRoutes[] = [Summary, Explorer];
+	const routes: TabRoutes[] = [Summary, Explorer, Views];
 
-	const initialQuery = useMemo(() => initialQueriesMap[DataSource.METRICS], []);
-	const { resetQuery } = useQueryBuilder();
+	const { updateAllQueriesOperators } = useQueryBuilder();
 
-	useLayoutEffect(() => {
-		resetQuery(initialQuery);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	const defaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap[DataSource.METRICS],
+				PANEL_TYPES.LIST,
+				DataSource.METRICS,
+			),
+		[updateAllQueriesOperators],
+	);
+
+	useShareBuilderUrl(defaultQuery);
 
 	return (
 		<div className="metrics-explorer-page">

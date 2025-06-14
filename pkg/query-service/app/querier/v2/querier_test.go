@@ -2,23 +2,31 @@ package v2
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/cache/cachetest"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
+	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/cache/inmemory"
-	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
+	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -229,28 +237,28 @@ func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
 		},
 	}
 
-	c := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
-
+	opts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
+	require.NoError(t, err)
 	qc := querycache.NewQueryCache(querycache.WithCache(c))
 
 	for idx, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cacheKey := fmt.Sprintf("test-cache-key-%d", idx)
-			cachedData := &querycache.CachedSeriesData{
+			cachedData := querycache.CachedSeriesData{
 				Start: minTimestamp(tc.cachedSeries),
 				End:   maxTimestamp(tc.cachedSeries),
 				Data:  tc.cachedSeries,
 			}
-			jsonData, err := json.Marshal([]*querycache.CachedSeriesData{cachedData})
-			if err != nil {
-				t.Errorf("error marshalling cached data: %v", err)
-			}
-			err = c.Store(cacheKey, jsonData, 5*time.Minute)
-			if err != nil {
-				t.Errorf("error storing cached data: %v", err)
-			}
+			orgID := valuer.GenerateUUID()
+			cacheableData := querycache.CacheableSeriesData{Series: []querycache.CachedSeriesData{cachedData}}
+			err = c.Set(context.Background(), orgID, cacheKey, &cacheableData, 0)
+			assert.NoError(t, err)
 
-			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
+			misses := qc.FindMissingTimeRanges(orgID, tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
@@ -449,29 +457,28 @@ func TestV2FindMissingTimeRangesWithFluxInterval(t *testing.T) {
 		},
 	}
 
-	c := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
-
+	opts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: opts})
+	require.NoError(t, err)
 	qc := querycache.NewQueryCache(querycache.WithCache(c))
 
 	for idx, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cacheKey := fmt.Sprintf("test-cache-key-%d", idx)
-			cachedData := &querycache.CachedSeriesData{
+			cachedData := querycache.CachedSeriesData{
 				Start: minTimestamp(tc.cachedSeries),
 				End:   maxTimestamp(tc.cachedSeries),
 				Data:  tc.cachedSeries,
 			}
-			jsonData, err := json.Marshal([]*querycache.CachedSeriesData{cachedData})
-			if err != nil {
-				t.Errorf("error marshalling cached data: %v", err)
-				return
-			}
-			err = c.Store(cacheKey, jsonData, 5*time.Minute)
-			if err != nil {
-				t.Errorf("error storing cached data: %v", err)
-				return
-			}
-			misses := qc.FindMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
+			orgID := valuer.GenerateUUID()
+			cacheableData := querycache.CacheableSeriesData{Series: []querycache.CachedSeriesData{cachedData}}
+			err = c.Set(context.Background(), orgID, cacheKey, &cacheableData, 0)
+			assert.NoError(t, err)
+
+			misses := qc.FindMissingTimeRanges(orgID, tc.requestedStart, tc.requestedEnd, tc.requestedStep, cacheKey)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
@@ -630,9 +637,14 @@ func TestV2QueryRangePanelGraph(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheOpts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
+	require.NoError(t, err)
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -663,9 +675,10 @@ func TestV2QueryRangePanelGraph(t *testing.T) {
 		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115580000+60*60*1000)*int64(1000000), (1675115580000+180*60*1000)*int64(1000000)), // 31st Jan, 04:23:00 to 31st Jan, 06:23:00
 	}
 
+	orgID := valuer.GenerateUUID()
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), orgID, param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -779,9 +792,14 @@ func TestV2QueryRangeValueType(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheOpts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
+	require.NoError(t, err)
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -809,9 +827,10 @@ func TestV2QueryRangeValueType(t *testing.T) {
 		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675119196722)*int64(1000000), (1675126396722)*int64(1000000)), // 31st Jan, 05:23:00 to 31st Jan, 06:23:00
 	}
 
+	orgID := valuer.GenerateUUID()
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), orgID, param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -866,7 +885,7 @@ func TestV2QueryRangeTimeShift(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -940,9 +959,14 @@ func TestV2QueryRangeTimeShiftWithCache(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheOpts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
+	require.NoError(t, err)
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -967,7 +991,7 @@ func TestV2QueryRangeTimeShiftWithCache(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -1043,9 +1067,14 @@ func TestV2QueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheOpts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
+	require.NoError(t, err)
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -1070,7 +1099,7 @@ func TestV2QueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -1117,9 +1146,14 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 			},
 		},
 	}
-	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	cacheOpts := cache.Memory{
+		TTL:             5 * time.Minute,
+		CleanupInterval: 10 * time.Minute,
+	}
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
+	require.NoError(t, err)
 	opts := QuerierOptions{
-		Cache:        cache,
+		Cache:        c,
 		Reader:       nil,
 		FluxInterval: 5 * time.Minute,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
@@ -1162,7 +1196,7 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 
 	for i, param := range params {
 		tracesV3.Enrich(param, map[string]v3.AttributeKey{})
-		_, errByName, err := q.QueryRange(context.Background(), param)
+		_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), param)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -1185,21 +1219,7 @@ func TestV2QueryRangeValueTypePromQL(t *testing.T) {
 	}
 }
 
-type regexMatcher struct {
-}
-
-func (m *regexMatcher) Match(expectedSQL, actualSQL string) error {
-	re, err := regexp.Compile(expectedSQL)
-	if err != nil {
-		return err
-	}
-	if !re.MatchString(actualSQL) {
-		return fmt.Errorf("expected query to contain %s, got %s", expectedSQL, actualSQL)
-	}
-	return nil
-}
-
-func Test_querier_runWindowBasedListQuery(t *testing.T) {
+func Test_querier_Traces_runWindowBasedListQueryDesc(t *testing.T) {
 	params := &v3.QueryRangeParamsV3{
 		Start: 1722171576000000000, // July 28, 2024 6:29:36 PM
 		End:   1722262800000000000, // July 29, 2024 7:50:00 PM
@@ -1218,6 +1238,13 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 					Filters: &v3.FilterSet{
 						Operator: "AND",
 						Items:    []v3.FilterItem{},
+					},
+					OrderBy: []v3.OrderBy{
+						{
+							ColumnName: "timestamp",
+							IsColumn:   true,
+							Order:      "DESC",
+						},
 					},
 				},
 			},
@@ -1272,7 +1299,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 			queryResponses: []queryResponse{
 				{
 					expectedQuery: ".*(timestamp >= '1722259200000000000' AND timestamp <= '1722262800000000000').* DESC LIMIT 2",
-					timestamps:    []uint64{1722259300000000000, 1722259400000000000},
+					timestamps:    []uint64{1722259400000000000, 1722259300000000000},
 				},
 			},
 			queryParams: queryParams{
@@ -1281,14 +1308,14 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				limit:  2,
 				offset: 0,
 			},
-			expectedTimestamps: []int64{1722259300000000000, 1722259400000000000},
+			expectedTimestamps: []int64{1722259400000000000, 1722259300000000000},
 		},
 		{
 			name: "all data not in first windows",
 			queryResponses: []queryResponse{
 				{
 					expectedQuery: ".*(timestamp >= '1722259200000000000' AND timestamp <= '1722262800000000000').* DESC LIMIT 3",
-					timestamps:    []uint64{1722259300000000000, 1722259400000000000},
+					timestamps:    []uint64{1722259400000000000, 1722259300000000000},
 				},
 				{
 					expectedQuery: ".*(timestamp >= '1722252000000000000' AND timestamp <= '1722259200000000000').* DESC LIMIT 1",
@@ -1301,14 +1328,14 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				limit:  3,
 				offset: 0,
 			},
-			expectedTimestamps: []int64{1722259300000000000, 1722259400000000000, 1722253000000000000},
+			expectedTimestamps: []int64{1722259400000000000, 1722259300000000000, 1722253000000000000},
 		},
 		{
 			name: "data in multiple windows",
 			queryResponses: []queryResponse{
 				{
 					expectedQuery: ".*(timestamp >= '1722259200000000000' AND timestamp <= '1722262800000000000').* DESC LIMIT 5",
-					timestamps:    []uint64{1722259300000000000, 1722259400000000000},
+					timestamps:    []uint64{1722259400000000000, 1722259300000000000},
 				},
 				{
 					expectedQuery: ".*(timestamp >= '1722252000000000000' AND timestamp <= '1722259200000000000').* DESC LIMIT 3",
@@ -1333,18 +1360,18 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				limit:  5,
 				offset: 0,
 			},
-			expectedTimestamps: []int64{1722259300000000000, 1722259400000000000, 1722253000000000000, 1722237700000000000},
+			expectedTimestamps: []int64{1722259400000000000, 1722259300000000000, 1722253000000000000, 1722237700000000000},
 		},
 		{
 			name: "query with offset",
 			queryResponses: []queryResponse{
 				{
 					expectedQuery: ".*(timestamp >= '1722259200000000000' AND timestamp <= '1722262800000000000').* DESC LIMIT 7",
-					timestamps:    []uint64{1722259210000000000, 1722259220000000000, 1722259230000000000},
+					timestamps:    []uint64{1722259230000000000, 1722259220000000000, 1722259210000000000},
 				},
 				{
 					expectedQuery: ".*(timestamp >= '1722252000000000000' AND timestamp <= '1722259200000000000').* DESC LIMIT 4",
-					timestamps:    []uint64{1722253000000000000, 1722254000000000000, 1722255000000000000},
+					timestamps:    []uint64{1722255000000000000, 1722254000000000000, 1722253000000000000},
 				},
 				{
 					expectedQuery: ".*(timestamp >= '1722237600000000000' AND timestamp <= '1722252000000000000').* DESC LIMIT 1",
@@ -1357,7 +1384,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				limit:  4,
 				offset: 3,
 			},
-			expectedTimestamps: []int64{1722253000000000000, 1722254000000000000, 1722255000000000000, 1722237700000000000},
+			expectedTimestamps: []int64{1722255000000000000, 1722254000000000000, 1722253000000000000, 1722237700000000000},
 		},
 		{
 			name: "query with offset and limit- data spread across multiple windows",
@@ -1368,15 +1395,15 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				},
 				{
 					expectedQuery: ".*(timestamp >= '1722252000000000000' AND timestamp <= '1722259200000000000').* DESC LIMIT 11",
-					timestamps:    []uint64{1722253000000000000, 1722254000000000000, 1722255000000000000},
+					timestamps:    []uint64{1722255000000000000, 1722254000000000000, 1722253000000000000},
 				},
 				{
 					expectedQuery: ".*(timestamp >= '1722237600000000000' AND timestamp <= '1722252000000000000').* DESC LIMIT 8",
-					timestamps:    []uint64{1722237700000000000, 1722237800000000000, 1722237900000000000, 1722237910000000000, 1722237920000000000},
+					timestamps:    []uint64{1722237920000000000, 1722237910000000000, 1722237900000000000, 1722237800000000000, 1722237700000000000},
 				},
 				{
 					expectedQuery: ".*(timestamp >= '1722208800000000000' AND timestamp <= '1722237600000000000').* DESC LIMIT 3",
-					timestamps:    []uint64{1722208810000000000, 1722208820000000000, 1722208830000000000},
+					timestamps:    []uint64{1722208830000000000, 1722208820000000000, 1722208810000000000},
 				},
 			},
 			queryParams: queryParams{
@@ -1385,7 +1412,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				limit:  5,
 				offset: 6,
 			},
-			expectedTimestamps: []int64{1722237910000000000, 1722237920000000000, 1722208810000000000, 1722208820000000000, 1722208830000000000},
+			expectedTimestamps: []int64{1722237800000000000, 1722237700000000000, 1722208830000000000, 1722208820000000000, 1722208810000000000},
 		},
 		{
 			name:           "don't allow pagination to get more than 10k spans",
@@ -1412,8 +1439,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup mock
-			mock, err := cmock.NewClickHouseWithQueryMatcher(nil, &regexMatcher{})
-			require.NoError(t, err, "Failed to create ClickHouse mock")
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherRegexp)
 
 			// Configure mock responses
 			for _, response := range tc.queryResponses {
@@ -1422,22 +1448,18 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 					values = append(values, []any{&ts, &testName})
 				}
 				// if len(values) > 0 {
-				mock.ExpectQuery(response.expectedQuery).WillReturnRows(
+				telemetryStore.Mock().ExpectQuery(response.expectedQuery).WillReturnRows(
 					cmock.NewRows(cols, values),
 				)
-				// }
 			}
 
 			// Create reader and querier
 			reader := clickhouseReader.NewReaderFromClickhouseConnection(
-				mock,
 				options,
 				nil,
+				telemetryStore,
+				prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
 				"",
-				featureManager.StartManager(),
-				"",
-				true,
-				true,
 				time.Duration(time.Second),
 				nil,
 			)
@@ -1446,9 +1468,8 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				reader: reader,
 				builder: queryBuilder.NewQueryBuilder(
 					queryBuilder.QueryBuilderOptions{
-						BuildTraceQuery: tracesV3.PrepareTracesQuery,
+						BuildTraceQuery: tracesV4.PrepareTracesQuery,
 					},
-					featureManager.StartManager(),
 				),
 			}
 			// Update query parameters
@@ -1483,7 +1504,760 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 			}
 
 			// Verify mock expectations
-			err = mock.ExpectationsWereMet()
+			err = telemetryStore.Mock().ExpectationsWereMet()
+			require.NoError(t, err, "Mock expectations were not met")
+		})
+	}
+}
+
+func Test_querier_Traces_runWindowBasedListQueryAsc(t *testing.T) {
+	params := &v3.QueryRangeParamsV3{
+		Start: 1722171576000000000, // July 28, 2024 6:29:36 PM
+		End:   1722262800000000000, // July 29, 2024 7:50:00 PM
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeList,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					QueryName:         "A",
+					Expression:        "A",
+					DataSource:        v3.DataSourceTraces,
+					PageSize:          10,
+					Limit:             100,
+					StepInterval:      60,
+					AggregateOperator: v3.AggregateOperatorNoOp,
+					SelectColumns:     []v3.AttributeKey{{Key: "serviceName"}},
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items:    []v3.FilterItem{},
+					},
+					OrderBy: []v3.OrderBy{
+						{
+							ColumnName: "timestamp",
+							IsColumn:   true,
+							Key:        "timestamp",
+							Order:      "asc",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tsRanges := []utils.LogsListTsRange{
+		{
+			Start: 1722259200000000000, // July 29, 2024 6:50:00 PM
+			End:   1722262800000000000, // July 29, 2024 7:50:00 PM
+		},
+		{
+			Start: 1722252000000000000, // July 29, 2024 4:50:00 PM
+			End:   1722259200000000000, // July 29, 2024 6:50:00 PM
+		},
+		{
+			Start: 1722237600000000000, // July 29, 2024 12:50:00 PM
+			End:   1722252000000000000, // July 29, 2024 4:50:00 PM
+		},
+		{
+			Start: 1722208800000000000, // July 29, 2024 4:50:00 AM
+			End:   1722237600000000000, // July 29, 2024 12:50:00 PM
+		},
+		{
+			Start: 1722171576000000000, // July 28, 2024 6:29:36 PM
+			End:   1722208800000000000, // July 29, 2024 4:50:00 AM
+		},
+	}
+
+	type queryParams struct {
+		start  int64
+		end    int64
+		limit  uint64
+		offset uint64
+	}
+
+	type queryResponse struct {
+		expectedQuery string
+		timestamps    []uint64
+	}
+
+	// create test struct with moc data i.e array of timestamps, limit, offset and expected results
+	testCases := []struct {
+		name               string
+		queryResponses     []queryResponse
+		queryParams        queryParams
+		expectedTimestamps []int64
+		expectedError      bool
+	}{
+		{
+			name: "should return correct timestamps when querying within time window",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= '1722171576000000000' AND timestamp <= '1722208800000000000').* asc LIMIT 2",
+					timestamps:    []uint64{1722171576000000000, 1722171577000000000},
+				},
+			},
+			queryParams: queryParams{
+				start:  1722171576000000000,
+				end:    1722262800000000000,
+				limit:  2,
+				offset: 0,
+			},
+			expectedTimestamps: []int64{1722171576000000000, 1722171577000000000},
+		},
+		{
+			name: "all data not in first windows",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= '1722171576000000000' AND timestamp <= '1722208800000000000').* asc LIMIT 3",
+					timestamps:    []uint64{1722259200000000000, 1722259201000000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= '1722208800000000000' AND timestamp <= '1722237600000000000').* asc LIMIT 1",
+					timestamps:    []uint64{1722208800100000000},
+				},
+			},
+			queryParams: queryParams{
+				start:  1722171576000000000,
+				end:    1722262800000000000,
+				limit:  3,
+				offset: 0,
+			},
+			expectedTimestamps: []int64{1722259200000000000, 1722259201000000000, 1722208800100000000},
+		},
+		{
+			name: "query with offset and limit- data spread across multiple windows",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= '1722171576000000000' AND timestamp <= '1722208800000000000').* asc LIMIT 11",
+					timestamps:    []uint64{},
+				},
+				{
+					expectedQuery: ".*(timestamp >= '1722208800000000000' AND timestamp <= '1722237600000000000').* asc LIMIT 11",
+					timestamps:    []uint64{1722208801000000000, 1722208802000000000, 1722208803000000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= '1722237600000000000' AND timestamp <= '1722252000000000000').* asc LIMIT 8",
+					timestamps:    []uint64{1722237600010000000, 1722237600020000000, 1722237600030000000, 1722237600040000000, 1722237600050000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= '1722252000000000000' AND timestamp <= '1722259200000000000').* asc LIMIT 3",
+					timestamps:    []uint64{1722252000100000000, 1722252000200000000, 1722252000300000000},
+				},
+			},
+			queryParams: queryParams{
+				start:  1722171576000000000,
+				end:    1722262800000000000,
+				limit:  5,
+				offset: 6,
+			},
+			expectedTimestamps: []int64{1722237600040000000, 1722237600050000000, 1722252000100000000, 1722252000200000000, 1722252000300000000},
+		},
+	}
+
+	cols := []cmock.ColumnType{
+		{Name: "timestamp", Type: "UInt64"},
+		{Name: "name", Type: "String"},
+	}
+	testName := "name"
+
+	options := clickhouseReader.NewOptions("", "", "archiveNamespace")
+
+	// iterate over test data, create reader and run test
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup mock
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherRegexp)
+
+			// Configure mock responses
+			for _, response := range tc.queryResponses {
+				values := make([][]any, 0, len(response.timestamps))
+				for _, ts := range response.timestamps {
+					values = append(values, []any{&ts, &testName})
+				}
+				telemetryStore.Mock().ExpectQuery(response.expectedQuery).WillReturnRows(
+					cmock.NewRows(cols, values),
+				)
+			}
+
+			// Create reader and querier
+			reader := clickhouseReader.NewReaderFromClickhouseConnection(
+				options,
+				nil,
+				telemetryStore,
+				prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
+				"",
+				time.Duration(time.Second),
+				nil,
+			)
+
+			q := &querier{
+				reader: reader,
+				builder: queryBuilder.NewQueryBuilder(
+					queryBuilder.QueryBuilderOptions{
+						BuildTraceQuery: tracesV4.PrepareTracesQuery,
+					},
+				),
+			}
+			// Update query parameters
+			params.Start = tc.queryParams.start
+			params.End = tc.queryParams.end
+			params.CompositeQuery.BuilderQueries["A"].Limit = tc.queryParams.limit
+			params.CompositeQuery.BuilderQueries["A"].Offset = tc.queryParams.offset
+
+			// Create a copy of tsRanges before passing to the function
+			// required because tsRanges is modified in the function
+			tsRangesCopy := make([]utils.LogsListTsRange, len(tsRanges))
+			copy(tsRangesCopy, tsRanges)
+
+			results, errMap, err := q.runWindowBasedListQuery(context.Background(), params, tsRangesCopy)
+
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+
+			// Assertions
+			require.NoError(t, err, "Query execution failed")
+			require.Nil(t, errMap, "Unexpected error map in results")
+			require.Len(t, results, 1, "Expected exactly one result set")
+
+			result := results[0]
+			require.Equal(t, "A", result.QueryName, "Incorrect query name in results")
+			require.Len(t, result.List, len(tc.expectedTimestamps),
+				"Result count mismatch: got %d results, expected %d",
+				len(result.List), len(tc.expectedTimestamps))
+
+			for i, expected := range tc.expectedTimestamps {
+				require.Equal(t, expected, result.List[i].Timestamp.UnixNano(),
+					"Timestamp mismatch at index %d: got %d, expected %d",
+					i, result.List[i].Timestamp.UnixNano(), expected)
+			}
+
+			// Verify mock expectations
+			err = telemetryStore.Mock().ExpectationsWereMet()
+			require.NoError(t, err, "Mock expectations were not met")
+		})
+	}
+}
+
+func Test_querier_Logs_runWindowBasedListQueryDesc(t *testing.T) {
+	params := &v3.QueryRangeParamsV3{
+		Start: 1722171576000000000, // July 28, 2024 6:29:36 PM
+		End:   1722262800000000000, // July 29, 2024 7:50:00 PM
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeList,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					QueryName:         "A",
+					Expression:        "A",
+					DataSource:        v3.DataSourceLogs,
+					PageSize:          10,
+					Limit:             100,
+					StepInterval:      60,
+					AggregateOperator: v3.AggregateOperatorNoOp,
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items:    []v3.FilterItem{},
+					},
+					OrderBy: []v3.OrderBy{
+						{
+							ColumnName: "timestamp",
+							Order:      "DESC",
+						},
+						{
+							ColumnName: "id",
+							Order:      "DESC",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tsRanges := []utils.LogsListTsRange{
+		{
+			Start: 1722259200000000000, // July 29, 2024 6:50:00 PM
+			End:   1722262800000000000, // July 29, 2024 7:50:00 PM
+		},
+		{
+			Start: 1722252000000000000, // July 29, 2024 4:50:00 PM
+			End:   1722259200000000000, // July 29, 2024 6:50:00 PM
+		},
+		{
+			Start: 1722237600000000000, // July 29, 2024 12:50:00 PM
+			End:   1722252000000000000, // July 29, 2024 4:50:00 PM
+		},
+		{
+			Start: 1722208800000000000, // July 29, 2024 4:50:00 AM
+			End:   1722237600000000000, // July 29, 2024 12:50:00 PM
+		},
+		{
+			Start: 1722171576000000000, // July 28, 2024 6:29:36 PM
+			End:   1722208800000000000, // July 29, 2024 4:50:00 AM
+		},
+	}
+
+	type queryParams struct {
+		start    int64
+		end      int64
+		limit    uint64
+		offset   uint64
+		pageSize uint64
+	}
+
+	type queryResponse struct {
+		expectedQuery string
+		timestamps    []uint64
+	}
+
+	// create test struct with moc data i.e array of timestamps, limit, offset and expected results
+	testCases := []struct {
+		name               string
+		queryResponses     []queryResponse
+		queryParams        queryParams
+		expectedTimestamps []int64
+		expectedError      bool
+	}{
+		{
+			name: "should return correct timestamps when querying within time window",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= 1722259200000000000 AND timestamp <= 1722262800000000000).* DESC LIMIT 2",
+					timestamps:    []uint64{1722259400000000000, 1722259300000000000},
+				},
+			},
+			queryParams: queryParams{
+				start:    1722171576000000000,
+				end:      1722262800000000000,
+				pageSize: 2,
+				offset:   0,
+			},
+			expectedTimestamps: []int64{1722259400000000000, 1722259300000000000},
+		},
+		{
+			name: "all data not in first windows",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= 1722259200000000000 AND timestamp <= 1722262800000000000).* DESC LIMIT 3",
+					timestamps:    []uint64{1722259400000000000, 1722259300000000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722252000000000000 AND timestamp <= 1722259200000000000).* DESC LIMIT 1",
+					timestamps:    []uint64{1722253000000000000},
+				},
+			},
+			queryParams: queryParams{
+				start:    1722171576000000000,
+				end:      1722262800000000000,
+				pageSize: 3,
+				offset:   0,
+			},
+			expectedTimestamps: []int64{1722259400000000000, 1722259300000000000, 1722253000000000000},
+		},
+		{
+			name: "data in multiple windows",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= 1722259200000000000 AND timestamp <= 1722262800000000000).* DESC LIMIT 5",
+					timestamps:    []uint64{1722259400000000000, 1722259300000000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722252000000000000 AND timestamp <= 1722259200000000000).* DESC LIMIT 3",
+					timestamps:    []uint64{1722253000000000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722237600000000000 AND timestamp <= 1722252000000000000).* DESC LIMIT 2",
+					timestamps:    []uint64{1722237700000000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722208800000000000 AND timestamp <= 1722237600000000000).* DESC LIMIT 1",
+					timestamps:    []uint64{},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722171576000000000 AND timestamp <= 1722208800000000000).* DESC LIMIT 1",
+					timestamps:    []uint64{},
+				},
+			},
+			queryParams: queryParams{
+				start:    1722171576000000000,
+				end:      1722262800000000000,
+				pageSize: 5,
+				offset:   0,
+			},
+			expectedTimestamps: []int64{1722259400000000000, 1722259300000000000, 1722253000000000000, 1722237700000000000},
+		},
+		{
+			name: "query with offset",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= 1722259200000000000 AND timestamp <= 1722262800000000000).* DESC LIMIT 7",
+					timestamps:    []uint64{1722259230000000000, 1722259220000000000, 1722259210000000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722252000000000000 AND timestamp <= 1722259200000000000).* DESC LIMIT 4",
+					timestamps:    []uint64{1722255000000000000, 1722254000000000000, 1722253000000000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722237600000000000 AND timestamp <= 1722252000000000000).* DESC LIMIT 1",
+					timestamps:    []uint64{1722237700000000000},
+				},
+			},
+			queryParams: queryParams{
+				start:    1722171576000000000,
+				end:      1722262800000000000,
+				pageSize: 4,
+				offset:   3,
+			},
+			expectedTimestamps: []int64{1722255000000000000, 1722254000000000000, 1722253000000000000, 1722237700000000000},
+		},
+		{
+			name: "query with offset and limit- data spread across multiple windows",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= 1722259200000000000 AND timestamp <= 1722262800000000000).* DESC LIMIT 11",
+					timestamps:    []uint64{},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722252000000000000 AND timestamp <= 1722259200000000000).* DESC LIMIT 11",
+					timestamps:    []uint64{1722255000000000000, 1722254000000000000, 1722253000000000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722237600000000000 AND timestamp <= 1722252000000000000).* DESC LIMIT 8",
+					timestamps:    []uint64{1722237920000000000, 1722237910000000000, 1722237900000000000, 1722237800000000000, 1722237700000000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722208800000000000 AND timestamp <= 1722237600000000000).* DESC LIMIT 3",
+					timestamps:    []uint64{1722208830000000000, 1722208820000000000, 1722208810000000000},
+				},
+			},
+			queryParams: queryParams{
+				start:    1722171576000000000,
+				end:      1722262800000000000,
+				pageSize: 5,
+				offset:   6,
+			},
+			expectedTimestamps: []int64{1722237800000000000, 1722237700000000000, 1722208830000000000, 1722208820000000000, 1722208810000000000},
+		},
+		{
+			name:           "dont allow pagination to get more than speficied limit",
+			queryResponses: []queryResponse{},
+			queryParams: queryParams{
+				start:    1722171576000000000,
+				end:      1722262800000000000,
+				limit:    200,
+				offset:   210,
+				pageSize: 30,
+			},
+			expectedError: true,
+		},
+	}
+
+	cols := []cmock.ColumnType{
+		{Name: "timestamp", Type: "UInt64"},
+		{Name: "name", Type: "String"},
+	}
+	testName := "name"
+
+	options := clickhouseReader.NewOptions("", "", "archiveNamespace")
+
+	// iterate over test data, create reader and run test
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup mock
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherRegexp)
+
+			// Configure mock responses
+			for _, response := range tc.queryResponses {
+				values := make([][]any, 0, len(response.timestamps))
+				for _, ts := range response.timestamps {
+					values = append(values, []any{&ts, &testName})
+				}
+				telemetryStore.Mock().ExpectQuery(response.expectedQuery).WillReturnRows(
+					cmock.NewRows(cols, values),
+				)
+			}
+
+			// Create reader and querier
+			reader := clickhouseReader.NewReaderFromClickhouseConnection(
+				options,
+				nil,
+				telemetryStore,
+				prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
+				"",
+				time.Duration(time.Second),
+				nil,
+			)
+
+			q := &querier{
+				reader: reader,
+				builder: queryBuilder.NewQueryBuilder(
+					queryBuilder.QueryBuilderOptions{
+						BuildLogQuery: logsV4.PrepareLogsQuery,
+					},
+				),
+			}
+			// Update query parameters
+			params.Start = tc.queryParams.start
+			params.End = tc.queryParams.end
+			params.CompositeQuery.BuilderQueries["A"].Limit = tc.queryParams.limit
+			params.CompositeQuery.BuilderQueries["A"].Offset = tc.queryParams.offset
+			params.CompositeQuery.BuilderQueries["A"].PageSize = tc.queryParams.pageSize
+			// Execute query
+			results, errMap, err := q.runWindowBasedListQuery(context.Background(), params, tsRanges)
+
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+
+			// Assertions
+			require.NoError(t, err, "Query execution failed")
+			require.Nil(t, errMap, "Unexpected error map in results")
+			require.Len(t, results, 1, "Expected exactly one result set")
+
+			result := results[0]
+			require.Equal(t, "A", result.QueryName, "Incorrect query name in results")
+			require.Len(t, result.List, len(tc.expectedTimestamps),
+				"Result count mismatch: got %d results, expected %d",
+				len(result.List), len(tc.expectedTimestamps))
+
+			for i, expected := range tc.expectedTimestamps {
+				require.Equal(t, expected, result.List[i].Timestamp.UnixNano(),
+					"Timestamp mismatch at index %d: got %d, expected %d",
+					i, result.List[i].Timestamp.UnixNano(), expected)
+			}
+
+			// Verify mock expectations
+			err = telemetryStore.Mock().ExpectationsWereMet()
+			require.NoError(t, err, "Mock expectations were not met")
+		})
+	}
+}
+
+func Test_querier_Logs_runWindowBasedListQueryAsc(t *testing.T) {
+	params := &v3.QueryRangeParamsV3{
+		Start: 1722171576000000000, // July 28, 2024 6:29:36 PM
+		End:   1722262800000000000, // July 29, 2024 7:50:00 PM
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeList,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					QueryName:         "A",
+					Expression:        "A",
+					DataSource:        v3.DataSourceLogs,
+					PageSize:          10,
+					Limit:             100,
+					StepInterval:      60,
+					AggregateOperator: v3.AggregateOperatorNoOp,
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items:    []v3.FilterItem{},
+					},
+					OrderBy: []v3.OrderBy{
+						{
+							ColumnName: "timestamp",
+							Order:      "asc",
+						},
+						{
+							ColumnName: "id",
+							Order:      "asc",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tsRanges := []utils.LogsListTsRange{
+		{
+			Start: 1722259200000000000, // July 29, 2024 6:50:00 PM
+			End:   1722262800000000000, // July 29, 2024 7:50:00 PM
+		},
+		{
+			Start: 1722252000000000000, // July 29, 2024 4:50:00 PM
+			End:   1722259200000000000, // July 29, 2024 6:50:00 PM
+		},
+		{
+			Start: 1722237600000000000, // July 29, 2024 12:50:00 PM
+			End:   1722252000000000000, // July 29, 2024 4:50:00 PM
+		},
+		{
+			Start: 1722208800000000000, // July 29, 2024 4:50:00 AM
+			End:   1722237600000000000, // July 29, 2024 12:50:00 PM
+		},
+		{
+			Start: 1722171576000000000, // July 28, 2024 6:29:36 PM
+			End:   1722208800000000000, // July 29, 2024 4:50:00 AM
+		},
+	}
+
+	type queryParams struct {
+		start    int64
+		end      int64
+		limit    uint64
+		offset   uint64
+		pageSize uint64
+	}
+
+	type queryResponse struct {
+		expectedQuery string
+		timestamps    []uint64
+	}
+
+	// create test struct with moc data i.e array of timestamps, limit, offset and expected results
+	testCases := []struct {
+		name               string
+		queryResponses     []queryResponse
+		queryParams        queryParams
+		expectedTimestamps []int64
+		expectedError      bool
+	}{
+		{
+			name: "should return correct timestamps when querying within time window",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= 1722171576000000000 AND timestamp <= 1722208800000000000).* asc LIMIT 2",
+					timestamps:    []uint64{1722171576010000000, 1722171576020000000},
+				},
+			},
+			queryParams: queryParams{
+				start:    1722171576000000000,
+				end:      1722262800000000000,
+				pageSize: 2,
+				offset:   0,
+			},
+			expectedTimestamps: []int64{1722171576010000000, 1722171576020000000},
+		},
+		{
+			name: "all data not in first windows",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= 1722171576000000000 AND timestamp <= 1722208800000000000).* asc LIMIT 3",
+					timestamps:    []uint64{1722171576001000000, 1722171576002000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722208800000000000 AND timestamp <= 1722237600000000000).* asc LIMIT 1",
+					timestamps:    []uint64{1722208800100000000},
+				},
+			},
+			queryParams: queryParams{
+				start:    1722171576000000000,
+				end:      1722262800000000000,
+				pageSize: 3,
+				offset:   0,
+			},
+			expectedTimestamps: []int64{1722171576001000000, 1722171576002000000, 1722208800100000000},
+		},
+		{
+			name: "query with offset and limit- data spread across multiple windows",
+			queryResponses: []queryResponse{
+				{
+					expectedQuery: ".*(timestamp >= 1722171576000000000 AND timestamp <= 1722208800000000000).* asc LIMIT 11",
+					timestamps:    []uint64{},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722208800000000000 AND timestamp <= 1722237600000000000).* asc LIMIT 11",
+					timestamps:    []uint64{1722208800100000000, 1722208800200000000, 1722208800300000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722237600000000000 AND timestamp <= 1722252000000000000).* asc LIMIT 8",
+					timestamps:    []uint64{1722237600100000000, 1722237600200000000, 1722237600300000000, 1722237600400000000, 1722237600500000000},
+				},
+				{
+					expectedQuery: ".*(timestamp >= 1722252000000000000 AND timestamp <= 1722259200000000000).* asc LIMIT 3",
+					timestamps:    []uint64{1722252000000100000, 1722252000000200000, 1722252000000300000},
+				},
+			},
+			queryParams: queryParams{
+				start:    1722171576000000000,
+				end:      1722262800000000000,
+				pageSize: 5,
+				offset:   6,
+			},
+			expectedTimestamps: []int64{1722237600400000000, 1722237600500000000, 1722252000000100000, 1722252000000200000, 1722252000000300000},
+		},
+	}
+
+	cols := []cmock.ColumnType{
+		{Name: "timestamp", Type: "UInt64"},
+		{Name: "name", Type: "String"},
+	}
+	testName := "name"
+
+	options := clickhouseReader.NewOptions("", "", "archiveNamespace")
+
+	// iterate over test data, create reader and run test
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup mock
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherRegexp)
+
+			// Configure mock responses
+			for _, response := range tc.queryResponses {
+				values := make([][]any, 0, len(response.timestamps))
+				for _, ts := range response.timestamps {
+					values = append(values, []any{&ts, &testName})
+				}
+				telemetryStore.Mock().ExpectQuery(response.expectedQuery).WillReturnRows(
+					cmock.NewRows(cols, values),
+				)
+			}
+
+			// Create reader and querier
+			reader := clickhouseReader.NewReaderFromClickhouseConnection(
+				options,
+				nil,
+				telemetryStore,
+				prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
+				"",
+				time.Duration(time.Second),
+				nil,
+			)
+
+			q := &querier{
+				reader: reader,
+				builder: queryBuilder.NewQueryBuilder(
+					queryBuilder.QueryBuilderOptions{
+						BuildLogQuery: logsV4.PrepareLogsQuery,
+					},
+				),
+			}
+			// Update query parameters
+			params.Start = tc.queryParams.start
+			params.End = tc.queryParams.end
+			params.CompositeQuery.BuilderQueries["A"].Limit = tc.queryParams.limit
+			params.CompositeQuery.BuilderQueries["A"].Offset = tc.queryParams.offset
+			params.CompositeQuery.BuilderQueries["A"].PageSize = tc.queryParams.pageSize
+
+			// Create a copy of tsRanges before passing to the function
+			// required because tsRanges is modified in the function
+			tsRangesCopy := make([]utils.LogsListTsRange, len(tsRanges))
+			copy(tsRangesCopy, tsRanges)
+			// Execute query
+			results, errMap, err := q.runWindowBasedListQuery(context.Background(), params, tsRangesCopy)
+
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+
+			// Assertions
+			require.NoError(t, err, "Query execution failed")
+			require.Nil(t, errMap, "Unexpected error map in results")
+			require.Len(t, results, 1, "Expected exactly one result set")
+
+			result := results[0]
+			require.Equal(t, "A", result.QueryName, "Incorrect query name in results")
+			require.Len(t, result.List, len(tc.expectedTimestamps),
+				"Result count mismatch: got %d results, expected %d",
+				len(result.List), len(tc.expectedTimestamps))
+
+			for i, expected := range tc.expectedTimestamps {
+				require.Equal(t, expected, result.List[i].Timestamp.UnixNano(),
+					"Timestamp mismatch at index %d: got %d, expected %d",
+					i, result.List[i].Timestamp.UnixNano(), expected)
+			}
+
+			// Verify mock expectations
+			err = telemetryStore.Mock().ExpectationsWereMet()
 			require.NoError(t, err, "Mock expectations were not met")
 		})
 	}

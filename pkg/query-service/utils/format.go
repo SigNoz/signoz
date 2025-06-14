@@ -233,8 +233,9 @@ func ClickHouseFormattedValue(v interface{}) string {
 
 func ClickHouseFormattedMetricNames(v interface{}) string {
 	if name, ok := v.(string); ok {
-		if newName, ok := metrics.MetricsUnderTransition[name]; ok {
-			return ClickHouseFormattedValue([]interface{}{name, newName})
+		transitionedMetrics := metrics.GetTransitionedMetric(name, !constants.IsDotMetricsEnabled)
+		if transitionedMetrics != name {
+			return ClickHouseFormattedValue([]interface{}{name, transitionedMetrics})
 		} else {
 			return ClickHouseFormattedValue([]interface{}{name})
 		}
@@ -303,7 +304,7 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 		typeName = constants.Attributes
 	}
 
-	if typeName != string(v3.AttributeKeyTypeResource) {
+	if typeName != string(v3.AttributeKeyTypeResource) && len(typeName) > 0 {
 		typeName = typeName[:len(typeName)-1]
 	}
 
@@ -319,7 +320,7 @@ func GetClickhouseColumnNameV2(typeName string, dataType, field string) string {
 		typeName = constants.Attributes
 	}
 
-	if typeName != string(v3.AttributeKeyTypeResource) {
+	if typeName != string(v3.AttributeKeyTypeResource) && len(typeName) > 0 {
 		typeName = typeName[:len(typeName)-1]
 	}
 

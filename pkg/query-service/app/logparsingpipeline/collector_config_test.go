@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -230,12 +231,14 @@ func TestPipelineAliasCollisionsDontResultInDuplicateCollectorProcessors(t *test
                 - memory
       `)
 
-	makeTestPipeline := func(name string, alias string) Pipeline {
-		return Pipeline{
-			OrderId: 1,
-			Name:    name,
-			Alias:   alias,
-			Enabled: true,
+	makeTestPipeline := func(name string, alias string) pipelinetypes.GettablePipeline {
+		return pipelinetypes.GettablePipeline{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				OrderID: 1,
+				Name:    name,
+				Alias:   alias,
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -250,7 +253,7 @@ func TestPipelineAliasCollisionsDontResultInDuplicateCollectorProcessors(t *test
 					},
 				},
 			},
-			Config: []PipelineOperator{
+			Config: []pipelinetypes.PipelineOperator{
 				{
 					ID:        "regex",
 					Type:      "regex_parser",
@@ -264,7 +267,7 @@ func TestPipelineAliasCollisionsDontResultInDuplicateCollectorProcessors(t *test
 		}
 	}
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelinetypes.GettablePipeline{
 		makeTestPipeline("test pipeline 1", "pipeline-alias"),
 		makeTestPipeline("test pipeline 2", "pipeline-alias"),
 	}
@@ -299,12 +302,14 @@ func TestPipelineAliasCollisionsDontResultInDuplicateCollectorProcessors(t *test
 func TestPipelineRouterWorksEvenIfFirstOpIsDisabled(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelinetypes.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -319,7 +324,7 @@ func TestPipelineRouterWorksEvenIfFirstOpIsDisabled(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{
+			Config: []pipelinetypes.PipelineOperator{
 				{
 					OrderId: 1,
 					ID:      "add",
@@ -370,12 +375,14 @@ func TestPipelineRouterWorksEvenIfFirstOpIsDisabled(t *testing.T) {
 func TestPipeCharInAliasDoesntBreakCollectorConfig(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelinetypes.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "test | pipeline",
-			Alias:   "test|pipeline",
-			Enabled: true,
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				OrderID: 1,
+				Name:    "test | pipeline",
+				Alias:   "test|pipeline",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -390,7 +397,7 @@ func TestPipeCharInAliasDoesntBreakCollectorConfig(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{
+			Config: []pipelinetypes.PipelineOperator{
 				{
 					OrderId: 1,
 					ID:      "add",

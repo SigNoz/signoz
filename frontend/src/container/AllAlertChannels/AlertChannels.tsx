@@ -7,22 +7,21 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
-import { Channels, PayloadProps } from 'types/api/channels/getAll';
+import { Channels } from 'types/api/channels/getAll';
 
 import Delete from './Delete';
 
 function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const { t } = useTranslation(['channels']);
 	const { notifications } = useNotifications();
-	const [channels, setChannels] = useState<Channels[]>(allChannels);
 	const { user } = useAppContext();
 	const [action] = useComponentPermission(['new_alert_action'], user.role);
 
 	const onClickEditHandler = useCallback((id: string) => {
-		history.replace(
+		history.push(
 			generatePath(ROUTES.CHANNELS_EDIT, {
 				id,
 			}),
@@ -56,19 +55,24 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 					<Button onClick={(): void => onClickEditHandler(id)} type="link">
 						{t('column_channel_edit')}
 					</Button>
-					<Delete id={id} setChannels={setChannels} notifications={notifications} />
+					<Delete id={id} notifications={notifications} />
 				</>
 			),
 		});
 	}
 
 	return (
-		<ResizeTable columns={columns} dataSource={channels} rowKey="id" bordered />
+		<ResizeTable
+			columns={columns}
+			dataSource={allChannels}
+			rowKey="id"
+			bordered
+		/>
 	);
 }
 
 interface AlertChannelsProps {
-	allChannels: PayloadProps;
+	allChannels: Channels[];
 }
 
 export default AlertChannels;

@@ -28,12 +28,12 @@ type SDK struct {
 
 // New creates a new Instrumentation instance with configured providers.
 // It sets up logging, tracing, and metrics based on the provided configuration.
-func New(ctx context.Context, build version.Build, cfg Config) (*SDK, error) {
+func New(ctx context.Context, cfg Config, build version.Build, serviceName string) (*SDK, error) {
 	// Set default resource attributes if not provided
 	if cfg.Resource.Attributes == nil {
 		cfg.Resource.Attributes = map[string]any{
-			string(semconv.ServiceNameKey):    build.Name,
-			string(semconv.ServiceVersionKey): build.Version,
+			string(semconv.ServiceNameKey):    serviceName,
+			string(semconv.ServiceVersionKey): build.Version(),
 		}
 	}
 

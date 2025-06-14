@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	"github.com/stretchr/testify/require"
@@ -16,12 +17,14 @@ import (
 func TestPipelinePreview(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelinetypes.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -36,7 +39,7 @@ func TestPipelinePreview(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{
+			Config: []pipelinetypes.PipelineOperator{
 				{
 					OrderId: 1,
 					ID:      "add",
@@ -49,10 +52,12 @@ func TestPipelinePreview(t *testing.T) {
 			},
 		},
 		{
-			OrderId: 2,
-			Name:    "pipeline2",
-			Alias:   "pipeline2",
-			Enabled: true,
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				OrderID: 2,
+				Name:    "pipeline2",
+				Alias:   "pipeline2",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -67,7 +72,7 @@ func TestPipelinePreview(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{
+			Config: []pipelinetypes.PipelineOperator{
 				{
 					OrderId: 1,
 					ID:      "add",
@@ -146,12 +151,14 @@ func TestPipelinePreview(t *testing.T) {
 func TestGrokParsingProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelinetypes.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -166,7 +173,7 @@ func TestGrokParsingProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{
+			Config: []pipelinetypes.PipelineOperator{
 				{
 					OrderId:   1,
 					ID:        "grok",
