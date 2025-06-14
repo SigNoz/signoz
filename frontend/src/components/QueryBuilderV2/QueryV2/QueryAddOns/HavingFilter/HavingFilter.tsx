@@ -225,7 +225,7 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 					},
 				],
 				defaultKeymap: true,
-				closeOnBlur: false,
+				closeOnBlur: true,
 				maxRenderedOptions: 200,
 				activateOnTyping: true,
 			}),
@@ -269,6 +269,9 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 					}}
 					onBlur={(): void => {
 						setIsFocused(false);
+						if (editorRef.current) {
+							closeCompletion(editorRef.current);
+						}
 					}}
 				/>
 				<Button
