@@ -790,16 +790,28 @@ function QuerySearch(): JSX.Element {
 	}, [queryKeySuggestions]);
 
 	useEffect(() => {
-		if (!queryContext?.isInValue) return;
+		if (!queryContext) return;
 
-		const { keyToken, currentToken } = queryContext;
-		const key = keyToken || currentToken;
-
-		// Only fetch if needed and if we have a valid key
-		if (key && key !== activeKey && !isLoadingSuggestions) {
-			fetchValueSuggestions(key);
+		// Trigger suggestions based on context
+		if (editorRef.current) {
+			// Small delay to ensure the context is fully updated
+			setTimeout(() => {
+				if (editorRef.current) {
+					startCompletion(editorRef.current);
+				}
+			}, 50);
 		}
-		// Use only the specific properties of queryContext we need to avoid unnecessary renders
+
+		// Handle value suggestions for value context
+		if (queryContext.isInValue) {
+			const { keyToken, currentToken } = queryContext;
+			const key = keyToken || currentToken;
+
+			// Only fetch if needed and if we have a valid key
+			if (key && key !== activeKey && !isLoadingSuggestions) {
+				fetchValueSuggestions(key);
+			}
+		}
 	}, [queryContext, activeKey, isLoadingSuggestions, fetchValueSuggestions]);
 
 	return (
@@ -964,7 +976,7 @@ function QuerySearch(): JSX.Element {
 				</Card>
 			)}
 
-			{/* {queryContext && (
+			{queryContext && (
 				<Card size="small" title="Current Context" className="query-context">
 					<div className="context-details">
 						<Space direction="vertical" size={4}>
@@ -1004,7 +1016,7 @@ function QuerySearch(): JSX.Element {
 						</Space>
 					</div>
 				</Card>
-			)} */}
+			)}
 		</div>
 	);
 }
