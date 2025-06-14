@@ -6,7 +6,6 @@
 	transition: left 0.2s linear;
 
 	border-radius: 6px;
-	border: 1px solid var(--Slate-500, #161922);
 	background: var(--Ink-300, #16181d);
 
 	display: flex;
@@ -64,6 +63,7 @@
 .explorer-options {
 	padding: 10px 12px;
 	background: var(--Ink-300, #16181d);
+	border-radius: 2px;
 
 	cursor: default;
 	display: flex;
@@ -232,6 +232,10 @@
 }
 
 .lightMode {
+	.explorer-options-container {
+		background: var(--bg-vanilla-100);
+	}
+
 	.explorer-options {
 		background: transparent;
 		box-shadow: none;
