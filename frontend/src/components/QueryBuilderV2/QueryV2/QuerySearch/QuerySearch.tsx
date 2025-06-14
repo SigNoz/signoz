@@ -765,13 +765,11 @@ function QuerySearch(): JSX.Element {
 				theme={copilot}
 				onChange={handleChange}
 				onUpdate={handleUpdate}
-				autoFocus
-				placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
 				extensions={[
 					autocompletion({
 						override: [autoSuggestions],
 						defaultKeymap: true,
-						closeOnBlur: false,
+						closeOnBlur: true,
 						activateOnTyping: true,
 						maxRenderedOptions: 50,
 					}),
@@ -780,9 +778,11 @@ function QuerySearch(): JSX.Element {
 					stopEventsExtension,
 					disallowMultipleSpaces,
 				]}
+				placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
 				basicSetup={{
 					lineNumbers: false,
 				}}
+				autoFocus
 			/>
 
 			{query && (
@@ -864,7 +864,7 @@ function QuerySearch(): JSX.Element {
 				</Card>
 			)}
 
-			{queryContext && (
+			{/* {queryContext && (
 				<Card size="small" title="Current Context" className="query-context">
 					<div className="context-details">
 						<Space direction="vertical" size={4}>
@@ -904,7 +904,7 @@ function QuerySearch(): JSX.Element {
 						</Space>
 					</div>
 				</Card>
-			)}
+			)} */}
 		</div>
 	);
 }

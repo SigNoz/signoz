@@ -156,10 +156,10 @@ export const QueryV2 = memo(function QueryV2({
 							<QuerySearch />
 
 							{showSpanScopeSelector && (
-								<>
+								<div className="traces-search-filter-container">
 									<div className="traces-search-filter-in">in</div>
 									<SpanScopeSelector queryName={query.queryName} />
-								</>
+								</div>
 							)}
 						</div>
 					</div>

@@ -423,6 +423,7 @@ function QueryAggregationSelect(): JSX.Element {
 					chipPlugin,
 					aggregatorAutocomplete,
 					javascript({ jsx: false, typescript: false }),
+					EditorView.lineWrapping,
 					keymap.of([
 						...completionKeymap,
 						{
