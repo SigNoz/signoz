@@ -104,7 +104,7 @@ func SuggestCorrection(input string, knownFieldKeys []string) (string, bool) {
 	}
 
 	if bestSimilarity >= typoSuggestionThreshold {
-		return fmt.Sprintf("did you mean: %s?", bestMatch), true
+		return fmt.Sprintf("did you mean: '%s'?", bestMatch), true
 	}
 
 	return "", false

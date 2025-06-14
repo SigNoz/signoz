@@ -328,6 +328,8 @@ type MetricAggregation struct {
 	TableHints *metrictypes.MetricTableHints `json:"-"`
 	// value filter to apply to the query
 	ValueFilter *metrictypes.MetricValueFilter `json:"-"`
+	// reduce to operator for metric scalar requests
+	ReduceTo ReduceTo `json:"reduceTo,omitempty"`
 }
 
 type Filter struct {
@@ -379,7 +381,7 @@ type FunctionArg struct {
 	// name of the argument
 	Name string `json:"name,omitempty"`
 	// value of the argument
-	Value string `json:"value"`
+	Value any `json:"value"`
 }
 
 type Function struct {

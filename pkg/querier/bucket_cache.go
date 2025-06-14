@@ -117,7 +117,7 @@ func (bc *bucketCache) GetMissRanges(
 }
 
 // Put stores fresh query results in the cache
-func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, fresh *qbtypes.Result) {
+func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result) {
 	// Get query window
 	startMs, endMs := q.Window()
 
@@ -159,8 +159,36 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 		return
 	}
 
-	// Convert trimmed result to buckets
-	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, startMs, cachableEndMs)
+	// Adjust start and end times to only cache complete intervals
+	cachableStartMs := startMs
+	stepMs := uint64(step.Duration.Milliseconds())
+
+	// If we have a step interval, adjust boundaries to only cache complete intervals
+	if stepMs > 0 {
+		// If start is not aligned, round up to next step boundary (first complete interval)
+		if startMs%stepMs != 0 {
+			cachableStartMs = ((startMs / stepMs) + 1) * stepMs
+		}
+
+		// If end is not aligned, round down to previous step boundary (last complete interval)
+		if cachableEndMs%stepMs != 0 {
+			cachableEndMs = (cachableEndMs / stepMs) * stepMs
+		}
+
+		// If after adjustment we have no complete intervals, don't cache
+		if cachableStartMs >= cachableEndMs {
+			bc.logger.DebugContext(ctx, "no complete intervals to cache",
+				"original_start", startMs,
+				"original_end", endMs,
+				"adjusted_start", cachableStartMs,
+				"adjusted_end", cachableEndMs,
+				"step", stepMs)
+			return
+		}
+	}
+
+	// Convert trimmed result to buckets with adjusted boundaries
+	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs)
 
 	// If no fresh buckets and no existing data, don't cache
 	if len(freshBuckets) == 0 && len(existingData.Buckets) == 0 {
@@ -485,6 +513,12 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*cac
 				}
 
 				if existingSeries, ok := seriesMap[key]; ok {
+					// Merge values, avoiding duplicate timestamps
+					timestampMap := make(map[int64]bool)
+					for _, v := range existingSeries.Values {
+						timestampMap[v.Timestamp] = true
+					}
+
 					// Pre-allocate capacity for merged values
 					newCap := len(existingSeries.Values) + len(series.Values)
 					if cap(existingSeries.Values) < newCap {
@@ -492,7 +526,13 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*cac
 						copy(newValues, existingSeries.Values)
 						existingSeries.Values = newValues
 					}
-					existingSeries.Values = append(existingSeries.Values, series.Values...)
+
+					// Only add values with new timestamps
+					for _, v := range series.Values {
+						if !timestampMap[v.Timestamp] {
+							existingSeries.Values = append(existingSeries.Values, v)
+						}
+					}
 				} else {
 					// New series
 					seriesMap[key] = series
@@ -697,7 +737,7 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 	switch result.Type {
 	case qbtypes.RequestTypeTimeSeries:
 		// Trim time series data
-		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
+		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && tsData != nil {
 			trimmedData := &qbtypes.TimeSeriesData{
 				QueryName: tsData.QueryName,
 			}

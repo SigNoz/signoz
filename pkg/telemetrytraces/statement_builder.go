@@ -179,12 +179,18 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, &orderBy.Key.TelemetryFieldKey, keys)
+		if err != nil {
+			return nil, err
+		}
+		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
 	}
 
 	// Add limit and offset
 	if query.Limit > 0 {
 		sb.Limit(query.Limit)
+	} else {
+		sb.Limit(100)
 	}
 
 	if query.Offset > 0 {
