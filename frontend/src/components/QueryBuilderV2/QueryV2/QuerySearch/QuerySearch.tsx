@@ -1,6 +1,6 @@
 import './QuerySearch.styles.scss';
 
-import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
+import { CheckCircleFilled } from '@ant-design/icons';
 import {
 	autocompletion,
 	closeCompletion,
@@ -10,15 +10,18 @@ import {
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
+import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, {
 	EditorView,
 	Extension,
 	keymap,
 } from '@uiw/react-codemirror';
-import { Card, Collapse, Space, Tag, Typography } from 'antd';
+import { Button, Card, Collapse, Popover, Tag } from 'antd';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
+import cx from 'classnames';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
+import { TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	IDetailedError,
@@ -31,7 +34,6 @@ import { getQueryContextAtCursor } from 'utils/queryContextUtils';
 
 import { queryExamples } from './constants';
 
-const { Text } = Typography;
 const { Panel } = Collapse;
 
 // Custom extension to stop events
@@ -336,7 +338,14 @@ function QuerySearch(): JSX.Element {
 
 	const handleQueryChange = useCallback(async (newQuery: string) => {
 		setQuery(newQuery);
+	}, []);
 
+	const handleChange = (value: string): void => {
+		setQuery(value);
+		handleQueryChange(value);
+	};
+
+	const handleQueryValidation = (newQuery: string): void => {
 		try {
 			const validationResponse = validateQuery(newQuery);
 			setValidation(validationResponse);
@@ -347,11 +356,14 @@ function QuerySearch(): JSX.Element {
 				errors: [error as IDetailedError],
 			});
 		}
-	}, []);
+	};
 
-	const handleChange = (value: string): void => {
-		setQuery(value);
-		handleQueryChange(value);
+	const handleBlur = (): void => {
+		handleQueryValidation(query);
+		setIsFocused(false);
+		if (editorRef.current) {
+			closeCompletion(editorRef.current);
+		}
 	};
 
 	const handleExampleClick = (exampleQuery: string): void => {
@@ -854,86 +866,94 @@ function QuerySearch(): JSX.Element {
 				</div>
 			)}
 
-			<CodeMirror
-				value={query}
-				theme={copilot}
-				onChange={handleChange}
-				onUpdate={handleUpdate}
-				extensions={[
-					autocompletion({
-						override: [autoSuggestions],
-						defaultKeymap: true,
-						closeOnBlur: true,
-						activateOnTyping: true,
-						maxRenderedOptions: 50,
-					}),
-					javascript({ jsx: false, typescript: false }),
-					EditorView.lineWrapping,
-					stopEventsExtension,
-					disallowMultipleSpaces,
-					keymap.of([
-						...completionKeymap,
-						{
-							key: 'Escape',
-							run: closeCompletion,
-						},
-					]),
-				]}
-				placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
-				basicSetup={{
-					lineNumbers: false,
-				}}
-				onFocus={(): void => {
-					setIsFocused(true);
-					if (editorRef.current) {
-						startCompletion(editorRef.current);
-					}
-				}}
-				onBlur={(): void => {
-					setIsFocused(false);
-					if (editorRef.current) {
-						closeCompletion(editorRef.current);
-					}
-				}}
-			/>
+			<div className="query-where-clause-editor-container">
+				<CodeMirror
+					value={query}
+					theme={copilot}
+					onChange={handleChange}
+					onUpdate={handleUpdate}
+					className={cx('query-where-clause-editor', {
+						isValid: validation.isValid === true,
+						hasErrors: validation.errors.length > 0,
+					})}
+					extensions={[
+						autocompletion({
+							override: [autoSuggestions],
+							defaultKeymap: true,
+							closeOnBlur: true,
+							activateOnTyping: true,
+							maxRenderedOptions: 50,
+						}),
+						javascript({ jsx: false, typescript: false }),
+						EditorView.lineWrapping,
+						stopEventsExtension,
+						disallowMultipleSpaces,
+						keymap.of([
+							...completionKeymap,
+							{
+								key: 'Escape',
+								run: closeCompletion,
+							},
+						]),
+					]}
+					placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
+					basicSetup={{
+						lineNumbers: false,
+					}}
+					onFocus={(): void => {
+						setIsFocused(true);
+						if (editorRef.current) {
+							startCompletion(editorRef.current);
+						}
+					}}
+					onBlur={handleBlur}
+				/>
 
-			{query && (
-				<div className="query-text-preview-container">
-					<Space direction="vertical" size={4}>
-						<Text className="query-text-preview-title">searchExpr</Text>
-						<Text className="query-text-preview">{query}</Text>
-					</Space>
-
-					<div className="query-validation">
-						<div className="query-validation-status">
-							<Text>Status:</Text>
-							<div className={validation.isValid ? 'valid' : 'invalid'}>
-								{validation.isValid ? (
-									<Space>
-										<CheckCircleFilled /> Valid
-									</Space>
-								) : (
-									<Space>
-										<CloseCircleFilled /> Invalid
-									</Space>
-								)}
-							</div>
-						</div>
-
-						<div className="query-validation-errors">
-							{validation.errors.map((error) => (
-								<div key={error.message} className="query-validation-error">
-									<div className="query-validation-error-line">
-										{error.line}:{error.column}
+				{query && validation.isValid === false && !isFocused && (
+					<div
+						className={cx('query-status-container', {
+							hasErrors: validation.errors.length > 0,
+						})}
+					>
+						<Popover
+							placement="bottomRight"
+							showArrow={false}
+							content={
+								<div className="query-status-content">
+									<div className="query-status-content-header">
+										<div className="query-validation">
+											<div className="query-validation-errors">
+												{validation.errors.map((error) => (
+													<div key={error.message} className="query-validation-error">
+														<div className="query-validation-error">
+															{error.line}:{error.column} - {error.message}
+														</div>
+													</div>
+												))}
+											</div>
+										</div>
 									</div>
-
-									<div className="query-validation-error-message">{error.message}</div>
 								</div>
-							))}
-						</div>
+							}
+							overlayClassName="query-status-popover"
+						>
+							{validation.isValid ? (
+								<Button
+									type="text"
+									icon={<CheckCircleFilled />}
+									className="periscope-btn ghost"
+								/>
+							) : (
+								<Button
+									type="text"
+									icon={<TriangleAlert size={14} color={Color.BG_CHERRY_500} />}
+									className="periscope-btn ghost"
+								/>
+							)}
+						</Popover>
 					</div>
-				</div>
-			)}
+				)}
+			</div>
 
 			{showExamples && (
 				<Card size="small" className="query-examples-card">
@@ -976,7 +996,7 @@ function QuerySearch(): JSX.Element {
 				</Card>
 			)}
 
-			{queryContext && (
+			{/* {queryContext && (
 				<Card size="small" title="Current Context" className="query-context">
 					<div className="context-details">
 						<Space direction="vertical" size={4}>
@@ -1016,7 +1036,7 @@ function QuerySearch(): JSX.Element {
 						</Space>
 					</div>
 				</Card>
-			)}
+			)} */}
 		</div>
 	);
 }
