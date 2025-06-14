@@ -183,7 +183,7 @@ func TestNoCollectorErrorsFromSeverityParserForMismatchedLogs(t *testing.T) {
 				Enabled:   true,
 				Name:      "severity parser",
 				ParseFrom: "attributes.test_severity",
-				SeverityMapping: map[string][]string{
+				Mapping: map[string][]string{
 					"debug": {"debug"},
 				},
 				OverwriteSeverityText: true,
@@ -199,7 +199,7 @@ func TestNoCollectorErrorsFromSeverityParserForMismatchedLogs(t *testing.T) {
 				Enabled:   true,
 				Name:      "severity parser",
 				ParseFrom: "attributes.test_severity",
-				SeverityMapping: map[string][]string{
+				Mapping: map[string][]string{
 					"debug": {"debug"},
 				},
 				OverwriteSeverityText: true,

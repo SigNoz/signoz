@@ -79,6 +79,21 @@ func Wrapf(cause error, t typ, code Code, format string, args ...interface{}) *b
 	}
 }
 
+// Rewrap wraps an existing base error with a new formatted message.
+// It is used when the original error already contains type and code.
+func ReWrapf(cause error, format string, args ...interface{}) *base {
+	t, c, _, e, u, a := Unwrapb(cause)
+
+	return &base{
+		t: t,
+		c: c,
+		m: fmt.Sprintf(format, args...),
+		e: e,
+		u: u,
+		a: a,
+	}
+}
+
 // WithUrl adds a url to the base error and returns a new base error.
 func (b *base) WithUrl(u string) *base {
 	return &base{
@@ -167,5 +182,13 @@ func WrapInvalidInputf(cause error, code Code, format string, args ...interface{
 }
 
 func NewInvalidInputf(code Code, format string, args ...interface{}) *base {
+	return Newf(TypeInvalidInput, code, format, args...)
+}
+
+func WrapUnexpectedf(cause error, code Code, format string, args ...interface{}) *base {
+	return Wrapf(cause, TypeInvalidInput, code, format, args...)
+}
+
+func NewUnexpectedf(code Code, format string, args ...interface{}) *base {
 	return Newf(TypeInvalidInput, code, format, args...)
 }
