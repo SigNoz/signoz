@@ -1,10 +1,3 @@
-/* eslint-disable class-methods-use-this */
-/* eslint-disable max-classes-per-file */
-/* eslint-disable sonarjs/no-collapsible-if */
-/* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable no-nested-ternary */
-
 import './QuerySearch.styles.scss';
 
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
@@ -15,7 +8,6 @@ import {
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
-import { ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, { EditorView, Extension } from '@uiw/react-codemirror';
 import { Card, Collapse, Space, Tag, Typography } from 'antd';
@@ -31,88 +23,10 @@ import { QueryKeySuggestionsProps } from 'types/api/querySuggestions/types';
 import { queryOperatorSuggestions, validateQuery } from 'utils/antlrQueryUtils';
 import { getQueryContextAtCursor } from 'utils/queryContextUtils';
 
+import { queryExamples } from './constants';
+
 const { Text } = Typography;
 const { Panel } = Collapse;
-
-const queryExamples = [
-	{
-		label: 'Basic Query',
-		query: "status = 'error'",
-		description: 'Find all errors',
-	},
-	{
-		label: 'Multiple Conditions',
-		query: "status = 'error' AND service = 'frontend'",
-		description: 'Find errors from frontend service',
-	},
-	{
-		label: 'IN Operator',
-		query: "status IN ['error', 'warning']",
-		description: 'Find items with specific statuses',
-	},
-	{
-		label: 'Function Usage',
-		query: "HAS(service, 'frontend')",
-		description: 'Use HAS function',
-	},
-	{
-		label: 'Numeric Comparison',
-		query: 'duration > 1000',
-		description: 'Find items with duration greater than 1000ms',
-	},
-	{
-		label: 'Range Query',
-		query: 'duration BETWEEN 100 AND 1000',
-		description: 'Find items with duration between 100ms and 1000ms',
-	},
-	{
-		label: 'Pattern Matching',
-		query: "service LIKE 'front%'",
-		description: 'Find services starting with "front"',
-	},
-	{
-		label: 'Complex Conditions',
-		query: "(status = 'error' OR status = 'warning') AND service = 'frontend'",
-		description: 'Find errors or warnings from frontend service',
-	},
-	{
-		label: 'Multiple Functions',
-		query: "HAS(service, 'frontend') AND HAS(status, 'error')",
-		description: 'Use multiple HAS functions',
-	},
-	{
-		label: 'NOT Operator',
-		query: "NOT status = 'success'",
-		description: 'Find items that are not successful',
-	},
-	{
-		label: 'Array Contains',
-		query: "tags CONTAINS 'production'",
-		description: 'Find items with production tag',
-	},
-	{
-		label: 'Regex Pattern',
-		query: "service REGEXP '^prod-.*'",
-		description: 'Find services matching regex pattern',
-	},
-	{
-		label: 'Null Check',
-		query: 'error IS NULL',
-		description: 'Find items without errors',
-	},
-	{
-		label: 'Multiple Attributes',
-		query:
-			"service = 'frontend' AND environment = 'production' AND status = 'error'",
-		description: 'Find production frontend errors',
-	},
-	{
-		label: 'Nested Conditions',
-		query:
-			"(service = 'frontend' OR service = 'backend') AND (status = 'error' OR status = 'warning')",
-		description: 'Find errors or warnings from frontend or backend',
-	},
-];
 
 // Custom extension to stop events
 const stopEventsExtension = EditorView.domEventHandlers({
@@ -127,29 +41,6 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
-// Custom extension to analyze the context at the cursor position
-const contextAwarePlugin = (
-	analyzeContext: (view: EditorView, pos: number) => void,
-): ViewPlugin<{ update: (update: ViewUpdate) => void }> =>
-	ViewPlugin.fromClass(
-		class {
-			constructor(view: EditorView) {
-				this.analyze(view);
-			}
-
-			update(update: ViewUpdate): void {
-				if (update.selectionSet && !update.docChanged) {
-					this.analyze(update.view);
-				}
-			}
-
-			analyze(view: EditorView): void {
-				const pos = view.state.selection.main.head;
-				analyzeContext(view, pos);
-			}
-		},
-	);
-
 const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
 	(view, from, to, text) => {
 		const currentLine = view.state.doc.lineAt(from);
@@ -162,6 +53,7 @@ const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
 	},
 );
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function QuerySearch(): JSX.Element {
 	const [query, setQuery] = useState<string>('');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
@@ -257,92 +149,6 @@ function QuerySearch(): JSX.Element {
 		return value;
 	};
 
-	const analyzeContext = useCallback((view: EditorView, pos: number): void => {
-		// Skip if component unmounted
-		if (!isMountedRef.current) return;
-
-		const doc = view.state.doc.toString();
-
-		// Check for spaces around the cursor position for debugging
-		const isCursorAtSpace = pos < doc.length && doc[pos] === ' ';
-		const isCursorAfterSpace = pos > 0 && doc[pos - 1] === ' ';
-		const isCursorAfterToken =
-			pos > 0 && doc[pos - 1] !== ' ' && doc[pos - 1] !== undefined;
-		const isCursorBeforeToken =
-			pos < doc.length && doc[pos] !== ' ' && doc[pos] !== undefined;
-
-		// Check brackets around cursor
-		const isCursorAtOpenBracket =
-			pos < doc.length && (doc[pos] === '[' || doc[pos] === '(');
-		const isCursorAfterOpenBracket =
-			pos > 0 && (doc[pos - 1] === '[' || doc[pos - 1] === '(');
-		const isCursorAtCloseBracket =
-			pos < doc.length && (doc[pos] === ']' || doc[pos] === ')');
-		const isCursorAfterCloseBracket =
-			pos > 0 && (doc[pos - 1] === ']' || doc[pos - 1] === ')');
-
-		// Check if cursor is at transition point (right after a token at the beginning of a space)
-		const isTransitionPoint = isCursorAtSpace && isCursorAfterToken;
-
-		// Get a slice of the text around cursor for context
-		const sliceStart = Math.max(0, pos - 10);
-		const sliceEnd = Math.min(doc.length, pos + 10);
-		const textSlice = doc.substring(sliceStart, sliceEnd);
-		const cursorPosInSlice = pos - sliceStart;
-
-		// Create a visual cursor indicator
-		const beforeCursor = textSlice.substring(0, cursorPosInSlice);
-		const afterCursor = textSlice.substring(cursorPosInSlice);
-		const visualCursor = `${beforeCursor}|${afterCursor}`;
-
-		const context = getQueryContextAtCursor(doc, pos);
-
-		// Enhanced debug logging with space and pair detection
-		console.log('Context at cursor:', {
-			position: pos,
-			visualCursor,
-			cursorAtSpace: isCursorAtSpace,
-			cursorAfterSpace: isCursorAfterSpace,
-			cursorAfterToken: isCursorAfterToken,
-			cursorBeforeToken: isCursorBeforeToken,
-			isTransitionPoint,
-			bracketInfo: {
-				cursorAtOpenBracket: isCursorAtOpenBracket,
-				cursorAfterOpenBracket: isCursorAfterOpenBracket,
-				cursorAtCloseBracket: isCursorAtCloseBracket,
-				cursorAfterCloseBracket: isCursorAfterCloseBracket,
-				isInBracketList: context.isInBracketList,
-			},
-			contextType: context.isInKey
-				? 'Key'
-				: context.isInOperator
-				? 'Operator'
-				: context.isInValue
-				? 'Value'
-				: context.isInConjunction
-				? 'Conjunction'
-				: context.isInFunction
-				? 'Function'
-				: context.isInParenthesis
-				? 'Parenthesis'
-				: context.isInBracketList
-				? 'BracketList'
-				: 'Unknown',
-			keyToken: context.keyToken,
-			operatorToken: context.operatorToken,
-			valueToken: context.valueToken,
-			queryPairs: context.queryPairs?.length || 0,
-			currentPair: context.currentPair
-				? {
-						key: context.currentPair.key,
-						operator: context.currentPair.operator,
-						value: context.currentPair.value,
-						isComplete: context.currentPair.isComplete,
-				  }
-				: null,
-		});
-	}, []);
-
 	// Add cleanup effect to prevent component updates after unmount
 	useEffect(
 		(): (() => void) => (): void => {
@@ -354,6 +160,7 @@ function QuerySearch(): JSX.Element {
 
 	// Use callback to prevent dependency changes on each render
 	const fetchValueSuggestions = useCallback(
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 		async (key: string): Promise<void> => {
 			if (
 				!key ||
@@ -367,15 +174,12 @@ function QuerySearch(): JSX.Element {
 			lastKeyRef.current = key;
 			setActiveKey(key);
 
-			console.log('fetching suggestions for key:', key);
-
-			// Replace current suggestions with loading indicator
 			setValueSuggestions([
 				{
 					label: 'Loading suggestions...',
 					type: 'text',
-					boost: -99, // Lower boost to appear at the bottom
-					apply: (): boolean => false, // Prevent selection
+					boost: -99,
+					apply: (): boolean => false,
 				},
 			]);
 
@@ -428,7 +232,6 @@ function QuerySearch(): JSX.Element {
 						index === self.findIndex((o) => o.label === option.label),
 				);
 
-				// Only if we're still on the same key
 				if (lastKeyRef.current === key && isMountedRef.current) {
 					if (allOptions.length > 0) {
 						setValueSuggestions(allOptions);
@@ -437,8 +240,8 @@ function QuerySearch(): JSX.Element {
 							{
 								label: 'No suggestions available',
 								type: 'text',
-								boost: -99, // Lower boost to appear at the bottom
-								apply: (): boolean => false, // Prevent selection
+								boost: -99,
+								apply: (): boolean => false,
 							},
 						]);
 					}
@@ -471,122 +274,57 @@ function QuerySearch(): JSX.Element {
 		[activeKey, isLoadingSuggestions],
 	);
 
-	// Enhanced update handler to track context changes, including bracket contexts
-	const handleUpdate = useCallback(
-		(viewUpdate: { view: EditorView }): void => {
-			// Skip updates if component is unmounted
-			if (!isMountedRef.current) return;
+	const handleUpdate = useCallback((viewUpdate: { view: EditorView }): void => {
+		if (!isMountedRef.current) return;
 
-			// Store editor reference
-			if (!editorRef.current) {
-				editorRef.current = viewUpdate.view;
+		if (!editorRef.current) {
+			editorRef.current = viewUpdate.view;
+		}
+
+		const selection = viewUpdate.view.state.selection.main;
+		const pos = selection.head;
+		const doc = viewUpdate.view.state.doc.toString();
+
+		const lineInfo = viewUpdate.view.state.doc.lineAt(pos);
+		const newPos = {
+			line: lineInfo.number,
+			ch: pos - lineInfo.from,
+		};
+
+		const lastPos = lastPosRef.current;
+
+		if (newPos.line !== lastPos.line || newPos.ch !== lastPos.ch) {
+			setCursorPos(newPos);
+			lastPosRef.current = newPos;
+
+			if (doc) {
+				const context = getQueryContextAtCursor(doc, pos);
+
+				let newContextType:
+					| 'key'
+					| 'operator'
+					| 'value'
+					| 'conjunction'
+					| 'function'
+					| 'parenthesis'
+					| 'bracketList'
+					| null = null;
+
+				if (context.isInKey) newContextType = 'key';
+				else if (context.isInOperator) newContextType = 'operator';
+				else if (context.isInValue) newContextType = 'value';
+				else if (context.isInConjunction) newContextType = 'conjunction';
+				else if (context.isInFunction) newContextType = 'function';
+				else if (context.isInParenthesis) newContextType = 'parenthesis';
+				else if (context.isInBracketList) newContextType = 'bracketList';
+
+				setQueryContext(context);
+
+				// Update editing mode based on context
+				setEditingMode(newContextType);
 			}
-
-			const selection = viewUpdate.view.state.selection.main;
-			const pos = selection.head;
-			const doc = viewUpdate.view.state.doc.toString();
-
-			const lineInfo = viewUpdate.view.state.doc.lineAt(pos);
-			const newPos = {
-				line: lineInfo.number,
-				ch: pos - lineInfo.from,
-			};
-
-			const lastPos = lastPosRef.current;
-
-			// Only update if cursor position actually changed
-			if (newPos.line !== lastPos.line || newPos.ch !== lastPos.ch) {
-				setCursorPos(newPos);
-				lastPosRef.current = newPos;
-
-				// Detect if cursor is at a space or after a token
-				const isAtSpace = pos < doc.length && doc[pos] === ' ';
-				const isAfterToken =
-					pos > 0 && doc[pos - 1] !== ' ' && doc[pos - 1] !== undefined;
-				const isTransitionPoint = isAtSpace && isAfterToken;
-
-				// Detect brackets around cursor
-				const isAtOpenBracket =
-					pos < doc.length && (doc[pos] === '[' || doc[pos] === '(');
-				const isAfterOpenBracket =
-					pos > 0 && (doc[pos - 1] === '[' || doc[pos - 1] === '(');
-				const isAtCloseBracket =
-					pos < doc.length && (doc[pos] === ']' || doc[pos] === ')');
-				const isAfterCloseBracket =
-					pos > 0 && (doc[pos - 1] === ']' || doc[pos - 1] === ')');
-
-				// Get context immediately when cursor position changes
-				if (doc) {
-					const context = getQueryContextAtCursor(doc, pos);
-
-					// Only update context and mode if they've actually changed
-					// This prevents unnecessary re-renders
-					const previousContextType = queryContext?.isInKey
-						? 'key'
-						: queryContext?.isInOperator
-						? 'operator'
-						: queryContext?.isInValue
-						? 'value'
-						: queryContext?.isInConjunction
-						? 'conjunction'
-						: queryContext?.isInFunction
-						? 'function'
-						: queryContext?.isInParenthesis
-						? 'parenthesis'
-						: queryContext?.isInBracketList
-						? 'bracketList'
-						: null;
-
-					const newContextType = context.isInKey
-						? 'key'
-						: context.isInOperator
-						? 'operator'
-						: context.isInValue
-						? 'value'
-						: context.isInConjunction
-						? 'conjunction'
-						: context.isInFunction
-						? 'function'
-						: context.isInParenthesis
-						? 'parenthesis'
-						: context.isInBracketList
-						? 'bracketList'
-						: null;
-
-					// Log context changes for debugging
-					if (previousContextType !== newContextType) {
-						console.log(
-							`Context changed: ${previousContextType || 'none'} -> ${
-								newContextType || 'none'
-							}`,
-							{
-								position: pos,
-								isAtSpace,
-								isAfterToken,
-								isTransitionPoint,
-								bracketInfo: {
-									isAtOpenBracket,
-									isAfterOpenBracket,
-									isAtCloseBracket,
-									isAfterCloseBracket,
-									isInBracketList: context.isInBracketList,
-								},
-								keyToken: context.keyToken,
-								operatorToken: context.operatorToken,
-								valueToken: context.valueToken,
-							},
-						);
-					}
-
-					setQueryContext(context);
-
-					// Update editing mode based on context
-					setEditingMode(newContextType);
-				}
-			}
-		},
-		[queryContext],
-	);
+		}
+	}, []);
 
 	const handleQueryChange = useCallback(async (newQuery: string) => {
 		setQuery(newQuery);
@@ -640,7 +378,8 @@ function QuerySearch(): JSX.Element {
 	};
 
 	// Enhanced myCompletions function to better use context including query pairs
-	function myCompletions(context: CompletionContext): CompletionResult | null {
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	function autoSuggestions(context: CompletionContext): CompletionResult | null {
 		const word = context.matchBefore(/[.\w]*/);
 		if (word?.from === word?.to && !context.explicit) return null;
 
@@ -667,12 +406,12 @@ function QuerySearch(): JSX.Element {
 				return null;
 			}
 
-			// Trigger fetch only if needed
-			if (keyName && (keyName !== activeKey || isLoadingSuggestions)) {
-				// Don't trigger a new fetch if we're already loading for this key
-				if (!(isLoadingSuggestions && lastKeyRef.current === keyName)) {
-					fetchValueSuggestions(keyName);
-				}
+			if (
+				keyName &&
+				(keyName !== activeKey || isLoadingSuggestions) &&
+				!(isLoadingSuggestions && lastKeyRef.current === keyName)
+			) {
+				fetchValueSuggestions(keyName);
 			}
 
 			// For values in bracket list, just add quotes without enclosing in brackets
@@ -804,11 +543,12 @@ function QuerySearch(): JSX.Element {
 			}
 
 			// Trigger fetch only if needed
-			if (keyName && (keyName !== activeKey || isLoadingSuggestions)) {
-				// Don't trigger a new fetch if we're already loading for this key
-				if (!(isLoadingSuggestions && lastKeyRef.current === keyName)) {
-					fetchValueSuggestions(keyName);
-				}
+			if (
+				keyName &&
+				(keyName !== activeKey || isLoadingSuggestions) &&
+				!(isLoadingSuggestions && lastKeyRef.current === keyName)
+			) {
+				fetchValueSuggestions(keyName);
 			}
 
 			// Process options to add appropriate formatting when selected
@@ -967,9 +707,7 @@ function QuerySearch(): JSX.Element {
 		}
 	}, [queryKeySuggestions]);
 
-	// Update state when query context changes to trigger suggestion refresh
 	useEffect(() => {
-		// Skip if we don't have a value context or it hasn't changed
 		if (!queryContext?.isInValue) return;
 
 		const { keyToken, currentToken } = queryContext;
@@ -984,7 +722,6 @@ function QuerySearch(): JSX.Element {
 
 	return (
 		<div className="code-mirror-where-clause">
-			{/* Add a context indicator banner */}
 			{editingMode && (
 				<div className={`context-indicator context-indicator-${editingMode}`}>
 					Currently editing: {renderContextBadge()}
@@ -1032,7 +769,7 @@ function QuerySearch(): JSX.Element {
 				placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
 				extensions={[
 					autocompletion({
-						override: [myCompletions],
+						override: [autoSuggestions],
 						defaultKeymap: true,
 						closeOnBlur: false,
 						activateOnTyping: true,
@@ -1041,9 +778,7 @@ function QuerySearch(): JSX.Element {
 					javascript({ jsx: false, typescript: false }),
 					EditorView.lineWrapping,
 					stopEventsExtension,
-					contextAwarePlugin(analyzeContext),
 					disallowMultipleSpaces,
-					// customTheme,
 				]}
 				basicSetup={{
 					lineNumbers: false,
@@ -1129,7 +864,7 @@ function QuerySearch(): JSX.Element {
 				</Card>
 			)}
 
-			{/* {queryContext && (
+			{queryContext && (
 				<Card size="small" title="Current Context" className="query-context">
 					<div className="context-details">
 						<Space direction="vertical" size={4}>
@@ -1169,7 +904,7 @@ function QuerySearch(): JSX.Element {
 						</Space>
 					</div>
 				</Card>
-			)} */}
+			)}
 		</div>
 	);
 }
