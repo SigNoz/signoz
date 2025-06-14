@@ -72,6 +72,7 @@
 		.having-filter-select-editor {
 			border-radius: 2px;
 			flex: 1;
+			width: calc(100% - 40px);
 
 			.cm-content {
 				padding: 0;
@@ -175,6 +176,26 @@
 					display: none !important;
 				}
 
+				.cm-scroller {
+					scrollbar-width: none;
+
+					&::-webkit-scrollbar {
+						display: none;
+					}
+
+					&::-webkit-scrollbar-thumb {
+						display: none;
+					}
+
+					&::-webkit-scrollbar-track {
+						display: none;
+					}
+
+					&::-webkit-scrollbar-corner {
+						display: none;
+					}
+				}
+
 				.cm-line {
 					line-height: 36px !important;
 					font-family: 'Space Mono', monospace !important;
@@ -229,10 +250,17 @@
 	grid-template-columns: repeat(2, 1fr);
 	gap: 8px;
 	padding-bottom: 8px;
+	position: relative;
 
 	.add-on-content {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
+
+		max-width: 100%;
+		min-width: 100%;
+
+		box-sizing: border-box;
+		position: relative;
 	}
 }
