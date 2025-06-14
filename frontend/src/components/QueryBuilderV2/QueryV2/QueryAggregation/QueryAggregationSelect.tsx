@@ -405,7 +405,7 @@ function QueryAggregationSelect(): JSX.Element {
 					},
 				],
 				defaultKeymap: true,
-				closeOnBlur: false,
+				closeOnBlur: true,
 				maxRenderedOptions: 50,
 				activateOnTyping: true,
 			}),
@@ -447,6 +447,10 @@ function QueryAggregationSelect(): JSX.Element {
 				}}
 				onBlur={(): void => {
 					setIsFocused(false);
+
+					if (editorRef.current) {
+						closeCompletion(editorRef.current);
+					}
 				}}
 			/>
 		</div>
