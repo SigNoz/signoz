@@ -143,13 +143,19 @@ function AddSpanToFunnelModal({
 	const handleSaveFunnel = (): void => {
 		setTriggerSave(true);
 		// Reset trigger after a brief moment to allow the save to be processed
-		setTimeout(() => setTriggerSave(false), 100);
+		setTimeout(() => {
+			setTriggerSave(false);
+			onClose();
+		}, 100);
 	};
 
 	const handleDiscard = (): void => {
 		setTriggerDiscard(true);
 		// Reset trigger after a brief moment
-		setTimeout(() => setTriggerDiscard(false), 100);
+		setTimeout(() => {
+			setTriggerDiscard(false);
+			onClose();
+		}, 100);
 	};
 
 	const renderListView = (): JSX.Element => (
@@ -239,9 +245,6 @@ function AddSpanToFunnelModal({
 			footer={
 				activeView === ModalView.DETAILS
 					? [
-							<Button key="close" onClick={onClose}>
-								Close
-							</Button>,
 							<Button
 								type="default"
 								key="discard"

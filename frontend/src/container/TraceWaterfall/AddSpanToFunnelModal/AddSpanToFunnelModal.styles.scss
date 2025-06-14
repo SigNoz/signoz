@@ -241,6 +241,15 @@
 			&-title {
 				color: var(--bg-ink-500);
 			}
+
+			&-footer {
+				border-top-color: var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+				.add-span-to-funnel-modal__discard-button {
+					background: var(--bg-vanilla-200);
+					color: var(--bg-ink-500);
+				}
+			}
 		}
 	}
 

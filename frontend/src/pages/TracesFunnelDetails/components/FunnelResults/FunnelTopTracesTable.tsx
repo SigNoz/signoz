@@ -7,6 +7,7 @@ import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { FunnelStepData } from 'types/api/traceFunnels';
 
 import FunnelTable from './FunnelTable';
 import { topTracesTableColumns } from './utils';
@@ -24,6 +25,7 @@ interface FunnelTopTracesTableProps {
 		SuccessResponse<SlowTraceData | ErrorTraceData> | ErrorResponse,
 		Error
 	>;
+	steps: FunnelStepData[];
 }
 
 function FunnelTopTracesTable({
@@ -32,6 +34,7 @@ function FunnelTopTracesTable({
 	stepBOrder,
 	title,
 	tooltip,
+	steps,
 	useQueryHook,
 }: FunnelTopTracesTableProps): JSX.Element {
 	const { startTime, endTime } = useFunnelContext();
@@ -41,8 +44,9 @@ function FunnelTopTracesTable({
 			end_time: endTime,
 			step_start: stepAOrder,
 			step_end: stepBOrder,
+			steps,
 		}),
-		[startTime, endTime, stepAOrder, stepBOrder],
+		[startTime, endTime, stepAOrder, stepBOrder, steps],
 	);
 
 	const { data: response, isLoading, isFetching } = useQueryHook(

@@ -1,5 +1,7 @@
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useDebounce from 'hooks/useDebounce';
+import { useLocalStorage } from 'hooks/useLocalStorage';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEqual } from 'lodash-es';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
@@ -13,10 +15,11 @@ interface UseFunnelConfiguration {
 	isPopoverOpen: boolean;
 	setIsPopoverOpen: (isPopoverOpen: boolean) => void;
 	steps: FunnelStepData[];
+	isSaving: boolean;
 }
 
 // Add this helper function
-const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
+export const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
 	if (steps.some((step) => !step.filters)) return steps;
 
 	return steps.map((step) => ({
@@ -51,7 +54,6 @@ export default function useFunnelConfiguration({
 		initialSteps,
 		hasIncompleteStepFields,
 		handleRestoreSteps,
-		handleRunFunnel,
 	} = useFunnelContext();
 
 	// State management
@@ -71,6 +73,15 @@ export default function useFunnelConfiguration({
 
 	// Derived state
 	const lastSavedStepsStateRef = useRef<FunnelStepData[]>(steps);
+	const hasRestoredFromLocalStorage = useRef(false);
+
+	// localStorage hook for funnel steps
+	const localStorageKey = `${LOCALSTORAGE.FUNNEL_STEPS}_${funnel.funnel_id}`;
+	const [
+		localStorageSavedSteps,
+		setLocalStorageSavedSteps,
+		clearLocalStorageSavedSteps,
+	] = useLocalStorage<FunnelStepData[] | null>(localStorageKey, null);
 
 	const hasStepsChanged = useCallback(() => {
 		const normalizedLastSavedSteps = normalizeSteps(
@@ -79,6 +90,32 @@ export default function useFunnelConfiguration({
 		const normalizedDebouncedSteps = normalizeSteps(debouncedSteps);
 		return !isEqual(normalizedDebouncedSteps, normalizedLastSavedSteps);
 	}, [debouncedSteps]);
+
+	// Handle localStorage for funnel steps
+	useEffect(() => {
+		// Restore from localStorage on first run if
+		if (!hasRestoredFromLocalStorage.current) {
+			const savedSteps = localStorageSavedSteps;
+			if (savedSteps) {
+				handleRestoreSteps(savedSteps);
+				hasRestoredFromLocalStorage.current = true;
+				return;
+			}
+		}
+
+		// Save steps to localStorage
+		if (hasStepsChanged()) {
+			setLocalStorageSavedSteps(debouncedSteps);
+		}
+	}, [
+		debouncedSteps,
+		disableAutoSave,
+		funnel.funnel_id,
+		hasStepsChanged,
+		handleRestoreSteps,
+		localStorageSavedSteps,
+		setLocalStorageSavedSteps,
+	]);
 
 	const hasFunnelStepDefinitionsChanged = useCallback(
 		(prevSteps: FunnelStepData[], nextSteps: FunnelStepData[]): boolean => {
@@ -94,15 +131,6 @@ export default function useFunnelConfiguration({
 				);
 			});
 		},
-		[],
-	);
-
-	const hasFunnelLatencyTypeChanged = useCallback(
-		(prevSteps: FunnelStepData[], nextSteps: FunnelStepData[]): boolean =>
-			prevSteps.some((step, index) => {
-				const nextStep = nextSteps[index];
-				return step.latency_type !== nextStep.latency_type;
-			}),
 		[],
 	);
 
@@ -132,7 +160,7 @@ export default function useFunnelConfiguration({
 			// Manual save mode: only save when explicitly triggered
 			shouldSave = triggerAutoSave;
 		} else {
-			// Auto-save mode: save when steps have changed and no incomplete fields
+			// Auto-save mode: save when steps have changed
 			shouldSave = hasStepsChanged() && !hasIncompleteStepFields;
 		}
 
@@ -142,6 +170,9 @@ export default function useFunnelConfiguration({
 					const updatedFunnelSteps = data?.payload?.steps;
 
 					if (!updatedFunnelSteps) return;
+
+					// Clear localStorage since steps are saved successfully
+					clearLocalStorageSavedSteps();
 
 					queryClient.setQueryData(
 						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.funnel_id],
@@ -163,12 +194,8 @@ export default function useFunnelConfiguration({
 						(step) => step.service_name === '' || step.span_name === '',
 					);
 
-					if (hasFunnelLatencyTypeChanged(lastValidatedSteps, debouncedSteps)) {
-						handleRunFunnel();
-						setLastValidatedSteps(debouncedSteps);
-					}
 					// Only validate if funnel steps definitions
-					else if (
+					if (
 						!hasIncompleteStepFields &&
 						hasFunnelStepDefinitionsChanged(lastValidatedSteps, debouncedSteps)
 					) {
@@ -222,11 +249,14 @@ export default function useFunnelConfiguration({
 		triggerAutoSave,
 		showNotifications,
 		disableAutoSave,
+		localStorageSavedSteps,
+		clearLocalStorageSavedSteps,
 	]);
 
 	return {
 		isPopoverOpen,
 		setIsPopoverOpen,
 		steps,
+		isSaving: updateStepsMutation.isLoading,
 	};
 }

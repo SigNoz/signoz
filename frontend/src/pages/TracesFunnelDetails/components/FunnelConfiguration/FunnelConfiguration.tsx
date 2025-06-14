@@ -6,6 +6,7 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import useFunnelConfiguration from 'hooks/TracesFunnels/useFunnelConfiguration';
 import { PencilLine } from 'lucide-react';
 import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/FunnelItemPopover';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { memo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -34,11 +35,17 @@ function FunnelConfiguration({
 	triggerAutoSave,
 	showNotifications,
 }: FunnelConfigurationProps): JSX.Element {
-	const { isPopoverOpen, setIsPopoverOpen, steps } = useFunnelConfiguration({
+	const { triggerSave } = useFunnelContext();
+	const {
+		isPopoverOpen,
+		setIsPopoverOpen,
+		steps,
+		isSaving,
+	} = useFunnelConfiguration({
 		funnel,
 		disableAutoSave,
-		triggerAutoSave,
-		showNotifications,
+		triggerAutoSave: triggerAutoSave || triggerSave,
+		showNotifications: showNotifications || triggerSave,
 	});
 	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState<boolean>(
 		false,
@@ -106,7 +113,7 @@ function FunnelConfiguration({
 
 			{!isTraceDetailsPage && (
 				<>
-					<StepsFooter stepsCount={steps.length} />
+					<StepsFooter stepsCount={steps.length} isSaving={isSaving || false} />
 					<AddFunnelDescriptionModal
 						isOpen={isDescriptionModalOpen}
 						onClose={handleDescriptionModalClose}

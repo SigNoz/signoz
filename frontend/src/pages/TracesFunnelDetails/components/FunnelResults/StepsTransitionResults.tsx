@@ -47,16 +47,19 @@ function StepsTransitionResults(): JSX.Element {
 					transitions={stepTransitions}
 					startStep={stepAOrder}
 					endStep={stepBOrder}
+					steps={steps}
 				/>
 				<TopSlowestTraces
 					funnelId={funnelId}
 					stepAOrder={stepAOrder}
 					stepBOrder={stepBOrder}
+					steps={steps}
 				/>
 				<TopTracesWithErrors
 					funnelId={funnelId}
 					stepAOrder={stepAOrder}
 					stepBOrder={stepBOrder}
+					steps={steps}
 				/>
 			</div>
 		</div>

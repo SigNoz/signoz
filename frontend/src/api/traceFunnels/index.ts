@@ -185,6 +185,7 @@ export interface FunnelOverviewPayload {
 	end_time: number;
 	step_start?: number;
 	step_end?: number;
+	steps: FunnelStepData[];
 }
 
 export interface FunnelOverviewResponse {
@@ -291,6 +292,7 @@ export const getFunnelErrorTraces = async (
 export interface FunnelStepsPayload {
 	start_time: number;
 	end_time: number;
+	steps: FunnelStepData[];
 }
 
 export interface FunnelStepGraphMetrics {
@@ -330,6 +332,7 @@ export interface FunnelStepsOverviewPayload {
 	end_time: number;
 	step_start?: number;
 	step_end?: number;
+	steps: FunnelStepData[];
 }
 
 export interface FunnelStepsOverviewResponse {
