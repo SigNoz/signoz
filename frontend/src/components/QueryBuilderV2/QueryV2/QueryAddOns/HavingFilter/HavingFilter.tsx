@@ -237,10 +237,9 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 			<div className="having-filter-select-container">
 				<CodeMirror
 					value={input}
+					theme={copilot}
 					onChange={setInput}
 					className="having-filter-select-editor"
-					width="100%"
-					theme={copilot}
 					extensions={[
 						havingAutocomplete,
 						javascript({ jsx: false, typescript: false }),
