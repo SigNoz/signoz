@@ -127,6 +127,10 @@
 
 					font-family: 'Space Mono', monospace !important;
 
+					&:hover {
+						background: var(--bg-ink-100) !important;
+					}
+
 					.cm-completionIcon {
 						display: none !important;
 					}
