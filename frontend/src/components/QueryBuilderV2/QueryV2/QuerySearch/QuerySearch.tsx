@@ -399,10 +399,42 @@ function QuerySearch(): JSX.Element {
 			label: string;
 			type: string;
 			info?: string;
-			apply?: string;
+			apply?:
+				| string
+				| ((view: EditorView, completion: any, from: number, to: number) => void);
 			detail?: string;
 			boost?: number;
 		}[] = [];
+
+		// Helper function to add space after selection
+		const addSpaceAfterSelection = (
+			view: EditorView,
+			completion: any,
+			from: number,
+			to: number,
+		): void => {
+			view.dispatch({
+				changes: { from, to, insert: `${completion.apply} ` },
+				selection: { anchor: from + completion.apply.length + 1 },
+			});
+		};
+
+		// Helper function to add space after selection to options
+		const addSpaceToOptions = (opts: typeof options): typeof options =>
+			opts.map((option) => {
+				const originalApply = option.apply || option.label;
+				return {
+					...option,
+					apply: (
+						view: EditorView,
+						completion: any,
+						from: number,
+						to: number,
+					): void => {
+						addSpaceAfterSelection(view, { apply: originalApply }, from, to);
+					},
+				};
+			});
 
 		// Special handling for bracket list context (for IN operator)
 		if (queryContext.isInBracketList) {
@@ -444,10 +476,13 @@ function QuerySearch(): JSX.Element {
 				return processedOption;
 			});
 
+			// Add space after selection
+			const optionsWithSpace = addSpaceToOptions(processedOptions);
+
 			// Return current value suggestions without comma
 			return {
 				from: word?.from ?? 0,
-				options: processedOptions,
+				options: optionsWithSpace,
 			};
 		}
 
@@ -480,10 +515,13 @@ function QuerySearch(): JSX.Element {
 					(option.label.toLowerCase() === searchText ? 100 : 0),
 			}));
 
+			// Add space after selection for keys
+			const optionsWithSpace = addSpaceToOptions(options);
+
 			return {
 				from: word?.from ?? 0,
 				to: word?.to ?? cursorPos.ch,
-				options,
+				options: optionsWithSpace,
 			};
 		}
 
@@ -533,10 +571,13 @@ function QuerySearch(): JSX.Element {
 				}));
 			}
 
+			// Add space after selection for operators
+			const optionsWithSpace = addSpaceToOptions(options);
+
 			return {
 				from: word?.from ?? 0,
 				to: word?.to ?? cursorPos.ch,
-				options,
+				options: optionsWithSpace,
 			};
 		}
 
@@ -615,10 +656,13 @@ function QuerySearch(): JSX.Element {
 				return processedOption;
 			});
 
+			// Add space after selection
+			const optionsWithSpace = addSpaceToOptions(processedOptions);
+
 			// Return current value suggestions from state
 			return {
 				from: word?.from ?? 0,
-				options: processedOptions,
+				options: optionsWithSpace,
 			};
 		}
 
@@ -629,9 +673,13 @@ function QuerySearch(): JSX.Element {
 				{ label: 'HASALL', type: 'function' },
 				{ label: 'HASNONE', type: 'function' },
 			];
+
+			// Add space after selection for functions
+			const optionsWithSpace = addSpaceToOptions(options);
+
 			return {
 				from: word?.from ?? 0,
-				options,
+				options: optionsWithSpace,
 			};
 		}
 
@@ -640,9 +688,13 @@ function QuerySearch(): JSX.Element {
 				{ label: 'AND', type: 'conjunction' },
 				{ label: 'OR', type: 'conjunction' },
 			];
+
+			// Add space after selection for conjunctions
+			const optionsWithSpace = addSpaceToOptions(options);
+
 			return {
 				from: word?.from ?? 0,
-				options,
+				options: optionsWithSpace,
 			};
 		}
 
@@ -654,14 +706,19 @@ function QuerySearch(): JSX.Element {
 				// Right after opening parenthesis/bracket
 				if (curChar === '(') {
 					// In expression context, suggest keys, functions, or nested parentheses
+					options = [
+						...(keySuggestions || []),
+						{ label: '(', type: 'parenthesis', info: 'Open nested group' },
+						{ label: 'NOT', type: 'operator', info: 'Negate expression' },
+						...options.filter((opt) => opt.type === 'function'),
+					];
+
+					// Add space after selection for opening parenthesis context
+					const optionsWithSpace = addSpaceToOptions(options);
+
 					return {
 						from: word?.from ?? 0,
-						options: [
-							...(keySuggestions || []),
-							{ label: '(', type: 'parenthesis', info: 'Open nested group' },
-							{ label: 'NOT', type: 'operator', info: 'Negate expression' },
-							...options.filter((opt) => opt.type === 'function'),
-						],
+						options: optionsWithSpace,
 					};
 				}
 
@@ -675,25 +732,35 @@ function QuerySearch(): JSX.Element {
 
 			if (curChar === ')' || curChar === ']') {
 				// After closing parenthesis/bracket, suggest conjunctions
+				options = [
+					{ label: 'AND', type: 'conjunction' },
+					{ label: 'OR', type: 'conjunction' },
+				];
+
+				// Add space after selection for closing parenthesis context
+				const optionsWithSpace = addSpaceToOptions(options);
+
 				return {
 					from: word?.from ?? 0,
-					options: [
-						{ label: 'AND', type: 'conjunction' },
-						{ label: 'OR', type: 'conjunction' },
-					],
+					options: optionsWithSpace,
 				};
 			}
 		}
 
 		// If no specific context is detected, provide general suggestions
+		options = [
+			...(keySuggestions || []),
+			{ label: 'AND', type: 'conjunction', boost: -10 },
+			{ label: 'OR', type: 'conjunction', boost: -10 },
+			{ label: '(', type: 'parenthesis', info: 'Open group', boost: -20 },
+		];
+
+		// Add space after selection for general context
+		const optionsWithSpace = addSpaceToOptions(options);
+
 		return {
 			from: word?.from ?? 0,
-			options: [
-				...(keySuggestions || []),
-				{ label: 'AND', type: 'conjunction', boost: -10 },
-				{ label: 'OR', type: 'conjunction', boost: -10 },
-				{ label: '(', type: 'parenthesis', info: 'Open group', boost: -20 },
-			],
+			options: optionsWithSpace,
 		};
 	}
 
