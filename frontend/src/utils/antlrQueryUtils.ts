@@ -119,17 +119,9 @@ export const validateQuery = (query: string): IValidationResult => {
 	// Empty query is considered invalid
 	if (!query.trim()) {
 		return {
-			isValid: false,
-			message: 'Query cannot be empty',
-			errors: [
-				{
-					message: 'Query cannot be empty',
-					line: 0,
-					column: 0,
-					offendingSymbol: '',
-					expectedTokens: [],
-				},
-			],
+			isValid: true,
+			message: 'Query is empty',
+			errors: [],
 		};
 	}
 
