@@ -159,7 +159,7 @@ function CreateAlertChannels({
 	const prepareWebhookRequest = useCallback(() => {
 		// initial api request without auth params
 		let request: WebhookChannel = {
-			api_url: selectedConfig?.api_url || '',
+			api_url: `${selectedConfig?.api_url}&text=${selectedConfig?.text}` || '',
 			name: selectedConfig?.name || '',
 			send_resolved: selectedConfig?.send_resolved || false,
 		};
