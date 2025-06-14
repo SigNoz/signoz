@@ -127,32 +127,36 @@
 
 .lightMode {
 	.left-toolbar {
+		.filter-btn {
+			border-color: var(--bg-vanilla-300) !important;
+		}
+
 		.left-toolbar-query-actions {
-			border-color: var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
+			border-color: var(--bg-vanilla-300) !important;
+			background: var(--bg-vanilla-100) !important;
 
 			.ant-btn {
-				border-color: var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-				color: var(--bg-ink-200);
+				border-color: var(--bg-vanilla-300) !important;
+				background: var(--bg-vanilla-100) !important;
+				color: var(--bg-ink-200) !important;
 
 				&.active-tab {
-					background-color: var(--bg-robin-100);
+					background-color: var(--bg-robin-100) !important;
 				}
 			}
 		}
 	}
 	.loading-container {
 		.loading-btn {
-			background: var(--bg-vanilla-300);
+			background: var(--bg-vanilla-300) !important;
 		}
 
 		.cancel-run {
-			color: var(--bg-vanilla-100);
+			color: var(--bg-vanilla-100) !important;
 		}
 
 		.cancel-run:hover {
-			background-color: #ff7875;
+			background-color: #ff7875 !important;
 		}
 	}
 }
