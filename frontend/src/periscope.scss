@@ -127,6 +127,8 @@
 
 		background: var(--bg-ink-300);
 
+		min-width: 0;
+
 		.ant-select {
 			border: none;
 			height: 36px;
