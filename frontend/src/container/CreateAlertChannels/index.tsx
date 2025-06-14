@@ -164,6 +164,8 @@ function CreateAlertChannels({
 			send_resolved: selectedConfig?.send_resolved || false,
 		};
 
+		console.log(request);
+
 		if (selectedConfig?.username !== '' || selectedConfig?.password !== '') {
 			if (selectedConfig?.username !== '') {
 				// if username is not null then password must be passed
