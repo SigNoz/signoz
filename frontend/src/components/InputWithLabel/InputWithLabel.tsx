@@ -44,6 +44,7 @@ function InputWithLabel({
 				type={type}
 				value={inputValue}
 				onChange={handleChange}
+				name={label.toLowerCase()}
 			/>
 			{labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
 			{onClose && (
