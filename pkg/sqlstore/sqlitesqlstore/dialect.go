@@ -18,19 +18,21 @@ const (
 )
 
 const (
-	Org              string = "org"
-	User             string = "user"
-	UserNoCascade    string = "user_no_cascade"
-	FactorPassword   string = "factor_password"
-	CloudIntegration string = "cloud_integration"
+	Org                string = "org"
+	User               string = "user"
+	UserNoCascade      string = "user_no_cascade"
+	FactorPassword     string = "factor_password"
+	CloudIntegration   string = "cloud_integration"
+	AgentConfigVersion string = "agent_config_version"
 )
 
 const (
-	OrgReference              string = `("org_id") REFERENCES "organizations" ("id")`
-	UserReference             string = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
-	UserNoCascadeReference    string = `("user_id") REFERENCES "users" ("id")`
-	FactorPasswordReference   string = `("password_id") REFERENCES "factor_password" ("id")`
-	CloudIntegrationReference string = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
+	OrgReference                string = `("org_id") REFERENCES "organizations" ("id")`
+	UserReference               string = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	UserNoCascadeReference      string = `("user_id") REFERENCES "users" ("id")`
+	FactorPasswordReference     string = `("password_id") REFERENCES "factor_password" ("id")`
+	CloudIntegrationReference   string = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
+	AgentConfigVersionReference string = `("version_id") REFERENCES "agent_config_version" ("id")`
 )
 
 const (
@@ -157,6 +159,22 @@ func (dialect *dialect) ColumnExists(ctx context.Context, bun bun.IDB, table str
 	return count > 0, nil
 }
 
+func (dialect *dialect) IndexExists(ctx context.Context, bun bun.IDB, table string, index string) (bool, error) {
+	var count int
+	err := bun.NewSelect().
+		ColumnExpr("COUNT(*)").
+		TableExpr("sqlite_master").
+		Where("type = ?", "index").
+		Where("name = ?", index).
+		Scan(ctx, &count)
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
 func (dialect *dialect) AddColumn(ctx context.Context, bun bun.IDB, table string, column string, columnExpr string) error {
 	exists, err := dialect.ColumnExists(ctx, bun, table, column)
 	if err != nil {
@@ -269,6 +287,8 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 			fkReferences = append(fkReferences, FactorPasswordReference)
 		} else if reference == CloudIntegration && !slices.Contains(fkReferences, CloudIntegrationReference) {
 			fkReferences = append(fkReferences, CloudIntegrationReference)
+		} else if reference == AgentConfigVersion && !slices.Contains(fkReferences, AgentConfigVersionReference) {
+			fkReferences = append(fkReferences, AgentConfigVersionReference)
 		}
 	}
 
