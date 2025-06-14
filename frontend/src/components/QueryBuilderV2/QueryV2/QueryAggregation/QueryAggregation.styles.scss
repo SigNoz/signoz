@@ -6,7 +6,7 @@
 		display: flex;
 		flex-direction: row;
 		gap: 8px;
-		align-items: center;
+		align-items: flex-start;
 
 		.query-aggregation-options-input {
 			width: 100%;
@@ -42,6 +42,7 @@
 			.query-aggregation-select-editor {
 				border-radius: 2px;
 				flex: 1;
+				min-width: 0;
 
 				.cm-content {
 					padding: 0;
