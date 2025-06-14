@@ -1,9 +1,8 @@
 import './AlertDetails.styles.scss';
 
-import { Breadcrumb, Button, Divider } from 'antd';
+import { Breadcrumb, Button, Divider, Empty } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
-import NotFound from 'components/NotFound';
 import RouteTab from 'components/RouteTab';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
@@ -70,6 +69,7 @@ BreadCrumbItem.defaultProps = {
 function AlertDetails(): JSX.Element {
 	const { pathname } = useLocation();
 	const { routes } = useRouteTabUtils();
+	const { t } = useTranslation(['alerts']);
 
 	const {
 		isLoading,
@@ -90,7 +90,11 @@ function AlertDetails(): JSX.Element {
 		!isValidRuleId ||
 		(alertDetailsResponse && alertDetailsResponse.statusCode !== 200)
 	) {
-		return <NotFound />;
+		return (
+			<div className="alert-empty-card">
+				<Empty description={t('alert_rule_not_found')} />
+			</div>
+		);
 	}
 
 	const handleTabChange = (route: string): void => {

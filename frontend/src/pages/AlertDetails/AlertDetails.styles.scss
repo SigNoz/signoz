@@ -38,6 +38,21 @@
 	}
 }
 
+.alert-empty-card {
+	margin-top: 50px;
+	.ant-empty-description {
+		color: var(--text-vanilla-400);
+	}
+}
+
+.lightMode {
+	.alert-empty-card {
+		.ant-empty-description {
+			color: var(--text-ink-400);
+		}
+	}
+}
+
 .alert-details {
 	margin-top: 10px;
 	.divider {
