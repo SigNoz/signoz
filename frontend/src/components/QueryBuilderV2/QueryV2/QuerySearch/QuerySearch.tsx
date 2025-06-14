@@ -3,13 +3,19 @@ import './QuerySearch.styles.scss';
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import {
 	autocompletion,
+	closeCompletion,
 	CompletionContext,
+	completionKeymap,
 	CompletionResult,
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
 import { copilot } from '@uiw/codemirror-theme-copilot';
-import CodeMirror, { EditorView, Extension } from '@uiw/react-codemirror';
+import CodeMirror, {
+	EditorView,
+	Extension,
+	keymap,
+} from '@uiw/react-codemirror';
 import { Card, Collapse, Space, Tag, Typography } from 'antd';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
@@ -76,6 +82,8 @@ function QuerySearch(): JSX.Element {
 	const [showExamples] = useState(false);
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
+	const [isFocused, setIsFocused] = useState(false);
+
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
 
 	// Reference to the editor view for programmatic autocompletion
@@ -700,6 +708,13 @@ function QuerySearch(): JSX.Element {
 			})),
 		);
 
+	// Effect to handle focus state and trigger suggestions
+	useEffect(() => {
+		if (isFocused && editorRef.current) {
+			startCompletion(editorRef.current);
+		}
+	}, [isFocused]);
+
 	useEffect(() => {
 		if (queryKeySuggestions) {
 			const options = generateOptions(queryKeySuggestions.data.data);
@@ -777,12 +792,30 @@ function QuerySearch(): JSX.Element {
 					EditorView.lineWrapping,
 					stopEventsExtension,
 					disallowMultipleSpaces,
+					keymap.of([
+						...completionKeymap,
+						{
+							key: 'Escape',
+							run: closeCompletion,
+						},
+					]),
 				]}
 				placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
 				basicSetup={{
 					lineNumbers: false,
 				}}
-				autoFocus
+				onFocus={(): void => {
+					setIsFocused(true);
+					if (editorRef.current) {
+						startCompletion(editorRef.current);
+					}
+				}}
+				onBlur={(): void => {
+					setIsFocused(false);
+					if (editorRef.current) {
+						closeCompletion(editorRef.current);
+					}
+				}}
 			/>
 
 			{query && (
