@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics/analyticstest"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -40,7 +42,10 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	licensing, err := nooplicensing.New(context.TODO(), providerSettings, licensing.Config{})
+	require.NoError(err)
+
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, licensing)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
@@ -97,7 +102,9 @@ func TestAgentCheckIns(t *testing.T) {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	licensing, err := nooplicensing.New(context.TODO(), providerSettings, licensing.Config{})
+	require.NoError(err)
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, licensing)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
@@ -193,7 +200,9 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	licensing, err := nooplicensing.New(context.TODO(), providerSettings, licensing.Config{})
+	require.NoError(err)
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, licensing)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 
@@ -221,7 +230,9 @@ func TestConfigureService(t *testing.T) {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	licensing, err := nooplicensing.New(context.TODO(), providerSettings, licensing.Config{})
+	require.NoError(err)
+	modules := signoz.NewModules(sqlStore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, licensing)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	require.Nil(apiErr)
 

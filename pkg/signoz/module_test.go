@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
@@ -33,7 +35,10 @@ func TestNewModules(t *testing.T) {
 	require.NoError(t, err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, nil)
+	licensing, err := nooplicensing.New(context.TODO(), providerSettings, licensing.Config{})
+	require.NoError(t, err)
+
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, nil, licensing)
 
 	reflectVal := reflect.ValueOf(modules)
 	for i := 0; i < reflectVal.NumField(); i++ {

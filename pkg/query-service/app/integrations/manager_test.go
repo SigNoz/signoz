@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics/analyticstest"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
@@ -33,7 +35,9 @@ func TestIntegrationLifecycle(t *testing.T) {
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
 	analytics := analyticstest.New()
-	modules := signoz.NewModules(store, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	licensing, err := nooplicensing.New(context.TODO(), providerSettings, licensing.Config{})
+	require.NoError(err)
+	modules := signoz.NewModules(store, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics, licensing)
 	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create test user: %v", apiErr)
