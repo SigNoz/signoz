@@ -22,7 +22,7 @@ const queryRangeURL = 'http://localhost/api/v3/query_range';
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({
-		pathname: `${ROUTES.LOGS_EXPLORER}`,
+		pathname: ROUTES.LOGS_EXPLORER,
 	}),
 }));
 
@@ -99,6 +99,24 @@ const logsQueryServerRequest = (): void =>
 			res(ctx.status(200), ctx.json(logsQueryRangeSuccessResponse)),
 		),
 	);
+
+const checkAutoRefreshButtonsPresent = async (
+	getByRole: (role: string, options?: any) => HTMLElement,
+): Promise<void> => {
+	await waitFor(() => {
+		expect(
+			getByRole('button', {
+				name: /sync/i,
+			}),
+		).toBeInTheDocument();
+
+		expect(
+			getByRole('button', {
+				name: /caret-down/i,
+			}),
+		).toBeInTheDocument();
+	});
+};
 
 describe('Logs Explorer Tests', () => {
 	test('Logs Explorer default view test without data', async () => {
@@ -260,4 +278,58 @@ describe('Logs Explorer Tests', () => {
 		await fireEvent.click(histogramToggle);
 		expect(queryByText(frequencyChartContent)).not.toBeInTheDocument();
 	});
+
+	test.each([
+		{ panelType: PANEL_TYPES.LIST, viewName: 'list view' },
+		{ panelType: PANEL_TYPES.TIME_SERIES, viewName: 'time series view' },
+		{ panelType: PANEL_TYPES.TABLE, viewName: 'table view' },
+	])(
+		'check that auto refresh is present in $viewName',
+		async ({ panelType }) => {
+			const { getByRole } = render(
+				<QueryBuilderContext.Provider
+					value={{
+						isDefaultQuery: (): boolean => false,
+						currentQuery: {
+							...initialQueriesMap.logs,
+							builder: {
+								...initialQueriesMap.logs.builder,
+								queryData: [initialQueryBuilderFormValues],
+							},
+						},
+						setSupersetQuery: jest.fn(),
+						supersetQuery: initialQueriesMap.logs,
+						stagedQuery: initialQueriesMap.logs,
+						initialDataSource: null,
+						panelType,
+						isEnabledQuery: false,
+						lastUsedQuery: 0,
+						setLastUsedQuery: noop,
+						handleSetQueryData: noop,
+						handleSetFormulaData: noop,
+						handleSetQueryItemData: noop,
+						handleSetConfig: noop,
+						removeQueryBuilderEntityByIndex: noop,
+						removeQueryTypeItemByIndex: noop,
+						addNewBuilderQuery: noop,
+						cloneQuery: noop,
+						addNewFormula: noop,
+						addNewQueryItem: noop,
+						redirectWithQueryBuilderData: noop,
+						handleRunQuery: noop,
+						resetQuery: noop,
+						updateAllQueriesOperators: (): Query => initialQueriesMap.logs,
+						updateQueriesData: (): Query => initialQueriesMap.logs,
+						initQueryBuilderData: noop,
+						handleOnUnitsChange: noop,
+						isStagedQueryUpdated: (): boolean => false,
+					}}
+				>
+					<LogsExplorer />
+				</QueryBuilderContext.Provider>,
+			);
+
+			await checkAutoRefreshButtonsPresent(getByRole);
+		},
+	);
 });
