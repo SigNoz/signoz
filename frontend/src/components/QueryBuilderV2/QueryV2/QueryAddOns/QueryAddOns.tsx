@@ -7,6 +7,7 @@ import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/Grou
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter';
 import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { isEmpty } from 'lodash-es';
 import { BarChart2, ScrollText, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -98,22 +99,38 @@ function QueryAddOns({
 			return;
 		}
 
+		let filteredAddOns: AddOn[];
 		if (panelType === PANEL_TYPES.VALUE) {
 			// Filter out all add-ons except legend format
-			setAddOns((prevAddOns) =>
-				prevAddOns.filter((addOn) => addOn.key === ADD_ONS_KEYS.LEGEND_FORMAT),
+			filteredAddOns = ADD_ONS.filter(
+				(addOn) => addOn.key === ADD_ONS_KEYS.LEGEND_FORMAT,
 			);
 		} else {
-			setAddOns(Object.values(ADD_ONS));
+			filteredAddOns = Object.values(ADD_ONS);
+
+			// Filter out group_by for metrics data source
+			if (query.dataSource === DataSource.METRICS) {
+				filteredAddOns = filteredAddOns.filter(
+					(addOn) => addOn.key !== ADD_ONS_KEYS.GROUP_BY,
+				);
+			}
 		}
 
 		// add reduce to if showReduceTo is true
 		if (showReduceTo) {
-			setAddOns((prevAddOns) => [...prevAddOns, REDUCE_TO]);
+			filteredAddOns = [...filteredAddOns, REDUCE_TO];
 		}
 
+		setAddOns(filteredAddOns);
+
+		// Filter selectedViews to only include add-ons present in filteredAddOns
+		setSelectedViews((prevSelectedViews) =>
+			prevSelectedViews.filter((view) =>
+				filteredAddOns.some((addOn) => addOn.key === view.key),
+			),
+		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [panelType, isListViewPanel]);
+	}, [panelType, isListViewPanel, query.dataSource]);
 
 	const handleOptionClick = (e: RadioChangeEvent): void => {
 		if (selectedViews.find((view) => view.key === e.target.value.key)) {
@@ -167,6 +184,15 @@ function QueryAddOns({
 		[handleChangeQueryData],
 	);
 
+	const handleChangeHaving = useCallback(
+		(value: string) => {
+			handleChangeQueryData('havingExpression', {
+				expression: value,
+			});
+		},
+		[handleChangeQueryData],
+	);
+
 	return (
 		<div className="query-add-ons">
 			{selectedViews.length > 0 && (
@@ -204,6 +230,8 @@ function QueryAddOns({
 												selectedViews.filter((view) => view.key !== 'having'),
 											);
 										}}
+										onChange={handleChangeHaving}
+										queryData={query}
 									/>
 								</div>
 							</div>
@@ -214,6 +242,7 @@ function QueryAddOns({
 							<InputWithLabel
 								label="Limit"
 								onChange={handleChangeLimit}
+								initialValue={query?.limit ?? undefined}
 								placeholder="Enter limit"
 								onClose={(): void => {
 									setSelectedViews(selectedViews.filter((view) => view.key !== 'limit'));
@@ -233,11 +262,13 @@ function QueryAddOns({
 										isListViewPanel={isListViewPanel}
 									/>
 								</div>
-								<Button
-									className="close-btn periscope-btn ghost"
-									icon={<X size={16} />}
-									onClick={(): void => handleRemoveView('order_by')}
-								/>
+								{!isListViewPanel && (
+									<Button
+										className="close-btn periscope-btn ghost"
+										icon={<X size={16} />}
+										onClick={(): void => handleRemoveView('order_by')}
+									/>
+								)}
 							</div>
 						</div>
 					)}
@@ -265,6 +296,7 @@ function QueryAddOns({
 								label="Legend format"
 								placeholder="Write legend format"
 								onChange={handleChangeQueryLegend}
+								initialValue={isEmpty(query?.legend) ? undefined : query?.legend}
 								onClose={(): void => {
 									setSelectedViews(
 										selectedViews.filter((view) => view.key !== 'legend_format'),

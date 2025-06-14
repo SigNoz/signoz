@@ -43,6 +43,7 @@ function WidgetGraphContainer({
 
 	if (
 		selectedGraph !== PANEL_TYPES.LIST &&
+		selectedGraph !== PANEL_TYPES.VALUE &&
 		queryResponse.data?.payload.data?.result?.length === 0
 	) {
 		return (
@@ -52,7 +53,7 @@ function WidgetGraphContainer({
 		);
 	}
 	if (
-		selectedGraph === PANEL_TYPES.LIST &&
+		(selectedGraph === PANEL_TYPES.LIST || selectedGraph === PANEL_TYPES.VALUE) &&
 		queryResponse.data?.payload?.data?.newResult?.data?.result?.length === 0
 	) {
 		return (

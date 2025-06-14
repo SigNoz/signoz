@@ -2,7 +2,7 @@ import './ChartPreview.styles.scss';
 
 import { InfoCircleOutlined } from '@ant-design/icons';
 import Spinner from 'components/Spinner';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -144,7 +144,8 @@ function ChartPreview({
 			},
 			originalGraphType: graphType,
 		},
-		alertDef?.version || DEFAULT_ENTITY_VERSION,
+		// alertDef?.version || DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				'chartPreview',

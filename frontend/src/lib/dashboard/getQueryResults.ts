@@ -3,6 +3,12 @@
 // @ts-nocheck
 
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
+import {
+	convertV5ResponseToLegacy,
+	getQueryRangeV5,
+	prepareQueryRangePayloadV5,
+} from 'api/v5/v5';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
@@ -26,13 +32,42 @@ export async function GetMetricQueryRange(
 	headers?: Record<string, string>,
 	isInfraMonitoring?: boolean,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
-	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
-	const response = await getMetricsQueryRange(
-		queryPayload,
-		version || 'v3',
-		signal,
-		headers,
-	);
+	let legendMap: Record<string, string>;
+	let response: SuccessResponse<MetricRangePayloadProps>;
+
+	if (version === ENTITY_VERSION_V5) {
+		const v5Result = prepareQueryRangePayloadV5(props);
+		legendMap = v5Result.legendMap;
+
+		const v5Response = await getQueryRangeV5(
+			v5Result.queryPayload,
+			version,
+			signal,
+			headers,
+		);
+
+		// Convert V5 response to legacy format for components
+		response = convertV5ResponseToLegacy(v5Response, legendMap);
+	} else {
+		const legacyResult = prepareQueryRangePayload(props);
+		legendMap = legacyResult.legendMap;
+
+		response = await getMetricsQueryRange(
+			legacyResult.queryPayload,
+			version || 'v3',
+			signal,
+			headers,
+		);
+	}
+
+	// todo: Sagar
+	if (response.statusCode >= 400 && version === ENTITY_VERSION_V5) {
+		let error = `API responded with ${response.statusCode} -  ${response.error?.message} status: ${response?.status}`;
+		if (response.body && !isEmpty(response.body)) {
+			error = `${error}, errors: ${response.body}`;
+		}
+		throw new Error(error);
+	}
 
 	if (response.statusCode >= 400) {
 		let error = `API responded with ${response.statusCode} -  ${response.error} status: ${response.message}`;

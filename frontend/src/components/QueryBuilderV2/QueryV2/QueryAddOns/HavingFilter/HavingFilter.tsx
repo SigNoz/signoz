@@ -15,6 +15,7 @@ import { Button } from 'antd';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 const havingOperators = [
 	{
@@ -67,16 +68,30 @@ const conjunctions = [
 	{ label: 'OR', value: 'OR' },
 ];
 
-function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
+function HavingFilter({
+	onClose,
+	onChange,
+	queryData,
+}: {
+	onClose: () => void;
+	onChange: (value: string) => void;
+	queryData: IBuilderQuery;
+}): JSX.Element {
 	const { aggregationOptions } = useQueryBuilderV2Context();
-	const [input, setInput] = useState('');
+	const [input, setInput] = useState(
+		queryData?.havingExpression?.expression || '',
+	);
 	const [isFocused, setIsFocused] = useState(false);
 
 	const editorRef = useRef<EditorView | null>(null);
 
 	const [options, setOptions] = useState<{ label: string; value: string }[]>([]);
 
-	// Effect to handle focus state and trigger suggestions
+	const handleChange = (value: string): void => {
+		setInput(value);
+		onChange(value);
+	};
+
 	useEffect(() => {
 		if (isFocused && editorRef.current && options.length > 0) {
 			startCompletion(editorRef.current);
@@ -237,9 +252,10 @@ function HavingFilter({ onClose }: { onClose: () => void }): JSX.Element {
 			<div className="having-filter-select-container">
 				<CodeMirror
 					value={input}
+					onChange={handleChange}
 					theme={copilot}
-					onChange={setInput}
 					className="having-filter-select-editor"
+					width="100%"
 					extensions={[
 						havingAutocomplete,
 						javascript({ jsx: false, typescript: false }),
