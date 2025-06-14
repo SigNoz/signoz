@@ -121,7 +121,7 @@ function EditAlertChannels({
 	const prepareWebhookRequest = useCallback(() => {
 		const { name, username, password } = selectedConfig;
 		return {
-			api_url: `${selectedConfig?.api_url}&text=${selectedConfig?.text}` || '',
+			api_url: selectedConfig?.api_url || '',
 			name: name || '',
 			send_resolved: selectedConfig?.send_resolved || false,
 			username,
