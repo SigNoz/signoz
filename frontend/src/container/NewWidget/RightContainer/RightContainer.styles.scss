@@ -1,12 +1,40 @@
 .right-container {
 	display: flex;
 	flex-direction: column;
+	width: 400px;
+	min-width: 30px;
+	transition: width 0.1s ease-in-out;
+	overflow: hidden;
+
+	&.expanded {
+		width: 400px;
+	}
+
+	&.minimized {
+		width: 30px;
+		
+		.header {
+			justify-content: center;
+			padding: 14px 8px;
+		}
+	}
 
 	.header {
 		display: flex;
 		padding: 14px 14px 14px 12px;
 		align-items: center;
 		gap: 8px;
+
+		&.hide {
+			display: none;
+		}
+
+		.hide-button {
+			flex-shrink: 0;
+			background: none;
+			border: none;
+			cursor: pointer;
+		}
 
 		.purple-dot {
 			width: 8px;
