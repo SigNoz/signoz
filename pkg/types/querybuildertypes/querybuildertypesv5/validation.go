@@ -619,6 +619,11 @@ func validateQueryEnvelope(envelope QueryEnvelope, requestType RequestType) erro
 
 // validateMetricAggregation validates metric-specific aggregation parameters
 func validateMetricAggregation(agg MetricAggregation) error {
+	// we can't decide anything here without known temporality
+	if agg.Temporality == metrictypes.Unknown {
+		return nil
+	}
+
 	// Validate that rate/increase are only used with appropriate temporalities
 	if agg.TimeAggregation == metrictypes.TimeAggregationRate || agg.TimeAggregation == metrictypes.TimeAggregationIncrease {
 		// For gauge metrics (Unspecified temporality), rate/increase doesn't make sense

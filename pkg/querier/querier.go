@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"golang.org/x/exp/maps"
 
@@ -104,6 +105,33 @@ func adjustTimeRangeForShift[T any](spec qbtypes.QueryBuilderQuery[T], tr qbtype
 
 func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
 
+	// First pass: collect all metric names that need temporality
+	metricNames := make([]string, 0)
+	for _, query := range req.CompositeQuery.Queries {
+		if query.Type == qbtypes.QueryTypeBuilder {
+			if spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]); ok {
+				for _, agg := range spec.Aggregations {
+					if agg.MetricName != "" {
+						metricNames = append(metricNames, agg.MetricName)
+					}
+				}
+			}
+		}
+	}
+
+	// Fetch temporality for all metrics at once
+	var metricTemporality map[string]metrictypes.Temporality
+	if len(metricNames) > 0 {
+		var err error
+		metricTemporality, err = q.metadataStore.FetchTemporalityMulti(ctx, metricNames...)
+		if err != nil {
+			q.logger.WarnContext(ctx, "failed to fetch metric temporality", "error", err, "metrics", metricNames)
+			// Continue without temporality - statement builder will handle unspecified
+			metricTemporality = make(map[string]metrictypes.Temporality)
+		}
+		q.logger.DebugContext(ctx, "fetched metric temporalities", "metricTemporality", metricTemporality)
+	}
+
 	queries := make(map[string]qbtypes.Query)
 	steps := make(map[string]qbtypes.Step)
 
@@ -139,6 +167,13 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				for i := range spec.Aggregations {
+					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
+						if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && temp != metrictypes.Unknown {
+							spec.Aggregations[i].Temporality = temp
+						}
+					}
+				}
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 				bq := newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType)
