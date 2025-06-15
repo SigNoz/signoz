@@ -2,6 +2,7 @@ package querybuildertypesv5
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -120,8 +121,8 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 								"expression": "severity_text = 'ERROR'"
 							},
 							"selectFields": [{
-								"key": "body",
-								"type": "log"
+								"name": "body",
+								"fieldContext": "log"
 							}],
 							"limit": 50,
 							"offset": 10
@@ -177,8 +178,8 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}],
 							"stepInterval": 120,
 							"groupBy": [{
-								"key": "method",
-								"type": "tag"
+								"name": "method",
+								"fieldContext": "tag"
 							}]
 						}
 					}]
@@ -436,10 +437,9 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"name": "B",
 							"type": "builder_formula",
 							"spec": {
-								"name": "rate",
+								"name": "B",
 								"expression": "A * 100"
 							}
 						}
@@ -465,7 +465,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 						{
 							Type: QueryTypeFormula,
 							Spec: QueryBuilderFormula{
-								Name:       "rate",
+								Name:       "B",
 								Expression: "A * 100",
 							},
 						},
@@ -669,6 +669,231 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 
 			if tt.expected.Variables != nil {
 				assert.Equal(t, tt.expected.Variables, req.Variables)
+			}
+		})
+	}
+}
+
+func TestQueryRangeRequestUnmarshalWithSuggestions(t *testing.T) {
+	tests := []struct {
+		name        string
+		jsonData    string
+		expectedErr string
+	}{
+		{
+			name: "valid request",
+			jsonData: `{
+				"schemaVersion": "v5",
+				"start": 1000,
+				"end": 2000,
+				"requestType": "timeseries",
+				"compositeQuery": {
+					"queries": []
+				}
+			}`,
+			expectedErr: "",
+		},
+		{
+			name: "typo in start field",
+			jsonData: `{
+				"schemaVersion": "v5",
+				"strt": 1000,
+				"end": 2000,
+				"requestType": "timeseries",
+				"compositeQuery": {
+					"queries": []
+				}
+			}`,
+			expectedErr: `unknown field "strt"`,
+		},
+		{
+			name: "typo in schemaVersion",
+			jsonData: `{
+				"schemaVerson": "v5",
+				"start": 1000,
+				"end": 2000,
+				"requestType": "timeseries",
+				"compositeQuery": {
+					"queries": []
+				}
+			}`,
+			expectedErr: `unknown field "schemaVerson"`,
+		},
+		{
+			name: "requestype instead of requestType",
+			jsonData: `{
+				"schemaVersion": "v5",
+				"start": 1000,
+				"end": 2000,
+				"requestype": "timeseries",
+				"compositeQuery": {
+					"queries": []
+				}
+			}`,
+			expectedErr: `unknown field "requestype"`,
+		},
+		{
+			name: "composite_query instead of compositeQuery",
+			jsonData: `{
+				"schemaVersion": "v5",
+				"start": 1000,
+				"end": 2000,
+				"requestType": "timeseries",
+				"composite_query": {
+					"queries": []
+				}
+			}`,
+			expectedErr: `unknown field "composite_query"`,
+		},
+		{
+			name: "no_cache instead of noCache",
+			jsonData: `{
+				"schemaVersion": "v5",
+				"start": 1000,
+				"end": 2000,
+				"requestType": "timeseries",
+				"compositeQuery": {
+					"queries": []
+				},
+				"no_cache": true
+			}`,
+			expectedErr: `unknown field "no_cache"`,
+		},
+		{
+			name: "format_options instead of formatOptions",
+			jsonData: `{
+				"schemaVersion": "v5",
+				"start": 1000,
+				"end": 2000,
+				"requestType": "timeseries",
+				"compositeQuery": {
+					"queries": []
+				},
+				"format_options": {}
+			}`,
+			expectedErr: `unknown field "format_options"`,
+		},
+		{
+			name: "completely unknown field with no good suggestion",
+			jsonData: `{
+				"schemaVersion": "v5",
+				"completely_unknown_field_xyz": 1000,
+				"end": 2000,
+				"requestType": "timeseries",
+				"compositeQuery": {
+					"queries": []
+				}
+			}`,
+			expectedErr: `unknown field "completely_unknown_field_xyz"`,
+		},
+		{
+			name: "common mistake: limit instead of variables",
+			jsonData: `{
+				"schemaVersion": "v5",
+				"start": 1000,
+				"end": 2000,
+				"requestType": "timeseries",
+				"compositeQuery": {
+					"queries": []
+				},
+				"limit": 100
+			}`,
+			expectedErr: `unknown field "limit"`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var req QueryRangeRequest
+			err := json.Unmarshal([]byte(tt.jsonData), &req)
+
+			if tt.expectedErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedErr)
+			}
+		})
+	}
+}
+
+func TestGetJSONFieldNames(t *testing.T) {
+	type TestStruct struct {
+		Field1 string `json:"field1"`
+		Field2 int    `json:"field2,omitempty"`
+		Field3 bool   `json:"-"`
+		Field4 string `json:""`
+		Field5 string // no json tag
+	}
+
+	fields := getJSONFieldNames(&TestStruct{})
+	expected := []string{"field1", "field2"}
+
+	assert.ElementsMatch(t, expected, fields)
+}
+
+func TestUnmarshalJSONWithSuggestions(t *testing.T) {
+	type TestRequest struct {
+		SchemaVersion string `json:"schemaVersion"`
+		Start         int64  `json:"start"`
+		End           int64  `json:"end"`
+		Limit         int    `json:"limit,omitempty"`
+	}
+
+	tests := []struct {
+		name        string
+		jsonData    string
+		expectedErr string
+	}{
+		{
+			name: "valid JSON",
+			jsonData: `{
+				"schemaVersion": "v1",
+				"start": 1000,
+				"end": 2000
+			}`,
+			expectedErr: "",
+		},
+		{
+			name: "typo in field name",
+			jsonData: `{
+				"schemaVerson": "v1",
+				"start": 1000,
+				"end": 2000
+			}`,
+			expectedErr: `unknown field "schemaVerson"`,
+		},
+		{
+			name: "multiple typos - only first is reported",
+			jsonData: `{
+				"strt": 1000,
+				"ed": 2000
+			}`,
+			expectedErr: `unknown field "strt"`,
+		},
+		{
+			name: "case sensitivity",
+			jsonData: `{
+				"schema_version": "v1",
+				"start": 1000,
+				"end": 2000
+			}`,
+			expectedErr: `unknown field "schema_version"`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var req TestRequest
+			err := UnmarshalJSONWithSuggestions([]byte(tt.jsonData), &req)
+
+			if tt.expectedErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				// Clean up the error message for comparison
+				errMsg := strings.ReplaceAll(err.Error(), "\n", " ")
+				assert.Contains(t, errMsg, tt.expectedErr)
 			}
 		})
 	}
