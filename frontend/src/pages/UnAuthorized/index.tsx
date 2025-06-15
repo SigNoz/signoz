@@ -11,8 +11,9 @@ function UnAuthorizePage(): JSX.Element {
 				<Typography.Title level={3}>
 					Oops.. you don&apos;t have permission to view this page
 				</Typography.Title>
-				<Button to={ROUTES.APPLICATION} tabIndex={0}>
-					Return To Services Page
+
+				<Button to={ROUTES.HOME} tabIndex={0} className="periscope-btn primary">
+					Return To Home
 				</Button>
 			</Space>
 		</Container>

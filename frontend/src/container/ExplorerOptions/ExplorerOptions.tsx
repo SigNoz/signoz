@@ -54,6 +54,7 @@ import {
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+import { FormattingOptions } from 'providers/preferences/types';
 import {
 	CSSProperties,
 	Dispatch,
@@ -270,17 +271,26 @@ function ExplorerOptions({
 	const getUpdatedExtraData = (
 		extraData: string | undefined,
 		newSelectedColumns: BaseAutocompleteData[],
+		formattingOptions?: FormattingOptions,
 	): string => {
 		let updatedExtraData;
 
 		if (extraData) {
 			const parsedExtraData = JSON.parse(extraData);
 			parsedExtraData.selectColumns = newSelectedColumns;
+			if (formattingOptions) {
+				parsedExtraData.format = formattingOptions.format;
+				parsedExtraData.maxLines = formattingOptions.maxLines;
+				parsedExtraData.fontSize = formattingOptions.fontSize;
+			}
 			updatedExtraData = JSON.stringify(parsedExtraData);
 		} else {
 			updatedExtraData = JSON.stringify({
 				color: Color.BG_SIENNA_500,
 				selectColumns: newSelectedColumns,
+				format: formattingOptions?.format,
+				maxLines: formattingOptions?.maxLines,
+				fontSize: formattingOptions?.fontSize,
 			});
 		}
 		return updatedExtraData;
@@ -289,6 +299,14 @@ function ExplorerOptions({
 	const updatedExtraData = getUpdatedExtraData(
 		extraData,
 		options?.selectColumns,
+		// pass this only for logs
+		sourcepage === DataSource.LOGS
+			? {
+					format: options?.format,
+					maxLines: options?.maxLines,
+					fontSize: options?.fontSize,
+			  }
+			: undefined,
 	);
 
 	const {
@@ -517,6 +535,14 @@ function ExplorerOptions({
 				color,
 				selectColumns: options.selectColumns,
 				version: 1,
+				...// pass this only for logs
+				(sourcepage === DataSource.LOGS
+					? {
+							format: options?.format,
+							maxLines: options?.maxLines,
+							fontSize: options?.fontSize,
+					  }
+					: {}),
 			}),
 			notifications,
 			panelType: panelType || PANEL_TYPES.LIST,
