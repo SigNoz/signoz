@@ -36,7 +36,6 @@ function QuerySection({
 	const { t } = useTranslation('alerts');
 	const [currentTab, setCurrentTab] = useState(queryCategory);
 
-	// TODO[vikrantgupta25] : check if this is still required ??
 	const handleQueryCategoryChange = (queryType: string): void => {
 		setQueryCategory(queryType as EQueryType);
 		setCurrentTab(queryType as EQueryType);

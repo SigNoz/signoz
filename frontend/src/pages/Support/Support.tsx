@@ -155,10 +155,10 @@ export default function Support(): JSX.Element {
 				page: pathname,
 			});
 			setIsAddCreditCardModalOpen(true);
-		} else if (window.Intercom) {
+		} else if (window.pylon) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			window.Intercom('show');
+			window.Pylon('show');
 		}
 	};
 
@@ -183,7 +183,7 @@ export default function Support(): JSX.Element {
 	return (
 		<div className="support-page-container">
 			<div className="support-page-header">
-				<Title level={3}> Support </Title>
+				<Title level={3}> Help & Support </Title>
 				<Text style={{ fontSize: 14 }}>
 					We are here to help in case of questions or issues. Pick the channel that
 					is most convenient for you.

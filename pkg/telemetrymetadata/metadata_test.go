@@ -3,11 +3,10 @@ package telemetrymetadata
 import (
 	"context"
 	"fmt"
-	"io"
-	"log/slog"
 	"regexp"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -36,7 +35,7 @@ func TestGetKeys(t *testing.T) {
 	mock := mockTelemetryStore.Mock()
 
 	metadata := NewTelemetryMetaStore(
-		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		instrumentationtest.New().ToProviderSettings(),
 		mockTelemetryStore,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,

@@ -160,8 +160,6 @@ function GridCardGraph({
 		};
 	});
 
-	// TODO [vikrantgupta25] remove this useEffect with refactor as this is prone to race condition
-	// this is added to tackle the case of async communication between VariableItem.tsx and GridCard.tsx
 	useEffect(() => {
 		if (variablesToGetUpdated.length > 0) {
 			queryClient.cancelQueries([
@@ -191,8 +189,9 @@ function GridCardGraph({
 
 	const isLogsQuery = useMemo(
 		() =>
-			requestData.query.builder.queryData.every(
-				(query) => query.dataSource === DataSource.LOGS,
+			requestData?.query?.builder?.queryData?.length > 0 &&
+			requestData?.query?.builder?.queryData?.every(
+				(query) => query?.dataSource === DataSource.LOGS,
 			),
 		[requestData.query],
 	);
@@ -203,7 +202,7 @@ function GridCardGraph({
 			variables: getDashboardVariables(variables),
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval:
-				widget.panelTypes === PANEL_TYPES.LIST && isLogsQuery
+				widget?.panelTypes === PANEL_TYPES.LIST && isLogsQuery
 					? 'custom'
 					: globalSelectedInterval,
 			start: customTimeRange?.startTime || start,

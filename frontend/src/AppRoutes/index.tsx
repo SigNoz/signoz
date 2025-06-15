@@ -28,6 +28,7 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
+import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { Userpilot } from 'userpilot';
 import { extractDomain } from 'utils/app';
 
@@ -103,6 +104,20 @@ function App(): JSX.Element {
 				if (domain) {
 					logEvent('Domain Identified', groupTraits, 'group');
 				}
+				if (window && window.Appcues) {
+					window.Appcues.identify(email, {
+						name: displayName,
+
+						tenant_id: hostNameParts[0],
+						data_region: hostNameParts[1],
+						tenant_url: hostname,
+						company_domain: domain,
+
+						companyName: orgName,
+						email,
+						paidUser: !!trialInfo?.trialConvertedToSubscription,
+					});
+				}
 
 				Userpilot.identify(email, {
 					email,
@@ -137,18 +152,6 @@ function App(): JSX.Element {
 					source: 'signoz-ui',
 					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
 				});
-
-				if (
-					window.cioanalytics &&
-					typeof window.cioanalytics.identify === 'function'
-				) {
-					window.cioanalytics.reset();
-					window.cioanalytics.identify(email, {
-						name: user.displayName,
-						email,
-						role: user.role,
-					});
-				}
 			}
 		},
 		[
@@ -169,11 +172,13 @@ function App(): JSX.Element {
 			user &&
 			!!user.email
 		) {
+			// either the active API returns error with 404 or 501 and if it returns a terminated license means it's on basic plan
 			const isOnBasicPlan =
-				activeLicenseFetchError &&
-				[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
-					activeLicenseFetchError?.getHttpStatusCode(),
-				);
+				(activeLicenseFetchError &&
+					[StatusCodes.NOT_FOUND, StatusCodes.NOT_IMPLEMENTED].includes(
+						activeLicenseFetchError?.getHttpStatusCode(),
+					)) ||
+				(activeLicense?.status && activeLicense.status === LicenseStatus.INVALID);
 			const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
 
 			if (isLoggedInState && user && user.id && user.email && !isIdentifiedUser) {
@@ -189,6 +194,11 @@ function App(): JSX.Element {
 						(route) => route?.path !== ROUTES.BILLING,
 					);
 				}
+
+				if (isEnterpriseSelfHostedUser) {
+					updatedRoutes.push(LIST_LICENSES);
+				}
+
 				// always add support route for cloud users
 				updatedRoutes = [...updatedRoutes, SUPPORT_ROUTE];
 			} else {
@@ -213,13 +223,13 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (pathname === ROUTES.ONBOARDING) {
-			window.Intercom('update', {
-				hide_default_launcher: true,
-			});
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			window.Pylon('hideChatBubble');
 		} else {
-			window.Intercom('update', {
-				hide_default_launcher: false,
-			});
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			window.Pylon('showChatBubble');
 		}
 	}, [pathname]);
 
@@ -254,11 +264,13 @@ function App(): JSX.Element {
 				!showAddCreditCardModal &&
 				(isCloudUser || isEnterpriseSelfHostedUser)
 			) {
-				window.Intercom('boot', {
-					app_id: process.env.INTERCOM_APP_ID,
-					email: user?.email || '',
-					name: user?.displayName || '',
-				});
+				window.pylon = {
+					chat_settings: {
+						app_id: process.env.PYLON_APP_ID,
+						email: user.email,
+						name: user.displayName,
+					},
+				};
 			}
 		}
 	}, [
@@ -320,10 +332,6 @@ function App(): JSX.Element {
 		} else {
 			posthog.reset();
 			Sentry.close();
-
-			if (window.cioanalytics && typeof window.cioanalytics.reset === 'function') {
-				window.cioanalytics.reset();
-			}
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);

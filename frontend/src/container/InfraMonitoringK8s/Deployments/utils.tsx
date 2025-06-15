@@ -226,6 +226,12 @@ export const getK8sDeploymentsListColumns = (
 	return columnsConfig as ColumnType<K8sDeploymentsRowData>[];
 };
 
+const dotToUnder: Record<string, keyof K8sDeploymentsData['meta']> = {
+	'k8s.deployment.name': 'k8s_deployment_name',
+	'k8s.namespace.name': 'k8s_namespace_name',
+	'k8s.cluster.name': 'k8s_cluster_name',
+};
+
 const getGroupByEle = (
 	deployment: K8sDeploymentsData,
 	groupBy: IBuilderQuery['groupBy'],
@@ -233,9 +239,14 @@ const getGroupByEle = (
 	const groupByValues: string[] = [];
 
 	groupBy.forEach((group) => {
-		groupByValues.push(
-			deployment.meta[group.key as keyof typeof deployment.meta],
-		);
+		const rawKey = group.key as string;
+
+		// Choose mapped key if present, otherwise use rawKey
+		const metaKey = (dotToUnder[rawKey] ??
+			rawKey) as keyof typeof deployment.meta;
+		const value = deployment.meta[metaKey];
+
+		groupByValues.push(value);
 	});
 
 	return (

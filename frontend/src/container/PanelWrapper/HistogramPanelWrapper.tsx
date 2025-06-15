@@ -55,7 +55,11 @@ function HistogramPanelWrapper({
 		if (setGraphVisibility) {
 			setGraphVisibility(localStoredVisibilityState);
 		}
-	}, [queryResponse.data?.payload.data.result, setGraphVisibility, widget.id]);
+	}, [
+		queryResponse?.data?.payload?.data?.result,
+		setGraphVisibility,
+		widget.id,
+	]);
 
 	const histogramOptions = useMemo(
 		() =>

@@ -24,6 +24,10 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
+import {
+	MetricsExplorerEventKeys,
+	MetricsExplorerEvents,
+} from 'container/MetricsExplorer/events';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import {
 	defaultLogsSelectedColumns,
@@ -50,6 +54,7 @@ import {
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+import { FormattingOptions } from 'providers/preferences/types';
 import {
 	CSSProperties,
 	Dispatch,
@@ -140,7 +145,9 @@ function ExplorerOptions({
 				panelType,
 			});
 		} else if (isMetricsExplorer) {
-			logEvent('Metrics Explorer: Save view clicked', {
+			logEvent(MetricsExplorerEvents.SaveViewClicked, {
+				[MetricsExplorerEventKeys.Tab]: 'explorer',
+				[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,
 				panelType,
 			});
 		}
@@ -184,8 +191,10 @@ function ExplorerOptions({
 					panelType,
 				});
 			} else if (isMetricsExplorer) {
-				logEvent('Metrics Explorer: Create alert', {
+				logEvent(MetricsExplorerEvents.AddToAlertClicked, {
 					panelType,
+					[MetricsExplorerEventKeys.Tab]: 'explorer',
+					[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,
 				});
 			}
 
@@ -218,11 +227,14 @@ function ExplorerOptions({
 				panelType,
 			});
 		} else if (isMetricsExplorer) {
-			logEvent('Metrics Explorer: Add to dashboard clicked', {
+			logEvent(MetricsExplorerEvents.AddToDashboardClicked, {
 				panelType,
+				[MetricsExplorerEventKeys.Tab]: 'explorer',
+				[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,
 			});
 		}
 		setIsExport(true);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isLogsExplorer, isMetricsExplorer, panelType, setIsExport, sourcepage]);
 
 	const {
@@ -259,17 +271,26 @@ function ExplorerOptions({
 	const getUpdatedExtraData = (
 		extraData: string | undefined,
 		newSelectedColumns: BaseAutocompleteData[],
+		formattingOptions?: FormattingOptions,
 	): string => {
 		let updatedExtraData;
 
 		if (extraData) {
 			const parsedExtraData = JSON.parse(extraData);
 			parsedExtraData.selectColumns = newSelectedColumns;
+			if (formattingOptions) {
+				parsedExtraData.format = formattingOptions.format;
+				parsedExtraData.maxLines = formattingOptions.maxLines;
+				parsedExtraData.fontSize = formattingOptions.fontSize;
+			}
 			updatedExtraData = JSON.stringify(parsedExtraData);
 		} else {
 			updatedExtraData = JSON.stringify({
 				color: Color.BG_SIENNA_500,
 				selectColumns: newSelectedColumns,
+				format: formattingOptions?.format,
+				maxLines: formattingOptions?.maxLines,
+				fontSize: formattingOptions?.fontSize,
 			});
 		}
 		return updatedExtraData;
@@ -278,6 +299,14 @@ function ExplorerOptions({
 	const updatedExtraData = getUpdatedExtraData(
 		extraData,
 		options?.selectColumns,
+		// pass this only for logs
+		sourcepage === DataSource.LOGS
+			? {
+					format: options?.format,
+					maxLines: options?.maxLines,
+					fontSize: options?.fontSize,
+			  }
+			: undefined,
 	);
 
 	const {
@@ -506,6 +535,14 @@ function ExplorerOptions({
 				color,
 				selectColumns: options.selectColumns,
 				version: 1,
+				...// pass this only for logs
+				(sourcepage === DataSource.LOGS
+					? {
+							format: options?.format,
+							maxLines: options?.maxLines,
+							fontSize: options?.fontSize,
+					  }
+					: {}),
 			}),
 			notifications,
 			panelType: panelType || PANEL_TYPES.LIST,

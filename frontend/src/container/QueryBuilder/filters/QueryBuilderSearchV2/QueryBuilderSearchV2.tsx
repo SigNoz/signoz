@@ -1037,7 +1037,9 @@ function QueryBuilderSearchV2(
 					);
 				})}
 			</Select>
-			{!hideSpanScopeSelector && <SpanScopeSelector queryName={query.queryName} />}
+			{!hideSpanScopeSelector && (
+				<SpanScopeSelector query={query} onChange={onChange} />
+			)}
 		</div>
 	);
 }

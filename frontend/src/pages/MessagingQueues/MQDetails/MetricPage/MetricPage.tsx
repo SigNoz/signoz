@@ -10,17 +10,19 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Widgets } from 'types/api/dashboard/getAll';
 
+import { FeatureKeys } from '../../../../constants/features';
+import { useAppContext } from '../../../../providers/App/App';
 import MetricColumnGraphs from './MetricColumnGraphs';
 import MetricPageGridGraph from './MetricPageGraph';
 import {
-	cpuRecentUtilizationWidgetData,
-	currentOffsetPartitionWidgetData,
-	insyncReplicasWidgetData,
-	jvmGcCollectionsElapsedWidgetData,
-	jvmGCCountWidgetData,
-	jvmMemoryHeapWidgetData,
-	oldestOffsetWidgetData,
-	partitionCountPerTopicWidgetData,
+	getCpuRecentUtilizationWidgetData,
+	getCurrentOffsetPartitionWidgetData,
+	getInsyncReplicasWidgetData,
+	getJvmGcCollectionsElapsedWidgetData,
+	getJvmGCCountWidgetData,
+	getJvmMemoryHeapWidgetData,
+	getOldestOffsetWidgetData,
+	getPartitionCountPerTopicWidgetData,
 } from './MetricPageUtil';
 
 interface CollapsibleMetricSectionProps {
@@ -95,6 +97,11 @@ function MetricPage(): JSX.Element {
 		}));
 	};
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const { t } = useTranslation('messagingQueues');
 
 	const metricSections = [
@@ -103,10 +110,10 @@ function MetricPage(): JSX.Element {
 			title: t('metricGraphCategory.brokerJVMMetrics.title'),
 			description: t('metricGraphCategory.brokerJVMMetrics.description'),
 			graphCount: [
-				jvmGCCountWidgetData,
-				jvmGcCollectionsElapsedWidgetData,
-				cpuRecentUtilizationWidgetData,
-				jvmMemoryHeapWidgetData,
+				getJvmGCCountWidgetData(dotMetricsEnabled),
+				getJvmGcCollectionsElapsedWidgetData(dotMetricsEnabled),
+				getCpuRecentUtilizationWidgetData(dotMetricsEnabled),
+				getJvmMemoryHeapWidgetData(dotMetricsEnabled),
 			],
 		},
 		{
@@ -114,10 +121,10 @@ function MetricPage(): JSX.Element {
 			title: t('metricGraphCategory.partitionMetrics.title'),
 			description: t('metricGraphCategory.partitionMetrics.description'),
 			graphCount: [
-				partitionCountPerTopicWidgetData,
-				currentOffsetPartitionWidgetData,
-				oldestOffsetWidgetData,
-				insyncReplicasWidgetData,
+				getPartitionCountPerTopicWidgetData(dotMetricsEnabled),
+				getCurrentOffsetPartitionWidgetData(dotMetricsEnabled),
+				getOldestOffsetWidgetData(dotMetricsEnabled),
+				getInsyncReplicasWidgetData(dotMetricsEnabled),
 			],
 		},
 	];

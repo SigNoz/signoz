@@ -17,7 +17,6 @@ import { DEFAULT_BUCKET_COUNT } from 'container/PanelWrapper/constants';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useAxiosError from 'hooks/useAxiosError';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -41,10 +40,10 @@ import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
-	Dashboard,
 	LegendPosition,
 	Widgets,
 } from 'types/api/dashboard/getAll';
+import { Props } from 'types/api/dashboard/update';
 import { IField } from 'types/api/logs/fields';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
@@ -105,9 +104,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const isLogsQuery = currentQuery.builder.queryData.every(
-		(query) => query.dataSource === DataSource.LOGS,
-	);
+	const isLogsQuery =
+		currentQuery?.builder?.queryData?.length > 0 &&
+		currentQuery?.builder?.queryData?.every(
+			(query) => query?.dataSource === DataSource.LOGS,
+		);
 
 	const customGlobalSelectedInterval = useMemo(
 		() =>
@@ -139,11 +140,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		if (!logEventCalledRef.current) {
 			logEvent('Panel Edit: Page visited', {
 				panelType: selectedWidget?.panelTypes,
-				dashboardId: selectedDashboard?.uuid,
+				dashboardId: selectedDashboard?.id,
 				widgetId: selectedWidget?.id,
 				dashboardName: selectedDashboard?.data.title,
 				isNewPanel: !!isWidgetNotPresent,
-				dataSource: currentQuery.builder.queryData?.[0]?.dataSource,
+				dataSource: currentQuery?.builder?.queryData?.[0]?.dataSource,
 			});
 			logEventCalledRef.current = true;
 		}
@@ -343,8 +344,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		return { selectedWidget, preWidgets, afterWidgets };
 	}, [selectedDashboard, query]);
 
-	const handleError = useAxiosError();
-
 	// this loading state is to take care of mismatch in the responses for table and other panels
 	// hence while changing the query contains the older value and the processing logic fails
 	const [isLoadingPanelData, setIsLoadingPanelData] = useState<boolean>(false);
@@ -358,7 +357,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	// this has been moved here from the left container
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		const updatedQuery = cloneDeep(stagedQuery || initialQueriesMap.metrics);
-		updatedQuery.builder.queryData[0].pageSize = 10;
+		if (updatedQuery?.builder?.queryData?.[0]) {
+			updatedQuery.builder.queryData[0].pageSize = 10;
+		}
 
 		if (selectedWidget) {
 			if (selectedGraph === PANEL_TYPES.LIST) {
@@ -371,7 +372,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					tableParams: {
 						pagination: {
 							offset: 0,
-							limit: updatedQuery.builder.queryData[0].limit || 0,
+							limit: updatedQuery?.builder?.queryData?.[0]?.limit || 0,
 						},
 					},
 				};
@@ -406,7 +407,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		if (stagedQuery) {
 			setIsLoadingPanelData(false);
 			const updatedStagedQuery = cloneDeep(stagedQuery);
-			updatedStagedQuery.builder.queryData[0].pageSize = 10;
+			if (updatedStagedQuery?.builder?.queryData?.[0]) {
+				updatedStagedQuery.builder.queryData[0].pageSize = 10;
+			}
 			setRequestData((prev) => ({
 				...prev,
 				selectedTime: selectedTime.enum || prev.selectedTime,
@@ -464,9 +467,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			updatedLayout = newLayoutItem;
 		}
 
-		const dashboard: Dashboard = {
-			...selectedDashboard,
-			uuid: selectedDashboard.uuid,
+		const dashboard: Props = {
+			id: selectedDashboard.id,
+
 			data: {
 				...selectedDashboard.data,
 				widgets: isNewDashboard
@@ -534,15 +537,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		};
 
 		updateDashboardMutation.mutateAsync(dashboard, {
-			onSuccess: () => {
+			onSuccess: (updatedDashboard) => {
 				setSelectedRowWidgetId(null);
-				setSelectedDashboard(dashboard);
+				setSelectedDashboard(updatedDashboard.data);
 				setToScrollWidgetId(selectedWidget?.id || '');
 				safeNavigate({
 					pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
 				});
 			},
-			onError: handleError,
 		});
 	}, [
 		selectedDashboard,
@@ -556,7 +558,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		currentQuery,
 		preWidgets,
 		updateDashboardMutation,
-		handleError,
 		widgets,
 		setSelectedDashboard,
 		setToScrollWidgetId,
@@ -595,12 +596,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 		logEvent('Panel Edit: Save changes', {
 			panelType: selectedWidget.panelTypes,
-			dashboardId: selectedDashboard?.uuid,
+			dashboardId: selectedDashboard?.id,
 			widgetId: selectedWidget.id,
 			dashboardName: selectedDashboard?.data.title,
 			queryType: currentQuery.queryType,
 			isNewPanel: isUndefined(selectWidget),
-			dataSource: currentQuery.builder.queryData?.[0]?.dataSource,
+			dataSource: currentQuery?.builder?.queryData?.[0]?.dataSource,
 		});
 		setSaveModal(true);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -608,7 +609,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const isNewTraceLogsAvailable =
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
-		currentQuery.builder.queryData.find(
+		currentQuery?.builder?.queryData?.find(
 			(query) => query.dataSource !== DataSource.METRICS,
 		) !== undefined;
 
@@ -619,7 +620,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		}
 
 		const isTraceOrLogsQueryBuilder =
-			currentQuery.builder.queryData.find(
+			currentQuery?.builder?.queryData?.find(
 				(query) =>
 					query.dataSource === DataSource.TRACES ||
 					query.dataSource === DataSource.LOGS,
@@ -631,7 +632,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 		return isNewTraceLogsAvailable;
 	}, [
-		currentQuery.builder.queryData,
+		currentQuery?.builder?.queryData,
 		selectedWidget?.id,
 		isNewTraceLogsAvailable,
 	]);
@@ -660,7 +661,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	useEffect(() => {
 		if (selectedGraph === PANEL_TYPES.LIST) {
-			const initialDataSource = currentQuery.builder.queryData[0].dataSource;
+			const initialDataSource = currentQuery?.builder?.queryData?.[0]?.dataSource;
 			if (initialDataSource === DataSource.LOGS) {
 				// we do not need selected log columns in the request data as the entire response contains all the necessary data
 				setRequestData((prev) => ({
