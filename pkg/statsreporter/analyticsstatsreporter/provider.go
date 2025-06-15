@@ -216,5 +216,20 @@ func (provider *provider) collectOrg(ctx context.Context, orgID valuer.UUID) map
 		stats["telemetry.metrics.count"] = metrics
 	}
 
+	var tracesLastSeenAt time.Time
+	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT toDateTime(max(timestamp)) FROM signoz_traces.distributed_signoz_index_v3").Scan(&tracesLastSeenAt); err == nil {
+		stats["telemetry.traces.last_seen_at"] = tracesLastSeenAt
+	}
+
+	var logsLastSeenAt time.Time
+	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT fromUnixTimestamp64Nano(max(timestamp)) FROM signoz_logs.distributed_logs_v2").Scan(&logsLastSeenAt); err == nil {
+		stats["telemetry.logs.last_seen_at"] = logsLastSeenAt
+	}
+
+	var metricsLastSeenAt time.Time
+	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT toDateTime(max(unix_milli) / 1000) FROM signoz_metrics.distributed_samples_v4").Scan(&metricsLastSeenAt); err == nil {
+		stats["telemetry.metrics.last_seen_at"] = metricsLastSeenAt
+	}
+
 	return stats
 }
