@@ -33,3 +33,7 @@ export interface ChangelogProps {
 	publishedAt: string;
 	features: Feature[];
 }
+
+export const SupportedImageTypes = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+
+export const SupportedVideoTypes = ['.mp4', '.webm'];
