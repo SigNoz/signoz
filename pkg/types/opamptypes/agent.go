@@ -3,6 +3,7 @@ package opamptypes
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -21,10 +22,22 @@ type StorableAgent struct {
 
 	types.Identifiable
 	types.TimeAuditable
+	// AgentID is needed as the ID from opamp client is ULID and not UUID, so we are keeping it like this
+	AgentID      string      `json:"agentId" yaml:"agentId" bun:"agent_id,type:text,unique"`
 	OrgID        string      `json:"orgId" yaml:"orgId" bun:"org_id,type:text,notnull"`
 	TerminatedAt time.Time   `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at"` // check if this is reuqired
 	Status       AgentStatus `json:"currentStatus" yaml:"currentStatus" bun:"status,type:text,notnull"`
 	Config       string      `bun:"config,type:text,notnull"`
+}
+
+func NewStorableAgent(store sqlstore.SQLStore, orgID string, agentID string, status AgentStatus) StorableAgent {
+	return StorableAgent{
+		OrgID:         orgID,
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		AgentID:       agentID,
+		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		Status:        status,
+	}
 }
 
 type ElementType struct{ valuer.String }

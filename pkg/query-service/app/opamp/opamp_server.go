@@ -118,7 +118,7 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 		agent.CanLB = model.ExtractLbFlag(msg.AgentDescription)
 		zap.L().Debug(
 			"New agent added", zap.Bool("canLb", agent.CanLB),
-			zap.String("ID", agent.ID.StringValue()),
+			zap.String("agentID", agent.AgentID),
 			zap.Any("status", agent.Status),
 		)
 	}

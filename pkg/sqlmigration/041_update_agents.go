@@ -32,6 +32,8 @@ type newAgent41 struct {
 
 	types.Identifiable
 	types.TimeAuditable
+	// AgentID is needed as the ID from opamp client is ULID and not UUID, so we are keeping it like this
+	AgentID      string                 `json:"agentId" yaml:"agentId" bun:"agent_id,type:text,unique"`
 	OrgID        string                 `json:"orgId" yaml:"orgId" bun:"org_id,type:text,notnull"`
 	TerminatedAt time.Time              `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at"` // check if this is reuqired
 	Status       opamptypes.AgentStatus `json:"currentStatus" yaml:"currentStatus" bun:"status,type:text,notnull"`
@@ -251,6 +253,7 @@ func (migration *updateAgents) CopyOldAgentToNewAgent(ctx context.Context, tx bu
 	for _, existingAgent := range existingAgents {
 		newAgents = append(newAgents, &newAgent41{
 			Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+			AgentID:      existingAgent.AgentID,
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: existingAgent.StartedAt,
 				UpdatedAt: existingAgent.StartedAt,
