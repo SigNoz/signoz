@@ -129,8 +129,9 @@ type ColumnDescriptor struct {
 }
 
 type ScalarData struct {
-	Columns []*ColumnDescriptor `json:"columns"`
-	Data    [][]any             `json:"data"`
+	QueryName string              `json:"queryName"`
+	Columns   []*ColumnDescriptor `json:"columns"`
+	Data      [][]any             `json:"data"`
 }
 
 type RawData struct {
