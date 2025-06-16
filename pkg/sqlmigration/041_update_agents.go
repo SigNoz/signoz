@@ -32,8 +32,8 @@ type newAgent41 struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	OrgID        string                 `json:"orgId" yaml:"orgId" bun:"org_id,type:text"`
-	TerminatedAt time.Time              `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at,type:datetime"` // check if this is reuqired
+	OrgID        string                 `json:"orgId" yaml:"orgId" bun:"org_id,type:text,notnull"`
+	TerminatedAt time.Time              `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at"` // check if this is reuqired
 	Status       opamptypes.AgentStatus `json:"currentStatus" yaml:"currentStatus" bun:"status,type:text,notnull"`
 	Config       string                 `bun:"config,type:text,notnull"`
 }
@@ -63,13 +63,13 @@ type newAgentConfigVersion41 struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID          string                  `json:"orgId" bun:"org_id,type:text"`
-	Version        int                     `json:"version" bun:"version,default:1,unique:element_version_idx"`
-	ElementType    opamptypes.ElementType  `json:"elementType" bun:"element_type,notnull,type:varchar(120),unique:element_version_idx"`
-	DeployStatus   opamptypes.DeployStatus `json:"deployStatus" bun:"deploy_status,notnull,type:varchar(80),default:'DIRTY'"`
-	DeploySequence int                     `json:"deploySequence" bun:"deploy_sequence"`       // remove
-	DeployResult   string                  `json:"deployResult" bun:"deploy_result,type:text"` // check if I can create a map in backend
-	Hash           string                  `json:"lastHash" bun:"hash,type:text"`              // check if we need to store this.
+	OrgID          string                  `json:"orgId" bun:"org_id,type:text,notnull"`
+	Version        int                     `json:"version" bun:"version"`
+	ElementType    opamptypes.ElementType  `json:"elementType" bun:"element_type,notnull"`
+	DeployStatus   opamptypes.DeployStatus `json:"deployStatus" bun:"deploy_status,notnull,default:'DIRTY'"`
+	DeploySequence int                     `json:"deploySequence" bun:"deploy_sequence"`
+	DeployResult   string                  `json:"deployResult" bun:"deploy_result,type:text"`
+	Hash           string                  `json:"lastHash" bun:"hash,type:text"`
 	Config         string                  `json:"config" bun:"config,type:text"`
 }
 
@@ -92,7 +92,7 @@ type newAgentConfigElement41 struct {
 	types.Identifiable
 	types.TimeAuditable
 	ElementID   string `bun:"element_id,type:text,notnull,unique:agent_config_elements_u1"`
-	ElementType string `bun:"element_type,type:varchar(120),notnull,unique:agent_config_elements_u1"`
+	ElementType string `bun:"element_type,type,notnull,unique:agent_config_elements_u1"`
 	VersionID   string `bun:"version_id,type:text,notnull,unique:agent_config_elements_u1"`
 }
 
@@ -200,15 +200,6 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 		})
 	if err != nil {
 		return err
-	}
-
-	// add unique constraint to agents table of org_id and agent_id
-	if exists, err := migration.store.Dialect().IndexExists(ctx, tx, "agent", "idx_agents_org_id_agent_id"); err != nil {
-		return err
-	} else if !exists {
-		if _, err := tx.NewCreateIndex().Table("agent").Index("idx_agents_org_id_agent_id").Column("org_id", "id").Unique().Exec(ctx); err != nil {
-			return err
-		}
 	}
 
 	err = migration.

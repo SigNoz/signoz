@@ -56,7 +56,7 @@ func (agent *Agent) Upsert() error {
 
 	_, err := agent.store.BunDB().NewInsert().
 		Model(&agent.StorableAgent).
-		On("CONFLICT (org_id, id) DO UPDATE").
+		On("CONFLICT (id) DO UPDATE").
 		Set("updated_at = EXCLUDED.updated_at").
 		Set("config = EXCLUDED.config").
 		Set("status = EXCLUDED.status").

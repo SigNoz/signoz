@@ -21,8 +21,8 @@ type StorableAgent struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	OrgID        string      `json:"orgId" yaml:"orgId" bun:"org_id,type:text"`
-	TerminatedAt time.Time   `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at,type:datetime"`
+	OrgID        string      `json:"orgId" yaml:"orgId" bun:"org_id,type:text,notnull"`
+	TerminatedAt time.Time   `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at"` // check if this is reuqired
 	Status       AgentStatus `json:"currentStatus" yaml:"currentStatus" bun:"status,type:text,notnull"`
 	Config       string      `bun:"config,type:text,notnull"`
 }
@@ -75,14 +75,14 @@ type AgentConfigVersion struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID          string       `json:"orgId" bun:"org_id,type:text"`
-	Version        int          `json:"version" bun:"version,default:1,unique:element_version_idx"`
-	ElementType    ElementType  `json:"elementType" bun:"element_type,notnull,type:varchar(120),unique:element_version_idx"`
-	DeployStatus   DeployStatus `json:"deployStatus" bun:"deploy_status,notnull,type:varchar(80),default:'DIRTY'"`
+	OrgID          string       `json:"orgId" bun:"org_id,type:text,notnull"`
+	Version        int          `json:"version" bun:"version,unique:element_version_idx"`
+	ElementType    ElementType  `json:"elementType" bun:"element_type,notnull,unique:element_version_idx"`
+	DeployStatus   DeployStatus `json:"deployStatus" bun:"deploy_status,notnull,default:'DIRTY'"`
 	DeploySequence int          `json:"deploySequence" bun:"deploy_sequence"`
-	DeployResult   string       `json:"deployResult" bun:"deploy_result,type:text"` // keeping this as agentConf/manager.go has some context with this
+	DeployResult   string       `json:"deployResult" bun:"deploy_result,type:text"`
 	Hash           string       `json:"lastHash" bun:"hash,type:text"`
-	Config         string       `json:"lastConfig" bun:"config,type:text"`
+	Config         string       `json:"config" bun:"config,type:text"`
 }
 
 func NewAgentConfigVersion(orgId string, elementType ElementType) *AgentConfigVersion {
@@ -106,6 +106,6 @@ type AgentConfigElement struct {
 	types.Identifiable
 	types.TimeAuditable
 	ElementID   string `bun:"element_id,type:text,notnull,unique:agent_config_elements_u1"`
-	ElementType string `bun:"element_type,type:varchar(120),notnull,unique:agent_config_elements_u1"`
+	ElementType string `bun:"element_type,type,notnull,unique:agent_config_elements_u1"`
 	VersionID   string `bun:"version_id,type:text,notnull,unique:agent_config_elements_u1"`
 }
