@@ -85,7 +85,13 @@ function LabelSelect({
 	}, [handleBlur]);
 
 	const handleLabelChange = (event: ChangeEvent<HTMLInputElement>): void => {
-		setCurrentVal(event.target?.value.replace(':', ''));
+		// Remove the colon if it's the last character.
+		// As the colon is used to separate the key and value in the query.
+		setCurrentVal(
+			event.target?.value.endsWith(':')
+				? event.target?.value.slice(0, -1)
+				: event.target?.value,
+		);
 	};
 
 	const handleClose = (key: string): void => {
