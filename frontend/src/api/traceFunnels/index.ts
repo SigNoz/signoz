@@ -119,6 +119,7 @@ export const updateFunnelSteps = async (
 export interface ValidateFunnelPayload {
 	start_time: number;
 	end_time: number;
+	steps: FunnelStepData[];
 }
 
 export interface ValidateFunnelResponse {
@@ -132,12 +133,11 @@ export interface ValidateFunnelResponse {
 }
 
 export const validateFunnelSteps = async (
-	funnelId: string,
 	payload: ValidateFunnelPayload,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<ValidateFunnelResponse> | ErrorResponse> => {
 	const response = await axios.post(
-		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/validate`,
+		`${FUNNELS_BASE_PATH}/analytics/validate`,
 		payload,
 		{ signal },
 	);

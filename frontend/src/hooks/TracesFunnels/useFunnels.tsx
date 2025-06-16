@@ -38,6 +38,7 @@ import {
 	CreateFunnelPayload,
 	CreateFunnelResponse,
 	FunnelData,
+	FunnelStepData,
 } from 'types/api/traceFunnels';
 
 export const useFunnelsList = (): UseQueryResult<
@@ -118,12 +119,14 @@ export const useValidateFunnelSteps = ({
 	startTime,
 	endTime,
 	enabled,
+	steps,
 }: {
 	funnelId: string;
 	selectedTime: string;
 	startTime: number;
 	endTime: number;
 	enabled: boolean;
+	steps: FunnelStepData[];
 }): UseQueryResult<
 	SuccessResponse<ValidateFunnelResponse> | ErrorResponse,
 	Error
@@ -131,11 +134,15 @@ export const useValidateFunnelSteps = ({
 	useQuery({
 		queryFn: ({ signal }) =>
 			validateFunnelSteps(
-				funnelId,
-				{ start_time: startTime, end_time: endTime },
+				{ start_time: startTime, end_time: endTime, steps },
 				signal,
 			),
-		queryKey: [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId, selectedTime],
+		queryKey: [
+			REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS,
+			funnelId,
+			selectedTime,
+			steps,
+		],
 		enabled,
 		staleTime: 0,
 	});
@@ -166,7 +173,11 @@ export const useFunnelOverview = (
 	SuccessResponse<FunnelOverviewResponse> | ErrorResponse,
 	Error
 > => {
-	const { selectedTime, validTracesCount } = useFunnelContext();
+	const {
+		selectedTime,
+		validTracesCount,
+		isUpdatingFunnel,
+	} = useFunnelContext();
 	return useQuery({
 		queryFn: ({ signal }) => getFunnelOverview(funnelId, payload, signal),
 		queryKey: [
@@ -175,7 +186,7 @@ export const useFunnelOverview = (
 			selectedTime,
 			payload.steps,
 		],
-		enabled: !!funnelId && validTracesCount > 0,
+		enabled: !!funnelId && validTracesCount > 0 && !isUpdatingFunnel,
 	});
 };
 
@@ -183,7 +194,11 @@ export const useFunnelSlowTraces = (
 	funnelId: string,
 	payload: FunnelOverviewPayload,
 ): UseQueryResult<SuccessResponse<SlowTraceData> | ErrorResponse, Error> => {
-	const { selectedTime, validTracesCount } = useFunnelContext();
+	const {
+		selectedTime,
+		validTracesCount,
+		isUpdatingFunnel,
+	} = useFunnelContext();
 	return useQuery<SuccessResponse<SlowTraceData> | ErrorResponse, Error>({
 		queryFn: ({ signal }) => getFunnelSlowTraces(funnelId, payload, signal),
 		queryKey: [
@@ -194,7 +209,7 @@ export const useFunnelSlowTraces = (
 			payload.step_end ?? '',
 			payload.steps,
 		],
-		enabled: !!funnelId && validTracesCount > 0,
+		enabled: !!funnelId && validTracesCount > 0 && !isUpdatingFunnel,
 	});
 };
 
@@ -202,7 +217,11 @@ export const useFunnelErrorTraces = (
 	funnelId: string,
 	payload: FunnelOverviewPayload,
 ): UseQueryResult<SuccessResponse<ErrorTraceData> | ErrorResponse, Error> => {
-	const { selectedTime, validTracesCount } = useFunnelContext();
+	const {
+		selectedTime,
+		validTracesCount,
+		isUpdatingFunnel,
+	} = useFunnelContext();
 	return useQuery({
 		queryFn: ({ signal }) => getFunnelErrorTraces(funnelId, payload, signal),
 		queryKey: [
@@ -213,7 +232,7 @@ export const useFunnelErrorTraces = (
 			payload.step_end ?? '',
 			payload.steps,
 		],
-		enabled: !!funnelId && validTracesCount > 0,
+		enabled: !!funnelId && validTracesCount > 0 && !isUpdatingFunnel,
 	});
 };
 
@@ -221,7 +240,11 @@ export function useFunnelStepsGraphData(
 	funnelId: string,
 	payload: FunnelStepsPayload,
 ): UseQueryResult<SuccessResponse<FunnelStepsResponse> | ErrorResponse, Error> {
-	const { selectedTime, validTracesCount } = useFunnelContext();
+	const {
+		selectedTime,
+		validTracesCount,
+		isUpdatingFunnel,
+	} = useFunnelContext();
 
 	return useQuery({
 		queryFn: ({ signal }) => getFunnelSteps(funnelId, payload, signal),
@@ -231,7 +254,7 @@ export function useFunnelStepsGraphData(
 			selectedTime,
 			payload.steps,
 		],
-		enabled: !!funnelId && validTracesCount > 0,
+		enabled: !!funnelId && validTracesCount > 0 && !isUpdatingFunnel,
 	});
 }
 
@@ -242,7 +265,11 @@ export const useFunnelStepsOverview = (
 	SuccessResponse<FunnelStepsOverviewResponse> | ErrorResponse,
 	Error
 > => {
-	const { selectedTime, validTracesCount } = useFunnelContext();
+	const {
+		selectedTime,
+		validTracesCount,
+		isUpdatingFunnel,
+	} = useFunnelContext();
 	return useQuery({
 		queryFn: ({ signal }) => getFunnelStepsOverview(funnelId, payload, signal),
 		queryKey: [
@@ -253,6 +280,6 @@ export const useFunnelStepsOverview = (
 			payload.step_end ?? '',
 			payload.steps,
 		],
-		enabled: !!funnelId && validTracesCount > 0,
+		enabled: !!funnelId && validTracesCount > 0 && !isUpdatingFunnel,
 	});
 };

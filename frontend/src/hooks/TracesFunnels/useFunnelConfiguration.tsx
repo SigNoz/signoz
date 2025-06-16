@@ -5,7 +5,7 @@ import { useLocalStorage } from 'hooks/useLocalStorage';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEqual } from 'lodash-es';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 
@@ -39,21 +39,21 @@ export const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function useFunnelConfiguration({
 	funnel,
-	disableAutoSave = false,
 	triggerAutoSave = false,
 	showNotifications = false,
 }: {
 	funnel: FunnelData;
-	disableAutoSave?: boolean;
 	triggerAutoSave?: boolean;
 	showNotifications?: boolean;
 }): UseFunnelConfiguration {
 	const { notifications } = useNotifications();
+	const queryClient = useQueryClient();
 	const {
 		steps,
 		initialSteps,
-		hasIncompleteStepFields,
 		handleRestoreSteps,
+		selectedTime,
+		setIsUpdatingFunnel,
 	} = useFunnelContext();
 
 	// State management
@@ -61,7 +61,7 @@ export default function useFunnelConfiguration({
 
 	const debouncedSteps = useDebounce(steps, 200);
 
-	const [lastValidatedSteps, setLastValidatedSteps] = useState<FunnelStepData[]>(
+	const [lastUpdatedSteps, setLastUpdatedSteps] = useState<FunnelStepData[]>(
 		initialSteps,
 	);
 
@@ -109,12 +109,13 @@ export default function useFunnelConfiguration({
 		}
 	}, [
 		debouncedSteps,
-		disableAutoSave,
 		funnel.funnel_id,
 		hasStepsChanged,
 		handleRestoreSteps,
 		localStorageSavedSteps,
 		setLocalStorageSavedSteps,
+		queryClient,
+		selectedTime,
 	]);
 
 	const hasFunnelStepDefinitionsChanged = useCallback(
@@ -144,27 +145,10 @@ export default function useFunnelConfiguration({
 		[funnel.funnel_id, debouncedSteps],
 	);
 
-	const queryClient = useQueryClient();
-	const { selectedTime } = useFunnelContext();
-
-	const validateStepsQueryKey = useMemo(
-		() => [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnel.funnel_id, selectedTime],
-		[funnel.funnel_id, selectedTime],
-	);
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		// Determine if we should save based on the mode
-		let shouldSave = false;
-
-		if (disableAutoSave) {
-			// Manual save mode: only save when explicitly triggered
-			shouldSave = triggerAutoSave;
-		} else {
-			// Auto-save mode: save when steps have changed
-			shouldSave = hasStepsChanged() && !hasIncompleteStepFields;
-		}
-
-		if (shouldSave && !isEqual(debouncedSteps, lastValidatedSteps)) {
+		if (triggerAutoSave && !isEqual(debouncedSteps, lastUpdatedSteps)) {
+			setIsUpdatingFunnel(true);
 			updateStepsMutation.mutate(getUpdatePayload(), {
 				onSuccess: (data) => {
 					const updatedFunnelSteps = data?.payload?.steps;
@@ -195,12 +179,8 @@ export default function useFunnelConfiguration({
 					);
 
 					// Only validate if funnel steps definitions
-					if (
-						!hasIncompleteStepFields &&
-						hasFunnelStepDefinitionsChanged(lastValidatedSteps, debouncedSteps)
-					) {
-						queryClient.refetchQueries(validateStepsQueryKey);
-						setLastValidatedSteps(debouncedSteps);
+					if (!hasIncompleteStepFields) {
+						setLastUpdatedSteps(debouncedSteps);
 					}
 
 					// Show success notification only when requested
@@ -243,12 +223,10 @@ export default function useFunnelConfiguration({
 		getUpdatePayload,
 		hasFunnelStepDefinitionsChanged,
 		hasStepsChanged,
-		lastValidatedSteps,
+		lastUpdatedSteps,
 		queryClient,
-		validateStepsQueryKey,
 		triggerAutoSave,
 		showNotifications,
-		disableAutoSave,
 		localStorageSavedSteps,
 		clearLocalStorageSavedSteps,
 	]);
