@@ -44,6 +44,7 @@ function QueryAggregationOptions({
 						<div className="query-aggregation-interval-input-container">
 							<InputWithLabel
 								initialValue="60"
+								className="query-aggregation-interval-input"
 								label="Seconds"
 								placeholder="60"
 								type="number"

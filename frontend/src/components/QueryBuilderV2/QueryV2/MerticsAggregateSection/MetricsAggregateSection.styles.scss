@@ -47,6 +47,7 @@
 	.metrics-aggregation-section-content {
 		display: flex;
 		flex-direction: row;
+		flex-wrap: wrap;
 		gap: 8px;
 
 		.metrics-aggregation-section-content-item {
@@ -77,10 +78,6 @@
 					background: var(--Ink-300, #16181d);
 				}
 			}
-		}
-
-		.space-aggregation-select {
-			min-width: 480px !important;
 		}
 	}
 }
