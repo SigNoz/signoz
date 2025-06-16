@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
@@ -122,7 +123,7 @@ func main() {
 		zeus.Config{},
 		noopzeus.NewProviderFactory(),
 		licensing.Config{},
-		func(_ sqlstore.SQLStore, _ zeus.Zeus, _ organization.Getter) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
+		func(_ sqlstore.SQLStore, _ zeus.Zeus, _ organization.Getter, _ analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
 			return nooplicensing.NewFactory()
 		},
 		signoz.NewEmailingProviderFactories(),
