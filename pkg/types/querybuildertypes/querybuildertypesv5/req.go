@@ -91,13 +91,6 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 		}
 		q.Spec = spec
 
-	case QueryTypeTraceOperator:
-		var spec QueryBuilderTraceOperator
-		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid trace operator spec")
-		}
-		q.Spec = spec
-
 	case QueryTypePromQL:
 		var spec PromQuery
 		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "PromQL spec"); err != nil {
