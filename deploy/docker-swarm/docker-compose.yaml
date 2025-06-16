@@ -168,9 +168,6 @@ services:
       - "4318:4318" # OTLP HTTP receiver
     deploy:
       replicas: 3
-      placement:
-        constraints:
-          - node.labels.role == worker
     depends_on:
       - clickhouse
       - schema-migrator
