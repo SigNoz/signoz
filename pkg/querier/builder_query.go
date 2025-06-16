@@ -208,7 +208,14 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 
 	// Pass query window and step for partial value detection
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
-	payload, err := consume(rows, q.kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+
+	kind := q.kind
+	// all metric queries are time series then reduced if required
+	if q.spec.Signal == telemetrytypes.SignalMetrics {
+		kind = qbtypes.RequestTypeTimeSeries
+	}
+
+	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
 	}

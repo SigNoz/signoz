@@ -222,13 +222,18 @@ func (q *querier) run(ctx context.Context, orgID valuer.UUID, qs map[string]qbty
 		}
 	}
 
+	processedResults, err := q.postProcessResults(results, req)
+	if err != nil {
+		return nil, err
+	}
+
 	return &qbtypes.QueryRangeResponse{
 		Type: req.RequestType,
 		Data: struct {
 			Results  []any    `json:"results"`
 			Warnings []string `json:"warnings"`
 		}{
-			Results:  maps.Values(results),
+			Results:  maps.Values(processedResults),
 			Warnings: warnings,
 		},
 		Meta: struct {
