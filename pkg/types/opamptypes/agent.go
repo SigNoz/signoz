@@ -23,9 +23,9 @@ type StorableAgent struct {
 	types.Identifiable
 	types.TimeAuditable
 	// AgentID is needed as the ID from opamp client is ULID and not UUID, so we are keeping it like this
-	AgentID      string      `json:"agentId" yaml:"agentId" bun:"agent_id,type:text,unique"`
+	AgentID      string      `json:"agentId" yaml:"agentId" bun:"agent_id,type:text,notnull,unique"`
 	OrgID        valuer.UUID `json:"orgId" yaml:"orgId" bun:"org_id,type:text,notnull"`
-	TerminatedAt time.Time   `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at"` // check if this is reuqired
+	TerminatedAt time.Time   `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at"`
 	Status       AgentStatus `json:"currentStatus" yaml:"currentStatus" bun:"status,type:text,notnull"`
 	Config       string      `bun:"config,type:text,notnull"`
 }
