@@ -13,6 +13,7 @@ export interface Event {
 	name: string;
 	timeUnixNano: number;
 	attributeMap: Record<string, string>;
+	isError: boolean;
 }
 export interface Span {
 	timestamp: number;
@@ -27,7 +28,7 @@ export interface Span {
 	name: string;
 	references: any;
 	tagMap: Record<string, string>;
-	event: string[];
+	event: Event[];
 	rootName: string;
 	statusMessage: string;
 	statusCodeString: string;

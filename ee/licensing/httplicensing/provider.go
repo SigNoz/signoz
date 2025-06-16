@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/licensing/licensingstore/sqllicensingstore"
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/analyticstypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -23,16 +25,17 @@ type provider struct {
 	config    licensing.Config
 	settings  factory.ScopedProviderSettings
 	orgGetter organization.Getter
+	analytics analytics.Analytics
 	stopChan  chan struct{}
 }
 
-func NewProviderFactory(store sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
+func NewProviderFactory(store sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("http"), func(ctx context.Context, providerSettings factory.ProviderSettings, config licensing.Config) (licensing.Licensing, error) {
-		return New(ctx, providerSettings, config, store, zeus, orgGetter)
+		return New(ctx, providerSettings, config, store, zeus, orgGetter, analytics)
 	})
 }
 
-func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Config, sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter) (licensing.Licensing, error) {
+func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Config, sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) (licensing.Licensing, error) {
 	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/ee/licensing/httplicensing")
 	licensestore := sqllicensingstore.New(sqlstore)
 	return &provider{
@@ -42,6 +45,7 @@ func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Conf
 		settings:  settings,
 		orgGetter: orgGetter,
 		stopChan:  make(chan struct{}),
+		analytics: analytics,
 	}, nil
 }
 
@@ -158,6 +162,25 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 	if err != nil {
 		return err
 	}
+
+	stats := licensetypes.NewStatsFromLicense(activeLicense)
+	provider.analytics.Send(ctx,
+		analyticstypes.Track{
+			UserId:     "stats_" + organizationID.String(),
+			Event:      "License Updated",
+			Properties: analyticstypes.NewPropertiesFromMap(stats),
+			Context: &analyticstypes.Context{
+				Extra: map[string]interface{}{
+					analyticstypes.KeyGroupID: organizationID.String(),
+				},
+			},
+		},
+		analyticstypes.Group{
+			UserId:  "stats_" + organizationID.String(),
+			GroupId: organizationID.String(),
+			Traits:  analyticstypes.NewTraitsFromMap(stats),
+		},
+	)
 
 	return nil
 }
