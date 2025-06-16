@@ -90,8 +90,8 @@ type AgentConfigVersion struct {
 	types.UserAuditable
 	OrgID          string       `json:"orgId" bun:"org_id,type:text,notnull"`
 	Version        int          `json:"version" bun:"version,unique:element_version_idx"`
-	ElementType    ElementType  `json:"elementType" bun:"element_type,notnull,unique:element_version_idx"`
-	DeployStatus   DeployStatus `json:"deployStatus" bun:"deploy_status,notnull,default:'DIRTY'"`
+	ElementType    ElementType  `json:"elementType" bun:"element_type,type:text,notnull,unique:element_version_idx"`
+	DeployStatus   DeployStatus `json:"deployStatus" bun:"deploy_status,type:text,notnull,default:'DIRTY'"`
 	DeploySequence int          `json:"deploySequence" bun:"deploy_sequence"`
 	DeployResult   string       `json:"deployResult" bun:"deploy_result,type:text"`
 	Hash           string       `json:"lastHash" bun:"hash,type:text"`
@@ -119,6 +119,6 @@ type AgentConfigElement struct {
 	types.Identifiable
 	types.TimeAuditable
 	ElementID   string `bun:"element_id,type:text,notnull,unique:agent_config_elements_u1"`
-	ElementType string `bun:"element_type,type,notnull,unique:agent_config_elements_u1"`
+	ElementType string `bun:"element_type,type:text,notnull,unique:agent_config_elements_u1"`
 	VersionID   string `bun:"version_id,type:text,notnull,unique:agent_config_elements_u1"`
 }
