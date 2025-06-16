@@ -2,6 +2,7 @@ package clickhouseprometheus
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/prometheus/prometheus/prompb"
 )
@@ -17,7 +18,12 @@ func unmarshalLabels(s string) ([]prompb.Label, string, error) {
 	for n, v := range m {
 		if n == "__name__" {
 			metricName = v
+		} else {
+			if strings.Contains(n, ".") {
+				n = `"` + n + `"`
+			}
 		}
+
 		res = append(res, prompb.Label{
 			Name:  n,
 			Value: v,
