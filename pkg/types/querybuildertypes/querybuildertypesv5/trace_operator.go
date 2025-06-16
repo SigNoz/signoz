@@ -1,7 +1,6 @@
 package querybuildertypesv5
 
 import (
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"regexp"
 	"strings"
 
@@ -19,6 +18,15 @@ var (
 	TraceOperatorOr                 = TraceOperatorType{valuer.NewString("||")}
 	TraceOperatorNot                = TraceOperatorType{valuer.NewString("NOT")}
 	TraceOperatorExclude            = TraceOperatorType{valuer.NewString("NOT")}
+)
+
+type TraceOrderBy struct {
+	valuer.String
+}
+
+var (
+	OrderBySpanCount     = TraceOrderBy{valuer.NewString("span_count")}
+	OrderByTraceDuration = TraceOrderBy{valuer.NewString("trace_duration")}
 )
 
 type QueryBuilderTraceOperator struct {
@@ -192,12 +200,12 @@ func (q *QueryBuilderTraceOperator) ValidateOrderBy() error {
 	for i, orderBy := range q.Order {
 		// Validate field is one of the allowed values
 		fieldName := orderBy.Key.Name
-		if fieldName != constants.OrderBySpanCount && fieldName != constants.OrderByTraceDuration {
+		if fieldName != OrderBySpanCount.StringValue() && fieldName != OrderByTraceDuration.StringValue() {
 			return errors.WrapInvalidInputf(
 				nil,
 				errors.CodeInvalidInput,
 				"orderBy[%d] field must be either '%s' or '%s', got '%s'",
-				i, constants.OrderBySpanCount, constants.OrderByTraceDuration, fieldName,
+				i, OrderBySpanCount.StringValue(), OrderByTraceDuration.StringValue(), fieldName,
 			)
 		}
 

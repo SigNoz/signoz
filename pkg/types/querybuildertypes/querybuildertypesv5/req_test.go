@@ -2,7 +2,6 @@ package querybuildertypesv5
 
 import (
 	"encoding/json"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"testing"
 	"time"
 
@@ -275,7 +274,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							Expression: "A => (B && NOT C)",
 							Filter:     &Filter{Expression: "trace_duration BETWEEN 100ms AND 5s AND span_count IN (5, 10, 15)"},
 							Order: []OrderBy{{
-								Key:       OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: constants.OrderBySpanCount}},
+								Key:       OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: OrderBySpanCount.StringValue()}},
 								Direction: OrderDirectionAsc,
 							}},
 							Limit:     50,
@@ -1223,7 +1222,7 @@ func TestQueryBuilderTraceOperator_ValidateTraceOperator(t *testing.T) {
 				Order: []OrderBy{{
 					Key: OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name:         constants.OrderByTraceDuration,
+							Name:         OrderByTraceDuration.StringValue(),
 							FieldContext: telemetrytypes.FieldContextSpan,
 						},
 					},
