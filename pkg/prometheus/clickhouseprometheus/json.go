@@ -2,8 +2,7 @@ package clickhouseprometheus
 
 import (
 	"encoding/json"
-	"strings"
-
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
 )
 
@@ -19,7 +18,7 @@ func unmarshalLabels(s string) ([]prompb.Label, string, error) {
 		if n == "__name__" {
 			metricName = v
 		} else {
-			if strings.Contains(n, ".") {
+			if !model.IsValidLegacyMetricName(n) {
 				n = `"` + n + `"`
 			}
 		}
