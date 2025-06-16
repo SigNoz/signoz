@@ -159,22 +159,6 @@ func (dialect *dialect) ColumnExists(ctx context.Context, bun bun.IDB, table str
 	return count > 0, nil
 }
 
-func (dialect *dialect) IndexExists(ctx context.Context, bun bun.IDB, table string, index string) (bool, error) {
-	var count int
-	err := bun.NewSelect().
-		ColumnExpr("COUNT(*)").
-		TableExpr("sqlite_master").
-		Where("type = ?", "index").
-		Where("name = ?", index).
-		Scan(ctx, &count)
-
-	if err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
-}
-
 func (dialect *dialect) AddColumn(ctx context.Context, bun bun.IDB, table string, column string, columnExpr string) error {
 	exists, err := dialect.ColumnExists(ctx, bun, table, column)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -135,7 +136,7 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 
 	// there are multiple orgs, so we don't need to update the agents table
 	if len(orgIDs) > 1 {
-		return nil
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "multiple orgs found: %v", orgIDs)
 	}
 
 	err = migration.

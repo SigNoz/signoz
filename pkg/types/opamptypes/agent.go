@@ -24,13 +24,13 @@ type StorableAgent struct {
 	types.TimeAuditable
 	// AgentID is needed as the ID from opamp client is ULID and not UUID, so we are keeping it like this
 	AgentID      string      `json:"agentId" yaml:"agentId" bun:"agent_id,type:text,unique"`
-	OrgID        string      `json:"orgId" yaml:"orgId" bun:"org_id,type:text,notnull"`
+	OrgID        valuer.UUID `json:"orgId" yaml:"orgId" bun:"org_id,type:text,notnull"`
 	TerminatedAt time.Time   `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at"` // check if this is reuqired
 	Status       AgentStatus `json:"currentStatus" yaml:"currentStatus" bun:"status,type:text,notnull"`
 	Config       string      `bun:"config,type:text,notnull"`
 }
 
-func NewStorableAgent(store sqlstore.SQLStore, orgID string, agentID string, status AgentStatus) StorableAgent {
+func NewStorableAgent(store sqlstore.SQLStore, orgID valuer.UUID, agentID string, status AgentStatus) StorableAgent {
 	return StorableAgent{
 		OrgID:         orgID,
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
@@ -88,7 +88,7 @@ type AgentConfigVersion struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID          string       `json:"orgId" bun:"org_id,type:text,notnull"`
+	OrgID          valuer.UUID  `json:"orgId" bun:"org_id,type:text,notnull"`
 	Version        int          `json:"version" bun:"version,unique:element_version_idx"`
 	ElementType    ElementType  `json:"elementType" bun:"element_type,type:text,notnull,unique:element_version_idx"`
 	DeployStatus   DeployStatus `json:"deployStatus" bun:"deploy_status,type:text,notnull,default:'DIRTY'"`
@@ -98,7 +98,7 @@ type AgentConfigVersion struct {
 	Config         string       `json:"config" bun:"config,type:text"`
 }
 
-func NewAgentConfigVersion(orgId string, elementType ElementType) *AgentConfigVersion {
+func NewAgentConfigVersion(orgId valuer.UUID, elementType ElementType) *AgentConfigVersion {
 	return &AgentConfigVersion{
 		OrgID:        orgId,
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
@@ -118,7 +118,7 @@ type AgentConfigElement struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	ElementID   string `bun:"element_id,type:text,notnull,unique:agent_config_elements_u1"`
-	ElementType string `bun:"element_type,type:text,notnull,unique:agent_config_elements_u1"`
-	VersionID   string `bun:"version_id,type:text,notnull,unique:agent_config_elements_u1"`
+	ElementID   string      `bun:"element_id,type:text,notnull,unique:agent_config_elements_u1"`
+	ElementType string      `bun:"element_type,type:text,notnull,unique:agent_config_elements_u1"`
+	VersionID   valuer.UUID `bun:"version_id,type:text,notnull,unique:agent_config_elements_u1"`
 }

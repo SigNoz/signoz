@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -91,7 +92,7 @@ func (m *Manager) notifyConfigUpdateSubscribers() {
 }
 
 // Implements opamp.AgentConfigProvider
-func (m *Manager) RecommendAgentConfig(orgId string, currentConfYaml []byte) (
+func (m *Manager) RecommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte) (
 	recommendedConfYaml []byte,
 	// Opaque id of the recommended config, used for reporting deployment status updates
 	configId string,
@@ -156,7 +157,7 @@ func (m *Manager) RecommendAgentConfig(orgId string, currentConfYaml []byte) (
 
 // Implements opamp.AgentConfigProvider
 func (m *Manager) ReportConfigDeploymentStatus(
-	orgId string,
+	orgId valuer.UUID,
 	agentId string,
 	configId string,
 	err error,
@@ -176,26 +177,26 @@ func (m *Manager) ReportConfigDeploymentStatus(
 }
 
 func GetLatestVersion(
-	ctx context.Context, orgId string, elementType opamptypes.ElementType,
+	ctx context.Context, orgId valuer.UUID, elementType opamptypes.ElementType,
 ) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 	return m.GetLatestVersion(ctx, orgId, elementType)
 }
 
 func GetConfigVersion(
-	ctx context.Context, orgId string, elementType opamptypes.ElementType, version int,
+	ctx context.Context, orgId valuer.UUID, elementType opamptypes.ElementType, version int,
 ) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 	return m.GetConfigVersion(ctx, orgId, elementType, version)
 }
 
 func GetConfigHistory(
-	ctx context.Context, orgId string, typ opamptypes.ElementType, limit int,
+	ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType, limit int,
 ) ([]opamptypes.AgentConfigVersion, *model.ApiError) {
 	return m.GetConfigHistory(ctx, orgId, typ, limit)
 }
 
 // StartNewVersion launches a new config version for given set of elements
 func StartNewVersion(
-	ctx context.Context, orgId string, userId string, eleType opamptypes.ElementType, elementIds []string,
+	ctx context.Context, orgId valuer.UUID, userId valuer.UUID, eleType opamptypes.ElementType, elementIds []string,
 ) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 
 	// create a new version
@@ -216,7 +217,7 @@ func NotifyConfigUpdate(ctx context.Context) {
 	m.notifyConfigUpdateSubscribers()
 }
 
-func Redeploy(ctx context.Context, orgId string, typ opamptypes.ElementType, version int) *model.ApiError {
+func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType, version int) *model.ApiError {
 
 	configVersion, err := GetConfigVersion(ctx, orgId, typ, version)
 	if err != nil {
@@ -273,7 +274,7 @@ func Redeploy(ctx context.Context, orgId string, typ opamptypes.ElementType, ver
 }
 
 // UpsertFilterProcessor updates the agent config with new filter processor params
-func UpsertFilterProcessor(ctx context.Context, orgId string, version int, config *filterprocessor.Config) error {
+func UpsertFilterProcessor(ctx context.Context, orgId valuer.UUID, version int, config *filterprocessor.Config) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}
@@ -306,7 +307,7 @@ func UpsertFilterProcessor(ctx context.Context, orgId string, version int, confi
 // successful deployment if no error is received.
 // this method is currently expected to be called only once in the lifecycle
 // but can be improved in future to accept continuous request status updates from opamp
-func (m *Manager) OnConfigUpdate(orgId string, agentId string, hash string, err error) {
+func (m *Manager) OnConfigUpdate(orgId valuer.UUID, agentId string, hash string, err error) {
 
 	status := opamptypes.Deployed.StringValue()
 
@@ -325,7 +326,7 @@ func (m *Manager) OnConfigUpdate(orgId string, agentId string, hash string, err 
 }
 
 // UpsertSamplingProcessor updates the agent config with new filter processor params
-func UpsertSamplingProcessor(ctx context.Context, orgId string, version int, config *tsp.Config) error {
+func UpsertSamplingProcessor(ctx context.Context, orgId valuer.UUID, version int, config *tsp.Config) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}

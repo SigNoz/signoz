@@ -4189,6 +4189,12 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	orgID, errv2 := valuer.NewUUID(claims.OrgID)
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
 		RespondError(w, model.WrapApiError(err, "Failed to parse agent config version"), nil)
@@ -4199,9 +4205,9 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 	var apierr *model.ApiError
 
 	if version != -1 {
-		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), claims.OrgID, version)
+		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), orgID, version)
 	} else {
-		payload, apierr = aH.listLogsPipelines(context.Background(), claims.OrgID)
+		payload, apierr = aH.listLogsPipelines(context.Background(), orgID)
 	}
 
 	if apierr != nil {
@@ -4212,7 +4218,7 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 }
 
 // listLogsPipelines lists logs piplines for latest version
-func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
+func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID valuer.UUID) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	// get lateset agent config
@@ -4242,7 +4248,7 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
 }
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
-func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID string, version int) (
+func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID valuer.UUID, version int) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, orgID, version)

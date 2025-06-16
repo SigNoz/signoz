@@ -454,19 +454,3 @@ func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, 
 
 	return nil
 }
-
-func (dialect *dialect) IndexExists(ctx context.Context, bun bun.IDB, table string, index string) (bool, error) {
-	var count int
-	err := bun.NewSelect().
-		ColumnExpr("COUNT(*)").
-		TableExpr("pg_indexes").
-		Where("tablename = ?", table).
-		Where("indexname = ?", index).
-		Scan(ctx, &count)
-
-	if err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
-}

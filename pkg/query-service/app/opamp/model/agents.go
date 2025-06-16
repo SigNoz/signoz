@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server/types"
 	"github.com/pkg/errors"
@@ -73,7 +74,7 @@ func (agents *Agents) FindAgent(agentID string) *Agent {
 // FindOrCreateAgent returns the Agent instance associated with the given agentID.
 // If the Agent instance does not exist, it is created and added to the list of
 // Agent instances.
-func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection, orgId string) (*Agent, bool, error) {
+func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection, orgID valuer.UUID) (*Agent, bool, error) {
 	agents.mux.Lock()
 	defer agents.mux.Unlock()
 	agent, ok := agents.agentsById[agentID]
@@ -82,11 +83,11 @@ func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection, o
 		return agent, false, nil
 	}
 
-	if !ok && orgId == "" {
+	if !ok && orgID.IsZero() {
 		return nil, false, errors.New("cannot create agent without orgId")
 	}
 
-	agent = New(agents.store, agents.logger, orgId, agentID, conn)
+	agent = New(agents.store, agents.logger, orgID, agentID, conn)
 	err := agent.Upsert()
 	if err != nil {
 		return nil, false, err

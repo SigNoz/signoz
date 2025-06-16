@@ -89,12 +89,21 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	}
 
 	// prepare config by calling gen func
-	cfg, err := agentConf.StartNewVersion(ctx, claims.OrgID, claims.UserID, opamptypes.ElementTypeLogPipelines, elements)
-	if err != nil || cfg == nil {
-		return nil, err
+	orgIDUUID, errv2 := valuer.NewUUID(claims.OrgID)
+	if errv2 != nil {
+		return nil, model.BadRequest(fmt.Errorf("invalid orgID: %w", errv2))
+	}
+	userIDUUID, errv2 := valuer.NewUUID(claims.UserID)
+	if errv2 != nil {
+		return nil, model.BadRequest(fmt.Errorf("invalid userID: %w", errv2))
 	}
 
-	return ic.GetPipelinesByVersion(ctx, claims.OrgID, cfg.Version)
+	cfg, err := agentConf.StartNewVersion(ctx, orgIDUUID, userIDUUID, opamptypes.ElementTypeLogPipelines, elements)
+	if err != nil || cfg == nil {
+		return nil, model.InternalError(fmt.Errorf("failed to start new version: %w", err))
+	}
+
+	return ic.GetPipelinesByVersion(ctx, orgIDUUID, cfg.Version)
 }
 
 func (ic *LogParsingPipelineController) ValidatePipelines(
@@ -143,12 +152,12 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 // Returns effective list of pipelines including user created
 // pipelines and pipelines for installed integrations
 func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
-	ctx context.Context, orgID string, version int,
+	ctx context.Context, orgID valuer.UUID, version int,
 ) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
 
 	result := []pipelinetypes.GettablePipeline{}
 	if version >= 0 {
-		savedPipelines, errors := ic.getPipelinesByVersion(ctx, orgID, version)
+		savedPipelines, errors := ic.getPipelinesByVersion(ctx, orgID.String(), version)
 		if errors != nil {
 			zap.L().Error("failed to get pipelines for version", zap.Int("version", version), zap.Errors("errors", errors))
 			return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version %v", errors))
@@ -156,7 +165,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 		result = savedPipelines
 	}
 
-	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx, orgID)
+	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx, orgID.String())
 	if apiErr != nil {
 		return nil, model.WrapApiError(
 			apiErr, "could not get pipelines for installed integrations",
@@ -200,7 +209,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 
 // GetPipelinesByVersion responds with version info and associated pipelines
 func (ic *LogParsingPipelineController) GetPipelinesByVersion(
-	ctx context.Context, orgId string, version int,
+	ctx context.Context, orgId valuer.UUID, version int,
 ) (*PipelinesResponse, *model.ApiError) {
 
 	pipelines, errors := ic.getEffectivePipelinesByVersion(ctx, orgId, version)
@@ -260,7 +269,7 @@ func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatur
 
 // Implements agentConf.AgentFeature interface.
 func (pc *LogParsingPipelineController) RecommendAgentConfig(
-	orgId string,
+	orgId valuer.UUID,
 	currentConfYaml []byte,
 	configVersion *opamptypes.AgentConfigVersion,
 ) (

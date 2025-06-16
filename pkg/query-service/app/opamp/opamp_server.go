@@ -5,6 +5,7 @@ import (
 	"time"
 
 	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server"
 	"github.com/open-telemetry/opamp-go/server/types"
@@ -91,10 +92,10 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 	// find the orgID, if nothing is found keep it empty.
 	// the find or create agent will return an error if orgID is empty
 	// thus retry will happen
-	orgID := ""
+	var orgID valuer.UUID
 	orgIDs, err := srv.agents.OrgGetter.ListByOwnedKeyRange(context.Background())
 	if err == nil && len(orgIDs) == 1 {
-		orgID = orgIDs[0].ID.String()
+		orgID = orgIDs[0].ID
 	}
 
 	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn, orgID)
@@ -147,6 +148,6 @@ func Ready() bool {
 	return true
 }
 
-func Subscribe(orgId string, agentId string, hash string, f model.OnChangeCallback) {
+func Subscribe(orgId valuer.UUID, agentId string, hash string, f model.OnChangeCallback) {
 	model.ListenToConfigUpdate(orgId, agentId, hash, f)
 }

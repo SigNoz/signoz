@@ -22,7 +22,7 @@ type Repo struct {
 }
 
 func (r *Repo) GetConfigHistory(
-	ctx context.Context, orgId string, typ opamptypes.ElementType, limit int,
+	ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType, limit int,
 ) ([]opamptypes.AgentConfigVersion, *model.ApiError) {
 	var c []opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
@@ -52,7 +52,7 @@ func (r *Repo) GetConfigHistory(
 }
 
 func (r *Repo) GetConfigVersion(
-	ctx context.Context, orgId string, typ opamptypes.ElementType, v int,
+	ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType, v int,
 ) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 	var c opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
@@ -77,7 +77,7 @@ func (r *Repo) GetConfigVersion(
 }
 
 func (r *Repo) GetLatestVersion(
-	ctx context.Context, orgId string, typ opamptypes.ElementType,
+	ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType,
 ) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 	var c opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
@@ -101,7 +101,7 @@ func (r *Repo) GetLatestVersion(
 }
 
 func (r *Repo) insertConfig(
-	ctx context.Context, orgId string, userId string, c *opamptypes.AgentConfigVersion, elements []string,
+	ctx context.Context, orgId valuer.UUID, userId valuer.UUID, c *opamptypes.AgentConfigVersion, elements []string,
 ) (fnerr *model.ApiError) {
 
 	if c.ElementType.StringValue() == "" {
@@ -154,7 +154,7 @@ func (r *Repo) insertConfig(
 			Identifiable: types.Identifiable{ID: c.ID},
 			Version:      c.Version,
 			UserAuditable: types.UserAuditable{
-				CreatedBy: userId,
+				CreatedBy: userId.String(),
 			},
 			ElementType:  c.ElementType,
 			DeployStatus: c.DeployStatus,
@@ -170,7 +170,7 @@ func (r *Repo) insertConfig(
 	for _, e := range elements {
 		agentConfigElement := &opamptypes.AgentConfigElement{
 			Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
-			VersionID:    c.ID.StringValue(),
+			VersionID:    c.ID,
 			ElementType:  c.ElementType.StringValue(),
 			ElementID:    e,
 		}
@@ -184,7 +184,7 @@ func (r *Repo) insertConfig(
 }
 
 func (r *Repo) updateDeployStatus(ctx context.Context,
-	orgId string,
+	orgId valuer.UUID,
 	elementType opamptypes.ElementType,
 	version int,
 	status string,
@@ -194,8 +194,8 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 
 	// check if it has org orgID prefix
 	// ensuring it here and also ensuring in coordinator.go
-	if !strings.HasPrefix(lastHash, orgId) {
-		lastHash = orgId + lastHash
+	if !strings.HasPrefix(lastHash, orgId.String()) {
+		lastHash = orgId.String() + lastHash
 	}
 
 	_, err := r.store.BunDB().NewUpdate().
@@ -217,7 +217,7 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 }
 
 func (r *Repo) updateDeployStatusByHash(
-	ctx context.Context, orgId string, confighash string, status string, result string,
+	ctx context.Context, orgId valuer.UUID, confighash string, status string, result string,
 ) *model.ApiError {
 
 	_, err := r.store.BunDB().NewUpdate().

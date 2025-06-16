@@ -105,15 +105,15 @@ func CreateTestOrg(t *testing.T, store sqlstore.SQLStore) error {
 	return nil
 }
 
-func GetTestOrgId(store sqlstore.SQLStore) (string, error) {
-	var orgID string
+func GetTestOrgId(store sqlstore.SQLStore) (valuer.UUID, error) {
+	var orgID valuer.UUID
 	err := store.BunDB().NewSelect().
 		Model(&types.Organization{}).
 		Column("id").
 		Limit(1).
 		Scan(context.Background(), &orgID)
 	if err != nil {
-		return "", err
+		return orgID, err
 	}
 	return orgID, nil
 }

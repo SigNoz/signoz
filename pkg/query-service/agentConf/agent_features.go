@@ -3,6 +3,7 @@ package agentConf
 import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // Interface for features implemented via agent config.
@@ -14,7 +15,7 @@ type AgentFeature interface {
 	// Recommend config for an agent based on its `currentConfYaml` and
 	// `configVersion` for the feature's settings
 	RecommendAgentConfig(
-		orgId string,
+		orgId valuer.UUID,
 		currentConfYaml []byte,
 		configVersion *opamptypes.AgentConfigVersion,
 	) (

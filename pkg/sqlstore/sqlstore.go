@@ -68,9 +68,6 @@ type SQLDialect interface {
 	// Renames a column in a table for the given table, old column name and new column name.
 	RenameColumn(context.Context, bun.IDB, string, string, string) (bool, error)
 
-	// Checks if an index exists in a table for the given table and index.
-	IndexExists(context.Context, bun.IDB, string, string) (bool, error)
-
 	// Renames a table and modifies the given model for the given table, old model, new model, references and callback. The old model
 	// and new model must inherit bun.BaseModel.
 	RenameTableAndModifyModel(context.Context, bun.IDB, interface{}, interface{}, []string, func(context.Context) error) error

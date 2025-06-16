@@ -10,6 +10,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
@@ -39,7 +40,7 @@ type Agent struct {
 // lb exporter configuration. values: 1 (true) or 0 (false)
 const lbExporterFlag = "capabilities.lbexporter"
 
-func New(store sqlstore.SQLStore, logger *slog.Logger, orgID string, agentID string, conn opampTypes.Connection) *Agent {
+func New(store sqlstore.SQLStore, logger *slog.Logger, orgID valuer.UUID, agentID string, conn opampTypes.Connection) *Agent {
 	return &Agent{
 		StorableAgent: opamptypes.NewStorableAgent(store, orgID, agentID, opamptypes.AgentStatusConnected),
 		conn:          conn,

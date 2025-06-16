@@ -3,6 +3,8 @@ package model
 import (
 	"fmt"
 	"sync"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // communicates with calling apis when config is applied or fails
@@ -15,7 +17,7 @@ func init() {
 	}
 }
 
-type OnChangeCallback func(orgId string, agentId string, hash string, err error)
+type OnChangeCallback func(orgId valuer.UUID, agentId string, hash string, err error)
 
 // responsible for managing subscribers on config change
 type Coordinator struct {
@@ -25,22 +27,22 @@ type Coordinator struct {
 	subscribers map[string][]OnChangeCallback
 }
 
-func getSubscriberKey(orgId string, hash string) string {
-	return orgId + hash
+func getSubscriberKey(orgId valuer.UUID, hash string) string {
+	return orgId.String() + hash
 }
 
-func onConfigSuccess(orgId string, agentId string, hash string) {
+func onConfigSuccess(orgId valuer.UUID, agentId string, hash string) {
 	key := getSubscriberKey(orgId, hash)
 	notifySubscribers(orgId, agentId, key, nil)
 }
 
-func onConfigFailure(orgId string, agentId string, hash string, errorMessage string) {
+func onConfigFailure(orgId valuer.UUID, agentId string, hash string, errorMessage string) {
 	key := getSubscriberKey(orgId, hash)
 	notifySubscribers(orgId, agentId, key, fmt.Errorf(errorMessage))
 }
 
 // OnSuccess listens to config changes and notifies subscribers
-func notifySubscribers(orgId string, agentId string, key string, err error) {
+func notifySubscribers(orgId valuer.UUID, agentId string, key string, err error) {
 	// this method currently does not handle multi-agent scenario.
 	// as soon as a message is delivered, we release all the subscribers
 	// for a given key
@@ -59,7 +61,7 @@ func notifySubscribers(orgId string, agentId string, key string, err error) {
 }
 
 // callers subscribe to this function to listen on config change requests
-func ListenToConfigUpdate(orgId string, agentId string, hash string, ss OnChangeCallback) {
+func ListenToConfigUpdate(orgId valuer.UUID, agentId string, hash string, ss OnChangeCallback) {
 	coordinator.mutex.Lock()
 	defer coordinator.mutex.Unlock()
 
