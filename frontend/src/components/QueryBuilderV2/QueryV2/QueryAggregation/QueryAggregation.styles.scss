@@ -7,6 +7,12 @@
 		flex-direction: row;
 		gap: 8px;
 		align-items: flex-start;
+		flex-wrap: wrap;
+
+		.query-aggregation-select-container {
+			flex: 1;
+			min-width: 400px;
+		}
 
 		.query-aggregation-options-input {
 			width: 100%;
@@ -29,7 +35,15 @@
 			flex-direction: row;
 			align-items: center;
 			gap: 8px;
-			width: 400px;
+			max-width: 360px;
+
+			.query-aggregation-interval-input-container {
+				.query-aggregation-interval-input {
+					input {
+						max-width: 120px;
+					}
+				}
+			}
 		}
 
 		.query-aggregation-select-container {

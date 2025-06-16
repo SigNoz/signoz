@@ -13,6 +13,7 @@ function InputWithLabel({
 	onClose,
 	labelAfter,
 	onChange,
+	className,
 }: {
 	label: string;
 	initialValue?: string | number;
@@ -21,6 +22,7 @@ function InputWithLabel({
 	onClose?: () => void;
 	labelAfter?: boolean;
 	onChange: (value: string) => void;
+	className?: string;
 }): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>(
 		initialValue ? initialValue.toString() : '',
@@ -33,7 +35,7 @@ function InputWithLabel({
 
 	return (
 		<div
-			className={cx('input-with-label', {
+			className={cx('input-with-label', className, {
 				labelAfter,
 			})}
 		>
@@ -63,6 +65,7 @@ InputWithLabel.defaultProps = {
 	onClose: undefined,
 	labelAfter: false,
 	initialValue: undefined,
+	className: undefined,
 };
 
 export default InputWithLabel;
