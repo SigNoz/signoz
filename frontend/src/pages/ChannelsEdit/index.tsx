@@ -1,4 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+
+import './ChannelsEdit.styles.scss';
+
 import { Typography } from 'antd';
 import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
@@ -128,15 +131,17 @@ function ChannelsEdit(): JSX.Element {
 	const target = prepChannelConfig();
 
 	return (
-		<EditAlertChannels
-			{...{
-				initialValue: {
-					...target.channel,
-					type: target.type,
-					name: value.name,
-				},
-			}}
-		/>
+		<div className="edit-alert-channels-container">
+			<EditAlertChannels
+				{...{
+					initialValue: {
+						...target.channel,
+						type: target.type,
+						name: value.name,
+					},
+				}}
+			/>
+		</div>
 	);
 }
 interface Params {

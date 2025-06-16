@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
@@ -34,7 +35,7 @@ type Modules struct {
 	Apdex       apdex.Module
 	Dashboard   dashboard.Module
 	QuickFilter quickfilter.Module
-	TraceFunnel  tracefunnel.Module
+	TraceFunnel tracefunnel.Module
 }
 
 func NewModules(
@@ -44,19 +45,20 @@ func NewModules(
 	providerSettings factory.ProviderSettings,
 	orgGetter organization.Getter,
 	alertmanager alertmanager.Alertmanager,
+	analytics analytics.Analytics,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
-	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), jwt, emailing, providerSettings, orgSetter)
+	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), jwt, emailing, providerSettings, orgSetter, analytics)
 	return Modules{
 		OrgGetter:   orgGetter,
 		OrgSetter:   orgSetter,
-		Preference:  implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewDefaultPreferenceMap()),
+		Preference:  implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
 		SavedView:   implsavedview.NewModule(sqlstore),
 		Apdex:       implapdex.NewModule(sqlstore),
-		Dashboard:   impldashboard.NewModule(sqlstore, providerSettings),
+		Dashboard:   impldashboard.NewModule(sqlstore, providerSettings, analytics),
 		User:        user,
 		QuickFilter: quickfilter,
-		TraceFunnel:  impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
+		TraceFunnel: impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 	}
 }

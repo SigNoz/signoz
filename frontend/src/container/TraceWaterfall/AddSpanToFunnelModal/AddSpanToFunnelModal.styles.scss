@@ -16,11 +16,51 @@
 
 		&-body {
 			padding: 14px 16px !important;
+			padding-bottom: 0 !important;
+			border-bottom-left-radius: 0;
+			border-bottom-right-radius: 0;
 		}
-	}
-	&--details {
-		.ant-modal-content {
-			height: 710px;
+
+		&-footer {
+			margin-top: 0;
+			background: var(--bg-ink-400);
+			border-top: 1px solid var(--bg-slate-500);
+			padding: 16px !important;
+			.add-span-to-funnel-modal {
+				&__save-button {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 4px;
+					color: var(--bg-vanilla-100);
+					font-size: 12px;
+					font-weight: 500;
+					line-height: 24px;
+					width: 135px;
+
+					.ant-btn-icon {
+						display: flex;
+					}
+					&:disabled {
+						color: var(--bg-vanilla-400);
+						.ant-btn-icon {
+							svg {
+								stroke: var(--bg-vanilla-400);
+							}
+						}
+					}
+				}
+				&__discard-button {
+					background: var(--bg-slate-500);
+				}
+			}
+			.ant-btn {
+				border-radius: 2px;
+				padding: 4px 8px;
+				margin: 0 !important;
+				border: none;
+				box-shadow: none;
+			}
 		}
 	}
 }

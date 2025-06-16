@@ -135,9 +135,10 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 
 		// warnings would be encountered as part of the main condition already
 		filterWhereClause, _, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
-			FieldMapper:      b.fieldMapper,
-			ConditionBuilder: b.conditionBuilder,
-			FieldKeys:        keys,
+			FieldMapper:        b.fieldMapper,
+			ConditionBuilder:   b.conditionBuilder,
+			FieldKeys:          keys,
+			SkipFullTextFilter: true,
 		})
 
 		if err != nil {

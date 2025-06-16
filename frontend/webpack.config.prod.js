@@ -13,7 +13,6 @@ const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-const Critters = require('critters-webpack-plugin');
 const { RetryChunkLoadPlugin } = require('webpack-retry-chunk-load-plugin');
 
 dotenv.config();
@@ -62,14 +61,6 @@ const plugins = [
 		}),
 	}),
 	new MiniCssExtractPlugin(),
-	new Critters({
-		preload: 'swap',
-		// Base path location of the CSS files
-		path: resolve(__dirname, './build/css'),
-		// Public path of the CSS resources. This prefix is removed from the href
-		publicPath: resolve(__dirname, './public/css'),
-		fonts: true,
-	}),
 	sentryWebpackPlugin({
 		authToken: process.env.SENTRY_AUTH_TOKEN,
 		org: process.env.SENTRY_ORG,

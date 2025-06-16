@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -29,15 +30,16 @@ type traceQueryStatementBuilder struct {
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
 
 func NewTraceQueryStatementBuilder(
-	logger *slog.Logger,
+	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
 ) *traceQueryStatementBuilder {
+	tracesSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrytraces")
 	return &traceQueryStatementBuilder{
-		logger:                    logger,
+		logger:                    tracesSettings.Logger(),
 		metadataStore:             metadataStore,
 		fm:                        fieldMapper,
 		cb:                        conditionBuilder,
@@ -455,7 +457,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	endBucket := end / querybuilder.NsToSeconds
 
-	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.LE("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
+	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.L("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
 
 	return warnings, nil
 }
