@@ -2,7 +2,7 @@ package querybuildertypesv5
 
 import (
 	"encoding/json"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"testing"
 	"time"
 
@@ -123,16 +123,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							}
 						},
 						{
-							"type": "builder_query",
-							"spec": {
-								"name": "B",
-								"signal": "traces",
-								"filter": {
-									"expression": "hasError = true"
-								}
-							}
-						},
-						{
 							"type": "builder_trace_operator",
 							"spec": {
 								"name": "trace_flow_analysis",
@@ -140,17 +130,22 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 								"filter": {
 									"expression": "trace_duration > 200ms AND span_count >= 5"
 								},
-								"orderBy": {
-									"field": "trace_duration",
+								"orderBy": [{
+									"key": {
+										"name": "trace_duration"
+									},
 									"direction": "desc"
-								},
+								}],
 								"limit": 100,
 								"page_token": "eyJsYXN0X3RyYWNlX2lkIjoiYWJjZGVmIn0="
 							}
 						}
 					]
-				}
-			}`,
+				},
+			"variables": {
+				"service": "frontend"
+			}
+		}`,
 			expected: QueryRangeRequest{
 				SchemaVersion: "v1",
 				Start:         1640995200000,
@@ -169,16 +164,6 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							},
 						},
 						{
-							Type: QueryTypeBuilder,
-							Spec: QueryBuilderQuery[TraceAggregation]{
-								Name:   "B",
-								Signal: telemetrytypes.SignalTraces,
-								Filter: &Filter{
-									Expression: "hasError = true",
-								},
-							},
-						},
-						{
 							Type: QueryTypeTraceOperator,
 							Spec: QueryBuilderTraceOperator{
 								Name:       "trace_flow_analysis",
@@ -186,19 +171,23 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 								Filter: &Filter{
 									Expression: "trace_duration > 200ms AND span_count >= 5",
 								},
-								OrderBy: &TraceOrderBy{
-									Field:     TraceOrderByTraceDuration,
+								Order: []OrderBy{{
+									Key:       OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "trace_duration"}},
 									Direction: OrderDirectionDesc,
-								},
+								}},
 								Limit:     100,
 								PageToken: "eyJsYXN0X3RyYWNlX2lkIjoiYWJjZGVmIn0=",
 							},
 						},
 					},
 				},
+				Variables: map[string]any{
+					"service": "frontend",
+				},
 			},
 			wantErr: false,
 		},
+
 		{
 			name: "valid trace operator with complex expression and span_count ordering",
 			jsonData: `{
@@ -213,9 +202,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							"spec": {
 								"name": "A",
 								"signal": "traces",
-								"filter": {
-									"expression": "service.name = 'frontend'"
-								}
+								"filter": { "expression": "service.name = 'frontend'" }
 							}
 						},
 						{
@@ -223,9 +210,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							"spec": {
 								"name": "B",
 								"signal": "traces",
-								"filter": {
-									"expression": "hasError = true"
-								}
+								"filter": { "expression": "hasError = true" }
 							}
 						},
 						{
@@ -233,9 +218,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							"spec": {
 								"name": "C",
 								"signal": "traces",
-								"filter": {
-									"expression": "response_status_code = '200'"
-								}
+								"filter": { "expression": "response_status_code = '200'" }
 							}
 						},
 						{
@@ -243,20 +226,13 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 							"spec": {
 								"name": "complex_trace_analysis",
 								"expression": "A => (B && NOT C)",
-								"filter": {
-									"expression": "trace_duration BETWEEN 100ms AND 5s AND span_count IN (5, 10, 15)"
-								},
-								"orderBy": {
-									"field": "span_count",
+								"filter": { "expression": "trace_duration BETWEEN 100ms AND 5s AND span_count IN (5, 10, 15)" },
+								"orderBy": [{
+									"key": { "name": "span_count" },
 									"direction": "asc"
-								},
+								}],
 								"limit": 50,
-								"functions": [
-									{
-										"name": "absolute",
-										"args": []
-									}
-								]
+								"functions": [{ "name": "absolute", "args": [] }]
 							}
 						}
 					]
@@ -267,61 +243,46 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 				Start:         1640995200000,
 				End:           1640998800000,
 				RequestType:   RequestTypeTimeSeries,
-				CompositeQuery: CompositeQuery{
-					Queries: []QueryEnvelope{
-						{
-							Type: QueryTypeBuilder,
-							Spec: QueryBuilderQuery[TraceAggregation]{
-								Name:   "A",
-								Signal: telemetrytypes.SignalTraces,
-								Filter: &Filter{
-									Expression: "service.name = 'frontend'",
-								},
-							},
-						},
-						{
-							Type: QueryTypeBuilder,
-							Spec: QueryBuilderQuery[TraceAggregation]{
-								Name:   "B",
-								Signal: telemetrytypes.SignalTraces,
-								Filter: &Filter{
-									Expression: "hasError = true",
-								},
-							},
-						},
-						{
-							Type: QueryTypeBuilder,
-							Spec: QueryBuilderQuery[TraceAggregation]{
-								Name:   "C",
-								Signal: telemetrytypes.SignalTraces,
-								Filter: &Filter{
-									Expression: "response_status_code = '200'",
-								},
-							},
-						},
-						{
-							Type: QueryTypeTraceOperator,
-							Spec: QueryBuilderTraceOperator{
-								Name:       "complex_trace_analysis",
-								Expression: "A => (B && NOT C)",
-								Filter: &Filter{
-									Expression: "trace_duration BETWEEN 100ms AND 5s AND span_count IN (5, 10, 15)",
-								},
-								OrderBy: &TraceOrderBy{
-									Field:     TraceOrderBySpanCount,
-									Direction: OrderDirectionAsc,
-								},
-								Limit: 50,
-								Functions: []Function{
-									{
-										Name: FunctionNameAbsolute,
-										Args: []FunctionArg{},
-									},
-								},
-							},
+				CompositeQuery: CompositeQuery{Queries: []QueryEnvelope{
+					{
+						Type: QueryTypeBuilder,
+						Spec: QueryBuilderQuery[TraceAggregation]{
+							Name:   "A",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &Filter{Expression: "service.name = 'frontend'"},
 						},
 					},
-				},
+					{
+						Type: QueryTypeBuilder,
+						Spec: QueryBuilderQuery[TraceAggregation]{
+							Name:   "B",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &Filter{Expression: "hasError = true"},
+						},
+					},
+					{
+						Type: QueryTypeBuilder,
+						Spec: QueryBuilderQuery[TraceAggregation]{
+							Name:   "C",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &Filter{Expression: "response_status_code = '200'"},
+						},
+					},
+					{
+						Type: QueryTypeTraceOperator,
+						Spec: QueryBuilderTraceOperator{
+							Name:       "complex_trace_analysis",
+							Expression: "A => (B && NOT C)",
+							Filter:     &Filter{Expression: "trace_duration BETWEEN 100ms AND 5s AND span_count IN (5, 10, 15)"},
+							Order: []OrderBy{{
+								Key:       OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: constants.OrderBySpanCount}},
+								Direction: OrderDirectionAsc,
+							}},
+							Limit:     50,
+							Functions: []Function{{Name: FunctionNameAbsolute, Args: []FunctionArg{}}},
+						},
+					},
+				}},
 			},
 			wantErr: false,
 		},
@@ -1031,10 +992,12 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 					assert.Equal(t, expectedSpec.Expression, actualSpec.Expression)
 					assert.Equal(t, expectedSpec.Limit, actualSpec.Limit)
 					assert.Equal(t, expectedSpec.PageToken, actualSpec.PageToken)
-					if expectedSpec.OrderBy != nil {
-						assert.NotNil(t, actualSpec.OrderBy)
-						assert.Equal(t, expectedSpec.OrderBy.Field, actualSpec.OrderBy.Field)
-						assert.Equal(t, expectedSpec.OrderBy.Direction, actualSpec.OrderBy.Direction)
+					assert.Equal(t, len(expectedSpec.Order), len(actualSpec.Order))
+					for i, expectedOrder := range expectedSpec.Order {
+						if i < len(actualSpec.Order) {
+							assert.Equal(t, expectedOrder.Key.Name, actualSpec.Order[i].Key.Name)
+							assert.Equal(t, expectedOrder.Direction, actualSpec.Order[i].Direction)
+						}
 					}
 				case QueryTypePromQL:
 					expectedSpec := expectedQuery.Spec.(PromQuery)
@@ -1257,10 +1220,15 @@ func TestQueryBuilderTraceOperator_ValidateTraceOperator(t *testing.T) {
 				Filter: &Filter{
 					Expression: "trace_duration > 200ms",
 				},
-				OrderBy: &TraceOrderBy{
-					Field:     TraceOrderByTraceDuration,
+				Order: []OrderBy{{
+					Key: OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:         constants.OrderByTraceDuration,
+							FieldContext: telemetrytypes.FieldContextSpan,
+						},
+					},
 					Direction: OrderDirectionDesc,
-				},
+				}},
 				Limit: 100,
 			},
 			queries: []QueryEnvelope{
@@ -1339,22 +1307,17 @@ func TestQueryBuilderTraceOperator_ValidateTraceOperator(t *testing.T) {
 			traceOperator: QueryBuilderTraceOperator{
 				Name:       "test_operator",
 				Expression: "A",
-				OrderBy: &TraceOrderBy{
-					Field:     TraceOrderByField{valuer.NewString("invalid_field")},
-					Direction: OrderDirectionAsc,
-				},
+				Order: []OrderBy{{
+					Key:       OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "invalid_string"}},
+					Direction: OrderDirectionDesc,
+				}},
 			},
-			queries: []QueryEnvelope{
-				{
-					Type: QueryTypeBuilder,
-					Spec: QueryBuilderQuery[TraceAggregation]{
-						Name:   "A",
-						Signal: telemetrytypes.SignalTraces,
-					},
-				},
-			},
+			queries: []QueryEnvelope{{
+				Type: QueryTypeBuilder,
+				Spec: QueryBuilderQuery[TraceAggregation]{Name: "A", Signal: telemetrytypes.SignalTraces},
+			}},
 			expectError:   true,
-			errorContains: "orderBy field must be either 'span_count' or 'trace_duration'",
+			errorContains: "orderBy[0] field must be either 'span_count' or 'trace_duration'",
 		},
 		{
 			name: "invalid pagination limit",

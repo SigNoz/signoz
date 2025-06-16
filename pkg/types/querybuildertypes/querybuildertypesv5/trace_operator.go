@@ -1,6 +1,7 @@
 package querybuildertypesv5
 
 import (
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"regexp"
 	"strings"
 
@@ -21,20 +22,6 @@ var (
 	TraceOperatorExclude            = TraceOperatorType{valuer.NewString("NOT")}
 )
 
-// TraceOrderByField defines the allowed fields for trace operator ordering
-type TraceOrderByField struct{ valuer.String }
-
-var (
-	TraceOrderBySpanCount     = TraceOrderByField{valuer.NewString("span_count")}
-	TraceOrderByTraceDuration = TraceOrderByField{valuer.NewString("trace_duration")}
-)
-
-// TraceOrderBy represents ordering for trace operators
-type TraceOrderBy struct {
-	Field     TraceOrderByField `json:"field"`
-	Direction OrderDirection    `json:"direction"`
-}
-
 // QueryBuilderTraceOperator represents a trace operator query (AIP-158 and AIP-160 compliant)
 type QueryBuilderTraceOperator struct {
 	Name     string `json:"name"`
@@ -50,7 +37,7 @@ type QueryBuilderTraceOperator struct {
 	ReturnSpansFrom string `json:"returnSpansFrom,omitempty"`
 
 	// Trace-specific ordering (only span_count and trace_duration allowed)
-	OrderBy *TraceOrderBy `json:"orderBy,omitempty"`
+	Order []OrderBy `json:"orderBy,omitempty"`
 
 	// AIP-158 compliant pagination
 	Limit     int    `json:"limit,omitempty"`
@@ -199,28 +186,31 @@ func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelop
 
 // ValidateOrderBy validates the orderBy field
 func (q *QueryBuilderTraceOperator) ValidateOrderBy() error {
-	if q.OrderBy == nil {
+	if len(q.Order) == 0 {
 		return nil
 	}
 
-	// Validate field is one of the allowed values
-	if q.OrderBy.Field != TraceOrderBySpanCount && q.OrderBy.Field != TraceOrderByTraceDuration {
-		return errors.WrapInvalidInputf(
-			nil,
-			errors.CodeInvalidInput,
-			"orderBy field must be either 'span_count' or 'trace_duration', got '%s'",
-			q.OrderBy.Field,
-		)
-	}
+	for i, orderBy := range q.Order {
+		// Validate field is one of the allowed values
+		fieldName := orderBy.Key.Name
+		if fieldName != constants.OrderBySpanCount && fieldName != constants.OrderByTraceDuration {
+			return errors.WrapInvalidInputf(
+				nil,
+				errors.CodeInvalidInput,
+				"orderBy[%d] field must be either '%s' or '%s', got '%s'",
+				i, constants.OrderBySpanCount, constants.OrderByTraceDuration, fieldName,
+			)
+		}
 
-	// Validate direction
-	if q.OrderBy.Direction != OrderDirectionAsc && q.OrderBy.Direction != OrderDirectionDesc {
-		return errors.WrapInvalidInputf(
-			nil,
-			errors.CodeInvalidInput,
-			"orderBy direction must be either 'asc' or 'desc', got '%s'",
-			q.OrderBy.Direction,
-		)
+		// Validate direction
+		if orderBy.Direction != OrderDirectionAsc && orderBy.Direction != OrderDirectionDesc {
+			return errors.WrapInvalidInputf(
+				nil,
+				errors.CodeInvalidInput,
+				"orderBy[%d] direction must be either 'asc' or 'desc', got '%s'",
+				i, orderBy.Direction,
+			)
+		}
 	}
 
 	return nil
