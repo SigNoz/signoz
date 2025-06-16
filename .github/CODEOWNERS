@@ -12,4 +12,9 @@
 /pkg/factory/ @grandwizard28
 /pkg/types/ @grandwizard28
 .golangci.yml @grandwizard28
-**/(zeus|licensing|sqlmigration)/ @vikrantgupta25
+/pkg/zeus/ @vikrantgupta25
+/pkg/licensing/ @vikrantgupta25
+/pkg/sqlmigration/ @vikrantgupta25
+/ee/zeus/ @vikrantgupta25
+/ee/licensing/ @vikrantgupta25
+/ee/sqlmigration/ @vikrantgupta25
