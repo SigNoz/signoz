@@ -137,7 +137,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 									"direction": "desc"
 								}],
 								"limit": 100,
-								"page_token": "eyJsYXN0X3RyYWNlX2lkIjoiYWJjZGVmIn0="
+								"cursor": "eyJsYXN0X3RyYWNlX2lkIjoiYWJjZGVmIn0="
 							}
 						}
 					]
