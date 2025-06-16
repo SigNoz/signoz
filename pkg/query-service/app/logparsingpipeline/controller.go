@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -51,15 +50,10 @@ type PipelinesResponse struct {
 // ApplyPipelines stores new or changed pipelines and initiates a new config update
 func (ic *LogParsingPipelineController) ApplyPipelines(
 	ctx context.Context,
-	orgID string,
+	orgID valuer.UUID,
+	userID valuer.UUID,
 	postable []pipelinetypes.PostablePipeline,
 ) (*PipelinesResponse, *model.ApiError) {
-	// get user id from context
-	claims, errv2 := authtypes.ClaimsFromContext(ctx)
-	if errv2 != nil {
-		return nil, model.UnauthorizedError(fmt.Errorf("failed to get userId from context"))
-	}
-
 	var pipelines []pipelinetypes.GettablePipeline
 
 	// scan through postable pipelines, to select the existing pipelines or insert missing ones
@@ -88,22 +82,12 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 		elements[i] = p.ID.StringValue()
 	}
 
-	// prepare config by calling gen func
-	orgIDUUID, errv2 := valuer.NewUUID(claims.OrgID)
-	if errv2 != nil {
-		return nil, model.BadRequest(fmt.Errorf("invalid orgID: %w", errv2))
-	}
-	userIDUUID, errv2 := valuer.NewUUID(claims.UserID)
-	if errv2 != nil {
-		return nil, model.BadRequest(fmt.Errorf("invalid userID: %w", errv2))
-	}
-
-	cfg, err := agentConf.StartNewVersion(ctx, orgIDUUID, userIDUUID, opamptypes.ElementTypeLogPipelines, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, orgID, userID, opamptypes.ElementTypeLogPipelines, elements)
 	if err != nil || cfg == nil {
 		return nil, model.InternalError(fmt.Errorf("failed to start new version: %w", err))
 	}
 
-	return ic.GetPipelinesByVersion(ctx, orgIDUUID, cfg.Version)
+	return ic.GetPipelinesByVersion(ctx, orgID, cfg.Version)
 }
 
 func (ic *LogParsingPipelineController) ValidatePipelines(

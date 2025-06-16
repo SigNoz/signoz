@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -133,7 +134,7 @@ func (r *Repo) insertConfig(
 	}
 
 	if configVersion != nil {
-		c.Version = opamptypes.UpdateVersion(configVersion.Version)
+		c.IncrementVersion(configVersion.Version)
 	} else {
 		// first version
 		c.Version = 1
@@ -147,19 +148,10 @@ func (r *Repo) insertConfig(
 		}
 	}()
 
-	// insert config
-	_, dbErr := r.store.BunDB().NewInsert().
-		Model(&opamptypes.AgentConfigVersion{
-			OrgID:        orgId,
-			Identifiable: types.Identifiable{ID: c.ID},
-			Version:      c.Version,
-			UserAuditable: types.UserAuditable{
-				CreatedBy: userId.String(),
-			},
-			ElementType:  c.ElementType,
-			DeployStatus: c.DeployStatus,
-			DeployResult: c.DeployResult,
-		}).
+	_, dbErr := r.store.
+		BunDB().
+		NewInsert().
+		Model(c).
 		Exec(ctx)
 
 	if dbErr != nil {
@@ -170,9 +162,13 @@ func (r *Repo) insertConfig(
 	for _, e := range elements {
 		agentConfigElement := &opamptypes.AgentConfigElement{
 			Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
-			VersionID:    c.ID,
-			ElementType:  c.ElementType.StringValue(),
-			ElementID:    e,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+			VersionID:   c.ID,
+			ElementType: c.ElementType.StringValue(),
+			ElementID:   e,
 		}
 		_, dbErr = r.store.BunDB().NewInsert().Model(agentConfigElement).Exec(ctx)
 		if dbErr != nil {

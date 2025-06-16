@@ -4274,6 +4274,18 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// prepare config by calling gen func
+	orgID, errv2 := valuer.NewUUID(claims.OrgID)
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+	userID, errv2 := valuer.NewUUID(claims.UserID)
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	req := pipelinetypes.PostablePipelines{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -4294,7 +4306,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 			return nil, validationErr
 		}
 
-		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, claims.OrgID, postable)
+		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, orgID, userID, postable)
 	}
 
 	res, err := createPipeline(r.Context(), req.Pipelines)

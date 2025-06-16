@@ -70,12 +70,12 @@ func NewElementType(value string) ElementType {
 type DeployStatus struct{ valuer.String }
 
 var (
-	PendingDeploy       = DeployStatus{valuer.NewString("DIRTY")}
-	Deploying           = DeployStatus{valuer.NewString("DEPLOYING")}
-	Deployed            = DeployStatus{valuer.NewString("DEPLOYED")}
-	DeployInitiated     = DeployStatus{valuer.NewString("IN_PROGRESS")}
-	DeployFailed        = DeployStatus{valuer.NewString("FAILED")}
-	DeployStatusUnknown = DeployStatus{valuer.NewString("UNKNOWN")}
+	PendingDeploy       = DeployStatus{valuer.NewString("dirty")}
+	Deploying           = DeployStatus{valuer.NewString("deploying")}
+	Deployed            = DeployStatus{valuer.NewString("deployed")}
+	DeployInitiated     = DeployStatus{valuer.NewString("in_progress")}
+	DeployFailed        = DeployStatus{valuer.NewString("failed")}
+	DeployStatusUnknown = DeployStatus{valuer.NewString("unknown")}
 )
 
 type AgentConfigVersion struct {
@@ -88,29 +88,34 @@ type AgentConfigVersion struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID          valuer.UUID  `json:"orgId" bun:"org_id,type:text,notnull"`
-	Version        int          `json:"version" bun:"version,unique:element_version_idx"`
-	ElementType    ElementType  `json:"elementType" bun:"element_type,type:text,notnull,unique:element_version_idx"`
-	DeployStatus   DeployStatus `json:"deployStatus" bun:"deploy_status,type:text,notnull,default:'DIRTY'"`
+	OrgID          valuer.UUID  `json:"orgId" bun:"org_id,type:text,notnull,unique:element_version_org_idx"`
+	Version        int          `json:"version" bun:"version,unique:element_version_org_idx"`
+	ElementType    ElementType  `json:"elementType" bun:"element_type,type:text,notnull,unique:element_version_org_idx"`
+	DeployStatus   DeployStatus `json:"deployStatus" bun:"deploy_status,type:text,notnull,default:'dirty'"`
 	DeploySequence int          `json:"deploySequence" bun:"deploy_sequence"`
 	DeployResult   string       `json:"deployResult" bun:"deploy_result,type:text"`
 	Hash           string       `json:"lastHash" bun:"hash,type:text"`
 	Config         string       `json:"config" bun:"config,type:text"`
 }
 
-func NewAgentConfigVersion(orgId valuer.UUID, elementType ElementType) *AgentConfigVersion {
+func NewAgentConfigVersion(orgId valuer.UUID, userId valuer.UUID, elementType ElementType) *AgentConfigVersion {
 	return &AgentConfigVersion{
-		OrgID:        orgId,
-		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
-		ElementType:  elementType,
-		DeployStatus: PendingDeploy,
-		Hash:         "",
-		Config:       "{}",
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		UserAuditable: types.UserAuditable{CreatedBy: userId.String(), UpdatedBy: userId.String()},
+		OrgID:         orgId,
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		ElementType:   elementType,
+		DeployStatus:  PendingDeploy,
+		Hash:          "",
+		Config:        "{}",
 	}
 }
 
-func UpdateVersion(v int) int {
-	return v + 1
+func (a *AgentConfigVersion) IncrementVersion(lastVersion int) {
+	a.Version = lastVersion + 1
 }
 
 type AgentConfigElement struct {

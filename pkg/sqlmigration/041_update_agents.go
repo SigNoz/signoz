@@ -66,10 +66,10 @@ type newAgentConfigVersion41 struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID          string                  `json:"orgId" bun:"org_id,type:text,notnull"`
-	Version        int                     `json:"version" bun:"version"`
-	ElementType    opamptypes.ElementType  `json:"elementType" bun:"element_type,type:text,notnull"`
-	DeployStatus   opamptypes.DeployStatus `json:"deployStatus" bun:"deploy_status,type:text,notnull,default:'DIRTY'"`
+	OrgID          string                  `json:"orgId" bun:"org_id,type:text,notnull,unique:element_version_org_idx"`
+	Version        int                     `json:"version" bun:"version,unique:element_version_org_idx"`
+	ElementType    opamptypes.ElementType  `json:"elementType" bun:"element_type,type:text,notnull,unique:element_version_org_idx"`
+	DeployStatus   opamptypes.DeployStatus `json:"deployStatus" bun:"deploy_status,type:text,notnull,default:'dirty'"`
 	DeploySequence int                     `json:"deploySequence" bun:"deploy_sequence"`
 	DeployResult   string                  `json:"deployResult" bun:"deploy_result,type:text"`
 	Hash           string                  `json:"lastHash" bun:"hash,type:text"`
@@ -259,8 +259,8 @@ func (migration *updateAgents) CopyOldAgentToNewAgent(ctx context.Context, tx bu
 			Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 			AgentID:      existingAgent.AgentID,
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: existingAgent.StartedAt,
-				UpdatedAt: existingAgent.StartedAt,
+				CreatedAt: time.Unix(existingAgent.StartedAt.Unix(), 0),
+				UpdatedAt: time.Unix(existingAgent.StartedAt.Unix(), 0),
 			},
 			Status:       existingAgent.CurrentStatus,
 			Config:       existingAgent.EffectiveConfig,
@@ -274,11 +274,15 @@ func (migration *updateAgents) CopyOldAgentToNewAgent(ctx context.Context, tx bu
 func (migration *updateAgents) CopyOldAgentConfigVersionToNewAgentConfigVersion(ctx context.Context, tx bun.IDB, existingAgentConfigVersions []*existingAgentConfigVersions41, orgID string) ([]*newAgentConfigVersion41, error) {
 	newAgentConfigVersions := make([]*newAgentConfigVersion41, 0)
 	for _, existingAgentConfigVersion := range existingAgentConfigVersions {
+		versionID, err := valuer.NewUUID(existingAgentConfigVersion.ID)
+		if err != nil {
+			return nil, err
+		}
 		newAgentConfigVersions = append(newAgentConfigVersions, &newAgentConfigVersion41{
-			Identifiable: types.Identifiable{ID: valuer.MustNewUUID(existingAgentConfigVersion.ID)},
+			Identifiable: types.Identifiable{ID: versionID},
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: existingAgentConfigVersion.CreatedAt,
-				UpdatedAt: existingAgentConfigVersion.UpdatedAt,
+				CreatedAt: time.Unix(existingAgentConfigVersion.CreatedAt.Unix(), 0),
+				UpdatedAt: time.Unix(existingAgentConfigVersion.UpdatedAt.Unix(), 0),
 			},
 			UserAuditable: types.UserAuditable{
 				CreatedBy: existingAgentConfigVersion.CreatedBy,
@@ -300,11 +304,15 @@ func (migration *updateAgents) CopyOldAgentConfigVersionToNewAgentConfigVersion(
 func (migration *updateAgents) CopyOldAgentConfigElementToNewAgentConfigElement(ctx context.Context, tx bun.IDB, existingAgentConfigElements []*existingAgentConfigElement41, orgID string) ([]*newAgentConfigElement41, error) {
 	newAgentConfigElements := make([]*newAgentConfigElement41, 0)
 	for _, existingAgentConfigElement := range existingAgentConfigElements {
+		elementID, err := valuer.NewUUID(existingAgentConfigElement.ElementID)
+		if err != nil {
+			return nil, err
+		}
 		newAgentConfigElements = append(newAgentConfigElements, &newAgentConfigElement41{
-			Identifiable: types.Identifiable{ID: valuer.MustNewUUID(existingAgentConfigElement.ID)},
+			Identifiable: types.Identifiable{ID: elementID},
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: existingAgentConfigElement.CreatedAt,
-				UpdatedAt: existingAgentConfigElement.UpdatedAt,
+				CreatedAt: time.Unix(existingAgentConfigElement.CreatedAt.Unix(), 0),
+				UpdatedAt: time.Unix(existingAgentConfigElement.UpdatedAt.Unix(), 0),
 			},
 			VersionID:   existingAgentConfigElement.VersionID,
 			ElementID:   existingAgentConfigElement.ElementID,

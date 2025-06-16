@@ -200,7 +200,7 @@ func StartNewVersion(
 ) (*opamptypes.AgentConfigVersion, *model.ApiError) {
 
 	// create a new version
-	cfg := opamptypes.NewAgentConfigVersion(orgId, eleType)
+	cfg := opamptypes.NewAgentConfigVersion(orgId, userId, eleType)
 
 	// insert new config and elements into database
 	err := m.insertConfig(ctx, orgId, userId, cfg, elementIds)

@@ -32,7 +32,7 @@ func NewRepo(sqlStore sqlstore.SQLStore) Repo {
 
 // insertPipeline stores a given postable pipeline to database
 func (r *Repo) insertPipeline(
-	ctx context.Context, orgID string, postable *pipelinetypes.PostablePipeline,
+	ctx context.Context, orgID valuer.UUID, postable *pipelinetypes.PostablePipeline,
 ) (*pipelinetypes.GettablePipeline, *model.ApiError) {
 	if err := postable.IsValid(); err != nil {
 		return nil, model.BadRequest(errors.Wrap(err,
@@ -60,7 +60,7 @@ func (r *Repo) insertPipeline(
 
 	insertRow := &pipelinetypes.GettablePipeline{
 		StoreablePipeline: pipelinetypes.StoreablePipeline{
-			OrgID: orgID,
+			OrgID: orgID.String(),
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
