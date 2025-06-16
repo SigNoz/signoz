@@ -33,12 +33,14 @@ type QueryBuilderTraceOperator struct {
 	ReturnSpansFrom string `json:"returnSpansFrom,omitempty"`
 
 	// Trace-specific ordering (only span_count and trace_duration allowed)
-	Order       []OrderBy        `json:"orderBy,omitempty"`
-	Aggregation TraceAggregation `json:"aggregations,omitempty"`
+	Order []OrderBy `json:"orderBy,omitempty"`
 
-	// AIP-158 compliant pagination
-	Limit     int    `json:"limit,omitempty"`
-	PageToken string `json:"page_token,omitempty"`
+	Aggregations []TraceAggregation `json:"aggregations,omitempty"`
+	StepInterval Step               `json:"stepInterval,omitempty"`
+	GroupBy      []GroupByKey       `json:"groupBy,omitempty"`
+
+	Limit  int    `json:"limit,omitempty"`
+	Cursor string `json:"cursor,omitempty"`
 
 	// Other post-processing options
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`

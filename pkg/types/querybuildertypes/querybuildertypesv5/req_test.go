@@ -175,8 +175,8 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 									Key:       OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "trace_duration"}},
 									Direction: OrderDirectionDesc,
 								}},
-								Limit:     100,
-								PageToken: "eyJsYXN0X3RyYWNlX2lkIjoiYWJjZGVmIn0=",
+								Limit:  100,
+								Cursor: "eyJsYXN0X3RyYWNlX2lkIjoiYWJjZGVmIn0=",
 							},
 						},
 					},
@@ -991,7 +991,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 					assert.Equal(t, expectedSpec.Name, actualSpec.Name)
 					assert.Equal(t, expectedSpec.Expression, actualSpec.Expression)
 					assert.Equal(t, expectedSpec.Limit, actualSpec.Limit)
-					assert.Equal(t, expectedSpec.PageToken, actualSpec.PageToken)
+					assert.Equal(t, expectedSpec.Cursor, actualSpec.Cursor)
 					assert.Equal(t, len(expectedSpec.Order), len(actualSpec.Order))
 					for i, expectedOrder := range expectedSpec.Order {
 						if i < len(actualSpec.Order) {
