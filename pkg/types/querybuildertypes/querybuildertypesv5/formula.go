@@ -20,8 +20,28 @@ type QueryBuilderFormula struct {
 	// expression to apply to the query
 	Expression string `json:"expression"`
 
+	// order by keys and directions
+	Order []OrderBy `json:"order,omitempty"`
+
+	// limit the maximum number of rows to return
+	Limit int `json:"limit,omitempty"`
+
+	// having clause to apply to the formula result
+	Having *Having `json:"having,omitempty"`
+
 	// functions to apply to the formula result
 	Functions []Function `json:"functions,omitempty"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+func (f *QueryBuilderFormula) UnmarshalJSON(data []byte) error {
+	type Alias QueryBuilderFormula
+	var temp Alias
+	if err := UnmarshalJSONWithContext(data, &temp, "formula spec"); err != nil {
+		return err
+	}
+	*f = QueryBuilderFormula(temp)
+	return nil
 }
 
 // small container to store the query name and index or alias reference
