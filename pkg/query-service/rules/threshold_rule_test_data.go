@@ -86,5 +86,26 @@ var (
 			matchType:          "1", // Once
 			target:             200, // 200 GB
 		},
+		{
+			targetUnit: "decgbytes",
+			yAxisUnit:  "By",
+			values: [][]interface{}{
+				{float64(2863284053), "attr", time.Now()},                             // 2.86 GB
+				{float64(2863388842), "attr", time.Now().Add(1 * time.Second)},        // 2.86 GB
+				{float64(300947400), "attr", time.Now().Add(2 * time.Second)},         // 0.3 GB
+				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},         // 0.3 GB
+				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)}, // 66.64 MB
+			},
+			metaValues: [][]interface{}{},
+			createTableValues: [][]interface{}{
+				{"statement"},
+			},
+			attrMetaValues:     [][]interface{}{},
+			resourceMetaValues: [][]interface{}{},
+			expectAlerts:       0,
+			compareOp:          "1", // Above
+			matchType:          "1", // Once
+			target:             200, // 200 GB
+		},
 	}
 )
