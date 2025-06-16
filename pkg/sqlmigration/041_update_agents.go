@@ -126,7 +126,10 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// get all org ids
 	var orgIDs []string
