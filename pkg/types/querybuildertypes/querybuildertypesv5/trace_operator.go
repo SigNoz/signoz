@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// TraceOperatorType defines the type of trace operator
 type TraceOperatorType struct{ valuer.String }
 
 var (
@@ -22,22 +21,20 @@ var (
 	TraceOperatorExclude            = TraceOperatorType{valuer.NewString("NOT")}
 )
 
-// QueryBuilderTraceOperator represents a trace operator query (AIP-158 and AIP-160 compliant)
 type QueryBuilderTraceOperator struct {
 	Name     string `json:"name"`
 	Disabled bool   `json:"disabled,omitempty"`
 
-	// The expression string that will be parsed server-side
 	Expression string `json:"expression"`
 
-	// AIP-160 compliant filter for trace-level conditions
 	Filter *Filter `json:"filter,omitempty"`
 
 	// User-configurable span return strategy - which query's spans to return
 	ReturnSpansFrom string `json:"returnSpansFrom,omitempty"`
 
 	// Trace-specific ordering (only span_count and trace_duration allowed)
-	Order []OrderBy `json:"orderBy,omitempty"`
+	Order       []OrderBy        `json:"orderBy,omitempty"`
+	Aggregation TraceAggregation `json:"aggregations,omitempty"`
 
 	// AIP-158 compliant pagination
 	Limit     int    `json:"limit,omitempty"`
