@@ -79,7 +79,7 @@ func Parse(filters *v3.FilterSet) (string, error) {
 						operator = v3.FilterOperatorEqual
 					}
 
-					filter = fmt.Sprintf("%s %s nil", v.Key.Key, operator)
+					filter = fmt.Sprintf("%s %s nil", v.Key.Key, logOperatorsToExpr[operator])
 				}
 			}
 		default:
