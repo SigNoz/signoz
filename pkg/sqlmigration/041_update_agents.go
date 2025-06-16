@@ -94,9 +94,9 @@ type newAgentConfigElement41 struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	ElementID   string `bun:"element_id,type:text,notnull,unique:agent_config_elements_u1"`
-	ElementType string `bun:"element_type,type:text,notnull,unique:agent_config_elements_u1"`
-	VersionID   string `bun:"version_id,type:text,notnull,unique:agent_config_elements_u1"`
+	ElementID   string `bun:"element_id,type:text,notnull,unique:element_type_version_idx"`
+	ElementType string `bun:"element_type,type:text,notnull,unique:element_type_version_idx"`
+	VersionID   string `bun:"version_id,type:text,notnull,unique:element_type_version_idx"`
 }
 
 func NewUpdateAgentsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
