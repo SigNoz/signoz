@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http/httptest"
 	"runtime/debug"
 	"strings"
@@ -544,7 +545,7 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore, agentID stri
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testbed.store), sharder)
 
-	model.InitDB(testbed.store, orgGetter)
+	model.InitDB(testbed.store, slog.Default(), orgGetter)
 
 	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
 	err = opampServer.Start(opamp.GetAvailableLocalAddress())

@@ -179,7 +179,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
-	opAmpModel.InitDB(serverOptions.SigNoz.SQLStore, serverOptions.SigNoz.Modules.OrgGetter)
+	opAmpModel.InitDB(serverOptions.SigNoz.SQLStore, serverOptions.SigNoz.Instrumentation.Logger(), serverOptions.SigNoz.Modules.OrgGetter)
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
 		Store: serverOptions.SigNoz.SQLStore,

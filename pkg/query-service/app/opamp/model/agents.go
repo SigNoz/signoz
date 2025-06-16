@@ -1,7 +1,9 @@
 package model
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -25,6 +27,7 @@ type Agents struct {
 	connections map[types.Connection]map[string]bool
 	store       sqlstore.SQLStore
 	OrgGetter   organization.Getter
+	logger      *slog.Logger
 }
 
 func (a *Agents) Count() int {
@@ -32,7 +35,7 @@ func (a *Agents) Count() int {
 }
 
 // Initialize the database and create schema if needed
-func InitDB(sqlStore sqlstore.SQLStore, orgGetter organization.Getter) {
+func InitDB(sqlStore sqlstore.SQLStore, logger *slog.Logger, orgGetter organization.Getter) {
 
 	AllAgents = Agents{
 		agentsById:  make(map[string]*Agent),
@@ -40,6 +43,7 @@ func InitDB(sqlStore sqlstore.SQLStore, orgGetter organization.Getter) {
 		mux:         sync.RWMutex{},
 		store:       sqlStore,
 		OrgGetter:   orgGetter,
+		logger:      logger,
 	}
 }
 
@@ -82,11 +86,12 @@ func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection, o
 		return nil, false, errors.New("cannot create agent without orgId")
 	}
 
-	agent = New(agents.store, orgId, agentID, conn)
+	agent = New(agents.store, agents.logger, orgId, agentID, conn)
 	err := agent.Upsert()
 	if err != nil {
 		return nil, false, err
 	}
+	agent.KeepOnlyLast50Agents(context.Background())
 	agents.agentsById[agentID] = agent
 
 	if agents.connections[conn] == nil {

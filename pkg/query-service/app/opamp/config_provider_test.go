@@ -3,6 +3,7 @@ package opamp
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -12,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -169,6 +171,59 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	)
 }
 
+func TestOpAMPServerAgentLimit(t *testing.T) {
+	require := require.New(t)
+
+	tb := newTestbed(t)
+	// Create 51 agents and check if the first one gets deleted
+	var agentConnections []*MockOpAmpConnection
+	var agentIds []string
+	for i := 0; i < 51; i++ {
+		agentConn := &MockOpAmpConnection{}
+		agentId := valuer.GenerateUUID().String()
+		agentIds = append(agentIds, agentId)
+		tb.opampServer.OnMessage(
+			agentConn,
+			&protobufs.AgentToServer{
+				InstanceUid: agentId,
+				EffectiveConfig: &protobufs.EffectiveConfig{
+					ConfigMap: initialAgentConf(),
+				},
+			},
+		)
+		agentConnections = append(agentConnections, agentConn)
+	}
+
+	// Perform a DB level check to ensure the first agent is removed
+	count, err := tb.sqlStore.BunDB().NewSelect().
+		Model(new(opamptypes.StorableAgent)).
+		Where("agent_id = ?", agentIds[0]).
+		Count(context.Background())
+	require.Nil(err, "Error querying the database for agent count")
+	require.Equal(0, count, "First agent should be removed from the database after exceeding the limit of 50 agents")
+
+	// verify there are 50 agents in the db
+	count, err = tb.sqlStore.BunDB().NewSelect().
+		Model(new(opamptypes.StorableAgent)).
+		Count(context.Background())
+	require.Nil(err, "Error querying the database for agent count")
+	require.Equal(50, count, "There should be 50 agents in the database")
+
+	// Check if the 51st agent received a config
+	lastAgentConn := agentConnections[50]
+	lastAgentMsg := lastAgentConn.LatestMsgFromServer()
+	require.NotNil(
+		lastAgentMsg,
+		"51st agent should receive a remote config from the server",
+	)
+
+	tb.opampServer.Stop()
+	require.Equal(
+		0, len(tb.testConfigProvider.ConfigUpdateSubscribers),
+		"Opamp server should have unsubscribed to config provider updates after shutdown",
+	)
+}
+
 type testbed struct {
 	testConfigProvider *MockAgentConfigProvider
 	opampServer        *Server
@@ -183,7 +238,7 @@ func newTestbed(t *testing.T) *testbed {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.Nil(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), sharder)
-	model.InitDB(testDB, orgGetter)
+	model.InitDB(testDB, slog.Default(), orgGetter)
 	testConfigProvider := NewMockAgentConfigProvider()
 	opampServer := InitializeServer(nil, testConfigProvider)
 

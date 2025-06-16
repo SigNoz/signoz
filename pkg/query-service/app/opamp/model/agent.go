@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -31,17 +32,19 @@ type Agent struct {
 	connMutex sync.Mutex
 	mux       sync.RWMutex
 	store     sqlstore.SQLStore
+	logger    *slog.Logger
 }
 
 // set in agent description when agent is capable of supporting
 // lb exporter configuration. values: 1 (true) or 0 (false)
 const lbExporterFlag = "capabilities.lbexporter"
 
-func New(store sqlstore.SQLStore, orgID string, agentID string, conn opampTypes.Connection) *Agent {
+func New(store sqlstore.SQLStore, logger *slog.Logger, orgID string, agentID string, conn opampTypes.Connection) *Agent {
 	return &Agent{
 		StorableAgent: opamptypes.NewStorableAgent(store, orgID, agentID, opamptypes.AgentStatusConnected),
 		conn:          conn,
 		store:         store,
+		logger:        logger,
 	}
 }
 
@@ -62,6 +65,27 @@ func (agent *Agent) Upsert() error {
 	}
 
 	return nil
+}
+
+// keep only the last 50 agents in the database
+func (agent *Agent) KeepOnlyLast50Agents(ctx context.Context) {
+	// Delete all agents except the last 50 in a single query
+	_, err := agent.store.BunDB().
+		NewDelete().
+		Model(new(opamptypes.StorableAgent)).
+		Where("org_id = ?", agent.OrgID).
+		Where("agent_id NOT IN (?)",
+			agent.store.BunDB().
+				NewSelect().
+				ColumnExpr("distinct(agent_id)").
+				Model(new(opamptypes.StorableAgent)).
+				Where("org_id = ?", agent.OrgID).
+				OrderExpr("created_at DESC").
+				Limit(50)).
+		Exec(ctx)
+	if err != nil {
+		agent.logger.Error("failed to delete old agents", "error", err)
+	}
 }
 
 // extracts lb exporter support flag from agent description. the flag

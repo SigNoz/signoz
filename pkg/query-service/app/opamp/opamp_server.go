@@ -84,6 +84,7 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 // For the subsequent requests, agents don't send the attributes unless something is changed
 // but we keep them in context mapped which is mapped to the instanceID, so we would know the
 // orgID from the context
+// note :- there can only be 50 agents in the db for a given orgID, we don't have a check in-memory but we delete from the db after insert.
 func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
 	agentID := msg.InstanceUid
 
