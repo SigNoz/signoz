@@ -32,7 +32,7 @@ func NewRepo(sqlStore sqlstore.SQLStore) Repo {
 
 // insertPipeline stores a given postable pipeline to database
 func (r *Repo) insertPipeline(
-	ctx context.Context, orgID string, postable *pipelinetypes.PostablePipeline,
+	ctx context.Context, orgID valuer.UUID, postable *pipelinetypes.PostablePipeline,
 ) (*pipelinetypes.GettablePipeline, *model.ApiError) {
 	if err := postable.IsValid(); err != nil {
 		return nil, model.BadRequest(errors.Wrap(err,
@@ -60,7 +60,7 @@ func (r *Repo) insertPipeline(
 
 	insertRow := &pipelinetypes.GettablePipeline{
 		StoreablePipeline: pipelinetypes.StoreablePipeline{
-			OrgID: orgID,
+			OrgID: orgID.String(),
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
@@ -102,11 +102,11 @@ func (r *Repo) getPipelinesByVersion(
 	storablePipelines := []pipelinetypes.StoreablePipeline{}
 	err := r.sqlStore.BunDB().NewSelect().
 		Model(&storablePipelines).
-		Join("JOIN agent_config_elements e ON p.id = e.element_id").
-		Join("JOIN agent_config_versions v ON v.id = e.version_id").
-		Where("e.element_type = ?", logPipelines). // TODO: nitya - add org_id to this as well
-		Where("v.version = ?", version).           // TODO: nitya - add org_id to this as well
-		Where("p.org_id = ?", orgID).
+		Join("JOIN agent_config_element e ON p.id = e.element_id").
+		Join("JOIN agent_config_version v ON v.id = e.version_id").
+		Where("e.element_type = ?", logPipelines).
+		Where("v.version = ?", version).
+		Where("v.org_id = ?", orgID).
 		Order("p.order_id ASC").
 		Scan(ctx)
 	if err != nil {
@@ -129,20 +129,6 @@ func (r *Repo) getPipelinesByVersion(
 	}
 
 	return gettablePipelines, errors
-}
-
-func (r *Repo) GetDefaultOrgID(ctx context.Context) (string, *model.ApiError) {
-	var orgs []types.Organization
-	err := r.sqlStore.BunDB().NewSelect().
-		Model(&orgs).
-		Scan(ctx)
-	if err != nil {
-		return "", model.InternalError(errors.Wrap(err, "failed to get default org ID"))
-	}
-	if len(orgs) == 0 {
-		return "", model.InternalError(errors.New("no orgs found"))
-	}
-	return orgs[0].ID.StringValue(), nil
 }
 
 // GetPipelines returns pipeline and errors (if any)
