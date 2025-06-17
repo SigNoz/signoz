@@ -45,7 +45,6 @@ function LogsExplorerList({
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 	const { initialDataSource } = useQueryBuilder();
-
 	const { activeLogId } = useCopyLogLink();
 
 	const {
