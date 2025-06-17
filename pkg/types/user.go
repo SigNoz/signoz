@@ -255,3 +255,12 @@ type GettableLoginPrecheck struct {
 	SelectOrg       bool     `json:"selectOrg"`
 	Orgs            []string `json:"orgs"`
 }
+
+func NewTraitsFromUser(user *User) map[string]any {
+	return map[string]any{
+		"role":         user.Role,
+		"email":        user.Email,
+		"display_name": user.DisplayName,
+		"created_at":   user.CreatedAt,
+	}
+}

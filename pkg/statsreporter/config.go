@@ -12,6 +12,13 @@ type Config struct {
 
 	// Interval is the interval at which the stats are collected.
 	Interval time.Duration `mapstructure:"interval"`
+
+	// Collect is the collection configuration.
+	Collect Collect `mapstructure:"collect"`
+}
+
+type Collect struct {
+	Identities bool `mapstructure:"identities"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -22,6 +29,9 @@ func newConfig() factory.Config {
 	return Config{
 		Enabled:  true,
 		Interval: 6 * time.Hour,
+		Collect: Collect{
+			Identities: true,
+		},
 	}
 }
 

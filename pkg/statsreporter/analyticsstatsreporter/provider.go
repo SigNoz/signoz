@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -31,6 +32,9 @@ type provider struct {
 	// used to get organizations
 	orgGetter organization.Getter
 
+	// used to get users
+	userGetter user.Getter
+
 	// used to send stats to an analytics backend
 	analytics analytics.Analytics
 
@@ -44,9 +48,9 @@ type provider struct {
 	stopC chan struct{}
 }
 
-func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, build version.Build, analyticsConfig analytics.Config) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
+func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, build version.Build, analyticsConfig analytics.Config) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("analytics"), func(ctx context.Context, settings factory.ProviderSettings, config statsreporter.Config) (statsreporter.StatsReporter, error) {
-		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, build, analyticsConfig)
+		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, userGetter, build, analyticsConfig)
 	})
 }
 
@@ -57,6 +61,7 @@ func New(
 	telemetryStore telemetrystore.TelemetryStore,
 	collectors []statsreporter.StatsCollector,
 	orgGetter organization.Getter,
+	userGetter user.Getter,
 	build version.Build,
 	analyticsConfig analytics.Config,
 ) (statsreporter.StatsReporter, error) {
@@ -73,6 +78,7 @@ func New(
 		telemetryStore: telemetryStore,
 		collectors:     collectors,
 		orgGetter:      orgGetter,
+		userGetter:     userGetter,
 		analytics:      analytics,
 		build:          build,
 		deployment:     deployment,
@@ -134,6 +140,16 @@ func (provider *provider) Report(ctx context.Context) error {
 
 		provider.analytics.IdentifyGroup(ctx, org.ID.String(), traits)
 		provider.analytics.TrackGroup(ctx, org.ID.String(), "Stats Reported", stats)
+
+		users, err := provider.userGetter.ListByOrgID(ctx, org.ID)
+		if err != nil {
+			provider.settings.Logger().WarnContext(ctx, "failed to list users", "error", err, "org_id", org.ID)
+			continue
+		}
+
+		for _, user := range users {
+			provider.analytics.IdentifyUser(ctx, org.ID.String(), user.ID.String(), traits)
+		}
 	}
 
 	return nil

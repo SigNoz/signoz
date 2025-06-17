@@ -134,12 +134,7 @@ func (m *Module) CreateUserWithPassword(ctx context.Context, user *types.User, p
 		return nil, err
 	}
 
-	traitsOrProperties := map[string]any{
-		"role":         user.Role,
-		"email":        user.Email,
-		"display_name": user.DisplayName,
-		"created_at":   user.CreatedAt,
-	}
+	traitsOrProperties := types.NewTraitsFromUser(user)
 	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traitsOrProperties)
 	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Created", traitsOrProperties)
 
@@ -151,12 +146,7 @@ func (m *Module) CreateUser(ctx context.Context, user *types.User) error {
 		return err
 	}
 
-	traitsOrProperties := map[string]any{
-		"role":         user.Role,
-		"email":        user.Email,
-		"display_name": user.DisplayName,
-		"created_at":   user.CreatedAt,
-	}
+	traitsOrProperties := types.NewTraitsFromUser(user)
 	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traitsOrProperties)
 	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Created", traitsOrProperties)
 
@@ -183,11 +173,22 @@ func (m *Module) ListUsers(ctx context.Context, orgID string) ([]*types.Gettable
 	return m.store.ListUsers(ctx, orgID)
 }
 
-func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error) {
-	return m.store.UpdateUser(ctx, orgID, id, user)
+func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User, updatedBy string) (*types.User, error) {
+	user, err := m.store.UpdateUser(ctx, orgID, id, user)
+	if err != nil {
+		return nil, err
+	}
+
+	traits := types.NewTraitsFromUser(user)
+	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traits)
+
+	traits["updated_by"] = updatedBy
+	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Updated", traits)
+
+	return user, nil
 }
 
-func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error {
+func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, deletedBy string) error {
 	user, err := m.store.GetUserByID(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -207,7 +208,15 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error 
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 
-	return m.store.DeleteUser(ctx, orgID, user.ID.StringValue())
+	if err := m.store.DeleteUser(ctx, orgID, user.ID.StringValue()); err != nil {
+		return err
+	}
+
+	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Deleted", map[string]any{
+		"deleted_by": deletedBy,
+	})
+
+	return nil
 }
 
 func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*types.ResetPasswordRequest, error) {
