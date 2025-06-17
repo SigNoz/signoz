@@ -644,10 +644,16 @@ func (m *Module) Register(ctx context.Context, req *types.PostableRegisterOrgAnd
 }
 
 func (m *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	stats := make(map[string]any)
 	count, err := m.store.CountByOrgID(ctx, orgID)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		stats["user.count"] = count
 	}
 
-	return map[string]any{"user.count": count}, nil
+	count, err = m.store.CountAPIKeyByOrgID(ctx, orgID)
+	if err == nil {
+		stats["factor.api_key.count"] = count
+	}
+
+	return stats, nil
 }

@@ -826,3 +826,21 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 
 	return int64(count), nil
 }
+
+func (store *store) CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
+	apiKey := new(types.StorableAPIKey)
+
+	count, err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(apiKey).
+		Join("JOIN users ON users.id = factor_api_key.user_id").
+		Where("org_id = ?", orgID).
+		Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(count), nil
+}

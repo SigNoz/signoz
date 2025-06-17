@@ -72,6 +72,7 @@ type UserStore interface {
 	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*StorableAPIKeyUser, error)
 	RevokeAPIKey(ctx context.Context, id valuer.UUID, revokedByUserID valuer.UUID) error
 	GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*StorableAPIKeyUser, error)
+	CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
 
 	CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
 }
