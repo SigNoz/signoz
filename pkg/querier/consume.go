@@ -176,7 +176,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				lblVals = append(lblVals, *val)
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
-					Value: val,
+					Value: *val,
 				})
 
 			default:
@@ -227,8 +227,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		}
 	}
 	if maxAgg < 0 {
-		//nolint:nilnil
-		return nil, nil // empty result-set
+		return &qbtypes.TimeSeriesData{
+			QueryName: queryName,
+		}, nil
 	}
 
 	buckets := make([]*qbtypes.AggregationBucket, maxAgg+1)
@@ -319,8 +320,9 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 	}
 
 	return &qbtypes.ScalarData{
-		Columns: cd,
-		Data:    data,
+		QueryName: queryName,
+		Columns:   cd,
+		Data:      data,
 	}, nil
 }
 

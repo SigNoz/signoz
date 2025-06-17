@@ -63,6 +63,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
@@ -1787,7 +1788,7 @@ func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWrite
 
 	result, apiErr := aH.reader.GetWaterfallSpansForTraceWithMetadata(r.Context(), orgID, traceID, req)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		render.Error(w, apiErr)
 		return
 	}
 
@@ -1821,7 +1822,7 @@ func (aH *APIHandler) GetFlamegraphSpansForTrace(w http.ResponseWriter, r *http.
 
 	result, apiErr := aH.reader.GetFlamegraphSpansForTrace(r.Context(), orgID, traceID, req)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		render.Error(w, apiErr)
 		return
 	}
 
@@ -3460,10 +3461,9 @@ func (aH *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request)
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		RespondError(w, model.UnauthorizedError(errors.New("unauthorized")), nil)
 		return
 	}
 
@@ -4142,8 +4142,6 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, res)
 }
 
-const logPipelines = "log_pipelines"
-
 func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	versionString := mux.Vars(r)["version"]
 
@@ -4191,6 +4189,12 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	orgID, errv2 := valuer.NewUUID(claims.OrgID)
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
 		RespondError(w, model.WrapApiError(err, "Failed to parse agent config version"), nil)
@@ -4201,9 +4205,9 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 	var apierr *model.ApiError
 
 	if version != -1 {
-		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), claims.OrgID, version)
+		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), orgID, version)
 	} else {
-		payload, apierr = aH.listLogsPipelines(context.Background(), claims.OrgID)
+		payload, apierr = aH.listLogsPipelines(context.Background(), orgID)
 	}
 
 	if apierr != nil {
@@ -4214,12 +4218,12 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 }
 
 // listLogsPipelines lists logs piplines for latest version
-func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
+func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID valuer.UUID) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	// get lateset agent config
 	latestVersion := -1
-	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
+	lastestConfig, err := agentConf.GetLatestVersion(ctx, orgID, opamptypes.ElementTypeLogPipelines)
 	if err != nil && err.Type() != model.ErrorNotFound {
 		return nil, model.WrapApiError(err, "failed to get latest agent config version")
 	}
@@ -4228,14 +4232,14 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
 		latestVersion = lastestConfig.Version
 	}
 
-	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, latestVersion)
+	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, orgID, latestVersion)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get pipelines")
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
-	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
+	history, err := agentConf.GetConfigHistory(ctx, orgID, opamptypes.ElementTypeLogPipelines, limit)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get config history")
 	}
@@ -4244,17 +4248,17 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
 }
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
-func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID string, version int) (
+func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID valuer.UUID, version int) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
-	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
+	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, orgID, version)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get pipelines by version")
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
-	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
+	history, err := agentConf.GetConfigHistory(ctx, orgID, opamptypes.ElementTypeLogPipelines, limit)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to retrieve agent config history")
 	}
@@ -4265,6 +4269,18 @@ func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID stri
 
 func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
+	// prepare config by calling gen func
+	orgID, errv2 := valuer.NewUUID(claims.OrgID)
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+	userID, errv2 := valuer.NewUUID(claims.UserID)
 	if errv2 != nil {
 		render.Error(w, errv2)
 		return
@@ -4290,7 +4306,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 			return nil, validationErr
 		}
 
-		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, claims.OrgID, postable)
+		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, orgID, userID, postable)
 	}
 
 	res, err := createPipeline(r.Context(), req.Pipelines)

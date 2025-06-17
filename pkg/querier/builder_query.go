@@ -118,6 +118,10 @@ func (q *builderQuery[T]) Fingerprint() string {
 		parts = append(parts, fmt.Sprintf("having=%s", q.spec.Having.Expression))
 	}
 
+	if q.spec.ShiftBy != 0 {
+		parts = append(parts, fmt.Sprintf("shiftby=%d", q.spec.ShiftBy))
+	}
+
 	return strings.Join(parts, "&")
 }
 
@@ -204,7 +208,14 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 
 	// Pass query window and step for partial value detection
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
-	payload, err := consume(rows, q.kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+
+	kind := q.kind
+	// all metric queries are time series then reduced if required
+	if q.spec.Signal == telemetrytypes.SignalMetrics {
+		kind = qbtypes.RequestTypeTimeSeries
+	}
+
+	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -224,16 +235,18 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	isAsc := len(q.spec.Order) > 0 &&
 		strings.ToLower(string(q.spec.Order[0].Direction.StringValue())) == "asc"
 
+	fromMS, toMS := q.fromMS, q.toMS
+
 	// Adjust [fromMS,toMS] window if a cursor was supplied
 	if cur := strings.TrimSpace(q.spec.Cursor); cur != "" {
 		if ts, err := decodeCursor(cur); err == nil {
 			if isAsc {
-				if uint64(ts) >= q.fromMS {
-					q.fromMS = uint64(ts + 1)
+				if uint64(ts) >= fromMS {
+					fromMS = uint64(ts + 1)
 				}
 			} else { // DESC
-				if uint64(ts) <= q.toMS {
-					q.toMS = uint64(ts - 1)
+				if uint64(ts) <= toMS {
+					toMS = uint64(ts - 1)
 				}
 			}
 		}
@@ -252,7 +265,16 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	totalBytes := uint64(0)
 	start := time.Now()
 
-	for _, r := range makeBuckets(q.fromMS, q.toMS) {
+	// Get buckets and reverse them for ascending order
+	buckets := makeBuckets(fromMS, toMS)
+	if isAsc {
+		// Reverse the buckets for ascending order
+		for i, j := 0, len(buckets)-1; i < j; i, j = i+1, j-1 {
+			buckets[i], buckets[j] = buckets[j], buckets[i]
+		}
+	}
+
+	for _, r := range buckets {
 		q.spec.Offset = 0
 		q.spec.Limit = need
 

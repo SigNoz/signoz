@@ -2,8 +2,10 @@ package opamp
 
 import (
 	"context"
+	"time"
 
 	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server"
 	"github.com/open-telemetry/opamp-go/server/types"
@@ -53,6 +55,7 @@ func (srv *Server) Start(listener string) error {
 		ListenEndpoint: listener,
 	}
 
+	// This will have to send request to all the agents of all tenants
 	unsubscribe := srv.agentConfigProvider.SubscribeToConfigUpdates(func() {
 		err := srv.agents.RecommendLatestConfigToAll(srv.agentConfigProvider)
 		if err != nil {
@@ -78,21 +81,47 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 	srv.agents.RemoveConnection(conn)
 }
 
+// When the agent sends the message for the first time, then we need to know the orgID
+// For the subsequent requests, agents don't send the attributes unless something is changed
+// but we keep them in context mapped which is mapped to the instanceID, so we would know the
+// orgID from the context
+// note :- there can only be 50 agents in the db for a given orgID, we don't have a check in-memory but we delete from the db after insert.
 func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
 	agentID := msg.InstanceUid
 
-	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn)
+	// find the orgID, if nothing is found keep it empty.
+	// the find or create agent will return an error if orgID is empty
+	// thus retry will happen
+	var orgID valuer.UUID
+	orgIDs, err := srv.agents.OrgGetter.ListByOwnedKeyRange(context.Background())
+	if err == nil && len(orgIDs) == 1 {
+		orgID = orgIDs[0].ID
+	}
+
+	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn, orgID)
 	if err != nil {
 		zap.L().Error("Failed to find or create agent", zap.String("agentID", agentID), zap.Error(err))
-		// TODO: handle error
+
+		// Return error response according to OpAMP protocol
+		return &protobufs.ServerToAgent{
+			InstanceUid: agentID,
+			ErrorResponse: &protobufs.ServerErrorResponse{
+				Type: protobufs.ServerErrorResponseType_ServerErrorResponseType_Unavailable,
+				Details: &protobufs.ServerErrorResponse_RetryInfo{
+					RetryInfo: &protobufs.RetryInfo{
+						RetryAfterNanoseconds: uint64(5 * time.Second), // minimum recommended retry interval
+					},
+				},
+			},
+		}
 	}
 
 	if created {
 		agent.CanLB = model.ExtractLbFlag(msg.AgentDescription)
 		zap.L().Debug(
 			"New agent added", zap.Bool("canLb", agent.CanLB),
-			zap.String("ID", agent.ID),
-			zap.Any("status", agent.CurrentStatus),
+			zap.String("agentID", agent.AgentID),
+			zap.Any("status", agent.Status),
 		)
 	}
 
@@ -119,6 +148,6 @@ func Ready() bool {
 	return true
 }
 
-func Subscribe(agentId string, hash string, f model.OnChangeCallback) {
-	model.ListenToConfigUpdate(agentId, hash, f)
+func Subscribe(orgId valuer.UUID, agentId string, hash string, f model.OnChangeCallback) {
+	model.ListenToConfigUpdate(orgId, agentId, hash, f)
 }
