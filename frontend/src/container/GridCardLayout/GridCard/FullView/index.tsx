@@ -10,7 +10,7 @@ import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
@@ -122,7 +122,8 @@ function FullView({
 
 	const response = useGetQueryRange(
 		requestData,
-		selectedDashboard?.data?.version || version || DEFAULT_ENTITY_VERSION,
+		// selectedDashboard?.data?.version || version || DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
 			queryKey: [widget?.query, widget?.panelTypes, requestData, version],
 			enabled: !isDependedDataLoaded,
