@@ -179,7 +179,7 @@ export const useFunnelOverview = (
 		isUpdatingFunnel,
 	} = useFunnelContext();
 	return useQuery({
-		queryFn: ({ signal }) => getFunnelOverview(funnelId, payload, signal),
+		queryFn: ({ signal }) => getFunnelOverview(payload, signal),
 		queryKey: [
 			REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW,
 			funnelId,
@@ -200,7 +200,7 @@ export const useFunnelSlowTraces = (
 		isUpdatingFunnel,
 	} = useFunnelContext();
 	return useQuery<SuccessResponse<SlowTraceData> | ErrorResponse, Error>({
-		queryFn: ({ signal }) => getFunnelSlowTraces(funnelId, payload, signal),
+		queryFn: ({ signal }) => getFunnelSlowTraces(payload, signal),
 		queryKey: [
 			REACT_QUERY_KEY.GET_FUNNEL_SLOW_TRACES,
 			funnelId,
@@ -247,7 +247,7 @@ export function useFunnelStepsGraphData(
 	} = useFunnelContext();
 
 	return useQuery({
-		queryFn: ({ signal }) => getFunnelSteps(funnelId, payload, signal),
+		queryFn: ({ signal }) => getFunnelSteps(payload, signal),
 		queryKey: [
 			REACT_QUERY_KEY.GET_FUNNEL_STEPS_GRAPH_DATA,
 			funnelId,
@@ -271,7 +271,7 @@ export const useFunnelStepsOverview = (
 		isUpdatingFunnel,
 	} = useFunnelContext();
 	return useQuery({
-		queryFn: ({ signal }) => getFunnelStepsOverview(funnelId, payload, signal),
+		queryFn: ({ signal }) => getFunnelStepsOverview(payload, signal),
 		queryKey: [
 			REACT_QUERY_KEY.GET_FUNNEL_STEPS_OVERVIEW,
 			funnelId,

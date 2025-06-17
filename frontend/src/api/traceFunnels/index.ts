@@ -203,12 +203,11 @@ export interface FunnelOverviewResponse {
 }
 
 export const getFunnelOverview = async (
-	funnelId: string,
 	payload: FunnelOverviewPayload,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<FunnelOverviewResponse> | ErrorResponse> => {
 	const response = await axios.post(
-		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/overview`,
+		`${FUNNELS_BASE_PATH}/analytics/overview`,
 		payload,
 		{
 			signal,
@@ -236,12 +235,11 @@ export interface SlowTraceData {
 }
 
 export const getFunnelSlowTraces = async (
-	funnelId: string,
 	payload: FunnelOverviewPayload,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<SlowTraceData> | ErrorResponse> => {
 	const response = await axios.post(
-		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/slow-traces`,
+		`${FUNNELS_BASE_PATH}/analytics/slow-traces`,
 		payload,
 		{
 			signal,
@@ -274,7 +272,7 @@ export const getFunnelErrorTraces = async (
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<ErrorTraceData> | ErrorResponse> => {
 	const response: AxiosResponse = await axios.post(
-		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/error-traces`,
+		`${FUNNELS_BASE_PATH}/analytics/error-traces`,
 		payload,
 		{
 			signal,
@@ -309,12 +307,11 @@ export interface FunnelStepsResponse {
 }
 
 export const getFunnelSteps = async (
-	funnelId: string,
 	payload: FunnelStepsPayload,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<FunnelStepsResponse> | ErrorResponse> => {
 	const response = await axios.post(
-		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/steps`,
+		`${FUNNELS_BASE_PATH}/analytics/steps`,
 		payload,
 		{ signal },
 	);
@@ -344,12 +341,11 @@ export interface FunnelStepsOverviewResponse {
 }
 
 export const getFunnelStepsOverview = async (
-	funnelId: string,
 	payload: FunnelStepsOverviewPayload,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<FunnelStepsOverviewResponse> | ErrorResponse> => {
 	const response = await axios.post(
-		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/steps/overview`,
+		`${FUNNELS_BASE_PATH}/analytics/steps/overview`,
 		payload,
 		{ signal },
 	);
