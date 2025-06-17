@@ -18,9 +18,9 @@ import CodeMirror, {
 	keymap,
 } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tag } from 'antd';
+import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -29,7 +29,8 @@ import {
 	IValidationResult,
 } from 'types/antlrQueryTypes';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryKeySuggestionsProps } from 'types/api/querySuggestions/types';
+import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
+import { DataSource } from 'types/common/queryBuilder';
 import { queryOperatorSuggestions, validateQuery } from 'utils/antlrQueryUtils';
 import { getQueryContextAtCursor } from 'utils/queryContextUtils';
 
@@ -65,9 +66,11 @@ const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
 function QuerySearch({
 	onChange,
 	queryData,
+	dataSource,
 }: {
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
+	dataSource: DataSource;
 }): JSX.Element {
 	const [query, setQuery] = useState<string>(queryData.filter?.expression || '');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
@@ -84,13 +87,15 @@ function QuerySearch({
 	});
 
 	const [keySuggestions, setKeySuggestions] = useState<
-		QueryKeySuggestionsProps[] | null
+		QueryKeyDataSuggestionsProps[] | null
 	>(null);
 
 	const [showExamples] = useState(false);
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
 	const [isFocused, setIsFocused] = useState(false);
+
+	const [isCompleteKeysList, setIsCompleteKeysList] = useState(false);
 
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
 
@@ -99,9 +104,45 @@ function QuerySearch({
 	const lastKeyRef = useRef<string>('');
 	const isMountedRef = useRef<boolean>(true);
 
-	const { data: queryKeySuggestions } = useGetQueryKeySuggestions({
-		signal: 'traces',
-	});
+	// const {
+	// 	data: queryKeySuggestions,
+	// 	refetch: refetchQueryKeySuggestions,
+	// } = useGetQueryKeySuggestions({
+	// 	signal: dataSource,
+	// 	name: searchText || '',
+	// });
+
+	// Add back the generateOptions function and useEffect
+	const generateOptions = (keys: {
+		[key: string]: QueryKeyDataSuggestionsProps[];
+	}): any[] =>
+		Object.values(keys).flatMap((items: QueryKeyDataSuggestionsProps[]) =>
+			items.map(({ name, fieldDataType }) => ({
+				label: name,
+				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
+				info: '',
+				details: '',
+			})),
+		);
+
+	const fetchKeySuggestions = async (searchText?: string): Promise<void> => {
+		const response = await getKeySuggestions({
+			signal: dataSource,
+			name: searchText || '',
+		});
+
+		if (response.data.data) {
+			const { complete, keys } = response.data.data;
+			const options = generateOptions(keys);
+			setKeySuggestions((prev) => [...(prev || []), ...options]);
+			setIsCompleteKeysList(complete);
+		}
+	};
+
+	useEffect(() => {
+		fetchKeySuggestions();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	// Add a state for tracking editing mode
 	const [editingMode, setEditingMode] = useState<
@@ -202,7 +243,7 @@ function QuerySearch({
 			try {
 				const response = await getValueSuggestions({
 					key,
-					signal: 'traces',
+					signal: dataSource,
 				});
 
 				// Skip updates if component unmounted or key changed
@@ -287,7 +328,7 @@ function QuerySearch({
 				}
 			}
 		},
-		[activeKey, isLoadingSuggestions],
+		[activeKey, dataSource, isLoadingSuggestions],
 	);
 
 	const handleUpdate = useCallback((viewUpdate: { view: EditorView }): void => {
@@ -518,6 +559,12 @@ function QuerySearch({
 			options = (keySuggestions || []).filter((option) =>
 				option.label.toLowerCase().includes(searchText),
 			);
+
+			if (!isCompleteKeysList && options.length === 0) {
+				setTimeout(() => {
+					fetchKeySuggestions(searchText);
+				}, 300);
+			}
 
 			// If we have previous pairs, we can prioritize keys that haven't been used yet
 			if (queryContext.queryPairs && queryContext.queryPairs.length > 0) {
@@ -790,30 +837,12 @@ function QuerySearch({
 		};
 	}
 
-	// Add back the generateOptions function and useEffect
-	const generateOptions = (data: any): any[] =>
-		Object.values(data.keys).flatMap((items: any) =>
-			items.map(({ name, fieldDataType }: any) => ({
-				label: name,
-				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
-				info: '',
-				details: '',
-			})),
-		);
-
 	// Effect to handle focus state and trigger suggestions
 	useEffect(() => {
 		if (isFocused && editorRef.current) {
 			startCompletion(editorRef.current);
 		}
 	}, [isFocused]);
-
-	useEffect(() => {
-		if (queryKeySuggestions) {
-			const options = generateOptions(queryKeySuggestions.data.data);
-			setKeySuggestions(options);
-		}
-	}, [queryKeySuggestions]);
 
 	useEffect(() => {
 		if (!queryContext) return;
@@ -1009,42 +1038,44 @@ function QuerySearch({
 					</Collapse>
 				</Card>
 			)}
-
-			{/* {queryContext && (
+			{/* 
+			{queryContext && (
 				<Card size="small" title="Current Context" className="query-context">
 					<div className="context-details">
 						<Space direction="vertical" size={4}>
 							<Space>
-								<Text strong>Token:</Text>
-								<Text code>{queryContext.currentToken || '-'}</Text>
+								<Typography.Text strong>Token:</Typography.Text>
+								<Typography.Text code>
+									{queryContext.currentToken || '-'}
+								</Typography.Text>
 							</Space>
 							<Space>
-								<Text strong>Type:</Text>
-								<Text>{queryContext.tokenType || '-'}</Text>
+								<Typography.Text strong>Type:</Typography.Text>
+								<Typography.Text>{queryContext.tokenType || '-'}</Typography.Text>
 							</Space>
 							<Space>
-								<Text strong>Context:</Text>
+								<Typography.Text strong>Context:</Typography.Text>
 								{renderContextBadge()}
 							</Space>
 
 							{queryContext.keyToken && (
 								<Space>
-									<Text strong>Key:</Text>
-									<Text code>{queryContext.keyToken}</Text>
+									<Typography.Text strong>Key:</Typography.Text>
+									<Typography.Text code>{queryContext.keyToken}</Typography.Text>
 								</Space>
 							)}
 
 							{queryContext.operatorToken && (
 								<Space>
-									<Text strong>Operator:</Text>
-									<Text code>{queryContext.operatorToken}</Text>
+									<Typography.Text strong>Operator:</Typography.Text>
+									<Typography.Text code>{queryContext.operatorToken}</Typography.Text>
 								</Space>
 							)}
 
 							{queryContext.valueToken && (
 								<Space>
-									<Text strong>Value:</Text>
-									<Text code>{queryContext.valueToken}</Text>
+									<Typography.Text strong>Value:</Typography.Text>
+									<Typography.Text code>{queryContext.valueToken}</Typography.Text>
 								</Space>
 							)}
 						</Space>

@@ -175,7 +175,11 @@ export const QueryV2 = memo(function QueryV2({
 
 						<div className="qb-search-filter-container">
 							<div className="query-search-container">
-								<QuerySearch onChange={handleSearchChange} queryData={query} />
+								<QuerySearch
+									onChange={handleSearchChange}
+									queryData={query}
+									dataSource={dataSource}
+								/>
 							</div>
 
 							{showSpanScopeSelector && (
