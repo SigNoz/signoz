@@ -45,6 +45,7 @@ function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 		case PANEL_TYPES.TABLE:
 		case PANEL_TYPES.PIE:
 		case PANEL_TYPES.VALUE:
+		case PANEL_TYPES.TRACE:
 			return 'scalar';
 		case PANEL_TYPES.LIST:
 			return 'raw';
@@ -89,7 +90,9 @@ function createBaseSpec(
 						}),
 				  )
 				: undefined,
-		limit: isEmpty(queryData.limit) ? undefined : queryData.limit ?? undefined,
+		limit: isEmpty(queryData.limit)
+			? queryData?.pageSize ?? undefined
+			: queryData.limit ?? undefined,
 		offset: requestType === 'raw' ? queryData.offset : undefined,
 		order:
 			queryData.orderBy.length > 0
@@ -193,7 +196,7 @@ function convertBuilderQueriesToV5(
 						signal: 'traces' as const,
 						...baseSpec,
 						aggregations: aggregations as TraceAggregation[],
-						limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
+						limit: baseSpec?.limit ?? (requestType === 'raw' ? 10 : undefined),
 					};
 					break;
 				case 'logs':
@@ -202,7 +205,7 @@ function convertBuilderQueriesToV5(
 						signal: 'logs' as const,
 						...baseSpec,
 						aggregations: aggregations as LogAggregation[],
-						limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
+						limit: baseSpec?.limit ?? (requestType === 'raw' ? 10 : undefined),
 					};
 					break;
 				case 'metrics':
@@ -213,7 +216,7 @@ function convertBuilderQueriesToV5(
 						...baseSpec,
 						aggregations: aggregations as MetricAggregation[],
 						// reduceTo: queryData.reduceTo,
-						limit: baseSpec?.limit ?? requestType === 'raw' ? 10 : undefined,
+						limit: baseSpec?.limit ?? (requestType === 'raw' ? 10 : undefined),
 					};
 					break;
 			}

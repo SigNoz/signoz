@@ -373,6 +373,13 @@ function QuerySearch({
 		}
 	};
 
+	useEffect(() => {
+		if (query) {
+			handleQueryValidation(query);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const handleExampleClick = (exampleQuery: string): void => {
 		// If there's an existing query, append the example with AND
 		const newQuery = query ? `${query} AND ${exampleQuery}` : exampleQuery;
