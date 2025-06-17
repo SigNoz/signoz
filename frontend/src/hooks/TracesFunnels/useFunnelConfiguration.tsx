@@ -7,6 +7,7 @@ import { isEqual } from 'lodash-es';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 
 import { useUpdateFunnelSteps } from './useFunnels';
@@ -26,12 +27,19 @@ export const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
 		...step,
 		filters: {
 			...step.filters,
-			items: step.filters.items.map((item) => ({
-				id: '',
-				key: item.key,
-				value: item.value,
-				op: item.op,
-			})),
+			items: step.filters.items.map((item) => {
+				const {
+					id: unusedId,
+					isIndexed,
+					...keyObj
+				} = item.key as BaseAutocompleteData;
+				return {
+					id: '',
+					key: keyObj,
+					value: item.value,
+					op: item.op,
+				};
+			}),
 		},
 	}));
 };
@@ -50,7 +58,8 @@ export default function useFunnelConfiguration({
 	const queryClient = useQueryClient();
 	const {
 		steps,
-		initialSteps,
+		lastUpdatedSteps,
+		setLastUpdatedSteps,
 		handleRestoreSteps,
 		selectedTime,
 		setIsUpdatingFunnel,
@@ -60,10 +69,6 @@ export default function useFunnelConfiguration({
 	const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
 	const debouncedSteps = useDebounce(steps, 200);
-
-	const [lastUpdatedSteps, setLastUpdatedSteps] = useState<FunnelStepData[]>(
-		initialSteps,
-	);
 
 	// Mutation hooks
 	const updateStepsMutation = useUpdateFunnelSteps(
@@ -116,6 +121,7 @@ export default function useFunnelConfiguration({
 		setLocalStorageSavedSteps,
 		queryClient,
 		selectedTime,
+		lastUpdatedSteps,
 	]);
 
 	const hasFunnelStepDefinitionsChanged = useCallback(

@@ -59,6 +59,8 @@ interface FunnelContextType {
 	handleRestoreSteps: (oldSteps: FunnelStepData[]) => void;
 	isUpdatingFunnel: boolean;
 	setIsUpdatingFunnel: Dispatch<SetStateAction<boolean>>;
+	lastUpdatedSteps: FunnelStepData[];
+	setLastUpdatedSteps: Dispatch<SetStateAction<FunnelStepData[]>>;
 }
 
 const FunnelContext = createContext<FunnelContextType | undefined>(undefined);
@@ -91,13 +93,16 @@ export function FunnelProvider({
 	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
 	const [triggerSave, setTriggerSave] = useState<boolean>(false);
 	const [isUpdatingFunnel, setIsUpdatingFunnel] = useState<boolean>(false);
+	const [lastUpdatedSteps, setLastUpdatedSteps] = useState<FunnelStepData[]>(
+		initialSteps,
+	);
 
 	// Check if there are unsaved changes by comparing with initial steps from API
 	const hasUnsavedChanges = useMemo(() => {
 		const normalizedCurrentSteps = normalizeSteps(steps);
-		const normalizedInitialSteps = normalizeSteps(initialSteps);
+		const normalizedInitialSteps = normalizeSteps(lastUpdatedSteps);
 		return !isEqual(normalizedCurrentSteps, normalizedInitialSteps);
-	}, [steps, initialSteps]);
+	}, [steps, lastUpdatedSteps]);
 
 	const { hasIncompleteStepFields, hasAllEmptyStepFields } = useMemo(
 		() => ({
@@ -254,6 +259,8 @@ export function FunnelProvider({
 			hasUnsavedChanges,
 			setIsUpdatingFunnel,
 			isUpdatingFunnel,
+			lastUpdatedSteps,
+			setLastUpdatedSteps,
 		}),
 		[
 			funnelId,
@@ -279,6 +286,8 @@ export function FunnelProvider({
 			hasUnsavedChanges,
 			setIsUpdatingFunnel,
 			isUpdatingFunnel,
+			lastUpdatedSteps,
+			setLastUpdatedSteps,
 		],
 	);
 
