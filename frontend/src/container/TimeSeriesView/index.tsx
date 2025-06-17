@@ -1,6 +1,6 @@
 import './TimeSeriesView.styles.scss';
 
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -54,7 +54,8 @@ function TimeSeriesViewContainer({
 				dataSource,
 			},
 		},
-		ENTITY_VERSION_V4,
+		// ENTITY_VERSION_V4,
+		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
