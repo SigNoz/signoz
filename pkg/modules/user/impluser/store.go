@@ -835,7 +835,7 @@ func (store *store) CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (
 		BunDB().
 		NewSelect().
 		Model(apiKey).
-		Join("JOIN users ON users.id = factor_api_key.user_id").
+		Join("JOIN users ON users.id = storable_api_key.user_id").
 		Where("org_id = ?", orgID).
 		Count(ctx)
 	if err != nil {
