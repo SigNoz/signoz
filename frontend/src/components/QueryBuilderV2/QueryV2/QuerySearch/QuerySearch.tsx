@@ -28,6 +28,7 @@ import {
 	IQueryContext,
 	IValidationResult,
 } from 'types/antlrQueryTypes';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeySuggestionsProps } from 'types/api/querySuggestions/types';
 import { queryOperatorSuggestions, validateQuery } from 'utils/antlrQueryUtils';
 import { getQueryContextAtCursor } from 'utils/queryContextUtils';
@@ -61,9 +62,14 @@ const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
 	},
 );
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
-function QuerySearch(): JSX.Element {
-	const [query, setQuery] = useState<string>('');
+function QuerySearch({
+	onChange,
+	queryData,
+}: {
+	onChange: (value: string) => void;
+	queryData: IBuilderQuery;
+}): JSX.Element {
+	const [query, setQuery] = useState<string>(queryData.filter?.expression || '');
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([
 		{ label: 'error', type: 'value' },
 		{ label: 'frontend', type: 'value' },
@@ -343,6 +349,7 @@ function QuerySearch(): JSX.Element {
 	const handleChange = (value: string): void => {
 		setQuery(value);
 		handleQueryChange(value);
+		onChange(value);
 	};
 
 	const handleQueryValidation = (newQuery: string): void => {
@@ -365,6 +372,13 @@ function QuerySearch(): JSX.Element {
 			closeCompletion(editorRef.current);
 		}
 	};
+
+	useEffect(() => {
+		if (query) {
+			handleQueryValidation(query);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const handleExampleClick = (exampleQuery: string): void => {
 		// If there's an existing query, append the example with AND
