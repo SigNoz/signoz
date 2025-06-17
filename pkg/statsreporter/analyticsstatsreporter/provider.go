@@ -122,6 +122,7 @@ func (provider *provider) Report(ctx context.Context) error {
 			continue
 		}
 
+		// Add build and deployment stats
 		stats["build.version"] = provider.build.Version()
 		stats["build.branch"] = provider.build.Branch()
 		stats["build.hash"] = provider.build.Hash()
@@ -131,15 +132,15 @@ func (provider *provider) Report(ctx context.Context) error {
 		stats["deployment.os"] = provider.deployment.OS()
 		stats["deployment.arch"] = provider.deployment.Arch()
 
-		provider.settings.Logger().DebugContext(ctx, "reporting stats", "stats", stats)
-		traits := map[string]any{
-			"display_name": org.DisplayName,
-			"name":         org.Name,
-			"created_at":   org.CreatedAt,
-			"alias":        org.Alias,
-		}
+		// Add org stats
+		stats["display_name"] = org.DisplayName
+		stats["name"] = org.Name
+		stats["created_at"] = org.CreatedAt
+		stats["alias"] = org.Alias
 
-		provider.analytics.IdentifyGroup(ctx, org.ID.String(), traits)
+		provider.settings.Logger().DebugContext(ctx, "reporting stats", "stats", stats)
+
+		provider.analytics.IdentifyGroup(ctx, org.ID.String(), stats)
 		provider.analytics.TrackGroup(ctx, org.ID.String(), "Stats Reported", stats)
 
 		if !provider.config.Collect.Identities {
