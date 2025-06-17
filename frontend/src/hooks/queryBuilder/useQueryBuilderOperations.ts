@@ -34,6 +34,7 @@ import {
 import {
 	HandleChangeFormulaData,
 	HandleChangeQueryData,
+	HandleChangeQueryDataV5,
 	UseQueryOperations,
 } from 'types/common/operations.types';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
@@ -292,9 +293,11 @@ export const useQueryOperations: UseQueryOperations = ({
 		index,
 	]);
 
-	const handleChangeQueryData: HandleChangeQueryData = useCallback(
-		(key, value) => {
-			const newQuery: IBuilderQuery = {
+	const handleChangeQueryData:
+		| HandleChangeQueryData
+		| HandleChangeQueryDataV5 = useCallback(
+		(key: string, value: any) => {
+			const newQuery = {
 				...query,
 				[key]:
 					key === LEGEND && typeof value === 'string'
