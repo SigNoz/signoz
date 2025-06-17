@@ -130,16 +130,17 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	// get all org ids
-	var orgIDs []string
-	if err := tx.NewSelect().Model(new(types.Organization)).Column("id").Scan(ctx, &orgIDs); err != nil {
-		return err
-	}
-
-	// there are multiple orgs, so we don't need to update the agents table
-	// exit gracefully
-	if len(orgIDs) > 1 {
-		return nil
+	var orgID string
+	err = tx.
+		NewSelect().
+		ColumnExpr("id").
+		Table("organizations").
+		Limit(1).
+		Scan(ctx, &orgID)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return err
+		}
 	}
 
 	err = migration.
@@ -157,7 +158,7 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 
 			if err == nil && len(existingAgents) > 0 {
 				newAgents, err := migration.
-					CopyOldAgentToNewAgent(ctx, tx, existingAgents, orgIDs[0])
+					CopyOldAgentToNewAgent(ctx, tx, existingAgents, orgID)
 				if err != nil {
 					return err
 				}
@@ -190,7 +191,7 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 
 			if err == nil && len(existingAgentConfigVersions) > 0 {
 				newAgentConfigVersions, err := migration.
-					CopyOldAgentConfigVersionToNewAgentConfigVersion(ctx, tx, existingAgentConfigVersions, orgIDs[0])
+					CopyOldAgentConfigVersionToNewAgentConfigVersion(ctx, tx, existingAgentConfigVersions, orgID)
 				if err != nil {
 					return err
 				}
@@ -223,7 +224,7 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 
 			if err == nil && len(existingAgentConfigElements) > 0 {
 				newAgentConfigElements, err := migration.
-					CopyOldAgentConfigElementToNewAgentConfigElement(ctx, tx, existingAgentConfigElements, orgIDs[0])
+					CopyOldAgentConfigElementToNewAgentConfigElement(ctx, tx, existingAgentConfigElements, orgID)
 				if err != nil {
 					return err
 				}
