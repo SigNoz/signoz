@@ -110,6 +110,7 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewUpdateDashboardFactory(sqlstore),
 		sqlmigration.NewDropFeatureSetFactory(),
 		sqlmigration.NewDropDeprecatedTablesFactory(),
+		sqlmigration.NewUpdateAgentsFactory(sqlstore),
 	)
 }
 

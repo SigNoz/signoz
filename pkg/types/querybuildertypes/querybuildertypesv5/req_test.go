@@ -773,7 +773,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 						{
 							"type": "builder_formula",
 							"spec": {
-								"name": "rate",
+								"name": "B",
 								"expression": "A * 100"
 							}
 						}
@@ -799,7 +799,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 						{
 							Type: QueryTypeFormula,
 							Spec: QueryBuilderFormula{
-								Name:       "rate",
+								Name:       "B",
 								Expression: "A * 100",
 							},
 						},
