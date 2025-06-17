@@ -141,7 +141,11 @@ export const useValidateFunnelSteps = ({
 			REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS,
 			funnelId,
 			selectedTime,
-			steps,
+			steps.map((step) => {
+				// eslint-disable-next-line @typescript-eslint/naming-convention
+				const { latency_type, ...rest } = step;
+				return rest;
+			}),
 		],
 		enabled,
 		staleTime: 0,
