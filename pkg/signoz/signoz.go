@@ -31,6 +31,7 @@ import (
 type SigNoz struct {
 	*factory.Registry
 	Instrumentation instrumentation.Instrumentation
+	Analytics       analytics.Analytics
 	Cache           cache.Cache
 	Web             web.Web
 	SQLStore        sqlstore.SQLStore
@@ -288,6 +289,7 @@ func New(
 
 	return &SigNoz{
 		Registry:        registry,
+		Analytics:       analytics,
 		Instrumentation: instrumentation,
 		Cache:           cache,
 		Web:             web,

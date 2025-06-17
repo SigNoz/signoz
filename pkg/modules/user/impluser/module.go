@@ -18,7 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/analyticstypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -135,35 +134,14 @@ func (m *Module) CreateUserWithPassword(ctx context.Context, user *types.User, p
 		return nil, err
 	}
 
-	m.analytics.Send(ctx,
-		analyticstypes.Identify{
-			UserId: user.ID.String(),
-			Traits: analyticstypes.
-				NewTraits().
-				SetName(user.DisplayName).
-				SetEmail(user.Email).
-				Set("role", user.Role).
-				SetCreatedAt(user.CreatedAt),
-		},
-		analyticstypes.Group{
-			UserId:  user.ID.String(),
-			GroupId: user.OrgID,
-		},
-		analyticstypes.Track{
-			UserId: user.ID.String(),
-			Event:  "User Created",
-			Properties: analyticstypes.NewPropertiesFromMap(map[string]any{
-				"role":  user.Role,
-				"email": user.Email,
-				"name":  user.DisplayName,
-			}),
-			Context: &analyticstypes.Context{
-				Extra: map[string]interface{}{
-					analyticstypes.KeyGroupID: user.OrgID,
-				},
-			},
-		},
-	)
+	traitsOrProperties := map[string]any{
+		"role":         user.Role,
+		"email":        user.Email,
+		"display_name": user.DisplayName,
+		"created_at":   user.CreatedAt,
+	}
+	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traitsOrProperties)
+	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Created", traitsOrProperties)
 
 	return user, nil
 }
@@ -173,35 +151,14 @@ func (m *Module) CreateUser(ctx context.Context, user *types.User) error {
 		return err
 	}
 
-	m.analytics.Send(ctx,
-		analyticstypes.Identify{
-			UserId: user.ID.String(),
-			Traits: analyticstypes.
-				NewTraits().
-				SetName(user.DisplayName).
-				SetEmail(user.Email).
-				Set("role", user.Role).
-				SetCreatedAt(user.CreatedAt),
-		},
-		analyticstypes.Group{
-			UserId:  user.ID.String(),
-			GroupId: user.OrgID,
-		},
-		analyticstypes.Track{
-			UserId: user.ID.String(),
-			Event:  "User Created",
-			Properties: analyticstypes.NewPropertiesFromMap(map[string]any{
-				"role":  user.Role,
-				"email": user.Email,
-				"name":  user.DisplayName,
-			}),
-			Context: &analyticstypes.Context{
-				Extra: map[string]interface{}{
-					analyticstypes.KeyGroupID: user.OrgID,
-				},
-			},
-		},
-	)
+	traitsOrProperties := map[string]any{
+		"role":         user.Role,
+		"email":        user.Email,
+		"display_name": user.DisplayName,
+		"created_at":   user.CreatedAt,
+	}
+	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traitsOrProperties)
+	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Created", traitsOrProperties)
 
 	return nil
 }

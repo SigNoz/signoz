@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/analyticstypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 )
@@ -126,36 +125,15 @@ func (provider *provider) Report(ctx context.Context) error {
 		stats["deployment.arch"] = provider.deployment.Arch()
 
 		provider.settings.Logger().DebugContext(ctx, "reporting stats", "stats", stats)
-		provider.analytics.Send(
-			ctx,
-			analyticstypes.Track{
-				UserId:     "stats_" + org.ID.String(),
-				Event:      "Stats Reported",
-				Properties: analyticstypes.NewPropertiesFromMap(stats),
-				Context: &analyticstypes.Context{
-					Extra: map[string]interface{}{
-						analyticstypes.KeyGroupID: org.ID.String(),
-					},
-				},
-			},
-			analyticstypes.Group{
-				UserId:  "stats_" + org.ID.String(),
-				GroupId: org.ID.String(),
-				Traits: analyticstypes.
-					NewTraitsFromMap(stats).
-					SetName(org.DisplayName).
-					SetUsername(org.Name).
-					SetCreatedAt(org.CreatedAt),
-			},
-			analyticstypes.Identify{
-				UserId: "stats_" + org.ID.String(),
-				Traits: analyticstypes.
-					NewTraits().
-					SetName(org.DisplayName).
-					SetUsername(org.Name).
-					SetCreatedAt(org.CreatedAt),
-			},
-		)
+		traits := map[string]any{
+			"display_name": org.DisplayName,
+			"name":         org.Name,
+			"created_at":   org.CreatedAt,
+			"alias":        org.Alias,
+		}
+
+		provider.analytics.IdentifyGroup(ctx, org.ID.String(), traits)
+		provider.analytics.TrackGroup(ctx, org.ID.String(), "Stats Reported", stats)
 	}
 
 	return nil
