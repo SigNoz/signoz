@@ -60,11 +60,11 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 		};
 	}, [checkScroll]);
 
-	const handleUpdateWorkspaceClick = (): void => {
+	const onClickUpdateWorkspace = (): void => {
 		window.open('https://signoz.io/docs/operate/migration/', '_blank');
 	};
 
-	const handleScrollForMore = (): void => {
+	const onClickScrollForMore = (): void => {
 		if (changelogContentSectionRef.current) {
 			changelogContentSectionRef.current.scrollTo({
 				top: changelogContentSectionRef.current.scrollTop + 600, // Scroll 600px from the current position
@@ -102,15 +102,15 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 					<div>
 						<Button
 							type="default"
-							icon={<CloseOutlined size={14} />}
+							icon={<CloseOutlined style={{ fontSize: '14px' }} />}
 							onClick={onClose}
 						>
 							Skip for now
 						</Button>
 						<Button
 							type="primary"
-							icon={<CheckOutlined size={14} />}
-							onClick={handleUpdateWorkspaceClick}
+							icon={<CheckOutlined style={{ fontSize: '14px' }} />}
+							onClick={onClickUpdateWorkspace}
 						>
 							Update my workspace
 						</Button>
@@ -120,7 +120,7 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 							<button
 								type="button"
 								className="scroll-btn"
-								onClick={handleScrollForMore}
+								onClick={onClickScrollForMore}
 							>
 								<ChevronsDown size={14} />
 								<span>Scroll for more</span>
