@@ -258,6 +258,7 @@ type GettableLoginPrecheck struct {
 
 func NewTraitsFromUser(user *User) map[string]any {
 	return map[string]any{
+		"name":         user.DisplayName,
 		"role":         user.Role,
 		"email":        user.Email,
 		"display_name": user.DisplayName,
