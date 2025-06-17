@@ -141,6 +141,10 @@ func (provider *provider) Report(ctx context.Context) error {
 		provider.analytics.IdentifyGroup(ctx, org.ID.String(), traits)
 		provider.analytics.TrackGroup(ctx, org.ID.String(), "Stats Reported", stats)
 
+		if !provider.config.Collect.Identities {
+			continue
+		}
+
 		users, err := provider.userGetter.ListByOrgID(ctx, org.ID)
 		if err != nil {
 			provider.settings.Logger().WarnContext(ctx, "failed to list users", "error", err, "org_id", org.ID)
