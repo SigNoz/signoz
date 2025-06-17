@@ -3,7 +3,7 @@ import './ListView.styles.scss';
 import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ResizeTable } from 'components/ResizeTable';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -110,7 +110,8 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				selectColumns: options?.selectColumns,
 			},
 		},
-		ENTITY_VERSION_V4,
+		// ENTITY_VERSION_V4,
+		ENTITY_VERSION_V5,
 		{
 			queryKey,
 			enabled:
