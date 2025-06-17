@@ -4,7 +4,7 @@ export type Media = {
 	ext: string;
 	url: string;
 	mime: string;
-	alternativeText: string;
+	alternativeText: string | null;
 	[key: string]: any; // Allow other fields (e.g., mime, size) to be flexible
 };
 

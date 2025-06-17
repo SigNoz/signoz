@@ -41,38 +41,27 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 				scrollTop,
 			} = changelogContentSectionRef.current;
 			const isAtBottom = scrollHeight - clientHeight - scrollTop <= 8;
-			console.log({ isAtBottom });
 			setHasScroll(scrollHeight > clientHeight + 24 && !isAtBottom); // 24px - buffer height to show show more
 		}
 	}, []);
 
 	useEffect(() => {
 		checkScroll();
-		window.addEventListener('resize', checkScroll);
+		const changelogContentSection = changelogContentSectionRef.current;
 
-		const observer = new MutationObserver(checkScroll);
-		const changelogContentrSection = changelogContentSectionRef.current;
-
-		if (changelogContentrSection) {
-			observer.observe(changelogContentrSection, {
-				childList: true,
-				subtree: true,
-				attributes: true,
-			});
-			changelogContentrSection.addEventListener('scroll', checkScroll);
+		if (changelogContentSection) {
+			changelogContentSection.addEventListener('scroll', checkScroll);
 		}
 
 		return (): void => {
-			window.removeEventListener('resize', checkScroll);
-			observer.disconnect();
-			if (changelogContentrSection) {
-				changelogContentrSection.removeEventListener('scroll', checkScroll);
+			if (changelogContentSection) {
+				changelogContentSection.removeEventListener('scroll', checkScroll);
 			}
 		};
 	}, [checkScroll]);
 
 	const handleUpdateWorkspaceClick = (): void => {
-		window.open('');
+		window.open('https://signoz.io/docs/operate/migration/', '_blank');
 	};
 
 	const handleScrollForMore = (): void => {
@@ -143,7 +132,7 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 		>
 			<div className="changelog-modal-content" ref={changelogContentSectionRef}>
 				{getChangelogByVersionResponse.isLoading ? (
-					<Skeleton active paragraph={{ rows: 12 }} />
+					<Skeleton active paragraph={{ rows: 24 }} />
 				) : (
 					getChangelogByVersionResponse.data?.payload && (
 						<ChangelogRenderer
