@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 )
@@ -152,7 +153,7 @@ func (provider *provider) Report(ctx context.Context) error {
 		}
 
 		for _, user := range users {
-			provider.analytics.IdentifyUser(ctx, org.ID.String(), user.ID.String(), traits)
+			provider.analytics.IdentifyUser(ctx, org.ID.String(), user.ID.String(), types.NewTraitsFromUser(user))
 		}
 	}
 
