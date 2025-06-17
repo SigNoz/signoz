@@ -2023,7 +2023,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, errv2 := aH.Signoz.Modules.User.Register(r.Context(), &req)
+	user, errv2 := aH.Signoz.Modules.User.Register(r.Context(), &req)
 	if errv2 != nil {
 		render.Error(w, errv2)
 		return
@@ -2033,7 +2033,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	// from here onwards, we expect admin (owner) to invite other users.
 	aH.SetupCompleted = true
 
-	aH.Respond(w, nil)
+	aH.Respond(w, user)
 }
 
 func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
