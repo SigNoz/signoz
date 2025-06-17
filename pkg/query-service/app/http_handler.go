@@ -1584,6 +1584,7 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 		switch request.EventType {
 		case model.TrackEvent:
 			telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
+			aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, request.EventName, request.Attributes)
 		case model.GroupEvent:
 			telemetry.GetInstance().SendGroupEvent(request.Attributes, claims.Email)
 		case model.IdentifyEvent:
