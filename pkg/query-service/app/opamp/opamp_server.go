@@ -66,7 +66,26 @@ func (srv *Server) Start(listener string) error {
 	})
 	srv.cleanups = append(srv.cleanups, unsubscribe)
 
-	return srv.server.Start(settings)
+	// this is a temporary fix added since we don't have retry logic in the client implementation.
+	// in this PR https://github.com/SigNoz/signoz/pull/7327 we added org id changes where agent cannot be added without org.
+	// to prevent the opamp server from starting before the org is created, we check for orgs every 10 seconds, so that
+	// client can retry to connect to the opamp server.
+	go func() {
+		for {
+			time.Sleep(10 * time.Second)
+			orgs, err := srv.agents.OrgGetter.ListByOwnedKeyRange(context.Background())
+			if err != nil {
+				zap.L().Error("failed to list orgs", zap.Error(err))
+				continue
+			}
+			if len(orgs) > 0 {
+				srv.server.Start(settings)
+				return
+			}
+		}
+	}()
+
+	return nil
 }
 
 func (srv *Server) Stop() {
