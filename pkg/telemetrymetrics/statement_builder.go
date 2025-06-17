@@ -305,7 +305,7 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.LTE("unix_milli", end),
 	)
 
-	if query.Aggregations[0].Temporality != metrictypes.Unspecified {
+	if query.Aggregations[0].Temporality != metrictypes.Unknown {
 		sb.Where(sb.ILike("temporality", query.Aggregations[0].Temporality.StringValue()))
 	}
 

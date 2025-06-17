@@ -2,8 +2,10 @@ package telemetrylogs
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -2315,7 +2317,15 @@ func TestFilterExprLogs(t *testing.T) {
 				require.Equal(t, tc.expectedArgs, args)
 			} else {
 				require.Error(t, err, "Expected error for query: %s", tc.query)
-				require.Contains(t, err.Error(), tc.expectedErrorContains)
+				_, _, _, _, _, a := errors.Unwrapb(err)
+				contains := false
+				for _, warn := range a {
+					if strings.Contains(warn, tc.expectedErrorContains) {
+						contains = true
+						break
+					}
+				}
+				require.True(t, contains)
 			}
 		})
 	}
