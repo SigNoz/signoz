@@ -58,7 +58,8 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
@@ -95,6 +96,7 @@ function LogsExplorerViews({
 	chartQueryKeyRef: MutableRefObject<any>;
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
+	const dispatch = useDispatch();
 
 	// this is to respect the panel type present in the URL rather than defaulting it to list always.
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
@@ -106,9 +108,10 @@ function LogsExplorerViews({
 		DEFAULT_PER_PAGE_VALUE,
 	);
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const currentMinTimeRef = useRef<number>(minTime);
 
@@ -256,6 +259,8 @@ function LogsExplorerViews({
 		{},
 		undefined,
 		chartQueryKeyRef,
+		undefined,
+		'custom',
 	);
 
 	const {
@@ -502,6 +507,11 @@ function LogsExplorerViews({
 			requestData?.id !== stagedQuery?.id ||
 			currentMinTimeRef.current !== minTime
 		) {
+			// Recalculate global time when query changes i.e. stage and run query clicked
+			if (requestData?.id !== stagedQuery?.id && selectedTime !== 'custom') {
+				dispatch(UpdateTimeInterval(selectedTime));
+			}
+
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
 				page: 1,
@@ -523,6 +533,9 @@ function LogsExplorerViews({
 		activeLogId,
 		panelType,
 		selectedView,
+		dispatch,
+		selectedTime,
+		maxTime,
 	]);
 
 	const chartData = useMemo(() => {
