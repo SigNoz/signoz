@@ -10,6 +10,7 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { Copy, Ellipsis, Trash } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
 
 import MetricsAggregateSection from './MerticsAggregateSection/MetricsAggregateSection';
@@ -76,6 +77,26 @@ export const QueryV2 = memo(function QueryV2({
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
 			handleChangeQueryData('stepInterval', value);
+		},
+		[handleChangeQueryData],
+	);
+
+	const handleSearchChange = useCallback(
+		(value: string) => {
+			(handleChangeQueryData as HandleChangeQueryDataV5)('filter', {
+				expression: value,
+			});
+		},
+		[handleChangeQueryData],
+	);
+
+	const handleChangeAggregation = useCallback(
+		(value: string) => {
+			(handleChangeQueryData as HandleChangeQueryDataV5)('aggregations', [
+				{
+					expression: value,
+				},
+			]);
 		},
 		[handleChangeQueryData],
 	);
@@ -154,7 +175,7 @@ export const QueryV2 = memo(function QueryV2({
 
 						<div className="qb-search-filter-container">
 							<div className="query-search-container">
-								<QuerySearch />
+								<QuerySearch onChange={handleSearchChange} queryData={query} />
 							</div>
 
 							{showSpanScopeSelector && (
@@ -166,13 +187,17 @@ export const QueryV2 = memo(function QueryV2({
 						</div>
 					</div>
 
-					{!showOnlyWhereClause && !isListViewPanel && (
-						<QueryAggregation
-							dataSource={dataSource}
-							panelType={panelType || undefined}
-							onAggregationIntervalChange={handleChangeAggregateEvery}
-						/>
-					)}
+					{!showOnlyWhereClause &&
+						!isListViewPanel &&
+						dataSource !== DataSource.METRICS && (
+							<QueryAggregation
+								dataSource={dataSource}
+								panelType={panelType || undefined}
+								onAggregationIntervalChange={handleChangeAggregateEvery}
+								onChange={handleChangeAggregation}
+								queryData={query}
+							/>
+						)}
 
 					{!showOnlyWhereClause && dataSource === DataSource.METRICS && (
 						<MetricsAggregateSection
