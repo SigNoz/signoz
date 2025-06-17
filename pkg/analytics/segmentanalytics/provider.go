@@ -137,6 +137,7 @@ func (provider *provider) IdentifyUser(ctx context.Context, group, user string, 
 	err = provider.client.Enqueue(analyticstypes.Group{
 		UserId:  user,
 		GroupId: group,
+		Traits:  analyticstypes.NewTraits(),
 	})
 	if err != nil {
 		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", "err", err)
