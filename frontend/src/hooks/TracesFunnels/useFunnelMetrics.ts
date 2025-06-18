@@ -20,10 +20,11 @@ export function useFunnelMetrics({
 	metricsData: MetricItem[];
 	conversionRate: number;
 } {
-	const { startTime, endTime } = useFunnelContext();
+	const { startTime, endTime, steps } = useFunnelContext();
 	const payload = {
 		start_time: startTime,
 		end_time: endTime,
+		steps,
 	};
 
 	const {
@@ -81,6 +82,7 @@ export function useFunnelStepsMetrics({
 		end_time: endTime,
 		step_start: stepStart,
 		step_end: stepEnd,
+		steps,
 	};
 
 	const {
