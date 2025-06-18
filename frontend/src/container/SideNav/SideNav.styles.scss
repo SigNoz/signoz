@@ -889,6 +889,10 @@
 	.ant-dropdown-menu-item-divider {
 		background-color: var(--Slate-500, #161922) !important;
 	}
+
+	.ant-dropdown-menu-item-disabled {
+		opacity: 0.7;
+	}
 }
 
 .settings-dropdown,
