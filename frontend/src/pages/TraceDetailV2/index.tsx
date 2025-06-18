@@ -67,19 +67,15 @@ export default function TraceDetailsPage(): JSX.Element {
 			key: 'trace-details',
 			children: <TraceDetailsV2 />,
 		},
-		...(process.env.NODE_ENV === 'development'
-			? [
-					{
-						label: (
-							<div className="tab-item">
-								<Cone className="funnel-icon" size={16} /> Funnels
-							</div>
-						),
-						key: 'funnels',
-						children: <div />,
-					},
-			  ]
-			: []),
+		{
+			label: (
+				<div className="tab-item">
+					<Cone className="funnel-icon" size={16} /> Funnels
+				</div>
+			),
+			key: 'funnels',
+			children: <div />,
+		},
 		{
 			label: (
 				<div className="tab-item">
