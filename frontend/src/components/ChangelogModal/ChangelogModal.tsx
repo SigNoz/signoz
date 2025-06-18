@@ -1,13 +1,10 @@
 import './ChangelogModal.styles.scss';
 
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { Button, Modal, Skeleton } from 'antd';
-import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
+import { Button, Modal } from 'antd';
 import cx from 'classnames';
 import { ChevronsDown, ScrollText } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -22,16 +19,8 @@ interface Props {
 function ChangelogModal({ onClose }: Props): JSX.Element {
 	const [hasScroll, setHasScroll] = useState(false);
 	const changelogContentSectionRef = useRef<HTMLDivElement>(null);
-	const { isLoggedIn } = useAppContext();
-	const { latestVersion } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
 
-	const getChangelogByVersionResponse = useQuery({
-		queryFn: () => getChangelogByVersion(latestVersion),
-		queryKey: ['getChangelogByVersion', latestVersion],
-		enabled: isLoggedIn,
-	});
+	const { changelog } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const checkScroll = useCallback((): void => {
 		if (changelogContentSectionRef.current) {
@@ -81,10 +70,7 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 					<ScrollText size={16} />
 					<span>
 						What’s New ⎯ Changelog :{' '}
-						{getChangelogByVersionResponse.data?.payload?.release_date &&
-							formatDate(
-								getChangelogByVersionResponse.data?.payload?.release_date as string,
-							)}
+						{changelog && formatDate(changelog?.release_date as string)}
 					</span>
 				</div>
 			}
@@ -96,8 +82,7 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 					className={cx('changelog-modal-footer', hasScroll && 'scroll-available')}
 				>
 					<span className="changelog-modal-footer-label">
-						{getChangelogByVersionResponse.data?.payload?.features.length} new
-						features, 12 bug fixes
+						{changelog?.features.length} new features, 12 bug fixes
 					</span>
 					<div>
 						<Button
@@ -115,7 +100,7 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 							Update my workspace
 						</Button>
 					</div>
-					{getChangelogByVersionResponse.data?.payload && (
+					{changelog && (
 						<div className="scroll-btn-container">
 							<button
 								type="button"
@@ -131,15 +116,7 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 			}
 		>
 			<div className="changelog-modal-content" ref={changelogContentSectionRef}>
-				{getChangelogByVersionResponse.isLoading ? (
-					<Skeleton active paragraph={{ rows: 24 }} />
-				) : (
-					getChangelogByVersionResponse.data?.payload && (
-						<ChangelogRenderer
-							changelog={getChangelogByVersionResponse.data?.payload}
-						/>
-					)
-				)}
+				{changelog && <ChangelogRenderer changelog={changelog} />}
 			</div>
 		</Modal>
 	);

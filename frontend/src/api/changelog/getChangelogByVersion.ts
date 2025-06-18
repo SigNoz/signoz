@@ -1,11 +1,11 @@
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { ChangelogProps } from 'types/api/changelog/getChangelogByVersion';
+import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 
 const getChangelogByVersion = async (
 	versionId: string,
-): Promise<SuccessResponse<ChangelogProps> | ErrorResponse> => {
+): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> => {
 	try {
 		const response = await axios.get(`
 			https://cms.signoz.cloud/api/release-changelogs?filters[version][$eq]=${versionId}&populate[features][sort]=sort_order:asc&populate[features][populate][media][fields]=id,ext,url,mime,alternativeText

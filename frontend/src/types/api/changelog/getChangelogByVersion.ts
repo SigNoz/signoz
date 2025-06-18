@@ -21,7 +21,7 @@ type Feature = {
 	media: Media | null;
 };
 
-export interface ChangelogProps {
+export interface ChangelogSchema {
 	id: number;
 	documentId: string;
 	version: string;

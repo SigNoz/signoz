@@ -114,10 +114,12 @@ function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const { pathname, search } = useLocation();
-	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
-		AppState,
-		AppReducer
-	>((state) => state.app);
+	const {
+		currentVersion,
+		latestVersion,
+		isCurrentVersionError,
+		changelog,
+	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const {
 		user,
@@ -785,7 +787,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										'brand-title-section',
 										isCommunityEnterpriseUser && 'community-enterprise-user',
 										isCloudUser && 'cloud-user',
-										showVersionUpdateNotification && 'version-update-notification',
+										showVersionUpdateNotification &&
+											changelog &&
+											'version-update-notification',
 									)}
 								>
 									<span className="license-type"> {licenseTag} </span>
@@ -796,7 +800,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 											overlayClassName="version-tooltip-overlay"
 											arrow={false}
 											overlay={
-												showVersionUpdateNotification && (
+												showVersionUpdateNotification &&
+												changelog && (
 													<div className="version-update-notification-tooltip">
 														<div className="version-update-notification-tooltip-title">
 															There&apos;s a new version available.
@@ -814,7 +819,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 													{currentVersion}
 												</span>
 
-												{showVersionUpdateNotification && (
+												{showVersionUpdateNotification && changelog && (
 													<span className="version-update-notification-dot-icon" />
 												)}
 											</div>

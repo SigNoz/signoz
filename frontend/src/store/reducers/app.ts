@@ -3,6 +3,7 @@ import {
 	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
+	UPDATE_LATEST_CHANGELOG,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
@@ -16,6 +17,7 @@ const InitialValue: InitialValueTypes = {
 	configs: {},
 	ee: 'Y',
 	setupCompleted: true,
+	changelog: null,
 };
 
 const appReducer = (
@@ -50,6 +52,13 @@ const appReducer = (
 			return {
 				...state,
 				configs: action.payload.configs,
+			};
+		}
+
+		case UPDATE_LATEST_CHANGELOG: {
+			return {
+				...state,
+				changelog: action.payload.changelog,
 			};
 		}
 		default:

@@ -2,7 +2,7 @@ import './ChangelogRenderer.styles.scss';
 
 import ReactMarkdown from 'react-markdown';
 import {
-	ChangelogProps,
+	ChangelogSchema,
 	Media,
 	SupportedImageTypes,
 	SupportedVideoTypes,
@@ -10,7 +10,7 @@ import {
 import { formatDate } from 'utils/dateUtils';
 
 interface Props {
-	changelog: ChangelogProps;
+	changelog: ChangelogSchema;
 }
 
 function renderMedia(media: Media): JSX.Element | null {
