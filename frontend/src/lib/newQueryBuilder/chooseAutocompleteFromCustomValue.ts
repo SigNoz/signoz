@@ -4,7 +4,7 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-export const getDataType = (dataType?: string): DataTypes => {
+const getDataTypeForCustomValue = (dataType?: string): DataTypes => {
 	if (dataType === 'number') {
 		return DataTypes.Float64;
 	}
@@ -26,7 +26,7 @@ export const chooseAutocompleteFromCustomValue = (
 	isJSON?: boolean,
 	dataType?: string,
 ): BaseAutocompleteData => {
-	const dataTypeToUse = getDataType(dataType);
+	const dataTypeToUse = getDataTypeForCustomValue(dataType);
 	const firstBaseAutoCompleteValue = sourceList.find(
 		(sourceAutoComplete) =>
 			value === sourceAutoComplete.key &&
