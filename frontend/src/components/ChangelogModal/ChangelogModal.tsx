@@ -103,6 +103,7 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 					{changelog && (
 						<div className="scroll-btn-container">
 							<button
+								data-testid="scroll-more-btn"
 								type="button"
 								className="scroll-btn"
 								onClick={onClickScrollForMore}
@@ -115,7 +116,11 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 				</div>
 			}
 		>
-			<div className="changelog-modal-content" ref={changelogContentSectionRef}>
+			<div
+				className="changelog-modal-content"
+				data-testid="changelog-content"
+				ref={changelogContentSectionRef}
+			>
 				{changelog && <ChangelogRenderer changelog={changelog} />}
 			</div>
 		</Modal>
