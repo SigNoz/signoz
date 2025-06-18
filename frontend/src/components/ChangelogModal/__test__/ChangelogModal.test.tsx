@@ -1,6 +1,11 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import ChangelogModal from '../ChangelogModal';
+/* eslint-disable sonarjs/no-duplicate-string */
+/* eslint-disable sonarjs/no-identical-functions */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+
+import { fireEvent, render, screen } from '@testing-library/react';
 import * as redux from 'react-redux';
+
+import ChangelogModal from '../ChangelogModal';
 
 const mockChangelog = {
 	release_date: '2025-06-10',
@@ -17,7 +22,13 @@ const mockChangelog = {
 };
 
 // Mock react-markdown to just render children as plain text
-jest.mock('react-markdown', () => ({ children }: any) => <>{children}</>);
+jest.mock(
+	'react-markdown',
+	() =>
+		function ReactMarkdown({ children }: any) {
+			return <div>{children}</div>;
+		},
+);
 
 describe('ChangelogModal', () => {
 	beforeEach(() => {

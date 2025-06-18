@@ -1,8 +1,19 @@
+/* eslint-disable sonarjs/no-duplicate-string */
+/* eslint-disable sonarjs/no-identical-functions */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+
 import { render, screen } from '@testing-library/react';
+
 import ChangelogRenderer from '../components/ChangelogRenderer';
 
 // Mock react-markdown to just render children as plain text
-jest.mock('react-markdown', () => ({ children }: any) => <>{children}</>);
+jest.mock(
+	'react-markdown',
+	() =>
+		function ReactMarkdown({ children }: any) {
+			return <div>{children}</div>;
+		},
+);
 
 const mockChangelog = {
 	id: 1,
