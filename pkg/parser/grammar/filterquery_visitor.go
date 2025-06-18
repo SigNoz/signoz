@@ -56,6 +56,9 @@ type FilterQueryVisitor interface {
 	// Visit a parse tree produced by FilterQueryParser#value.
 	VisitValue(ctx *ValueContext) interface{}
 
+	// Visit a parse tree produced by FilterQueryParser#variable.
+	VisitVariable(ctx *VariableContext) interface{}
+
 	// Visit a parse tree produced by FilterQueryParser#key.
 	VisitKey(ctx *KeyContext) interface{}
 }

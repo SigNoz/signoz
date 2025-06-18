@@ -1,7 +1,9 @@
 package querybuildertypesv5
 
 import (
+	"encoding/json"
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 	"time"
@@ -143,4 +145,51 @@ type RawData struct {
 type RawRow struct {
 	Timestamp time.Time       `json:"timestamp"`
 	Data      map[string]*any `json:"data"`
+}
+
+// MarshalJSON implements custom JSON marshaling for TimeSeriesValue to handle NaN/Inf values
+func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
+	// Create a custom struct with interface{} fields to handle special float values
+	type CustomTimeSeriesValue struct {
+		Timestamp int64   `json:"timestamp"`
+		Value     any     `json:"value"`
+		Partial   bool    `json:"partial,omitempty"`
+		Values    []any   `json:"values,omitempty"`
+		Bucket    *Bucket `json:"bucket,omitempty"`
+	}
+
+	custom := CustomTimeSeriesValue{
+		Timestamp: t.Timestamp,
+		Partial:   t.Partial,
+		Bucket:    t.Bucket,
+	}
+
+	// Handle the Value field
+	if math.IsNaN(t.Value) {
+		custom.Value = "NaN"
+	} else if math.IsInf(t.Value, 1) {
+		custom.Value = "Inf"
+	} else if math.IsInf(t.Value, -1) {
+		custom.Value = "-Inf"
+	} else {
+		custom.Value = t.Value
+	}
+
+	// Handle the Values slice
+	if t.Values != nil {
+		custom.Values = make([]interface{}, len(t.Values))
+		for i, v := range t.Values {
+			if math.IsNaN(v) {
+				custom.Values[i] = "NaN"
+			} else if math.IsInf(v, 1) {
+				custom.Values[i] = "Inf"
+			} else if math.IsInf(v, -1) {
+				custom.Values[i] = "-Inf"
+			} else {
+				custom.Values[i] = v
+			}
+		}
+	}
+
+	return json.Marshal(custom)
 }

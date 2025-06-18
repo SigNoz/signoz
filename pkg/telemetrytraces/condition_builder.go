@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -188,6 +189,11 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
+	// Check if this is a span search scope field
+	if key.FieldContext == telemetrytypes.FieldContextSpan && c.isSpanScopeField(key.Name) {
+		return c.buildSpanScopeCondition(key, operator, value)
+	}
+
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
 	if err != nil {
 		return "", err
@@ -207,4 +213,42 @@ func (c *conditionBuilder) ConditionFor(
 		return sb.And(condition, existsCondition), nil
 	}
 	return condition, nil
+}
+
+func (c *conditionBuilder) isSpanScopeField(name string) bool {
+	keyName := strings.ToLower(name)
+	return keyName == SpanSearchScopeRoot || keyName == SpanSearchScopeEntryPoint
+}
+
+func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, error) {
+	// Span scope fields only support = true operator
+	if operator != qbtypes.FilterOperatorEqual {
+		return "", fmt.Errorf("span scope field %s only supports '=' operator", key.Name)
+	}
+
+	// Check if value is true (can be bool true or string "true")
+	isTrue := false
+	switch v := value.(type) {
+	case bool:
+		isTrue = v
+	case string:
+		isTrue = strings.ToLower(v) == "true"
+	default:
+		return "", fmt.Errorf("span scope field %s expects boolean value, got %T", key.Name, value)
+	}
+
+	if !isTrue {
+		return "", fmt.Errorf("span scope field %s can only be filtered with value 'true'", key.Name)
+	}
+
+	keyName := strings.ToLower(key.Name)
+	switch keyName {
+	case SpanSearchScopeRoot:
+		return "parent_span_id = ''", nil
+	case SpanSearchScopeEntryPoint:
+		return fmt.Sprintf("((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
+			DBName, TopLevelOperationsTableName), nil
+	default:
+		return "", fmt.Errorf("invalid span search scope: %s", key.Name)
+	}
 }

@@ -3,8 +3,11 @@ package querier
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
+	"strings"
 
+	"github.com/SigNoz/govaluate"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -106,12 +109,15 @@ func postProcessBuilderQuery[T any](
 	q *querier,
 	result *qbtypes.Result,
 	query qbtypes.QueryBuilderQuery[T],
-	_ *qbtypes.QueryRangeRequest,
+	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
 	// Apply functions
 	if len(query.Functions) > 0 {
-		result = q.applyFunctions(result, query.Functions)
+		// For builder queries, use the query's own step
+		step := query.StepInterval.Duration.Milliseconds()
+		functions := q.prepareFillZeroArgsWithStep(query.Functions, req, step)
+		result = q.applyFunctions(result, functions)
 	}
 
 	return result
@@ -130,7 +136,10 @@ func postProcessMetricQuery(
 	}
 
 	if len(query.Functions) > 0 {
-		result = q.applyFunctions(result, query.Functions)
+		// For metric queries, use the query's own step
+		step := query.StepInterval.Duration.Milliseconds()
+		functions := q.prepareFillZeroArgsWithStep(query.Functions, req, step)
+		result = q.applyFunctions(result, functions)
 	}
 
 	// Apply reduce to for scalar request type
@@ -222,6 +231,11 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 			if result != nil {
 				results[name] = result
 			}
+		} else if req.RequestType == qbtypes.RequestTypeScalar {
+			result := q.processScalarFormula(ctx, results, formula, req)
+			if result != nil {
+				results[name] = result
+			}
 		}
 	}
 
@@ -233,7 +247,7 @@ func (q *querier) processTimeSeriesFormula(
 	ctx context.Context,
 	results map[string]*qbtypes.Result,
 	formula qbtypes.QueryBuilderFormula,
-	_ *qbtypes.QueryRangeRequest,
+	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 	// Prepare time series data for formula evaluation
 	timeSeriesData := make(map[string]*qbtypes.TimeSeriesData)
@@ -278,10 +292,216 @@ func (q *querier) processTimeSeriesFormula(
 	}
 
 	if len(formula.Functions) > 0 {
-		result = q.applyFunctions(result, formula.Functions)
+		// For formulas, calculate GCD of steps from queries in the expression
+		step := q.calculateFormulaStep(formula.Expression, req)
+		functions := q.prepareFillZeroArgsWithStep(formula.Functions, req, step)
+		result = q.applyFunctions(result, functions)
 	}
 
 	return result
+}
+
+// processScalarFormula handles formula evaluation for scalar data
+//
+// NOTE: This implementation has a known limitation with formulas that reference
+// specific aggregations by index (e.g., "A.0", "A.1") or multiple aggregations
+// from the same query (e.g., "A.0 * 2 + A.1"). The FormulaEvaluator's series
+// matching logic doesn't work correctly when converting scalar data to time series
+// format for these cases.
+//
+// Currently supported:
+// - Formulas between different queries: "A / B", "A * 2 + B"
+// - Simple references: "A" (defaults to first aggregation)
+//
+// Not supported:
+// - Indexed aggregation references: "A.0", "A.1"
+// - Multiple aggregations from same query: "A.0 + A.1"
+//
+// To properly support this, we would need to either:
+// 1. Fix the FormulaEvaluator's series lookup logic for scalar-converted data
+// 2. Implement a dedicated scalar formula evaluator
+func (q *querier) processScalarFormula(
+	ctx context.Context,
+	results map[string]*qbtypes.Result,
+	formula qbtypes.QueryBuilderFormula,
+	req *qbtypes.QueryRangeRequest,
+) *qbtypes.Result {
+	// Convert scalar data to time series format with zero timestamp
+	timeSeriesData := make(map[string]*qbtypes.TimeSeriesData)
+
+	for queryName, result := range results {
+		if scalarData, ok := result.Value.(*qbtypes.ScalarData); ok {
+			// Convert scalar to time series
+			tsData := &qbtypes.TimeSeriesData{
+				QueryName:    scalarData.QueryName,
+				Aggregations: make([]*qbtypes.AggregationBucket, 0),
+			}
+
+			// Find aggregation columns
+			aggColumns := make(map[int]int) // aggregation index -> column index
+			for colIdx, col := range scalarData.Columns {
+				if col.Type == qbtypes.ColumnTypeAggregation {
+					aggColumns[int(col.AggregationIndex)] = colIdx
+				}
+			}
+
+			// Group rows by their label sets
+			type labeledRowData struct {
+				labels []*qbtypes.Label
+				values map[int]float64 // aggregation index -> value
+			}
+
+			// First pass: group all rows by their label combination
+			rowsByLabels := make(map[string]*labeledRowData)
+			for _, row := range scalarData.Data {
+				// Build labels from group columns
+				labels := make([]*qbtypes.Label, 0)
+				for i, col := range scalarData.Columns {
+					if col.Type == qbtypes.ColumnTypeGroup && i < len(row) {
+						labels = append(labels, &qbtypes.Label{
+							Key:   col.TelemetryFieldKey,
+							Value: row[i],
+						})
+					}
+				}
+
+				labelKey := qbtypes.GetUniqueSeriesKey(labels)
+
+				// Get or create row data
+				rowData, exists := rowsByLabels[labelKey]
+				if !exists {
+					rowData = &labeledRowData{
+						labels: labels,
+						values: make(map[int]float64),
+					}
+					rowsByLabels[labelKey] = rowData
+				}
+
+				// Store all aggregation values from this row
+				for aggIdx, colIdx := range aggColumns {
+					if colIdx < len(row) {
+						if val, ok := toFloat64(row[colIdx]); ok {
+							rowData.values[aggIdx] = val
+						}
+					}
+				}
+			}
+
+			// Get sorted label keys for consistent ordering
+			labelKeys := make([]string, 0, len(rowsByLabels))
+			for key := range rowsByLabels {
+				labelKeys = append(labelKeys, key)
+			}
+			slices.Sort(labelKeys)
+
+			// Create aggregation buckets
+			aggIndices := make([]int, 0, len(aggColumns))
+			for aggIdx := range aggColumns {
+				aggIndices = append(aggIndices, aggIdx)
+			}
+			slices.Sort(aggIndices)
+
+			// For each aggregation, create a bucket with series in consistent order
+			for _, aggIdx := range aggIndices {
+				colIdx := aggColumns[aggIdx]
+
+				bucket := &qbtypes.AggregationBucket{
+					Index:  aggIdx,
+					Alias:  scalarData.Columns[colIdx].Name,
+					Meta:   scalarData.Columns[colIdx].Meta,
+					Series: make([]*qbtypes.TimeSeries, 0),
+				}
+
+				// Create series in the same order (by label key)
+				for _, labelKey := range labelKeys {
+					rowData := rowsByLabels[labelKey]
+
+					// Only create series if we have a value for this aggregation
+					if val, exists := rowData.values[aggIdx]; exists {
+						series := &qbtypes.TimeSeries{
+							Labels: rowData.labels,
+							Values: []*qbtypes.TimeSeriesValue{{
+								Timestamp: 0,
+								Value:     val,
+							}},
+						}
+						bucket.Series = append(bucket.Series, series)
+					}
+				}
+
+				tsData.Aggregations = append(tsData.Aggregations, bucket)
+			}
+
+			timeSeriesData[queryName] = tsData
+		}
+	}
+
+	// Create formula evaluator
+	canDefaultZero := make(map[string]bool)
+	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
+	if err != nil {
+		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
+		return nil
+	}
+
+	// Evaluate the formula
+	formulaSeries, err := evaluator.EvaluateFormula(timeSeriesData)
+	if err != nil {
+		q.logger.ErrorContext(ctx, "failed to evaluate formula", "error", err, "formula", formula.Name)
+		return nil
+	}
+
+	// Convert back to scalar format
+	scalarResult := &qbtypes.ScalarData{
+		QueryName: formula.Name,
+		Columns:   make([]*qbtypes.ColumnDescriptor, 0),
+		Data:      make([][]any, 0),
+	}
+
+	// Build columns from first series
+	if len(formulaSeries) > 0 && len(formulaSeries[0].Labels) > 0 {
+		// Add group columns
+		for _, label := range formulaSeries[0].Labels {
+			scalarResult.Columns = append(scalarResult.Columns, &qbtypes.ColumnDescriptor{
+				TelemetryFieldKey: label.Key,
+				QueryName:         formula.Name,
+				Type:              qbtypes.ColumnTypeGroup,
+			})
+		}
+	}
+
+	// Add result column
+	scalarResult.Columns = append(scalarResult.Columns, &qbtypes.ColumnDescriptor{
+		TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "__result"},
+		QueryName:         formula.Name,
+		AggregationIndex:  0,
+		Type:              qbtypes.ColumnTypeAggregation,
+	})
+
+	// Build rows
+	for _, series := range formulaSeries {
+		row := make([]any, len(scalarResult.Columns))
+
+		// Add group values
+		for i, label := range series.Labels {
+			if i < len(row)-1 {
+				row[i] = label.Value
+			}
+		}
+
+		// Add aggregation value (from single value at timestamp 0)
+		if len(series.Values) > 0 {
+			row[len(row)-1] = series.Values[0].Value
+		} else {
+			row[len(row)-1] = "n/a"
+		}
+
+		scalarResult.Data = append(scalarResult.Data, row)
+	}
+
+	return &qbtypes.Result{
+		Value: scalarResult,
+	}
 }
 
 // filterDisabledQueries removes results for disabled queries
@@ -649,4 +869,99 @@ func toFloat64(v any) (float64, bool) {
 		return float64(val), true
 	}
 	return 0, false
+}
+
+// gcd calculates the greatest common divisor
+func gcd(a, b int64) int64 {
+	if b == 0 {
+		return a
+	}
+	return gcd(b, a%b)
+}
+
+// prepareFillZeroArgsWithStep prepares fillZero function arguments with a specific step
+func (q *querier) prepareFillZeroArgsWithStep(functions []qbtypes.Function, req *qbtypes.QueryRangeRequest, step int64) []qbtypes.Function {
+	// Check if we need to modify any functions
+	needsCopy := false
+	for _, fn := range functions {
+		if fn.Name == qbtypes.FunctionNameFillZero && len(fn.Args) == 0 {
+			needsCopy = true
+			break
+		}
+	}
+
+	// If no fillZero functions need arguments, return original slice
+	if !needsCopy {
+		return functions
+	}
+
+	// Only copy if we need to modify
+	updatedFunctions := make([]qbtypes.Function, len(functions))
+	copy(updatedFunctions, functions)
+
+	// Process each function
+	for i, fn := range updatedFunctions {
+		if fn.Name == qbtypes.FunctionNameFillZero && len(fn.Args) == 0 {
+			// Set the arguments: start, end, step
+			fn.Args = []qbtypes.FunctionArg{
+				{Value: float64(req.Start)},
+				{Value: float64(req.End)},
+				{Value: float64(step)},
+			}
+			updatedFunctions[i] = fn
+		}
+	}
+
+	return updatedFunctions
+}
+
+// calculateFormulaStep calculates the GCD of steps from queries referenced in the formula
+func (q *querier) calculateFormulaStep(expression string, req *qbtypes.QueryRangeRequest) int64 {
+	// Use govaluate to parse the expression and extract variables
+	// This is the same library used by FormulaEvaluator
+	parsedExpr, err := govaluate.NewEvaluableExpression(expression)
+	if err != nil {
+		// If we can't parse the expression, use default
+		return 60000
+	}
+
+	// Get the variables from the parsed expression
+	variables := parsedExpr.Vars()
+
+	// Extract base query names (e.g., "A" from "A.0" or "A.my_alias")
+	queryNames := make(map[string]bool)
+	for _, variable := range variables {
+		// Split by "." to get the base query name
+		parts := strings.Split(variable, ".")
+		if len(parts) > 0 {
+			queryNames[parts[0]] = true
+		}
+	}
+
+	var steps []int64
+
+	// Collect steps only from queries referenced in the formula
+	for _, query := range req.CompositeQuery.Queries {
+		info := getqueryInfo(query.Spec)
+		// Check if this query is referenced in the formula
+		if !info.Disabled && queryNames[info.Name] && info.Step.Duration > 0 {
+			stepMs := info.Step.Duration.Milliseconds()
+			if stepMs > 0 {
+				steps = append(steps, stepMs)
+			}
+		}
+	}
+
+	// If no steps found, use a default (60 seconds)
+	if len(steps) == 0 {
+		return 60000
+	}
+
+	// Calculate GCD of all steps
+	result := steps[0]
+	for i := 1; i < len(steps); i++ {
+		result = gcd(result, steps[i])
+	}
+
+	return result
 }

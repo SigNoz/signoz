@@ -56,6 +56,9 @@ type FilterQueryListener interface {
 	// EnterValue is called when entering the value production.
 	EnterValue(c *ValueContext)
 
+	// EnterVariable is called when entering the variable production.
+	EnterVariable(c *VariableContext)
+
 	// EnterKey is called when entering the key production.
 	EnterKey(c *KeyContext)
 
@@ -106,6 +109,9 @@ type FilterQueryListener interface {
 
 	// ExitValue is called when exiting the value production.
 	ExitValue(c *ValueContext)
+
+	// ExitVariable is called when exiting the variable production.
+	ExitVariable(c *VariableContext)
 
 	// ExitKey is called when exiting the key production.
 	ExitKey(c *KeyContext)

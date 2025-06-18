@@ -72,6 +72,10 @@ func (v *BaseFilterQueryVisitor) VisitValue(ctx *ValueContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseFilterQueryVisitor) VisitVariable(ctx *VariableContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseFilterQueryVisitor) VisitKey(ctx *KeyContext) interface{} {
 	return v.VisitChildren(ctx)
 }

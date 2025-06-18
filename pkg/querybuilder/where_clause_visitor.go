@@ -29,6 +29,7 @@ type filterExpressionVisitor struct {
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	skipResourceFilter bool
 	skipFullTextFilter bool
+	variableResolver   *VariableResolver
 }
 
 type FilterExprVisitorOpts struct {
@@ -41,10 +42,16 @@ type FilterExprVisitorOpts struct {
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
+	Variables          map[string]qbtypes.VariableItem
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor
 func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVisitor {
+	var variableResolver *VariableResolver
+	if opts.Variables != nil && len(opts.Variables) > 0 {
+		variableResolver = NewVariableResolver(opts.Variables)
+	}
+
 	return &filterExpressionVisitor{
 		fieldMapper:        opts.FieldMapper,
 		conditionBuilder:   opts.ConditionBuilder,
@@ -55,6 +62,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		jsonKeyToKey:       opts.JsonKeyToKey,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
+		variableResolver:   variableResolver,
 	}
 }
 
@@ -161,6 +169,8 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitValue(t)
 	case *grammar.KeyContext:
 		return v.VisitKey(t)
+	case *grammar.VariableContext:
+		return v.VisitVariable(t)
 	default:
 		return ""
 	}
@@ -378,6 +388,11 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	if len(values) > 0 {
 		value := v.Visit(values[0])
 
+		// Check if we should skip this filter due to __all__ variable
+		if strVal, ok := value.(string); ok && strVal == "__SKIP_FILTER__" {
+			return "true" // Return always true condition to skip filter
+		}
+
 		var op qbtypes.FilterOperator
 
 		// Handle each type of comparison
@@ -433,12 +448,58 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 // VisitInClause handles IN expressions
 func (v *filterExpressionVisitor) VisitInClause(ctx *grammar.InClauseContext) any {
-	return v.Visit(ctx.ValueList())
+	// Check if it's a variable
+	if ctx.Variable() != nil {
+		value := v.Visit(ctx.Variable())
+
+		// If the variable resolved to "__SKIP_FILTER__", return empty array
+		if skipVal, ok := value.(string); ok && skipVal == "__SKIP_FILTER__" {
+			return []any{}
+		}
+
+		// If it's already an array, return it
+		if arr, ok := value.([]any); ok {
+			return arr
+		}
+
+		// Otherwise, wrap single value in array
+		return []any{value}
+	}
+
+	// Handle regular value list
+	if ctx.ValueList() != nil {
+		return v.Visit(ctx.ValueList())
+	}
+
+	return []any{}
 }
 
 // VisitNotInClause handles NOT IN expressions
 func (v *filterExpressionVisitor) VisitNotInClause(ctx *grammar.NotInClauseContext) any {
-	return v.Visit(ctx.ValueList())
+	// Check if it's a variable
+	if ctx.Variable() != nil {
+		value := v.Visit(ctx.Variable())
+
+		// If the variable resolved to "__SKIP_FILTER__", return empty array
+		if skipVal, ok := value.(string); ok && skipVal == "__SKIP_FILTER__" {
+			return []any{}
+		}
+
+		// If it's already an array, return it
+		if arr, ok := value.([]any); ok {
+			return arr
+		}
+
+		// Otherwise, wrap single value in array
+		return []any{value}
+	}
+
+	// Handle regular value list
+	if ctx.ValueList() != nil {
+		return v.Visit(ctx.ValueList())
+	}
+
+	return []any{}
 }
 
 // VisitValueList handles comma-separated value lists
@@ -568,12 +629,79 @@ func (v *filterExpressionVisitor) VisitArray(ctx *grammar.ArrayContext) any {
 	return v.Visit(ctx.ValueList())
 }
 
-// VisitValue handles literal values: strings, numbers, booleans
+// VisitVariable handles variable resolution
+func (v *filterExpressionVisitor) VisitVariable(ctx *grammar.VariableContext) any {
+	var varName string
+	var varText string
+
+	// Extract variable name based on syntax
+	if ctx.DOLLAR_VAR() != nil {
+		varText = ctx.DOLLAR_VAR().GetText()
+		varName = varText[1:] // Remove $
+	} else if ctx.CURLY_VAR() != nil {
+		varText = ctx.CURLY_VAR().GetText()
+		// Remove {{ }} and optional whitespace/dots
+		varName = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(varText, "{{"), "}}"))
+		varName = strings.TrimPrefix(varName, ".")
+	} else if ctx.SQUARE_VAR() != nil {
+		varText = ctx.SQUARE_VAR().GetText()
+		// Remove [[ ]] and optional whitespace/dots
+		varName = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(varText, "[["), "]]"))
+		varName = strings.TrimPrefix(varName, ".")
+	} else {
+		v.errors = append(v.errors, "unknown variable type")
+		return nil
+	}
+
+	// If no variable resolver is provided, return the variable text
+	if v.variableResolver == nil {
+		v.errors = append(v.errors, fmt.Sprintf("variable %s used but no variable resolver provided", varText))
+		return varText
+	}
+
+	// Resolve the variable
+	resolvedValue, skipFilter, err := v.variableResolver.ResolveVariable(varName)
+	if err != nil {
+		v.errors = append(v.errors, fmt.Sprintf("failed to resolve variable %s: %v", varText, err))
+		return nil
+	}
+
+	if skipFilter {
+		return "__SKIP_FILTER__"
+	}
+
+	return resolvedValue
+}
+
+// VisitValue handles literal values: strings, numbers, booleans, variables
 func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
+	// Check if this is a variable first
+	if ctx.Variable() != nil {
+		return v.Visit(ctx.Variable())
+	}
+
 	if ctx.QUOTED_TEXT() != nil {
 		txt := ctx.QUOTED_TEXT().GetText()
-		// trim quotes and return the value
-		return trimQuotes(txt)
+		// trim quotes and check for variable
+		value := trimQuotes(txt)
+
+		// Check if this is a variable reference
+		if v.variableResolver != nil {
+			if isVar, varName := v.variableResolver.IsVariableReference(value); isVar {
+				resolvedValue, skipFilter, err := v.variableResolver.ResolveVariable(varName)
+				if err != nil {
+					v.errors = append(v.errors, fmt.Sprintf("failed to resolve variable: %s", err.Error()))
+					return value
+				}
+				if skipFilter {
+					// Return a special marker to indicate filter should be skipped
+					return "__SKIP_FILTER__"
+				}
+				return resolvedValue
+			}
+		}
+
+		return value
 	} else if ctx.NUMBER() != nil {
 		number, err := strconv.ParseFloat(ctx.NUMBER().GetText(), 64)
 		if err != nil {
@@ -590,7 +718,25 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 		// When the user writes an expression like `service.name=redis`
 		// The `redis` part is a VALUE context but parsed as a KEY token
 		// so we return the text as is
-		return ctx.KEY().GetText()
+		keyText := ctx.KEY().GetText()
+
+		// Check if this is a variable reference
+		if v.variableResolver != nil {
+			if isVar, varName := v.variableResolver.IsVariableReference(keyText); isVar {
+				resolvedValue, skipFilter, err := v.variableResolver.ResolveVariable(varName)
+				if err != nil {
+					v.errors = append(v.errors, fmt.Sprintf("failed to resolve variable: %s", err.Error()))
+					return keyText
+				}
+				if skipFilter {
+					// Return a special marker to indicate filter should be skipped
+					return "__SKIP_FILTER__"
+				}
+				return resolvedValue
+			}
+		}
+
+		return keyText
 	}
 
 	return "" // Should not happen with valid input

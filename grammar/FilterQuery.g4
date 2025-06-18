@@ -75,15 +75,17 @@ comparison
     | key NOT CONTAINS value
     ;
 
-// in(...) or in[...] 
+// in(...) or in[...] - now also supports variables
 inClause
     : IN LPAREN valueList RPAREN
     | IN LBRACK valueList RBRACK
+    | IN variable                    // NEW: support for IN $var, IN {{var}}, IN [[var]]
     ;
 
 notInClause
     : NOT IN LPAREN valueList RPAREN
     | NOT IN LBRACK valueList RBRACK
+    | NOT IN variable                // NEW: support for NOT IN $var, etc.
     ;
 
 // List of values for in(...) or in[...]
@@ -126,13 +128,21 @@ array
 
 /*
  * A 'value' can be a string literal (double or single-quoted),
-//  a numeric literal, boolean, or a "bare" token as needed.
+//  a numeric literal, boolean, a "bare" token, or a variable.
  */
 value
     : QUOTED_TEXT
     | NUMBER
     | BOOL
     | KEY
+    | variable    // NEW: variables can be used as values
+    ;
+
+// NEW: Variable rule to support different variable syntaxes
+variable
+    : DOLLAR_VAR
+    | CURLY_VAR
+    | SQUARE_VAR
     ;
 
 /*
@@ -189,6 +199,11 @@ BOOL
     : [Tt][Rr][Uu][Ee]
     | [Ff][Aa][Ll][Ss][Ee]
     ;
+
+// NEW: Variable token types
+DOLLAR_VAR : '$' [a-zA-Z_] [a-zA-Z0-9._]* ;
+CURLY_VAR : '{{' [ \t]* '.'? [a-zA-Z_] [a-zA-Z0-9._]* [ \t]* '}}' ;
+SQUARE_VAR : '[[' [ \t]* '.'? [a-zA-Z_] [a-zA-Z0-9._]* [ \t]* ']]' ;
 
 fragment SIGN : [+-] ;
 

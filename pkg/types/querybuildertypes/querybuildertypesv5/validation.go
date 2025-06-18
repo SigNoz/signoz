@@ -80,6 +80,7 @@ func ValidateFunctionName(name FunctionName) error {
 		FunctionNameMedian7,
 		FunctionNameTimeShift,
 		FunctionNameAnomaly,
+		FunctionNameFillZero,
 	}
 
 	if slices.Contains(validFunctions, name) {
@@ -106,8 +107,8 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 		return err
 	}
 
-	// Validate aggregations only for non-raw request types
-	if requestType != RequestTypeRaw {
+	// Validate aggregations only for non-raw request types and non-disabled queries
+	if requestType != RequestTypeRaw && !q.Disabled {
 		if err := q.validateAggregations(); err != nil {
 			return err
 		}
@@ -128,9 +129,23 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 		return err
 	}
 
-	// Validate order by
-	if err := q.validateOrderBy(); err != nil {
-		return err
+	// Validate order by (for aggregation queries)
+	if requestType != RequestTypeRaw && len(q.Aggregations) > 0 {
+		if err := q.validateOrderByForAggregation(); err != nil {
+			return err
+		}
+	} else {
+		// For non-aggregation queries, use regular validation
+		if err := q.validateOrderBy(); err != nil {
+			return err
+		}
+	}
+
+	// Validate having clause
+	if requestType != RequestTypeRaw {
+		if err := q.validateHaving(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -323,6 +338,118 @@ func (q *QueryBuilderQuery[T]) validateOrderBy() error {
 			)
 		}
 	}
+	return nil
+}
+
+// validateOrderByForAggregation validates order by clauses for aggregation queries
+// For aggregation queries, order by can only reference:
+// 1. Group by keys
+// 2. Aggregation expressions or aliases
+// 3. Aggregation index (0, 1, 2, etc.)
+func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
+	// First validate basic order by constraints
+	if err := q.validateOrderBy(); err != nil {
+		return err
+	}
+
+	// Build valid order by keys
+	validOrderKeys := make(map[string]bool)
+
+	// Add group by keys
+	for _, gb := range q.GroupBy {
+		validOrderKeys[gb.TelemetryFieldKey.Name] = true
+	}
+
+	// Add aggregation aliases and expressions
+	for i, agg := range q.Aggregations {
+		// Add index-based reference
+		validOrderKeys[fmt.Sprintf("%d", i)] = true
+
+		// Add alias if present
+		switch v := any(agg).(type) {
+		case TraceAggregation:
+			if v.Alias != "" {
+				validOrderKeys[v.Alias] = true
+			}
+			// Also allow ordering by expression
+			validOrderKeys[v.Expression] = true
+		case LogAggregation:
+			if v.Alias != "" {
+				validOrderKeys[v.Alias] = true
+			}
+			// Also allow ordering by expression
+			validOrderKeys[v.Expression] = true
+		case MetricAggregation:
+			// For metrics, we allow ordering by special patterns
+			// Examples: __result, sum(cpu_usage), avg(memory), etc.
+			// Also allow the generic __result pattern
+			validOrderKeys["__result"] = true
+
+			// For metrics with aggregations, also allow patterns like:
+			// - {spaceAggregation}({metricName})
+			// - {timeAggregation}({metricName})
+			// - {spaceAggregation}({timeAggregation}({metricName}))
+			// But these are validated during SQL generation since they're complex patterns
+		}
+	}
+
+	// Validate each order by clause
+	for i, order := range q.Order {
+		orderKey := order.Key.Name
+
+		// Check if this is a valid order by key
+		if !validOrderKeys[orderKey] {
+			orderId := fmt.Sprintf("order by clause #%d", i+1)
+			if q.Name != "" {
+				orderId = fmt.Sprintf("order by clause #%d in query '%s'", i+1, q.Name)
+			}
+
+			// Build helpful error message
+			validKeys := []string{}
+			for k := range validOrderKeys {
+				validKeys = append(validKeys, k)
+			}
+			slices.Sort(validKeys)
+
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid order by key '%s' for %s",
+				orderKey,
+				orderId,
+			).WithAdditional(
+				fmt.Sprintf("For aggregation queries, order by can only reference group by keys, aggregation aliases/expressions, or aggregation indices. Valid keys are: %s", strings.Join(validKeys, ", ")),
+			)
+		}
+	}
+
+	return nil
+}
+
+// validateHaving validates having clause for aggregation queries
+// Having clause can only reference aggregation results, not non-aggregated columns
+func (q *QueryBuilderQuery[T]) validateHaving() error {
+	if q.Having == nil || q.Having.Expression == "" {
+		return nil
+	}
+
+	// Basic validation of having expression structure
+	// The detailed validation of the expression (parsing, valid operators, etc.)
+	// is done during query execution
+
+	// For now, we just ensure that having is only used with aggregations
+	if len(q.Aggregations) == 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"having clause can only be used with aggregation queries",
+		)
+	}
+
+	// TODO: We could add more validation here in the future, such as:
+	// 1. Parsing the expression to ensure it's syntactically valid
+	// 2. Checking that all referenced fields are aggregation results
+	// 3. Validating operators and values
+	// But this would require expression parsing logic here
+
 	return nil
 }
 

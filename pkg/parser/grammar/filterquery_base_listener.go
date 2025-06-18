@@ -117,6 +117,12 @@ func (s *BaseFilterQueryListener) EnterValue(ctx *ValueContext) {}
 // ExitValue is called when production value is exited.
 func (s *BaseFilterQueryListener) ExitValue(ctx *ValueContext) {}
 
+// EnterVariable is called when production variable is entered.
+func (s *BaseFilterQueryListener) EnterVariable(ctx *VariableContext) {}
+
+// ExitVariable is called when production variable is exited.
+func (s *BaseFilterQueryListener) ExitVariable(ctx *VariableContext) {}
+
 // EnterKey is called when production key is entered.
 func (s *BaseFilterQueryListener) EnterKey(ctx *KeyContext) {}
 

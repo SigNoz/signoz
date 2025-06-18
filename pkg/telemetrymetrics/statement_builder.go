@@ -76,6 +76,7 @@ func (b *metricQueryStatementBuilder) Build(
 	end uint64,
 	_ qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 	keySelectors := getKeySelectors(query)
 	keys, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
@@ -83,7 +84,7 @@ func (b *metricQueryStatementBuilder) Build(
 		return nil, err
 	}
 
-	return b.buildPipelineStatement(ctx, start, end, query, keys)
+	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
 }
 
 // Fast‑path (no fingerprint grouping)
@@ -139,6 +140,7 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 	var (
 		cteFragments []string
@@ -178,7 +180,7 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 
 	// time_series_cte
 	// this is applicable for all the queries
-	if timeSeriesCTE, timeSeriesCTEArgs, err = b.buildTimeSeriesCTE(ctx, start, end, query, keys); err != nil {
+	if timeSeriesCTE, timeSeriesCTEArgs, err = b.buildTimeSeriesCTE(ctx, start, end, query, keys, variables); err != nil {
 		return nil, err
 	}
 
@@ -269,6 +271,7 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) (string, []any, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
@@ -281,6 +284,7 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
+			Variables:        variables,
 		})
 		if err != nil {
 			return "", nil, err
@@ -502,9 +506,25 @@ func (b *metricQueryStatementBuilder) buildFinalSelect(
 			sb.GroupBy(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
 		sb.GroupBy("ts")
+
+		// Add having clause if needed
+		if query.Having != nil && query.Having.Expression != "" {
+			// Rewrite having expression to use SQL column names
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+			sb.Having(rewrittenExpr)
+		}
 	} else {
 		sb.Select("*")
 		sb.From("__spatial_aggregation_cte")
+
+		// For non-percentile queries, we need to filter in WHERE clause since we're selecting from CTE
+		if query.Having != nil && query.Having.Expression != "" {
+			// Rewrite having expression to use SQL column names
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+			sb.Where(rewrittenExpr)
+		}
 	}
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
