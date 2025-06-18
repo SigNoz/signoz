@@ -2,13 +2,16 @@ import '../RenameFunnel/RenameFunnel.styles.scss';
 import './DeleteFunnel.styles.scss';
 
 import SignozModal from 'components/SignozModal/SignozModal';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { useDeleteFunnel } from 'hooks/TracesFunnels/useFunnels';
+import { useLocalStorage } from 'hooks/useLocalStorage';
 import { useNotifications } from 'hooks/useNotifications';
 import { Trash2, X } from 'lucide-react';
 import { useQueryClient } from 'react-query';
 import { useHistory } from 'react-router-dom';
+import { FunnelStepData } from 'types/api/traceFunnels';
 
 interface DeleteFunnelProps {
 	isOpen: boolean;
@@ -29,6 +32,13 @@ function DeleteFunnel({
 
 	const history = useHistory();
 	const { pathname } = history.location;
+
+	// localStorage hook for funnel steps
+	const localStorageKey = `${LOCALSTORAGE.FUNNEL_STEPS}_${funnelId}`;
+	const [, , clearLocalStorageSavedSteps] = useLocalStorage<
+		FunnelStepData[] | null
+	>(localStorageKey, null);
+
 	const handleDelete = (): void => {
 		deleteFunnelMutation.mutate(
 			{
@@ -39,6 +49,7 @@ function DeleteFunnel({
 					notifications.success({
 						message: 'Funnel deleted successfully',
 					});
+					clearLocalStorageSavedSteps();
 					onClose();
 
 					if (
