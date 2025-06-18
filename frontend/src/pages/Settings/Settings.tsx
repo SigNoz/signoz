@@ -63,7 +63,8 @@ function SettingsPage(): JSX.Element {
 						isAdmin &&
 						(item.key === ROUTES.BILLING ||
 							item.key === ROUTES.ORG_SETTINGS ||
-							item.key === ROUTES.MY_SETTINGS)
+							item.key === ROUTES.MY_SETTINGS ||
+							item.key === ROUTES.SHORTCUTS)
 					),
 				}));
 
@@ -80,7 +81,8 @@ function SettingsPage(): JSX.Element {
 							item.key === ROUTES.CUSTOM_DOMAIN_SETTINGS ||
 							item.key === ROUTES.API_KEYS ||
 							item.key === ROUTES.INGESTION_SETTINGS ||
-							item.key === ROUTES.ORG_SETTINGS
+							item.key === ROUTES.ORG_SETTINGS ||
+							item.key === ROUTES.SHORTCUTS
 								? true
 								: item.isEnabled,
 					}));
@@ -91,7 +93,8 @@ function SettingsPage(): JSX.Element {
 						...item,
 						isEnabled:
 							item.key === ROUTES.INGESTION_SETTINGS ||
-							item.key === ROUTES.INTEGRATIONS
+							item.key === ROUTES.INTEGRATIONS ||
+							item.key === ROUTES.SHORTCUTS
 								? true
 								: item.isEnabled,
 					}));
@@ -106,7 +109,8 @@ function SettingsPage(): JSX.Element {
 							item.key === ROUTES.BILLING ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.API_KEYS ||
-							item.key === ROUTES.ORG_SETTINGS
+							item.key === ROUTES.ORG_SETTINGS ||
+							item.key === ROUTES.SHORTCUTS
 								? true
 								: item.isEnabled,
 					}));
@@ -126,7 +130,9 @@ function SettingsPage(): JSX.Element {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
-							item.key === ROUTES.API_KEYS || item.key === ROUTES.ORG_SETTINGS
+							item.key === ROUTES.API_KEYS ||
+							item.key === ROUTES.ORG_SETTINGS ||
+							item.key === ROUTES.SHORTCUTS
 								? true
 								: item.isEnabled,
 					}));
