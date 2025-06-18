@@ -49,10 +49,10 @@ type PostableFunnel struct {
 	UserID      string        `json:"user_id,omitempty"`
 
 	// Analytics specific fields
-	StartTime  int64 `json:"start_time,omitempty"`
-	EndTime    int64 `json:"end_time,omitempty"`
-	StepAOrder int64 `json:"step_a_order,omitempty"`
-	StepBOrder int64 `json:"step_b_order,omitempty"`
+	StartTime int64 `json:"start_time,omitempty"`
+	EndTime   int64 `json:"end_time,omitempty"`
+	StepStart int64 `json:"step_start,omitempty"`
+	StepEnd   int64 `json:"step_end,omitempty"`
 }
 
 // GettableFunnel represents all possible funnel-related responses
