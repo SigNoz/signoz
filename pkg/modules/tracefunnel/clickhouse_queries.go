@@ -179,8 +179,8 @@ WITH
         count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
         count(DISTINCT CASE WHEN s1_error = 1 THEN trace_id END) AS sum_s1_error,
         count(DISTINCT CASE WHEN s2_error = 1 THEN trace_id END) AS sum_s2_error,
-        avg((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6) AS avg_duration,
-        quantile(0.99)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time)) / 1e6) AS latency
+        avgIf((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))/1e6, t1_time > 0 AND t2_time > t1_time) AS avg_duration,
+        quantileIf(0.99)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))/1e6, t1_time > 0 AND t2_time > t1_time) AS latency
     FROM funnel
 )
 
@@ -274,11 +274,10 @@ WITH
         count(DISTINCT CASE WHEN s2_error = 1 THEN trace_id END) AS sum_s2_error,
         count(DISTINCT CASE WHEN s3_error = 1 THEN trace_id END) AS sum_s3_error,
 
-        avgIf((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))/1e6, t1_time > 0 AND t2_time > t1_time) AS avg_duration_12,
-        quantileIf(0.99)((toUnixTimestamp64Nano(t2_time) - toUnixTimestamp64Nano(t1_time))/1e6, t1_time > 0 AND t2_time > t1_time) AS latency_12,
+        avgIf((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t1_time))/1e6, t1_time > 0 AND t2_time > t1_time AND t3_time > t2_time) AS avg_funnel_duration,
+        quantileIf(0.99)((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t1_time))/1e6, t1_time > 0 AND t2_time > t1_time AND t3_time > t2_time) AS p99_funnel_latency
 
-        avgIf((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time))/1e6, t2_time > 0 AND t3_time > t2_time) AS avg_duration_23,
-        quantileIf(0.99)((toUnixTimestamp64Nano(t3_time) - toUnixTimestamp64Nano(t2_time))/1e6, t2_time > 0 AND t3_time > t2_time) AS latency_23
+
     FROM funnel
 )
 
@@ -286,8 +285,8 @@ SELECT
     round(if(total_s1_spans > 0, total_s3_spans * 100.0 / total_s1_spans, 0), 2) AS conversion_rate,
     total_s3_spans / nullIf(time_window_sec, 0) AS avg_rate,
     greatest(sum_s1_error, sum_s2_error, sum_s3_error) AS errors,
-    avg_duration_23 AS avg_duration,
-    latency_23 AS latency
+    avg_funnel_duration AS avg_duration,
+    p99_funnel_latency AS latency
 FROM totals;
 `
 	return fmt.Sprintf(
@@ -338,7 +337,7 @@ SELECT
     count(DISTINCT trace_id) AS total_s1_spans,
     count(DISTINCT CASE WHEN t1_error = 1 THEN trace_id END) AS total_s1_errored_spans,
     count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
-    count(DISTINCT CASE WHEN t2_error = 1 THEN trace_id END) AS total_s2_errored_spans
+    count(DISTINCT CASE WHEN t2_time > t1_time AND t2_error = 1 THEN trace_id END) AS total_s2_errored_spans
 FROM (
     SELECT
         trace_id,
@@ -355,7 +354,7 @@ FROM (
             (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
         )
     GROUP BY trace_id
-    HAVING t1_time > 0 AND t2_time > t1_time
+    HAVING t1_time > 0
 ) AS funnel;
 `
 	return fmt.Sprintf(queryTemplate,
