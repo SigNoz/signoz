@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -67,7 +68,7 @@ func (ta *MockAgentConfigProvider) HasRecommendations() bool {
 }
 
 // AgentConfigProvider interface
-func (ta *MockAgentConfigProvider) RecommendAgentConfig(baseConfYaml []byte) (
+func (ta *MockAgentConfigProvider) RecommendAgentConfig(orgId valuer.UUID, baseConfYaml []byte) (
 	[]byte, string, error,
 ) {
 	if len(ta.ZPagesEndpoint) < 1 {
@@ -92,11 +93,14 @@ func (ta *MockAgentConfigProvider) RecommendAgentConfig(baseConfYaml []byte) (
 
 // AgentConfigProvider interface
 func (ta *MockAgentConfigProvider) ReportConfigDeploymentStatus(
+	orgId valuer.UUID,
 	agentId string,
 	configId string,
 	err error,
 ) {
-	confIdReports := ta.ReportedDeploymentStatuses[configId]
+	// using orgID + configId as key to avoid collisions with other orgs
+	// check code in model/coordinator.go for more details
+	confIdReports := ta.ReportedDeploymentStatuses[orgId.String()+configId]
 	if confIdReports == nil {
 		confIdReports = map[string]bool{}
 		ta.ReportedDeploymentStatuses[configId] = confIdReports
@@ -106,10 +110,12 @@ func (ta *MockAgentConfigProvider) ReportConfigDeploymentStatus(
 }
 
 // Test helper.
-func (ta *MockAgentConfigProvider) HasReportedDeploymentStatus(
+func (ta *MockAgentConfigProvider) HasReportedDeploymentStatus(orgID valuer.UUID,
 	configId string, agentId string,
 ) bool {
-	confIdReports := ta.ReportedDeploymentStatuses[configId]
+	// using orgID + configId as key to avoid collisions with other orgs
+	// check code in model/coordinator.go for more details
+	confIdReports := ta.ReportedDeploymentStatuses[orgID.String()+configId]
 	if confIdReports == nil {
 		return false
 	}

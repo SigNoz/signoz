@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -113,6 +114,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.SigNoz.SQLStore,
 		serverOptions.SigNoz.TelemetryStore,
 		serverOptions.SigNoz.Prometheus,
+		serverOptions.SigNoz.Modules.OrgGetter,
 	)
 
 	if err != nil {
@@ -120,10 +122,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate opamp
-	_, err = opAmpModel.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB())
-	if err != nil {
-		return nil, err
-	}
+	opAmpModel.InitDB(serverOptions.SigNoz.SQLStore, serverOptions.SigNoz.Instrumentation.Logger(), serverOptions.SigNoz.Modules.OrgGetter)
 
 	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore)
 	if err != nil {
@@ -141,7 +140,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		serverOptions.SigNoz.SQLStore, integrationsController.GetPipelinesForInstalledIntegrations,
+		serverOptions.SigNoz.SQLStore,
+		integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -149,7 +149,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// initiate agent config handler
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:            serverOptions.SigNoz.SQLStore.SQLxDB(),
+		Store:         serverOptions.SigNoz.SQLStore,
 		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
 	})
 	if err != nil {
@@ -157,7 +157,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New(serverOptions.SigNoz.Licensing, serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.SigNoz.Zeus, serverOptions.SigNoz.Modules.Organization)
+	usageManager, err := usage.New(serverOptions.SigNoz.Licensing, serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.SigNoz.Zeus, serverOptions.SigNoz.Modules.OrgGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +225,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
-	orgs, err := apiHandler.Signoz.Modules.Organization.GetAll(context.Background())
+	orgs, err := apiHandler.Signoz.Modules.OrgGetter.ListByOwnedKeyRange(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -240,11 +240,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 }
 
 func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, error) {
-
 	r := baseapp.NewRouter()
 
-	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(middleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.serverOptions.SigNoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.serverOptions.SigNoz.Sharder, s.serverOptions.SigNoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.SigNoz.Sharder).Wrap)
 	r.Use(middleware.NewTimeout(s.serverOptions.SigNoz.Instrumentation.Logger(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -275,8 +274,8 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	r := baseapp.NewRouter()
 	am := middleware.NewAuthZ(s.serverOptions.SigNoz.Instrumentation.Logger())
 
-	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(middleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.serverOptions.SigNoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.serverOptions.SigNoz.Sharder, s.serverOptions.SigNoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.SigNoz.Sharder).Wrap)
 	r.Use(middleware.NewTimeout(s.serverOptions.SigNoz.Instrumentation.Logger(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -293,10 +292,12 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterInfraMetricsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)
+	apiHandler.RegisterQueryRangeV5Routes(r, am)
 	apiHandler.RegisterWebSocketPaths(r, am)
 	apiHandler.RegisterMessagingQueuesRoutes(r, am)
 	apiHandler.RegisterThirdPartyApiRoutes(r, am)
 	apiHandler.MetricExplorerRoutes(r, am)
+	apiHandler.RegisterTraceFunnelsRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -450,6 +451,7 @@ func makeRulesManager(
 	sqlstore sqlstore.SQLStore,
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
+	orgGetter organization.Getter,
 ) (*baserules.Manager, error) {
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
@@ -465,6 +467,7 @@ func makeRulesManager(
 		PrepareTestRuleFunc: rules.TestNotification,
 		Alertmanager:        alertmanager,
 		SQLStore:            sqlstore,
+		OrgGetter:           orgGetter,
 	}
 
 	// create Manager

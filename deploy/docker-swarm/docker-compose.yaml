@@ -100,26 +100,33 @@ services:
     #   - "9000:9000"
     #   - "8123:8123"
     #   - "9181:9181"
+              
+    configs:
+      - source: clickhouse-config
+        target: /etc/clickhouse-server/config.xml
+      - source: clickhouse-users
+        target: /etc/clickhouse-server/users.xml
+      - source: clickhouse-custom-function
+        target: /etc/clickhouse-server/custom-function.xml
+      - source: clickhouse-cluster
+        target: /etc/clickhouse-server/config.d/cluster.xml
+        
     volumes:
-      - ../common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
-      - ../common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
-      - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
-      - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
-      - ../common/clickhouse/cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
       - clickhouse:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:v0.85.2
+    image: signoz/signoz:v0.87.0
     command:
       - --config=/root/config/prometheus.yml
     ports:
       - "8080:8080" # signoz port
     #   - "6060:6060"     # pprof port
     volumes:
-      - ../common/signoz/prometheus.yml:/root/config/prometheus.yml
-      - ../common/dashboards:/root/config/dashboards
       - sqlite:/var/lib/signoz/
+    configs:
+      - source: signoz-prometheus-config
+        target: /root/config/prometheus.yml
     environment:
       - SIGNOZ_ALERTMANAGER_PROVIDER=signoz
       - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000
@@ -147,9 +154,11 @@ services:
       - --manager-config=/etc/manager-config.yaml
       - --copy-path=/var/tmp/collector-config.yaml
       - --feature-gates=-pkg.translator.prometheus.NormalizeName
-    volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
-      - ../common/signoz/otel-collector-opamp-config.yaml:/etc/manager-config.yaml
+    configs:
+      - source: otel-collector-config
+        target: /etc/otel-collector-config.yaml
+      - source: otel-manager-config
+        target: /etc/manager-config.yaml
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
       - LOW_CARDINAL_EXCEPTION_GROUPING=false
@@ -186,3 +195,26 @@ volumes:
     name: signoz-sqlite
   zookeeper-1:
     name: signoz-zookeeper-1
+
+configs:
+  clickhouse-config:
+    file: ../common/clickhouse/config.xml
+  clickhouse-users:
+    file: ../common/clickhouse/users.xml
+  clickhouse-custom-function:
+    file: ../common/clickhouse/custom-function.xml
+  clickhouse-cluster:
+    file: ../common/clickhouse/cluster.xml
+
+  signoz-prometheus-config:
+    file: ../common/signoz/prometheus.yml
+  # If you have multiple dashboard files, you can list them individually:
+  # dashboard-foo:
+  #   file: ../common/dashboards/foo.json
+  # dashboard-bar:
+  #   file: ../common/dashboards/bar.json
+
+  otel-collector-config:
+    file: ./otel-collector-config.yaml
+  otel-manager-config:
+    file: ../common/signoz/otel-collector-opamp-config.yaml

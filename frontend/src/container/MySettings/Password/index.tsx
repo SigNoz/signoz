@@ -73,7 +73,7 @@ function PasswordContainer(): JSX.Element {
 		currentPassword === updatePassword;
 
 	return (
-		<Card>
+		<Card className="reset-password-card">
 			<Space direction="vertical" size="small">
 				<Typography.Title
 					level={4}

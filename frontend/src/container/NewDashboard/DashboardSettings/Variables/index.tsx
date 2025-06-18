@@ -171,7 +171,8 @@ function VariablesSetting({
 
 		updateMutation.mutateAsync(
 			{
-				...selectedDashboard,
+				id: selectedDashboard.id,
+
 				data: {
 					...selectedDashboard.data,
 					variables: updatedVariablesData,
@@ -179,17 +180,12 @@ function VariablesSetting({
 			},
 			{
 				onSuccess: (updatedDashboard) => {
-					if (updatedDashboard.payload) {
-						setSelectedDashboard(updatedDashboard.payload);
+					if (updatedDashboard.data) {
+						setSelectedDashboard(updatedDashboard.data);
 						notifications.success({
 							message: t('variable_updated_successfully'),
 						});
 					}
-				},
-				onError: () => {
-					notifications.error({
-						message: t('error_while_updating_variable'),
-					});
 				},
 			},
 		);

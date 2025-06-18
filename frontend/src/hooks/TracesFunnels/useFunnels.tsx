@@ -7,6 +7,7 @@ import {
 	FunnelOverviewResponse,
 	FunnelStepsOverviewPayload,
 	FunnelStepsOverviewResponse,
+	FunnelStepsPayload,
 	FunnelStepsResponse,
 	getFunnelById,
 	getFunnelErrorTraces,
@@ -37,6 +38,7 @@ import {
 	CreateFunnelPayload,
 	CreateFunnelResponse,
 	FunnelData,
+	FunnelStepData,
 } from 'types/api/traceFunnels';
 
 export const useFunnelsList = (): UseQueryResult<
@@ -117,12 +119,14 @@ export const useValidateFunnelSteps = ({
 	startTime,
 	endTime,
 	enabled,
+	steps,
 }: {
 	funnelId: string;
 	selectedTime: string;
 	startTime: number;
 	endTime: number;
 	enabled: boolean;
+	steps: FunnelStepData[];
 }): UseQueryResult<
 	SuccessResponse<ValidateFunnelResponse> | ErrorResponse,
 	Error
@@ -130,11 +134,19 @@ export const useValidateFunnelSteps = ({
 	useQuery({
 		queryFn: ({ signal }) =>
 			validateFunnelSteps(
-				funnelId,
-				{ start_time: startTime, end_time: endTime },
+				{ start_time: startTime, end_time: endTime, steps },
 				signal,
 			),
-		queryKey: [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId, selectedTime],
+		queryKey: [
+			REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS,
+			funnelId,
+			selectedTime,
+			steps.map((step) => {
+				// eslint-disable-next-line @typescript-eslint/naming-convention
+				const { latency_type, ...rest } = step;
+				return rest;
+			}),
+		],
 		enabled,
 		staleTime: 0,
 	});
@@ -142,6 +154,7 @@ export const useValidateFunnelSteps = ({
 interface SaveFunnelDescriptionPayload {
 	funnel_id: string;
 	description: string;
+	timestamp: number;
 }
 
 export const useSaveFunnelDescription = (): UseMutationResult<
@@ -149,7 +162,11 @@ export const useSaveFunnelDescription = (): UseMutationResult<
 	Error,
 	SaveFunnelDescriptionPayload
 > =>
-	useMutation({
+	useMutation<
+		SuccessResponse<FunnelData> | ErrorResponse,
+		Error,
+		SaveFunnelDescriptionPayload
+	>({
 		mutationFn: saveFunnelDescription,
 	});
 
@@ -163,18 +180,17 @@ export const useFunnelOverview = (
 	const {
 		selectedTime,
 		validTracesCount,
-		hasFunnelBeenExecuted,
+		isUpdatingFunnel,
 	} = useFunnelContext();
 	return useQuery({
-		queryFn: ({ signal }) => getFunnelOverview(funnelId, payload, signal),
+		queryFn: ({ signal }) => getFunnelOverview(payload, signal),
 		queryKey: [
 			REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW,
 			funnelId,
 			selectedTime,
-			payload.step_start ?? '',
-			payload.step_end ?? '',
+			payload.steps,
 		],
-		enabled: !!funnelId && validTracesCount > 0 && hasFunnelBeenExecuted,
+		enabled: !!funnelId && validTracesCount > 0 && !isUpdatingFunnel,
 	});
 };
 
@@ -185,18 +201,19 @@ export const useFunnelSlowTraces = (
 	const {
 		selectedTime,
 		validTracesCount,
-		hasFunnelBeenExecuted,
+		isUpdatingFunnel,
 	} = useFunnelContext();
 	return useQuery<SuccessResponse<SlowTraceData> | ErrorResponse, Error>({
-		queryFn: ({ signal }) => getFunnelSlowTraces(funnelId, payload, signal),
+		queryFn: ({ signal }) => getFunnelSlowTraces(payload, signal),
 		queryKey: [
 			REACT_QUERY_KEY.GET_FUNNEL_SLOW_TRACES,
 			funnelId,
 			selectedTime,
 			payload.step_start ?? '',
 			payload.step_end ?? '',
+			payload.steps,
 		],
-		enabled: !!funnelId && validTracesCount > 0 && hasFunnelBeenExecuted,
+		enabled: !!funnelId && validTracesCount > 0 && !isUpdatingFunnel,
 	});
 };
 
@@ -207,7 +224,7 @@ export const useFunnelErrorTraces = (
 	const {
 		selectedTime,
 		validTracesCount,
-		hasFunnelBeenExecuted,
+		isUpdatingFunnel,
 	} = useFunnelContext();
 	return useQuery({
 		queryFn: ({ signal }) => getFunnelErrorTraces(funnelId, payload, signal),
@@ -217,35 +234,31 @@ export const useFunnelErrorTraces = (
 			selectedTime,
 			payload.step_start ?? '',
 			payload.step_end ?? '',
+			payload.steps,
 		],
-		enabled: !!funnelId && validTracesCount > 0 && hasFunnelBeenExecuted,
+		enabled: !!funnelId && validTracesCount > 0 && !isUpdatingFunnel,
 	});
 };
 
 export function useFunnelStepsGraphData(
 	funnelId: string,
+	payload: FunnelStepsPayload,
 ): UseQueryResult<SuccessResponse<FunnelStepsResponse> | ErrorResponse, Error> {
 	const {
-		startTime,
-		endTime,
 		selectedTime,
 		validTracesCount,
-		hasFunnelBeenExecuted,
+		isUpdatingFunnel,
 	} = useFunnelContext();
 
 	return useQuery({
-		queryFn: ({ signal }) =>
-			getFunnelSteps(
-				funnelId,
-				{ start_time: startTime, end_time: endTime },
-				signal,
-			),
+		queryFn: ({ signal }) => getFunnelSteps(payload, signal),
 		queryKey: [
 			REACT_QUERY_KEY.GET_FUNNEL_STEPS_GRAPH_DATA,
 			funnelId,
 			selectedTime,
+			payload.steps,
 		],
-		enabled: !!funnelId && validTracesCount > 0 && hasFunnelBeenExecuted,
+		enabled: !!funnelId && validTracesCount > 0 && !isUpdatingFunnel,
 	});
 }
 
@@ -259,17 +272,18 @@ export const useFunnelStepsOverview = (
 	const {
 		selectedTime,
 		validTracesCount,
-		hasFunnelBeenExecuted,
+		isUpdatingFunnel,
 	} = useFunnelContext();
 	return useQuery({
-		queryFn: ({ signal }) => getFunnelStepsOverview(funnelId, payload, signal),
+		queryFn: ({ signal }) => getFunnelStepsOverview(payload, signal),
 		queryKey: [
 			REACT_QUERY_KEY.GET_FUNNEL_STEPS_OVERVIEW,
 			funnelId,
 			selectedTime,
 			payload.step_start ?? '',
 			payload.step_end ?? '',
+			payload.steps,
 		],
-		enabled: !!funnelId && validTracesCount > 0 && hasFunnelBeenExecuted,
+		enabled: !!funnelId && validTracesCount > 0 && !isUpdatingFunnel,
 	});
 };

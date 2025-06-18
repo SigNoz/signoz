@@ -41,16 +41,16 @@ type Manager struct {
 
 	zeus zeus.Zeus
 
-	organizationModule organization.Module
+	orgGetter organization.Getter
 }
 
-func New(licenseService licensing.Licensing, clickhouseConn clickhouse.Conn, zeus zeus.Zeus, organizationModule organization.Module) (*Manager, error) {
+func New(licenseService licensing.Licensing, clickhouseConn clickhouse.Conn, zeus zeus.Zeus, orgGetter organization.Getter) (*Manager, error) {
 	m := &Manager{
-		clickhouseConn:     clickhouseConn,
-		licenseService:     licenseService,
-		scheduler:          gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
-		zeus:               zeus,
-		organizationModule: organizationModule,
+		clickhouseConn: clickhouseConn,
+		licenseService: licenseService,
+		scheduler:      gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
+		zeus:           zeus,
+		orgGetter:      orgGetter,
 	}
 	return m, nil
 }
@@ -74,8 +74,7 @@ func (lm *Manager) Start(ctx context.Context) error {
 	return nil
 }
 func (lm *Manager) UploadUsage(ctx context.Context) {
-
-	organizations, err := lm.organizationModule.GetAll(context.Background())
+	organizations, err := lm.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		zap.L().Error("failed to get organizations", zap.Error(err))
 		return

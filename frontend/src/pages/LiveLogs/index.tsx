@@ -4,6 +4,7 @@ import LiveLogsContainer from 'container/LiveLogs/LiveLogsContainer';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { EventSourceProvider } from 'providers/EventSource';
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { useEffect } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -17,7 +18,9 @@ function LiveLogs(): JSX.Element {
 
 	return (
 		<EventSourceProvider>
-			<LiveLogsContainer />
+			<PreferenceContextProvider>
+				<LiveLogsContainer />
+			</PreferenceContextProvider>
 		</EventSourceProvider>
 	);
 }

@@ -46,7 +46,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 ) (string, error) {
 
 	if key.FieldContext != telemetrytypes.FieldContextResource {
-		return "", nil
+		return "true", nil
 	}
 
 	column, err := b.fm.ColumnFor(ctx, key)

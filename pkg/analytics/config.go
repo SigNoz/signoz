@@ -1,8 +1,6 @@
 package analytics
 
 import (
-	"fmt"
-
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
@@ -12,8 +10,12 @@ var (
 )
 
 type Config struct {
-	Enabled bool   `mapstructure:"enabled"`
-	Key     string `mapstructure:"key"`
+	Enabled bool    `mapstructure:"enabled"`
+	Segment Segment `mapstructure:"segment"`
+}
+
+type Segment struct {
+	Key string `mapstructure:"key"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -23,14 +25,20 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return Config{
 		Enabled: false,
-		Key:     key,
+		Segment: Segment{
+			Key: key,
+		},
 	}
 }
 
 func (c Config) Validate() error {
-	if c.Key != key {
-		return fmt.Errorf("cannot override key set at build time with key: %s", c.Key)
+	return nil
+}
+
+func (c Config) Provider() string {
+	if c.Enabled {
+		return "segment"
 	}
 
-	return nil
+	return "noop"
 }

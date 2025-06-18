@@ -1,11 +1,12 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
 import { Logout } from 'api/utils';
+import listOrgPreferences from 'api/v1/org/preferences/list';
+import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/getVersion';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
-import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
+import { useGetFeatureFlag } from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
 import useGetUser from 'hooks/user/useGetUser';
 import {
@@ -25,8 +26,11 @@ import {
 	LicenseState,
 	TrialInfo,
 } from 'types/api/licensesV3/getActive';
+import {
+	OrgPreference,
+	UserPreference,
+} from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
-import { OrgPreference } from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
 import { IAppContext, IUser } from './types';
@@ -45,6 +49,11 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const [orgPreferences, setOrgPreferences] = useState<OrgPreference[] | null>(
 		null,
 	);
+
+	const [userPreferences, setUserPreferences] = useState<
+		UserPreference[] | null
+	>(null);
+
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	);
@@ -147,7 +156,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		isFetching: isFetchingOrgPreferences,
 		error: orgPreferencesFetchError,
 	} = useQuery({
-		queryFn: () => getAllOrgPreferences(),
+		queryFn: () => listOrgPreferences(),
 		queryKey: ['getOrgPreferences', 'app-context'],
 		enabled: !!isLoggedIn && !!user.email && user.role === USER_ROLES.ADMIN,
 	});
@@ -162,11 +171,31 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		if (
 			!isFetchingOrgPreferences &&
 			orgPreferencesData &&
-			orgPreferencesData.payload
+			orgPreferencesData.data
 		) {
-			setOrgPreferences(orgPreferencesData.payload.data);
+			setOrgPreferences(orgPreferencesData.data);
 		}
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
+
+	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
+	const {
+		data: userPreferencesData,
+		isFetching: isFetchingUserPreferences,
+	} = useQuery({
+		queryFn: () => listUserPreferences(),
+		queryKey: ['getAllUserPreferences', 'app-context'],
+		enabled: !!isLoggedIn && !!user.email,
+	});
+
+	useEffect(() => {
+		if (
+			userPreferencesData &&
+			userPreferencesData.data &&
+			!isFetchingUserPreferences
+		) {
+			setUserPreferences(userPreferencesData.data);
+		}
+	}, [userPreferencesData, isFetchingUserPreferences, isLoggedIn]);
 
 	function updateUser(user: IUser): void {
 		setUser((prev) => ({
@@ -174,6 +203,23 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			...user,
 		}));
 	}
+
+	const updateUserPreferenceInContext = useCallback(
+		(userPreference: UserPreference): void => {
+			setUserPreferences((prev) => {
+				const index = prev?.findIndex((e) => e.name === userPreference.name);
+				if (index !== undefined) {
+					return [
+						...(prev?.slice(0, index) || []),
+						userPreference,
+						...(prev?.slice(index + 1, prev.length) || []),
+					];
+				}
+				return prev;
+			});
+		},
+		[],
+	);
 
 	function updateOrgPreferences(orgPreferences: OrgPreference[]): void {
 		setOrgPreferences(orgPreferences);
@@ -235,7 +281,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const value: IAppContext = useMemo(
 		() => ({
 			user,
-			activeLicense,
+			userPreferences,
 			featureFlags,
 			trialInfo,
 			orgPreferences,
@@ -249,9 +295,11 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			activeLicenseFetchError,
 			featureFlagsFetchError,
 			orgPreferencesFetchError,
+			activeLicense,
 			activeLicenseRefetch,
 			updateUser,
 			updateOrgPreferences,
+			updateUserPreferenceInContext,
 			updateOrg,
 			versionData: versionData?.payload || null,
 		}),
@@ -259,6 +307,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			trialInfo,
 			activeLicense,
 			activeLicenseFetchError,
+			userPreferences,
 			featureFlags,
 			featureFlagsFetchError,
 			isFetchingActiveLicense,
@@ -268,8 +317,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isLoggedIn,
 			org,
 			orgPreferences,
-			orgPreferencesFetchError,
 			activeLicenseRefetch,
+			orgPreferencesFetchError,
+			updateUserPreferenceInContext,
 			updateOrg,
 			user,
 			userFetchError,

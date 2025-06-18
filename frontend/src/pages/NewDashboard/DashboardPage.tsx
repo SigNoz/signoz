@@ -4,6 +4,7 @@ import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import NewDashboard from 'container/NewDashboard';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { useEffect } from 'react';
 import { ErrorType } from 'types/common';
 
@@ -19,9 +20,9 @@ function DashboardPage(): JSX.Element {
 		: 'Something went wrong';
 
 	useEffect(() => {
-		const dashboardTitle = dashboardResponse.data?.data.title;
+		const dashboardTitle = dashboardResponse.data?.data.data.title;
 		document.title = dashboardTitle || document.title;
-	}, [dashboardResponse.data?.data.title, isFetching]);
+	}, [dashboardResponse.data?.data.data.title, isFetching]);
 
 	if (isError && !isFetching && errorMessage === ErrorType.NotFound) {
 		return <NotFound />;
@@ -35,7 +36,11 @@ function DashboardPage(): JSX.Element {
 		return <Spinner tip="Loading.." />;
 	}
 
-	return <NewDashboard />;
+	return (
+		<PreferenceContextProvider>
+			<NewDashboard />
+		</PreferenceContextProvider>
+	);
 }
 
 export default DashboardPage;

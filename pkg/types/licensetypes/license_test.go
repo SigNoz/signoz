@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -75,7 +74,7 @@ func TestNewLicenseV3(t *testing.T) {
 		},
 		{
 			name: "Parse the entire license properly",
-			data: []byte(`{"id":"0196f794-ff30-7bee-a5f4-ef5ad315715e","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"ENTERPRISE"},"valid_from": 1730899309,"valid_until": -1}`),
+			data: []byte(`{"id":"0196f794-ff30-7bee-a5f4-ef5ad315715e","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"ENTERPRISE"},"valid_from": 1730899309,"valid_until": -1,"state":"test","free_until":"2025-05-16T11:17:48.124202Z"}`),
 			pass: true,
 			expected: &License{
 				ID:  valuer.MustNewUUID("0196f794-ff30-7bee-a5f4-ef5ad315715e"),
@@ -88,12 +87,16 @@ func TestNewLicenseV3(t *testing.T) {
 					"status":      "ACTIVE",
 					"valid_from":  float64(1730899309),
 					"valid_until": float64(-1),
+					"state":       "test",
+					"free_until":  "2025-05-16T11:17:48.124202Z",
 				},
 				PlanName:       PlanNameEnterprise,
 				ValidFrom:      1730899309,
 				ValidUntil:     -1,
-				Status:         "ACTIVE",
-				Features:       make([]*featuretypes.GettableFeature, 0),
+				Status:         valuer.NewString("ACTIVE"),
+				State:          "test",
+				FreeUntil:      time.Date(2025, 5, 16, 11, 17, 48, 124202000, time.UTC),
+				Features:       make([]*Feature, 0),
 				OrganizationID: valuer.MustNewUUID("0196f794-ff30-7bee-a5f4-ef5ad315715e"),
 			},
 		},
@@ -116,8 +119,8 @@ func TestNewLicenseV3(t *testing.T) {
 				PlanName:       PlanNameBasic,
 				ValidFrom:      1730899309,
 				ValidUntil:     -1,
-				Status:         "INVALID",
-				Features:       make([]*featuretypes.GettableFeature, 0),
+				Status:         valuer.NewString("INVALID"),
+				Features:       make([]*Feature, 0),
 				OrganizationID: valuer.MustNewUUID("0196f794-ff30-7bee-a5f4-ef5ad315715e"),
 			},
 		},
@@ -140,8 +143,8 @@ func TestNewLicenseV3(t *testing.T) {
 				PlanName:        PlanNameEnterprise,
 				ValidFrom:       1234,
 				ValidUntil:      5678,
-				Status:          "ACTIVE",
-				Features:        make([]*featuretypes.GettableFeature, 0),
+				Status:          valuer.NewString("ACTIVE"),
+				Features:        make([]*Feature, 0),
 				CreatedAt:       time.Time{},
 				UpdatedAt:       time.Time{},
 				LastValidatedAt: time.Time{},
@@ -153,7 +156,7 @@ func TestNewLicenseV3(t *testing.T) {
 	for _, tc := range testCases {
 		license, err := NewLicense(tc.data, valuer.MustNewUUID("0196f794-ff30-7bee-a5f4-ef5ad315715e"))
 		if license != nil {
-			license.Features = make([]*featuretypes.GettableFeature, 0)
+			license.Features = make([]*Feature, 0)
 			delete(license.Data, "features")
 		}
 

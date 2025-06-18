@@ -11,5 +11,10 @@
 /pkg/errors/ @grandwizard28
 /pkg/factory/ @grandwizard28
 /pkg/types/ @grandwizard28
-/pkg/sqlmigration/ @vikrantgupta25
 .golangci.yml @grandwizard28
+/pkg/zeus/ @vikrantgupta25
+/pkg/licensing/ @vikrantgupta25
+/pkg/sqlmigration/ @vikrantgupta25
+/ee/zeus/ @vikrantgupta25
+/ee/licensing/ @vikrantgupta25
+/ee/sqlmigration/ @vikrantgupta25

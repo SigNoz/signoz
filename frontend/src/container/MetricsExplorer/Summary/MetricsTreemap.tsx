@@ -154,7 +154,7 @@ function MetricsTreemap({
 													<foreignObject
 														width={nodeWidth}
 														height={nodeHeight}
-														onClick={(): void => openMetricDetails(node.data.id)}
+														onClick={(): void => openMetricDetails(node.data.id, 'treemap')}
 													>
 														<div
 															style={{

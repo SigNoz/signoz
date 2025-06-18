@@ -6,11 +6,13 @@ import { Alert, Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
-import getAllUserPreferences from 'api/preferences/getAllUserPreference';
-import updateUserPreferenceAPI from 'api/preferences/updateUserPreference';
+import listUserPreferences from 'api/v1/user/preferences/list';
+import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import Header from 'components/Header/Header';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
@@ -28,8 +30,8 @@ import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
+import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
-import { UserPreference } from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -161,10 +163,20 @@ export default function Home(): JSX.Element {
 		enabled: !!query,
 	});
 
-	const { data: k8sPodsData } = useGetK8sPodsList(query as K8sPodsListPayload, {
-		queryKey: ['K8sPodsList', query],
-		enabled: !!query,
-	});
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
+	const { data: k8sPodsData } = useGetK8sPodsList(
+		query as K8sPodsListPayload,
+		{
+			queryKey: ['K8sPodsList', query],
+			enabled: !!query,
+		},
+		undefined,
+		dotMetricsEnabled,
+	);
 
 	const [isLogsIngestionActive, setIsLogsIngestionActive] = useState(false);
 	const [isTracesIngestionActive, setIsTracesIngestionActive] = useState(false);
@@ -173,18 +185,25 @@ export default function Home(): JSX.Element {
 	);
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
-		const checklistSkipped = userPreferences?.find(
-			(preference) => preference.key === 'WELCOME_CHECKLIST_DO_LATER',
-		)?.value;
+		const checklistSkipped = Boolean(
+			userPreferences?.find(
+				(preference) =>
+					preference.name === ORG_PREFERENCES.WELCOME_CHECKLIST_DO_LATER,
+			)?.value,
+		);
 
 		const updatedChecklistItems = cloneDeep(checklistItems);
 
 		const newChecklistItems = updatedChecklistItems.map((item) => {
 			const newItem = { ...item };
-			newItem.isSkipped =
+
+			const isSkipped = Boolean(
 				userPreferences?.find(
-					(preference) => preference.key === item.skippedPreferenceKey,
-				)?.value || false;
+					(preference) => preference.name === item.skippedPreferenceKey,
+				)?.value,
+			);
+
+			newItem.isSkipped = isSkipped || false;
 			return newItem;
 		});
 
@@ -195,13 +214,13 @@ export default function Home(): JSX.Element {
 
 	// Fetch User Preferences
 	const { refetch: refetchUserPreferences } = useQuery({
-		queryFn: () => getAllUserPreferences(),
+		queryFn: () => listUserPreferences(),
 		queryKey: ['getUserPreferences'],
 		enabled: true,
 		refetchOnWindowFocus: false,
 		onSuccess: (response) => {
-			if (response.payload && response.payload.data) {
-				processUserPreferences(response.payload.data);
+			if (response.data) {
+				processUserPreferences(response.data);
 			}
 
 			setLoadingUserPreferences(false);
@@ -228,7 +247,7 @@ export default function Home(): JSX.Element {
 		setUpdatingUserPreferences(true);
 
 		updateUserPreference({
-			preferenceID: 'WELCOME_CHECKLIST_DO_LATER',
+			name: ORG_PREFERENCES.WELCOME_CHECKLIST_DO_LATER,
 			value: true,
 		});
 	};
@@ -238,7 +257,7 @@ export default function Home(): JSX.Element {
 			setUpdatingUserPreferences(true);
 
 			updateUserPreference({
-				preferenceID: item.skippedPreferenceKey,
+				name: item.skippedPreferenceKey,
 				value: true,
 			});
 		}
