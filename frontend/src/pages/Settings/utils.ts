@@ -63,11 +63,7 @@ export const getRoutes = (
 	}
 
 	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
-		settings.push(
-			...customDomainSettings(t),
-			...billingSettings(t),
-			...keyboardShortcuts(t),
-		);
+		settings.push(...customDomainSettings(t), ...billingSettings(t));
 	}
 
 	settings.push(
