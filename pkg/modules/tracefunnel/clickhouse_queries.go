@@ -33,7 +33,7 @@ FROM (
         trace_id,
         minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
         minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time
-    FROM signoz_traces.signoz_index_v3
+    FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
@@ -42,7 +42,7 @@ FROM (
             (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[10]s)
         )
     GROUP BY trace_id
-    HAVING t1_time > 0 AND t2_time > t1_time
+    HAVING t1_time > 0
 )
 ORDER BY t1_time
 LIMIT 5;`
@@ -96,7 +96,7 @@ FROM (
         minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
         minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
         minIf(timestamp, serviceName = step3.1 AND name = step3.2) AS t3_time
-    FROM signoz_traces.signoz_index_v3
+    FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
@@ -105,7 +105,7 @@ FROM (
          OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[14]s)
         )
     GROUP BY trace_id
-    HAVING t1_time > 0 AND t2_time > t1_time AND t3_time > t2_time
+    HAVING t1_time > 0
 )
 ORDER BY t1_time
 LIMIT 5;`
@@ -161,7 +161,7 @@ WITH
         minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
         toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
         toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error
-    FROM signoz_traces.signoz_index_v3
+    FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
@@ -170,7 +170,7 @@ WITH
             (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[12]s)
         )
     GROUP BY trace_id
-    HAVING t1_time > 0 AND t2_time > t1_time
+    HAVING t1_time > 0
 )
 
 , totals AS (
@@ -252,7 +252,7 @@ WITH
         toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
         toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error,
         toUInt8(anyIf(has_error, serviceName = step3.1 AND name = step3.2)) AS s3_error
-    FROM signoz_traces.signoz_index_v3
+    FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
@@ -261,13 +261,14 @@ WITH
          OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[17]s)
         )
     GROUP BY trace_id
+    HAVING t1_time > 0
 )
 
 , totals AS (
     SELECT
         count(DISTINCT trace_id) AS total_s1_spans,
         count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
-        count(DISTINCT CASE WHEN t3_time > t2_time THEN trace_id END) AS total_s3_spans,
+        count(DISTINCT CASE WHEN t3_time > t2_time AND t2_time > t1_time THEN trace_id END) AS total_s3_spans,
 
         count(DISTINCT CASE WHEN s1_error = 1 THEN trace_id END) AS sum_s1_error,
         count(DISTINCT CASE WHEN s2_error = 1 THEN trace_id END) AS sum_s2_error,
@@ -337,7 +338,7 @@ SELECT
     count(DISTINCT trace_id) AS total_s1_spans,
     count(DISTINCT CASE WHEN t1_error = 1 THEN trace_id END) AS total_s1_errored_spans,
     count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
-    count(DISTINCT CASE WHEN t2_time > t1_time AND t2_error = 1 THEN trace_id END) AS total_s2_errored_spans
+    count(DISTINCT CASE WHEN t2_error = 1 THEN trace_id END) AS total_s2_errored_spans
 FROM (
     SELECT
         trace_id,
@@ -345,7 +346,7 @@ FROM (
         minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
         toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS t1_error,
         toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS t2_error
-    FROM signoz_traces.signoz_index_v3
+    FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
@@ -404,8 +405,8 @@ SELECT
     count(DISTINCT CASE WHEN t1_error = 1 THEN trace_id END) AS total_s1_errored_spans,
     count(DISTINCT CASE WHEN t2_time > t1_time THEN trace_id END) AS total_s2_spans,
     count(DISTINCT CASE WHEN t2_time > t1_time AND t2_error = 1 THEN trace_id END) AS total_s2_errored_spans,
-    count(DISTINCT CASE WHEN t2_time > t1_time AND t3_time > t2_time THEN trace_id END) AS total_s3_spans,
-    count(DISTINCT CASE WHEN t2_time > t1_time AND t3_time > t2_time AND t3_error = 1 THEN trace_id END) AS total_s3_errored_spans
+    count(DISTINCT CASE WHEN t3_time > t2_time AND t2_time > t1_time THEN trace_id END) AS total_s3_spans,
+    count(DISTINCT CASE WHEN t3_time > t2_time AND t2_time > t1_time AND t3_error = 1 THEN trace_id END) AS total_s3_errored_spans
 FROM (
     SELECT
         trace_id,
@@ -415,7 +416,7 @@ FROM (
         toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS t1_error,
         toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS t2_error,
         toUInt8(anyIf(has_error, serviceName = step3.1 AND name = step3.2)) AS t3_error
-    FROM signoz_traces.signoz_index_v3
+    FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
@@ -424,7 +425,7 @@ FROM (
          OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[14]s)
         )
     GROUP BY trace_id
-    HAVING t1_time > 0 AND t2_time > t1_time AND t3_time > t2_time
+    HAVING t1_time > 0
 ) AS funnel;
 `
 	return fmt.Sprintf(queryTemplate,
@@ -477,7 +478,7 @@ FROM (
         minIf(timestamp, serviceName = step1.1 AND name = step1.2) AS t1_time,
         minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
         count() AS span_count
-    FROM signoz_traces.signoz_index_v3
+    FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
@@ -539,7 +540,7 @@ FROM (
         toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS t1_error,
         toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS t2_error,
         count() AS span_count
-    FROM signoz_traces.signoz_index_v3
+    FROM signoz_traces.distributed_signoz_index_v3
     WHERE
         timestamp BETWEEN start_ts AND end_ts
         AND (
@@ -625,7 +626,7 @@ FROM (
             minIf(timestamp, serviceName = step2.1 AND name = step2.2) AS t2_time,
             toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
             toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error
-        FROM signoz_traces.signoz_index_v3
+        FROM signoz_traces.distributed_signoz_index_v3
         WHERE
             timestamp BETWEEN start_ts AND end_ts
             AND (
@@ -634,6 +635,7 @@ FROM (
                 (serviceName = step2.1 AND name = step2.2 AND (contains_error_t2 = 0 OR has_error = true) %[12]s)
             )
         GROUP BY trace_id
+        HAVING t1_time > 0
     ) AS funnel
 ) AS totals;
 `
@@ -701,7 +703,7 @@ WITH
             toUInt8(anyIf(has_error, serviceName = step1.1 AND name = step1.2)) AS s1_error,
             toUInt8(anyIf(has_error, serviceName = step2.1 AND name = step2.2)) AS s2_error,
             toUInt8(anyIf(has_error, serviceName = step3.1 AND name = step3.2)) AS s3_error
-        FROM signoz_traces.signoz_index_v3
+        FROM signoz_traces.distributed_signoz_index_v3
         WHERE
             timestamp BETWEEN start_ts AND end_ts
             AND (
@@ -710,6 +712,7 @@ WITH
              OR (serviceName = step3.1 AND name = step3.2 AND (contains_error_t3 = 0 OR has_error = true) %[17]s)
             )
         GROUP BY trace_id
+        HAVING t1_time > 0
     )
 `
 
