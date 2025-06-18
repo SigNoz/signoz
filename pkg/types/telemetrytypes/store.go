@@ -2,6 +2,8 @@ package telemetrytypes
 
 import (
 	"context"
+
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 )
 
 // MetadataStore is the interface for the telemetry metadata store.
@@ -22,4 +24,10 @@ type MetadataStore interface {
 
 	// GetAllValues returns a list of all values.
 	GetAllValues(ctx context.Context, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, error)
+
+	// FetchTemporality fetches the temporality for metric
+	FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error)
+
+	// FetchTemporalityMulti fetches the temporality for multiple metrics
+	FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error)
 }

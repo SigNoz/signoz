@@ -68,7 +68,7 @@ func CollisionHandledFinalExpr(
 				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
 			} else {
 				// not even a close match, return an error
-				return "", nil, err
+				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field %s not found", field.Name)
 			}
 		} else {
 			for _, key := range keysForField {

@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/analyticstypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -45,19 +44,7 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 		return nil, err
 	}
 
-	module.analytics.Send(ctx,
-		analyticstypes.Track{
-			UserId:     creator.String(),
-			Event:      "Dashboard Created",
-			Properties: analyticstypes.NewPropertiesFromMap(dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard})),
-			Context: &analyticstypes.Context{
-				Extra: map[string]interface{}{
-					analyticstypes.KeyGroupID: orgID,
-				},
-			},
-		},
-	)
-
+	module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
 	return dashboard, nil
 }
 

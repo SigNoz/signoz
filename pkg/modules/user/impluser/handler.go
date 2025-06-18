@@ -326,7 +326,7 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	user.UpdatedAt = time.Now()
 
-	updatedUser, err := h.module.UpdateUser(ctx, claims.OrgID, id, &user)
+	updatedUser, err := h.module.UpdateUser(ctx, claims.OrgID, id, &user, claims.UserID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -347,7 +347,7 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.module.DeleteUser(ctx, claims.OrgID, id); err != nil {
+	if err := h.module.DeleteUser(ctx, claims.OrgID, id, claims.UserID); err != nil {
 		render.Error(w, err)
 		return
 	}

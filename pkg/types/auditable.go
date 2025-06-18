@@ -8,6 +8,6 @@ type TimeAuditable struct {
 }
 
 type UserAuditable struct {
-	CreatedBy string `bun:"created_by" json:"createdBy"`
-	UpdatedBy string `bun:"updated_by" json:"updatedBy"`
+	CreatedBy string `bun:"created_by,type:text" json:"createdBy"`
+	UpdatedBy string `bun:"updated_by,type:text" json:"updatedBy"`
 }

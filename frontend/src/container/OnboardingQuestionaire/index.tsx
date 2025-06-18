@@ -8,6 +8,7 @@ import updateOrgPreferenceAPI from 'api/v1/org/preferences/name/update';
 import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingInvitesContainer';
 import { useNotifications } from 'hooks/useNotifications';
@@ -196,7 +197,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 		setUpdatingOrgOnboardingStatus(true);
 		updateOrgPreference({
-			name: 'org_onboarding',
+			name: ORG_PREFERENCES.ORG_ONBOARDING,
 			value: true,
 		});
 	};
