@@ -635,7 +635,7 @@ func TestJsonEnrich(t *testing.T) {
 	for _, tt := range testJSONFilterEnrichData {
 		Convey(tt.Name, t, func() {
 			res := jsonFilterEnrich(tt.Filter)
-			So(res, ShouldEqual, tt.Result)
+			So(res, ShouldResemble, tt.Result)
 		})
 	}
 }
