@@ -520,6 +520,28 @@ var testJSONFilterEnrichData = []struct {
 		},
 	},
 	{
+		Name: "int64 string",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.intx",
+				DataType: v3.AttributeKeyDataTypeUnspecified,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "=",
+			Value:    "0",
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.intx",
+				DataType: v3.AttributeKeyDataTypeInt64,
+				Type:     v3.AttributeKeyTypeUnspecified,
+				IsJSON:   true,
+			},
+			Operator: "=",
+			Value:    int64(0),
+		},
+	},
+	{
 		Name: "float64",
 		Filter: v3.FilterItem{
 			Key: v3.AttributeKey{
@@ -613,7 +635,7 @@ func TestJsonEnrich(t *testing.T) {
 	for _, tt := range testJSONFilterEnrichData {
 		Convey(tt.Name, t, func() {
 			res := jsonFilterEnrich(tt.Filter)
-			So(res, ShouldResemble, tt.Result)
+			So(res, ShouldEqual, tt.Result)
 		})
 	}
 }
