@@ -148,6 +148,7 @@ func BuildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 	return queryString, nil
 }
 
+// TODO: remove this function as this is identical to BuildTracesFilterQuery
 func BuildTracesFilter(fs *v3.FilterSet) (string, error) {
 	var conditions []string
 
