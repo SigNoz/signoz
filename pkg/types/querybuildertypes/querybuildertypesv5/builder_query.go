@@ -4,7 +4,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-type QueryBuilderQuery struct {
+type QueryBuilderQuery[T any] struct {
 	// name of the query, mainly used when query is used in formula
 	Name string `json:"name"`
 
@@ -16,7 +16,7 @@ type QueryBuilderQuery struct {
 
 	// we want to support multiple aggregations
 	// currently supported: []Aggregation, []MetricAggregation
-	Aggregations []any `json:"aggregations,omitempty"`
+	Aggregations []T `json:"aggregations,omitempty"`
 
 	// disabled if true, the query will not be executed
 	Disabled bool `json:"disabled,omitempty"`
@@ -55,4 +55,25 @@ type QueryBuilderQuery struct {
 
 	// functions to apply to the query
 	Functions []Function `json:"functions,omitempty"`
+
+	// ShiftBy is extracted from timeShift function for internal use
+	// This field is not serialized to JSON
+	ShiftBy int64 `json:"-"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+func (q *QueryBuilderQuery[T]) UnmarshalJSON(data []byte) error {
+	// Define a type alias to avoid infinite recursion
+	type Alias QueryBuilderQuery[T]
+
+	var temp Alias
+	// Use UnmarshalJSONWithContext for better error messages
+	if err := UnmarshalJSONWithContext(data, &temp, "query spec"); err != nil {
+		return err
+	}
+
+	// Copy the decoded values back to the original struct
+	*q = QueryBuilderQuery[T](temp)
+
+	return nil
 }

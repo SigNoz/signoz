@@ -26,6 +26,7 @@ import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { VIEWS } from '../constants';
 import { getHostTracesQueryPayload, selectedColumns } from './constants';
 import { getListColumns } from './utils';
 
@@ -39,7 +40,10 @@ interface Props {
 		interval: Time | CustomTimeType,
 		dateTimeRange?: [number, number],
 	) => void;
-	handleChangeTracesFilters: (value: IBuilderQuery['filters']) => void;
+	handleChangeTracesFilters: (
+		value: IBuilderQuery['filters'],
+		view: VIEWS,
+	) => void;
 	tracesFilters: IBuilderQuery['filters'];
 	selectedInterval: Time;
 }
@@ -70,14 +74,16 @@ function HostMetricTraces({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: [],
+							items: tracesFilters.items.filter(
+								(item) => item.key?.key !== 'host.name',
+							),
 							op: 'AND',
 						},
 					},
 				],
 			},
 		}),
-		[currentQuery],
+		[currentQuery, tracesFilters.items],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
@@ -153,14 +159,16 @@ function HostMetricTraces({
 					{query && (
 						<QueryBuilderSearch
 							query={query}
-							onChange={handleChangeTracesFilters}
+							onChange={(value): void =>
+								handleChangeTracesFilters(value, VIEWS.TRACES)
+							}
 							disableNavigationShortcuts
 						/>
 					)}
 				</div>
 				<div className="datetime-section">
 					<DateTimeSelectionV2
-						showAutoRefresh={false}
+						showAutoRefresh
 						showRefreshText={false}
 						hideShareModal
 						isModalTimeSelection={isModalTimeSelection}

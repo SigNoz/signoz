@@ -5,10 +5,15 @@ import { ROLES, USER_ROLES } from 'types/roles';
 import {
 	alertChannels,
 	apiKeys,
+	billingSettings,
+	createAlertChannels,
 	customDomainSettings,
+	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
+	keyboardShortcuts,
 	multiIngestionSettings,
+	mySettings,
 	organizationSettings,
 } from './config';
 
@@ -27,7 +32,12 @@ export const getRoutes = (
 	const isEditor = userRole === USER_ROLES.EDITOR;
 
 	if (isWorkspaceBlocked && isAdmin) {
-		settings.push(...organizationSettings(t));
+		settings.push(
+			...organizationSettings(t),
+			...mySettings(t),
+			...billingSettings(t),
+			...keyboardShortcuts(t),
+		);
 
 		return settings;
 	}
@@ -48,13 +58,20 @@ export const getRoutes = (
 
 	settings.push(...alertChannels(t));
 
-	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
+	if (isAdmin) {
 		settings.push(...apiKeys(t));
 	}
 
-	if (isCloudUser && isAdmin) {
-		settings.push(...customDomainSettings(t));
+	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
+		settings.push(...customDomainSettings(t), ...billingSettings(t));
 	}
+
+	settings.push(
+		...mySettings(t),
+		...createAlertChannels(t),
+		...editAlertChannels(t),
+		...keyboardShortcuts(t),
+	);
 
 	return settings;
 };

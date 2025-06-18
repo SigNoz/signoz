@@ -3,6 +3,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import getAll from 'api/v1/user/get';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
@@ -14,6 +15,7 @@ import { matchPath, useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
+import { OrgPreference } from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
 import { UserResponse } from 'types/api/user/getUser';
 import { USER_ROLES } from 'types/roles';
@@ -36,8 +38,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		user,
 		isLoggedIn: isLoggedInState,
 		isFetchingOrgPreferences,
-		activeLicenseV3,
-		isFetchingActiveLicenseV3,
+		activeLicense,
+		isFetchingActiveLicense,
 		trialInfo,
 		featureFlags,
 	} = useAppContext();
@@ -78,7 +80,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const checkFirstTimeUser = useCallback((): boolean => {
 		const users = usersData?.data || [];
 
-		const remainingUsers = users.filter(
+		const remainingUsers = (Array.isArray(users) ? users : []).filter(
 			(user) => user.email !== 'admin@signoz.cloud',
 		);
 
@@ -95,7 +97,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			usersData.data
 		) {
 			const isOnboardingComplete = orgPreferences?.find(
-				(preference: Record<string, any>) => preference.key === 'ORG_ONBOARDING',
+				(preference: OrgPreference) =>
+					preference.name === ORG_PREFERENCES.ORG_ONBOARDING,
 			)?.value;
 
 			const isFirstUser = checkFirstTimeUser();
@@ -123,7 +126,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 		const isRouteEnabledForWorkspaceBlockedState =
 			isAdmin &&
-			(path === ROUTES.ORG_SETTINGS ||
+			(path === ROUTES.SETTINGS ||
+				path === ROUTES.ORG_SETTINGS ||
 				path === ROUTES.BILLING ||
 				path === ROUTES.MY_SETTINGS);
 
@@ -145,16 +149,16 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+		if (!isFetchingActiveLicense && activeLicense) {
 			const currentRoute = mapRoutes.get('current');
 
-			const isTerminated = activeLicenseV3.state === LicenseState.TERMINATED;
-			const isExpired = activeLicenseV3.state === LicenseState.EXPIRED;
-			const isCancelled = activeLicenseV3.state === LicenseState.CANCELLED;
+			const isTerminated = activeLicense.state === LicenseState.TERMINATED;
+			const isExpired = activeLicense.state === LicenseState.EXPIRED;
+			const isCancelled = activeLicense.state === LicenseState.CANCELLED;
 
 			const isWorkspaceAccessRestricted = isTerminated || isExpired || isCancelled;
 
-			const { platform } = activeLicenseV3;
+			const { platform } = activeLicense;
 
 			if (
 				isWorkspaceAccessRestricted &&
@@ -164,26 +168,26 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				navigateToWorkSpaceAccessRestricted(currentRoute);
 			}
 		}
-	}, [isFetchingActiveLicenseV3, activeLicenseV3, mapRoutes, pathname]);
+	}, [isFetchingActiveLicense, activeLicense, mapRoutes, pathname]);
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3) {
+		if (!isFetchingActiveLicense) {
 			const currentRoute = mapRoutes.get('current');
 			const shouldBlockWorkspace = trialInfo?.workSpaceBlock;
 
 			if (
 				shouldBlockWorkspace &&
 				currentRoute &&
-				activeLicenseV3?.platform === LicensePlatform.CLOUD
+				activeLicense?.platform === LicensePlatform.CLOUD
 			) {
 				navigateToWorkSpaceBlocked(currentRoute);
 			}
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
-		isFetchingActiveLicenseV3,
+		isFetchingActiveLicense,
 		trialInfo?.workSpaceBlock,
-		activeLicenseV3?.platform,
+		activeLicense?.platform,
 		mapRoutes,
 		pathname,
 	]);
@@ -197,20 +201,20 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+		if (!isFetchingActiveLicense && activeLicense) {
 			const currentRoute = mapRoutes.get('current');
 			const shouldSuspendWorkspace =
-				activeLicenseV3.state === LicenseState.DEFAULTED;
+				activeLicense.state === LicenseState.DEFAULTED;
 
 			if (
 				shouldSuspendWorkspace &&
 				currentRoute &&
-				activeLicenseV3.platform === LicensePlatform.CLOUD
+				activeLicense.platform === LicensePlatform.CLOUD
 			) {
 				navigateToWorkSpaceSuspended(currentRoute);
 			}
 		}
-	}, [isFetchingActiveLicenseV3, activeLicenseV3, mapRoutes, pathname]);
+	}, [isFetchingActiveLicense, activeLicense, mapRoutes, pathname]);
 
 	useEffect(() => {
 		if (org && org.length > 0 && org[0].id !== undefined) {

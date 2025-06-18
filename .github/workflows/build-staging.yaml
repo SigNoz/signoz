@@ -66,7 +66,8 @@ jobs:
           echo 'CI=1' > frontend/.env
           echo 'TUNNEL_URL="${{ secrets.NP_TUNNEL_URL }}"' >> frontend/.env
           echo 'TUNNEL_DOMAIN="${{ secrets.NP_TUNNEL_DOMAIN }}"' >> frontend/.env
-          echo 'USERPILOT_KEY="${{ secrets.NP_USERPILOT_KEY }}"' >> frontend/.env
+          echo 'PYLON_APP_ID="${{ secrets.NP_PYLON_APP_ID }}"' >> frontend/.env
+          echo 'APPCUES_APP_ID="${{ secrets.NP_APPCUES_APP_ID }}"' >> frontend/.env
       - name: cache-dotenv
         uses: actions/cache@v4
         with:
@@ -106,7 +107,8 @@ jobs:
         -X github.com/SigNoz/signoz/ee/zeus.url=https://api.staging.signoz.cloud
         -X github.com/SigNoz/signoz/ee/zeus.deprecatedURL=https://license.staging.signoz.cloud
         -X github.com/SigNoz/signoz/ee/query-service/constants.ZeusURL=https://api.staging.signoz.cloud
-        -X github.com/SigNoz/signoz/ee/query-service/constants.LicenseSignozIo=https://license.staging.signoz.cloud/api/v1'
+        -X github.com/SigNoz/signoz/ee/query-service/constants.LicenseSignozIo=https://license.staging.signoz.cloud/api/v1
+        -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr'
       GO_CGO_ENABLED: 1
       DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
       DOCKER_DOCKERFILE_PATH: ./ee/query-service/Dockerfile.multi-arch

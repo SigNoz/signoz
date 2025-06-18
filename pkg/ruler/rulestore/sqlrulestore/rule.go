@@ -4,20 +4,16 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 )
 
 type rule struct {
-	*sqlx.DB
 	sqlstore sqlstore.SQLStore
 }
 
-func NewRuleStore(db *sqlx.DB, store sqlstore.SQLStore) ruletypes.RuleStore {
-	return &rule{sqlstore: store, DB: db}
+func NewRuleStore(store sqlstore.SQLStore) ruletypes.RuleStore {
+	return &rule{sqlstore: store}
 }
 
 func (r *rule) CreateRule(ctx context.Context, storedRule *ruletypes.Rule, cb func(context.Context, valuer.UUID) error) (valuer.UUID, error) {
@@ -86,7 +82,6 @@ func (r *rule) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.R
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return rules, err
 	}
 
@@ -102,47 +97,7 @@ func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.Ru
 		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, err
 	}
 	return rule, nil
-}
-
-func (r *rule) GetRuleUUID(ctx context.Context, ruleID int) (*ruletypes.RuleHistory, error) {
-	ruleHistory := new(ruletypes.RuleHistory)
-	err := r.sqlstore.
-		BunDB().
-		NewSelect().
-		Model(ruleHistory).
-		Where("rule_id = ?", ruleID).
-		Scan(ctx)
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, err
-	}
-	return ruleHistory, nil
-}
-
-func (r *rule) ListOrgs(ctx context.Context) ([]valuer.UUID, error) {
-	orgIDStrs := make([]string, 0)
-	err := r.sqlstore.
-		BunDB().
-		NewSelect().
-		Model(new(types.Organization)).
-		Column("id").
-		Scan(ctx, &orgIDStrs)
-	if err != nil {
-		return nil, err
-	}
-
-	orgIDs := make([]valuer.UUID, len(orgIDStrs))
-	for idx, orgIDStr := range orgIDStrs {
-		orgID, err := valuer.NewUUID(orgIDStr)
-		if err != nil {
-			return nil, err
-		}
-		orgIDs[idx] = orgID
-	}
-
-	return orgIDs, nil
 }

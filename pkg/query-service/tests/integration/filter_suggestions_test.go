@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -8,18 +9,23 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
-	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/analytics/analyticstest"
+	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
+	"github.com/SigNoz/signoz/pkg/sharder"
+	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -299,24 +305,28 @@ func (tb *FilterSuggestionsTestBed) GetQBFilterSuggestionsForLogs(
 func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	testDB := utils.NewQueryServiceDBForTests(t)
 
-	fm := featureManager.StartManager()
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
-	userModule := impluser.NewModule(impluser.NewStore(testDB))
-	userHandler := impluser.NewHandler(userModule)
-	modules := signoz.NewModules(testDB, userModule)
-	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	require.NoError(t, err)
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), sharder)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter)
+	require.NoError(t, err)
+	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	emailing := emailingtest.New()
+	analytics := analyticstest.New()
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	handlers := signoz.NewHandlers(modules)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		Reader:       reader,
-		FeatureFlags: fm,
-		JWT:          jwt,
+		Reader: reader,
+		JWT:    jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
-			Handlers: signoz.NewHandlers(modules, userHandler),
+			Handlers: handlers,
 		},
-		QuickFilters: quickFilterModule,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
@@ -324,13 +334,12 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 
 	router := app.NewRouter()
 	//add the jwt middleware
-	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	router.Use(middleware.NewAuth(jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, sharder, instrumentationtest.New().Logger()).Wrap)
 	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterQueryRangeV3Routes(router, am)
 
-	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
-	user, apiErr := createTestUser(organizationModule, userModule)
+	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
@@ -347,7 +356,7 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
-		userModule:     userModule,
+		userModule:     modules.User,
 	}
 }
 

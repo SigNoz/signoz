@@ -23,13 +23,14 @@ import { Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import {
 	LicensePlatform,
-	LicenseV3ResModel,
+	LicenseResModel,
 } from 'types/api/licensesV3/getActive';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
 
+import { FeatureKeys } from '../../../constants/features';
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
 
@@ -42,7 +43,7 @@ const EmptyState = memo(
 		activeLicenseV3,
 	}: {
 		user: IUser;
-		activeLicenseV3: LicenseV3ResModel | null;
+		activeLicenseV3: LicenseResModel | null;
 	}): JSX.Element => (
 		<div className="empty-state-container">
 			<div className="empty-state-content-container">
@@ -146,7 +147,7 @@ function ServiceMetrics({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const { user, activeLicenseV3 } = useAppContext();
+	const { user, activeLicense } = useAppContext();
 
 	const [timeRange, setTimeRange] = useState(() => {
 		const now = new Date().getTime();
@@ -210,6 +211,11 @@ function ServiceMetrics({
 
 	const topLevelOperations = useMemo(() => Object.entries(data || {}), [data]);
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const queryRangeRequestData = useMemo(
 		() =>
 			getQueryRangeRequestData({
@@ -217,12 +223,14 @@ function ServiceMetrics({
 				minTime: timeRange.startTime * 1e6,
 				maxTime: timeRange.endTime * 1e6,
 				globalSelectedInterval,
+				dotMetricsEnabled,
 			}),
 		[
 			globalSelectedInterval,
 			timeRange.endTime,
 			timeRange.startTime,
 			topLevelOperations,
+			dotMetricsEnabled,
 		],
 	);
 
@@ -335,7 +343,7 @@ function ServiceMetrics({
 				{servicesExist ? (
 					<ServicesListTable services={top5Services} onRowClick={handleRowClick} />
 				) : (
-					<EmptyState user={user} activeLicenseV3={activeLicenseV3} />
+					<EmptyState user={user} activeLicenseV3={activeLicense} />
 				)}
 			</Card.Content>
 

@@ -1,10 +1,9 @@
 import './LaunchChatSupport.styles.scss';
 
 import { Button, Modal, Tooltip, Typography } from 'antd';
-import updateCreditCardApi from 'api/billing/checkout';
 import logEvent from 'api/common/logEvent';
+import updateCreditCardApi from 'api/v1/checkout/create';
 import cx from 'classnames';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
@@ -14,8 +13,9 @@ import { useAppContext } from 'providers/App/App';
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import APIError from 'types/api/error';
 
 export interface LaunchChatSupportProps {
 	eventName: string;
@@ -24,7 +24,7 @@ export interface LaunchChatSupportProps {
 	buttonText?: string;
 	className?: string;
 	onHoverText?: string;
-	intercomMessageDisabled?: boolean;
+	chatMessageDisabled?: boolean;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -35,7 +35,7 @@ function LaunchChatSupport({
 	buttonText = '',
 	className = '',
 	onHoverText = '',
-	intercomMessageDisabled = false,
+	chatMessageDisabled = false,
 }: LaunchChatSupportProps): JSX.Element | null {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const { notifications } = useNotifications();
@@ -111,27 +111,30 @@ function LaunchChatSupport({
 			setIsAddCreditCardModalOpen(true);
 		} else {
 			logEvent(eventName, attributes);
-			if (window.Intercom && !intercomMessageDisabled) {
-				window.Intercom('showNewMessage', defaultTo(message, ''));
+			if (window.pylon && !chatMessageDisabled) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				window.Pylon('showNewMessage', defaultTo(message, ''));
 			}
 		}
 	};
 
 	const handleBillingOnSuccess = (
-		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
+		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
 	): void => {
-		if (data?.payload?.redirectURL) {
+		if (data?.data?.redirectURL) {
 			const newTab = document.createElement('a');
-			newTab.href = data.payload.redirectURL;
+			newTab.href = data.data.redirectURL;
 			newTab.target = '_blank';
 			newTab.rel = 'noopener noreferrer';
 			newTab.click();
 		}
 	};
 
-	const handleBillingOnError = (): void => {
+	const handleBillingOnError = (error: APIError): void => {
 		notifications.error({
-			message: SOMETHING_WENT_WRONG,
+			message: error.getErrorCode(),
+			description: error.getErrorMessage(),
 		});
 	};
 
@@ -219,7 +222,7 @@ LaunchChatSupport.defaultProps = {
 	buttonText: '',
 	className: '',
 	onHoverText: '',
-	intercomMessageDisabled: false,
+	chatMessageDisabled: false,
 };
 
 export default LaunchChatSupport;

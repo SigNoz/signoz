@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -8,28 +9,32 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
-	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
-
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/analytics/analyticstest"
+	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
-	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sharder"
+	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 // Higher level tests for UI facing APIs
@@ -37,6 +42,9 @@ import (
 func TestSignozIntegrationLifeCycle(t *testing.T) {
 	require := require.New(t)
 	testbed := NewIntegrationsTestBed(t, nil)
+
+	merr := utils.CreateTestOrg(t, testbed.store)
+	require.NoError(merr)
 
 	installedResp := testbed.GetInstalledIntegrationsFromQS()
 	require.Equal(
@@ -121,8 +129,12 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require := require.New(t)
 
 	testDB := utils.NewQueryServiceDBForTests(t)
+	utils.CreateTestOrg(t, testDB)
+
+	agentID := valuer.GenerateUUID().String()
+
 	integrationsTB := NewIntegrationsTestBed(t, testDB)
-	pipelinesTB := NewLogPipelinesTestBed(t, testDB)
+	pipelinesTB := NewLogPipelinesTestBed(t, testDB, agentID)
 
 	availableIntegrationsResp := integrationsTB.GetAvailableIntegrationsFromQS()
 	availableIntegrations := availableIntegrationsResp.Integrations
@@ -355,7 +367,7 @@ func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {
 	require.GreaterOrEqual(dashboards[0].UpdatedAt.Unix(), tsBeforeInstallation)
 
 	// Should be able to get installed integrations dashboard by id
-	dd := integrationsTB.GetDashboardByIdFromQS(dashboards[0].UUID)
+	dd := integrationsTB.GetDashboardByIdFromQS(dashboards[0].ID)
 	require.GreaterOrEqual(dd.CreatedAt.Unix(), tsBeforeInstallation)
 	require.GreaterOrEqual(dd.UpdatedAt.Unix(), tsBeforeInstallation)
 	require.Equal(*dd, dashboards[0])
@@ -376,6 +388,7 @@ type IntegrationsTestBed struct {
 	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
+	store          sqlstore.SQLStore
 	userModule     user.Module
 }
 
@@ -470,7 +483,7 @@ func (tb *IntegrationsTestBed) RequestQSToUninstallIntegration(
 	tb.RequestQS("/api/v1/integrations/uninstall", request)
 }
 
-func (tb *IntegrationsTestBed) GetDashboardsFromQS() []types.Dashboard {
+func (tb *IntegrationsTestBed) GetDashboardsFromQS() []dashboardtypes.Dashboard {
 	result := tb.RequestQS("/api/v1/dashboards", nil)
 
 	dataJson, err := json.Marshal(result.Data)
@@ -478,7 +491,7 @@ func (tb *IntegrationsTestBed) GetDashboardsFromQS() []types.Dashboard {
 		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
 	}
 
-	dashboards := []types.Dashboard{}
+	dashboards := []dashboardtypes.Dashboard{}
 	err = json.Unmarshal(dataJson, &dashboards)
 	if err != nil {
 		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into dashboards")
@@ -487,7 +500,7 @@ func (tb *IntegrationsTestBed) GetDashboardsFromQS() []types.Dashboard {
 	return dashboards
 }
 
-func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *types.Dashboard {
+func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *dashboardtypes.Dashboard {
 	result := tb.RequestQS(fmt.Sprintf("/api/v1/dashboards/%s", dashboardUuid), nil)
 
 	dataJson, err := json.Marshal(result.Data)
@@ -495,7 +508,7 @@ func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *typ
 		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
 	}
 
-	dashboard := types.Dashboard{}
+	dashboard := dashboardtypes.Dashboard{}
 	err = json.Unmarshal(dataJson, &dashboard)
 	if err != nil {
 		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into dashboards")
@@ -563,7 +576,6 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		t.Fatalf("could not create integrations controller: %v", err)
 	}
 
-	fm := featureManager.StartManager()
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
@@ -572,37 +584,40 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		t.Fatalf("could not create cloud integrations controller: %v", err)
 	}
 
-	userModule := impluser.NewModule(impluser.NewStore(testDB))
-	userHandler := impluser.NewHandler(userModule)
-	modules := signoz.NewModules(testDB, userModule)
-	handlers := signoz.NewHandlers(modules, userHandler)
-
-	quickFilterModule := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(testDB)))
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	require.NoError(t, err)
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), sharder)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, testDB, orgGetter)
+	require.NoError(t, err)
+	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
+	emailing := emailingtest.New()
+	analytics := analyticstest.New()
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
+	handlers := signoz.NewHandlers(modules)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		Reader:                      reader,
-		IntegrationsController:      controller,
-		FeatureFlags:                fm,
+		Reader:                 reader,
+		IntegrationsController: controller,
+
 		JWT:                         jwt,
 		CloudIntegrationsController: cloudIntegrationsController,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
 			Handlers: handlers,
 		},
-		QuickFilters: quickFilterModule,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
 	router := app.NewRouter()
-	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	router.Use(middleware.NewAuth(jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, sharder, instrumentationtest.New().Logger()).Wrap)
 	am := middleware.NewAuthZ(instrumentationtest.New().Logger())
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterIntegrationRoutes(router, am)
 
-	organizationModule := implorganization.NewModule(implorganization.NewStore(testDB))
-	user, apiErr := createTestUser(organizationModule, userModule)
+	user, apiErr := createTestUser(modules.OrgSetter, modules.User)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
@@ -612,7 +627,8 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
-		userModule:     userModule,
+		store:          testDB,
+		userModule:     modules.User,
 	}
 }
 

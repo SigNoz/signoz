@@ -41,7 +41,6 @@ const { Search } = Input;
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const { t } = useTranslation('common');
 	const { user } = useAppContext();
-	// TODO[vikrantgupta25]: check with sagar on cleanup
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
 		user.role,

@@ -33,7 +33,7 @@ function ServiceMetricTable({
 	const { notifications } = useNotifications();
 	const { t: getText } = useTranslation(['services']);
 
-	const { isFetchingActiveLicenseV3, trialInfo } = useAppContext();
+	const { isFetchingActiveLicense, trialInfo } = useAppContext();
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const queries = useGetQueriesRange(queryRangeRequestData, ENTITY_VERSION_V4, {
@@ -70,7 +70,7 @@ function ServiceMetricTable({
 
 	useEffect(() => {
 		if (
-			!isFetchingActiveLicenseV3 &&
+			!isFetchingActiveLicense &&
 			trialInfo?.onTrial &&
 			!trialInfo?.trialConvertedToSubscription &&
 			isCloudUserVal
@@ -85,7 +85,7 @@ function ServiceMetricTable({
 	}, [
 		services,
 		isCloudUserVal,
-		isFetchingActiveLicenseV3,
+		isFetchingActiveLicense,
 		trialInfo?.onTrial,
 		trialInfo?.trialConvertedToSubscription,
 	]);
@@ -96,7 +96,7 @@ function ServiceMetricTable({
 			`${range[0]}-${range[1]} of ${total} items`,
 	};
 	return (
-		<>
+		<div className="service-metric-table-container">
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
 					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
@@ -116,7 +116,7 @@ function ServiceMetricTable({
 				rowKey="serviceName"
 				className="service-metrics-table"
 			/>
-		</>
+		</div>
 	);
 }
 

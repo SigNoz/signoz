@@ -76,10 +76,7 @@ func TestQueryToKeys(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		keys, err := QueryStringToKeysSelectors(testCase.query)
-		if err != nil {
-			t.Fatalf("Error: %v", err)
-		}
+		keys := QueryStringToKeysSelectors(testCase.query)
 		if len(keys) != len(testCase.expectedKeys) {
 			t.Fatalf("Expected %d keys, got %d", len(testCase.expectedKeys), len(keys))
 		}

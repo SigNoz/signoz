@@ -116,14 +116,14 @@ function DashboardVariableSelection(): JSX.Element | null {
 						const oldVariables = prev?.data.variables;
 						// this is added to handle case where we have two different
 						// schemas for variable response
-						if (oldVariables[id]) {
+						if (oldVariables?.[id]) {
 							oldVariables[id] = {
 								...oldVariables[id],
 								selectedValue: value,
 								allSelected,
 							};
 						}
-						if (oldVariables[name]) {
+						if (oldVariables?.[name]) {
 							oldVariables[name] = {
 								...oldVariables[name],
 								selectedValue: value,

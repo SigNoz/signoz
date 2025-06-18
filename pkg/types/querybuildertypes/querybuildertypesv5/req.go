@@ -2,13 +2,13 @@ package querybuildertypesv5
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type QueryEnvelope struct {
-	// Name is the unique identifier for the query.
-	Name string `json:"name"`
 	// Type is the type of the query.
 	Type QueryType `json:"type"` // "builder_query" | "builder_formula" | "builder_sub_query" | "builder_join" | "promql" | "clickhouse_sql"
 	// Spec is the deferred decoding of the query if any.
@@ -18,56 +18,101 @@ type QueryEnvelope struct {
 // implement custom json unmarshaler for the QueryEnvelope
 func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	var shadow struct {
-		Name string          `json:"name"`
 		Type QueryType       `json:"type"`
 		Spec json.RawMessage `json:"spec"`
 	}
-	if err := json.Unmarshal(data, &shadow); err != nil {
-		return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid query envelope")
+	if err := UnmarshalJSONWithSuggestions(data, &shadow); err != nil {
+		return err
 	}
 
-	q.Name = shadow.Name
 	q.Type = shadow.Type
 
 	// 2. Decode the spec based on the Type.
 	switch shadow.Type {
 	case QueryTypeBuilder, QueryTypeSubQuery:
-		var spec QueryBuilderQuery
-		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid builder query spec")
+		var header struct {
+			Signal telemetrytypes.Signal `json:"signal"`
 		}
-		q.Spec = spec
+		if err := json.Unmarshal(shadow.Spec, &header); err != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"cannot detect builder signal: %v",
+				err,
+			)
+		}
+
+		switch header.Signal {
+		case telemetrytypes.SignalTraces:
+			var spec QueryBuilderQuery[TraceAggregation]
+			if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "query spec"); err != nil {
+				return wrapUnmarshalError(err, "invalid trace builder query spec: %v", err)
+			}
+			q.Spec = spec
+		case telemetrytypes.SignalLogs:
+			var spec QueryBuilderQuery[LogAggregation]
+			if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "query spec"); err != nil {
+				return wrapUnmarshalError(err, "invalid log builder query spec: %v", err)
+			}
+			q.Spec = spec
+		case telemetrytypes.SignalMetrics:
+			var spec QueryBuilderQuery[MetricAggregation]
+			if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "query spec"); err != nil {
+				return wrapUnmarshalError(err, "invalid metric builder query spec: %v", err)
+			}
+			q.Spec = spec
+		default:
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"unknown builder signal %q",
+				header.Signal,
+			).WithAdditional(
+				"Valid signals are: traces, logs, metrics",
+			)
+		}
 
 	case QueryTypeFormula:
 		var spec QueryBuilderFormula
-		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid formula spec")
+		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "formula spec"); err != nil {
+			return wrapUnmarshalError(err, "invalid formula spec: %v", err)
 		}
 		q.Spec = spec
 
 	case QueryTypeJoin:
 		var spec QueryBuilderJoin
+		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "join spec"); err != nil {
+			return wrapUnmarshalError(err, "invalid join spec: %v", err)
+		}
+		q.Spec = spec
+
+	case QueryTypeTraceOperator:
+		var spec QueryBuilderTraceOperator
 		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid join spec")
+			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid trace operator spec")
 		}
 		q.Spec = spec
 
 	case QueryTypePromQL:
 		var spec PromQuery
-		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid PromQL spec")
+		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "PromQL spec"); err != nil {
+			return wrapUnmarshalError(err, "invalid PromQL spec: %v", err)
 		}
 		q.Spec = spec
 
 	case QueryTypeClickHouseSQL:
 		var spec ClickHouseQuery
-		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid ClickHouse SQL spec")
+		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "ClickHouse SQL spec"); err != nil {
+			return wrapUnmarshalError(err, "invalid ClickHouse SQL spec: %v", err)
 		}
 		q.Spec = spec
 
 	default:
-		return errors.WrapInvalidInputf(nil, errors.CodeInvalidInput, "unknown query type %q", shadow.Type)
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"unknown query type %q",
+			shadow.Type,
+		).WithAdditional(
+			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql",
+		)
 	}
 
 	return nil
@@ -76,6 +121,59 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 type CompositeQuery struct {
 	// Queries is the queries to use for the request.
 	Queries []QueryEnvelope `json:"queries"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling to provide better error messages
+func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
+	type Alias CompositeQuery
+
+	// First do a normal unmarshal without DisallowUnknownFields
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	// Then check for unknown fields at this level only
+	var check map[string]json.RawMessage
+	if err := json.Unmarshal(data, &check); err != nil {
+		return err
+	}
+
+	// Check for unknown fields at this level
+	validFields := map[string]bool{
+		"queries": true,
+	}
+
+	for field := range check {
+		if !validFields[field] {
+			// Find closest match
+			var fieldNames []string
+			for f := range validFields {
+				fieldNames = append(fieldNames, f)
+			}
+
+			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"unknown field %q in composite query",
+					field,
+				).WithAdditional(
+					suggestion,
+				)
+			}
+
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"unknown field %q in composite query",
+				field,
+			).WithAdditional(
+				"Valid fields are: " + strings.Join(fieldNames, ", "),
+			)
+		}
+	}
+
+	*c = CompositeQuery(temp)
+	return nil
 }
 
 type QueryRangeRequest struct {
@@ -91,4 +189,77 @@ type QueryRangeRequest struct {
 	CompositeQuery CompositeQuery `json:"compositeQuery"`
 	// Variables is the variables to use for the request.
 	Variables map[string]any `json:"variables,omitempty"`
+
+	// NoCache is a flag to disable caching for the request.
+	NoCache bool `json:"noCache,omitempty"`
+
+	FormatOptions *FormatOptions `json:"formatOptions,omitempty"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
+	// Define a type alias to avoid infinite recursion
+	type Alias QueryRangeRequest
+
+	// First do a normal unmarshal without DisallowUnknownFields to let nested structures handle their own validation
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	// Then check for unknown fields at this level only
+	var check map[string]json.RawMessage
+	if err := json.Unmarshal(data, &check); err != nil {
+		return err
+	}
+
+	// Check for unknown fields at the top level
+	validFields := map[string]bool{
+		"schemaVersion":  true,
+		"start":          true,
+		"end":            true,
+		"requestType":    true,
+		"compositeQuery": true,
+		"variables":      true,
+		"noCache":        true,
+		"formatOptions":  true,
+	}
+
+	for field := range check {
+		if !validFields[field] {
+			// Find closest match
+			var fieldNames []string
+			for f := range validFields {
+				fieldNames = append(fieldNames, f)
+			}
+
+			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"unknown field %q",
+					field,
+				).WithAdditional(
+					suggestion,
+				)
+			}
+
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"unknown field %q",
+				field,
+			).WithAdditional(
+				"Valid fields are: " + strings.Join(fieldNames, ", "),
+			)
+		}
+	}
+
+	// Copy the decoded values back to the original struct
+	*r = QueryRangeRequest(temp)
+
+	return nil
+}
+
+type FormatOptions struct {
+	FillGaps               bool `json:"fillGaps,omitempty"`
+	FormatTableResultForUI bool `json:"formatTableResultForUI,omitempty"`
 }

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
@@ -12,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"go.uber.org/zap"
 )
 
 type API struct {
@@ -20,9 +20,13 @@ type API struct {
 	telemetryMetadataStore telemetrytypes.MetadataStore
 }
 
-func NewAPI(telemetryStore telemetrystore.TelemetryStore) *API {
-
+// TODO: move this to module and remove metastore init
+func NewAPI(
+	settings factory.ProviderSettings,
+	telemetryStore telemetrystore.TelemetryStore,
+) *API {
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
+		settings,
 		telemetryStore,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,
@@ -99,7 +103,6 @@ func (api *API) GetFieldsValues(w http.ResponseWriter, r *http.Request) {
 	relatedValues, err := api.telemetryMetadataStore.GetRelatedValues(ctx, fieldValueSelector)
 	if err != nil {
 		// we don't want to return error if we fail to get related values for some reason
-		zap.L().Error("failed to get related values", zap.Error(err))
 		relatedValues = []string{}
 	}
 

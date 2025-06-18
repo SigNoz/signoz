@@ -6,21 +6,26 @@ import (
 	"os"
 	"time"
 
-	eeuserimpl "github.com/SigNoz/signoz/ee/modules/user/impluser"
+	"github.com/SigNoz/signoz/ee/licensing"
+	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	"github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
-	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/factory"
+	pkglicensing "github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
+	pkgzeus "github.com/SigNoz/signoz/pkg/zeus"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -88,8 +93,9 @@ func main() {
 	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
+	ctx := context.Background()
 
-	config, err := signoz.NewConfig(context.Background(), config.ResolverConfig{
+	config, err := signoz.NewConfig(ctx, config.ResolverConfig{
 		Uris: []string{"env:"},
 		ProviderFactories: []config.ProviderFactory{
 			envprovider.NewFactory(),
@@ -112,26 +118,6 @@ func main() {
 		zap.L().Fatal("Failed to add postgressqlstore factory", zap.Error(err))
 	}
 
-	signoz, err := signoz.New(
-		context.Background(),
-		config,
-		zeus.Config(),
-		httpzeus.NewProviderFactory(),
-		signoz.NewCacheProviderFactories(),
-		signoz.NewWebProviderFactories(),
-		sqlStoreFactories,
-		signoz.NewTelemetryStoreProviderFactories(),
-		func(sqlstore sqlstore.SQLStore) user.Module {
-			return eeuserimpl.NewModule(eeuserimpl.NewStore(sqlstore))
-		},
-		func(userModule user.Module) user.Handler {
-			return eeuserimpl.NewHandler(userModule)
-		},
-	)
-	if err != nil {
-		zap.L().Fatal("Failed to create signoz", zap.Error(err))
-	}
-
 	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
 
 	if len(jwtSecret) == 0 {
@@ -141,6 +127,26 @@ func main() {
 	}
 
 	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)
+
+	signoz, err := signoz.New(
+		context.Background(),
+		config,
+		jwt,
+		zeus.Config(),
+		httpzeus.NewProviderFactory(),
+		licensing.Config(24*time.Hour, 3),
+		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) factory.ProviderFactory[pkglicensing.Licensing, pkglicensing.Config] {
+			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter, analytics)
+		},
+		signoz.NewEmailingProviderFactories(),
+		signoz.NewCacheProviderFactories(),
+		signoz.NewWebProviderFactories(),
+		sqlStoreFactories,
+		signoz.NewTelemetryStoreProviderFactories(),
+	)
+	if err != nil {
+		zap.L().Fatal("Failed to create signoz", zap.Error(err))
+	}
 
 	serverOptions := &app.ServerOptions{
 		Config:                     config,
@@ -160,22 +166,22 @@ func main() {
 		zap.L().Fatal("Failed to create server", zap.Error(err))
 	}
 
-	if err := server.Start(context.Background()); err != nil {
+	if err := server.Start(ctx); err != nil {
 		zap.L().Fatal("Could not start server", zap.Error(err))
 	}
 
-	signoz.Start(context.Background())
+	signoz.Start(ctx)
 
-	if err := signoz.Wait(context.Background()); err != nil {
+	if err := signoz.Wait(ctx); err != nil {
 		zap.L().Fatal("Failed to start signoz", zap.Error(err))
 	}
 
-	err = server.Stop()
+	err = server.Stop(ctx)
 	if err != nil {
 		zap.L().Fatal("Failed to stop server", zap.Error(err))
 	}
 
-	err = signoz.Stop(context.Background())
+	err = signoz.Stop(ctx)
 	if err != nil {
 		zap.L().Fatal("Failed to stop signoz", zap.Error(err))
 	}

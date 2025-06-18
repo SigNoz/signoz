@@ -17,17 +17,21 @@ var (
 )
 
 var (
-	Org              = "org"
-	User             = "user"
-	FactorPassword   = "factor_password"
-	CloudIntegration = "cloud_integration"
+	Org                = "org"
+	User               = "user"
+	UserNoCascade      = "user_no_cascade"
+	FactorPassword     = "factor_password"
+	CloudIntegration   = "cloud_integration"
+	AgentConfigVersion = "agent_config_version"
 )
 
 var (
-	OrgReference              = `("org_id") REFERENCES "organizations" ("id")`
-	UserReference             = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
-	FactorPasswordReference   = `("password_id") REFERENCES "factor_password" ("id")`
-	CloudIntegrationReference = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
+	OrgReference                = `("org_id") REFERENCES "organizations" ("id")`
+	UserReference               = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	UserReferenceNoCascade      = `("user_id") REFERENCES "users" ("id")`
+	FactorPasswordReference     = `("password_id") REFERENCES "factor_password" ("id")`
+	CloudIntegrationReference   = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
+	AgentConfigVersionReference = `("version_id") REFERENCES "agent_config_version" ("id")`
 )
 
 type dialect struct{}
@@ -266,10 +270,14 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 			fkReferences = append(fkReferences, OrgReference)
 		} else if reference == User && !slices.Contains(fkReferences, UserReference) {
 			fkReferences = append(fkReferences, UserReference)
+		} else if reference == UserNoCascade && !slices.Contains(fkReferences, UserReferenceNoCascade) {
+			fkReferences = append(fkReferences, UserReferenceNoCascade)
 		} else if reference == FactorPassword && !slices.Contains(fkReferences, FactorPasswordReference) {
 			fkReferences = append(fkReferences, FactorPasswordReference)
 		} else if reference == CloudIntegration && !slices.Contains(fkReferences, CloudIntegrationReference) {
 			fkReferences = append(fkReferences, CloudIntegrationReference)
+		} else if reference == AgentConfigVersion && !slices.Contains(fkReferences, AgentConfigVersionReference) {
+			fkReferences = append(fkReferences, AgentConfigVersionReference)
 		}
 	}
 

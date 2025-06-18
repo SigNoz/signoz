@@ -33,11 +33,7 @@ func NewSummaryService(reader interfaces.Reader, alertManager *rules.Manager, da
 
 func (receiver *SummaryService) FilterKeys(ctx context.Context, params *metrics_explorer.FilterKeyRequest) (*metrics_explorer.FilterKeyResponse, *model.ApiError) {
 	var response metrics_explorer.FilterKeyResponse
-	keys, apiError := receiver.reader.GetAllMetricFilterAttributeKeys(
-		ctx,
-		params,
-		true,
-	)
+	keys, apiError := receiver.reader.GetAllMetricFilterAttributeKeys(ctx, params)
 	if apiError != nil {
 		return nil, apiError
 	}
@@ -56,7 +52,7 @@ func (receiver *SummaryService) FilterValues(ctx context.Context, orgID valuer.U
 	case "metric_name":
 		var filterValues []string
 		request := v3.AggregateAttributeRequest{DataSource: v3.DataSourceMetrics, SearchText: params.SearchText, Limit: params.Limit}
-		attributes, err := receiver.reader.GetMetricAggregateAttributes(ctx, orgID, &request, true, true)
+		attributes, err := receiver.reader.GetMetricAggregateAttributes(ctx, orgID, &request, true)
 		if err != nil {
 			return nil, model.InternalError(err)
 		}
@@ -165,7 +161,12 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, orgID val
 		if errv2 != nil {
 			return &model.ApiError{Typ: model.ErrorInternal, Err: errv2}
 		}
-		data, err := receiver.dashboard.GetByMetricNames(ctx, claims.OrgID, metricNames)
+
+		orgID, err := valuer.NewUUID(claims.OrgID)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+		data, err := receiver.dashboard.GetByMetricNames(ctx, orgID, metricNames)
 		if err != nil {
 			return err
 		}
@@ -338,7 +339,11 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 		if errv2 != nil {
 			return &model.ApiError{Typ: model.ErrorInternal, Err: errv2}
 		}
-		names, err := receiver.dashboard.GetByMetricNames(ctx, claims.OrgID, metricNames)
+		orgID, err := valuer.NewUUID(claims.OrgID)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+		names, err := receiver.dashboard.GetByMetricNames(ctx, orgID, metricNames)
 		if err != nil {
 			return err
 		}

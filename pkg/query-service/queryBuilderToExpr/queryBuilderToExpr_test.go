@@ -64,6 +64,20 @@ var testCases = []struct {
 		Expr: `body != nil && lower(body) contains lower("checkbody")`,
 	},
 	{
+		Name: "body.log.message exists",
+		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "body.log.message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
+		}},
+		Expr: `"log.message" in fromJSON(body)`,
+	},
+	{
+		Name: "body.log.message not exists",
+		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "body.log.message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
+		}},
+		Expr: `"log.message" not in fromJSON(body)`,
+	},
+	{
 		Name: "body ncontains",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "checkbody", Operator: "ncontains"},
@@ -126,6 +140,34 @@ var testCases = []struct {
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
 		}},
 		Expr: `"key" not in attributes`,
+	},
+	{
+		Name: "trace_id not exists",
+		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
+		}},
+		Expr: `trace_id == nil`,
+	},
+	{
+		Name: "trace_id exists",
+		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
+		}},
+		Expr: `trace_id != nil`,
+	},
+	{
+		Name: "span_id not exists",
+		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "span_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
+		}},
+		Expr: `span_id == nil`,
+	},
+	{
+		Name: "span_id exists",
+		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "span_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
+		}},
+		Expr: `span_id != nil`,
 	},
 	{
 		Name: "Multi filter",

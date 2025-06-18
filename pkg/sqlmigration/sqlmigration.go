@@ -25,10 +25,12 @@ var (
 )
 
 var (
-	OrgReference              = "org"
-	UserReference             = "user"
-	FactorPasswordReference   = "factor_password"
-	CloudIntegrationReference = "cloud_integration"
+	OrgReference                = "org"
+	UserReference               = "user"
+	UserReferenceNoCascade      = "user_no_cascade"
+	FactorPasswordReference     = "factor_password"
+	CloudIntegrationReference   = "cloud_integration"
+	AgentConfigVersionReference = "agent_config_version"
 )
 
 func New(

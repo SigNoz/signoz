@@ -9,31 +9,45 @@ import (
 )
 
 type provider struct {
-	settings factory.ScopedProviderSettings
-	startC   chan struct{}
+	stopC chan struct{}
 }
 
-func NewProviderFactory() factory.ProviderFactory[analytics.Analytics, analytics.Config] {
+func NewFactory() factory.ProviderFactory[analytics.Analytics, analytics.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("noop"), New)
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config analytics.Config) (analytics.Analytics, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/analytics/noopanalytics")
-
 	return &provider{
-		settings: settings,
-		startC:   make(chan struct{}),
+		stopC: make(chan struct{}),
 	}, nil
 }
 
 func (provider *provider) Start(_ context.Context) error {
-	<-provider.startC
+	<-provider.stopC
 	return nil
 }
 
-func (provider *provider) Send(ctx context.Context, messages ...analyticstypes.Message) {}
+func (provider *provider) Send(ctx context.Context, messages ...analyticstypes.Message) {
+	// do nothing
+}
+
+func (provider *provider) TrackGroup(ctx context.Context, group, event string, attributes map[string]any) {
+	// do nothing
+}
+
+func (provider *provider) TrackUser(ctx context.Context, group, user, event string, attributes map[string]any) {
+	// do nothing
+}
+
+func (provider *provider) IdentifyGroup(ctx context.Context, group string, traits map[string]any) {
+	// do nothing
+}
+
+func (provider *provider) IdentifyUser(ctx context.Context, group, user string, traits map[string]any) {
+	// do nothing
+}
 
 func (provider *provider) Stop(_ context.Context) error {
-	close(provider.startC)
+	close(provider.stopC)
 	return nil
 }

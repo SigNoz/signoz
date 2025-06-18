@@ -11,7 +11,7 @@ import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
@@ -27,6 +27,7 @@ import { GridCardGraphProps } from './types';
 import { isDataAvailableByPanelType } from './utils';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function GridCardGraph({
 	widget,
 	headerMenuList = [MenuItemKeys.View],
@@ -159,8 +160,6 @@ function GridCardGraph({
 		};
 	});
 
-	// TODO [vikrantgupta25] remove this useEffect with refactor as this is prone to race condition
-	// this is added to tackle the case of async communication between VariableItem.tsx and GridCard.tsx
 	useEffect(() => {
 		if (variablesToGetUpdated.length > 0) {
 			queryClient.cancelQueries([
@@ -188,14 +187,27 @@ function GridCardGraph({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [updatedQuery]);
 
+	const isLogsQuery = useMemo(
+		() =>
+			requestData?.query?.builder?.queryData?.length > 0 &&
+			requestData?.query?.builder?.queryData?.every(
+				(query) => query?.dataSource === DataSource.LOGS,
+			),
+		[requestData.query],
+	);
+
 	const queryResponse = useGetQueryRange(
 		{
 			...requestData,
 			variables: getDashboardVariables(variables),
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
-			globalSelectedInterval,
+			globalSelectedInterval:
+				widget?.panelTypes === PANEL_TYPES.LIST && isLogsQuery
+					? 'custom'
+					: globalSelectedInterval,
 			start: customTimeRange?.startTime || start,
 			end: customTimeRange?.endTime || end,
+			originalGraphType: widget?.panelTypes,
 		},
 		version || DEFAULT_ENTITY_VERSION,
 		{
