@@ -844,6 +844,7 @@ function FormAlertRules({
 							alertDef={alertDef}
 							setAlertDef={setAlertDef}
 							queryOptions={queryOptions}
+							yAxisUnit={yAxisUnit}
 						/>
 
 						{renderBasicInfo()}
