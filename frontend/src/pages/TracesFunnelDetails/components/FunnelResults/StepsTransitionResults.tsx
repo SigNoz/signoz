@@ -47,7 +47,6 @@ function StepsTransitionResults(): JSX.Element {
 					transitions={stepTransitions}
 					startStep={stepAOrder}
 					endStep={stepBOrder}
-					steps={steps}
 				/>
 				<TopSlowestTraces
 					funnelId={funnelId}

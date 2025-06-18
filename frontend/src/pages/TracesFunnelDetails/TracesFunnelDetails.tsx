@@ -30,7 +30,7 @@ function TracesFunnelDetails(): JSX.Element {
 		<FunnelProvider funnelId={funnelId}>
 			<div className="traces-funnel-details">
 				<div className="traces-funnel-details__steps-config">
-					<FunnelConfiguration funnel={data.payload} disableAutoSave />
+					<FunnelConfiguration funnel={data.payload} />
 				</div>
 				<div className="traces-funnel-details__steps-results">
 					<FunnelResults />

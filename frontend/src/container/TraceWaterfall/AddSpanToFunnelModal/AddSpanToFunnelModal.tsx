@@ -72,7 +72,6 @@ function FunnelDetailsView({
 				funnel={funnel}
 				isTraceDetailsPage
 				span={span}
-				disableAutoSave
 				triggerAutoSave={triggerAutoSave}
 				showNotifications={showNotifications}
 			/>

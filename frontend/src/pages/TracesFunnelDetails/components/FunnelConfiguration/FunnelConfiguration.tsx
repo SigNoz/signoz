@@ -22,7 +22,6 @@ interface FunnelConfigurationProps {
 	funnel: FunnelData;
 	isTraceDetailsPage?: boolean;
 	span?: Span;
-	disableAutoSave?: boolean;
 	triggerAutoSave?: boolean;
 	showNotifications?: boolean;
 }
@@ -31,7 +30,6 @@ function FunnelConfiguration({
 	funnel,
 	isTraceDetailsPage,
 	span,
-	disableAutoSave,
 	triggerAutoSave,
 	showNotifications,
 }: FunnelConfigurationProps): JSX.Element {
@@ -43,7 +41,6 @@ function FunnelConfiguration({
 		isSaving,
 	} = useFunnelConfiguration({
 		funnel,
-		disableAutoSave,
 		triggerAutoSave: triggerAutoSave || triggerSave,
 		showNotifications: showNotifications || triggerSave,
 	});
@@ -129,7 +126,6 @@ function FunnelConfiguration({
 FunnelConfiguration.defaultProps = {
 	isTraceDetailsPage: false,
 	span: undefined,
-	disableAutoSave: false,
 	triggerAutoSave: false,
 	showNotifications: false,
 };
