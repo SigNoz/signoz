@@ -9,6 +9,7 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
+import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import ExportPanel from 'container/ExportPanel';
@@ -30,6 +31,7 @@ import { cloneDeep, isEmpty, set } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -55,12 +57,22 @@ function TracesExplorer(): JSX.Element {
 		},
 	});
 
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(
-		ExplorerViews.LIST,
-	);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [selectedView, setSelectedView] = useState<ExplorerViews>(() => {
+		const savedView = searchParams.get(QueryParams.selectedExplorerView);
+		return savedView ? (savedView as ExplorerViews) : ExplorerViews.LIST;
+	});
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const { safeNavigate } = useSafeNavigate();
+
+	// Update URL when selectedView changes
+	useEffect(() => {
+		setSearchParams((prev: URLSearchParams) => {
+			prev.set(QueryParams.selectedExplorerView, selectedView);
+			return prev;
+		});
+	}, [selectedView, setSearchParams]);
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews): void => {
@@ -82,26 +94,15 @@ function TracesExplorer(): JSX.Element {
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
 
-	const defaultQuery = useMemo(() => {
-		const query = updateAllQueriesOperators(
-			initialQueriesMap.traces,
-			PANEL_TYPES.LIST,
-			DataSource.TRACES,
-		);
-
-		return {
-			...query,
-			builder: {
-				...query.builder,
-				queryData: [
-					{
-						...query.builder.queryData[0],
-						orderBy: [{ columnName: 'timestamp', order: 'desc' }],
-					},
-				],
-			},
-		};
-	}, [updateAllQueriesOperators]);
+	const defaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap.traces,
+				PANEL_TYPES.LIST,
+				DataSource.TRACES,
+			),
+		[updateAllQueriesOperators],
+	);
 
 	const exportDefaultQuery = useMemo(
 		() =>
