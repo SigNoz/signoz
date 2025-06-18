@@ -24,7 +24,12 @@ import { getRoutes } from './utils';
 function SettingsPage(): JSX.Element {
 	const { pathname, search } = useLocation();
 
-	const { user, featureFlags, trialInfo } = useAppContext();
+	const {
+		user,
+		featureFlags,
+		trialInfo,
+		isFetchingActiveLicense,
+	} = useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [settingsMenuItems, setSettingsMenuItems] = useState<SidebarItem[]>(
@@ -50,6 +55,20 @@ function SettingsPage(): JSX.Element {
 	useEffect(() => {
 		setSettingsMenuItems((prevItems) => {
 			let updatedItems = [...prevItems];
+
+			if (trialInfo?.workSpaceBlock && !isFetchingActiveLicense) {
+				updatedItems = updatedItems.map((item) => ({
+					...item,
+					isEnabled: !!(
+						isAdmin &&
+						(item.key === ROUTES.BILLING ||
+							item.key === ROUTES.ORG_SETTINGS ||
+							item.key === ROUTES.MY_SETTINGS)
+					),
+				}));
+
+				return updatedItems;
+			}
 
 			if (isCloudUser) {
 				if (isAdmin) {
@@ -125,7 +144,15 @@ function SettingsPage(): JSX.Element {
 
 			return updatedItems;
 		});
-	}, [isAdmin, isEditor, isCloudUser, isEnterpriseSelfHostedUser]);
+	}, [
+		isAdmin,
+		isEditor,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isFetchingActiveLicense,
+		trialInfo?.workSpaceBlock,
+		pathname,
+	]);
 
 	const routes = useMemo(
 		() =>

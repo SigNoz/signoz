@@ -126,7 +126,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 		const isRouteEnabledForWorkspaceBlockedState =
 			isAdmin &&
-			(path === ROUTES.ORG_SETTINGS ||
+			(path === ROUTES.SETTINGS ||
+				path === ROUTES.ORG_SETTINGS ||
 				path === ROUTES.BILLING ||
 				path === ROUTES.MY_SETTINGS);
 

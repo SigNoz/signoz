@@ -32,7 +32,11 @@ export const getRoutes = (
 	const isEditor = userRole === USER_ROLES.EDITOR;
 
 	if (isWorkspaceBlocked && isAdmin) {
-		settings.push(...organizationSettings(t));
+		settings.push(
+			...organizationSettings(t),
+			...mySettings(t),
+			...billingSettings(t),
+		);
 
 		return settings;
 	}
