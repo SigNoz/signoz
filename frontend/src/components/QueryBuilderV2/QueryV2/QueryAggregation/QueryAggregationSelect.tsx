@@ -268,10 +268,18 @@ function QueryAggregationSelect({
 				to: number,
 			): void => {
 				const acceptsArgs = operatorArgMeta[op.value]?.acceptsArgs;
-				const insertText = acceptsArgs ? `${op.value}(` : `${op.value}() `;
-				const cursorPos = acceptsArgs
-					? from + op.value.length + 1 // after 'func('
-					: from + op.value.length + 3; // after 'func() '
+
+				let insertText: string;
+				let cursorPos: number;
+
+				if (!acceptsArgs) {
+					insertText = `${op.value}() `;
+					cursorPos = from + insertText.length; // Use insertText.length instead of hardcoded values
+				} else {
+					insertText = `${op.value}(`;
+					cursorPos = from + insertText.length; // Use insertText.length instead of hardcoded values
+				}
+
 				view.dispatch({
 					changes: { from, to, insert: insertText },
 					selection: { anchor: cursorPos },
@@ -299,10 +307,19 @@ function QueryAggregationSelect({
 						from: number,
 						to: number,
 					): void => {
-						// Insert the selected key followed by ') '
+						const text = view.state.sliceDoc(0, from);
+						const funcName = getFunctionContextAtCursor(text, from);
+						const multiple = funcName ? operatorArgMeta[funcName]?.multiple : false;
+
+						// Insert the selected key followed by either a comma or closing parenthesis
+						const insertText = multiple
+							? `${completion.label},`
+							: `${completion.label}) `;
+						const cursorPos = from + insertText.length; // Use insertText.length instead of hardcoded values
+
 						view.dispatch({
-							changes: { from, to, insert: `${completion.label}) ` },
-							selection: { anchor: from + completion.label.length + 2 }, // Position cursor after ') '
+							changes: { from, to, insert: insertText },
+							selection: { anchor: cursorPos },
 						});
 
 						// Trigger next suggestions after a small delay
