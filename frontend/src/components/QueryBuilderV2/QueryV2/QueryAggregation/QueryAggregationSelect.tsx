@@ -165,9 +165,15 @@ function QueryAggregationSelect({
 				.split(',')
 				.map((arg) => arg.trim())
 				.filter((arg) => arg.length > 0);
-			args.forEach((arg) => {
-				pairs.push({ func, arg });
-			});
+
+			if (args.length === 0) {
+				// For functions with no arguments, add a pair with empty string as arg
+				pairs.push({ func, arg: '' });
+			} else {
+				args.forEach((arg) => {
+					pairs.push({ func, arg });
+				});
+			}
 		}
 		setFunctionArgPairs(pairs);
 		setAggregationOptions(pairs);
@@ -261,11 +267,11 @@ function QueryAggregationSelect({
 				from: number,
 				to: number,
 			): void => {
-				const isCount = op.value === TracesAggregatorOperator.COUNT;
-				const insertText = isCount ? `${op.value}() ` : `${op.value}(`;
-				const cursorPos = isCount
-					? from + op.value.length + 3 // after 'count() '
-					: from + op.value.length + 1; // after 'operator('
+				const acceptsArgs = operatorArgMeta[op.value]?.acceptsArgs;
+				const insertText = acceptsArgs ? `${op.value}(` : `${op.value}() `;
+				const cursorPos = acceptsArgs
+					? from + op.value.length + 1 // after 'func('
+					: from + op.value.length + 3; // after 'func() '
 				view.dispatch({
 					changes: { from, to, insert: insertText },
 					selection: { anchor: cursorPos },

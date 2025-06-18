@@ -2,9 +2,7 @@ import './Explorer.styles.scss';
 
 import * as Sentry from '@sentry/react';
 import { Switch } from 'antd';
-import axios from 'axios';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
@@ -126,7 +124,6 @@ function Explorer(): JSX.Element {
 					queryComponents={queryComponents}
 					showFunctions={false}
 					version="v3"
-					isListViewPanel
 				/>
 				{/* TODO: Enable once we have resolved all related metrics issues */}
 				{/* <Button.Group className="explore-tabs">

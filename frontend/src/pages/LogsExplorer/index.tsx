@@ -8,6 +8,7 @@ import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViewsContainer from 'container/LogsExplorerViews';
@@ -26,15 +27,19 @@ import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { ExplorerViews } from './utils';
 
 function LogsExplorer(): JSX.Element {
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(
-		ExplorerViews.LIST,
-	);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [selectedView, setSelectedView] = useState<ExplorerViews>(() => {
+		const savedView = searchParams.get(QueryParams.selectedExplorerView);
+		return savedView ? (savedView as ExplorerViews) : ExplorerViews.LIST;
+	});
+
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
 			LOCALSTORAGE.SHOW_LOGS_QUICK_FILTERS,
@@ -44,6 +49,14 @@ function LogsExplorer(): JSX.Element {
 		}
 		return true;
 	});
+
+	// Update URL when selectedView changes
+	useEffect(() => {
+		setSearchParams((prev: URLSearchParams) => {
+			prev.set(QueryParams.selectedExplorerView, selectedView);
+			return prev;
+		});
+	}, [selectedView, setSearchParams]);
 
 	const { handleRunQuery, handleSetConfig } = useQueryBuilder();
 
