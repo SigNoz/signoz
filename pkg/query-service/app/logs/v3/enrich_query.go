@@ -217,7 +217,6 @@ func jsonReplaceField(filter v3.FilterItem, fields map[string]v3.AttributeKey) v
 }
 
 func parseStrValue(valueStr string, operator v3.FilterOperator) (string, interface{}) {
-
 	valueType := "string"
 
 	// for the following operators it will always be string
