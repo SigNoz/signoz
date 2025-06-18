@@ -51,7 +51,7 @@ export const getYAxisFormattedValue = (
 export const getToolTipValue = (
 	value: string,
 	format?: string,
-	usingUniversalUnits?: boolean,
+	usingUniversalUnits = true,
 ): string => {
 	const universalMappingExists =
 		usingUniversalUnits && format && format in UniversalUnitToGrafanaUnit;
