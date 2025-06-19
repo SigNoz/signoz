@@ -212,19 +212,14 @@ export const QueryV2 = memo(function QueryV2({
 					<div className="qb-search-container">
 						{dataSource === DataSource.METRICS && (
 							<div className="metrics-select-container">
-								<MetricsSelect
-									key={JSON.stringify(query)}
-									query={query}
-									index={0}
-									version="v4"
-								/>
+								<MetricsSelect query={query} index={0} version="v4" />
 							</div>
 						)}
 
 						<div className="qb-search-filter-container">
 							<div className="query-search-container">
 								<QuerySearch
-									key={JSON.stringify(query)}
+									key={`query-search-${query.queryName}-${query.dataSource}`}
 									onChange={handleSearchChange}
 									queryData={query}
 									dataSource={dataSource}
@@ -245,7 +240,7 @@ export const QueryV2 = memo(function QueryV2({
 						dataSource !== DataSource.METRICS && (
 							<QueryAggregation
 								dataSource={dataSource}
-								key={JSON.stringify(query)}
+								key={`query-search-${query.queryName}-${query.dataSource}`}
 								panelType={panelType || undefined}
 								onAggregationIntervalChange={handleChangeAggregateEvery}
 								onChange={handleChangeAggregation}
@@ -258,7 +253,7 @@ export const QueryV2 = memo(function QueryV2({
 							panelType={panelType}
 							query={query}
 							index={0}
-							key={JSON.stringify(query)}
+							key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}`}
 							version="v4"
 						/>
 					)}
