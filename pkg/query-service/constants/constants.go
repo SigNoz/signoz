@@ -633,12 +633,16 @@ var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
 var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
 var IsDotMetricsEnabled = false
+var PreferSpanMetrics = false
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
 	if GetOrDefaultEnv(DotMetricsEnabled, "false") == "true" {
 		IsDotMetricsEnabled = true
+	}
+	if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
+		PreferSpanMetrics = true
 	}
 }
 
