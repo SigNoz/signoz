@@ -21,7 +21,7 @@ function convertTimeSeriesData(
 	return {
 		queryName: timeSeriesData.queryName,
 		legend: legendMap[timeSeriesData.queryName] || timeSeriesData.queryName,
-		series: timeSeriesData.aggregations.flatMap((aggregation) =>
+		series: timeSeriesData?.aggregations?.flatMap((aggregation) =>
 			aggregation.series.map((series) => ({
 				labels: series.labels
 					? Object.fromEntries(

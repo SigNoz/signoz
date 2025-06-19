@@ -97,6 +97,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 									label="Seconds"
 									placeholder="Enter a number"
 									labelAfter
+									initialValue={query?.stepInterval ?? undefined}
 								/>
 							</div>
 						</div>

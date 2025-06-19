@@ -8,11 +8,16 @@ import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearch
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Copy, Ellipsis, Trash } from 'lucide-react';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
 
+import {
+	convertAggregationToExpression,
+	convertFiltersToExpression,
+	convertHavingToExpression,
+} from '../utils';
 import MetricsAggregateSection from './MerticsAggregateSection/MetricsAggregateSection';
 import { MetricsSelect } from './MetricsSelect/MetricsSelect';
 import QueryAddOns from './QueryAddOns/QueryAddOns';
@@ -48,6 +53,44 @@ export const QueryV2 = memo(function QueryV2({
 		isListViewPanel,
 		entityVersion: version,
 	});
+
+	// Convert old format to new format and update query when component mounts or query changes
+	const performQueryConversions = useCallback(() => {
+		// Convert filters if needed
+		if (query.filters?.items?.length > 0 && !query.filter?.expression) {
+			const convertedFilter = convertFiltersToExpression(query.filters);
+			handleChangeQueryData('filter', convertedFilter);
+		}
+
+		// Convert having if needed
+		if (query.having?.length > 0 && !query.havingExpression?.expression) {
+			const convertedHaving = convertHavingToExpression(query.having);
+			handleChangeQueryData('havingExpression', convertedHaving);
+		}
+
+		// Convert aggregation if needed
+		if (!query.aggregations && query.aggregateOperator) {
+			const convertedAggregation = convertAggregationToExpression(
+				query.aggregateOperator,
+				query.aggregateAttribute,
+				query.dataSource,
+				query.timeAggregation,
+				query.spaceAggregation,
+			) as any; // Type assertion to handle union type
+			handleChangeQueryData('aggregations', convertedAggregation);
+		}
+	}, [query, handleChangeQueryData]);
+
+	useEffect(() => {
+		const needsConversion =
+			(query.filters?.items?.length > 0 && !query.filter?.expression) ||
+			(query.having?.length > 0 && !query.havingExpression?.expression) ||
+			(!query.aggregations && query.aggregateOperator);
+
+		if (needsConversion) {
+			performQueryConversions();
+		}
+	}, [performQueryConversions, query]);
 
 	const handleToggleDisableQuery = useCallback(() => {
 		handleChangeQueryData('disabled', !query.disabled);
@@ -176,6 +219,7 @@ export const QueryV2 = memo(function QueryV2({
 						<div className="qb-search-filter-container">
 							<div className="query-search-container">
 								<QuerySearch
+									key={`query-search-${query.queryName}-${query.dataSource}`}
 									onChange={handleSearchChange}
 									queryData={query}
 									dataSource={dataSource}
@@ -196,6 +240,7 @@ export const QueryV2 = memo(function QueryV2({
 						dataSource !== DataSource.METRICS && (
 							<QueryAggregation
 								dataSource={dataSource}
+								key={`query-search-${query.queryName}-${query.dataSource}`}
 								panelType={panelType || undefined}
 								onAggregationIntervalChange={handleChangeAggregateEvery}
 								onChange={handleChangeAggregation}
@@ -208,6 +253,7 @@ export const QueryV2 = memo(function QueryV2({
 							panelType={panelType}
 							query={query}
 							index={0}
+							key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}`}
 							version="v4"
 						/>
 					)}
