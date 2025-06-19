@@ -508,7 +508,12 @@ function LogsExplorerViews({
 			currentMinTimeRef.current !== minTime
 		) {
 			// Recalculate global time when query changes i.e. stage and run query clicked
-			if (requestData?.id !== stagedQuery?.id && selectedTime !== 'custom') {
+			if (
+				!!requestData?.id &&
+				stagedQuery?.id &&
+				requestData?.id !== stagedQuery?.id &&
+				selectedTime !== 'custom'
+			) {
 				dispatch(UpdateTimeInterval(selectedTime));
 			}
 
