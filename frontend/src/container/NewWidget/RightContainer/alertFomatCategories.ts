@@ -109,16 +109,6 @@ export const alertsCategory = [
 export const getCategorySelectOptionByName = (
 	name?: CategoryNames | string,
 ): DefaultOptionType[] => {
-	const oldAlertsCategory = alertsCategory
-		.find((category) => category.name === name)
-		?.formats.map((format) => ({
-			label: format.name,
-			value: format.id,
-		}));
-	if (oldAlertsCategory) {
-		return oldAlertsCategory;
-	}
-
 	const newAlertsCategory = Y_AXIS_CATEGORIES.find(
 		(category) => category.name === name,
 	);
@@ -129,20 +119,24 @@ export const getCategorySelectOptionByName = (
 		}));
 	}
 
-	return [];
-};
-
-export const getCategoryByOptionId = (id: string): Category | undefined => {
-	const oldAlertsCategory = alertsCategory.find((category) =>
-		category.formats.some((format) => format.id === id),
-	);
+	const oldAlertsCategory = alertsCategory
+		.find((category) => category.name === name)
+		?.formats.map((format) => ({
+			label: format.name,
+			value: format.id,
+		}));
 	if (oldAlertsCategory) {
 		return oldAlertsCategory;
 	}
 
+	return [];
+};
+
+export const getCategoryByOptionId = (id: string): Category | undefined => {
 	const newAlertsCategory = Y_AXIS_CATEGORIES.find((category) =>
 		category.units.some((unit) => unit.id === id),
 	);
+	console.log('newAlertsCategory', newAlertsCategory, Y_AXIS_CATEGORIES, id);
 	if (newAlertsCategory) {
 		return {
 			name: newAlertsCategory.name,
@@ -151,6 +145,13 @@ export const getCategoryByOptionId = (id: string): Category | undefined => {
 				id: unit.id,
 			})),
 		};
+	}
+
+	const oldAlertsCategory = alertsCategory.find((category) =>
+		category.formats.some((format) => format.id === id),
+	);
+	if (oldAlertsCategory) {
+		return oldAlertsCategory;
 	}
 
 	return undefined;
