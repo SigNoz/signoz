@@ -29,7 +29,7 @@ const ROUTES = {
 	ALERT_OVERVIEW: '/alerts/overview',
 	ALL_CHANNELS: '/settings/channels',
 	CHANNELS_NEW: '/settings/channels/new',
-	CHANNELS_EDIT: '/settings/channels/edit/:id',
+	CHANNELS_EDIT: '/settings/channels/edit/:channelId',
 	ALL_ERROR: '/exceptions',
 	ERROR_DETAIL: '/error-detail',
 	VERSION: '/status',
