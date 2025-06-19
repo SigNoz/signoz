@@ -1,9 +1,9 @@
 /* eslint-disable sonarjs/no-collapsible-if */
 /* eslint-disable no-continue */
 /* eslint-disable sonarjs/cognitive-complexity */
+import FilterQueryLexer from 'antlr-parser/FilterQueryLexer';
+import FilterQueryParser from 'antlr-parser/FilterQueryParser';
 import { CharStreams, CommonTokenStream } from 'antlr4';
-import FilterQueryLexer from 'parser/FilterQueryLexer';
-import FilterQueryParser from 'parser/FilterQueryParser';
 import {
 	IDetailedError,
 	IQueryContext,

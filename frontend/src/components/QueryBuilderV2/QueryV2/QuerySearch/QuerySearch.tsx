@@ -12,11 +12,7 @@ import {
 import { javascript } from '@codemirror/lang-javascript';
 import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
-import CodeMirror, {
-	EditorView,
-	Extension,
-	keymap,
-} from '@uiw/react-codemirror';
+import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tag } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
@@ -50,18 +46,6 @@ const stopEventsExtension = EditorView.domEventHandlers({
 		return false;
 	},
 });
-
-const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
-	(view, from, to, text) => {
-		const currentLine = view.state.doc.lineAt(from);
-		const before = currentLine.text.slice(0, from - currentLine.from);
-		const after = currentLine.text.slice(to - currentLine.from);
-
-		const newText = before + text + after;
-
-		return /\s{2,}/.test(newText);
-	},
-);
 
 function QuerySearch({
 	onChange,
@@ -179,32 +163,6 @@ function QuerySearch({
 	const isListOperator = (op: string | undefined): boolean => {
 		if (!op) return false;
 		return op.toUpperCase() === 'IN' || op.toUpperCase() === 'NOT IN';
-	};
-
-	// Helper function to format value based on operator type and value type
-	const formatValueForOperator = (
-		value: string,
-		operatorToken: string | undefined,
-		type: string,
-	): string => {
-		// If operator requires a list and value isn't already in list format
-		if (isListOperator(operatorToken) && !value.startsWith('[')) {
-			// For string values, wrap in quotes first, then in brackets
-			if (type === 'value' || type === 'keyword') {
-				const quotedValue = wrapStringValueInQuotes(value);
-				return `[${quotedValue}]`;
-			}
-			// For numbers, just wrap in brackets
-			return `[${value}]`;
-		}
-
-		// If we're already inside bracket list for IN operator and it's a string value
-		// just wrap in quotes but not brackets (we're already in brackets)
-		if (type === 'value' || type === 'keyword') {
-			return wrapStringValueInQuotes(value);
-		}
-
-		return value;
 	};
 
 	// Add cleanup effect to prevent component updates after unmount
@@ -687,11 +645,7 @@ function QuerySearch({
 				// Format values based on their type and the operator
 				if (option.type === 'value' || option.type === 'keyword') {
 					// String values get quoted
-					processedOption.apply = formatValueForOperator(
-						option.label,
-						operatorName,
-						option.type,
-					);
+					processedOption.apply = option.label;
 
 					// Add context info to the suggestion
 					if (keyName && operatorName) {
@@ -931,7 +885,6 @@ function QuerySearch({
 						javascript({ jsx: false, typescript: false }),
 						EditorView.lineWrapping,
 						stopEventsExtension,
-						disallowMultipleSpaces,
 						keymap.of([
 							...completionKeymap,
 							{

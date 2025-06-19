@@ -1,7 +1,7 @@
 /* eslint-disable */
 
 import { CharStreams, CommonTokenStream, Token } from 'antlr4';
-import FilterQueryLexer from 'parser/FilterQueryLexer';
+import FilterQueryLexer from 'antlr-parser/FilterQueryLexer';
 import { IQueryContext, IQueryPair, IToken } from 'types/antlrQueryTypes';
 
 // Function to normalize multiple spaces to single spaces when not in quotes
