@@ -8,6 +8,7 @@ import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViewsContainer from 'container/LogsExplorerViews';
@@ -20,6 +21,7 @@ import { OptionsQuery } from 'container/OptionsMenu/types';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
+import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
@@ -27,14 +29,24 @@ import { isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
+import {
+	getExplorerViewForPanelType,
+	getExplorerViewFromUrl,
+} from 'utils/explorerUtils';
 
 import { ExplorerViews } from './utils';
 
 function LogsExplorer(): JSX.Element {
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(
-		ExplorerViews.LIST,
+	const [searchParams] = useSearchParams();
+
+	// Get panel type from URL
+	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+
+	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
+		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
 	);
 	const { preferences, loading: preferencesLoading } = usePreferenceContext();
 
@@ -47,6 +59,23 @@ function LogsExplorer(): JSX.Element {
 		}
 		return true;
 	});
+
+	// Update selected view when panel type from URL changes
+	useEffect(() => {
+		if (panelTypesFromUrl) {
+			const newView = getExplorerViewForPanelType(panelTypesFromUrl);
+			if (newView && newView !== selectedView) {
+				setSelectedView(newView);
+			}
+		}
+	}, [panelTypesFromUrl, selectedView]);
+
+	// Update URL when selectedView changes (without triggering re-renders)
+	useEffect(() => {
+		const url = new URL(window.location.href);
+		url.searchParams.set(QueryParams.selectedExplorerView, selectedView);
+		window.history.replaceState({}, '', url.toString());
+	}, [selectedView]);
 
 	const { handleRunQuery, handleSetConfig } = useQueryBuilder();
 

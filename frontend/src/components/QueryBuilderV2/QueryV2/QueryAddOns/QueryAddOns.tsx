@@ -260,6 +260,7 @@ function QueryAddOns({
 										query={query}
 										onChange={handleChangeOrderByKeys}
 										isListViewPanel={isListViewPanel}
+										isNewQueryV2
 									/>
 								</div>
 								{!isListViewPanel && (
