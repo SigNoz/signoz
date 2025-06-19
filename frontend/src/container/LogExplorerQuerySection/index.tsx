@@ -12,10 +12,7 @@ import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interface
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import {
-	ExplorerViews,
-	prepareQueryWithDefaultTimestamp,
-} from 'pages/LogsExplorer/utils';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { memo, useCallback, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -27,14 +24,15 @@ function LogExplorerQuerySection({
 	const { updateAllQueriesOperators } = useQueryBuilder();
 
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
-	const defaultValue = useMemo(() => {
-		const updatedQuery = updateAllQueriesOperators(
-			initialQueriesMap.logs,
-			PANEL_TYPES.LIST,
-			DataSource.LOGS,
-		);
-		return prepareQueryWithDefaultTimestamp(updatedQuery);
-	}, [updateAllQueriesOperators]);
+	const defaultValue = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap.logs,
+				PANEL_TYPES.LIST,
+				DataSource.LOGS,
+			),
+		[updateAllQueriesOperators],
+	);
 
 	useShareBuilderUrl(defaultValue);
 

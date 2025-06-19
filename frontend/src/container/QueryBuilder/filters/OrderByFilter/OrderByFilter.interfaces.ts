@@ -8,6 +8,7 @@ export type OrderByFilterProps = {
 	onChange: (values: OrderByPayload[]) => void;
 	isListViewPanel?: boolean;
 	entityVersion?: string;
+	isNewQueryV2?: boolean;
 };
 
 export type OrderByFilterValue = {
