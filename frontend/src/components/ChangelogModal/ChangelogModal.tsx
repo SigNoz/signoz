@@ -4,10 +4,8 @@ import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { Button, Modal } from 'antd';
 import cx from 'classnames';
 import { ChevronsDown, ScrollText } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 import { formatDate } from 'utils/dateUtils';
 
 import ChangelogRenderer from './components/ChangelogRenderer';
@@ -19,8 +17,7 @@ interface Props {
 function ChangelogModal({ onClose }: Props): JSX.Element {
 	const [hasScroll, setHasScroll] = useState(false);
 	const changelogContentSectionRef = useRef<HTMLDivElement>(null);
-
-	const { changelog } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { changelog } = useAppContext();
 
 	const checkScroll = useCallback((): void => {
 		if (changelogContentSectionRef.current) {

@@ -49,7 +49,6 @@ import AppActions from 'types/actions';
 import {
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
-	UPDATE_LATEST_CHANGELOG,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
@@ -87,6 +86,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
 		userPreferences,
+		updateChangelog,
 	} = useAppContext();
 
 	const { notifications } = useNotifications();
@@ -281,15 +281,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			getChangelogByVersionResponse.data &&
 			getChangelogByVersionResponse.data.payload
 		) {
-			dispatch({
-				type: UPDATE_LATEST_CHANGELOG,
-				payload: {
-					changelog: getChangelogByVersionResponse.data.payload,
-				},
-			});
+			updateChangelog(getChangelogByVersionResponse.data.payload);
 		}
 	}, [
-		dispatch,
+		updateChangelog,
 		getChangelogByVersionResponse.isFetched,
 		getChangelogByVersionResponse.isLoading,
 		getChangelogByVersionResponse.isError,

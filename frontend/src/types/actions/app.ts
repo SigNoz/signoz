@@ -1,4 +1,3 @@
-import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import AppReducer from 'types/reducer/app';
 
 export const UPDATE_CURRENT_VERSION = 'UPDATE_CURRENT_VERSION';
@@ -6,7 +5,6 @@ export const UPDATE_LATEST_VERSION = 'UPDATE_LATEST_VERSION';
 export const UPDATE_CURRENT_ERROR = 'UPDATE_CURRENT_ERROR';
 export const UPDATE_LATEST_VERSION_ERROR = 'UPDATE_LATEST_VERSION_ERROR';
 export const UPDATE_CONFIGS = 'UPDATE_CONFIGS';
-export const UPDATE_LATEST_CHANGELOG = 'UPDATE_LATEST_CHANGELOG';
 
 export interface UpdateAppVersion {
 	type: typeof UPDATE_CURRENT_VERSION;
@@ -38,16 +36,8 @@ export interface UpdateConfigs {
 	};
 }
 
-export interface UpdateLatestChangelog {
-	type: typeof UPDATE_LATEST_CHANGELOG;
-	payload: {
-		changelog: ChangelogSchema;
-	};
-}
-
 export type AppAction =
 	| UpdateAppVersion
 	| UpdateLatestVersion
 	| UpdateVersionError
-	| UpdateConfigs
-	| UpdateLatestChangelog;
+	| UpdateConfigs;

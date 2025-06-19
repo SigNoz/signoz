@@ -114,12 +114,10 @@ function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const { pathname, search } = useLocation();
-	const {
-		currentVersion,
-		latestVersion,
-		isCurrentVersionError,
-		changelog,
-	} = useSelector<AppState, AppReducer>((state) => state.app);
+	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
+		AppState,
+		AppReducer
+	>((state) => state.app);
 
 	const {
 		user,
@@ -127,6 +125,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		trialInfo,
 		isLoggedIn,
 		userPreferences,
+		changelog,
 		updateUserPreferenceInContext,
 	} = useAppContext();
 
