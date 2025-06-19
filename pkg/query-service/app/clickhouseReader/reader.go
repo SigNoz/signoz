@@ -2492,26 +2492,6 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 	return &tagsInfo, nil
 }
 
-// remove this after sometime
-func removeUnderscoreDuplicateFields(fields []model.Field) []model.Field {
-	lookup := map[string]model.Field{}
-	for _, v := range fields {
-		lookup[v.Name+v.DataType] = v
-	}
-
-	for k := range lookup {
-		if strings.Contains(k, ".") {
-			delete(lookup, strings.ReplaceAll(k, ".", "_"))
-		}
-	}
-
-	updatedFields := []model.Field{}
-	for _, v := range lookup {
-		updatedFields = append(updatedFields, v)
-	}
-	return updatedFields
-}
-
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
 	// response will contain top level fields from the otel log model
 	response := model.GetFieldsResponse{
@@ -2534,10 +2514,6 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
-
-	//remove this code after sometime
-	attributes = removeUnderscoreDuplicateFields(attributes)
-	resources = removeUnderscoreDuplicateFields(resources)
 
 	statements := []model.ShowCreateTableStatement{}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
@@ -2574,10 +2550,6 @@ func (r *ClickHouseReader) GetLogFieldsFromNames(ctx context.Context, fieldNames
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
-
-	//remove this code after sometime
-	attributes = removeUnderscoreDuplicateFields(attributes)
-	resources = removeUnderscoreDuplicateFields(resources)
 
 	statements := []model.ShowCreateTableStatement{}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
@@ -3885,10 +3857,6 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 			}
 		}
 
-		// remove duplicate _ attributes for logs.
-		// remove this function after a month
-		removeDuplicateUnderscoreAttributes(row)
-
 		rowList = append(rowList, &v3.Row{Timestamp: t, Data: row})
 	}
 
@@ -3911,52 +3879,6 @@ func getPersonalisedError(err error) error {
 	return err
 }
 
-func removeDuplicateUnderscoreAttributes(row map[string]interface{}) {
-	if val, ok := row["attributes_int64"]; ok {
-		attributes := val.(*map[string]int64)
-		for key := range *attributes {
-			if strings.Contains(key, ".") {
-				uKey := strings.ReplaceAll(key, ".", "_")
-				delete(*attributes, uKey)
-			}
-		}
-
-	}
-
-	if val, ok := row["attributes_float64"]; ok {
-		attributes := val.(*map[string]float64)
-		for key := range *attributes {
-			if strings.Contains(key, ".") {
-				uKey := strings.ReplaceAll(key, ".", "_")
-				delete(*attributes, uKey)
-			}
-		}
-
-	}
-
-	if val, ok := row["attributes_bool"]; ok {
-		attributes := val.(*map[string]bool)
-		for key := range *attributes {
-			if strings.Contains(key, ".") {
-				uKey := strings.ReplaceAll(key, ".", "_")
-				delete(*attributes, uKey)
-			}
-		}
-
-	}
-	for _, k := range []string{"attributes_string", "resources_string"} {
-		if val, ok := row[k]; ok {
-			attributes := val.(*map[string]string)
-			for key := range *attributes {
-				if strings.Contains(key, ".") {
-					uKey := strings.ReplaceAll(key, ".", "_")
-					delete(*attributes, uKey)
-				}
-			}
-
-		}
-	}
-}
 func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	rows, err := r.db.Query(ctx, "SELECT 1")
 	if err != nil {
