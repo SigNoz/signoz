@@ -391,7 +391,7 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 	},
 	{
 		key: 'invite-collaborators',
-		label: 'Invite a Collaborator',
+		label: 'Invite a Team Member',
 		icon: <Plus size={14} />,
 		itemKey: 'invite-collaborators',
 	},
@@ -403,6 +403,10 @@ export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACES_EXPLORER,
 	[ROUTES.LOGS_BASE]: ROUTES.LOGS_EXPLORER,
 	[ROUTES.METRICS_EXPLORER_BASE]: ROUTES.METRICS_EXPLORER,
+	[ROUTES.INFRASTRUCTURE_MONITORING_BASE]:
+		ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+	[ROUTES.API_MONITORING_BASE]: ROUTES.API_MONITORING,
+	[ROUTES.MESSAGING_QUEUES_BASE]: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 };
 
 export default menuItems;
