@@ -47,6 +47,7 @@ function ApDexApplication(): JSX.Element {
 			showArrow={false}
 			open={isOpen}
 			onOpenChange={handleOpenChange}
+			overlayClassName="ap-dex-settings-popover"
 			content={
 				<ApDexSettings
 					servicename={servicename}
@@ -57,9 +58,11 @@ function ApDexApplication(): JSX.Element {
 				/>
 			}
 		>
-			<Button size="middle" icon={<SettingOutlined />}>
-				Settings
-			</Button>
+			<div className="ap-dex-settings-popover-content">
+				<Button size="middle" icon={<SettingOutlined />}>
+					Settings
+				</Button>
+			</div>
 		</Popover>
 	);
 }

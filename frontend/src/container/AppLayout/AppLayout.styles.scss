@@ -22,6 +22,12 @@
 			width: 100%;
 		}
 	}
+
+	&.side-nav-pinned {
+		.app-content {
+			width: calc(100% - 240px);
+		}
+	}
 }
 
 .chat-support-gateway {

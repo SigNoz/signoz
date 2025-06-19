@@ -6,7 +6,7 @@ import FunnelMetricsTable from './FunnelMetricsTable';
 function OverallMetrics(): JSX.Element {
 	const { funnelId } = useParams<{ funnelId: string }>();
 	const { isLoading, metricsData, conversionRate, isError } = useFunnelMetrics({
-		funnelId: funnelId || '',
+		funnelId,
 	});
 
 	return (

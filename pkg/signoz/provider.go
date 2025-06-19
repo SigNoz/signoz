@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing/smtpemailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -110,6 +111,7 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewUpdateDashboardFactory(sqlstore),
 		sqlmigration.NewDropFeatureSetFactory(),
 		sqlmigration.NewDropDeprecatedTablesFactory(),
+		sqlmigration.NewUpdateAgentsFactory(sqlstore),
 	)
 }
 
@@ -152,9 +154,9 @@ func NewSharderProviderFactories() factory.NamedMap[factory.ProviderFactory[shar
 	)
 }
 
-func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
+func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
 	return factory.MustNewNamedMap(
-		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, build, analyticsConfig),
+		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, userGetter, build, analyticsConfig),
 		noopstatsreporter.NewFactory(),
 	)
 }

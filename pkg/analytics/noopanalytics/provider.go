@@ -27,7 +27,25 @@ func (provider *provider) Start(_ context.Context) error {
 	return nil
 }
 
-func (provider *provider) Send(ctx context.Context, messages ...analyticstypes.Message) {}
+func (provider *provider) Send(ctx context.Context, messages ...analyticstypes.Message) {
+	// do nothing
+}
+
+func (provider *provider) TrackGroup(ctx context.Context, group, event string, attributes map[string]any) {
+	// do nothing
+}
+
+func (provider *provider) TrackUser(ctx context.Context, group, user, event string, attributes map[string]any) {
+	// do nothing
+}
+
+func (provider *provider) IdentifyGroup(ctx context.Context, group string, traits map[string]any) {
+	// do nothing
+}
+
+func (provider *provider) IdentifyUser(ctx context.Context, group, user string, traits map[string]any) {
+	// do nothing
+}
 
 func (provider *provider) Stop(_ context.Context) error {
 	close(provider.stopC)

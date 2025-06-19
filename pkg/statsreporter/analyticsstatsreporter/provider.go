@@ -9,9 +9,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/analyticstypes"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 )
@@ -32,6 +33,9 @@ type provider struct {
 	// used to get organizations
 	orgGetter organization.Getter
 
+	// used to get users
+	userGetter user.Getter
+
 	// used to send stats to an analytics backend
 	analytics analytics.Analytics
 
@@ -45,9 +49,9 @@ type provider struct {
 	stopC chan struct{}
 }
 
-func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, build version.Build, analyticsConfig analytics.Config) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
+func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, build version.Build, analyticsConfig analytics.Config) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("analytics"), func(ctx context.Context, settings factory.ProviderSettings, config statsreporter.Config) (statsreporter.StatsReporter, error) {
-		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, build, analyticsConfig)
+		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, userGetter, build, analyticsConfig)
 	})
 }
 
@@ -58,6 +62,7 @@ func New(
 	telemetryStore telemetrystore.TelemetryStore,
 	collectors []statsreporter.StatsCollector,
 	orgGetter organization.Getter,
+	userGetter user.Getter,
 	build version.Build,
 	analyticsConfig analytics.Config,
 ) (statsreporter.StatsReporter, error) {
@@ -74,6 +79,7 @@ func New(
 		telemetryStore: telemetryStore,
 		collectors:     collectors,
 		orgGetter:      orgGetter,
+		userGetter:     userGetter,
 		analytics:      analytics,
 		build:          build,
 		deployment:     deployment,
@@ -116,6 +122,7 @@ func (provider *provider) Report(ctx context.Context) error {
 			continue
 		}
 
+		// Add build and deployment stats
 		stats["build.version"] = provider.build.Version()
 		stats["build.branch"] = provider.build.Branch()
 		stats["build.hash"] = provider.build.Hash()
@@ -125,37 +132,30 @@ func (provider *provider) Report(ctx context.Context) error {
 		stats["deployment.os"] = provider.deployment.OS()
 		stats["deployment.arch"] = provider.deployment.Arch()
 
+		// Add org stats
+		stats["display_name"] = org.DisplayName
+		stats["name"] = org.Name
+		stats["created_at"] = org.CreatedAt
+		stats["alias"] = org.Alias
+
 		provider.settings.Logger().DebugContext(ctx, "reporting stats", "stats", stats)
-		provider.analytics.Send(
-			ctx,
-			analyticstypes.Track{
-				UserId:     "stats_" + org.ID.String(),
-				Event:      "Stats Reported",
-				Properties: analyticstypes.NewPropertiesFromMap(stats),
-				Context: &analyticstypes.Context{
-					Extra: map[string]interface{}{
-						analyticstypes.KeyGroupID: org.ID.String(),
-					},
-				},
-			},
-			analyticstypes.Group{
-				UserId:  "stats_" + org.ID.String(),
-				GroupId: org.ID.String(),
-				Traits: analyticstypes.
-					NewTraitsFromMap(stats).
-					SetName(org.DisplayName).
-					SetUsername(org.Name).
-					SetCreatedAt(org.CreatedAt),
-			},
-			analyticstypes.Identify{
-				UserId: "stats_" + org.ID.String(),
-				Traits: analyticstypes.
-					NewTraits().
-					SetName(org.DisplayName).
-					SetUsername(org.Name).
-					SetCreatedAt(org.CreatedAt),
-			},
-		)
+
+		provider.analytics.IdentifyGroup(ctx, org.ID.String(), stats)
+		provider.analytics.TrackGroup(ctx, org.ID.String(), "Stats Reported", stats)
+
+		if !provider.config.Collect.Identities {
+			continue
+		}
+
+		users, err := provider.userGetter.ListByOrgID(ctx, org.ID)
+		if err != nil {
+			provider.settings.Logger().WarnContext(ctx, "failed to list users", "error", err, "org_id", org.ID)
+			continue
+		}
+
+		for _, user := range users {
+			provider.analytics.IdentifyUser(ctx, org.ID.String(), user.ID.String(), types.NewTraitsFromUser(user))
+		}
 	}
 
 	return nil
@@ -214,6 +214,21 @@ func (provider *provider) collectOrg(ctx context.Context, orgID valuer.UUID) map
 	var metrics uint64
 	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT COUNT(*) FROM signoz_metrics.distributed_samples_v4").Scan(&metrics); err == nil {
 		stats["telemetry.metrics.count"] = metrics
+	}
+
+	var tracesLastSeenAt time.Time
+	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT max(timestamp) FROM signoz_traces.distributed_signoz_index_v3").Scan(&tracesLastSeenAt); err == nil {
+		stats["telemetry.traces.last_observed.time"] = tracesLastSeenAt.UTC()
+	}
+
+	var logsLastSeenAt time.Time
+	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT fromUnixTimestamp64Nano(max(timestamp)) FROM signoz_logs.distributed_logs_v2").Scan(&logsLastSeenAt); err == nil {
+		stats["telemetry.logs.last_observed.time"] = logsLastSeenAt.UTC()
+	}
+
+	var metricsLastSeenAt time.Time
+	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT toDateTime(max(unix_milli) / 1000) FROM signoz_metrics.distributed_samples_v4").Scan(&metricsLastSeenAt); err == nil {
+		stats["telemetry.metrics.last_observed.time"] = metricsLastSeenAt.UTC()
 	}
 
 	return stats

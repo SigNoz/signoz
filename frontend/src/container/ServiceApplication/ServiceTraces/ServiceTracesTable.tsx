@@ -53,7 +53,7 @@ function ServiceTraceTable({
 			`${range[0]}-${range[1]} of ${total} items`,
 	};
 	return (
-		<>
+		<div className="service-traces-table-container">
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
 					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
@@ -73,7 +73,7 @@ function ServiceTraceTable({
 				rowKey="serviceName"
 				className="service-traces-table"
 			/>
-		</>
+		</div>
 	);
 }
 
