@@ -453,7 +453,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 	}
 
 	// Add aggregations
-	for i, _ := range b.operator.Aggregations {
+	for i := range b.operator.Aggregations {
 		// Simple implementation - in reality, you'd use the aggExprRewriter
 		sb.SelectMore(fmt.Sprintf("count(*) AS __result_%d", i))
 	}
