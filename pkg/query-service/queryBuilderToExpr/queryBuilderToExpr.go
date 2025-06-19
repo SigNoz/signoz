@@ -65,11 +65,19 @@ func Parse(filters *v3.FilterSet) (string, error) {
 		case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
 			// accustom log filters like `body.log.message EXISTS` into EXPR language
 			// where User is attempting to check for keys present in JSON log body
-			key, found := strings.CutPrefix(v.Key.Key, "body.")
-			if found {
-				filter = fmt.Sprintf("%s %s %s", exprFormattedValue(key), logOperatorsToExpr[v.Operator], "fromJSON(body)")
+			if strings.HasPrefix(v.Key.Key, "body.") {
+				filter = fmt.Sprintf("%s %s %s", exprFormattedValue(strings.TrimPrefix(v.Key.Key, "body.")), logOperatorsToExpr[v.Operator], "fromJSON(body)")
+			} else if typ := getTypeName(v.Key.Type); typ != "" {
+				filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], typ)
 			} else {
-				filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], getTypeName(v.Key.Type))
+				// if type of key is not available; is considered as TOP LEVEL key in OTEL Log Data model hence
+				// switch Exist and Not Exists operators with NOT EQUAL and EQUAL respectively
+				operator := v3.FilterOperatorNotEqual
+				if v.Operator == v3.FilterOperatorNotExists {
+					operator = v3.FilterOperatorEqual
+				}
+
+				filter = fmt.Sprintf("%s %s nil", v.Key.Key, logOperatorsToExpr[operator])
 			}
 		default:
 			filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))

@@ -391,7 +391,7 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 	},
 	{
 		key: 'invite-collaborators',
-		label: 'Invite a Collaborator',
+		label: 'Invite a Team Member',
 		icon: <Plus size={14} />,
 		itemKey: 'invite-collaborators',
 	},
