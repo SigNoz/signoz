@@ -224,3 +224,6 @@ statsreporter:
   enabled: true
   # The interval at which the stats are collected.
   interval: 6h
+  collect:
+    # Whether to collect identities and traits (emails).
+    identities: true

@@ -447,6 +447,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				{
 					key: 'workspace',
 					label: 'Workspace Settings',
+					disabled: isWorkspaceBlocked,
 				},
 				...(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser
 					? [
@@ -464,7 +465,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					),
 				},
 			].filter(Boolean),
-		[isEnterpriseSelfHostedUser, isCommunityEnterpriseUser, user.email],
+		[
+			isEnterpriseSelfHostedUser,
+			isCommunityEnterpriseUser,
+			user.email,
+			isWorkspaceBlocked,
+		],
 	);
 
 	useEffect(() => {
