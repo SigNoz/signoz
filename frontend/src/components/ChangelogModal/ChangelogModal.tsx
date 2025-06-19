@@ -50,7 +50,7 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 	}, [checkScroll]);
 
 	const onClickUpdateWorkspace = (): void => {
-		window.open('https://signoz.io/docs/operate/migration/', '_blank');
+		window.open('https://github.com/SigNoz/signoz/releases', '_blank');
 	};
 
 	const onClickScrollForMore = (): void => {
