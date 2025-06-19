@@ -136,7 +136,6 @@ export const getCategoryByOptionId = (id: string): Category | undefined => {
 	const newAlertsCategory = Y_AXIS_CATEGORIES.find((category) =>
 		category.units.some((unit) => unit.id === id),
 	);
-	console.log('newAlertsCategory', newAlertsCategory, Y_AXIS_CATEGORIES, id);
 	if (newAlertsCategory) {
 		return {
 			name: newAlertsCategory.name,
