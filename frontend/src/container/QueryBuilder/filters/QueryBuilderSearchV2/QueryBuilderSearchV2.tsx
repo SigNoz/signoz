@@ -450,7 +450,7 @@ function QueryBuilderSearchV2(
 			if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
 				event.preventDefault();
 				event.stopPropagation();
-				handleRunQuery();
+				handleRunQuery(false, true);
 				setIsOpen(false);
 			}
 		},

@@ -263,7 +263,11 @@ function TracesExplorer(): JSX.Element {
 									onChangeSelectedView={handleChangeSelectedView}
 								/>
 							}
-							rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
+							rightActions={
+								<RightToolbarActions
+									onStageRunQuery={(): void => handleRunQuery(false, true)}
+								/>
+							}
 						/>
 					</div>
 					<ExplorerCard sourcepage={DataSource.TRACES}>
