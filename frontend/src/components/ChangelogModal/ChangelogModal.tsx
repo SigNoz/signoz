@@ -81,9 +81,12 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 				<div
 					className={cx('changelog-modal-footer', hasScroll && 'scroll-available')}
 				>
-					<span className="changelog-modal-footer-label">
-						{changelog?.features.length} new features, 12 bug fixes
-					</span>
+					{changelog?.features && (
+						<span className="changelog-modal-footer-label">
+							{changelog.features.length} new&nbsp;
+							{changelog.features.length > 1 ? 'features' : 'feature'}
+						</span>
+					)}
 					<div>
 						<Button
 							type="default"
