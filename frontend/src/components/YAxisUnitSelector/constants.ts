@@ -456,15 +456,6 @@ export const Y_AXIS_CATEGORIES = [
 			},
 		],
 	},
-	{
-		name: 'Miscellaneous',
-		units: [
-			{
-				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.NONE],
-				id: UniversalYAxisUnit.NONE,
-			},
-		],
-	},
 ];
 
 export const UniversalUnitToGrafanaUnit: Record<UniversalYAxisUnit, string> = {
