@@ -53,7 +53,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				mockSourceList,
 				'string_key',
 				false,
-				'string',
+				'string' as DataTypes,
 			);
 
 			expect(result).toEqual(mockSourceList[0]);
@@ -77,7 +77,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				mockSourceList,
 				'bool_key',
 				false,
-				'bool',
+				'bool' as DataTypes,
 			);
 
 			expect(result).toEqual(mockSourceList[2]);
@@ -101,7 +101,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				mockSourceList,
 				'unknown_key',
 				false,
-				'unknown',
+				'unknown' as DataTypes,
 			);
 
 			expect(result).toEqual({
@@ -137,7 +137,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				mockSourceList,
 				'number_key',
 				false,
-				'string',
+				'string' as DataTypes,
 			);
 
 			expect(result).toEqual({
@@ -154,7 +154,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				mockSourceList,
 				'bool_key',
 				false,
-				'string',
+				'string' as DataTypes,
 			);
 
 			expect(result).toEqual({
@@ -171,7 +171,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				mockSourceList,
 				'duplicate_key',
 				false,
-				'number',
+				'number' as DataTypes,
 			);
 
 			expect(result).toEqual(mockSourceList[6]);
@@ -185,7 +185,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				mockSourceList,
 				'new_string_key',
 				false,
-				'string',
+				'string' as DataTypes,
 			);
 
 			expect(result).toEqual({
@@ -202,7 +202,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				mockSourceList,
 				'new_number_key',
 				false,
-				'number',
+				'number' as DataTypes,
 			);
 
 			expect(result).toEqual({
@@ -219,7 +219,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				mockSourceList,
 				'new_bool_key',
 				false,
-				'bool',
+				'bool' as DataTypes,
 			);
 
 			expect(result).toEqual({
@@ -236,7 +236,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				mockSourceList,
 				'new_unknown_key',
 				false,
-				'unknown',
+				'unknown' as DataTypes,
 			);
 
 			expect(result).toEqual({

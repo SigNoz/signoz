@@ -24,7 +24,7 @@ export const chooseAutocompleteFromCustomValue = (
 	sourceList: BaseAutocompleteData[],
 	value: string,
 	isJSON?: boolean,
-	dataType?: string,
+	dataType?: DataTypes | 'number',
 ): BaseAutocompleteData => {
 	const dataTypeToUse = getDataTypeForCustomValue(dataType);
 	const firstBaseAutoCompleteValue = sourceList.find(
