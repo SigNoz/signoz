@@ -111,6 +111,20 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				isJSON: false,
 			});
 		});
+
+		// Test case: Perfect match with isJSON true in sourceList
+		it('should return matching element with isJSON true', () => {
+			const jsonSourceList = [
+				{ key: 'json_key', dataType: DataTypes.String, isJSON: true },
+			];
+			const result = chooseAutocompleteFromCustomValue(
+				jsonSourceList as BaseAutocompleteData[],
+				'json_key',
+				true,
+				'string' as DataTypes,
+			);
+			expect(result).toEqual(jsonSourceList[0]);
+		});
 	});
 
 	describe('when element with same value but different data type found in sourceList', () => {
@@ -260,6 +274,22 @@ describe('chooseAutocompleteFromCustomValue', () => {
 				key: 'new_undefined_key',
 				dataType: DataTypes.EMPTY,
 				isJSON: false,
+			});
+		});
+
+		// Test case: New key with isJSON true - should create new object with isJSON true
+		it('should return new object with isJSON true when not found', () => {
+			const result = chooseAutocompleteFromCustomValue(
+				mockSourceList,
+				'json_not_found',
+				true,
+				'string' as DataTypes,
+			);
+			expect(result).toEqual({
+				...initialAutocompleteData,
+				key: 'json_not_found',
+				dataType: DataTypes.String,
+				isJSON: true,
 			});
 		});
 	});
