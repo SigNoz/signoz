@@ -1024,15 +1024,17 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 
 func TestParseTraceExpression(t *testing.T) {
 	tests := []struct {
-		name        string
-		expression  string
-		expectError bool
-		checkResult func(t *testing.T, result *TraceOperand)
+		name            string
+		expression      string
+		expectError     bool
+		expectedOpCount int
+		checkResult     func(t *testing.T, result *TraceOperand)
 	}{
 		{
-			name:        "simple query reference",
-			expression:  "A",
-			expectError: false,
+			name:            "simple query reference",
+			expression:      "A",
+			expectError:     false,
+			expectedOpCount: 0,
 			checkResult: func(t *testing.T, result *TraceOperand) {
 				assert.NotNil(t, result.QueryRef)
 				assert.Equal(t, "A", result.QueryRef.Name)
@@ -1040,9 +1042,10 @@ func TestParseTraceExpression(t *testing.T) {
 			},
 		},
 		{
-			name:        "simple implication",
-			expression:  "A => B",
-			expectError: false,
+			name:            "simple implication",
+			expression:      "A => B",
+			expectError:     false,
+			expectedOpCount: 1,
 			checkResult: func(t *testing.T, result *TraceOperand) {
 				assert.NotNil(t, result.Operator)
 				assert.Equal(t, TraceOperatorDirectDescendant, *result.Operator)
@@ -1053,9 +1056,10 @@ func TestParseTraceExpression(t *testing.T) {
 			},
 		},
 		{
-			name:        "and operation",
-			expression:  "A && B",
-			expectError: false,
+			name:            "and operation",
+			expression:      "A && B",
+			expectError:     false,
+			expectedOpCount: 1,
 			checkResult: func(t *testing.T, result *TraceOperand) {
 				assert.NotNil(t, result.Operator)
 				assert.Equal(t, TraceOperatorAnd, *result.Operator)
@@ -1064,9 +1068,10 @@ func TestParseTraceExpression(t *testing.T) {
 			},
 		},
 		{
-			name:        "or operation",
-			expression:  "A || B",
-			expectError: false,
+			name:            "or operation",
+			expression:      "A || B",
+			expectError:     false,
+			expectedOpCount: 1,
 			checkResult: func(t *testing.T, result *TraceOperand) {
 				assert.NotNil(t, result.Operator)
 				assert.Equal(t, TraceOperatorOr, *result.Operator)
@@ -1075,9 +1080,10 @@ func TestParseTraceExpression(t *testing.T) {
 			},
 		},
 		{
-			name:        "unary NOT operation",
-			expression:  "NOT A",
-			expectError: false,
+			name:            "unary NOT operation",
+			expression:      "NOT A",
+			expectError:     false,
+			expectedOpCount: 1,
 			checkResult: func(t *testing.T, result *TraceOperand) {
 				assert.NotNil(t, result.Operator)
 				assert.Equal(t, TraceOperatorNot, *result.Operator)
@@ -1087,9 +1093,10 @@ func TestParseTraceExpression(t *testing.T) {
 			},
 		},
 		{
-			name:        "binary NOT operation",
-			expression:  "A NOT B",
-			expectError: false,
+			name:            "binary NOT operation",
+			expression:      "A NOT B",
+			expectError:     false,
+			expectedOpCount: 1,
 			checkResult: func(t *testing.T, result *TraceOperand) {
 				assert.NotNil(t, result.Operator)
 				assert.Equal(t, TraceOperatorExclude, *result.Operator)
@@ -1100,9 +1107,10 @@ func TestParseTraceExpression(t *testing.T) {
 			},
 		},
 		{
-			name:        "complex expression with precedence",
-			expression:  "A => B && C || D",
-			expectError: false,
+			name:            "complex expression with precedence",
+			expression:      "A => B && C || D",
+			expectError:     false,
+			expectedOpCount: 3, // Three operators: =>, &&, ||
 			checkResult: func(t *testing.T, result *TraceOperand) {
 				// Should parse as: A => (B && (C || D)) due to precedence: NOT > || > && > =>
 				// The parsing finds operators from lowest precedence first
@@ -1116,9 +1124,10 @@ func TestParseTraceExpression(t *testing.T) {
 			},
 		},
 		{
-			name:        "simple parentheses",
-			expression:  "(A)",
-			expectError: false,
+			name:            "simple parentheses",
+			expression:      "(A)",
+			expectError:     false,
+			expectedOpCount: 0,
 			checkResult: func(t *testing.T, result *TraceOperand) {
 				assert.NotNil(t, result.QueryRef)
 				assert.Equal(t, "A", result.QueryRef.Name)
@@ -1126,9 +1135,10 @@ func TestParseTraceExpression(t *testing.T) {
 			},
 		},
 		{
-			name:        "parentheses expression",
-			expression:  "A => (B || C)",
-			expectError: false,
+			name:            "parentheses expression",
+			expression:      "A => (B || C)",
+			expectError:     false,
+			expectedOpCount: 2, // Two operators: =>, ||
 			checkResult: func(t *testing.T, result *TraceOperand) {
 				assert.NotNil(t, result.Operator)
 				assert.Equal(t, TraceOperatorDirectDescendant, *result.Operator)
@@ -1142,9 +1152,10 @@ func TestParseTraceExpression(t *testing.T) {
 			},
 		},
 		{
-			name:        "nested NOT with parentheses",
-			expression:  "NOT (A && B)",
-			expectError: false,
+			name:            "nested NOT with parentheses",
+			expression:      "NOT (A && B)",
+			expectError:     false,
+			expectedOpCount: 2, // Two operators: NOT, &&
 			checkResult: func(t *testing.T, result *TraceOperand) {
 				assert.NotNil(t, result.Operator)
 				assert.Equal(t, TraceOperatorNot, *result.Operator)
@@ -1154,6 +1165,13 @@ func TestParseTraceExpression(t *testing.T) {
 				assert.NotNil(t, result.Left.Operator)
 				assert.Equal(t, TraceOperatorAnd, *result.Left.Operator)
 			},
+		},
+		{
+			name:            "complex expression exceeding operator limit",
+			expression:      "A => B => C => D => E => F => G => H => I => J => K => L",
+			expectError:     false, // parseTraceExpression doesn't validate count, ParseExpression does
+			expectedOpCount: 11,    // 11 => operators
+			checkResult:     nil,
 		},
 		{
 			name:        "invalid query reference with numbers",
@@ -1170,11 +1188,11 @@ func TestParseTraceExpression(t *testing.T) {
 			expression:  "",
 			expectError: true,
 		},
-
 		{
-			name:        "expression with extra whitespace",
-			expression:  "  A   =>   B  ",
-			expectError: false,
+			name:            "expression with extra whitespace",
+			expression:      "  A   =>   B  ",
+			expectError:     false,
+			expectedOpCount: 1,
 			checkResult: func(t *testing.T, result *TraceOperand) {
 				assert.NotNil(t, result.Operator)
 				assert.Equal(t, TraceOperatorDirectDescendant, *result.Operator)
@@ -1186,7 +1204,7 @@ func TestParseTraceExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := parseTraceExpression(tt.expression)
+			result, opCount, err := parseTraceExpression(tt.expression)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1196,8 +1214,67 @@ func TestParseTraceExpression(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, result)
+			assert.Equal(t, tt.expectedOpCount, opCount, "operator count mismatch")
+
 			if tt.checkResult != nil {
 				tt.checkResult(t, result)
+			}
+		})
+	}
+}
+
+func TestQueryBuilderTraceOperator_ParseExpression_OperatorLimit(t *testing.T) {
+	tests := []struct {
+		name          string
+		expression    string
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name:        "within operator limit",
+			expression:  "A => B => C",
+			expectError: false,
+		},
+		{
+			name:          "exceeding operator limit",
+			expression:    "A => B => C => D => E => F => G => H => I => J => K => L",
+			expectError:   true,
+			errorContains: "expression contains 11 operators, which exceeds the maximum allowed 10 operators",
+		},
+		{
+			name:        "exactly at limit",
+			expression:  "A => B => C => D => E => F => G => H => I => J => K",
+			expectError: false, // 10 operators, exactly at limit
+		},
+		{
+			name:        "complex expression at limit",
+			expression:  "(A && B) => (C || D) => (E && F) => (G || H) => (I && J) => K",
+			expectError: false, // 10 operators: 3 &&, 2 ||, 5 => = 10 total
+		},
+		{
+			name:          "complex expression exceeding limit",
+			expression:    "(A && B) => (C || D) => (E && F) => (G || H) => (I && J) => (K || L)",
+			expectError:   true,
+			errorContains: "expression contains 11 operators, which exceeds the maximum allowed 10 operators",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			op := &QueryBuilderTraceOperator{
+				Expression: tt.expression,
+			}
+
+			err := op.ParseExpression()
+
+			if tt.expectError {
+				assert.Error(t, err)
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, op.ParsedExpression)
 			}
 		})
 	}
