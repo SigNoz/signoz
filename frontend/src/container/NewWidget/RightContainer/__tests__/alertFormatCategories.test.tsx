@@ -61,12 +61,12 @@ describe('getCategoryByOptionId', () => {
 		const result = getCategoryByOptionId(testUnit.id);
 		expect(result).toEqual({
 			name: testCategory.name,
-			formats: alertsCategory
-				.find((category) => category.name === testCategory.name)
-				?.formats.map((format) => ({
-					name: format.name,
-					id: format.id,
-				})),
+			formats: Y_AXIS_CATEGORIES.find(
+				(category) => category.name === testCategory.name,
+			)?.units.map((format) => ({
+				name: format.name,
+				id: format.id,
+			})),
 		});
 	});
 });
