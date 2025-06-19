@@ -109,3 +109,28 @@
 		border: 1px solid var(--bg-slate-400, #1d212d);
 	}
 }
+
+.lightMode {
+	.changelog-renderer {
+		.changelog-release-date {
+			color: var(--text-ink-500);
+		}
+
+		&-line {
+			background-color: var(--bg-vanilla-300);
+		}
+		li,
+		p {
+			color: var(--text-ink-500);
+		}
+
+		h1,
+		h2,
+		h3,
+		h4,
+		h5,
+		h6 {
+			color: var(--bg-ink-500);
+		}
+	}
+}

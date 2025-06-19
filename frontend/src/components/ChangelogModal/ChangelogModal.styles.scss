@@ -126,3 +126,36 @@
 		opacity: 0.5;
 	}
 }
+
+.lightMode {
+	.changelog-modal {
+		.ant-modal-content {
+			background-color: var(--bg-vanilla-100);
+			border-color: var(--bg-vanilla-300);
+		}
+
+		&-title {
+			background: var(--bg-vanilla-100);
+			color: var(--bg-ink-500);
+			border-color: var(--bg-vanilla-300);
+		}
+
+		&-content {
+			border-color: var(--bg-vanilla-300);
+		}
+
+		&-footer {
+			border-color: var(--bg-vanilla-300);
+
+			.scroll-btn-container {
+				.scroll-btn {
+					background-color: var(--bg-vanilla-300);
+
+					span {
+						color: var(--text-ink-500);
+					}
+				}
+			}
+		}
+	}
+}
