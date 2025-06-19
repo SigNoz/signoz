@@ -563,52 +563,54 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<title>{pageTitle}</title>
 			</Helmet>
 
-			<div className={cx('app-banner-container')}>
-				{SHOW_TRIAL_EXPIRY_BANNER && (
-					<div className="trial-expiry-banner">
-						You are in free trial period. Your free trial will end on{' '}
-						<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
-						{user.role === USER_ROLES.ADMIN ? (
-							<span>
-								{' '}
-								Please{' '}
-								<a className="upgrade-link" onClick={handleUpgrade}>
-									upgrade
-								</a>
-								to continue using SigNoz features.
-							</span>
-						) : (
-							'Please contact your administrator for upgrading to a paid plan.'
-						)}
-					</div>
-				)}
-
-				{SHOW_WORKSPACE_RESTRICTED_BANNER && renderWorkspaceRestrictedBanner()}
-
-				{SHOW_PAYMENT_FAILED_BANNER && (
-					<div className="payment-failed-banner">
-						Your bill payment has failed. Your workspace will get suspended on{' '}
-						<span>
-							{getFormattedDateWithMinutes(
-								dayjs(activeLicense?.event_queue?.scheduled_at).unix() || Date.now(),
+			{isLoggedIn && (
+				<div className={cx('app-banner-container')}>
+					{SHOW_TRIAL_EXPIRY_BANNER && (
+						<div className="trial-expiry-banner">
+							You are in free trial period. Your free trial will end on{' '}
+							<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
+							{user.role === USER_ROLES.ADMIN ? (
+								<span>
+									{' '}
+									Please{' '}
+									<a className="upgrade-link" onClick={handleUpgrade}>
+										upgrade
+									</a>
+									to continue using SigNoz features.
+								</span>
+							) : (
+								'Please contact your administrator for upgrading to a paid plan.'
 							)}
-							.
-						</span>
-						{user.role === USER_ROLES.ADMIN ? (
+						</div>
+					)}
+
+					{SHOW_WORKSPACE_RESTRICTED_BANNER && renderWorkspaceRestrictedBanner()}
+
+					{SHOW_PAYMENT_FAILED_BANNER && (
+						<div className="payment-failed-banner">
+							Your bill payment has failed. Your workspace will get suspended on{' '}
 							<span>
-								{' '}
-								Please{' '}
-								<a className="upgrade-link" onClick={handleFailedPayment}>
-									pay the bill
-								</a>
-								to continue using SigNoz features.
+								{getFormattedDateWithMinutes(
+									dayjs(activeLicense?.event_queue?.scheduled_at).unix() || Date.now(),
+								)}
+								.
 							</span>
-						) : (
-							' Please contact your administrator to pay the bill.'
-						)}
-					</div>
-				)}
-			</div>
+							{user.role === USER_ROLES.ADMIN ? (
+								<span>
+									{' '}
+									Please{' '}
+									<a className="upgrade-link" onClick={handleFailedPayment}>
+										pay the bill
+									</a>
+									to continue using SigNoz features.
+								</span>
+							) : (
+								' Please contact your administrator to pay the bill.'
+							)}
+						</div>
+					)}
+				</div>
+			)}
 
 			<Flex
 				className={cx(
