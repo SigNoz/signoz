@@ -35,7 +35,7 @@ func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
 	} else if config.Provider == "postgres" {
 		bunDB = bun.NewDB(db, pgdialect.New())
 	} else {
-		panic(fmt.Errorf("provider %q is not supported by provider", config.Provider))
+		panic(fmt.Errorf("provider %q is not supported", config.Provider))
 	}
 
 	return &Provider{
