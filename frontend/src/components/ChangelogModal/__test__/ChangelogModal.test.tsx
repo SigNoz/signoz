@@ -60,8 +60,9 @@ describe('ChangelogModal', () => {
 		render(<ChangelogModal onClose={jest.fn()} />);
 		fireEvent.click(screen.getByText('Update my workspace'));
 		expect(window.open).toHaveBeenCalledWith(
-			'https://signoz.io/docs/operate/migration/',
+			'https://github.com/SigNoz/signoz/releases',
 			'_blank',
+			'noopener,noreferrer',
 		);
 	});
 
