@@ -253,7 +253,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 					const route = routePermission[key];
 					if (
 						route &&
-						(!route.length || route.find((e) => e === user.role) === undefined) // UNAuTHORIZED if current role is not in the list or no role allowed for the route
+						(route.find((e) => e === user.role) === undefined || !route.length) // UNAuTHORIZED if current role is not in the list or no role allowed for the route
 					) {
 						history.push(ROUTES.UN_AUTHORIZED);
 					}
