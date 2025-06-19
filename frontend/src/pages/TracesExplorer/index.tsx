@@ -9,6 +9,7 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
+import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import ExportPanel from 'container/ExportPanel';
@@ -22,6 +23,7 @@ import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/config
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import TableView from 'container/TracesExplorer/TableView';
 import TracesView from 'container/TracesExplorer/TracesView';
+import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
@@ -30,10 +32,15 @@ import { cloneDeep, isEmpty, set } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
+import {
+	getExplorerViewForPanelType,
+	getExplorerViewFromUrl,
+} from 'utils/explorerUtils';
 import { v4 } from 'uuid';
 
 function TracesExplorer(): JSX.Element {
@@ -55,12 +62,35 @@ function TracesExplorer(): JSX.Element {
 		},
 	});
 
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(
-		ExplorerViews.LIST,
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	// Get panel type from URL
+	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+
+	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
+		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
 	);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const { safeNavigate } = useSafeNavigate();
+
+	// Update selected view when panel type from URL changes
+	useEffect(() => {
+		if (panelTypesFromUrl) {
+			const newView = getExplorerViewForPanelType(panelTypesFromUrl);
+			if (newView && newView !== selectedView) {
+				setSelectedView(newView);
+			}
+		}
+	}, [panelTypesFromUrl, selectedView]);
+
+	// Update URL when selectedView changes
+	useEffect(() => {
+		setSearchParams((prev: URLSearchParams) => {
+			prev.set(QueryParams.selectedExplorerView, selectedView);
+			return prev;
+		});
+	}, [selectedView, setSearchParams]);
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews): void => {
@@ -82,26 +112,15 @@ function TracesExplorer(): JSX.Element {
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
 
-	const defaultQuery = useMemo(() => {
-		const query = updateAllQueriesOperators(
-			initialQueriesMap.traces,
-			PANEL_TYPES.LIST,
-			DataSource.TRACES,
-		);
-
-		return {
-			...query,
-			builder: {
-				...query.builder,
-				queryData: [
-					{
-						...query.builder.queryData[0],
-						orderBy: [{ columnName: 'timestamp', order: 'desc' }],
-					},
-				],
-			},
-		};
-	}, [updateAllQueriesOperators]);
+	const defaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap.traces,
+				PANEL_TYPES.LIST,
+				DataSource.TRACES,
+			),
+		[updateAllQueriesOperators],
+	);
 
 	const exportDefaultQuery = useMemo(
 		() =>
