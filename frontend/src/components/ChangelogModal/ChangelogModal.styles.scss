@@ -58,6 +58,14 @@
 			}
 		}
 
+		&-ctas {
+			display: flex;
+
+			& svg {
+				font-size: 14px;
+			}
+		}
+
 		.scroll-btn-container {
 			display: none;
 			position: absolute;
