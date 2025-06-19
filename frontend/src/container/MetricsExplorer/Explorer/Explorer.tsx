@@ -53,6 +53,16 @@ function Explorer(): JSX.Element {
 		});
 	};
 
+	const defaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap[DataSource.METRICS],
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.METRICS,
+			),
+		[updateAllQueriesOperators],
+	);
+
 	const exportDefaultQuery = useMemo(
 		() =>
 			updateAllQueriesOperators(
@@ -63,7 +73,7 @@ function Explorer(): JSX.Element {
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	useShareBuilderUrl(exportDefaultQuery);
+	useShareBuilderUrl(defaultQuery);
 
 	const handleExport = useCallback(
 		(

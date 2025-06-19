@@ -56,7 +56,6 @@ import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
 	IsDefaultQueryProps,
-	MetricAggregateOperator,
 	QueryBuilderContextType,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
@@ -145,13 +144,6 @@ export function QueryBuilderProvider({
 				.includes(queryData.aggregateOperator);
 
 			if (!isCurrentOperatorAvailableInList) {
-				// For metrics, prioritize COUNT as the default operator
-				if (dataSource === DataSource.METRICS) {
-					return {
-						...queryData,
-						aggregateOperator: MetricAggregateOperator.COUNT,
-					};
-				}
 				return { ...queryData, aggregateOperator: initialOperators[0].value };
 			}
 
@@ -190,14 +182,6 @@ export function QueryBuilderProvider({
 						),
 					},
 				};
-
-				// For metrics, ensure orderBy is empty for initial queries
-				if (
-					initialDataSource === DataSource.METRICS ||
-					(!initialDataSource && item.dataSource === DataSource.METRICS)
-				) {
-					currentElement.orderBy = [];
-				}
 
 				return currentElement;
 			});
