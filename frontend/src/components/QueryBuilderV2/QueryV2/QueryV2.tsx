@@ -176,6 +176,7 @@ export const QueryV2 = memo(function QueryV2({
 						<div className="qb-search-filter-container">
 							<div className="query-search-container">
 								<QuerySearch
+									key={`${query.queryName}-${query.dataSource}`}
 									onChange={handleSearchChange}
 									queryData={query}
 									dataSource={dataSource}

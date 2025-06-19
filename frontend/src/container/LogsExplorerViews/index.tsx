@@ -135,7 +135,7 @@ function LogsExplorerViewsContainer({
 	const [queryId, setQueryId] = useState<string>(v4());
 	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 
-	const [orderDirection, setOrderDirection] = useState<string>('asc');
+	const [orderDirection, setOrderDirection] = useState<string>('desc');
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
@@ -323,14 +323,26 @@ function LogsExplorerViewsContainer({
 				};
 			}
 
+			// Create orderBy array based on orderDirection
+			const orderBy = [
+				{ columnName: 'timestamp', order: orderDirection },
+				{ columnName: 'id', order: orderDirection },
+			];
+
 			const queryData: IBuilderQuery[] =
 				query.builder.queryData.length > 1
-					? query.builder.queryData
+					? query.builder.queryData.map((item) => ({
+							...item,
+							...(selectedPanelType !== PANEL_TYPES.LIST ? { order: [] } : {}),
+					  }))
 					: [
 							{
 								...(listQuery || initialQueryBuilderFormValues),
 								...paginateData,
 								...(updatedFilters ? { filters: updatedFilters } : {}),
+								...(selectedPanelType === PANEL_TYPES.LIST
+									? { order: orderBy }
+									: { order: [] }),
 							},
 					  ];
 
@@ -344,7 +356,7 @@ function LogsExplorerViewsContainer({
 
 			return data;
 		},
-		[listQuery, activeLogId],
+		[activeLogId, orderDirection, listQuery, selectedPanelType],
 	);
 
 	const handleEndReached = useCallback(() => {
@@ -487,10 +499,19 @@ function LogsExplorerViewsContainer({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
+	// Store previous orderDirection to detect changes
+	const prevOrderDirectionRef = useRef(orderDirection);
+
 	useEffect(() => {
+		const orderDirectionChanged =
+			prevOrderDirectionRef.current !== orderDirection &&
+			selectedPanelType === PANEL_TYPES.LIST;
+		prevOrderDirectionRef.current = orderDirection;
+
 		if (
 			requestData?.id !== stagedQuery?.id ||
-			currentMinTimeRef.current !== minTime
+			currentMinTimeRef.current !== minTime ||
+			orderDirectionChanged
 		) {
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
@@ -513,6 +534,8 @@ function LogsExplorerViewsContainer({
 		activeLogId,
 		panelType,
 		selectedView,
+		orderDirection,
+		selectedPanelType,
 	]);
 
 	const chartData = useMemo(() => {

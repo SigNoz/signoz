@@ -22,8 +22,39 @@ import { isEmpty } from 'lodash-es';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { prepareQueryRangePayload } from './prepareQueryRangePayload';
+
+/**
+ * Validates if metric name is available for METRICS data source
+ */
+function validateMetricNameForMetricsDataSource(query: Query): boolean {
+	if (query.queryType !== 'builder') {
+		return true; // Non-builder queries don't need this validation
+	}
+
+	const { queryData } = query.builder;
+
+	// Check if any METRICS data source queries exist
+	const metricsQueries = queryData.filter(
+		(queryItem) => queryItem.dataSource === DataSource.METRICS,
+	);
+
+	// If no METRICS queries, validation passes
+	if (metricsQueries.length === 0) {
+		return true;
+	}
+
+	// Check if ALL METRICS queries are missing metric names
+	const allMetricsQueriesMissingNames = metricsQueries.every((queryItem) => {
+		const metricName = queryItem.aggregateAttribute?.key;
+		return !metricName || metricName.trim() === '';
+	});
+
+	// Return false only if ALL METRICS queries are missing metric names
+	return !allMetricsQueriesMissingNames;
+}
 
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
@@ -34,6 +65,32 @@ export async function GetMetricQueryRange(
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	let legendMap: Record<string, string>;
 	let response: SuccessResponse<MetricRangePayloadProps>;
+
+	// Validate metric name for METRICS data source before making the API call
+	if (
+		version === ENTITY_VERSION_V5 &&
+		!validateMetricNameForMetricsDataSource(props.query)
+	) {
+		// Return empty response to avoid 400 error when metric name is missing
+		return {
+			statusCode: 200,
+			error: null,
+			message: 'Metric name is required for metrics data source',
+			payload: {
+				data: {
+					result: [],
+					resultType: '',
+					newResult: {
+						data: {
+							result: [],
+							resultType: '',
+						},
+					},
+				},
+			},
+			params: props,
+		};
+	}
 
 	if (version === ENTITY_VERSION_V5) {
 		const v5Result = prepareQueryRangePayloadV5(props);

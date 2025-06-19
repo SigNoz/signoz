@@ -34,7 +34,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { ExplorerViews } from './utils';
 
 function LogsExplorer(): JSX.Element {
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams] = useSearchParams();
 	const [selectedView, setSelectedView] = useState<ExplorerViews>(() => {
 		const savedView = searchParams.get(QueryParams.selectedExplorerView);
 		return savedView ? (savedView as ExplorerViews) : ExplorerViews.LIST;
@@ -50,13 +50,12 @@ function LogsExplorer(): JSX.Element {
 		return true;
 	});
 
-	// Update URL when selectedView changes
+	// Update URL when selectedView changes (without triggering re-renders)
 	useEffect(() => {
-		setSearchParams((prev: URLSearchParams) => {
-			prev.set(QueryParams.selectedExplorerView, selectedView);
-			return prev;
-		});
-	}, [selectedView, setSearchParams]);
+		const url = new URL(window.location.href);
+		url.searchParams.set(QueryParams.selectedExplorerView, selectedView);
+		window.history.replaceState({}, '', url.toString());
+	}, [selectedView]);
 
 	const { handleRunQuery, handleSetConfig } = useQueryBuilder();
 
