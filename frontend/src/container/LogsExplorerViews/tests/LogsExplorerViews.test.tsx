@@ -203,6 +203,10 @@ describe('LogsExplorerViews -', () => {
 			activeLogId: ACTIVE_LOG_ID,
 		});
 
+		const originalFiltersLength =
+			mockQueryBuilderContextValue.currentQuery.builder.queryData[0].filters?.items
+				.length || 0;
+
 		lodsQueryServerRequest();
 		render(
 			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue}>
@@ -220,7 +224,10 @@ describe('LogsExplorerViews -', () => {
 
 		await waitFor(() => {
 			const listCall = (useGetExplorerQueryRange as jest.Mock).mock.calls.find(
-				(call) => call[0] && call[0].builder.queryData[0].filters.items.length > 1,
+				(call) =>
+					call[0] &&
+					call[0].builder.queryData[0].filters.items.length ===
+						originalFiltersLength + 1,
 			);
 
 			expect(listCall).toBeDefined();
@@ -230,10 +237,6 @@ describe('LogsExplorerViews -', () => {
 
 				const firstQuery = queryData[0];
 
-				// Get the original number of filters from mock data
-				const originalFiltersLength =
-					mockQueryBuilderContextValue.currentQuery.builder.queryData[0].filters
-						?.items.length || 0;
 				const expectedFiltersLength = originalFiltersLength + 1; // +1 for activeLogId filter
 
 				// Verify that the activeLogId filter is present
