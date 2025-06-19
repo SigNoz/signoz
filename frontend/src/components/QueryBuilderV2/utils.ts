@@ -138,25 +138,33 @@ export const convertAggregationToExpression = (
 	timeAggregation?: string,
 	spaceAggregation?: string,
 	alias?: string,
-): (TraceAggregation | LogAggregation | MetricAggregation)[] => {
+): (TraceAggregation | LogAggregation | MetricAggregation)[] | undefined => {
 	// Skip if no operator or attribute key
 	if (!aggregateOperator) {
-		return [];
+		return undefined;
 	}
+
+	// Replace noop with count as default
+	const normalizedOperator =
+		aggregateOperator === 'noop' ? 'count' : aggregateOperator;
+	const normalizedTimeAggregation =
+		timeAggregation === 'noop' ? 'count' : timeAggregation;
+	const normalizedSpaceAggregation =
+		spaceAggregation === 'noop' ? 'count' : spaceAggregation;
 
 	// For metrics, use the MetricAggregation format
 	if (dataSource === DataSource.METRICS) {
 		return [
 			{
 				metricName: aggregateAttribute.key,
-				timeAggregation: (timeAggregation || aggregateOperator) as any,
-				spaceAggregation: (spaceAggregation || aggregateOperator) as any,
+				timeAggregation: (normalizedTimeAggregation || normalizedOperator) as any,
+				spaceAggregation: (normalizedSpaceAggregation || normalizedOperator) as any,
 			} as MetricAggregation,
 		];
 	}
 
 	// For traces and logs, use expression format
-	const expression = `${aggregateOperator}(${aggregateAttribute.key})`;
+	const expression = `${normalizedOperator}(${aggregateAttribute.key})`;
 
 	if (dataSource === DataSource.TRACES) {
 		return [

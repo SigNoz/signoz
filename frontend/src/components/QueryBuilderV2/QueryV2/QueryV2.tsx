@@ -69,7 +69,7 @@ export const QueryV2 = memo(function QueryV2({
 		}
 
 		// Convert aggregation if needed
-		if (!query.aggregations) {
+		if (!query.aggregations && query.aggregateOperator) {
 			const convertedAggregation = convertAggregationToExpression(
 				query.aggregateOperator,
 				query.aggregateAttribute,
@@ -85,7 +85,7 @@ export const QueryV2 = memo(function QueryV2({
 		const needsConversion =
 			(query.filters?.items?.length > 0 && !query.filter?.expression) ||
 			(query.having?.length > 0 && !query.havingExpression?.expression) ||
-			!query.aggregations;
+			(!query.aggregations && query.aggregateOperator);
 
 		if (needsConversion) {
 			performQueryConversions();
@@ -212,14 +212,19 @@ export const QueryV2 = memo(function QueryV2({
 					<div className="qb-search-container">
 						{dataSource === DataSource.METRICS && (
 							<div className="metrics-select-container">
-								<MetricsSelect query={query} index={0} version="v4" />
+								<MetricsSelect
+									key={JSON.stringify(query)}
+									query={query}
+									index={0}
+									version="v4"
+								/>
 							</div>
 						)}
 
 						<div className="qb-search-filter-container">
 							<div className="query-search-container">
 								<QuerySearch
-									key={`${query.queryName}-${query.dataSource}`}
+									key={JSON.stringify(query)}
 									onChange={handleSearchChange}
 									queryData={query}
 									dataSource={dataSource}
@@ -240,6 +245,7 @@ export const QueryV2 = memo(function QueryV2({
 						dataSource !== DataSource.METRICS && (
 							<QueryAggregation
 								dataSource={dataSource}
+								key={JSON.stringify(query)}
 								panelType={panelType || undefined}
 								onAggregationIntervalChange={handleChangeAggregateEvery}
 								onChange={handleChangeAggregation}
@@ -252,6 +258,7 @@ export const QueryV2 = memo(function QueryV2({
 							panelType={panelType}
 							query={query}
 							index={0}
+							key={JSON.stringify(query)}
 							version="v4"
 						/>
 					)}
