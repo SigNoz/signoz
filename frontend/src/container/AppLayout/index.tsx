@@ -163,7 +163,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
 				getChangelogByVersion(latestVersion),
 			queryKey: ['getChangelogByVersion', latestVersion],
-			enabled: isLoggedIn && shouldFetchChangelog,
+			enabled: isLoggedIn && !isCloudUserVal && shouldFetchChangelog,
 		},
 	]);
 
