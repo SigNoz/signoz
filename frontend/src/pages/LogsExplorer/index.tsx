@@ -21,6 +21,7 @@ import { OptionsQuery } from 'container/OptionsMenu/types';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
+import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
@@ -30,15 +31,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
+import {
+	getExplorerViewForPanelType,
+	getExplorerViewFromUrl,
+} from 'utils/explorerUtils';
 
 import { ExplorerViews } from './utils';
 
 function LogsExplorer(): JSX.Element {
 	const [searchParams] = useSearchParams();
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(() => {
-		const savedView = searchParams.get(QueryParams.selectedExplorerView);
-		return savedView ? (savedView as ExplorerViews) : ExplorerViews.LIST;
-	});
+
+	// Get panel type from URL
+	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+
+	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
+		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+	);
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
@@ -49,6 +57,16 @@ function LogsExplorer(): JSX.Element {
 		}
 		return true;
 	});
+
+	// Update selected view when panel type from URL changes
+	useEffect(() => {
+		if (panelTypesFromUrl) {
+			const newView = getExplorerViewForPanelType(panelTypesFromUrl);
+			if (newView && newView !== selectedView) {
+				setSelectedView(newView);
+			}
+		}
+	}, [panelTypesFromUrl, selectedView]);
 
 	// Update URL when selectedView changes (without triggering re-renders)
 	useEffect(() => {

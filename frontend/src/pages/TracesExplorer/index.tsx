@@ -23,6 +23,7 @@ import { defaultSelectedColumns } from 'container/TracesExplorer/ListView/config
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import TableView from 'container/TracesExplorer/TableView';
 import TracesView from 'container/TracesExplorer/TracesView';
+import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
@@ -36,6 +37,10 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
+import {
+	getExplorerViewForPanelType,
+	getExplorerViewFromUrl,
+} from 'utils/explorerUtils';
 import { v4 } from 'uuid';
 
 function TracesExplorer(): JSX.Element {
@@ -58,13 +63,26 @@ function TracesExplorer(): JSX.Element {
 	});
 
 	const [searchParams, setSearchParams] = useSearchParams();
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(() => {
-		const savedView = searchParams.get(QueryParams.selectedExplorerView);
-		return savedView ? (savedView as ExplorerViews) : ExplorerViews.LIST;
-	});
+
+	// Get panel type from URL
+	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+
+	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
+		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+	);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const { safeNavigate } = useSafeNavigate();
+
+	// Update selected view when panel type from URL changes
+	useEffect(() => {
+		if (panelTypesFromUrl) {
+			const newView = getExplorerViewForPanelType(panelTypesFromUrl);
+			if (newView && newView !== selectedView) {
+				setSelectedView(newView);
+			}
+		}
+	}, [panelTypesFromUrl, selectedView]);
 
 	// Update URL when selectedView changes
 	useEffect(() => {
