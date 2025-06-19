@@ -55,6 +55,16 @@ function Explorer(): JSX.Element {
 		});
 	};
 
+	const defaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap[DataSource.METRICS],
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.METRICS,
+			),
+		[updateAllQueriesOperators],
+	);
+
 	const exportDefaultQuery = useMemo(
 		() =>
 			updateAllQueriesOperators(
@@ -65,7 +75,7 @@ function Explorer(): JSX.Element {
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	useShareBuilderUrl(exportDefaultQuery);
+	useShareBuilderUrl(defaultQuery);
 
 	const handleExport = useCallback(
 		(
@@ -132,7 +142,6 @@ function Explorer(): JSX.Element {
 					queryComponents={queryComponents}
 					showFunctions={false}
 					version="v3"
-					isListViewPanel
 				/>
 				{/* TODO: Enable once we have resolved all related metrics issues */}
 				{/* <Button.Group className="explore-tabs">

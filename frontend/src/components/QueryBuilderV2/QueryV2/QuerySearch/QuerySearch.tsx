@@ -140,9 +140,10 @@ function QuerySearch({
 	};
 
 	useEffect(() => {
+		setKeySuggestions([]);
 		fetchKeySuggestions();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [dataSource]);
 
 	// Add a state for tracking editing mode
 	const [editingMode, setEditingMode] = useState<
