@@ -286,7 +286,7 @@ function LogsExplorer(): JSX.Element {
 						}
 						rightActions={
 							<RightToolbarActions
-								onStageRunQuery={handleRunQuery}
+								onStageRunQuery={(): void => handleRunQuery(false, true)}
 								listQueryKeyRef={listQueryKeyRef}
 								chartQueryKeyRef={chartQueryKeyRef}
 								isLoadingQueries={isLoadingQueries}

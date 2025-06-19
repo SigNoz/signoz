@@ -132,7 +132,9 @@ function Explorer(): JSX.Element {
 					</div>
 					<div className="explore-header-right-actions">
 						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions onStageRunQuery={handleRunQuery} />
+						<RightToolbarActions
+							onStageRunQuery={(): void => handleRunQuery(false, true)}
+						/>
 					</div>
 				</div>
 				{/* <QuerySection /> */}
