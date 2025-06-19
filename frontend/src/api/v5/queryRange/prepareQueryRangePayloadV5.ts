@@ -153,7 +153,7 @@ export function parseAggregations(
 	return result;
 }
 
-function createAggregation(
+export function createAggregation(
 	queryData: any,
 ): TraceAggregation[] | LogAggregation[] | MetricAggregation[] {
 	if (queryData.dataSource === DataSource.METRICS) {
