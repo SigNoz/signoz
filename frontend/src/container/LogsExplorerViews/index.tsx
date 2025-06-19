@@ -138,7 +138,7 @@ function LogsExplorerViewsContainer({
 	const [queryStats, setQueryStats] = useState<WsDataEvent>();
 	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
 
-	const [orderDirection, setOrderDirection] = useState<string>('asc');
+	const [orderDirection, setOrderDirection] = useState<string>('desc');
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
@@ -331,14 +331,26 @@ function LogsExplorerViewsContainer({
 				};
 			}
 
+			// Create orderBy array based on orderDirection
+			const orderBy = [
+				{ columnName: 'timestamp', order: orderDirection },
+				{ columnName: 'id', order: orderDirection },
+			];
+
 			const queryData: IBuilderQuery[] =
 				query.builder.queryData.length > 1
-					? query.builder.queryData
+					? query.builder.queryData.map((item) => ({
+							...item,
+							...(selectedPanelType !== PANEL_TYPES.LIST ? { order: [] } : {}),
+					  }))
 					: [
 							{
 								...(listQuery || initialQueryBuilderFormValues),
 								...paginateData,
 								...(updatedFilters ? { filters: updatedFilters } : {}),
+								...(selectedPanelType === PANEL_TYPES.LIST
+									? { order: orderBy }
+									: { order: [] }),
 							},
 					  ];
 
@@ -352,7 +364,7 @@ function LogsExplorerViewsContainer({
 
 			return data;
 		},
-		[listQuery, activeLogId],
+		[activeLogId, orderDirection, listQuery, selectedPanelType],
 	);
 
 	const handleEndReached = useCallback(() => {
@@ -495,10 +507,19 @@ function LogsExplorerViewsContainer({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
+	// Store previous orderDirection to detect changes
+	const prevOrderDirectionRef = useRef(orderDirection);
+
 	useEffect(() => {
+		const orderDirectionChanged =
+			prevOrderDirectionRef.current !== orderDirection &&
+			selectedPanelType === PANEL_TYPES.LIST;
+		prevOrderDirectionRef.current = orderDirection;
+
 		if (
 			requestData?.id !== stagedQuery?.id ||
-			currentMinTimeRef.current !== minTime
+			currentMinTimeRef.current !== minTime ||
+			orderDirectionChanged
 		) {
 			// Recalculate global time when query changes i.e. stage and run query clicked
 			if (
@@ -534,6 +555,8 @@ function LogsExplorerViewsContainer({
 		dispatch,
 		selectedTime,
 		maxTime,
+		orderDirection,
+		selectedPanelType,
 	]);
 
 	const chartData = useMemo(() => {

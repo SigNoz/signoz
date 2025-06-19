@@ -3,6 +3,7 @@
 import {
 	autocompletion,
 	closeCompletion,
+	Completion,
 	CompletionContext,
 	completionKeymap,
 	CompletionResult,
@@ -54,18 +55,18 @@ const havingOperators = [
 
 // Add common value suggestions
 const commonValues = [
-	{ label: '0', value: '0' },
-	{ label: '1', value: '1' },
-	{ label: '5', value: '5' },
-	{ label: '10', value: '10' },
-	{ label: '50', value: '50' },
-	{ label: '100', value: '100' },
-	{ label: '1000', value: '1000' },
+	{ label: '0', value: '0 ' },
+	{ label: '1', value: '1 ' },
+	{ label: '5', value: '5 ' },
+	{ label: '10', value: '10 ' },
+	{ label: '50', value: '50 ' },
+	{ label: '100', value: '100 ' },
+	{ label: '1000', value: '1000 ' },
 ];
 
 const conjunctions = [
-	{ label: 'AND', value: 'AND' },
-	{ label: 'OR', value: 'OR' },
+	{ label: 'AND', value: 'AND ' },
+	{ label: 'OR', value: 'OR ' },
 ];
 
 function HavingFilter({
@@ -143,109 +144,165 @@ function HavingFilter({
 		});
 	};
 
-	const havingAutocomplete = useMemo(
-		() =>
-			autocompletion({
-				override: [
-					(context: CompletionContext): CompletionResult | null => {
-						const text = context.state.sliceDoc(0, context.pos);
-						const trimmedText = text.trim();
-						const tokens = trimmedText.split(/\s+/).filter(Boolean);
+	// Helper function for applying completion with space
+	const applyCompletionWithSpace = (
+		view: EditorView,
+		completion: Completion,
+		from: number,
+		to: number,
+	): void => {
+		const insertValue =
+			typeof completion.apply === 'string' ? completion.apply : completion.label;
+		const newText = `${insertValue} `;
+		const newPos = from + newText.length;
 
-						// Handle empty state when no aggregation options are available
-						if (options.length === 0) {
-							return {
-								from: context.pos,
-								options: [
-									{
-										label:
-											'No aggregation functions available. Please add aggregation functions first.',
-										type: 'text',
-										apply: (): boolean => true,
-									},
-								],
-							};
-						}
+		view.dispatch({
+			changes: { from, to, insert: newText },
+			selection: { anchor: newPos, head: newPos },
+			effects: EditorView.scrollIntoView(newPos),
+		});
+	};
 
-						// Show value suggestions after operator - this should take precedence
-						if (isAfterOperator(tokens)) {
-							return {
-								from: context.pos,
-								options: [
-									...commonValues,
-									{
-										label: 'Enter a custom number value',
-										type: 'text',
-										apply: (): boolean => true,
-									},
-								],
-							};
-						}
+	const havingAutocomplete = useMemo(() => {
+		// Helper functions for applying completions
+		const forceCompletion = (view: EditorView): void => {
+			setTimeout(() => {
+				if (view) {
+					startCompletion(view);
+				}
+			}, 0);
+		};
 
-						// Suggest key/operator pairs and ( for grouping
-						if (
-							tokens.length === 0 ||
-							conjunctions.some((c) => tokens[tokens.length - 1] === c.value) ||
-							tokens[tokens.length - 1] === '('
-						) {
-							return {
-								from: context.pos,
-								options,
-							};
-						}
+		const applyValueCompletion = (
+			view: EditorView,
+			completion: Completion,
+			from: number,
+			to: number,
+		): void => {
+			applyCompletionWithSpace(view, completion, from, to);
+			forceCompletion(view);
+		};
 
-						// Show suggestions when typing
-						if (tokens.length > 0) {
-							const lastToken = tokens[tokens.length - 1];
-							const filteredOptions = options.filter((opt) =>
-								opt.label.toLowerCase().includes(lastToken.toLowerCase()),
-							);
-							if (filteredOptions.length > 0) {
-								return {
-									from: context.pos - lastToken.length,
-									options: filteredOptions,
-								};
-							}
-						}
+		const applyOperatorCompletion = (
+			view: EditorView,
+			completion: Completion,
+			from: number,
+			to: number,
+		): void => {
+			const insertValue =
+				typeof completion.apply === 'string' ? completion.apply : completion.label;
+			const insertWithSpace = `${insertValue} `;
+			view.dispatch({
+				changes: { from, to, insert: insertWithSpace },
+				selection: { anchor: from + insertWithSpace.length },
+			});
+			forceCompletion(view);
+		};
 
-						// Suggest ) for grouping after a value and a space, if there are unmatched (
-						if (
-							tokens.length > 0 &&
-							isNumber(tokens[tokens.length - 1]) &&
-							text.endsWith(' ')
-						) {
-							return {
-								from: context.pos,
-								options: conjunctions,
-							};
-						}
+		return autocompletion({
+			override: [
+				(context: CompletionContext): CompletionResult | null => {
+					const text = context.state.sliceDoc(0, context.pos);
+					const trimmedText = text.trim();
+					const tokens = trimmedText.split(/\s+/).filter(Boolean);
 
-						// Suggest conjunctions after a closing parenthesis and a space
-						if (
-							tokens.length > 0 &&
-							tokens[tokens.length - 1] === ')' &&
-							text.endsWith(' ')
-						) {
-							return {
-								from: context.pos,
-								options: conjunctions,
-							};
-						}
-
-						// Show all options if no other condition matches
+					// Handle empty state when no aggregation options are available
+					if (options.length === 0) {
 						return {
 							from: context.pos,
-							options,
+							options: [
+								{
+									label:
+										'No aggregation functions available. Please add aggregation functions first.',
+									type: 'text',
+									apply: (): boolean => true,
+								},
+							],
 						};
-					},
-				],
-				defaultKeymap: true,
-				closeOnBlur: true,
-				maxRenderedOptions: 200,
-				activateOnTyping: true,
-			}),
-		[options],
-	);
+					}
+
+					// Show value suggestions after operator
+					if (isAfterOperator(tokens)) {
+						return {
+							from: context.pos,
+							options: [
+								...commonValues.map((value) => ({
+									...value,
+									apply: applyValueCompletion,
+								})),
+								{
+									label: 'Enter a custom number value',
+									type: 'text',
+									apply: applyValueCompletion,
+								},
+							],
+						};
+					}
+
+					// Suggest key/operator pairs and ( for grouping
+					if (
+						tokens.length === 0 ||
+						conjunctions.some((c) => tokens[tokens.length - 1] === c.value.trim()) ||
+						tokens[tokens.length - 1] === '('
+					) {
+						return {
+							from: context.pos,
+							options: options.map((opt) => ({
+								...opt,
+								apply: applyOperatorCompletion,
+							})),
+						};
+					}
+
+					// Show suggestions when typing
+					if (tokens.length > 0) {
+						const lastToken = tokens[tokens.length - 1];
+						const filteredOptions = options.filter((opt) =>
+							opt.label.toLowerCase().includes(lastToken.toLowerCase()),
+						);
+						if (filteredOptions.length > 0) {
+							return {
+								from: context.pos - lastToken.length,
+								options: filteredOptions.map((opt) => ({
+									...opt,
+									apply: applyOperatorCompletion,
+								})),
+							};
+						}
+					}
+
+					// Suggest conjunctions after a value and a space
+					if (
+						tokens.length > 0 &&
+						(isNumber(tokens[tokens.length - 1]) ||
+							tokens[tokens.length - 1] === ')') &&
+						text.endsWith(' ')
+					) {
+						return {
+							from: context.pos,
+							options: conjunctions.map((conj) => ({
+								...conj,
+								apply: applyValueCompletion,
+							})),
+						};
+					}
+
+					// Show all options if no other condition matches
+					return {
+						from: context.pos,
+						options: options.map((opt) => ({
+							...opt,
+							apply: applyOperatorCompletion,
+						})),
+					};
+				},
+			],
+			defaultKeymap: true,
+			closeOnBlur: true,
+			maxRenderedOptions: 200,
+			activateOnTyping: true,
+		});
+	}, [options]);
 
 	return (
 		<div className="having-filter-container">
