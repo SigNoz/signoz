@@ -4070,7 +4070,7 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
-	aH.WriteJSON(w, r, map[string]interface{}{"results": model.SignozLog{}})
+	aH.WriteJSON(w, r, map[string]interface{}{"results": []model.SignozLog{}})
 }
 
 func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
@@ -4078,7 +4078,7 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
-	aH.WriteJSON(w, r, nil)
+	aH.WriteJSON(w, r, model.GetLogsAggregatesResponse{})
 }
 
 func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
