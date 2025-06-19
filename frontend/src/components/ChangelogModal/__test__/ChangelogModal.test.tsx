@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import * as redux from 'react-redux';
 
 import ChangelogModal from '../ChangelogModal';
 
@@ -30,13 +29,12 @@ jest.mock(
 		},
 );
 
-describe('ChangelogModal', () => {
-	beforeEach(() => {
-		jest
-			.spyOn(redux, 'useSelector')
-			.mockReturnValue({ changelog: mockChangelog });
-	});
+// mock useAppContext
+jest.mock('providers/App/App', () => ({
+	useAppContext: jest.fn(() => ({ changelog: mockChangelog })),
+}));
 
+describe('ChangelogModal', () => {
 	it('renders modal with changelog data', () => {
 		render(<ChangelogModal onClose={jest.fn()} />);
 		expect(
