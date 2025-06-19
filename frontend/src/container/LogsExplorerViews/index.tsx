@@ -137,6 +137,7 @@ function LogsExplorerViews({
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
 	const [queryId, setQueryId] = useState<string>(v4());
 	const [queryStats, setQueryStats] = useState<WsDataEvent>();
+	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
@@ -173,8 +174,11 @@ function LogsExplorerViews({
 		return logs.length >= listQuery.limit;
 	}, [logs.length, listQuery]);
 
-	const listChartQuery = useMemo(() => {
-		if (!stagedQuery || !listQuery) return null;
+	useEffect(() => {
+		if (!stagedQuery || !listQuery) {
+			setListChartQuery(null);
+			return;
+		}
 
 		const modifiedQueryData: IBuilderQuery = {
 			...listQuery,
@@ -223,7 +227,7 @@ function LogsExplorerViews({
 			},
 		};
 
-		return modifiedQuery;
+		setListChartQuery(modifiedQuery);
 	}, [stagedQuery, listQuery, activeLogId]);
 
 	const exportDefaultQuery = useMemo(
