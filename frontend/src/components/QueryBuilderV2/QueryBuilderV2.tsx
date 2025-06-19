@@ -101,12 +101,12 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		<QueryBuilderV2Provider>
 			<div className="query-builder-v2">
 				<div className="qb-content-container">
-					{currentQuery.builder.queryData.map((query, index) => (
+					{isListViewPanel && (
 						<QueryV2
 							ref={containerRef}
-							key={query.queryName}
-							index={index}
-							query={query}
+							key={currentQuery.builder.queryData[0].queryName}
+							index={0}
+							query={currentQuery.builder.queryData[0]}
 							filterConfigs={queryFilterConfigs}
 							queryComponents={queryComponents}
 							version={version}
@@ -115,7 +115,24 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							showOnlyWhereClause={showOnlyWhereClause}
 							isListViewPanel={isListViewPanel}
 						/>
-					))}
+					)}
+
+					{!isListViewPanel &&
+						currentQuery.builder.queryData.map((query, index) => (
+							<QueryV2
+								ref={containerRef}
+								key={query.queryName}
+								index={index}
+								query={query}
+								filterConfigs={queryFilterConfigs}
+								queryComponents={queryComponents}
+								version={version}
+								isAvailableToDisable={false}
+								queryVariant={config?.queryVariant || 'dropdown'}
+								showOnlyWhereClause={showOnlyWhereClause}
+								isListViewPanel={isListViewPanel}
+							/>
+						))}
 
 					{!showOnlyWhereClause && currentQuery.builder.queryFormulas.length > 0 && (
 						<div className="qb-formulas-container">

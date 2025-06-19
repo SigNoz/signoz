@@ -71,6 +71,7 @@ function getSignalType(dataSource: string): 'traces' | 'logs' | 'metrics' {
 function createBaseSpec(
 	queryData: IBuilderQuery,
 	requestType: RequestType,
+	panelType?: PANEL_TYPES,
 ): BaseBuilderQuery {
 	return {
 		stepInterval: queryData.stepInterval,
@@ -90,9 +91,10 @@ function createBaseSpec(
 						}),
 				  )
 				: undefined,
-		limit: isEmpty(queryData.limit)
-			? queryData?.pageSize ?? undefined
-			: queryData.limit ?? undefined,
+		limit:
+			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
+				? queryData.limit || queryData.pageSize || undefined
+				: queryData.limit || undefined,
 		offset: requestType === 'raw' ? queryData.offset : undefined,
 		order:
 			queryData.orderBy.length > 0
@@ -151,7 +153,7 @@ export function parseAggregations(
 	return result;
 }
 
-function createAggregation(
+export function createAggregation(
 	queryData: any,
 ): TraceAggregation[] | LogAggregation[] | MetricAggregation[] {
 	if (queryData.dataSource === DataSource.METRICS) {
@@ -180,11 +182,12 @@ function createAggregation(
 function convertBuilderQueriesToV5(
 	builderQueries: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 	requestType: RequestType,
+	panelType?: PANEL_TYPES,
 ): QueryEnvelope[] {
 	return Object.entries(builderQueries).map(
 		([queryName, queryData]): QueryEnvelope => {
 			const signal = getSignalType(queryData.dataSource);
-			const baseSpec = createBaseSpec(queryData, requestType);
+			const baseSpec = createBaseSpec(queryData, requestType, panelType);
 			let spec: QueryEnvelope['spec'];
 
 			const aggregations = createAggregation(queryData);
@@ -196,7 +199,6 @@ function convertBuilderQueriesToV5(
 						signal: 'traces' as const,
 						...baseSpec,
 						aggregations: aggregations as TraceAggregation[],
-						limit: baseSpec?.limit ?? (requestType === 'raw' ? 10 : undefined),
 					};
 					break;
 				case 'logs':
@@ -205,7 +207,6 @@ function convertBuilderQueriesToV5(
 						signal: 'logs' as const,
 						...baseSpec,
 						aggregations: aggregations as LogAggregation[],
-						limit: baseSpec?.limit ?? (requestType === 'raw' ? 10 : undefined),
 					};
 					break;
 				case 'metrics':
@@ -216,7 +217,6 @@ function convertBuilderQueriesToV5(
 						...baseSpec,
 						aggregations: aggregations as MetricAggregation[],
 						// reduceTo: queryData.reduceTo,
-						limit: baseSpec?.limit ?? (requestType === 'raw' ? 10 : undefined),
 					};
 					break;
 			}
@@ -321,6 +321,8 @@ export const prepareQueryRangePayloadV5 = ({
 	const requestType = mapPanelTypeToRequestType(graphType);
 	let queries: QueryEnvelope[] = [];
 
+	console.log('query', query);
+
 	switch (query.queryType) {
 		case EQueryType.QUERY_BUILDER: {
 			const { queryData: data, queryFormulas } = query.builder;
@@ -337,6 +339,7 @@ export const prepareQueryRangePayloadV5 = ({
 			const builderQueries = convertBuilderQueriesToV5(
 				currentQueryData.data,
 				requestType,
+				graphType,
 			);
 
 			// Convert formulas as separate query type

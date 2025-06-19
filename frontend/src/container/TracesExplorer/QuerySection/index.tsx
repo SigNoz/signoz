@@ -39,7 +39,9 @@ function QuerySection(): JSX.Element {
 
 	return (
 		<QueryBuilderV2
-			isListViewPanel={panelTypes === PANEL_TYPES.LIST}
+			isListViewPanel={
+				panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE
+			}
 			config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
 			queryComponents={queryComponents}
 			panelType={panelTypes}
