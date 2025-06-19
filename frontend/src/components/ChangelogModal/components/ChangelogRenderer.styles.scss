@@ -5,7 +5,7 @@
 	.changelog-release-date {
 		font-size: 14px;
 		line-height: 20px;
-		color: var(--Vanilla-400, #c0c1c3);
+		color: var(--text-vanilla-400, #c0c1c3);
 	}
 
 	&-list {
@@ -29,7 +29,7 @@
 			height: 6px;
 			border-radius: 100%;
 			transform: translateX(-50%);
-			background-color: var(--Robin-500, #7190f9);
+			background-color: var(--bg-robin-500, #7190f9);
 		}
 	}
 
@@ -50,7 +50,7 @@
 				top: 10px;
 				width: 20px;
 				height: 2px;
-				background-color: var(--Robin-500, #7190f9);
+				background-color: var(--bg-robin-500, #7190f9);
 				transform: translate(-100%, -50%);
 			}
 		}
@@ -60,19 +60,19 @@
 	p {
 		font-size: 14px;
 		line-height: 20px;
-		color: var(--Vanilla-400, #c0c1c3);
+		color: var(--text-vanilla-400, #c0c1c3);
 	}
 
 	code {
 		padding: 2px 4px;
-		background-color: var(--Slate-500, #161922);
+		background-color: var(--bg-slate-500, #161922);
 		border-radius: 6px;
 		font-size: 95%;
 		vertical-align: middle;
-		border: 1px solid var(--Slate-600, #1c1f2a);
+		border: 1px solid var(--bg-slate-600, #1c1f2a);
 	}
 	a {
-		color: var(--Robin-500, #7190f9);
+		color: var(--text-robin-500, #7190f9);
 		font-weight: 600;
 		text-decoration: underline;
 
@@ -88,7 +88,7 @@
 	h5,
 	h6 {
 		font-weight: 600;
-		color: var(--Signoz-Vanilla-100, #fff);
+		color: var(--text-vanilla-100, #fff);
 	}
 
 	h1 {
@@ -106,6 +106,6 @@
 		width: 100%;
 		overflow: hidden;
 		border-radius: 4px;
-		border: 1px solid var(--Slate-400, #1d212d);
+		border: 1px solid var(--bg-slate-400, #1d212d);
 	}
 }

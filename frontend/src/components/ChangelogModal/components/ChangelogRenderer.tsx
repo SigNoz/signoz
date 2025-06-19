@@ -1,5 +1,6 @@
 import './ChangelogRenderer.styles.scss';
 
+import dayjs from 'dayjs';
 import ReactMarkdown from 'react-markdown';
 import {
 	ChangelogSchema,
@@ -7,7 +8,6 @@ import {
 	SupportedImageTypes,
 	SupportedVideoTypes,
 } from 'types/api/changelog/getChangelogByVersion';
-import { formatDate } from 'utils/dateUtils';
 
 interface Props {
 	changelog: ChangelogSchema;
@@ -45,14 +45,16 @@ function renderMedia(media: Media): JSX.Element | null {
 }
 
 function ChangelogRenderer({ changelog }: Props): JSX.Element {
+	const formattedReleaseDate = dayjs(changelog.release_date).format(
+		'MMMM D, YYYY',
+	);
+
 	return (
 		<div className="changelog-renderer">
 			<div className="changelog-renderer-line">
 				<div className="inner-ball" />
 			</div>
-			<span className="changelog-release-date">
-				{formatDate(changelog.release_date)}
-			</span>
+			<span className="changelog-release-date">{formattedReleaseDate}</span>
 			{changelog.features && changelog.features.length > 0 && (
 				<div className="changelog-renderer-list flex flex-col gap-7">
 					{changelog.features.map((feature) => (

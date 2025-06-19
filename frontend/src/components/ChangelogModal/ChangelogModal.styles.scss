@@ -1,7 +1,7 @@
 .changelog-modal {
 	.ant-modal-content {
 		padding: unset;
-		background-color: var(--Ink-400, #121317);
+		background-color: var(--bg-ink-400, #121317);
 
 		.ant-modal-header {
 			margin-bottom: unset;
@@ -16,12 +16,12 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		background-color: var(--Ink-400, #121317);
+		background-color: var(--bg-ink-400, #121317);
 		padding: 16px;
 		font-size: 14px;
 		line-height: 20px;
-		color: var(--Vanilla-100, #fff);
-		border-bottom: 1px solid var(--Slate-500, #161922);
+		color: var(--text-vanilla-100, #fff);
+		border-bottom: 1px solid var(--bg-late-500, #161922);
 	}
 
 	&-footer.scroll-available {
@@ -32,14 +32,14 @@
 
 	&-footer {
 		position: relative;
-		border: 1px solid var(--Slate-500, #161922);
+		border: 1px solid var(--bg-slate-500, #161922);
 		padding: 12px;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 
 		&-label {
-			color: var(--Robin-400, #7190f9);
+			color: var(--text-robin-400, #7190f9);
 			font-size: 14px;
 			line-height: 24px;
 			position: relative;
@@ -54,7 +54,7 @@
 				width: 6px;
 				height: 6px;
 				border-radius: 100%;
-				background-color: var(--Robin-500, #7190f9);
+				background-color: var(--bg-robin-500, #7190f9);
 			}
 		}
 
@@ -86,17 +86,17 @@
 				transition: background-color 0.1s;
 
 				&:hover {
-					background-color: var(--Slate-200, #2c3140);
+					background-color: var(--bg-slate-200, #2c3140);
 				}
 
 				&:active {
-					background-color: var(--Slate-600, #1c1f2a);
+					background-color: var(--bg-slate-600, #1c1f2a);
 				}
 
 				span {
 					font-size: 12px;
 					line-height: 18px;
-					color: var(--Vanilla-400, #c0c1c3);
+					color: var(--text-vanilla-400, #c0c1c3);
 				}
 
 				// add animation to the chevrons down icon
@@ -111,7 +111,7 @@
 		max-height: calc(100vh - 300px);
 		overflow-y: auto;
 		padding: 16px;
-		border: 1px solid var(--Slate-500, #161922);
+		border: 1px solid var(--bg-slate-500, #161922);
 		border-top-width: 0;
 		border-bottom-width: 0;
 	}

@@ -11,7 +11,7 @@ const getChangelogByVersion = async (
 			https://cms.signoz.cloud/api/release-changelogs?filters[version][$eq]=${versionId}&populate[features][sort]=sort_order:asc&populate[features][populate][media][fields]=id,ext,url,mime,alternativeText
         `);
 
-		if (response.data.meta.pagination.total === 0) {
+		if (!Array.isArray(response.data.data) || response.data.data.length === 0) {
 			throw new Error('No changelog found!');
 		}
 

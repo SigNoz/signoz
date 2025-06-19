@@ -3,10 +3,10 @@ import './ChangelogModal.styles.scss';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { Button, Modal } from 'antd';
 import cx from 'classnames';
+import dayjs from 'dayjs';
 import { ChevronsDown, ScrollText } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { formatDate } from 'utils/dateUtils';
 
 import ChangelogRenderer from './components/ChangelogRenderer';
 
@@ -18,6 +18,10 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 	const [hasScroll, setHasScroll] = useState(false);
 	const changelogContentSectionRef = useRef<HTMLDivElement>(null);
 	const { changelog } = useAppContext();
+
+	const formattedReleaseDate = dayjs(changelog?.release_date).format(
+		'MMMM D, YYYY',
+	);
 
 	const checkScroll = useCallback((): void => {
 		if (changelogContentSectionRef.current) {
@@ -69,10 +73,7 @@ function ChangelogModal({ onClose }: Props): JSX.Element {
 			title={
 				<div className="changelog-modal-title">
 					<ScrollText size={16} />
-					<span>
-						What’s New ⎯ Changelog :{' '}
-						{changelog && formatDate(changelog?.release_date as string)}
-					</span>
+					What’s New ⎯ Changelog : {formattedReleaseDate}
 				</div>
 			}
 			width={820}
