@@ -217,6 +217,13 @@ function SettingsPage(): JSX.Element {
 			return true;
 		}
 
+		if (
+			pathname.startsWith(ROUTES.CHANNELS_EDIT) &&
+			key === ROUTES.ALL_CHANNELS
+		) {
+			return true;
+		}
+
 		return pathname === key;
 	};
 

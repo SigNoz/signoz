@@ -5,7 +5,6 @@ import (
 	"database/sql"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/jmoiron/sqlx"
 	"github.com/uptrace/bun"
 )
 
@@ -17,9 +16,6 @@ type SQLStore interface {
 
 	// BunDB returns an instance of bun.DB. This is the recommended way to interact with the database.
 	BunDB() *bun.DB
-
-	// SQLxDB returns an instance of sqlx.DB. This is the legacy ORM used.
-	SQLxDB() *sqlx.DB
 
 	// Returns the dialect of the database.
 	Dialect() SQLDialect
