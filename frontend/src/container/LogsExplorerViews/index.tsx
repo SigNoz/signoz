@@ -333,19 +333,19 @@ function LogsExplorerViewsContainer({
 				query.builder.queryData.length > 1
 					? query.builder.queryData.map((item) => ({
 							...item,
-							...(selectedPanelType !== PANEL_TYPES.LIST ? { order: [] } : {}),
+							...(selectedView !== ExplorerViews.LIST ? { order: [] } : {}),
 					  }))
 					: [
 							{
 								...(listQuery || initialQueryBuilderFormValues),
 								...paginateData,
 								...(updatedFilters ? { filters: updatedFilters } : {}),
-								...(selectedPanelType === PANEL_TYPES.LIST
+								...(selectedView === ExplorerViews.LIST
 									? { order: orderBy, orderBy }
 									: { order: [], orderBy: [] }),
 							},
 					  ];
-			console.log('queryData', queryData);
+
 			const data: Query = {
 				...query,
 				builder: {
@@ -356,7 +356,7 @@ function LogsExplorerViewsContainer({
 
 			return data;
 		},
-		[activeLogId, orderDirection, listQuery, selectedPanelType],
+		[activeLogId, orderDirection, listQuery, selectedView],
 	);
 
 	const handleEndReached = useCallback(() => {
