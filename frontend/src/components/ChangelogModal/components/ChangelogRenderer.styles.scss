@@ -1,0 +1,136 @@
+.changelog-renderer {
+	position: relative;
+	padding-left: 20px;
+
+	.changelog-release-date {
+		font-size: 14px;
+		line-height: 20px;
+		color: var(--text-vanilla-400, #c0c1c3);
+	}
+
+	&-list {
+		display: flex;
+		flex-direction: column;
+		gap: 28px;
+	}
+
+	&-line {
+		position: absolute;
+		left: 0;
+		top: 6px;
+		bottom: -30px;
+		width: 1px;
+		background-color: var(--bg-slate-400, #1d212d);
+
+		.inner-ball {
+			position: absolute;
+			left: 50%;
+			width: 6px;
+			height: 6px;
+			border-radius: 100%;
+			transform: translateX(-50%);
+			background-color: var(--bg-robin-500, #7190f9);
+		}
+	}
+
+	ul,
+	ol {
+		list-style: none;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding-left: 30px;
+
+		li {
+			position: relative;
+			&::before {
+				content: '';
+				position: absolute;
+				left: -10px;
+				top: 10px;
+				width: 20px;
+				height: 2px;
+				background-color: var(--bg-robin-500, #7190f9);
+				transform: translate(-100%, -50%);
+			}
+		}
+	}
+
+	li,
+	p {
+		font-size: 14px;
+		line-height: 20px;
+		color: var(--text-vanilla-400, #c0c1c3);
+	}
+
+	code {
+		padding: 2px 4px;
+		background-color: var(--bg-slate-500, #161922);
+		border-radius: 6px;
+		font-size: 95%;
+		vertical-align: middle;
+		border: 1px solid var(--bg-slate-600, #1c1f2a);
+	}
+	a {
+		color: var(--text-robin-500, #7190f9);
+		font-weight: 600;
+		text-decoration: underline;
+
+		&:hover {
+			text-decoration: none;
+		}
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-weight: 600;
+		color: var(--text-vanilla-100, #fff);
+	}
+
+	h1 {
+		font-size: 24px;
+		line-height: 32px;
+	}
+
+	h2 {
+		font-size: 20px;
+		line-height: 28px;
+	}
+
+	.changelog-media-image {
+		height: auto;
+		width: 100%;
+		overflow: hidden;
+		border-radius: 4px;
+		border: 1px solid var(--bg-slate-400, #1d212d);
+	}
+}
+
+.lightMode {
+	.changelog-renderer {
+		.changelog-release-date {
+			color: var(--text-ink-500);
+		}
+
+		&-line {
+			background-color: var(--bg-vanilla-300);
+		}
+		li,
+		p {
+			color: var(--text-ink-500);
+		}
+
+		h1,
+		h2,
+		h3,
+		h4,
+		h5,
+		h6 {
+			color: var(--text-ink-500);
+		}
+	}
+}
