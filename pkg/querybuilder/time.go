@@ -7,7 +7,7 @@ const (
 	BucketAdjustment = 1800 // 30 minutes
 
 	RecommendedNumberOfPoints = 300
-	MaxAllowedNumberofPoints  = 1500
+	MaxAllowedNumberOfPoints  = 1500
 	MaxAllowedSeries          = 3000
 )
 
@@ -44,7 +44,7 @@ func MinAllowedStepInterval(start, end uint64) uint64 {
 	start = ToNanoSecs(start)
 	end = ToNanoSecs(end)
 
-	step := (end - start) / MaxAllowedNumberofPoints / 1e9
+	step := (end - start) / MaxAllowedNumberOfPoints / 1e9
 
 	if step < 5 {
 		return 5
