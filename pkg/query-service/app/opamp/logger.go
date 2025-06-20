@@ -1,15 +1,25 @@
 package opamp
 
-import "log"
+import (
+	"context"
+
+	"go.uber.org/zap"
+)
 
 type Logger struct {
-	logger *log.Logger
+	*zap.SugaredLogger
 }
 
-func (l *Logger) Debugf(format string, v ...interface{}) {
-	l.logger.Printf(format, v...)
+func NewWrappedLogger(sugar *zap.SugaredLogger) *Logger {
+	return &Logger{
+		SugaredLogger: sugar,
+	}
 }
 
-func (l *Logger) Errorf(format string, v ...interface{}) {
-	l.logger.Printf(format, v...)
+func (l *Logger) Debugf(ctx context.Context, format string, args ...interface{}) {
+	l.SugaredLogger.Debugf(format, args...)
+}
+
+func (l *Logger) Errorf(ctx context.Context, format string, args ...interface{}) {
+	l.SugaredLogger.Errorf(format, args...)
 }

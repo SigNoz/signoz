@@ -2,6 +2,7 @@ package opamp
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
@@ -40,16 +41,23 @@ func InitializeServer(
 		agents:              agents,
 		agentConfigProvider: agentConfigProvider,
 	}
-	opAmpServer.server = server.New(zap.L().Sugar())
+	opAmpServer.server = server.New(NewWrappedLogger(zap.L().Sugar()))
 	return opAmpServer
 }
 
 func (srv *Server) Start(listener string) error {
 	settings := server.StartSettings{
 		Settings: server.Settings{
-			Callbacks: server.CallbacksStruct{
-				OnMessageFunc:         srv.OnMessage,
-				OnConnectionCloseFunc: srv.onDisconnect,
+			Callbacks: types.Callbacks{
+				OnConnecting: func(request *http.Request) types.ConnectionResponse {
+					return types.ConnectionResponse{
+						Accept: true,
+						ConnectionCallbacks: types.ConnectionCallbacks{
+							OnMessage:         srv.OnMessage,
+							OnConnectionClose: srv.onDisconnect,
+						},
+					}
+				},
 			},
 		},
 		ListenEndpoint: listener,
@@ -86,8 +94,8 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 // but we keep them in context mapped which is mapped to the instanceID, so we would know the
 // orgID from the context
 // note :- there can only be 50 agents in the db for a given orgID, we don't have a check in-memory but we delete from the db after insert.
-func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
-	agentID := msg.InstanceUid
+func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
+	agentID := string(msg.GetInstanceUid())
 
 	// find the orgID, if nothing is found keep it empty.
 	// the find or create agent will return an error if orgID is empty
@@ -104,7 +112,7 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 
 		// Return error response according to OpAMP protocol
 		return &protobufs.ServerToAgent{
-			InstanceUid: agentID,
+			InstanceUid: msg.GetInstanceUid(),
 			ErrorResponse: &protobufs.ServerErrorResponse{
 				Type: protobufs.ServerErrorResponseType_ServerErrorResponseType_Unavailable,
 				Details: &protobufs.ServerErrorResponse_RetryInfo{
@@ -126,7 +134,7 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 	}
 
 	response := &protobufs.ServerToAgent{
-		InstanceUid:  agentID,
+		InstanceUid:  msg.GetInstanceUid(),
 		Capabilities: uint64(capabilities),
 	}
 
