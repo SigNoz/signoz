@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
@@ -107,7 +106,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	)
 
 	rm, err := makeRulesManager(
-		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
 		serverOptions.SigNoz.Cache,
 		serverOptions.SigNoz.SQLStore,
@@ -413,7 +411,6 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func makeRulesManager(
-	db *sqlx.DB,
 	ch interfaces.Reader,
 	cache cache.Cache,
 	sqlstore sqlstore.SQLStore,
@@ -425,7 +422,6 @@ func makeRulesManager(
 	managerOpts := &rules.ManagerOptions{
 		TelemetryStore: telemetryStore,
 		Prometheus:     prometheus,
-		DBConn:         db,
 		Context:        context.Background(),
 		Logger:         zap.L(),
 		Reader:         ch,
