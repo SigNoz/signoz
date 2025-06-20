@@ -20,6 +20,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/go-viper/mapstructure/v2 v2.2.1
+	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/gojek/heimdall/v7 v7.0.3
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
@@ -57,8 +58,8 @@ require (
 	github.com/uptrace/bun/dialect/pgdialect v1.2.9
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.9
 	go.opentelemetry.io/collector/confmap v1.34.0
+	go.opentelemetry.io/collector/otelcol v0.128.0
 	go.opentelemetry.io/collector/pdata v1.34.0
-	go.opentelemetry.io/collector/processor v1.34.0
 	go.opentelemetry.io/contrib/config v0.10.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0
 	go.opentelemetry.io/otel v1.36.0
@@ -127,7 +128,6 @@ require (
 	github.com/go-openapi/validate v0.24.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
-	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gojek/valkyrie v0.0.0-20180215180059-6aee720afcdf // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
@@ -246,11 +246,11 @@ require (
 	go.opentelemetry.io/collector/featuregate v1.34.0 // indirect
 	go.opentelemetry.io/collector/internal/fanoutconsumer v0.128.0 // indirect
 	go.opentelemetry.io/collector/internal/telemetry v0.128.0 // indirect
-	go.opentelemetry.io/collector/otelcol v0.128.0 // indirect
 	go.opentelemetry.io/collector/pdata/pprofile v0.128.0 // indirect
 	go.opentelemetry.io/collector/pdata/testdata v0.128.0 // indirect
 	go.opentelemetry.io/collector/pipeline v0.128.0 // indirect
 	go.opentelemetry.io/collector/pipeline/xpipeline v0.128.0 // indirect
+	go.opentelemetry.io/collector/processor v1.34.0 // indirect
 	go.opentelemetry.io/collector/processor/processorhelper v0.128.0 // indirect
 	go.opentelemetry.io/collector/processor/processortest v0.128.0 // indirect
 	go.opentelemetry.io/collector/processor/xprocessor v0.128.0 // indirect
