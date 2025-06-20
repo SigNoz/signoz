@@ -384,7 +384,6 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                      reader,
 		CloudIntegrationsController: controller,
-		JWT:                         jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
 			Handlers: handlers,

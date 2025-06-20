@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// GetDashboardsInfo returns analytics data for dashboards
+// deprecated: remove this function in the next major release
 func GetDashboardsInfo(ctx context.Context, sqlstore sqlstore.SQLStore) (*model.DashboardsInfo, error) {
 	dashboardsInfo := model.DashboardsInfo{}
 	// fetch dashboards from dashboard db
@@ -64,6 +64,7 @@ func GetDashboardsInfo(ctx context.Context, sqlstore sqlstore.SQLStore) (*model.
 	return &dashboardsInfo, nil
 }
 
+// deprecated: remove this function in the next major release
 func isDashboardWithTSV2(data map[string]interface{}) bool {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -72,6 +73,7 @@ func isDashboardWithTSV2(data map[string]interface{}) bool {
 	return strings.Contains(string(jsonData), "time_series_v2")
 }
 
+// deprecated: remove this function in the next major release
 func isDashboardWithTagAttrs(data map[string]interface{}) bool {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -81,6 +83,7 @@ func isDashboardWithTagAttrs(data map[string]interface{}) bool {
 		strings.Contains(string(jsonData), "tag_attributes")
 }
 
+// deprecated: remove this function in the next major release
 func isDashboardWithLogsClickhouseQuery(data map[string]interface{}) bool {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -91,6 +94,7 @@ func isDashboardWithLogsClickhouseQuery(data map[string]interface{}) bool {
 	return result
 }
 
+// deprecated: remove this function in the next major release
 func isDashboardWithTracesClickhouseQuery(data map[string]interface{}) bool {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -105,6 +109,7 @@ func isDashboardWithTracesClickhouseQuery(data map[string]interface{}) bool {
 	return result
 }
 
+// deprecated: remove this function in the next major release
 func isDashboardWithPanelAndName(data map[string]interface{}) bool {
 	isDashboardName := false
 	isDashboardWithPanelAndName := false
@@ -125,8 +130,8 @@ func isDashboardWithPanelAndName(data map[string]interface{}) bool {
 	return isDashboardWithPanelAndName
 }
 
+// deprecated: remove this function in the next major release
 func extractDashboardName(data map[string]interface{}) string {
-
 	if data != nil && data["title"] != nil {
 		title, ok := data["title"].(string)
 		if ok {
@@ -137,6 +142,7 @@ func extractDashboardName(data map[string]interface{}) string {
 	return ""
 }
 
+// deprecated: remove this function in the next major release
 func checkLogPanelAttrContains(data map[string]interface{}) int {
 	var logsPanelsWithAttrContains int
 	filters, ok := data["filters"].(map[string]interface{})
@@ -163,6 +169,7 @@ func checkLogPanelAttrContains(data map[string]interface{}) int {
 	return logsPanelsWithAttrContains
 }
 
+// deprecated: remove this function in the next major release
 func countPanelsInDashboard(inputData map[string]interface{}) model.DashboardsInfo {
 	var logsPanelCount, tracesPanelCount, metricsPanelCount, logsPanelsWithAttrContains int
 	traceChQueryCount := 0

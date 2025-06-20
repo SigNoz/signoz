@@ -455,7 +455,7 @@ func (m *Module) CreateUserForSAMLRequest(ctx context.Context, email string) (*t
 
 }
 
-func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (string, error) {
+func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (string, error) {
 	users, err := m.GetUsersByEmail(ctx, email)
 	if err != nil {
 		m.settings.Logger().ErrorContext(ctx, "failed to get user with email received from auth provider", "error", err)

@@ -259,7 +259,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 				correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
 				if found {
 					// we found a close match, in the error message send the suggestion
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
+					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "%s", correction)
 				} else {
 					// not even a close match, return an error
 					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field %s not found", field.Name)

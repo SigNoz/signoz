@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func resourceFilterStmtBuilder() (qbtypes.StatementBuilder[qbtypes.TraceAggregation], error) {
+func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.TraceAggregation] {
 	fm := resourcefilter.NewFieldMapper()
 	cb := resourcefilter.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
@@ -24,7 +24,7 @@ func resourceFilterStmtBuilder() (qbtypes.StatementBuilder[qbtypes.TraceAggregat
 		fm,
 		cb,
 		mockMetadataStore,
-	), nil
+	)
 }
 
 func TestStatementBuilder(t *testing.T) {
@@ -72,8 +72,7 @@ func TestStatementBuilder(t *testing.T) {
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	aggExprRewriter := querybuilder.NewAggExprRewriter(nil, fm, cb, "", nil)
 
-	resourceFilterStmtBuilder, err := resourceFilterStmtBuilder()
-	require.NoError(t, err)
+	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),

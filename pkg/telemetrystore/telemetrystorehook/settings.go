@@ -34,7 +34,7 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 	}
 
 	if ctx.Value("enforce_max_result_rows") != nil {
-		settings["max_result_rows"] = h.settings.MaxResultRowsForCHQuery
+		settings["max_result_rows"] = h.settings.MaxResultRows
 	}
 
 	if h.settings.MaxBytesToRead != 0 {
@@ -60,7 +60,9 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 	}
 
 	if ctx.Value("max_result_rows") != nil && ctx.Value("result_overflow_mode") != nil {
-		if maxResultRows, ok := ctx.Value("max_result_rows").(int); ok { settings["max_result_rows"] = maxResultRows }
+		if maxResultRows, ok := ctx.Value("max_result_rows").(int); ok {
+			settings["max_result_rows"] = maxResultRows
+		}
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
