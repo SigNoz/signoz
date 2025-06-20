@@ -90,6 +90,15 @@ apiserver:
       - /api/v1/version
       - /
 
+##################### Querier #####################
+querier:
+  # The TTL for cached query results.
+  cache_ttl: 168h
+  # The interval for recent data that should not be cached.
+  flux_interval: 5m
+  # The maximum number of concurrent queries for missing ranges.
+  max_concurrent_queries: 4
+
 ##################### TelemetryStore #####################
 telemetrystore:
   # Maximum number of idle connections in the connection pool.
@@ -103,13 +112,15 @@ telemetrystore:
   clickhouse:
     # The DSN to use for clickhouse.
     dsn: tcp://localhost:9000
+    # The cluster name to use for clickhouse.
+    cluster: cluster
     # The query settings for clickhouse.
     settings:
       max_execution_time: 0
       max_execution_time_leaf: 0
       timeout_before_checking_execution_speed: 0
       max_bytes_to_read: 0
-      max_result_rows_for_ch_query: 0
+      max_result_rows: 0
 
 ##################### Prometheus #####################
 prometheus:
@@ -227,3 +238,9 @@ statsreporter:
   collect:
     # Whether to collect identities and traits (emails).
     identities: true
+
+
+##################### Gateway (License only) #####################
+gateway:
+  # The URL of the gateway's api.
+  url: http://localhost:8080

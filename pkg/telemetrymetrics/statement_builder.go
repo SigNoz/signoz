@@ -185,9 +185,7 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 
 	if b.canShortCircuitDelta(query) {
 		// spatial_aggregation_cte directly for certain delta queries
-		if frag, args, err := b.buildTemporalAggDeltaFastPath(start, end, query, timeSeriesCTE, timeSeriesCTEArgs); err != nil {
-			return nil, err
-		} else if frag != "" {
+		if frag, args := b.buildTemporalAggDeltaFastPath(start, end, query, timeSeriesCTE, timeSeriesCTEArgs); frag != "" {
 			cteFragments = append(cteFragments, frag)
 			cteArgs = append(cteArgs, args)
 		}
@@ -201,9 +199,7 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 		}
 
 		// spatial_aggregation_cte
-		if frag, args, err := b.buildSpatialAggregationCTE(ctx, start, end, query, keys); err != nil {
-			return nil, err
-		} else if frag != "" {
+		if frag, args := b.buildSpatialAggregationCTE(ctx, start, end, query, keys); frag != "" {
 			cteFragments = append(cteFragments, frag)
 			cteArgs = append(cteArgs, args)
 		}
@@ -223,7 +219,7 @@ func (b *metricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	timeSeriesCTE string,
 	timeSeriesCTEArgs []any,
-) (string, []any, error) {
+) (string, []any) {
 	stepSec := int64(query.StepInterval.Seconds())
 
 	sb := sqlbuilder.NewSelectBuilder()
@@ -262,7 +258,7 @@ func (b *metricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	sb.GroupBy("ALL")
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
-	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args, nil
+	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
 }
 
 func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
@@ -451,7 +447,7 @@ func (b *metricQueryStatementBuilder) buildSpatialAggregationCTE(
 	_ uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
-) (string, []any, error) {
+) (string, []any) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select("ts")
@@ -467,7 +463,7 @@ func (b *metricQueryStatementBuilder) buildSpatialAggregationCTE(
 	sb.GroupBy("ALL")
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args, nil
+	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
 }
 
 func (b *metricQueryStatementBuilder) buildFinalSelect(
