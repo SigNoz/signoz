@@ -148,7 +148,7 @@ type RawRow struct {
 	Data      map[string]*any `json:"data"`
 }
 
-func sanitizeValue(v interface{}) interface{} {
+func sanitizeValue(v any) any {
 	if v == nil {
 		return nil
 	}
@@ -179,13 +179,13 @@ func sanitizeValue(v interface{}) interface{} {
 	rv := reflect.ValueOf(v)
 	switch rv.Kind() {
 	case reflect.Slice:
-		result := make([]interface{}, rv.Len())
+		result := make([]any, rv.Len())
 		for i := 0; i < rv.Len(); i++ {
 			result[i] = sanitizeValue(rv.Index(i).Interface())
 		}
 		return result
 	case reflect.Map:
-		result := make(map[string]interface{})
+		result := make(map[string]any)
 		for _, key := range rv.MapKeys() {
 			keyStr := key.String()
 			result[keyStr] = sanitizeValue(rv.MapIndex(key).Interface())
@@ -207,7 +207,7 @@ func (q QueryRangeResponse) MarshalJSON() ([]byte, error) {
 	type Alias QueryRangeResponse
 	return json.Marshal(&struct {
 		*Alias
-		Data interface{} `json:"data"`
+		Data any `json:"data"`
 	}{
 		Alias: (*Alias)(&q),
 		Data:  sanitizeValue(q.Data),
@@ -216,9 +216,9 @@ func (q QueryRangeResponse) MarshalJSON() ([]byte, error) {
 
 func (s ScalarData) MarshalJSON() ([]byte, error) {
 	type Alias ScalarData
-	sanitizedData := make([][]interface{}, len(s.Data))
+	sanitizedData := make([][]any, len(s.Data))
 	for i, row := range s.Data {
-		sanitizedData[i] = make([]interface{}, len(row))
+		sanitizedData[i] = make([]any, len(row))
 		for j, val := range row {
 			sanitizedData[i][j] = sanitizeValue(val)
 		}
@@ -226,7 +226,7 @@ func (s ScalarData) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(&struct {
 		*Alias
-		Data [][]interface{} `json:"data"`
+		Data [][]any `json:"data"`
 	}{
 		Alias: (*Alias)(&s),
 		Data:  sanitizedData,
@@ -256,14 +256,24 @@ func (r RawRow) MarshalJSON() ([]byte, error) {
 
 func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
 	type Alias TimeSeriesValue
+
+	var sanitizedValues any
+	if t.Values != nil {
+		sanitizedValues = sanitizeValue(t.Values)
+		// If original was empty slice, ensure we return empty slice not nil
+		if len(t.Values) == 0 {
+			sanitizedValues = []any{}
+		}
+	}
+
 	return json.Marshal(&struct {
 		*Alias
-		Value  interface{} `json:"value"`
-		Values interface{} `json:"values,omitempty"`
+		Value  any `json:"value"`
+		Values any `json:"values,omitempty"`
 	}{
 		Alias:  (*Alias)(&t),
 		Value:  sanitizeValue(t.Value),
-		Values: sanitizeValue(t.Values),
+		Values: sanitizedValues,
 	})
 }
 

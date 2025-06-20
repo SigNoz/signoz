@@ -21,7 +21,7 @@ func TestTimeSeriesValue_MarshalJSON(t *testing.T) {
 				Timestamp: 1234567890,
 				Value:     42.5,
 			},
-			expected: `{"timestamp":1234567890,"value":42.5,"values":[]}`,
+			expected: `{"timestamp":1234567890,"value":42.5}`,
 		},
 		{
 			name: "NaN value",
@@ -29,7 +29,7 @@ func TestTimeSeriesValue_MarshalJSON(t *testing.T) {
 				Timestamp: 1234567890,
 				Value:     math.NaN(),
 			},
-			expected: `{"timestamp":1234567890,"value":"NaN","values":[]}`,
+			expected: `{"timestamp":1234567890,"value":"NaN"}`,
 		},
 		{
 			name: "positive infinity",
@@ -37,7 +37,7 @@ func TestTimeSeriesValue_MarshalJSON(t *testing.T) {
 				Timestamp: 1234567890,
 				Value:     math.Inf(1),
 			},
-			expected: `{"timestamp":1234567890,"value":"Inf","values":[]}`,
+			expected: `{"timestamp":1234567890,"value":"Inf"}`,
 		},
 		{
 			name: "negative infinity",
@@ -45,7 +45,7 @@ func TestTimeSeriesValue_MarshalJSON(t *testing.T) {
 				Timestamp: 1234567890,
 				Value:     math.Inf(-1),
 			},
-			expected: `{"timestamp":1234567890,"value":"-Inf","values":[]}`,
+			expected: `{"timestamp":1234567890,"value":"-Inf"}`,
 		},
 		{
 			name: "values array with NaN",
