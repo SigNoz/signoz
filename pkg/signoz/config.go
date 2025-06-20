@@ -295,6 +295,10 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 		config.TelemetryStore.Clickhouse.Cluster = deprecatedFlags.Cluster
 	}
 
+	if deprecatedFlags.PreferSpanMetrics {
+		fmt.Println("[Deprecated] flag --prefer-span-metrics is deprecated and scheduled for removal. Please use USE_SPAN_METRICS instead.")
+	}
+
 	if deprecatedFlags.GatewayUrl != "" {
 		fmt.Println("[Deprecated] flag --gateway-url is deprecated and scheduled for removal. Please use SIGNOZ_GATEWAY_URL instead.")
 		u, err := url.Parse(deprecatedFlags.GatewayUrl)

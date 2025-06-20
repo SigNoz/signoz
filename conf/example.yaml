@@ -120,7 +120,7 @@ telemetrystore:
       max_execution_time_leaf: 0
       timeout_before_checking_execution_speed: 0
       max_bytes_to_read: 0
-      max_result_rows_for_ch_query: 0
+      max_result_rows: 0
 
 ##################### Prometheus #####################
 prometheus:

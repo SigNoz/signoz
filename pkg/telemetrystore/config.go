@@ -44,7 +44,7 @@ type QuerySettings struct {
 	MaxExecutionTimeLeaf                int `mapstructure:"max_execution_time_leaf"`
 	TimeoutBeforeCheckingExecutionSpeed int `mapstructure:"timeout_before_checking_execution_speed"`
 	MaxBytesToRead                      int `mapstructure:"max_bytes_to_read"`
-	MaxResultRowsForCHQuery             int `mapstructure:"max_result_rows_for_ch_query"`
+	MaxResultRows                       int `mapstructure:"max_result_rows"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
