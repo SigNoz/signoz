@@ -79,11 +79,11 @@ func (b *traceQueryStatementBuilder) Build(
 
 			traceStart, traceEnd, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
 			if err != nil {
-				b.logger.Debug("failed to get trace time range", "trace_ids", traceIDs, "error", err)
+				b.logger.DebugContext(ctx, "failed to get trace time range", "trace_ids", traceIDs, "error", err)
 			} else if traceStart > 0 && traceEnd > 0 {
 				start = uint64(traceStart)
 				end = uint64(traceEnd)
-				b.logger.Debug("optimized time range for traces", "trace_ids", traceIDs, "start", start, "end", end)
+				b.logger.DebugContext(ctx, "optimized time range for traces", "trace_ids", traceIDs, "start", start, "end", end)
 			}
 		}
 	}
