@@ -155,6 +155,22 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			}
 			chSQLQuery := newchSQLQuery(q.telemetryStore, chQuery, nil, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 			queries[chQuery.Name] = chSQLQuery
+		case qbtypes.QueryTypeTraceOperator:
+			traceOpQuery, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator)
+			if !ok {
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid trace operator query spec %T", query.Spec)
+			}
+			toq := &traceOperatorQuery{
+				telemetryStore: q.telemetryStore,
+				stmtBuilder:    q.traceOperatorStmtBuilder,
+				spec:           traceOpQuery,
+				compositeQuery: &req.CompositeQuery,
+				fromMS:         uint64(req.Start),
+				toMS:           uint64(req.End),
+				kind:           req.RequestType,
+			}
+			queries[traceOpQuery.Name] = toq
+			steps[traceOpQuery.Name] = traceOpQuery.StepInterval
 		case qbtypes.QueryTypeBuilder:
 			switch spec := query.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
@@ -184,23 +200,6 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				steps[spec.Name] = spec.StepInterval
 			default:
 				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
-			case qbtypes.QueryBuilderTraceOperator:
-				traceOpQuery, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator)
-				if !ok {
-					return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid trace operator query spec %T", query.Spec)
-				}
-				// Store composite query in context for the statement builder to access
-				ctx = context.WithValue(ctx, "compositeQuery", req.CompositeQuery)
-				toq := &traceOperatorQuery{
-					telemetryStore: q.telemetryStore,
-					stmtBuilder:    q.traceOperatorStmtBuilder,
-					spec:           traceOpQuery,
-					fromMS:         uint64(req.Start),
-					toMS:           uint64(req.End),
-					kind:           req.RequestType,
-				}
-				queries[traceOpQuery.Name] = toq
-				steps[traceOpQuery.Name] = traceOpQuery.StepInterval
 			}
 		}
 	}
@@ -390,7 +389,7 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
 		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
 		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, qt.spec, adjustedTimeRange, qt.kind)
-	case *traceOperatorQuery: // ADD THIS CASE
+	case *traceOperatorQuery:
 		return &traceOperatorQuery{
 			telemetryStore: q.telemetryStore,
 			stmtBuilder:    q.traceOperatorStmtBuilder,

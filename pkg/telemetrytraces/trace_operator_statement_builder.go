@@ -2,14 +2,18 @@ package telemetrytraces
 
 import (
 	"context"
-	"log/slog"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"log/slog"
 )
+
+// Define context key type locally to match trace_operator_query.go
+type contextKey string
+
+const compositeQueryKey contextKey = "compositeQuery"
 
 type traceOperatorStatementBuilder struct {
 	logger           *slog.Logger
@@ -59,8 +63,8 @@ func (b *traceOperatorStatementBuilder) Build(
 		}
 	}
 
-	// Retrieve composite query from context
-	compositeQuery, ok := ctx.Value("compositeQuery").(*qbtypes.CompositeQuery)
+	// Retrieve composite query from context using the same context key type
+	compositeQuery, ok := ctx.Value(compositeQueryKey).(*qbtypes.CompositeQuery)
 	if !ok {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "composite query not found in context")
 	}
