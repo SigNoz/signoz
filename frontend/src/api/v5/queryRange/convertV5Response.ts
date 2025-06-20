@@ -111,8 +111,8 @@ function processScalarDataRows(
 	const unifiedRows = new Map<string, Record<string, any>>();
 
 	// Process each scalar result
-	scalarData.forEach((scalar) => {
-		scalar.data.forEach((dataRow) => {
+	scalarData?.forEach((scalar) => {
+		scalar?.data?.forEach((dataRow) => {
 			const groupColumns = scalar.columns.filter(
 				(col) => col.columnType === 'group',
 			);
