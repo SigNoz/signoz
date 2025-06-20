@@ -1,5 +1,5 @@
 import logEvent from 'api/common/logEvent';
-import { ENTITY_VERSION_V5 } from 'constants/app';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
@@ -209,8 +209,7 @@ function GridCardGraph({
 			end: customTimeRange?.endTime || end,
 			originalGraphType: widget?.panelTypes,
 		},
-		ENTITY_VERSION_V5,
-		// version || DEFAULT_ENTITY_VERSION,
+		version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				maxTime,

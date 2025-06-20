@@ -25,7 +25,7 @@ import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/v1/dashboards/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { sanitizeDashboardData } from 'container/NewDashboard/DashboardDescription';
@@ -293,7 +293,7 @@ function DashboardsList(): JSX.Element {
 					ns: 'dashboard',
 				}),
 				uploadedGrafana: false,
-				version: ENTITY_VERSION_V4,
+				version: ENTITY_VERSION_V5,
 			});
 
 			safeNavigate(
