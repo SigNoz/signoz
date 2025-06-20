@@ -600,53 +600,63 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		(preference) => preference.name === USER_PREFERENCES.SIDENAV_PINNED,
 	)?.value as boolean;
 
+	const SHOW_TRIAL_EXPIRY_BANNER =
+		showTrialExpiryBanner && !showPaymentFailedWarning;
+	const SHOW_WORKSPACE_RESTRICTED_BANNER = showWorkspaceRestricted;
+	const SHOW_PAYMENT_FAILED_BANNER =
+		!showTrialExpiryBanner && showPaymentFailedWarning;
+
 	return (
 		<Layout className={cx(isDarkMode ? 'darkMode dark' : 'lightMode')}>
 			<Helmet>
 				<title>{pageTitle}</title>
 			</Helmet>
 
-			{showTrialExpiryBanner && !showPaymentFailedWarning && (
-				<div className="trial-expiry-banner">
-					You are in free trial period. Your free trial will end on{' '}
-					<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
-					{user.role === USER_ROLES.ADMIN ? (
-						<span>
-							{' '}
-							Please{' '}
-							<a className="upgrade-link" onClick={handleUpgrade}>
-								upgrade
-							</a>
-							to continue using SigNoz features.
-						</span>
-					) : (
-						'Please contact your administrator for upgrading to a paid plan.'
+			{isLoggedIn && (
+				<div className={cx('app-banner-container')}>
+					{SHOW_TRIAL_EXPIRY_BANNER && (
+						<div className="trial-expiry-banner">
+							You are in free trial period. Your free trial will end on{' '}
+							<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
+							{user.role === USER_ROLES.ADMIN ? (
+								<span>
+									{' '}
+									Please{' '}
+									<a className="upgrade-link" onClick={handleUpgrade}>
+										upgrade
+									</a>
+									to continue using SigNoz features.
+								</span>
+							) : (
+								'Please contact your administrator for upgrading to a paid plan.'
+							)}
+						</div>
 					)}
-				</div>
-			)}
 
-			{showWorkspaceRestricted && renderWorkspaceRestrictedBanner()}
+					{SHOW_WORKSPACE_RESTRICTED_BANNER && renderWorkspaceRestrictedBanner()}
 
-			{!showTrialExpiryBanner && showPaymentFailedWarning && (
-				<div className="payment-failed-banner">
-					Your bill payment has failed. Your workspace will get suspended on{' '}
-					<span>
-						{getFormattedDateWithMinutes(
-							dayjs(activeLicense?.event_queue?.scheduled_at).unix() || Date.now(),
-						)}
-						.
-					</span>
-					{user.role === USER_ROLES.ADMIN ? (
-						<span>
-							{' '}
-							Please{' '}
-							<a className="upgrade-link" onClick={handleFailedPayment}>
-								pay the bill
-							</a>
-							to continue using SigNoz features.
-						</span>
-					) : (
-						' Please contact your administrator to pay the bill.'
+					{SHOW_PAYMENT_FAILED_BANNER && (
+						<div className="payment-failed-banner">
+							Your bill payment has failed. Your workspace will get suspended on{' '}
+							<span>
+								{getFormattedDateWithMinutes(
+									dayjs(activeLicense?.event_queue?.scheduled_at).unix() || Date.now(),
+								)}
+								.
+							</span>
+							{user.role === USER_ROLES.ADMIN ? (
+								<span>
+									{' '}
+									Please{' '}
+									<a className="upgrade-link" onClick={handleFailedPayment}>
+										pay the bill
+									</a>
+									to continue using SigNoz features.
+								</span>
+							) : (
+								' Please contact your administrator to pay the bill.'
+							)}
+						</div>
 					)}
 				</div>
 			)}
@@ -656,6 +666,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					'app-layout',
 					isDarkMode ? 'darkMode dark' : 'lightMode',
 					sideNavPinned ? 'side-nav-pinned' : '',
+					SHOW_WORKSPACE_RESTRICTED_BANNER ? 'isWorkspaceRestricted' : '',
+					SHOW_TRIAL_EXPIRY_BANNER ? 'isTrialExpired' : '',
+					SHOW_PAYMENT_FAILED_BANNER ? 'isPaymentFailed' : '',
 				)}
 			>
 				{isToDisplayLayout && !renderFullScreen && (
