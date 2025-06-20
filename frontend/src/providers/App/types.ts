@@ -1,3 +1,4 @@
+import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import APIError from 'types/api/error';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import { LicenseResModel, TrialInfo } from 'types/api/licensesV3/getActive';
@@ -26,11 +27,13 @@ export interface IAppContext {
 	activeLicenseFetchError: APIError | null;
 	featureFlagsFetchError: unknown;
 	orgPreferencesFetchError: unknown;
+	changelog: ChangelogSchema | null;
 	activeLicenseRefetch: () => void;
 	updateUser: (user: IUser) => void;
 	updateOrgPreferences: (orgPreferences: OrgPreference[]) => void;
 	updateUserPreferenceInContext: (userPreference: UserPreference) => void;
 	updateOrg(orgId: string, updatedOrgName: string): void;
+	updateChangelog(payload: ChangelogSchema): void;
 	versionData: PayloadProps | null;
 }
 
