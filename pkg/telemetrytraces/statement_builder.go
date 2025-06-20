@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -25,6 +26,7 @@ type traceQueryStatementBuilder struct {
 	cb                        qbtypes.ConditionBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
+	telemetryStore            telemetrystore.TelemetryStore
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
@@ -36,6 +38,7 @@ func NewTraceQueryStatementBuilder(
 	conditionBuilder qbtypes.ConditionBuilder,
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
+	telemetryStore telemetrystore.TelemetryStore,
 ) *traceQueryStatementBuilder {
 	tracesSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrytraces")
 	return &traceQueryStatementBuilder{
@@ -45,6 +48,7 @@ func NewTraceQueryStatementBuilder(
 		cb:                        conditionBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
+		telemetryStore:            telemetryStore,
 	}
 }
 
@@ -65,6 +69,24 @@ func (b *traceQueryStatementBuilder) Build(
 	keys, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check if filter contains trace_id(s) and optimize time range if needed
+	if query.Filter != nil && query.Filter.Expression != "" && b.telemetryStore != nil {
+		traceIDs, found := ExtractTraceIDsFromFilter(query.Filter.Expression)
+		fmt.Println("traceIDs", traceIDs)
+		if found && len(traceIDs) > 0 {
+			finder := NewTraceTimeRangeFinder(b.telemetryStore)
+
+			traceStart, traceEnd, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
+			if err != nil {
+				b.logger.Debug("failed to get trace time range", "trace_ids", traceIDs, "error", err)
+			} else if traceStart > 0 && traceEnd > 0 {
+				start = uint64(traceStart)
+				end = uint64(traceEnd)
+				b.logger.Debug("optimized time range for traces", "trace_ids", traceIDs, "start", start, "end", end)
+			}
+		}
 	}
 
 	// Create SQL builder
