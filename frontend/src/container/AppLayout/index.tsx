@@ -269,7 +269,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (!isLatestVersion) {
-			console.log({ isLatestVersion });
 			setShouldFetchChangelog(true);
 		}
 	}, [isLatestVersion]);
