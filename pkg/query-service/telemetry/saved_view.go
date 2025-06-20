@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// deprecated: remove this function in the next major release
 func GetViews(ctx context.Context, sqlstore sqlstore.SQLStore, orgID string) ([]*v3.SavedView, error) {
 	var views []types.SavedView
 	err := sqlstore.BunDB().NewSelect().Model(&views).Where("org_id = ?", orgID).Scan(ctx)
@@ -45,6 +46,7 @@ func GetViews(ctx context.Context, sqlstore sqlstore.SQLStore, orgID string) ([]
 	return savedViews, nil
 }
 
+// deprecated: remove this function in the next major release
 func GetSavedViewsInfo(ctx context.Context, sqlstore sqlstore.SQLStore) (*model.SavedViewsInfo, error) {
 	savedViewsInfo := model.SavedViewsInfo{}
 	// get single org ID from db
