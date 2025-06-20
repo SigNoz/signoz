@@ -88,9 +88,9 @@
                  All results of DNS requests are cached till server restart.
             -->
             <networks>
-                <ip>::/0</ip>
-                <ip>127.0.0.1</ip>
-                <ip>0.0.0.0/0</ip> 
+                <ip>::/0</ip>  <!-- IPv6 wildcard -->
+                <ip>127.0.0.1</ip> <!-- Localhost IPv4 -->
+                <ip>0.0.0.0/0</ip>   <!-- All IPv4 addresses -->
             </networks>
 
             <!-- Settings profile for user. -->
