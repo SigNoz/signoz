@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/jmoiron/sqlx"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 )
@@ -19,7 +18,6 @@ type provider struct {
 	settings factory.ScopedProviderSettings
 	sqldb    *sql.DB
 	bundb    *sqlstore.BunDB
-	sqlxdb   *sqlx.DB
 	dialect  *dialect
 }
 
@@ -61,7 +59,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		settings: settings,
 		sqldb:    sqldb,
 		bundb:    sqlstore.NewBunDB(settings, sqldb, pgdialect.New(), hooks),
-		sqlxdb:   sqlx.NewDb(sqldb, "postgres"),
 		dialect:  new(dialect),
 	}, nil
 }
@@ -72,10 +69,6 @@ func (provider *provider) BunDB() *bun.DB {
 
 func (provider *provider) SQLDB() *sql.DB {
 	return provider.sqldb
-}
-
-func (provider *provider) SQLxDB() *sqlx.DB {
-	return provider.sqlxdb
 }
 
 func (provider *provider) Dialect() sqlstore.SQLDialect {
