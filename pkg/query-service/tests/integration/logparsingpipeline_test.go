@@ -39,7 +39,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -557,9 +556,10 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore, agentID stri
 
 	opampClientConnection := &opamp.MockOpAmpConnection{}
 	opampServer.OnMessage(
+		context.TODO(),
 		opampClientConnection,
 		&protobufs.AgentToServer{
-			InstanceUid: agentID,
+			InstanceUid: []byte(agentID),
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
 			},
@@ -756,8 +756,8 @@ func assertPipelinesRecommendedInRemoteConfig(
 
 func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig(agentID string) {
 	lastMsg := tb.opampClientConn.LatestMsgFromServer()
-	tb.opampServer.OnMessage(tb.opampClientConn, &protobufs.AgentToServer{
-		InstanceUid: agentID,
+	tb.opampServer.OnMessage(context.TODO(), tb.opampClientConn, &protobufs.AgentToServer{
+		InstanceUid: []byte(agentID),
 		EffectiveConfig: &protobufs.EffectiveConfig{
 			ConfigMap: lastMsg.RemoteConfig.Config,
 		},
@@ -772,10 +772,12 @@ func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
 	pipelines []pipelinetypes.GettablePipeline,
 ) {
 	newAgentConn := &opamp.MockOpAmpConnection{}
+	agentID := valuer.GenerateUUID().String()
 	tb.opampServer.OnMessage(
+		context.TODO(),
 		newAgentConn,
 		&protobufs.AgentToServer{
-			InstanceUid: uuid.NewString(),
+			InstanceUid: []byte(agentID),
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
 			},
