@@ -6,8 +6,10 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -40,7 +42,7 @@ type telemetryMetaStore struct {
 }
 
 func NewTelemetryMetaStore(
-	logger *slog.Logger,
+	settings factory.ProviderSettings,
 	telemetrystore telemetrystore.TelemetryStore,
 	tracesDBName string,
 	tracesFieldsTblName string,
@@ -53,8 +55,10 @@ func NewTelemetryMetaStore(
 	relatedMetadataDBName string,
 	relatedMetadataTblName string,
 ) telemetrytypes.MetadataStore {
+	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetadata")
 
 	t := &telemetryMetaStore{
+		logger:                 metadataSettings.Logger(),
 		telemetrystore:         telemetrystore,
 		tracesDBName:           tracesDBName,
 		tracesFieldsTblName:    tracesFieldsTblName,
@@ -877,4 +881,91 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 		return nil, err
 	}
 	return values, nil
+}
+
+func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error) {
+	if metricName == "" {
+		return metrictypes.Unknown, errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric name cannot be empty")
+	}
+
+	temporalityMap, err := t.FetchTemporalityMulti(ctx, metricName)
+	if err != nil {
+		return metrictypes.Unknown, err
+	}
+
+	temporality, ok := temporalityMap[metricName]
+	if !ok {
+		return metrictypes.Unknown, nil
+	}
+
+	return temporality, nil
+}
+
+func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+	if len(metricNames) == 0 {
+		return make(map[string]metrictypes.Temporality), nil
+	}
+
+	result := make(map[string]metrictypes.Temporality)
+
+	// Build query to fetch temporality for all metrics
+	// We use attr_string_value where attr_name = '__temporality__'
+	// Note: The columns are mixed in the current data - temporality column contains metric_name
+	// and metric_name column contains temporality value, so we use the correct mapping
+	sb := sqlbuilder.Select(
+		"temporality as metric_name",
+		"argMax(attr_string_value, last_reported_unix_milli) as temporality_value",
+	).From(t.metricsDBName + "." + t.metricsFieldsTblName)
+
+	// Filter by metric names (in the temporality column due to data mix-up)
+	sb.Where(sb.In("temporality", metricNames))
+
+	// Only fetch temporality metadata rows (where attr_name = '__temporality__')
+	sb.Where(sb.E("attr_name", "__temporality__"))
+
+	// Group by metric name to get one temporality per metric
+	sb.GroupBy("temporality")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	t.logger.DebugContext(ctx, "fetching metric temporality", "query", query, "args", args)
+
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch metric temporality")
+	}
+	defer rows.Close()
+
+	// Process results
+	for rows.Next() {
+		var metricName, temporalityStr string
+		if err := rows.Scan(&metricName, &temporalityStr); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
+		}
+
+		// Convert string to Temporality type
+		var temporality metrictypes.Temporality
+		switch temporalityStr {
+		case "Delta":
+			temporality = metrictypes.Delta
+		case "Cumulative":
+			temporality = metrictypes.Cumulative
+		case "Unspecified":
+			temporality = metrictypes.Unspecified
+		default:
+			// Unknown or empty temporality
+			temporality = metrictypes.Unknown
+		}
+
+		result[metricName] = temporality
+	}
+
+	// For metrics not found in the database, set to Unknown
+	for _, metricName := range metricNames {
+		if _, exists := result[metricName]; !exists {
+			result[metricName] = metrictypes.Unknown
+		}
+	}
+
+	return result, nil
 }

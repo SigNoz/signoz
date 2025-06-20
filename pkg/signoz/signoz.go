@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -11,11 +12,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
@@ -27,16 +32,20 @@ import (
 type SigNoz struct {
 	*factory.Registry
 	Instrumentation instrumentation.Instrumentation
+	Analytics       analytics.Analytics
 	Cache           cache.Cache
 	Web             web.Web
 	SQLStore        sqlstore.SQLStore
 	TelemetryStore  telemetrystore.TelemetryStore
 	Prometheus      prometheus.Prometheus
 	Alertmanager    alertmanager.Alertmanager
+	Querier         querier.Querier
+	Rules           ruler.Ruler
 	Zeus            zeus.Zeus
 	Licensing       licensing.Licensing
 	Emailing        emailing.Emailing
 	Sharder         sharder.Sharder
+	StatsReporter   statsreporter.StatsReporter
 	Modules         Modules
 	Handlers        Handlers
 }
@@ -48,7 +57,7 @@ func New(
 	zeusConfig zeus.Config,
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	licenseConfig licensing.Config,
-	licenseProviderFactoryCb func(sqlstore.SQLStore, zeus.Zeus, organization.Getter) factory.ProviderFactory[licensing.Licensing, licensing.Config],
+	licenseProviderFactory func(sqlstore.SQLStore, zeus.Zeus, organization.Getter, analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config],
 	emailingProviderFactories factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
@@ -66,6 +75,18 @@ func New(
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
+
+	// Initialize analytics just after instrumentation, as providers might require it
+	analytics, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Analytics,
+		NewAnalyticsProviderFactories(),
+		config.Analytics.Provider(),
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize zeus from the available zeus provider factory. This is not config controlled
 	// and depends on the variant of the build.
@@ -150,6 +171,18 @@ func New(
 		return nil, err
 	}
 
+	// Initialize querier from the available querier provider factories
+	querier, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Querier,
+		NewQuerierProviderFactories(telemetrystore, prometheus, cache),
+		config.Querier.Provider(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Run migrations on the sqlstore
 	sqlmigrations, err := sqlmigration.New(
 		ctx,
@@ -181,6 +214,9 @@ func New(
 	// Initialize organization getter
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
 
+	// Initialize user getter
+	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
+
 	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(
 		ctx,
@@ -193,7 +229,19 @@ func New(
 		return nil, err
 	}
 
-	licensingProviderFactory := licenseProviderFactoryCb(sqlstore, zeus, orgGetter)
+	// Initialize ruler from the available ruler provider factories
+	ruler, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Ruler,
+		NewRulerProviderFactories(sqlstore),
+		"signoz",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	licensingProviderFactory := licenseProviderFactory(sqlstore, zeus, orgGetter, analytics)
 	licensing, err := licensingProviderFactory.New(
 		ctx,
 		providerSettings,
@@ -204,16 +252,40 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	modules := NewModules(sqlstore, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules)
 
+	// Create a list of all stats collectors
+	statsCollectors := []statsreporter.StatsCollector{
+		alertmanager,
+		ruler,
+		modules.Dashboard,
+		modules.SavedView,
+		modules.User,
+		licensing,
+	}
+
+	// Initialize stats reporter from the available stats reporter provider factories
+	statsReporter, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.StatsReporter,
+		NewStatsReporterProviderFactories(telemetrystore, statsCollectors, orgGetter, userGetter, version.Info, config.Analytics),
+		config.StatsReporter.Provider(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
+		factory.NewNamedService(factory.MustNewName("analytics"), analytics),
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
+		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
 	)
 	if err != nil {
 		return nil, err
@@ -221,6 +293,7 @@ func New(
 
 	return &SigNoz{
 		Registry:        registry,
+		Analytics:       analytics,
 		Instrumentation: instrumentation,
 		Cache:           cache,
 		Web:             web,
@@ -228,6 +301,7 @@ func New(
 		TelemetryStore:  telemetrystore,
 		Prometheus:      prometheus,
 		Alertmanager:    alertmanager,
+		Querier:         querier,
 		Zeus:            zeus,
 		Licensing:       licensing,
 		Emailing:        emailing,

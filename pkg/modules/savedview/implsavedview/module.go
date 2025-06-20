@@ -169,3 +169,20 @@ func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.
 	}
 	return nil
 }
+
+func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	savedViews := []*types.SavedView{}
+
+	err := module.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&savedViews).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return types.NewStatsFromSavedViews(savedViews), nil
+}

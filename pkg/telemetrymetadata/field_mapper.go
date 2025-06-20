@@ -95,7 +95,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
 				} else {
 					// not even a close match, return an error
-					return "", err
+					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field %s not found", field.Name)
 				}
 			}
 		} else if len(keysForField) == 1 {
@@ -108,7 +108,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 				colName, _ = m.FieldFor(ctx, key)
 				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
 			}
-			colName = fmt.Sprintf("multiIf(%s)", strings.Join(args, ", "))
+			colName = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))
 		}
 	}
 

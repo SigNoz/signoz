@@ -1,5 +1,5 @@
 import { MetricsTreeMapResponse } from 'api/metricsExplorer/getMetricsTreeMap';
-import React, { Dispatch, SetStateAction } from 'react';
+import React from 'react';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -12,9 +12,10 @@ export interface MetricsTableProps {
 	pageSize: number;
 	currentPage: number;
 	onPaginationChange: (page: number, pageSize: number) => void;
-	setOrderBy: Dispatch<SetStateAction<OrderByPayload>>;
+	setOrderBy: (orderBy: OrderByPayload) => void;
 	totalCount: number;
-	openMetricDetails: (metricName: string) => void;
+	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
+	queryFilters: TagFilter;
 }
 
 export interface MetricsSearchProps {
@@ -27,7 +28,7 @@ export interface MetricsTreemapProps {
 	isLoading: boolean;
 	isError: boolean;
 	viewType: TreemapViewType;
-	openMetricDetails: (metricName: string) => void;
+	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
 	setHeatmapView: (value: TreemapViewType) => void;
 }
 

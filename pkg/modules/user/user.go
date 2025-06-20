@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -27,8 +28,8 @@ type Module interface {
 	GetUserByEmailInOrg(ctx context.Context, orgID string, email string) (*types.GettableUser, error)
 	GetUsersByRoleInOrg(ctx context.Context, orgID string, role types.Role) ([]*types.GettableUser, error)
 	ListUsers(ctx context.Context, orgID string) ([]*types.GettableUser, error)
-	UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error)
-	DeleteUser(ctx context.Context, orgID string, id string) error
+	UpdateUser(ctx context.Context, orgID string, id string, user *types.User, updatedBy string) (*types.User, error)
+	DeleteUser(ctx context.Context, orgID string, id string, deletedBy string) error
 
 	// login
 	GetAuthenticatedUser(ctx context.Context, orgID, email, password, refreshToken string) (*types.User, error)
@@ -65,6 +66,13 @@ type Module interface {
 
 	// Register
 	Register(ctx context.Context, req *types.PostableRegisterOrgAndAdmin) (*types.User, error)
+
+	statsreporter.StatsCollector
+}
+
+type Getter interface {
+	// Get gets the users based on the given id
+	ListByOrgID(context.Context, valuer.UUID) ([]*types.User, error)
 }
 
 type Handler interface {

@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/analytics/analyticstest"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -31,6 +32,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 )
@@ -40,6 +42,9 @@ import (
 func TestSignozIntegrationLifeCycle(t *testing.T) {
 	require := require.New(t)
 	testbed := NewIntegrationsTestBed(t, nil)
+
+	merr := utils.CreateTestOrg(t, testbed.store)
+	require.NoError(merr)
 
 	installedResp := testbed.GetInstalledIntegrationsFromQS()
 	require.Equal(
@@ -124,8 +129,12 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require := require.New(t)
 
 	testDB := utils.NewQueryServiceDBForTests(t)
+	utils.CreateTestOrg(t, testDB)
+
+	agentID := valuer.GenerateUUID().String()
+
 	integrationsTB := NewIntegrationsTestBed(t, testDB)
-	pipelinesTB := NewLogPipelinesTestBed(t, testDB)
+	pipelinesTB := NewLogPipelinesTestBed(t, testDB, agentID)
 
 	availableIntegrationsResp := integrationsTB.GetAvailableIntegrationsFromQS()
 	availableIntegrations := availableIntegrationsResp.Integrations
@@ -379,6 +388,7 @@ type IntegrationsTestBed struct {
 	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
+	store          sqlstore.SQLStore
 	userModule     user.Module
 }
 
@@ -582,7 +592,8 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	require.NoError(t, err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
-	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings, orgGetter, alertmanager)
+	analytics := analyticstest.New()
+	modules := signoz.NewModules(testDB, jwt, emailing, providerSettings, orgGetter, alertmanager, analytics)
 	handlers := signoz.NewHandlers(modules)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
@@ -616,6 +627,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
+		store:          testDB,
 		userModule:     modules.User,
 	}
 }

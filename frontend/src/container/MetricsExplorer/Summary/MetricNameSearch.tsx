@@ -10,24 +10,21 @@ import {
 } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetMetricsListFilterValues } from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { COMPOSITE_QUERY_KEY } from './constants';
+import { SUMMARY_FILTERS_KEY } from './constants';
 
-function MetricNameSearch(): JSX.Element {
-	const { currentQuery } = useQueryBuilder();
-	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
-		query: currentQuery.builder.queryData[0],
-		entityVersion: '',
-	});
-	const [, setSearchParams] = useSearchParams();
+function MetricNameSearch({
+	queryFilters,
+}: {
+	queryFilters: TagFilter;
+}): JSX.Element {
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 	const [searchString, setSearchString] = useState<string>('');
@@ -70,9 +67,9 @@ function MetricNameSearch(): JSX.Element {
 
 	const handleSelect = useCallback(
 		(selectedMetricName: string): void => {
-			const newFilter = {
+			const newFilters = {
 				items: [
-					...currentQuery.builder.queryData[0].filters.items,
+					...queryFilters.items,
 					{
 						id: 'metric_name',
 						op: 'CONTAINS',
@@ -84,27 +81,15 @@ function MetricNameSearch(): JSX.Element {
 						value: selectedMetricName,
 					},
 				],
-				op: 'AND',
+				op: 'and',
 			};
-			const compositeQuery = {
-				...currentQuery,
-				builder: {
-					...currentQuery.builder,
-					queryData: [
-						{
-							...currentQuery.builder.queryData[0],
-							filters: newFilter,
-						},
-					],
-				},
-			};
-			handleChangeQueryData('filters', newFilter);
 			setSearchParams({
-				[COMPOSITE_QUERY_KEY]: JSON.stringify(compositeQuery),
+				...Object.fromEntries(searchParams.entries()),
+				[SUMMARY_FILTERS_KEY]: JSON.stringify(newFilters),
 			});
 			setIsPopoverOpen(false);
 		},
-		[currentQuery, handleChangeQueryData, setSearchParams],
+		[queryFilters.items, setSearchParams, searchParams],
 	);
 
 	const metricNameFilterValues = useMemo(
@@ -198,7 +183,7 @@ function MetricNameSearch(): JSX.Element {
 
 	const handleInputChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>): void => {
-			const value = e.target.value.trim().toLowerCase();
+			const value = e.target.value.trim();
 			setSearchString(value);
 			debouncedUpdate(value);
 		},

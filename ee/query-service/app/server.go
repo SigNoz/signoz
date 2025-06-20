@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/SigNoz/signoz/ee/query-service/app/api"
 	"github.com/SigNoz/signoz/ee/query-service/app/db"
@@ -107,7 +106,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	)
 
 	rm, err := makeRulesManager(
-		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
 		serverOptions.SigNoz.Cache,
 		serverOptions.SigNoz.Alertmanager,
@@ -122,10 +120,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate opamp
-	_, err = opAmpModel.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB())
-	if err != nil {
-		return nil, err
-	}
+	opAmpModel.InitDB(serverOptions.SigNoz.SQLStore, serverOptions.SigNoz.Instrumentation.Logger(), serverOptions.SigNoz.Modules.OrgGetter)
 
 	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore)
 	if err != nil {
@@ -143,7 +138,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		serverOptions.SigNoz.SQLStore, integrationsController.GetPipelinesForInstalledIntegrations,
+		serverOptions.SigNoz.SQLStore,
+		integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -151,7 +147,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// initiate agent config handler
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:            serverOptions.SigNoz.SQLStore.SQLxDB(),
+		Store:         serverOptions.SigNoz.SQLStore,
 		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
 	})
 	if err != nil {
@@ -294,6 +290,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterInfraMetricsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)
+	apiHandler.RegisterQueryRangeV5Routes(r, am)
 	apiHandler.RegisterWebSocketPaths(r, am)
 	apiHandler.RegisterMessagingQueuesRoutes(r, am)
 	apiHandler.RegisterThirdPartyApiRoutes(r, am)
@@ -445,7 +442,6 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func makeRulesManager(
-	db *sqlx.DB,
 	ch baseint.Reader,
 	cache cache.Cache,
 	alertmanager alertmanager.Alertmanager,
@@ -458,7 +454,6 @@ func makeRulesManager(
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
 		Prometheus:          prometheus,
-		DBConn:              db,
 		Context:             context.Background(),
 		Logger:              zap.L(),
 		Reader:              ch,

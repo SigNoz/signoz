@@ -148,6 +148,60 @@ func BuildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 	return queryString, nil
 }
 
+// TODO: remove this function as this is identical to BuildTracesFilterQuery
+func BuildTracesFilter(fs *v3.FilterSet) (string, error) {
+	var conditions []string
+
+	if fs != nil && len(fs.Items) != 0 {
+		for _, item := range fs.Items {
+			val := item.Value
+			// generate the key
+			columnName := getColumnName(item.Key)
+			var fmtVal string
+			item.Operator = v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
+			if item.Operator != v3.FilterOperatorExists && item.Operator != v3.FilterOperatorNotExists {
+				var err error
+				val, err = utils.ValidateAndCastValue(val, item.Key.DataType)
+				if err != nil {
+					return "", fmt.Errorf("invalid value for key %s: %v", item.Key.Key, err)
+				}
+			}
+			if val != nil {
+				fmtVal = utils.ClickHouseFormattedValue(val)
+			}
+			if operator, ok := tracesOperatorMappingV3[item.Operator]; ok {
+				switch item.Operator {
+				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
+					// we also want to treat %, _ as literals for contains
+					val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value), false)
+					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, val))
+				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
+					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
+				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
+					if item.Key.IsColumn {
+						subQuery, err := existsSubQueryForFixedColumn(item.Key, item.Operator)
+						if err != nil {
+							return "", err
+						}
+						conditions = append(conditions, subQuery)
+					} else {
+						cType := getClickHouseTracesColumnType(item.Key.Type)
+						cDataType := getClickHouseTracesColumnDataType(item.Key.DataType)
+						col := fmt.Sprintf("%s_%s", cType, cDataType)
+						conditions = append(conditions, fmt.Sprintf(operator, col, item.Key.Key))
+					}
+
+				default:
+					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, operator, fmtVal))
+				}
+			} else {
+				return "", fmt.Errorf("unsupported operator %s", item.Operator)
+			}
+		}
+	}
+	return strings.Join(conditions, " AND "), nil
+}
+
 func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey) (string, error) {
 	// TODO(nitya): in future when we support user based mat column handle them
 	// skipping now as we don't support creating them

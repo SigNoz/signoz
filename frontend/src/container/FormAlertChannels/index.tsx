@@ -57,7 +57,9 @@ function FormAlertChannels({
 
 	return (
 		<>
-			<Typography.Title level={3}>{title}</Typography.Title>
+			<Typography.Title level={4} className="form-alert-channels-title">
+				{title}
+			</Typography.Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
 				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
@@ -147,7 +149,7 @@ function FormAlertChannels({
 					</Button>
 					<Button
 						onClick={(): void => {
-							history.replace(ROUTES.SETTINGS);
+							history.replace(ROUTES.ALL_CHANNELS);
 						}}
 					>
 						{t('button_return')}

@@ -72,6 +72,9 @@ type UserStore interface {
 	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*StorableAPIKeyUser, error)
 	RevokeAPIKey(ctx context.Context, id valuer.UUID, revokedByUserID valuer.UUID) error
 	GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*StorableAPIKeyUser, error)
+	CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
+
+	CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
 }
 
 type GettableUser struct {
@@ -251,4 +254,14 @@ type GettableLoginPrecheck struct {
 	SSOError        string   `json:"ssoError"`
 	SelectOrg       bool     `json:"selectOrg"`
 	Orgs            []string `json:"orgs"`
+}
+
+func NewTraitsFromUser(user *User) map[string]any {
+	return map[string]any{
+		"name":         user.DisplayName,
+		"role":         user.Role,
+		"email":        user.Email,
+		"display_name": user.DisplayName,
+		"created_at":   user.CreatedAt,
+	}
 }

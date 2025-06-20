@@ -1,16 +1,11 @@
 import './AlertDetails.styles.scss';
 
-import { Breadcrumb, Button, Divider } from 'antd';
+import { Breadcrumb, Button, Divider, Empty } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
-import NotFound from 'components/NotFound';
 import RouteTab from 'components/RouteTab';
 import Spinner from 'components/Spinner';
-import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { useNotifications } from 'hooks/useNotifications';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -74,9 +69,7 @@ BreadCrumbItem.defaultProps = {
 function AlertDetails(): JSX.Element {
 	const { pathname } = useLocation();
 	const { routes } = useRouteTabUtils();
-	const urlQuery = useUrlQuery();
-	const { safeNavigate } = useSafeNavigate();
-	const { notifications } = useNotifications();
+	const { t } = useTranslation(['alerts']);
 
 	const {
 		isLoading,
@@ -92,33 +85,16 @@ function AlertDetails(): JSX.Element {
 		document.title = alertTitle || document.title;
 	}, [alertDetailsResponse?.payload?.data.alert, isRefetching]);
 
-	useEffect(() => {
-		if (alertDetailsResponse?.payload?.data?.id) {
-			const ruleUUID = alertDetailsResponse.payload.data.id;
-			if (ruleId !== ruleUUID) {
-				urlQuery.set(QueryParams.ruleId, ruleUUID);
-				const generatedUrl = `${window.location.pathname}?${urlQuery}`;
-				notifications.info({
-					message:
-						"We're transitioning alert rule IDs from integers to UUIDs.Both old and new alert links will continue to work after this change - existing notifications using integer IDs will remain functional while new alerts will use the UUID format. Please use the updated link in the URL for future references",
-				});
-				safeNavigate(generatedUrl);
-			}
-		}
-	}, [
-		alertDetailsResponse?.payload?.data.id,
-		notifications,
-		ruleId,
-		safeNavigate,
-		urlQuery,
-	]);
-
 	if (
 		isError ||
 		!isValidRuleId ||
 		(alertDetailsResponse && alertDetailsResponse.statusCode !== 200)
 	) {
-		return <NotFound />;
+		return (
+			<div className="alert-empty-card">
+				<Empty description={t('alert_rule_not_found')} />
+			</div>
+		);
 	}
 
 	const handleTabChange = (route: string): void => {

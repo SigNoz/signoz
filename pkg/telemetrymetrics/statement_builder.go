@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -13,33 +14,31 @@ import (
 )
 
 const (
-	RateWithoutNegative     = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value, (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
+	RateWithoutNegative     = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
 	IncreaseWithoutNegative = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value, ((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window)) * (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
 )
 
 type metricQueryStatementBuilder struct {
-	logger          *slog.Logger
-	metadataStore   telemetrytypes.MetadataStore
-	fm              qbtypes.FieldMapper
-	cb              qbtypes.ConditionBuilder
-	aggExprRewriter qbtypes.AggExprRewriter
+	logger        *slog.Logger
+	metadataStore telemetrytypes.MetadataStore
+	fm            qbtypes.FieldMapper
+	cb            qbtypes.ConditionBuilder
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*metricQueryStatementBuilder)(nil)
 
 func NewMetricQueryStatementBuilder(
-	logger *slog.Logger,
+	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	aggExprRewriter qbtypes.AggExprRewriter,
 ) *metricQueryStatementBuilder {
+	metricsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetrics")
 	return &metricQueryStatementBuilder{
-		logger:          logger,
-		metadataStore:   metadataStore,
-		fm:              fieldMapper,
-		cb:              conditionBuilder,
-		aggExprRewriter: aggExprRewriter,
+		logger:        metricsSettings.Logger(),
+		metadataStore: metadataStore,
+		fm:            fieldMapper,
+		cb:            conditionBuilder,
 	}
 }
 
@@ -306,7 +305,7 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.LTE("unix_milli", end),
 	)
 
-	if query.Aggregations[0].Temporality != metrictypes.Unspecified {
+	if query.Aggregations[0].Temporality != metrictypes.Unknown {
 		sb.Where(sb.ILike("temporality", query.Aggregations[0].Temporality.StringValue()))
 	}
 
@@ -418,7 +417,7 @@ func (b *metricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
-		rateExpr := fmt.Sprintf(RateWithoutNegative, start)
+		rateExpr := fmt.Sprintf(RateWithoutNegative, start, start)
 		wrapped := sqlbuilder.NewSelectBuilder()
 		wrapped.Select("ts")
 		for _, g := range query.GroupBy {

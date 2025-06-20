@@ -3,6 +3,7 @@ import './Inspect.styles.scss';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Drawer, Empty, Skeleton, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -11,11 +12,16 @@ import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import ExpandedView from './ExpandedView';
 import GraphView from './GraphView';
 import QueryBuilder from './QueryBuilder';
 import Stepper from './Stepper';
-import { GraphPopoverOptions, InspectProps } from './types';
+import {
+	GraphPopoverOptions,
+	InspectProps,
+	MetricInspectionAction,
+} from './types';
 import { useInspectMetrics } from './useInspectMetrics';
 
 function Inspect({
@@ -91,6 +97,25 @@ function Inspect({
 		timeAggregatedSeriesMap,
 		reset,
 	} = useInspectMetrics(metricName);
+
+	const handleDispatchMetricInspectionOptions = useCallback(
+		(action: MetricInspectionAction): void => {
+			dispatchMetricInspectionOptions(action);
+			logEvent(MetricsExplorerEvents.InspectQueryChanged, {
+				[MetricsExplorerEventKeys.Modal]: 'inspect',
+				[MetricsExplorerEventKeys.Filters]: metricInspectionOptions.filters,
+				[MetricsExplorerEventKeys.TimeAggregationInterval]:
+					metricInspectionOptions.timeAggregationInterval,
+				[MetricsExplorerEventKeys.TimeAggregationOption]:
+					metricInspectionOptions.timeAggregationOption,
+				[MetricsExplorerEventKeys.SpaceAggregationOption]:
+					metricInspectionOptions.spaceAggregationOption,
+				[MetricsExplorerEventKeys.SpaceAggregationLabels]:
+					metricInspectionOptions.spaceAggregationLabels,
+			});
+		},
+		[dispatchMetricInspectionOptions, metricInspectionOptions],
+	);
 
 	const selectedMetricType = useMemo(
 		() => metricDetailsData?.payload?.data?.metadata?.metric_type,
@@ -186,7 +211,7 @@ function Inspect({
 						setMetricName={setMetricName}
 						spaceAggregationLabels={spaceAggregationLabels}
 						metricInspectionOptions={metricInspectionOptions}
-						dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
+						dispatchMetricInspectionOptions={handleDispatchMetricInspectionOptions}
 						inspectionStep={inspectionStep}
 						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
 						searchQuery={searchQuery}
@@ -227,11 +252,17 @@ function Inspect({
 		popoverOptions,
 		metricInspectionOptions,
 		spaceAggregationLabels,
-		dispatchMetricInspectionOptions,
+		handleDispatchMetricInspectionOptions,
 		searchQuery,
 		expandedViewOptions,
 		timeAggregatedSeriesMap,
 	]);
+
+	useEffect(() => {
+		logEvent(MetricsExplorerEvents.ModalOpened, {
+			[MetricsExplorerEventKeys.Modal]: 'inspect',
+		});
+	}, []);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
