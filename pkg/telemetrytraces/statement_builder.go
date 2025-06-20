@@ -74,7 +74,6 @@ func (b *traceQueryStatementBuilder) Build(
 	// Check if filter contains trace_id(s) and optimize time range if needed
 	if query.Filter != nil && query.Filter.Expression != "" && b.telemetryStore != nil {
 		traceIDs, found := ExtractTraceIDsFromFilter(query.Filter.Expression)
-		fmt.Println("traceIDs", traceIDs)
 		if found && len(traceIDs) > 0 {
 			finder := NewTraceTimeRangeFinder(b.telemetryStore)
 
