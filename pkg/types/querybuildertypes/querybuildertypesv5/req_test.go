@@ -55,7 +55,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 					}]
 				},
 				"variables": {
-					"service": "frontend"
+					"service": {"value": "frontend"}
 				}
 			}`,
 			expected: QueryRangeRequest{
@@ -96,8 +96,10 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 						},
 					}},
 				},
-				Variables: map[string]any{
-					"service": "frontend",
+				Variables: map[string]VariableItem{
+					"service": VariableItem{
+						Value: "frontend",
+					},
 				},
 			},
 			wantErr: false,
@@ -142,7 +144,7 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 					]
 				},
 			"variables": {
-				"service": "frontend"
+				"service": {"value":"frontend"}
 			}
 		}`,
 			expected: QueryRangeRequest{
@@ -180,8 +182,10 @@ func TestQueryRangeRequest_UnmarshalJSON(t *testing.T) {
 						},
 					},
 				},
-				Variables: map[string]any{
-					"service": "frontend",
+				Variables: map[string]VariableItem{
+					"service": VariableItem{
+						Value: "frontend",
+					},
 				},
 			},
 			wantErr: false,

@@ -95,6 +95,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	end uint64,
 	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[T],
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 	config, exists := signalConfigs[b.signal]
 	if !exists {

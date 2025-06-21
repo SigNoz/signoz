@@ -76,6 +76,7 @@ func (b *metricQueryStatementBuilder) Build(
 	end uint64,
 	_ qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 	keySelectors := getKeySelectors(query)
 	keys, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
