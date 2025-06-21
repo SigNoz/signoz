@@ -18,6 +18,7 @@ export const urlKey = {
 	pageSize: 'pageSize',
 	exceptionType: 'exceptionType',
 	serviceName: 'serviceName',
+	compositeQuery: 'compositeQuery',
 };
 
 export const isOrderParams = (orderBy: string | null): orderBy is OrderBy =>
