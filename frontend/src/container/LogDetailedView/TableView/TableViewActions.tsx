@@ -23,6 +23,7 @@ import { DataType } from '../TableView';
 import {
 	escapeHtml,
 	filterKeyForField,
+	getFieldAttributes,
 	jsonToDataNodes,
 	parseFieldValue,
 	recursiveParseJSON,
@@ -45,6 +46,7 @@ interface ITableViewActionsProps {
 		operator: string,
 		fieldKey: string,
 		fieldValue: string,
+		dataType: string | undefined,
 	) => () => void;
 }
 
@@ -64,6 +66,7 @@ export function TableViewActions(
 	} = props;
 
 	const { pathname } = useLocation();
+	const { dataType } = getFieldAttributes(record.field);
 
 	// there is no option for where clause in old logs explorer and live logs page
 	const isOldLogsExplorerOrLiveLogsPage = useMemo(
@@ -161,6 +164,7 @@ export function TableViewActions(
 								OPERATORS['='],
 								fieldFilterKey,
 								parseFieldValue(fieldData.value),
+								dataType,
 							)}
 						/>
 					</Tooltip>
@@ -178,6 +182,7 @@ export function TableViewActions(
 								OPERATORS['!='],
 								fieldFilterKey,
 								parseFieldValue(fieldData.value),
+								dataType,
 							)}
 						/>
 					</Tooltip>

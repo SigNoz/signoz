@@ -3,6 +3,7 @@ import { Button, Col, Popover } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
 import { memo, useCallback, useMemo } from 'react';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 function ActionItem({
 	fieldKey,
@@ -55,6 +56,8 @@ export interface ActionItemProps {
 		fieldKey: string,
 		fieldValue: string,
 		operator: string,
+		isJSON?: boolean,
+		dataType?: DataTypes,
 	) => void;
 }
 
