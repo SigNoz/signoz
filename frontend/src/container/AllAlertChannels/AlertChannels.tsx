@@ -23,7 +23,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const onClickEditHandler = useCallback((id: string) => {
 		history.push(
 			generatePath(ROUTES.CHANNELS_EDIT, {
-				id,
+				channelId: id,
 			}),
 		);
 	}, []);

@@ -38,7 +38,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/SigNoz/signoz/pkg/cache"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -96,12 +95,11 @@ func NewRouter() *mux.Router {
 
 // APIHandler implements the query service public API
 type APIHandler struct {
-	reader            interfaces.Reader
-	ruleManager       *rules.Manager
-	querier           interfaces.Querier
-	querierV2         interfaces.Querier
-	queryBuilder      *queryBuilder.QueryBuilder
-	preferSpanMetrics bool
+	reader       interfaces.Reader
+	ruleManager  *rules.Manager
+	querier      interfaces.Querier
+	querierV2    interfaces.Querier
+	queryBuilder *queryBuilder.QueryBuilder
 
 	// temporalityMap is a map of metric name to temporality
 	// to avoid fetching temporality for the same metric multiple times
@@ -140,8 +138,6 @@ type APIHandler struct {
 
 	pvcsRepo *inframetrics.PvcsRepo
 
-	JWT *authtypes.JWT
-
 	AlertmanagerAPI *alertmanager.API
 
 	LicensingAPI licensing.API
@@ -154,11 +150,8 @@ type APIHandler struct {
 }
 
 type APIHandlerOpts struct {
-
 	// business data reader e.g. clickhouse
 	Reader interfaces.Reader
-
-	PreferSpanMetrics bool
 
 	// rule manager handles rule crud operations
 	RuleManager *rules.Manager
@@ -172,13 +165,8 @@ type APIHandlerOpts struct {
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
-	// cache
-	Cache cache.Cache
-
-	// Querier Influx Interval
+	// Flux Interval
 	FluxInterval time.Duration
-
-	JWT *authtypes.JWT
 
 	AlertmanagerAPI *alertmanager.API
 
@@ -195,14 +183,14 @@ type APIHandlerOpts struct {
 func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	querierOpts := querier.QuerierOptions{
 		Reader:       opts.Reader,
-		Cache:        opts.Cache,
+		Cache:        opts.Signoz.Cache,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
 		FluxInterval: opts.FluxInterval,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
 		Reader:       opts.Reader,
-		Cache:        opts.Cache,
+		Cache:        opts.Signoz.Cache,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
 		FluxInterval: opts.FluxInterval,
 	}
@@ -226,7 +214,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
-		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
 		IntegrationsController:        opts.IntegrationsController,
@@ -245,7 +232,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
-		JWT:                           opts.JWT,
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		LicensingAPI:                  opts.LicensingAPI,
@@ -1980,7 +1966,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if aH.preferSpanMetrics {
+	if constants.PreferSpanMetrics {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.UseSpanMetrics {
 				featureSet[idx].Active = true
@@ -2096,7 +2082,7 @@ func (aH *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	nextPage, err := aH.Signoz.Modules.User.PrepareSsoRedirect(ctx, redirectUri, identity.Email, aH.JWT)
+	nextPage, err := aH.Signoz.Modules.User.PrepareSsoRedirect(ctx, redirectUri, identity.Email)
 	if err != nil {
 		zap.L().Error("[receiveGoogleAuth] failed to generate redirect URI after successful login ", zap.String("domain", domain.String()), zap.Error(err))
 		handleSsoError(w, r, redirectUri)
