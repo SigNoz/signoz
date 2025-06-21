@@ -121,6 +121,7 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 				1747983448000, // end time in ms
 				qbtypes.RequestTypeRaw,
 				tt.query,
+				nil,
 			)
 
 			require.NoError(t, err)
