@@ -84,6 +84,23 @@
 				}
 			}
 
+			.discover-signoz-input {
+				width: 100%;
+				height: 100px;
+				resize: none;
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-300);
+				color: var(--bg-vanilla-100);
+				border-radius: 4px;
+				font-size: 14px;
+				padding: 12px;
+
+				&::placeholder {
+					color: var(--bg-vanilla-400);
+					opacity: 1;
+				}
+			}
+
 			&.invite-team-members-form {
 				min-height: calc(420px - 24px);
 				max-height: calc(420px - 24px);
@@ -123,7 +140,7 @@
 
 					height: 32px;
 					background: var(--Ink-300, #16181d);
-					border: 1px solid var(--bg-slate-400);
+					border: 1px solid var(--Greyscale-Slate-400, #1d212d);
 					color: var(--bg-vanilla-400);
 				}
 
@@ -442,6 +459,17 @@
 							font-weight: 500;
 							line-height: 20px;
 						}
+					}
+				}
+
+				.discover-signoz-input {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-100);
+					color: var(--text-ink-300);
+
+					&::placeholder {
+						color: var(--bg-slate-400);
+						opacity: 1;
 					}
 				}
 
