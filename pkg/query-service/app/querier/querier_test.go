@@ -1640,7 +1640,7 @@ func Test_querier_Traces_runWindowBasedListQueryAsc(t *testing.T) {
 				reader: reader,
 				builder: queryBuilder.NewQueryBuilder(
 					queryBuilder.QueryBuilderOptions{
-						BuildTraceQuery: tracesV3.PrepareTracesQuery,
+						BuildTraceQuery: tracesV4.PrepareTracesQuery,
 					},
 				),
 			}

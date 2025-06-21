@@ -149,7 +149,7 @@ function FormAlertChannels({
 					</Button>
 					<Button
 						onClick={(): void => {
-							history.replace(ROUTES.SETTINGS);
+							history.replace(ROUTES.ALL_CHANNELS);
 						}}
 					>
 						{t('button_return')}

@@ -59,7 +59,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if ah.opts.PreferSpanMetrics {
+	if constants.IsPreferSpanMetrics {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.UseSpanMetrics {
 				featureSet[idx].Active = true

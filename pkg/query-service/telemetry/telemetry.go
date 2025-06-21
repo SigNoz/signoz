@@ -110,6 +110,7 @@ const RATE_LIMIT_VALUE = 1
 var telemetry *Telemetry
 var once sync.Once
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) IsSampled() bool {
 
 	random_number := a.minRandInt + rand.Intn(a.maxRandInt-a.minRandInt) + 1
@@ -122,6 +123,7 @@ func (a *Telemetry) IsSampled() bool {
 
 }
 
+// deprecated: remove this function in the next major release
 func (telemetry *Telemetry) CheckQueryInfo(postData *v3.QueryRangeParamsV3) QueryInfoResult {
 	queryInfoResult := QueryInfoResult{}
 	if postData != nil && postData.CompositeQuery != nil {
@@ -172,22 +174,28 @@ func (telemetry *Telemetry) CheckQueryInfo(postData *v3.QueryRangeParamsV3) Quer
 	return queryInfoResult
 }
 
+// deprecated: remove this function in the next major release
 func (telemetry *Telemetry) AddActiveTracesUser() {
 	telemetry.mutex.Lock()
 	telemetry.activeUser["traces"] = 1
 	telemetry.mutex.Unlock()
 }
+
+// deprecated: remove this function in the next major release
 func (telemetry *Telemetry) AddActiveMetricsUser() {
 	telemetry.mutex.Lock()
 	telemetry.activeUser["metrics"] = 1
 	telemetry.mutex.Unlock()
 }
+
+// deprecated: remove this function in the next major release
 func (telemetry *Telemetry) AddActiveLogsUser() {
 	telemetry.mutex.Lock()
 	telemetry.activeUser["logs"] = 1
 	telemetry.mutex.Unlock()
 }
 
+// deprecated: remove this function in the next major release
 type Telemetry struct {
 	ossOperator   analytics.Client
 	saasOperator  analytics.Client
@@ -212,26 +220,32 @@ type Telemetry struct {
 	savedViewsInfoCallback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.AlertsInfo, error)) {
 	a.alertsInfoCallback = callback
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (int, error)) {
 	a.userCountCallback = callback
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context, store sqlstore.SQLStore) ([]TelemetryUser, error)) {
 	a.getUsersCallback = callback
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetSavedViewsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.SavedViewsInfo, error)) {
 	a.savedViewsInfoCallback = callback
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetDashboardsInfoCallback(callback func(ctx context.Context, store sqlstore.SQLStore) (*model.DashboardsInfo, error)) {
 	a.dashboardsInfoCallback = callback
 }
 
+// deprecated: remove this function in the next major release
 func createTelemetry() {
 	// Do not do anything in CI (not even resolving the outbound IP address)
 	if testing.Testing() {
@@ -523,7 +537,7 @@ func createTelemetry() {
 	go s.StartBlocking()
 }
 
-// Get preferred outbound ip of this machine
+// deprecated: remove this function in the next major release
 func getOutboundIP() string {
 
 	ip := []byte(IP_NOT_FOUND_PLACEHOLDER)
@@ -542,6 +556,7 @@ func getOutboundIP() string {
 	return string(ip)
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) IdentifyUser(user *types.User) {
 	if user.Email == DEFAULT_CLOUD_EMAIL {
 		return
@@ -579,6 +594,7 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	}
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SendIdentifyEvent(data map[string]interface{}, userEmail string) {
 
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
@@ -612,6 +628,7 @@ func (a *Telemetry) SendIdentifyEvent(data map[string]interface{}, userEmail str
 	}
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SendGroupEvent(data map[string]interface{}, userEmail string) {
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
@@ -646,18 +663,22 @@ func (a *Telemetry) SendGroupEvent(data map[string]interface{}, userEmail string
 	}
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetUserEmail(email string) {
 	a.userEmail = email
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetPatTokenUser() {
 	a.patTokenUser = true
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) GetUserEmail() string {
 	return a.userEmail
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetSaasOperator(saasOperatorKey string) {
 	if saasOperatorKey == "" {
 		return
@@ -665,6 +686,7 @@ func (a *Telemetry) SetSaasOperator(saasOperatorKey string) {
 	a.saasOperator = analytics.New(saasOperatorKey)
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetCompanyDomain(email string) {
 
 	email_split := strings.Split(email, "@")
@@ -675,10 +697,12 @@ func (a *Telemetry) SetCompanyDomain(email string) {
 
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) getCompanyDomain() string {
 	return a.companyDomain
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) checkEvents(event string) bool {
 	sendEvent := true
 	if event == TELEMETRY_EVENT_USER && a.isTelemetryAnonymous() {
@@ -687,6 +711,7 @@ func (a *Telemetry) checkEvents(event string) bool {
 	return sendEvent
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, rateLimitFlag bool, viaEventsAPI bool) {
 
 	// ignore telemetry for default user
@@ -772,32 +797,38 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 	}
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) isTelemetryAnonymous() bool {
 	return a.isAnonymous
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetTelemetryAnonymous(value bool) {
 	a.isAnonymous = value
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) isTelemetryEnabled() bool {
 	return a.isEnabled
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetTelemetryEnabled(value bool) {
 	a.isEnabled = value
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetReader(reader interfaces.Reader) {
 	a.reader = reader
 }
 
+// deprecated: remove this function in the next major release
 func (a *Telemetry) SetSqlStore(store sqlstore.SQLStore) {
 	a.sqlStore = store
 }
 
+// deprecated: remove this function in the next major release
 func GetInstance() *Telemetry {
-
 	once.Do(func() {
 		createTelemetry()
 	})
@@ -805,6 +836,7 @@ func GetInstance() *Telemetry {
 	return telemetry
 }
 
+// deprecated: remove this function in the next major release
 func getDeploymentType() string {
 	deploymentType := os.Getenv("DEPLOYMENT_TYPE")
 	if deploymentType == "" {

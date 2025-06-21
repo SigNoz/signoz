@@ -2321,6 +2321,7 @@ func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
 	return totalSpans, nil
 }
 
+// deprecated: remove this function in the next major release
 func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 	var spansInLastHeartBeatInterval uint64
 	r.db.QueryRow(ctx, fmt.Sprintf("SELECT count() from %s.%s where ts_bucket_start >= toUInt64(toUnixTimestamp(now() - toIntervalMinute(%d))) - 1800 and timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, r.traceTableName, int(interval.Minutes()), int(interval.Minutes()))).Scan(&spansInLastHeartBeatInterval)
@@ -2328,6 +2329,7 @@ func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context, 
 	return spansInLastHeartBeatInterval, nil
 }
 
+// deprecated: remove this function in the next major release
 func (r *ClickHouseReader) GetTotalLogs(ctx context.Context) (uint64, error) {
 
 	var totalLogs uint64
@@ -2362,6 +2364,7 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, orgID valuer.UU
 	return metricNameToTemporality, nil
 }
 
+// deprecated: remove this function in the next major release
 func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error) {
 
 	queryStr := fmt.Sprintf("SELECT countDistinct(fingerprint) as count from %s.%s where metric_name not like 'signoz_%%' group by metric_name order by count desc;", signozMetricDBName, signozTSTableNameV41Day)
@@ -2393,6 +2396,7 @@ func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]in
 	return timeSeriesData, nil
 }
 
+// deprecated: remove this function in the next major release
 func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var totalSamples uint64
@@ -2404,6 +2408,7 @@ func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Con
 	return totalSamples, nil
 }
 
+// deprecated: remove this function in the next major release
 func (r *ClickHouseReader) GetTotalSamples(ctx context.Context) (uint64, error) {
 	var totalSamples uint64
 
@@ -2414,6 +2419,7 @@ func (r *ClickHouseReader) GetTotalSamples(ctx context.Context) (uint64, error) 
 	return totalSamples, nil
 }
 
+// deprecated: remove this function in the next major release
 func (r *ClickHouseReader) GetDistributedInfoInLastHeartBeatInterval(ctx context.Context) (map[string]interface{}, error) {
 
 	clusterInfo := []model.ClusterInfo{}
@@ -2427,6 +2433,7 @@ func (r *ClickHouseReader) GetDistributedInfoInLastHeartBeatInterval(ctx context
 	return nil, nil
 }
 
+// deprecated: remove this function in the next major release
 func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var totalLogLines uint64
@@ -2438,6 +2445,7 @@ func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Contex
 	return totalLogLines, err
 }
 
+// deprecated: remove this function in the next major release
 func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (*model.TagsInfo, error) {
 	queryStr := fmt.Sprintf(`select serviceName, resources_string['deployment.environment'] as env, 
 	resources_string['telemetry.sdk.language'] as language from %s.%s 

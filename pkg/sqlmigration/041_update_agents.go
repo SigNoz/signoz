@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -18,16 +17,6 @@ import (
 type updateAgents struct {
 	store sqlstore.SQLStore
 }
-
-type existingAgent41 struct {
-	bun.BaseModel   `bun:"table:agents"`
-	AgentID         string                 `bun:"agent_id,pk,type:text,unique"`
-	StartedAt       time.Time              `bun:"started_at,notnull"`
-	TerminatedAt    time.Time              `bun:"terminated_at"`
-	CurrentStatus   opamptypes.AgentStatus `bun:"current_status,type:text,notnull"`
-	EffectiveConfig string                 `bun:"effective_config,type:text,notnull"`
-}
-
 type newAgent41 struct {
 	bun.BaseModel `bun:"table:agent"`
 
@@ -131,47 +120,32 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	// get all org ids
-	var orgIDs []string
-	if err := tx.NewSelect().Model(new(types.Organization)).Column("id").Scan(ctx, &orgIDs); err != nil {
+	var orgID string
+	err = tx.
+		NewSelect().
+		ColumnExpr("id").
+		Table("organizations").
+		Limit(1).
+		Scan(ctx, &orgID)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return err
+		}
+	}
+
+	if _, err := tx.
+		NewDropTable().
+		IfExists().
+		Table("agents").
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	// there are multiple orgs, so we don't need to update the agents table
-	if len(orgIDs) > 1 {
-		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "multiple orgs found: %v", orgIDs)
-	}
-
-	err = migration.
-		store.
-		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingAgent41), new(newAgent41), []string{OrgReference}, func(ctx context.Context) error {
-			existingAgents := make([]*existingAgent41, 0)
-			err = tx.
-				NewSelect().
-				Model(&existingAgents).
-				Scan(ctx)
-			if err != nil && err != sql.ErrNoRows {
-				return err
-			}
-
-			if err == nil && len(existingAgents) > 0 {
-				newAgents, err := migration.
-					CopyOldAgentToNewAgent(ctx, tx, existingAgents, orgIDs[0])
-				if err != nil {
-					return err
-				}
-				_, err = tx.
-					NewInsert().
-					Model(&newAgents).
-					Exec(ctx)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-	if err != nil {
+	if _, err := tx.
+		NewCreateTable().
+		IfNotExists().
+		Model(new(newAgent41)).
+		Exec(ctx); err != nil {
 		return err
 	}
 
@@ -190,7 +164,7 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 
 			if err == nil && len(existingAgentConfigVersions) > 0 {
 				newAgentConfigVersions, err := migration.
-					CopyOldAgentConfigVersionToNewAgentConfigVersion(ctx, tx, existingAgentConfigVersions, orgIDs[0])
+					CopyOldAgentConfigVersionToNewAgentConfigVersion(ctx, tx, existingAgentConfigVersions, orgID)
 				if err != nil {
 					return err
 				}
@@ -223,7 +197,7 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 
 			if err == nil && len(existingAgentConfigElements) > 0 {
 				newAgentConfigElements, err := migration.
-					CopyOldAgentConfigElementToNewAgentConfigElement(ctx, tx, existingAgentConfigElements, orgIDs[0])
+					CopyOldAgentConfigElementToNewAgentConfigElement(ctx, tx, existingAgentConfigElements, orgID)
 				if err != nil {
 					return err
 				}
@@ -250,25 +224,6 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 
 func (migration *updateAgents) Down(ctx context.Context, db *bun.DB) error {
 	return nil
-}
-
-func (migration *updateAgents) CopyOldAgentToNewAgent(ctx context.Context, tx bun.IDB, existingAgents []*existingAgent41, orgID string) ([]*newAgent41, error) {
-	newAgents := make([]*newAgent41, 0)
-	for _, existingAgent := range existingAgents {
-		newAgents = append(newAgents, &newAgent41{
-			Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
-			AgentID:      existingAgent.AgentID,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: time.Unix(existingAgent.StartedAt.Unix(), 0),
-				UpdatedAt: time.Unix(existingAgent.StartedAt.Unix(), 0),
-			},
-			Status:       existingAgent.CurrentStatus,
-			Config:       existingAgent.EffectiveConfig,
-			TerminatedAt: existingAgent.TerminatedAt,
-			OrgID:        orgID,
-		})
-	}
-	return newAgents, nil
 }
 
 func (migration *updateAgents) CopyOldAgentConfigVersionToNewAgentConfigVersion(ctx context.Context, tx bun.IDB, existingAgentConfigVersions []*existingAgentConfigVersions41, orgID string) ([]*newAgentConfigVersion41, error) {
