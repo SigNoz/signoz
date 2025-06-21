@@ -597,10 +597,8 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	handlers := signoz.NewHandlers(modules)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		Reader:                 reader,
-		IntegrationsController: controller,
-
-		JWT:                         jwt,
+		Reader:                      reader,
+		IntegrationsController:      controller,
 		CloudIntegrationsController: cloudIntegrationsController,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,

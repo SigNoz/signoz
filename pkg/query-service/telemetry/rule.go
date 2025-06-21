@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// deprecated: remove this function in the next major release
 func getChannels(ctx context.Context, sqlstore sqlstore.SQLStore) ([]*alertmanagertypes.Channel, error) {
 	channels := []*alertmanagertypes.Channel{}
 	if err := sqlstore.BunDB().NewSelect().Model(&channels).Scan(ctx); err != nil {
@@ -23,6 +24,7 @@ func getChannels(ctx context.Context, sqlstore sqlstore.SQLStore) ([]*alertmanag
 	return channels, nil
 }
 
+// deprecated: remove this function in the next major release
 func GetAlertsInfo(ctx context.Context, sqlstore sqlstore.SQLStore) (*model.AlertsInfo, error) {
 	alertsInfo := model.AlertsInfo{}
 

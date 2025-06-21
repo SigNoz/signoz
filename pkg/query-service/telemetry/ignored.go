@@ -1,7 +1,7 @@
 package telemetry
 
+// deprecated: remove this function in the next major release
 func ignoreEvents(event string, attributes map[string]interface{}) bool {
-
 	if event == TELEMETRY_EVENT_ACTIVE_USER {
 		for attr_key, attr_val := range attributes {
 
