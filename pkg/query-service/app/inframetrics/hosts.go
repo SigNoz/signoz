@@ -57,6 +57,7 @@ var (
 		"memory": {"C", "D", "F2"},
 		"wait":   {"E", "F", "F3"},
 		"load15": {"G"},
+		"disk":   {"H"},
 	}
 
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
@@ -71,6 +72,7 @@ var (
 		"memory": GetDotMetrics("system_memory_usage"),
 		"load15": GetDotMetrics("system_cpu_load_average_15m"),
 		"wait":   GetDotMetrics("system_cpu_time"),
+		"disk":   GetDotMetrics("system_filesystem_usage"),
 	}
 )
 
@@ -512,6 +514,9 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 			}
 			if wait, ok := row.Data["F3"].(float64); ok {
 				record.Wait = wait
+			}
+			if diskUsage, ok := row.Data["F4"].(float64); ok {
+				record.DiskUsage = diskUsage
 			}
 			if load15, ok := row.Data["G"].(float64); ok {
 				record.Load15 = load15
