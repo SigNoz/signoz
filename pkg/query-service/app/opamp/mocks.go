@@ -43,6 +43,10 @@ func (conn *MockOpAmpConnection) RemoteAddr() net.Addr {
 	return nil
 }
 
+func (conn *MockOpAmpConnection) Connection() net.Conn {
+	return nil
+}
+
 // Implements opamp.AgentConfigProvider
 type MockAgentConfigProvider struct {
 	// An updated config is recommended by TestAgentConfProvider
