@@ -71,7 +71,7 @@ function App(): JSX.Element {
 				const orgName =
 					org && Array.isArray(org) && org.length > 0 ? org[0].displayName : '';
 
-				const { displayName, email, role } = user;
+				const { displayName, email, role, id, orgId } = user;
 
 				const domain = extractDomain(email);
 				const hostNameParts = hostname.split('.');
@@ -105,7 +105,7 @@ function App(): JSX.Element {
 					logEvent('Domain Identified', groupTraits, 'group');
 				}
 				if (window && window.Appcues) {
-					window.Appcues.identify(email, {
+					window.Appcues.identify(id, {
 						name: displayName,
 
 						tenant_id: hostNameParts[0],
@@ -131,7 +131,7 @@ function App(): JSX.Element {
 					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
 				});
 
-				posthog?.identify(email, {
+				posthog?.identify(id, {
 					email,
 					name: displayName,
 					orgName,
@@ -143,7 +143,7 @@ function App(): JSX.Element {
 					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
 				});
 
-				posthog?.group('company', domain, {
+				posthog?.group('company', orgId, {
 					name: orgName,
 					tenant_id: hostNameParts[0],
 					data_region: hostNameParts[1],

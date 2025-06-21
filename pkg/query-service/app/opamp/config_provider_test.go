@@ -249,7 +249,7 @@ func newTestbed(t *testing.T) *testbed {
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	require.Nil(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), sharder)
-	model.InitDB(testDB, slog.Default(), orgGetter)
+	model.Init(testDB, slog.Default(), orgGetter)
 	testConfigProvider := NewMockAgentConfigProvider()
 	opampServer := InitializeServer(nil, testConfigProvider)
 
