@@ -71,7 +71,7 @@ import {
 	PaginationProps,
 } from 'types/api/ingestionKeys/types';
 import { USER_ROLES } from 'types/roles';
-import { hasDatePassed } from 'utils/timeUtils';
+import { getDaysUntilExpiry } from 'utils/timeUtils';
 
 const { Option } = Select;
 
@@ -1242,23 +1242,37 @@ function MultiIngestionSettings(): JSX.Element {
 
 						<div className="ingestion-key-details">
 							<div className="ingestion-key-last-used-at">
-								<CalendarClock size={14} />
+								{((): JSX.Element | null => {
+									const daysToExpiry = getDaysUntilExpiry(expiresOn);
+									const isNoExpiry = expiresOn === 'No Expiry';
 
-								{hasDatePassed(expiresOn) ? (
-									<>
-										Expired on <Minus size={12} />
-										<Typography.Text>{expiresOn}</Typography.Text>
-									</>
-								) : (
-									<>
-										{expiresOn !== 'No Expiry' && (
-											<>
-												Expires on <Minus size={12} />
-											</>
-										)}
-										<Typography.Text>{expiresOn}</Typography.Text>
-									</>
-								)}
+									if (!isNoExpiry && daysToExpiry < 0) {
+										return (
+											<div className="ingestion-key-expires-in danger">
+												<CalendarClock size={14} /> Expired on
+												<Minus size={12} /> {expiresOn}
+											</div>
+										);
+									}
+									if (!isNoExpiry && daysToExpiry <= 3) {
+										return (
+											<div className="ingestion-key-expires-in warning">
+												<CalendarClock size={14} /> Expires on
+												<Minus size={12} /> {expiresOn}
+											</div>
+										);
+									}
+									return (
+										<>
+											{!isNoExpiry && (
+												<>
+													<CalendarClock size={14} /> Expires on <Minus size={12} />
+												</>
+											)}
+											<Typography.Text>{expiresOn}</Typography.Text>
+										</>
+									);
+								})()}
 							</div>
 						</div>
 					</div>

@@ -165,3 +165,9 @@ export const hasDatePassed = (expiresAt: string): boolean => {
 
 	return date.isBefore(dayjs(), 'day');
 };
+
+export const getDaysUntilExpiry = (expiresAt: string): number => {
+	const date = dayjs(expiresAt);
+	if (!date.isValid()) return 0;
+	return date.diff(dayjs(), 'day');
+};
