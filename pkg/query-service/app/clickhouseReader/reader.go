@@ -38,7 +38,6 @@ import (
 	"go.uber.org/zap"
 
 	queryprogress "github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader/query_progress"
-	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
 	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
 	"github.com/SigNoz/signoz/pkg/query-service/app/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/smart"
@@ -2501,26 +2500,6 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 	return &tagsInfo, nil
 }
 
-// remove this after sometime
-func removeUnderscoreDuplicateFields(fields []model.Field) []model.Field {
-	lookup := map[string]model.Field{}
-	for _, v := range fields {
-		lookup[v.Name+v.DataType] = v
-	}
-
-	for k := range lookup {
-		if strings.Contains(k, ".") {
-			delete(lookup, strings.ReplaceAll(k, ".", "_"))
-		}
-	}
-
-	updatedFields := []model.Field{}
-	for _, v := range lookup {
-		updatedFields = append(updatedFields, v)
-	}
-	return updatedFields
-}
-
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
 	// response will contain top level fields from the otel log model
 	response := model.GetFieldsResponse{
@@ -2544,9 +2523,41 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
 
-	//remove this code after sometime
-	attributes = removeUnderscoreDuplicateFields(attributes)
-	resources = removeUnderscoreDuplicateFields(resources)
+	statements := []model.ShowCreateTableStatement{}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
+	err = r.db.Select(ctx, &statements, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	r.extractSelectedAndInterestingFields(statements[0].Statement, constants.Attributes, &attributes, &response)
+	r.extractSelectedAndInterestingFields(statements[0].Statement, constants.Resources, &resources, &response)
+
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetLogFieldsFromNames(ctx context.Context, fieldNames []string) (*model.GetFieldsResponse, *model.ApiError) {
+	// response will contain top level fields from the otel log model
+	response := model.GetFieldsResponse{
+		Selected:    constants.StaticSelectedLogFields,
+		Interesting: []model.Field{},
+	}
+
+	// get attribute keys
+	attributes := []model.Field{}
+	query := fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s where name in ('%s') group by name, datatype", r.logsDB, r.logsAttributeKeys, strings.Join(fieldNames, "','"))
+	err := r.db.Select(ctx, &attributes, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	// get resource keys
+	resources := []model.Field{}
+	query = fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s where name in ('%s') group by name, datatype", r.logsDB, r.logsResourceKeys, strings.Join(fieldNames, "','"))
+	err = r.db.Select(ctx, &resources, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
 
 	statements := []model.ShowCreateTableStatement{}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
@@ -2787,219 +2798,6 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 
 	return nil
 }
-
-func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.SignozLog, *model.ApiError) {
-	response := []model.SignozLog{}
-	fields, apiErr := r.GetLogFields(ctx)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	isPaginatePrev := logs.CheckIfPrevousPaginateAndModifyOrder(params)
-	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, params)
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
-	}
-
-	data := map[string]interface{}{
-		"lenFilters": lenFilters,
-	}
-	if lenFilters != 0 {
-		claims, errv2 := authtypes.ClaimsFromContext(ctx)
-		if errv2 == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
-		}
-	}
-
-	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
-
-	if filterSql != "" {
-		query = fmt.Sprintf("%s where %s", query, filterSql)
-	}
-
-	query = fmt.Sprintf("%s order by %s %s limit %d", query, params.OrderBy, params.Order, params.Limit)
-	err = r.db.Select(ctx, &response, query)
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
-	}
-	if isPaginatePrev {
-		// rever the results from db
-		for i, j := 0, len(response)-1; i < j; i, j = i+1, j-1 {
-			response[i], response[j] = response[j], response[i]
-		}
-	}
-	return &response, nil
-}
-
-func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailClient) {
-
-	fields, apiErr := r.GetLogFields(ctx)
-	if apiErr != nil {
-		client.Error <- apiErr.Err
-		return
-	}
-
-	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
-		Query: client.Filter.Query,
-	})
-
-	data := map[string]interface{}{
-		"lenFilters": lenFilters,
-	}
-	if lenFilters != 0 {
-		claims, errv2 := authtypes.ClaimsFromContext(ctx)
-		if errv2 == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
-		}
-	}
-
-	if err != nil {
-		client.Error <- err
-		return
-	}
-
-	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
-
-	tsStart := uint64(time.Now().UnixNano())
-	if client.Filter.TimestampStart != 0 {
-		tsStart = client.Filter.TimestampStart
-	}
-
-	var idStart string
-	if client.Filter.IdGt != "" {
-		idStart = client.Filter.IdGt
-	}
-
-	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			done := true
-			client.Done <- &done
-			zap.L().Debug("closing go routine : " + client.Name)
-			return
-		case <-ticker.C:
-			// get the new 100 logs as anything more older won't make sense
-			tmpQuery := fmt.Sprintf("%s where timestamp >='%d'", query, tsStart)
-			if filterSql != "" {
-				tmpQuery = fmt.Sprintf("%s and %s", tmpQuery, filterSql)
-			}
-			if idStart != "" {
-				tmpQuery = fmt.Sprintf("%s and id > '%s'", tmpQuery, idStart)
-			}
-			tmpQuery = fmt.Sprintf("%s order by timestamp desc, id desc limit 100", tmpQuery)
-			response := []model.SignozLog{}
-			err := r.db.Select(ctx, &response, tmpQuery)
-			if err != nil {
-				zap.L().Error("Error while getting logs", zap.Error(err))
-				client.Error <- err
-				return
-			}
-			for i := len(response) - 1; i >= 0; i-- {
-				select {
-				case <-ctx.Done():
-					done := true
-					client.Done <- &done
-					zap.L().Debug("closing go routine while sending logs : " + client.Name)
-					return
-				default:
-					client.Logs <- &response[i]
-					if i == 0 {
-						tsStart = response[i].Timestamp
-						idStart = response[i].ID
-					}
-				}
-			}
-		}
-	}
-}
-
-func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.LogsAggregateParams) (*model.GetLogsAggregatesResponse, *model.ApiError) {
-	logAggregatesDBResponseItems := []model.LogsAggregatesDBResponseItem{}
-
-	function := "toFloat64(count()) as value"
-	if params.Function != "" {
-		function = fmt.Sprintf("toFloat64(%s) as value", params.Function)
-	}
-
-	fields, apiErr := r.GetLogFields(ctx)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
-		Query: params.Query,
-	})
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
-	}
-
-	data := map[string]interface{}{
-		"lenFilters": lenFilters,
-	}
-	if lenFilters != 0 {
-		claims, errv2 := authtypes.ClaimsFromContext(ctx)
-		if errv2 == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
-		}
-	}
-
-	query := ""
-	if params.GroupBy != "" {
-		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as ts_start_interval, toString(%s) as groupBy, "+
-			"%s "+
-			"FROM %s.%s WHERE (timestamp >= '%d' AND timestamp <= '%d' )",
-			params.StepSeconds/60, params.GroupBy, function, r.logsDB, r.logsTable, params.TimestampStart, params.TimestampEnd)
-	} else {
-		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as ts_start_interval, "+
-			"%s "+
-			"FROM %s.%s WHERE (timestamp >= '%d' AND timestamp <= '%d' )",
-			params.StepSeconds/60, function, r.logsDB, r.logsTable, params.TimestampStart, params.TimestampEnd)
-	}
-	if filterSql != "" {
-		query = fmt.Sprintf("%s AND ( %s ) ", query, filterSql)
-	}
-	if params.GroupBy != "" {
-		query = fmt.Sprintf("%s GROUP BY ts_start_interval, toString(%s) as groupBy ORDER BY ts_start_interval", query, params.GroupBy)
-	} else {
-		query = fmt.Sprintf("%s GROUP BY ts_start_interval ORDER BY ts_start_interval", query)
-	}
-
-	err = r.db.Select(ctx, &logAggregatesDBResponseItems, query)
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
-	}
-
-	aggregateResponse := model.GetLogsAggregatesResponse{
-		Items: make(map[int64]model.LogsAggregatesResponseItem),
-	}
-
-	for i := range logAggregatesDBResponseItems {
-		if elem, ok := aggregateResponse.Items[int64(logAggregatesDBResponseItems[i].Timestamp)]; ok {
-			if params.GroupBy != "" && logAggregatesDBResponseItems[i].GroupBy != "" {
-				elem.GroupBy[logAggregatesDBResponseItems[i].GroupBy] = logAggregatesDBResponseItems[i].Value
-			}
-			aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = elem
-		} else {
-			if params.GroupBy != "" && logAggregatesDBResponseItems[i].GroupBy != "" {
-				aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = model.LogsAggregatesResponseItem{
-					Timestamp: logAggregatesDBResponseItems[i].Timestamp,
-					GroupBy:   map[string]interface{}{logAggregatesDBResponseItems[i].GroupBy: logAggregatesDBResponseItems[i].Value},
-				}
-			} else if params.GroupBy == "" {
-				aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = model.LogsAggregatesResponseItem{
-					Timestamp: logAggregatesDBResponseItems[i].Timestamp,
-					Value:     logAggregatesDBResponseItems[i].Value,
-				}
-			}
-		}
-
-	}
-
-	return &aggregateResponse, nil
-}
-
 func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error) {
 	var result = model.DashboardVar{VariableValues: make([]interface{}, 0)}
 	rows, err := r.db.Query(ctx, query)
@@ -4067,10 +3865,6 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 			}
 		}
 
-		// remove duplicate _ attributes for logs.
-		// remove this function after a month
-		removeDuplicateUnderscoreAttributes(row)
-
 		rowList = append(rowList, &v3.Row{Timestamp: t, Data: row})
 	}
 
@@ -4093,52 +3887,6 @@ func getPersonalisedError(err error) error {
 	return err
 }
 
-func removeDuplicateUnderscoreAttributes(row map[string]interface{}) {
-	if val, ok := row["attributes_int64"]; ok {
-		attributes := val.(*map[string]int64)
-		for key := range *attributes {
-			if strings.Contains(key, ".") {
-				uKey := strings.ReplaceAll(key, ".", "_")
-				delete(*attributes, uKey)
-			}
-		}
-
-	}
-
-	if val, ok := row["attributes_float64"]; ok {
-		attributes := val.(*map[string]float64)
-		for key := range *attributes {
-			if strings.Contains(key, ".") {
-				uKey := strings.ReplaceAll(key, ".", "_")
-				delete(*attributes, uKey)
-			}
-		}
-
-	}
-
-	if val, ok := row["attributes_bool"]; ok {
-		attributes := val.(*map[string]bool)
-		for key := range *attributes {
-			if strings.Contains(key, ".") {
-				uKey := strings.ReplaceAll(key, ".", "_")
-				delete(*attributes, uKey)
-			}
-		}
-
-	}
-	for _, k := range []string{"attributes_string", "resources_string"} {
-		if val, ok := row[k]; ok {
-			attributes := val.(*map[string]string)
-			for key := range *attributes {
-				if strings.Contains(key, ".") {
-					uKey := strings.ReplaceAll(key, ".", "_")
-					delete(*attributes, uKey)
-				}
-			}
-
-		}
-	}
-}
 func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	rows, err := r.db.Query(ctx, "SELECT 1")
 	if err != nil {
