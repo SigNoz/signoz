@@ -489,10 +489,10 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	}
 
 	providerSettings := instrumentationtest.New().ToProviderSettings()
-	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	sharder, err := noopsharder.New(context.Background(), providerSettings, sharder.Config{})
 	require.NoError(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), sharder)
-	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
+	alertmanager, err := signozalertmanager.New(context.Background(), providerSettings, alertmanager.Config{Signoz: alertmanager.Signoz{PollInterval: 10 * time.Second, Config: alertmanagerserver.NewConfig()}}, sqlStore, orgGetter)
 	require.NoError(t, err)
 	jwt := authtypes.NewJWT("", 1*time.Hour, 1*time.Hour)
 	emailing := emailingtest.New()
@@ -542,12 +542,13 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore, agentID stri
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
 	providerSettings := instrumentationtest.New().ToProviderSettings()
-	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	sharder, err := noopsharder.New(context.Background(), providerSettings, sharder.Config{})
+	require.Nil(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testbed.store), sharder)
 
 	model.Init(testbed.store, slog.Default(), orgGetter)
 
-	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
+	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr, instrumentationtest.New())
 	err = opampServer.Start(opamp.GetAvailableLocalAddress())
 	require.Nil(t, err, "failed to start opamp server")
 
@@ -557,7 +558,7 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore, agentID stri
 
 	opampClientConnection := &opamp.MockOpAmpConnection{}
 	opampServer.OnMessage(
-		context.TODO(),
+		context.Background(),
 		opampClientConnection,
 		&protobufs.AgentToServer{
 			InstanceUid: []byte(agentID),
@@ -757,7 +758,7 @@ func assertPipelinesRecommendedInRemoteConfig(
 
 func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig(agentID string) {
 	lastMsg := tb.opampClientConn.LatestMsgFromServer()
-	tb.opampServer.OnMessage(context.TODO(), tb.opampClientConn, &protobufs.AgentToServer{
+	tb.opampServer.OnMessage(context.Background(), tb.opampClientConn, &protobufs.AgentToServer{
 		InstanceUid: []byte(agentID),
 		EffectiveConfig: &protobufs.EffectiveConfig{
 			ConfigMap: lastMsg.RemoteConfig.Config,
@@ -775,7 +776,7 @@ func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
 	newAgentConn := &opamp.MockOpAmpConnection{}
 	agentID := valuer.GenerateUUID().String()
 	tb.opampServer.OnMessage(
-		context.TODO(),
+		context.Background(),
 		newAgentConn,
 		&protobufs.AgentToServer{
 			InstanceUid: []byte(agentID),

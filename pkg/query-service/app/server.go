@@ -172,6 +172,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	s.opampServer = opamp.InitializeServer(
 		&opAmpModel.AllAgents,
 		agentConfMgr,
+		signoz.Instrumentation,
 	)
 
 	orgs, err := apiHandler.Signoz.Modules.OrgGetter.ListByOwnedKeyRange(context.Background())

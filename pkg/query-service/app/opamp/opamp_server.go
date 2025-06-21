@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -31,7 +32,9 @@ const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffe
 	protobufs.ServerCapabilities_ServerCapabilities_AcceptsStatus
 
 func InitializeServer(
-	agents *model.Agents, agentConfigProvider AgentConfigProvider,
+	agents *model.Agents,
+	agentConfigProvider AgentConfigProvider,
+	instrumentation instrumentation.Instrumentation,
 ) *Server {
 	if agents == nil {
 		agents = &model.AllAgents
@@ -41,7 +44,7 @@ func InitializeServer(
 		agents:              agents,
 		agentConfigProvider: agentConfigProvider,
 	}
-	opAmpServer.server = server.New(NewWrappedLogger(zap.L().Sugar()))
+	opAmpServer.server = server.New(wrappedLogger(instrumentation.Logger()))
 	return opAmpServer
 }
 
