@@ -80,6 +80,7 @@ func ValidateFunctionName(name FunctionName) error {
 		FunctionNameMedian7,
 		FunctionNameTimeShift,
 		FunctionNameAnomaly,
+		FunctionNameFillZero,
 	}
 
 	if slices.Contains(validFunctions, name) {
@@ -128,9 +129,20 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 		return err
 	}
 
-	// Validate order by
-	if err := q.validateOrderBy(); err != nil {
-		return err
+	if requestType != RequestTypeRaw && len(q.Aggregations) > 0 {
+		if err := q.validateOrderByForAggregation(); err != nil {
+			return err
+		}
+	} else {
+		if err := q.validateOrderBy(); err != nil {
+			return err
+		}
+	}
+
+	if requestType != RequestTypeRaw {
+		if err := q.validateHaving(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -323,6 +335,96 @@ func (q *QueryBuilderQuery[T]) validateOrderBy() error {
 			)
 		}
 	}
+	return nil
+}
+
+// validateOrderByForAggregation validates order by clauses for aggregation queries
+// For aggregation queries, order by can only reference:
+// 1. Group by keys
+// 2. Aggregation expressions or aliases
+// 3. Aggregation index (0, 1, 2, etc.)
+func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
+	// First validate basic order by constraints
+	if err := q.validateOrderBy(); err != nil {
+		return err
+	}
+
+	validOrderKeys := make(map[string]bool)
+
+	for _, gb := range q.GroupBy {
+		validOrderKeys[gb.TelemetryFieldKey.Name] = true
+	}
+
+	for i, agg := range q.Aggregations {
+		validOrderKeys[fmt.Sprintf("%d", i)] = true
+
+		switch v := any(agg).(type) {
+		case TraceAggregation:
+			if v.Alias != "" {
+				validOrderKeys[v.Alias] = true
+			}
+			validOrderKeys[v.Expression] = true
+		case LogAggregation:
+			if v.Alias != "" {
+				validOrderKeys[v.Alias] = true
+			}
+			validOrderKeys[v.Expression] = true
+		case MetricAggregation:
+			// Also allow the generic __result pattern
+			validOrderKeys["__result"] = true
+
+			validOrderKeys[fmt.Sprintf("%s(%s)", v.SpaceAggregation.StringValue(), v.MetricName)] = true
+			if v.TimeAggregation != metrictypes.TimeAggregationUnspecified {
+				validOrderKeys[fmt.Sprintf("%s(%s)", v.TimeAggregation.StringValue(), v.MetricName)] = true
+			}
+			if v.TimeAggregation != metrictypes.TimeAggregationUnspecified && v.SpaceAggregation != metrictypes.SpaceAggregationUnspecified {
+				validOrderKeys[fmt.Sprintf("%s(%s(%s))", v.SpaceAggregation.StringValue(), v.TimeAggregation.StringValue(), v.MetricName)] = true
+			}
+		}
+	}
+
+	for i, order := range q.Order {
+		orderKey := order.Key.Name
+
+		if !validOrderKeys[orderKey] {
+			orderId := fmt.Sprintf("order by clause #%d", i+1)
+			if q.Name != "" {
+				orderId = fmt.Sprintf("order by clause #%d in query '%s'", i+1, q.Name)
+			}
+
+			validKeys := []string{}
+			for k := range validOrderKeys {
+				validKeys = append(validKeys, k)
+			}
+			slices.Sort(validKeys)
+
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid order by key '%s' for %s",
+				orderKey,
+				orderId,
+			).WithAdditional(
+				fmt.Sprintf("For aggregation queries, order by can only reference group by keys, aggregation aliases/expressions, or aggregation indices. Valid keys are: %s", strings.Join(validKeys, ", ")),
+			)
+		}
+	}
+
+	return nil
+}
+
+func (q *QueryBuilderQuery[T]) validateHaving() error {
+	if q.Having == nil || q.Having.Expression == "" {
+		return nil
+	}
+
+	// ensure that having is only used with aggregations
+	if len(q.Aggregations) == 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"having clause can only be used with aggregation queries. Use `filter.expression` instead",
+		)
+	}
+
 	return nil
 }
 
