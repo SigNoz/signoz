@@ -81,6 +81,7 @@ func TestStatementBuilder(t *testing.T) {
 		cb,
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
+		nil,
 	)
 
 	for _, c := range cases {

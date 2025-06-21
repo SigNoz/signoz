@@ -79,6 +79,7 @@ func newProvider(
 		traceConditionBuilder,
 		resourceFilterStmtBuilder,
 		traceAggExprRewriter,
+		telemetryStore,
 	)
 
 	// Create log statement builder

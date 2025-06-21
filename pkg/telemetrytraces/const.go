@@ -48,4 +48,6 @@ var (
 		"hasError",
 		"isRemote",
 	}
+	SpanSearchScopeRoot       = "isroot"
+	SpanSearchScopeEntryPoint = "isentrypoint"
 )
