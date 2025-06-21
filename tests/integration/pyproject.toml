@@ -12,7 +12,7 @@ psycopg2 = "^2.9.10"
 testcontainers = "^4.10.0"
 black = "^25.1.0"
 clickhouse-driver = "^0.2.9"
-requests = "^2.32.3"
+requests = "^2.32.4"
 wiremock = "^2.6.1"
 
 
