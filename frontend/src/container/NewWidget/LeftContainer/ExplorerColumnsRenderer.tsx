@@ -8,6 +8,7 @@ import {
 	Checkbox,
 	Divider,
 	Dropdown,
+	Empty,
 	Input,
 	Tooltip,
 	Typography,
@@ -18,6 +19,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { debounce } from 'lodash-es';
 import {
 	AlertCircle,
 	GripVertical,
@@ -25,7 +27,7 @@ import {
 	Search,
 	Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
 	DragDropContext,
 	Draggable,
@@ -51,6 +53,7 @@ function ExplorerColumnsRenderer({
 }: LogColumnsRendererProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const [searchText, setSearchText] = useState<string>('');
+	const [querySearchText, setQuerySearchText] = useState<string>('');
 	const [open, setOpen] = useState<boolean>(false);
 
 	const initialDataSource = currentQuery.builder.queryData[0].dataSource;
@@ -60,13 +63,14 @@ function ExplorerColumnsRenderer({
 			aggregateAttribute: '',
 			dataSource: currentQuery.builder.queryData[0].dataSource,
 			aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
-			searchText: '',
+			searchText: querySearchText,
 			tagType: '',
 		},
 		{
 			queryKey: [
 				currentQuery.builder.queryData[0].dataSource,
 				currentQuery.builder.queryData[0].aggregateOperator,
+				querySearchText,
 			],
 		},
 	);
@@ -120,8 +124,21 @@ function ExplorerColumnsRenderer({
 		setOpen(false);
 	};
 
+	const debouncedSetQuerySearchText = useMemo(
+		() => debounce((value: string) => setQuerySearchText(value), 400),
+		[],
+	);
+
+	useEffect(
+		() => (): void => {
+			debouncedSetQuerySearchText.cancel();
+		},
+		[debouncedSetQuerySearchText],
+	);
+
 	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		setSearchText(e.target.value);
+		debouncedSetQuerySearchText(e.target.value);
 	};
 
 	const items: MenuProps['items'] = [
@@ -142,20 +159,29 @@ function ExplorerColumnsRenderer({
 			key: 'columns',
 			label: (
 				<div className="attribute-columns">
-					{data?.payload?.attributeKeys
-						?.filter((attributeKey) =>
-							attributeKey.key.toLowerCase().includes(searchText.toLowerCase()),
-						)
-						?.map((attributeKey) => (
-							<Checkbox
-								checked={isAttributeKeySelected(attributeKey.key)}
-								onChange={(): void => handleCheckboxChange(attributeKey.key)}
-								style={{ padding: 0 }}
-								key={attributeKey.key}
-							>
-								{attributeKey.key}
-							</Checkbox>
-						))}
+					{isLoading ? (
+						<Spinner size="large" tip="Loading..." height="2vh" />
+					) : (
+						((): JSX.Element | JSX.Element[] => {
+							const filteredAttributeKeys =
+								data?.payload?.attributeKeys?.filter((attributeKey) =>
+									attributeKey.key.toLowerCase().includes(searchText.toLowerCase()),
+								) || [];
+							if (filteredAttributeKeys.length === 0) {
+								return <Empty description="No columns found" />;
+							}
+							return filteredAttributeKeys.map((attributeKey) => (
+								<Checkbox
+									checked={isAttributeKeySelected(attributeKey.key)}
+									onChange={(): void => handleCheckboxChange(attributeKey.key)}
+									style={{ padding: 0 }}
+									key={attributeKey.key}
+								>
+									{attributeKey.key}
+								</Checkbox>
+							));
+						})()
+					)}
 				</div>
 			),
 		},
@@ -219,10 +245,6 @@ function ExplorerColumnsRenderer({
 	};
 
 	const isDarkMode = useIsDarkMode();
-
-	if (isLoading) {
-		return <Spinner size="large" tip="Loading..." height="4vh" />;
-	}
 
 	return (
 		<div className="explorer-columns-renderer">
