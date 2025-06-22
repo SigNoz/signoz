@@ -65,14 +65,6 @@ type Reader interface {
 	LiveTailLogsV4(ctx context.Context, query string, timestampStart uint64, idStart string, client *model.LogsLiveTailClientV2)
 
 	GetTotalSpans(ctx context.Context) (uint64, error)
-	GetTotalLogs(ctx context.Context) (uint64, error)
-	GetTotalSamples(ctx context.Context) (uint64, error)
-	GetSpansInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error)
-	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)
-	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error)
-	GetLogsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error)
-	GetTagsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (*model.TagsInfo, error)
-	GetDistributedInfoInLastHeartBeatInterval(ctx context.Context) (map[string]interface{}, error)
 	// Logs
 	GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	GetLogFieldsFromNames(ctx context.Context, fieldNames []string) (*model.GetFieldsResponse, *model.ApiError)
