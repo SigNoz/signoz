@@ -455,9 +455,9 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	// Use the selectFromCTE parameter dynamically instead of hardcoding
 	traceSubquery := fmt.Sprintf("SELECT DISTINCT trace_id FROM %s", selectFromCTE)
 
+	// Keeping the return of current query same
 	sb.Select(
 		"any(root.serviceName) as `subQuery.serviceName`",
 		"any(root.name) as `subQuery.name`",
