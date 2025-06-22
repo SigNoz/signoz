@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type QueryEnvelope struct {
@@ -176,6 +177,20 @@ func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type VariableType struct{ valuer.String }
+
+var (
+	QueryVariableType   = VariableType{valuer.NewString("query")}
+	DynamicVariableType = VariableType{valuer.NewString("dynamic")}
+	CustomVariableType  = VariableType{valuer.NewString("custom")}
+	TextBoxVariableType = VariableType{valuer.NewString("text")}
+)
+
+type VariableItem struct {
+	Type  VariableType `json:"type"`
+	Value any          `json:"value"`
+}
+
 type QueryRangeRequest struct {
 	// SchemaVersion is the version of the schema to use for the request payload.
 	SchemaVersion string `json:"schemaVersion"`
@@ -188,7 +203,7 @@ type QueryRangeRequest struct {
 	// CompositeQuery is the composite query to use for the request.
 	CompositeQuery CompositeQuery `json:"compositeQuery"`
 	// Variables is the variables to use for the request.
-	Variables map[string]any `json:"variables,omitempty"`
+	Variables map[string]VariableItem `json:"variables,omitempty"`
 
 	// NoCache is a flag to disable caching for the request.
 	NoCache bool `json:"noCache,omitempty"`

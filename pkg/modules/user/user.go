@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 )
@@ -38,7 +37,7 @@ type Module interface {
 	LoginPrecheck(ctx context.Context, orgID, email, sourceUrl string) (*types.GettableLoginPrecheck, error)
 
 	// sso
-	PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (string, error)
+	PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (string, error)
 	CanUsePassword(ctx context.Context, email string) (bool, error)
 
 	// password

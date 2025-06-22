@@ -468,6 +468,7 @@ type LogPipelinesTestBed struct {
 	opampClientConn *opamp.MockOpAmpConnection
 	store           sqlstore.SQLStore
 	userModule      user.Module
+	JWT             *authtypes.JWT
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
@@ -502,7 +503,6 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		LogsParsingPipelineController: controller,
-		JWT:                           jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
 			Handlers: handlers,
@@ -535,6 +535,7 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		agentConfMgr: agentConfMgr,
 		store:        sqlStore,
 		userModule:   modules.User,
+		JWT:          jwt,
 	}
 }
 
@@ -545,7 +546,7 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore, agentID stri
 	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testbed.store), sharder)
 
-	model.InitDB(testbed.store, slog.Default(), orgGetter)
+	model.Init(testbed.store, slog.Default(), orgGetter)
 
 	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
 	err = opampServer.Start(opamp.GetAvailableLocalAddress())
@@ -586,7 +587,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 
 	respWriter := httptest.NewRecorder()
 
-	ctx, err := tb.apiHandler.JWT.ContextFromRequest(req.Context(), req.Header.Get("Authorization"))
+	ctx, err := tb.JWT.ContextFromRequest(req.Context(), req.Header.Get("Authorization"))
 	if err != nil {
 		tb.t.Fatalf("couldn't get jwt from request: %v", err)
 	}
