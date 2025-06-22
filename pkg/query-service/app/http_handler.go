@@ -4535,7 +4535,7 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 		}
 
 		properties["referrer"] = referrer
-		properties["source"] = "dashboard"
+		properties["module_name"] = "dashboard"
 		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Queried", properties)
 	}
 
@@ -4549,7 +4549,7 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 		}
 
 		properties["referrer"] = referrer
-		properties["source"] = "rule"
+		properties["module_name"] = "rule"
 		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Queried", properties)
 	}
 
