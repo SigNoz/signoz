@@ -4519,7 +4519,7 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 		return
 	}
 
-	if _, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer); err == nil {
+	if matched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer); matched {
 		properties := queryInfoResult.ToMap()
 
 		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
@@ -4539,7 +4539,7 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Queried", properties)
 	}
 
-	if _, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer); err == nil {
+	if matched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer); matched {
 		properties := queryInfoResult.ToMap()
 
 		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
