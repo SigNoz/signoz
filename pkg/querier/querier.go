@@ -7,10 +7,12 @@ import (
 	"slices"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -110,7 +112,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 
 	// First pass: collect all metric names that need temporality
 	metricNames := make([]string, 0)
-	for _, query := range req.CompositeQuery.Queries {
+	for idx, query := range req.CompositeQuery.Queries {
 		if query.Type == qbtypes.QueryTypeBuilder {
 			if spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]); ok {
 				for _, agg := range spec.Aggregations {
@@ -118,6 +120,47 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 						metricNames = append(metricNames, agg.MetricName)
 					}
 				}
+			}
+			// if step interval is not set, we set it ourselves with recommended value
+			// if step interval is set to value which could result in points more than
+			// allowed, we override it.
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				if spec.StepInterval.Seconds() == 0 {
+					spec.StepInterval = qbtypes.Step{
+						Duration: time.Second * time.Duration(querybuilder.RecommendedStepInterval(req.Start, req.End)),
+					}
+				}
+				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepInterval(req.Start, req.End)) {
+					spec.StepInterval = qbtypes.Step{
+						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
+					}
+				}
+				req.CompositeQuery.Queries[idx].Spec = spec
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				if spec.StepInterval.Seconds() == 0 {
+					spec.StepInterval = qbtypes.Step{
+						Duration: time.Second * time.Duration(querybuilder.RecommendedStepInterval(req.Start, req.End)),
+					}
+				}
+				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepInterval(req.Start, req.End)) {
+					spec.StepInterval = qbtypes.Step{
+						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
+					}
+				}
+				req.CompositeQuery.Queries[idx].Spec = spec
+			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				if spec.StepInterval.Seconds() == 0 {
+					spec.StepInterval = qbtypes.Step{
+						Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMetric(req.Start, req.End)),
+					}
+				}
+				if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)) {
+					spec.StepInterval = qbtypes.Step{
+						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
+					}
+				}
+				req.CompositeQuery.Queries[idx].Spec = spec
 			}
 		}
 	}
@@ -176,13 +219,13 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
-				bq := newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, spec, timeRange, req.RequestType)
+				bq := newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, spec, timeRange, req.RequestType, req.Variables)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
-				bq := newBuilderQuery(q.telemetryStore, q.logStmtBuilder, spec, timeRange, req.RequestType)
+				bq := newBuilderQuery(q.telemetryStore, q.logStmtBuilder, spec, timeRange, req.RequestType, req.Variables)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
@@ -195,7 +238,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				}
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
-				bq := newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType)
+				bq := newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType, req.Variables)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			default:

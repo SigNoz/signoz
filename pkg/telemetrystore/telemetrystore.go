@@ -7,7 +7,11 @@ import (
 )
 
 type TelemetryStore interface {
+	// ClickhouseDB returns the clickhouse database connection.
 	ClickhouseDB() clickhouse.Conn
+
+	// Cluster returns the cluster name.
+	Cluster() string
 }
 
 type TelemetryStoreHook interface {

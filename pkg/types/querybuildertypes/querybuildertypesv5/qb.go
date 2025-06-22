@@ -49,7 +49,7 @@ type Statement struct {
 // StatementBuilder builds the query.
 type StatementBuilder[T any] interface {
 	// Build builds the query.
-	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery[T]) (*Statement, error)
+	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery[T], variables map[string]VariableItem) (*Statement, error)
 }
 
 type TraceOperatorStatementBuilder interface {

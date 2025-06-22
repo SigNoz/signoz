@@ -38,7 +38,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/SigNoz/signoz/pkg/cache"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -96,12 +95,11 @@ func NewRouter() *mux.Router {
 
 // APIHandler implements the query service public API
 type APIHandler struct {
-	reader            interfaces.Reader
-	ruleManager       *rules.Manager
-	querier           interfaces.Querier
-	querierV2         interfaces.Querier
-	queryBuilder      *queryBuilder.QueryBuilder
-	preferSpanMetrics bool
+	reader       interfaces.Reader
+	ruleManager  *rules.Manager
+	querier      interfaces.Querier
+	querierV2    interfaces.Querier
+	queryBuilder *queryBuilder.QueryBuilder
 
 	// temporalityMap is a map of metric name to temporality
 	// to avoid fetching temporality for the same metric multiple times
@@ -140,8 +138,6 @@ type APIHandler struct {
 
 	pvcsRepo *inframetrics.PvcsRepo
 
-	JWT *authtypes.JWT
-
 	AlertmanagerAPI *alertmanager.API
 
 	LicensingAPI licensing.API
@@ -154,11 +150,8 @@ type APIHandler struct {
 }
 
 type APIHandlerOpts struct {
-
 	// business data reader e.g. clickhouse
 	Reader interfaces.Reader
-
-	PreferSpanMetrics bool
 
 	// rule manager handles rule crud operations
 	RuleManager *rules.Manager
@@ -172,13 +165,8 @@ type APIHandlerOpts struct {
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
-	// cache
-	Cache cache.Cache
-
-	// Querier Influx Interval
+	// Flux Interval
 	FluxInterval time.Duration
-
-	JWT *authtypes.JWT
 
 	AlertmanagerAPI *alertmanager.API
 
@@ -195,14 +183,14 @@ type APIHandlerOpts struct {
 func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	querierOpts := querier.QuerierOptions{
 		Reader:       opts.Reader,
-		Cache:        opts.Cache,
+		Cache:        opts.Signoz.Cache,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
 		FluxInterval: opts.FluxInterval,
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
 		Reader:       opts.Reader,
-		Cache:        opts.Cache,
+		Cache:        opts.Signoz.Cache,
 		KeyGenerator: queryBuilder.NewKeyGenerator(),
 		FluxInterval: opts.FluxInterval,
 	}
@@ -226,7 +214,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
-		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
 		IntegrationsController:        opts.IntegrationsController,
@@ -245,7 +232,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
-		JWT:                           opts.JWT,
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		LicensingAPI:                  opts.LicensingAPI,
@@ -973,7 +959,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 	keys := make(map[string]v3.AttributeKey)
 
 	if rule.AlertType == ruletypes.AlertTypeLogs {
-		logFields, err := aH.reader.GetLogFields(ctx)
+		logFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
 		if err == nil {
 			params := &v3.QueryRangeParamsV3{
 				CompositeQuery: rule.RuleCondition.CompositeQuery,
@@ -1980,7 +1966,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if aH.preferSpanMetrics {
+	if constants.PreferSpanMetrics {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.UseSpanMetrics {
 				featureSet[idx].Active = true
@@ -2096,7 +2082,7 @@ func (aH *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	nextPage, err := aH.Signoz.Modules.User.PrepareSsoRedirect(ctx, redirectUri, identity.Email, aH.JWT)
+	nextPage, err := aH.Signoz.Modules.User.PrepareSsoRedirect(ctx, redirectUri, identity.Email)
 	if err != nil {
 		zap.L().Error("[receiveGoogleAuth] failed to generate redirect URI after successful login ", zap.String("domain", domain.String()), zap.Error(err))
 		handleSsoError(w, r, redirectUri)
@@ -4070,78 +4056,15 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
-	params, err := logs.ParseLogFilterParams(r)
-	if err != nil {
-		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
-		return
-	}
-	res, apiErr := aH.reader.GetLogs(r.Context(), params)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch logs from the DB")
-		return
-	}
-	aH.WriteJSON(w, r, map[string]interface{}{"results": res})
+	aH.WriteJSON(w, r, map[string]interface{}{"results": []model.SignozLog{}})
 }
 
 func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
-	params, err := logs.ParseLogFilterParams(r)
-	if err != nil {
-		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
-		return
-	}
-
-	// create the client
-	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error), Filter: *params}
-	go aH.reader.TailLogs(r.Context(), client)
-
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(200)
-
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
-		RespondError(w, &err, "streaming is not supported")
-		return
-	}
-	// flush the headers
-	flusher.Flush()
-
-	for {
-		select {
-		case log := <-client.Logs:
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
-			flusher.Flush()
-		case <-client.Done:
-			zap.L().Debug("done!")
-			return
-		case err := <-client.Error:
-			zap.L().Error("error occured", zap.Error(err))
-			return
-		}
-	}
+	return
 }
 
 func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
-	params, err := logs.ParseLogAggregateParams(r)
-	if err != nil {
-		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
-		return
-	}
-	res, apiErr := aH.reader.AggregateLogs(r.Context(), params)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch logs aggregate from the DB")
-		return
-	}
-	aH.WriteJSON(w, r, res)
+	aH.WriteJSON(w, r, model.GetLogsAggregatesResponse{})
 }
 
 func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
@@ -4521,7 +4444,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
-			logsFields, err := aH.reader.GetLogFields(ctx)
+			logsFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, errQuriesByName)
@@ -4845,7 +4768,7 @@ func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
-			logsFields, err := aH.reader.GetLogFields(r.Context())
+			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
@@ -4953,7 +4876,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
-			logsFields, err := aH.reader.GetLogFields(r.Context())
+			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 				RespondError(w, apiErrObj, nil)
