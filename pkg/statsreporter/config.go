@@ -30,7 +30,7 @@ func newConfig() factory.Config {
 		Enabled:  true,
 		Interval: 6 * time.Hour,
 		Collect: Collect{
-			Identities: true,
+			Identities: false,
 		},
 	}
 }
