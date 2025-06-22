@@ -252,7 +252,7 @@ function ExplorerColumnsRenderer({
 				<Typography.Text>Columns</Typography.Text>
 				{isError && (
 					<Tooltip title={SOMETHING_WENT_WRONG}>
-						<AlertCircle size={16} />
+						<AlertCircle size={16} data-testid="alert-circle-icon" />
 					</Tooltip>
 				)}
 			</div>
@@ -287,6 +287,7 @@ function ExplorerColumnsRenderer({
 															size={12}
 															color="red"
 															onClick={(): void => removeSelectedLogField(field.name)}
+															data-testid="trash-icon"
 														/>
 													</div>
 												)}
@@ -312,6 +313,7 @@ function ExplorerColumnsRenderer({
 															size={12}
 															color="red"
 															onClick={(): void => removeSelectedLogField(field.key)}
+															data-testid="trash-icon"
 														/>
 													</div>
 												)}
