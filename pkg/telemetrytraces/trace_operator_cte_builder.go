@@ -403,24 +403,8 @@ func (b *traceOperatorCTEBuilder) buildListQuery(selectFromCTE string) (*qbtypes
 
 	sb.From(selectFromCTE)
 
-	// Add order by
-	for _, orderBy := range b.operator.Order {
-		switch orderBy.Key.Name {
-		case qbtypes.OrderBySpanCount.StringValue():
-			// This would need to be handled with a wrapper CTE
-			continue
-		case qbtypes.OrderByTraceDuration.StringValue():
-			// This would also need special handling
-			continue
-		default:
-			sb.OrderBy(fmt.Sprintf("%s %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
-		}
-	}
-
-	// Default order by timestamp if no order specified
-	if len(b.operator.Order) == 0 {
-		sb.OrderBy("timestamp ASC")
-	}
+	// For span results, only timestamp ordering makes sense
+	sb.OrderBy("timestamp DESC")
 
 	// Add limit
 	if b.operator.Limit > 0 {
@@ -471,34 +455,49 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(selectFromCTE string) (*q
 func (b *traceOperatorCTEBuilder) buildScalarQuery(selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	// Add group by fields
-	for _, gb := range b.operator.GroupBy {
-		sb.Select(fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
-	}
+	// Use the selectFromCTE parameter dynamically instead of hardcoding
+	traceSubquery := fmt.Sprintf("SELECT DISTINCT trace_id FROM %s", selectFromCTE)
 
-	// Add aggregations
-	if len(b.operator.Aggregations) > 0 {
-		for i := range b.operator.Aggregations {
-			// Simple implementation
-			sb.SelectMore(fmt.Sprintf("count(*) AS __result_%d", i))
+	sb.Select(
+		"any(root.serviceName) as `subQuery.serviceName`",
+		"any(root.name) as `subQuery.name`",
+		"count(bs.span_id) as span_count",
+		"any(root.durationNano) as `subQuery.durationNano`",
+		"result.trace_id as `subQuery.traceID`",
+	)
+
+	sb.From(fmt.Sprintf("(%s) result", traceSubquery))
+	sb.JoinWithOption(sqlbuilder.InnerJoin, "base_spans bs", "result.trace_id = bs.trace_id")
+	sb.JoinWithOption(sqlbuilder.InnerJoin, "base_spans root",
+		"result.trace_id = root.trace_id AND root.parent_span_id = ''")
+
+	sb.GroupBy("result.trace_id")
+
+	// Handle ordering - update column references to match new aliases
+	orderApplied := false
+	for _, orderBy := range b.operator.Order {
+		switch orderBy.Key.Name {
+		case qbtypes.OrderByTraceDuration.StringValue():
+			// Use root span duration for trace duration
+			sb.OrderBy(fmt.Sprintf("`subQuery.durationNano` %s", orderBy.Direction.StringValue()))
+			orderApplied = true
+		case qbtypes.OrderBySpanCount.StringValue():
+			// Use span count
+			sb.OrderBy(fmt.Sprintf("span_count %s", orderBy.Direction.StringValue()))
+			orderApplied = true
+		default:
+			// For other fields, try to map them (could be root span fields)
+			sb.OrderBy(fmt.Sprintf("%s %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+			orderApplied = true
 		}
-	} else {
-		// Default aggregation
-		sb.Select("count(*) AS __result_0")
 	}
 
-	sb.From(selectFromCTE)
-
-	if len(b.operator.GroupBy) > 0 {
-		sb.GroupBy("ALL")
+	// Default order by root span duration DESC if no order specified
+	if !orderApplied {
+		sb.OrderBy("`subQuery.durationNano` DESC")
 	}
 
-	// Add order by
-	if len(b.operator.Order) == 0 && len(b.operator.Aggregations) > 0 {
-		sb.OrderBy("__result_0 DESC")
-	}
-
-	// Add limit
+	// Add limit if specified
 	if b.operator.Limit > 0 {
 		sb.Limit(b.operator.Limit)
 	}
