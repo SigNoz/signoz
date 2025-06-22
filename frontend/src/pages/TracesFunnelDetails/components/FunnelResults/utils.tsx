@@ -18,10 +18,4 @@ export const topTracesTableColumns = [
 		key: 'duration_ms',
 		render: (value: string): string => getYAxisFormattedValue(value, 'ms'),
 	},
-	{
-		title: 'SPAN COUNT',
-		dataIndex: 'span_count',
-		key: 'span_count',
-		render: (value: number): string => value.toString(),
-	},
 ];

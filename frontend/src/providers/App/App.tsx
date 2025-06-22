@@ -19,6 +19,7 @@ import {
 	useState,
 } from 'react';
 import { useQuery } from 'react-query';
+import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import {
 	LicensePlatform,
@@ -58,6 +59,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	);
 	const [org, setOrg] = useState<Organization[] | null>(null);
+	const [changelog, setChangelog] = useState<ChangelogSchema | null>(null);
 
 	// if the user.id is not present, for migration older cases then we need to logout only for current logged in users!
 	useEffect(() => {
@@ -253,6 +255,13 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		[org],
 	);
 
+	const updateChangelog = useCallback(
+		(payload: ChangelogSchema): void => {
+			setChangelog(payload);
+		},
+		[setChangelog],
+	);
+
 	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
 	useGlobalEventListener('AFTER_LOGIN', (event) => {
 		if (event.detail) {
@@ -296,11 +305,13 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			featureFlagsFetchError,
 			orgPreferencesFetchError,
 			activeLicense,
+			changelog,
 			activeLicenseRefetch,
 			updateUser,
 			updateOrgPreferences,
 			updateUserPreferenceInContext,
 			updateOrg,
+			updateChangelog,
 			versionData: versionData?.payload || null,
 		}),
 		[
@@ -319,8 +330,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			orgPreferences,
 			activeLicenseRefetch,
 			orgPreferencesFetchError,
+			changelog,
 			updateUserPreferenceInContext,
 			updateOrg,
+			updateChangelog,
 			user,
 			userFetchError,
 			versionData,

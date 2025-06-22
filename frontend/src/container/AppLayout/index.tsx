@@ -7,6 +7,7 @@ import * as Sentry from '@sentry/react';
 import { Flex } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
 import logEvent from 'api/common/logEvent';
 import manageCreditCardApi from 'api/v1/portal/create';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
@@ -40,9 +41,10 @@ import {
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
+import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {
 	UPDATE_CURRENT_ERROR,
@@ -50,15 +52,18 @@ import {
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
-import { SuccessResponseV2 } from 'types/api';
+import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import APIError from 'types/api/error';
 import {
 	LicenseEvent,
 	LicensePlatform,
 	LicenseState,
 } from 'types/api/licensesV3/getActive';
+import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
+import { checkVersionState } from 'utils/app';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
 	getFormattedDate,
@@ -81,6 +86,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
 		userPreferences,
+		updateChangelog,
 	} = useAppContext();
 
 	const { notifications } = useNotifications();
@@ -92,6 +98,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const [showSlowApiWarning, setShowSlowApiWarning] = useState(false);
 	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
+	const [shouldFetchChangelog, setShouldFetchChangelog] = useState<boolean>(
+		false,
+	);
+
+	const { currentVersion, latestVersion } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
+
+	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
 	const handleBillingOnSuccess = (
 		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
@@ -129,7 +144,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
-	const [getUserVersionResponse, getUserLatestVersionResponse] = useQueries([
+	const [
+		getUserVersionResponse,
+		getUserLatestVersionResponse,
+		getChangelogByVersionResponse,
+	] = useQueries([
 		{
 			queryFn: getUserVersion,
 			queryKey: ['getUserVersion', user?.accessJwt],
@@ -139,6 +158,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			queryFn: getUserLatestVersion,
 			queryKey: ['getUserLatestVersion', user?.accessJwt],
 			enabled: isLoggedIn,
+		},
+		{
+			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
+				getChangelogByVersion(latestVersion),
+			queryKey: ['getChangelogByVersion', latestVersion],
+			enabled: isLoggedIn && !isCloudUserVal && shouldFetchChangelog,
 		},
 	]);
 
@@ -240,6 +265,30 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getUserVersionResponse.isFetched,
 		getUserLatestVersionResponse.isSuccess,
 		notifications,
+	]);
+
+	useEffect(() => {
+		if (!isLatestVersion) {
+			setShouldFetchChangelog(true);
+		}
+	}, [isLatestVersion]);
+
+	useEffect(() => {
+		if (
+			getChangelogByVersionResponse.isFetched &&
+			getChangelogByVersionResponse.isSuccess &&
+			getChangelogByVersionResponse.data &&
+			getChangelogByVersionResponse.data.payload
+		) {
+			updateChangelog(getChangelogByVersionResponse.data.payload);
+		}
+	}, [
+		updateChangelog,
+		getChangelogByVersionResponse.isFetched,
+		getChangelogByVersionResponse.isLoading,
+		getChangelogByVersionResponse.isError,
+		getChangelogByVersionResponse.data,
+		getChangelogByVersionResponse.isSuccess,
 	]);
 
 	const isToDisplayLayout = isLoggedIn;
@@ -551,53 +600,63 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		(preference) => preference.name === USER_PREFERENCES.SIDENAV_PINNED,
 	)?.value as boolean;
 
+	const SHOW_TRIAL_EXPIRY_BANNER =
+		showTrialExpiryBanner && !showPaymentFailedWarning;
+	const SHOW_WORKSPACE_RESTRICTED_BANNER = showWorkspaceRestricted;
+	const SHOW_PAYMENT_FAILED_BANNER =
+		!showTrialExpiryBanner && showPaymentFailedWarning;
+
 	return (
 		<Layout className={cx(isDarkMode ? 'darkMode dark' : 'lightMode')}>
 			<Helmet>
 				<title>{pageTitle}</title>
 			</Helmet>
 
-			{showTrialExpiryBanner && !showPaymentFailedWarning && (
-				<div className="trial-expiry-banner">
-					You are in free trial period. Your free trial will end on{' '}
-					<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
-					{user.role === USER_ROLES.ADMIN ? (
-						<span>
-							{' '}
-							Please{' '}
-							<a className="upgrade-link" onClick={handleUpgrade}>
-								upgrade
-							</a>
-							to continue using SigNoz features.
-						</span>
-					) : (
-						'Please contact your administrator for upgrading to a paid plan.'
+			{isLoggedIn && (
+				<div className={cx('app-banner-container')}>
+					{SHOW_TRIAL_EXPIRY_BANNER && (
+						<div className="trial-expiry-banner">
+							You are in free trial period. Your free trial will end on{' '}
+							<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
+							{user.role === USER_ROLES.ADMIN ? (
+								<span>
+									{' '}
+									Please{' '}
+									<a className="upgrade-link" onClick={handleUpgrade}>
+										upgrade
+									</a>
+									to continue using SigNoz features.
+								</span>
+							) : (
+								'Please contact your administrator for upgrading to a paid plan.'
+							)}
+						</div>
 					)}
-				</div>
-			)}
 
-			{showWorkspaceRestricted && renderWorkspaceRestrictedBanner()}
+					{SHOW_WORKSPACE_RESTRICTED_BANNER && renderWorkspaceRestrictedBanner()}
 
-			{!showTrialExpiryBanner && showPaymentFailedWarning && (
-				<div className="payment-failed-banner">
-					Your bill payment has failed. Your workspace will get suspended on{' '}
-					<span>
-						{getFormattedDateWithMinutes(
-							dayjs(activeLicense?.event_queue?.scheduled_at).unix() || Date.now(),
-						)}
-						.
-					</span>
-					{user.role === USER_ROLES.ADMIN ? (
-						<span>
-							{' '}
-							Please{' '}
-							<a className="upgrade-link" onClick={handleFailedPayment}>
-								pay the bill
-							</a>
-							to continue using SigNoz features.
-						</span>
-					) : (
-						' Please contact your administrator to pay the bill.'
+					{SHOW_PAYMENT_FAILED_BANNER && (
+						<div className="payment-failed-banner">
+							Your bill payment has failed. Your workspace will get suspended on{' '}
+							<span>
+								{getFormattedDateWithMinutes(
+									dayjs(activeLicense?.event_queue?.scheduled_at).unix() || Date.now(),
+								)}
+								.
+							</span>
+							{user.role === USER_ROLES.ADMIN ? (
+								<span>
+									{' '}
+									Please{' '}
+									<a className="upgrade-link" onClick={handleFailedPayment}>
+										pay the bill
+									</a>
+									to continue using SigNoz features.
+								</span>
+							) : (
+								' Please contact your administrator to pay the bill.'
+							)}
+						</div>
 					)}
 				</div>
 			)}
@@ -607,6 +666,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					'app-layout',
 					isDarkMode ? 'darkMode dark' : 'lightMode',
 					sideNavPinned ? 'side-nav-pinned' : '',
+					SHOW_WORKSPACE_RESTRICTED_BANNER ? 'isWorkspaceRestricted' : '',
+					SHOW_TRIAL_EXPIRY_BANNER ? 'isTrialExpired' : '',
+					SHOW_PAYMENT_FAILED_BANNER ? 'isPaymentFailed' : '',
 				)}
 			>
 				{isToDisplayLayout && !renderFullScreen && (

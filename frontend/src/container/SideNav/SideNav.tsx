@@ -23,6 +23,7 @@ import logEvent from 'api/common/logEvent';
 import { Logout } from 'api/utils';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import cx from 'classnames';
+import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
@@ -124,6 +125,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		trialInfo,
 		isLoggedIn,
 		userPreferences,
+		changelog,
 		updateUserPreferenceInContext,
 	} = useAppContext();
 
@@ -155,6 +157,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const [hasScroll, setHasScroll] = useState(false);
 	const navTopSectionRef = useRef<HTMLDivElement>(null);
+	const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
 
 	const checkScroll = useCallback((): void => {
 		if (navTopSectionRef.current) {
@@ -447,6 +450,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				{
 					key: 'workspace',
 					label: 'Workspace Settings',
+					disabled: isWorkspaceBlocked,
 				},
 				...(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser
 					? [
@@ -464,7 +468,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					),
 				},
 			].filter(Boolean),
-		[isEnterpriseSelfHostedUser, isCommunityEnterpriseUser, user.email],
+		[
+			isEnterpriseSelfHostedUser,
+			isCommunityEnterpriseUser,
+			user.email,
+			isWorkspaceBlocked,
+		],
 	);
 
 	useEffect(() => {
@@ -731,20 +740,13 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);
 
-	const onClickVersionHandler = useCallback(
-		(event: MouseEvent): void => {
-			if (isCloudUser) {
-				return;
-			}
+	const onClickVersionHandler = useCallback((): void => {
+		if (isCloudUser) {
+			return;
+		}
 
-			if (isCtrlMetaKey(event)) {
-				openInNewTab(ROUTES.VERSION);
-			} else {
-				history.push(ROUTES.VERSION);
-			}
-		},
-		[isCloudUser],
-	);
+		setShowChangelogModal(true);
+	}, [isCloudUser]);
 
 	useEffect(() => {
 		if (!isLatestVersion && !isCloudUser) {
@@ -784,7 +786,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										'brand-title-section',
 										isCommunityEnterpriseUser && 'community-enterprise-user',
 										isCloudUser && 'cloud-user',
-										showVersionUpdateNotification && 'version-update-notification',
+										showVersionUpdateNotification &&
+											changelog &&
+											'version-update-notification',
 									)}
 								>
 									<span className="license-type"> {licenseTag} </span>
@@ -795,7 +799,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 											overlayClassName="version-tooltip-overlay"
 											arrow={false}
 											overlay={
-												showVersionUpdateNotification && (
+												showVersionUpdateNotification &&
+												changelog && (
 													<div className="version-update-notification-tooltip">
 														<div className="version-update-notification-tooltip-title">
 															There&apos;s a new version available.
@@ -813,7 +818,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 													{currentVersion}
 												</span>
 
-												{showVersionUpdateNotification && (
+												{showVersionUpdateNotification && changelog && (
 													<span className="version-update-notification-dot-icon" />
 												)}
 											</div>
@@ -1044,6 +1049,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					</div>
 				</div>
 			</Modal>
+			{showChangelogModal && (
+				<ChangelogModal onClose={(): void => setShowChangelogModal(false)} />
+			)}
 		</div>
 	);
 }

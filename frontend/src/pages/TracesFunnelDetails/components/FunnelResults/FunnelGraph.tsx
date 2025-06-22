@@ -29,13 +29,20 @@ Chart.register(
 );
 
 function FunnelGraph(): JSX.Element {
-	const { funnelId } = useFunnelContext();
+	const { funnelId, startTime, endTime, steps } = useFunnelContext();
+
+	const payload = {
+		start_time: startTime,
+		end_time: endTime,
+		steps,
+	};
+
 	const {
 		data: stepsData,
 		isLoading,
 		isFetching,
 		isError,
-	} = useFunnelStepsGraphData(funnelId);
+	} = useFunnelStepsGraphData(funnelId, payload);
 
 	const data = useMemo(() => stepsData?.payload?.data?.[0]?.data, [
 		stepsData?.payload?.data,
