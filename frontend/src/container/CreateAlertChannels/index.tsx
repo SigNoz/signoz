@@ -138,6 +138,15 @@ function CreateAlertChannels({
 	);
 
 	const onSlackHandler = useCallback(async () => {
+		if (!selectedConfig.api_url) {
+			console.log('selectedConfig', selectedConfig);
+			notifications.error({
+				message: 'Error',
+				description: t('webhook_url_required'),
+			});
+			return;
+		}
+
 		setSavingState(true);
 
 		try {
@@ -154,7 +163,7 @@ function CreateAlertChannels({
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareSlackRequest, notifications, t, showErrorModal]);
+	}, [selectedConfig, notifications, t, prepareSlackRequest, showErrorModal]);
 
 	const prepareWebhookRequest = useCallback(() => {
 		// initial api request without auth params
@@ -192,6 +201,14 @@ function CreateAlertChannels({
 	}, [notifications, t, selectedConfig]);
 
 	const onWebhookHandler = useCallback(async () => {
+		if (!selectedConfig.api_url) {
+			notifications.error({
+				message: 'Error',
+				description: t('webhook_url_required'),
+			});
+			return;
+		}
+
 		setSavingState(true);
 		try {
 			const request = prepareWebhookRequest();
@@ -208,7 +225,13 @@ function CreateAlertChannels({
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareWebhookRequest, notifications, t, showErrorModal]);
+	}, [
+		selectedConfig.api_url,
+		notifications,
+		t,
+		prepareWebhookRequest,
+		showErrorModal,
+	]);
 
 	const preparePagerRequest = useCallback(() => {
 		const validationError = ValidatePagerChannel(selectedConfig as PagerChannel);
@@ -272,6 +295,14 @@ function CreateAlertChannels({
 	);
 
 	const onOpsgenieHandler = useCallback(async () => {
+		if (!selectedConfig.api_key) {
+			notifications.error({
+				message: 'Error',
+				description: t('api_key_required'),
+			});
+			return;
+		}
+
 		setSavingState(true);
 		try {
 			await createOpsgenie(prepareOpsgenieRequest());
@@ -287,7 +318,13 @@ function CreateAlertChannels({
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareOpsgenieRequest, notifications, t, showErrorModal]);
+	}, [
+		selectedConfig.api_key,
+		notifications,
+		t,
+		prepareOpsgenieRequest,
+		showErrorModal,
+	]);
 
 	const prepareEmailRequest = useCallback(
 		() => ({
@@ -301,6 +338,14 @@ function CreateAlertChannels({
 	);
 
 	const onEmailHandler = useCallback(async () => {
+		if (!selectedConfig.to) {
+			notifications.error({
+				message: 'Error',
+				description: t('to_required'),
+			});
+			return;
+		}
+
 		setSavingState(true);
 		try {
 			const request = prepareEmailRequest();
@@ -317,7 +362,7 @@ function CreateAlertChannels({
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareEmailRequest, notifications, t, showErrorModal]);
+	}, [prepareEmailRequest, notifications, t, showErrorModal, selectedConfig.to]);
 
 	const prepareMsTeamsRequest = useCallback(
 		() => ({
@@ -331,6 +376,14 @@ function CreateAlertChannels({
 	);
 
 	const onMsTeamsHandler = useCallback(async () => {
+		if (!selectedConfig.webhook_url) {
+			notifications.error({
+				message: 'Error',
+				description: t('webhook_url_required'),
+			});
+			return;
+		}
+
 		setSavingState(true);
 
 		try {
@@ -347,10 +400,24 @@ function CreateAlertChannels({
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareMsTeamsRequest, notifications, t, showErrorModal]);
+	}, [
+		selectedConfig.webhook_url,
+		notifications,
+		t,
+		prepareMsTeamsRequest,
+		showErrorModal,
+	]);
 
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
+			if (!selectedConfig.name) {
+				notifications.error({
+					message: 'Error',
+					description: t('channel_name_required'),
+				});
+				return;
+			}
+
 			const functionMapper = {
 				[ChannelType.Slack]: onSlackHandler,
 				[ChannelType.Webhook]: onWebhookHandler,
