@@ -380,15 +380,15 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 	case *builderQuery[qbtypes.TraceAggregation]:
 		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
 		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
-		return newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, qt.spec, adjustedTimeRange, qt.kind)
+		return newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, qt.spec, adjustedTimeRange, qt.kind, qt.variables)
 	case *builderQuery[qbtypes.LogAggregation]:
 		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
 		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
-		return newBuilderQuery(q.telemetryStore, q.logStmtBuilder, qt.spec, adjustedTimeRange, qt.kind)
+		return newBuilderQuery(q.telemetryStore, q.logStmtBuilder, qt.spec, adjustedTimeRange, qt.kind, qt.variables)
 	case *builderQuery[qbtypes.MetricAggregation]:
 		qt.spec.ShiftBy = extractShiftFromBuilderQuery(qt.spec)
 		adjustedTimeRange := adjustTimeRangeForShift(qt.spec, timeRange, qt.kind)
-		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, qt.spec, adjustedTimeRange, qt.kind)
+		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, qt.spec, adjustedTimeRange, qt.kind, qt.variables)
 	case *traceOperatorQuery:
 		return &traceOperatorQuery{
 			telemetryStore: q.telemetryStore,
