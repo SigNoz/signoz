@@ -4531,7 +4531,8 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 		}
 
 		properties["referrer"] = referrer
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Dashboard Queried", properties)
+		properties["source"] = "dashboard"
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Queried", properties)
 	}
 
 	if _, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer); err == nil {
@@ -4542,7 +4543,8 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 		}
 
 		properties["referrer"] = referrer
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Alert Queried", properties)
+		properties["source"] = "rule"
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Queried", properties)
 	}
 
 }
