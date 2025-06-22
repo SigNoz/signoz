@@ -2298,16 +2298,6 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 	}
 }
 
-func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
-
-	var totalSpans uint64
-
-	queryStr := fmt.Sprintf("SELECT count() from %s.%s;", signozTraceDBName, r.traceTableName)
-	r.db.QueryRow(ctx, queryStr).Scan(&totalSpans)
-
-	return totalSpans, nil
-}
-
 func (r *ClickHouseReader) FetchTemporality(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 	var metricNamesToQuery []string
