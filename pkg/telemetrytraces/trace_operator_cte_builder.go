@@ -63,9 +63,7 @@ func (b *traceOperatorCTEBuilder) collectQueries() error {
 
 func (b *traceOperatorCTEBuilder) build(requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
 	// Build base spans CTE
-	if err := b.buildBaseSpansCTE(); err != nil {
-		return nil, err
-	}
+	b.buildBaseSpansCTE()
 
 	// Build CTEs for the expression tree
 	rootCTEName, err := b.buildExpressionCTEs(b.operator.ParsedExpression)
@@ -127,7 +125,7 @@ func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
 		b.start, b.end, startBucket, endBucket)
 }
 
-func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
+func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"trace_id",
@@ -165,7 +163,6 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() error {
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	b.addCTE("base_spans", sql, args, nil)
-	return nil
 }
 
 func (b *traceOperatorCTEBuilder) buildExpressionCTEs(expr *qbtypes.TraceOperand) (string, error) {
@@ -276,7 +273,8 @@ func (b *traceOperatorCTEBuilder) buildOperatorCTE(op qbtypes.TraceOperatorType,
 	case qbtypes.TraceOperatorAnd:
 		sql, args, dependsOn = b.buildAndCTE(leftCTE, rightCTE)
 	case qbtypes.TraceOperatorOr:
-		sql, args, dependsOn = b.buildOrCTE(leftCTE, rightCTE)
+		sql, dependsOn = b.buildOrCTE(leftCTE, rightCTE)
+		args = nil // OR operations don't need args
 	case qbtypes.TraceOperatorNot, qbtypes.TraceOperatorExclude:
 		sql, args, dependsOn = b.buildNotCTE(leftCTE, rightCTE)
 	default:
@@ -333,14 +331,14 @@ func (b *traceOperatorCTEBuilder) buildAndCTE(leftCTE, rightCTE string) (string,
 	return sql, args, []string{leftCTE, rightCTE}
 }
 
-func (b *traceOperatorCTEBuilder) buildOrCTE(leftCTE, rightCTE string) (string, []any, []string) {
+func (b *traceOperatorCTEBuilder) buildOrCTE(leftCTE, rightCTE string) (string, []string) {
 	sql := fmt.Sprintf(`
 		SELECT * FROM %s
 		UNION DISTINCT
 		SELECT * FROM %s
 	`, leftCTE, rightCTE)
 
-	return sql, nil, []string{leftCTE, rightCTE}
+	return sql, []string{leftCTE, rightCTE}
 }
 
 func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string, []any, []string) {

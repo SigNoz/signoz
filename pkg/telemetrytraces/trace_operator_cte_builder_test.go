@@ -178,7 +178,7 @@ func TestTraceOperatorCTEBuilder_CollectQueries(t *testing.T) {
 				start:          1000000000000, // 1 second in nanoseconds
 				end:            2000000000000, // 2 seconds in nanoseconds
 				operator:       tc.operator,
-				stmtBuilder:    &traceOperatorStatementBuilder{metadataStore: mockMetadataStore},
+				stmtBuilder:    &traceOperatorStatementBuilder{metadataStore: mockMetadataStore, cb: NewConditionBuilder(NewFieldMapper())},
 				queries:        make(map[string]*qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]),
 				ctes:           []cteNode{},
 				cteNameToIndex: make(map[string]int),
@@ -232,9 +232,8 @@ func TestTraceOperatorCTEBuilder_BuildBaseSpansCTE(t *testing.T) {
 		queryToCTEName: make(map[string]string),
 	}
 
-	err := builder.buildBaseSpansCTE()
+	builder.buildBaseSpansCTE()
 
-	require.NoError(t, err)
 	require.Len(t, builder.ctes, 1)
 
 	cte := builder.ctes[0]
@@ -293,7 +292,7 @@ func TestTraceOperatorCTEBuilder_BuildOperatorCTEs(t *testing.T) {
 				start:          1000000000000,
 				end:            2000000000000,
 				operator:       &qbtypes.QueryBuilderTraceOperator{},
-				stmtBuilder:    &traceOperatorStatementBuilder{metadataStore: mockMetadataStore},
+				stmtBuilder:    &traceOperatorStatementBuilder{metadataStore: mockMetadataStore, cb: NewConditionBuilder(NewFieldMapper())},
 				queries:        make(map[string]*qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]),
 				ctes:           []cteNode{},
 				cteNameToIndex: make(map[string]int),
@@ -393,7 +392,7 @@ func TestTraceOperatorCTEBuilder_BuildFinalQuery(t *testing.T) {
 				start:          1000000000000,
 				end:            2000000000000,
 				operator:       tc.operator,
-				stmtBuilder:    &traceOperatorStatementBuilder{metadataStore: mockMetadataStore},
+				stmtBuilder:    &traceOperatorStatementBuilder{metadataStore: mockMetadataStore, cb: NewConditionBuilder(NewFieldMapper())},
 				queries:        make(map[string]*qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]),
 				ctes:           []cteNode{},
 				cteNameToIndex: make(map[string]int),
