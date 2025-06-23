@@ -14,7 +14,6 @@ import (
 	"errors"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -80,8 +79,6 @@ func prepareTaskName(ruleId interface{}) string {
 type ManagerOptions struct {
 	TelemetryStore telemetrystore.TelemetryStore
 	Prometheus     prometheus.Prometheus
-	// rule db conn
-	DBConn *sqlx.DB
 
 	Context     context.Context
 	Logger      *zap.Logger

@@ -95,6 +95,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	end uint64,
 	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[T],
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 	config, exists := signalConfigs[b.signal]
 	if !exists {
@@ -111,7 +112,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 		return nil, err
 	}
 
-	if err := b.addConditions(ctx, q, start, end, query, keys); err != nil {
+	if err := b.addConditions(ctx, q, start, end, query, keys, variables); err != nil {
 		return nil, err
 	}
 
@@ -129,6 +130,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[T],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) error {
 	// Add filter condition if present
 	if query.Filter != nil && query.Filter.Expression != "" {
@@ -139,6 +141,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			ConditionBuilder:   b.conditionBuilder,
 			FieldKeys:          keys,
 			SkipFullTextFilter: true,
+			Variables:          variables,
 		})
 
 		if err != nil {

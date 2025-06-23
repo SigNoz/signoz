@@ -120,14 +120,19 @@ describe('Create Alert Channel', () => {
 			expect(screen.getByText('button_test_channel')).toBeInTheDocument();
 			expect(screen.getByText('button_return')).toBeInTheDocument();
 		});
-		it('Should check if saving the form without filling the name displays "Something went wrong"', async () => {
+		it('Should check if saving the form without filling the name displays error notification', async () => {
 			const saveButton = screen.getByRole('button', {
 				name: 'button_save_channel',
 			});
 
 			fireEvent.click(saveButton);
 
-			await waitFor(() => expect(showErrorModal).toHaveBeenCalled());
+			await waitFor(() =>
+				expect(errorNotification).toHaveBeenCalledWith({
+					message: 'Error',
+					description: 'channel_name_required',
+				}),
+			);
 		});
 		it('Should check if clicking on Test button shows "An alert has been sent to this channel" success message if testing passes', async () => {
 			server.use(
