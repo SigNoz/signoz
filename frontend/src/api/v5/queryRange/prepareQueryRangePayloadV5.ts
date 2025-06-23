@@ -25,6 +25,7 @@ import {
 	RequestType,
 	TelemetryFieldKey,
 	TraceAggregation,
+	VariableItem,
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -382,7 +383,10 @@ export const prepareQueryRangePayloadV5 = ({
 		formatOptions: {
 			formatTableResultForUI: !!formatForWeb,
 		},
-		variables,
+		variables: Object.entries(variables).reduce((acc, [key, value]) => {
+			acc[key] = { value };
+			return acc;
+		}, {} as Record<string, VariableItem>),
 	};
 
 	return { legendMap, queryPayload };
