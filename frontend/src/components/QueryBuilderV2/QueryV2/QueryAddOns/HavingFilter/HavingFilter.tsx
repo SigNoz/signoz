@@ -106,6 +106,11 @@ function HavingFilter({
 	const [input, setInput] = useState(
 		queryData?.havingExpression?.expression || '',
 	);
+
+	useEffect(() => {
+		setInput(queryData?.havingExpression?.expression || '');
+	}, [queryData?.havingExpression?.expression]);
+
 	const [isFocused, setIsFocused] = useState(false);
 
 	const editorRef = useRef<EditorView | null>(null);

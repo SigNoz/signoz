@@ -86,7 +86,7 @@ function Summary(): JSX.Element {
 		};
 	}, [updateAllQueriesOperators]);
 
-	useShareBuilderUrl(defaultQuery);
+	useShareBuilderUrl({ defaultValue: defaultQuery });
 
 	// This is used to avoid the filters from being serialized with the id
 	const currentQueryFiltersString = useMemo(() => {
