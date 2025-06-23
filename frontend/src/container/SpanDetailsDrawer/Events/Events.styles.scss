@@ -186,30 +186,3 @@
 		}
 	}
 }
-
-.stacktrace-popover {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	max-width: 50vw;
-
-	.stacktrace-preview {
-		max-height: 40vh;
-		overflow-y: auto;
-		white-space: pre-wrap;
-		word-break: break-all;
-		padding: 8px;
-		border-radius: 4px;
-	}
-
-	.expand-button {
-		align-self: flex-end;
-	}
-}
-
-.stacktrace-full {
-	max-height: 70vh;
-	overflow-y: auto;
-	white-space: pre-wrap;
-	word-break: break-all;
-}

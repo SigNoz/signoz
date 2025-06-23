@@ -128,7 +128,9 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 				width="80vw"
 				centered
 			>
-				<pre className="stacktrace-full">{modalContent?.content}</pre>
+				<pre className="attribute-with-expandable-popover__full-view">
+					{modalContent?.content}
+				</pre>
 			</Modal>
 		</div>
 	);

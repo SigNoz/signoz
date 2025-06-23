@@ -1,6 +1,6 @@
 import { Tooltip, Typography } from 'antd';
 
-import ExpandableAttribute from './ExpandableAttribute';
+import AttributeWithExpandablePopover from './AttributeWithExpandablePopover';
 
 const EXPANDABLE_ATTRIBUTE_KEYS = ['exception.stacktrace', 'exception.message'];
 
@@ -17,7 +17,7 @@ function EventAttribute({
 }: EventAttributeProps): JSX.Element {
 	if (EXPANDABLE_ATTRIBUTE_KEYS.includes(attributeKey)) {
 		return (
-			<ExpandableAttribute
+			<AttributeWithExpandablePopover
 				attributeKey={attributeKey}
 				attributeValue={attributeValue}
 				onExpand={onExpand}
