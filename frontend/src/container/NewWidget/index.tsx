@@ -242,8 +242,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	useEffect(() => {
 		const compositeQuery = query.get('compositeQuery');
 		if (compositeQuery) {
-			const parsedQuery = JSON.parse(compositeQuery) as Query;
-			setYAxisUnit(parsedQuery.unit || 'none');
+			try {
+				const decoded = decodeURIComponent(compositeQuery);
+				const parsedQuery = JSON.parse(decoded) as Query;
+				setYAxisUnit(parsedQuery.unit || 'none');
+			} catch (error) {
+				setYAxisUnit('none');
+			}
 		}
 	}, [query]);
 
