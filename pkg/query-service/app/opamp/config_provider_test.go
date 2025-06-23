@@ -1,11 +1,20 @@
 package opamp
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sharder"
+	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
@@ -21,6 +30,9 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 
 	tb := newTestbed(t)
 
+	orgID, err := utils.GetTestOrgId(tb.sqlStore)
+	require.Nil(err)
+
 	require.Equal(
 		0, len(tb.testConfigProvider.ConfigUpdateSubscribers),
 		"there should be no agent config subscribers at the start",
@@ -35,7 +47,8 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	// Even if there are no recommended changes to the agent's initial config
 	require.False(tb.testConfigProvider.HasRecommendations())
 	agent1Conn := &MockOpAmpConnection{}
-	agent1Id := "testAgent1"
+	agent1Id := valuer.GenerateUUID().String()
+	// get orgId from the db
 	tb.opampServer.OnMessage(
 		agent1Conn,
 		&protobufs.AgentToServer{
@@ -57,7 +70,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 
 	tb.testConfigProvider.ZPagesEndpoint = "localhost:55555"
 	require.True(tb.testConfigProvider.HasRecommendations())
-	agent2Id := "testAgent2"
+	agent2Id := valuer.GenerateUUID().String()
 	agent2Conn := &MockOpAmpConnection{}
 	tb.opampServer.OnMessage(
 		agent2Conn,
@@ -97,10 +110,10 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		},
 	})
 	expectedConfId := tb.testConfigProvider.ZPagesEndpoint
-	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(expectedConfId, agent2Id),
+	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, agent2Id),
 		"Server should report deployment success to config provider on receiving update from agent.",
 	)
-	require.True(tb.testConfigProvider.ReportedDeploymentStatuses[expectedConfId][agent2Id])
+	require.True(tb.testConfigProvider.ReportedDeploymentStatuses[orgID.String()+expectedConfId][agent2Id])
 	require.Nil(
 		agent2Conn.LatestMsgFromServer(),
 		"Server should not recommend a RemoteConfig if agent is already running it.",
@@ -130,10 +143,10 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		},
 	})
 	expectedConfId = tb.testConfigProvider.ZPagesEndpoint
-	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(expectedConfId, agent2Id),
+	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, agent2Id),
 		"Server should report deployment failure to config provider on receiving update from agent.",
 	)
-	require.False(tb.testConfigProvider.ReportedDeploymentStatuses[expectedConfId][agent2Id])
+	require.False(tb.testConfigProvider.ReportedDeploymentStatuses[orgID.String()+expectedConfId][agent2Id])
 
 	lastAgent1Msg = agent1Conn.LatestMsgFromServer()
 	agent1Conn.ClearMsgsFromServer()
@@ -158,26 +171,88 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	)
 }
 
+func TestOpAMPServerAgentLimit(t *testing.T) {
+	require := require.New(t)
+
+	tb := newTestbed(t)
+	// Create 51 agents and check if the first one gets deleted
+	var agentConnections []*MockOpAmpConnection
+	var agentIds []string
+	for i := 0; i < 51; i++ {
+		agentConn := &MockOpAmpConnection{}
+		agentId := valuer.GenerateUUID().String()
+		agentIds = append(agentIds, agentId)
+		tb.opampServer.OnMessage(
+			agentConn,
+			&protobufs.AgentToServer{
+				InstanceUid: agentId,
+				EffectiveConfig: &protobufs.EffectiveConfig{
+					ConfigMap: initialAgentConf(),
+				},
+			},
+		)
+		agentConnections = append(agentConnections, agentConn)
+	}
+
+	// Perform a DB level check to ensure the first agent is removed
+	count, err := tb.sqlStore.BunDB().NewSelect().
+		Model(new(opamptypes.StorableAgent)).
+		Where("agent_id = ?", agentIds[0]).
+		Count(context.Background())
+	require.Nil(err, "Error querying the database for agent count")
+	require.Equal(0, count, "First agent should be removed from the database after exceeding the limit of 50 agents")
+
+	// verify there are 50 agents in the db
+	count, err = tb.sqlStore.BunDB().NewSelect().
+		Model(new(opamptypes.StorableAgent)).
+		Count(context.Background())
+	require.Nil(err, "Error querying the database for agent count")
+	require.Equal(50, count, "There should be 50 agents in the database")
+
+	// Check if the 51st agent received a config
+	lastAgentConn := agentConnections[50]
+	lastAgentMsg := lastAgentConn.LatestMsgFromServer()
+	require.NotNil(
+		lastAgentMsg,
+		"51st agent should receive a remote config from the server",
+	)
+
+	tb.opampServer.Stop()
+	require.Equal(
+		0, len(tb.testConfigProvider.ConfigUpdateSubscribers),
+		"Opamp server should have unsubscribed to config provider updates after shutdown",
+	)
+}
+
 type testbed struct {
 	testConfigProvider *MockAgentConfigProvider
 	opampServer        *Server
 	t                  *testing.T
+	sqlStore           sqlstore.SQLStore
 }
 
 func newTestbed(t *testing.T) *testbed {
 	testDB := utils.NewQueryServiceDBForTests(t)
-	_, err := model.InitDB(testDB.SQLxDB())
-	if err != nil {
-		t.Fatalf("could not init opamp model: %v", err)
-	}
 
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	require.Nil(t, err)
+	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), sharder)
+	model.Init(testDB, slog.Default(), orgGetter)
 	testConfigProvider := NewMockAgentConfigProvider()
 	opampServer := InitializeServer(nil, testConfigProvider)
+
+	// create a test org
+	err = utils.CreateTestOrg(t, testDB)
+	if err != nil {
+		t.Fatalf("could not create test org: %v", err)
+	}
 
 	return &testbed{
 		testConfigProvider: testConfigProvider,
 		opampServer:        opampServer,
 		t:                  t,
+		sqlStore:           testDB,
 	}
 }
 

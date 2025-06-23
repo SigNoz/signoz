@@ -49,6 +49,15 @@ func NewOrganizationKey(orgID valuer.UUID) uint32 {
 	return hasher.Sum32()
 }
 
+func NewTraitsFromOrganization(org *Organization) map[string]any {
+	return map[string]any{
+		"display_name": org.DisplayName,
+		"name":         org.Name,
+		"created_at":   org.CreatedAt,
+		"alias":        org.Alias,
+	}
+}
+
 type TTLSetting struct {
 	bun.BaseModel `bun:"table:ttl_setting"`
 	Identifiable

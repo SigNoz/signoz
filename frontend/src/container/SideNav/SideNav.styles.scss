@@ -240,6 +240,7 @@
 					line-height: 18px; /* 163.636% */
 					letter-spacing: 0.88px;
 					text-transform: uppercase;
+					min-height: 18px;
 
 					display: flex;
 					align-items: center;
@@ -888,6 +889,10 @@
 
 	.ant-dropdown-menu-item-divider {
 		background-color: var(--Slate-500, #161922) !important;
+	}
+
+	.ant-dropdown-menu-item-disabled {
+		opacity: 0.7;
 	}
 }
 

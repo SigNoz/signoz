@@ -18,7 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/analyticstypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -135,35 +134,9 @@ func (m *Module) CreateUserWithPassword(ctx context.Context, user *types.User, p
 		return nil, err
 	}
 
-	m.analytics.Send(ctx,
-		analyticstypes.Identify{
-			UserId: user.ID.String(),
-			Traits: analyticstypes.
-				NewTraits().
-				SetName(user.DisplayName).
-				SetEmail(user.Email).
-				Set("role", user.Role).
-				SetCreatedAt(user.CreatedAt),
-		},
-		analyticstypes.Group{
-			UserId:  user.ID.String(),
-			GroupId: user.OrgID,
-		},
-		analyticstypes.Track{
-			UserId: user.ID.String(),
-			Event:  "User Created",
-			Properties: analyticstypes.NewPropertiesFromMap(map[string]any{
-				"role":  user.Role,
-				"email": user.Email,
-				"name":  user.DisplayName,
-			}),
-			Context: &analyticstypes.Context{
-				Extra: map[string]interface{}{
-					analyticstypes.KeyGroupID: user.OrgID,
-				},
-			},
-		},
-	)
+	traitsOrProperties := types.NewTraitsFromUser(user)
+	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traitsOrProperties)
+	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Created", traitsOrProperties)
 
 	return user, nil
 }
@@ -173,35 +146,9 @@ func (m *Module) CreateUser(ctx context.Context, user *types.User) error {
 		return err
 	}
 
-	m.analytics.Send(ctx,
-		analyticstypes.Identify{
-			UserId: user.ID.String(),
-			Traits: analyticstypes.
-				NewTraits().
-				SetName(user.DisplayName).
-				SetEmail(user.Email).
-				Set("role", user.Role).
-				SetCreatedAt(user.CreatedAt),
-		},
-		analyticstypes.Group{
-			UserId:  user.ID.String(),
-			GroupId: user.OrgID,
-		},
-		analyticstypes.Track{
-			UserId: user.ID.String(),
-			Event:  "User Created",
-			Properties: analyticstypes.NewPropertiesFromMap(map[string]any{
-				"role":  user.Role,
-				"email": user.Email,
-				"name":  user.DisplayName,
-			}),
-			Context: &analyticstypes.Context{
-				Extra: map[string]interface{}{
-					analyticstypes.KeyGroupID: user.OrgID,
-				},
-			},
-		},
-	)
+	traitsOrProperties := types.NewTraitsFromUser(user)
+	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traitsOrProperties)
+	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Created", traitsOrProperties)
 
 	return nil
 }
@@ -226,11 +173,22 @@ func (m *Module) ListUsers(ctx context.Context, orgID string) ([]*types.Gettable
 	return m.store.ListUsers(ctx, orgID)
 }
 
-func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User) (*types.User, error) {
-	return m.store.UpdateUser(ctx, orgID, id, user)
+func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *types.User, updatedBy string) (*types.User, error) {
+	user, err := m.store.UpdateUser(ctx, orgID, id, user)
+	if err != nil {
+		return nil, err
+	}
+
+	traits := types.NewTraitsFromUser(user)
+	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traits)
+
+	traits["updated_by"] = updatedBy
+	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Updated", traits)
+
+	return user, nil
 }
 
-func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error {
+func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, deletedBy string) error {
 	user, err := m.store.GetUserByID(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -250,7 +208,15 @@ func (m *Module) DeleteUser(ctx context.Context, orgID string, id string) error 
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 
-	return m.store.DeleteUser(ctx, orgID, user.ID.StringValue())
+	if err := m.store.DeleteUser(ctx, orgID, user.ID.StringValue()); err != nil {
+		return err
+	}
+
+	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Deleted", map[string]any{
+		"deleted_by": deletedBy,
+	})
+
+	return nil
 }
 
 func (m *Module) CreateResetPasswordToken(ctx context.Context, userID string) (*types.ResetPasswordRequest, error) {
@@ -489,7 +455,7 @@ func (m *Module) CreateUserForSAMLRequest(ctx context.Context, email string) (*t
 
 }
 
-func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (string, error) {
+func (m *Module) PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (string, error) {
 	users, err := m.GetUsersByEmail(ctx, email)
 	if err != nil {
 		m.settings.Logger().ErrorContext(ctx, "failed to get user with email received from auth provider", "error", err)
@@ -644,10 +610,16 @@ func (m *Module) Register(ctx context.Context, req *types.PostableRegisterOrgAnd
 }
 
 func (m *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	stats := make(map[string]any)
 	count, err := m.store.CountByOrgID(ctx, orgID)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		stats["user.count"] = count
 	}
 
-	return map[string]any{"user.count": count}, nil
+	count, err = m.store.CountAPIKeyByOrgID(ctx, orgID)
+	if err == nil {
+		stats["factor.api_key.count"] = count
+	}
+
+	return stats, nil
 }

@@ -17,5 +17,5 @@ type BucketCache interface {
 	// cached portion + list of gaps to fetch
 	GetMissRanges(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step) (cached *qbtypes.Result, missing []*qbtypes.TimeRange)
 	// store fresh buckets for future hits
-	Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, fresh *qbtypes.Result)
+	Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result)
 }

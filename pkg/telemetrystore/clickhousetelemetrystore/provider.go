@@ -12,6 +12,7 @@ import (
 type provider struct {
 	settings       factory.ScopedProviderSettings
 	clickHouseConn clickhouse.Conn
+	cluster        string
 	hooks          []telemetrystore.TelemetryStoreHook
 }
 
@@ -49,12 +50,17 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	return &provider{
 		settings:       settings,
 		clickHouseConn: chConn,
+		cluster:        config.Clickhouse.Cluster,
 		hooks:          hooks,
 	}, nil
 }
 
 func (p *provider) ClickhouseDB() clickhouse.Conn {
 	return p
+}
+
+func (p *provider) Cluster() string {
+	return p.cluster
 }
 
 func (p *provider) Close() error {

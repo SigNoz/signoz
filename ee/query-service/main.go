@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
@@ -101,10 +102,14 @@ func main() {
 			fileprovider.NewFactory(),
 		},
 	}, signoz.DeprecatedFlags{
-		MaxIdleConns: maxIdleConns,
-		MaxOpenConns: maxOpenConns,
-		DialTimeout:  dialTimeout,
-		Config:       promConfigPath,
+		MaxIdleConns:               maxIdleConns,
+		MaxOpenConns:               maxOpenConns,
+		DialTimeout:                dialTimeout,
+		Config:                     promConfigPath,
+		FluxInterval:               fluxInterval,
+		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
+		Cluster:                    cluster,
+		GatewayUrl:                 gatewayUrl,
 	})
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
@@ -134,8 +139,8 @@ func main() {
 		zeus.Config(),
 		httpzeus.NewProviderFactory(),
 		licensing.Config(24*time.Hour, 3),
-		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus, orgGetter organization.Getter) factory.ProviderFactory[pkglicensing.Licensing, pkglicensing.Config] {
-			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter)
+		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) factory.ProviderFactory[pkglicensing.Licensing, pkglicensing.Config] {
+			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter, analytics)
 		},
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),
@@ -147,20 +152,7 @@ func main() {
 		zap.L().Fatal("Failed to create signoz", zap.Error(err))
 	}
 
-	serverOptions := &app.ServerOptions{
-		Config:                     config,
-		SigNoz:                     signoz,
-		HTTPHostPort:               baseconst.HTTPHostPort,
-		PreferSpanMetrics:          preferSpanMetrics,
-		PrivateHostPort:            baseconst.PrivateHostPort,
-		FluxInterval:               fluxInterval,
-		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
-		Cluster:                    cluster,
-		GatewayUrl:                 gatewayUrl,
-		Jwt:                        jwt,
-	}
-
-	server, err := app.NewServer(serverOptions)
+	server, err := app.NewServer(config, signoz, jwt)
 	if err != nil {
 		zap.L().Fatal("Failed to create server", zap.Error(err))
 	}

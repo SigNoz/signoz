@@ -15,6 +15,7 @@ import { matchPath, useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
+import { OrgPreference } from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
 import { UserResponse } from 'types/api/user/getUser';
 import { USER_ROLES } from 'types/roles';
@@ -96,8 +97,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			usersData.data
 		) {
 			const isOnboardingComplete = orgPreferences?.find(
-				(preference: Record<string, any>) =>
-					preference.key === ORG_PREFERENCES.ORG_ONBOARDING,
+				(preference: OrgPreference) =>
+					preference.name === ORG_PREFERENCES.ORG_ONBOARDING,
 			)?.value;
 
 			const isFirstUser = checkFirstTimeUser();
@@ -125,7 +126,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 		const isRouteEnabledForWorkspaceBlockedState =
 			isAdmin &&
-			(path === ROUTES.ORG_SETTINGS ||
+			(path === ROUTES.SETTINGS ||
+				path === ROUTES.ORG_SETTINGS ||
 				path === ROUTES.BILLING ||
 				path === ROUTES.MY_SETTINGS);
 

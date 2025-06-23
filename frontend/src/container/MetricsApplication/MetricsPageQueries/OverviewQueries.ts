@@ -611,9 +611,7 @@ export const errorPercentage = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.StatusCodeNorm,
+				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
 				dataType: DataTypes.Int64,
 				isColumn: false,
 				type: MetricsType.Tag,

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -11,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -30,6 +32,7 @@ import (
 type SigNoz struct {
 	*factory.Registry
 	Instrumentation instrumentation.Instrumentation
+	Analytics       analytics.Analytics
 	Cache           cache.Cache
 	Web             web.Web
 	SQLStore        sqlstore.SQLStore
@@ -54,7 +57,7 @@ func New(
 	zeusConfig zeus.Config,
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	licenseConfig licensing.Config,
-	licenseProviderFactory func(sqlstore.SQLStore, zeus.Zeus, organization.Getter) factory.ProviderFactory[licensing.Licensing, licensing.Config],
+	licenseProviderFactory func(sqlstore.SQLStore, zeus.Zeus, organization.Getter, analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config],
 	emailingProviderFactories factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
@@ -211,6 +214,9 @@ func New(
 	// Initialize organization getter
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
 
+	// Initialize user getter
+	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
+
 	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(
 		ctx,
@@ -235,7 +241,7 @@ func New(
 		return nil, err
 	}
 
-	licensingProviderFactory := licenseProviderFactory(sqlstore, zeus, orgGetter)
+	licensingProviderFactory := licenseProviderFactory(sqlstore, zeus, orgGetter, analytics)
 	licensing, err := licensingProviderFactory.New(
 		ctx,
 		providerSettings,
@@ -266,7 +272,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.StatsReporter,
-		NewStatsReporterProviderFactories(telemetrystore, statsCollectors, orgGetter, version.Info, config.Analytics),
+		NewStatsReporterProviderFactories(telemetrystore, statsCollectors, orgGetter, userGetter, version.Info, config.Analytics),
 		config.StatsReporter.Provider(),
 	)
 	if err != nil {
@@ -287,6 +293,7 @@ func New(
 
 	return &SigNoz{
 		Registry:        registry,
+		Analytics:       analytics,
 		Instrumentation: instrumentation,
 		Cache:           cache,
 		Web:             web,

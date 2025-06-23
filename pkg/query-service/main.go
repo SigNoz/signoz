@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
@@ -62,15 +63,19 @@ func main() {
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	// Deprecated
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
+	// Deprecated
 	flag.BoolVar(&preferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
 	// Deprecated
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", constants.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	// Deprecated
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
+	// Deprecated
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
+	// Deprecated
 	flag.StringVar(&fluxIntervalForTraceDetail, "flux-interval-trace-detail", "2m", "(the interval to exclude data from being cached to avoid incorrect cache for trace data in motion)")
+	// Deprecated
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
-	// Allow using the consistent naming with the signoz collector
+	// Deprecated
 	flag.StringVar(&cluster, "cluster-name", "cluster", "(cluster name - defaults to 'cluster')")
 	// Deprecated
 	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
@@ -93,10 +98,14 @@ func main() {
 			fileprovider.NewFactory(),
 		},
 	}, signoz.DeprecatedFlags{
-		MaxIdleConns: maxIdleConns,
-		MaxOpenConns: maxOpenConns,
-		DialTimeout:  dialTimeout,
-		Config:       promConfigPath,
+		MaxIdleConns:               maxIdleConns,
+		MaxOpenConns:               maxOpenConns,
+		DialTimeout:                dialTimeout,
+		Config:                     promConfigPath,
+		FluxInterval:               fluxInterval,
+		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
+		PreferSpanMetrics:          preferSpanMetrics,
+		Cluster:                    cluster,
 	})
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
@@ -122,7 +131,7 @@ func main() {
 		zeus.Config{},
 		noopzeus.NewProviderFactory(),
 		licensing.Config{},
-		func(_ sqlstore.SQLStore, _ zeus.Zeus, _ organization.Getter) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
+		func(_ sqlstore.SQLStore, _ zeus.Zeus, _ organization.Getter, _ analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
 			return nooplicensing.NewFactory()
 		},
 		signoz.NewEmailingProviderFactories(),
@@ -135,20 +144,7 @@ func main() {
 		zap.L().Fatal("Failed to create signoz", zap.Error(err))
 	}
 
-	serverOptions := &app.ServerOptions{
-		Config:                     config,
-		HTTPHostPort:               constants.HTTPHostPort,
-		PreferSpanMetrics:          preferSpanMetrics,
-		PrivateHostPort:            constants.PrivateHostPort,
-		CacheConfigPath:            cacheConfigPath,
-		FluxInterval:               fluxInterval,
-		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
-		Cluster:                    cluster,
-		SigNoz:                     signoz,
-		Jwt:                        jwt,
-	}
-
-	server, err := app.NewServer(serverOptions)
+	server, err := app.NewServer(config, signoz, jwt)
 	if err != nil {
 		logger.Fatal("Failed to create server", zap.Error(err))
 	}
