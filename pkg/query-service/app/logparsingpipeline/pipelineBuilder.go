@@ -250,7 +250,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		parseFromNotNilCheck, parent.ParseFrom, parent.ParseFrom, parent.ParseFrom, parent.ParseFrom,
 	)
 	if parent.EnableFlattening {
-		parent.MaxFlatteningDepth = 3 // TODO: (Piyush) Variablise this constant
+		parent.MaxFlatteningDepth = constants.MaxJSONFlatteningDepth
 	}
 
 	// return if no mapping available
@@ -288,7 +288,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 			err := fromNotNilCheck(&operator)
 			if err != nil {
 				return fmt.Errorf(
-					"couldn't generate nil check for From field of %s op %s on field %s: %w", operator.Type, operator.Type, operator.From, err,
+					"couldn't generate nil check for From field of %s op on field %s: %s", operator.Type, operator.From, err,
 				)
 			}
 
