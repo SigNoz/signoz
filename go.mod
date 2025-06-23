@@ -28,7 +28,6 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/huandu/go-sqlbuilder v1.35.0
 	github.com/jackc/pgx/v5 v5.7.2
-	github.com/jmoiron/sqlx v1.3.4
 	github.com/json-iterator/go v1.1.12
 	github.com/knadh/koanf v1.5.0
 	github.com/knadh/koanf/v2 v2.1.1

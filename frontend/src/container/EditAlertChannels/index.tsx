@@ -28,7 +28,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
 import APIError from 'types/api/error';
 
 function EditAlertChannels({
@@ -53,7 +52,11 @@ function EditAlertChannels({
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [testingState, setTestingState] = useState<boolean>(false);
 	const { notifications } = useNotifications();
-	const { id } = useParams<{ id: string }>();
+
+	// Extract channelId from URL pathname since useParams doesn't work in nested routing
+	const { pathname } = window.location;
+	const channelIdMatch = pathname.match(/\/settings\/channels\/edit\/([^/]+)/);
+	const id = channelIdMatch ? channelIdMatch[1] : '';
 
 	const [type, setType] = useState<ChannelType>(
 		initialValue?.type ? (initialValue.type as ChannelType) : ChannelType.Slack,
