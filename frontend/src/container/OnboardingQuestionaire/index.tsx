@@ -42,14 +42,13 @@ const INITIAL_ORG_DETAILS: OrgDetails = {
 	usesObservability: true,
 	observabilityTool: '',
 	otherTool: '',
-	familiarity: '',
+	usesOtel: null,
 };
 
 const INITIAL_SIGNOZ_DETAILS: SignozDetails = {
-	hearAboutSignoz: '',
 	interestInSignoz: '',
 	otherInterestInSignoz: '',
-	otherAboutSignoz: '',
+	discoverSignoz: '',
 };
 
 const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
@@ -168,22 +167,17 @@ function OnboardingQuestionaire(): JSX.Element {
 		});
 
 		updateProfile({
-			familiarity_with_observability: orgDetails?.familiarity as string,
+			uses_otel: orgDetails?.usesOtel as boolean,
 			has_existing_observability_tool: orgDetails?.usesObservability as boolean,
 			existing_observability_tool:
 				orgDetails?.observabilityTool === 'Others'
 					? (orgDetails?.otherTool as string)
 					: (orgDetails?.observabilityTool as string),
-
+			where_did_you_discover_signoz: signozDetails?.discoverSignoz as string,
 			reasons_for_interest_in_signoz:
 				signozDetails?.interestInSignoz === 'Others'
 					? (signozDetails?.otherInterestInSignoz as string)
 					: (signozDetails?.interestInSignoz as string),
-			where_did_you_hear_about_signoz:
-				signozDetails?.hearAboutSignoz === 'Others'
-					? (signozDetails?.otherAboutSignoz as string)
-					: (signozDetails?.hearAboutSignoz as string),
-
 			logs_scale_per_day_in_gb: optimiseSignozDetails?.logsPerDay as number,
 			number_of_hosts: optimiseSignozDetails?.hostsPerDay as number,
 			number_of_services: optimiseSignozDetails?.services as number,
