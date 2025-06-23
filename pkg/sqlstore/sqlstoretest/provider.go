@@ -8,8 +8,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/jmoiron/sqlx"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 )
 
@@ -19,7 +19,6 @@ type Provider struct {
 	db      *sql.DB
 	mock    sqlmock.Sqlmock
 	bunDB   *bun.DB
-	sqlxDB  *sqlx.DB
 	dialect *dialect
 }
 
@@ -30,20 +29,19 @@ func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
 	}
 
 	var bunDB *bun.DB
-	var sqlxDB *sqlx.DB
 
 	if config.Provider == "sqlite" {
 		bunDB = bun.NewDB(db, sqlitedialect.New())
-		sqlxDB = sqlx.NewDb(db, "sqlite3")
+	} else if config.Provider == "postgres" {
+		bunDB = bun.NewDB(db, pgdialect.New())
 	} else {
-		panic(fmt.Errorf("provider %q is not supported by mockSQLStore", config.Provider))
+		panic(fmt.Errorf("provider %q is not supported", config.Provider))
 	}
 
 	return &Provider{
 		db:      db,
 		mock:    mock,
 		bunDB:   bunDB,
-		sqlxDB:  sqlxDB,
 		dialect: new(dialect),
 	}
 }
@@ -54,10 +52,6 @@ func (provider *Provider) BunDB() *bun.DB {
 
 func (provider *Provider) SQLDB() *sql.DB {
 	return provider.db
-}
-
-func (provider *Provider) SQLxDB() *sqlx.DB {
-	return provider.sqlxDB
 }
 
 func (provider *Provider) Mock() sqlmock.Sqlmock {

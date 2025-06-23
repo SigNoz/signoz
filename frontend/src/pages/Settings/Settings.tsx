@@ -24,7 +24,12 @@ import { getRoutes } from './utils';
 function SettingsPage(): JSX.Element {
 	const { pathname, search } = useLocation();
 
-	const { user, featureFlags, trialInfo } = useAppContext();
+	const {
+		user,
+		featureFlags,
+		trialInfo,
+		isFetchingActiveLicense,
+	} = useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [settingsMenuItems, setSettingsMenuItems] = useState<SidebarItem[]>(
@@ -51,6 +56,21 @@ function SettingsPage(): JSX.Element {
 		setSettingsMenuItems((prevItems) => {
 			let updatedItems = [...prevItems];
 
+			if (trialInfo?.workSpaceBlock && !isFetchingActiveLicense) {
+				updatedItems = updatedItems.map((item) => ({
+					...item,
+					isEnabled: !!(
+						isAdmin &&
+						(item.key === ROUTES.BILLING ||
+							item.key === ROUTES.ORG_SETTINGS ||
+							item.key === ROUTES.MY_SETTINGS ||
+							item.key === ROUTES.SHORTCUTS)
+					),
+				}));
+
+				return updatedItems;
+			}
+
 			if (isCloudUser) {
 				if (isAdmin) {
 					updatedItems = updatedItems.map((item) => ({
@@ -61,7 +81,8 @@ function SettingsPage(): JSX.Element {
 							item.key === ROUTES.CUSTOM_DOMAIN_SETTINGS ||
 							item.key === ROUTES.API_KEYS ||
 							item.key === ROUTES.INGESTION_SETTINGS ||
-							item.key === ROUTES.ORG_SETTINGS
+							item.key === ROUTES.ORG_SETTINGS ||
+							item.key === ROUTES.SHORTCUTS
 								? true
 								: item.isEnabled,
 					}));
@@ -72,7 +93,8 @@ function SettingsPage(): JSX.Element {
 						...item,
 						isEnabled:
 							item.key === ROUTES.INGESTION_SETTINGS ||
-							item.key === ROUTES.INTEGRATIONS
+							item.key === ROUTES.INTEGRATIONS ||
+							item.key === ROUTES.SHORTCUTS
 								? true
 								: item.isEnabled,
 					}));
@@ -87,7 +109,8 @@ function SettingsPage(): JSX.Element {
 							item.key === ROUTES.BILLING ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.API_KEYS ||
-							item.key === ROUTES.ORG_SETTINGS
+							item.key === ROUTES.ORG_SETTINGS ||
+							item.key === ROUTES.SHORTCUTS
 								? true
 								: item.isEnabled,
 					}));
@@ -107,7 +130,9 @@ function SettingsPage(): JSX.Element {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
-							item.key === ROUTES.API_KEYS || item.key === ROUTES.ORG_SETTINGS
+							item.key === ROUTES.API_KEYS ||
+							item.key === ROUTES.ORG_SETTINGS ||
+							item.key === ROUTES.SHORTCUTS
 								? true
 								: item.isEnabled,
 					}));
@@ -125,7 +150,15 @@ function SettingsPage(): JSX.Element {
 
 			return updatedItems;
 		});
-	}, [isAdmin, isEditor, isCloudUser, isEnterpriseSelfHostedUser]);
+	}, [
+		isAdmin,
+		isEditor,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isFetchingActiveLicense,
+		trialInfo?.workSpaceBlock,
+		pathname,
+	]);
 
 	const routes = useMemo(
 		() =>
@@ -181,6 +214,13 @@ function SettingsPage(): JSX.Element {
 
 	const isActiveNavItem = (key: string): boolean => {
 		if (pathname.startsWith(ROUTES.ALL_CHANNELS) && key === ROUTES.ALL_CHANNELS) {
+			return true;
+		}
+
+		if (
+			pathname.startsWith(ROUTES.CHANNELS_EDIT) &&
+			key === ROUTES.ALL_CHANNELS
+		) {
 			return true;
 		}
 

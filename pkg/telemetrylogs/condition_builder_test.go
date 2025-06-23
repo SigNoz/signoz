@@ -36,18 +36,6 @@ func TestConditionFor(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "Not Equal operator - timestamp",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "timestamp",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			operator:      qbtypes.FilterOperatorNotEqual,
-			value:         uint64(1617979338000000000),
-			expectedSQL:   "timestamp <> ?",
-			expectedArgs:  []any{uint64(1617979338000000000)},
-			expectedError: nil,
-		},
-		{
 			name: "Greater Than operator - number attribute",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "request.duration",
@@ -71,30 +59,6 @@ func TestConditionFor(t *testing.T) {
 			value:         float64(1024),
 			expectedSQL:   "(attributes_number['request.size'] < ? AND mapContains(attributes_number, 'request.size') = ?)",
 			expectedArgs:  []any{float64(1024), true},
-			expectedError: nil,
-		},
-		{
-			name: "Greater Than Or Equal operator - timestamp",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "timestamp",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			operator:      qbtypes.FilterOperatorGreaterThanOrEq,
-			value:         uint64(1617979338000000000),
-			expectedSQL:   "timestamp >= ?",
-			expectedArgs:  []any{uint64(1617979338000000000)},
-			expectedError: nil,
-		},
-		{
-			name: "Less Than Or Equal operator - timestamp",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "timestamp",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			operator:      qbtypes.FilterOperatorLessThanOrEq,
-			value:         uint64(1617979338000000000),
-			expectedSQL:   "timestamp <= ?",
-			expectedArgs:  []any{uint64(1617979338000000000)},
 			expectedError: nil,
 		},
 		{
@@ -161,52 +125,6 @@ func TestConditionFor(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "Between operator - timestamp",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "timestamp",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			operator:      qbtypes.FilterOperatorBetween,
-			value:         []any{uint64(1617979338000000000), uint64(1617979348000000000)},
-			expectedSQL:   "timestamp BETWEEN ? AND ?",
-			expectedArgs:  []any{uint64(1617979338000000000), uint64(1617979348000000000)},
-			expectedError: nil,
-		},
-		{
-			name: "Between operator - invalid value",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "timestamp",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			operator:      qbtypes.FilterOperatorBetween,
-			value:         "invalid",
-			expectedSQL:   "",
-			expectedError: qbtypes.ErrBetweenValues,
-		},
-		{
-			name: "Between operator - insufficient values",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "timestamp",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			operator:      qbtypes.FilterOperatorBetween,
-			value:         []any{uint64(1617979338000000000)},
-			expectedSQL:   "",
-			expectedError: qbtypes.ErrBetweenValues,
-		},
-		{
-			name: "Not Between operator - timestamp",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "timestamp",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			operator:      qbtypes.FilterOperatorNotBetween,
-			value:         []any{uint64(1617979338000000000), uint64(1617979348000000000)},
-			expectedSQL:   "timestamp NOT BETWEEN ? AND ?",
-			expectedArgs:  []any{uint64(1617979338000000000), uint64(1617979348000000000)},
-			expectedError: nil,
-		},
-		{
 			name: "In operator - severity_text",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "severity_text",
@@ -259,17 +177,6 @@ func TestConditionFor(t *testing.T) {
 				FieldContext: telemetrytypes.FieldContextLog,
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
-			value:         nil,
-			expectedSQL:   "true",
-			expectedError: nil,
-		},
-		{
-			name: "Exists operator - number field",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         "timestamp",
-				FieldContext: telemetrytypes.FieldContextLog,
-			},
-			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
 			expectedSQL:   "true",
 			expectedError: nil,

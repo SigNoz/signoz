@@ -36,7 +36,9 @@ function FilteredTable({
 		<Container>
 			<TableHeaderContainer>
 				{headers.map((header) => (
-					<TableHeader key={header}>{header}</TableHeader>
+					<TableHeader key={header} minWidth="90px">
+						{header}
+					</TableHeader>
 				))}
 			</TableHeaderContainer>
 

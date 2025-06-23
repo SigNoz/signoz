@@ -37,9 +37,14 @@ func GetDefaultSiteURL() string {
 const DotMetricsEnabled = "DOT_METRICS_ENABLED"
 
 var IsDotMetricsEnabled = false
+var IsPreferSpanMetrics = false
 
 func init() {
 	if GetOrDefaultEnv(DotMetricsEnabled, "false") == "true" {
 		IsDotMetricsEnabled = true
+	}
+
+	if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
+		IsPreferSpanMetrics = true
 	}
 }
