@@ -165,67 +165,69 @@ export const QueryV2 = memo(function QueryV2({
 					</div>
 				)}
 
-				<div className="qb-elements-container">
-					<div className="qb-search-container">
-						{dataSource === DataSource.METRICS && (
-							<div className="metrics-select-container">
-								<MetricsSelect query={query} index={index} version="v4" />
-							</div>
-						)}
-
-						<div className="qb-search-filter-container">
-							<div className="query-search-container">
-								<QuerySearch
-									key={`query-search-${query.queryName}-${query.dataSource}`}
-									onChange={handleSearchChange}
-									queryData={query}
-									dataSource={dataSource}
-								/>
-							</div>
-
-							{showSpanScopeSelector && (
-								<div className="traces-search-filter-container">
-									<div className="traces-search-filter-in">in</div>
-									<SpanScopeSelector queryName={query.queryName} />
+				{!isCollapsed && (
+					<div className="qb-elements-container">
+						<div className="qb-search-container">
+							{dataSource === DataSource.METRICS && (
+								<div className="metrics-select-container">
+									<MetricsSelect query={query} index={index} version="v4" />
 								</div>
 							)}
-						</div>
-					</div>
 
-					{!showOnlyWhereClause &&
-						!isListViewPanel &&
-						dataSource !== DataSource.METRICS && (
-							<QueryAggregation
-								dataSource={dataSource}
-								key={`query-search-${query.queryName}-${query.dataSource}`}
-								panelType={panelType || undefined}
-								onAggregationIntervalChange={handleChangeAggregateEvery}
-								onChange={handleChangeAggregation}
-								queryData={query}
+							<div className="qb-search-filter-container">
+								<div className="query-search-container">
+									<QuerySearch
+										key={`query-search-${query.queryName}-${query.dataSource}`}
+										onChange={handleSearchChange}
+										queryData={query}
+										dataSource={dataSource}
+									/>
+								</div>
+
+								{showSpanScopeSelector && (
+									<div className="traces-search-filter-container">
+										<div className="traces-search-filter-in">in</div>
+										<SpanScopeSelector queryName={query.queryName} />
+									</div>
+								)}
+							</div>
+						</div>
+
+						{!showOnlyWhereClause &&
+							!isListViewPanel &&
+							dataSource !== DataSource.METRICS && (
+								<QueryAggregation
+									dataSource={dataSource}
+									key={`query-search-${query.queryName}-${query.dataSource}`}
+									panelType={panelType || undefined}
+									onAggregationIntervalChange={handleChangeAggregateEvery}
+									onChange={handleChangeAggregation}
+									queryData={query}
+								/>
+							)}
+
+						{!showOnlyWhereClause && dataSource === DataSource.METRICS && (
+							<MetricsAggregateSection
+								panelType={panelType}
+								query={query}
+								index={index}
+								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}`}
+								version="v4"
 							/>
 						)}
 
-					{!showOnlyWhereClause && dataSource === DataSource.METRICS && (
-						<MetricsAggregateSection
-							panelType={panelType}
-							query={query}
-							index={index}
-							key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}`}
-							version="v4"
-						/>
-					)}
-
-					{!showOnlyWhereClause && (
-						<QueryAddOns
-							index={index}
-							query={query}
-							version="v3"
-							isListViewPanel={isListViewPanel}
-							showReduceTo={showReduceTo}
-							panelType={panelType}
-						/>
-					)}
-				</div>
+						{!showOnlyWhereClause && (
+							<QueryAddOns
+								index={index}
+								query={query}
+								version="v3"
+								isListViewPanel={isListViewPanel}
+								showReduceTo={showReduceTo}
+								panelType={panelType}
+							/>
+						)}
+					</div>
+				)}
 			</div>
 		</div>
 	);
