@@ -79,7 +79,7 @@ func Wrapf(cause error, t typ, code Code, format string, args ...interface{}) *b
 	}
 }
 
-// Rewrapf wraps an existing base error with a new formatted message.
+// ReWrapf wraps an existing base error with a new formatted message.
 // It is used when the original error already contains type and code.
 func ReWrapf(cause error, format string, args ...interface{}) *base {
 	t, c, _, e, u, a := Unwrapb(cause)
