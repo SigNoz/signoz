@@ -111,6 +111,15 @@ export type SpaceAggregation =
 
 export type ColumnType = 'group' | 'aggregation';
 
+// ===================== Variable Types =====================
+
+export type VariableType = 'query' | 'dynamic' | 'custom' | 'text';
+
+export interface VariableItem {
+	type?: VariableType;
+	value: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
 // ===================== Core Interface Types =====================
 
 export interface TelemetryFieldKey {
@@ -174,6 +183,7 @@ export interface MetricAggregation {
 	temporality: Temporality;
 	timeAggregation: TimeAggregation;
 	spaceAggregation: SpaceAggregation;
+	reduceTo?: string;
 }
 
 export interface SecondaryAggregation {
@@ -230,6 +240,9 @@ export interface QueryBuilderFormula {
 	name: string;
 	expression: string;
 	functions?: QueryFunction[];
+	order?: OrderBy[];
+	limit?: number;
+	having?: Having;
 }
 
 export interface QueryBuilderJoin {
@@ -254,8 +267,8 @@ export interface PromQuery {
 	name: string;
 	query: string;
 	disabled?: boolean;
-	stats?: boolean;
 	step?: Step;
+	stats?: boolean;
 }
 
 export interface ClickHouseQuery {
@@ -288,9 +301,10 @@ export interface QueryRangeRequestV5 {
 	end: number; // epoch milliseconds
 	requestType: RequestType;
 	compositeQuery: CompositeQuery;
-	variables?: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+	variables?: Record<string, VariableItem>;
 	formatOptions?: {
 		formatTableResultForUI: boolean;
+		fillGaps?: boolean;
 	};
 }
 
@@ -316,6 +330,7 @@ export interface TimeSeriesValue {
 	value: number;
 	values?: number[]; // For heatmap type charts
 	bucket?: Bucket;
+	partial?: boolean;
 }
 
 export interface TimeSeries {
@@ -339,6 +354,9 @@ export interface ColumnDescriptor extends TelemetryFieldKey {
 	queryName: string;
 	aggregationIndex: number;
 	columnType: ColumnType;
+	meta?: {
+		unit?: string;
+	};
 }
 
 export interface ScalarData {
