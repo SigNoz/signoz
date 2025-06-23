@@ -79,6 +79,7 @@ func newProvider(
 		traceConditionBuilder,
 		resourceFilterStmtBuilder,
 		traceAggExprRewriter,
+		telemetryStore,
 	)
 
 	// ADD: Create trace operator statement builder
