@@ -24,7 +24,9 @@ function JsonFlattening({
 		if (!enableMapping) {
 			form.setFieldsValue({ mapping: undefined });
 		} else if (form.getFieldValue('mapping') === undefined) {
-			form.setFieldsValue({ mapping: selectedProcessorData?.mapping });
+			form.setFieldsValue({
+				mapping: selectedProcessorData?.mapping || PREDEFINED_MAPPING,
+			});
 		}
 	}, [enableMapping, form, selectedProcessorData?.mapping]);
 
