@@ -162,7 +162,7 @@ function FormAlertRules({
 
 	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 
-	useShareBuilderUrl(sq);
+	useShareBuilderUrl({ defaultValue: sq });
 
 	const handleDetectionMethodChange = (value: string): void => {
 		setAlertDef((def) => ({

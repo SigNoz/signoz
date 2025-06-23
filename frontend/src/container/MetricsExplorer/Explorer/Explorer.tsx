@@ -75,7 +75,7 @@ function Explorer(): JSX.Element {
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	useShareBuilderUrl(defaultQuery);
+	useShareBuilderUrl({ defaultValue: defaultQuery });
 
 	const handleExport = useCallback(
 		(

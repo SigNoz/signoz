@@ -97,6 +97,10 @@ function QuerySearch({
 		errors: [],
 	});
 
+	useEffect(() => {
+		setQuery(queryData.filter?.expression || '');
+	}, [queryData.filter?.expression]);
+
 	const [keySuggestions, setKeySuggestions] = useState<
 		QueryKeyDataSuggestionsProps[] | null
 	>(null);

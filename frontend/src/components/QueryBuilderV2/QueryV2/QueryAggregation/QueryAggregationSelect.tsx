@@ -149,6 +149,13 @@ function QueryAggregationSelect({
 	const [input, setInput] = useState(
 		queryData?.aggregations?.map((i: any) => i.expression).join(' ') || '',
 	);
+
+	useEffect(() => {
+		setInput(
+			queryData?.aggregations?.map((i: any) => i.expression).join(' ') || '',
+		);
+	}, [queryData?.aggregations]);
+
 	const [cursorPos, setCursorPos] = useState(0);
 	const [functionArgPairs, setFunctionArgPairs] = useState<
 		{ func: string; arg: string }[]
