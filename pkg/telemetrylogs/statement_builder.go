@@ -155,7 +155,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +275,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		// Group by all dimensions
 		sb.GroupBy("ALL")
 		if query.Having != nil && query.Having.Expression != "" {
-			sb.Having(query.Having.Expression)
+			// Rewrite having expression to use SQL column names
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			sb.Having(rewrittenExpr)
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
@@ -289,7 +292,9 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	} else {
 		sb.GroupBy("ALL")
 		if query.Having != nil && query.Having.Expression != "" {
-			sb.Having(query.Having.Expression)
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			sb.Having(rewrittenExpr)
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
@@ -369,7 +374,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -379,7 +384,9 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	// Add having clause if needed
 	if query.Having != nil && query.Having.Expression != "" {
-		sb.Having(query.Having.Expression)
+		rewriter := querybuilder.NewHavingExpressionRewriter()
+		rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+		sb.Having(rewrittenExpr)
 	}
 
 	// Add order by
@@ -418,11 +425,12 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 // buildFilterCondition builds SQL condition from filter expression
 func (b *logQueryStatementBuilder) addFilterCondition(
-	_ context.Context,
+	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) ([]string, error) {
 
 	var filterWhereClause *sqlbuilder.WhereClause
@@ -439,6 +447,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			FullTextColumn:     b.fullTextColumn,
 			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
+			Variables:          variables,
 		})
 
 		if err != nil {

@@ -1,8 +1,13 @@
 package querier
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"log/slog"
+	"sort"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -14,27 +19,36 @@ import (
 )
 
 type promqlQuery struct {
+	logger      *slog.Logger
 	promEngine  prometheus.Prometheus
 	query       qbv5.PromQuery
 	tr          qbv5.TimeRange
 	requestType qbv5.RequestType
+	vars        map[string]qbv5.VariableItem
 }
 
 var _ qbv5.Query = (*promqlQuery)(nil)
 
 func newPromqlQuery(
+	logger *slog.Logger,
 	promEngine prometheus.Prometheus,
 	query qbv5.PromQuery,
 	tr qbv5.TimeRange,
 	requestType qbv5.RequestType,
+	variables map[string]qbv5.VariableItem,
 ) *promqlQuery {
-	return &promqlQuery{promEngine, query, tr, requestType}
+	return &promqlQuery{logger, promEngine, query, tr, requestType, variables}
 }
 
 func (q *promqlQuery) Fingerprint() string {
+	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	if err != nil {
+		q.logger.Error("failed render template variables", "query", q.query.Query)
+		return ""
+	}
 	parts := []string{
 		"promql",
-		q.query.Query,
+		query,
 		q.query.Step.Duration.String(),
 	}
 
@@ -45,23 +59,66 @@ func (q *promqlQuery) Window() (uint64, uint64) {
 	return q.tr.From, q.tr.To
 }
 
+// TODO(srikanthccv): cleanup the templating logic
+func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem, start, end uint64) (string, error) {
+	varsData := map[string]any{}
+	for k, v := range vars {
+		varsData[k] = formatValueForProm(v)
+	}
+
+	querybuilder.AssignReservedVars(varsData, start, end)
+
+	keys := make([]string, 0, len(varsData))
+	for k := range varsData {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i]) > len(keys[j])
+	})
+
+	for _, k := range keys {
+		query = strings.Replace(query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(varsData[k]), -1)
+		query = strings.Replace(query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(varsData[k]), -1)
+		query = strings.Replace(query, fmt.Sprintf("$%s", k), fmt.Sprint(varsData[k]), -1)
+	}
+
+	tmpl := template.New("promql-query")
+	tmpl, err := tmpl.Parse(query)
+	if err != nil {
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while replacing template variables")
+	}
+	var newQuery bytes.Buffer
+
+	// replace go template variables
+	err = tmpl.Execute(&newQuery, varsData)
+	if err != nil {
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while replacing template variables")
+	}
+	return newQuery.String(), nil
+}
+
 func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 
 	start := int64(querybuilder.ToNanoSecs(q.tr.From))
 	end := int64(querybuilder.ToNanoSecs(q.tr.To))
 
+	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	if err != nil {
+		return nil, err
+	}
+
 	qry, err := q.promEngine.Engine().NewRangeQuery(
 		ctx,
 		q.promEngine.Storage(),
 		nil,
-		q.query.Query,
+		query,
 		time.Unix(0, start),
 		time.Unix(0, end),
 		q.query.Step.Duration,
 	)
 
 	if err != nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query %q", q.query.Query)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query %q", query)
 	}
 
 	res := qry.Exec(ctx)
@@ -89,7 +146,7 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 
 	matrix, promErr := res.Matrix()
 	if promErr != nil {
-		return nil, errors.WrapInternalf(promErr, errors.CodeInternal, "error getting matrix from promql query %q", q.query.Query)
+		return nil, errors.WrapInternalf(promErr, errors.CodeInternal, "error getting matrix from promql query %q", query)
 	}
 
 	var series []*qbv5.TimeSeries
@@ -115,7 +172,7 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		series = append(series, &s)
 	}
 
-	warnings, _ := res.Warnings.AsStrings(q.query.Query, 10, 0)
+	warnings, _ := res.Warnings.AsStrings(query, 10, 0)
 
 	return &qbv5.Result{
 		Type: q.requestType,

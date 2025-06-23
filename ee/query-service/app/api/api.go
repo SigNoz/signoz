@@ -59,7 +59,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		LicensingAPI:                  httplicensing.NewLicensingAPI(signoz.Licensing),
 		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
 		Signoz:                        signoz,
-		QuerierAPI:                    querierAPI.NewAPI(signoz.Querier),
+		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier),
 	})
 
 	if err != nil {
