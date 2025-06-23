@@ -57,7 +57,7 @@ import {
 	StepContainer,
 	StepHeading,
 } from './styles';
-import { getSelectedQueryOptions } from './utils';
+import { getSelectedQueryOptions, useGetYAxisUnitFromQuery } from './utils';
 
 export enum AlertDetectionTypes {
 	THRESHOLD_ALERT = 'threshold_rule',
@@ -684,6 +684,8 @@ function FormAlertRules({
 
 	const isAlertNameMissing = !formInstance.getFieldValue('alert');
 
+	const yAxisUnitFromQuery = useGetYAxisUnitFromQuery(stagedQuery);
+
 	const onUnitChangeHandler = (value: string): void => {
 		setYAxisUnit(value);
 		// reset target unit
@@ -695,6 +697,10 @@ function FormAlertRules({
 			},
 		}));
 	};
+
+	useEffect(() => {
+		setYAxisUnit(yAxisUnitFromQuery || '');
+	}, [yAxisUnitFromQuery]);
 
 	const isChannelConfigurationValid =
 		alertDef?.broadcastToAll ||

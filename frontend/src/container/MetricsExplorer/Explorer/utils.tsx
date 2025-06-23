@@ -40,13 +40,16 @@ export const splitQueryIntoOneChartPerQuery = (query: Query): Query[] => {
 
 export function useGetMetricUnits(
 	metricNames: string[],
+	isEnabled = true,
 ): {
 	isLoading: boolean;
 	units: string[];
 	isError: boolean;
 	metrics: (MetricDetails | undefined)[];
 } {
-	const metricsData = useGetMultipleMetrics(metricNames);
+	const metricsData = useGetMultipleMetrics(metricNames, {
+		enabled: metricNames.length > 0 && isEnabled,
+	});
 	return {
 		isLoading: metricsData.some((metric) => metric.isLoading),
 		units: metricsData.map(
