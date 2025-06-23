@@ -177,7 +177,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		"trace_id",
 		"span_id",
 		"name",
-		sqlbuilder.Escape("resource_string_service$$name"),
+		sqlbuilder.Escape("resource_string_service$$name")+" AS `service.name`",
 		"duration_nano",
 		"response_status_code",
 	)
