@@ -36,7 +36,7 @@ func (a *Agents) Count() int {
 }
 
 // Initialize the database and create schema if needed
-func InitDB(sqlStore sqlstore.SQLStore, logger *slog.Logger, orgGetter organization.Getter) {
+func Init(sqlStore sqlstore.SQLStore, logger *slog.Logger, orgGetter organization.Getter) {
 
 	AllAgents = Agents{
 		agentsById:  make(map[string]*Agent),

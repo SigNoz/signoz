@@ -322,7 +322,6 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader: reader,
-		JWT:    jwt,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
 			Handlers: handlers,

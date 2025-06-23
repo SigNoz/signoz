@@ -28,20 +28,23 @@ type ConnectionConfig struct {
 	DialTimeout time.Duration `mapstructure:"dial_timeout"`
 }
 
+type ClickhouseConfig struct {
+	// DSN is the database source name.
+	DSN string `mapstructure:"dsn"`
+
+	// Cluster is the cluster name to use for clickhouse.
+	Cluster string `mapstructure:"cluster"`
+
+	// QuerySettings is the query settings for clickhouse.
+	QuerySettings QuerySettings `mapstructure:"settings"`
+}
+
 type QuerySettings struct {
 	MaxExecutionTime                    int `mapstructure:"max_execution_time"`
 	MaxExecutionTimeLeaf                int `mapstructure:"max_execution_time_leaf"`
 	TimeoutBeforeCheckingExecutionSpeed int `mapstructure:"timeout_before_checking_execution_speed"`
 	MaxBytesToRead                      int `mapstructure:"max_bytes_to_read"`
-	MaxResultRowsForCHQuery             int `mapstructure:"max_result_rows_for_ch_query"`
-}
-
-type ClickhouseConfig struct {
-	// DSN is the database source name.
-	DSN string `mapstructure:"dsn"`
-
-	// QuerySettings is the query settings for clickhouse.
-	QuerySettings QuerySettings `mapstructure:"settings"`
+	MaxResultRows                       int `mapstructure:"max_result_rows"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -57,7 +60,8 @@ func newConfig() factory.Config {
 			DialTimeout:  5 * time.Second,
 		},
 		Clickhouse: ClickhouseConfig{
-			DSN: "tcp://localhost:9000",
+			DSN:     "tcp://localhost:9000",
+			Cluster: "cluster",
 		},
 	}
 

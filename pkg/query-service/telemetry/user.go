@@ -13,10 +13,12 @@ type TelemetryUser struct {
 	Organization string
 }
 
+// deprecated: remove this function in the next major release
 func GetUsers(ctx context.Context, sqlstore sqlstore.SQLStore) ([]TelemetryUser, error) {
 	return GetUsersWithOpts(ctx, 0, sqlstore)
 }
 
+// deprecated: remove this function in the next major release
 func GetUserCount(ctx context.Context, sqlstore sqlstore.SQLStore) (int, error) {
 	users, err := GetUsersWithOpts(ctx, 0, sqlstore)
 	if err != nil {
@@ -25,7 +27,7 @@ func GetUserCount(ctx context.Context, sqlstore sqlstore.SQLStore) (int, error) 
 	return len(users), nil
 }
 
-// GetUsersWithOpts fetches users and supports additional search options
+// deprecated: remove this function in the next major release
 func GetUsersWithOpts(ctx context.Context, limit int, sqlstore sqlstore.SQLStore) ([]TelemetryUser, error) {
 	var displayName string
 	err := sqlstore.BunDB().NewSelect().

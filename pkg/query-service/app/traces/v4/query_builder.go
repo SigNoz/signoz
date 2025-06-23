@@ -361,7 +361,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 				if mq.Offset != 0 {
 					afterSubQuery = tracesV3.AddOffsetToQuery(afterSubQuery, mq.Offset)
 				}
-				query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3) + withSubQuery + ") " + fmt.Sprintf(afterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter, filterSubQuery)
+				query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter, filterSubQuery) + withSubQuery + ")" + afterSubQuery
 			} else {
 				withSubQueryWithLimits := tracesV3.AddLimitToQuery(constants.TracesExplorerSpanCountWithSubQuery, mq.Limit)
 				withSubQuery := fmt.Sprintf(withSubQueryWithLimits, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME, timeFilter, filterSubQuery)

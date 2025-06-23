@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
-	"time"
 
 	"github.com/gorilla/handlers"
 
@@ -42,95 +41,72 @@ import (
 	"go.uber.org/zap"
 )
 
-type ServerOptions struct {
-	Config                     signoz.Config
-	HTTPHostPort               string
-	PrivateHostPort            string
-	PreferSpanMetrics          bool
-	CacheConfigPath            string
-	FluxInterval               string
-	FluxIntervalForTraceDetail string
-	Cluster                    string
-	SigNoz                     *signoz.SigNoz
-	Jwt                        *authtypes.JWT
-}
-
 // Server runs HTTP, Mux and a grpc server
 type Server struct {
-	serverOptions *ServerOptions
-	ruleManager   *rules.Manager
+	config      signoz.Config
+	signoz      *signoz.SigNoz
+	jwt         *authtypes.JWT
+	ruleManager *rules.Manager
 
 	// public http router
-	httpConn   net.Listener
-	httpServer *http.Server
+	httpConn     net.Listener
+	httpServer   *http.Server
+	httpHostPort string
 
 	// private http
-	privateConn net.Listener
-	privateHTTP *http.Server
+	privateConn     net.Listener
+	privateHTTP     *http.Server
+	privateHostPort string
 
 	opampServer *opamp.Server
 
 	unavailableChannel chan healthcheck.Status
 }
 
-// HealthCheckStatus returns health check status channel a client can subscribe to
-func (s Server) HealthCheckStatus() chan healthcheck.Status {
-	return s.unavailableChannel
-}
-
 // NewServer creates and initializes Server
-func NewServer(serverOptions *ServerOptions) (*Server, error) {
-
-	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
+func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) (*Server, error) {
+	integrationsController, err := integrations.NewController(signoz.SQLStore)
 	if err != nil {
 		return nil, err
 	}
 
-	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore)
-	if err != nil {
-		return nil, err
-	}
-
-	cloudIntegrationsController, err := cloudintegrations.NewController(serverOptions.SigNoz.SQLStore)
+	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SQLStore)
 	if err != nil {
 		return nil, err
 	}
 
 	reader := clickhouseReader.NewReader(
-		serverOptions.SigNoz.SQLStore,
-		serverOptions.SigNoz.TelemetryStore,
-		serverOptions.SigNoz.Prometheus,
-		serverOptions.Cluster,
-		fluxIntervalForTraceDetail,
-		serverOptions.SigNoz.Cache,
+		signoz.SQLStore,
+		signoz.TelemetryStore,
+		signoz.Prometheus,
+		signoz.TelemetryStore.Cluster(),
+		config.Querier.FluxInterval,
+		signoz.Cache,
 	)
 
 	rm, err := makeRulesManager(
 		reader,
-		serverOptions.SigNoz.Cache,
-		serverOptions.SigNoz.SQLStore,
-		serverOptions.SigNoz.TelemetryStore,
-		serverOptions.SigNoz.Prometheus,
-		serverOptions.SigNoz.Modules.OrgGetter,
+		signoz.Cache,
+		signoz.SQLStore,
+		signoz.TelemetryStore,
+		signoz.Prometheus,
+		signoz.Modules.OrgGetter,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	if err != nil {
 		return nil, err
 	}
 
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		serverOptions.SigNoz.SQLStore, integrationsController.GetPipelinesForInstalledIntegrations,
+		signoz.SQLStore,
+		integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	// todo(remove): remove in favour of statsreporter and analytics
 	telemetry.GetInstance().SetReader(reader)
-	telemetry.GetInstance().SetSqlStore(serverOptions.SigNoz.SQLStore)
+	telemetry.GetInstance().SetSqlStore(signoz.SQLStore)
 	telemetry.GetInstance().SetSavedViewsInfoCallback(telemetry.GetSavedViewsInfo)
 	telemetry.GetInstance().SetAlertsInfoCallback(telemetry.GetAlertsInfo)
 	telemetry.GetInstance().SetGetUsersCallback(telemetry.GetUsers)
@@ -139,30 +115,32 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
-		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
 		RuleManager:                   rm,
 		IntegrationsController:        integrationsController,
 		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
-		FluxInterval:                  fluxInterval,
-		JWT:                           serverOptions.Jwt,
-		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
+		FluxInterval:                  config.Querier.FluxInterval,
+		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
-		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.Instrumentation.ToProviderSettings(), serverOptions.SigNoz.TelemetryStore),
-		Signoz:                        serverOptions.SigNoz,
-		QuerierAPI:                    querierAPI.NewAPI(serverOptions.SigNoz.Querier),
+		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
+		Signoz:                        signoz,
+		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	s := &Server{
+		config:             config,
+		signoz:             signoz,
+		jwt:                jwt,
 		ruleManager:        rm,
-		serverOptions:      serverOptions,
+		httpHostPort:       constants.HTTPHostPort,
+		privateHostPort:    constants.PrivateHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
 
-	httpServer, err := s.createPublicServer(apiHandler, serverOptions.SigNoz.Web)
+	httpServer, err := s.createPublicServer(apiHandler, signoz.Web)
 
 	if err != nil {
 		return nil, err
@@ -177,20 +155,23 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
-	opAmpModel.InitDB(serverOptions.SigNoz.SQLStore, serverOptions.SigNoz.Instrumentation.Logger(), serverOptions.SigNoz.Modules.OrgGetter)
+	opAmpModel.Init(signoz.SQLStore, signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter)
 
-	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		Store: serverOptions.SigNoz.SQLStore,
-		AgentFeatures: []agentConf.AgentFeature{
-			logParsingPipelineController,
+	agentConfMgr, err := agentConf.Initiate(
+		&agentConf.ManagerOptions{
+			Store: signoz.SQLStore,
+			AgentFeatures: []agentConf.AgentFeature{
+				logParsingPipelineController,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	s.opampServer = opamp.InitializeServer(
-		&opAmpModel.AllAgents, agentConfMgr,
+		&opAmpModel.AllAgents,
+		agentConfMgr,
 	)
 
 	orgs, err := apiHandler.Signoz.Modules.OrgGetter.ListByOwnedKeyRange(context.Background())
@@ -207,19 +188,24 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	return s, nil
 }
 
+// HealthCheckStatus returns health check status channel a client can subscribe to
+func (s Server) HealthCheckStatus() chan healthcheck.Status {
+	return s.unavailableChannel
+}
+
 func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 
 	r := NewRouter()
 
-	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.serverOptions.SigNoz.Sharder, s.serverOptions.SigNoz.Instrumentation.Logger()).Wrap)
-	r.Use(middleware.NewTimeout(s.serverOptions.SigNoz.Instrumentation.Logger(),
-		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
-		s.serverOptions.Config.APIServer.Timeout.Default,
-		s.serverOptions.Config.APIServer.Timeout.Max,
+	r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
+		s.config.APIServer.Timeout.ExcludedRoutes,
+		s.config.APIServer.Timeout.Default,
+		s.config.APIServer.Timeout.Max,
 	).Wrap)
 	r.Use(middleware.NewAnalytics().Wrap)
-	r.Use(middleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.SigNoz.Sharder).Wrap)
-	r.Use(middleware.NewLogging(s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
+	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	api.RegisterPrivateRoutes(r)
 
@@ -242,17 +228,17 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
 	r := NewRouter()
 
-	r.Use(middleware.NewAuth(s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.serverOptions.SigNoz.Sharder, s.serverOptions.SigNoz.Instrumentation.Logger()).Wrap)
-	r.Use(middleware.NewTimeout(s.serverOptions.SigNoz.Instrumentation.Logger(),
-		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
-		s.serverOptions.Config.APIServer.Timeout.Default,
-		s.serverOptions.Config.APIServer.Timeout.Max,
+	r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
+		s.config.APIServer.Timeout.ExcludedRoutes,
+		s.config.APIServer.Timeout.Default,
+		s.config.APIServer.Timeout.Max,
 	).Wrap)
 	r.Use(middleware.NewAnalytics().Wrap)
-	r.Use(middleware.NewAPIKey(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.SigNoz.Sharder).Wrap)
-	r.Use(middleware.NewLogging(s.serverOptions.SigNoz.Instrumentation.Logger(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
+	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
 
-	am := middleware.NewAuthZ(s.serverOptions.SigNoz.Instrumentation.Logger())
+	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger())
 
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
@@ -293,7 +279,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 func (s *Server) initListeners() error {
 	// listen on public port
 	var err error
-	publicHostPort := s.serverOptions.HTTPHostPort
+	publicHostPort := s.httpHostPort
 	if publicHostPort == "" {
 		return fmt.Errorf("constants.HTTPHostPort is required")
 	}
@@ -303,10 +289,10 @@ func (s *Server) initListeners() error {
 		return err
 	}
 
-	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.serverOptions.HTTPHostPort))
+	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.httpHostPort))
 
 	// listen on private port to support internal services
-	privateHostPort := s.serverOptions.PrivateHostPort
+	privateHostPort := s.privateHostPort
 
 	if privateHostPort == "" {
 		return fmt.Errorf("constants.PrivateHostPort is required")
@@ -316,7 +302,7 @@ func (s *Server) initListeners() error {
 	if err != nil {
 		return err
 	}
-	zap.L().Info(fmt.Sprintf("Query server started listening on private port %s...", s.serverOptions.PrivateHostPort))
+	zap.L().Info(fmt.Sprintf("Query server started listening on private port %s...", s.privateHostPort))
 
 	return nil
 }
@@ -336,7 +322,7 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 
 	go func() {
-		zap.L().Info("Starting HTTP server", zap.Int("port", httpPort), zap.String("addr", s.serverOptions.HTTPHostPort))
+		zap.L().Info("Starting HTTP server", zap.Int("port", httpPort), zap.String("addr", s.httpHostPort))
 
 		switch err := s.httpServer.Serve(s.httpConn); err {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
@@ -362,7 +348,7 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 	fmt.Println("starting private http")
 	go func() {
-		zap.L().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.serverOptions.PrivateHostPort))
+		zap.L().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.privateHostPort))
 
 		switch err := s.privateHTTP.Serve(s.privateConn); err {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
