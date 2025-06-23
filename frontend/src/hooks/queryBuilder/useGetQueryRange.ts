@@ -10,6 +10,7 @@ import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { DataSource } from 'types/common/queryBuilder';
 
 type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
@@ -25,15 +26,13 @@ export const useGetQueryRange: UseGetQueryRange = (
 	headers,
 ) => {
 	const newRequestData: GetQueryResultsProps = useMemo(() => {
+		const firstQueryData = requestData.query.builder?.queryData[0];
 		const isListWithSingleTimestampOrder =
 			requestData.graphType === PANEL_TYPES.LIST &&
-			requestData.query.builder?.queryData[0]?.orderBy?.length === 1 &&
+			firstQueryData?.orderBy?.length === 1 &&
 			// exclude list with id filter (i.e. context logs)
-			!requestData.query.builder?.queryData[0].filters.items.some(
-				(filter) => filter.key?.key === 'id',
-			) &&
-			requestData.query.builder?.queryData[0].orderBy[0].columnName ===
-				'timestamp';
+			!firstQueryData?.filters.items.some((filter) => filter.key?.key === 'id') &&
+			firstQueryData?.orderBy[0].columnName === 'timestamp';
 
 		const modifiedRequestData = {
 			...requestData,
@@ -44,17 +43,20 @@ export const useGetQueryRange: UseGetQueryRange = (
 		};
 
 		// If the query is a list with a single timestamp order, we need to add the id column to the order by clause
-		if (isListWithSingleTimestampOrder) {
+		if (
+			isListWithSingleTimestampOrder &&
+			firstQueryData?.dataSource === DataSource.LOGS
+		) {
 			modifiedRequestData.query.builder = {
 				...requestData.query.builder,
 				queryData: [
 					{
-						...requestData?.query?.builder?.queryData[0],
+						...firstQueryData,
 						orderBy: [
-							...(requestData?.query?.builder?.queryData[0]?.orderBy || []),
+							...(firstQueryData?.orderBy || []),
 							{
 								columnName: 'id',
-								order: requestData?.query?.builder?.queryData[0]?.orderBy[0]?.order,
+								order: firstQueryData?.orderBy[0]?.order,
 							},
 						],
 					},
