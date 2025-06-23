@@ -77,5 +77,8 @@
   "channel_test_failed": "Failed to send a test message to this channel, please confirm that the parameters are set correctly",
   "channel_test_unexpected": "An unexpected error occurred while sending a message to this channel, please try again",
   "webhook_url_required": "Webhook URL is mandatory",
-  "slack_channel_help": "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace)"
+  "slack_channel_help": "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace)",
+  "api_key_required": "API Key is mandatory",
+	"to_required": "To field is mandatory",
+	"channel_name_required": "Channel name is mandatory"
 }
