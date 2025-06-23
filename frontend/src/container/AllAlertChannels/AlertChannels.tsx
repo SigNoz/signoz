@@ -21,9 +21,9 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const [action] = useComponentPermission(['new_alert_action'], user.role);
 
 	const onClickEditHandler = useCallback((id: string) => {
-		history.replace(
+		history.push(
 			generatePath(ROUTES.CHANNELS_EDIT, {
-				id,
+				channelId: id,
 			}),
 		);
 	}, []);

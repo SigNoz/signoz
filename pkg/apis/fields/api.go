@@ -3,9 +3,9 @@ package fields
 import (
 	"bytes"
 	"io"
-	"log/slog"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
@@ -20,9 +20,13 @@ type API struct {
 	telemetryMetadataStore telemetrytypes.MetadataStore
 }
 
-func NewAPI(telemetryStore telemetrystore.TelemetryStore, logger *slog.Logger) *API {
+// TODO: move this to module and remove metastore init
+func NewAPI(
+	settings factory.ProviderSettings,
+	telemetryStore telemetrystore.TelemetryStore,
+) *API {
 	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
-		logger,
+		settings,
 		telemetryStore,
 		telemetrytraces.DBName,
 		telemetrytraces.TagAttributesV2TableName,

@@ -9,8 +9,8 @@
   "tooltip_notification_channels": "More details on how to setting notification channels",
   "sending_channels_note": "The alerts will be sent to all the configured channels.",
   "loading_channels_message": "Loading Channels..",
-  "page_title_create": "New Notification Channels",
-  "page_title_edit": "Edit Notification Channels",
+  "page_title_create": "New Notification Channel",
+  "page_title_edit": "Edit Notification Channel",
   "button_save_channel": "Save",
   "button_test_channel": "Test",
   "button_return": "Back",
@@ -62,5 +62,8 @@
   "channel_test_failed": "Failed to send a test message to this channel, please confirm that the parameters are set correctly",
   "channel_test_unexpected": "An unexpected error occurred while sending a message to this channel, please try again",
   "webhook_url_required": "Webhook URL is mandatory",
-  "slack_channel_help": "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace)"
+  "slack_channel_help": "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace)",
+  "api_key_required": "API Key is mandatory",
+	"to_required": "To field is mandatory",
+	"channel_name_required": "Channel name is mandatory"
 }

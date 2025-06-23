@@ -1,35 +1,115 @@
 import '../MySettings.styles.scss';
 import './UserInfo.styles.scss';
 
-import { Button, Card, Flex, Input, Space, Typography } from 'antd';
+import { Button, Input, Modal, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
+import changeMyPassword from 'api/v1/factor_password/changeMyPassword';
 import editUser from 'api/v1/user/id/update';
 import { useNotifications } from 'hooks/useNotifications';
-import { PencilIcon } from 'lucide-react';
+import { Check, FileTerminal, MailIcon, UserIcon } from 'lucide-react';
+import { isPasswordValid } from 'pages/SignUp/utils';
 import { useAppContext } from 'providers/App/App';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import APIError from 'types/api/error';
 
-import { NameInput } from '../styles';
-
 function UserInfo(): JSX.Element {
 	const { user, org, updateUser } = useAppContext();
-	const { t } = useTranslation();
+	const { t } = useTranslation(['routes', 'settings', 'common']);
+
+	const { notifications } = useNotifications();
+
+	const [currentPassword, setCurrentPassword] = useState<string>('');
+	const [updatePassword, setUpdatePassword] = useState<string>('');
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [isPasswordPolicyError, setIsPasswordPolicyError] = useState<boolean>(
+		false,
+	);
 
 	const [changedName, setChangedName] = useState<string>(
 		user?.displayName || '',
 	);
-	const [loading, setLoading] = useState<boolean>(false);
 
-	const { notifications } = useNotifications();
+	const [isUpdateNameModalOpen, setIsUpdateNameModalOpen] = useState<boolean>(
+		false,
+	);
+	const [
+		isResetPasswordModalOpen,
+		setIsResetPasswordModalOpen,
+	] = useState<boolean>(false);
 
-	if (!user || !org) {
+	const defaultPlaceHolder = '*************';
+
+	useEffect(() => {
+		if (currentPassword && !isPasswordValid(currentPassword)) {
+			setIsPasswordPolicyError(true);
+		} else {
+			setIsPasswordPolicyError(false);
+		}
+	}, [currentPassword]);
+
+	if (!user) {
 		return <div />;
 	}
 
-	const onClickUpdateHandler = async (): Promise<void> => {
+	const hideUpdateNameModal = (): void => {
+		setIsUpdateNameModalOpen(false);
+	};
+
+	const hideResetPasswordModal = (): void => {
+		setIsResetPasswordModalOpen(false);
+	};
+
+	const onChangePasswordClickHandler = async (): Promise<void> => {
 		try {
-			setLoading(true);
+			setIsLoading(true);
+
+			if (!isPasswordValid(currentPassword)) {
+				setIsPasswordPolicyError(true);
+				setIsLoading(false);
+				return;
+			}
+			await changeMyPassword({
+				newPassword: updatePassword,
+				oldPassword: currentPassword,
+				userId: user.id,
+			});
+			notifications.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
+			hideResetPasswordModal();
+			setIsLoading(false);
+		} catch (error) {
+			setIsLoading(false);
+			notifications.error({
+				message: (error as APIError).error.error.code,
+				description: (error as APIError).error.error.message,
+			});
+		}
+	};
+
+	const isResetPasswordDisabled =
+		isLoading ||
+		currentPassword.length === 0 ||
+		updatePassword.length === 0 ||
+		isPasswordPolicyError ||
+		currentPassword === updatePassword;
+
+	const onSaveHandler = async (): Promise<void> => {
+		logEvent('Account Settings: Name Updated', {
+			name: changedName,
+		});
+		logEvent(
+			'Account Settings: Name Updated',
+			{
+				name: changedName,
+			},
+			'identify',
+		);
+		try {
+			setIsLoading(true);
 			await editUser({
 				displayName: changedName,
 				userId: user.id,
@@ -44,80 +124,143 @@ function UserInfo(): JSX.Element {
 				...user,
 				displayName: changedName,
 			});
-			setLoading(false);
+			setIsLoading(false);
+			hideUpdateNameModal();
 		} catch (error) {
 			notifications.error({
 				message: (error as APIError).getErrorCode(),
 				description: (error as APIError).getErrorMessage(),
 			});
 		}
-		setLoading(false);
+		setIsLoading(false);
 	};
 
+	if (!user || !org) {
+		return <div />;
+	}
+
 	return (
-		<Card>
-			<Space direction="vertical" size="middle">
-				<Flex gap={8}>
-					<Typography.Title level={4} style={{ marginTop: 0 }}>
-						User Details
-					</Typography.Title>
-				</Flex>
+		<div className="user-info-card">
+			<div className="user-info">
+				<div className="user-name">{user.displayName}</div>
 
-				<Flex gap={16}>
-					<Space>
-						<Typography className="userInfo-label" data-testid="name-label">
-							Name
-						</Typography>
-						<NameInput
-							data-testid="name-textbox"
-							placeholder="Your Name"
-							onChange={(event): void => {
-								setChangedName(event.target.value);
-							}}
-							value={changedName}
-							disabled={loading}
-						/>
-					</Space>
+				<div className="user-info-subsection">
+					<div className="user-email">
+						<MailIcon size={16} /> {user.email}
+					</div>
 
+					<div className="user-role">
+						<UserIcon size={16} /> {user.role.toLowerCase()}
+					</div>
+				</div>
+			</div>
+
+			<div className="user-info-update-section">
+				<Button
+					type="default"
+					className="periscope-btn secondary"
+					icon={<FileTerminal size={16} />}
+					onClick={(): void => setIsUpdateNameModalOpen(true)}
+				>
+					Update name
+				</Button>
+
+				<Button
+					type="default"
+					className="periscope-btn secondary"
+					icon={<FileTerminal size={16} />}
+					onClick={(): void => setIsResetPasswordModalOpen(true)}
+				>
+					Reset password
+				</Button>
+			</div>
+
+			<Modal
+				className="update-name-modal"
+				title={<span className="title">Update name</span>}
+				open={isUpdateNameModalOpen}
+				closable
+				onCancel={hideUpdateNameModal}
+				footer={[
 					<Button
-						className="flexBtn"
-						loading={loading}
-						disabled={loading}
-						onClick={onClickUpdateHandler}
-						data-testid="update-name-button"
+						key="submit"
 						type="primary"
+						icon={<Check size={16} />}
+						onClick={onSaveHandler}
+						disabled={isLoading}
+						data-testid="update-name-btn"
 					>
-						<PencilIcon size={12} /> Update
-					</Button>
-				</Flex>
-
-				<Space>
-					<Typography className="userInfo-label" data-testid="email-label">
-						{' '}
-						Email{' '}
-					</Typography>
+						Update name
+					</Button>,
+				]}
+			>
+				<Typography.Text>Name</Typography.Text>
+				<div className="update-name-input">
 					<Input
-						className="userInfo-value"
-						data-testid="email-textbox"
-						value={user.email}
-						disabled
+						placeholder="e.g. John Doe"
+						value={changedName}
+						onChange={(e): void => setChangedName(e.target.value)}
 					/>
-				</Space>
+				</div>
+			</Modal>
 
-				<Space>
-					<Typography className="userInfo-label" data-testid="role-label">
-						{' '}
-						Role{' '}
-					</Typography>
-					<Input
-						className="userInfo-value"
-						value={user.role || ''}
-						disabled
-						data-testid="role-textbox"
-					/>
-				</Space>
-			</Space>
-		</Card>
+			<Modal
+				className="reset-password-modal"
+				title={<span className="title">Reset password</span>}
+				open={isResetPasswordModalOpen}
+				closable
+				onCancel={hideResetPasswordModal}
+				footer={[
+					<Button
+						key="submit"
+						className={`periscope-btn ${
+							isResetPasswordDisabled ? 'secondary' : 'primary'
+						}`}
+						icon={<Check size={16} />}
+						onClick={onChangePasswordClickHandler}
+						disabled={isLoading || isResetPasswordDisabled}
+						data-testid="reset-password-btn"
+					>
+						Reset password
+					</Button>,
+				]}
+			>
+				<div className="reset-password-container">
+					<div className="current-password-input">
+						<Typography.Text>Current password</Typography.Text>
+						<Input.Password
+							data-testid="current-password-textbox"
+							disabled={isLoading}
+							placeholder={defaultPlaceHolder}
+							onChange={(event): void => {
+								setCurrentPassword(event.target.value);
+							}}
+							value={currentPassword}
+							type="password"
+							autoComplete="off"
+							visibilityToggle
+						/>
+					</div>
+
+					<div className="new-password-input">
+						<Typography.Text>New password</Typography.Text>
+						<Input.Password
+							data-testid="new-password-textbox"
+							disabled={isLoading}
+							placeholder={defaultPlaceHolder}
+							onChange={(event): void => {
+								const updatedValue = event.target.value;
+								setUpdatePassword(updatedValue);
+							}}
+							value={updatePassword}
+							type="password"
+							autoComplete="off"
+							visibilityToggle={false}
+						/>
+					</div>
+				</div>
+			</Modal>
+		</div>
 	);
 }
 

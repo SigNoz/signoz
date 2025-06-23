@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -13,6 +14,7 @@ type MockMetadataStore struct {
 	KeysMap          map[string][]*telemetrytypes.TelemetryFieldKey
 	RelatedValuesMap map[string][]string
 	AllValuesMap     map[string]*telemetrytypes.TelemetryFieldValues
+	TemporalityMap   map[string]metrictypes.Temporality
 }
 
 // NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps
@@ -21,6 +23,7 @@ func NewMockMetadataStore() *MockMetadataStore {
 		KeysMap:          make(map[string][]*telemetrytypes.TelemetryFieldKey),
 		RelatedValuesMap: make(map[string][]string),
 		AllValuesMap:     make(map[string]*telemetrytypes.TelemetryFieldValues),
+		TemporalityMap:   make(map[string]metrictypes.Temporality),
 	}
 }
 
@@ -248,4 +251,32 @@ func (m *MockMetadataStore) SetRelatedValues(lookupKey string, values []string) 
 // SetAllValues sets all values for testing
 func (m *MockMetadataStore) SetAllValues(lookupKey string, values *telemetrytypes.TelemetryFieldValues) {
 	m.AllValuesMap[lookupKey] = values
+}
+
+// FetchTemporality fetches the temporality for a metric
+func (m *MockMetadataStore) FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error) {
+	if temporality, exists := m.TemporalityMap[metricName]; exists {
+		return temporality, nil
+	}
+	return metrictypes.Unknown, nil
+}
+
+// FetchTemporalityMulti fetches the temporality for multiple metrics
+func (m *MockMetadataStore) FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+	result := make(map[string]metrictypes.Temporality)
+
+	for _, metricName := range metricNames {
+		if temporality, exists := m.TemporalityMap[metricName]; exists {
+			result[metricName] = temporality
+		} else {
+			result[metricName] = metrictypes.Unknown
+		}
+	}
+
+	return result, nil
+}
+
+// SetTemporality sets the temporality for a metric in the mock store
+func (m *MockMetadataStore) SetTemporality(metricName string, temporality metrictypes.Temporality) {
+	m.TemporalityMap[metricName] = temporality
 }

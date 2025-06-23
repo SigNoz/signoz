@@ -5,7 +5,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -61,8 +63,9 @@ func TestNewProviderFactories(t *testing.T) {
 	})
 
 	assert.NotPanics(t, func() {
+		userGetter := impluser.NewGetter(impluser.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), instrumentationtest.New().ToProviderSettings()))
 		orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil)
 		telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherEqual)
-		NewStatsReporterProviderFactories(telemetryStore, []statsreporter.StatsCollector{}, orgGetter, version.Build{}, analytics.Config{Enabled: true})
+		NewStatsReporterProviderFactories(telemetryStore, []statsreporter.StatsCollector{}, orgGetter, userGetter, version.Build{}, analytics.Config{Enabled: true})
 	})
 }
