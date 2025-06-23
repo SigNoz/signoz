@@ -462,7 +462,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 // buildFilterCondition builds SQL condition from filter expression
 func (b *traceQueryStatementBuilder) addFilterCondition(
-	ctx context.Context,
+	_ context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],

@@ -43,7 +43,7 @@ func newPromqlQuery(
 func (q *promqlQuery) Fingerprint() string {
 	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
 	if err != nil {
-		q.logger.Error("failed render template variables", "query", q.query.Query)
+		q.logger.ErrorContext(context.TODO(), "failed render template variables", "query", q.query.Query)
 		return ""
 	}
 	parts := []string{

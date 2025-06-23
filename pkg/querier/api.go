@@ -44,11 +44,11 @@ func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
 
 			queryJSON, _ := json.Marshal(queryRangeRequest)
 
-			a.set.Logger.Error("panic in QueryRange",
+			a.set.Logger.ErrorContext(ctx, "panic in QueryRange",
 				"error", r,
-				"userId", claims.UserID,
-				"queryRangeRequest", string(queryJSON),
-				"stackTrace", stackTrace,
+				"user", claims.UserID,
+				"payload", string(queryJSON),
+				"stacktrace", stackTrace,
 			)
 
 			render.Error(rw, errors.NewInternalf(
