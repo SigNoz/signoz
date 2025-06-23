@@ -171,7 +171,10 @@ function AddNewProcessor({
 				onValuesChange={onFormValuesChanged}
 			>
 				<TypeSelect value={processorType} onChange={handleProcessorType} />
-				<ProcessorForm processorType={processorType} />
+				<ProcessorForm
+					processorType={processorType}
+					selectedProcessorData={selectedProcessorData}
+				/>
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>

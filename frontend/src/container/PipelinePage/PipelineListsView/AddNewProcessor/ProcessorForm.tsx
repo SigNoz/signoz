@@ -3,14 +3,17 @@ import './styles.scss';
 import { Form, Input, Select } from 'antd';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import { useTranslation } from 'react-i18next';
+import { ProcessorData } from 'types/api/pipeline/def';
 
 import { formValidationRules } from '../config';
 import { processorFields, ProcessorFormField } from './config';
 import CSVInput from './FormFields/CSVInput';
+import JsonFlattening from './FormFields/JsonFlattening';
 import { FormWrapper, PipelineIndexIcon, StyledSelect } from './styles';
 
 function ProcessorFieldInput({
 	fieldData,
+	selectedProcessorData,
 }: ProcessorFieldInputProps): JSX.Element | null {
 	const { t } = useTranslation('pipeline');
 
@@ -50,6 +53,8 @@ function ProcessorFieldInput({
 		);
 	} else if (Array.isArray(fieldData?.initialValue)) {
 		inputField = <CSVInput placeholder={t(fieldData.placeholder)} />;
+	} else if (fieldData?.name === 'enable_flattening') {
+		inputField = <JsonFlattening selectedProcessorData={selectedProcessorData} />;
 	} else {
 		inputField = <Input placeholder={t(fieldData.placeholder)} />;
 	}
@@ -83,25 +88,39 @@ function ProcessorFieldInput({
 	);
 }
 
+ProcessorFieldInput.defaultProps = {
+	selectedProcessorData: undefined,
+};
+
 interface ProcessorFieldInputProps {
 	fieldData: ProcessorFormField;
+	selectedProcessorData?: ProcessorData;
 }
 
-function ProcessorForm({ processorType }: ProcessorFormProps): JSX.Element {
+function ProcessorForm({
+	processorType,
+	selectedProcessorData,
+}: ProcessorFormProps): JSX.Element {
 	return (
 		<div className="processor-form-container">
 			{processorFields[processorType]?.map((fieldData: ProcessorFormField) => (
 				<ProcessorFieldInput
 					key={fieldData.name + String(fieldData.initialValue)}
 					fieldData={fieldData}
+					selectedProcessorData={selectedProcessorData}
 				/>
 			))}
 		</div>
 	);
 }
 
+ProcessorForm.defaultProps = {
+	selectedProcessorData: undefined,
+};
+
 interface ProcessorFormProps {
 	processorType: string;
+	selectedProcessorData?: ProcessorData;
 }
 
 export default ProcessorForm;

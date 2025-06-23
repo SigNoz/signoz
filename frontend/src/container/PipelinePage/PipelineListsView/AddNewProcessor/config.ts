@@ -136,6 +136,13 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			name: 'parse_to',
 			initialValue: 'attributes',
 		},
+		{
+			id: 4,
+			fieldName: 'Enable Flattening',
+			placeholder: '',
+			name: 'enable_flattening',
+			initialValue: false,
+		},
 	],
 	regex_parser: [
 		{
