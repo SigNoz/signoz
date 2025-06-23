@@ -289,6 +289,9 @@ export interface QueryRangeRequestV5 {
 	requestType: RequestType;
 	compositeQuery: CompositeQuery;
 	variables?: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+	formatOptions?: {
+		formatTableResultForUI: boolean;
+	};
 }
 
 // ===================== Response Types =====================
