@@ -20,7 +20,7 @@ func TestNewTraceOperatorStatementBuilder(t *testing.T) {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
-	// Create a mock trace statement builder (you'd need to implement this)
+	// Create a mock trace statement builder
 	traceStmtBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
@@ -28,6 +28,7 @@ func TestNewTraceOperatorStatementBuilder(t *testing.T) {
 		cb,
 		nil, // resource filter builder
 		nil, // agg expr rewriter
+		nil, // telemetry store - added missing parameter
 	)
 
 	aggExprRewriter := &mockAggExprRewriter{}
@@ -295,6 +296,7 @@ func TestTraceOperatorStatementBuilder_Build(t *testing.T) {
 				cb,
 				nil, // resource filter builder
 				nil, // agg expr rewriter
+				nil, // telemetry store - added missing parameter
 			)
 
 			aggExprRewriter := &mockAggExprRewriter{}
@@ -346,6 +348,7 @@ func TestTraceOperatorStatementBuilder_Build_WithSelectFields(t *testing.T) {
 		cb,
 		nil,
 		nil,
+		nil, // telemetry store - added missing parameter
 	)
 
 	aggExprRewriter := &mockAggExprRewriter{}
