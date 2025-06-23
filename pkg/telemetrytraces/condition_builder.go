@@ -129,7 +129,10 @@ func (c *conditionBuilder) conditionFor(
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 		// if the field is intrinsic, it always exists
-		if slices.Contains(IntrinsicFields, tblFieldName) || slices.Contains(CalculatedFields, tblFieldName) {
+		if slices.Contains(IntrinsicFields, tblFieldName) ||
+			slices.Contains(CalculatedFields, tblFieldName) ||
+			slices.Contains(IntrinsicFieldsDeprecated, tblFieldName) ||
+			slices.Contains(CalculatedFieldsDeprecated, tblFieldName) {
 			return "true", nil
 		}
 
@@ -202,7 +205,10 @@ func (c *conditionBuilder) ConditionFor(
 	if operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
 		field, _ := c.fm.FieldFor(ctx, key)
-		if slices.Contains(IntrinsicFields, field) || slices.Contains(CalculatedFields, field) {
+		if slices.Contains(IntrinsicFields, field) ||
+			slices.Contains(IntrinsicFieldsDeprecated, field) ||
+			slices.Contains(CalculatedFields, field) ||
+			slices.Contains(CalculatedFieldsDeprecated, field) {
 			return condition, nil
 		}
 
