@@ -139,7 +139,6 @@ function CreateAlertChannels({
 
 	const onSlackHandler = useCallback(async () => {
 		if (!selectedConfig.api_url) {
-			console.log('selectedConfig', selectedConfig);
 			notifications.error({
 				message: 'Error',
 				description: t('webhook_url_required'),
