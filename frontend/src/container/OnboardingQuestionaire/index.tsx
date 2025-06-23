@@ -167,13 +167,13 @@ function OnboardingQuestionaire(): JSX.Element {
 		});
 
 		updateProfile({
-			usesOtel: orgDetails?.usesOtel as boolean,
+			uses_otel: orgDetails?.usesOtel as boolean,
 			has_existing_observability_tool: orgDetails?.usesObservability as boolean,
 			existing_observability_tool:
 				orgDetails?.observabilityTool === 'Others'
 					? (orgDetails?.otherTool as string)
 					: (orgDetails?.observabilityTool as string),
-			discover_signoz: signozDetails?.discoverSignoz as string,
+			where_did_you_discover_signoz: signozDetails?.discoverSignoz as string,
 			reasons_for_interest_in_signoz:
 				signozDetails?.interestInSignoz === 'Others'
 					? (signozDetails?.otherInterestInSignoz as string)
