@@ -55,6 +55,9 @@ type ThresholdRule struct {
 	// used for attribute metadata enrichment for logs and traces
 	logsKeys  map[string]v3.AttributeKey
 	spansKeys map[string]v3.AttributeKey
+
+	// internal use
+	triggerCnt int
 }
 
 func NewThresholdRule(
@@ -362,8 +365,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		}
 	}
 
-	if shouldLog || rand.Float64() < (1.0/30.0) {
+	if (shouldLog && r.triggerCnt < 100) || rand.Float64() < (1.0/30.0) {
 		func(ts time.Time) {
+			r.triggerCnt++
 			defer func() {
 				if rr := recover(); rr != nil {
 					zap.L().Warn("unexpected panic while converting to v5",
