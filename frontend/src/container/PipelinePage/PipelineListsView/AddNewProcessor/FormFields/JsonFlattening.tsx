@@ -1,3 +1,5 @@
+import './JsonFlattening.styles.scss';
+
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Form, Input, Space, Switch, Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
@@ -11,10 +13,14 @@ interface JsonFlatteningProps {
 
 function JsonFlattening({
 	selectedProcessorData,
-}: JsonFlatteningProps): JSX.Element {
+}: JsonFlatteningProps): JSX.Element | null {
 	const form = Form.useFormInstance();
 	const mappingValue = selectedProcessorData?.mapping || {};
 	const enableFlattening = Form.useWatch('enable_flattening', form);
+
+	const [enablePaths, setEnablePaths] = useState(
+		selectedProcessorData?.enable_paths ?? true,
+	);
 
 	const [enableMapping, setEnableMapping] = useState(
 		!!mappingValue && Object.keys(mappingValue).length > 0,
@@ -34,64 +40,66 @@ function JsonFlattening({
 		setEnableMapping(checked);
 	};
 
+	const handleEnablePathsChange = (checked: boolean): void => {
+		setEnablePaths(checked);
+		form.setFieldValue('enable_paths', checked);
+	};
+
+	if (!enableFlattening) {
+		return null;
+	}
+
 	return (
-		<>
+		<div className="json-flattening-form">
 			<Form.Item
-				name="enable_flattening"
+				className="json-flattening-form__item"
+				name="enable_paths"
 				valuePropName="checked"
-				initialValue={selectedProcessorData?.enable_flattening}
+				initialValue={selectedProcessorData?.enable_paths}
 			>
-				<Switch size="small" />
+				<Space>
+					<Switch
+						size="small"
+						checked={enablePaths}
+						onChange={handleEnablePathsChange}
+					/>
+					Enable Paths
+				</Space>
 			</Form.Item>
 
-			{enableFlattening && (
-				<>
-					<Form.Item
-						name="enable_paths"
-						label="Enable Paths"
-						valuePropName="checked"
-						initialValue={selectedProcessorData?.enable_paths}
-					>
-						<Switch size="small" />
-					</Form.Item>
-
-					<Form.Item
-						name="path_prefix"
-						label="Path Prefix"
-						initialValue={selectedProcessorData?.path_prefix}
-					>
-						<Input placeholder="Path Prefix" />
-					</Form.Item>
-
-					<Form.Item
-						label={
-							<Space>
-								Enable Mapping
-								<Tooltip title="The order of filled keys will determine the priority of keys i.e. earlier keys have higher precedence">
-									<InfoCircleOutlined />
-								</Tooltip>
-							</Space>
-						}
-					>
-						<Switch
-							size="small"
-							checked={enableMapping}
-							onChange={handleEnableMappingChange}
-						/>
-					</Form.Item>
-
-					{enableMapping && (
-						<Form.Item
-							name="mapping"
-							label="Mapping"
-							initialValue={selectedProcessorData?.mapping || PREDEFINED_MAPPING}
-						>
-							<KeyValueList />
-						</Form.Item>
-					)}
-				</>
+			{enablePaths && (
+				<Form.Item
+					name="path_prefix"
+					label="Path Prefix"
+					initialValue={selectedProcessorData?.path_prefix}
+				>
+					<Input placeholder="Path Prefix" />
+				</Form.Item>
 			)}
-		</>
+
+			<Form.Item className="json-flattening-form__item">
+				<Space>
+					<Switch
+						size="small"
+						checked={enableMapping}
+						onChange={handleEnableMappingChange}
+					/>
+					Enable Mapping
+					<Tooltip title="The order of filled keys will determine the priority of keys i.e. earlier keys have higher precedence">
+						<InfoCircleOutlined />
+					</Tooltip>
+				</Space>
+			</Form.Item>
+
+			{enableMapping && (
+				<Form.Item
+					name="mapping"
+					initialValue={selectedProcessorData?.mapping || PREDEFINED_MAPPING}
+				>
+					<KeyValueList />
+				</Form.Item>
+			)}
+		</div>
 	);
 }
 

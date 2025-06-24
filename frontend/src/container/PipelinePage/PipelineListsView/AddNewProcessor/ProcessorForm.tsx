@@ -1,7 +1,8 @@
 import './styles.scss';
 
-import { Form, Input, Select } from 'antd';
+import { Form, Input, Select, Space, Switch } from 'antd';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProcessorData } from 'types/api/pipeline/def';
 
@@ -11,11 +12,15 @@ import CSVInput from './FormFields/CSVInput';
 import JsonFlattening from './FormFields/JsonFlattening';
 import { FormWrapper, PipelineIndexIcon, StyledSelect } from './styles';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function ProcessorFieldInput({
 	fieldData,
 	selectedProcessorData,
 }: ProcessorFieldInputProps): JSX.Element | null {
 	const { t } = useTranslation('pipeline');
+	const [enableFlattening, setEnableFlattening] = useState(
+		selectedProcessorData?.enable_flattening ?? false,
+	);
 
 	// Watch form values so we can evaluate shouldRender on
 	// conditional fields when form values are updated.
@@ -59,6 +64,11 @@ function ProcessorFieldInput({
 		inputField = <Input placeholder={t(fieldData.placeholder)} />;
 	}
 
+	const handleEnableFlatteningChange = (checked: boolean): void => {
+		form.setFieldValue('enable_flattening', checked);
+		setEnableFlattening(checked);
+	};
+
 	return (
 		<div
 			className={
@@ -73,16 +83,32 @@ function ProcessorFieldInput({
 				</PipelineIndexIcon>
 			)}
 			<FormWrapper>
-				<Form.Item
-					required={false}
-					label={<ModalFooterTitle>{fieldData.fieldName}</ModalFooterTitle>}
-					name={fieldData.name}
-					initialValue={fieldData.initialValue}
-					rules={fieldData.rules ? fieldData.rules : formValidationRules}
-					dependencies={fieldData.dependencies || []}
-				>
-					{inputField}
-				</Form.Item>
+				{fieldData.name === 'enable_flattening' ? (
+					<>
+						<Form.Item name="enable_flattening" valuePropName="checked" noStyle>
+							<Space>
+								<Switch
+									size="small"
+									onChange={handleEnableFlatteningChange}
+									checked={enableFlattening}
+								/>
+								<ModalFooterTitle>{fieldData.fieldName}</ModalFooterTitle>
+							</Space>
+						</Form.Item>
+						{inputField}
+					</>
+				) : (
+					<Form.Item
+						required={false}
+						label={<ModalFooterTitle>{fieldData.fieldName}</ModalFooterTitle>}
+						name={fieldData.name}
+						initialValue={fieldData.initialValue}
+						rules={fieldData.rules ? fieldData.rules : formValidationRules}
+						dependencies={fieldData.dependencies || []}
+					>
+						{inputField}
+					</Form.Item>
+				)}
 			</FormWrapper>
 		</div>
 	);
