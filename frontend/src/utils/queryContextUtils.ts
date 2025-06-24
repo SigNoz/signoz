@@ -3,6 +3,16 @@
 import { CharStreams, CommonTokenStream, Token } from 'antlr4';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import { IQueryContext, IQueryPair, IToken } from 'types/antlrQueryTypes';
+import { analyzeQuery } from 'parser/analyzeQuery';
+import {
+	isBracketToken,
+	isConjunctionToken,
+	isFunctionToken,
+	isKeyToken,
+	isMultiValueOperator,
+	isOperatorToken,
+	isValueToken,
+} from './tokenUtils';
 
 // Function to normalize multiple spaces to single spaces when not in quotes
 function normalizeSpaces(query: string): string {
@@ -69,7 +79,8 @@ export function createContext(
 
 // Helper to determine token type for context
 function determineTokenContext(
-	tokenType: number,
+	token: IToken,
+	query: string,
 ): {
 	isInKey: boolean;
 	isInOperator: boolean;
@@ -78,57 +89,49 @@ function determineTokenContext(
 	isInConjunction: boolean;
 	isInParenthesis: boolean;
 } {
-	// Key context
-	const isInKey = tokenType === FilterQueryLexer.KEY;
+	let isInKey: boolean = false;
+	let isInOperator: boolean = false;
+	let isInValue: boolean = false;
+	let isInFunction: boolean = false;
+	let isInConjunction: boolean = false;
+	let isInParenthesis: boolean = false;
 
-	// Operator context
-	const isInOperator = [
-		FilterQueryLexer.EQUALS,
-		FilterQueryLexer.NOT_EQUALS,
-		FilterQueryLexer.NEQ,
-		FilterQueryLexer.LT,
-		FilterQueryLexer.LE,
-		FilterQueryLexer.GT,
-		FilterQueryLexer.GE,
-		FilterQueryLexer.LIKE,
-		FilterQueryLexer.NOT_LIKE,
-		FilterQueryLexer.ILIKE,
-		FilterQueryLexer.NOT_ILIKE,
-		FilterQueryLexer.BETWEEN,
-		FilterQueryLexer.EXISTS,
-		FilterQueryLexer.REGEXP,
-		FilterQueryLexer.CONTAINS,
-		FilterQueryLexer.IN,
-		FilterQueryLexer.NOT,
-	].includes(tokenType);
+	const tokenType = token.type;
+	const currentTokenContext = analyzeQuery(query, token);
 
-	// Value context
-	const isInValue = [
-		FilterQueryLexer.QUOTED_TEXT,
-		FilterQueryLexer.NUMBER,
-		FilterQueryLexer.BOOL,
-	].includes(tokenType);
+	if (!currentTokenContext) {
+		// Key context
+		isInKey = isKeyToken(tokenType);
+
+		// Operator context
+		isInOperator = isOperatorToken(tokenType);
+
+		// Value context
+		isInValue = isValueToken(tokenType);
+	} else {
+		switch (currentTokenContext.type) {
+			case 'Operator':
+				isInOperator = true;
+				break;
+			case 'Value':
+				isInValue = true;
+				break;
+			case 'Key':
+				isInKey = true;
+				break;
+			default:
+				break;
+		}
+	}
 
 	// Function context
-	const isInFunction = [
-		FilterQueryLexer.HAS,
-		FilterQueryLexer.HASANY,
-		FilterQueryLexer.HASALL,
-		FilterQueryLexer.HASNONE,
-	].includes(tokenType);
+	isInFunction = isFunctionToken(tokenType);
 
 	// Conjunction context
-	const isInConjunction = [FilterQueryLexer.AND, FilterQueryLexer.OR].includes(
-		tokenType,
-	);
+	isInConjunction = isConjunctionToken(tokenType);
 
 	// Parenthesis context
-	const isInParenthesis = [
-		FilterQueryLexer.LPAREN,
-		FilterQueryLexer.RPAREN,
-		FilterQueryLexer.LBRACK,
-		FilterQueryLexer.RBRACK,
-	].includes(tokenType);
+	isInParenthesis = isBracketToken(tokenType);
 
 	return {
 		isInKey,
@@ -138,61 +141,6 @@ function determineTokenContext(
 		isInConjunction,
 		isInParenthesis,
 	};
-}
-
-// Helper function to check if a token is an operator
-function isOperatorToken(tokenType: number): boolean {
-	return [
-		FilterQueryLexer.EQUALS,
-		FilterQueryLexer.NOT_EQUALS,
-		FilterQueryLexer.NEQ,
-		FilterQueryLexer.LT,
-		FilterQueryLexer.LE,
-		FilterQueryLexer.GT,
-		FilterQueryLexer.GE,
-		FilterQueryLexer.LIKE,
-		FilterQueryLexer.NOT_LIKE,
-		FilterQueryLexer.ILIKE,
-		FilterQueryLexer.NOT_ILIKE,
-		FilterQueryLexer.BETWEEN,
-		FilterQueryLexer.EXISTS,
-		FilterQueryLexer.REGEXP,
-		FilterQueryLexer.CONTAINS,
-		FilterQueryLexer.IN,
-		FilterQueryLexer.NOT,
-	].includes(tokenType);
-}
-
-// Helper function to check if a token is a value
-function isValueToken(tokenType: number): boolean {
-	return [
-		FilterQueryLexer.QUOTED_TEXT,
-		FilterQueryLexer.NUMBER,
-		FilterQueryLexer.BOOL,
-	].includes(tokenType);
-}
-
-// Helper function to check if a token is a conjunction
-function isConjunctionToken(tokenType: number): boolean {
-	return [FilterQueryLexer.AND, FilterQueryLexer.OR].includes(tokenType);
-}
-
-// Helper function to check if a token is a bracket
-function isBracketToken(tokenType: number): boolean {
-	return [
-		FilterQueryLexer.LPAREN,
-		FilterQueryLexer.RPAREN,
-		FilterQueryLexer.LBRACK,
-		FilterQueryLexer.RBRACK,
-	].includes(tokenType);
-}
-
-// Helper function to check if an operator typically uses bracket values (multi-value operators)
-function isMultiValueOperator(operatorToken?: string): boolean {
-	if (!operatorToken) return false;
-
-	const upperOp = operatorToken.toUpperCase();
-	return upperOp === 'IN' || upperOp === 'NOT IN';
 }
 
 // Function to determine token context boundaries more precisely
@@ -888,7 +836,7 @@ export function getQueryContextAtCursor(
 			lastTokenBeforeCursor &&
 			(isAtSpace || isAfterSpace || isTransitionPoint)
 		) {
-			const lastTokenContext = determineTokenContext(lastTokenBeforeCursor.type);
+			const lastTokenContext = determineTokenContext(lastTokenBeforeCursor, input);
 
 			// Apply the context progression logic: key → operator → value → conjunction → key
 			if (lastTokenContext.isInKey) {
@@ -984,7 +932,7 @@ export function getQueryContextAtCursor(
 		// FIXED: Consider the case where the cursor is at the end of a token
 		// with no space yet (user is actively typing)
 		if (exactToken && adjustedCursorIndex === exactToken.stop + 1) {
-			const tokenContext = determineTokenContext(exactToken.type);
+			const tokenContext = determineTokenContext(exactToken, input);
 
 			// When the cursor is at the end of a token, return the current token context
 			return {
@@ -1011,7 +959,7 @@ export function getQueryContextAtCursor(
 
 		// Regular token-based context detection (when cursor is directly on a token)
 		if (exactToken?.channel === 0) {
-			const tokenContext = determineTokenContext(exactToken.type);
+			const tokenContext = determineTokenContext(exactToken, input);
 
 			// Get relevant tokens based on current pair
 			const keyFromPair = currentPair?.key || '';
@@ -1044,7 +992,7 @@ export function getQueryContextAtCursor(
 
 		// If we're between tokens but not after a space, use previous token to determine context
 		if (previousToken?.channel === 0) {
-			const prevContext = determineTokenContext(previousToken.type);
+			const prevContext = determineTokenContext(previousToken, input);
 
 			// Get relevant tokens based on current pair
 			const keyFromPair = currentPair?.key || '';
@@ -1221,7 +1169,10 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 			}
 
 			// If token is a KEY, start a new pair
-			if (token.type === FilterQueryLexer.KEY) {
+			if (
+				token.type === FilterQueryLexer.KEY &&
+				!(currentPair && currentPair.key)
+			) {
 				// If we have an existing incomplete pair, add it to the result
 				if (currentPair && currentPair.key) {
 					queryPairs.push({

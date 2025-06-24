@@ -93,6 +93,7 @@ value
     : QUOTED_TEXT
     | NUMBER
     | BOOL
+    | KEY
     ;
 
 key

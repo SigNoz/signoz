@@ -1022,17 +1022,15 @@ export default class FilterQueryParser extends Parser {
 		try {
 			this.state = 202;
 			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
-				case 37:
+			switch (this._interp.adaptivePredict(this._input, 12, this._ctx)) {
+				case 1:
 					this.enterOuterAlt(localctx, 1);
 					{
 						this.state = 199;
 						this.key();
 					}
 					break;
-				case 34:
-				case 35:
-				case 36:
+				case 2:
 					this.enterOuterAlt(localctx, 2);
 					{
 						this.state = 200;
@@ -1046,8 +1044,6 @@ export default class FilterQueryParser extends Parser {
 						this.array();
 					}
 					break;
-				default:
-					throw new NoViableAltException(this);
 			}
 		} catch (re) {
 			if (re instanceof RecognitionException) {
@@ -1099,7 +1095,7 @@ export default class FilterQueryParser extends Parser {
 			{
 				this.state = 208;
 				_la = this._input.LA(1);
-				if (!(((_la - 34) & ~0x1f) === 0 && ((1 << (_la - 34)) & 7) !== 0)) {
+				if (!(((_la - 34) & ~0x1f) === 0 && ((1 << (_la - 34)) & 15) !== 0)) {
 					this._errHandler.recoverInline(this);
 				} else {
 					this._errHandler.reportMatch(this);
@@ -1639,7 +1635,7 @@ export default class FilterQueryParser extends Parser {
 		1,
 		0,
 		34,
-		36,
+		37,
 		227,
 		0,
 		34,
@@ -3808,6 +3804,9 @@ export class ValueContext extends ParserRuleContext {
 	}
 	public BOOL(): TerminalNode {
 		return this.getToken(FilterQueryParser.BOOL, 0);
+	}
+	public KEY(): TerminalNode {
+		return this.getToken(FilterQueryParser.KEY, 0);
 	}
 	public get ruleIndex(): number {
 		return FilterQueryParser.RULE_value;
