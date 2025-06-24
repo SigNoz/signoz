@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -128,6 +131,8 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 			END as priority`).From(t.tracesDBName + "." + t.tracesFieldsTblName)
 	var limit int
 
+	searchTexts := []string{}
+
 	conds := []string{}
 	for _, fieldKeySelector := range fieldKeySelectors {
 
@@ -145,6 +150,8 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		} else {
 			fieldKeyConds = append(fieldKeyConds, sb.Like("tag_key", "%"+fieldKeySelector.Name+"%"))
 		}
+
+		searchTexts = append(searchTexts, fieldKeySelector.Name)
 
 		// now look at the field context
 		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
@@ -207,6 +214,28 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 	}
 
+	staticKeys := []string{"isRoot", "isEntrypoint"}
+	staticKeys = append(staticKeys, telemetrytraces.IntrinsicFields...)
+	staticKeys = append(staticKeys, telemetrytraces.CalculatedFields...)
+
+	// add matching intrinsic and matching calculated fields
+	for _, key := range staticKeys {
+		found := false
+		for _, v := range searchTexts {
+			if v == "" || strings.Contains(key, v) {
+				found = true
+				break
+			}
+		}
+		if found {
+			keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+				Name:         key,
+				FieldContext: telemetrytypes.FieldContextSpan,
+				Signal:       telemetrytypes.SignalTraces,
+			})
+		}
+	}
+
 	return keys, nil
 }
 
@@ -258,6 +287,8 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	var limit int
 
 	conds := []string{}
+	searchTexts := []string{}
+
 	for _, fieldKeySelector := range fieldKeySelectors {
 
 		if fieldKeySelector.StartUnixMilli != 0 {
@@ -274,6 +305,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		} else {
 			fieldKeyConds = append(fieldKeyConds, sb.Like("tag_key", "%"+fieldKeySelector.Name+"%"))
 		}
+		searchTexts = append(searchTexts, fieldKeySelector.Name)
 
 		// now look at the field context
 		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
@@ -333,6 +365,27 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 
 	if rows.Err() != nil {
 		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+	}
+
+	staticKeys := []string{}
+	staticKeys = append(staticKeys, telemetrylogs.IntrinsicFields...)
+
+	// add matching intrinsic and matching calculated fields
+	for _, key := range staticKeys {
+		found := false
+		for _, v := range searchTexts {
+			if v == "" || strings.Contains(key, v) {
+				found = true
+				break
+			}
+		}
+		if found {
+			keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+				Name:         key,
+				FieldContext: telemetrytypes.FieldContextLog,
+				Signal:       telemetrytypes.SignalLogs,
+			})
+		}
 	}
 
 	return keys, nil

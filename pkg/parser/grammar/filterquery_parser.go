@@ -51,7 +51,7 @@ func filterqueryParserInit() {
 	}
 	staticData.PredictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
-		4, 1, 33, 213, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
+		4, 1, 33, 218, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
 		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
 		10, 2, 11, 7, 11, 2, 12, 7, 12, 2, 13, 7, 13, 2, 14, 7, 14, 2, 15, 7, 15,
 		2, 16, 7, 16, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 5, 2, 43,
@@ -65,83 +65,86 @@ func filterqueryParserInit() {
 		6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1,
 		6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1,
 		6, 3, 6, 149, 8, 6, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1,
-		7, 1, 7, 3, 7, 161, 8, 7, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 1,
-		8, 1, 8, 1, 8, 1, 8, 1, 8, 3, 8, 175, 8, 8, 1, 9, 1, 9, 1, 9, 5, 9, 180,
-		8, 9, 10, 9, 12, 9, 183, 9, 9, 1, 10, 1, 10, 1, 11, 1, 11, 1, 11, 1, 11,
-		1, 11, 1, 12, 1, 12, 1, 12, 5, 12, 195, 8, 12, 10, 12, 12, 12, 198, 9,
-		12, 1, 13, 1, 13, 1, 13, 3, 13, 203, 8, 13, 1, 14, 1, 14, 1, 14, 1, 14,
-		1, 15, 1, 15, 1, 16, 1, 16, 1, 16, 0, 0, 17, 0, 2, 4, 6, 8, 10, 12, 14,
-		16, 18, 20, 22, 24, 26, 28, 30, 32, 0, 6, 1, 0, 7, 8, 2, 0, 13, 13, 15,
-		15, 2, 0, 14, 14, 16, 16, 2, 0, 30, 30, 33, 33, 1, 0, 25, 27, 1, 0, 28,
-		31, 227, 0, 34, 1, 0, 0, 0, 2, 37, 1, 0, 0, 0, 4, 39, 1, 0, 0, 0, 6, 47,
-		1, 0, 0, 0, 8, 57, 1, 0, 0, 0, 10, 70, 1, 0, 0, 0, 12, 148, 1, 0, 0, 0,
-		14, 160, 1, 0, 0, 0, 16, 174, 1, 0, 0, 0, 18, 176, 1, 0, 0, 0, 20, 184,
-		1, 0, 0, 0, 22, 186, 1, 0, 0, 0, 24, 191, 1, 0, 0, 0, 26, 202, 1, 0, 0,
-		0, 28, 204, 1, 0, 0, 0, 30, 208, 1, 0, 0, 0, 32, 210, 1, 0, 0, 0, 34, 35,
-		3, 2, 1, 0, 35, 36, 5, 0, 0, 1, 36, 1, 1, 0, 0, 0, 37, 38, 3, 4, 2, 0,
-		38, 3, 1, 0, 0, 0, 39, 44, 3, 6, 3, 0, 40, 41, 5, 24, 0, 0, 41, 43, 3,
-		6, 3, 0, 42, 40, 1, 0, 0, 0, 43, 46, 1, 0, 0, 0, 44, 42, 1, 0, 0, 0, 44,
-		45, 1, 0, 0, 0, 45, 5, 1, 0, 0, 0, 46, 44, 1, 0, 0, 0, 47, 53, 3, 8, 4,
-		0, 48, 49, 5, 23, 0, 0, 49, 52, 3, 8, 4, 0, 50, 52, 3, 8, 4, 0, 51, 48,
-		1, 0, 0, 0, 51, 50, 1, 0, 0, 0, 52, 55, 1, 0, 0, 0, 53, 51, 1, 0, 0, 0,
-		53, 54, 1, 0, 0, 0, 54, 7, 1, 0, 0, 0, 55, 53, 1, 0, 0, 0, 56, 58, 5, 22,
-		0, 0, 57, 56, 1, 0, 0, 0, 57, 58, 1, 0, 0, 0, 58, 59, 1, 0, 0, 0, 59, 60,
-		3, 10, 5, 0, 60, 9, 1, 0, 0, 0, 61, 62, 5, 1, 0, 0, 62, 63, 3, 4, 2, 0,
-		63, 64, 5, 2, 0, 0, 64, 71, 1, 0, 0, 0, 65, 71, 3, 12, 6, 0, 66, 71, 3,
-		22, 11, 0, 67, 71, 3, 20, 10, 0, 68, 71, 3, 32, 16, 0, 69, 71, 3, 30, 15,
-		0, 70, 61, 1, 0, 0, 0, 70, 65, 1, 0, 0, 0, 70, 66, 1, 0, 0, 0, 70, 67,
-		1, 0, 0, 0, 70, 68, 1, 0, 0, 0, 70, 69, 1, 0, 0, 0, 71, 11, 1, 0, 0, 0,
-		72, 73, 3, 32, 16, 0, 73, 74, 5, 6, 0, 0, 74, 75, 3, 30, 15, 0, 75, 149,
-		1, 0, 0, 0, 76, 77, 3, 32, 16, 0, 77, 78, 7, 0, 0, 0, 78, 79, 3, 30, 15,
-		0, 79, 149, 1, 0, 0, 0, 80, 81, 3, 32, 16, 0, 81, 82, 5, 9, 0, 0, 82, 83,
-		3, 30, 15, 0, 83, 149, 1, 0, 0, 0, 84, 85, 3, 32, 16, 0, 85, 86, 5, 10,
-		0, 0, 86, 87, 3, 30, 15, 0, 87, 149, 1, 0, 0, 0, 88, 89, 3, 32, 16, 0,
-		89, 90, 5, 11, 0, 0, 90, 91, 3, 30, 15, 0, 91, 149, 1, 0, 0, 0, 92, 93,
-		3, 32, 16, 0, 93, 94, 5, 12, 0, 0, 94, 95, 3, 30, 15, 0, 95, 149, 1, 0,
-		0, 0, 96, 97, 3, 32, 16, 0, 97, 98, 7, 1, 0, 0, 98, 99, 3, 30, 15, 0, 99,
-		149, 1, 0, 0, 0, 100, 101, 3, 32, 16, 0, 101, 102, 7, 2, 0, 0, 102, 103,
-		3, 30, 15, 0, 103, 149, 1, 0, 0, 0, 104, 105, 3, 32, 16, 0, 105, 106, 5,
-		17, 0, 0, 106, 107, 3, 30, 15, 0, 107, 108, 5, 23, 0, 0, 108, 109, 3, 30,
-		15, 0, 109, 149, 1, 0, 0, 0, 110, 111, 3, 32, 16, 0, 111, 112, 5, 22, 0,
-		0, 112, 113, 5, 17, 0, 0, 113, 114, 3, 30, 15, 0, 114, 115, 5, 23, 0, 0,
-		115, 116, 3, 30, 15, 0, 116, 149, 1, 0, 0, 0, 117, 118, 3, 32, 16, 0, 118,
-		119, 3, 14, 7, 0, 119, 149, 1, 0, 0, 0, 120, 121, 3, 32, 16, 0, 121, 122,
-		3, 16, 8, 0, 122, 149, 1, 0, 0, 0, 123, 124, 3, 32, 16, 0, 124, 125, 5,
-		18, 0, 0, 125, 149, 1, 0, 0, 0, 126, 127, 3, 32, 16, 0, 127, 128, 5, 22,
-		0, 0, 128, 129, 5, 18, 0, 0, 129, 149, 1, 0, 0, 0, 130, 131, 3, 32, 16,
-		0, 131, 132, 5, 19, 0, 0, 132, 133, 3, 30, 15, 0, 133, 149, 1, 0, 0, 0,
-		134, 135, 3, 32, 16, 0, 135, 136, 5, 22, 0, 0, 136, 137, 5, 19, 0, 0, 137,
-		138, 3, 30, 15, 0, 138, 149, 1, 0, 0, 0, 139, 140, 3, 32, 16, 0, 140, 141,
-		5, 20, 0, 0, 141, 142, 3, 30, 15, 0, 142, 149, 1, 0, 0, 0, 143, 144, 3,
-		32, 16, 0, 144, 145, 5, 22, 0, 0, 145, 146, 5, 20, 0, 0, 146, 147, 3, 30,
-		15, 0, 147, 149, 1, 0, 0, 0, 148, 72, 1, 0, 0, 0, 148, 76, 1, 0, 0, 0,
-		148, 80, 1, 0, 0, 0, 148, 84, 1, 0, 0, 0, 148, 88, 1, 0, 0, 0, 148, 92,
-		1, 0, 0, 0, 148, 96, 1, 0, 0, 0, 148, 100, 1, 0, 0, 0, 148, 104, 1, 0,
-		0, 0, 148, 110, 1, 0, 0, 0, 148, 117, 1, 0, 0, 0, 148, 120, 1, 0, 0, 0,
-		148, 123, 1, 0, 0, 0, 148, 126, 1, 0, 0, 0, 148, 130, 1, 0, 0, 0, 148,
-		134, 1, 0, 0, 0, 148, 139, 1, 0, 0, 0, 148, 143, 1, 0, 0, 0, 149, 13, 1,
-		0, 0, 0, 150, 151, 5, 21, 0, 0, 151, 152, 5, 1, 0, 0, 152, 153, 3, 18,
-		9, 0, 153, 154, 5, 2, 0, 0, 154, 161, 1, 0, 0, 0, 155, 156, 5, 21, 0, 0,
-		156, 157, 5, 3, 0, 0, 157, 158, 3, 18, 9, 0, 158, 159, 5, 4, 0, 0, 159,
-		161, 1, 0, 0, 0, 160, 150, 1, 0, 0, 0, 160, 155, 1, 0, 0, 0, 161, 15, 1,
-		0, 0, 0, 162, 163, 5, 22, 0, 0, 163, 164, 5, 21, 0, 0, 164, 165, 5, 1,
-		0, 0, 165, 166, 3, 18, 9, 0, 166, 167, 5, 2, 0, 0, 167, 175, 1, 0, 0, 0,
-		168, 169, 5, 22, 0, 0, 169, 170, 5, 21, 0, 0, 170, 171, 5, 3, 0, 0, 171,
-		172, 3, 18, 9, 0, 172, 173, 5, 4, 0, 0, 173, 175, 1, 0, 0, 0, 174, 162,
-		1, 0, 0, 0, 174, 168, 1, 0, 0, 0, 175, 17, 1, 0, 0, 0, 176, 181, 3, 30,
-		15, 0, 177, 178, 5, 5, 0, 0, 178, 180, 3, 30, 15, 0, 179, 177, 1, 0, 0,
-		0, 180, 183, 1, 0, 0, 0, 181, 179, 1, 0, 0, 0, 181, 182, 1, 0, 0, 0, 182,
-		19, 1, 0, 0, 0, 183, 181, 1, 0, 0, 0, 184, 185, 7, 3, 0, 0, 185, 21, 1,
-		0, 0, 0, 186, 187, 7, 4, 0, 0, 187, 188, 5, 1, 0, 0, 188, 189, 3, 24, 12,
-		0, 189, 190, 5, 2, 0, 0, 190, 23, 1, 0, 0, 0, 191, 196, 3, 26, 13, 0, 192,
-		193, 5, 5, 0, 0, 193, 195, 3, 26, 13, 0, 194, 192, 1, 0, 0, 0, 195, 198,
-		1, 0, 0, 0, 196, 194, 1, 0, 0, 0, 196, 197, 1, 0, 0, 0, 197, 25, 1, 0,
-		0, 0, 198, 196, 1, 0, 0, 0, 199, 203, 3, 32, 16, 0, 200, 203, 3, 30, 15,
-		0, 201, 203, 3, 28, 14, 0, 202, 199, 1, 0, 0, 0, 202, 200, 1, 0, 0, 0,
-		202, 201, 1, 0, 0, 0, 203, 27, 1, 0, 0, 0, 204, 205, 5, 3, 0, 0, 205, 206,
-		3, 18, 9, 0, 206, 207, 5, 4, 0, 0, 207, 29, 1, 0, 0, 0, 208, 209, 7, 5,
-		0, 0, 209, 31, 1, 0, 0, 0, 210, 211, 5, 31, 0, 0, 211, 33, 1, 0, 0, 0,
-		11, 44, 51, 53, 57, 70, 148, 160, 174, 181, 196, 202,
+		7, 1, 7, 1, 7, 1, 7, 3, 7, 163, 8, 7, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 1,
+		8, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 3, 8, 180, 8,
+		8, 1, 9, 1, 9, 1, 9, 5, 9, 185, 8, 9, 10, 9, 12, 9, 188, 9, 9, 1, 10, 1,
+		10, 1, 11, 1, 11, 1, 11, 1, 11, 1, 11, 1, 12, 1, 12, 1, 12, 5, 12, 200,
+		8, 12, 10, 12, 12, 12, 203, 9, 12, 1, 13, 1, 13, 1, 13, 3, 13, 208, 8,
+		13, 1, 14, 1, 14, 1, 14, 1, 14, 1, 15, 1, 15, 1, 16, 1, 16, 1, 16, 0, 0,
+		17, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 0, 6,
+		1, 0, 7, 8, 2, 0, 13, 13, 15, 15, 2, 0, 14, 14, 16, 16, 2, 0, 30, 30, 33,
+		33, 1, 0, 25, 27, 1, 0, 28, 31, 234, 0, 34, 1, 0, 0, 0, 2, 37, 1, 0, 0,
+		0, 4, 39, 1, 0, 0, 0, 6, 47, 1, 0, 0, 0, 8, 57, 1, 0, 0, 0, 10, 70, 1,
+		0, 0, 0, 12, 148, 1, 0, 0, 0, 14, 162, 1, 0, 0, 0, 16, 179, 1, 0, 0, 0,
+		18, 181, 1, 0, 0, 0, 20, 189, 1, 0, 0, 0, 22, 191, 1, 0, 0, 0, 24, 196,
+		1, 0, 0, 0, 26, 207, 1, 0, 0, 0, 28, 209, 1, 0, 0, 0, 30, 213, 1, 0, 0,
+		0, 32, 215, 1, 0, 0, 0, 34, 35, 3, 2, 1, 0, 35, 36, 5, 0, 0, 1, 36, 1,
+		1, 0, 0, 0, 37, 38, 3, 4, 2, 0, 38, 3, 1, 0, 0, 0, 39, 44, 3, 6, 3, 0,
+		40, 41, 5, 24, 0, 0, 41, 43, 3, 6, 3, 0, 42, 40, 1, 0, 0, 0, 43, 46, 1,
+		0, 0, 0, 44, 42, 1, 0, 0, 0, 44, 45, 1, 0, 0, 0, 45, 5, 1, 0, 0, 0, 46,
+		44, 1, 0, 0, 0, 47, 53, 3, 8, 4, 0, 48, 49, 5, 23, 0, 0, 49, 52, 3, 8,
+		4, 0, 50, 52, 3, 8, 4, 0, 51, 48, 1, 0, 0, 0, 51, 50, 1, 0, 0, 0, 52, 55,
+		1, 0, 0, 0, 53, 51, 1, 0, 0, 0, 53, 54, 1, 0, 0, 0, 54, 7, 1, 0, 0, 0,
+		55, 53, 1, 0, 0, 0, 56, 58, 5, 22, 0, 0, 57, 56, 1, 0, 0, 0, 57, 58, 1,
+		0, 0, 0, 58, 59, 1, 0, 0, 0, 59, 60, 3, 10, 5, 0, 60, 9, 1, 0, 0, 0, 61,
+		62, 5, 1, 0, 0, 62, 63, 3, 4, 2, 0, 63, 64, 5, 2, 0, 0, 64, 71, 1, 0, 0,
+		0, 65, 71, 3, 12, 6, 0, 66, 71, 3, 22, 11, 0, 67, 71, 3, 20, 10, 0, 68,
+		71, 3, 32, 16, 0, 69, 71, 3, 30, 15, 0, 70, 61, 1, 0, 0, 0, 70, 65, 1,
+		0, 0, 0, 70, 66, 1, 0, 0, 0, 70, 67, 1, 0, 0, 0, 70, 68, 1, 0, 0, 0, 70,
+		69, 1, 0, 0, 0, 71, 11, 1, 0, 0, 0, 72, 73, 3, 32, 16, 0, 73, 74, 5, 6,
+		0, 0, 74, 75, 3, 30, 15, 0, 75, 149, 1, 0, 0, 0, 76, 77, 3, 32, 16, 0,
+		77, 78, 7, 0, 0, 0, 78, 79, 3, 30, 15, 0, 79, 149, 1, 0, 0, 0, 80, 81,
+		3, 32, 16, 0, 81, 82, 5, 9, 0, 0, 82, 83, 3, 30, 15, 0, 83, 149, 1, 0,
+		0, 0, 84, 85, 3, 32, 16, 0, 85, 86, 5, 10, 0, 0, 86, 87, 3, 30, 15, 0,
+		87, 149, 1, 0, 0, 0, 88, 89, 3, 32, 16, 0, 89, 90, 5, 11, 0, 0, 90, 91,
+		3, 30, 15, 0, 91, 149, 1, 0, 0, 0, 92, 93, 3, 32, 16, 0, 93, 94, 5, 12,
+		0, 0, 94, 95, 3, 30, 15, 0, 95, 149, 1, 0, 0, 0, 96, 97, 3, 32, 16, 0,
+		97, 98, 7, 1, 0, 0, 98, 99, 3, 30, 15, 0, 99, 149, 1, 0, 0, 0, 100, 101,
+		3, 32, 16, 0, 101, 102, 7, 2, 0, 0, 102, 103, 3, 30, 15, 0, 103, 149, 1,
+		0, 0, 0, 104, 105, 3, 32, 16, 0, 105, 106, 5, 17, 0, 0, 106, 107, 3, 30,
+		15, 0, 107, 108, 5, 23, 0, 0, 108, 109, 3, 30, 15, 0, 109, 149, 1, 0, 0,
+		0, 110, 111, 3, 32, 16, 0, 111, 112, 5, 22, 0, 0, 112, 113, 5, 17, 0, 0,
+		113, 114, 3, 30, 15, 0, 114, 115, 5, 23, 0, 0, 115, 116, 3, 30, 15, 0,
+		116, 149, 1, 0, 0, 0, 117, 118, 3, 32, 16, 0, 118, 119, 3, 14, 7, 0, 119,
+		149, 1, 0, 0, 0, 120, 121, 3, 32, 16, 0, 121, 122, 3, 16, 8, 0, 122, 149,
+		1, 0, 0, 0, 123, 124, 3, 32, 16, 0, 124, 125, 5, 18, 0, 0, 125, 149, 1,
+		0, 0, 0, 126, 127, 3, 32, 16, 0, 127, 128, 5, 22, 0, 0, 128, 129, 5, 18,
+		0, 0, 129, 149, 1, 0, 0, 0, 130, 131, 3, 32, 16, 0, 131, 132, 5, 19, 0,
+		0, 132, 133, 3, 30, 15, 0, 133, 149, 1, 0, 0, 0, 134, 135, 3, 32, 16, 0,
+		135, 136, 5, 22, 0, 0, 136, 137, 5, 19, 0, 0, 137, 138, 3, 30, 15, 0, 138,
+		149, 1, 0, 0, 0, 139, 140, 3, 32, 16, 0, 140, 141, 5, 20, 0, 0, 141, 142,
+		3, 30, 15, 0, 142, 149, 1, 0, 0, 0, 143, 144, 3, 32, 16, 0, 144, 145, 5,
+		22, 0, 0, 145, 146, 5, 20, 0, 0, 146, 147, 3, 30, 15, 0, 147, 149, 1, 0,
+		0, 0, 148, 72, 1, 0, 0, 0, 148, 76, 1, 0, 0, 0, 148, 80, 1, 0, 0, 0, 148,
+		84, 1, 0, 0, 0, 148, 88, 1, 0, 0, 0, 148, 92, 1, 0, 0, 0, 148, 96, 1, 0,
+		0, 0, 148, 100, 1, 0, 0, 0, 148, 104, 1, 0, 0, 0, 148, 110, 1, 0, 0, 0,
+		148, 117, 1, 0, 0, 0, 148, 120, 1, 0, 0, 0, 148, 123, 1, 0, 0, 0, 148,
+		126, 1, 0, 0, 0, 148, 130, 1, 0, 0, 0, 148, 134, 1, 0, 0, 0, 148, 139,
+		1, 0, 0, 0, 148, 143, 1, 0, 0, 0, 149, 13, 1, 0, 0, 0, 150, 151, 5, 21,
+		0, 0, 151, 152, 5, 1, 0, 0, 152, 153, 3, 18, 9, 0, 153, 154, 5, 2, 0, 0,
+		154, 163, 1, 0, 0, 0, 155, 156, 5, 21, 0, 0, 156, 157, 5, 3, 0, 0, 157,
+		158, 3, 18, 9, 0, 158, 159, 5, 4, 0, 0, 159, 163, 1, 0, 0, 0, 160, 161,
+		5, 21, 0, 0, 161, 163, 3, 30, 15, 0, 162, 150, 1, 0, 0, 0, 162, 155, 1,
+		0, 0, 0, 162, 160, 1, 0, 0, 0, 163, 15, 1, 0, 0, 0, 164, 165, 5, 22, 0,
+		0, 165, 166, 5, 21, 0, 0, 166, 167, 5, 1, 0, 0, 167, 168, 3, 18, 9, 0,
+		168, 169, 5, 2, 0, 0, 169, 180, 1, 0, 0, 0, 170, 171, 5, 22, 0, 0, 171,
+		172, 5, 21, 0, 0, 172, 173, 5, 3, 0, 0, 173, 174, 3, 18, 9, 0, 174, 175,
+		5, 4, 0, 0, 175, 180, 1, 0, 0, 0, 176, 177, 5, 22, 0, 0, 177, 178, 5, 21,
+		0, 0, 178, 180, 3, 30, 15, 0, 179, 164, 1, 0, 0, 0, 179, 170, 1, 0, 0,
+		0, 179, 176, 1, 0, 0, 0, 180, 17, 1, 0, 0, 0, 181, 186, 3, 30, 15, 0, 182,
+		183, 5, 5, 0, 0, 183, 185, 3, 30, 15, 0, 184, 182, 1, 0, 0, 0, 185, 188,
+		1, 0, 0, 0, 186, 184, 1, 0, 0, 0, 186, 187, 1, 0, 0, 0, 187, 19, 1, 0,
+		0, 0, 188, 186, 1, 0, 0, 0, 189, 190, 7, 3, 0, 0, 190, 21, 1, 0, 0, 0,
+		191, 192, 7, 4, 0, 0, 192, 193, 5, 1, 0, 0, 193, 194, 3, 24, 12, 0, 194,
+		195, 5, 2, 0, 0, 195, 23, 1, 0, 0, 0, 196, 201, 3, 26, 13, 0, 197, 198,
+		5, 5, 0, 0, 198, 200, 3, 26, 13, 0, 199, 197, 1, 0, 0, 0, 200, 203, 1,
+		0, 0, 0, 201, 199, 1, 0, 0, 0, 201, 202, 1, 0, 0, 0, 202, 25, 1, 0, 0,
+		0, 203, 201, 1, 0, 0, 0, 204, 208, 3, 32, 16, 0, 205, 208, 3, 30, 15, 0,
+		206, 208, 3, 28, 14, 0, 207, 204, 1, 0, 0, 0, 207, 205, 1, 0, 0, 0, 207,
+		206, 1, 0, 0, 0, 208, 27, 1, 0, 0, 0, 209, 210, 5, 3, 0, 0, 210, 211, 3,
+		18, 9, 0, 211, 212, 5, 4, 0, 0, 212, 29, 1, 0, 0, 0, 213, 214, 7, 5, 0,
+		0, 214, 31, 1, 0, 0, 0, 215, 216, 5, 31, 0, 0, 216, 33, 1, 0, 0, 0, 11,
+		44, 51, 53, 57, 70, 148, 162, 179, 186, 201, 207,
 	}
 	deserializer := antlr.NewATNDeserializer(nil)
 	staticData.atn = deserializer.Deserialize(staticData.serializedATN)
@@ -1947,6 +1950,7 @@ type IInClauseContext interface {
 	RPAREN() antlr.TerminalNode
 	LBRACK() antlr.TerminalNode
 	RBRACK() antlr.TerminalNode
+	Value() IValueContext
 
 	// IsInClauseContext differentiates from other interfaces.
 	IsInClauseContext()
@@ -2020,6 +2024,22 @@ func (s *InClauseContext) RBRACK() antlr.TerminalNode {
 	return s.GetToken(FilterQueryParserRBRACK, 0)
 }
 
+func (s *InClauseContext) Value() IValueContext {
+	var t antlr.RuleContext
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(IValueContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IValueContext)
+}
+
 func (s *InClauseContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
@@ -2053,7 +2073,7 @@ func (s *InClauseContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 func (p *FilterQueryParser) InClause() (localctx IInClauseContext) {
 	localctx = NewInClauseContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 14, FilterQueryParserRULE_inClause)
-	p.SetState(160)
+	p.SetState(162)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -2122,6 +2142,21 @@ func (p *FilterQueryParser) InClause() (localctx IInClauseContext) {
 			}
 		}
 
+	case 3:
+		p.EnterOuterAlt(localctx, 3)
+		{
+			p.SetState(160)
+			p.Match(FilterQueryParserIN)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
+		}
+		{
+			p.SetState(161)
+			p.Value()
+		}
+
 	case antlr.ATNInvalidAltNumber:
 		goto errorExit
 	}
@@ -2154,6 +2189,7 @@ type INotInClauseContext interface {
 	RPAREN() antlr.TerminalNode
 	LBRACK() antlr.TerminalNode
 	RBRACK() antlr.TerminalNode
+	Value() IValueContext
 
 	// IsNotInClauseContext differentiates from other interfaces.
 	IsNotInClauseContext()
@@ -2231,6 +2267,22 @@ func (s *NotInClauseContext) RBRACK() antlr.TerminalNode {
 	return s.GetToken(FilterQueryParserRBRACK, 0)
 }
 
+func (s *NotInClauseContext) Value() IValueContext {
+	var t antlr.RuleContext
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(IValueContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IValueContext)
+}
+
 func (s *NotInClauseContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
@@ -2264,7 +2316,7 @@ func (s *NotInClauseContext) Accept(visitor antlr.ParseTreeVisitor) interface{} 
 func (p *FilterQueryParser) NotInClause() (localctx INotInClauseContext) {
 	localctx = NewNotInClauseContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 16, FilterQueryParserRULE_notInClause)
-	p.SetState(174)
+	p.SetState(179)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -2274,7 +2326,7 @@ func (p *FilterQueryParser) NotInClause() (localctx INotInClauseContext) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(162)
+			p.SetState(164)
 			p.Match(FilterQueryParserNOT)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2282,7 +2334,7 @@ func (p *FilterQueryParser) NotInClause() (localctx INotInClauseContext) {
 			}
 		}
 		{
-			p.SetState(163)
+			p.SetState(165)
 			p.Match(FilterQueryParserIN)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2290,7 +2342,7 @@ func (p *FilterQueryParser) NotInClause() (localctx INotInClauseContext) {
 			}
 		}
 		{
-			p.SetState(164)
+			p.SetState(166)
 			p.Match(FilterQueryParserLPAREN)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2298,11 +2350,11 @@ func (p *FilterQueryParser) NotInClause() (localctx INotInClauseContext) {
 			}
 		}
 		{
-			p.SetState(165)
+			p.SetState(167)
 			p.ValueList()
 		}
 		{
-			p.SetState(166)
+			p.SetState(168)
 			p.Match(FilterQueryParserRPAREN)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2313,7 +2365,7 @@ func (p *FilterQueryParser) NotInClause() (localctx INotInClauseContext) {
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(168)
+			p.SetState(170)
 			p.Match(FilterQueryParserNOT)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2321,7 +2373,7 @@ func (p *FilterQueryParser) NotInClause() (localctx INotInClauseContext) {
 			}
 		}
 		{
-			p.SetState(169)
+			p.SetState(171)
 			p.Match(FilterQueryParserIN)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2329,7 +2381,7 @@ func (p *FilterQueryParser) NotInClause() (localctx INotInClauseContext) {
 			}
 		}
 		{
-			p.SetState(170)
+			p.SetState(172)
 			p.Match(FilterQueryParserLBRACK)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2337,16 +2389,39 @@ func (p *FilterQueryParser) NotInClause() (localctx INotInClauseContext) {
 			}
 		}
 		{
-			p.SetState(171)
+			p.SetState(173)
 			p.ValueList()
 		}
 		{
-			p.SetState(172)
+			p.SetState(174)
 			p.Match(FilterQueryParserRBRACK)
 			if p.HasError() {
 				// Recognition error - abort rule
 				goto errorExit
 			}
+		}
+
+	case 3:
+		p.EnterOuterAlt(localctx, 3)
+		{
+			p.SetState(176)
+			p.Match(FilterQueryParserNOT)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
+		}
+		{
+			p.SetState(177)
+			p.Match(FilterQueryParserIN)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
+		}
+		{
+			p.SetState(178)
+			p.Value()
 		}
 
 	case antlr.ATNInvalidAltNumber:
@@ -2501,10 +2576,10 @@ func (p *FilterQueryParser) ValueList() (localctx IValueListContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(176)
+		p.SetState(181)
 		p.Value()
 	}
-	p.SetState(181)
+	p.SetState(186)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -2513,7 +2588,7 @@ func (p *FilterQueryParser) ValueList() (localctx IValueListContext) {
 
 	for _la == FilterQueryParserCOMMA {
 		{
-			p.SetState(177)
+			p.SetState(182)
 			p.Match(FilterQueryParserCOMMA)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2521,11 +2596,11 @@ func (p *FilterQueryParser) ValueList() (localctx IValueListContext) {
 			}
 		}
 		{
-			p.SetState(178)
+			p.SetState(183)
 			p.Value()
 		}
 
-		p.SetState(183)
+		p.SetState(188)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -2638,7 +2713,7 @@ func (p *FilterQueryParser) FullText() (localctx IFullTextContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(184)
+		p.SetState(189)
 		_la = p.GetTokenStream().LA(1)
 
 		if !(_la == FilterQueryParserQUOTED_TEXT || _la == FilterQueryParserFREETEXT) {
@@ -2786,7 +2861,7 @@ func (p *FilterQueryParser) FunctionCall() (localctx IFunctionCallContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(186)
+		p.SetState(191)
 		_la = p.GetTokenStream().LA(1)
 
 		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&234881024) != 0) {
@@ -2797,7 +2872,7 @@ func (p *FilterQueryParser) FunctionCall() (localctx IFunctionCallContext) {
 		}
 	}
 	{
-		p.SetState(187)
+		p.SetState(192)
 		p.Match(FilterQueryParserLPAREN)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -2805,11 +2880,11 @@ func (p *FilterQueryParser) FunctionCall() (localctx IFunctionCallContext) {
 		}
 	}
 	{
-		p.SetState(188)
+		p.SetState(193)
 		p.FunctionParamList()
 	}
 	{
-		p.SetState(189)
+		p.SetState(194)
 		p.Match(FilterQueryParserRPAREN)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -2965,10 +3040,10 @@ func (p *FilterQueryParser) FunctionParamList() (localctx IFunctionParamListCont
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(191)
+		p.SetState(196)
 		p.FunctionParam()
 	}
-	p.SetState(196)
+	p.SetState(201)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -2977,7 +3052,7 @@ func (p *FilterQueryParser) FunctionParamList() (localctx IFunctionParamListCont
 
 	for _la == FilterQueryParserCOMMA {
 		{
-			p.SetState(192)
+			p.SetState(197)
 			p.Match(FilterQueryParserCOMMA)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2985,11 +3060,11 @@ func (p *FilterQueryParser) FunctionParamList() (localctx IFunctionParamListCont
 			}
 		}
 		{
-			p.SetState(193)
+			p.SetState(198)
 			p.FunctionParam()
 		}
 
-		p.SetState(198)
+		p.SetState(203)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -3139,7 +3214,7 @@ func (s *FunctionParamContext) Accept(visitor antlr.ParseTreeVisitor) interface{
 func (p *FilterQueryParser) FunctionParam() (localctx IFunctionParamContext) {
 	localctx = NewFunctionParamContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 26, FilterQueryParserRULE_functionParam)
-	p.SetState(202)
+	p.SetState(207)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -3149,21 +3224,21 @@ func (p *FilterQueryParser) FunctionParam() (localctx IFunctionParamContext) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(199)
+			p.SetState(204)
 			p.Key()
 		}
 
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(200)
+			p.SetState(205)
 			p.Value()
 		}
 
 	case 3:
 		p.EnterOuterAlt(localctx, 3)
 		{
-			p.SetState(201)
+			p.SetState(206)
 			p.Array()
 		}
 
@@ -3291,7 +3366,7 @@ func (p *FilterQueryParser) Array() (localctx IArrayContext) {
 	p.EnterRule(localctx, 28, FilterQueryParserRULE_array)
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(204)
+		p.SetState(209)
 		p.Match(FilterQueryParserLBRACK)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -3299,11 +3374,11 @@ func (p *FilterQueryParser) Array() (localctx IArrayContext) {
 		}
 	}
 	{
-		p.SetState(205)
+		p.SetState(210)
 		p.ValueList()
 	}
 	{
-		p.SetState(206)
+		p.SetState(211)
 		p.Match(FilterQueryParserRBRACK)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -3426,7 +3501,7 @@ func (p *FilterQueryParser) Value() (localctx IValueContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(208)
+		p.SetState(213)
 		_la = p.GetTokenStream().LA(1)
 
 		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&4026531840) != 0) {
@@ -3535,7 +3610,7 @@ func (p *FilterQueryParser) Key() (localctx IKeyContext) {
 	p.EnterRule(localctx, 32, FilterQueryParserRULE_key)
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(210)
+		p.SetState(215)
 		p.Match(FilterQueryParserKEY)
 		if p.HasError() {
 			// Recognition error - abort rule

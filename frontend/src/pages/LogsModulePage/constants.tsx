@@ -22,7 +22,11 @@ export const logsExplorer: TabRoutes = {
 };
 
 export const logsPipelines: TabRoutes = {
-	Component: Pipelines,
+	Component: (): JSX.Element => (
+		<PreferenceContextProvider>
+			<Pipelines />
+		</PreferenceContextProvider>
+	),
 	name: (
 		<div className="tab-item">
 			<Workflow size={16} /> Pipelines
