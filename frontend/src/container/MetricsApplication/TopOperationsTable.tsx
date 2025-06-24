@@ -4,6 +4,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import { InputRef, Switch, Tooltip, Typography } from 'antd';
 import { ColumnsType, ColumnType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
+import TextToolTip from 'components/TextToolTip';
 import Download from 'container/Download/Download';
 import { filterDropdown } from 'container/ServiceApplication/Filter/FilterDropdown';
 import useResourceAttribute from 'hooks/useResourceAttribute';
@@ -176,6 +177,13 @@ function TopOperationsTable({
 		hideOnSinglePage: true,
 	};
 
+	const entryPointSpanInfo = {
+		text: 'Entrypoint spans are the first spans in a trace',
+		url:
+			'https://signoz.io/docs/userguide/metrics/#apdex?utm_source=product&utm_medium=frontend&utm_campaign=apdex',
+		urlText: 'Learn more about Apdex.',
+	};
+
 	return (
 		<div className="top-operation">
 			<div className="top-operation__controls">
@@ -193,6 +201,12 @@ function TopOperationsTable({
 						size="small"
 					/>
 					<span className="top-operation__entry-point-label">Entrypoint Spans</span>
+					<TextToolTip
+						text={entryPointSpanInfo.text}
+						url={entryPointSpanInfo.url}
+						useFilledIcon={false}
+						urlText={entryPointSpanInfo.urlText}
+					/>
 				</div>
 			</div>
 			<ResizeTable
