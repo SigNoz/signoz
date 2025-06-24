@@ -11,7 +11,7 @@ export const mapQueryDataToApi = <Data extends MapData, Key extends keyof Data>(
 ): MapQueryDataToApiResult<Record<string, Data>> => {
 	const newLegendMap: Record<string, string> = {};
 
-	const preparedResult = data.reduce<Record<string, Data>>((acc, query) => {
+	const preparedResult = data?.reduce<Record<string, Data>>((acc, query) => {
 		const newResult: Record<string, Data> = {
 			...acc,
 			[query[nameField] as string]: {
