@@ -24,3 +24,6 @@ export const generateExportToDashboardLink = ({
 	}=${widgetId}&${QueryParams.compositeQuery}=${encodeURIComponent(
 		JSON.stringify(query),
 	)}`;
+
+export const shouldEnableDrilldown = (panelType: PANEL_TYPES): boolean =>
+	!panelType;

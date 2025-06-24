@@ -10,6 +10,7 @@ import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useState } from 'react';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { shouldEnableDrilldown } from 'utils/dashboard/generateExportToDashboardLink';
 
 function DashboardWidget(): JSX.Element | null {
 	const { search } = useLocation();
@@ -56,6 +57,7 @@ function DashboardWidget(): JSX.Element | null {
 			yAxisUnit={selectedWidget?.yAxisUnit}
 			selectedGraph={selectedGraph}
 			fillSpans={selectedWidget?.fillSpans}
+			enableDrilldown={shouldEnableDrilldown(selectedGraph)}
 		/>
 	);
 }
