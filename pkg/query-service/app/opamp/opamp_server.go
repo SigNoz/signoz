@@ -124,6 +124,8 @@ func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *pr
 					},
 				},
 			},
+			// Note: refer to opamp/model/agent.go; look for `Flags` keyword
+			// Flags: uint64(protobufs.ServerToAgentFlags_ServerToAgentFlags_ReportFullState),
 		}
 	}
 
