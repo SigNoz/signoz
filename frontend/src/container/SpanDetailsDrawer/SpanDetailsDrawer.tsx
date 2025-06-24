@@ -192,6 +192,19 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								</Typography.Text>
 							</div>
 						</div>
+
+						{selectedSpan.statusMessage && (
+							<div className="item">
+								<Typography.Text className="attribute-key">
+									status message
+								</Typography.Text>
+								<div className="value-wrapper">
+									<Typography.Text className="attribute-value">
+										{selectedSpan.statusMessage}
+									</Typography.Text>
+								</div>
+							</div>
+						)}
 					</section>
 
 					<Button onClick={onLogsHandler} className="related-logs">
