@@ -9,7 +9,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { debounce } from 'lodash-es';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import {
 	AlertCircle,
 	GripVertical,
@@ -17,7 +17,7 @@ import {
 	Search,
 	Trash2,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	DragDropContext,
 	Draggable,
@@ -115,10 +115,9 @@ function ExplorerColumnsRenderer({
 		setOpen(false);
 	};
 
-	const debouncedSetQuerySearchText = useMemo(
-		() => debounce((value: string) => setQuerySearchText(value), 400),
-		[],
-	);
+	const debouncedSetQuerySearchText = useDebouncedFn((value) => {
+		setQuerySearchText(value as string);
+	}, 400);
 
 	useEffect(
 		() => (): void => {
