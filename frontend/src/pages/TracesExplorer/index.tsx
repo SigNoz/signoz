@@ -112,22 +112,6 @@ function TracesExplorer(): JSX.Element {
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
 
-	const isMultipleQueries = useMemo(
-		() =>
-			currentQuery.builder.queryData.length > 1 ||
-			currentQuery.builder.queryFormulas.length > 0,
-		[currentQuery],
-	);
-
-	const isGroupByExist = useMemo(() => {
-		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
-			(acc, query) => acc + (query?.groupBy?.length || 0),
-			0,
-		);
-
-		return groupByCount > 0;
-	}, [currentQuery]);
-
 	const defaultQuery = useMemo(
 		() =>
 			updateAllQueriesOperators(
