@@ -1,6 +1,9 @@
 package querybuilder
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 const (
 	NsToSeconds      = 1000000000
@@ -82,4 +85,20 @@ func MinAllowedStepIntervalForMetric(start, end uint64) uint64 {
 
 	// return the nearest lower multiple of 60
 	return step - step%60
+}
+
+func AssignReservedVars(vars map[string]any, start, end uint64) {
+	start = ToNanoSecs(start)
+	end = ToNanoSecs(end)
+
+	vars["start_timestamp"] = start / 1_000_000_000
+	vars["end_timestamp"] = end / 1_000_000_000
+	vars["start_timestamp_ms"] = start / 1_000_000
+	vars["end_timestamp_ms"] = end / 1_000_000
+	vars["SIGNOZ_START_TIME"] = start / 1_000_000
+	vars["SIGNOZ_END_TIME"] = end / 1_000_000
+	vars["start_timestamp_nano"] = start
+	vars["end_timestamp_nano"] = end
+	vars["start_datetime"] = fmt.Sprintf("toDateTime(%d)", start/1_000_000_000)
+	vars["end_datetime"] = fmt.Sprintf("toDateTime(%d)", end/1_000_000_000)
 }
