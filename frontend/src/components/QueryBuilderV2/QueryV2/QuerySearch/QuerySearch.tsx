@@ -14,10 +14,10 @@ import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, {
 	EditorView,
-	Extension,
 	keymap,
+	Extension,
 } from '@uiw/react-codemirror';
-import { Button, Card, Collapse, Popover, Tag } from 'antd';
+import { Button, Card, Collapse, Popover, Space, Tag, Typography } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
@@ -197,7 +197,6 @@ function QuerySearch({
 		return op.toUpperCase() === 'IN' || op.toUpperCase() === 'NOT IN';
 	};
 
-	// Helper function to format value based on operator type and value type
 	const formatValueForOperator = (
 		value: string,
 		operatorToken: string | undefined,
@@ -216,7 +215,10 @@ function QuerySearch({
 
 		// If we're already inside bracket list for IN operator and it's a string value
 		// just wrap in quotes but not brackets (we're already in brackets)
-		if (type === 'value' || type === 'keyword') {
+		if (
+			(type === 'value' || type === 'keyword') &&
+			!/^[a-zA-Z0-9_][a-zA-Z0-9_.\[\]]*$/.test(value)
+		) {
 			return wrapStringValueInQuotes(value);
 		}
 
@@ -1055,7 +1057,7 @@ function QuerySearch({
 					</Collapse>
 				</Card>
 			)}
-			{/* 
+
 			{queryContext && (
 				<Card size="small" title="Current Context" className="query-context">
 					<div className="context-details">
@@ -1098,7 +1100,7 @@ function QuerySearch({
 						</Space>
 					</div>
 				</Card>
-			)} */}
+			)}
 		</div>
 	);
 }
