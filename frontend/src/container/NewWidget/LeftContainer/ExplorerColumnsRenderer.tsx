@@ -3,18 +3,8 @@
 import './ExplorerColumnsRenderer.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Checkbox,
-	Divider,
-	Dropdown,
-	Empty,
-	Input,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Button, Divider, Dropdown, Input, Tooltip, Typography } from 'antd';
 import { MenuProps } from 'antd/lib';
-import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -37,6 +27,7 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WidgetGraphProps } from '../types';
+import ExplorerAttributeColumns from './ExplorerAttributeColumns';
 
 type LogColumnsRendererProps = {
 	setSelectedLogFields: WidgetGraphProps['setSelectedLogFields'];
@@ -158,31 +149,13 @@ function ExplorerColumnsRenderer({
 		{
 			key: 'columns',
 			label: (
-				<div className="attribute-columns">
-					{isLoading ? (
-						<Spinner size="large" tip="Loading..." height="2vh" />
-					) : (
-						((): JSX.Element | JSX.Element[] => {
-							const filteredAttributeKeys =
-								data?.payload?.attributeKeys?.filter((attributeKey) =>
-									attributeKey.key.toLowerCase().includes(searchText.toLowerCase()),
-								) || [];
-							if (filteredAttributeKeys.length === 0) {
-								return <Empty description="No columns found" />;
-							}
-							return filteredAttributeKeys.map((attributeKey) => (
-								<Checkbox
-									checked={isAttributeKeySelected(attributeKey.key)}
-									onChange={(): void => handleCheckboxChange(attributeKey.key)}
-									style={{ padding: 0 }}
-									key={attributeKey.key}
-								>
-									{attributeKey.key}
-								</Checkbox>
-							));
-						})()
-					)}
-				</div>
+				<ExplorerAttributeColumns
+					isLoading={isLoading}
+					data={data}
+					searchText={searchText}
+					isAttributeKeySelected={isAttributeKeySelected}
+					handleCheckboxChange={handleCheckboxChange}
+				/>
 			),
 		},
 	];
