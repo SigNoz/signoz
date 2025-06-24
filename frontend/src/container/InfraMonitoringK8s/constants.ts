@@ -550,6 +550,9 @@ export function GetDeploymentsQuickFiltersConfig(
 	const metric = dotMetricsEnabled
 		? 'k8s.pod.cpu.utilization'
 		: 'k8s_pod_cpu_utilization';
+	const environmentKey = dotMetricsEnabled
+		? 'deployment.environment'
+		: 'deployment_environment';
 
 	return [
 		{
@@ -600,6 +603,19 @@ export function GetDeploymentsQuickFiltersConfig(
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Environment',
+			attributeKey: {
+				key: environmentKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+			},
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
 	];
 }
 
@@ -616,6 +632,9 @@ export function GetStatefulsetsQuickFiltersConfig(
 	const metric = dotMetricsEnabled
 		? 'k8s.pod.cpu.utilization'
 		: 'k8s_pod_cpu_utilization';
+	const environmentKey = dotMetricsEnabled
+		? 'deployment.environment'
+		: 'deployment_environment';
 
 	return [
 		{
@@ -666,6 +685,19 @@ export function GetStatefulsetsQuickFiltersConfig(
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Environment',
+			attributeKey: {
+				key: environmentKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+			},
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
 	];
 }
 
@@ -682,6 +714,9 @@ export function GetDaemonsetsQuickFiltersConfig(
 	const metricName = dotMetricsEnabled
 		? 'k8s.pod.cpu.utilization'
 		: 'k8s_pod_cpu_utilization';
+	const environmentKey = dotMetricsEnabled
+		? 'deployment.environment'
+		: 'deployment_environment';
 
 	return [
 		{
@@ -730,6 +765,19 @@ export function GetDaemonsetsQuickFiltersConfig(
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Environment',
+			attributeKey: {
+				key: environmentKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+			},
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
 	];
 }
 
@@ -744,6 +792,9 @@ export function GetJobsQuickFiltersConfig(
 	const metricName = dotMetricsEnabled
 		? 'k8s.pod.cpu.utilization'
 		: 'k8s_pod_cpu_utilization';
+	const environmentKey = dotMetricsEnabled
+		? 'deployment.environment'
+		: 'deployment_environment';
 
 	return [
 		{
@@ -789,6 +840,19 @@ export function GetJobsQuickFiltersConfig(
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: metricName,
+			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Environment',
+			attributeKey: {
+				key: environmentKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+			},
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
