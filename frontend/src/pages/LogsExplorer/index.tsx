@@ -9,7 +9,7 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViewsContainer from 'container/LogsExplorerViews';
 import {
@@ -23,6 +23,7 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEqual, isNull } from 'lodash-es';
@@ -77,7 +78,11 @@ function LogsExplorer(): JSX.Element {
 		window.history.replaceState({}, '', url.toString());
 	}, [selectedView]);
 
-	const { handleRunQuery, handleSetConfig } = useQueryBuilder();
+	const {
+		handleRunQuery,
+		handleSetConfig,
+		updateAllQueriesOperators,
+	} = useQueryBuilder();
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -87,10 +92,16 @@ function LogsExplorer(): JSX.Element {
 
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
 
+	const [shouldReset, setShouldReset] = useState(false);
+
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews): void => {
 			if (selectedView === ExplorerViews.LIST) {
 				handleSetConfig(PANEL_TYPES.LIST, DataSource.LOGS);
+			}
+
+			if (view === ExplorerViews.LIST) {
+				setShouldReset(true);
 			}
 
 			setSelectedView(view);
@@ -100,6 +111,25 @@ function LogsExplorer(): JSX.Element {
 		},
 		[handleSetConfig, handleExplorerTabChange, selectedView],
 	);
+
+	const defaultListQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap.logs,
+				PANEL_TYPES.LIST,
+				DataSource.LOGS,
+			),
+		[updateAllQueriesOperators],
+	);
+
+	useShareBuilderUrl({
+		defaultValue: defaultListQuery,
+		forceReset: shouldReset,
+	});
+
+	useEffect(() => {
+		if (shouldReset) setShouldReset(false);
+	}, [shouldReset]);
 
 	const handleFilterVisibilityChange = (): void => {
 		setLocalStorageApi(
@@ -286,7 +316,7 @@ function LogsExplorer(): JSX.Element {
 						}
 						rightActions={
 							<RightToolbarActions
-								onStageRunQuery={handleRunQuery}
+								onStageRunQuery={(): void => handleRunQuery(false, true)}
 								listQueryKeyRef={listQueryKeyRef}
 								chartQueryKeyRef={chartQueryKeyRef}
 								isLoadingQueries={isLoadingQueries}

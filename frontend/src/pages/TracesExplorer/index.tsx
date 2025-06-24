@@ -92,10 +92,16 @@ function TracesExplorer(): JSX.Element {
 		});
 	}, [selectedView, setSearchParams]);
 
+	const [shouldReset, setShouldReset] = useState(false);
+
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews): void => {
 			if (selectedView === ExplorerViews.LIST) {
-				handleSetConfig(PANEL_TYPES.LIST, DataSource.LOGS);
+				handleSetConfig(PANEL_TYPES.LIST, DataSource.TRACES);
+			}
+
+			if (view === ExplorerViews.LIST) {
+				setShouldReset(true);
 			}
 
 			setSelectedView(view);
@@ -177,7 +183,11 @@ function TracesExplorer(): JSX.Element {
 		[exportDefaultQuery, panelType, safeNavigate, getUpdatedQueryForExport],
 	);
 
-	useShareBuilderUrl(defaultQuery);
+	useShareBuilderUrl({ defaultValue: defaultQuery, forceReset: shouldReset });
+
+	useEffect(() => {
+		if (shouldReset) setShouldReset(false);
+	}, [shouldReset]);
 
 	const [isOpen, setOpen] = useState<boolean>(true);
 	const logEventCalledRef = useRef(false);
@@ -263,7 +273,11 @@ function TracesExplorer(): JSX.Element {
 									onChangeSelectedView={handleChangeSelectedView}
 								/>
 							}
-							rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
+							rightActions={
+								<RightToolbarActions
+									onStageRunQuery={(): void => handleRunQuery(false, true)}
+								/>
+							}
 						/>
 					</div>
 					<ExplorerCard sourcepage={DataSource.TRACES}>

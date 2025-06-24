@@ -6,6 +6,7 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetMetricsTreeMap } from 'hooks/metricsExplorer/useGetMetricsTreeMap';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -83,6 +84,8 @@ function Summary(): JSX.Element {
 			[MetricsExplorerEventKeys.Tab]: 'summary',
 		});
 	}, [maxTime, minTime]);
+
+	useShareBuilderUrl({ defaultValue: defaultQuery });
 
 	// This is used to avoid the filters from being serialized with the id
 	const queryFiltersWithoutId = useMemo(() => {
