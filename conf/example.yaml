@@ -237,7 +237,7 @@ statsreporter:
   interval: 6h
   collect:
     # Whether to collect identities and traits (emails).
-    identities: false
+    identities: true
 
 
 ##################### Gateway (License only) #####################
