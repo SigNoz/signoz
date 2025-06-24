@@ -4507,6 +4507,10 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 		return
 	}
 
+	if !(len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0)) {
+		return
+	}
+
 	queryInfoResult := NewQueryInfoResult(queryRangeParams, version)
 	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Queried", queryInfoResult.ToMap())
 
