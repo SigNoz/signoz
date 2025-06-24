@@ -4507,12 +4507,13 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 		return
 	}
 
+	queryInfoResult := NewQueryInfoResult(queryRangeParams, version)
 	if !(len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0)) {
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", queryInfoResult.ToMap())
 		return
 	}
 
-	queryInfoResult := NewQueryInfoResult(queryRangeParams, version)
-	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Queried", queryInfoResult.ToMap())
+	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", queryInfoResult.ToMap())
 
 	if !(queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed) {
 		return
@@ -4540,7 +4541,7 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 
 		properties["referrer"] = referrer
 		properties["module_name"] = "dashboard"
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Queried", properties)
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
 	}
 
 	if matched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer); matched {
@@ -4554,7 +4555,7 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 
 		properties["referrer"] = referrer
 		properties["module_name"] = "rule"
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Queried", properties)
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
 	}
 
 }
