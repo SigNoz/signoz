@@ -32,6 +32,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { Props } from 'types/api/dashboard/update';
 import { DataSource } from 'types/common/queryBuilder';
+import { shouldEnableDrilldown } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
 import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
@@ -226,6 +227,7 @@ function WidgetGraphComponent({
 	const onToggleModelHandler = (): void => {
 		const existingSearchParams = new URLSearchParams(search);
 		existingSearchParams.delete(QueryParams.expandedWidgetId);
+		existingSearchParams.delete(QueryParams.compositeQuery);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
 		if (queryResponse.data?.payload) {
 			const {
@@ -354,6 +356,7 @@ function WidgetGraphComponent({
 					onClickHandler={onClickHandler ?? graphClickHandler}
 					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
+					enableDrillDown={shouldEnableDrilldown(widget.panelTypes)}
 				/>
 			</Modal>
 

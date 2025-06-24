@@ -20,6 +20,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import createQueryParams from 'lib/createQueryParams';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
@@ -71,7 +72,10 @@ import {
 	placeWidgetBetweenRows,
 } from './utils';
 
-function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
+function NewWidget({
+	selectedGraph,
+	enableDrilldown = false,
+}: NewWidgetProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const {
 		selectedDashboard,
@@ -687,6 +691,26 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		}
 	}, [selectedLogFields, selectedTracesFields, currentQuery, selectedGraph]);
 
+	const showSwitchToViewModeButton =
+		enableDrilldown && !isNewDashboard && !!query.get('widgetId');
+
+	const handleSwitchToViewMode = useCallback(() => {
+		if (!query.get('widgetId')) return;
+		const widgetId = query.get('widgetId') || '';
+		const queryParams = {
+			[QueryParams.expandedWidgetId]: widgetId,
+			[QueryParams.compositeQuery]: encodeURIComponent(
+				JSON.stringify(currentQuery),
+			),
+		};
+
+		const updatedSearch = createQueryParams(queryParams);
+		safeNavigate({
+			pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
+			search: updatedSearch,
+		});
+	}, [query, safeNavigate, dashboardId, currentQuery]);
+
 	return (
 		<Container>
 			<div className="edit-header">
@@ -703,31 +727,42 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						</Typography.Text>
 					</Flex>
 				</div>
-				{isSaveDisabled && (
-					<Button
-						type="primary"
-						data-testid="new-widget-save"
-						loading={updateDashboardMutation.isLoading}
-						disabled={isSaveDisabled}
-						onClick={onSaveDashboard}
-						className="save-btn"
-					>
-						Save Changes
-					</Button>
-				)}
-				{!isSaveDisabled && (
-					<Button
-						type="primary"
-						data-testid="new-widget-save"
-						loading={updateDashboardMutation.isLoading}
-						disabled={isSaveDisabled}
-						onClick={onSaveDashboard}
-						icon={<Check size={14} />}
-						className="save-btn"
-					>
-						Save Changes
-					</Button>
-				)}
+				<div className="right-header">
+					{showSwitchToViewModeButton && (
+						<Button
+							data-testid="switch-to-view-mode"
+							disabled={isSaveDisabled || !currentQuery}
+							onClick={handleSwitchToViewMode}
+						>
+							Switch to View Mode
+						</Button>
+					)}
+					{isSaveDisabled && (
+						<Button
+							type="primary"
+							data-testid="new-widget-save"
+							loading={updateDashboardMutation.isLoading}
+							disabled={isSaveDisabled}
+							onClick={onSaveDashboard}
+							className="save-btn"
+						>
+							Save Changes
+						</Button>
+					)}
+					{!isSaveDisabled && (
+						<Button
+							type="primary"
+							data-testid="new-widget-save"
+							loading={updateDashboardMutation.isLoading}
+							disabled={isSaveDisabled}
+							onClick={onSaveDashboard}
+							icon={<Check size={14} />}
+							className="save-btn"
+						>
+							Save Changes
+						</Button>
+					)}
+				</div>
 			</div>
 
 			<PanelContainer>

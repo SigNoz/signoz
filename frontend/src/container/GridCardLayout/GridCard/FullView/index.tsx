@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './WidgetFullView.styles.scss';
 
 import {
@@ -8,11 +9,14 @@ import {
 import { Button, Input, Spin } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import useDrilldown from 'container/GridCardLayout/GridCard/FullView/useDrilldown';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import {
 	timeItems,
@@ -52,6 +56,7 @@ function FullView({
 	onClickHandler,
 	customOnDragSelect,
 	setCurrentGraphRef,
+	enableDrillDown = false,
 }: FullViewProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { selectedTime: globalSelectedTime } = useSelector<
@@ -112,6 +117,13 @@ function FullView({
 				},
 			},
 		};
+	});
+
+	const { dashboardEditView } = useDrilldown({
+		enableDrillDown,
+		widget,
+		setRequestData,
+		selectedDashboard,
 	});
 
 	useEffect(() => {
@@ -204,71 +216,98 @@ function FullView({
 
 	return (
 		<div className="full-view-container">
-			<div className="full-view-header-container">
-				{fullViewOptions && (
-					<TimeContainer $panelType={widget.panelTypes}>
-						{response.isFetching && (
-							<Spin spinning indicator={<LoadingOutlined spin />} />
+			<OverlayScrollbar>
+				<>
+					<div className="full-view-header-container">
+						{fullViewOptions && (
+							<TimeContainer $panelType={widget.panelTypes}>
+								{enableDrillDown && (
+									<Button
+										className="switch-edit-btn"
+										disabled={response.isFetching || response.isLoading}
+										onClick={(): void => {
+											safeNavigate(dashboardEditView);
+										}}
+									>
+										Switch to Edit Mode
+									</Button>
+								)}
+								<div className="time-container">
+									{response.isFetching && (
+										<Spin spinning indicator={<LoadingOutlined spin />} />
+									)}
+									<TimePreference
+										selectedTime={selectedTime}
+										setSelectedTime={setSelectedTime}
+									/>
+									<Button
+										style={{
+											marginLeft: '4px',
+										}}
+										onClick={(): void => {
+											response.refetch();
+										}}
+										type="primary"
+										icon={<SyncOutlined />}
+									/>
+								</div>
+							</TimeContainer>
 						)}
-						<TimePreference
-							selectedTime={selectedTime}
-							setSelectedTime={setSelectedTime}
-						/>
-						<Button
-							style={{
-								marginLeft: '4px',
-							}}
-							onClick={(): void => {
-								response.refetch();
-							}}
-							type="primary"
-							icon={<SyncOutlined />}
-						/>
-					</TimeContainer>
-				)}
-			</div>
+						{enableDrillDown && (
+							<QueryBuilderV2
+								panelType={widget.panelTypes}
+								version={selectedDashboard?.data?.version || 'v3'}
+								isListViewPanel={widget.panelTypes === PANEL_TYPES.LIST}
+								// filterConfigs={filterConfigs}
+								// queryComponents={queryComponents}
+							/>
+						)}
+					</div>
 
-			<div
-				className={cx('graph-container', {
-					disabled: isDashboardLocked,
-					'height-widget': widget?.mergeAllActiveQueries || widget?.stackedBarChart,
-					'list-graph-container': isListView,
-				})}
-				ref={fullViewRef}
-			>
-				<GraphContainer
-					style={{
-						height: isListView ? '100%' : '90%',
-					}}
-					isGraphLegendToggleAvailable={canModifyChart}
-				>
-					{isTablePanel && (
-						<Input
-							addonBefore={<SearchOutlined size={14} />}
-							className="global-search"
-							placeholder="Search..."
-							allowClear
-							key={widget.id}
-							onChange={(e): void => {
-								setSearchTerm(e.target.value || '');
+					<div
+						className={cx('graph-container', {
+							disabled: isDashboardLocked,
+							'height-widget':
+								widget?.mergeAllActiveQueries || widget?.stackedBarChart,
+							'list-graph-container': isListView,
+						})}
+						ref={fullViewRef}
+					>
+						<GraphContainer
+							style={{
+								height: isListView ? '100%' : '90%',
 							}}
-						/>
-					)}
-					<PanelWrapper
-						queryResponse={response}
-						widget={widget}
-						setRequestData={setRequestData}
-						isFullViewMode
-						onToggleModelHandler={onToggleModelHandler}
-						setGraphVisibility={setGraphsVisibilityStates}
-						graphVisibility={graphsVisibilityStates}
-						onDragSelect={customOnDragSelect ?? onDragSelect}
-						tableProcessedDataRef={tableProcessedDataRef}
-						searchTerm={searchTerm}
-						onClickHandler={onClickHandler}
-					/>
-				</GraphContainer>
-			</div>
+							isGraphLegendToggleAvailable={canModifyChart}
+						>
+							{isTablePanel && (
+								<Input
+									addonBefore={<SearchOutlined size={14} />}
+									className="global-search"
+									placeholder="Search..."
+									allowClear
+									key={widget.id}
+									onChange={(e): void => {
+										setSearchTerm(e.target.value || '');
+									}}
+								/>
+							)}
+							<PanelWrapper
+								queryResponse={response}
+								widget={widget}
+								setRequestData={setRequestData}
+								isFullViewMode
+								onToggleModelHandler={onToggleModelHandler}
+								setGraphVisibility={setGraphsVisibilityStates}
+								graphVisibility={graphsVisibilityStates}
+								onDragSelect={customOnDragSelect ?? onDragSelect}
+								tableProcessedDataRef={tableProcessedDataRef}
+								searchTerm={searchTerm}
+								onClickHandler={onClickHandler}
+							/>
+						</GraphContainer>
+					</div>
+				</>
+			</OverlayScrollbar>
 		</div>
 	);
 }

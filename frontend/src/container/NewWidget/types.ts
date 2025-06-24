@@ -12,6 +12,7 @@ export interface NewWidgetProps {
 	selectedGraph: PANEL_TYPES;
 	yAxisUnit: Widgets['yAxisUnit'];
 	fillSpans: Widgets['fillSpans'];
+	enableDrilldown?: boolean;
 }
 
 export interface WidgetGraphProps {
