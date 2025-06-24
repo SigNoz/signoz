@@ -4943,11 +4943,13 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		Result: result,
 	}
 
-	if rand.Float64() < (1.0 / 30.0) {
+	if rand.Float64() < (1.0/30.0) &&
+		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeList &&
+		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeTrace {
 		v4JSON, _ := json.Marshal(queryRangeParams)
 		func() {
 			defer func() {
-				if rr := recover(); r != nil {
+				if rr := recover(); rr != nil {
 					zap.L().Warn(
 						"unexpected panic while converting to v5",
 						zap.Any("panic", rr),

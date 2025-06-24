@@ -15,7 +15,9 @@ import (
 	v5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-func ConvertV3ToV5(v3Params *v3.QueryRangeParamsV3) (*v5.QueryRangeRequest, error) {
+func ConvertV3ToV5(params *v3.QueryRangeParamsV3) (*v5.QueryRangeRequest, error) {
+	v3Params := params.Clone()
+
 	if v3Params == nil || v3Params.CompositeQuery == nil {
 		return nil, fmt.Errorf("v3 params or composite query is nil")
 	}
@@ -24,7 +26,7 @@ func ConvertV3ToV5(v3Params *v3.QueryRangeParamsV3) (*v5.QueryRangeRequest, erro
 
 	for name, value := range v3Params.Variables {
 		varItems[name] = v5.VariableItem{
-			Type:  v5.QueryVariableType,
+			Type:  v5.QueryVariableType, // doesn't matter at the moment
 			Value: value,
 		}
 	}
@@ -360,13 +362,13 @@ func convertOrderBy(v3OrderBy []v3.OrderBy, v3Query *v3.BuilderQuery) []v5.Order
 
 		var orderByName string
 		if order.ColumnName == "#SIGNOZ_VALUE" {
-			if v3Query.DataSource == v3.DataSourceLogs || v3Query.DataSource == v3.DataSourceMetrics {
+			if v3Query.DataSource == v3.DataSourceLogs || v3Query.DataSource == v3.DataSourceTraces {
 				orderByName = buildTraceAggregationExpression(v3Query)
 			} else {
 				if v3Query.Expression != v3Query.QueryName {
 					orderByName = v3Query.Expression
 				} else {
-					orderByName = fmt.Sprintf("%s(%s)", v3Query.AggregateAttribute.Key, v3Query.SpaceAggregation)
+					orderByName = fmt.Sprintf("%s(%s)", v3Query.SpaceAggregation, v3Query.AggregateAttribute.Key)
 				}
 			}
 		} else {
@@ -394,19 +396,17 @@ func convertHaving(v3Having []v3.Having, v3Query *v3.BuilderQuery) *v5.Having {
 	expressions := []string{}
 	for _, h := range v3Having {
 		var expr string
-		if h.ColumnName == "#SIGNOZ_VALUE" {
-			if v3Query.DataSource == v3.DataSourceLogs || v3Query.DataSource == v3.DataSourceMetrics {
-				expr = buildTraceAggregationExpression(v3Query)
-			} else {
-				if v3Query.Expression != v3Query.QueryName {
-					expr = v3Query.Expression
-				} else {
-					expr = fmt.Sprintf("%s(%s)", v3Query.AggregateAttribute.Key, v3Query.SpaceAggregation)
-				}
-			}
+
+		if v3Query.DataSource == v3.DataSourceLogs || v3Query.DataSource == v3.DataSourceTraces {
+			h.ColumnName = buildTraceAggregationExpression(v3Query)
 		} else {
-			expr = buildHavingExpression(h)
+			if v3Query.Expression != v3Query.QueryName {
+				h.ColumnName = v3Query.Expression
+			} else {
+				h.ColumnName = fmt.Sprintf("%s(%s)", v3Query.SpaceAggregation, v3Query.AggregateAttribute.Key)
+			}
 		}
+		expr = buildHavingExpression(h)
 
 		if expr != "" {
 			expressions = append(expressions, expr)

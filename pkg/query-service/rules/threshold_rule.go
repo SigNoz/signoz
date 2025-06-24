@@ -365,8 +365,11 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 	if shouldLog || rand.Float64() < (1.0/30.0) {
 		func(ts time.Time) {
 			defer func() {
-				if rr := recover(); r != nil {
-					zap.L().Warn("unexpected panic while converting to v5", zap.Any("panic", rr), zap.String("ruleid", r.ID()))
+				if rr := recover(); rr != nil {
+					zap.L().Warn("unexpected panic while converting to v5",
+						zap.Any("panic", rr),
+						zap.String("ruleid", r.ID()),
+					)
 				}
 			}()
 			v5Req, err := transition.ConvertV3ToV5(params)
