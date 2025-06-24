@@ -3,7 +3,10 @@ package querier
 import (
 	"encoding/json"
 	"net/http"
+	"runtime/debug"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -11,14 +14,16 @@ import (
 )
 
 type API struct {
+	set     factory.ProviderSettings
 	querier Querier
 }
 
-func NewAPI(querier Querier) *API {
-	return &API{querier: querier}
+func NewAPI(set factory.ProviderSettings, querier Querier) *API {
+	return &API{set: set, querier: querier}
 }
 
 func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
+
 	ctx := req.Context()
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
@@ -32,6 +37,26 @@ func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		render.Error(rw, err)
 		return
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			stackTrace := string(debug.Stack())
+
+			queryJSON, _ := json.Marshal(queryRangeRequest)
+
+			a.set.Logger.ErrorContext(ctx, "panic in QueryRange",
+				"error", r,
+				"user", claims.UserID,
+				"payload", string(queryJSON),
+				"stacktrace", stackTrace,
+			)
+
+			render.Error(rw, errors.NewInternalf(
+				errors.CodeInternal,
+				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
+			))
+		}
+	}()
 
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {

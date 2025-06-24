@@ -3,15 +3,15 @@ import '../OnboardingQuestionaire.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Typography } from 'antd';
+import TextArea from 'antd/lib/input/TextArea';
 import logEvent from 'api/common/logEvent';
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export interface SignozDetails {
-	hearAboutSignoz: string | null;
 	interestInSignoz: string | null;
 	otherInterestInSignoz: string | null;
-	otherAboutSignoz: string | null;
+	discoverSignoz: string | null;
 }
 
 interface AboutSigNozQuestionsProps {
@@ -20,15 +20,6 @@ interface AboutSigNozQuestionsProps {
 	onNext: () => void;
 	onBack: () => void;
 }
-
-const hearAboutSignozOptions: Record<string, string> = {
-	search: 'Google / Search',
-	hackerNews: 'Hacker News',
-	linkedin: 'LinkedIn',
-	twitter: 'Twitter',
-	reddit: 'Reddit',
-	colleaguesFriends: 'Colleagues / Friends',
-};
 
 const interestedInOptions: Record<string, string> = {
 	savingCosts: 'Saving costs',
@@ -42,24 +33,20 @@ export function AboutSigNozQuestions({
 	onNext,
 	onBack,
 }: AboutSigNozQuestionsProps): JSX.Element {
-	const [hearAboutSignoz, setHearAboutSignoz] = useState<string | null>(
-		signozDetails?.hearAboutSignoz || null,
-	);
-	const [otherAboutSignoz, setOtherAboutSignoz] = useState<string>(
-		signozDetails?.otherAboutSignoz || '',
-	);
 	const [interestInSignoz, setInterestInSignoz] = useState<string | null>(
 		signozDetails?.interestInSignoz || null,
 	);
 	const [otherInterestInSignoz, setOtherInterestInSignoz] = useState<string>(
 		signozDetails?.otherInterestInSignoz || '',
 	);
+	const [discoverSignoz, setDiscoverSignoz] = useState<string>(
+		signozDetails?.discoverSignoz || '',
+	);
 	const [isNextDisabled, setIsNextDisabled] = useState<boolean>(true);
 
 	useEffect((): void => {
 		if (
-			hearAboutSignoz !== null &&
-			(hearAboutSignoz !== 'Others' || otherAboutSignoz !== '') &&
+			discoverSignoz !== '' &&
 			interestInSignoz !== null &&
 			(interestInSignoz !== 'Others' || otherInterestInSignoz !== '')
 		) {
@@ -67,24 +54,17 @@ export function AboutSigNozQuestions({
 		} else {
 			setIsNextDisabled(true);
 		}
-	}, [
-		hearAboutSignoz,
-		otherAboutSignoz,
-		interestInSignoz,
-		otherInterestInSignoz,
-	]);
+	}, [interestInSignoz, otherInterestInSignoz, discoverSignoz]);
 
 	const handleOnNext = (): void => {
 		setSignozDetails({
-			hearAboutSignoz,
-			otherAboutSignoz,
+			discoverSignoz,
 			interestInSignoz,
 			otherInterestInSignoz,
 		});
 
 		logEvent('Org Onboarding: Answered', {
-			hearAboutSignoz,
-			otherAboutSignoz,
+			discoverSignoz,
 			interestInSignoz,
 			otherInterestInSignoz,
 		});
@@ -94,8 +74,7 @@ export function AboutSigNozQuestions({
 
 	const handleOnBack = (): void => {
 		setSignozDetails({
-			hearAboutSignoz,
-			otherAboutSignoz,
+			discoverSignoz,
 			interestInSignoz,
 			otherInterestInSignoz,
 		});
@@ -115,52 +94,16 @@ export function AboutSigNozQuestions({
 			<div className="questions-form-container">
 				<div className="questions-form">
 					<div className="form-group">
-						<div className="question">Where did you hear about SigNoz?</div>
-						<div className="two-column-grid">
-							{Object.keys(hearAboutSignozOptions).map((option: string) => (
-								<Button
-									key={option}
-									type="primary"
-									className={`onboarding-questionaire-button ${
-										hearAboutSignoz === option ? 'active' : ''
-									}`}
-									onClick={(): void => setHearAboutSignoz(option)}
-								>
-									{hearAboutSignozOptions[option]}
-									{hearAboutSignoz === option && (
-										<CheckCircle size={12} color={Color.BG_FOREST_500} />
-									)}
-								</Button>
-							))}
+						<div className="question">How did you first come across SigNoz?</div>
 
-							{hearAboutSignoz === 'Others' ? (
-								<Input
-									type="text"
-									className="onboarding-questionaire-other-input"
-									placeholder="How you got to know about us"
-									value={otherAboutSignoz}
-									autoFocus
-									addonAfter={
-										otherAboutSignoz !== '' ? (
-											<CheckCircle size={12} color={Color.BG_FOREST_500} />
-										) : (
-											''
-										)
-									}
-									onChange={(e): void => setOtherAboutSignoz(e.target.value)}
-								/>
-							) : (
-								<Button
-									type="primary"
-									className={`onboarding-questionaire-button ${
-										hearAboutSignoz === 'Others' ? 'active' : ''
-									}`}
-									onClick={(): void => setHearAboutSignoz('Others')}
-								>
-									Others
-								</Button>
-							)}
-						</div>
+						<TextArea
+							className="discover-signoz-input"
+							placeholder="e.g., Google Search, Hacker News, Reddit, a friend, ChatGPT, a blog post, a conference, etc."
+							value={discoverSignoz}
+							autoFocus
+							rows={4}
+							onChange={(e): void => setDiscoverSignoz(e.target.value)}
+						/>
 					</div>
 
 					<div className="form-group">

@@ -15,23 +15,27 @@ import {
 import EditAlertChannels from 'container/EditAlertChannels';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useParams } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 
 function ChannelsEdit(): JSX.Element {
-	const { id } = useParams<Params>();
 	const { t } = useTranslation();
+
+	// Extract channelId from URL pathname since useParams doesn't work in nested routing
+	const { pathname } = window.location;
+	const channelIdMatch = pathname.match(/\/settings\/channels\/edit\/([^/]+)/);
+	const channelId = channelIdMatch ? channelIdMatch[1] : undefined;
 
 	const { isFetching, isError, data, error } = useQuery<
 		SuccessResponseV2<Channels>,
 		APIError
-	>(['getChannel', id], {
+	>(['getChannel', channelId], {
 		queryFn: () =>
 			get({
-				id,
+				id: channelId || '',
 			}),
+		enabled: !!channelId,
 	});
 
 	if (isError) {
@@ -143,9 +147,6 @@ function ChannelsEdit(): JSX.Element {
 			/>
 		</div>
 	);
-}
-interface Params {
-	id: string;
 }
 
 export default ChannelsEdit;

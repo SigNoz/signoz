@@ -51,6 +51,33 @@ function ServiceStatus({
 	return <div className={`service-status ${className}`}>{text}</div>;
 }
 
+function getTabItems(serviceDetailsData: any): TabsProps['items'] {
+	const dashboards = serviceDetailsData?.assets.dashboards || [];
+	const dataCollected = serviceDetailsData?.data_collected || {};
+	const items: TabsProps['items'] = [];
+
+	if (dashboards.length) {
+		items.push({
+			key: 'dashboards',
+			label: `Dashboards (${dashboards.length})`,
+			children: <CloudServiceDashboards service={serviceDetailsData} />,
+		});
+	}
+
+	items.push({
+		key: 'data-collected',
+		label: 'Data Collected',
+		children: (
+			<CloudServiceDataCollected
+				logsData={dataCollected.logs || []}
+				metricsData={dataCollected.metrics || []}
+			/>
+		),
+	});
+
+	return items;
+}
+
 function ServiceDetails(): JSX.Element | null {
 	const urlQuery = useUrlQuery();
 	const cloudAccountId = urlQuery.get('cloudAccountId');
@@ -106,23 +133,7 @@ function ServiceDetails(): JSX.Element | null {
 		return null;
 	}
 
-	const tabItems: TabsProps['items'] = [
-		{
-			key: 'dashboards',
-			label: `Dashboards (${serviceDetailsData?.assets.dashboards.length})`,
-			children: <CloudServiceDashboards service={serviceDetailsData} />,
-		},
-		{
-			key: 'data-collected',
-			label: 'Data Collected',
-			children: (
-				<CloudServiceDataCollected
-					logsData={serviceDetailsData?.data_collected.logs || []}
-					metricsData={serviceDetailsData?.data_collected.metrics || []}
-				/>
-			),
-		},
-	];
+	const tabItems = getTabItems(serviceDetailsData);
 
 	return (
 		<div className="service-details">
