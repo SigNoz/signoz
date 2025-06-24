@@ -192,7 +192,7 @@ function TopOperationsTable({
 						onChange={onEntryPointToggle}
 						size="small"
 					/>
-					<span className="top-operation__entry-point-label">Entry Point Spans</span>
+					<span className="top-operation__entry-point-label">Entrypoint Spans</span>
 				</div>
 			</div>
 			<ResizeTable
@@ -200,7 +200,7 @@ function TopOperationsTable({
 				loading={isLoading}
 				showHeader
 				title={(): string =>
-					isEntryPoint ? 'Key Entry Point Operations' : 'Key Operations'
+					isEntryPoint ? 'Key Entrypoint Operations' : 'Key Operations'
 				}
 				tableLayout="fixed"
 				dataSource={data}

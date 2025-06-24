@@ -65,8 +65,8 @@ const mockedUseResourceAttribute = useResourceAttribute as jest.MockedFunction<
 
 // Constants
 const KEY_OPERATIONS_TEXT = 'Key Operations';
-const KEY_ENTRY_POINT_OPERATIONS_TEXT = 'Key Entry Point Operations';
-const ENTRY_POINT_SPANS_TEXT = 'Entry Point Spans';
+const KEY_ENTRY_POINT_OPERATIONS_TEXT = 'Key Entrypoint Operations';
+const ENTRY_POINT_SPANS_TEXT = 'Entrypoint Spans';
 const TOP_OPERATIONS_ENDPOINT = 'top_operations';
 const ENTRY_POINT_OPERATIONS_ENDPOINT = 'entry_point_operations';
 
