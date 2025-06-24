@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/rand/v2"
 	"text/template"
 	"time"
 
@@ -361,7 +362,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		}
 	}
 
-	if shouldLog {
+	if shouldLog || rand.Float64() < (1.0/30.0) {
 		func(ts time.Time) {
 			defer func() {
 				if rr := recover(); r != nil {

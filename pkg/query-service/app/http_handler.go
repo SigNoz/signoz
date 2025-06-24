@@ -4943,7 +4943,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		Result: result,
 	}
 
-	if rand.Float64() < (1.0 / 20.0) {
+	if rand.Float64() < (1.0 / 30.0) {
 		v4JSON, _ := json.Marshal(queryRangeParams)
 		func() {
 			defer func() {
