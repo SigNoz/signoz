@@ -27,8 +27,8 @@ import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
-import { Route, Router, Switch } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { Router } from 'react-router-dom';
+import { CompatRouter, Route, Routes } from 'react-router-dom-v5-compat';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { Userpilot } from 'userpilot';
 import { extractDomain } from 'utils/app';
@@ -379,18 +379,17 @@ function App(): JSX.Element {
 													<AlertRuleProvider>
 														<AppLayout>
 															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																<Switch>
-																	{routes.map(({ path, component, exact }) => (
+																<Routes>
+																	{routes.map(({ path, element: Component }) => (
 																		<Route
 																			key={`${path}`}
-																			exact={exact}
-																			path={path}
-																			component={component}
+																			path={path as string}
+																			element={<Component />}
 																		/>
 																	))}
-																	<Route exact path="/" component={Home} />
-																	<Route path="*" component={NotFound} />
-																</Switch>
+																	<Route path="/" element={<Home />} />
+																	<Route path="*" element={<NotFound />} />
+																</Routes>
 															</Suspense>
 														</AppLayout>
 													</AlertRuleProvider>
