@@ -421,6 +421,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				formatForWeb:
 					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
+				originalGraphType: selectedGraph || selectedWidget.panelTypes,
 			}));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
