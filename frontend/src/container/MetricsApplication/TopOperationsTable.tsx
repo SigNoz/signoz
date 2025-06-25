@@ -178,10 +178,9 @@ function TopOperationsTable({
 	};
 
 	const entryPointSpanInfo = {
-		text: 'Entrypoint spans are the first spans in a trace',
-		url:
-			'https://signoz.io/docs/userguide/metrics/#apdex?utm_source=product&utm_medium=frontend&utm_campaign=apdex',
-		urlText: 'Learn more about Apdex.',
+		text: 'Shows only spans where requests first enter this service',
+		url: 'https://signoz.io/docs/userguide/entry_point_service_overview/',
+		urlText: 'Learn more about Entrypoint Spans.',
 	};
 
 	return (
