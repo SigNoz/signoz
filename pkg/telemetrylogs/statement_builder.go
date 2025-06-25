@@ -6,16 +6,11 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
-)
-
-var (
-	ErrUnsupportedAggregation = errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported aggregation")
 )
 
 type logQueryStatementBuilder struct {
@@ -66,6 +61,7 @@ func (b *logQueryStatementBuilder) Build(
 	end uint64,
 	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 
 	start = querybuilder.ToNanoSecs(start)
@@ -82,11 +78,11 @@ func (b *logQueryStatementBuilder) Build(
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
-		return b.buildListQuery(ctx, q, query, start, end, keys)
+		return b.buildListQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys)
+		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(ctx, q, query, start, end, keys, false)
+		return b.buildScalarQuery(ctx, q, query, start, end, keys, false, variables)
 	}
 
 	return nil, fmt.Errorf("unsupported request type: %s", requestType)
@@ -135,6 +131,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -142,7 +139,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
 		cteFragments = append(cteFragments, frag)
@@ -158,19 +155,25 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction))
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, &orderBy.Key.TelemetryFieldKey, keys)
+		if err != nil {
+			return nil, err
+		}
+		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
 	}
 
 	// Add limit and offset
 	if query.Limit > 0 {
 		sb.Limit(query.Limit)
+	} else {
+		sb.Limit(100)
 	}
 
 	if query.Offset > 0 {
@@ -195,6 +198,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -202,7 +206,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
 		cteFragments = append(cteFragments, frag)
@@ -245,7 +249,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -253,10 +257,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	var finalSQL string
 	var finalArgs []any
 
-	if query.Limit > 0 {
+	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, true)
+		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, true, variables)
 		if err != nil {
 			return nil, err
 		}
@@ -271,7 +275,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		// Group by all dimensions
 		sb.GroupBy("ALL")
 		if query.Having != nil && query.Having.Expression != "" {
-			sb.Having(query.Having.Expression)
+			// Rewrite having expression to use SQL column names
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			sb.Having(rewrittenExpr)
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
@@ -285,7 +292,9 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	} else {
 		sb.GroupBy("ALL")
 		if query.Having != nil && query.Having.Expression != "" {
-			sb.Having(query.Having.Expression)
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			sb.Having(rewrittenExpr)
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
@@ -312,6 +321,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	skipResourceCTE bool,
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -319,7 +329,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" && !skipResourceCTE {
 		cteFragments = append(cteFragments, frag)
@@ -364,7 +374,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -374,16 +384,18 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	// Add having clause if needed
 	if query.Having != nil && query.Having.Expression != "" {
-		sb.Having(query.Having.Expression)
+		rewriter := querybuilder.NewHavingExpressionRewriter()
+		rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+		sb.Having(rewrittenExpr)
 	}
 
 	// Add order by
 	for _, orderBy := range query.Order {
 		idx, ok := aggOrderBy(orderBy, query)
 		if ok {
-			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction))
+			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction))
+			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
 		}
 	}
 
@@ -418,21 +430,29 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) ([]string, error) {
 
-	// add filter expression
-	filterWhereClause, warnings, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
-		FieldMapper:        b.fm,
-		ConditionBuilder:   b.cb,
-		FieldKeys:          keys,
-		SkipResourceFilter: true,
-		FullTextColumn:     b.fullTextColumn,
-		JsonBodyPrefix:     b.jsonBodyPrefix,
-		JsonKeyToKey:       b.jsonKeyToKey,
-	})
+	var filterWhereClause *sqlbuilder.WhereClause
+	var warnings []string
+	var err error
 
-	if err != nil {
-		return nil, err
+	if query.Filter != nil && query.Filter.Expression != "" {
+		// add filter expression
+		filterWhereClause, warnings, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			FieldMapper:        b.fm,
+			ConditionBuilder:   b.cb,
+			FieldKeys:          keys,
+			SkipResourceFilter: true,
+			FullTextColumn:     b.fullTextColumn,
+			JsonBodyPrefix:     b.jsonBodyPrefix,
+			JsonKeyToKey:       b.jsonKeyToKey,
+			Variables:          variables,
+		})
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if filterWhereClause != nil {
@@ -464,9 +484,10 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
+	variables map[string]qbtypes.VariableItem,
 ) (cteSQL string, cteArgs []any, err error) {
 
-	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end)
+	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end, variables)
 	if err != nil {
 		return "", nil, err
 	}
@@ -480,6 +501,7 @@ func (b *logQueryStatementBuilder) buildResourceFilterCTE(
 	ctx context.Context,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
+	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 
 	return b.resourceFilterStmtBuilder.Build(
@@ -488,5 +510,6 @@ func (b *logQueryStatementBuilder) buildResourceFilterCTE(
 		end,
 		qbtypes.RequestTypeRaw,
 		query,
+		variables,
 	)
 }

@@ -26,6 +26,7 @@ import {
 	waitFor,
 	within,
 } from 'tests/test-utils';
+import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 
 import TracesExplorer from '..';
 import { Filter } from '../Filter/Filter';
@@ -449,6 +450,8 @@ jest.mock('hooks/useHandleExplorerTabChange', () => ({
 	})),
 }));
 
+let capturedPayload: QueryRangePayload;
+
 describe('TracesExplorer - ', () => {
 	const quickFiltersListURL = `${BASE_URL}/api/v1/orgs/me/filters/traces`;
 
@@ -495,6 +498,45 @@ describe('TracesExplorer - ', () => {
 		expect(getByText('Next')).toBeInTheDocument();
 
 		// column interaction is covered in E2E tests as its a complex interaction
+	});
+	it('should not add id to orderBy when dataSource is traces', async () => {
+		server.use(
+			rest.post(`${BASE_URL}/api/v4/query_range`, async (req, res, ctx) => {
+				const payload = await req.json();
+				capturedPayload = payload;
+				return res(ctx.status(200), ctx.json(queryRangeForTableView));
+			}),
+		);
+
+		render(
+			<QueryBuilderContext.Provider
+				value={{
+					...qbProviderValue,
+					stagedQuery: {
+						...qbProviderValue.stagedQuery,
+						builder: {
+							...qbProviderValue.stagedQuery.builder,
+							queryData: [
+								{
+									...qbProviderValue.stagedQuery.builder.queryData[0],
+									orderBy: [{ columnName: 'timestamp', order: 'desc' }],
+								},
+							],
+						},
+					},
+				}}
+			>
+				<TracesExplorer />
+			</QueryBuilderContext.Provider>,
+		);
+
+		await waitFor(() => {
+			expect(capturedPayload).toBeDefined();
+		});
+
+		expect(capturedPayload.compositeQuery.builderQueries?.A.orderBy).toEqual([
+			{ columnName: 'timestamp', order: 'desc' },
+		]);
 	});
 
 	it('trace explorer - table view', async () => {

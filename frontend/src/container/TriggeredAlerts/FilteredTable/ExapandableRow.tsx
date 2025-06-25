@@ -28,26 +28,26 @@ function ExapandableRow({ allAlerts }: ExapandableRowProps): JSX.Element {
 						hoverable
 						key={alert.fingerprint}
 					>
-						<TableCell>
+						<TableCell minWidth="90px">
 							<Status severity={alert.status.state} />
 						</TableCell>
 
-						<TableCell>
+						<TableCell minWidth="90px" overflowX="scroll">
 							<Typography>{labels.alertname}</Typography>
 						</TableCell>
 
-						<TableCell>
+						<TableCell minWidth="90px">
 							<Typography>{labels.severity}</Typography>
 						</TableCell>
 
-						<TableCell>
+						<TableCell minWidth="90px">
 							<Typography>{`${formatTimezoneAdjustedTimestamp(
 								formatedDate,
 								DATE_TIME_FORMATS.UTC_US,
 							)}`}</Typography>
 						</TableCell>
 
-						<TableCell>
+						<TableCell minWidth="90px" overflowX="scroll">
 							<div>
 								{tags.map((e) => (
 									<Tag key={e}>{`${e}:${labels[e]}`}</Tag>

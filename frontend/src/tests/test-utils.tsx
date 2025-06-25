@@ -143,6 +143,7 @@ export function getAppContextMock(
 		},
 		isFetchingActiveLicense: false,
 		activeLicenseFetchError: null,
+		changelog: null,
 		user: {
 			accessJwt: 'some-token',
 			refreshJwt: 'some-refresh-token',
@@ -236,6 +237,7 @@ export function getAppContextMock(
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
 		activeLicenseRefetch: jest.fn(),
+		updateChangelog: jest.fn(),
 		versionData: {
 			version: '1.0.0',
 			ee: 'Y',

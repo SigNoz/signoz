@@ -32,6 +32,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 )
@@ -41,6 +42,9 @@ import (
 func TestSignozIntegrationLifeCycle(t *testing.T) {
 	require := require.New(t)
 	testbed := NewIntegrationsTestBed(t, nil)
+
+	merr := utils.CreateTestOrg(t, testbed.store)
+	require.NoError(merr)
 
 	installedResp := testbed.GetInstalledIntegrationsFromQS()
 	require.Equal(
@@ -125,8 +129,12 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require := require.New(t)
 
 	testDB := utils.NewQueryServiceDBForTests(t)
+	utils.CreateTestOrg(t, testDB)
+
+	agentID := valuer.GenerateUUID().String()
+
 	integrationsTB := NewIntegrationsTestBed(t, testDB)
-	pipelinesTB := NewLogPipelinesTestBed(t, testDB)
+	pipelinesTB := NewLogPipelinesTestBed(t, testDB, agentID)
 
 	availableIntegrationsResp := integrationsTB.GetAvailableIntegrationsFromQS()
 	availableIntegrations := availableIntegrationsResp.Integrations
@@ -380,6 +388,7 @@ type IntegrationsTestBed struct {
 	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
+	store          sqlstore.SQLStore
 	userModule     user.Module
 }
 
@@ -588,10 +597,8 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	handlers := signoz.NewHandlers(modules)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		Reader:                 reader,
-		IntegrationsController: controller,
-
-		JWT:                         jwt,
+		Reader:                      reader,
+		IntegrationsController:      controller,
 		CloudIntegrationsController: cloudIntegrationsController,
 		Signoz: &signoz.SigNoz{
 			Modules:  modules,
@@ -618,6 +625,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 		testUser:       user,
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
+		store:          testDB,
 		userModule:     modules.User,
 	}
 }
