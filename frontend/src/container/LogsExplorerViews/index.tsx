@@ -349,7 +349,7 @@ function LogsExplorerViewsContainer({
 								...paginateData,
 								...(updatedFilters ? { filters: updatedFilters } : {}),
 								...(selectedView === ExplorerViews.LIST
-									? { order: orderBy }
+									? { order: orderBy, orderBy }
 									: { order: [] }),
 							},
 					  ];

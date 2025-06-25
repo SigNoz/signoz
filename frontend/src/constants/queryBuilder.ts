@@ -170,7 +170,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	timeAggregation: MetricAggregateOperator.RATE,
 	spaceAggregation: MetricAggregateOperator.SUM,
 	filter: { expression: '' },
-	aggregations: [],
+	aggregations: [{ expression: 'count() ' }],
 	havingExpression: { expression: '' },
 	functions: [],
 	filters: { items: [], op: 'AND' },
