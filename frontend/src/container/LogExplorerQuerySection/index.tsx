@@ -34,7 +34,7 @@ function LogExplorerQuerySection({
 		[updateAllQueriesOperators],
 	);
 
-	useShareBuilderUrl(defaultValue);
+	useShareBuilderUrl({ defaultValue });
 
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const isTable = panelTypes === PANEL_TYPES.TABLE;

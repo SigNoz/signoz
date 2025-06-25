@@ -8,6 +8,7 @@ import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
 import GridPanelSwitch from 'container/GridPanelSwitch';
+import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
@@ -174,6 +175,12 @@ function ChartPreview({
 			queryResponse.data?.payload.data.result,
 		);
 		queryResponse.data.payload.data.result = sortedSeriesData;
+	}
+
+	if (queryResponse.data && graphType === PANEL_TYPES.PIE) {
+		const transformedData = populateMultipleResults(queryResponse?.data);
+		// eslint-disable-next-line no-param-reassign
+		queryResponse.data = transformedData;
 	}
 
 	const containerDimensions = useResizeObserver(graphRef);

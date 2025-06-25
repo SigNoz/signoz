@@ -75,7 +75,7 @@ function Explorer(): JSX.Element {
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	useShareBuilderUrl(defaultQuery);
+	useShareBuilderUrl({ defaultValue: defaultQuery });
 
 	const handleExport = useCallback(
 		(
@@ -132,7 +132,9 @@ function Explorer(): JSX.Element {
 					</div>
 					<div className="explore-header-right-actions">
 						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions onStageRunQuery={handleRunQuery} />
+						<RightToolbarActions
+							onStageRunQuery={(): void => handleRunQuery(true, true)}
+						/>
 					</div>
 				</div>
 				{/* <QuerySection /> */}

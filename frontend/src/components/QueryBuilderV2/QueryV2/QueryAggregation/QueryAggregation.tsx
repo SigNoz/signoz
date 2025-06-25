@@ -48,10 +48,12 @@ function QueryAggregationOptions({
 						<div className="query-aggregation-interval-label">every</div>
 						<div className="query-aggregation-interval-input-container">
 							<InputWithLabel
-								initialValue={queryData.stepInterval ? queryData.stepInterval : '60'}
+								initialValue={
+									queryData.stepInterval ? queryData.stepInterval : undefined
+								}
 								className="query-aggregation-interval-input"
 								label="Seconds"
-								placeholder="60"
+								placeholder="Auto"
 								type="number"
 								onChange={handleAggregationIntervalChange}
 								labelAfter
