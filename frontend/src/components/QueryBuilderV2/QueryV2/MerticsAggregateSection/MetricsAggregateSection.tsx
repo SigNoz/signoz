@@ -7,8 +7,10 @@ import SpaceAggregationOptions from 'container/QueryBuilder/components/SpaceAggr
 import { GroupByFilter, OperatorsSelect } from 'container/QueryBuilder/filters';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Info } from 'lucide-react';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+
+import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
 
 const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	query,
@@ -21,6 +23,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	version: string;
 	panelType: PANEL_TYPES | null;
 }): JSX.Element {
+	const { setAggregationOptions } = useQueryBuilderV2Context();
 	const {
 		operators,
 		spaceAggregationOptions,
@@ -32,6 +35,21 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 		query,
 		entityVersion: version,
 	});
+
+	useEffect(() => {
+		console.log('query', query);
+		setAggregationOptions([
+			{
+				func: query.spaceAggregation || 'count',
+				arg: query.aggregateAttribute.key || '',
+			},
+		]);
+	}, [
+		query.spaceAggregation,
+		query.aggregateAttribute.key,
+		setAggregationOptions,
+		query,
+	]);
 
 	const handleChangeGroupByKeys = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
