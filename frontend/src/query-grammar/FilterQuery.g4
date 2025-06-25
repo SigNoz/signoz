@@ -47,6 +47,8 @@ comparison
     | key notInClause
     | key EXISTS
     | key NOT_EXISTS
+    | key IS_NULL
+    | key IS_NOT_NULL
     | key REGEXP value
     | key NOT_REGEXP value
     | key CONTAINS value
@@ -121,23 +123,26 @@ GE          : '>=' ;
 
 // Multi-keyword operators
 LIKE        : [Ll][Ii][Kk][Ee] ;
-NOT_LIKE    : [Nn][Oo][Tt] [ \t]+ [Ll][Ii][Kk][Ee] ;
+NOT_LIKE    : [Nn][Oo][Tt] '_' [Ll][Ii][Kk][Ee] ;
 ILIKE       : [Ii][Ll][Ii][Kk][Ee] ;
-NOT_ILIKE   : [Nn][Oo][Tt] [ \t]+ [Ii][Ll][Ii][Kk][Ee] ;
+NOT_ILIKE   : [Nn][Oo][Tt] '_' [Ii][Ll][Ii][Kk][Ee] ;
 BETWEEN     : [Bb][Ee][Tt][Ww][Ee][Ee][Nn] ;
-NOT_BETWEEN : [Nn][Oo][Tt] [ \t]+ [Bb][Ee][Tt][Ww][Ee][Ee][Nn] ;
+NOT_BETWEEN : [Nn][Oo][Tt] '_' [Bb][Ee][Tt][Ww][Ee][Ee][Nn] ;
 
 EXISTS      : [Ee][Xx][Ii][Ss][Tt][Ss]? ;
-NOT_EXISTS  : [Nn][Oo][Tt] [ \t]+ [Ee][Xx][Ii][Ss][Tt][Ss]? ;
+NOT_EXISTS  : [Nn][Oo][Tt] '-' [Ee][Xx][Ii][Ss][Tt][Ss]? ;
+
+IS_NULL     : [Ii][Ss] '_' [Nn][Uu][Ll][Ll] ;
+IS_NOT_NULL : [Ii][Ss] '_' [Nn][Oo][Tt] '_' [Nn][Uu][Ll][Ll] ;
 
 REGEXP      : [Rr][Ee][Gg][Ee][Xx][Pp] ;
-NOT_REGEXP  : [Nn][Oo][Tt] [ \t]+ [Rr][Ee][Gg][Ee][Xx][Pp] ;
+NOT_REGEXP  : [Nn][Oo][Tt] '_' [Rr][Ee][Gg][Ee][Xx][Pp] ;
 
 CONTAINS    : [Cc][Oo][Nn][Tt][Aa][Ii][Nn][Ss]? ;
-NOT_CONTAINS: [Nn][Oo][Tt] [ \t]+ [Cc][Oo][Nn][Tt][Aa][Ii][Nn][Ss]? ;
+NOT_CONTAINS: [Nn][Oo][Tt] '_' [Cc][Oo][Nn][Tt][Aa][Ii][Nn][Ss]? ;
 
 IN          : [Ii][Nn] ;
-NOT_IN      : [Nn][Oo][Tt] [ \t]+ [Ii][Nn] ;
+NOT_IN      : [Nn][Oo][Tt] '_' [Ii][Nn] ;
 
 // Boolean logic
 NOT         : [Nn][Oo][Tt] ;
