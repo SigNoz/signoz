@@ -17,6 +17,7 @@ import {
 	getCategorySelectOptionByName,
 } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	AlertDef,
@@ -37,6 +38,7 @@ import {
 	StepHeading,
 	VerticalLine,
 } from './styles';
+import { usePrefillAlertConditions } from './utils';
 
 function RuleOptions({
 	alertDef,
@@ -46,7 +48,7 @@ function RuleOptions({
 }: RuleOptionsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
-	const { currentQuery } = useQueryBuilder();
+	const { currentQuery, stagedQuery } = useQueryBuilder();
 
 	const { ruleType } = alertDef;
 
@@ -72,6 +74,16 @@ function RuleOptions({
 			},
 		});
 	};
+
+	const handleAlertDefChange = useCallback(
+		(props: AlertDef): void => {
+			setAlertDef(props);
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[JSON.stringify(alertDef)],
+	);
+
+	usePrefillAlertConditions(stagedQuery, alertDef, handleAlertDefChange);
 
 	const renderCompareOps = (): JSX.Element => (
 		<InlineSelect
@@ -317,6 +329,8 @@ function RuleOptions({
 			frequency: freq,
 		});
 	};
+
+	console.log(alertDef.condition);
 
 	const renderAnomalyRuleOpts = (): JSX.Element => (
 		<Form.Item>
