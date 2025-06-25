@@ -47,8 +47,6 @@ comparison
     | key notInClause
     | key EXISTS
     | key NOT_EXISTS
-    | key IS_NULL
-    | key IS_NOT_NULL
     | key REGEXP value
     | key NOT_REGEXP value
     | key CONTAINS value
@@ -131,9 +129,6 @@ NOT_BETWEEN : [Nn][Oo][Tt] '_' [Bb][Ee][Tt][Ww][Ee][Ee][Nn] ;
 
 EXISTS      : [Ee][Xx][Ii][Ss][Tt][Ss]? ;
 NOT_EXISTS  : [Nn][Oo][Tt] '-' [Ee][Xx][Ii][Ss][Tt][Ss]? ;
-
-IS_NULL     : [Ii][Ss] '_' [Nn][Uu][Ll][Ll] ;
-IS_NOT_NULL : [Ii][Ss] '_' [Nn][Oo][Tt] '_' [Nn][Uu][Ll][Ll] ;
 
 REGEXP      : [Rr][Ee][Gg][Ee][Xx][Pp] ;
 NOT_REGEXP  : [Nn][Oo][Tt] '_' [Rr][Ee][Gg][Ee][Xx][Pp] ;

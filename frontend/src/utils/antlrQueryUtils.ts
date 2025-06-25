@@ -847,11 +847,10 @@ export const queryOperatorSuggestions = [
 	{ label: 'ILIKE', type: 'operator', info: 'Case insensitive like' },
 	{ label: 'BETWEEN', type: 'operator', info: 'Between' },
 	{ label: 'EXISTS', type: 'operator', info: 'Exists' },
+	{ label: 'NOT_EXISTS', type: 'operator', info: 'Not Exists' },
 	{ label: 'REGEXP', type: 'operator', info: 'Regular expression' },
 	{ label: 'CONTAINS', type: 'operator', info: 'Contains' },
 	{ label: 'IN', type: 'operator', info: 'In' },
 	{ label: 'NOT', type: 'operator', info: 'Not' },
 	{ label: 'NOT_LIKE', type: 'operator', info: 'Not like' },
-	{ label: 'IS_NULL', type: 'operator', info: 'Is null' },
-	{ label: 'IS_NOT_NULL', type: 'operator', info: 'Is not null' },
 ];

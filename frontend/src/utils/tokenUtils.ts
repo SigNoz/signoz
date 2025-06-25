@@ -24,18 +24,14 @@ export function isOperatorToken(tokenType: number): boolean {
 		FilterQueryLexer.CONTAINS,
 		FilterQueryLexer.IN,
 		FilterQueryLexer.NOT,
-		FilterQueryLexer.IS_NOT_NULL,
-		FilterQueryLexer.IS_NULL,
 	].includes(tokenType);
 }
 
 // Helper function to check if a token is an operator which doesn't require a value
 export function isNonValueOperatorToken(tokenType: number): boolean {
-	return [
-		FilterQueryLexer.IS_NOT_NULL,
-		FilterQueryLexer.IS_NULL,
-		FilterQueryLexer.EXISTS,
-	].includes(tokenType);
+	return [FilterQueryLexer.NOT_EXISTS, FilterQueryLexer.EXISTS].includes(
+		tokenType,
+	);
 }
 
 // Helper function to check if a token is a value
