@@ -2320,8 +2320,7 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, orgID valuer.UU
 	metadataMap, apiErr := r.GetUpdatedMetricsMetadata(ctx, orgID, metricNames...)
 	if apiErr != nil {
 		zap.L().Warn("Failed to fetch updated metrics metadata", zap.Error(apiErr))
-		// best-effort return, not failing outright
-		return metricNameToTemporality, nil
+		return nil, apiErr
 	}
 
 	for metricName, metadata := range metadataMap {
@@ -3036,10 +3035,7 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 
 	seen := make(map[string]struct{})
 	for _, name := range metricNames {
-		metadata, ok := metadataMap[name]
-		if !ok {
-			continue
-		}
+		metadata := metadataMap[name]
 
 		typ := string(metadata.MetricType)
 		temporality := string(metadata.Temporality)
@@ -3170,18 +3166,17 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 		unit        string
 	)
 
-	if metadata, exists := metadataMap[metricName]; exists {
-		metricType = string(metadata.MetricType)
-		temporality = string(metadata.Temporality)
-		isMonotonic = metadata.IsMonotonic
-		description = metadata.Description
-		unit = metadata.Unit
+	metadata := metadataMap[metricName]
 
-		if temporality == string(v3.Delta) {
-			deltaExists = true
-		}
+	metricType = string(metadata.MetricType)
+	temporality = string(metadata.Temporality)
+	isMonotonic = metadata.IsMonotonic
+	description = metadata.Description
+	unit = metadata.Unit
+
+	if temporality == string(v3.Delta) {
+		deltaExists = true
 	}
-
 	// 2. Only for Histograms, get `le` buckets
 	var leFloat64 []float64
 	if metricType == string(v3.MetricTypeHistogram) {
