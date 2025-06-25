@@ -103,7 +103,8 @@ func GetFieldNames(compositeQuery *v3.CompositeQuery) []string {
 		if query.Filters != nil && len(query.Filters.Items) != 0 {
 			for i := 0; i < len(query.Filters.Items); i++ {
 				tempItem := jsonFilterEnrich(query.Filters.Items[i])
-				if tempItem.Key.IsJSON {
+				// since json query is only for logs
+				if query.DataSource == v3.DataSourceLogs && tempItem.Key.IsJSON {
 					key, found := strings.CutPrefix(tempItem.Key.Key, "body.")
 					if found {
 						fieldNames[key] = struct{}{}
