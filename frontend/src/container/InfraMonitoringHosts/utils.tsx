@@ -255,7 +255,6 @@ export function GetHostsQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];
