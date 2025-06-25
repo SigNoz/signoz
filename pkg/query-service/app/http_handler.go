@@ -969,7 +969,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
 		}
 	} else if rule.AlertType == ruletypes.AlertTypeTraces {
-		traceFields, err := aH.reader.GetSpanAttributeKeys(ctx)
+		traceFields, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
 		if err == nil {
 			keys = traceFields
 		} else {
@@ -4348,7 +4348,7 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 	data := map[string]v3.AttributeKey{}
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
 		if query.DataSource == v3.DataSourceTraces {
-			spanKeys, err := aH.reader.GetSpanAttributeKeys(ctx)
+			spanKeys, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				return nil, err
 			}
@@ -4392,8 +4392,18 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		hasLogsQuery := false
+		hasTracesQuery := false
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs {
+				hasLogsQuery = true
+			}
+			if query.DataSource == v3.DataSourceTraces {
+				hasTracesQuery = true
+			}
+		}
 		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
+		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
 			logsFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -4404,15 +4414,15 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			fields := model.GetLogFieldsV3(ctx, queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
-
-		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
-		if err != nil {
-			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
-			return
+		if hasTracesQuery {
+			spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			tracesV4.Enrich(queryRangeParams, spanKeys)
 		}
-		tracesV4.Enrich(queryRangeParams, spanKeys)
-
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -4790,8 +4800,19 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		hasLogsQuery := false
+		hasTracesQuery := false
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs {
+				hasLogsQuery = true
+			}
+			if query.DataSource == v3.DataSourceTraces {
+				hasTracesQuery = true
+			}
+		}
+
 		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
+		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
 			// get the fields if any logs query is present
 			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
@@ -4803,13 +4824,15 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
-		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
-		if err != nil {
-			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
-			return
+		if hasTracesQuery {
+			spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			tracesV4.Enrich(queryRangeParams, spanKeys)
 		}
-		tracesV4.Enrich(queryRangeParams, spanKeys)
 	}
 
 	// WARN: Only works for AND operator in traces query
