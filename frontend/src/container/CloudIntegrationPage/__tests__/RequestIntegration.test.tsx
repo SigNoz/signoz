@@ -34,7 +34,7 @@ describe('Request AWS integration', () => {
 
 		expect(
 			screen.getByText(
-				/cannot find what you’re looking for\? request more integrations/i,
+				/can't find what you’re looking for\? request more integrations/i,
 			),
 		).toBeInTheDocument();
 

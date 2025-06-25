@@ -81,12 +81,13 @@ func TestStatementBuilder(t *testing.T) {
 		cb,
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
+		nil,
 	)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query)
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
