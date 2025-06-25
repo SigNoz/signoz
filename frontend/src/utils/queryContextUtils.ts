@@ -10,6 +10,7 @@ import {
 	isFunctionToken,
 	isKeyToken,
 	isMultiValueOperator,
+	isNonValueOperatorToken,
 	isOperatorToken,
 	isValueToken,
 } from './tokenUtils';
@@ -863,6 +864,7 @@ export function getQueryContextAtCursor(
 			if (lastTokenContext.isInOperator) {
 				// If we just typed an operator and then a space, we move to value context
 				const keyFromPair = currentPair?.key || '';
+				const isNonValueToken = isNonValueOperatorToken(lastTokenBeforeCursor.type);
 				return {
 					tokenType: lastTokenBeforeCursor.type,
 					text: lastTokenBeforeCursor.text,
@@ -871,9 +873,9 @@ export function getQueryContextAtCursor(
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: false,
 					isInOperator: false,
-					isInValue: true, // After operator + space, should be value context
+					isInValue: !isNonValueToken, // After operator + space, should be value context
 					isInFunction: false,
-					isInConjunction: false,
+					isInConjunction: isNonValueToken,
 					isInParenthesis: false,
 					isInBracketList: false,
 					operatorToken: lastTokenBeforeCursor.text,
