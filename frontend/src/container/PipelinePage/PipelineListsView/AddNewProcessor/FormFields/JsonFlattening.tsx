@@ -19,6 +19,7 @@ function JsonFlattening({
 	const form = Form.useFormInstance();
 	const mappingValue = selectedProcessorData?.mapping || {};
 	const enableFlattening = Form.useWatch('enable_flattening', form);
+	const enablePaths = Form.useWatch('enable_paths', form);
 
 	const [enableMapping, setEnableMapping] = useState(
 		!!mappingValue && Object.keys(mappingValue).length > 0,
@@ -57,14 +58,14 @@ function JsonFlattening({
 				<Space>
 					<Switch
 						size="small"
-						checked={form.getFieldValue('enable_paths')}
+						checked={enablePaths}
 						onChange={handleEnablePathsChange}
 					/>
 					Enable Paths
 				</Space>
 			</Form.Item>
 
-			{form.getFieldValue('enable_paths') && (
+			{enablePaths && (
 				<Form.Item
 					name="path_prefix"
 					label="Path Prefix"
