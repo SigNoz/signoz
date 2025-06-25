@@ -112,6 +112,30 @@ function getFunctionContextAtCursor(
 	return null;
 }
 
+// Custom extension to stop events from propagating to global shortcuts
+const stopEventsExtension = EditorView.domEventHandlers({
+	keydown: (event) => {
+		// Stop all keyboard events from propagating to global shortcuts
+		event.stopPropagation();
+		event.stopImmediatePropagation();
+		return false; // Important for CM to know you handled it
+	},
+	input: (event) => {
+		event.stopPropagation();
+		return false;
+	},
+	focus: (event) => {
+		// Ensure focus events don't interfere with global shortcuts
+		event.stopPropagation();
+		return false;
+	},
+	blur: (event) => {
+		// Ensure blur events don't interfere with global shortcuts
+		event.stopPropagation();
+		return false;
+	},
+});
+
 // eslint-disable-next-line react/no-this-in-sfc
 function QueryAggregationSelect({
 	onChange,
@@ -125,6 +149,13 @@ function QueryAggregationSelect({
 	const [input, setInput] = useState(
 		queryData?.aggregations?.map((i: any) => i.expression).join(' ') || '',
 	);
+
+	useEffect(() => {
+		setInput(
+			queryData?.aggregations?.map((i: any) => i.expression).join(' ') || '',
+		);
+	}, [queryData?.aggregations]);
+
 	const [cursorPos, setCursorPos] = useState(0);
 	const [functionArgPairs, setFunctionArgPairs] = useState<
 		{ func: string; arg: string }[]
@@ -457,6 +488,7 @@ function QueryAggregationSelect({
 					aggregatorAutocomplete,
 					javascript({ jsx: false, typescript: false }),
 					EditorView.lineWrapping,
+					stopEventsExtension,
 					keymap.of([
 						...completionKeymap,
 						{

@@ -41,11 +41,22 @@ const { Panel } = Collapse;
 // Custom extension to stop events
 const stopEventsExtension = EditorView.domEventHandlers({
 	keydown: (event) => {
+		// Stop all keyboard events from propagating to global shortcuts
 		event.stopPropagation();
-		// Optionally: event.preventDefault();
+		event.stopImmediatePropagation();
 		return false; // Important for CM to know you handled it
 	},
 	input: (event) => {
+		event.stopPropagation();
+		return false;
+	},
+	focus: (event) => {
+		// Ensure focus events don't interfere with global shortcuts
+		event.stopPropagation();
+		return false;
+	},
+	blur: (event) => {
+		// Ensure blur events don't interfere with global shortcuts
 		event.stopPropagation();
 		return false;
 	},
@@ -85,6 +96,10 @@ function QuerySearch({
 		message: '',
 		errors: [],
 	});
+
+	useEffect(() => {
+		setQuery(queryData.filter?.expression || '');
+	}, [queryData.filter?.expression]);
 
 	const [keySuggestions, setKeySuggestions] = useState<
 		QueryKeyDataSuggestionsProps[] | null
