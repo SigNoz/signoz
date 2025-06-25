@@ -4,7 +4,6 @@ import (
 	"maps"
 	"os"
 	"strconv"
-	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -18,30 +17,7 @@ const (
 	OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
 )
 
-// Deprecated: Use the new analytics service instead
-var DEFAULT_TELEMETRY_ANONYMOUS = false
-
-// Deprecated: Use the new analytics service instead
-func IsOSSTelemetryEnabled() bool {
-	ossSegmentKey := GetOrDefaultEnv("OSS_TELEMETRY_ENABLED", "true")
-	return ossSegmentKey == "true"
-}
-
 const MaxAllowedPointsInTimeSeries = 300
-
-// Deprecated: Use the new analytics service instead
-func IsTelemetryEnabled() bool {
-	if testing.Testing() {
-		return false
-	}
-
-	isTelemetryEnabledStr := os.Getenv("TELEMETRY_ENABLED")
-	isTelemetryEnabledBool, err := strconv.ParseBool(isTelemetryEnabledStr)
-	if err != nil {
-		return true
-	}
-	return isTelemetryEnabledBool
-}
 
 const TraceTTL = "traces"
 const MetricsTTL = "metrics"
@@ -50,12 +26,6 @@ const LogsTTL = "logs"
 const SpanSearchScopeRoot = "isroot"
 const SpanSearchScopeEntryPoint = "isentrypoint"
 const OrderBySpanCount = "span_count"
-
-// Deprecated: Use the new statsreporter service instead
-var TELEMETRY_HEART_BEAT_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_HEART_BEAT_DURATION_MINUTES", 720)
-
-// Deprecated: Use the new statsreporter service instead
-var TELEMETRY_ACTIVE_USER_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_ACTIVE_USER_DURATION_MINUTES", 360)
 
 // Deprecated: Use the new emailing service instead
 var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email.gotmpl")
