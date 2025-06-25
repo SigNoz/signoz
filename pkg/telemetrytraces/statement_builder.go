@@ -171,19 +171,14 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	// Select default columns
-	sb.Select(
-		"timestamp",
-		"trace_id",
-		"span_id",
-		"name",
-		sqlbuilder.Escape("resource_string_service$$name")+" AS `service.name`",
-		"duration_nano",
-		"response_status_code",
-	)
+	selectedFields := query.SelectFields
+
+	if len(selectedFields) == 0 {
+		selectedFields = DefaultFields
+	}
 
 	// TODO: should we deprecate `SelectFields` and return everything from a span like we do for logs?
-	for _, field := range query.SelectFields {
+	for _, field := range selectedFields {
 		colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
 		if err != nil {
 			return nil, err
