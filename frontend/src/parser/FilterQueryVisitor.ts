@@ -1,24 +1,26 @@
-// Generated from src/query-grammar/FilterQuery.g4 by ANTLR 4.13.1
+// Generated from FilterQuery.g4 by ANTLR 4.13.1
 
-import { ParseTreeVisitor } from 'antlr4';
+import {ParseTreeVisitor} from 'antlr4';
 
-import { QueryContext } from './FilterQueryParser';
-import { ExpressionContext } from './FilterQueryParser';
-import { OrExpressionContext } from './FilterQueryParser';
-import { AndExpressionContext } from './FilterQueryParser';
-import { UnaryExpressionContext } from './FilterQueryParser';
-import { PrimaryContext } from './FilterQueryParser';
-import { ComparisonContext } from './FilterQueryParser';
-import { InClauseContext } from './FilterQueryParser';
-import { NotInClauseContext } from './FilterQueryParser';
-import { ValueListContext } from './FilterQueryParser';
-import { FullTextContext } from './FilterQueryParser';
-import { FunctionCallContext } from './FilterQueryParser';
-import { FunctionParamListContext } from './FilterQueryParser';
-import { FunctionParamContext } from './FilterQueryParser';
-import { ArrayContext } from './FilterQueryParser';
-import { ValueContext } from './FilterQueryParser';
-import { KeyContext } from './FilterQueryParser';
+
+import { QueryContext } from "./FilterQueryParser";
+import { ExpressionContext } from "./FilterQueryParser";
+import { OrExpressionContext } from "./FilterQueryParser";
+import { AndExpressionContext } from "./FilterQueryParser";
+import { UnaryExpressionContext } from "./FilterQueryParser";
+import { PrimaryContext } from "./FilterQueryParser";
+import { ComparisonContext } from "./FilterQueryParser";
+import { InClauseContext } from "./FilterQueryParser";
+import { NotInClauseContext } from "./FilterQueryParser";
+import { ValueListContext } from "./FilterQueryParser";
+import { FullTextContext } from "./FilterQueryParser";
+import { FunctionCallContext } from "./FilterQueryParser";
+import { FunctionParamListContext } from "./FilterQueryParser";
+import { FunctionParamContext } from "./FilterQueryParser";
+import { ArrayContext } from "./FilterQueryParser";
+import { ValueContext } from "./FilterQueryParser";
+import { KeyContext } from "./FilterQueryParser";
+
 
 /**
  * This interface defines a complete generic visitor for a parse tree produced
@@ -27,9 +29,7 @@ import { KeyContext } from './FilterQueryParser';
  * @param <Result> The return type of the visit operation. Use `void` for
  * operations with no return type.
  */
-export default class FilterQueryVisitor<
-	Result
-> extends ParseTreeVisitor<Result> {
+export default class FilterQueryVisitor<Result> extends ParseTreeVisitor<Result> {
 	/**
 	 * Visit a parse tree produced by `FilterQueryParser.query`.
 	 * @param ctx the parse tree
@@ -133,3 +133,4 @@ export default class FilterQueryVisitor<
 	 */
 	visitKey?: (ctx: KeyContext) => Result;
 }
+
