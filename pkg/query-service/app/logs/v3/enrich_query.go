@@ -91,7 +91,7 @@ func GetFieldNames(compositeQuery *v3.CompositeQuery) []string {
 	}
 
 	for queryName, query := range compositeQuery.BuilderQueries {
-		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
+		if query.Expression != queryName {
 			continue
 		}
 
