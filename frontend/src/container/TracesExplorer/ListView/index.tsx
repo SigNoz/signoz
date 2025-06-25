@@ -21,6 +21,7 @@ import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { cloneDeep } from 'lodash-es';
 import { ArrowUp10, Minus } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -46,7 +47,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
 
-	const [orderDirection, setOrderDirection] = useState<string>('asc');
+	const [orderDirection, setOrderDirection] = useState<string>('desc');
 
 	const {
 		selectedTime: globalSelectedTime,
@@ -76,6 +77,23 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	const paginationConfig =
 		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
 
+	const requestQuery = useMemo(() => {
+		const query = stagedQuery
+			? cloneDeep(stagedQuery)
+			: cloneDeep(initialQueriesMap.traces);
+
+		if (query.builder.queryData[0]) {
+			query.builder.queryData[0].orderBy = [
+				{
+					columnName: 'timestamp',
+					order: orderDirection as 'asc' | 'desc',
+				},
+			];
+		}
+
+		return query;
+	}, [stagedQuery, orderDirection]);
+
 	const queryKey = useMemo(
 		() => [
 			REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -86,6 +104,7 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 			panelType,
 			paginationConfig,
 			options?.selectColumns,
+			orderDirection,
 		],
 		[
 			stagedQuery,
@@ -95,12 +114,13 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 			options?.selectColumns,
 			maxTime,
 			minTime,
+			orderDirection,
 		],
 	);
 
 	const { data, isFetching, isLoading, isError } = useGetQueryRange(
 		{
-			query: stagedQuery || initialQueriesMap.traces,
+			query: requestQuery,
 			graphType: panelType,
 			selectedTime: 'GLOBAL_TIME' as const,
 			globalSelectedInterval: globalSelectedTime as CustomTimeType,
