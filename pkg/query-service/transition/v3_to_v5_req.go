@@ -133,7 +133,7 @@ func convertSingleBuilderQuery(name string, v3Query *v3.BuilderQuery) (v5.QueryE
 			Offset:       int(v3Query.Offset),
 			Having:       convertHaving(v3Query.Having, v3Query),
 			Functions:    convertFunctions(v3Query.Functions),
-			SelectFields: converSelectColumns(v3Query.SelectColumns),
+			SelectFields: convertSelectColumns(v3Query.SelectColumns),
 		}
 
 		// Convert trace aggregations
@@ -513,7 +513,7 @@ func convertFunctionName(v3Name v3.FunctionName) v5.FunctionName {
 	}
 }
 
-func converSelectColumns(cols []v3.AttributeKey) []telemetrytypes.TelemetryFieldKey {
+func convertSelectColumns(cols []v3.AttributeKey) []telemetrytypes.TelemetryFieldKey {
 	fields := []telemetrytypes.TelemetryFieldKey{}
 
 	for _, key := range cols {
