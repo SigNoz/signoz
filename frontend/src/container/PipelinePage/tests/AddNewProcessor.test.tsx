@@ -77,7 +77,7 @@ const renderJsonProcessor = ({
 
 describe('JSON Flattening Processor Tests', () => {
 	describe('Enable/Disable Flattening', () => {
-		it('should not display the form when enable flattening is turned off', async () => {
+		it('should display the form when enable flattening is turned on', async () => {
 			renderJsonProcessor({
 				selectedProcessorData: {
 					...selectedProcessorData,
@@ -85,11 +85,11 @@ describe('JSON Flattening Processor Tests', () => {
 				},
 			});
 
-			// Verify the JSON flattening form is not displayed
+			// Verify the JSON flattening form is displayed
 			expect(screen.queryByText(ENABLE_PATHS_TEXT)).toBeInTheDocument();
 			expect(screen.queryByText(ENABLE_MAPPING_TEXT)).toBeInTheDocument();
 		});
-		it('should not display the form when enable flattening is turned on', async () => {
+		it('should not display the form when enable flattening is turned off', async () => {
 			renderJsonProcessor({
 				selectedProcessorData: {
 					...selectedProcessorData,
@@ -101,7 +101,7 @@ describe('JSON Flattening Processor Tests', () => {
 			expect(screen.queryByText(ENABLE_PATHS_TEXT)).not.toBeInTheDocument();
 			expect(screen.queryByText(ENABLE_MAPPING_TEXT)).not.toBeInTheDocument();
 		});
-		it('should display the form when enable flattening is turned on', async () => {
+		it('should display the form when enable flattening switch is toggled on', async () => {
 			renderJsonProcessor({});
 
 			// Wait for the component to render and find the enable flattening switch
@@ -120,7 +120,7 @@ describe('JSON Flattening Processor Tests', () => {
 				expect(screen.getByText(ENABLE_MAPPING_TEXT)).toBeInTheDocument();
 			});
 		});
-		it('should display the form when enable flattening is turned off', async () => {
+		it('should hide the form when enable flattening switch is toggled off', async () => {
 			renderJsonProcessor({
 				selectedProcessorData: {
 					...selectedProcessorData,
@@ -145,7 +145,7 @@ describe('JSON Flattening Processor Tests', () => {
 	});
 
 	describe('Enable/Disable Paths', () => {
-		it('should display the prefix path when enable paths is turned on', async () => {
+		it('should toggle path prefix visibility when enable paths switch is toggled', async () => {
 			renderJsonProcessor({
 				selectedProcessorData: {
 					...selectedProcessorData,
@@ -181,7 +181,7 @@ describe('JSON Flattening Processor Tests', () => {
 				expect(screen.getByLabelText(PATH_PREFIX_LABEL)).toBeInTheDocument();
 			});
 		});
-		it('should display the prefix path when enable paths is turned off', async () => {
+		it('should hide path prefix when enable paths switch is turned off', async () => {
 			renderJsonProcessor({
 				selectedProcessorData: {
 					...selectedProcessorData,
