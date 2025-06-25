@@ -288,7 +288,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		}
 
 		if hasTracesQuery {
-			spanKeys, err := r.reader.GetSpanAttributeKeys(ctx)
+			spanKeys, err := r.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(params.CompositeQuery))
 			if err != nil {
 				return nil, err
 			}

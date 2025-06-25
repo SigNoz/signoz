@@ -210,6 +210,10 @@ export function GetHostsQuickFiltersConfig(
 		? 'system.cpu.load_average.15m'
 		: 'system_cpu_load_average_15m';
 
+	const environmentKey = dotMetricsEnabled
+		? 'deployment.environment'
+		: 'deployment_environment';
+
 	return [
 		{
 			type: FiltersType.CHECKBOX,
@@ -239,6 +243,18 @@ export function GetHostsQuickFiltersConfig(
 			aggregateOperator: 'noop',
 			aggregateAttribute: metricName,
 			dataSource: DataSource.METRICS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Environment',
+			attributeKey: {
+				key: environmentKey,
+				dataType: DataTypes.String,
+				type: 'resource',
+				isColumn: false,
+				isJSON: false,
+			},
 			defaultOpen: true,
 		},
 	];

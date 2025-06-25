@@ -20,6 +20,7 @@ export function getDefaultCellStyle(isDarkMode?: boolean): CSSProperties {
 
 export const defaultTableStyle: CSSProperties = {
 	minWidth: '40rem',
+	maxWidth: '60rem',
 };
 
 export const defaultListViewPanelStyle: CSSProperties = {
