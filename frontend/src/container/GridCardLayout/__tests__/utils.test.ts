@@ -109,7 +109,7 @@ describe('GridCardLayout Utils', () => {
 			builder: {
 				queryData: [
 					{
-						stepInterval: 30,
+						stepInterval: 60,
 						aggregateOperator: 'avg',
 						dataSource: DataSource.METRICS,
 						queryName: 'A',
@@ -181,7 +181,7 @@ describe('GridCardLayout Utils', () => {
 
 			expect(result.builder.queryData).toHaveLength(2);
 			expect(result.builder.queryData[0].stepInterval).toBe(180);
-			expect(result.builder.queryData[1].stepInterval).toBe(180);
+			expect(result.builder.queryData[1].stepInterval).toBe(45); // 45 is the stepInterval of the second query - custom value
 		});
 
 		it('should use calculated stepInterval when original is undefined', () => {
