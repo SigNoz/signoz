@@ -64,7 +64,7 @@ function QuerySection({
 
 	const { query } = selectedWidget;
 
-	useShareBuilderUrl(query);
+	useShareBuilderUrl({ defaultValue: query });
 
 	const handleStageQuery = useCallback(
 		(query: Query): void => {

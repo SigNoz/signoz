@@ -13,6 +13,7 @@ import TimePreference from 'components/TimePreferenceDropDown';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import {
 	timeItems,
 	timePreferance,
@@ -177,6 +178,12 @@ function FullView({
 			response.data?.payload.data.result,
 		);
 		response.data.payload.data.result = sortedSeriesData;
+	}
+
+	if (response.data && widget.panelTypes === PANEL_TYPES.PIE) {
+		const transformedData = populateMultipleResults(response?.data);
+		// eslint-disable-next-line no-param-reassign
+		response.data = transformedData;
 	}
 
 	useEffect(() => {
