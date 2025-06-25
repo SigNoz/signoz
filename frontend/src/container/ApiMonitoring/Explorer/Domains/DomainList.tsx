@@ -54,19 +54,21 @@ function DomainList(): JSX.Element {
 
 	// initialise tab with default query.
 	useShareBuilderUrl({
-		...initialQueriesMap.traces,
-		builder: {
-			...initialQueriesMap.traces.builder,
-			queryData: [
-				{
-					...initialQueriesMap.traces.builder.queryData[0],
-					dataSource: DataSource.TRACES,
-					aggregateOperator: 'noop',
-					aggregateAttribute: {
-						...initialQueriesMap.traces.builder.queryData[0].aggregateAttribute,
+		defaultValue: {
+			...initialQueriesMap.traces,
+			builder: {
+				...initialQueriesMap.traces.builder,
+				queryData: [
+					{
+						...initialQueriesMap.traces.builder.queryData[0],
+						dataSource: DataSource.TRACES,
+						aggregateOperator: 'noop',
+						aggregateAttribute: {
+							...initialQueriesMap.traces.builder.queryData[0].aggregateAttribute,
+						},
 					},
-				},
-			],
+				],
+			},
 		},
 	});
 

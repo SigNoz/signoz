@@ -42,173 +42,54 @@ function convertTimeSeriesData(
 }
 
 /**
- * Helper function to collect columns from scalar data
- */
-function collectColumnsFromScalarData(
-	scalarData: ScalarData[],
-): { name: string; queryName: string; isValueColumn: boolean }[] {
-	const columnMap = new Map<
-		string,
-		{ name: string; queryName: string; isValueColumn: boolean }
-	>();
-
-	scalarData.forEach((scalar) => {
-		scalar.columns.forEach((col) => {
-			if (col.columnType === 'group') {
-				// For group columns, use the column name as-is
-				const key = `${col.name}_group`;
-				if (!columnMap.has(key)) {
-					columnMap.set(key, {
-						name: col.name,
-						queryName: '', // Group columns don't have query names
-						isValueColumn: false,
-					});
-				}
-			} else if (col.columnType === 'aggregation') {
-				// For aggregation columns, use the query name as the column name
-				const key = `${col.queryName}_aggregation`;
-				if (!columnMap.has(key)) {
-					columnMap.set(key, {
-						name: col.queryName, // Use query name as column name (A, B, etc.)
-						queryName: col.queryName,
-						isValueColumn: true,
-					});
-				}
-			}
-		});
-	});
-
-	return Array.from(columnMap.values()).sort((a, b) => {
-		if (a.isValueColumn !== b.isValueColumn) {
-			return a.isValueColumn ? 1 : -1;
-		}
-		return a.name.localeCompare(b.name);
-	});
-}
-
-/**
- * Helper function to process scalar data rows with unified table structure
- */
-function processScalarDataRows(
-	scalarData: ScalarData[],
-): { data: Record<string, any> }[] {
-	// First, identify all group columns and all value columns
-	const allGroupColumns = new Set<string>();
-	const allValueColumns = new Set<string>();
-
-	scalarData.forEach((scalar) => {
-		scalar.columns.forEach((col) => {
-			if (col.columnType === 'group') {
-				allGroupColumns.add(col.name);
-			} else if (col.columnType === 'aggregation') {
-				// Use query name for value columns to match expected format
-				allValueColumns.add(col.queryName);
-			}
-		});
-	});
-
-	// Create a unified row structure
-	const unifiedRows = new Map<string, Record<string, any>>();
-
-	// Process each scalar result
-	scalarData.forEach((scalar) => {
-		scalar.data.forEach((dataRow) => {
-			const groupColumns = scalar.columns.filter(
-				(col) => col.columnType === 'group',
-			);
-
-			// Create row key based on group columns
-			let rowKey: string;
-			const groupValues: Record<string, any> = {};
-
-			if (groupColumns.length > 0) {
-				const keyParts: string[] = [];
-				groupColumns.forEach((col, index) => {
-					const value = dataRow[index];
-					keyParts.push(String(value));
-					groupValues[col.name] = value;
-				});
-				rowKey = keyParts.join('|');
-			} else {
-				// For scalar values without grouping, create a default row
-				rowKey = 'default_row';
-				// Set all group columns to 'n/a' for this row
-				Array.from(allGroupColumns).forEach((groupCol) => {
-					groupValues[groupCol] = 'n/a';
-				});
-			}
-
-			// Get or create the unified row
-			if (!unifiedRows.has(rowKey)) {
-				const newRow: Record<string, any> = { ...groupValues };
-				// Initialize all value columns to 'n/a'
-				Array.from(allValueColumns).forEach((valueCol) => {
-					newRow[valueCol] = 'n/a';
-				});
-				unifiedRows.set(rowKey, newRow);
-			}
-
-			const row = unifiedRows.get(rowKey)!;
-
-			// Fill in the aggregation values using query name as column name
-			scalar.columns.forEach((col, colIndex) => {
-				if (col.columnType === 'aggregation') {
-					row[col.queryName] = dataRow[colIndex];
-				}
-			});
-		});
-	});
-
-	return Array.from(unifiedRows.values()).map((rowData) => ({
-		data: rowData,
-	}));
-}
-
-/**
  * Converts V5 ScalarData array to legacy format with table structure
  */
 function convertScalarDataArrayToTable(
 	scalarDataArray: ScalarData[],
 	legendMap: Record<string, string>,
-): QueryDataV3 {
+): QueryDataV3[] {
 	// If no scalar data, return empty structure
+
 	if (!scalarDataArray || scalarDataArray.length === 0) {
+		return [];
+	}
+
+	// Process each scalar data separately to maintain query separation
+	return scalarDataArray?.map((scalarData) => {
+		// Get query name from the first column
+		const queryName = scalarData?.columns?.[0]?.queryName || '';
+
+		// Collect columns for this specific query
+		const columns = scalarData?.columns?.map((col) => ({
+			name: col.columnType === 'aggregation' ? col.queryName : col.name,
+			queryName: col.queryName,
+			isValueColumn: col.columnType === 'aggregation',
+		}));
+
+		// Process rows for this specific query
+		const rows = scalarData?.data?.map((dataRow) => {
+			const rowData: Record<string, any> = {};
+
+			scalarData?.columns?.forEach((col, colIndex) => {
+				const columnName =
+					col.columnType === 'aggregation' ? col.queryName : col.name;
+				rowData[columnName] = dataRow[colIndex];
+			});
+
+			return { data: rowData };
+		});
+
 		return {
-			queryName: '',
-			legend: '',
+			queryName,
+			legend: legendMap[queryName] || '',
 			series: null,
 			list: null,
 			table: {
-				columns: [],
-				rows: [],
+				columns,
+				rows,
 			},
 		};
-	}
-
-	// Collect columns and process rows
-	const columns = collectColumnsFromScalarData(scalarDataArray);
-	const rows = processScalarDataRows(scalarDataArray);
-
-	// Get the primary query name
-	const primaryQuery = scalarDataArray.find((s) =>
-		s.columns.some((c) => c.columnType === 'aggregation'),
-	);
-	const queryName =
-		primaryQuery?.columns.find((c) => c.columnType === 'aggregation')
-			?.queryName ||
-		scalarDataArray[0]?.columns[0]?.queryName ||
-		'';
-
-	return {
-		queryName,
-		legend: legendMap[queryName] || queryName,
-		series: null,
-		list: null,
-		table: {
-			columns,
-			rows,
-		},
-	};
+	});
 }
 
 /**
@@ -268,11 +149,11 @@ function convertV5DataByType(
 		}
 		case 'scalar': {
 			const scalarData = v5Data.data.results as ScalarData[];
-			// For scalar data, combine all results into a single table
-			const combinedTable = convertScalarDataArrayToTable(scalarData, legendMap);
+			// For scalar data, combine all results into separate table entries
+			const combinedTables = convertScalarDataArrayToTable(scalarData, legendMap);
 			return {
 				resultType: 'scalar',
-				result: [combinedTable],
+				result: combinedTables,
 			};
 		}
 		case 'raw': {
@@ -339,7 +220,7 @@ export function convertV5ResponseToLegacy(
 				// If metric names is an empty object
 				if (isEmpty(queryData.metric)) {
 					// If metrics list is empty && the user haven't defined a legend then add the legend equal to the name of the query.
-					if (!newQueryData.legend) {
+					if (newQueryData.legend === undefined || newQueryData.legend === null) {
 						newQueryData.legend = queryData.queryName;
 					}
 					// If name of the query and the legend if inserted is same then add the same to the metrics object.
