@@ -12,10 +12,11 @@ function SomethingWentWrong(): JSX.Element {
 			<Button
 				type="primary"
 				onClick={(): void => {
-					history.push(ROUTES.APPLICATION);
+					history.push(ROUTES.HOME);
 				}}
+				className="periscope-btn primary"
 			>
-				Return to Services page
+				Return to Home
 			</Button>
 		</Container>
 	);

@@ -13,7 +13,8 @@ type Temporality struct {
 var (
 	Delta       = Temporality{valuer.NewString("delta")}
 	Cumulative  = Temporality{valuer.NewString("cumulative")}
-	Unspecified = Temporality{valuer.NewString("")}
+	Unspecified = Temporality{valuer.NewString("unspecified")}
+	Unknown     = Temporality{valuer.NewString("")}
 )
 
 // Type is the type of the metric in OTLP data model

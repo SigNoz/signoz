@@ -1,15 +1,15 @@
 import logEvent from 'api/common/logEvent';
 import { ValidateFunnelResponse } from 'api/traceFunnels';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	CustomTimeType,
 	Time as TimeV2,
 } from 'container/TopNav/DateTimeSelectionV2/config';
+import { normalizeSteps } from 'hooks/TracesFunnels/useFunnelConfiguration';
 import { useValidateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
-import { useLocalStorage } from 'hooks/useLocalStorage';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import { isEqual } from 'lodash-es';
 import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
 import {
 	createContext,
@@ -41,6 +41,9 @@ interface FunnelContextType {
 	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
 	handleStepRemoval: (index: number) => void;
 	handleRunFunnel: () => void;
+	handleSaveFunnel: () => void;
+	triggerSave: boolean;
+	hasUnsavedChanges: boolean;
 	validationResponse:
 		| SuccessResponse<ValidateFunnelResponse>
 		| ErrorResponse
@@ -54,8 +57,10 @@ interface FunnelContextType {
 		spanName: string,
 	) => void;
 	handleRestoreSteps: (oldSteps: FunnelStepData[]) => void;
-	hasFunnelBeenExecuted: boolean;
-	setHasFunnelBeenExecuted: Dispatch<SetStateAction<boolean>>;
+	isUpdatingFunnel: boolean;
+	setIsUpdatingFunnel: Dispatch<SetStateAction<boolean>>;
+	lastUpdatedSteps: FunnelStepData[];
+	setLastUpdatedSteps: Dispatch<SetStateAction<FunnelStepData[]>>;
 }
 
 const FunnelContext = createContext<FunnelContextType | undefined>(undefined);
@@ -86,6 +91,19 @@ export function FunnelProvider({
 	const funnel = data?.payload;
 	const initialSteps = funnel?.steps?.length ? funnel.steps : initialStepsData;
 	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
+	const [triggerSave, setTriggerSave] = useState<boolean>(false);
+	const [isUpdatingFunnel, setIsUpdatingFunnel] = useState<boolean>(false);
+	const [lastUpdatedSteps, setLastUpdatedSteps] = useState<FunnelStepData[]>(
+		initialSteps,
+	);
+
+	// Check if there are unsaved changes by comparing with initial steps from API
+	const hasUnsavedChanges = useMemo(() => {
+		const normalizedCurrentSteps = normalizeSteps(steps);
+		const normalizedInitialSteps = normalizeSteps(lastUpdatedSteps);
+		return !isEqual(normalizedCurrentSteps, normalizedInitialSteps);
+	}, [steps, lastUpdatedSteps]);
+
 	const { hasIncompleteStepFields, hasAllEmptyStepFields } = useMemo(
 		() => ({
 			hasAllEmptyStepFields: steps.every(
@@ -98,15 +116,6 @@ export function FunnelProvider({
 		[steps],
 	);
 
-	const [unexecutedFunnels, setUnexecutedFunnels] = useLocalStorage<string[]>(
-		LOCALSTORAGE.UNEXECUTED_FUNNELS,
-		[],
-	);
-
-	const [hasFunnelBeenExecuted, setHasFunnelBeenExecuted] = useState(
-		!unexecutedFunnels.includes(funnelId),
-	);
-
 	const {
 		data: validationResponse,
 		isLoading: isValidationLoading,
@@ -116,7 +125,13 @@ export function FunnelProvider({
 		selectedTime,
 		startTime,
 		endTime,
-		enabled: !!funnelId && !!selectedTime && !!startTime && !!endTime,
+		enabled:
+			!!funnelId &&
+			!!selectedTime &&
+			!!startTime &&
+			!!endTime &&
+			!hasIncompleteStepFields,
+		steps,
 	});
 
 	const validTracesCount = useMemo(
@@ -170,6 +185,10 @@ export function FunnelProvider({
 			handleStepUpdate(index, {
 				service_name: serviceName,
 				span_name: spanName,
+				filters: {
+					items: [],
+					op: 'AND',
+				},
 			});
 			logEvent('Trace Funnels: span added (replaced) from trace details page', {});
 		},
@@ -181,13 +200,14 @@ export function FunnelProvider({
 
 	const handleRunFunnel = useCallback(async (): Promise<void> => {
 		if (validTracesCount === 0) return;
-		if (!hasFunnelBeenExecuted) {
-			setUnexecutedFunnels(unexecutedFunnels.filter((id) => id !== funnelId));
 
-			setHasFunnelBeenExecuted(true);
-		}
 		queryClient.refetchQueries([
 			REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW,
+			funnelId,
+			selectedTime,
+		]);
+		queryClient.refetchQueries([
+			REACT_QUERY_KEY.GET_FUNNEL_STEPS_OVERVIEW,
 			funnelId,
 			selectedTime,
 		]);
@@ -206,15 +226,13 @@ export function FunnelProvider({
 			funnelId,
 			selectedTime,
 		]);
-	}, [
-		funnelId,
-		hasFunnelBeenExecuted,
-		unexecutedFunnels,
-		queryClient,
-		selectedTime,
-		setUnexecutedFunnels,
-		validTracesCount,
-	]);
+	}, [funnelId, queryClient, selectedTime, validTracesCount]);
+
+	const handleSaveFunnel = useCallback(() => {
+		setTriggerSave(true);
+		// Reset the trigger after a brief moment to allow useFunnelConfiguration to pick it up
+		setTimeout(() => setTriggerSave(false), 100);
+	}, []);
 
 	const value = useMemo<FunnelContextType>(
 		() => ({
@@ -230,14 +248,19 @@ export function FunnelProvider({
 			handleAddStep: addNewStep,
 			handleStepRemoval,
 			handleRunFunnel,
+			handleSaveFunnel,
+			triggerSave,
 			validationResponse,
 			isValidateStepsLoading: isValidationLoading || isValidationFetching,
 			hasIncompleteStepFields,
 			hasAllEmptyStepFields,
 			handleReplaceStep,
 			handleRestoreSteps,
-			hasFunnelBeenExecuted,
-			setHasFunnelBeenExecuted,
+			hasUnsavedChanges,
+			setIsUpdatingFunnel,
+			isUpdatingFunnel,
+			lastUpdatedSteps,
+			setLastUpdatedSteps,
 		}),
 		[
 			funnelId,
@@ -251,6 +274,8 @@ export function FunnelProvider({
 			addNewStep,
 			handleStepRemoval,
 			handleRunFunnel,
+			handleSaveFunnel,
+			triggerSave,
 			validationResponse,
 			isValidationLoading,
 			isValidationFetching,
@@ -258,8 +283,11 @@ export function FunnelProvider({
 			hasAllEmptyStepFields,
 			handleReplaceStep,
 			handleRestoreSteps,
-			hasFunnelBeenExecuted,
-			setHasFunnelBeenExecuted,
+			hasUnsavedChanges,
+			setIsUpdatingFunnel,
+			isUpdatingFunnel,
+			lastUpdatedSteps,
+			setLastUpdatedSteps,
 		],
 	);
 

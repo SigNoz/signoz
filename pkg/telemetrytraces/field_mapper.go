@@ -150,6 +150,11 @@ func (m *defaultFieldMapper) getColumn(
 			return indexV3Columns["attributes_bool"], nil
 		}
 	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextUnspecified:
+		// Check if this is a span scope field
+		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
+			// The actual SQL will be generated in the condition builder
+			return &schema.Column{Name: key.Name, Type: schema.ColumnTypeBool}, nil
+		}
 		if col, ok := indexV3Columns[key.Name]; ok {
 			return col, nil
 		}
@@ -171,6 +176,13 @@ func (m *defaultFieldMapper) FieldFor(
 	ctx context.Context,
 	key *telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
+	// Special handling for span scope fields
+	if key.FieldContext == telemetrytypes.FieldContextSpan &&
+		(strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint) {
+		// Return the field name as-is, the condition builder will handle the SQL generation
+		return key.Name, nil
+	}
+
 	column, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -247,10 +259,10 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 				correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
 				if found {
 					// we found a close match, in the error message send the suggestion
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
+					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "%s", correction)
 				} else {
 					// not even a close match, return an error
-					return "", err
+					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field %s not found", field.Name)
 				}
 			}
 		} else if len(keysForField) == 1 {
@@ -263,7 +275,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 				colName, _ = m.FieldFor(ctx, key)
 				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
 			}
-			colName = fmt.Sprintf("multiIf(%s)", strings.Join(args, ", "))
+			colName = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))
 		}
 	}
 

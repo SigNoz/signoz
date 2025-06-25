@@ -42,7 +42,13 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 					<Button className="previous-btn">
 						<ArrowLeft
 							size={14}
-							onClick={(): void => history.push(ROUTES.TRACES_EXPLORER)}
+							onClick={(): void => {
+								if (window.history.length > 1) {
+									history.goBack();
+								} else {
+									history.push(ROUTES.TRACES_EXPLORER);
+								}
+							}}
 						/>
 					</Button>
 					<div className="trace-name">

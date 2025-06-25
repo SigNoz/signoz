@@ -58,7 +58,8 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
@@ -95,6 +96,7 @@ function LogsExplorerViews({
 	chartQueryKeyRef: MutableRefObject<any>;
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
+	const dispatch = useDispatch();
 
 	// this is to respect the panel type present in the URL rather than defaulting it to list always.
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
@@ -106,15 +108,15 @@ function LogsExplorerViews({
 		DEFAULT_PER_PAGE_VALUE,
 	);
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const currentMinTimeRef = useRef<number>(minTime);
 
 	// Context
 	const {
-		initialDataSource,
 		currentQuery,
 		stagedQuery,
 		panelType,
@@ -135,6 +137,7 @@ function LogsExplorerViews({
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
 	const [queryId, setQueryId] = useState<string>(v4());
 	const [queryStats, setQueryStats] = useState<WsDataEvent>();
+	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
@@ -144,7 +147,7 @@ function LogsExplorerViews({
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.LOGS,
+		dataSource: DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 
@@ -171,8 +174,11 @@ function LogsExplorerViews({
 		return logs.length >= listQuery.limit;
 	}, [logs.length, listQuery]);
 
-	const listChartQuery = useMemo(() => {
-		if (!stagedQuery || !listQuery) return null;
+	useEffect(() => {
+		if (!stagedQuery || !listQuery) {
+			setListChartQuery(null);
+			return;
+		}
 
 		const modifiedQueryData: IBuilderQuery = {
 			...listQuery,
@@ -221,7 +227,7 @@ function LogsExplorerViews({
 			},
 		};
 
-		return modifiedQuery;
+		setListChartQuery(modifiedQuery);
 	}, [stagedQuery, listQuery, activeLogId]);
 
 	const exportDefaultQuery = useMemo(
@@ -257,6 +263,8 @@ function LogsExplorerViews({
 		{},
 		undefined,
 		chartQueryKeyRef,
+		undefined,
+		'custom',
 	);
 
 	const {
@@ -503,6 +511,16 @@ function LogsExplorerViews({
 			requestData?.id !== stagedQuery?.id ||
 			currentMinTimeRef.current !== minTime
 		) {
+			// Recalculate global time when query changes i.e. stage and run query clicked
+			if (
+				!!requestData?.id &&
+				stagedQuery?.id &&
+				requestData?.id !== stagedQuery?.id &&
+				selectedTime !== 'custom'
+			) {
+				dispatch(UpdateTimeInterval(selectedTime));
+			}
+
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
 				page: 1,
@@ -524,6 +542,9 @@ function LogsExplorerViews({
 		activeLogId,
 		panelType,
 		selectedView,
+		dispatch,
+		selectedTime,
+		maxTime,
 	]);
 
 	const chartData = useMemo(() => {

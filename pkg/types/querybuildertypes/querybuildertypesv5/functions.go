@@ -30,6 +30,7 @@ var (
 	FunctionNameMedian7       = FunctionName{valuer.NewString("median7")}
 	FunctionNameTimeShift     = FunctionName{valuer.NewString("timeShift")}
 	FunctionNameAnomaly       = FunctionName{valuer.NewString("anomaly")}
+	FunctionNameFillZero      = FunctionName{valuer.NewString("fillZero")}
 )
 
 // ApplyFunction applies the given function to the result data
@@ -89,13 +90,42 @@ func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 		// Placeholder for anomaly detection as function that can be used in dashboards other than
 		// the anomaly alert
 		return result
+	case FunctionNameFillZero:
+		// fillZero expects 3 arguments: start, end, step (all in milliseconds)
+		if len(args) < 3 {
+			return result
+		}
+		start, err := parseFloat64Arg(args[0].Value)
+		if err != nil {
+			return result
+		}
+		end, err := parseFloat64Arg(args[1].Value)
+		if err != nil {
+			return result
+		}
+		step, err := parseFloat64Arg(args[2].Value)
+		if err != nil || step <= 0 {
+			return result
+		}
+		return funcFillZero(result, int64(start), int64(end), int64(step))
 	}
 	return result
 }
 
-// parseFloat64Arg parses a string argument to float64
-func parseFloat64Arg(value string) (float64, error) {
-	return strconv.ParseFloat(value, 64)
+// parseFloat64Arg parses an argument to float64
+func parseFloat64Arg(value any) (float64, error) {
+	switch v := value.(type) {
+	case float64:
+		return v, nil
+	case int64:
+		return float64(v), nil
+	case int:
+		return float64(v), nil
+	case string:
+		return strconv.ParseFloat(v, 64)
+	default:
+		return 0, strconv.ErrSyntax
+	}
 }
 
 // getEWMAAlpha calculates the alpha value for EWMA functions
@@ -336,6 +366,39 @@ func funcTimeShift(result *TimeSeries, shift float64) *TimeSeries {
 		result.Values[idx] = point
 	}
 
+	return result
+}
+
+// funcFillZero fills gaps in time series with zeros at regular step intervals
+// It takes start, end, and step parameters (all in milliseconds) to ensure consistent filling
+func funcFillZero(result *TimeSeries, start, end, step int64) *TimeSeries {
+	if step <= 0 {
+		return result
+	}
+
+	alignedStart := (start / step) * step
+	alignedEnd := ((end + step - 1) / step) * step
+
+	existingValues := make(map[int64]*TimeSeriesValue)
+	for _, v := range result.Values {
+		existingValues[v.Timestamp] = v
+	}
+
+	filledValues := make([]*TimeSeriesValue, 0)
+
+	for ts := alignedStart; ts <= alignedEnd; ts += step {
+		if val, exists := existingValues[ts]; exists {
+			filledValues = append(filledValues, val)
+		} else {
+			filledValues = append(filledValues, &TimeSeriesValue{
+				Timestamp: ts,
+				Value:     0,
+				Partial:   false,
+			})
+		}
+	}
+
+	result.Values = filledValues
 	return result
 }
 

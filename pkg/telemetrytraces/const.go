@@ -2,7 +2,6 @@ package telemetrytraces
 
 var (
 	IntrinsicFields = []string{
-		"timestamp",
 		"trace_id",
 		"span_id",
 		"trace_state",
@@ -15,6 +14,8 @@ var (
 		"status_code",
 		"status_message",
 		"status_code_string",
+	}
+	IntrinsicFieldsDeprecated = []string{
 		"traceID",
 		"spanID",
 		"parentSpanID",
@@ -36,7 +37,9 @@ var (
 		"db_operation",
 		"has_error",
 		"is_remote",
+	}
 
+	CalculatedFieldsDeprecated = []string{
 		"responseStatusCode",
 		"externalHttpUrl",
 		"httpUrl",
@@ -48,4 +51,6 @@ var (
 		"hasError",
 		"isRemote",
 	}
+	SpanSearchScopeRoot       = "isroot"
+	SpanSearchScopeEntryPoint = "isentrypoint"
 )

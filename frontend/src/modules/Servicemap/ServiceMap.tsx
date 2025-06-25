@@ -95,7 +95,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 		);
 	}
 	return (
-		<Container>
+		<div className="service-map-container">
 			<ResourceAttributesFilter
 				suffixIcon={
 					<TextToolTip
@@ -109,7 +109,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 			/>
 
 			<Map fgRef={fgRef} serviceMap={serviceMap} />
-		</Container>
+		</div>
 	);
 }
 

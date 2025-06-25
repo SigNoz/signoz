@@ -60,26 +60,30 @@ function CloudServiceDataCollected({
 
 	return (
 		<div className="cloud-service-data-collected">
-			<div className="cloud-service-data-collected__table">
-				<div className="cloud-service-data-collected__table-heading">Logs</div>
-				<Table
-					columns={logsColumns}
-					dataSource={logsData}
-					// eslint-disable-next-line react/jsx-props-no-spreading
-					{...tableProps}
-					className="cloud-service-data-collected__table-logs"
-				/>
-			</div>
-			<div className="cloud-service-data-collected__table">
-				<div className="cloud-service-data-collected__table-heading">Metrics</div>
-				<Table
-					columns={metricsColumns}
-					dataSource={metricsData}
-					// eslint-disable-next-line react/jsx-props-no-spreading
-					{...tableProps}
-					className="cloud-service-data-collected__table-metrics"
-				/>
-			</div>
+			{logsData && logsData.length > 0 && (
+				<div className="cloud-service-data-collected__table">
+					<div className="cloud-service-data-collected__table-heading">Logs</div>
+					<Table
+						columns={logsColumns}
+						dataSource={logsData}
+						// eslint-disable-next-line react/jsx-props-no-spreading
+						{...tableProps}
+						className="cloud-service-data-collected__table-logs"
+					/>
+				</div>
+			)}
+			{metricsData && metricsData.length > 0 && (
+				<div className="cloud-service-data-collected__table">
+					<div className="cloud-service-data-collected__table-heading">Metrics</div>
+					<Table
+						columns={metricsColumns}
+						dataSource={metricsData}
+						// eslint-disable-next-line react/jsx-props-no-spreading
+						{...tableProps}
+						className="cloud-service-data-collected__table-metrics"
+					/>
+				</div>
+			)}
 		</div>
 	);
 }
