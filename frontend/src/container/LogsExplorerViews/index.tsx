@@ -349,11 +349,11 @@ function LogsExplorerViewsContainer({
 								...paginateData,
 								...(updatedFilters ? { filters: updatedFilters } : {}),
 								...(selectedPanelType === PANEL_TYPES.LIST
-									? { order: orderBy, orderBy }
-									: { order: [], orderBy: [] }),
+									? { order: orderBy }
+									: { order: [] }),
 							},
 					  ];
-			console.log('queryData', queryData);
+
 			const data: Query = {
 				...query,
 				builder: {
