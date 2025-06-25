@@ -325,7 +325,9 @@ describe('Logs Explorer Tests', () => {
 						isStagedQueryUpdated: (): boolean => false,
 					}}
 				>
-					<LogsExplorer />
+					<PreferenceContextProvider>
+						<LogsExplorer />
+					</PreferenceContextProvider>
 				</QueryBuilderContext.Provider>,
 			);
 
