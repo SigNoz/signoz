@@ -172,5 +172,13 @@ export const usePrefillAlertConditions = (
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [matchType, thresholdOperator, alertDefStringified, handleAlertDefChange]);
+	}, [
+		matchType,
+		thresholdOperator,
+		thresholdValue,
+		thresholdUnit,
+		alertDefStringified,
+		handleAlertDefChange,
+		threshold,
+	]);
 };

@@ -330,8 +330,6 @@ function RuleOptions({
 		});
 	};
 
-	console.log(alertDef.condition);
-
 	const renderAnomalyRuleOpts = (): JSX.Element => (
 		<Form.Item>
 			<Typography.Text className="rule-definition">
