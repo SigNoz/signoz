@@ -25,6 +25,7 @@ import {
 	RequestType,
 	TelemetryFieldKey,
 	TraceAggregation,
+	VariableItem,
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -316,12 +317,11 @@ export const prepareQueryRangePayloadV5 = ({
 	variables = {},
 	start: startTime,
 	end: endTime,
+	formatForWeb,
 }: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
 	let queries: QueryEnvelope[] = [];
-
-	console.log('query', query);
 
 	switch (query.queryType) {
 		case EQueryType.QUERY_BUILDER: {
@@ -380,7 +380,13 @@ export const prepareQueryRangePayloadV5 = ({
 		compositeQuery: {
 			queries,
 		},
-		variables,
+		formatOptions: {
+			formatTableResultForUI: !!formatForWeb,
+		},
+		variables: Object.entries(variables).reduce((acc, [key, value]) => {
+			acc[key] = { value };
+			return acc;
+		}, {} as Record<string, VariableItem>),
 	};
 
 	return { legendMap, queryPayload };

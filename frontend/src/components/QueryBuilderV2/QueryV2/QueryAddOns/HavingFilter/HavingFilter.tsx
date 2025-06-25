@@ -69,6 +69,30 @@ const conjunctions = [
 	{ label: 'OR', value: 'OR ' },
 ];
 
+// Custom extension to stop events from propagating to global shortcuts
+const stopEventsExtension = EditorView.domEventHandlers({
+	keydown: (event) => {
+		// Stop all keyboard events from propagating to global shortcuts
+		event.stopPropagation();
+		event.stopImmediatePropagation();
+		return false; // Important for CM to know you handled it
+	},
+	input: (event) => {
+		event.stopPropagation();
+		return false;
+	},
+	focus: (event) => {
+		// Ensure focus events don't interfere with global shortcuts
+		event.stopPropagation();
+		return false;
+	},
+	blur: (event) => {
+		// Ensure blur events don't interfere with global shortcuts
+		event.stopPropagation();
+		return false;
+	},
+});
+
 function HavingFilter({
 	onClose,
 	onChange,
@@ -82,6 +106,11 @@ function HavingFilter({
 	const [input, setInput] = useState(
 		queryData?.havingExpression?.expression || '',
 	);
+
+	useEffect(() => {
+		setInput(queryData?.havingExpression?.expression || '');
+	}, [queryData?.havingExpression?.expression]);
+
 	const [isFocused, setIsFocused] = useState(false);
 
 	const editorRef = useRef<EditorView | null>(null);
@@ -316,6 +345,7 @@ function HavingFilter({
 					extensions={[
 						havingAutocomplete,
 						javascript({ jsx: false, typescript: false }),
+						stopEventsExtension,
 						keymap.of([
 							...completionKeymap,
 							{
