@@ -6,14 +6,14 @@ interface KeyValueListProps {
 }
 
 export const PREDEFINED_MAPPING = {
+	environment: ['service.env'],
 	host: ['host', 'hostname'],
+	message: ['message', 'msg', 'log'],
 	service: ['service', 'syslog.appname'],
 	severity: ['status', 'severity', 'level', 'syslog.severity'],
-	trace_id: ['trace_id'],
 	span_id: ['span_id'],
-	message: ['message', 'msg', 'log'],
 	trace_flags: ['flags'],
-	environment: ['service.env'],
+	trace_id: ['trace_id'],
 };
 
 function KeyValueList({

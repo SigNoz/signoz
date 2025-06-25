@@ -9,18 +9,16 @@ import KeyValueList, { PREDEFINED_MAPPING } from './KeyValueList';
 
 interface JsonFlatteningProps {
 	selectedProcessorData?: ProcessorData;
+	isAdd: boolean;
 }
 
 function JsonFlattening({
 	selectedProcessorData,
+	isAdd,
 }: JsonFlatteningProps): JSX.Element | null {
 	const form = Form.useFormInstance();
 	const mappingValue = selectedProcessorData?.mapping || {};
 	const enableFlattening = Form.useWatch('enable_flattening', form);
-
-	const [enablePaths, setEnablePaths] = useState(
-		selectedProcessorData?.enable_paths ?? true,
-	);
 
 	const [enableMapping, setEnableMapping] = useState(
 		!!mappingValue && Object.keys(mappingValue).length > 0,
@@ -41,7 +39,6 @@ function JsonFlattening({
 	};
 
 	const handleEnablePathsChange = (checked: boolean): void => {
-		setEnablePaths(checked);
 		form.setFieldValue('enable_paths', checked);
 	};
 
@@ -55,19 +52,19 @@ function JsonFlattening({
 				className="json-flattening-form__item"
 				name="enable_paths"
 				valuePropName="checked"
-				initialValue={selectedProcessorData?.enable_paths}
+				initialValue={isAdd ? true : selectedProcessorData?.enable_paths}
 			>
 				<Space>
 					<Switch
 						size="small"
-						checked={enablePaths}
+						checked={form.getFieldValue('enable_paths')}
 						onChange={handleEnablePathsChange}
 					/>
 					Enable Paths
 				</Space>
 			</Form.Item>
 
-			{enablePaths && (
+			{form.getFieldValue('enable_paths') && (
 				<Form.Item
 					name="path_prefix"
 					label="Path Prefix"

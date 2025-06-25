@@ -2,7 +2,6 @@ import './styles.scss';
 
 import { Form, Input, Select, Space, Switch } from 'antd';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProcessorData } from 'types/api/pipeline/def';
 
@@ -16,11 +15,9 @@ import { FormWrapper, PipelineIndexIcon, StyledSelect } from './styles';
 function ProcessorFieldInput({
 	fieldData,
 	selectedProcessorData,
+	isAdd,
 }: ProcessorFieldInputProps): JSX.Element | null {
 	const { t } = useTranslation('pipeline');
-	const [enableFlattening, setEnableFlattening] = useState(
-		selectedProcessorData?.enable_flattening ?? false,
-	);
 
 	// Watch form values so we can evaluate shouldRender on
 	// conditional fields when form values are updated.
@@ -59,15 +56,15 @@ function ProcessorFieldInput({
 	} else if (Array.isArray(fieldData?.initialValue)) {
 		inputField = <CSVInput placeholder={t(fieldData.placeholder)} />;
 	} else if (fieldData?.name === 'enable_flattening') {
-		inputField = <JsonFlattening selectedProcessorData={selectedProcessorData} />;
+		inputField = (
+			<JsonFlattening
+				selectedProcessorData={selectedProcessorData}
+				isAdd={isAdd}
+			/>
+		);
 	} else {
 		inputField = <Input placeholder={t(fieldData.placeholder)} />;
 	}
-
-	const handleEnableFlatteningChange = (checked: boolean): void => {
-		form.setFieldValue('enable_flattening', checked);
-		setEnableFlattening(checked);
-	};
 
 	return (
 		<div
@@ -84,19 +81,25 @@ function ProcessorFieldInput({
 			)}
 			<FormWrapper>
 				{fieldData.name === 'enable_flattening' ? (
-					<>
-						<Form.Item name="enable_flattening" valuePropName="checked" noStyle>
-							<Space>
-								<Switch
-									size="small"
-									onChange={handleEnableFlatteningChange}
-									checked={enableFlattening}
-								/>
-								<ModalFooterTitle>{fieldData.fieldName}</ModalFooterTitle>
-							</Space>
-						</Form.Item>
-						{inputField}
-					</>
+					<Form.Item
+						required={false}
+						name="enable_flattening"
+						initialValue={
+							selectedProcessorData?.enable_flattening ?? fieldData.initialValue
+						}
+						valuePropName="checked"
+					>
+						<Space>
+							<Switch
+								size="small"
+								checked={form.getFieldValue('enable_flattening')}
+								onChange={(checked: boolean): void => {
+									form.setFieldValue('enable_flattening', checked);
+								}}
+							/>
+							<ModalFooterTitle>{fieldData.fieldName}</ModalFooterTitle>
+						</Space>
+					</Form.Item>
 				) : (
 					<Form.Item
 						required={false}
@@ -109,6 +112,7 @@ function ProcessorFieldInput({
 						{inputField}
 					</Form.Item>
 				)}
+				{fieldData.name === 'enable_flattening' && inputField}
 			</FormWrapper>
 		</div>
 	);
@@ -121,11 +125,13 @@ ProcessorFieldInput.defaultProps = {
 interface ProcessorFieldInputProps {
 	fieldData: ProcessorFormField;
 	selectedProcessorData?: ProcessorData;
+	isAdd: boolean;
 }
 
 function ProcessorForm({
 	processorType,
 	selectedProcessorData,
+	isAdd,
 }: ProcessorFormProps): JSX.Element {
 	return (
 		<div className="processor-form-container">
@@ -134,6 +140,7 @@ function ProcessorForm({
 					key={fieldData.name + String(fieldData.initialValue)}
 					fieldData={fieldData}
 					selectedProcessorData={selectedProcessorData}
+					isAdd={isAdd}
 				/>
 			))}
 		</div>
@@ -147,6 +154,7 @@ ProcessorForm.defaultProps = {
 interface ProcessorFormProps {
 	processorType: string;
 	selectedProcessorData?: ProcessorData;
+	isAdd: boolean;
 }
 
 export default ProcessorForm;

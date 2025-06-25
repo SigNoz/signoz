@@ -174,6 +174,7 @@ function AddNewProcessor({
 				<ProcessorForm
 					processorType={processorType}
 					selectedProcessorData={selectedProcessorData}
+					isAdd={isAdd}
 				/>
 				<Divider plain />
 				<Form.Item>
