@@ -40,6 +40,7 @@ export interface IQueryContext {
 	isInConjunction?: boolean;
 	isInParenthesis?: boolean;
 	isInBracketList?: boolean; // For multi-value operators like IN where values are in brackets
+	isValueWrappedInQuotes?: boolean;
 	keyToken?: string;
 	operatorToken?: string;
 	valueToken?: string;

@@ -75,3 +75,12 @@ export function isFunctionToken(tokenType: number): boolean {
 		FilterQueryLexer.HASNONE,
 	].includes(tokenType);
 }
+
+export function isWrappedUnderQuotes(token: string): boolean {
+	if (!token) return false;
+	const sanitizedToken = token.trim();
+	return (
+		(sanitizedToken.startsWith('"') && sanitizedToken.endsWith('"')) ||
+		(sanitizedToken.startsWith("'") && sanitizedToken.endsWith("'"))
+	);
+}
