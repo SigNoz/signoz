@@ -16,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
@@ -94,9 +93,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 
 	// send telemetry event
 	for i := 0; i < len(invites); i++ {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_SENT, map[string]interface{}{
-			"invited user email": invites[i].Email,
-		}, creator.Email, true, false)
+		m.analytics.TrackUser(ctx, orgID, creator.ID.String(), "Invite Sent", map[string]any{"invitee_email": invites[i].Email, "invitee_role": invites[i].Role})
 
 		if err := m.emailing.SendHTML(ctx, invites[i].Email, "You are invited to join a team in SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
 			"CustomerName": invites[i].Name,
