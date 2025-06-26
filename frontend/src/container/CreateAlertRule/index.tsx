@@ -3,6 +3,7 @@ import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
+import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import history from 'lib/history';
 import { useEffect, useState } from 'react';
@@ -31,6 +32,12 @@ function CreateRules(): JSX.Element {
 		alertTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
 			? AlertTypes.ANOMALY_BASED_ALERT
 			: queryParams.get(QueryParams.alertType);
+
+	const { thresholds } = (location.state as {
+		thresholds: ThresholdProps[];
+	}) || {
+		thresholds: null,
+	};
 
 	const compositeQuery = useGetCompositeQueryParam();
 	function getAlertTypeFromDataSource(): AlertTypes | null {
@@ -96,7 +103,9 @@ function CreateRules(): JSX.Element {
 		}
 
 		const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
-		history.replace(generatedUrl);
+		history.replace(generatedUrl, {
+			thresholds,
+		});
 	};
 
 	useEffect(() => {
