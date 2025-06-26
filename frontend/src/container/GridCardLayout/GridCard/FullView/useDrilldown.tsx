@@ -1,7 +1,7 @@
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { Dispatch, SetStateAction, useEffect } from 'react';
+import { Dispatch, SetStateAction, useEffect, useRef } from 'react';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 
@@ -22,6 +22,7 @@ const useDrilldown = ({
 	setRequestData,
 	selectedDashboard,
 }: DrilldownQueryProps): UseDrilldownReturn => {
+	const isMounted = useRef(false);
 	const { redirectWithQueryBuilderData, currentQuery } = useQueryBuilder();
 	const compositeQueryExists = !!useGetCompositeQueryParam();
 
@@ -36,11 +37,12 @@ const useDrilldown = ({
 	}, [currentQuery]);
 
 	// update composite query with widget query if composite query is not present in url.
-	// Composite query should be in the url if switch to edit mode is clicked.
+	// Composite query should be in the url if switch to edit mode is clicked or drilldown happens from dashboard.
 	useEffect(() => {
-		if (enableDrillDown && !compositeQueryExists) {
+		if (enableDrillDown && !compositeQueryExists && !isMounted.current) {
 			redirectWithQueryBuilderData(widget.query);
 		}
+		isMounted.current = true;
 	}, [
 		widget,
 		enableDrillDown,
