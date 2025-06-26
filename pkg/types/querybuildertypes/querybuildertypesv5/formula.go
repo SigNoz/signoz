@@ -20,6 +20,8 @@ type QueryBuilderFormula struct {
 	// expression to apply to the query
 	Expression string `json:"expression"`
 
+	Disabled bool `json:"disabled,omitempty"`
+
 	// order by keys and directions
 	Order []OrderBy `json:"order,omitempty"`
 
