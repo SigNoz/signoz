@@ -26,7 +26,7 @@ processors:
     detectors: [env, system]
     timeout: 2s
   signozspanmetrics/delta:
-    metrics_exporter: clickhousemetricswrite, signozclickhousemetrics
+    metrics_exporter: signozclickhousemetrics
     metrics_flush_interval: 60s
     latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
     dimensions_cache_size: 100000
@@ -92,11 +92,11 @@ service:
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [clickhousemetricswrite, signozclickhousemetrics]
+      exporters: [signozclickhousemetrics]
     metrics/prometheus:
       receivers: [prometheus]
       processors: [batch]
-      exporters: [clickhousemetricswrite/prometheus, signozclickhousemetrics]
+      exporters: [signozclickhousemetrics]
     logs:
       receivers: [otlp]
       processors: [batch]
