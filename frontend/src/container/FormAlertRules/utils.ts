@@ -3,9 +3,8 @@ import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/typ
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
-import { AlertDef } from 'types/api/alerts/def';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -72,9 +71,12 @@ const THRESHOLD_COLORS_SORTING_ORDER = ['Red', 'Orange', 'Green', 'Blue'];
 
 export const usePrefillAlertConditions = (
 	stagedQuery: Query | null,
-	alertDef: AlertDef,
-	handleAlertDefChange: (props: AlertDef) => void,
-): void => {
+): {
+	matchType: string | null;
+	op: string | null;
+	target: number | undefined;
+	targetUnit: string | undefined;
+} => {
 	const [searchParams] = useSearchParams();
 
 	// Extract and set match type
@@ -145,40 +147,10 @@ export const usePrefillAlertConditions = (
 
 	const thresholdValue = useMemo(() => threshold?.thresholdValue, [threshold]);
 
-	const alertDefStringified = useMemo(() => JSON.stringify(alertDef), [
-		alertDef,
-	]);
-
-	useEffect(() => {
-		if (threshold) {
-			console.log({ thresholdOperator, thresholdValue, thresholdUnit });
-			handleAlertDefChange({
-				...alertDef,
-				condition: {
-					...alertDef.condition,
-					op: thresholdOperator || undefined,
-					target: thresholdValue,
-					targetUnit: thresholdUnit,
-				},
-			});
-		}
-		if (matchType) {
-			handleAlertDefChange({
-				...alertDef,
-				condition: {
-					...alertDef.condition,
-					matchType,
-				},
-			});
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
+	return {
 		matchType,
-		thresholdOperator,
-		thresholdValue,
-		thresholdUnit,
-		alertDefStringified,
-		handleAlertDefChange,
-		threshold,
-	]);
+		op: thresholdOperator,
+		target: thresholdValue,
+		targetUnit: thresholdUnit,
+	};
 };

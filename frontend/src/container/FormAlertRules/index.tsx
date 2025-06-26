@@ -57,7 +57,7 @@ import {
 	StepContainer,
 	StepHeading,
 } from './styles';
-import { getSelectedQueryOptions } from './utils';
+import { getSelectedQueryOptions, usePrefillAlertConditions } from './utils';
 
 export enum AlertDetectionTypes {
 	THRESHOLD_ALERT = 'threshold_rule',
@@ -113,6 +113,9 @@ function FormAlertRules({
 		handleSetConfig,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+	const { matchType, op, target, targetUnit } = usePrefillAlertConditions(
+		stagedQuery,
+	);
 
 	useEffect(() => {
 		handleSetConfig(panelType || PANEL_TYPES.TIME_SERIES, dataSource);
@@ -266,6 +269,13 @@ function FormAlertRules({
 			...initialValue,
 			broadcastToAll: !broadcastToSpecificChannels,
 			ruleType,
+			condition: {
+				...initialValue.condition,
+				matchType: matchType || initialValue.condition.matchType,
+				op: op || initialValue.condition.op,
+				target: target || initialValue.condition.target,
+				targetUnit: targetUnit || initialValue.condition.targetUnit,
+			},
 		});
 
 		setDetectionMethod(ruleType);
