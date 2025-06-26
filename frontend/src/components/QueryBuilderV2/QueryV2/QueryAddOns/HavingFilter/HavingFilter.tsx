@@ -244,6 +244,15 @@ function HavingFilter({
 						return null;
 					}
 
+					// Hide suggestions while typing a value after an operator
+					if (
+						!text.endsWith(' ') &&
+						tokens.length >= 2 &&
+						havingOperators.some((op) => op.value === tokens[tokens.length - 2])
+					) {
+						return null;
+					}
+
 					// Suggest key/operator pairs and ( for grouping
 					if (
 						tokens.length === 0 ||
