@@ -57,7 +57,8 @@ import {
 	StepContainer,
 	StepHeading,
 } from './styles';
-import { getSelectedQueryOptions, usePrefillAlertConditions } from './utils';
+import { usePrefillAlertConditions } from './usePrefillAlertConditions';
+import { getSelectedQueryOptions } from './utils';
 
 export enum AlertDetectionTypes {
 	THRESHOLD_ALERT = 'threshold_rule',
