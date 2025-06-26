@@ -109,6 +109,9 @@ func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *pr
 		orgID = orgIDs[0].ID
 	}
 
+	// when a new org is created and the agent is not able to register
+	// the changes in pkg/query-service/app/opamp/model/agent.go 270 - 277 takes care that
+	// agents sends the effective config when we processStatusUpdate.
 	agent, created, err := srv.agents.FindOrCreateAgent(agentID.String(), conn, orgID)
 	if err != nil {
 		zap.L().Error("Failed to find or create agent", zap.String("agentID", agentID.String()), zap.Error(err))
