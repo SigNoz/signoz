@@ -346,6 +346,7 @@ function HavingFilter({
 						havingAutocomplete,
 						javascript({ jsx: false, typescript: false }),
 						stopEventsExtension,
+						EditorView.lineWrapping,
 						keymap.of([
 							...completionKeymap,
 							{
