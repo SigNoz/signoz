@@ -27,7 +27,7 @@ func NewUUID(value string) (UUID, error) {
 }
 
 func NewUUIDFromBytes(value []byte) (UUID, error) {
-	val, err := uuid.ParseBytes(value)
+	val, err := uuid.FromBytes(value)
 	if err != nil {
 		return UUID{}, err
 	}

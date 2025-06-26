@@ -98,7 +98,7 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 // orgID from the context
 // note :- there can only be 50 agents in the db for a given orgID, we don't have a check in-memory but we delete from the db after insert.
 func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
-	agentID := string(msg.GetInstanceUid())
+	agentID, _ := valuer.NewUUIDFromBytes(msg.GetInstanceUid())
 
 	// find the orgID, if nothing is found keep it empty.
 	// the find or create agent will return an error if orgID is empty
@@ -109,9 +109,9 @@ func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *pr
 		orgID = orgIDs[0].ID
 	}
 
-	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn, orgID)
+	agent, created, err := srv.agents.FindOrCreateAgent(agentID.String(), conn, orgID)
 	if err != nil {
-		zap.L().Error("Failed to find or create agent", zap.String("agentID", agentID), zap.Error(err))
+		zap.L().Error("Failed to find or create agent", zap.String("agentID", agentID.String()), zap.Error(err))
 
 		// Return error response according to OpAMP protocol
 		return &protobufs.ServerToAgent{
