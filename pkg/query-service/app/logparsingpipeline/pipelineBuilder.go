@@ -246,7 +246,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		)
 	}
 	parent.If = fmt.Sprintf(
-		`%s && ((type(%s) == "string" && isJSON(%s) && type(fromJSON(%s)) == "map" ) || type(%s) == "map")`,
+		`%s && ((type(%s) == "string" && isJSON(%s) && type(fromJSON(unquote(%s))) == "map" ) || type(%s) == "map")`,
 		parseFromNotNilCheck, parent.ParseFrom, parent.ParseFrom, parent.ParseFrom, parent.ParseFrom,
 	)
 	if parent.EnableFlattening {
