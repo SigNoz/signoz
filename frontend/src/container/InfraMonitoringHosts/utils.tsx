@@ -1,7 +1,8 @@
 import './InfraMonitoring.styles.scss';
 
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, TabsProps, Tag } from 'antd';
+import { Progress, TabsProps, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	HostData,
@@ -93,7 +94,14 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		align: 'right',
 	},
 	{
-		title: <div className="column-header-right">Memory Usage</div>,
+		title: (
+			<div className="column-header-right memory-usage-header">
+				Memory Usage
+				<Tooltip title="Excluding cache memory">
+					<InfoCircleOutlined />
+				</Tooltip>
+			</div>
+		),
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 100,
@@ -255,7 +263,6 @@ export function GetHostsQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];

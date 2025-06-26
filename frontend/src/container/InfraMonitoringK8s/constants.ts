@@ -238,7 +238,6 @@ export function GetPodsQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];
@@ -302,7 +301,6 @@ export function GetNodesQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];
@@ -365,7 +363,6 @@ export function GetNamespaceQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];
@@ -409,7 +406,6 @@ export function GetClustersQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];
@@ -449,7 +445,6 @@ export function GetContainersQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];
@@ -531,7 +526,6 @@ export function GetVolumesQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];
@@ -613,7 +607,6 @@ export function GetDeploymentsQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];
@@ -695,7 +688,6 @@ export function GetStatefulsetsQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];
@@ -775,7 +767,6 @@ export function GetDaemonsetsQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];
@@ -853,7 +844,6 @@ export function GetJobsQuickFiltersConfig(
 				isColumn: false,
 				isJSON: false,
 			},
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 	];

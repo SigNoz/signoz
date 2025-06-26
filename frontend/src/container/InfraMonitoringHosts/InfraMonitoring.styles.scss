@@ -172,6 +172,13 @@
 			.ant-table-cell:nth-child(n + 3) {
 				padding-right: 24px;
 			}
+			.memory-usage-header {
+				display: flex;
+				align-items: center;
+				justify-content: flex-end;
+				gap: 4px;
+				margin-right: 4px;
+			}
 			.column-header-right {
 				text-align: right;
 			}
