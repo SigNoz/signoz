@@ -13,6 +13,7 @@ import {
 	isNonValueOperatorToken,
 	isOperatorToken,
 	isValueToken,
+	isWrappedUnderQuotes,
 } from './tokenUtils';
 
 // Function to normalize multiple spaces to single spaces when not in quotes
@@ -714,6 +715,8 @@ export function getQueryContextAtCursor(
 			const operatorToken = currentPair?.operator || '';
 			const valueToken = currentPair?.value || '';
 
+			const isValueWrappedInQuotes = isWrappedUnderQuotes(valueToken);
+
 			// Determine if we're in a multi-value operator context
 			const isForMultiValueOperator = isMultiValueOperator(operatorToken);
 
@@ -739,6 +742,7 @@ export function getQueryContextAtCursor(
 				isInFunction: false,
 				isInParenthesis: isInParenthesisBoundary || false,
 				isInBracketList: isInBracketListBoundary || false,
+				isValueWrappedInQuotes: isValueWrappedInQuotes,
 				keyToken: isInKeyBoundary
 					? keyToken
 					: isInOperatorBoundary || finalIsInValue
