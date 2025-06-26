@@ -47,9 +47,10 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	// Even if there are no recommended changes to the agent's initial config
 	require.False(tb.testConfigProvider.HasRecommendations())
 	agent1Conn := &MockOpAmpConnection{}
-	agent1Id := valuer.GenerateUUID().String()
+	agent1Id := []byte(valuer.GenerateUUID().String())
 	// get orgId from the db
 	tb.opampServer.OnMessage(
+		context.Background(),
 		agent1Conn,
 		&protobufs.AgentToServer{
 			InstanceUid: agent1Id,
@@ -70,9 +71,10 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 
 	tb.testConfigProvider.ZPagesEndpoint = "localhost:55555"
 	require.True(tb.testConfigProvider.HasRecommendations())
-	agent2Id := valuer.GenerateUUID().String()
+	agent2Id := []byte((valuer.GenerateUUID().String()))
 	agent2Conn := &MockOpAmpConnection{}
 	tb.opampServer.OnMessage(
+		context.Background(),
 		agent2Conn,
 		&protobufs.AgentToServer{
 			InstanceUid: agent2Id,
@@ -97,7 +99,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	)
 
 	agent2Conn.ClearMsgsFromServer()
-	tb.opampServer.OnMessage(agent2Conn, &protobufs.AgentToServer{
+	tb.opampServer.OnMessage(context.Background(), agent2Conn, &protobufs.AgentToServer{
 		InstanceUid: agent2Id,
 		EffectiveConfig: &protobufs.EffectiveConfig{
 			ConfigMap: NewAgentConfigMap(
@@ -110,10 +112,10 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		},
 	})
 	expectedConfId := tb.testConfigProvider.ZPagesEndpoint
-	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, agent2Id),
+	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, string(agent2Id)),
 		"Server should report deployment success to config provider on receiving update from agent.",
 	)
-	require.True(tb.testConfigProvider.ReportedDeploymentStatuses[orgID.String()+expectedConfId][agent2Id])
+	require.True(tb.testConfigProvider.ReportedDeploymentStatuses[orgID.String()+expectedConfId][string(agent2Id)])
 	require.Nil(
 		agent2Conn.LatestMsgFromServer(),
 		"Server should not recommend a RemoteConfig if agent is already running it.",
@@ -135,7 +137,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	}
 
 	lastAgent2Msg = agent2Conn.LatestMsgFromServer()
-	tb.opampServer.OnMessage(agent2Conn, &protobufs.AgentToServer{
+	tb.opampServer.OnMessage(context.Background(), agent2Conn, &protobufs.AgentToServer{
 		InstanceUid: agent2Id,
 		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
 			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED,
@@ -143,14 +145,14 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		},
 	})
 	expectedConfId = tb.testConfigProvider.ZPagesEndpoint
-	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, agent2Id),
+	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, string(agent2Id)),
 		"Server should report deployment failure to config provider on receiving update from agent.",
 	)
-	require.False(tb.testConfigProvider.ReportedDeploymentStatuses[orgID.String()+expectedConfId][agent2Id])
+	require.False(tb.testConfigProvider.ReportedDeploymentStatuses[orgID.String()+expectedConfId][string(agent2Id)])
 
 	lastAgent1Msg = agent1Conn.LatestMsgFromServer()
 	agent1Conn.ClearMsgsFromServer()
-	response := tb.opampServer.OnMessage(agent1Conn, &protobufs.AgentToServer{
+	response := tb.opampServer.OnMessage(context.Background(), agent1Conn, &protobufs.AgentToServer{
 		InstanceUid: agent1Id,
 		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
 			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
@@ -177,12 +179,13 @@ func TestOpAMPServerAgentLimit(t *testing.T) {
 	tb := newTestbed(t)
 	// Create 51 agents and check if the first one gets deleted
 	var agentConnections []*MockOpAmpConnection
-	var agentIds []string
+	var agentIds [][]byte
 	for i := 0; i < 51; i++ {
 		agentConn := &MockOpAmpConnection{}
-		agentId := valuer.GenerateUUID().String()
+		agentId := []byte(valuer.GenerateUUID().String())
 		agentIds = append(agentIds, agentId)
 		tb.opampServer.OnMessage(
+			context.Background(),
 			agentConn,
 			&protobufs.AgentToServer{
 				InstanceUid: agentId,
@@ -235,12 +238,12 @@ func newTestbed(t *testing.T) *testbed {
 	testDB := utils.NewQueryServiceDBForTests(t)
 
 	providerSettings := instrumentationtest.New().ToProviderSettings()
-	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
+	sharder, err := noopsharder.New(context.Background(), providerSettings, sharder.Config{})
 	require.Nil(t, err)
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(testDB), sharder)
 	model.Init(testDB, slog.Default(), orgGetter)
 	testConfigProvider := NewMockAgentConfigProvider()
-	opampServer := InitializeServer(nil, testConfigProvider)
+	opampServer := InitializeServer(nil, testConfigProvider, instrumentationtest.New())
 
 	// create a test org
 	err = utils.CreateTestOrg(t, testDB)
