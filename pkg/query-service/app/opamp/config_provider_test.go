@@ -47,7 +47,8 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	// Even if there are no recommended changes to the agent's initial config
 	require.False(tb.testConfigProvider.HasRecommendations())
 	agent1Conn := &MockOpAmpConnection{}
-	agent1Id := []byte(valuer.GenerateUUID().String())
+	agent1Id, err := valuer.GenerateUUID().MarshalBinary()
+	require.Nil(err)
 	// get orgId from the db
 	tb.opampServer.OnMessage(
 		context.Background(),
@@ -71,7 +72,9 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 
 	tb.testConfigProvider.ZPagesEndpoint = "localhost:55555"
 	require.True(tb.testConfigProvider.HasRecommendations())
-	agent2Id := []byte((valuer.GenerateUUID().String()))
+	agent2IdUUID := valuer.GenerateUUID()
+	agent2Id, err := agent2IdUUID.MarshalBinary()
+	require.Nil(err)
 	agent2Conn := &MockOpAmpConnection{}
 	tb.opampServer.OnMessage(
 		context.Background(),
@@ -112,10 +115,10 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		},
 	})
 	expectedConfId := tb.testConfigProvider.ZPagesEndpoint
-	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, string(agent2Id)),
+	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, agent2IdUUID.String()),
 		"Server should report deployment success to config provider on receiving update from agent.",
 	)
-	require.True(tb.testConfigProvider.ReportedDeploymentStatuses[orgID.String()+expectedConfId][string(agent2Id)])
+	require.True(tb.testConfigProvider.ReportedDeploymentStatuses[orgID.String()+expectedConfId][agent2IdUUID.String()])
 	require.Nil(
 		agent2Conn.LatestMsgFromServer(),
 		"Server should not recommend a RemoteConfig if agent is already running it.",
@@ -145,10 +148,10 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		},
 	})
 	expectedConfId = tb.testConfigProvider.ZPagesEndpoint
-	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, string(agent2Id)),
+	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(orgID, expectedConfId, agent2IdUUID.String()),
 		"Server should report deployment failure to config provider on receiving update from agent.",
 	)
-	require.False(tb.testConfigProvider.ReportedDeploymentStatuses[orgID.String()+expectedConfId][string(agent2Id)])
+	require.False(tb.testConfigProvider.ReportedDeploymentStatuses[orgID.String()+expectedConfId][agent2IdUUID.String()])
 
 	lastAgent1Msg = agent1Conn.LatestMsgFromServer()
 	agent1Conn.ClearMsgsFromServer()
@@ -182,7 +185,9 @@ func TestOpAMPServerAgentLimit(t *testing.T) {
 	var agentIds [][]byte
 	for i := 0; i < 51; i++ {
 		agentConn := &MockOpAmpConnection{}
-		agentId := []byte(valuer.GenerateUUID().String())
+		agentIdUUID := valuer.GenerateUUID()
+		agentId, err := agentIdUUID.MarshalBinary()
+		require.Nil(err)
 		agentIds = append(agentIds, agentId)
 		tb.opampServer.OnMessage(
 			context.Background(),
