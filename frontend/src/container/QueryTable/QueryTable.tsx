@@ -7,10 +7,12 @@ import {
 	createTableColumnsFromQuery,
 	RowData,
 } from 'lib/query/createTableColumnsFromQuery';
+import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { QueryTableProps } from './QueryTable.intefaces';
+import useTableContextMenu from './useTableContextMenu';
 import { createDownloadableData } from './utils';
 
 export function QueryTable({
@@ -31,6 +33,21 @@ export function QueryTable({
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
 	const { loading } = props;
+
+	const {
+		coordinates,
+		popoverPosition,
+		clickedData,
+		onClose,
+		onClick,
+	} = useCoordinates();
+	const { menuItemsConfig } = useTableContextMenu({
+		widgetId: widgetId || '',
+		clickedData,
+		onClose,
+		coordinates,
+	});
+
 	const { columns: newColumns, dataSource: newDataSource } = useMemo(() => {
 		if (columns && dataSource) {
 			return { columns, dataSource };
@@ -53,6 +70,44 @@ export function QueryTable({
 	const downloadableData = createDownloadableData(newDataSource);
 
 	const tableColumns = modifyColumns ? modifyColumns(newColumns) : newColumns;
+
+	// Add click handlers to columns to capture clicked data
+	const columnsWithClickHandlers = useMemo(
+		() =>
+			tableColumns.map((column: any): any => ({
+				...column,
+				render: (text: any, record: RowData, index: number): JSX.Element => {
+					const originalRender = column.render;
+					const renderedContent = originalRender
+						? originalRender(text, record, index)
+						: text;
+
+					return (
+						<div
+							// have its dimension equal to the column width
+							onClick={(e): void => {
+								e.stopPropagation();
+								console.log('@record:', { record, column });
+								onClick(e, { record, column });
+							}}
+							onKeyDown={(e): void => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									e.stopPropagation();
+									onClick(e as any, { record, column });
+								}
+							}}
+							style={{ cursor: 'pointer' }}
+							role="button"
+							tabIndex={0}
+						>
+							{renderedContent}
+						</div>
+					);
+				},
+			})),
+		[tableColumns, onClick],
+	);
 
 	const paginationConfig = {
 		pageSize: 10,
@@ -82,28 +137,45 @@ export function QueryTable({
 	}, [newDataSource, onTableSearch, searchTerm]);
 
 	return (
-		<div className="query-table">
-			{isDownloadEnabled && (
-				<div className="query-table--download">
-					<Download
-						data={downloadableData}
-						fileName={`${fileName}-${servicename}`}
-						isLoading={loading as boolean}
-					/>
-				</div>
-			)}
-			<ResizeTable
-				columns={tableColumns}
-				tableLayout="fixed"
-				dataSource={filterTable === null ? newDataSource : filterTable}
-				scroll={{ x: 'max-content' }}
-				pagination={paginationConfig}
-				widgetId={widgetId}
-				shouldPersistColumnWidths
-				sticky={sticky}
-				// eslint-disable-next-line react/jsx-props-no-spreading
-				{...props}
+		<>
+			<div className="query-table">
+				{isDownloadEnabled && (
+					<div className="query-table--download">
+						<Download
+							data={downloadableData}
+							fileName={`${fileName}-${servicename}`}
+							isLoading={loading as boolean}
+						/>
+					</div>
+				)}
+				<ResizeTable
+					columns={columnsWithClickHandlers}
+					tableLayout="fixed"
+					dataSource={filterTable === null ? newDataSource : filterTable}
+					scroll={{ x: 'max-content' }}
+					pagination={paginationConfig}
+					widgetId={widgetId}
+					shouldPersistColumnWidths
+					sticky={sticky}
+					// eslint-disable-next-line react/jsx-props-no-spreading
+					{...props}
+				/>
+			</div>
+			<ContextMenu
+				coordinates={coordinates}
+				popoverPosition={popoverPosition}
+				title={menuItemsConfig.header}
+				items={menuItemsConfig.items}
+				onClose={onClose}
 			/>
-		</div>
+
+			{/* <ContextMenuV2
+				coordinates={coordinates}
+				popoverPosition={popoverPosition}
+				title={menuItemsConfig.header}
+				items={menuItemsConfig.items}
+				onClose={onClose}
+			/> */}
+		</>
 	);
 }
