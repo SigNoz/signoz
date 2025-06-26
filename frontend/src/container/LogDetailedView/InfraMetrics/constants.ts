@@ -2712,7 +2712,6 @@ export const nodeWidgetInfo = [
 export const hostWidgetInfo = [
 	{ title: 'CPU Usage', yAxisUnit: 'percentunit' },
 	{ title: 'Memory Usage', yAxisUnit: 'bytes' },
-	{ title: 'Disk Usage', yAxisUnit: 'bytes' },
 	{ title: 'System Load Average', yAxisUnit: '' },
 	{ title: 'Network usage (bytes)', yAxisUnit: 'bytes' },
 	{ title: 'Network usage (packet/s)', yAxisUnit: 'pps' },
