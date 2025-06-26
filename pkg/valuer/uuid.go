@@ -69,6 +69,10 @@ func (enum UUID) String() string {
 	return enum.val.String()
 }
 
+func (enum UUID) MarshalBinary() ([]byte, error) {
+	return enum.val.MarshalBinary()
+}
+
 func (enum UUID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(enum.StringValue())
 }

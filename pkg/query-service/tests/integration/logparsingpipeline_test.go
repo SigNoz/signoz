@@ -774,12 +774,14 @@ func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
 	pipelines []pipelinetypes.GettablePipeline,
 ) {
 	newAgentConn := &opamp.MockOpAmpConnection{}
-	agentID := valuer.GenerateUUID().String()
+	agentIDUUID := valuer.GenerateUUID()
+	agentID, err := agentIDUUID.MarshalBinary()
+	require.Nil(tb.t, err)
 	tb.opampServer.OnMessage(
 		context.Background(),
 		newAgentConn,
 		&protobufs.AgentToServer{
-			InstanceUid: []byte(agentID),
+			InstanceUid: agentID,
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
 			},
