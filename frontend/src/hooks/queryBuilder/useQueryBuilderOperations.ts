@@ -369,13 +369,13 @@ export const useQueryOperations: UseQueryOperations = ({
 				setOperators(initialOperators);
 			}
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		dataSource,
 		initialDataSource,
 		panelType,
 		entityVersion,
 		query,
-		operators,
 		handleMetricAggregateAtributeTypes,
 	]);
 
