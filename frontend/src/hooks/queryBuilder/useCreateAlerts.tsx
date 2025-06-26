@@ -71,7 +71,7 @@ const useCreateAlerts = (
 					widget?.query,
 				);
 
-				let url = `${ROUTES.ALERTS_NEW}?${
+				const url = `${ROUTES.ALERTS_NEW}?${
 					QueryParams.compositeQuery
 				}=${encodeURIComponent(JSON.stringify(updatedQuery))}&${
 					QueryParams.panelTypes
@@ -79,11 +79,9 @@ const useCreateAlerts = (
 					selectedDashboard?.data.version || DEFAULT_ENTITY_VERSION
 				}`;
 
-				if (thresholds?.length) {
-					url += `&thresholds=${encodeURIComponent(JSON.stringify(thresholds))}`;
-				}
-
-				history.push(url);
+				history.push(url, {
+					thresholds,
+				});
 			},
 			onError: () => {
 				notifications.error({

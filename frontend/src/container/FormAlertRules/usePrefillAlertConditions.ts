@@ -1,6 +1,6 @@
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 const THRESHOLD_COLORS_SORTING_ORDER = ['Red', 'Orange', 'Green', 'Blue'];
@@ -13,7 +13,7 @@ export const usePrefillAlertConditions = (
 	target: number | undefined;
 	targetUnit: string | undefined;
 } => {
-	const [searchParams] = useSearchParams();
+	const location = useLocation();
 
 	// Extract and set match type
 	const timeAggregation = useMemo(() => {
@@ -41,16 +41,12 @@ export const usePrefillAlertConditions = (
 
 	// Extract and set threshold operator, value and unit
 	const threshold = useMemo(() => {
-		let thresholds: ThresholdProps[] = [];
-		const thresholdsParam = searchParams.get('thresholds');
-		if (thresholdsParam) {
-			try {
-				thresholds = JSON.parse(thresholdsParam);
-			} catch (error) {
-				return null;
-			}
-		}
-		if (thresholds.length === 0) return null;
+		const { thresholds } = (location.state as {
+			thresholds: ThresholdProps[];
+		}) || {
+			thresholds: null,
+		};
+		if (!thresholds || thresholds.length === 0) return null;
 		const sortedThresholds = thresholds.sort((a, b) => {
 			const aIndex = THRESHOLD_COLORS_SORTING_ORDER.indexOf(
 				a.thresholdColor || '',
@@ -61,7 +57,7 @@ export const usePrefillAlertConditions = (
 			return aIndex - bIndex;
 		});
 		return sortedThresholds[0];
-	}, [searchParams]);
+	}, [location.state]);
 
 	const thresholdOperator = useMemo(() => {
 		const op = threshold?.thresholdOperator;
