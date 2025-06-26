@@ -8,4 +8,6 @@ import {
 export const getKeySuggestions = (
 	props: QueryKeyRequestProps,
 ): Promise<AxiosResponse<QueryKeySuggestionsResponseProps>> =>
-	axios.get(`/fields/keys?signal=${props.signal}&name=${props.name}`);
+	axios.get(
+		`/fields/keys?signal=${props.signal}&name=${props.name}&metricName=${props.metricName}`,
+	);

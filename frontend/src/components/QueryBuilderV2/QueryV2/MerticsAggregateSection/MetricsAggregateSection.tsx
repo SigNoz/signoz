@@ -37,7 +37,6 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	});
 
 	useEffect(() => {
-		console.log('query', query);
 		setAggregationOptions([
 			{
 				func: query.spaceAggregation || 'count',
