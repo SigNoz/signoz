@@ -371,9 +371,11 @@ function RuleOptions({
 		selectedCategory?.name,
 	);
 
+	const step3Label = alertDef.alertType === 'METRIC_BASED_ALERT' ? '3' : '2';
+
 	return (
 		<>
-			<StepHeading>{t('alert_form_step3')}</StepHeading>
+			<StepHeading>{t('alert_form_step3', { step: step3Label })}</StepHeading>
 			<FormContainer>
 				{queryCategory === EQueryType.PROM && renderPromRuleOptions()}
 				{queryCategory !== EQueryType.PROM &&
