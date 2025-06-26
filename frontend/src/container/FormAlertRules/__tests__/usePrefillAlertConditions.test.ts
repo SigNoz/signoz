@@ -2,32 +2,6 @@ import { renderHook } from '@testing-library/react';
 
 import { usePrefillAlertConditions } from '../usePrefillAlertConditions';
 
-const mockThreshold1 = {
-	index: '0d11f426-a02e-48da-867c-b79c6ef1ff06',
-	isEditEnabled: false,
-	keyIndex: 1,
-	selectedGraph: 'graph',
-	thresholdColor: 'Orange',
-	thresholdFormat: 'Text',
-	thresholdLabel: 'Caution',
-	thresholdOperator: '>',
-	thresholdTableOptions: 'A',
-	thresholdUnit: 'rpm',
-	thresholdValue: 800,
-};
-const mockThreshold2 = {
-	index: 'edbe8ef2-fa54-4cb9-b343-7afe883bb714',
-	isEditEnabled: false,
-	keyIndex: 0,
-	selectedGraph: 'graph',
-	thresholdColor: 'Red',
-	thresholdFormat: 'Text',
-	thresholdLabel: 'Danger',
-	thresholdOperator: '<',
-	thresholdTableOptions: 'A',
-	thresholdUnit: 'rpm',
-	thresholdValue: 900,
-};
 const TEST_MAPPINGS = {
 	op: {
 		'>': '1',
@@ -40,16 +14,42 @@ const TEST_MAPPINGS = {
 	},
 };
 
-const jestActual = jest.requireActual('react-router-dom-v5-compat');
-
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jestActual,
-	useSearchParams: jest.fn().mockReturnValue([
-		{
-			get: (): string => JSON.stringify([mockThreshold1, mockThreshold2]),
-		},
-	]),
-}));
+jest.mock('react-router-dom-v5-compat', () => {
+	const mockThreshold1 = {
+		index: '0d11f426-a02e-48da-867c-b79c6ef1ff06',
+		isEditEnabled: false,
+		keyIndex: 1,
+		selectedGraph: 'graph',
+		thresholdColor: 'Orange',
+		thresholdFormat: 'Text',
+		thresholdLabel: 'Caution',
+		thresholdOperator: '>',
+		thresholdTableOptions: 'A',
+		thresholdUnit: 'rpm',
+		thresholdValue: 800,
+	};
+	const mockThreshold2 = {
+		index: 'edbe8ef2-fa54-4cb9-b343-7afe883bb714',
+		isEditEnabled: false,
+		keyIndex: 0,
+		selectedGraph: 'graph',
+		thresholdColor: 'Red',
+		thresholdFormat: 'Text',
+		thresholdLabel: 'Danger',
+		thresholdOperator: '<',
+		thresholdTableOptions: 'A',
+		thresholdUnit: 'rpm',
+		thresholdValue: 900,
+	};
+	return {
+		...jest.requireActual('react-router-dom-v5-compat'),
+		useLocation: jest.fn().mockReturnValue({
+			state: {
+				thresholds: [mockThreshold1, mockThreshold2],
+			},
+		}),
+	};
+});
 
 const mockStagedQuery = {
 	builder: {
