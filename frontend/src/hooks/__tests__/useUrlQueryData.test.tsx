@@ -9,7 +9,7 @@ import useUrlQueryData from '../useUrlQueryData';
 
 // Mock the useSafeNavigate hook
 const mockSafeNavigate = jest.fn();
-jest.mock('./useSafeNavigate', () => ({
+jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: () => ({
 		safeNavigate: mockSafeNavigate,
 	}),
