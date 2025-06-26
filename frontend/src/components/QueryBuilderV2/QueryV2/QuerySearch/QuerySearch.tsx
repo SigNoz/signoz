@@ -12,11 +12,7 @@ import {
 import { javascript } from '@codemirror/lang-javascript';
 import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
-import CodeMirror, {
-	EditorView,
-	keymap,
-	Extension,
-} from '@uiw/react-codemirror';
+import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Space, Tag, Typography } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
@@ -62,17 +58,17 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
-const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
-	(view, from, to, text) => {
-		const currentLine = view.state.doc.lineAt(from);
-		const before = currentLine.text.slice(0, from - currentLine.from);
-		const after = currentLine.text.slice(to - currentLine.from);
+// const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
+// 	(view, from, to, text) => {
+// 		const currentLine = view.state.doc.lineAt(from);
+// 		const before = currentLine.text.slice(0, from - currentLine.from);
+// 		const after = currentLine.text.slice(to - currentLine.from);
 
-		const newText = before + text + after;
+// 		const newText = before + text + after;
 
-		return /\s{2,}/.test(newText);
-	},
-);
+// 		return /\s{2,}/.test(newText);
+// 	},
+// );
 
 function QuerySearch({
 	onChange,
@@ -217,7 +213,8 @@ function QuerySearch({
 		// just wrap in quotes but not brackets (we're already in brackets)
 		if (
 			(type === 'value' || type === 'keyword') &&
-			!/^[a-zA-Z0-9_][a-zA-Z0-9_.\[\]]*$/.test(value)
+			!/^[a-zA-Z0-9_][a-zA-Z0-9_.\[\]]*$/.test(value) &&
+			!queryContext?.isValueWrappedInQuotes
 		) {
 			return wrapStringValueInQuotes(value);
 		}
@@ -949,7 +946,6 @@ function QuerySearch({
 						javascript({ jsx: false, typescript: false }),
 						EditorView.lineWrapping,
 						stopEventsExtension,
-						disallowMultipleSpaces,
 						keymap.of([
 							...completionKeymap,
 							{
