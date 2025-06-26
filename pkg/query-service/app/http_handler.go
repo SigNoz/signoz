@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -29,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/query-service/transition"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
@@ -64,6 +66,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
@@ -966,7 +969,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
 		}
 	} else if rule.AlertType == ruletypes.AlertTypeTraces {
-		traceFields, err := aH.reader.GetSpanAttributeKeys(ctx)
+		traceFields, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
 		if err == nil {
 			keys = traceFields
 		} else {
@@ -4345,7 +4348,7 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 	data := map[string]v3.AttributeKey{}
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
 		if query.DataSource == v3.DataSourceTraces {
-			spanKeys, err := aH.reader.GetSpanAttributeKeys(ctx)
+			spanKeys, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				return nil, err
 			}
@@ -4389,8 +4392,18 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		hasLogsQuery := false
+		hasTracesQuery := false
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs {
+				hasLogsQuery = true
+			}
+			if query.DataSource == v3.DataSourceTraces {
+				hasTracesQuery = true
+			}
+		}
 		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
+		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
 			logsFields, err := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -4401,15 +4414,15 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			fields := model.GetLogFieldsV3(ctx, queryRangeParams, logsFields)
 			logsv3.Enrich(queryRangeParams, fields)
 		}
-
-		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
-		if err != nil {
-			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
-			return
+		if hasTracesQuery {
+			spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			tracesV4.Enrich(queryRangeParams, spanKeys)
 		}
-		tracesV4.Enrich(queryRangeParams, spanKeys)
-
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -4787,8 +4800,19 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		hasLogsQuery := false
+		hasTracesQuery := false
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs {
+				hasLogsQuery = true
+			}
+			if query.DataSource == v3.DataSourceTraces {
+				hasTracesQuery = true
+			}
+		}
+
 		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(queryRangeParams) {
+		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
 			// get the fields if any logs query is present
 			logsFields, err := aH.reader.GetLogFieldsFromNames(r.Context(), logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if err != nil {
@@ -4800,13 +4824,15 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
-		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
-		if err != nil {
-			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
-			return
+		if hasTracesQuery {
+			spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			tracesV4.Enrich(queryRangeParams, spanKeys)
 		}
-		tracesV4.Enrich(queryRangeParams, spanKeys)
 	}
 
 	// WARN: Only works for AND operator in traces query
@@ -4852,6 +4878,45 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	aH.sendQueryResultEvents(r, result, queryRangeParams, "v4")
 	resp := v3.QueryRangeResponse{
 		Result: result,
+	}
+
+	if rand.Float64() < (1.0/30.0) &&
+		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeList &&
+		queryRangeParams.CompositeQuery.PanelType != v3.PanelTypeTrace {
+		v4JSON, _ := json.Marshal(queryRangeParams)
+		func() {
+			defer func() {
+				if rr := recover(); rr != nil {
+					zap.L().Warn(
+						"unexpected panic while converting to v5",
+						zap.Any("panic", rr),
+						zap.String("v4_payload", string(v4JSON)),
+					)
+				}
+			}()
+			v5Req, err := transition.ConvertV3ToV5(queryRangeParams)
+			if err != nil {
+				zap.L().Warn("unable to convert to v5 request payload", zap.Error(err), zap.String("v4_payload", string(v4JSON)))
+				return
+			}
+			v5ReqJSON, _ := json.Marshal(v5Req)
+
+			v3Resp := v3.QueryRangeResponse{
+				Result: result,
+			}
+
+			v5Resp, err := transition.ConvertV3ResponseToV5(&v3Resp, querybuildertypesv5.RequestTypeTimeSeries)
+			if err != nil {
+				zap.L().Warn("unable to convert to v5 response payload", zap.Error(err))
+				return
+			}
+
+			v5RespJSON, _ := json.Marshal(v5Resp)
+			zap.L().Info("v5 request and expected response",
+				zap.String("request_payload", string(v5ReqJSON)),
+				zap.String("response_payload", string(v5RespJSON)),
+			)
+		}()
 	}
 
 	aH.Respond(w, resp)
