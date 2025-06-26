@@ -5,7 +5,8 @@ import { Form, Input, Space, Switch, Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
 import { ProcessorData } from 'types/api/pipeline/def';
 
-import KeyValueList, { PREDEFINED_MAPPING } from './KeyValueList';
+import { PREDEFINED_MAPPING } from '../config';
+import KeyValueList from './KeyValueList';
 
 interface JsonFlatteningProps {
 	selectedProcessorData?: ProcessorData;

@@ -465,3 +465,14 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 	],
 };
+
+export const PREDEFINED_MAPPING = {
+	environment: ['service.env'],
+	host: ['host', 'hostname'],
+	message: ['message', 'msg', 'log'],
+	service: ['service', 'syslog.appname'],
+	severity: ['status', 'severity', 'level', 'syslog.severity'],
+	span_id: ['span_id'],
+	trace_flags: ['flags'],
+	trace_id: ['trace_id'],
+};

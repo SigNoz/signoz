@@ -1,20 +1,11 @@
 import { Form, Select } from 'antd';
 
+import { PREDEFINED_MAPPING } from '../config';
+
 interface KeyValueListProps {
 	value?: Record<string, string[]>;
 	onChange?: (value: Record<string, string[]>) => void;
 }
-
-export const PREDEFINED_MAPPING = {
-	environment: ['service.env'],
-	host: ['host', 'hostname'],
-	message: ['message', 'msg', 'log'],
-	service: ['service', 'syslog.appname'],
-	severity: ['status', 'severity', 'level', 'syslog.severity'],
-	span_id: ['span_id'],
-	trace_flags: ['flags'],
-	trace_id: ['trace_id'],
-};
 
 function KeyValueList({
 	value = PREDEFINED_MAPPING,
