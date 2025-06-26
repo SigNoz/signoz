@@ -29,7 +29,7 @@ import NoLogs from '../NoLogs/NoLogs';
 import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
-import { convertKeysToColumnFields } from './utils';
+import { convertKeysToColumnFields, isTraceToLogsQuery } from './utils';
 
 function Footer(): JSX.Element {
 	return <Spinner height={20} tip="Getting Logs" />;
@@ -186,6 +186,39 @@ function LogsExplorerList({
 		selectedFields,
 	]);
 
+	const isTraceToLogsNavigation = useMemo(() => {
+		if (!currentStagedQueryData) return false;
+		return isTraceToLogsQuery(currentStagedQueryData);
+	}, [currentStagedQueryData]);
+
+	const getEmptyStateMessage = useMemo(() => {
+		if (!isTraceToLogsNavigation) return;
+
+		return {
+			title: 'No logs found for this trace',
+			description:
+				'This could be because logs are not linked to traces, logs are not being sent to SigNoz, or no logs were associated with this particular trace.',
+			documentationLinks: [
+				{
+					text: 'How to link logs and traces',
+					url: 'https://signoz.io/docs/userguide/logs/#correlating-logs-with-traces',
+					description:
+						'Learn how to correlate your logs with traces for better observability',
+				},
+				{
+					text: 'Sending logs to SigNoz',
+					url: 'https://signoz.io/docs/userguide/logs/',
+					description: 'Set up log collection and forwarding to SigNoz',
+				},
+				{
+					text: 'Trace and log correlation best practices',
+					url: 'https://signoz.io/docs/instrumentation/overview/',
+					description: 'Best practices for instrumenting your applications',
+				},
+			],
+		};
+	}, [isTraceToLogsNavigation]);
+
 	return (
 		<div className="logs-list-view-container">
 			{(isLoading || (isFetching && logs.length === 0)) && <LogsLoading />}
@@ -201,7 +234,11 @@ function LogsExplorerList({
 				logs.length === 0 &&
 				!isError &&
 				isFilterApplied && (
-					<EmptyLogsSearch dataSource={DataSource.LOGS} panelType="LIST" />
+					<EmptyLogsSearch
+						dataSource={DataSource.LOGS}
+						panelType="LIST"
+						customMessage={getEmptyStateMessage}
+					/>
 				)}
 
 			{isError && !isLoading && !isFetching && <LogsError />}

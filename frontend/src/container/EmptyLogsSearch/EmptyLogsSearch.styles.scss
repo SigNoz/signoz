@@ -4,6 +4,12 @@
 	justify-content: center;
 	align-items: center;
 	height: 240px;
+	&.custom-message {
+		height: 370px;
+		.empty-logs-search-container-content {
+			max-width: 340px;
+		}
+	}
 
 	.empty-logs-search-container-content {
 		display: flex;
@@ -25,6 +31,23 @@
 
 		.sub-text {
 			font-weight: 600;
+		}
+
+		.custom-title {
+			font-weight: 600;
+			font-size: 13px;
+			color: var(--text-vanilla-100);
+		}
+
+		.custom-description {
+			font-size: 14px;
+			color: var(--text-vanilla-400);
+			line-height: 20px;
+		}
+
+		.documentation-links {
+			display: flex;
+			flex-direction: column;
 		}
 	}
 }
