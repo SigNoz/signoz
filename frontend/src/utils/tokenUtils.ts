@@ -15,9 +15,7 @@ export function isOperatorToken(tokenType: number): boolean {
 		FilterQueryLexer.GT,
 		FilterQueryLexer.GE,
 		FilterQueryLexer.LIKE,
-		FilterQueryLexer.NOT_LIKE,
 		FilterQueryLexer.ILIKE,
-		FilterQueryLexer.NOT_ILIKE,
 		FilterQueryLexer.BETWEEN,
 		FilterQueryLexer.EXISTS,
 		FilterQueryLexer.REGEXP,
@@ -29,9 +27,7 @@ export function isOperatorToken(tokenType: number): boolean {
 
 // Helper function to check if a token is an operator which doesn't require a value
 export function isNonValueOperatorToken(tokenType: number): boolean {
-	return [FilterQueryLexer.NOT_EXISTS, FilterQueryLexer.EXISTS].includes(
-		tokenType,
-	);
+	return [FilterQueryLexer.EXISTS].includes(tokenType);
 }
 
 // Helper function to check if a token is a value
@@ -72,7 +68,6 @@ export function isFunctionToken(tokenType: number): boolean {
 		FilterQueryLexer.HAS,
 		FilterQueryLexer.HASANY,
 		FilterQueryLexer.HASALL,
-		FilterQueryLexer.HASNONE,
 	].includes(tokenType);
 }
 
