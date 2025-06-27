@@ -3,6 +3,18 @@
 import { CharStreams, CommonTokenStream, Token } from 'antlr4';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import { IQueryContext, IQueryPair, IToken } from 'types/antlrQueryTypes';
+import { analyzeQuery } from 'parser/analyzeQuery';
+import {
+	isBracketToken,
+	isConjunctionToken,
+	isFunctionToken,
+	isKeyToken,
+	isMultiValueOperator,
+	isNonValueOperatorToken,
+	isOperatorToken,
+	isValueToken,
+	isWrappedUnderQuotes,
+} from './tokenUtils';
 
 // Function to normalize multiple spaces to single spaces when not in quotes
 function normalizeSpaces(query: string): string {
@@ -39,6 +51,7 @@ function normalizeSpaces(query: string): string {
 export function createContext(
 	token: Token,
 	isInKey: boolean,
+	isInNegation: boolean,
 	isInOperator: boolean,
 	isInValue: boolean,
 	keyToken?: string,
@@ -54,6 +67,7 @@ export function createContext(
 		stop: token.stop,
 		currentToken: token.text || '',
 		isInKey,
+		isInNegation,
 		isInOperator,
 		isInValue,
 		isInFunction: false,
@@ -69,130 +83,74 @@ export function createContext(
 
 // Helper to determine token type for context
 function determineTokenContext(
-	tokenType: number,
+	token: IToken,
+	query: string,
 ): {
 	isInKey: boolean;
+	isInNegation: boolean;
 	isInOperator: boolean;
 	isInValue: boolean;
 	isInFunction: boolean;
 	isInConjunction: boolean;
 	isInParenthesis: boolean;
 } {
-	// Key context
-	const isInKey = tokenType === FilterQueryLexer.KEY;
+	let isInKey: boolean = false;
+	let isInNegation: boolean = false;
+	let isInOperator: boolean = false;
+	let isInValue: boolean = false;
+	let isInFunction: boolean = false;
+	let isInConjunction: boolean = false;
+	let isInParenthesis: boolean = false;
 
-	// Operator context
-	const isInOperator = [
-		FilterQueryLexer.EQUALS,
-		FilterQueryLexer.NOT_EQUALS,
-		FilterQueryLexer.NEQ,
-		FilterQueryLexer.LT,
-		FilterQueryLexer.LE,
-		FilterQueryLexer.GT,
-		FilterQueryLexer.GE,
-		FilterQueryLexer.LIKE,
-		FilterQueryLexer.NOT_LIKE,
-		FilterQueryLexer.ILIKE,
-		FilterQueryLexer.NOT_ILIKE,
-		FilterQueryLexer.BETWEEN,
-		FilterQueryLexer.EXISTS,
-		FilterQueryLexer.REGEXP,
-		FilterQueryLexer.CONTAINS,
-		FilterQueryLexer.IN,
-		FilterQueryLexer.NOT,
-	].includes(tokenType);
+	const tokenType = token.type;
+	const currentTokenContext = analyzeQuery(query, token);
 
-	// Value context
-	const isInValue = [
-		FilterQueryLexer.QUOTED_TEXT,
-		FilterQueryLexer.NUMBER,
-		FilterQueryLexer.BOOL,
-	].includes(tokenType);
+	if (!currentTokenContext) {
+		// Key context
+		isInKey = isKeyToken(tokenType);
+
+		// Operator context
+		isInOperator = isOperatorToken(tokenType);
+
+		// Value context
+		isInValue = isValueToken(tokenType);
+	} else {
+		switch (currentTokenContext.type) {
+			case 'Operator':
+				isInOperator = true;
+				break;
+			case 'Value':
+				isInValue = true;
+				break;
+			case 'Key':
+				isInKey = true;
+				break;
+			default:
+				break;
+		}
+	}
+
+	// Negation context
+	isInNegation = tokenType === FilterQueryLexer.NOT;
 
 	// Function context
-	const isInFunction = [
-		FilterQueryLexer.HAS,
-		FilterQueryLexer.HASANY,
-		FilterQueryLexer.HASALL,
-		FilterQueryLexer.HASNONE,
-	].includes(tokenType);
+	isInFunction = isFunctionToken(tokenType);
 
 	// Conjunction context
-	const isInConjunction = [FilterQueryLexer.AND, FilterQueryLexer.OR].includes(
-		tokenType,
-	);
+	isInConjunction = isConjunctionToken(tokenType);
 
 	// Parenthesis context
-	const isInParenthesis = [
-		FilterQueryLexer.LPAREN,
-		FilterQueryLexer.RPAREN,
-		FilterQueryLexer.LBRACK,
-		FilterQueryLexer.RBRACK,
-	].includes(tokenType);
+	isInParenthesis = isBracketToken(tokenType);
 
 	return {
 		isInKey,
+		isInNegation,
 		isInOperator,
 		isInValue,
 		isInFunction,
 		isInConjunction,
 		isInParenthesis,
 	};
-}
-
-// Helper function to check if a token is an operator
-function isOperatorToken(tokenType: number): boolean {
-	return [
-		FilterQueryLexer.EQUALS,
-		FilterQueryLexer.NOT_EQUALS,
-		FilterQueryLexer.NEQ,
-		FilterQueryLexer.LT,
-		FilterQueryLexer.LE,
-		FilterQueryLexer.GT,
-		FilterQueryLexer.GE,
-		FilterQueryLexer.LIKE,
-		FilterQueryLexer.NOT_LIKE,
-		FilterQueryLexer.ILIKE,
-		FilterQueryLexer.NOT_ILIKE,
-		FilterQueryLexer.BETWEEN,
-		FilterQueryLexer.EXISTS,
-		FilterQueryLexer.REGEXP,
-		FilterQueryLexer.CONTAINS,
-		FilterQueryLexer.IN,
-		FilterQueryLexer.NOT,
-	].includes(tokenType);
-}
-
-// Helper function to check if a token is a value
-function isValueToken(tokenType: number): boolean {
-	return [
-		FilterQueryLexer.QUOTED_TEXT,
-		FilterQueryLexer.NUMBER,
-		FilterQueryLexer.BOOL,
-	].includes(tokenType);
-}
-
-// Helper function to check if a token is a conjunction
-function isConjunctionToken(tokenType: number): boolean {
-	return [FilterQueryLexer.AND, FilterQueryLexer.OR].includes(tokenType);
-}
-
-// Helper function to check if a token is a bracket
-function isBracketToken(tokenType: number): boolean {
-	return [
-		FilterQueryLexer.LPAREN,
-		FilterQueryLexer.RPAREN,
-		FilterQueryLexer.LBRACK,
-		FilterQueryLexer.RBRACK,
-	].includes(tokenType);
-}
-
-// Helper function to check if an operator typically uses bracket values (multi-value operators)
-function isMultiValueOperator(operatorToken?: string): boolean {
-	if (!operatorToken) return false;
-
-	const upperOp = operatorToken.toUpperCase();
-	return upperOp === 'IN' || upperOp === 'NOT IN';
 }
 
 // Function to determine token context boundaries more precisely
@@ -206,6 +164,7 @@ function determineContextBoundaries(
 	operatorContext: { start: number; end: number } | null;
 	valueContext: { start: number; end: number } | null;
 	conjunctionContext: { start: number; end: number } | null;
+	negationContext: { start: number; end: number } | null;
 	bracketContext: { start: number; end: number; isForList: boolean } | null;
 } {
 	// Find the current query pair based on cursor position
@@ -393,6 +352,12 @@ function determineContextBoundaries(
 	if (currentPair) {
 		const { position } = currentPair;
 
+		// Negation context: from negationStart to negationEnd
+		const negationContext = {
+			start: position.negationStart ?? 0,
+			end: position.negationEnd ?? 0,
+		};
+
 		// Key context: from keyStart to keyEnd
 		const keyContext = {
 			start: position.keyStart,
@@ -462,6 +427,7 @@ function determineContextBoundaries(
 
 		return {
 			keyContext,
+			negationContext,
 			operatorContext,
 			valueContext,
 			conjunctionContext,
@@ -483,6 +449,18 @@ function determineContextBoundaries(
 		if (tokenAtCursor.type === FilterQueryLexer.KEY) {
 			return {
 				keyContext: { start: tokenAtCursor.start, end: tokenAtCursor.stop },
+				negationContext: null,
+				operatorContext: null,
+				valueContext: null,
+				conjunctionContext: null,
+				bracketContext,
+			};
+		}
+
+		if (tokenAtCursor.type === FilterQueryLexer.NOT) {
+			return {
+				keyContext: null,
+				negationContext: { start: tokenAtCursor.start, end: tokenAtCursor.stop },
 				operatorContext: null,
 				valueContext: null,
 				conjunctionContext: null,
@@ -493,6 +471,7 @@ function determineContextBoundaries(
 		if (isOperatorToken(tokenAtCursor.type)) {
 			return {
 				keyContext: null,
+				negationContext: null,
 				operatorContext: { start: tokenAtCursor.start, end: tokenAtCursor.stop },
 				valueContext: null,
 				conjunctionContext: null,
@@ -503,6 +482,7 @@ function determineContextBoundaries(
 		if (isValueToken(tokenAtCursor.type)) {
 			return {
 				keyContext: null,
+				negationContext: null,
 				operatorContext: null,
 				valueContext: { start: tokenAtCursor.start, end: tokenAtCursor.stop },
 				conjunctionContext: null,
@@ -513,6 +493,7 @@ function determineContextBoundaries(
 		if (isConjunctionToken(tokenAtCursor.type)) {
 			return {
 				keyContext: null,
+				negationContext: null,
 				operatorContext: null,
 				valueContext: null,
 				conjunctionContext: { start: tokenAtCursor.start, end: tokenAtCursor.stop },
@@ -524,6 +505,7 @@ function determineContextBoundaries(
 	// If no current pair, return null for all contexts except possibly bracket context
 	return {
 		keyContext: null,
+		negationContext: null,
 		operatorContext: null,
 		valueContext: null,
 		conjunctionContext: null,
@@ -565,6 +547,7 @@ export function getQueryContextAtCursor(
 				stop: cursorIndex,
 				currentToken: '',
 				isInKey: true,
+				isInNegation: false,
 				isInOperator: false,
 				isInValue: false,
 				isInFunction: false,
@@ -710,6 +693,12 @@ export function getQueryContextAtCursor(
 				adjustedCursorIndex <= contextBoundaries.keyContext.end) ||
 				adjustedCursorIndex === contextBoundaries.keyContext.end + 1);
 
+		const isInNegationBoundary =
+			contextBoundaries.negationContext &&
+			((adjustedCursorIndex >= contextBoundaries.negationContext.start &&
+				adjustedCursorIndex <= contextBoundaries.negationContext.end) ||
+				adjustedCursorIndex === contextBoundaries.negationContext.end + 1);
+
 		const isInOperatorBoundary =
 			contextBoundaries.operatorContext &&
 			((adjustedCursorIndex >= contextBoundaries.operatorContext.start &&
@@ -753,6 +742,7 @@ export function getQueryContextAtCursor(
 		// If cursor is within a specific context boundary, this takes precedence
 		if (
 			isInKeyBoundary ||
+			isInNegationBoundary ||
 			isInOperatorBoundary ||
 			isInValueBoundary ||
 			isInConjunctionBoundary ||
@@ -764,6 +754,8 @@ export function getQueryContextAtCursor(
 			const keyToken = currentPair?.key || '';
 			const operatorToken = currentPair?.operator || '';
 			const valueToken = currentPair?.value || '';
+
+			const isValueWrappedInQuotes = isWrappedUnderQuotes(valueToken);
 
 			// Determine if we're in a multi-value operator context
 			const isForMultiValueOperator = isMultiValueOperator(operatorToken);
@@ -784,12 +776,14 @@ export function getQueryContextAtCursor(
 				stop: adjustedCursorIndex,
 				currentToken: '',
 				isInKey: isInKeyBoundary || false,
+				isInNegation: isInNegationBoundary || false,
 				isInOperator: isInOperatorBoundary || false,
 				isInValue: finalIsInValue || false,
 				isInConjunction: finalIsInConjunction || false,
 				isInFunction: false,
 				isInParenthesis: isInParenthesisBoundary || false,
 				isInBracketList: isInBracketListBoundary || false,
+				isValueWrappedInQuotes: isValueWrappedInQuotes,
 				keyToken: isInKeyBoundary
 					? keyToken
 					: isInOperatorBoundary || finalIsInValue
@@ -871,6 +865,7 @@ export function getQueryContextAtCursor(
 				stop: adjustedCursorIndex,
 				currentToken: '',
 				isInKey: true, // Default to key context when input is empty
+				isInNegation: false,
 				isInOperator: false,
 				isInValue: false,
 				isInFunction: false,
@@ -888,7 +883,7 @@ export function getQueryContextAtCursor(
 			lastTokenBeforeCursor &&
 			(isAtSpace || isAfterSpace || isTransitionPoint)
 		) {
-			const lastTokenContext = determineTokenContext(lastTokenBeforeCursor.type);
+			const lastTokenContext = determineTokenContext(lastTokenBeforeCursor, input);
 
 			// Apply the context progression logic: key → operator → value → conjunction → key
 			if (lastTokenContext.isInKey) {
@@ -900,7 +895,29 @@ export function getQueryContextAtCursor(
 					stop: adjustedCursorIndex,
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: true, // After key + space, should be operator context
+					isInValue: false,
+					isInFunction: false,
+					isInConjunction: false,
+					isInParenthesis: false,
+					isInBracketList: false,
+					keyToken: lastTokenBeforeCursor.text,
+					queryPairs: queryPairs,
+					currentPair: currentPair,
+				};
+			}
+
+			if (lastTokenContext.isInNegation) {
+				return {
+					tokenType: lastTokenBeforeCursor.type,
+					text: lastTokenBeforeCursor.text,
+					start: adjustedCursorIndex,
+					stop: adjustedCursorIndex,
+					currentToken: lastTokenBeforeCursor.text,
+					isInKey: false,
+					isInNegation: false,
+					isInOperator: true, // After key + space + NOT, should be operator context
 					isInValue: false,
 					isInFunction: false,
 					isInConjunction: false,
@@ -915,6 +932,7 @@ export function getQueryContextAtCursor(
 			if (lastTokenContext.isInOperator) {
 				// If we just typed an operator and then a space, we move to value context
 				const keyFromPair = currentPair?.key || '';
+				const isNonValueToken = isNonValueOperatorToken(lastTokenBeforeCursor.type);
 				return {
 					tokenType: lastTokenBeforeCursor.type,
 					text: lastTokenBeforeCursor.text,
@@ -922,10 +940,11 @@ export function getQueryContextAtCursor(
 					stop: adjustedCursorIndex,
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: false,
-					isInValue: true, // After operator + space, should be value context
+					isInValue: !isNonValueToken, // After operator + space, should be value context
 					isInFunction: false,
-					isInConjunction: false,
+					isInConjunction: isNonValueToken,
 					isInParenthesis: false,
 					isInBracketList: false,
 					operatorToken: lastTokenBeforeCursor.text,
@@ -946,6 +965,7 @@ export function getQueryContextAtCursor(
 					stop: adjustedCursorIndex,
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: false,
 					isInValue: false,
 					isInFunction: false,
@@ -969,6 +989,7 @@ export function getQueryContextAtCursor(
 					stop: adjustedCursorIndex,
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: true, // After conjunction + space, should be key context
+					isInNegation: false,
 					isInOperator: false,
 					isInValue: false,
 					isInFunction: false,
@@ -984,7 +1005,7 @@ export function getQueryContextAtCursor(
 		// FIXED: Consider the case where the cursor is at the end of a token
 		// with no space yet (user is actively typing)
 		if (exactToken && adjustedCursorIndex === exactToken.stop + 1) {
-			const tokenContext = determineTokenContext(exactToken.type);
+			const tokenContext = determineTokenContext(exactToken, input);
 
 			// When the cursor is at the end of a token, return the current token context
 			return {
@@ -1011,7 +1032,7 @@ export function getQueryContextAtCursor(
 
 		// Regular token-based context detection (when cursor is directly on a token)
 		if (exactToken?.channel === 0) {
-			const tokenContext = determineTokenContext(exactToken.type);
+			const tokenContext = determineTokenContext(exactToken, input);
 
 			// Get relevant tokens based on current pair
 			const keyFromPair = currentPair?.key || '';
@@ -1044,7 +1065,7 @@ export function getQueryContextAtCursor(
 
 		// If we're between tokens but not after a space, use previous token to determine context
 		if (previousToken?.channel === 0) {
-			const prevContext = determineTokenContext(previousToken.type);
+			const prevContext = determineTokenContext(previousToken, input);
 
 			// Get relevant tokens based on current pair
 			const keyFromPair = currentPair?.key || '';
@@ -1062,6 +1083,7 @@ export function getQueryContextAtCursor(
 					stop: adjustedCursorIndex,
 					currentToken: previousToken.text,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: false,
 					isInValue: true, // Always in value context after operator
 					isInFunction: false,
@@ -1084,6 +1106,7 @@ export function getQueryContextAtCursor(
 					stop: adjustedCursorIndex,
 					currentToken: previousToken.text,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: true, // After key, progress to operator context
 					isInValue: false,
 					isInFunction: false,
@@ -1104,6 +1127,7 @@ export function getQueryContextAtCursor(
 					stop: adjustedCursorIndex,
 					currentToken: previousToken.text,
 					isInKey: false,
+					isInNegation: false,
 					isInOperator: false,
 					isInValue: false,
 					isInFunction: false,
@@ -1126,6 +1150,7 @@ export function getQueryContextAtCursor(
 					stop: adjustedCursorIndex,
 					currentToken: previousToken.text,
 					isInKey: true, // After conjunction, progress back to key context
+					isInNegation: false,
 					isInOperator: false,
 					isInValue: false,
 					isInFunction: false,
@@ -1146,6 +1171,7 @@ export function getQueryContextAtCursor(
 			stop: adjustedCursorIndex,
 			currentToken: '',
 			isInKey: true,
+			isInNegation: false,
 			isInOperator: false,
 			isInValue: false,
 			isInFunction: false,
@@ -1165,6 +1191,7 @@ export function getQueryContextAtCursor(
 			currentToken: '',
 			isInValue: false,
 			isInKey: true, // Default to key context on error
+			isInNegation: false,
 			isInOperator: false,
 			isInFunction: false,
 			isInConjunction: false,
@@ -1221,13 +1248,17 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 			}
 
 			// If token is a KEY, start a new pair
-			if (token.type === FilterQueryLexer.KEY) {
+			if (
+				token.type === FilterQueryLexer.KEY &&
+				!(currentPair && currentPair.key)
+			) {
 				// If we have an existing incomplete pair, add it to the result
 				if (currentPair && currentPair.key) {
 					queryPairs.push({
 						key: currentPair.key,
 						operator: currentPair.operator || '',
 						value: currentPair.value,
+						hasNegation: currentPair.hasNegation || false,
 						position: {
 							keyStart: currentPair.position?.keyStart || 0,
 							keyEnd: currentPair.position?.keyEnd || 0,
@@ -1235,6 +1266,8 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 							operatorEnd: currentPair.position?.operatorEnd || 0,
 							valueStart: currentPair.position?.valueStart,
 							valueEnd: currentPair.position?.valueEnd,
+							negationStart: currentPair.position?.negationStart || 0,
+							negationEnd: currentPair.position?.negationEnd || 0,
 						},
 						isComplete: !!(
 							currentPair.key &&
@@ -1255,6 +1288,22 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					},
 				};
 			}
+			// If NOT token comes set hasNegation to true
+			else if (token.type === FilterQueryLexer.NOT && currentPair) {
+				currentPair.hasNegation = true;
+
+				currentPair.position = {
+					keyStart: currentPair.position?.keyStart || 0,
+					keyEnd: currentPair.position?.keyEnd || 0,
+					operatorStart: currentPair.position?.operatorStart || 0,
+					operatorEnd: currentPair.position?.operatorEnd || 0,
+					valueStart: currentPair.position?.valueStart,
+					valueEnd: currentPair.position?.valueEnd,
+					negationStart: token.start,
+					negationEnd: token.stop,
+				};
+			}
+
 			// If token is an operator and we have a key, add the operator
 			else if (
 				isOperatorToken(token.type) &&
@@ -1271,6 +1320,8 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					operatorEnd: token.stop,
 					valueStart: currentPair.position?.valueStart,
 					valueEnd: currentPair.position?.valueEnd,
+					negationStart: currentPair.position?.negationStart || 0,
+					negationEnd: currentPair.position?.negationEnd || 0,
 				};
 			}
 			// If token is a value and we have a key and operator, add the value
@@ -1290,6 +1341,8 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					operatorEnd: currentPair.position?.operatorEnd || 0,
 					valueStart: token.start,
 					valueEnd: token.stop,
+					negationStart: currentPair.position?.negationStart || 0,
+					negationEnd: currentPair.position?.negationEnd || 0,
 				};
 			}
 			// If token is a conjunction (AND/OR), finalize the current pair
@@ -1298,6 +1351,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					key: currentPair.key,
 					operator: currentPair.operator || '',
 					value: currentPair.value,
+					hasNegation: currentPair.hasNegation || false,
 					position: {
 						keyStart: currentPair.position?.keyStart || 0,
 						keyEnd: currentPair.position?.keyEnd || 0,
@@ -1305,6 +1359,8 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 						operatorEnd: currentPair.position?.operatorEnd || 0,
 						valueStart: currentPair.position?.valueStart,
 						valueEnd: currentPair.position?.valueEnd,
+						negationStart: currentPair.position?.negationStart || 0,
+						negationEnd: currentPair.position?.negationEnd || 0,
 					},
 					isComplete: !!(
 						currentPair.key &&
@@ -1324,6 +1380,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 				key: currentPair.key,
 				operator: currentPair.operator || '',
 				value: currentPair.value,
+				hasNegation: currentPair.hasNegation || false,
 				position: {
 					keyStart: currentPair.position?.keyStart || 0,
 					keyEnd: currentPair.position?.keyEnd || 0,
@@ -1331,6 +1388,8 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					operatorEnd: currentPair.position?.operatorEnd || 0,
 					valueStart: currentPair.position?.valueStart,
 					valueEnd: currentPair.position?.valueEnd,
+					negationStart: currentPair.position?.negationStart || 0,
+					negationEnd: currentPair.position?.negationEnd || 0,
 				},
 				isComplete: !!(
 					currentPair.key &&

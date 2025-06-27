@@ -32,7 +32,7 @@ import { getQueryContextAtCursor } from 'utils/queryContextUtils';
 2. Context-aware autocompletion
 3. Support for various query operators (=, !=, IN, LIKE, etc.)
 4. Support for complex conditions with AND/OR operators
-5. Support for functions (HAS, HASANY, HASALL, HASNONE)
+5. Support for functions (HAS, HASANY, HASALL)
 6. Support for parentheses and nested conditions
 7. Query examples for common use cases
 

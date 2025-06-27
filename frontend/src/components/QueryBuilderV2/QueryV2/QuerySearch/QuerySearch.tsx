@@ -12,12 +12,8 @@ import {
 import { javascript } from '@codemirror/lang-javascript';
 import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
-import CodeMirror, {
-	EditorView,
-	Extension,
-	keymap,
-} from '@uiw/react-codemirror';
-import { Button, Card, Collapse, Popover, Tag } from 'antd';
+import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
+import { Button, Card, Collapse, Popover, Space, Tag, Typography } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
@@ -31,7 +27,11 @@ import {
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
-import { queryOperatorSuggestions, validateQuery } from 'utils/antlrQueryUtils';
+import {
+	negationQueryOperatorSuggestions,
+	queryOperatorSuggestions,
+	validateQuery,
+} from 'utils/antlrQueryUtils';
 import { getQueryContextAtCursor } from 'utils/queryContextUtils';
 
 import { queryExamples } from './constants';
@@ -62,17 +62,17 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
-const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
-	(view, from, to, text) => {
-		const currentLine = view.state.doc.lineAt(from);
-		const before = currentLine.text.slice(0, from - currentLine.from);
-		const after = currentLine.text.slice(to - currentLine.from);
+// const disallowMultipleSpaces: Extension = EditorView.inputHandler.of(
+// 	(view, from, to, text) => {
+// 		const currentLine = view.state.doc.lineAt(from);
+// 		const before = currentLine.text.slice(0, from - currentLine.from);
+// 		const after = currentLine.text.slice(to - currentLine.from);
 
-		const newText = before + text + after;
+// 		const newText = before + text + after;
 
-		return /\s{2,}/.test(newText);
-	},
-);
+// 		return /\s{2,}/.test(newText);
+// 	},
+// );
 
 function QuerySearch({
 	onChange,
@@ -196,7 +196,6 @@ function QuerySearch({
 		return op.toUpperCase() === 'IN' || op.toUpperCase() === 'NOT IN';
 	};
 
-	// Helper function to format value based on operator type and value type
 	const formatValueForOperator = (
 		value: string,
 		operatorToken: string | undefined,
@@ -215,7 +214,10 @@ function QuerySearch({
 
 		// If we're already inside bracket list for IN operator and it's a string value
 		// just wrap in quotes but not brackets (we're already in brackets)
-		if (type === 'value' || type === 'keyword') {
+		if (
+			(type === 'value' || type === 'keyword') &&
+			!/^[a-zA-Z0-9_][a-zA-Z0-9_.\[\]]*$/.test(value)
+		) {
 			return wrapStringValueInQuotes(value);
 		}
 
@@ -495,10 +497,19 @@ function QuerySearch({
 			completion: any,
 			from: number,
 			to: number,
+			shouldAddSpace: boolean = true,
 		): void => {
 			view.dispatch({
-				changes: { from, to, insert: `${completion.apply} ` },
-				selection: { anchor: from + completion.apply.length + 1 },
+				changes: {
+					from,
+					to,
+					insert: shouldAddSpace ? `${completion.apply} ` : `${completion.apply}`,
+				},
+				selection: {
+					anchor:
+						from +
+						(shouldAddSpace ? completion.apply.length + 1 : completion.apply.length),
+				},
 			});
 		};
 
@@ -514,7 +525,26 @@ function QuerySearch({
 						from: number,
 						to: number,
 					): void => {
-						addSpaceAfterSelection(view, { apply: originalApply }, from, to);
+						if (queryContext.isInValue && option.type === 'value') {
+							if (
+								queryContext.currentPair?.position &&
+								queryContext.currentPair.position.valueStart &&
+								queryContext.currentPair.position.valueEnd
+							) {
+								const { valueStart, valueEnd } = queryContext.currentPair.position;
+								addSpaceAfterSelection(
+									view,
+									{ apply: originalApply },
+									valueStart,
+									valueEnd + 1,
+									false,
+								);
+							} else {
+								addSpaceAfterSelection(view, { apply: originalApply }, from, to);
+							}
+						} else {
+							addSpaceAfterSelection(view, { apply: originalApply }, from, to);
+						}
 					},
 				};
 			});
@@ -619,6 +649,10 @@ function QuerySearch({
 
 			// Get key information from context or current pair
 			const keyName = queryContext.keyToken || queryContext.currentPair?.key;
+
+			if (queryContext.currentPair?.hasNegation) {
+				options = negationQueryOperatorSuggestions;
+			}
 
 			// If we have a key context, add that info to the operator suggestions
 			if (keyName) {
@@ -760,7 +794,6 @@ function QuerySearch({
 				{ label: 'HAS', type: 'function' },
 				{ label: 'HASANY', type: 'function' },
 				{ label: 'HASALL', type: 'function' },
-				{ label: 'HASNONE', type: 'function' },
 			];
 
 			// Add space after selection for functions
@@ -836,20 +869,26 @@ function QuerySearch({
 			}
 		}
 
-		// If no specific context is detected, provide general suggestions
-		options = [
-			...(keySuggestions || []),
-			{ label: 'AND', type: 'conjunction', boost: -10 },
-			{ label: 'OR', type: 'conjunction', boost: -10 },
-			{ label: '(', type: 'parenthesis', info: 'Open group', boost: -20 },
-		];
+		// // If no specific context is detected, provide general suggestions
+		// options = [
+		// 	...(keySuggestions || []),
+		// 	{ label: 'AND', type: 'conjunction', boost: -10 },
+		// 	{ label: 'OR', type: 'conjunction', boost: -10 },
+		// 	{ label: '(', type: 'parenthesis', info: 'Open group', boost: -20 },
+		// ];
 
-		// Add space after selection for general context
-		const optionsWithSpace = addSpaceToOptions(options);
+		// // Add space after selection for general context
+		// const optionsWithSpace = addSpaceToOptions(options);
 
+		// return {
+		// 	from: word?.from ?? 0,
+		// 	options: optionsWithSpace,
+		// };
+
+		//Don't show anything if no context detected
 		return {
 			from: word?.from ?? 0,
-			options: optionsWithSpace,
+			options: [],
 		};
 	}
 
@@ -946,7 +985,6 @@ function QuerySearch({
 						javascript({ jsx: false, typescript: false }),
 						EditorView.lineWrapping,
 						stopEventsExtension,
-						disallowMultipleSpaces,
 						keymap.of([
 							...completionKeymap,
 							{
@@ -1054,7 +1092,7 @@ function QuerySearch({
 					</Collapse>
 				</Card>
 			)}
-			{/* 
+
 			{queryContext && (
 				<Card size="small" title="Current Context" className="query-context">
 					<div className="context-details">
@@ -1097,7 +1135,7 @@ function QuerySearch({
 						</Space>
 					</div>
 				</Card>
-			)} */}
+			)}
 		</div>
 	);
 }
