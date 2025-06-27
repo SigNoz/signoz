@@ -16,7 +16,7 @@ export interface IQueryPair {
 	key: string;
 	operator: string;
 	value?: string;
-	hasNegation?: boolean; // Indicates if the pair has a negation operator (e.g., NOT)
+	hasNegation?: boolean;
 	position: {
 		keyStart: number;
 		keyEnd: number;
