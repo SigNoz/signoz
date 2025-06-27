@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable no-empty */
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { useEffect, useState } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';
@@ -43,14 +43,14 @@ async function preferencesLoader<T>(config: {
 
 // Use the generic loader with specific configs
 async function logsPreferencesLoader(): Promise<{
-	columns: BaseAutocompleteData[];
+	columns: TelemetryFieldKey[];
 	formatting: FormattingOptions;
 }> {
 	return preferencesLoader(logsLoaderConfig);
 }
 
 async function tracesPreferencesLoader(): Promise<{
-	columns: BaseAutocompleteData[];
+	columns: TelemetryFieldKey[];
 }> {
 	return preferencesLoader(tracesLoaderConfig);
 }
