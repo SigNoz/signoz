@@ -63,6 +63,11 @@ func getClickhouseKey(key v3.AttributeKey) string {
 		return key.Key
 	}
 
+	// if resource attribute, then use the new json column
+	if key.Type == v3.AttributeKeyTypeResource {
+		return fmt.Sprintf("'resource.%s'", key.Key)
+	}
+
 	//if the key is present in the topLevelColumn then it will be only searched in those columns,
 	//regardless if it is indexed/present again in resource or column attribute
 	if !key.IsColumn {
