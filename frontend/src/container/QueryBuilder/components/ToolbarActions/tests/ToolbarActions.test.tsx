@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 
 import LeftToolbarActions from '../LeftToolbarActions';
@@ -9,7 +9,6 @@ import RightToolbarActions from '../RightToolbarActions';
 describe('ToolbarActions', () => {
 	it('LeftToolbarActions - renders correctly with default props', async () => {
 		const handleChangeSelectedView = jest.fn();
-		const handleToggleShowFrequencyChart = jest.fn();
 		const { queryByTestId } = render(
 			<LeftToolbarActions
 				items={{
@@ -31,10 +30,8 @@ describe('ToolbarActions', () => {
 						disabled: false,
 					},
 				}}
-				selectedView={SELECTED_VIEWS.SEARCH}
+				selectedView={ExplorerViews.LIST}
 				onChangeSelectedView={handleChangeSelectedView}
-				onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
-				showFrequencyChart
 				showFilter
 				handleFilterVisibilityChange={(): void => {}}
 			/>,
@@ -77,10 +74,8 @@ describe('ToolbarActions', () => {
 						show: true,
 					},
 				}}
-				selectedView={SELECTED_VIEWS.QUERY_BUILDER}
+				selectedView={ExplorerViews.TIMESERIES}
 				onChangeSelectedView={handleChangeSelectedView}
-				onToggleHistrogramVisibility={handleToggleShowFrequencyChart}
-				showFrequencyChart
 				showFilter
 				handleFilterVisibilityChange={(): void => {}}
 			/>,
