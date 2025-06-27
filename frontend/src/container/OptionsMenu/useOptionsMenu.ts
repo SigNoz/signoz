@@ -1,21 +1,24 @@
-import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
+import { TelemetryFieldKey } from 'api/v5/v5';
+import { AxiosResponse } from 'axios';
 import { LogViewMode } from 'container/LogsTable';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import {
-	AllTraceFilterKeys,
-	AllTraceFilterKeyValue,
-} from 'pages/TracesExplorer/Filter/filterUtils';
+import { AllTraceFilterKeyValue } from 'pages/TracesExplorer/Filter/filterUtils';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
-	BaseAutocompleteData,
-	IQueryAutocompleteResponse,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+	QueryKeyRequestProps,
+	QueryKeySuggestionsResponseProps,
+} from 'types/api/querySuggestions/types';
+import {
+	FieldContext,
+	FieldDataType,
+	SignalType,
+} from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -47,7 +50,7 @@ interface UseOptionsMenu {
 
 const useOptionsMenu = ({
 	dataSource,
-	aggregateOperator,
+	// aggregateOperator,
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
 	const { notifications } = useNotifications();
@@ -61,15 +64,23 @@ const useOptionsMenu = ({
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 	const debouncedSearchText = useDebounce(searchText, 300);
 
-	const initialQueryParams = useMemo(
+	// const initialQueryParams = useMemo(
+	// 	() => ({
+	// 		searchText: '',
+	// 		aggregateAttribute: '',
+	// 		tagType: undefined,
+	// 		dataSource,
+	// 		aggregateOperator,
+	// 	}),
+	// 	[dataSource, aggregateOperator],
+	// );
+
+	const initialQueryParamsV5: QueryKeyRequestProps = useMemo(
 		() => ({
+			signal: dataSource,
 			searchText: '',
-			aggregateAttribute: '',
-			tagType: undefined,
-			dataSource,
-			aggregateOperator,
 		}),
-		[dataSource, aggregateOperator],
+		[dataSource],
 	);
 
 	const {
@@ -77,23 +88,37 @@ const useOptionsMenu = ({
 		redirectWithQuery: redirectWithOptionsData,
 	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
-	const initialQueries = useMemo(
+	// const initialQueries = useMemo(
+	// 	() =>
+	// 		initialOptions?.selectColumns?.map((column) => ({
+	// 			queryKey: column,
+	// 			queryFn: (): Promise<
+	// 				SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
+	// 			> =>
+	// 				getAggregateKeys({
+	// 					...initialQueryParams,
+	// 					searchText: column,
+	// 				}),
+	// 			enabled: !!column && !optionsQuery,
+	// 		})) || [],
+	// 	[initialOptions?.selectColumns, initialQueryParams, optionsQuery],
+	// );
+
+	const initialQueriesV5 = useMemo(
 		() =>
 			initialOptions?.selectColumns?.map((column) => ({
 				queryKey: column,
-				queryFn: (): Promise<
-					SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
-				> =>
-					getAggregateKeys({
-						...initialQueryParams,
+				queryFn: (): Promise<AxiosResponse<QueryKeySuggestionsResponseProps>> =>
+					getKeySuggestions({
+						...initialQueryParamsV5,
 						searchText: column,
 					}),
 				enabled: !!column && !optionsQuery,
 			})) || [],
-		[initialOptions?.selectColumns, initialQueryParams, optionsQuery],
+		[initialOptions?.selectColumns, initialQueryParamsV5, optionsQuery],
 	);
 
-	const initialAttributesResult = useQueries(initialQueries);
+	const initialAttributesResult = useQueries(initialQueriesV5);
 
 	const isFetchedInitialAttributes = useMemo(
 		() => initialAttributesResult.every((result) => result.isFetched),
@@ -106,42 +131,52 @@ const useOptionsMenu = ({
 		}
 
 		const attributesData = initialAttributesResult?.reduce(
-			(acc, attributeResponse) => {
-				const data = attributeResponse?.data?.payload?.attributeKeys || [];
+			(acc: TelemetryFieldKey[], attributeResponse): TelemetryFieldKey[] => {
+				const suggestions =
+					Object.values(attributeResponse?.data?.data?.data?.keys || {}).flat() ||
+					[];
 
-				return [...acc, ...data];
+				const mappedSuggestions: TelemetryFieldKey[] = suggestions.map(
+					(suggestion) => ({
+						name: suggestion.name,
+						signal: suggestion.signal as SignalType,
+						fieldDataType: suggestion.fieldDataType as FieldDataType,
+						fieldContext: suggestion.fieldContext as FieldContext,
+					}),
+				);
+
+				return [...acc, ...mappedSuggestions];
 			},
-			[] as BaseAutocompleteData[],
+			[],
 		);
 
-		let initialSelected = initialOptions.selectColumns
-			?.map((column) => attributesData.find(({ key }) => key === column))
-			.filter(Boolean) as BaseAutocompleteData[];
+		let initialSelected: TelemetryFieldKey[] | undefined =
+			initialOptions.selectColumns
+				?.map((column) => attributesData.find(({ name }) => name === column))
+				.filter((e) => !!e) || [];
 
 		if (dataSource === DataSource.TRACES) {
 			initialSelected = initialSelected
 				?.map((col) => {
-					if (col && Object.keys(AllTraceFilterKeyValue).includes(col?.key)) {
+					if (col && Object.keys(AllTraceFilterKeyValue).includes(col?.name)) {
 						const metaData = defaultTraceSelectedColumns.find(
-							(coln) => coln.key === (col.key as AllTraceFilterKeys),
+							(coln) => coln.name === col.name,
 						);
 
 						return {
 							...metaData,
-							key: metaData?.key,
-							dataType: metaData?.dataType,
-							type: metaData?.type,
-							isColumn: metaData?.isColumn,
-							isJSON: metaData?.isJSON,
-							id: metaData?.id,
+							name: metaData?.name || '',
 						};
 					}
 					return col;
 				})
-				.filter(Boolean) as BaseAutocompleteData[];
+				.filter((e) => !!e);
 
 			if (!initialSelected || !initialSelected?.length) {
-				initialSelected = defaultTraceSelectedColumns;
+				initialSelected = defaultTraceSelectedColumns.map((e) => ({
+					...e,
+					name: e.name,
+				}));
 			}
 		}
 
@@ -154,41 +189,91 @@ const useOptionsMenu = ({
 	]);
 
 	const {
-		data: searchedAttributesData,
-		isFetching: isSearchedAttributesFetching,
-	} = useGetAggregateKeys(
+		data: searchedAttributesDataV5,
+		isFetching: isSearchedAttributesFetchingV5,
+	} = useGetQueryKeySuggestions(
 		{
-			...initialQueryParams,
+			...initialQueryParamsV5,
 			searchText: debouncedSearchText,
 		},
 		{ queryKey: [debouncedSearchText, isFocused], enabled: isFocused },
 	);
 
-	const searchedAttributeKeys = useMemo(() => {
-		if (searchedAttributesData?.payload?.attributeKeys?.length) {
+	// const {
+	// 	data: searchedAttributesData,
+	// 	isFetching: isSearchedAttributesFetching,
+	// } = useGetAggregateKeys(
+	// 	{
+	// 		...initialQueryParams,
+	// 		searchText: debouncedSearchText,
+	// 	},
+	// 	{ queryKey: [debouncedSearchText, isFocused], enabled: isFocused },
+	// );
+
+	const searchedAttributeKeys: TelemetryFieldKey[] = useMemo(() => {
+		const searchedAttributesDataList = Object.values(
+			searchedAttributesDataV5?.data.data.keys || {},
+		).flat();
+		if (searchedAttributesDataList.length) {
 			if (dataSource === DataSource.LOGS) {
+				const logsSelectedColumns: TelemetryFieldKey[] = defaultLogsSelectedColumns.map(
+					(e) => ({
+						...e,
+						name: e.name,
+						signal: e.signal as SignalType,
+						fieldContext: e.fieldContext as FieldContext,
+						fieldDataType: e.fieldDataType as FieldDataType,
+					}),
+				);
 				return [
-					...defaultLogsSelectedColumns,
-					...searchedAttributesData.payload.attributeKeys.filter(
-						(attribute) => attribute.key !== 'body',
-					),
+					...logsSelectedColumns,
+					...searchedAttributesDataList
+						.filter((attribute) => attribute.name !== 'body')
+						// eslint-disable-next-line sonarjs/no-identical-functions
+						.map((e) => ({
+							...e,
+							name: e.name,
+							signal: e.signal as SignalType,
+							fieldContext: e.fieldContext as FieldContext,
+							fieldDataType: e.fieldDataType as FieldDataType,
+						})),
 				];
 			}
-			return searchedAttributesData.payload.attributeKeys;
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			return searchedAttributesDataList.map((e) => ({
+				...e,
+				name: e.name,
+				signal: e.signal as SignalType,
+				fieldContext: e.fieldContext as FieldContext,
+				fieldDataType: e.fieldDataType as FieldDataType,
+			}));
 		}
 		if (dataSource === DataSource.TRACES) {
-			return defaultTraceSelectedColumns;
+			return defaultTraceSelectedColumns.map((e) => ({
+				...e,
+				name: e.name,
+			}));
 		}
 
 		return [];
-	}, [dataSource, searchedAttributesData?.payload?.attributeKeys]);
+	}, [dataSource, searchedAttributesDataV5?.data.data.keys]);
 
 	const initialOptionsQuery: OptionsQuery = useMemo(() => {
-		let defaultColumns = defaultOptionsQuery.selectColumns;
+		let defaultColumns: TelemetryFieldKey[] = defaultOptionsQuery.selectColumns;
 		if (dataSource === DataSource.TRACES) {
-			defaultColumns = defaultTraceSelectedColumns;
+			defaultColumns = defaultTraceSelectedColumns.map((e) => ({
+				...e,
+				name: e.name,
+			}));
 		} else if (dataSource === DataSource.LOGS) {
-			defaultColumns = defaultLogsSelectedColumns;
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			defaultColumns = defaultLogsSelectedColumns.map((e) => ({
+				...e,
+				name: e.name,
+				signal: e.signal as SignalType,
+				fieldContext: e.fieldContext as FieldContext,
+				fieldDataType: e.fieldDataType as FieldDataType,
+			}));
 		}
 
 		const finalSelectColumns = initialOptions?.selectColumns
@@ -203,14 +288,14 @@ const useOptionsMenu = ({
 	}, [dataSource, initialOptions, initialSelectedColumns]);
 
 	const selectedColumnKeys = useMemo(
-		() => preferences?.columns?.map(({ id }) => id) || [],
+		() => preferences?.columns?.map(({ name }) => name) || [],
 		[preferences?.columns],
 	);
 
 	const optionsFromAttributeKeys = useMemo(() => {
 		const filteredAttributeKeys = searchedAttributeKeys.filter((item) => {
 			if (dataSource !== DataSource.LOGS) {
-				return item.key !== 'body';
+				return item.name !== 'body';
 			}
 			return true;
 		});
@@ -232,11 +317,11 @@ const useOptionsMenu = ({
 				const column = [
 					...searchedAttributeKeys,
 					...(preferences?.columns || []),
-				].find(({ id }) => id === key);
+				].find(({ name }) => name === key);
 
 				if (!column) return acc;
 				return [...acc, column];
-			}, [] as BaseAutocompleteData[]);
+			}, [] as TelemetryFieldKey[]);
 
 			const optionsData: OptionsQuery = {
 				...defaultOptionsQuery,
@@ -261,7 +346,7 @@ const useOptionsMenu = ({
 	const handleRemoveSelectedColumn = useCallback(
 		(columnKey: string) => {
 			const newSelectedColumns = preferences?.columns?.filter(
-				({ id }) => id !== columnKey,
+				({ name }) => name !== columnKey,
 			);
 
 			if (!newSelectedColumns?.length && dataSource !== DataSource.LOGS) {
@@ -367,7 +452,7 @@ const useOptionsMenu = ({
 	const optionsMenuConfig: Required<OptionsMenuConfig> = useMemo(
 		() => ({
 			addColumn: {
-				isFetching: isSearchedAttributesFetching,
+				isFetching: isSearchedAttributesFetchingV5,
 				value: preferences?.columns || defaultOptionsQuery.selectColumns,
 				options: optionsFromAttributeKeys || [],
 				onFocus: handleFocus,
@@ -390,7 +475,7 @@ const useOptionsMenu = ({
 			},
 		}),
 		[
-			isSearchedAttributesFetching,
+			isSearchedAttributesFetchingV5,
 			preferences,
 			optionsFromAttributeKeys,
 			handleSelectColumns,
