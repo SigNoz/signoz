@@ -28,7 +28,11 @@ import {
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
-import { queryOperatorSuggestions, validateQuery } from 'utils/antlrQueryUtils';
+import {
+	negationQueryOperatorSuggestions,
+	queryOperatorSuggestions,
+	validateQuery,
+} from 'utils/antlrQueryUtils';
 import { getQueryContextAtCursor } from 'utils/queryContextUtils';
 
 import { queryExamples } from './constants';
@@ -214,8 +218,7 @@ function QuerySearch({
 		// just wrap in quotes but not brackets (we're already in brackets)
 		if (
 			(type === 'value' || type === 'keyword') &&
-			!/^[a-zA-Z0-9_][a-zA-Z0-9_.\[\]]*$/.test(value) &&
-			!queryContext?.isValueWrappedInQuotes
+			!/^[a-zA-Z0-9_][a-zA-Z0-9_.\[\]]*$/.test(value)
 		) {
 			return wrapStringValueInQuotes(value);
 		}
@@ -496,10 +499,19 @@ function QuerySearch({
 			completion: any,
 			from: number,
 			to: number,
+			shouldAddSpace: boolean = true,
 		): void => {
 			view.dispatch({
-				changes: { from, to, insert: `${completion.apply} ` },
-				selection: { anchor: from + completion.apply.length + 1 },
+				changes: {
+					from,
+					to,
+					insert: shouldAddSpace ? `${completion.apply} ` : `${completion.apply}`,
+				},
+				selection: {
+					anchor:
+						from +
+						(shouldAddSpace ? completion.apply.length + 1 : completion.apply.length),
+				},
 			});
 		};
 
@@ -515,7 +527,26 @@ function QuerySearch({
 						from: number,
 						to: number,
 					): void => {
-						addSpaceAfterSelection(view, { apply: originalApply }, from, to);
+						if (queryContext.isInValue && option.type === 'value') {
+							if (
+								queryContext.currentPair?.position &&
+								queryContext.currentPair.position.valueStart &&
+								queryContext.currentPair.position.valueEnd
+							) {
+								const { valueStart, valueEnd } = queryContext.currentPair.position;
+								addSpaceAfterSelection(
+									view,
+									{ apply: originalApply },
+									valueStart,
+									valueEnd + 1,
+									false,
+								);
+							} else {
+								addSpaceAfterSelection(view, { apply: originalApply }, from, to);
+							}
+						} else {
+							addSpaceAfterSelection(view, { apply: originalApply }, from, to);
+						}
 					},
 				};
 			});
@@ -620,6 +651,10 @@ function QuerySearch({
 
 			// Get key information from context or current pair
 			const keyName = queryContext.keyToken || queryContext.currentPair?.key;
+
+			if (queryContext.currentPair?.hasNegation) {
+				options = negationQueryOperatorSuggestions;
+			}
 
 			// If we have a key context, add that info to the operator suggestions
 			if (keyName) {
@@ -761,7 +796,6 @@ function QuerySearch({
 				{ label: 'HAS', type: 'function' },
 				{ label: 'HASANY', type: 'function' },
 				{ label: 'HASALL', type: 'function' },
-				{ label: 'HASNONE', type: 'function' },
 			];
 
 			// Add space after selection for functions
@@ -837,20 +871,26 @@ function QuerySearch({
 			}
 		}
 
-		// If no specific context is detected, provide general suggestions
-		options = [
-			...(keySuggestions || []),
-			{ label: 'AND', type: 'conjunction', boost: -10 },
-			{ label: 'OR', type: 'conjunction', boost: -10 },
-			{ label: '(', type: 'parenthesis', info: 'Open group', boost: -20 },
-		];
+		// // If no specific context is detected, provide general suggestions
+		// options = [
+		// 	...(keySuggestions || []),
+		// 	{ label: 'AND', type: 'conjunction', boost: -10 },
+		// 	{ label: 'OR', type: 'conjunction', boost: -10 },
+		// 	{ label: '(', type: 'parenthesis', info: 'Open group', boost: -20 },
+		// ];
 
-		// Add space after selection for general context
-		const optionsWithSpace = addSpaceToOptions(options);
+		// // Add space after selection for general context
+		// const optionsWithSpace = addSpaceToOptions(options);
 
+		// return {
+		// 	from: word?.from ?? 0,
+		// 	options: optionsWithSpace,
+		// };
+
+		//Don't show anything if no context detected
 		return {
 			from: word?.from ?? 0,
-			options: optionsWithSpace,
+			options: [],
 		};
 	}
 
