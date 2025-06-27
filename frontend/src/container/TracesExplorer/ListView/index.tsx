@@ -64,6 +64,8 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		},
 	});
 
+	console.log('options', options);
+
 	const { draggedColumns, onDragColumns } = useDragColumns<RowData>(
 		LOCALSTORAGE.TRACES_LIST_COLUMNS,
 	);

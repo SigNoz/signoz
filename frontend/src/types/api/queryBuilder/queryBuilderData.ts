@@ -1,3 +1,4 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { Format } from 'container/NewWidget/RightContainer/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
@@ -85,7 +86,7 @@ export type IBuilderQuery = {
 	legend: string;
 	pageSize?: number;
 	offset?: number;
-	selectColumns?: BaseAutocompleteData[];
+	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
 };
 
 export interface IClickHouseQuery {

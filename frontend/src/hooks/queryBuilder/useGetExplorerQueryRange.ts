@@ -1,3 +1,4 @@
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
@@ -58,7 +59,8 @@ export const useGetExplorerQueryRange = (
 			query: requestData || initialQueriesMap.metrics,
 			params,
 		},
-		version,
+		// version,
+		ENTITY_VERSION_V5,
 		{
 			...options,
 			retry: false,

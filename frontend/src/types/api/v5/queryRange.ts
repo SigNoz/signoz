@@ -130,6 +130,9 @@ export interface TelemetryFieldKey {
 	fieldContext?: FieldContext;
 	fieldDataType?: FieldDataType;
 	materialized?: boolean;
+	isColumn?: boolean;
+	isJSON?: boolean;
+	isIndexed?: boolean;
 }
 
 export interface Filter {

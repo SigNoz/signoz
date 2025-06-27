@@ -4,10 +4,10 @@ export interface QueryKeyDataSuggestionsProps {
 	info?: string;
 	apply?: string;
 	detail?: string;
-	fieldContext: string;
-	fieldDataType: string;
+	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
+	fieldDataType?: 'string' | 'number' | 'boolean';
 	name: string;
-	signal: string;
+	signal: 'traces' | 'logs' | 'metrics';
 }
 
 export interface QueryKeySuggestionsResponseProps {
@@ -21,8 +21,11 @@ export interface QueryKeySuggestionsResponseProps {
 }
 
 export interface QueryKeyRequestProps {
-	signal: string;
-	name: string;
+	signal: 'traces' | 'logs' | 'metrics';
+	searchText: string;
+	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
+	fieldDataType?: 'string' | 'number' | 'boolean';
+	metricName?: string;
 }
 
 export interface QueryKeyValueSuggestionsProps {

@@ -1,12 +1,12 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { render, screen } from '@testing-library/react';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import {
 	FormattingOptions,
 	PreferenceMode,
 	Preferences,
 } from 'providers/preferences/types';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import {
 	PreferenceContextProvider,
@@ -17,7 +17,7 @@ import {
 jest.mock('../sync/usePreferenceSync', () => ({
 	usePreferenceSync: jest.fn().mockReturnValue({
 		preferences: {
-			columns: [] as BaseAutocompleteData[],
+			columns: [] as TelemetryFieldKey[],
 			formatting: {
 				maxLines: 2,
 				format: 'table',
