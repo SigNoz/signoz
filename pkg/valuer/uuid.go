@@ -27,7 +27,7 @@ func NewUUID(value string) (UUID, error) {
 }
 
 func NewUUIDFromBytes(value []byte) (UUID, error) {
-	val, err := uuid.ParseBytes(value)
+	val, err := uuid.FromBytes(value)
 	if err != nil {
 		return UUID{}, err
 	}
@@ -67,6 +67,10 @@ func (enum UUID) StringValue() string {
 
 func (enum UUID) String() string {
 	return enum.val.String()
+}
+
+func (enum UUID) MarshalBinary() ([]byte, error) {
+	return enum.val.MarshalBinary()
 }
 
 func (enum UUID) MarshalJSON() ([]byte, error) {

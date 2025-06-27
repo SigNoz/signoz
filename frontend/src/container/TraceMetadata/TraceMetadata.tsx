@@ -43,13 +43,7 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 						<ArrowLeft
 							size={14}
 							onClick={(): void => {
-								// Check if page was opened in new tab (no referrer from same origin)
-								// or if there's no meaningful history to go back to
-								const hasValidReferrer =
-									document.referrer &&
-									new URL(document.referrer).origin === window.location.origin;
-
-								if (hasValidReferrer && window.history.length > 1) {
+								if (window.history.length > 1) {
 									history.goBack();
 								} else {
 									history.push(ROUTES.TRACES_EXPLORER);

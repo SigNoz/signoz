@@ -1631,7 +1631,7 @@
 			"docker metrics to signoz"
 		],
 		"imgUrl": "/Logos/docker.svg",
-		"link": "https://signoz.io/docs/userguide/k8s-metrics/"
+		"link": "https://signoz.io/docs/metrics-management/docker-container-metrics/"
 	},
 	{
 		"dataSource": "ec2-application-logs",

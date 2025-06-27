@@ -2463,7 +2463,7 @@ export const getHostQueryPayload = (
 							functions: [],
 							groupBy: [],
 							having: [],
-							legend: '',
+							legend: 'system disk io',
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
