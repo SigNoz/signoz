@@ -13,7 +13,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
-import { Button, Card, Collapse, Popover, Space, Tag, Typography } from 'antd';
+import { Button, Card, Collapse, Popover, Tag } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
@@ -215,10 +215,7 @@ function QuerySearch({
 
 		// If we're already inside bracket list for IN operator and it's a string value
 		// just wrap in quotes but not brackets (we're already in brackets)
-		if (
-			(type === 'value' || type === 'keyword') &&
-			!/^[a-zA-Z0-9_][a-zA-Z0-9_.\[\]]*$/.test(value)
-		) {
+		if (type === 'value' || type === 'keyword') {
 			return wrapStringValueInQuotes(value);
 		}
 
@@ -498,7 +495,7 @@ function QuerySearch({
 			completion: any,
 			from: number,
 			to: number,
-			shouldAddSpace: boolean = true,
+			shouldAddSpace = true,
 		): void => {
 			view.dispatch({
 				changes: {
@@ -886,7 +883,7 @@ function QuerySearch({
 		// 	options: optionsWithSpace,
 		// };
 
-		//Don't show anything if no context detected
+		// Don't show anything if no context detected
 		return {
 			from: word?.from ?? 0,
 			options: [],
@@ -1094,7 +1091,7 @@ function QuerySearch({
 				</Card>
 			)}
 
-			{queryContext && (
+			{/* {queryContext && (
 				<Card size="small" title="Current Context" className="query-context">
 					<div className="context-details">
 						<Space direction="vertical" size={4}>
@@ -1136,7 +1133,7 @@ function QuerySearch({
 						</Space>
 					</div>
 				</Card>
-			)}
+			)} */}
 		</div>
 	);
 }
