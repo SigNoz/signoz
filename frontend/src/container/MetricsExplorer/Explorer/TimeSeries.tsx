@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter/BuilderUnits';
@@ -63,7 +63,7 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				payload,
-				ENTITY_VERSION_V4,
+				ENTITY_VERSION_V5,
 				globalSelectedTime,
 				maxTime,
 				minTime,
@@ -80,7 +80,8 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 							dataSource: DataSource.METRICS,
 						},
 					},
-					ENTITY_VERSION_V4,
+					// ENTITY_VERSION_V4,
+					ENTITY_VERSION_V5,
 				),
 			enabled: !!payload,
 		})),

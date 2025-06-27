@@ -1,5 +1,6 @@
 /* eslint-disable no-empty */
 import getLocalStorageKey from 'api/browser/localstorage/get';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -50,10 +51,10 @@ const logsLoaders = {
 		return { columns: [], formatting: undefined } as any;
 	},
 	default: async (): Promise<{
-		columns: BaseAutocompleteData[];
+		columns: TelemetryFieldKey[];
 		formatting: FormattingOptions;
 	}> => ({
-		columns: defaultLogsSelectedColumns as BaseAutocompleteData[],
+		columns: defaultLogsSelectedColumns,
 		formatting: {
 			maxLines: 2,
 			format: 'table',
