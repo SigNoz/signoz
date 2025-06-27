@@ -3,6 +3,7 @@ import './LogsExplorer.styles.scss';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
@@ -31,7 +32,6 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import {
@@ -200,11 +200,11 @@ function LogsExplorer(): JSX.Element {
 
 	// Check if the columns have the required columns (timestamp, body)
 	const hasRequiredColumns = useCallback(
-		(columns?: Array<{ key: string }> | null): boolean => {
+		(columns?: TelemetryFieldKey[] | null): boolean => {
 			if (!columns?.length) return false;
 
-			const hasTimestamp = columns.some((col) => col.key === 'timestamp');
-			const hasBody = columns.some((col) => col.key === 'body');
+			const hasTimestamp = columns.some((col) => col.name === 'timestamp');
+			const hasBody = columns.some((col) => col.name === 'body');
 
 			return hasTimestamp && hasBody;
 		},
@@ -213,7 +213,7 @@ function LogsExplorer(): JSX.Element {
 
 	// Merge the columns with the required columns (timestamp, body) if missing
 	const mergeWithRequiredColumns = useCallback(
-		(columns: BaseAutocompleteData[]): BaseAutocompleteData[] => [
+		(columns: TelemetryFieldKey[]): TelemetryFieldKey[] => [
 			// Add required columns (timestamp, body) if missing
 			...(!hasRequiredColumns(columns) ? defaultLogsSelectedColumns : []),
 			...columns,
