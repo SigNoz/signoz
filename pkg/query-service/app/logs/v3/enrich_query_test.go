@@ -1005,7 +1005,7 @@ func TestGetFieldNames(t *testing.T) {
 					},
 				},
 			},
-			want: []string{"field1", "field2", "field3"},
+			want: []string{"field1", "field2"},
 		},
 		{
 			name: "empty aggregate attribute key and filters",

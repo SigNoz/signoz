@@ -30,7 +30,7 @@ func getqueryInfo(spec any) queryInfo {
 	case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
 	case qbtypes.QueryBuilderFormula:
-		return queryInfo{Name: s.Name, Disabled: false}
+		return queryInfo{Name: s.Name, Disabled: s.Disabled}
 	case qbtypes.PromQuery:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.Step}
 	case qbtypes.ClickHouseQuery:

@@ -430,9 +430,13 @@ function HostMetricsDetails({
 								>
 									{host.active ? 'ACTIVE' : 'INACTIVE'}
 								</Tag>
-								<Tag className="infra-monitoring-tags" bordered>
-									{host.os}
-								</Tag>
+								{host.os ? (
+									<Tag className="infra-monitoring-tags" bordered>
+										{host.os}
+									</Tag>
+								) : (
+									<Typography.Text>-</Typography.Text>
+								)}
 								<div className="progress-container">
 									<Progress
 										percent={Number((host.cpu * 100).toFixed(1))}

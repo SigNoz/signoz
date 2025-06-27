@@ -1,15 +1,25 @@
 package opamp
 
-import "log"
+import (
+	"context"
+	"fmt"
+	"log/slog"
+)
 
-type Logger struct {
-	logger *log.Logger
+type logger struct {
+	l *slog.Logger
 }
 
-func (l *Logger) Debugf(format string, v ...interface{}) {
-	l.logger.Printf(format, v...)
+func wrappedLogger(l *slog.Logger) *logger {
+	return &logger{
+		l: l,
+	}
 }
 
-func (l *Logger) Errorf(format string, v ...interface{}) {
-	l.logger.Printf(format, v...)
+func (l *logger) Debugf(ctx context.Context, format string, args ...interface{}) {
+	l.l.DebugContext(ctx, fmt.Sprintf(format, args...))
+}
+
+func (l *logger) Errorf(ctx context.Context, format string, args ...interface{}) {
+	l.l.ErrorContext(ctx, fmt.Sprintf(format, args...))
 }

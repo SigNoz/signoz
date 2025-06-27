@@ -265,7 +265,16 @@ func (agent *Agent) processStatusUpdate(
 
 	configChanged := false
 	if agentDescrChanged {
-		// Agent description is changed.
+		// Agent description is changed, but effective config is missing, force request agent to send Config
+		//
+		// Note: ideally this flag should be sent along side ErrorResponse;
+		// but OpAMP agent prioritizes Flags before ErrorResponse hence sending
+		// requests consequently without respecting the retry cooldown, if in future that changes,
+		// it should be shifted there; To test uncomment Flags added in opamp_server.go
+		if newStatus.EffectiveConfig == nil || newStatus.EffectiveConfig.ConfigMap == nil {
+			response.Flags = uint64(protobufs.ServerToAgentFlags_ServerToAgentFlags_ReportFullState)
+			return
+		}
 
 		//Get the default org ID
 		// agent.

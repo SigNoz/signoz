@@ -417,14 +417,17 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 		} else {
 			fieldConds = append(fieldConds, sb.Like("attr_name", "%"+fieldKeySelector.Name+"%"))
 		}
+		fieldConds = append(fieldConds, sb.NotLike("attr_name", "\\_\\_%"))
 
-		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
-			fieldConds = append(fieldConds, sb.E("attr_type", fieldKeySelector.FieldContext.TagType()))
-		}
+		// note: type and datatype do not have much significance in metrics
 
-		if fieldKeySelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-			fieldConds = append(fieldConds, sb.E("attr_datatype", fieldKeySelector.FieldDataType.TagDataType()))
-		}
+		// if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
+		// 	fieldConds = append(fieldConds, sb.E("attr_type", fieldKeySelector.FieldContext.TagType()))
+		// }
+
+		// if fieldKeySelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+		// 	fieldConds = append(fieldConds, sb.E("attr_datatype", fieldKeySelector.FieldDataType.TagDataType()))
+		// }
 
 		if fieldKeySelector.MetricContext != nil {
 			fieldConds = append(fieldConds, sb.E("metric_name", fieldKeySelector.MetricContext.MetricName))
@@ -966,18 +969,15 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNa
 	// Note: The columns are mixed in the current data - temporality column contains metric_name
 	// and metric_name column contains temporality value, so we use the correct mapping
 	sb := sqlbuilder.Select(
-		"temporality as metric_name",
-		"argMax(attr_string_value, last_reported_unix_milli) as temporality_value",
+		"metric_name",
+		"argMax(temporality, last_reported_unix_milli) as temporality",
 	).From(t.metricsDBName + "." + t.metricsFieldsTblName)
 
 	// Filter by metric names (in the temporality column due to data mix-up)
-	sb.Where(sb.In("temporality", metricNames))
-
-	// Only fetch temporality metadata rows (where attr_name = '__temporality__')
-	sb.Where(sb.E("attr_name", "__temporality__"))
+	sb.Where(sb.In("metric_name", metricNames))
 
 	// Group by metric name to get one temporality per metric
-	sb.GroupBy("temporality")
+	sb.GroupBy("metric_name")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
