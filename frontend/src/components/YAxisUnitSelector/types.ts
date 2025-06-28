@@ -71,6 +71,7 @@ export enum UniversalYAxisUnit {
 
 	// Percent
 	PERCENT = '%',
+	PERCENT_UNIT = 'percentunit',
 	NONE = '1',
 }
 
@@ -280,4 +281,6 @@ export enum YAxisUnit {
 
 	UCUM_PETABYTES = 'PBy',
 	OPEN_METRICS_PETABYTES = 'petabytes',
+
+	OPEN_METRICS_PERCENT_UNIT = 'percentunit',
 }

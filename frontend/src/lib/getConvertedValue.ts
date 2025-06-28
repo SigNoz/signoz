@@ -110,32 +110,32 @@ const unitsMapping = [
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BITS],
 				value: UniversalYAxisUnit.BITS,
-				factor: 1,
+				factor: 8,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.KILOBITS],
 				value: UniversalYAxisUnit.KILOBITS,
-				factor: 1024,
+				factor: 8 * 1024,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MEGABITS],
 				value: UniversalYAxisUnit.MEGABITS,
-				factor: 1024 * 1024,
+				factor: 8 * 1024 * 1024,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.GIGABITS],
 				value: UniversalYAxisUnit.GIGABITS,
-				factor: 1024 * 1024 * 1024,
+				factor: 8 * 1024 * 1024 * 1024,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.TERABITS],
 				value: UniversalYAxisUnit.TERABITS,
-				factor: 1024 * 1024 * 1024 * 1024,
+				factor: 8 * 1024 * 1024 * 1024 * 1024,
 			},
 			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PETABITS],
 				value: UniversalYAxisUnit.PETABITS,
-				factor: 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: 8 * 1024 * 1024 * 1024 * 1024 * 1024,
 			},
 		],
 	},
