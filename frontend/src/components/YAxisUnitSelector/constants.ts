@@ -204,6 +204,9 @@ export const UniversalYAxisUnitMappings: Record<
 		YAxisUnit.UCUM_IOPS_SECOND,
 		YAxisUnit.OPEN_METRICS_IOPS_SECOND,
 	]),
+	[UniversalYAxisUnit.PERCENT_UNIT]: new Set([
+		YAxisUnit.OPEN_METRICS_PERCENT_UNIT,
+	]),
 };
 
 export const Y_AXIS_UNIT_NAMES: Record<UniversalYAxisUnit, string> = {
@@ -232,7 +235,7 @@ export const Y_AXIS_UNIT_NAMES: Record<UniversalYAxisUnit, string> = {
 	[UniversalYAxisUnit.TERABITS_SECOND]: 'Terabits/sec',
 	[UniversalYAxisUnit.COUNT]: 'Count',
 	[UniversalYAxisUnit.COUNT_SECOND]: 'Count/sec',
-	[UniversalYAxisUnit.PERCENT]: 'Percent (%)',
+	[UniversalYAxisUnit.PERCENT]: 'Percent (0 - 100)',
 	[UniversalYAxisUnit.NONE]: 'None',
 	[UniversalYAxisUnit.DAYS]: 'Days',
 	[UniversalYAxisUnit.HOURS]: 'Hours',
@@ -251,6 +254,7 @@ export const Y_AXIS_UNIT_NAMES: Record<UniversalYAxisUnit, string> = {
 	[UniversalYAxisUnit.READS_MINUTE]: 'Reads/min',
 	[UniversalYAxisUnit.WRITES_MINUTE]: 'Writes/min',
 	[UniversalYAxisUnit.IOOPS_SECOND]: 'IOPS/sec',
+	[UniversalYAxisUnit.PERCENT_UNIT]: 'Percent (0.0 - 1.0)',
 };
 
 export const Y_AXIS_CATEGORIES = [
@@ -454,6 +458,10 @@ export const Y_AXIS_CATEGORIES = [
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PERCENT],
 				id: UniversalYAxisUnit.PERCENT,
 			},
+			{
+				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PERCENT_UNIT],
+				id: UniversalYAxisUnit.PERCENT_UNIT,
+			},
 		],
 	},
 ];
@@ -523,6 +531,7 @@ export const UniversalUnitToGrafanaUnit: Record<UniversalYAxisUnit, string> = {
 
 	// Percent
 	[UniversalYAxisUnit.PERCENT]: 'percent',
+	[UniversalYAxisUnit.PERCENT_UNIT]: 'percentunit',
 
 	// None
 	[UniversalYAxisUnit.NONE]: 'none',
