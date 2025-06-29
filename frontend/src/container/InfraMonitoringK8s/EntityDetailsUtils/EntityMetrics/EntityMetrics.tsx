@@ -186,7 +186,7 @@ function EntityMetrics<T>({
 		query: UseQueryResult<SuccessResponse<MetricRangePayloadProps>, unknown>,
 		idx: number,
 	): JSX.Element => {
-		if (query.isLoading) {
+		if (!query.data && query.isLoading) {
 			return <Skeleton />;
 		}
 

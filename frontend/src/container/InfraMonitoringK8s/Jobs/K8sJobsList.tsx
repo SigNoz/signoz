@@ -186,6 +186,25 @@ function K8sJobsList({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
+	const groupedByRowDataQueryKey = useMemo(() => {
+		if (selectedJobUID) {
+			return [
+				'jobList',
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(selectedRowData),
+			];
+		}
+		return [
+			'jobList',
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(selectedRowData),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [queryFilters, orderBy, selectedJobUID, minTime, maxTime, selectedRowData]);
+
 	const {
 		data: groupedByRowData,
 		isFetching: isFetchingGroupedByRowData,
@@ -195,7 +214,7 @@ function K8sJobsList({
 	} = useGetK8sJobsList(
 		fetchGroupedByRowDataQuery as K8sJobsListPayload,
 		{
-			queryKey: ['jobList', fetchGroupedByRowDataQuery],
+			queryKey: groupedByRowDataQueryKey,
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 		undefined,
@@ -251,10 +270,42 @@ function K8sJobsList({
 		return groupedByRowData?.payload?.data?.records || [];
 	}, [groupedByRowData, selectedRowData]);
 
+	const queryKey = useMemo(() => {
+		if (selectedJobUID) {
+			return [
+				'jobList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(groupBy),
+			];
+		}
+		return [
+			'jobList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		selectedJobUID,
+		pageSize,
+		currentPage,
+		queryFilters,
+		orderBy,
+		groupBy,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sJobsList(
 		query as K8sJobsListPayload,
 		{
-			queryKey: ['jobList', query],
+			queryKey,
 			enabled: !!query,
 		},
 		undefined,
