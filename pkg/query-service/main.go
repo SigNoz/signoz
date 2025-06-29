@@ -137,6 +137,7 @@ func main() {
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),
+		signoz.NewSQLSchemaProviderFactories(),
 		signoz.NewSQLStoreProviderFactories(),
 		signoz.NewTelemetryStoreProviderFactories(),
 	)

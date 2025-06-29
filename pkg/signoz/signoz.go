@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -61,6 +62,7 @@ func New(
 	emailingProviderFactories factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
+	sqlSchemaProviderFactories factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 ) (*SigNoz, error) {
@@ -183,12 +185,23 @@ func New(
 		return nil, err
 	}
 
+	sqlschema, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.SQLSchema,
+		sqlSchemaProviderFactories,
+		config.SQLStore.Provider,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Run migrations on the sqlstore
 	sqlmigrations, err := sqlmigration.New(
 		ctx,
 		providerSettings,
 		config.SQLMigration,
-		NewSQLMigrationProviderFactories(sqlstore),
+		NewSQLMigrationProviderFactories(sqlstore, sqlschema),
 	)
 	if err != nil {
 		return nil, err
