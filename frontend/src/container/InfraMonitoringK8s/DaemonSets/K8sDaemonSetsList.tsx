@@ -191,6 +191,32 @@ function K8sDaemonSetsList({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
+	const groupedByRowDataQueryKey = useMemo(() => {
+		if (selectedDaemonSetUID) {
+			return [
+				'daemonSetList',
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(selectedRowData),
+			];
+		}
+		return [
+			'daemonSetList',
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(selectedRowData),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		queryFilters,
+		orderBy,
+		selectedDaemonSetUID,
+		minTime,
+		maxTime,
+		selectedRowData,
+	]);
+
 	const {
 		data: groupedByRowData,
 		isFetching: isFetchingGroupedByRowData,
@@ -200,7 +226,7 @@ function K8sDaemonSetsList({
 	} = useGetK8sDaemonSetsList(
 		fetchGroupedByRowDataQuery as K8sDaemonSetsListPayload,
 		{
-			queryKey: ['daemonSetList', fetchGroupedByRowDataQuery],
+			queryKey: groupedByRowDataQueryKey,
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 		undefined,
@@ -251,10 +277,42 @@ function K8sDaemonSetsList({
 		[groupedByRowData, groupBy],
 	);
 
+	const queryKey = useMemo(() => {
+		if (selectedDaemonSetUID) {
+			return [
+				'daemonSetList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(groupBy),
+			];
+		}
+		return [
+			'daemonSetList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		selectedDaemonSetUID,
+		pageSize,
+		currentPage,
+		queryFilters,
+		orderBy,
+		groupBy,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sDaemonSetsList(
 		query as K8sDaemonSetsListPayload,
 		{
-			queryKey: ['daemonSetList', query],
+			queryKey,
 			enabled: !!query,
 		},
 		undefined,

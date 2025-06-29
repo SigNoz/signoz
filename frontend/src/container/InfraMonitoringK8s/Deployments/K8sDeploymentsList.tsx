@@ -192,6 +192,32 @@ function K8sDeploymentsList({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
+	const groupedByRowDataQueryKey = useMemo(() => {
+		if (selectedDeploymentUID) {
+			return [
+				'deploymentList',
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(selectedRowData),
+			];
+		}
+		return [
+			'deploymentList',
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(selectedRowData),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		queryFilters,
+		orderBy,
+		selectedDeploymentUID,
+		minTime,
+		maxTime,
+		selectedRowData,
+	]);
+
 	const {
 		data: groupedByRowData,
 		isFetching: isFetchingGroupedByRowData,
@@ -201,7 +227,7 @@ function K8sDeploymentsList({
 	} = useGetK8sDeploymentsList(
 		fetchGroupedByRowDataQuery as K8sDeploymentsListPayload,
 		{
-			queryKey: ['deploymentList', fetchGroupedByRowDataQuery],
+			queryKey: groupedByRowDataQueryKey,
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 		undefined,
@@ -252,10 +278,42 @@ function K8sDeploymentsList({
 		[groupedByRowData, groupBy],
 	);
 
+	const queryKey = useMemo(() => {
+		if (selectedDeploymentUID) {
+			return [
+				'deploymentList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(groupBy),
+			];
+		}
+		return [
+			'deploymentList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		selectedDeploymentUID,
+		pageSize,
+		currentPage,
+		queryFilters,
+		orderBy,
+		groupBy,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sDeploymentsList(
 		query as K8sDeploymentsListPayload,
 		{
-			queryKey: ['deploymentList', query],
+			queryKey,
 			enabled: !!query,
 		},
 		undefined,
