@@ -198,7 +198,8 @@ function LogsExplorerList({
 	}, [currentStagedQueryData]);
 
 	const handleClearFilters = useCallback((): void => {
-		const updatedQuery = currentQuery?.builder.queryData?.[lastUsedQuery || 0];
+		const queryIndex = lastUsedQuery ?? 0;
+		const updatedQuery = currentQuery?.builder.queryData?.[queryIndex];
 
 		if (!updatedQuery) return;
 
@@ -210,11 +211,11 @@ function LogsExplorerList({
 			...currentQuery,
 			builder: {
 				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((item: any, idx: number) => ({
+				queryData: currentQuery.builder.queryData.map((item, idx: number) => ({
 					...item,
 					filters: {
 						...item.filters,
-						items: idx === lastUsedQuery ? [] : [...item.filters.items],
+						items: idx === queryIndex ? [] : [...(item.filters?.items || [])],
 					},
 				})),
 			},
@@ -224,6 +225,12 @@ function LogsExplorerList({
 	}, [currentQuery, lastUsedQuery, redirectWithQueryBuilderData]);
 
 	const getEmptyStateMessage = useMemo(() => {
+		const DOCS_URLS = {
+			CORRELATING_LOGS_TRACES:
+				'https://signoz.io/docs/userguide/logs/#correlating-logs-with-traces',
+			SENDING_LOGS: 'https://signoz.io/docs/userguide/logs/',
+			INSTRUMENTATION: 'https://signoz.io/docs/instrumentation/overview/',
+		};
 		if (!isTraceToLogsNavigation) return;
 
 		return {
@@ -237,18 +244,18 @@ function LogsExplorerList({
 			documentationLinks: [
 				{
 					text: 'How to link logs and traces',
-					url: 'https://signoz.io/docs/userguide/logs/#correlating-logs-with-traces',
+					url: DOCS_URLS.CORRELATING_LOGS_TRACES,
 					description:
 						'Learn how to correlate your logs with traces for better observability',
 				},
 				{
 					text: 'Sending logs to SigNoz',
-					url: 'https://signoz.io/docs/userguide/logs/',
+					url: DOCS_URLS.SENDING_LOGS,
 					description: 'Set up log collection and forwarding to SigNoz',
 				},
 				{
 					text: 'Trace and log correlation best practices',
-					url: 'https://signoz.io/docs/instrumentation/overview/',
+					url: DOCS_URLS.INSTRUMENTATION,
 					description: 'Best practices for instrumenting your applications',
 				},
 			],

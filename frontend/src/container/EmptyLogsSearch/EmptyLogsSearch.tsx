@@ -22,6 +22,7 @@ interface EmptyLogsSearchProps {
 		}>;
 		showClearFiltersButton?: boolean;
 		onClearFilters?: () => void;
+		clearFiltersButtonText?: string;
 	};
 }
 
@@ -90,7 +91,8 @@ export default function EmptyLogsSearch({
 									className="empty-logs-search__clear-filters-btn"
 									onClick={customMessage.onClearFilters}
 								>
-									Clear filters from Trace to view other logs
+									{customMessage.clearFiltersButtonText ||
+										'Clear filters from Trace to view other logs'}
 									<span className="empty-logs-search__clear-filters-btn-icon">
 										<Delete size={14} />
 										Clear filters

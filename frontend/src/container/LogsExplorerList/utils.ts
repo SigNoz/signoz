@@ -13,7 +13,10 @@ export const convertKeysToColumnFields = (
 		name: item.key,
 		type: item.type as string,
 	}));
-
+/**
+ * Determines if a query represents a trace-to-logs navigation
+ * by checking for the presence of a trace_id filter.
+ */
 export const isTraceToLogsQuery = (queryData: IBuilderQuery): boolean => {
 	// Check if this is a trace-to-logs query by looking for trace_id filter
 	if (!queryData?.filters?.items) return false;
