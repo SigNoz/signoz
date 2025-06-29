@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	"github.com/SigNoz/signoz/ee/query-service/app"
+	"github.com/SigNoz/signoz/ee/sqlschema/postgressqlschema"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
@@ -122,6 +123,11 @@ func main() {
 		zap.L().Fatal("Failed to add postgressqlstore factory", zap.Error(err))
 	}
 
+	sqlSchemaFactories := signoz.NewSQLSchemaProviderFactories()
+	if err := sqlSchemaFactories.Add(postgressqlschema.NewFactory()); err != nil {
+		zap.L().Fatal("Failed to add postgressqlschema factory", zap.Error(err))
+	}
+
 	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
 
 	if len(jwtSecret) == 0 {
@@ -145,6 +151,7 @@ func main() {
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),
+		sqlSchemaFactories,
 		sqlStoreFactories,
 		signoz.NewTelemetryStoreProviderFactories(),
 	)
