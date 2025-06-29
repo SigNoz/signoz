@@ -4,6 +4,7 @@ import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import LearnMore from 'components/LearnMore/LearnMore';
+import { Delete } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
 
@@ -12,12 +13,15 @@ interface EmptyLogsSearchProps {
 	panelType: PanelTypeKeys;
 	customMessage?: {
 		title: string;
-		description: string;
+		subTitle?: string;
+		description: string | string[];
 		documentationLinks?: Array<{
 			text: string;
 			url: string;
 			description?: string;
 		}>;
+		showClearFiltersButton?: boolean;
+		onClearFilters?: () => void;
 	};
 }
 
@@ -54,42 +58,78 @@ export default function EmptyLogsSearch({
 
 	return (
 		<div
-			className={cx('empty-logs-search-container', {
-				'custom-message': !!customMessage,
+			className={cx('empty-logs-search__container', {
+				'empty-logs-search__container--custom-message': !!customMessage,
 			})}
 		>
-			<div className="empty-logs-search-container-content">
-				<img
-					src="/Icons/emptyState.svg"
-					alt="thinking-emoji"
-					className="empty-state-svg"
-				/>
-				{customMessage ? (
-					<>
-						<Typography.Text className="custom-title">
-							{customMessage.title}
-						</Typography.Text>
-						<Typography.Text className="custom-description">
-							{customMessage.description}
-						</Typography.Text>
-						{customMessage.documentationLinks && (
-							<div className="documentation-links">
-								{customMessage.documentationLinks.map((link) => (
-									<LearnMore
-										key={link.text}
-										text={link.text}
-										url={link.url}
-										onClick={(): void => handleDocumentationClick(link.url, link.text)}
-									/>
-								))}
+			<div className="empty-logs-search__row">
+				<div className="empty-logs-search__content">
+					<img
+						src="/Icons/emptyState.svg"
+						alt="thinking-emoji"
+						className="empty-state-svg"
+					/>
+					{customMessage ? (
+						<>
+							<div className="empty-logs-search__header">
+								<Typography.Text className="empty-logs-search__title">
+									{customMessage.title}
+								</Typography.Text>
+								{customMessage.subTitle && (
+									<Typography.Text className="empty-logs-search__subtitle">
+										{customMessage.subTitle}
+									</Typography.Text>
+								)}
 							</div>
-						)}
-					</>
-				) : (
-					<Typography.Text>
-						<span className="sub-text">This query had no results. </span>
-						Edit your query and try again!
-					</Typography.Text>
+							{Array.isArray(customMessage.description) ? (
+								<ul className="empty-logs-search__description-list">
+									{customMessage.description.map((desc) => (
+										<li key={desc}>{desc}</li>
+									))}
+								</ul>
+							) : (
+								<Typography.Text className="empty-logs-search__description">
+									{customMessage.description}
+								</Typography.Text>
+							)}
+							{/* Clear filters button */}
+							{customMessage.showClearFiltersButton && (
+								<button
+									type="button"
+									className="empty-logs-search__clear-filters-btn"
+									onClick={customMessage.onClearFilters}
+								>
+									Clear filters from Trace to view other logs
+									<span className="empty-logs-search__clear-filters-btn-icon">
+										<Delete size={14} />
+										Clear filters
+									</span>
+								</button>
+							)}
+						</>
+					) : (
+						<Typography.Text>
+							<span className="empty-logs-search__sub-text">
+								This query had no results.{' '}
+							</span>
+							Edit your query and try again!
+						</Typography.Text>
+					)}
+				</div>
+				{customMessage?.documentationLinks && (
+					<div className="empty-logs-search__resources-card">
+						<div className="empty-logs-search__resources-title">RESOURCES</div>
+						<div className="empty-logs-search__resources-links">
+							{customMessage.documentationLinks.map((link) => (
+								<LearnMore
+									key={link.text}
+									text={link.text}
+									url={link.url}
+									onClick={(): void => handleDocumentationClick(link.url, link.text)}
+								/>
+							))}
+						</div>
+					</div>
 				)}
 			</div>
 		</div>

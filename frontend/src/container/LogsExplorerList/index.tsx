@@ -195,9 +195,13 @@ function LogsExplorerList({
 		if (!isTraceToLogsNavigation) return;
 
 		return {
-			title: 'No logs found for this trace',
-			description:
-				'This could be because logs are not linked to traces, logs are not being sent to SigNoz, or no logs were associated with this particular trace.',
+			title: 'No logs found for this trace.',
+			subTitle: 'This could be because :',
+			description: [
+				'Logs are not linked to Traces.',
+				'Logs are not being sent to SigNoz.',
+				'No logs are associated with this particular trace/span.',
+			],
 			documentationLinks: [
 				{
 					text: 'How to link logs and traces',
@@ -216,6 +220,8 @@ function LogsExplorerList({
 					description: 'Best practices for instrumenting your applications',
 				},
 			],
+			showClearFiltersButton: true,
+			onClearFilters: (): void => {}, // Placeholder, replace with actual clear filters logic if needed
 		};
 	}, [isTraceToLogsNavigation]);
 
