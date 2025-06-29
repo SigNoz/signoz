@@ -205,11 +205,44 @@ function K8sPodsList({
 		return queryPayload;
 	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy, groupBy]);
 
+	const queryKey = useMemo(() => {
+		if (selectedPodUID) {
+			return [
+				'podList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(groupBy),
+			];
+		}
+		return [
+			'podList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		selectedPodUID,
+		pageSize,
+		currentPage,
+		queryFilters,
+		orderBy,
+		groupBy,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sPodsList(
 		query as K8sPodsListPayload,
 		{
-			queryKey: ['hostList', query],
+			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 		undefined,
 		dotMetricsEnabled,
@@ -261,6 +294,25 @@ function K8sPodsList({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData]);
 
+	const groupedByRowDataQueryKey = useMemo(() => {
+		if (selectedPodUID) {
+			return [
+				'podList',
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(selectedRowData),
+			];
+		}
+		return [
+			'podList',
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(selectedRowData),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [queryFilters, orderBy, selectedPodUID, minTime, maxTime, selectedRowData]);
+
 	const {
 		data: groupedByRowData,
 		isFetching: isFetchingGroupedByRowData,
@@ -270,7 +322,7 @@ function K8sPodsList({
 	} = useGetK8sPodsList(
 		fetchGroupedByRowDataQuery as K8sPodsListPayload,
 		{
-			queryKey: ['hostList', fetchGroupedByRowDataQuery],
+			queryKey: groupedByRowDataQueryKey,
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 		undefined,
@@ -411,6 +463,7 @@ function K8sPodsList({
 
 	const selectedPodData = useMemo(() => {
 		if (!selectedPodUID) return null;
+		console.log({ podsData });
 		if (groupBy.length > 0) {
 			// If grouped by, return the pod from the formatted grouped by pods data
 			return nestedPodsData.find((pod) => pod.podUID === selectedPodUID) || null;
