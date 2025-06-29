@@ -47,15 +47,6 @@ export default function EmptyLogsSearch({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const handleDocumentationClick = (url: string, text: string): void => {
-		logEvent('Logs Explorer: Documentation link clicked', {
-			panelType,
-			linkText: text,
-			linkUrl: url,
-		});
-		window.open(url, '_blank');
-	};
-
 	return (
 		<div
 			className={cx('empty-logs-search__container', {
@@ -121,12 +112,7 @@ export default function EmptyLogsSearch({
 						<div className="empty-logs-search__resources-title">RESOURCES</div>
 						<div className="empty-logs-search__resources-links">
 							{customMessage.documentationLinks.map((link) => (
-								<LearnMore
-									key={link.text}
-									text={link.text}
-									url={link.url}
-									onClick={(): void => handleDocumentationClick(link.url, link.text)}
-								/>
+								<LearnMore key={link.text} text={link.text} url={link.url} />
 							))}
 						</div>
 					</div>
