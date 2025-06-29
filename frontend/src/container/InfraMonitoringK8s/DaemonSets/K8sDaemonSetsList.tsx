@@ -314,6 +314,7 @@ function K8sDaemonSetsList({
 		{
 			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 		undefined,
 		dotMetricsEnabled,

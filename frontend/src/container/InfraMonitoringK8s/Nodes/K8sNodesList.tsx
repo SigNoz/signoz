@@ -312,6 +312,7 @@ function K8sNodesList({
 		{
 			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 		undefined,
 		dotMetricsEnabled,

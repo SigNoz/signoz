@@ -307,6 +307,7 @@ function K8sJobsList({
 		{
 			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 		undefined,
 		dotMetricsEnabled,

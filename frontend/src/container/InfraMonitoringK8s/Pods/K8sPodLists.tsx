@@ -242,6 +242,7 @@ function K8sPodsList({
 		{
 			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 		undefined,
 		dotMetricsEnabled,
@@ -462,6 +463,7 @@ function K8sPodsList({
 
 	const selectedPodData = useMemo(() => {
 		if (!selectedPodUID) return null;
+		console.log({ podsData });
 		if (groupBy.length > 0) {
 			// If grouped by, return the pod from the formatted grouped by pods data
 			return nestedPodsData.find((pod) => pod.podUID === selectedPodUID) || null;
