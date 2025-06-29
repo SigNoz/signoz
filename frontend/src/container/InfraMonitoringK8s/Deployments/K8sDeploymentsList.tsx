@@ -315,6 +315,7 @@ function K8sDeploymentsList({
 		{
 			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 		undefined,
 		dotMetricsEnabled,

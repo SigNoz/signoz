@@ -130,6 +130,7 @@ function HostsList(): JSX.Element {
 		{
 			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 	);
 

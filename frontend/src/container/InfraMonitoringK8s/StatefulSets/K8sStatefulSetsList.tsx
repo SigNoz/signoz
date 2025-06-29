@@ -319,6 +319,7 @@ function K8sStatefulSetsList({
 		{
 			queryKey,
 			enabled: !!query,
+			keepPreviousData: true,
 		},
 		undefined,
 		dotMetricsEnabled,
