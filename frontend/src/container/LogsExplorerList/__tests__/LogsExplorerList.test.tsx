@@ -9,7 +9,7 @@ import { rest } from 'msw';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { render } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils';
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
 
@@ -133,7 +133,7 @@ describe('LogsExplorerList - empty states', () => {
 			},
 		};
 
-		const { queryByText } = render(
+		render(
 			<QueryBuilderContext.Provider value={mockTraceToLogsContextValue as any}>
 				<PreferenceContextProvider>
 					<LogsExplorerViews
@@ -148,20 +148,26 @@ describe('LogsExplorerList - empty states', () => {
 		);
 
 		// Check for custom empty state message
-		expect(queryByText('No logs found for this trace')).toBeInTheDocument();
+		expect(screen.getByText('No logs found for this trace.')).toBeInTheDocument();
+		expect(screen.getByText('This could be because :')).toBeInTheDocument();
 		expect(
-			queryByText(
-				'This could be because logs are not linked to traces, logs are not being sent to SigNoz, or no logs were associated with this particular trace.',
-			),
+			screen.getByText('Logs are not linked to Traces.'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('Logs are not being sent to SigNoz.'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('No logs are associated with this particular trace/span.'),
 		).toBeInTheDocument();
 
 		// Check for documentation links
-		expect(queryByText('How to link logs and traces')).toBeInTheDocument();
-		expect(queryByText('Sending logs to SigNoz')).toBeInTheDocument();
+		expect(screen.getByText('How to link logs and traces')).toBeInTheDocument();
+		expect(screen.getByText('Sending logs to SigNoz')).toBeInTheDocument();
 		expect(
-			queryByText('Trace and log correlation best practices'),
+			screen.getByText('Trace and log correlation best practices'),
 		).toBeInTheDocument();
 	});
+
 	it('should display empty state when filters are applied and no results are found', async () => {
 		const mockTraceToLogsContextValue = {
 			...mockQueryBuilderContextValue,
@@ -195,7 +201,7 @@ describe('LogsExplorerList - empty states', () => {
 			},
 		};
 
-		const { queryByText } = render(
+		render(
 			<QueryBuilderContext.Provider value={mockTraceToLogsContextValue as any}>
 				<PreferenceContextProvider>
 					<LogsExplorerViews
@@ -210,7 +216,9 @@ describe('LogsExplorerList - empty states', () => {
 		);
 
 		// Check for custom empty state message
-		expect(queryByText(/This query had no results./i)).toBeInTheDocument();
-		expect(queryByText(/Edit your query and try again!/i)).toBeInTheDocument();
+		expect(screen.getByText(/This query had no results./i)).toBeInTheDocument();
+		expect(
+			screen.getByText(/Edit your query and try again!/i),
+		).toBeInTheDocument();
 	});
 });
