@@ -63,6 +63,12 @@ function LogsExplorerList({
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
 	});
 
+	const {
+		currentQuery,
+		lastUsedQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
+
 	const activeLogIndex = useMemo(
 		() => logs.findIndex(({ id }) => id === activeLogId),
 		[logs, activeLogId],
@@ -191,6 +197,32 @@ function LogsExplorerList({
 		return isTraceToLogsQuery(currentStagedQueryData);
 	}, [currentStagedQueryData]);
 
+	const handleClearFilters = useCallback((): void => {
+		const updatedQuery = currentQuery?.builder.queryData?.[lastUsedQuery || 0];
+
+		if (!updatedQuery) return;
+
+		if (updatedQuery?.filters?.items) {
+			updatedQuery.filters.items = [];
+		}
+
+		const preparedQuery = {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: currentQuery.builder.queryData.map((item: any, idx: number) => ({
+					...item,
+					filters: {
+						...item.filters,
+						items: idx === lastUsedQuery ? [] : [...item.filters.items],
+					},
+				})),
+			},
+		};
+
+		redirectWithQueryBuilderData(preparedQuery);
+	}, [currentQuery, lastUsedQuery, redirectWithQueryBuilderData]);
+
 	const getEmptyStateMessage = useMemo(() => {
 		if (!isTraceToLogsNavigation) return;
 
@@ -221,9 +253,9 @@ function LogsExplorerList({
 				},
 			],
 			showClearFiltersButton: true,
-			onClearFilters: (): void => {}, // Placeholder, replace with actual clear filters logic if needed
+			onClearFilters: handleClearFilters,
 		};
-	}, [isTraceToLogsNavigation]);
+	}, [isTraceToLogsNavigation, handleClearFilters]);
 
 	return (
 		<div className="logs-list-view-container">
