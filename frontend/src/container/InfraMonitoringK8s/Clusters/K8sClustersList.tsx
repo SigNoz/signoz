@@ -189,6 +189,32 @@ function K8sClustersList({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
+	const groupedByRowDataQueryKey = useMemo(() => {
+		if (selectedClusterName) {
+			return [
+				'clusterList',
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(selectedRowData),
+			];
+		}
+		return [
+			'clusterList',
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(selectedRowData),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		queryFilters,
+		orderBy,
+		selectedClusterName,
+		minTime,
+		maxTime,
+		selectedRowData,
+	]);
+
 	const {
 		data: groupedByRowData,
 		isFetching: isFetchingGroupedByRowData,
@@ -198,7 +224,7 @@ function K8sClustersList({
 	} = useGetK8sClustersList(
 		fetchGroupedByRowDataQuery as K8sClustersListPayload,
 		{
-			queryKey: ['clusterList', fetchGroupedByRowDataQuery],
+			queryKey: groupedByRowDataQueryKey,
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 		undefined,
@@ -254,10 +280,42 @@ function K8sClustersList({
 		return groupedByRowData?.payload?.data?.records || [];
 	}, [groupedByRowData, selectedRowData]);
 
+	const queryKey = useMemo(() => {
+		if (selectedClusterName) {
+			return [
+				'clusterList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(groupBy),
+			];
+		}
+		return [
+			'clusterList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		selectedClusterName,
+		pageSize,
+		currentPage,
+		queryFilters,
+		orderBy,
+		groupBy,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sClustersList(
 		query as K8sClustersListPayload,
 		{
-			queryKey: ['clusterList', query],
+			queryKey,
 			enabled: !!query,
 		},
 		undefined,

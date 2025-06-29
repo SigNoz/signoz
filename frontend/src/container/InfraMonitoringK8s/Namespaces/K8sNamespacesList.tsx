@@ -190,6 +190,32 @@ function K8sNamespacesList({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
+	const groupedByRowDataQueryKey = useMemo(() => {
+		if (selectedNamespaceUID) {
+			return [
+				'namespaceList',
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(selectedRowData),
+			];
+		}
+		return [
+			'namespaceList',
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(selectedRowData),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		queryFilters,
+		orderBy,
+		selectedNamespaceUID,
+		minTime,
+		maxTime,
+		selectedRowData,
+	]);
+
 	const {
 		data: groupedByRowData,
 		isFetching: isFetchingGroupedByRowData,
@@ -199,7 +225,7 @@ function K8sNamespacesList({
 	} = useGetK8sNamespacesList(
 		fetchGroupedByRowDataQuery as K8sNamespacesListPayload,
 		{
-			queryKey: ['namespaceList', fetchGroupedByRowDataQuery],
+			queryKey: groupedByRowDataQueryKey,
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 		undefined,
@@ -250,10 +276,42 @@ function K8sNamespacesList({
 		[groupedByRowData, groupBy],
 	);
 
+	const queryKey = useMemo(() => {
+		if (selectedNamespaceUID) {
+			return [
+				'namespaceList',
+				String(pageSize),
+				String(currentPage),
+				JSON.stringify(queryFilters),
+				JSON.stringify(orderBy),
+				JSON.stringify(groupBy),
+			];
+		}
+		return [
+			'namespaceList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [
+		selectedNamespaceUID,
+		pageSize,
+		currentPage,
+		queryFilters,
+		orderBy,
+		groupBy,
+		minTime,
+		maxTime,
+	]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sNamespacesList(
 		query as K8sNamespacesListPayload,
 		{
-			queryKey: ['namespaceList', query],
+			queryKey,
 			enabled: !!query,
 		},
 		undefined,
