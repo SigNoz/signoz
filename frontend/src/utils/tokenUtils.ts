@@ -60,7 +60,7 @@ export function isMultiValueOperator(operatorToken?: string): boolean {
 	if (!operatorToken) return false;
 
 	const upperOp = operatorToken.toUpperCase();
-	return upperOp === 'IN' || upperOp === 'NOT IN';
+	return upperOp === 'IN';
 }
 
 export function isFunctionToken(tokenType: number): boolean {

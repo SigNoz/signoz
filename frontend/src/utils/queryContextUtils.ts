@@ -755,8 +755,6 @@ export function getQueryContextAtCursor(
 			const operatorToken = currentPair?.operator || '';
 			const valueToken = currentPair?.value || '';
 
-			const isValueWrappedInQuotes = isWrappedUnderQuotes(valueToken);
-
 			// Determine if we're in a multi-value operator context
 			const isForMultiValueOperator = isMultiValueOperator(operatorToken);
 
@@ -783,7 +781,6 @@ export function getQueryContextAtCursor(
 				isInFunction: false,
 				isInParenthesis: isInParenthesisBoundary || false,
 				isInBracketList: isInBracketListBoundary || false,
-				isValueWrappedInQuotes: isValueWrappedInQuotes,
 				keyToken: isInKeyBoundary
 					? keyToken
 					: isInOperatorBoundary || finalIsInValue
@@ -1238,9 +1235,12 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 		const queryPairs: IQueryPair[] = [];
 		let currentPair: Partial<IQueryPair> | null = null;
 
+		let iterator = 0;
+
 		// Process tokens to build triplets
-		for (let i = 0; i < allTokens.length; i++) {
-			const token = allTokens[i];
+		while (iterator < allTokens.length) {
+			const token = allTokens[iterator];
+			iterator += 1;
 
 			// Skip EOF and whitespace tokens
 			if (token.type === FilterQueryLexer.EOF || token.channel !== 0) {
@@ -1258,7 +1258,10 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 						key: currentPair.key,
 						operator: currentPair.operator || '',
 						value: currentPair.value,
+						valueList: currentPair.valueList || [],
+						valuesPosition: currentPair.valuesPosition || [],
 						hasNegation: currentPair.hasNegation || false,
+						isMultiValue: currentPair.isMultiValue || false,
 						position: {
 							keyStart: currentPair.position?.keyStart || 0,
 							keyEnd: currentPair.position?.keyEnd || 0,
@@ -1311,6 +1314,55 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 				currentPair.key &&
 				!currentPair.operator
 			) {
+				let multiValueStart: number | undefined;
+				let multiValueEnd: number | undefined;
+
+				if (isMultiValueOperator(token.text)) {
+					currentPair.isMultiValue = true;
+
+					// Iterate from '[' || '(' till ']' || ')' to get all the values
+					const valueList: string[] = [];
+					const valuesPosition: { start: number; end: number }[] = [];
+
+					if (
+						[FilterQueryLexer.LPAREN, FilterQueryLexer.LBRACK].includes(
+							allTokens[iterator].type,
+						)
+					) {
+						multiValueStart = allTokens[iterator].start;
+						iterator += 1;
+						const closingToken =
+							allTokens[iterator].type === FilterQueryLexer.LPAREN
+								? FilterQueryLexer.RPAREN
+								: FilterQueryLexer.RBRACK;
+
+						while (
+							allTokens[iterator].type !== closingToken &&
+							iterator < allTokens.length
+						) {
+							if (isValueToken(allTokens[iterator].type)) {
+								valueList.push(allTokens[iterator].text);
+								valuesPosition.push({
+									start: allTokens[iterator].start,
+									end: allTokens[iterator].stop,
+								});
+							}
+							iterator += 1;
+						}
+
+						if (allTokens[iterator].type === closingToken) {
+							multiValueEnd = allTokens[iterator].stop;
+						}
+					}
+
+					currentPair.valuesPosition = valuesPosition;
+					currentPair.valueList = valueList;
+
+					if (multiValueStart && multiValueEnd) {
+						currentPair.value = query.substring(multiValueStart, multiValueEnd + 1);
+					}
+				}
+
 				currentPair.operator = token.text;
 				// Ensure we create a valid position object with all required fields
 				currentPair.position = {
@@ -1318,8 +1370,8 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					keyEnd: currentPair.position?.keyEnd || 0,
 					operatorStart: token.start,
 					operatorEnd: token.stop,
-					valueStart: currentPair.position?.valueStart,
-					valueEnd: currentPair.position?.valueEnd,
+					valueStart: multiValueStart || currentPair.position?.valueStart,
+					valueEnd: multiValueEnd || currentPair.position?.valueEnd,
 					negationStart: currentPair.position?.negationStart || 0,
 					negationEnd: currentPair.position?.negationEnd || 0,
 				};
@@ -1351,7 +1403,10 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					key: currentPair.key,
 					operator: currentPair.operator || '',
 					value: currentPair.value,
+					valueList: currentPair.valueList || [],
+					valuesPosition: currentPair.valuesPosition || [],
 					hasNegation: currentPair.hasNegation || false,
+					isMultiValue: currentPair.isMultiValue || false,
 					position: {
 						keyStart: currentPair.position?.keyStart || 0,
 						keyEnd: currentPair.position?.keyEnd || 0,
@@ -1380,7 +1435,10 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 				key: currentPair.key,
 				operator: currentPair.operator || '',
 				value: currentPair.value,
+				valueList: currentPair.valueList || [],
+				valuesPosition: currentPair.valuesPosition || [],
 				hasNegation: currentPair.hasNegation || false,
+				isMultiValue: currentPair.isMultiValue || false,
 				position: {
 					keyStart: currentPair.position?.keyStart || 0,
 					keyEnd: currentPair.position?.keyEnd || 0,
