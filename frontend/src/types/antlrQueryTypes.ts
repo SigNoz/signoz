@@ -16,7 +16,9 @@ export interface IQueryPair {
 	key: string;
 	operator: string;
 	value?: string;
+	valueList?: string[];
 	hasNegation?: boolean;
+	isMultiValue?: boolean;
 	position: {
 		keyStart: number;
 		keyEnd: number;
@@ -27,6 +29,10 @@ export interface IQueryPair {
 		negationStart?: number;
 		negationEnd?: number;
 	};
+	valuesPosition?: {
+		start?: number;
+		end?: number;
+	}[];
 	isComplete: boolean; // true if the pair has all three components
 }
 
@@ -44,7 +50,6 @@ export interface IQueryContext {
 	isInConjunction?: boolean;
 	isInParenthesis?: boolean;
 	isInBracketList?: boolean; // For multi-value operators like IN where values are in brackets
-	isValueWrappedInQuotes?: boolean;
 	keyToken?: string;
 	operatorToken?: string;
 	valueToken?: string;
