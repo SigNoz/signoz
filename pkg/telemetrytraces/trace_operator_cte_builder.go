@@ -149,13 +149,17 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() {
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
+	// Convert nanoseconds to seconds for DateTime64 comparison
+	startSeconds := float64(b.start) / 1e9
+	endSeconds := float64(b.end) / 1e9
+
 	// Add time filter
 	startBucket := b.start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	endBucket := b.end / querybuilder.NsToSeconds
 
 	sb.Where(
-		sb.GE("timestamp", fmt.Sprintf("%d", b.start)),
-		sb.L("timestamp", fmt.Sprintf("%d", b.end)),
+		sb.GE("timestamp", fmt.Sprintf("toDateTime64(%.9f, 9)", startSeconds)),
+		sb.L("timestamp", fmt.Sprintf("toDateTime64(%.9f, 9)", endSeconds)),
 		sb.GE("ts_bucket_start", startBucket),
 		sb.LE("ts_bucket_start", endBucket),
 	)
@@ -163,6 +167,7 @@ func (b *traceOperatorCTEBuilder) buildBaseSpansCTE() {
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	b.addCTE("base_spans", sql, args, nil)
+
 }
 
 func (b *traceOperatorCTEBuilder) buildExpressionCTEs(expr *qbtypes.TraceOperand) (string, error) {
