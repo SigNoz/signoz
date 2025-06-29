@@ -29,7 +29,11 @@ import NoLogs from '../NoLogs/NoLogs';
 import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
-import { convertKeysToColumnFields, isTraceToLogsQuery } from './utils';
+import {
+	convertKeysToColumnFields,
+	getEmptyLogsListConfig,
+	isTraceToLogsQuery,
+} from './utils';
 
 function Footer(): JSX.Element {
 	return <Spinner height={20} tip="Getting Logs" />;
@@ -225,43 +229,9 @@ function LogsExplorerList({
 	}, [currentQuery, lastUsedQuery, redirectWithQueryBuilderData]);
 
 	const getEmptyStateMessage = useMemo(() => {
-		const DOCS_URLS = {
-			CORRELATING_LOGS_TRACES:
-				'https://signoz.io/docs/userguide/logs/#correlating-logs-with-traces',
-			SENDING_LOGS: 'https://signoz.io/docs/userguide/logs/',
-			INSTRUMENTATION: 'https://signoz.io/docs/instrumentation/overview/',
-		};
 		if (!isTraceToLogsNavigation) return;
 
-		return {
-			title: 'No logs found for this trace.',
-			subTitle: 'This could be because :',
-			description: [
-				'Logs are not linked to Traces.',
-				'Logs are not being sent to SigNoz.',
-				'No logs are associated with this particular trace/span.',
-			],
-			documentationLinks: [
-				{
-					text: 'How to link logs and traces',
-					url: DOCS_URLS.CORRELATING_LOGS_TRACES,
-					description:
-						'Learn how to correlate your logs with traces for better observability',
-				},
-				{
-					text: 'Sending logs to SigNoz',
-					url: DOCS_URLS.SENDING_LOGS,
-					description: 'Set up log collection and forwarding to SigNoz',
-				},
-				{
-					text: 'Trace and log correlation best practices',
-					url: DOCS_URLS.INSTRUMENTATION,
-					description: 'Best practices for instrumenting your applications',
-				},
-			],
-			showClearFiltersButton: true,
-			onClearFilters: handleClearFilters,
-		};
+		return getEmptyLogsListConfig(handleClearFilters);
 	}, [isTraceToLogsNavigation, handleClearFilters]);
 
 	return (

@@ -27,3 +27,48 @@ export const isTraceToLogsQuery = (queryData: IBuilderQuery): boolean => {
 
 	return !!traceIdFilter;
 };
+
+type EmptyLogsListConfig = {
+	title: string;
+	subTitle: string;
+	description: string[];
+	documentationLinks: {
+		text: string;
+		url: string;
+		description: string;
+	}[];
+	showClearFiltersButton: boolean;
+	onClearFilters: () => void;
+};
+
+export const getEmptyLogsListConfig = (
+	handleClearFilters: () => void,
+): EmptyLogsListConfig => ({
+	title: 'No logs found for this trace.',
+	subTitle: 'This could be because :',
+	description: [
+		'Logs are not linked to Traces.',
+		'Logs are not being sent to SigNoz.',
+		'No logs are associated with this particular trace/span.',
+	],
+	documentationLinks: [
+		{
+			text: 'How to link logs and traces',
+			url: 'https://signoz.io/docs/userguide/logs/#correlating-logs-with-traces',
+			description:
+				'Learn how to correlate your logs with traces for better observability',
+		},
+		{
+			text: 'Sending logs to SigNoz',
+			url: 'https://signoz.io/docs/userguide/logs/',
+			description: 'Set up log collection and forwarding to SigNoz',
+		},
+		{
+			text: 'Trace and log correlation best practices',
+			url: 'https://signoz.io/docs/instrumentation/overview/',
+			description: 'Best practices for instrumenting your applications',
+		},
+	],
+	showClearFiltersButton: true,
+	onClearFilters: handleClearFilters,
+});
