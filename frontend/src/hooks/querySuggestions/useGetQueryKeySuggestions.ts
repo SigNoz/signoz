@@ -6,14 +6,16 @@ import { QueryKeySuggestionsResponseProps } from 'types/api/querySuggestions/typ
 export const useGetQueryKeySuggestions = ({
 	signal,
 	name,
+	metricName,
 }: {
 	signal: string;
 	name: string;
+	metricName?: string;
 }): UseQueryResult<
 	AxiosResponse<QueryKeySuggestionsResponseProps>,
 	AxiosError
 > =>
 	useQuery<AxiosResponse<QueryKeySuggestionsResponseProps>, AxiosError>({
-		queryKey: ['queryKeySuggestions', signal, name],
-		queryFn: () => getKeySuggestions({ signal, name }),
+		queryKey: ['queryKeySuggestions', signal, name, metricName],
+		queryFn: () => getKeySuggestions({ signal, name, metricName }),
 	});

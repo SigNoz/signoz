@@ -23,6 +23,7 @@ export interface QueryKeySuggestionsResponseProps {
 export interface QueryKeyRequestProps {
 	signal: string;
 	name: string;
+	metricName?: string;
 }
 
 export interface QueryKeyValueSuggestionsProps {
