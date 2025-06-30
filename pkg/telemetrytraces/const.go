@@ -174,7 +174,7 @@ var (
 		},
 		"http_host": {
 			Name:          "http_host",
-			Description:   "The HTTP host or server address. Learn more [her](https://signoz.io/docs/traces-management/guides/derived-fields-spans/#http_host)",
+			Description:   "The HTTP host or server address. Learn more [here](https://signoz.io/docs/traces-management/guides/derived-fields-spans/#http_host)",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
