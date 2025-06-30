@@ -2,7 +2,22 @@ package sqlschema
 
 import (
 	"strings"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+var (
+	ConstraintTypePrimaryKey = ConstraintType{s: valuer.NewString("pk")}
+	ConstraintTypeForeignKey = ConstraintType{s: valuer.NewString("fk")}
+	ConstraintTypeCheck      = ConstraintType{s: valuer.NewString("ck")}
+	ConstraintTypeUnique     = ConstraintType{s: valuer.NewString("uq")}
+)
+
+type ConstraintType struct{ s valuer.String }
+
+func (c ConstraintType) String() string {
+	return c.s.String()
+}
 
 var (
 	_ Constraint = (*PrimaryKeyConstraint)(nil)
@@ -24,7 +39,7 @@ type Constraint interface {
 	Columns() []string
 
 	// The SQL representation of the constraint.
-	ToSQL(fmter SQLFormatter) []byte
+	ToDefinitionSQL(fmter SQLFormatter) []byte
 }
 
 type PrimaryKeyConstraint struct {
@@ -48,7 +63,7 @@ func (constraint *PrimaryKeyConstraint) Columns() []string {
 	return constraint.ColumnNames
 }
 
-func (constraint *PrimaryKeyConstraint) ToSQL(fmter SQLFormatter) []byte {
+func (constraint *PrimaryKeyConstraint) ToDefinitionSQL(fmter SQLFormatter) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "CONSTRAINT "...)
@@ -92,7 +107,7 @@ func (constraint *ForeignKeyConstraint) Columns() []string {
 	return []string{constraint.ReferencingColumnName}
 }
 
-func (constraint *ForeignKeyConstraint) ToSQL(fmter SQLFormatter) []byte {
+func (constraint *ForeignKeyConstraint) ToDefinitionSQL(fmter SQLFormatter) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "CONSTRAINT "...)
@@ -102,7 +117,7 @@ func (constraint *ForeignKeyConstraint) ToSQL(fmter SQLFormatter) []byte {
 	sql = fmter.AppendIdent(sql, constraint.ReferencingColumnName)
 	sql = append(sql, ") REFERENCES "...)
 	sql = fmter.AppendIdent(sql, constraint.ReferencedTableName)
-	sql = append(sql, "("...)
+	sql = append(sql, " ("...)
 	sql = fmter.AppendIdent(sql, constraint.ReferencedColumnName)
 	sql = append(sql, ")"...)
 
@@ -135,7 +150,7 @@ func (constraint *UniqueConstraint) Columns() []string {
 	return constraint.ColumnNames
 }
 
-func (constraint *UniqueConstraint) ToSQL(fmter SQLFormatter) []byte {
+func (constraint *UniqueConstraint) ToDefinitionSQL(fmter SQLFormatter) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "CONSTRAINT "...)

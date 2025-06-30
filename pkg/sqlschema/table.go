@@ -97,15 +97,15 @@ func (table *Table) ToCreateSQL(fmter SQLFormatter) []byte {
 			sql = append(sql, ", "...)
 		}
 
-		sql = append(sql, column.ToSQL(fmter)...)
+		sql = append(sql, column.ToDefinitionSQL(fmter)...)
 	}
 
 	sql = append(sql, ", "...)
-	sql = append(sql, table.PrimaryKeyConstraint.ToSQL(fmter)...)
+	sql = append(sql, table.PrimaryKeyConstraint.ToDefinitionSQL(fmter)...)
 
 	for _, constraint := range table.ForeignKeyConstraints {
 		sql = append(sql, ", "...)
-		sql = append(sql, constraint.ToSQL(fmter)...)
+		sql = append(sql, constraint.ToDefinitionSQL(fmter)...)
 	}
 
 	sql = append(sql, ")"...)

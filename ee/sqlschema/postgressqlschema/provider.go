@@ -31,7 +31,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 func (provider *provider) CreateIndex(ctx context.Context, index sqlschema.Index) [][]byte {
-	return [][]byte{index.ToSQL(provider.fmtter)}
+	return [][]byte{index.ToCreateSQL(provider.fmtter)}
 }
 
 func (provider *provider) DropConstraintUnsafe(ctx context.Context, table *sqlschema.Table, constraint sqlschema.Constraint) [][]byte {

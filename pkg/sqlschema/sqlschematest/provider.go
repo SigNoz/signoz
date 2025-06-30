@@ -30,7 +30,7 @@ func (provider *Provider) SQLDataTypeOf(dataType sqlschema.DataType) string {
 }
 
 func (provider *Provider) CreateIndex(ctx context.Context, index sqlschema.Index) [][]byte {
-	return [][]byte{index.ToSQL(provider)}
+	return [][]byte{index.ToCreateSQL(provider)}
 }
 
 func (provider *Provider) DropConstraintUnsafe(ctx context.Context, table *sqlschema.Table, constraint sqlschema.Constraint) [][]byte {
