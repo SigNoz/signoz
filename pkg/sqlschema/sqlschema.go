@@ -5,10 +5,12 @@ import (
 )
 
 type SQLSchema interface {
-	// Drops a constraint from a table without checking if it exists. The input table needs to exactly match the table without the constraint.
+	// Returns a list of SQL statements to drop a constraint from a table.
+	// Unsafe might fail if the input table does not exactly match the table without the constraint.
+	// Ideally we would have inspected the table and found out the original table definition.
 	DropConstraintUnsafe(context.Context, *Table, Constraint) [][]byte
 
-	// Create Index
+	// Returns a list of SQL statements to create an index.
 	CreateIndex(context.Context, Index) [][]byte
 }
 

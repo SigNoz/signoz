@@ -1,6 +1,21 @@
 package sqlschema
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+var (
+	IndexTypeUnique = IndexType{s: valuer.NewString("uq")}
+	IndexTypeIndex  = IndexType{s: valuer.NewString("ix")}
+)
+
+type IndexType struct{ s valuer.String }
+
+func (i IndexType) String() string {
+	return i.s.String()
+}
 
 type Index interface {
 	// The name of the index.
@@ -16,7 +31,7 @@ type Index interface {
 	Columns() []string
 
 	// The SQL representation of the index.
-	ToSQL(fmter SQLFormatter) []byte
+	ToCreateSQL(fmter SQLFormatter) []byte
 }
 
 type UniqueIndex struct {
@@ -42,7 +57,7 @@ func (index *UniqueIndex) Columns() []string {
 	return index.ColumnNames
 }
 
-func (index *UniqueIndex) ToSQL(fmter SQLFormatter) []byte {
+func (index *UniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "CREATE UNIQUE INDEX IF NOT EXISTS "...)
