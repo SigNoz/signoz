@@ -153,6 +153,32 @@ function determineTokenContext(
 	};
 }
 
+export function getCurrentValueIndexAtCursor(
+	valuesPosition: {
+		start?: number;
+		end?: number;
+	}[],
+	cursorIndex: number,
+): number | null {
+	if (!valuesPosition || valuesPosition.length === 0) return null;
+
+	// Find the value that contains the cursor index
+	for (let i = 0; i < valuesPosition.length; i++) {
+		const start = valuesPosition[i].start;
+		const end = valuesPosition[i].end;
+		if (
+			start !== undefined &&
+			end !== undefined &&
+			start <= cursorIndex &&
+			cursorIndex <= end
+		) {
+			return i;
+		}
+	}
+
+	return null;
+}
+
 // Function to determine token context boundaries more precisely
 function determineContextBoundaries(
 	query: string,
@@ -171,32 +197,7 @@ function determineContextBoundaries(
 	let currentPair: IQueryPair | null = null;
 
 	if (queryPairs.length > 0) {
-		// Look for the rightmost pair whose end position is before or at the cursor
-		let bestMatch: IQueryPair | null = null;
-
-		for (const pair of queryPairs) {
-			const { position } = pair;
-
-			// Find the rightmost position of this pair
-			const pairEnd = position.valueEnd || position.operatorEnd || position.keyEnd;
-
-			// FIXED: Consider cursor position at the end of a token (including the last character)
-			if (
-				(pairEnd <= cursorIndex || pairEnd + 1 === cursorIndex) &&
-				(!bestMatch ||
-					pairEnd >
-						(bestMatch.position.valueEnd ||
-							bestMatch.position.operatorEnd ||
-							bestMatch.position.keyEnd))
-			) {
-				bestMatch = pair;
-			}
-		}
-
-		// If we found a match, use it
-		if (bestMatch) {
-			currentPair = bestMatch;
-		}
+		currentPair = getCurrentQueryPair(queryPairs, query, cursorIndex);
 	}
 
 	// Check for bracket context first (could be part of an IN operator's value)
@@ -643,38 +644,7 @@ export function getQueryContextAtCursor(
 		// Find the current pair without causing a circular dependency
 		let currentPair: IQueryPair | null = null;
 		if (queryPairs.length > 0) {
-			// Look for the rightmost pair whose end position is before or at the cursor
-			let bestMatch: IQueryPair | null = null;
-
-			for (const pair of queryPairs) {
-				const { position } = pair;
-
-				// Find the rightmost position of this pair
-				const pairEnd =
-					position.valueEnd || position.operatorEnd || position.keyEnd;
-
-				// FIXED: If this pair ends at or before the cursor (including exactly at the end),
-				// and it's further right than our previous best match
-				if (
-					(pairEnd <= adjustedCursorIndex || pairEnd + 1 === adjustedCursorIndex) &&
-					(!bestMatch ||
-						pairEnd >
-							(bestMatch.position.valueEnd ||
-								bestMatch.position.operatorEnd ||
-								bestMatch.position.keyEnd))
-				) {
-					bestMatch = pair;
-				}
-			}
-
-			// If we found a match, use it
-			if (bestMatch) {
-				currentPair = bestMatch;
-			}
-			// If cursor is at the end, use the last pair
-			else if (adjustedCursorIndex >= input.length) {
-				currentPair = queryPairs[queryPairs.length - 1];
-			}
+			currentPair = getCurrentQueryPair(queryPairs, query, adjustedCursorIndex);
 		}
 
 		// Determine precise context boundaries
@@ -1469,18 +1439,17 @@ export function extractQueryPairs(query: string): IQueryPair[] {
  * This is useful for getting suggestions based on the current context
  * The function finds the rightmost complete pair that ends before or at the cursor position
  *
- * @param query The query string
+ * @param queryPairs An array of IQueryPair objects representing the key-operator-value triplets
+ * @param query The full query string
  * @param cursorIndex The position of the cursor in the query
  * @returns The query pair at the cursor position, or null if not found
  */
 export function getCurrentQueryPair(
+	queryPairs: IQueryPair[],
 	query: string,
 	cursorIndex: number,
 ): IQueryPair | null {
 	try {
-		const queryPairs = extractQueryPairs(query);
-		// Removed the circular dependency by not calling getQueryContextAtCursor here
-
 		// If we have pairs, try to find the one at the cursor position
 		if (queryPairs.length > 0) {
 			// Look for the rightmost pair whose end position is before or at the cursor
@@ -1493,9 +1462,13 @@ export function getCurrentQueryPair(
 				const pairEnd =
 					position.valueEnd || position.operatorEnd || position.keyEnd;
 
+				const pairStart =
+					position.keyStart || position.operatorStart || position.valueStart || 0;
+
 				// If this pair ends at or before the cursor, and it's further right than our previous best match
 				if (
-					pairEnd <= cursorIndex &&
+					pairEnd >= cursorIndex &&
+					pairStart <= cursorIndex &&
 					(!bestMatch ||
 						pairEnd >
 							(bestMatch.position.valueEnd ||
