@@ -3,6 +3,7 @@ import Timestamp from 'timestamp-nano';
 import { Order, OrderBy } from 'types/api/errors/getAll';
 
 import {
+	COMPOSITE_QUERY_FILTER_NAME,
 	DEFAULT_FILTER_VALUE,
 	EXCEPTION_TYPE_FILTER_NAME,
 	SERVICE_NAME_FILTER_NAME,
@@ -12,6 +13,7 @@ export const isOrder = (order: string | null): order is Order =>
 	!!(order === 'ascending' || order === 'descending');
 
 export const urlKey = {
+	compositeQuery: 'compositeQuery',
 	order: 'order',
 	offset: 'offset',
 	orderParam: 'orderParam',
@@ -35,7 +37,12 @@ export const getOrder = (order: string | null): Order => {
 	}
 	return 'ascending';
 };
-
+export const getCompositeQuery = (compositeQuery: string | null): string => {
+	if (compositeQuery) {
+		return compositeQuery;
+	}
+	return '';
+};
 export const getLimit = (limit: string | null): number => {
 	if (limit) {
 		return parseInt(limit, 10);
@@ -139,7 +146,11 @@ export const getFilterValues = (
 	return { exceptionFilterValue, serviceFilterValue };
 };
 
-type FilterValues = { exceptionType: string; serviceName: string };
+type FilterValues = {
+	exceptionType: string;
+	serviceName: string;
+	compositeQuery: string;
+};
 
 const extractSingleFilterValue = (
 	filterName: string,
@@ -167,6 +178,7 @@ export const extractFilterValues = (
 	const filterValues: FilterValues = {
 		exceptionType: prefilledFilters.exceptionType,
 		serviceName: prefilledFilters.serviceName,
+		compositeQuery: prefilledFilters.compositeQuery,
 	};
 	if (filters[EXCEPTION_TYPE_FILTER_NAME]) {
 		filterValues.exceptionType = extractSingleFilterValue(
@@ -177,6 +189,12 @@ export const extractFilterValues = (
 	if (filters[SERVICE_NAME_FILTER_NAME]) {
 		filterValues.serviceName = extractSingleFilterValue(
 			SERVICE_NAME_FILTER_NAME,
+			filters,
+		);
+	}
+	if (filters[COMPOSITE_QUERY_FILTER_NAME]) {
+		filterValues.compositeQuery = extractSingleFilterValue(
+			COMPOSITE_QUERY_FILTER_NAME,
 			filters,
 		);
 	}

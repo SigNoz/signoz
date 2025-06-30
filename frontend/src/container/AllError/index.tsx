@@ -46,6 +46,7 @@ import { useAppContext } from '../../providers/App/App';
 import { FilterDropdownExtendsProps } from './types';
 import {
 	extractFilterValues,
+	getCompositeQuery,
 	getDefaultFilterValue,
 	getDefaultOrder,
 	getFilterString,
@@ -59,6 +60,7 @@ import {
 } from './utils';
 
 type QueryParams = {
+	compositeQuery: string;
 	order: string;
 	offset: number;
 	orderParam: string;
@@ -76,6 +78,7 @@ function AllErrors(): JSX.Element {
 	const { t } = useTranslation(['common']);
 	const {
 		updatedOrder,
+		getUpdatedCompositeQuery,
 		getUpdatedOffset,
 		getUpdatedParams,
 		getUpdatedPageSize,
@@ -84,6 +87,9 @@ function AllErrors(): JSX.Element {
 	} = useMemo(
 		() => ({
 			updatedOrder: getOrder(params.get(urlKey.order)),
+			getUpdatedCompositeQuery: getCompositeQuery(
+				params.get(urlKey.compositeQuery),
+			),
 			getUpdatedOffset: getOffSet(params.get(urlKey.offset)),
 			getUpdatedParams: getOrderParams(params.get(urlKey.orderParam)),
 			getUpdatedPageSize: getUpdatePageSize(params.get(urlKey.pageSize)),
@@ -97,6 +103,7 @@ function AllErrors(): JSX.Element {
 		() =>
 			`${pathname}?${createQueryParams({
 				order: updatedOrder,
+				compositeQuery: getUpdatedCompositeQuery,
 				offset: getUpdatedOffset,
 				orderParam: getUpdatedParams,
 				pageSize: getUpdatedPageSize,
@@ -105,6 +112,7 @@ function AllErrors(): JSX.Element {
 			})}`,
 		[
 			pathname,
+			getUpdatedCompositeQuery,
 			updatedOrder,
 			getUpdatedOffset,
 			getUpdatedParams,
@@ -199,6 +207,7 @@ function AllErrors(): JSX.Element {
 			);
 
 			const queryParams: QueryParams = {
+				compositeQuery: getUpdatedCompositeQuery,
 				order: updatedOrder,
 				offset: getUpdatedOffset,
 				orderParam: getUpdatedParams,
@@ -217,6 +226,7 @@ function AllErrors(): JSX.Element {
 			confirm();
 		},
 		[
+			getUpdatedCompositeQuery,
 			getUpdatedExceptionType,
 			getUpdatedOffset,
 			getUpdatedPageSize,
@@ -426,12 +436,17 @@ function AllErrors(): JSX.Element {
 				const { columnKey = '', order } = sorter;
 				const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
 				const params = new URLSearchParams(window.location.search);
-				const { exceptionType, serviceName } = extractFilterValues(filters, {
-					serviceName: getFilterString(params.get(urlKey.serviceName)),
-					exceptionType: getFilterString(params.get(urlKey.exceptionType)),
-				});
+				const { exceptionType, serviceName, compositeQuery } = extractFilterValues(
+					filters,
+					{
+						compositeQuery: getFilterString(params.get(urlKey.compositeQuery)),
+						serviceName: getFilterString(params.get(urlKey.serviceName)),
+						exceptionType: getFilterString(params.get(urlKey.exceptionType)),
+					},
+				);
 				history.replace(
 					`${pathname}?${createQueryParams({
+						compositeQuery,
 						order: updatedOrder,
 						offset: (current - 1) * pageSize,
 						orderParam: columnKey,
