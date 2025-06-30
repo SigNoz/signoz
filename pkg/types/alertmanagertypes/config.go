@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
-	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
 )
 
@@ -398,5 +397,4 @@ type ConfigStore interface {
 func init() {
 	commoncfg.MarshalSecretValue = true
 	config.MarshalSecretValue = true
-	model.NameValidationScheme = model.UTF8Validation
 }
