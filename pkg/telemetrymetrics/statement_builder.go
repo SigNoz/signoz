@@ -442,7 +442,7 @@ func (b *metricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 			wrapped.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
 		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", incExpr))
-		wrapped.From(fmt.Sprintf("(%s) WINDOW increase_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
+		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
 		q, args := wrapped.BuildWithFlavor(sqlbuilder.ClickHouse, innerArgs...)
 		return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, nil
 	default:
