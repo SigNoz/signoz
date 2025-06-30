@@ -23,6 +23,7 @@ interface SpanFilterConfig {
 interface SpanScopeSelectorProps {
 	onChange?: (value: TagFilter) => void;
 	query?: IBuilderQuery;
+	skipQueryBuilderRedirect?: boolean;
 }
 
 const SPAN_FILTER_CONFIG: Record<SpanScope, SpanFilterConfig | null> = {
@@ -58,6 +59,7 @@ const SELECT_OPTIONS = [
 function SpanScopeSelector({
 	onChange,
 	query,
+	skipQueryBuilderRedirect,
 }: SpanScopeSelectorProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const [selectedScope, setSelectedScope] = useState<SpanScope>(
@@ -79,6 +81,7 @@ function SpanScopeSelector({
 		if (hasFilter('isEntryPoint')) return SpanScope.ENTRYPOINT_SPANS;
 		return SpanScope.ALL_SPANS;
 	};
+
 	useEffect(() => {
 		let queryData = (currentQuery?.builder?.queryData || [])?.find(
 			(item) => item.queryName === query?.queryName,
@@ -127,13 +130,10 @@ function SpanScopeSelector({
 			},
 		}));
 
-		if (onChange && query) {
+		if (skipQueryBuilderRedirect && onChange && query) {
 			onChange({
 				...query.filters,
-				items: getUpdatedFilters(
-					[...query.filters.items, ...newQuery.builder.queryData[0].filters.items],
-					true,
-				),
+				items: getUpdatedFilters([...query.filters.items], true),
 			});
 
 			setSelectedScope(newScope);
@@ -156,6 +156,7 @@ function SpanScopeSelector({
 SpanScopeSelector.defaultProps = {
 	onChange: undefined,
 	query: undefined,
+	skipQueryBuilderRedirect: false,
 };
 
 export default SpanScopeSelector;
