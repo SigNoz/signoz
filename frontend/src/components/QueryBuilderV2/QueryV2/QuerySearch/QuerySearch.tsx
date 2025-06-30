@@ -32,9 +32,13 @@ import {
 	queryOperatorSuggestions,
 	validateQuery,
 } from 'utils/antlrQueryUtils';
-import { getQueryContextAtCursor } from 'utils/queryContextUtils';
+import {
+	getQueryContextAtCursor,
+	getCurrentValueIndexAtCursor,
+} from 'utils/queryContextUtils';
 
 import { queryExamples } from './constants';
+import { isNull } from 'lodash-es';
 
 const { Panel } = Collapse;
 
@@ -523,24 +527,47 @@ function QuerySearch({
 						from: number,
 						to: number,
 					): void => {
-						if (queryContext.isInValue && option.type === 'value') {
-							if (
-								queryContext.currentPair?.position &&
-								queryContext.currentPair.position.valueStart &&
-								queryContext.currentPair.position.valueEnd
-							) {
-								const { valueStart, valueEnd } = queryContext.currentPair.position;
-								addSpaceAfterSelection(
-									view,
-									{ apply: originalApply },
-									valueStart,
-									valueEnd + 1,
-									false,
+						let shouldDefaultApply = true;
+
+						// Changes to replace the value in-place with the existing value
+						const isValueType = queryContext.isInValue && option.type === 'value';
+						const pair = queryContext.currentPair;
+
+						if (isValueType) {
+							if (queryContext.isInBracketList && pair?.valuesPosition) {
+								const idx = getCurrentValueIndexAtCursor(
+									pair.valuesPosition,
+									cursorPos.ch,
 								);
-							} else {
-								addSpaceAfterSelection(view, { apply: originalApply }, from, to);
+								if (!isNull(idx)) {
+									const { start, end } = pair.valuesPosition[idx];
+									if (typeof start === 'number' && typeof end === 'number') {
+										shouldDefaultApply = false;
+										addSpaceAfterSelection(
+											view,
+											{ apply: originalApply },
+											start,
+											end + 1,
+											false,
+										);
+									}
+								}
+							} else if (pair?.position) {
+								const { valueStart, valueEnd } = pair.position;
+								if (typeof valueStart === 'number' && typeof valueEnd === 'number') {
+									shouldDefaultApply = false;
+									addSpaceAfterSelection(
+										view,
+										{ apply: originalApply },
+										valueStart,
+										valueEnd + 1,
+										false,
+									);
+								}
 							}
-						} else {
+						}
+
+						if (shouldDefaultApply) {
 							addSpaceAfterSelection(view, { apply: originalApply }, from, to);
 						}
 					},
