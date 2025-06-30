@@ -551,19 +551,19 @@ function LogsExplorerViews({
 		if (!stagedQuery) return [];
 
 		if (panelType === PANEL_TYPES.LIST) {
-			if (listChartData && listChartData.payload.data.result.length > 0) {
+			if (listChartData && listChartData.payload.data?.result.length > 0) {
 				return listChartData.payload.data.result;
 			}
 			return [];
 		}
 
-		if (!data || data.payload.data.result.length === 0) return [];
+		if (!data || data.payload.data?.result.length === 0) return [];
 
 		const isGroupByExist = stagedQuery.builder.queryData.some(
 			(queryData) => queryData.groupBy.length > 0,
 		);
 
-		const firstPayloadQuery = data.payload.data.result.find(
+		const firstPayloadQuery = data.payload.data?.result.find(
 			(item) => item.queryName === listQuery?.queryName,
 		);
 

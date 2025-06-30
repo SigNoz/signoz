@@ -46,6 +46,14 @@ export const logsQueryRangeSuccessResponse = {
 		],
 	},
 };
+export const logsQueryRangeEmptyResponse = {
+	resultType: '',
+	result: [
+		{
+			queryName: 'A',
+		},
+	],
+};
 
 export const logsPaginationQueryRangeSuccessResponse = ({
 	offset = 0,
