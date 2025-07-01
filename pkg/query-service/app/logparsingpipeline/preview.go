@@ -12,9 +12,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
-	"go.opentelemetry.io/collector/processor"
 )
 
 func SimulatePipelinesProcessing(
@@ -42,7 +42,7 @@ func SimulatePipelinesProcessing(
 	}
 	simulatorInputPLogs := SignozLogsToPLogs(logs)
 
-	processorFactories, err := processor.MakeFactoryMap(
+	processorFactories, err := otelcol.MakeFactoryMap(
 		signozlogspipelineprocessor.NewFactory(),
 	)
 	if err != nil {
