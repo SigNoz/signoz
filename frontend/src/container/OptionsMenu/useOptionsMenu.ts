@@ -150,10 +150,10 @@ const useOptionsMenu = ({
 			[],
 		);
 
-		let initialSelected: TelemetryFieldKey[] | undefined =
+		let initialSelected: TelemetryFieldKey[] =
 			initialOptions.selectColumns
 				?.map((column) => attributesData.find(({ name }) => name === column))
-				.filter((e) => !!e) || [];
+				.filter((e): e is TelemetryFieldKey => !!e) || [];
 
 		if (dataSource === DataSource.TRACES) {
 			initialSelected = initialSelected
