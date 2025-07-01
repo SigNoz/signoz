@@ -70,6 +70,7 @@ function Metrics({
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,
+			keepPreviousData: true,
 		})),
 	);
 
