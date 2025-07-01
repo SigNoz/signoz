@@ -155,7 +155,13 @@ function QuerySearch({
 		if (response.data.data) {
 			const { complete, keys } = response.data.data;
 			const options = generateOptions(keys);
-			setKeySuggestions((prev) => [...(prev || []), ...options]);
+			// Use a Map to deduplicate by label and preserve order: new options take precedence
+			const merged = new Map<string, QueryKeyDataSuggestionsProps>();
+			options.forEach((opt) => merged.set(opt.label, opt));
+			(keySuggestions || []).forEach((opt) => {
+				if (!merged.has(opt.label)) merged.set(opt.label, opt);
+			});
+			setKeySuggestions(Array.from(merged.values()));
 			setIsCompleteKeysList(complete);
 		}
 	};
