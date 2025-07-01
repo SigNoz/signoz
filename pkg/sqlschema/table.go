@@ -34,7 +34,13 @@ func (table *Table) ToRenameSQL(fmter SQLFormatter, newName string) []byte {
 	return sql
 }
 
-func (table *Table) ToDropCopyCreateSQL(fmter SQLFormatter) [][]byte {
+// Creates a temporary table with the same schema as the input table,
+// inserts the data from the input table into the temporary table, drops the input table,
+// and then renames the temporary table to the input table name.
+//
+// It creates constraints with the same name as the input table making it unfit for RDMS systems which will complain about duplicate constraints.
+// It is only useful for SQLite.
+func (table *Table) ToCreateTempInsertDropAlterSQL(fmter SQLFormatter) [][]byte {
 	sql := [][]byte{}
 
 	tempTable := &Table{

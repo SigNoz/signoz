@@ -34,5 +34,5 @@ func (provider *Provider) CreateIndex(ctx context.Context, index sqlschema.Index
 }
 
 func (provider *Provider) DropConstraintUnsafe(ctx context.Context, table *sqlschema.Table, constraint sqlschema.Constraint) [][]byte {
-	return table.ToDropCopyCreateSQL(provider)
+	return table.ToCreateTempInsertDropAlterSQL(provider)
 }

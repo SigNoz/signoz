@@ -74,7 +74,7 @@ func (index *UniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
 		sql = fmter.AppendIdent(sql, col)
 	}
 
-	sql = append(sql, ')')
+	sql = append(sql, ")"...)
 
 	return sql
 }

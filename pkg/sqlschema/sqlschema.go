@@ -7,7 +7,7 @@ import (
 type SQLSchema interface {
 	// Returns a list of SQL statements to drop a constraint from a table.
 	// Unsafe might fail if the input table does not exactly match the table without the constraint.
-	// Ideally we would have inspected the table and found out the original table definition.
+	// Safe would be to inspect the table and find out the original table definition. This is not implemented yet.
 	DropConstraintUnsafe(context.Context, *Table, Constraint) [][]byte
 
 	// Returns a list of SQL statements to create an index.
