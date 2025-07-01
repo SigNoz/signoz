@@ -353,6 +353,10 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 				return err
 			}
 
+			if len(channels) == 0 {
+				return errors.New("no channels found for this org, please set channels first")
+			}
+
 			for _, channel := range channels {
 				preferredChannels = append(preferredChannels, channel.Name)
 			}
