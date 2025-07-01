@@ -1,25 +1,25 @@
 import { cloneDeep } from 'lodash-es';
-import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 /**
- * Transforms a query by modifying the orderBy field
+ * Transforms a query by modifying specific fields in the builder queries
  * @param query - The original query object
- * @param customOrderBy - Array of orderBy items to replace the existing ones
- * @returns A new query object with the modified orderBy
+ * @param fieldOverrides - Partial object containing fields to override in each builder query
+ * @returns A new query object with the modified fields
  */
-export const transformQueryOrderBy = (
+export const transformBuilderQueryFields = (
 	query: Query,
-	customOrderBy: OrderByPayload[],
+	fieldOverrides: Partial<IBuilderQuery>,
 ): Query => {
 	// Create a deep copy of the query
 	const transformedQuery: Query = cloneDeep(query);
 
-	// Update the orderBy for each query in the builder
+	// Update the specified fields for each query in the builder
 	if (transformedQuery.builder?.queryData) {
 		transformedQuery.builder.queryData = transformedQuery.builder.queryData.map(
-			(query) => ({
-				...query,
-				orderBy: customOrderBy,
+			(queryItem) => ({
+				...queryItem,
+				...fieldOverrides,
 			}),
 		);
 	}

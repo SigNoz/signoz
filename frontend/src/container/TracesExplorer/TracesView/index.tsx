@@ -17,7 +17,7 @@ import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
-import { transformQueryOrderBy } from 'utils/queryTransformers';
+import { transformBuilderQueryFields } from 'utils/queryTransformers';
 
 import TraceExplorerControls from '../Controls';
 import { TracesLoading } from '../TraceLoading/TraceLoading';
@@ -42,12 +42,14 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 
 	const transformedQuery = useMemo(
 		() =>
-			transformQueryOrderBy(stagedQuery || initialQueriesMap.traces, [
-				{
-					columnName: 'timestamp',
-					order: 'desc',
-				},
-			]),
+			transformBuilderQueryFields(stagedQuery || initialQueriesMap.traces, {
+				orderBy: [
+					{
+						columnName: 'timestamp',
+						order: 'desc',
+					},
+				],
+			}),
 		[stagedQuery],
 	);
 
