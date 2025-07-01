@@ -681,6 +681,9 @@ function K8sPodsList({
 		});
 	};
 
+	const showTableLoadingState =
+		(isFetching || isLoading) && formattedPodsData.length === 0;
+
 	return (
 		<div className="k8s-list">
 			<K8sHeader
@@ -704,7 +707,7 @@ function K8sPodsList({
 				className={classNames('k8s-list-table', {
 					'expanded-k8s-list-table': isGroupedByAttribute,
 				})}
-				dataSource={isFetching || isLoading ? [] : formattedPodsData}
+				dataSource={showTableLoadingState ? [] : formattedPodsData}
 				columns={columns}
 				pagination={{
 					current: currentPage,
@@ -715,26 +718,25 @@ function K8sPodsList({
 					onChange: onPaginationChange,
 				}}
 				loading={{
-					spinning: isFetching || isLoading,
+					spinning: showTableLoadingState,
 					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 				}}
 				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-hosts-message-container">
-								<div className="no-filtered-hosts-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+					emptyText: showTableLoadingState ? null : (
+						<div className="no-filtered-hosts-message-container">
+							<div className="no-filtered-hosts-message-content">
+								<img
+									src="/Icons/emptyState.svg"
+									alt="thinking-emoji"
+									className="empty-state-svg"
+								/>
 
-									<Typography.Text className="no-filtered-hosts-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
-								</div>
+								<Typography.Text className="no-filtered-hosts-message">
+									This query had no results. Edit your query and try again!
+								</Typography.Text>
 							</div>
-						),
+						</div>
+					),
 				}}
 				scroll={{ x: true }}
 				tableLayout="fixed"

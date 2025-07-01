@@ -574,6 +574,9 @@ function K8sVolumesList({
 		});
 	};
 
+	const showTableLoadingState =
+		(isFetching || isLoading) && formattedVolumesData.length === 0;
+
 	return (
 		<div className="k8s-list">
 			<K8sHeader
@@ -593,7 +596,7 @@ function K8sVolumesList({
 				className={classNames('k8s-list-table', 'volumes-list-table', {
 					'expanded-volumes-list-table': isGroupedByAttribute,
 				})}
-				dataSource={isFetching || isLoading ? [] : formattedVolumesData}
+				dataSource={showTableLoadingState ? [] : formattedVolumesData}
 				columns={columns}
 				pagination={{
 					current: currentPage,
@@ -605,26 +608,25 @@ function K8sVolumesList({
 				}}
 				scroll={{ x: true }}
 				loading={{
-					spinning: isFetching || isLoading,
+					spinning: showTableLoadingState,
 					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 				}}
 				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-hosts-message-container">
-								<div className="no-filtered-hosts-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+					emptyText: showTableLoadingState ? null : (
+						<div className="no-filtered-hosts-message-container">
+							<div className="no-filtered-hosts-message-content">
+								<img
+									src="/Icons/emptyState.svg"
+									alt="thinking-emoji"
+									className="empty-state-svg"
+								/>
 
-									<Typography.Text className="no-filtered-hosts-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
-								</div>
+								<Typography.Text className="no-filtered-hosts-message">
+									This query had no results. Edit your query and try again!
+								</Typography.Text>
 							</div>
-						),
+						</div>
+					),
 				}}
 				tableLayout="fixed"
 				onChange={handleTableChange}
