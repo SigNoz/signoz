@@ -236,7 +236,14 @@ func (q *queryCache) FindMissingTimeRanges(orgID valuer.UUID, start, end, step i
 
 func (q *queryCache) getCachedSeriesData(orgID valuer.UUID, cacheKey string) []*CachedSeriesData {
 	cacheableSeriesData := new(CacheableSeriesData)
-	err := q.cache.Get(context.TODO(), orgID, cacheKey, cacheableSeriesData, true)
+	tmpcacheableSeriesData := new(CacheableSeriesData)
+	err := q.cache.Get(context.TODO(), orgID, cacheKey, tmpcacheableSeriesData, true)
+	data, err := tmpcacheableSeriesData.MarshalBinary()
+	if err != nil {
+		zap.L().Error("error marshalling cacheable series data", zap.Error(err))
+	}
+	cacheableSeriesData.UnmarshalBinary(data)
+
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil
 	}
@@ -300,11 +307,18 @@ func (q *queryCache) MergeWithCachedSeriesDataV2(orgID valuer.UUID, cacheKey str
 		return newData
 	}
 
+	tmpcacheableSeriesData := new(CacheableSeriesData)
 	cacheableSeriesData := new(CacheableSeriesData)
-	err := q.cache.Get(context.TODO(), orgID, cacheKey, cacheableSeriesData, true)
+	err := q.cache.Get(context.TODO(), orgID, cacheKey, tmpcacheableSeriesData, true)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil
 	}
+	data, err := tmpcacheableSeriesData.MarshalBinary()
+	if err != nil {
+		zap.L().Error("error marshalling cacheable series data", zap.Error(err))
+	}
+	cacheableSeriesData.UnmarshalBinary(data)
+
 	allData := append(cacheableSeriesData.Series, newData...)
 
 	sort.Slice(allData, func(i, j int) bool {
