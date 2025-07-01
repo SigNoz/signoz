@@ -206,7 +206,7 @@ QUOTED_TEXT
         )
     ;
 
-fragment SEGMENT      : [a-zA-Z$] [a-zA-Z0-9$_:\-]* ;
+fragment SEGMENT      : [a-zA-Z$] [a-zA-Z0-9$_:\-.]* ;
 fragment EMPTY_BRACKS : '[' ']' ;
 fragment OLD_JSON_BRACKS: '[' '*' ']';
 

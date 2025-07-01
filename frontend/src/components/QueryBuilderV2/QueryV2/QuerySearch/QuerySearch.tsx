@@ -17,6 +17,7 @@ import { Button, Card, Collapse, Popover, Tag } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
+import { isNull } from 'lodash-es';
 import { TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -33,12 +34,11 @@ import {
 	validateQuery,
 } from 'utils/antlrQueryUtils';
 import {
-	getQueryContextAtCursor,
 	getCurrentValueIndexAtCursor,
+	getQueryContextAtCursor,
 } from 'utils/queryContextUtils';
 
 import { queryExamples } from './constants';
-import { isNull } from 'lodash-es';
 
 const { Panel } = Collapse;
 
