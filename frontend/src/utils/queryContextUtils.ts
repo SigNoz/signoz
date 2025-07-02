@@ -12,9 +12,11 @@ import {
 	isMultiValueOperator,
 	isNonValueOperatorToken,
 	isOperatorToken,
+	isQueryPairComplete,
 	isValueToken,
 	isWrappedUnderQuotes,
 } from './tokenUtils';
+import { OPERATORS } from './antlrQueryUtils';
 
 // Function to normalize multiple spaces to single spaces when not in quotes
 function normalizeSpaces(query: string): string {
@@ -1352,6 +1354,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 				currentPair &&
 				currentPair.key &&
 				currentPair.operator &&
+				currentPair.operator !== OPERATORS.EXISTS &&
 				!currentPair.value
 			) {
 				currentPair.value = token.text;
@@ -1369,9 +1372,10 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 			}
 			// If token is a conjunction (AND/OR) or A key, finalize the current pair
 			else if (
-				(isConjunctionToken(token.type) || token.type === FilterQueryLexer.KEY) &&
 				currentPair &&
-				currentPair.key
+				currentPair.key &&
+				(isConjunctionToken(token.type) ||
+					(token.type === FilterQueryLexer.KEY && isQueryPairComplete(currentPair)))
 			) {
 				queryPairs.push({
 					key: currentPair.key,
