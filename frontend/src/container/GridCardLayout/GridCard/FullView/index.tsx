@@ -23,7 +23,9 @@ import {
 	timePreferance,
 } from 'container/NewWidget/RightContainer/timeItems';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
+import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -68,6 +70,7 @@ function FullView({
 	const location = useLocation();
 
 	const fullViewRef = useRef<HTMLDivElement>(null);
+	const { handleRunQuery } = useQueryBuilder();
 
 	useEffect(() => {
 		setCurrentGraphRef(fullViewRef);
@@ -254,13 +257,20 @@ function FullView({
 							</TimeContainer>
 						)}
 						{enableDrillDown && (
-							<QueryBuilderV2
-								panelType={widget.panelTypes}
-								version={selectedDashboard?.data?.version || 'v3'}
-								isListViewPanel={widget.panelTypes === PANEL_TYPES.LIST}
-								// filterConfigs={filterConfigs}
-								// queryComponents={queryComponents}
-							/>
+							<>
+								<QueryBuilderV2
+									panelType={widget.panelTypes}
+									version={selectedDashboard?.data?.version || 'v3'}
+									isListViewPanel={widget.panelTypes === PANEL_TYPES.LIST}
+									// filterConfigs={filterConfigs}
+									// queryComponents={queryComponents}
+								/>
+								<RightToolbarActions
+									onStageRunQuery={(): void => {
+										handleRunQuery(true, true);
+									}}
+								/>
+							</>
 						)}
 					</div>
 

@@ -1,94 +1,107 @@
-import { ColumnType } from 'antd/lib/table';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+import {
+	OPERATORS,
+	QUERY_BUILDER_OPERATORS_BY_TYPES,
+} from 'constants/queryBuilder';
 import { ReactNode } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export type ContextMenuItem = ReactNode;
 
-interface ClickedData {
-	record: RowData;
-	column: ColumnType<RowData>;
+function getBaseMeta(
+	query: Query,
+	filterKey: string,
+): BaseAutocompleteData | null {
+	const steps = query.builder.queryData;
+	for (let i = 0; i < steps.length; i++) {
+		const { groupBy } = steps[i];
+		for (let j = 0; j < groupBy.length; j++) {
+			if (groupBy[j].key === filterKey) {
+				return groupBy[j];
+			}
+		}
+	}
+	return null;
 }
 
-interface ColumnClickData {
-	record: RowData;
-	column: ColumnType<RowData>;
-}
+const SUPPORTED_OPERATORS = {
+	[OPERATORS['=']]: {
+		label: 'Is this',
+		icon: '=',
+		value: '=',
+	},
+	[OPERATORS['!=']]: {
+		label: 'Is not this',
+		icon: '!=',
+		value: '!=',
+	},
+	[OPERATORS['>=']]: {
+		label: 'Is greater than or equal to',
+		icon: '>=',
+		value: '>=',
+	},
+	[OPERATORS['<=']]: {
+		label: 'Is less than or equal to',
+		icon: '<=',
+		value: '<=',
+	},
+	[OPERATORS['<']]: {
+		label: 'Is less than',
+		icon: '<',
+		value: '<',
+	},
+};
 
 export function getContextMenuConfig(
-	clickedData: ClickedData | null,
+	query: Query,
+	clickedData: any,
 	panelType: string,
-	onColumnClick: (operator: string, data: ColumnClickData) => void,
+	onColumnClick: (operator: string) => void,
 ): { header?: string; items?: ContextMenuItem } {
+	const filterKey = clickedData?.column?.title;
+	const header = `Filter by ${filterKey}`;
+
+	const filterDataType = getBaseMeta(query, filterKey)?.dataType || 'string';
+
+	const operators =
+		QUERY_BUILDER_OPERATORS_BY_TYPES[
+			filterDataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
+		];
+
+	const filterOperators = operators.filter(
+		(operator) => SUPPORTED_OPERATORS[operator],
+	);
+
 	if (
 		panelType === 'table' &&
 		clickedData?.column &&
 		!(clickedData.column as any).queryName
 	) {
-		const columnName = clickedData.column.title || clickedData.column.dataIndex;
 		return {
-			header: `Filter by ${columnName}`,
-			items: (
-				<>
-					<div
-						style={{
-							display: 'flex',
-							alignItems: 'center',
-							gap: 8,
-							padding: '8px 16px',
-							cursor: 'pointer',
-						}}
-						onClick={(): void =>
-							onColumnClick('=', {
-								record: clickedData.record,
-								column: clickedData.column,
-							})
-						}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter' || e.key === ' ') {
-								e.preventDefault();
-								onColumnClick('=', {
-									record: clickedData.record,
-									column: clickedData.column,
-								});
-							}
-						}}
-						role="button"
-						tabIndex={0}
-					>
-						<span style={{ color: '#3B5AFB', fontSize: 18 }}>=</span>
-						<span style={{ fontWeight: 600, color: '#2B2B43' }}>Is this</span>
-					</div>
-					<div
-						style={{
-							display: 'flex',
-							alignItems: 'center',
-							gap: 8,
-							padding: '8px 16px',
-							cursor: 'pointer',
-						}}
-						onClick={(): void =>
-							onColumnClick('!=', {
-								record: clickedData.record,
-								column: clickedData.column,
-							})
-						}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter' || e.key === ' ') {
-								e.preventDefault();
-								onColumnClick('!=', {
-									record: clickedData.record,
-									column: clickedData.column,
-								});
-							}
-						}}
-						role="button"
-						tabIndex={0}
-					>
-						<span style={{ color: '#3B5AFB', fontSize: 18 }}>≠</span>
-						<span style={{ fontWeight: 600, color: '#2B2B43' }}>Is not this</span>
-					</div>
-				</>
-			),
+			header,
+			items: filterOperators.map((operator) => (
+				<div
+					key={operator}
+					style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: 8,
+						padding: '8px 16px',
+						cursor: 'pointer',
+					}}
+					onClick={(): void => onColumnClick(SUPPORTED_OPERATORS[operator].value)}
+					role="button"
+					tabIndex={0}
+				>
+					<span style={{ color: '#3B5AFB', fontSize: 18 }}>
+						{SUPPORTED_OPERATORS[operator].icon}
+					</span>
+					<span style={{ fontWeight: 600, color: '#2B2B43' }}>
+						{SUPPORTED_OPERATORS[operator].label}
+					</span>
+				</div>
+			)),
 		};
 	}
 	return {};

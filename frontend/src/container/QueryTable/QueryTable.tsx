@@ -43,6 +43,7 @@ export function QueryTable({
 	} = useCoordinates();
 	const { menuItemsConfig } = useTableContextMenu({
 		widgetId: widgetId || '',
+		query,
 		clickedData,
 		onClose,
 		coordinates,

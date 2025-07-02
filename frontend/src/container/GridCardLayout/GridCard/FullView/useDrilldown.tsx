@@ -24,31 +24,26 @@ const useDrilldown = ({
 }: DrilldownQueryProps): UseDrilldownReturn => {
 	const isMounted = useRef(false);
 	const { redirectWithQueryBuilderData, currentQuery } = useQueryBuilder();
-	const compositeQueryExists = !!useGetCompositeQueryParam();
+	const compositeQuery = useGetCompositeQueryParam();
 
 	useEffect(() => {
-		if (enableDrillDown && compositeQueryExists) {
+		if (enableDrillDown && !!compositeQuery) {
 			setRequestData((prev) => ({
 				...prev,
-				query: currentQuery,
+				query: compositeQuery,
 			}));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentQuery]);
+	}, [currentQuery, compositeQuery]);
 
 	// update composite query with widget query if composite query is not present in url.
 	// Composite query should be in the url if switch to edit mode is clicked or drilldown happens from dashboard.
 	useEffect(() => {
-		if (enableDrillDown && !compositeQueryExists && !isMounted.current) {
-			redirectWithQueryBuilderData(widget.query);
+		if (enableDrillDown && !isMounted.current) {
+			redirectWithQueryBuilderData(compositeQuery || widget.query);
 		}
 		isMounted.current = true;
-	}, [
-		widget,
-		enableDrillDown,
-		compositeQueryExists,
-		redirectWithQueryBuilderData,
-	]);
+	}, [widget, enableDrillDown, compositeQuery, redirectWithQueryBuilderData]);
 
 	const dashboardEditView = generateExportToDashboardLink({
 		query: currentQuery,
