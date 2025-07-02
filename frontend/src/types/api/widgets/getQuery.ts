@@ -53,6 +53,18 @@ export interface QueryDataV3 {
 	predictedSeries?: SeriesItem[] | null;
 	anomalyScores?: SeriesItem[] | null;
 	isAnomaly?: boolean;
+	table?: {
+		rows: {
+			data: {
+				[key: string]: any;
+			};
+		}[];
+		columns: {
+			name: string;
+			queryName: string;
+			isValueColumn: boolean;
+		}[];
+	};
 }
 
 export interface Props {

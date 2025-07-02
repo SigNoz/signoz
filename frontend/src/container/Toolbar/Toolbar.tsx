@@ -32,14 +32,19 @@ export default function Toolbar({
 	return (
 		<div className="toolbar">
 			<div className="leftActions">{leftActions}</div>
-			<div className="timeRange">
-				{showOldCTA && <NewExplorerCTA />}
-				<DateTimeSelectionV2
-					showAutoRefresh={showAutoRefresh}
-					showRefreshText={!isLogsExplorerPage && !isApiMonitoringPage}
-				/>
+
+			<div className="rightActions">
+				<div className="timeRange">
+					{showOldCTA && <NewExplorerCTA />}
+					<DateTimeSelectionV2
+						showAutoRefresh={showAutoRefresh}
+						showRefreshText={!isLogsExplorerPage && !isApiMonitoringPage}
+						hideShareModal
+					/>
+				</div>
+
+				{rightActions}
 			</div>
-			<div className="rightActions">{rightActions}</div>
 		</div>
 	);
 }
