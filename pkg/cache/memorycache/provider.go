@@ -11,11 +11,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	go_cache "github.com/patrickmn/go-cache"
+	gocache "github.com/patrickmn/go-cache"
 )
 
 type provider struct {
-	cc       *go_cache.Cache
+	cc       *gocache.Cache
 	config   cache.Config
 	settings factory.ScopedProviderSettings
 }
@@ -26,26 +26,26 @@ func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
 
 func New(ctx context.Context, settings factory.ProviderSettings, config cache.Config) (cache.Cache, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/cache/memorycache")
-	return &provider{cc: go_cache.New(config.Memory.TTL, config.Memory.CleanupInterval), settings: scopedProviderSettings, config: config}, nil
+
+	return &provider{
+		cc:       gocache.New(config.Memory.TTL, config.Memory.CleanupInterval),
+		settings: scopedProviderSettings,
+		config:   config,
+	}, nil
 }
 
 func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey string, data cachetypes.Cacheable, ttl time.Duration) error {
-	// check if the data being passed is a pointer and is not nil
-	err := cachetypes.ValidatePointer(data, "inmemory")
+	err := cachetypes.CheckCacheablePointer(data)
 	if err != nil {
 		return err
 	}
 
-	if ttl == 0 {
-		provider.settings.Logger().WarnContext(ctx, "zero value for TTL found. defaulting to the base TTL", "cache_key", cacheKey, "default_ttl", provider.config.Memory.TTL)
-	}
-	provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), data, ttl)
+	provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), data.Clone(), ttl)
 	return nil
 }
 
 func (provider *provider) Get(_ context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable, allowExpired bool) error {
-	// check if the destination being passed is a pointer and is not nil
-	err := cachetypes.ValidatePointer(dest, "inmemory")
+	err := cachetypes.CheckCacheablePointer(dest)
 	if err != nil {
 		return err
 	}
@@ -56,10 +56,17 @@ func (provider *provider) Get(_ context.Context, orgID valuer.UUID, cacheKey str
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "destination value is not settable, %s", dstv.Elem())
 	}
 
-	data, found := provider.cc.Get(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
+	cachedData, found := provider.cc.Get(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 	if !found {
 		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "key miss")
 	}
+
+	cacheableData, ok := cachedData.(cachetypes.Cacheable)
+	if !ok {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cached data is not a cacheable")
+	}
+
+	data := cacheableData.Clone()
 
 	// check the type compatbility between the src and dest
 	srcv := reflect.ValueOf(data)

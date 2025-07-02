@@ -1,6 +1,10 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
+)
 
 type GetWaterfallSpansForTraceWithMetadataCache struct {
 	StartTime                     uint64            `json:"startTime"`
@@ -12,6 +16,20 @@ type GetWaterfallSpansForTraceWithMetadataCache struct {
 	SpanIdToSpanNodeMap           map[string]*Span  `json:"spanIdToSpanNodeMap"`
 	TraceRoots                    []*Span           `json:"traceRoots"`
 	HasMissingSpans               bool              `json:"hasMissingSpans"`
+}
+
+func (c *GetWaterfallSpansForTraceWithMetadataCache) Clone() cachetypes.Cacheable {
+	return &GetWaterfallSpansForTraceWithMetadataCache{
+		StartTime:                     c.StartTime,
+		EndTime:                       c.EndTime,
+		DurationNano:                  c.DurationNano,
+		TotalSpans:                    c.TotalSpans,
+		TotalErrorSpans:               c.TotalErrorSpans,
+		ServiceNameToTotalDurationMap: c.ServiceNameToTotalDurationMap,
+		SpanIdToSpanNodeMap:           c.SpanIdToSpanNodeMap,
+		TraceRoots:                    c.TraceRoots,
+		HasMissingSpans:               c.HasMissingSpans,
+	}
 }
 
 func (c *GetWaterfallSpansForTraceWithMetadataCache) MarshalBinary() (data []byte, err error) {
@@ -27,6 +45,16 @@ type GetFlamegraphSpansForTraceCache struct {
 	DurationNano  uint64              `json:"durationNano"`
 	SelectedSpans [][]*FlamegraphSpan `json:"selectedSpans"`
 	TraceRoots    []*FlamegraphSpan   `json:"traceRoots"`
+}
+
+func (c *GetFlamegraphSpansForTraceCache) Clone() cachetypes.Cacheable {
+	return &GetFlamegraphSpansForTraceCache{
+		StartTime:     c.StartTime,
+		EndTime:       c.EndTime,
+		DurationNano:  c.DurationNano,
+		SelectedSpans: c.SelectedSpans,
+		TraceRoots:    c.TraceRoots,
+	}
 }
 
 func (c *GetFlamegraphSpansForTraceCache) MarshalBinary() (data []byte, err error) {
