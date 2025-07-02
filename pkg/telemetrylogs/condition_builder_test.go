@@ -337,7 +337,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "GET",
-			expectedSQL:   `JSONExtract(JSON_VALUE(body, '$."http"."method"'), 'String') = ?`,
+			expectedSQL:   `JSON_VALUE(body, '$."http"."method"') = ?`,
 			expectedError: nil,
 		},
 		{
@@ -417,7 +417,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorContains,
 			value:         "200",
-			expectedSQL:   `LOWER(JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'String')) LIKE LOWER(?)`,
+			expectedSQL:   `LOWER(JSON_VALUE(body, '$."http"."status_code"')) LIKE LOWER(?)`,
 			expectedError: nil,
 		},
 		{
@@ -427,7 +427,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotContains,
 			value:         "200",
-			expectedSQL:   `LOWER(JSONExtract(JSON_VALUE(body, '$."http"."status_code"'), 'String')) NOT LIKE LOWER(?)`,
+			expectedSQL:   `LOWER(JSON_VALUE(body, '$."http"."status_code"')) NOT LIKE LOWER(?)`,
 			expectedError: nil,
 		},
 		{
