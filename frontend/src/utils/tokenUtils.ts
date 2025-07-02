@@ -1,6 +1,6 @@
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import { IQueryPair } from 'types/antlrQueryTypes';
-import { OPERATORS } from 'utils/antlrQueryUtils';
+import { OPERATORS } from 'constants/antlrQueryConstants';
 
 export function isKeyToken(tokenType: number): boolean {
 	return tokenType === FilterQueryLexer.KEY;

@@ -16,7 +16,7 @@ import {
 	isValueToken,
 	isWrappedUnderQuotes,
 } from './tokenUtils';
-import { OPERATORS } from './antlrQueryUtils';
+import { OPERATORS } from 'constants/antlrQueryConstants';
 
 // Function to normalize multiple spaces to single spaces when not in quotes
 function normalizeSpaces(query: string): string {
