@@ -28,16 +28,17 @@ export const isTraceToLogsQuery = (queryData: IBuilderQuery): boolean => {
 	return !!traceIdFilter;
 };
 
-type EmptyLogsListConfig = {
+export type EmptyLogsListConfig = {
 	title: string;
 	subTitle: string;
-	description: string[];
-	documentationLinks: {
+	description: string | string[];
+	documentationLinks?: Array<{
 		text: string;
 		url: string;
-	}[];
-	showClearFiltersButton: boolean;
-	onClearFilters: () => void;
+	}>;
+	showClearFiltersButton?: boolean;
+	onClearFilters?: () => void;
+	clearFiltersButtonText?: string;
 };
 
 export const getEmptyLogsListConfig = (
@@ -61,6 +62,7 @@ export const getEmptyLogsListConfig = (
 				'https://signoz.io/docs/traces-management/guides/correlate-traces-and-logs/',
 		},
 	],
+	clearFiltersButtonText: 'Clear filters from Trace to view other logs',
 	showClearFiltersButton: true,
 	onClearFilters: handleClearFilters,
 });

@@ -4,6 +4,7 @@ import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import LearnMore from 'components/LearnMore/LearnMore';
+import { EmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import { Delete } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
@@ -11,19 +12,7 @@ import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
 interface EmptyLogsSearchProps {
 	dataSource: DataSource;
 	panelType: PanelTypeKeys;
-	customMessage?: {
-		title: string;
-		subTitle?: string;
-		description: string | string[];
-		documentationLinks?: Array<{
-			text: string;
-			url: string;
-			description?: string;
-		}>;
-		showClearFiltersButton?: boolean;
-		onClearFilters?: () => void;
-		clearFiltersButtonText?: string;
-	};
+	customMessage?: EmptyLogsListConfig;
 }
 
 export default function EmptyLogsSearch({
@@ -91,8 +80,7 @@ export default function EmptyLogsSearch({
 									className="empty-logs-search__clear-filters-btn"
 									onClick={customMessage.onClearFilters}
 								>
-									{customMessage.clearFiltersButtonText ||
-										'Clear filters from Trace to view other logs'}
+									{customMessage.clearFiltersButtonText}
 									<span className="empty-logs-search__clear-filters-btn-icon">
 										<Delete size={14} />
 										Clear filters
