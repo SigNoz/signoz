@@ -161,11 +161,8 @@ describe('LogsExplorerList - empty states', () => {
 		).toBeInTheDocument();
 
 		// Check for documentation links
-		expect(screen.getByText('How to link logs and traces')).toBeInTheDocument();
 		expect(screen.getByText('Sending logs to SigNoz')).toBeInTheDocument();
-		expect(
-			screen.getByText('Trace and log correlation best practices'),
-		).toBeInTheDocument();
+		expect(screen.getByText('Correlate traces and logs')).toBeInTheDocument();
 	});
 
 	it('should display empty state when filters are applied and no results are found', async () => {
