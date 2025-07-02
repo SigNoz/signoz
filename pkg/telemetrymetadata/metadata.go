@@ -16,6 +16,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/maps"
 )
 
 var (
@@ -208,6 +209,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		}
 
 		keys = append(keys, key)
+		mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()] = key
 	}
 
 	if rows.Err() != nil {
@@ -215,8 +217,8 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 	}
 
 	staticKeys := []string{"isRoot", "isEntrypoint"}
-	staticKeys = append(staticKeys, telemetrytraces.IntrinsicFields...)
-	staticKeys = append(staticKeys, telemetrytraces.CalculatedFields...)
+	staticKeys = append(staticKeys, maps.Keys(telemetrytraces.IntrinsicFields)...)
+	staticKeys = append(staticKeys, maps.Keys(telemetrytraces.CalculatedFields)...)
 
 	// add matching intrinsic and matching calculated fields
 	for _, key := range staticKeys {
@@ -228,6 +230,19 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 			}
 		}
 		if found {
+			if field, exists := telemetrytraces.IntrinsicFields[key]; exists {
+				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
+					keys = append(keys, &field)
+				}
+				continue
+			}
+
+			if field, exists := telemetrytraces.CalculatedFields[key]; exists {
+				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
+					keys = append(keys, &field)
+				}
+				continue
+			}
 			keys = append(keys, &telemetrytypes.TelemetryFieldKey{
 				Name:         key,
 				FieldContext: telemetrytypes.FieldContextSpan,
@@ -361,6 +376,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 
 		keys = append(keys, key)
+		mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()] = key
 	}
 
 	if rows.Err() != nil {
@@ -368,7 +384,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	staticKeys := []string{}
-	staticKeys = append(staticKeys, telemetrylogs.IntrinsicFields...)
+	staticKeys = append(staticKeys, maps.Keys(telemetrylogs.IntrinsicFields)...)
 
 	// add matching intrinsic and matching calculated fields
 	for _, key := range staticKeys {
@@ -380,6 +396,13 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			}
 		}
 		if found {
+			if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
+				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
+					keys = append(keys, &field)
+				}
+				continue
+			}
+
 			keys = append(keys, &telemetrytypes.TelemetryFieldKey{
 				Name:         key,
 				FieldContext: telemetrytypes.FieldContextLog,

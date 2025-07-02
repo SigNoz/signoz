@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -205,6 +206,10 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "Query timed out").
+				WithAdditional("Try refining your search by adding relevant resource attributes filtering")
+		}
 		return nil, err
 	}
 	defer rows.Close()
