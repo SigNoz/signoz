@@ -1,3 +1,5 @@
+import './styles.scss';
+
 import { Popover, PopoverProps } from 'antd';
 import { ReactNode } from 'react';
 
@@ -16,6 +18,38 @@ interface ContextMenuProps {
 	items?: ReactNode;
 	onClose: () => void;
 	children?: ReactNode;
+}
+
+interface ContextMenuItemProps {
+	children: ReactNode;
+	onClick?: () => void;
+	icon?: ReactNode;
+	disabled?: boolean;
+	danger?: boolean;
+}
+
+function ContextMenuItem({
+	children,
+	onClick,
+	icon,
+	disabled = false,
+	danger = false,
+}: ContextMenuItemProps): JSX.Element {
+	const className = `context-menu-item${disabled ? ' disabled' : ''}${
+		danger ? ' danger' : ''
+	}`;
+
+	return (
+		<button
+			className={className}
+			onClick={disabled ? undefined : onClick}
+			disabled={disabled}
+			type="button"
+		>
+			{icon && <span className="icon">{icon}</span>}
+			<span className="text">{children}</span>
+		</button>
+	);
 }
 
 export function ContextMenu({
@@ -71,6 +105,17 @@ export function ContextMenu({
 		</Popover>
 	);
 }
+
+// Attach Item component to ContextMenu
+ContextMenu.Item = ContextMenuItem;
+
+// default props for ContextMenuItem
+ContextMenuItem.defaultProps = {
+	onClick: undefined,
+	icon: undefined,
+	disabled: false,
+	danger: false,
+};
 
 // default props
 ContextMenu.defaultProps = {
