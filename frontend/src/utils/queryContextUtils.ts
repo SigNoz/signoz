@@ -16,7 +16,7 @@ import {
 	isValueToken,
 	isWrappedUnderQuotes,
 } from './tokenUtils';
-import { OPERATORS } from 'constants/antlrQueryConstants';
+import { NON_VALUE_OPERATORS } from 'constants/antlrQueryConstants';
 
 // Function to normalize multiple spaces to single spaces when not in quotes
 function normalizeSpaces(query: string): string {
@@ -1354,7 +1354,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 				currentPair &&
 				currentPair.key &&
 				currentPair.operator &&
-				currentPair.operator !== OPERATORS.EXISTS &&
+				!NON_VALUE_OPERATORS.includes(currentPair.operator) &&
 				!currentPair.value
 			) {
 				currentPair.value = token.text;

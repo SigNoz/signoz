@@ -15,6 +15,8 @@ export const OPERATORS = {
 	'<': '<',
 };
 
+export const NON_VALUE_OPERATORS = [OPERATORS.EXISTS];
+
 export enum QUERY_BUILDER_KEY_TYPES {
 	STRING = 'string',
 	NUMBER = 'number',
