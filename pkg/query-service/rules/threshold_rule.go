@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/rand/v2"
 	"text/template"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/transition"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
@@ -52,6 +55,9 @@ type ThresholdRule struct {
 	// used for attribute metadata enrichment for logs and traces
 	logsKeys  map[string]v3.AttributeKey
 	spansKeys map[string]v3.AttributeKey
+
+	// internal use
+	triggerCnt int
 }
 
 func NewThresholdRule(
@@ -288,7 +294,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		}
 
 		if hasTracesQuery {
-			spanKeys, err := r.reader.GetSpanAttributeKeys(ctx)
+			spanKeys, err := r.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(params.CompositeQuery))
 			if err != nil {
 				return nil, err
 			}
@@ -349,12 +355,53 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		return resultVector, nil
 	}
 
+	shouldLog := false
+
 	for _, series := range queryResult.Series {
 		smpl, shouldAlert := r.ShouldAlert(*series)
 		if shouldAlert {
+			shouldLog = true
 			resultVector = append(resultVector, smpl)
 		}
 	}
+
+	if (shouldLog && r.triggerCnt < 100) || rand.Float64() < (1.0/30.0) {
+		func(ts time.Time) {
+			r.triggerCnt++
+			defer func() {
+				if rr := recover(); rr != nil {
+					zap.L().Warn("unexpected panic while converting to v5",
+						zap.Any("panic", rr),
+						zap.String("ruleid", r.ID()),
+					)
+				}
+			}()
+			v5Req, err := transition.ConvertV3ToV5(params)
+			if err != nil {
+				zap.L().Warn("unable to convert to v5 request payload", zap.Error(err), zap.String("ruleid", r.ID()))
+				return
+			}
+			v5ReqJSON, _ := json.Marshal(v5Req)
+
+			v3Resp := v3.QueryRangeResponse{
+				Result: results,
+			}
+
+			v5Resp, err := transition.ConvertV3ResponseToV5(&v3Resp, querybuildertypesv5.RequestTypeTimeSeries)
+			if err != nil {
+				zap.L().Warn("unable to convert to v5 response payload", zap.Error(err), zap.String("ruleid", r.ID()))
+				return
+			}
+
+			v5RespJSON, _ := json.Marshal(v5Resp)
+			zap.L().Info("v5 request and expected response for triggered alert",
+				zap.String("request_payload", string(v5ReqJSON)),
+				zap.String("response_payload", string(v5RespJSON)),
+				zap.String("ruleid", r.ID()),
+			)
+		}(ts)
+	}
+
 	return resultVector, nil
 }
 
