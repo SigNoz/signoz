@@ -47,9 +47,11 @@ function convertTimeSeriesData(
 		queryName: timeSeriesData.queryName,
 		legend: legendMap[timeSeriesData.queryName] || timeSeriesData.queryName,
 		series: timeSeriesData?.aggregations?.flatMap((aggregation) => {
-			const { index } = aggregation;
-			const { alias } = aggregation;
-			const { series } = aggregation;
+			const { index, alias, series } = aggregation;
+
+			if (!series || !series.length) {
+				return [];
+			}
 
 			return series.map((series) => ({
 				labels: series.labels
