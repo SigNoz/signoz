@@ -1,8 +1,8 @@
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import {
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 } from 'constants/queryBuilder';
+import ContextMenu from 'periscope/components/ContextMenu';
 import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -81,26 +81,13 @@ export function getContextMenuConfig(
 		return {
 			header,
 			items: filterOperators.map((operator) => (
-				<div
+				<ContextMenu.Item
 					key={operator}
-					style={{
-						display: 'flex',
-						alignItems: 'center',
-						gap: 8,
-						padding: '8px 16px',
-						cursor: 'pointer',
-					}}
+					icon={SUPPORTED_OPERATORS[operator].icon}
 					onClick={(): void => onColumnClick(SUPPORTED_OPERATORS[operator].value)}
-					role="button"
-					tabIndex={0}
 				>
-					<span style={{ color: '#3B5AFB', fontSize: 18 }}>
-						{SUPPORTED_OPERATORS[operator].icon}
-					</span>
-					<span style={{ fontWeight: 600, color: '#2B2B43' }}>
-						{SUPPORTED_OPERATORS[operator].label}
-					</span>
-				</div>
+					{SUPPORTED_OPERATORS[operator].label}
+				</ContextMenu.Item>
 			)),
 		};
 	}
