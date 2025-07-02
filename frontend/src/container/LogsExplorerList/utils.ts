@@ -35,7 +35,6 @@ type EmptyLogsListConfig = {
 	documentationLinks: {
 		text: string;
 		url: string;
-		description: string;
 	}[];
 	showClearFiltersButton: boolean;
 	onClearFilters: () => void;
@@ -53,20 +52,13 @@ export const getEmptyLogsListConfig = (
 	],
 	documentationLinks: [
 		{
-			text: 'How to link logs and traces',
-			url: 'https://signoz.io/docs/userguide/logs/#correlating-logs-with-traces',
-			description:
-				'Learn how to correlate your logs with traces for better observability',
-		},
-		{
 			text: 'Sending logs to SigNoz',
-			url: 'https://signoz.io/docs/userguide/logs/',
-			description: 'Set up log collection and forwarding to SigNoz',
+			url: 'https://signoz.io/docs/logs-management/send-logs-to-signoz/',
 		},
 		{
-			text: 'Trace and log correlation best practices',
-			url: 'https://signoz.io/docs/instrumentation/overview/',
-			description: 'Best practices for instrumenting your applications',
+			text: 'Correlate traces and logs',
+			url:
+				'https://signoz.io/docs/traces-management/guides/correlate-traces-and-logs/',
 		},
 	],
 	showClearFiltersButton: true,
