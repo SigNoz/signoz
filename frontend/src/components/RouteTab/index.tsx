@@ -29,13 +29,23 @@ function RouteTab({
 
 	// Find the matching route for the current pathname
 	const currentRoute = routesWithParams.find((route) => {
-		const pathnameOnly = route.route.split('?')[0];
-		const routePattern = escapeRegExp(pathnameOnly).replace(
+		const [routePathname, routeQueryString = ''] = route.route.split('?');
+
+		const routePattern = escapeRegExp(routePathname).replace(
 			/\\:([a-zA-Z0-9_]+)/g,
 			'([^/]+)',
 		);
 		const regex = new RegExp(`^${routePattern}$`);
-		return regex.test(location.pathname);
+
+		const routeParams = new URLSearchParams(routeQueryString);
+		const locationParams = new URLSearchParams(location.search);
+
+		return (
+			regex.test(location.pathname) &&
+			Array.from(routeParams.entries()).every(
+				([key, value]) => locationParams.get(key) === value,
+			)
+		);
 	});
 
 	const onChange = (activeRoute: string): void => {
