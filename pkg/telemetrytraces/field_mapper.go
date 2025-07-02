@@ -49,6 +49,7 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
+		"resource": {Name: "resource", Type: schema.ColumnTypeJSON},
 
 		"events": {Name: "events", Type: schema.ArrayColumnType{
 			ElementType: schema.ColumnTypeString,
@@ -135,7 +136,7 @@ func (m *defaultFieldMapper) getColumn(
 ) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return indexV3Columns["resources_string"], nil
+		return indexV3Columns["resource"], nil
 	case telemetrytypes.FieldContextScope:
 		return nil, qbtypes.ErrColumnNotFound
 	case telemetrytypes.FieldContextAttribute:
@@ -189,6 +190,8 @@ func (m *defaultFieldMapper) FieldFor(
 	}
 
 	switch column.Type {
+	case schema.ColumnTypeJSON:
+		return fmt.Sprintf("'resource.%s'", key.Name), nil
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,
