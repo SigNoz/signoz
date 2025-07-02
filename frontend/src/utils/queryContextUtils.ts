@@ -1367,8 +1367,12 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					negationEnd: currentPair.position?.negationEnd || 0,
 				};
 			}
-			// If token is a conjunction (AND/OR), finalize the current pair
-			else if (isConjunctionToken(token.type) && currentPair && currentPair.key) {
+			// If token is a conjunction (AND/OR) or A key, finalize the current pair
+			else if (
+				(isConjunctionToken(token.type) || token.type === FilterQueryLexer.KEY) &&
+				currentPair &&
+				currentPair.key
+			) {
 				queryPairs.push({
 					key: currentPair.key,
 					operator: currentPair.operator || '',
@@ -1396,6 +1400,19 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 
 				// Reset for the next pair
 				currentPair = null;
+
+				if (token.type === FilterQueryLexer.KEY) {
+					// If we encounter a new key, start a new pair immediately
+					currentPair = {
+						key: token.text,
+						position: {
+							keyStart: token.start,
+							keyEnd: token.stop,
+							operatorStart: 0, // Initialize with default values
+							operatorEnd: 0, // Initialize with default values
+						},
+					};
+				}
 			}
 		}
 

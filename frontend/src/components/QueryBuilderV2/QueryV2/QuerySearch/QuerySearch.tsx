@@ -567,7 +567,12 @@ function QuerySearch({
 								);
 								if (!isNull(idx)) {
 									const { start, end } = pair.valuesPosition[idx];
-									if (typeof start === 'number' && typeof end === 'number') {
+									if (
+										typeof start === 'number' &&
+										typeof end === 'number' &&
+										cursorPos.ch >= start &&
+										cursorPos.ch <= end + 1
+									) {
 										shouldDefaultApply = false;
 										addSpaceAfterSelection(
 											view,
@@ -580,7 +585,12 @@ function QuerySearch({
 								}
 							} else if (pair?.position) {
 								const { valueStart, valueEnd } = pair.position;
-								if (typeof valueStart === 'number' && typeof valueEnd === 'number') {
+								if (
+									typeof valueStart === 'number' &&
+									typeof valueEnd === 'number' &&
+									cursorPos.ch >= valueStart &&
+									cursorPos.ch <= valueEnd + 1
+								) {
 									shouldDefaultApply = false;
 									addSpaceAfterSelection(
 										view,
@@ -600,7 +610,9 @@ function QuerySearch({
 								typeof operatorStart === 'number' &&
 								typeof operatorEnd === 'number' &&
 								operatorStart !== 0 &&
-								operatorEnd !== 0
+								operatorEnd !== 0 &&
+								cursorPos.ch >= operatorStart &&
+								cursorPos.ch <= operatorEnd + 1
 							) {
 								shouldDefaultApply = false;
 								addSpaceAfterSelection(
