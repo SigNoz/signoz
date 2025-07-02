@@ -537,6 +537,8 @@ function QuerySearch({
 
 						// Changes to replace the value in-place with the existing value
 						const isValueType = queryContext.isInValue && option.type === 'value';
+						const isOperatorType =
+							queryContext.isInOperator && option.type === 'operator';
 						const pair = queryContext.currentPair;
 
 						if (isValueType) {
@@ -570,6 +572,26 @@ function QuerySearch({
 										false,
 									);
 								}
+							}
+						}
+
+						if (isOperatorType && pair?.position) {
+							console.log('Is in operator type', originalApply, pair);
+							const { operatorStart, operatorEnd } = pair.position;
+							if (
+								typeof operatorStart === 'number' &&
+								typeof operatorEnd === 'number' &&
+								operatorStart !== 0 &&
+								operatorEnd !== 0
+							) {
+								shouldDefaultApply = false;
+								addSpaceAfterSelection(
+									view,
+									{ apply: originalApply },
+									operatorStart,
+									operatorEnd + 1,
+									false,
+								);
 							}
 						}
 
