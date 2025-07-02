@@ -3,6 +3,7 @@ package memorycache
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -141,4 +142,50 @@ func TestSetGetWithDifferentTypes(t *testing.T) {
 	cachedCacheable := new(CacheableB)
 	err = cache.Get(context.Background(), orgID, "key", cachedCacheable, false)
 	assert.Error(t, err)
+}
+
+func TestConcurrentSetGet(t *testing.T) {
+	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+		TTL:             10 * time.Second,
+		CleanupInterval: 10 * time.Second,
+	}})
+	require.NoError(t, err)
+
+	orgID := valuer.GenerateUUID()
+	numGoroutines := 100
+	done := make(chan bool, numGoroutines*2)
+
+	for i := 0; i < numGoroutines; i++ {
+		go func(id int) {
+			cacheable := &CacheableA{
+				Key:    fmt.Sprintf("key-%d", id),
+				Value:  id,
+				Expiry: 50 * time.Second,
+			}
+			err := cache.Set(context.Background(), orgID, fmt.Sprintf("key-%d", id), cacheable, 10*time.Second)
+			assert.NoError(t, err)
+			done <- true
+		}(i)
+	}
+
+	for i := 0; i < numGoroutines; i++ {
+		go func(id int) {
+			cachedCacheable := new(CacheableA)
+			err := cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", id), cachedCacheable, false)
+			// Some keys might not exist due to concurrent access, which is expected
+			_ = err
+			done <- true
+		}(i)
+	}
+
+	for i := 0; i < numGoroutines*2; i++ {
+		<-done
+	}
+
+	for i := 0; i < numGoroutines; i++ {
+		cachedCacheable := new(CacheableA)
+		assert.NoError(t, cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", i), cachedCacheable, false))
+		assert.Equal(t, fmt.Sprintf("key-%d", i), cachedCacheable.Key)
+		assert.Equal(t, i, cachedCacheable.Value)
+	}
 }
