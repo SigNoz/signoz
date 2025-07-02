@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -154,6 +155,8 @@ func TestConcurrentSetGet(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 	numGoroutines := 100
 	done := make(chan bool, numGoroutines*2)
+	cacheables := make([]*CacheableA, numGoroutines)
+	mu := sync.Mutex{}
 
 	for i := 0; i < numGoroutines; i++ {
 		go func(id int) {
@@ -164,6 +167,9 @@ func TestConcurrentSetGet(t *testing.T) {
 			}
 			err := cache.Set(context.Background(), orgID, fmt.Sprintf("key-%d", id), cacheable, 10*time.Second)
 			assert.NoError(t, err)
+			mu.Lock()
+			cacheables[id] = cacheable
+			mu.Unlock()
 			done <- true
 		}(i)
 	}
@@ -187,5 +193,7 @@ func TestConcurrentSetGet(t *testing.T) {
 		assert.NoError(t, cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", i), cachedCacheable, false))
 		assert.Equal(t, fmt.Sprintf("key-%d", i), cachedCacheable.Key)
 		assert.Equal(t, i, cachedCacheable.Value)
+		// confirm that the cached cacheable is a different pointer
+		assert.NotSame(t, cachedCacheable, cacheables[i])
 	}
 }
