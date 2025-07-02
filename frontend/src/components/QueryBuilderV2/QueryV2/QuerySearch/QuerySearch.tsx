@@ -29,13 +29,13 @@ import {
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
+import { validateQuery } from 'utils/antlrQueryUtils';
 import {
 	negationQueryOperatorSuggestions,
 	QUERY_BUILDER_KEY_TYPES,
 	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
 	queryOperatorSuggestions,
-	validateQuery,
-} from 'utils/antlrQueryUtils';
+} from 'constants/antlrQueryConstants';
 import {
 	getCurrentValueIndexAtCursor,
 	getQueryContextAtCursor,

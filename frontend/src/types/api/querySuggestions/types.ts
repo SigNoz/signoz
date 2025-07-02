@@ -1,4 +1,4 @@
-import { QUERY_BUILDER_KEY_TYPES } from 'utils/antlrQueryUtils';
+import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 
 export interface QueryKeyDataSuggestionsProps {
 	label: string;
