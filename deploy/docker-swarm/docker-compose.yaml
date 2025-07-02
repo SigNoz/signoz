@@ -147,7 +147,7 @@ services:
       retries: 3
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:v0.111.43
+    image: signoz/signoz-otel-collector:v0.128.0
     command:
       - --config=/etc/otel-collector-config.yaml
       - --manager-config=/etc/manager-config.yaml
@@ -173,7 +173,7 @@ services:
       - signoz
   schema-migrator:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:v0.111.43
+    image: signoz/signoz-schema-migrator:v0.128.0
     deploy:
       restart_policy:
         condition: on-failure
