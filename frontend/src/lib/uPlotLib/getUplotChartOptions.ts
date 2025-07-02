@@ -14,6 +14,7 @@ import {
 	calculateEnhancedLegendConfig,
 } from 'container/PanelWrapper/enhancedLegend';
 import { Dimensions } from 'hooks/useDimensions';
+import { getLegend } from 'lib/dashboard/getQueryResults';
 import { convertValue } from 'lib/getConvertedValue';
 import getLabelName from 'lib/getLabelName';
 import { cloneDeep, isUndefined } from 'lodash-es';
@@ -195,9 +196,14 @@ export const getUPlotChartOptions = ({
 
 	// Calculate dynamic legend configuration based on panel dimensions and series count
 	const seriesCount = (apiResponse?.data?.result || []).length;
+
 	const seriesLabels = enhancedLegend
 		? (apiResponse?.data?.result || []).map((item) =>
-				getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+				getLegend(
+					item,
+					currentQuery,
+					getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+				),
 		  )
 		: [];
 	const legendConfig = enhancedLegend

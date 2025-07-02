@@ -1,10 +1,15 @@
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Having, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	Having,
+	Query,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 import {
 	LogAggregation,
 	MetricAggregation,
 	TraceAggregation,
 } from 'types/api/v5/queryRange';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 /**
@@ -182,4 +187,36 @@ export const convertAggregationToExpression = (
 			...(alias && { alias }),
 		} as LogAggregation,
 	];
+};
+
+export const getQueryTitles = (currentQuery: Query): string[] => {
+	if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
+		const queryTitles: string[] = [];
+
+		// Handle builder queries with multiple aggregations
+		currentQuery.builder.queryData.forEach((q) => {
+			const aggregationCount = q.aggregations?.length || 1;
+
+			if (aggregationCount > 1) {
+				// If multiple aggregations, create titles like A.0, A.1, A.2
+				for (let i = 0; i < aggregationCount; i++) {
+					queryTitles.push(`${q.queryName}.${i}`);
+				}
+			} else {
+				// Single aggregation, just use query name
+				queryTitles.push(q.queryName);
+			}
+		});
+
+		// Handle formulas (they don't have aggregations, so just use query name)
+		const formulas = currentQuery.builder.queryFormulas.map((q) => q.queryName);
+
+		return [...queryTitles, ...formulas];
+	}
+
+	if (currentQuery.queryType === EQueryType.CLICKHOUSE) {
+		return currentQuery.clickhouse_sql.map((q) => q.name);
+	}
+
+	return currentQuery.promql.map((q) => q.name);
 };

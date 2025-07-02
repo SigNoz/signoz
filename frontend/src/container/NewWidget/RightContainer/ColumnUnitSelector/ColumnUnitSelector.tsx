@@ -21,6 +21,7 @@ export function ColumnUnitSelector(
 	function getAggregateColumnsNamesAndLabels(): string[] {
 		if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
 			const queries = currentQuery.builder.queryData.map((q) => q.queryName);
+			console.log(currentQuery.builder.queryData, queries);
 			const formulas = currentQuery.builder.queryFormulas.map((q) => q.queryName);
 			return [...queries, ...formulas];
 		}
