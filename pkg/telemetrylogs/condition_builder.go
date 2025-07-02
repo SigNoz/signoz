@@ -9,6 +9,7 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"golang.org/x/exp/maps"
 
 	"github.com/huandu/go-sqlbuilder"
 )
@@ -148,7 +149,7 @@ func (c *conditionBuilder) conditionFor(
 		}
 
 		// if the field is intrinsic, it always exists
-		if slices.Contains(IntrinsicFields, key.Name) {
+		if slices.Contains(maps.Keys(IntrinsicFields), key.Name) {
 			return "true", nil
 		}
 
@@ -210,7 +211,7 @@ func (c *conditionBuilder) ConditionFor(
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
 		field, _ := c.fm.FieldFor(ctx, key)
-		if slices.Contains(IntrinsicFields, field) && !strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+		if slices.Contains(maps.Keys(IntrinsicFields), field) && !strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
 			return condition, nil
 		}
 
