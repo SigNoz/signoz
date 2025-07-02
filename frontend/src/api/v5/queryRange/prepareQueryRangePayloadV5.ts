@@ -319,6 +319,7 @@ export const prepareQueryRangePayloadV5 = ({
 	start: startTime,
 	end: endTime,
 	formatForWeb,
+	originalGraphType,
 }: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
@@ -382,7 +383,11 @@ export const prepareQueryRangePayloadV5 = ({
 			queries,
 		},
 		formatOptions: {
-			formatTableResultForUI: !!formatForWeb,
+			formatTableResultForUI:
+				!!formatForWeb ||
+				(originalGraphType
+					? originalGraphType === PANEL_TYPES.TABLE
+					: graphType === PANEL_TYPES.TABLE),
 		},
 		variables: Object.entries(variables).reduce((acc, [key, value]) => {
 			acc[key] = { value };

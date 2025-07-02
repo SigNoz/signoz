@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { ColumnsType, ColumnType } from 'antd/es/table';
+import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import { convertUnit } from 'container/NewWidget/RightContainer/dataFormatCategories';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
@@ -183,10 +184,19 @@ export function createColumnsAndDataSource(
 				? getQueryLegend(currentQuery, item.queryName)
 				: undefined;
 
+			const isMultipleAggregations =
+				createAggregation(
+					currentQuery.queryType === EQueryType.QUERY_BUILDER
+						? currentQuery.builder?.queryData?.find(
+								(query) => query.queryName === item.queryName,
+						  )
+						: undefined,
+				)?.length > 1;
+
 			const column: ColumnType<RowData> = {
 				dataIndex: item.name,
 				// if no legend present then rely on the column name value
-				title: !isEmpty(legend) ? legend : item.name,
+				title: !isMultipleAggregations && !isEmpty(legend) ? legend : item.name,
 				width: QUERY_TABLE_CONFIG.width,
 				render: renderColumnCell && renderColumnCell[item.name],
 				sorter: (a: RowData, b: RowData): number => sortFunction(a, b, item),
