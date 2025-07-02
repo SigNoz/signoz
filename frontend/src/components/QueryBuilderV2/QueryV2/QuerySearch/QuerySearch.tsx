@@ -576,6 +576,7 @@ function QuerySearch({
 							}
 						}
 
+						// Changes to replace the operator in-place with the existing operator
 						if (isOperatorType && pair?.position) {
 							console.log('Is in operator type', originalApply, pair);
 							const { operatorStart, operatorEnd } = pair.position;
