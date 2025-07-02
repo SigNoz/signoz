@@ -38,8 +38,8 @@ export const useCoordinates = (): {
 	} => {
 		const windowWidth = window.innerWidth;
 		const windowHeight = window.innerHeight;
-		const popoverWidth = 300; // Estimated popover width
-		const popoverHeight = 200; // Estimated popover height
+		const popoverWidth = 180;
+		const popoverHeight = 254;
 		const offset = 10;
 
 		let left = x + offset;
@@ -48,7 +48,7 @@ export const useCoordinates = (): {
 
 		// Check if popover would go off the right edge
 		if (left + popoverWidth > windowWidth) {
-			left = x - popoverWidth - offset;
+			left = x - popoverWidth + offset;
 			placement = 'left';
 		}
 
@@ -60,13 +60,13 @@ export const useCoordinates = (): {
 
 		// Check if popover would go off the top edge
 		if (top < 0) {
-			top = y + offset;
+			top = offset;
 			placement = placement === 'right' ? 'bottomRight' : 'bottomLeft';
 		}
 
 		// Check if popover would go off the bottom edge
 		if (top + popoverHeight > windowHeight) {
-			top = y - popoverHeight - offset;
+			top = windowHeight - popoverHeight - offset;
 			placement = placement === 'right' ? 'topRight' : 'topLeft';
 		}
 

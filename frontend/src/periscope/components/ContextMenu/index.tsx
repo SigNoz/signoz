@@ -86,7 +86,7 @@ export function ContextMenu({
 				left: position.left,
 				top: position.top,
 				width: 180,
-				maxHeight: 400,
+				maxHeight: 254,
 			}}
 			arrow={false}
 			placement={position.placement}
