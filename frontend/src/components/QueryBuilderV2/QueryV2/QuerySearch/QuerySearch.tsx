@@ -30,6 +30,8 @@ import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 import {
 	negationQueryOperatorSuggestions,
+	QUERY_BUILDER_KEY_TYPES,
+	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
 	queryOperatorSuggestions,
 	validateQuery,
 } from 'utils/antlrQueryUtils';
@@ -115,6 +117,9 @@ function QuerySearch({
 	const [isFocused, setIsFocused] = useState(false);
 
 	const [isCompleteKeysList, setIsCompleteKeysList] = useState(false);
+	const [isCompleteValuesList, setIsCompleteValuesList] = useState<boolean>(
+		false,
+	);
 
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
 
@@ -244,7 +249,13 @@ function QuerySearch({
 	// Use callback to prevent dependency changes on each render
 	const fetchValueSuggestions = useCallback(
 		// eslint-disable-next-line sonarjs/cognitive-complexity
-		async (key: string): Promise<void> => {
+		async ({
+			key,
+			searchText,
+		}: {
+			key: string;
+			searchText?: string;
+		}): Promise<void> => {
 			if (
 				!key ||
 				(key === activeKey && !isLoadingSuggestions) ||
@@ -269,6 +280,7 @@ function QuerySearch({
 			try {
 				const response = await getValueSuggestions({
 					key,
+					searchText: searchText || '',
 					signal: dataSource,
 				});
 
@@ -282,6 +294,10 @@ function QuerySearch({
 				const values = responseData.data?.values || {};
 				const stringValues = values.stringValues || [];
 				const numberValues = values.numberValues || [];
+
+				if (responseData.data?.complete) {
+					setIsCompleteValuesList(responseData.data.complete);
+				}
 
 				// Generate options from string values - explicitly handle empty strings
 				const stringOptions = stringValues
@@ -337,7 +353,6 @@ function QuerySearch({
 							}
 						}, 10);
 					}
-					setIsLoadingSuggestions(false);
 				}
 			} catch (error) {
 				console.error('Error fetching suggestions:', error);
@@ -350,8 +365,9 @@ function QuerySearch({
 							apply: (): boolean => false, // Prevent selection
 						},
 					]);
-					setIsLoadingSuggestions(false);
 				}
+			} finally {
+				setIsLoadingSuggestions(false);
 			}
 		},
 		[activeKey, dataSource, isLoadingSuggestions],
@@ -577,7 +593,6 @@ function QuerySearch({
 
 						// Changes to replace the operator in-place with the existing operator
 						if (isOperatorType && pair?.position) {
-							console.log('Is in operator type', originalApply, pair);
 							const { operatorStart, operatorEnd } = pair.position;
 							if (
 								typeof operatorStart === 'number' &&
@@ -618,7 +633,7 @@ function QuerySearch({
 				(keyName !== activeKey || isLoadingSuggestions) &&
 				!(isLoadingSuggestions && lastKeyRef.current === keyName)
 			) {
-				fetchValueSuggestions(keyName);
+				fetchValueSuggestions({ key: keyName });
 			}
 
 			// For values in bracket list, just add quotes without enclosing in brackets
@@ -716,28 +731,49 @@ function QuerySearch({
 
 				// Filter operators based on key type
 				if (keyType) {
-					if (keyType === 'number') {
+					if (keyType === QUERY_BUILDER_KEY_TYPES.NUMBER) {
 						// Prioritize numeric operators
-						options = options.map((op) => ({
-							...op,
-							boost: ['>', '<', '>=', '<=', '=', '!=', 'BETWEEN'].includes(op.label)
-								? 100
-								: 0,
-						}));
-					} else if (keyType === 'string' || keyType === 'keyword') {
+						options = options
+							.filter((op) =>
+								QUERY_BUILDER_OPERATORS_BY_KEY_TYPE[
+									QUERY_BUILDER_KEY_TYPES.NUMBER
+								].includes(op.label),
+							)
+							.map((op) => ({
+								...op,
+								boost: ['>', '<', '>=', '<=', '=', '!=', 'BETWEEN'].includes(op.label)
+									? 100
+									: 0,
+							}));
+					} else if (
+						keyType === QUERY_BUILDER_KEY_TYPES.STRING ||
+						keyType === 'keyword'
+					) {
 						// Prioritize string operators
-						options = options.map((op) => ({
-							...op,
-							boost: ['=', '!=', 'LIKE', 'ILIKE', 'CONTAINS', 'IN'].includes(op.label)
-								? 100
-								: 0,
-						}));
-					} else if (keyType === 'boolean') {
+						options = options
+							.filter((op) =>
+								QUERY_BUILDER_OPERATORS_BY_KEY_TYPE[
+									QUERY_BUILDER_KEY_TYPES.STRING
+								].includes(op.label),
+							)
+							.map((op) => ({
+								...op,
+								boost: ['=', '!=', 'LIKE', 'ILIKE', 'CONTAINS', 'IN'].includes(op.label)
+									? 100
+									: 0,
+							}));
+					} else if (keyType === QUERY_BUILDER_KEY_TYPES.BOOLEAN) {
 						// Prioritize boolean operators
-						options = options.map((op) => ({
-							...op,
-							boost: ['=', '!='].includes(op.label) ? 100 : 0,
-						}));
+						options = options
+							.filter((op) =>
+								QUERY_BUILDER_OPERATORS_BY_KEY_TYPE[
+									QUERY_BUILDER_KEY_TYPES.BOOLEAN
+								].includes(op.label),
+							)
+							.map((op) => ({
+								...op,
+								boost: ['=', '!='].includes(op.label) ? 100 : 0,
+							}));
 					}
 				}
 
@@ -767,6 +803,11 @@ function QuerySearch({
 			if (!keyName) {
 				return null;
 			}
+			const searchText = word?.text.toLowerCase() ?? '';
+
+			options = (valueSuggestions || []).filter((option) =>
+				option.label.toLowerCase().includes(searchText),
+			);
 
 			// Trigger fetch only if needed
 			if (
@@ -774,16 +815,16 @@ function QuerySearch({
 				(keyName !== activeKey || isLoadingSuggestions) &&
 				!(isLoadingSuggestions && lastKeyRef.current === keyName)
 			) {
-				fetchValueSuggestions(keyName);
+				fetchValueSuggestions({ key: keyName, searchText });
 			}
 
 			// Process options to add appropriate formatting when selected
-			const processedOptions = valueSuggestions.map((option) => {
+			const processedOptions = options.map((option) => {
 				// Clone the option to avoid modifying the original
 				const processedOption = { ...option };
 
 				// Skip processing for non-selectable items
-				if (option.apply === false || typeof option.apply === 'function') {
+				if (!option.apply || typeof option.apply === 'function') {
 					return option;
 				}
 
@@ -973,7 +1014,7 @@ function QuerySearch({
 
 			// Only fetch if needed and if we have a valid key
 			if (key && key !== activeKey && !isLoadingSuggestions) {
-				fetchValueSuggestions(key);
+				fetchValueSuggestions({ key });
 			}
 		}
 	}, [queryContext, activeKey, isLoadingSuggestions, fetchValueSuggestions]);
