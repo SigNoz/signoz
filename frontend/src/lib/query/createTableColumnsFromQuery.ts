@@ -177,7 +177,7 @@ const addOperatorFormulaColumns = (
 		const operatorColumn: DynamicColumn = {
 			query,
 			field: currentQueryData.queryName,
-			dataIndex: currentQueryData.queryName,
+			dataIndex: customLabel || currentQueryData.queryName,
 			title: customLabel || operatorLabel,
 			data: [],
 			type: 'operator',
@@ -554,25 +554,26 @@ const fillDataFromTable = (
 
 	table.rows.forEach((row) => {
 		const unusedColumnsKeys = new Set<keyof RowData>(
-			columns.map((item) => item.field),
+			columns.map((item) => item.title),
 		);
 
 		columns.forEach((column) => {
 			const rowData = row.data;
+			const columnField = column.title || column.field;
 
-			if (Object.prototype.hasOwnProperty.call(rowData, column.field)) {
-				const value = rowData[column.field];
+			if (Object.prototype.hasOwnProperty.call(rowData, columnField)) {
+				const value = rowData[columnField];
 				processTableRowValue(value, column);
-				unusedColumnsKeys.delete(column.field);
+				unusedColumnsKeys.delete(columnField);
 			} else {
 				column.data.push('N/A');
-				unusedColumnsKeys.delete(column.field);
+				unusedColumnsKeys.delete(columnField);
 			}
 		});
 
 		// Fill any remaining unused columns with N/A
 		unusedColumnsKeys.forEach((key) => {
-			const unusedCol = columns.find((item) => item.field === key);
+			const unusedCol = columns.find((item) => item.title === key);
 			if (unusedCol) {
 				unusedCol.data.push('N/A');
 			}

@@ -74,6 +74,7 @@ function createBaseSpec(
 	requestType: RequestType,
 	panelType?: PANEL_TYPES,
 ): BaseBuilderQuery {
+	const nonEmptySelectColumns = queryData.selectColumns?.filter((c) => c.key);
 	return {
 		stepInterval: queryData.stepInterval,
 		disabled: queryData.disabled,
@@ -123,9 +124,9 @@ function createBaseSpec(
 						})),
 					}),
 			  ),
-		selectFields: isEmpty(queryData.selectColumns)
+		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
-			: queryData.selectColumns?.map(
+			: nonEmptySelectColumns?.map(
 					(column: BaseAutocompleteData): TelemetryFieldKey => ({
 						name: column.key,
 						fieldDataType: column?.dataType as FieldDataType,
@@ -157,6 +158,9 @@ export function parseAggregations(
 export function createAggregation(
 	queryData: any,
 ): TraceAggregation[] | LogAggregation[] | MetricAggregation[] {
+	if (!queryData) {
+		return [];
+	}
 	if (queryData.dataSource === DataSource.METRICS) {
 		return [
 			{

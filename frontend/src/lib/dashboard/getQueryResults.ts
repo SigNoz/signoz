@@ -76,7 +76,7 @@ export const getLegend = (
 	payloadQuery: Query,
 	labelName: string,
 ) => {
-	const aggregationPerQuery = payloadQuery.builder?.queryData.reduce(
+	const aggregationPerQuery = payloadQuery?.builder?.queryData.reduce(
 		(acc, query) => {
 			if (query.queryName === queryData.queryName) {
 				acc[query.queryName] = createAggregation(query);

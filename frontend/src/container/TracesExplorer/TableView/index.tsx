@@ -5,9 +5,10 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 function TableView(): JSX.Element {
@@ -42,11 +43,19 @@ function TableView(): JSX.Element {
 		},
 	);
 
+	const queryTableData = useMemo(
+		() =>
+			data?.payload?.data?.newResult?.data?.result ||
+			data?.payload.data.result ||
+			[],
+		[data],
+	);
+
 	return (
 		<Space.Compact block direction="vertical">
 			<QueryTable
 				query={stagedQuery || initialQueriesMap.traces}
-				queryTableData={data?.payload?.data?.newResult?.data?.result || []}
+				queryTableData={queryTableData as QueryDataV3[]}
 				loading={isLoading}
 				sticky
 			/>
