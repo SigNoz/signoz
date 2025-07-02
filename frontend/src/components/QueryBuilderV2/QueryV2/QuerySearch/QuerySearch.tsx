@@ -310,6 +310,7 @@ function QuerySearch({
 					.map((value: string) => ({
 						label: value,
 						type: 'value',
+						apply: value,
 					}));
 
 				// Generate options from number values
@@ -321,6 +322,7 @@ function QuerySearch({
 					.map((value: number) => ({
 						label: value.toString(),
 						type: 'number',
+						apply: value,
 					}));
 
 				// Combine all options and make sure we don't have duplicate labels
