@@ -16,7 +16,8 @@ function getColName(
 	legendMap: Record<string, string>,
 	aggregationPerQuery: Record<string, any>,
 ): string {
-	const aggregation = aggregationPerQuery[col.queryName][col.aggregationIndex];
+	const aggregation =
+		aggregationPerQuery?.[col.queryName]?.[col.aggregationIndex];
 	const legend = legendMap[col.queryName];
 	const aggregationName = aggregation?.alias || aggregation?.expression || '';
 
