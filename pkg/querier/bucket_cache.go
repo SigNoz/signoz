@@ -68,7 +68,7 @@ func (c *cachedData) Clone() cachetypes.Cacheable {
 	copy(copyOfWarnings, c.Warnings)
 
 	return &cachedData{
-		Buckets:  c.Buckets,
+		Buckets:  copyOfBuckets,
 		Warnings: copyOfWarnings,
 	}
 }
