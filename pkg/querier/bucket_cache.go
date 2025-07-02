@@ -53,9 +53,23 @@ type cachedData struct {
 }
 
 func (c *cachedData) Clone() cachetypes.Cacheable {
+	copyOfBuckets := make([]*cachedBucket, len(c.Buckets))
+	for i, bucket := range c.Buckets {
+		copyOfBuckets[i] = &cachedBucket{
+			StartMs: bucket.StartMs,
+			EndMs:   bucket.EndMs,
+			Type:    bucket.Type,
+			Value:   bucket.Value,
+			Stats:   bucket.Stats,
+		}
+	}
+
+	copyOfWarnings := make([]string, len(c.Warnings))
+	copy(copyOfWarnings, c.Warnings)
+
 	return &cachedData{
 		Buckets:  c.Buckets,
-		Warnings: c.Warnings,
+		Warnings: copyOfWarnings,
 	}
 }
 

@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"maps"
 
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 )
@@ -19,15 +20,23 @@ type GetWaterfallSpansForTraceWithMetadataCache struct {
 }
 
 func (c *GetWaterfallSpansForTraceWithMetadataCache) Clone() cachetypes.Cacheable {
+	copyOfServiceNameToTotalDurationMap := make(map[string]uint64)
+	maps.Copy(copyOfServiceNameToTotalDurationMap, c.ServiceNameToTotalDurationMap)
+
+	copyOfSpanIdToSpanNodeMap := make(map[string]*Span)
+	maps.Copy(copyOfSpanIdToSpanNodeMap, c.SpanIdToSpanNodeMap)
+
+	var copyOfTraceRoots []*Span
+	copy(copyOfTraceRoots, c.TraceRoots)
 	return &GetWaterfallSpansForTraceWithMetadataCache{
 		StartTime:                     c.StartTime,
 		EndTime:                       c.EndTime,
 		DurationNano:                  c.DurationNano,
 		TotalSpans:                    c.TotalSpans,
 		TotalErrorSpans:               c.TotalErrorSpans,
-		ServiceNameToTotalDurationMap: c.ServiceNameToTotalDurationMap,
-		SpanIdToSpanNodeMap:           c.SpanIdToSpanNodeMap,
-		TraceRoots:                    c.TraceRoots,
+		ServiceNameToTotalDurationMap: copyOfServiceNameToTotalDurationMap,
+		SpanIdToSpanNodeMap:           copyOfSpanIdToSpanNodeMap,
+		TraceRoots:                    copyOfTraceRoots,
 		HasMissingSpans:               c.HasMissingSpans,
 	}
 }

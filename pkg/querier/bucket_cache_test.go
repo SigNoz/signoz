@@ -2,6 +2,7 @@ package querier
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -1407,4 +1408,34 @@ func TestBucketCache_NoCache(t *testing.T) {
 	// Test NoCache behavior in querier would bypass the cache entirely
 	// The actual NoCache logic is implemented in querier.run(), not in bucket cache
 	// This test verifies that the cache works normally and NoCache bypasses it at a higher level
+}
+
+func TestBucketCache_Clone(t *testing.T) {
+	bc := createTestBucketCache(t)
+	ctx := context.Background()
+	orgID := valuer.UUID{}
+
+	original := &cachedData{
+		Buckets: []*cachedBucket{
+			{StartMs: 1000, EndMs: 2000, Type: qbtypes.RequestTypeTimeSeries, Value: json.RawMessage("bucket1"), Stats: qbtypes.ExecStats{RowsScanned: uint64(1), BytesScanned: uint64(100), DurationMS: uint64(100)}},
+			{StartMs: 1000, EndMs: 2000, Type: qbtypes.RequestTypeRaw, Value: json.RawMessage("bucket2"), Stats: qbtypes.ExecStats{RowsScanned: uint64(1), BytesScanned: uint64(100), DurationMS: uint64(100)}},
+		},
+		Warnings: []string{"warning1", "warning2"},
+	}
+
+	assert.NoError(t, bc.cache.Set(ctx, orgID, "clone", original, 10*time.Second))
+
+	// modify the original cacheable after it has been cached
+	original.Buckets[0].EndMs = uint64(3000)
+	original.Buckets[0].Value = json.RawMessage("bucket1-modified")
+
+	fromCache := new(cachedData)
+	assert.NoError(t, bc.cache.Get(ctx, orgID, "clone", fromCache, false))
+
+	// confirm that the fromCache cacheable is a different from the original
+	assert.NotSame(t, original, fromCache)
+
+	// confirm that the value of bucket1 which were modified after the cache is not modified
+	assert.Equal(t, uint64(2000), fromCache.Buckets[0].EndMs)
+	assert.Equal(t, json.RawMessage("bucket1"), fromCache.Buckets[0].Value)
 }
