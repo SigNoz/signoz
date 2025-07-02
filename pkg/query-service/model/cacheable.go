@@ -26,7 +26,7 @@ func (c *GetWaterfallSpansForTraceWithMetadataCache) Clone() cachetypes.Cacheabl
 	copyOfSpanIdToSpanNodeMap := make(map[string]*Span)
 	maps.Copy(copyOfSpanIdToSpanNodeMap, c.SpanIdToSpanNodeMap)
 
-	var copyOfTraceRoots []*Span
+	copyOfTraceRoots := make([]*Span, len(c.TraceRoots))
 	copy(copyOfTraceRoots, c.TraceRoots)
 	return &GetWaterfallSpansForTraceWithMetadataCache{
 		StartTime:                     c.StartTime,
