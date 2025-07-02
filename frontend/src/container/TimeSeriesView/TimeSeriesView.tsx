@@ -11,6 +11,7 @@ import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/Metrics
 import NoLogs from 'container/NoLogs/NoLogs';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -46,6 +47,7 @@ function TimeSeriesView({
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
+	const { currentQuery } = useQueryBuilder();
 
 	const chartData = useMemo(() => getUPlotChartData(data?.payload), [
 		data?.payload,
@@ -157,6 +159,7 @@ function TimeSeriesView({
 		tzDate: (timestamp: number) =>
 			uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 		timezone: timezone.value,
+		currentQuery,
 	});
 
 	return (
