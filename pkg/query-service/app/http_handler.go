@@ -4534,11 +4534,12 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 
 	referrer := r.Header.Get("Referer")
 
-	properties["referrer"] = referrer
 	if referrer == "" {
 		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
 		return
 	}
+
+	properties["referrer"] = referrer
 
 	if matched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer); matched {
 
