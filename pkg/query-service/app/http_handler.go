@@ -4527,7 +4527,7 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 	}
 
 	properties := queryInfoResult.ToMap()
-	if !(len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0 || len(result[0].Table.Rows) > 0)) {
+	if !(len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0 || (result[0].Table != nil && len(result[0].Table.Rows) > 0))) {
 		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
 		return
 	}
