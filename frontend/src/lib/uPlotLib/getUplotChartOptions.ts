@@ -71,6 +71,7 @@ export interface GetUPlotChartOptions {
 	enhancedLegend?: boolean;
 	legendPosition?: LegendPosition;
 	enableZoom?: boolean;
+	query?: Query;
 }
 
 /** the function converts series A , series B , series C to
@@ -182,6 +183,7 @@ export const getUPlotChartOptions = ({
 	enhancedLegend = true,
 	legendPosition = LegendPosition.BOTTOM,
 	enableZoom,
+	query,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -201,7 +203,7 @@ export const getUPlotChartOptions = ({
 		? (apiResponse?.data?.result || []).map((item) =>
 				getLegend(
 					item,
-					currentQuery,
+					query || currentQuery,
 					getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
 				),
 		  )
