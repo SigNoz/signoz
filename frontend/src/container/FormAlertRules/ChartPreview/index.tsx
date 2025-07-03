@@ -257,6 +257,7 @@ function ChartPreview({
 					uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 				timezone: timezone.value,
 				currentQuery,
+				query: query || currentQuery,
 			}),
 		[
 			yAxisUnit,
@@ -273,6 +274,7 @@ function ChartPreview({
 			graphType,
 			timezone.value,
 			currentQuery,
+			query,
 		],
 	);
 
