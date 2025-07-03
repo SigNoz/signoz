@@ -12,16 +12,9 @@ import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import dompurify from 'dompurify';
-import { isEmpty } from 'lodash-es';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
@@ -31,12 +24,11 @@ import {
 	escapeHtml,
 	filterKeyForField,
 	getFieldAttributes,
-	jsonToDataNodes,
 	parseFieldValue,
-	recursiveParseJSON,
 	removeEscapeCharacters,
 	unescapeString,
 } from '../utils';
+import useAsyncJSONProcessing from './useAsyncJSONProcessing';
 
 interface ITableViewActionsProps {
 	fieldData: Record<string, string>;
@@ -58,101 +50,6 @@ interface ITableViewActionsProps {
 }
 
 const convert = new Convert();
-
-// Hook for async JSON processing
-const useAsyncJSONProcessing = (
-	value: string,
-	shouldProcess: boolean,
-): {
-	isLoading: boolean;
-	treeData: any[] | null;
-	error: string | null;
-} => {
-	const [state, setState] = useState<{
-		isLoading: boolean;
-		treeData: any[] | null;
-		error: string | null;
-	}>({
-		isLoading: false,
-		treeData: null,
-		error: null,
-	});
-
-	const processingRef = useRef<boolean>(false);
-
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	useEffect((): (() => void) => {
-		if (!shouldProcess || processingRef.current) {
-			return (): void => {};
-		}
-
-		processingRef.current = true;
-		setState({ isLoading: true, treeData: null, error: null });
-
-		// Option 1: Using setTimeout for non-blocking processing
-		const processAsync = (): void => {
-			setTimeout(() => {
-				try {
-					const parsedBody = recursiveParseJSON(value);
-					if (!isEmpty(parsedBody)) {
-						const treeData = jsonToDataNodes(parsedBody);
-						setState({ isLoading: false, treeData, error: null });
-					} else {
-						setState({ isLoading: false, treeData: null, error: null });
-					}
-				} catch (error) {
-					setState({
-						isLoading: false,
-						treeData: null,
-						error: error instanceof Error ? error.message : 'Parsing failed',
-					});
-				} finally {
-					processingRef.current = false;
-				}
-			}, 0);
-		};
-
-		// Option 2: Using requestIdleCallback for better performance
-		const processWithIdleCallback = (): void => {
-			if ('requestIdleCallback' in window) {
-				requestIdleCallback(
-					// eslint-disable-next-line sonarjs/no-identical-functions
-					(): void => {
-						try {
-							const parsedBody = recursiveParseJSON(value);
-							if (!isEmpty(parsedBody)) {
-								const treeData = jsonToDataNodes(parsedBody);
-								setState({ isLoading: false, treeData, error: null });
-							} else {
-								setState({ isLoading: false, treeData: null, error: null });
-							}
-						} catch (error) {
-							setState({
-								isLoading: false,
-								treeData: null,
-								error: error instanceof Error ? error.message : 'Parsing failed',
-							});
-						} finally {
-							processingRef.current = false;
-						}
-					},
-					{ timeout: 1000 },
-				);
-			} else {
-				processAsync();
-			}
-		};
-
-		processWithIdleCallback();
-
-		// Cleanup function
-		return (): void => {
-			processingRef.current = false;
-		};
-	}, [value, shouldProcess]);
-
-	return state;
-};
 
 // Memoized Tree Component
 const MemoizedTree = React.memo<{ treeData: any[] }>(({ treeData }) => (
