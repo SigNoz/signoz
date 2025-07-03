@@ -1,8 +1,8 @@
 import { ApiV5Instance } from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import {
 	MetricRangePayloadV5,
 	QueryRangePayloadV5,
@@ -13,7 +13,7 @@ export const getQueryRangeV5 = async (
 	version: string,
 	signal: AbortSignal,
 	headers?: Record<string, string>,
-): Promise<SuccessResponse<MetricRangePayloadV5> | ErrorResponse> => {
+): Promise<SuccessResponseV2<MetricRangePayloadV5>> => {
 	try {
 		if (version && version === ENTITY_VERSION_V5) {
 			const response = await ApiV5Instance.post('/query_range', props, {
@@ -22,11 +22,8 @@ export const getQueryRangeV5 = async (
 			});
 
 			return {
-				statusCode: 200,
-				error: null,
-				message: response.data.status,
-				payload: response.data,
-				params: props,
+				httpStatusCode: response.status,
+				data: response.data,
 			};
 		}
 
@@ -37,14 +34,11 @@ export const getQueryRangeV5 = async (
 		});
 
 		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data,
-			params: props,
+			httpStatusCode: response.status,
+			data: response.data.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
 
