@@ -12,6 +12,41 @@
 		.query-aggregation-select-container {
 			flex: 1;
 			min-width: 400px;
+
+			.query-aggregation-select-editor {
+				&.error {
+					.cm-editor {
+						.cm-content {
+							border-color: var(--bg-cherry-500) !important;
+						}
+					}
+				}
+			}
+
+			.query-aggregation-error-container {
+				position: absolute;
+				right: 8px;
+				top: 50%;
+				transform: translateY(-50%);
+				z-index: 1;
+
+				.query-aggregation-error-content {
+					padding: 8px;
+					max-width: 300px;
+
+					.query-aggregation-error-message {
+						color: var(--bg-cherry-500);
+						font-size: 12px;
+						line-height: 16px;
+					}
+				}
+
+				.query-aggregation-error-btn {
+					padding: 4px;
+					height: auto;
+					min-width: auto;
+				}
+			}
 		}
 
 		.query-aggregation-options-input {
