@@ -617,7 +617,7 @@ func init() {
 	}
 
 	// set max flattening depth
-	depth, err := strconv.Atoi(GetOrDefaultEnv(maxJSONFlatteningDepth, "3"))
+	depth, err := strconv.Atoi(GetOrDefaultEnv(maxJSONFlatteningDepth, "1"))
 	if err == nil {
 		MaxJSONFlatteningDepth = depth
 	}
