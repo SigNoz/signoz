@@ -55,7 +55,7 @@ const mockStagedQuery = {
 	builder: {
 		queryData: [
 			{
-				timeAggregation: 'avg',
+				reduceTo: 'avg',
 			},
 		],
 	},
@@ -72,7 +72,7 @@ describe('usePrefillAlertConditions', () => {
 	it('returns null matchType for a single query with unsupported time aggregation', () => {
 		const { result } = renderHook(() =>
 			usePrefillAlertConditions({
-				builder: { queryData: [{ timeAggregation: 'p90' }] },
+				builder: { queryData: [{ reduceTo: 'p90' }] },
 			} as any),
 		);
 		expect(result.current.matchType).toBe(null);
@@ -84,10 +84,10 @@ describe('usePrefillAlertConditions', () => {
 				builder: {
 					queryData: [
 						{
-							timeAggregation: 'avg',
+							reduceTo: 'avg',
 						},
 						{
-							timeAggregation: 'avg',
+							reduceTo: 'avg',
 						},
 					],
 				},
@@ -102,10 +102,10 @@ describe('usePrefillAlertConditions', () => {
 				builder: {
 					queryData: [
 						{
-							timeAggregation: 'avg',
+							reduceTo: 'avg',
 						},
 						{
-							timeAggregation: 'sum',
+							reduceTo: 'sum',
 						},
 					],
 				},
