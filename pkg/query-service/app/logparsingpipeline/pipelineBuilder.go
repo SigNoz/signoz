@@ -241,8 +241,8 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 
 	parseFromNotNilCheck, err := fieldNotNilCheck(parent.ParseFrom)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't generate nil check for parseFrom of json parser op %s: %w", parent.Name, err,
+		return nil, errors.WrapInvalidInputf(err, CodeFieldNilCheckType,
+			"couldn't generate nil check for parseFrom of json parser op %s: %s", parent.Name, err,
 		)
 	}
 	parent.If = fmt.Sprintf(
@@ -287,9 +287,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 
 			err := fromNotNilCheck(&operator)
 			if err != nil {
-				return fmt.Errorf(
-					"couldn't generate nil check for From field of %s op on field %s: %w", operator.Type, operator.From, err,
-				)
+				return err
 			}
 
 			children = append(children, operator)
@@ -409,8 +407,8 @@ func cleanTraceParser(operator *pipelinetypes.PipelineOperator) {
 func fromNotNilCheck(operator *pipelinetypes.PipelineOperator) error {
 	fromNotNilCheck, err := fieldNotNilCheck(operator.From)
 	if err != nil {
-		return fmt.Errorf(
-			"couldn't generate nil check for From field of %s op %s: %w", operator.Type, operator.Name, err,
+		return errors.WrapInvalidInputf(err, CodeFieldNilCheckType,
+			"couldn't generate nil check for From field of %s op %s: %s", operator.Type, operator.Name, err,
 		)
 	}
 
