@@ -21,7 +21,7 @@ export interface OrgDetails {
 	usesObservability: boolean | null;
 	observabilityTool: string | null;
 	otherTool: string | null;
-	familiarity: string | null;
+	usesOtel: boolean | null;
 }
 
 interface OrgQuestionsProps {
@@ -38,13 +38,6 @@ const observabilityTools = {
 	AzureAppMonitor: 'Azure App Monitor',
 	GCPNativeO11yTools: 'GCP-native o11y tools',
 	Honeycomb: 'Honeycomb',
-};
-
-const o11yFamiliarityOptions: Record<string, string> = {
-	beginner: 'Beginner',
-	intermediate: 'Intermediate',
-	expert: 'Expert',
-	notFamiliar: "I'm not familiar with it",
 };
 
 function OrgQuestions({
@@ -69,9 +62,6 @@ function OrgQuestions({
 	const [otherTool, setOtherTool] = useState<string>(
 		orgDetails?.otherTool || '',
 	);
-	const [familiarity, setFamiliarity] = useState<string | null>(
-		orgDetails?.familiarity || null,
-	);
 	const [isNextDisabled, setIsNextDisabled] = useState<boolean>(true);
 
 	useEffect(() => {
@@ -79,6 +69,10 @@ function OrgQuestions({
 	}, [orgDetails.organisationName]);
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+
+	const [usesOtel, setUsesOtel] = useState<boolean | null>(
+		orgDetails?.usesOtel || null,
+	);
 
 	const handleOrgNameUpdate = async (): Promise<void> => {
 		/* Early bailout if orgData is not set or if the organisation name is not set or if the organisation name is empty or if the organisation name is the same as the one in the orgData */
@@ -92,7 +86,7 @@ function OrgQuestions({
 				usesObservability,
 				observabilityTool,
 				otherTool,
-				familiarity,
+				usesOtel,
 			});
 
 			onNext({
@@ -100,7 +94,7 @@ function OrgQuestions({
 				usesObservability,
 				observabilityTool,
 				otherTool,
-				familiarity,
+				usesOtel,
 			});
 
 			return;
@@ -123,7 +117,7 @@ function OrgQuestions({
 					usesObservability,
 					observabilityTool,
 					otherTool,
-					familiarity,
+					usesOtel,
 				});
 
 				onNext({
@@ -131,7 +125,7 @@ function OrgQuestions({
 					usesObservability,
 					observabilityTool,
 					otherTool,
-					familiarity,
+					usesOtel,
 				});
 			} else {
 				logEvent('Org Onboarding: Org Name Update Failed', {
@@ -177,7 +171,7 @@ function OrgQuestions({
 	useEffect(() => {
 		const isValidObservability = isValidUsesObservability();
 
-		if (organisationName !== '' && familiarity !== null && isValidObservability) {
+		if (organisationName !== '' && usesOtel !== null && isValidObservability) {
 			setIsNextDisabled(false);
 		} else {
 			setIsNextDisabled(true);
@@ -186,7 +180,7 @@ function OrgQuestions({
 	}, [
 		organisationName,
 		usesObservability,
-		familiarity,
+		usesOtel,
 		observabilityTool,
 		otherTool,
 	]);
@@ -317,25 +311,37 @@ function OrgQuestions({
 					)}
 
 					<div className="form-group">
-						<div className="question">
-							Are you familiar with setting up observability (o11y)?
-						</div>
+						<div className="question">Do you already use OpenTelemetry?</div>
 						<div className="two-column-grid">
-							{Object.keys(o11yFamiliarityOptions).map((option: string) => (
-								<Button
-									key={option}
-									type="primary"
-									className={`onboarding-questionaire-button ${
-										familiarity === option ? 'active' : ''
-									}`}
-									onClick={(): void => setFamiliarity(option)}
-								>
-									{o11yFamiliarityOptions[option]}
-									{familiarity === option && (
-										<CheckCircle size={12} color={Color.BG_FOREST_500} />
-									)}
-								</Button>
-							))}
+							<Button
+								type="primary"
+								name="usesObservability"
+								className={`onboarding-questionaire-button ${
+									usesOtel === true ? 'active' : ''
+								}`}
+								onClick={(): void => {
+									setUsesOtel(true);
+								}}
+							>
+								Yes{' '}
+								{usesOtel === true && (
+									<CheckCircle size={12} color={Color.BG_FOREST_500} />
+								)}
+							</Button>
+							<Button
+								type="primary"
+								className={`onboarding-questionaire-button ${
+									usesOtel === false ? 'active' : ''
+								}`}
+								onClick={(): void => {
+									setUsesOtel(false);
+								}}
+							>
+								No{' '}
+								{usesOtel === false && (
+									<CheckCircle size={12} color={Color.BG_FOREST_500} />
+								)}
+							</Button>
 						</div>
 					</div>
 				</div>

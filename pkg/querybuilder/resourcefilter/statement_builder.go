@@ -38,6 +38,10 @@ type resourceFilterStatementBuilder[T any] struct {
 	conditionBuilder qbtypes.ConditionBuilder
 	metadataStore    telemetrytypes.MetadataStore
 	signal           telemetrytypes.Signal
+
+	fullTextColumn *telemetrytypes.TelemetryFieldKey
+	jsonBodyPrefix string
+	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
 // Ensure interface compliance at compile time
@@ -64,12 +68,18 @@ func NewLogResourceFilterStatementBuilder(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	metadataStore telemetrytypes.MetadataStore,
+	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	jsonBodyPrefix string,
+	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *resourceFilterStatementBuilder[qbtypes.LogAggregation] {
 	return &resourceFilterStatementBuilder[qbtypes.LogAggregation]{
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
 		metadataStore:    metadataStore,
 		signal:           telemetrytypes.SignalLogs,
+		fullTextColumn:   fullTextColumn,
+		jsonBodyPrefix:   jsonBodyPrefix,
+		jsonKeyToKey:     jsonKeyToKey,
 	}
 }
 
@@ -112,7 +122,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 		return nil, err
 	}
 
-	if err := b.addConditions(ctx, q, start, end, query, keys); err != nil {
+	if err := b.addConditions(ctx, q, start, end, query, keys, variables); err != nil {
 		return nil, err
 	}
 
@@ -130,6 +140,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[T],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) error {
 	// Add filter condition if present
 	if query.Filter != nil && query.Filter.Expression != "" {
@@ -139,7 +150,12 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,
 			FieldKeys:          keys,
+			FullTextColumn:     b.fullTextColumn,
+			JsonBodyPrefix:     b.jsonBodyPrefix,
+			JsonKeyToKey:       b.jsonKeyToKey,
 			SkipFullTextFilter: true,
+			SkipFunctionCalls:  true,
+			Variables:          variables,
 		})
 
 		if err != nil {

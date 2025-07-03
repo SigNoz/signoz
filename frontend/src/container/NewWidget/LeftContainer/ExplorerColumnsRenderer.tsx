@@ -3,21 +3,13 @@
 import './ExplorerColumnsRenderer.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Checkbox,
-	Divider,
-	Dropdown,
-	Input,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Button, Divider, Dropdown, Input, Tooltip, Typography } from 'antd';
 import { MenuProps } from 'antd/lib';
-import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import {
 	AlertCircle,
 	GripVertical,
@@ -25,7 +17,7 @@ import {
 	Search,
 	Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	DragDropContext,
 	Draggable,
@@ -35,6 +27,7 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WidgetGraphProps } from '../types';
+import ExplorerAttributeColumns from './ExplorerAttributeColumns';
 
 type LogColumnsRendererProps = {
 	setSelectedLogFields: WidgetGraphProps['setSelectedLogFields'];
@@ -51,6 +44,7 @@ function ExplorerColumnsRenderer({
 }: LogColumnsRendererProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const [searchText, setSearchText] = useState<string>('');
+	const [querySearchText, setQuerySearchText] = useState<string>('');
 	const [open, setOpen] = useState<boolean>(false);
 
 	const initialDataSource = currentQuery.builder.queryData[0].dataSource;
@@ -60,13 +54,14 @@ function ExplorerColumnsRenderer({
 			aggregateAttribute: '',
 			dataSource: currentQuery.builder.queryData[0].dataSource,
 			aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
-			searchText: '',
+			searchText: querySearchText,
 			tagType: '',
 		},
 		{
 			queryKey: [
 				currentQuery.builder.queryData[0].dataSource,
 				currentQuery.builder.queryData[0].aggregateOperator,
+				querySearchText,
 			],
 		},
 	);
@@ -120,8 +115,20 @@ function ExplorerColumnsRenderer({
 		setOpen(false);
 	};
 
+	const debouncedSetQuerySearchText = useDebouncedFn((value) => {
+		setQuerySearchText(value as string);
+	}, 400);
+
+	useEffect(
+		() => (): void => {
+			debouncedSetQuerySearchText.cancel();
+		},
+		[debouncedSetQuerySearchText],
+	);
+
 	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		setSearchText(e.target.value);
+		debouncedSetQuerySearchText(e.target.value);
 	};
 
 	const items: MenuProps['items'] = [
@@ -141,22 +148,13 @@ function ExplorerColumnsRenderer({
 		{
 			key: 'columns',
 			label: (
-				<div className="attribute-columns">
-					{data?.payload?.attributeKeys
-						?.filter((attributeKey) =>
-							attributeKey.key.toLowerCase().includes(searchText.toLowerCase()),
-						)
-						?.map((attributeKey) => (
-							<Checkbox
-								checked={isAttributeKeySelected(attributeKey.key)}
-								onChange={(): void => handleCheckboxChange(attributeKey.key)}
-								style={{ padding: 0 }}
-								key={attributeKey.key}
-							>
-								{attributeKey.key}
-							</Checkbox>
-						))}
-				</div>
+				<ExplorerAttributeColumns
+					isLoading={isLoading}
+					data={data}
+					searchText={searchText}
+					isAttributeKeySelected={isAttributeKeySelected}
+					handleCheckboxChange={handleCheckboxChange}
+				/>
 			),
 		},
 	];
@@ -220,17 +218,13 @@ function ExplorerColumnsRenderer({
 
 	const isDarkMode = useIsDarkMode();
 
-	if (isLoading) {
-		return <Spinner size="large" tip="Loading..." height="4vh" />;
-	}
-
 	return (
 		<div className="explorer-columns-renderer">
 			<div className="title">
 				<Typography.Text>Columns</Typography.Text>
 				{isError && (
 					<Tooltip title={SOMETHING_WENT_WRONG}>
-						<AlertCircle size={16} />
+						<AlertCircle size={16} data-testid="alert-circle-icon" />
 					</Tooltip>
 				)}
 			</div>
@@ -265,6 +259,7 @@ function ExplorerColumnsRenderer({
 															size={12}
 															color="red"
 															onClick={(): void => removeSelectedLogField(field.name)}
+															data-testid="trash-icon"
 														/>
 													</div>
 												)}
@@ -290,6 +285,7 @@ function ExplorerColumnsRenderer({
 															size={12}
 															color="red"
 															onClick={(): void => removeSelectedLogField(field.key)}
+															data-testid="trash-icon"
 														/>
 													</div>
 												)}

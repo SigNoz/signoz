@@ -3,8 +3,12 @@ package querier
 import (
 	"context"
 	"fmt"
+	"math"
+	"slices"
 	"sort"
+	"strings"
 
+	"github.com/SigNoz/govaluate"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -26,7 +30,7 @@ func getqueryInfo(spec any) queryInfo {
 	case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
 	case qbtypes.QueryBuilderFormula:
-		return queryInfo{Name: s.Name, Disabled: false}
+		return queryInfo{Name: s.Name, Disabled: s.Disabled}
 	case qbtypes.PromQuery:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.Step}
 	case qbtypes.ClickHouseQuery:
@@ -106,12 +110,14 @@ func postProcessBuilderQuery[T any](
 	q *querier,
 	result *qbtypes.Result,
 	query qbtypes.QueryBuilderQuery[T],
-	_ *qbtypes.QueryRangeRequest,
+	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
 	// Apply functions
 	if len(query.Functions) > 0 {
-		result = q.applyFunctions(result, query.Functions)
+		step := query.StepInterval.Duration.Milliseconds()
+		functions := q.prepareFillZeroArgsWithStep(query.Functions, req, step)
+		result = q.applyFunctions(result, functions)
 	}
 
 	return result
@@ -130,7 +136,9 @@ func postProcessMetricQuery(
 	}
 
 	if len(query.Functions) > 0 {
-		result = q.applyFunctions(result, query.Functions)
+		step := query.StepInterval.Duration.Milliseconds()
+		functions := q.prepareFillZeroArgsWithStep(query.Functions, req, step)
+		result = q.applyFunctions(result, functions)
 	}
 
 	// Apply reduce to for scalar request type
@@ -220,6 +228,13 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 		if req.RequestType == qbtypes.RequestTypeTimeSeries {
 			result := q.processTimeSeriesFormula(ctx, results, formula, req)
 			if result != nil {
+				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
+				results[name] = result
+			}
+		} else if req.RequestType == qbtypes.RequestTypeScalar {
+			result := q.processScalarFormula(ctx, results, formula, req)
+			if result != nil {
+				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
 				results[name] = result
 			}
 		}
@@ -233,7 +248,7 @@ func (q *querier) processTimeSeriesFormula(
 	ctx context.Context,
 	results map[string]*qbtypes.Result,
 	formula qbtypes.QueryBuilderFormula,
-	_ *qbtypes.QueryRangeRequest,
+	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 	// Prepare time series data for formula evaluation
 	timeSeriesData := make(map[string]*qbtypes.TimeSeriesData)
@@ -278,10 +293,183 @@ func (q *querier) processTimeSeriesFormula(
 	}
 
 	if len(formula.Functions) > 0 {
-		result = q.applyFunctions(result, formula.Functions)
+		// For formulas, calculate GCD of steps from queries in the expression
+		step := q.calculateFormulaStep(formula.Expression, req)
+		functions := q.prepareFillZeroArgsWithStep(formula.Functions, req, step)
+		result = q.applyFunctions(result, functions)
 	}
 
 	return result
+}
+
+func (q *querier) processScalarFormula(
+	ctx context.Context,
+	results map[string]*qbtypes.Result,
+	formula qbtypes.QueryBuilderFormula,
+	req *qbtypes.QueryRangeRequest,
+) *qbtypes.Result {
+	// conver scalar data to time series format with zero timestamp
+	// so we can run it through formula evaluator
+	timeSeriesData := make(map[string]*qbtypes.TimeSeriesData)
+
+	for queryName, result := range results {
+		if scalarData, ok := result.Value.(*qbtypes.ScalarData); ok {
+			// the scalar results would have just one point so negligible cost
+			tsData := &qbtypes.TimeSeriesData{
+				QueryName:    scalarData.QueryName,
+				Aggregations: make([]*qbtypes.AggregationBucket, 0),
+			}
+
+			aggColumns := make(map[int]int) // aggregation index -> column index
+			for colIdx, col := range scalarData.Columns {
+				if col.Type == qbtypes.ColumnTypeAggregation {
+					aggColumns[int(col.AggregationIndex)] = colIdx
+				}
+			}
+
+			type labeledRowData struct {
+				labels []*qbtypes.Label
+				values map[int]float64 // aggregation index -> value
+			}
+
+			rowsByLabels := make(map[string]*labeledRowData)
+			for _, row := range scalarData.Data {
+				labels := make([]*qbtypes.Label, 0)
+				for i, col := range scalarData.Columns {
+					if col.Type == qbtypes.ColumnTypeGroup && i < len(row) {
+						l := &qbtypes.Label{
+							Key:   col.TelemetryFieldKey,
+							Value: getPointerValue(row[i]),
+						}
+
+						labels = append(labels, l)
+					}
+				}
+
+				labelKey := qbtypes.GetUniqueSeriesKey(labels)
+
+				rowData, exists := rowsByLabels[labelKey]
+				if !exists {
+					rowData = &labeledRowData{
+						labels: labels,
+						values: make(map[int]float64),
+					}
+					rowsByLabels[labelKey] = rowData
+				}
+
+				for aggIdx, colIdx := range aggColumns {
+					if colIdx < len(row) {
+						if val, ok := toFloat64(row[colIdx]); ok {
+							rowData.values[aggIdx] = val
+						} else {
+							q.logger.WarnContext(ctx, "skipped adding unrecognized value")
+						}
+					}
+				}
+			}
+
+			labelKeys := make([]string, 0, len(rowsByLabels))
+			for key := range rowsByLabels {
+				labelKeys = append(labelKeys, key)
+			}
+			slices.Sort(labelKeys)
+
+			aggIndices := make([]int, 0, len(aggColumns))
+			for aggIdx := range aggColumns {
+				aggIndices = append(aggIndices, aggIdx)
+			}
+			slices.Sort(aggIndices)
+
+			for _, aggIdx := range aggIndices {
+				colIdx := aggColumns[aggIdx]
+
+				bucket := &qbtypes.AggregationBucket{
+					Index:  aggIdx,
+					Alias:  scalarData.Columns[colIdx].Name,
+					Meta:   scalarData.Columns[colIdx].Meta,
+					Series: make([]*qbtypes.TimeSeries, 0),
+				}
+
+				for _, labelKey := range labelKeys {
+					rowData := rowsByLabels[labelKey]
+
+					if val, exists := rowData.values[aggIdx]; exists {
+						series := &qbtypes.TimeSeries{
+							Labels: rowData.labels,
+							Values: []*qbtypes.TimeSeriesValue{{
+								Timestamp: 0,
+								Value:     val,
+							}},
+						}
+						bucket.Series = append(bucket.Series, series)
+					}
+				}
+
+				tsData.Aggregations = append(tsData.Aggregations, bucket)
+			}
+
+			timeSeriesData[queryName] = tsData
+		}
+	}
+
+	canDefaultZero := make(map[string]bool)
+	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
+	if err != nil {
+		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
+		return nil
+	}
+
+	formulaSeries, err := evaluator.EvaluateFormula(timeSeriesData)
+	if err != nil {
+		q.logger.ErrorContext(ctx, "failed to evaluate formula", "error", err, "formula", formula.Name)
+		return nil
+	}
+
+	// Convert back to scalar format
+	scalarResult := &qbtypes.ScalarData{
+		QueryName: formula.Name,
+		Columns:   make([]*qbtypes.ColumnDescriptor, 0),
+		Data:      make([][]any, 0),
+	}
+
+	if len(formulaSeries) > 0 && len(formulaSeries[0].Labels) > 0 {
+		for _, label := range formulaSeries[0].Labels {
+			scalarResult.Columns = append(scalarResult.Columns, &qbtypes.ColumnDescriptor{
+				TelemetryFieldKey: label.Key,
+				QueryName:         formula.Name,
+				Type:              qbtypes.ColumnTypeGroup,
+			})
+		}
+	}
+
+	scalarResult.Columns = append(scalarResult.Columns, &qbtypes.ColumnDescriptor{
+		TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "__result"},
+		QueryName:         formula.Name,
+		AggregationIndex:  0,
+		Type:              qbtypes.ColumnTypeAggregation,
+	})
+
+	for _, series := range formulaSeries {
+		row := make([]any, len(scalarResult.Columns))
+
+		for i, label := range series.Labels {
+			if i < len(row)-1 {
+				row[i] = label.Value
+			}
+		}
+
+		if len(series.Values) > 0 {
+			row[len(row)-1] = series.Values[0].Value
+		} else {
+			row[len(row)-1] = "n/a"
+		}
+
+		scalarResult.Data = append(scalarResult.Data, row)
+	}
+
+	return &qbtypes.Result{
+		Value: scalarResult,
+	}
 }
 
 // filterDisabledQueries removes results for disabled queries
@@ -638,15 +826,91 @@ func compareValues(a, b any) int {
 
 // toFloat64 attempts to convert a value to float64
 func toFloat64(v any) (float64, bool) {
-	switch val := v.(type) {
-	case float64:
-		return val, true
-	case int64:
-		return float64(val), true
-	case int:
-		return float64(val), true
-	case int32:
-		return float64(val), true
+	val := numericAsFloat(getPointerValue(v))
+	if math.IsNaN(val) {
+		return 0, false
 	}
-	return 0, false
+	return val, true
+}
+
+func gcd(a, b int64) int64 {
+	if b == 0 {
+		return a
+	}
+	return gcd(b, a%b)
+}
+
+// prepareFillZeroArgsWithStep prepares fillZero function arguments with a specific step
+func (q *querier) prepareFillZeroArgsWithStep(functions []qbtypes.Function, req *qbtypes.QueryRangeRequest, step int64) []qbtypes.Function {
+	needsCopy := false
+	for _, fn := range functions {
+		if fn.Name == qbtypes.FunctionNameFillZero && len(fn.Args) == 0 {
+			needsCopy = true
+			break
+		}
+	}
+
+	if !needsCopy {
+		return functions
+	}
+
+	updatedFunctions := make([]qbtypes.Function, len(functions))
+	copy(updatedFunctions, functions)
+
+	for i, fn := range updatedFunctions {
+		if fn.Name == qbtypes.FunctionNameFillZero && len(fn.Args) == 0 {
+			fn.Args = []qbtypes.FunctionArg{
+				{Value: float64(req.Start)},
+				{Value: float64(req.End)},
+				{Value: float64(step)},
+			}
+			updatedFunctions[i] = fn
+		}
+	}
+
+	return updatedFunctions
+}
+
+// calculateFormulaStep calculates the GCD of steps from queries referenced in the formula
+func (q *querier) calculateFormulaStep(expression string, req *qbtypes.QueryRangeRequest) int64 {
+	parsedExpr, err := govaluate.NewEvaluableExpression(expression)
+	if err != nil {
+		return 60000
+	}
+
+	variables := parsedExpr.Vars()
+
+	// Extract base query names (e.g., "A" from "A.0" or "A.my_alias")
+	queryNames := make(map[string]bool)
+	for _, variable := range variables {
+		// Split by "." to get the base query name
+		parts := strings.Split(variable, ".")
+		if len(parts) > 0 {
+			queryNames[parts[0]] = true
+		}
+	}
+
+	var steps []int64
+
+	for _, query := range req.CompositeQuery.Queries {
+		info := getqueryInfo(query.Spec)
+		if queryNames[info.Name] && info.Step.Duration > 0 {
+			stepMs := info.Step.Duration.Milliseconds()
+			if stepMs > 0 {
+				steps = append(steps, stepMs)
+			}
+		}
+	}
+
+	if len(steps) == 0 {
+		return 60000
+	}
+
+	// Calculate GCD of all steps
+	result := steps[0]
+	for i := 1; i < len(steps); i++ {
+		result = gcd(result, steps[i])
+	}
+
+	return result
 }
