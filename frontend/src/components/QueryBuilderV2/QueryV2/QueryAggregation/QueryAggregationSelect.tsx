@@ -16,7 +16,8 @@ import {
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
-import { RangeSetBuilder } from '@codemirror/state';
+import { EditorState, RangeSetBuilder, Transaction } from '@codemirror/state';
+import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import CodeMirror, {
 	Decoration,
@@ -25,9 +26,11 @@ import CodeMirror, {
 	ViewPlugin,
 	ViewUpdate,
 } from '@uiw/react-codemirror';
+import { Button, Popover } from 'antd';
 import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
+import { TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -140,9 +143,11 @@ const stopEventsExtension = EditorView.domEventHandlers({
 function QueryAggregationSelect({
 	onChange,
 	queryData,
+	maxAggregations,
 }: {
 	onChange?: (value: string) => void;
 	queryData: IBuilderQuery;
+	maxAggregations?: number;
 }): JSX.Element {
 	const { setAggregationOptions } = useQueryBuilderV2Context();
 
@@ -160,8 +165,15 @@ function QueryAggregationSelect({
 	const [functionArgPairs, setFunctionArgPairs] = useState<
 		{ func: string; arg: string }[]
 	>([]);
+	const [validationError, setValidationError] = useState<string | null>(null);
 	const editorRef = useRef<EditorView | null>(null);
 	const [isFocused, setIsFocused] = useState(false);
+
+	// Get valid function names (lowercase)
+	const validFunctions = useMemo(
+		() => tracesAggregateOperatorOptions.map((op) => op.value.toLowerCase()),
+		[],
+	);
 
 	// Helper function to safely start completion
 	const safeStartCompletion = useCallback((): void => {
@@ -206,10 +218,76 @@ function QueryAggregationSelect({
 				});
 			}
 		}
+
+		// Validation logic
+		const validateAggregations = (): string | null => {
+			// Check maxAggregations limit
+			if (maxAggregations !== undefined && pairs.length > maxAggregations) {
+				return `Maximum ${maxAggregations} aggregation${
+					maxAggregations === 1 ? '' : 's'
+				} allowed`;
+			}
+
+			// Check for invalid functions
+			const invalidFuncs = pairs.filter(
+				(pair) => !validFunctions.includes(pair.func),
+			);
+			if (invalidFuncs.length > 0) {
+				const funcs = invalidFuncs.map((f) => f.func).join(', ');
+				return `Invalid function${invalidFuncs.length === 1 ? '' : 's'}: ${funcs}`;
+			}
+
+			// Check for incomplete function calls
+			if (/([a-zA-Z_][\w]*)\s*\([^)]*$/g.test(input)) {
+				return 'Incomplete function call - missing closing parenthesis';
+			}
+
+			// Check for empty function calls that require arguments
+			const emptyFuncs = (input.match(/([a-zA-Z_][\w]*)\s*\(\s*\)/g) || [])
+				.map((call) => call.match(/([a-zA-Z_][\w]*)/)?.[1])
+				.filter((func): func is string => Boolean(func))
+				.filter((func) => operatorArgMeta[func.toLowerCase()]?.acceptsArgs);
+
+			if (emptyFuncs.length > 0) {
+				const isPlural = emptyFuncs.length > 1;
+				return `Function${isPlural ? 's' : ''} ${emptyFuncs.join(', ')} require${
+					isPlural ? '' : 's'
+				} arguments`;
+			}
+
+			return null;
+		};
+
+		setValidationError(validateAggregations());
 		setFunctionArgPairs(pairs);
 		setAggregationOptions(pairs);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [input]);
+	}, [input, maxAggregations, validFunctions]);
+
+	// Transaction filter to limit aggregations
+	const transactionFilterExtension = useMemo(() => {
+		if (maxAggregations === undefined) return [];
+
+		return EditorState.transactionFilter.of((tr: Transaction) => {
+			if (!tr.docChanged) return tr;
+
+			const regex = /([a-zA-Z_][\w]*)\s*\(([^)]*)\)/g;
+			const oldMatches = [
+				...tr.startState.doc.toString().matchAll(regex),
+			].filter((match) => validFunctions.includes(match[1].toLowerCase()));
+			const newMatches = [
+				...tr.newDoc.toString().matchAll(regex),
+			].filter((match) => validFunctions.includes(match[1].toLowerCase()));
+
+			if (
+				newMatches.length > oldMatches.length &&
+				newMatches.length > maxAggregations
+			) {
+				return []; // Cancel transaction
+			}
+			return tr;
+		});
+	}, [maxAggregations, validFunctions]);
 
 	// Find function context for fetching suggestions
 	const functionContextForFetch = getFunctionContextAtCursor(input, cursorPos);
@@ -231,12 +309,6 @@ function QueryAggregationSelect({
 				!!functionContextForFetch &&
 				!!operatorArgMeta[functionContextForFetch]?.acceptsArgs,
 		},
-	);
-
-	// Get valid function names (lowercase)
-	const validFunctions = useMemo(
-		() => tracesAggregateOperatorOptions.map((op) => op.value.toLowerCase()),
-		[],
 	);
 
 	// Memoized chipPlugin that highlights valid function calls like count(), max(arg), min(arg)
@@ -372,6 +444,21 @@ function QueryAggregationSelect({
 						const cursorPos = context.pos;
 						const funcName = getFunctionContextAtCursor(text, cursorPos);
 
+						// Check if over limit and not editing existing
+						if (maxAggregations !== undefined) {
+							const regex = /([a-zA-Z_][\w]*)\s*\(([^)]*)\)/g;
+							const matches = [...text.matchAll(regex)].filter((match) =>
+								validFunctions.includes(match[1].toLowerCase()),
+							);
+							if (matches.length >= maxAggregations) {
+								const isEditing = matches.some((match) => {
+									const start = match.index ?? 0;
+									return cursorPos >= start && cursorPos <= start + match[0].length;
+								});
+								if (!isEditing) return null;
+							}
+						}
+
 						// Do not show suggestions if inside count()
 						if (
 							funcName === TracesAggregatorOperator.COUNT &&
@@ -470,7 +557,14 @@ function QueryAggregationSelect({
 				maxRenderedOptions: 50,
 				activateOnTyping: true,
 			}),
-		[operatorCompletions, isLoadingFields, fieldSuggestions, functionArgPairs],
+		[
+			operatorCompletions,
+			isLoadingFields,
+			fieldSuggestions,
+			functionArgPairs,
+			maxAggregations,
+			validFunctions,
+		],
 	);
 
 	return (
@@ -481,11 +575,14 @@ function QueryAggregationSelect({
 					setInput(value);
 					onChange?.(value);
 				}}
-				className="query-aggregation-select-editor"
+				className={`query-aggregation-select-editor ${
+					validationError ? 'error' : ''
+				}`}
 				theme={copilot}
 				extensions={[
 					chipPlugin,
 					aggregatorAutocomplete,
+					transactionFilterExtension,
 					javascript({ jsx: false, typescript: false }),
 					EditorView.lineWrapping,
 					stopEventsExtension,
@@ -497,7 +594,11 @@ function QueryAggregationSelect({
 						},
 					]),
 				]}
-				placeholder="Type aggregator functions like sum(), count_distinct(...), etc."
+				placeholder={
+					maxAggregations !== undefined
+						? `Type aggregator functions (max ${maxAggregations}) like sum(), count_distinct(...), etc.`
+						: 'Type aggregator functions like sum(), count_distinct(...), etc.'
+				}
 				basicSetup={{
 					lineNumbers: false,
 					autocompletion: true,
@@ -519,12 +620,33 @@ function QueryAggregationSelect({
 					}
 				}}
 			/>
+			{validationError && (
+				<div className="query-aggregation-error-container">
+					<Popover
+						placement="bottomRight"
+						showArrow={false}
+						content={
+							<div className="query-aggregation-error-content">
+								<div className="query-aggregation-error-message">{validationError}</div>
+							</div>
+						}
+						overlayClassName="query-aggregation-error-popover"
+					>
+						<Button
+							type="text"
+							icon={<TriangleAlert size={14} color={Color.BG_CHERRY_500} />}
+							className="periscope-btn ghost query-aggregation-error-btn"
+						/>
+					</Popover>
+				</div>
+			)}
 		</div>
 	);
 }
 
 QueryAggregationSelect.defaultProps = {
 	onChange: undefined,
+	maxAggregations: undefined,
 };
 
 export default QueryAggregationSelect;
