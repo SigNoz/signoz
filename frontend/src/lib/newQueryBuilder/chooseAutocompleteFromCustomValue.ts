@@ -28,13 +28,13 @@ export const chooseAutocompleteFromCustomValue = (
 	dataType?: DataTypes | 'number',
 	fieldType?: MetricsType | undefined,
 ): BaseAutocompleteData => {
-	console.log('uncaught sourceList', { sourceList, fieldType });
 	const dataTypeToUse = getDataTypeForCustomValue(dataType);
 	const firstBaseAutoCompleteValue = sourceList.find(
 		(sourceAutoComplete) =>
 			value === sourceAutoComplete.key &&
 			(dataType === undefined || dataTypeToUse === sourceAutoComplete.dataType) &&
-			(fieldType === undefined || fieldType === sourceAutoComplete.type),
+			((fieldType === undefined && sourceAutoComplete.type === '') ||
+				(fieldType !== undefined && fieldType === sourceAutoComplete.type)),
 	);
 
 	if (!firstBaseAutoCompleteValue) {
