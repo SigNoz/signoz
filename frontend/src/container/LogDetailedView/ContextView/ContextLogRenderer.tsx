@@ -42,7 +42,7 @@ function ContextLogRenderer({
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.METRICS,
+		dataSource: DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 
