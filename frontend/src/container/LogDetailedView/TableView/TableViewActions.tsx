@@ -1,7 +1,4 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable react/display-name */
-/* eslint-disable sonarjs/cognitive-complexity */
 import './TableViewActions.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
@@ -83,6 +80,7 @@ const useAsyncJSONProcessing = (
 
 	const processingRef = useRef<boolean>(false);
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect((): (() => void) => {
 		if (!shouldProcess || processingRef.current) {
 			return (): void => {};
@@ -118,6 +116,7 @@ const useAsyncJSONProcessing = (
 		const processWithIdleCallback = (): void => {
 			if ('requestIdleCallback' in window) {
 				requestIdleCallback(
+					// eslint-disable-next-line sonarjs/no-identical-functions
 					(): void => {
 						try {
 							const parsedBody = recursiveParseJSON(value);
@@ -159,6 +158,8 @@ const useAsyncJSONProcessing = (
 const MemoizedTree = React.memo<{ treeData: any[] }>(({ treeData }) => (
 	<Tree defaultExpandAll showLine treeData={treeData} />
 ));
+
+MemoizedTree.displayName = 'MemoizedTree';
 
 // Body Content Component
 const BodyContent: React.FC<{
@@ -207,6 +208,8 @@ const BodyContent: React.FC<{
 
 	return null;
 });
+
+BodyContent.displayName = 'BodyContent';
 
 export default function TableViewActions(
 	props: ITableViewActionsProps,
