@@ -2,9 +2,9 @@ import './ColumnUnitSelector.styles.scss';
 
 import { Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Dispatch, SetStateAction } from 'react';
+import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
+import { Dispatch, SetStateAction, useCallback } from 'react';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
-import { EQueryType } from 'types/common/dashboard';
 
 import YAxisUnitSelector from '../YAxisUnitSelector';
 
@@ -17,40 +17,33 @@ export function ColumnUnitSelector(
 	props: ColumnUnitSelectorProps,
 ): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
-
-	function getAggregateColumnsNamesAndLabels(): string[] {
-		if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
-			const queries = currentQuery.builder.queryData.map((q) => q.queryName);
-			console.log(currentQuery.builder.queryData, queries);
-			const formulas = currentQuery.builder.queryFormulas.map((q) => q.queryName);
-			return [...queries, ...formulas];
-		}
-		if (currentQuery.queryType === EQueryType.CLICKHOUSE) {
-			return currentQuery.clickhouse_sql.map((q) => q.name);
-		}
-		return currentQuery.promql.map((q) => q.name);
-	}
-
 	const { columnUnits, setColumnUnits } = props;
-	const aggregationQueries = getAggregateColumnsNamesAndLabels();
 
-	function handleColumnUnitSelect(queryName: string, value: string): void {
-		setColumnUnits((prev) => ({
-			...prev,
-			[queryName]: value,
-		}));
-	}
+	const aggregationQueries = useGetQueryLabels(currentQuery);
+
+	const handleColumnUnitSelect = useCallback(
+		(queryName: string, value: string): void => {
+			setColumnUnits((prev) => ({
+				...prev,
+				[queryName]: value,
+			}));
+		},
+		[setColumnUnits],
+	);
+
 	return (
 		<section className="column-unit-selector">
 			<Typography.Text className="heading">Column Units</Typography.Text>
-			{aggregationQueries.map((query) => (
+			{aggregationQueries.map(({ value, label }) => (
 				<YAxisUnitSelector
-					defaultValue={columnUnits[query]}
-					onSelect={(value: string): void => handleColumnUnitSelect(query, value)}
-					fieldLabel={query}
-					key={query}
+					defaultValue={columnUnits[value]}
+					onSelect={(unitValue: string): void =>
+						handleColumnUnitSelect(value, unitValue)
+					}
+					fieldLabel={label}
+					key={value}
 					handleClear={(): void => {
-						handleColumnUnitSelect(query, '');
+						handleColumnUnitSelect(value, '');
 					}}
 				/>
 			))}
