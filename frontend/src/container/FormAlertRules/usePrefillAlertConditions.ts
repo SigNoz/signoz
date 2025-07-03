@@ -16,20 +16,19 @@ export const usePrefillAlertConditions = (
 	const location = useLocation();
 
 	// Extract and set match type
-	const timeAggregation = useMemo(() => {
+	const reduceTo = useMemo(() => {
 		if (!stagedQuery) return null;
 		const isSameTimeAggregation = stagedQuery.builder.queryData.every(
 			(queryData) =>
-				queryData.timeAggregation ===
-				stagedQuery.builder.queryData[0].timeAggregation,
+				queryData.reduceTo === stagedQuery.builder.queryData[0].reduceTo,
 		);
 		return isSameTimeAggregation
-			? stagedQuery.builder.queryData[0].timeAggregation
+			? stagedQuery.builder.queryData[0].reduceTo
 			: null;
 	}, [stagedQuery]);
 
 	const matchType = useMemo(() => {
-		switch (timeAggregation) {
+		switch (reduceTo) {
 			case 'avg':
 				return '3';
 			case 'sum':
@@ -37,7 +36,7 @@ export const usePrefillAlertConditions = (
 			default:
 				return null;
 		}
-	}, [timeAggregation]);
+	}, [reduceTo]);
 
 	// Extract and set threshold operator, value and unit
 	const threshold = useMemo(() => {
