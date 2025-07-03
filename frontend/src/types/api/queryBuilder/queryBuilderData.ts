@@ -80,7 +80,7 @@ export type IBuilderQuery = {
 	having: Having[];
 	havingExpression?: HavingV5;
 	limit: number | null;
-	stepInterval: number;
+	stepInterval: number | undefined;
 	orderBy: OrderByPayload[];
 	reduceTo: ReduceOperators;
 	legend: string;
