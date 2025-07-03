@@ -17,6 +17,7 @@ import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
+import { transformBuilderQueryFields } from 'utils/queryTransformers';
 
 import TraceExplorerControls from '../Controls';
 import { TracesLoading } from '../TraceLoading/TraceLoading';
@@ -39,9 +40,22 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 		QueryParams.pagination,
 	);
 
+	const transformedQuery = useMemo(
+		() =>
+			transformBuilderQueryFields(stagedQuery || initialQueriesMap.traces, {
+				orderBy: [
+					{
+						columnName: 'timestamp',
+						order: 'desc',
+					},
+				],
+			}),
+		[stagedQuery],
+	);
+
 	const { data, isLoading, isFetching, isError } = useGetQueryRange(
 		{
-			query: stagedQuery || initialQueriesMap.traces,
+			query: transformedQuery,
 			graphType: panelType || PANEL_TYPES.TRACE,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,

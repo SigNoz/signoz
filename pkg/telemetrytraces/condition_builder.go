@@ -11,6 +11,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/maps"
 )
 
 type conditionBuilder struct {
@@ -129,10 +130,10 @@ func (c *conditionBuilder) conditionFor(
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 		// if the field is intrinsic, it always exists
-		if slices.Contains(IntrinsicFields, tblFieldName) ||
-			slices.Contains(CalculatedFields, tblFieldName) ||
-			slices.Contains(IntrinsicFieldsDeprecated, tblFieldName) ||
-			slices.Contains(CalculatedFieldsDeprecated, tblFieldName) {
+		if slices.Contains(maps.Keys(IntrinsicFields), tblFieldName) ||
+			slices.Contains(maps.Keys(CalculatedFields), tblFieldName) ||
+			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), tblFieldName) ||
+			slices.Contains(maps.Keys(CalculatedFieldsDeprecated), tblFieldName) {
 			return "true", nil
 		}
 
@@ -205,10 +206,10 @@ func (c *conditionBuilder) ConditionFor(
 	if operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
 		field, _ := c.fm.FieldFor(ctx, key)
-		if slices.Contains(IntrinsicFields, field) ||
-			slices.Contains(IntrinsicFieldsDeprecated, field) ||
-			slices.Contains(CalculatedFields, field) ||
-			slices.Contains(CalculatedFieldsDeprecated, field) {
+		if slices.Contains(maps.Keys(IntrinsicFields), field) ||
+			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), field) ||
+			slices.Contains(maps.Keys(CalculatedFields), field) ||
+			slices.Contains(maps.Keys(CalculatedFieldsDeprecated), field) {
 			return condition, nil
 		}
 
