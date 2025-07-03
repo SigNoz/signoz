@@ -3,7 +3,7 @@ import {
 	ConfigType,
 	getContextMenuConfig,
 } from 'container/QueryTable/contextConfig';
-// import useAggregateDrilldown from 'container/QueryTable/useAggregateDrilldown';
+import useAggregateDrilldown from 'container/QueryTable/useAggregateDrilldown';
 import useFilterDrilldown from 'container/QueryTable/useFilterDrilldown';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
@@ -52,12 +52,12 @@ export function useTableContextMenu({
 		[handleFilterDrilldown, clickedData, query],
 	);
 
-	// const { aggregateDrilldownConfig } = useAggregateDrilldown({
-	// 	query: drilldownQuery,
-	// 	widgetId,
-	// 	clickedData,
-	// 	onClose,
-	// });
+	const { aggregateDrilldownConfig } = useAggregateDrilldown({
+		query: drilldownQuery,
+		widgetId,
+		clickedData,
+		onClose,
+	});
 
 	const menuItemsConfig = useMemo(() => {
 		if (!coordinates) return {};
@@ -67,20 +67,18 @@ export function useTableContextMenu({
 
 		switch (columnType) {
 			case ConfigType.AGGREGATE:
-				// return getContextMenuConfig({
-				// 	configType: ConfigType.AGGREGATE,
-				// 	query,
-				// 	clickedData,
-				// 	panelType: 'table',
-				// 	onColumnClick: onColumnClick,
-				// });
-				return {};
+				return aggregateDrilldownConfig;
 			case ConfigType.GROUP:
 				return filterDrilldownConfig;
 			default:
 				return {};
 		}
-	}, [clickedData, filterDrilldownConfig, coordinates]);
+	}, [
+		clickedData,
+		filterDrilldownConfig,
+		coordinates,
+		aggregateDrilldownConfig,
+	]);
 
 	return { menuItemsConfig };
 }

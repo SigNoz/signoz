@@ -2,6 +2,7 @@ import {
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 } from 'constants/queryBuilder';
+import { BarChart2, DraftingCompass, ScrollText } from 'lucide-react';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -62,11 +63,16 @@ interface ContextMenuConfigParams {
 	configType: ConfigType;
 	query: Query;
 	clickedData: any;
-	panelType: string;
+	panelType?: string;
 	onColumnClick: (operator: string) => void;
 }
 
 interface GroupContextMenuConfig {
+	header?: string;
+	items?: ContextMenuItem;
+}
+
+interface AggregateContextMenuConfig {
 	header?: string;
 	items?: ContextMenuItem;
 }
@@ -77,7 +83,7 @@ function getGroupContextMenuConfig({
 	panelType,
 	onColumnClick,
 }: Omit<ContextMenuConfigParams, 'configType'>): GroupContextMenuConfig {
-	const filterKey = clickedData?.column?.title;
+	const filterKey = clickedData?.column?.dataIndex;
 	const header = `Filter by ${filterKey}`;
 
 	const filterDataType = getBaseMeta(query, filterKey)?.dataType || 'string';
@@ -113,6 +119,43 @@ function getGroupContextMenuConfig({
 	return {};
 }
 
+function getAggregateContextMenuConfig({
+	// query,
+	// clickedData,
+	onColumnClick,
+}: Omit<ContextMenuConfigParams, 'configType'>): AggregateContextMenuConfig {
+	const options = [
+		{
+			key: 'view_logs',
+			icon: <ScrollText size={16} />,
+			label: 'View in Logs',
+		},
+		{
+			key: 'view_metrics',
+			icon: <BarChart2 size={16} />,
+			label: 'View in Metrics',
+		},
+		{
+			key: 'view_traces',
+			icon: <DraftingCompass size={16} />,
+			label: 'View in Traces',
+		},
+	];
+
+	return {
+		header: 'Aggregate by',
+		items: options.map(({ key, label, icon }) => (
+			<ContextMenu.Item
+				key={key}
+				icon={icon}
+				onClick={(): void => onColumnClick(key)}
+			>
+				{label}
+			</ContextMenu.Item>
+		)),
+	};
+}
+
 export function getContextMenuConfig({
 	configType,
 	query,
@@ -128,5 +171,15 @@ export function getContextMenuConfig({
 			onColumnClick,
 		});
 	}
+
+	if (configType === ConfigType.AGGREGATE) {
+		return getAggregateContextMenuConfig({
+			query,
+			clickedData,
+			panelType,
+			onColumnClick,
+		});
+	}
+
 	return {};
 }

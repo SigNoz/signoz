@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react';
 interface ClickedData {
 	record: RowData;
 	column: ColumnType<RowData>;
+	tableColumns: ColumnType<RowData>[];
 }
 
 // Custom hook for managing coordinates

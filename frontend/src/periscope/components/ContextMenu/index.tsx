@@ -90,6 +90,7 @@ export function ContextMenu({
 			}}
 			arrow={false}
 			placement={position.placement}
+			rootClassName="context-menu"
 		>
 			{children}
 			{/* phantom span to force Popover to position relative to viewport */}

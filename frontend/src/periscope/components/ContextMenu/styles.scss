@@ -2,7 +2,7 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: 8px 16px;
+	padding: 8px;
 	cursor: pointer;
 	color: var(--bg-ink-400);
 	font-family: Inter;
@@ -64,6 +64,11 @@
 	}
 }
 
+// Target the popover inner specifically for context menu
+.context-menu .ant-popover-inner {
+	padding: 12px 8px !important;
+}
+
 // Dark mode support
 .darkMode {
 	.context-menu-item {
@@ -93,7 +98,7 @@
 	}
 
 	// Set the menu popover background
-	.ant-popover-inner {
+	.context-menu .ant-popover-inner {
 		background: var(--bg-ink-500) !important;
 		border: 1px solid var(--bg-slate-400) !important;
 	}

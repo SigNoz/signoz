@@ -88,14 +88,13 @@ export function QueryTable({
 							// have its dimension equal to the column width
 							onClick={(e): void => {
 								e.stopPropagation();
-								console.log('@record:', { record, column });
-								onClick(e, { record, column });
+								onClick(e, { record, column, tableColumns });
 							}}
 							onKeyDown={(e): void => {
 								if (e.key === 'Enter' || e.key === ' ') {
 									e.preventDefault();
 									e.stopPropagation();
-									onClick(e as any, { record, column });
+									onClick(e as any, { record, column, tableColumns });
 								}
 							}}
 							style={{ cursor: 'pointer' }}
