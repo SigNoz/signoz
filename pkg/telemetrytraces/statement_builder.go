@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -25,6 +26,7 @@ type traceQueryStatementBuilder struct {
 	cb                        qbtypes.ConditionBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
+	telemetryStore            telemetrystore.TelemetryStore
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
@@ -36,6 +38,7 @@ func NewTraceQueryStatementBuilder(
 	conditionBuilder qbtypes.ConditionBuilder,
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
+	telemetryStore telemetrystore.TelemetryStore,
 ) *traceQueryStatementBuilder {
 	tracesSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrytraces")
 	return &traceQueryStatementBuilder{
@@ -45,6 +48,7 @@ func NewTraceQueryStatementBuilder(
 		cb:                        conditionBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
+		telemetryStore:            telemetryStore,
 	}
 }
 
@@ -68,6 +72,23 @@ func (b *traceQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	// Check if filter contains trace_id(s) and optimize time range if needed
+	if query.Filter != nil && query.Filter.Expression != "" && b.telemetryStore != nil {
+		traceIDs, found := ExtractTraceIDsFromFilter(query.Filter.Expression)
+		if found && len(traceIDs) > 0 {
+			finder := NewTraceTimeRangeFinder(b.telemetryStore)
+
+			traceStart, traceEnd, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
+			if err != nil {
+				b.logger.DebugContext(ctx, "failed to get trace time range", "trace_ids", traceIDs, "error", err)
+			} else if traceStart > 0 && traceEnd > 0 {
+				start = uint64(traceStart)
+				end = uint64(traceEnd)
+				b.logger.DebugContext(ctx, "optimized time range for traces", "trace_ids", traceIDs, "start", start, "end", end)
+			}
+		}
+	}
+
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
 
@@ -77,7 +98,7 @@ func (b *traceQueryStatementBuilder) Build(
 	case qbtypes.RequestTypeTimeSeries:
 		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(ctx, q, query, start, end, keys, false, variables)
+		return b.buildScalarQuery(ctx, q, query, start, end, keys, variables, false, false)
 	}
 
 	return nil, fmt.Errorf("unsupported request type: %s", requestType)
@@ -150,19 +171,14 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	// Select default columns
-	sb.Select(
-		"timestamp",
-		"trace_id",
-		"span_id",
-		"name",
-		sqlbuilder.Escape("resource_string_service$$name"),
-		"duration_nano",
-		"response_status_code",
-	)
+	selectedFields := query.SelectFields
+
+	if len(selectedFields) == 0 {
+		selectedFields = DefaultFields
+	}
 
 	// TODO: should we deprecate `SelectFields` and return everything from a span like we do for logs?
-	for _, field := range query.SelectFields {
+	for _, field := range selectedFields {
 		colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
 		if err != nil {
 			return nil, err
@@ -174,7 +190,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +284,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +295,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, true, variables)
+		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, variables, true, true)
 		if err != nil {
 			return nil, err
 		}
@@ -289,12 +305,15 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 
 		// Constrain the main query to the rows that appear in the CTE.
 		tuple := fmt.Sprintf("(%s)", strings.Join(fieldNames, ", "))
-		sb.Where(fmt.Sprintf("%s IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
+		sb.Where(fmt.Sprintf("%s GLOBAL IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
 
 		// Group by all dimensions
-		sb.GroupBy("ALL")
+		sb.GroupBy("ts")
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
-			sb.Having(query.Having.Expression)
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			sb.Having(rewrittenExpr)
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
@@ -305,9 +324,12 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		finalArgs = querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	} else {
-		sb.GroupBy("ALL")
+		sb.GroupBy("ts")
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
-			sb.Having(query.Having.Expression)
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			sb.Having(rewrittenExpr)
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
@@ -332,8 +354,9 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-	skipResourceCTE bool,
 	variables map[string]qbtypes.VariableItem,
+	skipResourceCTE bool,
+	skipHaving bool,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -385,17 +408,19 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys)
+	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
 
 	// Group by dimensions
-	sb.GroupBy("ALL")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	// Add having clause if needed
-	if query.Having != nil && query.Having.Expression != "" {
-		sb.Having(query.Having.Expression)
+	if query.Having != nil && query.Having.Expression != "" && !skipHaving {
+		rewriter := querybuilder.NewHavingExpressionRewriter()
+		rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+		sb.Having(rewrittenExpr)
 	}
 
 	// Add order by
@@ -439,6 +464,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
 ) ([]string, error) {
 
 	var filterWhereClause *sqlbuilder.WhereClause
@@ -452,6 +478,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
+			Variables:          variables,
 		})
 
 		if err != nil {
@@ -496,7 +523,7 @@ func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 		return "", nil, err
 	}
 
-	sb.Where("resource_fingerprint IN (SELECT fingerprint FROM __resource_filter)")
+	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
 
 	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, nil
 }

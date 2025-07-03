@@ -212,9 +212,12 @@ function QuerySection({
 				return null;
 		}
 	};
+
+	const step2Label = alertDef.alertType === 'METRIC_BASED_ALERT' ? '2' : '1';
+
 	return (
 		<>
-			<StepHeading> {t('alert_form_step2')}</StepHeading>
+			<StepHeading> {t('alert_form_step2', { step: step2Label })}</StepHeading>
 			<FormContainer>
 				<div>{renderTabs(alertType)}</div>
 				{renderQuerySection(currentTab)}

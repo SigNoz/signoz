@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/handlers"
 
 	"github.com/SigNoz/signoz/ee/query-service/app/api"
-	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 	"github.com/SigNoz/signoz/ee/query-service/rules"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
@@ -39,7 +38,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
-	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
@@ -157,15 +155,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		return nil, err
 	}
 
-	telemetry.GetInstance().SetReader(reader)
-	telemetry.GetInstance().SetSqlStore(signoz.SQLStore)
-	telemetry.GetInstance().SetSaasOperator(constants.SaasSegmentKey)
-	telemetry.GetInstance().SetSavedViewsInfoCallback(telemetry.GetSavedViewsInfo)
-	telemetry.GetInstance().SetAlertsInfoCallback(telemetry.GetAlertsInfo)
-	telemetry.GetInstance().SetGetUsersCallback(telemetry.GetUsers)
-	telemetry.GetInstance().SetUserCountCallback(telemetry.GetUserCount)
-	telemetry.GetInstance().SetDashboardsInfoCallback(telemetry.GetDashboardsInfo)
-
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
 		RulesManager:                  rm,
@@ -211,7 +200,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	s.privateHTTP = privateServer
 
 	s.opampServer = opamp.InitializeServer(
-		&opAmpModel.AllAgents, agentConfMgr,
+		&opAmpModel.AllAgents, agentConfMgr, signoz.Instrumentation,
 	)
 
 	orgs, err := apiHandler.Signoz.Modules.OrgGetter.ListByOwnedKeyRange(context.Background())
@@ -243,7 +232,6 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 		s.config.APIServer.Timeout.Default,
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAnalytics().Wrap)
 	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	apiHandler.RegisterPrivateRoutes(r)
@@ -275,7 +263,6 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 		s.config.APIServer.Timeout.Default,
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAnalytics().Wrap)
 	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	apiHandler.RegisterRoutes(r, am)

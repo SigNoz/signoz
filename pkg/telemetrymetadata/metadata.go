@@ -4,15 +4,19 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/maps"
 )
 
 var (
@@ -128,6 +132,8 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 			END as priority`).From(t.tracesDBName + "." + t.tracesFieldsTblName)
 	var limit int
 
+	searchTexts := []string{}
+
 	conds := []string{}
 	for _, fieldKeySelector := range fieldKeySelectors {
 
@@ -145,6 +151,8 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		} else {
 			fieldKeyConds = append(fieldKeyConds, sb.Like("tag_key", "%"+fieldKeySelector.Name+"%"))
 		}
+
+		searchTexts = append(searchTexts, fieldKeySelector.Name)
 
 		// now look at the field context
 		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
@@ -201,10 +209,46 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		}
 
 		keys = append(keys, key)
+		mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()] = key
 	}
 
 	if rows.Err() != nil {
 		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+	}
+
+	staticKeys := []string{"isRoot", "isEntrypoint"}
+	staticKeys = append(staticKeys, maps.Keys(telemetrytraces.IntrinsicFields)...)
+	staticKeys = append(staticKeys, maps.Keys(telemetrytraces.CalculatedFields)...)
+
+	// add matching intrinsic and matching calculated fields
+	for _, key := range staticKeys {
+		found := false
+		for _, v := range searchTexts {
+			if v == "" || strings.Contains(key, v) {
+				found = true
+				break
+			}
+		}
+		if found {
+			if field, exists := telemetrytraces.IntrinsicFields[key]; exists {
+				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
+					keys = append(keys, &field)
+				}
+				continue
+			}
+
+			if field, exists := telemetrytraces.CalculatedFields[key]; exists {
+				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
+					keys = append(keys, &field)
+				}
+				continue
+			}
+			keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+				Name:         key,
+				FieldContext: telemetrytypes.FieldContextSpan,
+				Signal:       telemetrytypes.SignalTraces,
+			})
+		}
 	}
 
 	return keys, nil
@@ -258,6 +302,8 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	var limit int
 
 	conds := []string{}
+	searchTexts := []string{}
+
 	for _, fieldKeySelector := range fieldKeySelectors {
 
 		if fieldKeySelector.StartUnixMilli != 0 {
@@ -274,6 +320,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		} else {
 			fieldKeyConds = append(fieldKeyConds, sb.Like("tag_key", "%"+fieldKeySelector.Name+"%"))
 		}
+		searchTexts = append(searchTexts, fieldKeySelector.Name)
 
 		// now look at the field context
 		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
@@ -329,10 +376,39 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 
 		keys = append(keys, key)
+		mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()] = key
 	}
 
 	if rows.Err() != nil {
 		return nil, errors.Wrapf(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+	}
+
+	staticKeys := []string{}
+	staticKeys = append(staticKeys, maps.Keys(telemetrylogs.IntrinsicFields)...)
+
+	// add matching intrinsic and matching calculated fields
+	for _, key := range staticKeys {
+		found := false
+		for _, v := range searchTexts {
+			if v == "" || strings.Contains(key, v) {
+				found = true
+				break
+			}
+		}
+		if found {
+			if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
+				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
+					keys = append(keys, &field)
+				}
+				continue
+			}
+
+			keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+				Name:         key,
+				FieldContext: telemetrytypes.FieldContextLog,
+				Signal:       telemetrytypes.SignalLogs,
+			})
+		}
 	}
 
 	return keys, nil
@@ -364,14 +440,17 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 		} else {
 			fieldConds = append(fieldConds, sb.Like("attr_name", "%"+fieldKeySelector.Name+"%"))
 		}
+		fieldConds = append(fieldConds, sb.NotLike("attr_name", "\\_\\_%"))
 
-		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
-			fieldConds = append(fieldConds, sb.E("attr_type", fieldKeySelector.FieldContext.TagType()))
-		}
+		// note: type and datatype do not have much significance in metrics
 
-		if fieldKeySelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-			fieldConds = append(fieldConds, sb.E("attr_datatype", fieldKeySelector.FieldDataType.TagDataType()))
-		}
+		// if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified {
+		// 	fieldConds = append(fieldConds, sb.E("attr_type", fieldKeySelector.FieldContext.TagType()))
+		// }
+
+		// if fieldKeySelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+		// 	fieldConds = append(fieldConds, sb.E("attr_datatype", fieldKeySelector.FieldDataType.TagDataType()))
+		// }
 
 		if fieldKeySelector.MetricContext != nil {
 			fieldConds = append(fieldConds, sb.E("metric_name", fieldKeySelector.MetricContext.MetricName))
@@ -913,18 +992,15 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNa
 	// Note: The columns are mixed in the current data - temporality column contains metric_name
 	// and metric_name column contains temporality value, so we use the correct mapping
 	sb := sqlbuilder.Select(
-		"temporality as metric_name",
-		"argMax(attr_string_value, last_reported_unix_milli) as temporality_value",
+		"metric_name",
+		"argMax(temporality, last_reported_unix_milli) as temporality",
 	).From(t.metricsDBName + "." + t.metricsFieldsTblName)
 
 	// Filter by metric names (in the temporality column due to data mix-up)
-	sb.Where(sb.In("temporality", metricNames))
-
-	// Only fetch temporality metadata rows (where attr_name = '__temporality__')
-	sb.Where(sb.E("attr_name", "__temporality__"))
+	sb.Where(sb.In("metric_name", metricNames))
 
 	// Group by metric name to get one temporality per metric
-	sb.GroupBy("temporality")
+	sb.GroupBy("metric_name")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 

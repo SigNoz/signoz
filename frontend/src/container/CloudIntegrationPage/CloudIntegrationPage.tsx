@@ -14,7 +14,7 @@ function CloudIntegrationPage(): JSX.Element {
 			<HeroSection />
 			<RequestIntegrationBtn
 				type={IntegrationType.AWS_SERVICES}
-				message="Cannot find the AWS service you're looking for? Request more integrations"
+				message="Can't find the AWS service you're looking for? Request more integrations"
 			/>
 			<ServicesTabs />
 		</div>

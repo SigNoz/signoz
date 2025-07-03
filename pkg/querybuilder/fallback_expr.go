@@ -94,3 +94,11 @@ func CollisionHandledFinalExpr(
 
 	return multiIfStmt, allArgs, nil
 }
+
+func GroupByKeys(keys []qbtypes.GroupByKey) []string {
+	k := []string{}
+	for _, key := range keys {
+		k = append(k, "`"+key.Name+"`")
+	}
+	return k
+}
