@@ -604,7 +604,7 @@ var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
 var IsDotMetricsEnabled = false
 var PreferSpanMetrics = false
-var MaxJSONFlatteningDepth = 3
+var MaxJSONFlatteningDepth = 1
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
