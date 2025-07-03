@@ -4527,9 +4527,28 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 	}
 
 	properties := queryInfoResult.ToMap()
-	if !(len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0 || (result[0].Table != nil && len(result[0].Table.Rows) > 0))) {
+
+	// Check if result is empty or has no data
+	if len(result) == 0 {
 		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
 		return
+	}
+
+	// Check if first result has no series data
+	if len(result[0].Series) == 0 {
+		// Check if first result has no list data
+		if len(result[0].List) == 0 {
+			// Check if first result has no table data
+			if result[0].Table == nil {
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				return
+			}
+
+			if len(result[0].Table.Rows) == 0 {
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				return
+			}
+		}
 	}
 
 	referrer := r.Header.Get("Referer")
