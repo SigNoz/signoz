@@ -1,6 +1,8 @@
+import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	Having,
+	IBuilderQuery,
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
@@ -220,3 +222,49 @@ export const getQueryTitles = (currentQuery: Query): string[] => {
 
 	return currentQuery.promql.map((q) => q.name);
 };
+
+// function to give you label value for query name taking multiaggregation into account
+export function getQueryLabelWithAggregation(
+	queryData: IBuilderQuery[],
+	legendMap: Record<string, string> = {},
+): { label: string; value: string }[] {
+	const labels: { label: string; value: string }[] = [];
+
+	const aggregationPerQuery =
+		queryData.reduce((acc, query) => {
+			if (query.queryName && query.aggregations?.length) {
+				acc[query.queryName] = createAggregation(query).map((a: any) => ({
+					alias: a.alias,
+					expression: a.expression,
+				}));
+			}
+			return acc;
+		}, {} as Record<string, any>) || {};
+
+	Object.entries(aggregationPerQuery).forEach(([queryName, aggregations]) => {
+		const legend = legendMap[queryName];
+
+		if (aggregations.length > 1) {
+			aggregations.forEach((agg: any, index: number) => {
+				const aggregationName = agg.alias || agg.expression || '';
+				const label = `${queryName}.${index}`;
+				const value = legend
+					? `${aggregationName}-${legend}`
+					: `${queryName}.${aggregationName}`;
+				labels.push({
+					label,
+					value,
+				});
+			});
+		} else if (aggregations.length === 1) {
+			const label = legend || queryName;
+			const value = legend || queryName;
+			labels.push({
+				label,
+				value,
+			});
+		}
+	});
+
+	return labels;
+}
