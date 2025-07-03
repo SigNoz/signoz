@@ -10,6 +10,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
+import { MetricsType } from 'container/MetricsApplication/constant';
 import dompurify from 'dompurify';
 import { isEmpty } from 'lodash-es';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
@@ -47,6 +48,7 @@ interface ITableViewActionsProps {
 		fieldKey: string,
 		fieldValue: string,
 		dataType: string | undefined,
+		logType: MetricsType | undefined,
 	) => () => void;
 }
 
@@ -66,7 +68,7 @@ export function TableViewActions(
 	} = props;
 
 	const { pathname } = useLocation();
-	const { dataType } = getFieldAttributes(record.field);
+	const { dataType, logType: fieldType } = getFieldAttributes(record.field);
 
 	// there is no option for where clause in old logs explorer and live logs page
 	const isOldLogsExplorerOrLiveLogsPage = useMemo(
@@ -165,6 +167,7 @@ export function TableViewActions(
 								fieldFilterKey,
 								parseFieldValue(fieldData.value),
 								dataType,
+								fieldType,
 							)}
 						/>
 					</Tooltip>
@@ -183,6 +186,7 @@ export function TableViewActions(
 								fieldFilterKey,
 								parseFieldValue(fieldData.value),
 								dataType,
+								fieldType,
 							)}
 						/>
 					</Tooltip>
