@@ -76,7 +76,7 @@ function createBaseSpec(
 ): BaseBuilderQuery {
 	const nonEmptySelectColumns = queryData.selectColumns?.filter((c) => c.key);
 	return {
-		stepInterval: queryData.stepInterval,
+		stepInterval: queryData?.stepInterval || undefined,
 		disabled: queryData.disabled,
 		filter: queryData?.filter?.expression ? queryData.filter : undefined,
 		groupBy:
@@ -247,7 +247,7 @@ function convertPromQueriesToV5(
 				name: queryName,
 				query: queryData.query,
 				disabled: queryData.disabled || false,
-				step: queryData.stepInterval,
+				step: queryData?.stepInterval,
 				stats: false, // PromQL specific field
 			},
 		}),
