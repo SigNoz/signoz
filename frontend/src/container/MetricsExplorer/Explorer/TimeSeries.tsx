@@ -7,11 +7,13 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
+import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -58,6 +60,8 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 
 	const [yAxisUnit, setYAxisUnit] = useState<string>('');
 
+	const { showErrorModal } = useErrorModal();
+
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({
 			queryKey: [
@@ -84,6 +88,9 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 					ENTITY_VERSION_V5,
 				),
 			enabled: !!payload,
+			onError: (error: APIError): void => {
+				showErrorModal(error);
+			},
 		})),
 	);
 
