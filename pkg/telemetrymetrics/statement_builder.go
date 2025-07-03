@@ -258,7 +258,8 @@ func (b *metricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
-	sb.GroupBy("ALL")
+	sb.GroupBy("ts")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
 	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
@@ -320,7 +321,8 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.AddWhereClause(filterWhere)
 	}
 
-	sb.GroupBy("ALL")
+	sb.GroupBy("fingerprint")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return fmt.Sprintf("(%s) AS filtered_time_series", q), args, nil
@@ -375,7 +377,8 @@ func (b *metricQueryStatementBuilder) buildTemporalAggDelta(
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
-	sb.GroupBy("ALL")
+	sb.GroupBy("fingerprint", "ts")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 	sb.OrderBy("fingerprint", "ts")
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
@@ -412,7 +415,8 @@ func (b *metricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		baseSb.GTE("unix_milli", start),
 		baseSb.LT("unix_milli", end),
 	)
-	baseSb.GroupBy("ALL")
+	baseSb.GroupBy("fingerprint", "ts")
+	baseSb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 	baseSb.OrderBy("fingerprint", "ts")
 
 	innerQuery, innerArgs := baseSb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
@@ -438,7 +442,7 @@ func (b *metricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 			wrapped.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
 		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", incExpr))
-		wrapped.From(fmt.Sprintf("(%s) WINDOW increase_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
+		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
 		q, args := wrapped.BuildWithFlavor(sqlbuilder.ClickHouse, innerArgs...)
 		return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, nil
 	default:
@@ -465,7 +469,8 @@ func (b *metricQueryStatementBuilder) buildSpatialAggregationCTE(
 	if query.Aggregations[0].ValueFilter != nil {
 		sb.Where(sb.EQ("per_series_value", query.Aggregations[0].ValueFilter.Value))
 	}
-	sb.GroupBy("ALL")
+	sb.GroupBy("ts")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
