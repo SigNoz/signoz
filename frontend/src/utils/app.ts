@@ -19,16 +19,13 @@ export const checkVersionState = (
 ): boolean => {
 	let versionCore = currentVersion?.split('-')[0];
 
-	// extract only digits and dots (.) from a string
-	const latestMatch = latestVersion.match(/[\d.]+/);
-	const coreMatch = versionCore.match(/[\d.]+/);
+	// extract only digits and dots (.)
+	const latestVersionMatch = latestVersion.match(/[\d.]+/);
+	const currentVersionMatch = versionCore.match(/[\d.]+/);
 
-	if (latestMatch && coreMatch) {
-		latestVersion = latestMatch[0];
-		versionCore = coreMatch[0];
-	} else {
-		latestVersion = latestVersion;
-		versionCore = versionCore;
+	if (latestVersionMatch && currentVersionMatch) {
+		latestVersion = latestVersionMatch[0];
+		versionCore = currentVersionMatch[0];
 	}
 
 	return versionCore === latestVersion;
