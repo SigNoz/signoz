@@ -190,6 +190,16 @@ const BodyContent: React.FC<{
 			<span
 				style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
 			>
+				Error parsing Body JSON
+			</span>
+		);
+	}
+
+	if (record.field === 'body') {
+		return (
+			<span
+				style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
+			>
 				<span dangerouslySetInnerHTML={bodyHtml} />
 			</span>
 		);
@@ -269,10 +279,7 @@ export default function TableViewActions(
 		switch (record.field) {
 			case 'body':
 				return (
-					<>
-						<BodyContent fieldData={fieldData} record={record} bodyHtml={bodyHtml} />
-						<span style={commonStyles} dangerouslySetInnerHTML={bodyHtml} />
-					</>
+					<BodyContent fieldData={fieldData} record={record} bodyHtml={bodyHtml} />
 				);
 
 			case 'timestamp':
