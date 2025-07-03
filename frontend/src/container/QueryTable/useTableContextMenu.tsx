@@ -1,4 +1,9 @@
 import { CustomDataColumnType } from 'container/GridTableComponent/utils';
+import {
+	ConfigType,
+	getContextMenuConfig,
+} from 'container/QueryTable/contextConfig';
+// import useAggregateDrilldown from 'container/QueryTable/useAggregateDrilldown';
 import useFilterDrilldown from 'container/QueryTable/useFilterDrilldown';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
@@ -28,22 +33,49 @@ export function useTableContextMenu({
 	menuItemsConfig: { header?: string; items?: React.ReactNode };
 } {
 	const drilldownQuery = useGetCompositeQueryParam() || query;
-	const { filterDrilldownConfig } = useFilterDrilldown({
+	const { handleFilterDrilldown } = useFilterDrilldown({
 		query: drilldownQuery,
 		widgetId,
 		clickedData,
 		onClose,
 	});
 
+	const filterDrilldownConfig = useMemo(
+		() =>
+			getContextMenuConfig({
+				configType: ConfigType.GROUP,
+				query,
+				clickedData,
+				panelType: 'table',
+				onColumnClick: handleFilterDrilldown,
+			}),
+		[handleFilterDrilldown, clickedData, query],
+	);
+
+	// const { aggregateDrilldownConfig } = useAggregateDrilldown({
+	// 	query: drilldownQuery,
+	// 	widgetId,
+	// 	clickedData,
+	// 	onClose,
+	// });
+
 	const menuItemsConfig = useMemo(() => {
 		if (!coordinates) return {};
-		const columnType = clickedData?.column?.isValueColumn ? 'aggregate' : 'group';
+		const columnType = clickedData?.column?.isValueColumn
+			? ConfigType.AGGREGATE
+			: ConfigType.GROUP;
 
 		switch (columnType) {
-			case 'aggregate':
-				// return getContextMenuConfig(clickedData, 'table', onColumnClick);
+			case ConfigType.AGGREGATE:
+				// return getContextMenuConfig({
+				// 	configType: ConfigType.AGGREGATE,
+				// 	query,
+				// 	clickedData,
+				// 	panelType: 'table',
+				// 	onColumnClick: onColumnClick,
+				// });
 				return {};
-			case 'group':
+			case ConfigType.GROUP:
 				return filterDrilldownConfig;
 			default:
 				return {};

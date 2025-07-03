@@ -9,6 +9,11 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export type ContextMenuItem = ReactNode;
 
+export enum ConfigType {
+	GROUP = 'group',
+	AGGREGATE = 'aggregate',
+}
+
 function getBaseMeta(
 	query: Query,
 	filterKey: string,
@@ -53,12 +58,25 @@ const SUPPORTED_OPERATORS = {
 	},
 };
 
-export function getContextMenuConfig(
-	query: Query,
-	clickedData: any,
-	panelType: string,
-	onColumnClick: (operator: string) => void,
-): { header?: string; items?: ContextMenuItem } {
+interface ContextMenuConfigParams {
+	configType: ConfigType;
+	query: Query;
+	clickedData: any;
+	panelType: string;
+	onColumnClick: (operator: string) => void;
+}
+
+interface GroupContextMenuConfig {
+	header?: string;
+	items?: ContextMenuItem;
+}
+
+function getGroupContextMenuConfig({
+	query,
+	clickedData,
+	panelType,
+	onColumnClick,
+}: Omit<ContextMenuConfigParams, 'configType'>): GroupContextMenuConfig {
 	const filterKey = clickedData?.column?.title;
 	const header = `Filter by ${filterKey}`;
 
@@ -90,6 +108,25 @@ export function getContextMenuConfig(
 				</ContextMenu.Item>
 			)),
 		};
+	}
+
+	return {};
+}
+
+export function getContextMenuConfig({
+	configType,
+	query,
+	clickedData,
+	panelType,
+	onColumnClick,
+}: ContextMenuConfigParams): { header?: string; items?: ContextMenuItem } {
+	if (configType === ConfigType.GROUP) {
+		return getGroupContextMenuConfig({
+			query,
+			clickedData,
+			panelType,
+			onColumnClick,
+		});
 	}
 	return {};
 }

@@ -1,14 +1,10 @@
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
 import { CustomDataColumnType } from 'container/GridTableComponent/utils';
-import {
-	ContextMenuItem,
-	getContextMenuConfig,
-} from 'container/QueryTable/contextConfig';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
@@ -71,7 +67,7 @@ const useFilterDrilldown = ({
 	widgetId: string;
 	clickedData: ClickedData | null;
 	onClose: () => void;
-}): { filterDrilldownConfig: { header?: string; items?: ContextMenuItem } } => {
+}): { handleFilterDrilldown: (operator: string) => void } => {
 	const { redirectWithQueryBuilderData } = useQueryBuilder();
 
 	const redirectToViewMode = useCallback(
@@ -97,14 +93,8 @@ const useFilterDrilldown = ({
 		[onClose, clickedData, query, redirectToViewMode],
 	);
 
-	const filterDrilldownConfig = useMemo(
-		() =>
-			getContextMenuConfig(query, clickedData, 'table', handleFilterDrilldown),
-		[handleFilterDrilldown, clickedData, query],
-	);
-
 	return {
-		filterDrilldownConfig,
+		handleFilterDrilldown,
 	};
 };
 
