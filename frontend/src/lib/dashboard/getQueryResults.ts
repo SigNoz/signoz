@@ -106,7 +106,9 @@ export async function GetMetricQueryRange(
 	isInfraMonitoring?: boolean,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	let legendMap: Record<string, string>;
-	let response: SuccessResponse<MetricRangePayloadProps>;
+	let response:
+		| SuccessResponse<MetricRangePayloadProps>
+		| SuccessResponseV2<MetricRangePayloadV5>;
 
 	const panelType = props.originalGraphType || props.graphType;
 
@@ -152,7 +154,10 @@ export async function GetMetricQueryRange(
 
 		// Convert V5 response to legacy format for components
 		response = convertV5ResponseToLegacy(
-			v5Response,
+			{
+				payload: v5Response.data,
+				params: v5Result.queryPayload,
+			},
 			legendMap,
 			finalFormatForWeb,
 		);
