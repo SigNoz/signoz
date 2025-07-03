@@ -112,7 +112,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 								<InputWithLabel
 									onChange={handleChangeAggregateEvery}
 									label="Seconds"
-									placeholder="Enter a number"
+									placeholder="Auto"
 									labelAfter
 									initialValue={query?.stepInterval ?? undefined}
 								/>
