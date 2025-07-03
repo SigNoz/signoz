@@ -1,5 +1,4 @@
 import { Tabs, TabsProps } from 'antd';
-import { escapeRegExp } from 'lodash-es';
 import { useLocation, useParams } from 'react-router-dom';
 
 import { RouteTabProps } from './types';
@@ -29,11 +28,7 @@ function RouteTab({
 
 	// Find the matching route for the current pathname
 	const currentRoute = routesWithParams.find((route) => {
-		const pathnameOnly = route.route.split('?')[0];
-		const routePattern = escapeRegExp(pathnameOnly).replace(
-			/\\:([a-zA-Z0-9_]+)/g,
-			'([^/]+)',
-		);
+		const routePattern = route.route.replace(/:(\w+)/g, '([^/]+)');
 		const regex = new RegExp(`^${routePattern}$`);
 		return regex.test(location.pathname);
 	});
