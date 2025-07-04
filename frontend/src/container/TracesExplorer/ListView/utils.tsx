@@ -40,8 +40,8 @@ export const transformDataWithDate = (
 	[];
 
 export const getTraceLink = (record: RowData): string =>
-	`${ROUTES.TRACE}/${record.traceID}${formUrlParams({
-		spanId: record.spanID,
+	`${ROUTES.TRACE}/${record.traceID || record.trace_id}${formUrlParams({
+		spanId: record.spanID || record.span_id,
 		levelUp: 0,
 		levelDown: 0,
 	})}`;
