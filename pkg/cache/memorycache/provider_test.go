@@ -100,6 +100,7 @@ func TestCloneableSetGet(t *testing.T) {
 	assert.NoError(t, cache.Get(context.Background(), orgID, "key", cached, false))
 
 	assert.Equal(t, cloneable, cached)
+	// confirm that the cached cloneable is a different pointer
 	assert.NotSame(t, cloneable, cached)
 }
 
@@ -164,7 +165,7 @@ func TestSetGetWithDifferentTypes(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestConcurrentSetGetWithCloneable(t *testing.T) {
+func TestCloneableConcurrentSetGet(t *testing.T) {
 	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
