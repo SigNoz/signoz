@@ -1,6 +1,7 @@
 import './MetricsAggregateSection.styles.scss';
 
 import { Tooltip } from 'antd';
+import cx from 'classnames';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import SpaceAggregationOptions from 'container/QueryBuilder/components/SpaceAggregationOptions/SpaceAggregationOptions';
@@ -35,6 +36,11 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 		query,
 		entityVersion: version,
 	});
+
+	const isHistogram = useMemo(
+		() => query.aggregateAttribute.type === ATTRIBUTE_TYPES.HISTOGRAM,
+		[query.aggregateAttribute.type],
+	);
 
 	useEffect(() => {
 		setAggregationOptions([
@@ -77,35 +83,126 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 		!query?.aggregateAttribute.key || query?.aggregateAttribute.key === '';
 
 	return (
-		<div className="metrics-aggregate-section">
-			<div className="metrics-time-aggregation-section">
-				<div className="metrics-time-aggregation-section-title">
-					AGGREGATE BY TIME{' '}
-					<Tooltip title="AGGREGATE BY TIME">
-						<Info size={12} />
-					</Tooltip>
-				</div>
+		<div
+			className={cx('metrics-aggregate-section', {
+				'is-histogram': isHistogram,
+			})}
+		>
+			{!isHistogram && (
+				<div className="non-histogram-container">
+					<div className="metrics-time-aggregation-section">
+						<div className="metrics-aggregation-section-content">
+							<div className="metrics-aggregation-section-content-item">
+								<div className="metrics-aggregation-section-content-item-label main-label">
+									AGGREGATE BY TIME{' '}
+									<Tooltip title="AGGREGATE BY TIME">
+										<Info size={12} />
+									</Tooltip>
+								</div>
+								<div className="metrics-aggregation-section-content-item-value">
+									<OperatorsSelect
+										value={query.aggregateOperator}
+										onChange={handleChangeOperator}
+										operators={operators}
+										className="metrics-operators-select"
+									/>
+								</div>
+							</div>
 
-				<div className="metrics-aggregation-section-content">
-					<div className="metrics-aggregation-section-content-item">
-						<div className="metrics-aggregation-section-content-item-label">
-							Align with
-						</div>
+							{showAggregationInterval && (
+								<div className="metrics-aggregation-section-content-item">
+									<div className="metrics-aggregation-section-content-item-label">
+										every
+									</div>
 
-						<div className="metrics-aggregation-section-content-item-value">
-							<OperatorsSelect
-								value={query.aggregateOperator}
-								onChange={handleChangeOperator}
-								operators={operators}
-								className="metrics-operators-select"
-							/>
+									<div className="metrics-aggregation-section-content-item-value">
+										<InputWithLabel
+											onChange={handleChangeAggregateEvery}
+											label="Seconds"
+											placeholder="Auto"
+											labelAfter
+											initialValue={query?.stepInterval ?? undefined}
+										/>
+									</div>
+								</div>
+							)}
 						</div>
 					</div>
+					<div className="metrics-space-aggregation-section">
+						<div className="metrics-aggregation-section-content">
+							<div className="metrics-aggregation-section-content-item">
+								<div className="metrics-aggregation-section-content-item-label main-label">
+									AGGREGATE LABELS
+									<Tooltip title="AGGREGATE LABELS">
+										<Info size={12} />
+									</Tooltip>
+								</div>
+								<div className="metrics-aggregation-section-content-item-value">
+									<SpaceAggregationOptions
+										panelType={panelType}
+										key={`${panelType}${query.spaceAggregation}${query.timeAggregation}`}
+										aggregatorAttributeType={
+											query?.aggregateAttribute.type as ATTRIBUTE_TYPES
+										}
+										selectedValue={query.spaceAggregation}
+										disabled={disableOperatorSelector}
+										onSelect={handleSpaceAggregationChange}
+										operators={spaceAggregationOptions}
+										qbVersion="v3"
+									/>
+								</div>
+							</div>
 
-					{showAggregationInterval && (
+							<div className="metrics-aggregation-section-content-item">
+								<div className="metrics-aggregation-section-content-item-label">by</div>
+
+								<div className="metrics-aggregation-section-content-item-value group-by-filter-container">
+									<GroupByFilter
+										disabled={!query.aggregateAttribute.key}
+										query={query}
+										onChange={handleChangeGroupByKeys}
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{isHistogram && (
+				<div className="metrics-space-aggregation-section">
+					<div className="metrics-aggregation-section-content">
+						<div className="metrics-aggregation-section-content-item">
+							<div className="metrics-aggregation-section-content-item-value">
+								<SpaceAggregationOptions
+									panelType={panelType}
+									key={`${panelType}${query.spaceAggregation}${query.timeAggregation}`}
+									aggregatorAttributeType={
+										query?.aggregateAttribute.type as ATTRIBUTE_TYPES
+									}
+									selectedValue={query.spaceAggregation}
+									disabled={disableOperatorSelector}
+									onSelect={handleSpaceAggregationChange}
+									operators={spaceAggregationOptions}
+									qbVersion="v3"
+								/>
+							</div>
+						</div>
+
+						<div className="metrics-aggregation-section-content-item">
+							<div className="metrics-aggregation-section-content-item-label">by</div>
+
+							<div className="metrics-aggregation-section-content-item-value group-by-filter-container">
+								<GroupByFilter
+									disabled={!query.aggregateAttribute.key}
+									query={query}
+									onChange={handleChangeGroupByKeys}
+								/>
+							</div>
+						</div>
 						<div className="metrics-aggregation-section-content-item">
 							<div className="metrics-aggregation-section-content-item-label">
-								aggregated every
+								every
 							</div>
 
 							<div className="metrics-aggregation-section-content-item-value">
@@ -115,52 +212,13 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 									placeholder="Auto"
 									labelAfter
 									initialValue={query?.stepInterval ?? undefined}
+									className="histogram-every-input"
 								/>
 							</div>
 						</div>
-					)}
-				</div>
-			</div>
-
-			<div className="metrics-space-aggregation-section">
-				<div className="metrics-space-aggregation-section-title">
-					AGGREGATE LABELS
-					<Tooltip title="AGGREGATE LABELS">
-						<Info size={12} />
-					</Tooltip>
-				</div>
-
-				<div className="metrics-aggregation-section-content">
-					<div className="metrics-aggregation-section-content-item">
-						<div className="metrics-aggregation-section-content-item-value space-aggregation-select">
-							<SpaceAggregationOptions
-								panelType={panelType}
-								key={`${panelType}${query.spaceAggregation}${query.timeAggregation}`}
-								aggregatorAttributeType={
-									query?.aggregateAttribute.type as ATTRIBUTE_TYPES
-								}
-								selectedValue={query.spaceAggregation}
-								disabled={disableOperatorSelector}
-								onSelect={handleSpaceAggregationChange}
-								operators={spaceAggregationOptions}
-								qbVersion="v3"
-							/>
-						</div>
-					</div>
-
-					<div className="metrics-aggregation-section-content-item">
-						<div className="metrics-aggregation-section-content-item-label">by</div>
-
-						<div className="metrics-aggregation-section-content-item-value">
-							<GroupByFilter
-								disabled={!query.aggregateAttribute.key}
-								query={query}
-								onChange={handleChangeGroupByKeys}
-							/>
-						</div>
 					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	);
 });
