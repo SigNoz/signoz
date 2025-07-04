@@ -33,10 +33,22 @@ type ColumnConfig = { width: string; fixed?: boolean } | { weight: number };
 const COLUMN_CONFIG: Record<string, ColumnConfig> = {
 	'state-indicator': { width: '20px', fixed: true },
 	timestamp: { width: '150px', fixed: true },
-	body: { weight: 2 }, // Gets 2x the base width
-	expand: { width: 'auto' },
 } as const;
 
+// Constants for fixed column widths
+const COLUMN_WIDTHS = {
+	STATE_INDICATOR: 20,
+	TIMESTAMP: 150,
+	ACTIONS: 35,
+} as const;
+
+/**
+ * Calculates the width of a column based on table width and column configuration
+ * @param columnKey - The key of the column to calculate width for
+ * @param allColumns - Array of all table columns
+ * @param tableWidth - Total width of the table container
+ * @returns CSS width string (e.g., "150px" or "")
+ */
 export function getColumnWidth(
 	columnKey: string,
 	allColumns: ColumnsType<Record<string, unknown>>,
@@ -46,10 +58,14 @@ export function getColumnWidth(
 		return '';
 	}
 
-	// Calculate dynamic widths
 	const fixedColumns = ['state-indicator', 'timestamp'];
 	const fixedWidth =
-		20 + (allColumns.some((col) => col.key === 'timestamp') ? 150 : 0) + 35; // 20px - state-indicator + 150px - timestamp + 35px - actions
+		COLUMN_WIDTHS.STATE_INDICATOR +
+		(allColumns.some((col) => col.key === 'timestamp')
+			? COLUMN_WIDTHS.TIMESTAMP
+			: 0) +
+		COLUMN_WIDTHS.ACTIONS;
+
 	const remainingWidth = tableWidth - fixedWidth;
 
 	// Get columns that need dynamic width calculation
@@ -61,7 +77,7 @@ export function getColumnWidth(
 	const config = COLUMN_CONFIG[columnKey];
 	if (config && 'width' in config) {
 		if (columnKey === 'timestamp' && dynamicColumns.length === 0) {
-			return `${remainingWidth + 150}px`; // 150px (timestamp width) + remaining width
+			return `${remainingWidth + COLUMN_WIDTHS.TIMESTAMP}px`; // 150px (timestamp width) + remaining width
 		}
 		return config.width;
 	}
