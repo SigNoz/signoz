@@ -12,7 +12,7 @@ import {
 import { javascript } from '@codemirror/lang-javascript';
 import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
-import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
+import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tag } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
@@ -1138,13 +1138,42 @@ function QuerySearch({
 						javascript({ jsx: false, typescript: false }),
 						EditorView.lineWrapping,
 						stopEventsExtension,
-						keymap.of([
-							...completionKeymap,
-							{
-								key: 'Escape',
-								run: closeCompletion,
-							},
-						]),
+						Prec.highest(
+							keymap.of([
+								...completionKeymap,
+								{
+									key: 'Escape',
+									run: closeCompletion,
+								},
+								{
+									key: 'Enter',
+									preventDefault: true,
+									// Prevent default behavior of Enter to add new line
+									// and instead run a custom action
+									run: (): boolean => {
+										return true;
+									},
+								},
+								{
+									key: 'Mod-Enter',
+									preventDefault: true,
+									// Prevent default behavior of Mod-Enter to add new line
+									// and instead run a custom action
+									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
+									run: (): boolean => {
+										return true;
+									},
+								},
+								{
+									key: 'Shift-Enter',
+									preventDefault: true,
+									// Prevent default behavior of Shift-Enter to add new line
+									run: (): boolean => {
+										return true;
+									},
+								},
+							]),
+						),
 					]}
 					placeholder="Enter your query (e.g., status = 'error' AND service = 'frontend')"
 					basicSetup={{

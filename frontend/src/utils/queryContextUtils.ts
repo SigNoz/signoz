@@ -14,7 +14,6 @@ import {
 	isOperatorToken,
 	isQueryPairComplete,
 	isValueToken,
-	isWrappedUnderQuotes,
 } from './tokenUtils';
 import { NON_VALUE_OPERATORS } from 'constants/antlrQueryConstants';
 
