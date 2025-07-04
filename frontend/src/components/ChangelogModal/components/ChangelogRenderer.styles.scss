@@ -101,12 +101,17 @@
 		line-height: 28px;
 	}
 
-	.changelog-media-image {
+	.changelog-media-image,
+	.changelog-media-video {
 		height: auto;
 		width: 100%;
 		overflow: hidden;
 		border-radius: 4px;
 		border: 1px solid var(--bg-slate-400, #1d212d);
+	}
+
+	.changelog-media-video {
+		margin: 12px 0;
 	}
 }
 

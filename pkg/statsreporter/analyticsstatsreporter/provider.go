@@ -220,6 +220,7 @@ func (provider *provider) collectOrg(ctx context.Context, orgID valuer.UUID) map
 	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT max(timestamp) FROM signoz_traces.distributed_signoz_index_v3").Scan(&tracesLastSeenAt); err == nil {
 		if tracesLastSeenAt.Unix() != 0 {
 			stats["telemetry.traces.last_observed.time"] = tracesLastSeenAt.UTC()
+			stats["telemetry.traces.last_observed.time_unix"] = tracesLastSeenAt.Unix()
 		}
 	}
 
@@ -227,6 +228,7 @@ func (provider *provider) collectOrg(ctx context.Context, orgID valuer.UUID) map
 	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT fromUnixTimestamp64Nano(max(timestamp)) FROM signoz_logs.distributed_logs_v2").Scan(&logsLastSeenAt); err == nil {
 		if logsLastSeenAt.Unix() != 0 {
 			stats["telemetry.logs.last_observed.time"] = logsLastSeenAt.UTC()
+			stats["telemetry.logs.last_observed.time_unix"] = logsLastSeenAt.Unix()
 		}
 	}
 
@@ -234,6 +236,7 @@ func (provider *provider) collectOrg(ctx context.Context, orgID valuer.UUID) map
 	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, "SELECT toDateTime(max(unix_milli) / 1000) FROM signoz_metrics.distributed_samples_v4").Scan(&metricsLastSeenAt); err == nil {
 		if metricsLastSeenAt.Unix() != 0 {
 			stats["telemetry.metrics.last_observed.time"] = metricsLastSeenAt.UTC()
+			stats["telemetry.metrics.last_observed.time_unix"] = metricsLastSeenAt.Unix()
 		}
 	}
 

@@ -32,7 +32,7 @@ function ContextLogRenderer({
 	const [afterLogPage, setAfterLogPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([log]);
 
-	const { initialDataSource, stagedQuery } = useQueryBuilder();
+	const { stagedQuery } = useQueryBuilder();
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
@@ -42,7 +42,7 @@ function ContextLogRenderer({
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.METRICS,
+		dataSource: DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 
