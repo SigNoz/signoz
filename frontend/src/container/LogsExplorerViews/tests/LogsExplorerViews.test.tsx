@@ -113,6 +113,14 @@ jest.mock('hooks/logs/useCopyLogLink', () => ({
 	}),
 }));
 
+window.ResizeObserver =
+	window.ResizeObserver ||
+	jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
+
 // Set up the specific behavior for useGetExplorerQueryRange in individual test cases
 beforeEach(() => {
 	(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
