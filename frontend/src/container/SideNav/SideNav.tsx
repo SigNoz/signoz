@@ -741,12 +741,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);
 
 	const onClickVersionHandler = useCallback((): void => {
-		if (isCloudUser) {
+		if (isCloudUser || !changelog) {
 			return;
 		}
 
 		setShowChangelogModal(true);
-	}, [isCloudUser]);
+	}, [isCloudUser, changelog]);
 
 	useEffect(() => {
 		if (!isLatestVersion && !isCloudUser) {
@@ -814,7 +814,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 											}
 										>
 											<div className="version-container">
-												<span className="version" onClick={onClickVersionHandler}>
+												<span
+													className={cx('version', changelog && 'version-clickable')}
+													onClick={onClickVersionHandler}
+												>
 													{currentVersion}
 												</span>
 
