@@ -91,7 +91,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 						<div
 							className={cx('state-indicator', fontSize)}
 							style={{
-								width: getColumnWidth('state-indicator', allColumns, tableWidth),
+								...getColumnWidth('state-indicator', allColumns, tableWidth),
 							}}
 						>
 							<LogStateIndicator
@@ -127,7 +127,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 										<div
 											className="table-timestamp"
 											style={{
-												width: getColumnWidth('timestamp', allColumns, tableWidth),
+												...getColumnWidth('timestamp', allColumns, tableWidth),
 											}}
 										>
 											<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
@@ -163,7 +163,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 										linesPerRow={linesPerRow}
 										isDarkMode={isDarkMode}
 										style={{
-											width: getColumnWidth('body', allColumns, tableWidth),
+											...getColumnWidth('body', allColumns, tableWidth),
 										}}
 									/>
 								),
@@ -177,7 +177,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		// Apply width to all columns
 		return allColumns.map((column) => ({
 			...column,
-			width: getColumnWidth(column.key as string, allColumns, tableWidth),
+			...getColumnWidth(column.key as string, allColumns, tableWidth),
 			textWrap: 'word-break',
 		}));
 	}, [

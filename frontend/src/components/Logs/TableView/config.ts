@@ -47,15 +47,15 @@ const COLUMN_WIDTHS = {
  * @param columnKey - The key of the column to calculate width for
  * @param allColumns - Array of all table columns
  * @param tableWidth - Total width of the table container
- * @returns CSS width string (e.g., "150px" or "")
+ * @returns CSS width string (e.g., "150px")
  */
 export function getColumnWidth(
 	columnKey: string,
 	allColumns: ColumnsType<Record<string, unknown>>,
 	tableWidth?: number,
-): string {
+): CSSProperties {
 	if (!tableWidth) {
-		return '';
+		return {};
 	}
 
 	const fixedColumns = ['state-indicator', 'timestamp'];
@@ -77,9 +77,9 @@ export function getColumnWidth(
 	const config = COLUMN_CONFIG[columnKey];
 	if (config && 'width' in config) {
 		if (columnKey === 'timestamp' && dynamicColumns.length === 0) {
-			return `${remainingWidth + COLUMN_WIDTHS.TIMESTAMP}px`; // 150px (timestamp width) + remaining width
+			return { width: `${remainingWidth + COLUMN_WIDTHS.TIMESTAMP}px` }; // 150px (timestamp width) + remaining width
 		}
-		return config.width;
+		return { width: config.width };
 	}
 
 	// Calculate total weight (body gets 2x weight)
@@ -93,8 +93,8 @@ export function getColumnWidth(
 
 	// Return width based on column type
 	if (columnKey === 'body') {
-		return `${baseWidth * 2}px`;
+		return { width: `${baseWidth * 2}px` };
 	}
 
-	return `${baseWidth}px`;
+	return { width: `${baseWidth}px` };
 }

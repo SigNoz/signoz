@@ -168,14 +168,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						.map((column) => {
 							const isDragColumn = column.key !== 'expand';
 
-							const width = getColumnWidth(
-								column.key as string,
-								tableColumns,
-								tableWidth,
-							);
-
-							console.log({ columnKey: column.key, width, tableWidth });
-
 							return (
 								<TableHeaderCellStyled
 									$isLogIndicator={column.key === 'state-indicator'}
@@ -184,7 +176,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 									key={column.key}
 									fontSize={tableViewProps?.fontSize}
 									style={{
-										width,
+										...getColumnWidth(column.key as string, tableColumns, tableWidth),
 									}}
 									// eslint-disable-next-line react/jsx-props-no-spreading
 									{...(isDragColumn && { className: 'dragHandler' })}
