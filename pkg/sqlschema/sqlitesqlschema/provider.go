@@ -35,3 +35,16 @@ func (provider *provider) CreateIndex(ctx context.Context, index sqlschema.Index
 func (provider *provider) DropConstraintUnsafe(ctx context.Context, table *sqlschema.Table, _ sqlschema.Constraint) [][]byte {
 	return table.ToCreateTempInsertDropAlterSQL(provider.fmtter)
 }
+
+func (provider *provider) AddColumnUnsafe(ctx context.Context, table *sqlschema.Table, column *sqlschema.Column, val any) [][]byte {
+	sqls := [][]byte{
+		column.ToAddSQL(provider.fmtter, table.Name),
+		column.ToUpdateSQL(provider.fmtter, table.Name, val),
+	}
+
+	if !column.Nullable {
+		sqls = append(sqls, table.ToCreateTempInsertDropAlterSQL(provider.fmtter)...)
+	}
+
+	return sqls
+}

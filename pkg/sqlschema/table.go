@@ -58,7 +58,7 @@ func (table *Table) ToCreateTempInsertDropAlterSQL(fmter SQLFormatter) [][]byte 
 			columns = append(columns, ", "...)
 		}
 
-		columns = fmter.AppendIdent(columns, column.Name)
+		columns = fmter.AppendIdent(columns, string(column.Name))
 	}
 
 	insertIntoSelectSQL := []byte{}

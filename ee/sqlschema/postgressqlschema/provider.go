@@ -46,3 +46,16 @@ func (provider *provider) DropConstraintUnsafe(ctx context.Context, table *sqlsc
 
 	return sql
 }
+
+func (provider *provider) AddColumnUnsafe(ctx context.Context, table *sqlschema.Table, column *sqlschema.Column, val any) [][]byte {
+	sqls := [][]byte{
+		column.ToAddSQL(provider.fmtter, table.Name),
+		column.ToUpdateSQL(provider.fmtter, table.Name, val),
+	}
+
+	if !column.Nullable {
+		sqls = append(sqls, column.ToSetNotNullSQL(provider.fmtter, table.Name))
+	}
+
+	return sqls
+}
