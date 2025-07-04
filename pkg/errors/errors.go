@@ -79,19 +79,20 @@ func Wrapf(cause error, t typ, code Code, format string, args ...interface{}) *b
 	}
 }
 
-// ReWrapf wraps an existing base error with a new formatted message.
+// WithAdditional wraps an existing base error with a new formatted message.
 // It is used when the original error already contains type and code.
-func ReWrapf(cause error, format string, args ...interface{}) *base {
-	t, c, _, e, u, a := Unwrapb(cause)
-
-	return &base{
+func WithAdditional(cause error, format string, args ...interface{}) *base {
+	t, c, m, e, u, a := Unwrapb(cause)
+	b := &base{
 		t: t,
 		c: c,
-		m: fmt.Sprintf(format, args...),
+		m: m,
 		e: e,
 		u: u,
 		a: a,
 	}
+
+	return b.WithAdditional(append(a, fmt.Sprintf(format, args...))...)
 }
 
 // WithUrl adds a url to the base error and returns a new base error.

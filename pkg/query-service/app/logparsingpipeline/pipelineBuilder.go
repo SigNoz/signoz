@@ -40,7 +40,7 @@ func PreparePipelineProcessor(gettablePipelines []pipelinetypes.GettablePipeline
 
 		operators, err := getOperators(v.Config)
 		if err != nil {
-			return nil, nil, errors.ReWrapf(err, "failed to prepare operators")
+			return nil, nil, err
 		}
 
 		if len(operators) == 0 {
@@ -49,7 +49,7 @@ func PreparePipelineProcessor(gettablePipelines []pipelinetypes.GettablePipeline
 
 		filterExpr, err := queryBuilderToExpr.Parse(v.Filter)
 		if err != nil {
-			return nil, nil, errors.ReWrapf(err, "failed to parse pipeline filter")
+			return nil, nil, err
 		}
 
 		router := []pipelinetypes.PipelineOperator{
@@ -285,11 +285,12 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 				To:      to,
 			}
 
-			err := fromNotNilCheck(&operator)
+			fromNotNilCheck, err := fieldNotNilCheck(operator.From)
 			if err != nil {
 				return err
 			}
 
+			operator.If = fromNotNilCheck
 			children = append(children, operator)
 		}
 
@@ -403,24 +404,11 @@ func cleanTraceParser(operator *pipelinetypes.PipelineOperator) {
 	}
 }
 
-// fromNotNilCheck performs basic fieldNotNilCheck on From and attaches an IF condition
-func fromNotNilCheck(operator *pipelinetypes.PipelineOperator) error {
-	fromNotNilCheck, err := fieldNotNilCheck(operator.From)
-	if err != nil {
-		return errors.WrapInvalidInputf(err, CodeFieldNilCheckType,
-			"couldn't generate nil check for From field of %s op %s: %s", operator.Type, operator.Name, err,
-		)
-	}
-
-	operator.If = fromNotNilCheck
-	return nil
-}
-
 // Generates an expression checking that `fieldPath` has a non-nil value in a log record.
 func fieldNotNilCheck(fieldPath string) (string, error) {
 	_, err := expr.Compile(fieldPath)
 	if err != nil {
-		return "", fmt.Errorf("invalid fieldPath %s: %w", fieldPath, err)
+		return "", errors.WrapInvalidInputf(err, CodeFieldNilCheckType, "invalid fieldPath %s", fieldPath)
 	}
 
 	// helper for turning `.` into `?.` in field paths.
@@ -449,7 +437,7 @@ func fieldNotNilCheck(fieldPath string) (string, error) {
 	// should come out to be (attributes.test != nil && attributes.test["a.b"]?.value != nil)
 	collectionNotNilCheck, err := fieldNotNilCheck(parts[0])
 	if err != nil {
-		return "", fmt.Errorf("couldn't generate nil check for %s: %w", parts[0], err)
+		return "", errors.WithAdditional(err, "couldn't generate nil check for %s", parts[0])
 	}
 
 	// generate nil check for entire path.
