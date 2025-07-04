@@ -64,17 +64,6 @@ const useOptionsMenu = ({
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 	const debouncedSearchText = useDebounce(searchText, 300);
 
-	// const initialQueryParams = useMemo(
-	// 	() => ({
-	// 		searchText: '',
-	// 		aggregateAttribute: '',
-	// 		tagType: undefined,
-	// 		dataSource,
-	// 		aggregateOperator,
-	// 	}),
-	// 	[dataSource, aggregateOperator],
-	// );
-
 	const initialQueryParamsV5: QueryKeyRequestProps = useMemo(
 		() => ({
 			signal: dataSource,
@@ -87,22 +76,6 @@ const useOptionsMenu = ({
 		query: optionsQuery,
 		redirectWithQuery: redirectWithOptionsData,
 	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
-
-	// const initialQueries = useMemo(
-	// 	() =>
-	// 		initialOptions?.selectColumns?.map((column) => ({
-	// 			queryKey: column,
-	// 			queryFn: (): Promise<
-	// 				SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
-	// 			> =>
-	// 				getAggregateKeys({
-	// 					...initialQueryParams,
-	// 					searchText: column,
-	// 				}),
-	// 			enabled: !!column && !optionsQuery,
-	// 		})) || [],
-	// 	[initialOptions?.selectColumns, initialQueryParams, optionsQuery],
-	// );
 
 	const initialQueriesV5 = useMemo(
 		() =>

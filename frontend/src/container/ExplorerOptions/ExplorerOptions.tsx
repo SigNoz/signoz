@@ -1,10 +1,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './ExplorerOptions.styles.scss';
 
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
 	ColorPicker,
+	Divider,
 	Input,
 	Modal,
 	RefSelectProps,
@@ -44,7 +46,14 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { cloneDeep, isEqual, omit } from 'lodash-es';
-import { Check, ConciergeBell, Disc3, Plus, X } from 'lucide-react';
+import {
+	Check,
+	ConciergeBell,
+	Disc3,
+	PanelBottomClose,
+	Plus,
+	X,
+} from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { FormattingOptions } from 'providers/preferences/types';
 import {
@@ -69,8 +78,10 @@ import ExplorerOptionsHideArea from './ExplorerOptionsHideArea';
 import { PreservedViewsInLocalStorage } from './types';
 import {
 	DATASOURCE_VS_ROUTES,
+	generateRGBAFromHex,
 	getRandomColor,
 	saveNewViewHandler,
+	setExplorerToolBarVisibility,
 } from './utils';
 
 const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
@@ -241,6 +252,12 @@ function ExplorerOptions({
 
 	const extraData = viewsData?.data?.data?.find((view) => view.id === viewKey)
 		?.extraData;
+
+	const extraDataColor = extraData ? JSON.parse(extraData).color : '';
+	const rgbaColor = generateRGBAFromHex(
+		extraDataColor || Color.BG_SIENNA_500,
+		0.08,
+	);
 
 	const { options, handleOptionsChange } = useOptionsMenu({
 		storageKey:
@@ -623,6 +640,27 @@ function ExplorerOptions({
 		viewsData?.data?.data,
 	]);
 
+	const infoIconText = useMemo(() => {
+		if (isLogsExplorer) {
+			return 'Learn more about Logs explorer';
+		}
+		if (isMetricsExplorer) {
+			return 'Learn more about Metrics explorer';
+		}
+		return 'Learn more about Traces explorer';
+	}, [isLogsExplorer, isMetricsExplorer]);
+
+	const infoIconLink = useMemo(() => {
+		if (isLogsExplorer) {
+			return 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar';
+		}
+		// TODO: Add metrics explorer info icon link
+		if (isMetricsExplorer) {
+			return '';
+		}
+		return 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar';
+	}, [isLogsExplorer, isMetricsExplorer]);
+
 	const getQueryName = (query: Query): string => {
 		if (query.builder.queryFormulas.length > 0) {
 			return `Formula ${query.builder.queryFormulas[0].queryName}`;
@@ -635,10 +673,11 @@ function ExplorerOptions({
 			const selectLabel = (
 				<Button
 					disabled={disabled}
-					className="periscope-btn ghost"
-					shape="default"
+					shape="round"
 					icon={<ConciergeBell size={16} />}
-				/>
+				>
+					Create an Alert
+				</Button>
 			);
 			return (
 				<Select
@@ -667,11 +706,12 @@ function ExplorerOptions({
 		return (
 			<Button
 				disabled={disabled}
-				shape="default"
-				className="periscope-btn ghost"
+				shape="round"
 				onClick={(): void => onCreateAlertsHandler(query)}
 				icon={<ConciergeBell size={16} />}
-			/>
+			>
+				Create an Alert
+			</Button>
 		);
 	}, [
 		disabled,
@@ -685,11 +725,14 @@ function ExplorerOptions({
 		if (isOneChartPerQuery) {
 			const selectLabel = (
 				<Button
-					className="periscope-btn ghost"
+					type="primary"
 					disabled={disabled}
+					shape="round"
 					onClick={onAddToDashboard}
-					icon={<Plus size={12} />}
-				/>
+					icon={<Plus size={16} />}
+				>
+					Add to Dashboard
+				</Button>
 			);
 			return (
 				<Select
@@ -721,13 +764,23 @@ function ExplorerOptions({
 		}
 		return (
 			<Button
-				className="periscope-btn ghost"
+				type="primary"
 				disabled={disabled}
+				shape="round"
 				onClick={onAddToDashboard}
 				icon={<Plus size={16} />}
-			/>
+			>
+				Add to Dashboard
+			</Button>
 		);
 	}, [disabled, isOneChartPerQuery, onAddToDashboard, splitedQueries]);
+
+	const hideToolbar = (): void => {
+		setExplorerToolBarVisibility(false, sourcepage);
+		if (setIsExplorerOptionHidden) {
+			setIsExplorerOptionHidden(true);
+		}
+	};
 
 	return (
 		<div className="explorer-options-container">
@@ -744,31 +797,41 @@ function ExplorerOptions({
 				>
 					<Tooltip title="Clear this view" placement="top">
 						<Button
-							className="periscope-btn ghost"
+							className="action-icon"
 							onClick={handleClearSelect}
-							icon={<X size={16} />}
+							icon={<X size={14} />}
 						/>
 					</Tooltip>
 					{
 						// only show the update view option when the query is updated
 					}
 					{isQueryUpdated && (
-						<Tooltip title="Update this view" placement="top">
-							<Button
-								className={cx(
-									'periscope-btn ghost',
-									isEditDeleteSupported ? '' : 'hidden',
-								)}
-								disabled={isViewUpdating}
-								onClick={onUpdateQueryHandler}
-								icon={<Disc3 size={16} />}
+						<>
+							<Divider
+								type="vertical"
+								className={isEditDeleteSupported ? '' : 'hidden'}
 							/>
-						</Tooltip>
+							<Tooltip title="Update this view" placement="top">
+								<Button
+									className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
+									disabled={isViewUpdating}
+									onClick={onUpdateQueryHandler}
+									icon={<Disc3 size={14} />}
+								/>
+							</Tooltip>
+						</>
 					)}
 				</div>
 			)}
 			{!isExplorerOptionHidden && (
-				<div className="explorer-options">
+				<div
+					className="explorer-options"
+					style={{
+						background: extraData
+							? `linear-gradient(90deg, rgba(0,0,0,0) -5%, ${rgbaColor} 9%, rgba(0,0,0,0) 30%)`
+							: 'transparent',
+					}}
+				>
 					<div className="view-options">
 						<Select<string, { key: string; value: string }>
 							showSearch
@@ -809,22 +872,48 @@ function ExplorerOptions({
 						</Select>
 
 						<Button
-							shape="default"
-							className={cx(
-								'periscope-btn secondary',
-								isEditDeleteSupported ? '' : 'hidden',
-							)}
+							shape="round"
 							onClick={handleSaveViewModalToggle}
+							className={isEditDeleteSupported ? '' : 'hidden'}
 							disabled={viewsIsLoading || isRefetching}
-							icon={<Disc3 size={12} />}
+							icon={<Disc3 size={16} />}
 						>
 							Save this view
 						</Button>
 					</div>
 
+					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
+
 					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
 						{alertButton}
 						{dashboardButton}
+					</div>
+					<div className="actions">
+						{/* Hide the info icon for metrics explorer until we get the docs link */}
+						{!isMetricsExplorer && (
+							<Tooltip
+								title={
+									<div>
+										{infoIconText}
+										<Typography.Link href={infoIconLink} target="_blank">
+											{' '}
+											here
+										</Typography.Link>{' '}
+									</div>
+								}
+							>
+								<InfoCircleOutlined className="info-icon" />
+							</Tooltip>
+						)}
+						<Tooltip title="Hide">
+							<Button
+								disabled={disabled}
+								shape="circle"
+								onClick={hideToolbar}
+								icon={<PanelBottomClose size={16} />}
+								data-testid="hide-toolbar"
+							/>
+						</Tooltip>
 					</div>
 				</div>
 			)}
