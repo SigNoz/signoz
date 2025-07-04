@@ -28,6 +28,7 @@ export type UseTableViewProps = {
 	activeLogIndex?: number;
 	activeContextLog?: ILog | null;
 	isListViewPanel?: boolean;
+	tableWidth?: number;
 } & LogsTableViewProps;
 
 export type ActionsColumnProps = {

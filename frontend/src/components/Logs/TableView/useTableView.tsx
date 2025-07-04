@@ -17,7 +17,7 @@ import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorTypeForTable } from '../LogStateIndicator/utils';
 import {
 	defaultListViewPanelStyle,
-	defaultTableStyle,
+	getColumnWidth,
 	getDefaultCellStyle,
 } from './config';
 import { TableBodyContent } from './styles';
@@ -37,6 +37,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		fontSize,
 		appendTo = 'center',
 		isListViewPanel,
+		tableWidth,
 	} = props;
 
 	const isDarkMode = useIsDarkMode();
@@ -75,15 +76,24 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 			return [...fieldColumns];
 		}
 
-		return [
+		const allColumns = [
 			{
 				// We do not need any title and data index for the log state indicator
 				title: '',
 				dataIndex: '',
+				// eslint-disable-next-line sonarjs/no-duplicate-string
 				key: 'state-indicator',
-				render: (_, item): ColumnTypeRender<Record<string, unknown>> => ({
+				render: (
+					_: any,
+					item: Record<string, unknown>,
+				): ColumnTypeRender<Record<string, unknown>> => ({
 					children: (
-						<div className={cx('state-indicator', fontSize)}>
+						<div
+							className={cx('state-indicator', fontSize)}
+							style={{
+								width: getColumnWidth('state-indicator', allColumns, tableWidth),
+							}}
+						>
 							<LogStateIndicator
 								type={getLogIndicatorTypeForTable(item)}
 								fontSize={fontSize}
@@ -114,7 +124,12 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 										  );
 								return {
 									children: (
-										<div className="table-timestamp">
+										<div
+											className="table-timestamp"
+											style={{
+												width: getColumnWidth('timestamp', allColumns, tableWidth),
+											}}
+										>
 											<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
 												{date}
 											</Typography.Paragraph>
@@ -135,9 +150,6 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 							render: (
 								field: string | number,
 							): ColumnTypeRender<Record<string, unknown>> => ({
-								props: {
-									style: defaultTableStyle,
-								},
 								children: (
 									<TableBodyContent
 										dangerouslySetInnerHTML={{
@@ -150,6 +162,9 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 										fontSize={fontSize}
 										linesPerRow={linesPerRow}
 										isDarkMode={isDarkMode}
+										style={{
+											width: getColumnWidth('body', allColumns, tableWidth),
+										}}
 									/>
 								),
 							}),
@@ -158,6 +173,13 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				: []),
 			...(appendTo === 'end' ? fieldColumns : []),
 		];
+
+		// Apply width to all columns
+		return allColumns.map((column) => ({
+			...column,
+			width: getColumnWidth(column.key as string, allColumns, tableWidth),
+			textWrap: 'word-break',
+		}));
 	}, [
 		fields,
 		isListViewPanel,
@@ -166,6 +188,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		linesPerRow,
 		fontSize,
 		formatTimezoneAdjustedTimestamp,
+		tableWidth,
 	]);
 
 	return { columns, dataSource: flattenLogData };
