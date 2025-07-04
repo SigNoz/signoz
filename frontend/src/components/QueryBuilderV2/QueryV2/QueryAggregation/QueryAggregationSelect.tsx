@@ -27,13 +27,12 @@ import CodeMirror, {
 	ViewUpdate,
 } from '@uiw/react-codemirror';
 import { Button, Popover } from 'antd';
-import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
+import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
@@ -298,12 +297,25 @@ function QueryAggregationSelect({
 			functionContextForFetch,
 			queryData.dataSource,
 		],
-		() =>
-			getAggregateAttribute({
+		() => {
+			const operatorsWithoutDataType: (string | undefined)[] = [
+				TracesAggregatorOperator.COUNT,
+				TracesAggregatorOperator.COUNT_DISTINCT,
+				TracesAggregatorOperator.RATE,
+			];
+
+			const fieldDataType =
+				functionContextForFetch &&
+				operatorsWithoutDataType.includes(functionContextForFetch)
+					? undefined
+					: 'number';
+
+			return getKeySuggestions({
+				signal: queryData.dataSource,
 				searchText: '',
-				aggregateOperator: functionContextForFetch as string,
-				dataSource: queryData.dataSource,
-			}),
+				fieldDataType,
+			});
+		},
 		{
 			enabled:
 				!!functionContextForFetch &&
@@ -399,11 +411,14 @@ function QueryAggregationSelect({
 	// Memoize field suggestions from API (no filtering here)
 	const fieldSuggestions = useMemo(
 		() =>
-			aggregateAttributeData?.payload?.attributeKeys?.map(
-				(attributeKey: BaseAutocompleteData) => ({
-					label: attributeKey.key,
+			Object.keys(aggregateAttributeData?.data.data.keys || {}).flatMap((key) => {
+				const attributeKeys = aggregateAttributeData?.data.data.keys[key];
+				if (!attributeKeys) return [];
+
+				return attributeKeys.map((attributeKey) => ({
+					label: attributeKey.name,
 					type: 'variable',
-					info: attributeKey.dataType,
+					info: attributeKey.fieldDataType,
 					apply: (
 						view: EditorView,
 						completion: Completion,
@@ -430,8 +445,8 @@ function QueryAggregationSelect({
 							safeStartCompletion();
 						}, 50);
 					},
-				}),
-			) || [],
+				}));
+			}) || [],
 		[aggregateAttributeData, safeStartCompletion],
 	);
 

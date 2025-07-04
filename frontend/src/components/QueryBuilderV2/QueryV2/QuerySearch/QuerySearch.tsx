@@ -143,7 +143,7 @@ function QuerySearch({
 	const fetchKeySuggestions = async (searchText?: string): Promise<void> => {
 		const response = await getKeySuggestions({
 			signal: dataSource,
-			name: searchText || '',
+			searchText: searchText || '',
 			metricName: queryData.aggregateAttribute.key ?? undefined,
 		});
 

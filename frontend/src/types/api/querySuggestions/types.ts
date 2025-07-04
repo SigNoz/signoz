@@ -21,8 +21,10 @@ export interface QueryKeySuggestionsResponseProps {
 }
 
 export interface QueryKeyRequestProps {
-	signal: string;
-	name: string;
+	signal: 'traces' | 'logs' | 'metrics';
+	searchText: string;
+	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
+	fieldDataType?: string;
 	metricName?: string;
 }
 
@@ -37,6 +39,6 @@ export interface QueryKeyValueSuggestionsResponseProps {
 }
 
 export interface QueryKeyValueRequestProps {
-	signal: string;
+	signal: 'traces' | 'logs' | 'metrics';
 	key: string;
 }
