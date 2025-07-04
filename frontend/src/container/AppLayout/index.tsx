@@ -602,7 +602,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			</Helmet>
 
 			{isLoggedIn && (
-				<div className={cx('app-banner-container')}>
+				<div className={cx('app-banner-wrapper')}>
 					{SHOW_TRIAL_EXPIRY_BANNER && (
 						<div className="trial-expiry-banner">
 							You are in free trial period. Your free trial will end on{' '}
