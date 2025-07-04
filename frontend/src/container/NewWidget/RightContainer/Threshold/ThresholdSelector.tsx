@@ -4,11 +4,11 @@ import './ThresholdSelector.styles.scss';
 
 import { Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
 import { Antenna, Plus } from 'lucide-react';
 import { useCallback } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
 import Threshold from './Threshold';
@@ -23,19 +23,7 @@ function ThresholdSelector({
 }: ThresholdSelectorProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 
-	function getAggregateColumnsNamesAndLabels(): string[] {
-		if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
-			const queries = currentQuery.builder.queryData.map((q) => q.queryName);
-			const formulas = currentQuery.builder.queryFormulas.map((q) => q.queryName);
-			return [...queries, ...formulas];
-		}
-		if (currentQuery.queryType === EQueryType.CLICKHOUSE) {
-			return currentQuery.clickhouse_sql.map((q) => q.name);
-		}
-		return currentQuery.promql.map((q) => q.name);
-	}
-
-	const aggregationQueries = getAggregateColumnsNamesAndLabels();
+	const aggregationQueries = useGetQueryLabels(currentQuery);
 
 	const moveThreshold = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
@@ -65,7 +53,7 @@ function ThresholdSelector({
 				moveThreshold,
 				keyIndex: thresholds.length,
 				selectedGraph,
-				thresholdTableOptions: aggregationQueries[0] || '',
+				thresholdTableOptions: aggregationQueries[0]?.value || '',
 			},
 			...thresholds,
 		]);
@@ -104,10 +92,7 @@ function ThresholdSelector({
 						moveThreshold={moveThreshold}
 						selectedGraph={selectedGraph}
 						thresholdLabel={threshold.thresholdLabel}
-						tableOptions={aggregationQueries.map((query) => ({
-							value: query,
-							label: query,
-						}))}
+						tableOptions={aggregationQueries}
 						thresholdTableOptions={threshold.thresholdTableOptions}
 						columnUnits={columnUnits}
 					/>

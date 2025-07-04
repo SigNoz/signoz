@@ -25,6 +25,8 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { prepareQueryRangePayload } from './prepareQueryRangePayload';
+import { QueryData } from 'types/api/widgets/getQuery';
+import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 
 /**
  * Validates if metric name is available for METRICS data source
@@ -56,6 +58,46 @@ function validateMetricNameForMetricsDataSource(query: Query): boolean {
 	return !allMetricsQueriesMissingNames;
 }
 
+/**
+ * Helper function to get the data source for a specific query
+ */
+const getQueryDataSource = (
+	queryData: QueryData,
+	payloadQuery: Query,
+): DataSource | null => {
+	const queryItem = payloadQuery.builder?.queryData.find(
+		(query) => query.queryName === queryData.queryName,
+	);
+	return queryItem?.dataSource || null;
+};
+
+export const getLegend = (
+	queryData: QueryData,
+	payloadQuery: Query,
+	labelName: string,
+) => {
+	const aggregationPerQuery = payloadQuery?.builder?.queryData.reduce(
+		(acc, query) => {
+			if (query.queryName === queryData.queryName) {
+				acc[query.queryName] = createAggregation(query);
+			}
+			return acc;
+		},
+		{},
+	);
+
+	const metaData = queryData?.metaData;
+	const aggregation =
+		aggregationPerQuery?.[metaData?.queryName]?.[metaData?.index];
+	// const legend = legendMap[metaData?.queryName];
+	const aggregationName = aggregation?.alias || aggregation?.expression || '';
+
+	if (aggregationName && aggregationPerQuery[metaData?.queryName].length > 1) {
+		return `${aggregationName}-${labelName}`;
+	}
+	return labelName || metaData?.queryName;
+};
+
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
 	version: string,
@@ -64,7 +106,14 @@ export async function GetMetricQueryRange(
 	isInfraMonitoring?: boolean,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	let legendMap: Record<string, string>;
-	let response: SuccessResponse<MetricRangePayloadProps>;
+	let response:
+		| SuccessResponse<MetricRangePayloadProps>
+		| SuccessResponseV2<MetricRangePayloadV5>;
+
+	const panelType = props.originalGraphType || props.graphType;
+
+	const finalFormatForWeb =
+		props.formatForWeb || panelType === PANEL_TYPES.TABLE;
 
 	// Validate metric name for METRICS data source before making the API call
 	if (
@@ -104,7 +153,14 @@ export async function GetMetricQueryRange(
 		);
 
 		// Convert V5 response to legacy format for components
-		response = convertV5ResponseToLegacy(v5Response, legendMap);
+		response = convertV5ResponseToLegacy(
+			{
+				payload: v5Response.data,
+				params: v5Result.queryPayload,
+			},
+			legendMap,
+			finalFormatForWeb,
+		);
 	} else {
 		const legacyResult = prepareQueryRangePayload(props);
 		legendMap = legacyResult.legendMap;
@@ -134,7 +190,7 @@ export async function GetMetricQueryRange(
 		throw new Error(error);
 	}
 
-	if (props.formatForWeb) {
+	if (finalFormatForWeb) {
 		return response;
 	}
 

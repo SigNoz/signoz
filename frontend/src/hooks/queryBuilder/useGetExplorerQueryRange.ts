@@ -61,7 +61,6 @@ export const useGetExplorerQueryRange = (
 		version,
 		{
 			...options,
-			retry: false,
 			queryKey: [
 				key,
 				selectedTimeInterval ?? globalSelectedInterval,

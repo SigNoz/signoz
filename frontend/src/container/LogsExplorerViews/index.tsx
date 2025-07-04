@@ -69,6 +69,7 @@ import {
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import {
 	DataSource,
 	LogsAggregatorOperator,
@@ -789,7 +790,11 @@ function LogsExplorerViewsContainer({
 
 					{selectedPanelType === PANEL_TYPES.TABLE && (
 						<LogsExplorerTable
-							data={data?.payload?.data?.newResult?.data?.result || []}
+							data={
+								(data?.payload?.data?.newResult?.data?.result ||
+									data?.payload?.data?.result ||
+									[]) as QueryDataV3[]
+							}
 							isLoading={isLoading || isFetching}
 							isError={isError}
 						/>

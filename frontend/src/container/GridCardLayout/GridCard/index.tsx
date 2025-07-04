@@ -137,6 +137,7 @@ function GridCardGraph({
 				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
 				start: customTimeRange?.startTime || start,
 				end: customTimeRange?.endTime || end,
+				originalGraphType: widget.panelTypes,
 			};
 		}
 		updatedQuery.builder.queryData[0].pageSize = 10;

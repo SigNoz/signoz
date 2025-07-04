@@ -84,11 +84,12 @@ function GridTableComponent({
 					const newValue = { ...val };
 					Object.keys(val).forEach((k) => {
 						if (columnUnits[k]) {
-							// the check below takes care of not adding units for rows that have n/a values
-							newValue[k] =
-								val[k] !== 'n/a'
-									? getYAxisFormattedValue(String(val[k]), columnUnits[k])
-									: val[k];
+							// the check below takes care of not adding units for rows that have n/a or null values
+							if (val[k] !== 'n/a' && val[k] !== null) {
+								newValue[k] = getYAxisFormattedValue(String(val[k]), columnUnits[k]);
+							} else if (val[k] === null) {
+								newValue[k] = 'n/a';
+							}
 							newValue[`${k}_without_unit`] = val[k];
 						}
 					});
@@ -101,6 +102,7 @@ function GridTableComponent({
 		[columnUnits],
 	);
 
+	console.log('columnUnits', columnUnits, originalDataSource);
 	const dataSource = useMemo(() => applyColumnUnits(originalDataSource), [
 		applyColumnUnits,
 		originalDataSource,
