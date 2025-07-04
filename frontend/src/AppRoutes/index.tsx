@@ -193,6 +193,9 @@ function App(): JSX.Element {
 					updatedRoutes = updatedRoutes.filter(
 						(route) => route?.path !== ROUTES.BILLING,
 					);
+					updatedRoutes = updatedRoutes.filter(
+						(route) => route?.path !== ROUTES.INTEGRATIONS,
+					);
 				}
 
 				if (isEnterpriseSelfHostedUser) {
@@ -205,6 +208,9 @@ function App(): JSX.Element {
 				// if not a cloud user then remove billing and add list licenses route
 				updatedRoutes = updatedRoutes.filter(
 					(route) => route?.path !== ROUTES.BILLING,
+				);
+				updatedRoutes = updatedRoutes.filter(
+					(route) => route?.path !== ROUTES.INTEGRATIONS,
 				);
 				updatedRoutes = [...updatedRoutes, LIST_LICENSES];
 			}
