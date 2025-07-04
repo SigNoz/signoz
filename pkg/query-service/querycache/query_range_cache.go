@@ -37,12 +37,6 @@ type CacheableSeriesData struct {
 	Series []CachedSeriesData
 }
 
-func (c *CacheableSeriesData) Clone() cachetypes.Cacheable {
-	return &CacheableSeriesData{
-		Series: c.Series,
-	}
-}
-
 func (c *CacheableSeriesData) MarshalBinary() (data []byte, err error) {
 	return json.Marshal(c)
 }
