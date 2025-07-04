@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -16,40 +17,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type CacheableA struct {
+type CloneableA struct {
 	Key    string
 	Value  int
 	Expiry time.Duration
 }
 
-func (cacheable *CacheableA) Clone() cachetypes.Cacheable {
-	return &CacheableA{
-		Key:    cacheable.Key,
-		Value:  cacheable.Value,
-		Expiry: cacheable.Expiry,
+func (cloneable *CloneableA) Clone() cachetypes.Cacheable {
+	return &CloneableA{
+		Key:    cloneable.Key,
+		Value:  cloneable.Value,
+		Expiry: cloneable.Expiry,
 	}
 }
 
-func (cacheable *CacheableA) MarshalBinary() ([]byte, error) {
-	return json.Marshal(cacheable)
+func (cloneable *CloneableA) MarshalBinary() ([]byte, error) {
+	return json.Marshal(cloneable)
 }
 
-func (cacheable *CacheableA) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, cacheable)
+func (cloneable *CloneableA) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, cloneable)
 }
 
 type CacheableB struct {
 	Key    string
 	Value  int
 	Expiry time.Duration
-}
-
-func (cacheable *CacheableB) Clone() cachetypes.Cacheable {
-	return &CacheableB{
-		Key:    cacheable.Key,
-		Value:  cacheable.Value,
-		Expiry: cacheable.Expiry,
-	}
 }
 
 func (cacheable *CacheableB) MarshalBinary() ([]byte, error) {
@@ -60,31 +53,83 @@ func (cacheable *CacheableB) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, cacheable)
 }
 
-func TestSetWithNilPointer(t *testing.T) {
+func TestCloneableSetWithNilPointer(t *testing.T) {
 	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}})
 	require.NoError(t, err)
 
-	var cacheable *CacheableA
+	var cloneable *CloneableA
+	assert.Error(t, cache.Set(context.Background(), valuer.GenerateUUID(), "key", cloneable, 10*time.Second))
+}
+
+func TestCacheableSetWithNilPointer(t *testing.T) {
+	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+		TTL:             10 * time.Second,
+		CleanupInterval: 10 * time.Second,
+	}})
+	require.NoError(t, err)
+
+	var cacheable *CacheableB
 	assert.Error(t, cache.Set(context.Background(), valuer.GenerateUUID(), "key", cacheable, 10*time.Second))
 }
 
-func TestSetWithValidCacheable(t *testing.T) {
+func TestCloneableSetGet(t *testing.T) {
 	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}})
 	require.NoError(t, err)
 
-	cacheable := &CacheableA{
+	orgID := valuer.GenerateUUID()
+	cloneable := &CloneableA{
 		Key:    "some-random-key",
 		Value:  1,
 		Expiry: time.Microsecond,
 	}
 
-	assert.NoError(t, cache.Set(context.Background(), valuer.GenerateUUID(), "key", cacheable, 10*time.Second))
+	assert.NoError(t, cache.Set(context.Background(), orgID, "key", cloneable, 10*time.Second))
+
+	provider := cache.(*provider)
+	insideCache, found := provider.cc.Get(strings.Join([]string{orgID.StringValue(), "key"}, "::"))
+	assert.True(t, found)
+	assert.IsType(t, &CloneableA{}, insideCache)
+
+	cached := new(CloneableA)
+	assert.NoError(t, cache.Get(context.Background(), orgID, "key", cached, false))
+
+	assert.Equal(t, cloneable, cached)
+	assert.NotSame(t, cloneable, cached)
+}
+
+func TestCacheableSetGet(t *testing.T) {
+	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+		TTL:             10 * time.Second,
+		CleanupInterval: 10 * time.Second,
+	}})
+	require.NoError(t, err)
+
+	orgID := valuer.GenerateUUID()
+	cacheable := &CacheableB{
+		Key:    "some-random-key",
+		Value:  1,
+		Expiry: time.Microsecond,
+	}
+
+	assert.NoError(t, cache.Set(context.Background(), orgID, "key", cacheable, 10*time.Second))
+
+	provider := cache.(*provider)
+	insideCache, found := provider.cc.Get(strings.Join([]string{orgID.StringValue(), "key"}, "::"))
+	assert.True(t, found)
+	assert.IsType(t, []byte{}, insideCache)
+	assert.Equal(t, "{\"Key\":\"some-random-key\",\"Value\":1,\"Expiry\":1000}", string(insideCache.([]byte)))
+
+	cached := new(CacheableB)
+	assert.NoError(t, cache.Get(context.Background(), orgID, "key", cached, false))
+
+	assert.Equal(t, cacheable, cached)
+	assert.NotSame(t, cacheable, cached)
 }
 
 func TestGetWithNilPointer(t *testing.T) {
@@ -94,34 +139,8 @@ func TestGetWithNilPointer(t *testing.T) {
 	}})
 	require.NoError(t, err)
 
-	var cacheable *CacheableA
-	assert.Error(t, cache.Get(context.Background(), valuer.GenerateUUID(), "key", cacheable, false))
-}
-
-func TestSetGetWithSameTypes(t *testing.T) {
-	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
-		TTL:             10 * time.Second,
-		CleanupInterval: 10 * time.Second,
-	}})
-	require.NoError(t, err)
-
-	cacheable := &CacheableA{
-		Key:    "some-random-key",
-		Value:  1,
-		Expiry: time.Microsecond,
-	}
-	orgID := valuer.GenerateUUID()
-	assert.NoError(t, cache.Set(context.Background(), orgID, "key", cacheable, 10*time.Second))
-
-	cachedCacheable := new(CacheableA)
-	err = cache.Get(context.Background(), orgID, "key", cachedCacheable, false)
-	assert.NoError(t, err)
-
-	// confirm that the cached cacheable is equal to the original cacheable
-	assert.Equal(t, cacheable, cachedCacheable)
-
-	// confirm that the cached cacheable is a different pointer
-	assert.NotSame(t, cacheable, cachedCacheable)
+	var cloneable *CloneableA
+	assert.Error(t, cache.Get(context.Background(), valuer.GenerateUUID(), "key", cloneable, false))
 }
 
 func TestSetGetWithDifferentTypes(t *testing.T) {
@@ -133,19 +152,19 @@ func TestSetGetWithDifferentTypes(t *testing.T) {
 
 	orgID := valuer.GenerateUUID()
 
-	cacheable := &CacheableA{
+	cloneable := &CloneableA{
 		Key:    "some-random-key",
 		Value:  1,
 		Expiry: time.Microsecond,
 	}
-	assert.NoError(t, cache.Set(context.Background(), orgID, "key", cacheable, 10*time.Second))
+	assert.NoError(t, cache.Set(context.Background(), orgID, "key", cloneable, 10*time.Second))
 
 	cachedCacheable := new(CacheableB)
 	err = cache.Get(context.Background(), orgID, "key", cachedCacheable, false)
 	assert.Error(t, err)
 }
 
-func TestConcurrentSetGet(t *testing.T) {
+func TestConcurrentSetGetWithCloneable(t *testing.T) {
 	cache, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
@@ -155,20 +174,20 @@ func TestConcurrentSetGet(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 	numGoroutines := 100
 	done := make(chan bool, numGoroutines*2)
-	cacheables := make([]*CacheableA, numGoroutines)
+	cloneables := make([]*CloneableA, numGoroutines)
 	mu := sync.Mutex{}
 
 	for i := 0; i < numGoroutines; i++ {
 		go func(id int) {
-			cacheable := &CacheableA{
+			cloneable := &CloneableA{
 				Key:    fmt.Sprintf("key-%d", id),
 				Value:  id,
 				Expiry: 50 * time.Second,
 			}
-			err := cache.Set(context.Background(), orgID, fmt.Sprintf("key-%d", id), cacheable, 10*time.Second)
+			err := cache.Set(context.Background(), orgID, fmt.Sprintf("key-%d", id), cloneable, 10*time.Second)
 			assert.NoError(t, err)
 			mu.Lock()
-			cacheables[id] = cacheable
+			cloneables[id] = cloneable
 			mu.Unlock()
 			done <- true
 		}(i)
@@ -176,8 +195,8 @@ func TestConcurrentSetGet(t *testing.T) {
 
 	for i := 0; i < numGoroutines; i++ {
 		go func(id int) {
-			cachedCacheable := new(CacheableA)
-			err := cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", id), cachedCacheable, false)
+			cachedCloneable := new(CloneableA)
+			err := cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", id), cachedCloneable, false)
 			// Some keys might not exist due to concurrent access, which is expected
 			_ = err
 			done <- true
@@ -189,11 +208,11 @@ func TestConcurrentSetGet(t *testing.T) {
 	}
 
 	for i := 0; i < numGoroutines; i++ {
-		cachedCacheable := new(CacheableA)
-		assert.NoError(t, cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", i), cachedCacheable, false))
-		assert.Equal(t, fmt.Sprintf("key-%d", i), cachedCacheable.Key)
-		assert.Equal(t, i, cachedCacheable.Value)
+		cachedCloneable := new(CloneableA)
+		assert.NoError(t, cache.Get(context.Background(), orgID, fmt.Sprintf("key-%d", i), cachedCloneable, false))
+		assert.Equal(t, fmt.Sprintf("key-%d", i), cachedCloneable.Key)
+		assert.Equal(t, i, cachedCloneable.Value)
 		// confirm that the cached cacheable is a different pointer
-		assert.NotSame(t, cachedCacheable, cacheables[i])
+		assert.NotSame(t, cachedCloneable, cloneables[i])
 	}
 }

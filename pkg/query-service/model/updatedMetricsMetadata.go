@@ -5,7 +5,6 @@ import (
 	"time"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 )
 
 type UpdateMetricsMetadata struct {
@@ -16,18 +15,6 @@ type UpdateMetricsMetadata struct {
 	Temporality v3.Temporality `json:"temporality" ch:"temporality"`
 	IsMonotonic bool           `json:"is_monotonic" ch:"is_monotonic"`
 	CreatedAt   time.Time      `json:"created_at" ch:"created_at"`
-}
-
-func (c *UpdateMetricsMetadata) Clone() cachetypes.Cacheable {
-	return &UpdateMetricsMetadata{
-		MetricName:  c.MetricName,
-		MetricType:  c.MetricType,
-		Description: c.Description,
-		Unit:        c.Unit,
-		Temporality: c.Temporality,
-		IsMonotonic: c.IsMonotonic,
-		CreatedAt:   c.CreatedAt,
-	}
 }
 
 func (c *UpdateMetricsMetadata) MarshalBinary() (data []byte, err error) {

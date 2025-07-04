@@ -40,7 +40,18 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 		return err
 	}
 
-	provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), data.Clone(), ttl)
+	if cloneable, ok := data.(cachetypes.Cloneable); ok {
+		toCache := cloneable.Clone()
+		provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, ttl)
+		return nil
+	}
+
+	toCache, err := data.MarshalBinary()
+	if err != nil {
+		return err
+	}
+
+	provider.cc.Set(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, ttl)
 	return nil
 }
 
@@ -50,33 +61,40 @@ func (provider *provider) Get(_ context.Context, orgID valuer.UUID, cacheKey str
 		return err
 	}
 
-	// check if the destination value is settable
-	dstv := reflect.ValueOf(dest)
-	if !dstv.Elem().CanSet() {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "destination value is not settable, %s", dstv.Elem())
-	}
-
 	cachedData, found := provider.cc.Get(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"))
 	if !found {
 		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "key miss")
 	}
 
-	cacheableData, ok := cachedData.(cachetypes.Cacheable)
-	if !ok {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cached data is not a cacheable")
+	if cloneable, ok := cachedData.(cachetypes.Cloneable); ok {
+		// check if the destination value is settable
+		dstv := reflect.ValueOf(dest)
+		if !dstv.Elem().CanSet() {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsettable: (value: \"%s\")", dstv.Elem())
+		}
+
+		fromCache := cloneable.Clone()
+
+		// check the type compatbility between the src and dest
+		srcv := reflect.ValueOf(fromCache)
+		if !srcv.Type().AssignableTo(dstv.Type()) {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unassignable: (src: \"%s\", dst: \"%s\")", srcv.Type().String(), dstv.Type().String())
+		}
+
+		// set the value to from src to dest
+		dstv.Elem().Set(srcv.Elem())
+		return nil
 	}
 
-	data := cacheableData.Clone()
+	if fromCache, ok := cachedData.([]byte); ok {
+		if err = dest.UnmarshalBinary(fromCache); err != nil {
+			return err
+		}
 
-	// check the type compatbility between the src and dest
-	srcv := reflect.ValueOf(data)
-	if !srcv.Type().AssignableTo(dstv.Type()) {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "src type is not assignable to dst type")
+		return nil
 	}
 
-	// set the value to from src to dest
-	dstv.Elem().Set(srcv.Elem())
-	return nil
+	return errors.NewInternalf(errors.CodeInternal, "unrecognized: (value: \"%s\")", reflect.TypeOf(cachedData).String())
 }
 
 func (provider *provider) Delete(_ context.Context, orgID valuer.UUID, cacheKey string) {

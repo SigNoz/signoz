@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -50,27 +49,6 @@ type cachedBucket struct {
 type cachedData struct {
 	Buckets  []*cachedBucket `json:"buckets"`
 	Warnings []string        `json:"warnings"`
-}
-
-func (c *cachedData) Clone() cachetypes.Cacheable {
-	copyOfBuckets := make([]*cachedBucket, len(c.Buckets))
-	for i, bucket := range c.Buckets {
-		copyOfBuckets[i] = &cachedBucket{
-			StartMs: bucket.StartMs,
-			EndMs:   bucket.EndMs,
-			Type:    bucket.Type,
-			Value:   bucket.Value,
-			Stats:   bucket.Stats,
-		}
-	}
-
-	copyOfWarnings := make([]string, len(c.Warnings))
-	copy(copyOfWarnings, c.Warnings)
-
-	return &cachedData{
-		Buckets:  copyOfBuckets,
-		Warnings: copyOfWarnings,
-	}
 }
 
 func (c *cachedData) UnmarshalBinary(data []byte) error {
