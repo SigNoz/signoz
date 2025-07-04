@@ -25,6 +25,10 @@ func (provider *Provider) AppendIdent(b []byte, ident string) []byte {
 	return provider.Fmtter.AppendIdent(b, ident)
 }
 
+func (provider *Provider) AppendValue(b []byte, v any) []byte {
+	return schema.Append(provider.Fmtter, b, v)
+}
+
 func (provider *Provider) SQLDataTypeOf(dataType sqlschema.DataType) string {
 	return dataType.String()
 }
@@ -35,4 +39,12 @@ func (provider *Provider) CreateIndex(ctx context.Context, index sqlschema.Index
 
 func (provider *Provider) DropConstraintUnsafe(ctx context.Context, table *sqlschema.Table, constraint sqlschema.Constraint) [][]byte {
 	return table.ToCreateTempInsertDropAlterSQL(provider)
+}
+
+func (provider *Provider) AddColumnUnsafe(ctx context.Context, table *sqlschema.Table, column *sqlschema.Column, val any) [][]byte {
+	return [][]byte{
+		column.ToAddSQL(provider, table.Name),
+		column.ToUpdateSQL(provider, table.Name, val),
+		column.ToSetNotNullSQL(provider, table.Name),
+	}
 }

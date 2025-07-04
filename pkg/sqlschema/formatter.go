@@ -21,3 +21,7 @@ func (formatter Formatter) SQLDataTypeOf(dataType DataType) string {
 func (formatter Formatter) AppendIdent(b []byte, ident string) []byte {
 	return formatter.s.AppendIdent(b, ident)
 }
+
+func (formatter Formatter) AppendValue(b []byte, v any) []byte {
+	return schema.Append(formatter.s, b, v)
+}
