@@ -71,7 +71,7 @@ function LogDetail({
 	const [contextQuery, setContextQuery] = useState<Query | undefined>();
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
-	const { initialDataSource, stagedQuery } = useQueryBuilder();
+	const { stagedQuery } = useQueryBuilder();
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
@@ -81,7 +81,7 @@ function LogDetail({
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.LOGS,
+		dataSource: DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 
