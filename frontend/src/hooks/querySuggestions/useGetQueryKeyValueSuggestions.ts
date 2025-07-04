@@ -8,12 +8,12 @@ export const useGetQueryKeyValueSuggestions = ({
 	signal,
 }: {
 	key: string;
-	signal: string;
+	signal: 'traces' | 'logs' | 'metrics';
 }): UseQueryResult<
 	AxiosResponse<QueryKeyValueSuggestionsResponseProps>,
 	AxiosError
 > =>
 	useQuery<AxiosResponse<QueryKeyValueSuggestionsResponseProps>, AxiosError>({
 		queryKey: ['queryKeyValueSuggestions', key, signal],
-		queryFn: () => getValueSuggestions({ signal, key }),
+		queryFn: () => getValueSuggestions({ signal, key, searchText: '' }),
 	});
