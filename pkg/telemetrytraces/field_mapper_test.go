@@ -64,7 +64,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedResult: "resources_string['service.name']",
+			expectedResult: "'resource.service.name'",
 			expectedError:  nil,
 		},
 		{
