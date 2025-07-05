@@ -12,9 +12,9 @@ import (
 
 type provider struct {
 	settings factory.ScopedProviderSettings
-	fmtter   sqlschema.Formatter
+	fmter    sqlschema.Formatter
 	sqlstore sqlstore.SQLStore
-	tabled   sqlschema.TabledSQLSchema
+	operator sqlschema.SQLOperator
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config] {
@@ -25,43 +25,21 @@ func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[sqlschema.SQ
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlschema.Config, sqlstore sqlstore.SQLStore) (sqlschema.SQLSchema, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlschema/sqlitesqlschema")
-	fmtter := sqlschema.NewFormatter(sqlitedialect.New())
+	fmter := sqlschema.NewFormatter(sqlitedialect.New())
 
 	return &provider{
-		fmtter:   fmtter,
+		fmter:    fmter,
 		settings: settings,
 		sqlstore: sqlstore,
-		tabled:   newTabled(fmtter),
+		operator: sqlschema.NewOperator(fmter, false, false),
 	}, nil
 }
 
-func (provider *provider) Tabled() sqlschema.TabledSQLSchema {
-	return provider.tabled
+func (provider *provider) Operator() sqlschema.SQLOperator {
+	return provider.operator
 }
 
-func (provider *provider) CreateIndex(ctx context.Context, index sqlschema.Index) ([][]byte, error) {
-	return [][]byte{index.ToCreateSQL(provider.fmtter)}, nil
-}
-
-func (provider *provider) DropConstraint(ctx context.Context, tableName sqlschema.TableName, constraint sqlschema.Constraint) ([][]byte, error) {
-	table, uniqueConstraints, _, err := provider.GetTable(ctx, tableName)
-	if err != nil {
-		return nil, err
-	}
-
-	return provider.tabled.DropConstraint(table, uniqueConstraints, constraint), nil
-}
-
-func (provider *provider) AddColumn(ctx context.Context, tableName sqlschema.TableName, column *sqlschema.Column, val any) ([][]byte, error) {
-	table, _, _, err := provider.GetTable(ctx, tableName)
-	if err != nil {
-		return nil, err
-	}
-
-	return provider.tabled.AddColumn(table, column, val), nil
-}
-
-func (provider *provider) GetTable(ctx context.Context, name sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, []sqlschema.Index, error) {
+func (provider *provider) GetTable(ctx context.Context, name sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
 	var sql string
 
 	if err := provider.
@@ -69,13 +47,17 @@ func (provider *provider) GetTable(ctx context.Context, name sqlschema.TableName
 		BunDB().
 		NewRaw("SELECT sql FROM sqlite_master WHERE type IN (?) AND tbl_name = ? AND sql IS NOT NULL", bun.In([]string{"table"}), string(name)).
 		Scan(ctx, &sql); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	table, uniqueConstraints, err := parseCreateTable(sql, provider.fmtter)
+	table, uniqueConstraints, err := parseCreateTable(sql, provider.fmter)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	return table, uniqueConstraints, nil, nil
+	return table, uniqueConstraints, nil
+}
+
+func (provider *provider) GetIndices(ctx context.Context, name sqlschema.TableName) ([]sqlschema.Index, error) {
+	return []sqlschema.Index{}, nil
 }

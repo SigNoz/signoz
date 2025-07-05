@@ -31,44 +31,43 @@ func (table *Table) Clone() *Table {
 	}
 }
 
-func (table *Table) DropConstraint(constraint Constraint) (*Table, bool) {
+func (table *Table) DropConstraint(constraint Constraint) bool {
 	found := false
-	clonedTable := table.Clone()
 
-	if constraint.Equals(clonedTable.PrimaryKeyConstraint) {
+	if constraint.Equals(table.PrimaryKeyConstraint) {
+		table.PrimaryKeyConstraint = nil
 		found = true
-		clonedTable.PrimaryKeyConstraint = nil
 	}
 
 	if constraint.Type() == ConstraintTypeForeignKey {
-		for i, fkConstraint := range clonedTable.ForeignKeyConstraints {
+		for i, fkConstraint := range table.ForeignKeyConstraints {
 			if constraint.Equals(fkConstraint) {
-				clonedTable.ForeignKeyConstraints = append(clonedTable.ForeignKeyConstraints[:i], clonedTable.ForeignKeyConstraints[i+1:]...)
+				table.ForeignKeyConstraints = append(table.ForeignKeyConstraints[:i], table.ForeignKeyConstraints[i+1:]...)
 				found = true
 				break
 			}
 		}
 	}
 
-	return clonedTable, found
+	return found
 }
 
-func (table *Table) ToDropSQL(fmter SQLFormatter) [][]byte {
+func (table *Table) ToDropSQL(fmter SQLFormatter) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "DROP TABLE IF EXISTS "...)
 	sql = fmter.AppendIdent(sql, string(table.Name))
 
-	return [][]byte{sql}
+	return sql
 }
 
-func (table *Table) ToRenameSQL(fmter SQLFormatter, newName string) []byte {
+func (table *Table) ToRenameSQL(fmter SQLFormatter, newName TableName) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "ALTER TABLE "...)
 	sql = fmter.AppendIdent(sql, string(table.Name))
 	sql = append(sql, " RENAME TO "...)
-	sql = fmter.AppendIdent(sql, newName)
+	sql = fmter.AppendIdent(sql, string(newName))
 
 	return sql
 }
@@ -113,8 +112,8 @@ func (table *Table) ToCreateTempInsertDropAlterSQL(fmter SQLFormatter) [][]byte 
 	insertIntoSelectSQL = fmter.AppendIdent(insertIntoSelectSQL, string(table.Name))
 
 	sql = append(sql, insertIntoSelectSQL)
-	sql = append(sql, table.ToDropSQL(fmter)...)
-	sql = append(sql, tempTable.ToRenameSQL(fmter, string(table.Name)))
+	sql = append(sql, table.ToDropSQL(fmter))
+	sql = append(sql, tempTable.ToRenameSQL(fmter, table.Name))
 
 	return sql
 }

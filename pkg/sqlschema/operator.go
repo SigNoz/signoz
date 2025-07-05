@@ -1,0 +1,121 @@
+package sqlschema
+
+var _ SQLOperator = (*Operator)(nil)
+
+type Operator struct {
+	fmter                    SQLFormatter
+	fDropConstraint          bool
+	fColumnIfNotExistsExists bool
+}
+
+func NewOperator(fmter SQLFormatter, fDropConstraint bool, fColumnIfNotExistsExists bool) *Operator {
+	return &Operator{
+		fmter:                    fmter,
+		fDropConstraint:          fDropConstraint,
+		fColumnIfNotExistsExists: fColumnIfNotExistsExists,
+	}
+}
+
+func (operator *Operator) CreateTable(table *Table) [][]byte {
+	return [][]byte{table.ToCreateSQL(operator.fmter)}
+}
+
+func (operator *Operator) RenameTable(table *Table, newName TableName) [][]byte {
+	return [][]byte{table.ToRenameSQL(operator.fmter, newName)}
+}
+
+func (operator *Operator) RecreateTable(table *Table, uniqueConstraints []*UniqueConstraint) [][]byte {
+	sqls := [][]byte{}
+
+	sqls = append(sqls, table.ToCreateTempInsertDropAlterSQL(operator.fmter)...)
+
+	for _, uniqueConstraint := range uniqueConstraints {
+		sqls = append(sqls, uniqueConstraint.ToIndexSQL(operator.fmter, table.Name))
+	}
+
+	return sqls
+}
+
+func (operator *Operator) DropTable(table *Table) [][]byte {
+	return [][]byte{table.ToDropSQL(operator.fmter)}
+}
+
+func (operator *Operator) CreateIndex(index Index) [][]byte {
+	return [][]byte{index.ToCreateSQL(operator.fmter)}
+}
+
+func (operator *Operator) DropIndex(index Index) [][]byte {
+	return [][]byte{index.ToDropSQL(operator.fmter)}
+}
+
+func (operator *Operator) AddColumn(table *Table, column *Column, val any) [][]byte {
+	// If the column already exists, we do not need to add it.
+	if index := operator.findColumnByName(table, column.Name); index != -1 {
+		return [][]byte{}
+	}
+
+	sqls := [][]byte{
+		column.ToAddSQL(operator.fmter, table.Name, operator.fColumnIfNotExistsExists),
+		column.ToUpdateSQL(operator.fmter, table.Name, val),
+	}
+
+	if !column.Nullable {
+		sqls = append(sqls, column.ToSetNotNullSQL(operator.fmter, table.Name))
+	}
+
+	return sqls
+}
+
+func (operator *Operator) DropColumn(table *Table, column *Column) [][]byte {
+	// If the column does not exist, we do not need to drop it.
+	if index := operator.findColumnByName(table, column.Name); index == -1 {
+		return [][]byte{}
+	}
+
+	return [][]byte{column.ToDropSQL(operator.fmter, table.Name, operator.fColumnIfNotExistsExists)}
+}
+
+func (operator *Operator) DropConstraint(table *Table, uniqueConstraints []*UniqueConstraint, constraint Constraint) [][]byte {
+	if found := table.DropConstraint(constraint); !found {
+		uniqueConstraintIndex := operator.findUniqueConstraint(uniqueConstraints, constraint)
+		if uniqueConstraintIndex == -1 {
+			return [][]byte{}
+		}
+
+		if operator.fDropConstraint {
+			return [][]byte{uniqueConstraints[uniqueConstraintIndex].ToDropSQL(operator.fmter, table.Name)}
+		}
+
+		return operator.RecreateTable(table, append(uniqueConstraints[:uniqueConstraintIndex], uniqueConstraints[uniqueConstraintIndex+1:]...))
+	}
+
+	if operator.fDropConstraint {
+		return [][]byte{constraint.ToDropSQL(operator.fmter, table.Name)}
+	}
+
+	return operator.RecreateTable(table, uniqueConstraints)
+}
+
+func (*Operator) findColumnByName(table *Table, columnName ColumnName) int {
+	for i, column := range table.Columns {
+		if column.Name == columnName {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (*Operator) findUniqueConstraint(uniqueConstraints []*UniqueConstraint, constraint Constraint) int {
+	if constraint.Type() != ConstraintTypeUnique {
+		return -1
+	}
+
+	for i, uniqueConstraint := range uniqueConstraints {
+		if uniqueConstraint.Equals(constraint) {
+			return i
+		}
+	}
+
+	return -1
+}

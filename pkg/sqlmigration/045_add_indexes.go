@@ -50,36 +50,21 @@ func (migration *addIndexes) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	indexSQLs := [][]byte{}
-	indexSQL, err := migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "factor_password", ColumnNames: []string{"user_id"}})
-	if err != nil {
-		return err
-	}
+	sqls := [][]byte{}
 
-	indexSQLs = append(indexSQLs, indexSQL...)
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "factor_password", ColumnNames: []string{"user_id"}})
+	sqls = append(sqls, indexSQLs...)
 
-	indexSQL, err = migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []string{"password_id"}})
-	if err != nil {
-		return err
-	}
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []string{"password_id"}})
+	sqls = append(sqls, indexSQLs...)
 
-	indexSQLs = append(indexSQLs, indexSQL...)
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []string{"token"}})
+	sqls = append(sqls, indexSQLs...)
 
-	indexSQL, err = migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []string{"token"}})
-	if err != nil {
-		return err
-	}
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "license", ColumnNames: []string{"org_id"}})
+	sqls = append(sqls, indexSQLs...)
 
-	indexSQLs = append(indexSQLs, indexSQL...)
-
-	indexSQL, err = migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "license", ColumnNames: []string{"org_id"}})
-	if err != nil {
-		return err
-	}
-
-	indexSQLs = append(indexSQLs, indexSQL...)
-
-	for _, sql := range indexSQLs {
+	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}

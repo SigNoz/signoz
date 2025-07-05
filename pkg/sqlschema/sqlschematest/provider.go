@@ -3,6 +3,7 @@ package sqlschematest
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/uptrace/bun/schema"
 )
@@ -10,31 +11,39 @@ import (
 var _ sqlschema.SQLSchema = (*Provider)(nil)
 
 type Provider struct {
-	Fmter sqlschema.Formatter
+	Fmter             sqlschema.Formatter
+	Tables            map[string]*sqlschema.Table
+	UniqueConstraints map[string][]*sqlschema.UniqueConstraint
+	Indices           map[string]sqlschema.Index
 }
 
-func New() *Provider {
+func New(tables map[string]*sqlschema.Table, uniqueConstraints map[string][]*sqlschema.UniqueConstraint, indices map[string]sqlschema.Index) *Provider {
 	return &Provider{
-		Fmter: sqlschema.NewFormatter(schema.NewNopFormatter().Dialect()),
+		Fmter:             sqlschema.NewFormatter(schema.NewNopFormatter().Dialect()),
+		Tables:            tables,
+		UniqueConstraints: uniqueConstraints,
+		Indices:           indices,
 	}
 }
 
-func (provider *Provider) Tabled() sqlschema.TabledSQLSchema {
-	return nil
+func (provider *Provider) Operator() sqlschema.SQLOperator {
+	return sqlschema.NewOperator(provider.Fmter, false, false)
 }
 
-func (provider *Provider) CreateIndex(ctx context.Context, index sqlschema.Index) ([][]byte, error) {
-	return [][]byte{index.ToCreateSQL(provider.Fmter)}, nil
+func (provider *Provider) GetTable(ctx context.Context, name sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
+	table, ok := provider.Tables[string(name)]
+	if !ok {
+		return nil, nil, errors.NewNotFoundf(errors.CodeNotFound, "table %s not found", name)
+	}
+
+	return table, provider.UniqueConstraints[string(name)], nil
 }
 
-func (provider *Provider) DropConstraint(ctx context.Context, tableName sqlschema.TableName, constraint sqlschema.Constraint) ([][]byte, error) {
-	return nil, nil
-}
+func (provider *Provider) GetIndices(ctx context.Context, name sqlschema.TableName) ([]sqlschema.Index, error) {
+	indices, ok := provider.Indices[string(name)]
+	if !ok {
+		return []sqlschema.Index{}, nil
+	}
 
-func (provider *Provider) AddColumn(ctx context.Context, tableName sqlschema.TableName, column *sqlschema.Column, val any) ([][]byte, error) {
-	return nil, nil
-}
-
-func (provider *Provider) GetTable(ctx context.Context, name sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, []sqlschema.Index, error) {
-	return nil, nil, nil, nil
+	return []sqlschema.Index{indices}, nil
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/uptrace/bun/schema"
 )
 
+var _ SQLFormatter = (*Formatter)(nil)
+
 type Formatter struct {
 	s schema.Formatter
 }
