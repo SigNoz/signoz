@@ -2,17 +2,21 @@ package sqlschema
 
 var _ SQLOperator = (*Operator)(nil)
 
-type Operator struct {
-	fmter                    SQLFormatter
-	fDropConstraint          bool
-	fColumnIfNotExistsExists bool
+type OperatorSupport struct {
+	DropConstraint          bool
+	ColumnIfNotExistsExists bool
+	AlterColumnSetNotNull   bool
 }
 
-func NewOperator(fmter SQLFormatter, fDropConstraint bool, fColumnIfNotExistsExists bool) *Operator {
+type Operator struct {
+	fmter   SQLFormatter
+	support OperatorSupport
+}
+
+func NewOperator(fmter SQLFormatter, support OperatorSupport) *Operator {
 	return &Operator{
-		fmter:                    fmter,
-		fDropConstraint:          fDropConstraint,
-		fColumnIfNotExistsExists: fColumnIfNotExistsExists,
+		fmter:   fmter,
+		support: support,
 	}
 }
 
@@ -48,19 +52,30 @@ func (operator *Operator) DropIndex(index Index) [][]byte {
 	return [][]byte{index.ToDropSQL(operator.fmter)}
 }
 
-func (operator *Operator) AddColumn(table *Table, column *Column, val any) [][]byte {
+func (operator *Operator) AddColumn(table *Table, uniqueConstraints []*UniqueConstraint, column *Column, val any) [][]byte {
 	// If the column already exists, we do not need to add it.
 	if index := operator.findColumnByName(table, column.Name); index != -1 {
 		return [][]byte{}
 	}
 
+	// Add the column to the table.
+	table.Columns = append(table.Columns, column)
+
 	sqls := [][]byte{
-		column.ToAddSQL(operator.fmter, table.Name, operator.fColumnIfNotExistsExists),
-		column.ToUpdateSQL(operator.fmter, table.Name, val),
+		column.ToAddSQL(operator.fmter, table.Name, operator.support.ColumnIfNotExistsExists),
 	}
 
 	if !column.Nullable {
-		sqls = append(sqls, column.ToSetNotNullSQL(operator.fmter, table.Name))
+		if val == nil {
+			val = column.DataType.z
+		}
+		sqls = append(sqls, column.ToUpdateSQL(operator.fmter, table.Name, val))
+
+		if operator.support.AlterColumnSetNotNull {
+			sqls = append(sqls, column.ToSetNotNullSQL(operator.fmter, table.Name))
+		} else {
+			sqls = append(sqls, operator.RecreateTable(table, uniqueConstraints)...)
+		}
 	}
 
 	return sqls
@@ -72,7 +87,7 @@ func (operator *Operator) DropColumn(table *Table, column *Column) [][]byte {
 		return [][]byte{}
 	}
 
-	return [][]byte{column.ToDropSQL(operator.fmter, table.Name, operator.fColumnIfNotExistsExists)}
+	return [][]byte{column.ToDropSQL(operator.fmter, table.Name, operator.support.ColumnIfNotExistsExists)}
 }
 
 func (operator *Operator) DropConstraint(table *Table, uniqueConstraints []*UniqueConstraint, constraint Constraint) [][]byte {
@@ -82,14 +97,14 @@ func (operator *Operator) DropConstraint(table *Table, uniqueConstraints []*Uniq
 			return [][]byte{}
 		}
 
-		if operator.fDropConstraint {
+		if operator.support.DropConstraint {
 			return [][]byte{uniqueConstraints[uniqueConstraintIndex].ToDropSQL(operator.fmter, table.Name)}
 		}
 
 		return operator.RecreateTable(table, append(uniqueConstraints[:uniqueConstraintIndex], uniqueConstraints[uniqueConstraintIndex+1:]...))
 	}
 
-	if operator.fDropConstraint {
+	if operator.support.DropConstraint {
 		return [][]byte{constraint.ToDropSQL(operator.fmter, table.Name)}
 	}
 

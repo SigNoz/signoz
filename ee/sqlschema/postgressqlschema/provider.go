@@ -30,7 +30,11 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		sqlstore: sqlstore,
 		fmter:    fmter,
 		settings: settings,
-		operator: sqlschema.NewOperator(fmter, true, true),
+		operator: sqlschema.NewOperator(fmter, sqlschema.OperatorSupport{
+			DropConstraint:          true,
+			ColumnIfNotExistsExists: true,
+			AlterColumnSetNotNull:   true,
+		}),
 	}, nil
 }
 

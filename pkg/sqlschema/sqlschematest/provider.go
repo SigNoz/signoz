@@ -27,7 +27,7 @@ func New(tables map[string]*sqlschema.Table, uniqueConstraints map[string][]*sql
 }
 
 func (provider *Provider) Operator() sqlschema.SQLOperator {
-	return sqlschema.NewOperator(provider.Fmter, false, false)
+	return sqlschema.NewOperator(provider.Fmter, sqlschema.OperatorSupport{})
 }
 
 func (provider *Provider) GetTable(ctx context.Context, name sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
