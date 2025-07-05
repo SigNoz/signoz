@@ -2835,7 +2835,10 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 		unit        string
 	)
 
-	metadata := metadataMap[metricName]
+	metadata, ok := metadataMap[metricName]
+	if !ok {
+		return nil, fmt.Errorf("metric metadata not found: %s", metricName)
+	}
 
 	metricType = string(metadata.MetricType)
 	temporality = string(metadata.Temporality)
