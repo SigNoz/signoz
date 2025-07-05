@@ -270,7 +270,7 @@ export default function Events({
 				</div>
 			</div>
 
-			{isLoading && <LoadingContainer />}
+			{isLoading && formattedEntityEvents.length === 0 && <LoadingContainer />}
 
 			{!isLoading && !isError && formattedEntityEvents.length === 0 && (
 				<EntityDetailsEmptyContainer category={category} view="events" />

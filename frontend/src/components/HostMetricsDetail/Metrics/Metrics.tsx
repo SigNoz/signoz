@@ -70,6 +70,7 @@ function Metrics({
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,
+			keepPreviousData: true,
 		})),
 	);
 
@@ -143,7 +144,7 @@ function Metrics({
 		query: UseQueryResult<SuccessResponse<MetricRangePayloadProps>, unknown>,
 		idx: number,
 	): JSX.Element => {
-		if (query.isLoading) {
+		if (!query.data && query.isLoading) {
 			return <Skeleton />;
 		}
 
