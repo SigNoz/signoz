@@ -19,11 +19,11 @@ func TestParseCreateTable(t *testing.T) {
 		{
 			name: "NewlineAndTabBeforeComma_NoQuotesInColumnNames_InlineConstraints_References",
 			sql: `CREATE TABLE test (
-		id TEXT PRIMARY KEY,
-		name TEXT NOT NULL,
-		email TEXT NOT NULL,
-		data TEXT
-	, created_at TIMESTAMP, updated_at TIMESTAMP, org_id TEXT REFERENCES organizations(id) ON DELETE CASCADE)`,
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			email TEXT NOT NULL,
+			data TEXT
+		, created_at TIMESTAMP, updated_at TIMESTAMP, org_id TEXT REFERENCES organizations(id) ON DELETE CASCADE)`,
 			table: &sqlschema.Table{
 				Name: "test",
 				Columns: []*sqlschema.Column{
@@ -35,15 +35,9 @@ func TestParseCreateTable(t *testing.T) {
 					{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
 					{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: true},
 				},
-				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
-					ColumnNames: []string{"id"},
-				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
 				ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
-					{
-						ReferencingColumnName: "org_id",
-						ReferencedTableName:   "organizations",
-						ReferencedColumnName:  "id",
-					},
+					{ReferencingColumnName: "org_id", ReferencedTableName: "organizations", ReferencedColumnName: "id"},
 				},
 			},
 			uniqueConstraints: []*sqlschema.UniqueConstraint{},
@@ -59,15 +53,9 @@ func TestParseCreateTable(t *testing.T) {
 					{Name: "display_name", DataType: sqlschema.DataTypeText, Nullable: false},
 					{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 				},
-				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
-					ColumnNames: []string{"id"},
-				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
 				ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
-					{
-						ReferencingColumnName: "org_id",
-						ReferencedTableName:   "organizations",
-						ReferencedColumnName:  "id",
-					},
+					{ReferencingColumnName: "org_id", ReferencedTableName: "organizations", ReferencedColumnName: "id"},
 				},
 			},
 			uniqueConstraints: []*sqlschema.UniqueConstraint{},
@@ -83,15 +71,9 @@ func TestParseCreateTable(t *testing.T) {
 					{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
 					{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 				},
-				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
-					ColumnNames: []string{"id"},
-				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
 				ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
-					{
-						ReferencingColumnName: "org_id",
-						ReferencedTableName:   "organizations",
-						ReferencedColumnName:  "id",
-					},
+					{ReferencingColumnName: "org_id", ReferencedTableName: "organizations", ReferencedColumnName: "id"},
 				},
 			},
 			uniqueConstraints: []*sqlschema.UniqueConstraint{
@@ -111,14 +93,58 @@ func TestParseCreateTable(t *testing.T) {
 					{Name: "signal", DataType: sqlschema.DataTypeText, Nullable: false},
 					{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 				},
-				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
-					ColumnNames: []string{"id"},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
+			},
+			uniqueConstraints: []*sqlschema.UniqueConstraint{
+				{ColumnNames: []string{"org_id", "signal"}},
+			},
+			err: nil,
+		},
+		{
+			name: "Tabbed_BacktickQuotes_Constraints_PrimaryAndUnique",
+			sql:  "CREATE TABLE `test`       (id    integer   primary key unique,     dark_mode    numeric DEFAULT true)",
+			table: &sqlschema.Table{
+				Name: "test",
+				Columns: []*sqlschema.Column{
+					{Name: "id", DataType: sqlschema.DataTypeInteger, Nullable: false},
+					{Name: "dark_mode", DataType: sqlschema.DataTypeNumeric, Nullable: true, Default: "true"},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
+			},
+			uniqueConstraints: []*sqlschema.UniqueConstraint{},
+			err:               nil,
+		},
+		{
+			name: "SingleLine_BacktickQuotes_NoConstraints",
+			sql:  "CREATE TABLE `test-hyphen` (`field` integer NOT NULL)",
+			table: &sqlschema.Table{
+				Name: "test-hyphen",
+				Columns: []*sqlschema.Column{
+					{Name: "field", DataType: sqlschema.DataTypeInteger, Nullable: false},
+				},
+			},
+			uniqueConstraints: []*sqlschema.UniqueConstraint{},
+			err:               nil,
+		},
+		{
+			name: "SingleLine_QuotesAndDefaultInColumnNames_2Constraints_UniqueAndForeign",
+			sql:  `CREATE TABLE "test" ("id" text NOT NULL, "created_at" TIMESTAMP, "updated_at" TIMESTAMP, "status" text NOT NULL DEFAULT 'notstarted', "org_id" text NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "idx" UNIQUE ("org_id", "status", "created_at"), FOREIGN KEY ("org_id") REFERENCES "organizations" ("id"))`,
+			table: &sqlschema.Table{
+				Name: "test",
+				Columns: []*sqlschema.Column{
+					{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+					{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
+					{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
+					{Name: "status", DataType: sqlschema.DataTypeText, Nullable: false, Default: "'notstarted'"},
+					{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+				},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
+				ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "organizations", ReferencedColumnName: "id"},
 				},
 			},
 			uniqueConstraints: []*sqlschema.UniqueConstraint{
-				{
-					ColumnNames: []string{"org_id", "signal"},
-				},
+				{ColumnNames: []string{"org_id", "status", "created_at"}},
 			},
 			err: nil,
 		},

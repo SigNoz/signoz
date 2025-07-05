@@ -14,7 +14,7 @@ var (
 	sqliteIdentQuote   = "`|\"|'"
 	uniqueRegexp       = regexp.MustCompile(fmt.Sprintf(`^(?:CONSTRAINT [%v]?[\w-]+[%v]? )?UNIQUE (.*)$`, sqliteSeparator, sqliteSeparator))
 	tableRegexp        = regexp.MustCompile(fmt.Sprintf(`(?is)(CREATE TABLE [%v]?[\w\d-]+[%v]?)(?:\s*\((.*)\))?`, sqliteSeparator, sqliteSeparator))
-	tableNameRegexp    = regexp.MustCompile(fmt.Sprintf(`CREATE TABLE [%v]?(\w+)[%v]?`, sqliteSeparator, sqliteSeparator))
+	tableNameRegexp    = regexp.MustCompile(fmt.Sprintf(`CREATE TABLE [%v]?([\w-]+)[%v]?`, sqliteSeparator, sqliteSeparator))
 	checkRegexp        = regexp.MustCompile(`^(?i)CHECK[\s]*\(`)
 	constraintRegexp   = regexp.MustCompile(fmt.Sprintf(`CONSTRAINT\s+[%v]?[\w\d_]+[%v]?[\s]+`, sqliteSeparator, sqliteSeparator))
 	foreignKeyRegexp   = regexp.MustCompile(fmt.Sprintf(`FOREIGN KEY\s*\(\s*[%v]?(\w+)[%v]?\s*\)\s*REFERENCES\s*[%v]?(\w+)[%v]?\s*\(\s*[%v]?(\w+)[%v]?\s*\)`, sqliteSeparator, sqliteSeparator, sqliteSeparator, sqliteSeparator, sqliteSeparator, sqliteSeparator))
@@ -179,7 +179,7 @@ func parseCreateTable(str string, fmter sqlschema.Formatter) (*sqlschema.Table, 
 				column.Nullable = true
 			}
 
-			if strings.Contains(matchUpper, " UNIQUE") {
+			if strings.Contains(matchUpper, " UNIQUE") && !strings.Contains(matchUpper, " PRIMARY") {
 				uniqueConstraints = append(uniqueConstraints, &sqlschema.UniqueConstraint{
 					ColumnNames: []string{string(column.Name)},
 				})
@@ -187,13 +187,8 @@ func parseCreateTable(str string, fmter sqlschema.Formatter) (*sqlschema.Table, 
 
 			if strings.Contains(matchUpper, " PRIMARY") {
 				column.Nullable = false
-
-				if primaryKeyConstraint != nil {
-					primaryKeyConstraint.ColumnNames = append(primaryKeyConstraint.ColumnNames, string(column.Name))
-				} else {
-					primaryKeyConstraint = &sqlschema.PrimaryKeyConstraint{
-						ColumnNames: []string{string(column.Name)},
-					}
+				primaryKeyConstraint = &sqlschema.PrimaryKeyConstraint{
+					ColumnNames: []string{string(column.Name)},
 				}
 			}
 
