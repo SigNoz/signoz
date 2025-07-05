@@ -63,7 +63,6 @@ import {
 } from 'types/api/licensesV3/getActive';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { checkVersionState } from 'utils/app';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
 	getFormattedDate,
@@ -98,15 +97,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const [showSlowApiWarning, setShowSlowApiWarning] = useState(false);
 	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
-	const [shouldFetchChangelog, setShouldFetchChangelog] = useState<boolean>(
-		false,
-	);
 
-	const { currentVersion, latestVersion } = useSelector<AppState, AppReducer>(
+	const { latestVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
-
-	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
 	const handleBillingOnSuccess = (
 		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
@@ -163,7 +157,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
 				getChangelogByVersion(latestVersion),
 			queryKey: ['getChangelogByVersion', latestVersion],
-			enabled: isLoggedIn && !isCloudUserVal && shouldFetchChangelog,
+			enabled: isLoggedIn && !isCloudUserVal && Boolean(latestVersion),
 		},
 	]);
 
@@ -223,7 +217,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 		if (
 			getUserVersionResponse.isFetched &&
-			getUserLatestVersionResponse.isSuccess &&
+			getUserVersionResponse.isSuccess &&
 			getUserVersionResponse.data &&
 			getUserVersionResponse.data.payload
 		) {
@@ -261,17 +255,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getUserVersionResponse.isLoading,
 		getUserVersionResponse.isError,
 		getUserVersionResponse.data,
+		getUserVersionResponse.isSuccess,
 		getUserLatestVersionResponse.isFetched,
 		getUserVersionResponse.isFetched,
 		getUserLatestVersionResponse.isSuccess,
 		notifications,
 	]);
-
-	useEffect(() => {
-		if (!isLatestVersion) {
-			setShouldFetchChangelog(true);
-		}
-	}, [isLatestVersion]);
 
 	useEffect(() => {
 		if (
@@ -613,7 +602,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			</Helmet>
 
 			{isLoggedIn && (
-				<div className={cx('app-banner-container')}>
+				<div className={cx('app-banner-wrapper')}>
 					{SHOW_TRIAL_EXPIRY_BANNER && (
 						<div className="trial-expiry-banner">
 							You are in free trial period. Your free trial will end on{' '}

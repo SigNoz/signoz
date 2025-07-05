@@ -1,3 +1,5 @@
+import './MetricsApplication.styles.scss';
+
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
 import DBCall from 'container/MetricsApplication/Tabs/DBCall';
@@ -62,7 +64,12 @@ function MetricsApplication(): JSX.Element {
 		<div className="metrics-application-container">
 			<ResourceAttributesFilter />
 			<ApDexApplication />
-			<RouteTab routes={routes} history={history} activeKey={activeKey} />
+			<RouteTab
+				routes={routes}
+				history={history}
+				activeKey={activeKey}
+				className="service-route-tab"
+			/>
 		</div>
 	);
 }
