@@ -85,11 +85,11 @@ func (table *Table) ToCreateTempInsertDropAlterSQL(fmter SQLFormatter) [][]byte 
 	tempTable.Name = table.Name + "__temp"
 
 	if tempTable.PrimaryKeyConstraint != nil {
-		tempTable.PrimaryKeyConstraint = tempTable.PrimaryKeyConstraint.OverrideName(table.PrimaryKeyConstraint.Name(table.Name)).(*PrimaryKeyConstraint)
+		tempTable.PrimaryKeyConstraint = tempTable.PrimaryKeyConstraint.Named(table.PrimaryKeyConstraint.Name(table.Name)).(*PrimaryKeyConstraint)
 	}
 
 	for i, constraint := range tempTable.ForeignKeyConstraints {
-		tempTable.ForeignKeyConstraints[i] = constraint.OverrideName(constraint.Name(table.Name)).(*ForeignKeyConstraint)
+		tempTable.ForeignKeyConstraints[i] = constraint.Named(constraint.Name(table.Name)).(*ForeignKeyConstraint)
 	}
 
 	sql = append(sql, tempTable.ToCreateSQL(fmter))

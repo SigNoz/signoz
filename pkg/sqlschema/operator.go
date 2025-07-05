@@ -25,6 +25,7 @@ func (operator *Operator) CreateTable(table *Table) [][]byte {
 }
 
 func (operator *Operator) RenameTable(table *Table, newName TableName) [][]byte {
+	table.Name = newName
 	return [][]byte{table.ToRenameSQL(operator.fmter, newName)}
 }
 
@@ -82,10 +83,13 @@ func (operator *Operator) AddColumn(table *Table, uniqueConstraints []*UniqueCon
 }
 
 func (operator *Operator) DropColumn(table *Table, column *Column) [][]byte {
+	index := operator.findColumnByName(table, column.Name)
 	// If the column does not exist, we do not need to drop it.
-	if index := operator.findColumnByName(table, column.Name); index == -1 {
+	if index == -1 {
 		return [][]byte{}
 	}
+
+	table.Columns = append(table.Columns[:index], table.Columns[index+1:]...)
 
 	return [][]byte{column.ToDropSQL(operator.fmter, table.Name, operator.support.ColumnIfNotExistsExists)}
 }
