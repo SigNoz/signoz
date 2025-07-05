@@ -65,6 +65,7 @@ type QueryParams = {
 	pageSize: number;
 	exceptionType?: string;
 	serviceName?: string;
+	compositeQuery?: string;
 };
 
 function AllErrors(): JSX.Element {
@@ -81,6 +82,7 @@ function AllErrors(): JSX.Element {
 		getUpdatedPageSize,
 		getUpdatedExceptionType,
 		getUpdatedServiceName,
+		getUpdatedCompositeQuery,
 	} = useMemo(
 		() => ({
 			updatedOrder: getOrder(params.get(urlKey.order)),
@@ -89,6 +91,7 @@ function AllErrors(): JSX.Element {
 			getUpdatedPageSize: getUpdatePageSize(params.get(urlKey.pageSize)),
 			getUpdatedExceptionType: getFilterString(params.get(urlKey.exceptionType)),
 			getUpdatedServiceName: getFilterString(params.get(urlKey.serviceName)),
+			getUpdatedCompositeQuery: getFilterString(params.get(urlKey.compositeQuery)),
 		}),
 		[params],
 	);
@@ -203,6 +206,7 @@ function AllErrors(): JSX.Element {
 				offset: getUpdatedOffset,
 				orderParam: getUpdatedParams,
 				pageSize: getUpdatedPageSize,
+				compositeQuery: getUpdatedCompositeQuery,
 			};
 
 			if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
@@ -222,6 +226,7 @@ function AllErrors(): JSX.Element {
 			getUpdatedPageSize,
 			getUpdatedParams,
 			getUpdatedServiceName,
+			getUpdatedCompositeQuery,
 			pathname,
 			updatedOrder,
 		],
@@ -430,6 +435,7 @@ function AllErrors(): JSX.Element {
 					serviceName: getFilterString(params.get(urlKey.serviceName)),
 					exceptionType: getFilterString(params.get(urlKey.exceptionType)),
 				});
+				const compositeQuery = params.get(urlKey.compositeQuery) || '';
 				history.replace(
 					`${pathname}?${createQueryParams({
 						order: updatedOrder,
@@ -438,6 +444,7 @@ function AllErrors(): JSX.Element {
 						pageSize,
 						exceptionType,
 						serviceName,
+						compositeQuery,
 					})}`,
 				);
 			}
