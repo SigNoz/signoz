@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	metricToUseForDeployments = GetDotMetrics("k8s_pod_cpu_utilization")
+	metricToUseForDeployments = GetDotMetrics("k8s_pod_cpu_usage")
 	k8sDeploymentNameAttrKey  = GetDotMetrics("k8s_deployment_name")
 
 	metricNamesForDeployments = map[string]string{

@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	metricToUseForDaemonSets = GetDotMetrics("k8s_pod_cpu_utilization")
+	metricToUseForDaemonSets = GetDotMetrics("k8s_pod_cpu_usage")
 	k8sDaemonSetNameAttrKey  = GetDotMetrics("k8s_daemonset_name")
 
 	metricNamesForDaemonSets = map[string]string{

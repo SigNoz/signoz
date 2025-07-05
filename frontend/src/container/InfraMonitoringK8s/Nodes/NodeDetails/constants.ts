@@ -59,8 +59,8 @@ export const getNodeMetricsQueryPayload = (
 	const getKey = (dotKey: string, underscoreKey: string): string =>
 		dotMetricsEnabled ? dotKey : underscoreKey;
 	const k8sNodeCpuUtilizationKey = getKey(
-		'k8s.node.cpu.utilization',
-		'k8s_node_cpu_utilization',
+		'k8s.node.cpu.usage',
+		'k8s_node_cpu_usage',
 	);
 
 	const k8sNodeAllocatableCpuKey = getKey(
@@ -99,8 +99,8 @@ export const getNodeMetricsQueryPayload = (
 	);
 
 	const k8sPodCpuUtilizationKey = getKey(
-		'k8s.pod.cpu.utilization',
-		'k8s_pod_cpu_utilization',
+		'k8s.pod.cpu.usage',
+		'k8s_pod_cpu_usage',
 	);
 
 	const k8sPodMemoryUsageKey = getKey(
@@ -147,7 +147,7 @@ export const getNodeMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_node_cpu_utilization--float64--Gauge--true',
+								id: 'k8s_node_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: k8sNodeCpuUtilizationKey,
@@ -276,7 +276,7 @@ export const getNodeMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_node_cpu_utilization--float64--Gauge--true',
+								id: 'k8s_node_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: k8sNodeCpuUtilizationKey,
@@ -319,7 +319,7 @@ export const getNodeMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_node_cpu_utilization--float64--Gauge--true',
+								id: 'k8s_node_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: k8sNodeCpuUtilizationKey,
@@ -729,7 +729,7 @@ export const getNodeMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_node_cpu_utilization--float64--Gauge--true',
+								id: 'k8s_node_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: k8sNodeCpuUtilizationKey,
@@ -1079,7 +1079,7 @@ export const getNodeMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_pod_cpu_utilization--float64--Gauge--true',
+								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: k8sPodCpuUtilizationKey,

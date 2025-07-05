@@ -33,8 +33,8 @@ export const getDaemonSetMetricsQueryPayload = (
 	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
 	const k8sPodCpuUtilizationKey = dotMetricsEnabled
-		? 'k8s.pod.cpu.utilization'
-		: 'k8s_pod_cpu_utilization';
+		? 'k8s.pod.cpu.usage'
+		: 'k8s_pod_cpu_usage';
 
 	const k8sContainerCpuRequestKey = dotMetricsEnabled
 		? 'k8s.container.cpu_request'
@@ -84,7 +84,7 @@ export const getDaemonSetMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_pod_cpu_utilization--float64--Gauge--true',
+								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: k8sPodCpuUtilizationKey,

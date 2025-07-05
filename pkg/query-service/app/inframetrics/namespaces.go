@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	metricToUseForNamespaces = GetDotMetrics("k8s_pod_cpu_utilization")
+	metricToUseForNamespaces = GetDotMetrics("k8s_pod_cpu_usage")
 
 	namespaceAttrsToEnrich = []string{
 		GetDotMetrics("k8s_namespace_name"),

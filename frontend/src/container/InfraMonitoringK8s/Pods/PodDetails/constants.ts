@@ -72,10 +72,7 @@ export const getPodMetricsQueryPayload = (
 		dotMetricsEnabled ? dotKey : underscoreKey;
 	const k8sContainerNameKey = getKey('k8s.container.name', 'k8s_container_name');
 
-	const k8sPodCpuUtilKey = getKey(
-		'k8s.pod.cpu.utilization',
-		'k8s_pod_cpu_utilization',
-	);
+	const k8sPodCpuUtilKey = getKey('k8s.pod.cpu.usage', 'k8s_pod_cpu_usage');
 
 	const k8sPodCpuReqUtilKey = getKey(
 		'k8s.pod.cpu_request_utilization',
@@ -115,8 +112,8 @@ export const getPodMetricsQueryPayload = (
 	);
 
 	const containerCpuUtilKey = getKey(
-		'container.cpu.utilization',
-		'container_cpu_utilization',
+		'container.cpu.usage',
+		'container_cpu_usage',
 	);
 
 	const k8sContainerCpuRequestKey = getKey(
@@ -189,7 +186,7 @@ export const getPodMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_pod_cpu_utilization--float64--Gauge--true',
+								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: k8sPodCpuUtilKey,
@@ -245,7 +242,7 @@ export const getPodMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_pod_cpu_utilization--float64--Gauge--true',
+								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: k8sPodCpuUtilKey,
@@ -301,7 +298,7 @@ export const getPodMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'k8s_pod_cpu_utilization--float64--Gauge--true',
+								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: k8sPodCpuUtilKey,
@@ -1570,7 +1567,7 @@ export const getPodMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'container_cpu_utilization--float64--Gauge--true',
+								id: 'container_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: containerCpuUtilKey,
@@ -1668,7 +1665,7 @@ export const getPodMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'container_cpu_utilization--float64--Gauge--true',
+								id: 'container_cpu_usage--float64--Gauge--true',
 								isColumn: true,
 								isJSON: false,
 								key: containerCpuUtilKey,

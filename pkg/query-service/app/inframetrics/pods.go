@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	metricToUseForPods = GetDotMetrics("k8s_pod_cpu_utilization")
+	metricToUseForPods = GetDotMetrics("k8s_pod_cpu_usage")
 
 	podAttrsToEnrich = []string{
 		GetDotMetrics("k8s_pod_uid"),
@@ -49,7 +49,7 @@ var (
 	podQueryNames = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"}
 
 	metricNamesForPods = map[string]string{
-		"cpu":            GetDotMetrics("k8s_pod_cpu_utilization"),
+		"cpu":            GetDotMetrics("k8s_pod_cpu_usage"),
 		"cpu_request":    GetDotMetrics("k8s_pod_cpu_request_utilization"),
 		"cpu_limit":      GetDotMetrics("k8s_pod_cpu_limit_utilization"),
 		"memory":         GetDotMetrics("k8s_pod_memory_usage"),
