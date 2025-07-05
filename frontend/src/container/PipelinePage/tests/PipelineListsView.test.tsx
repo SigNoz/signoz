@@ -192,7 +192,7 @@ describe('PipelinePage container test', () => {
 			'.ant-table-expanded-row [data-icon="delete"]',
 		);
 
-		expect(deleteBtns.length).toBe(2);
+		expect(deleteBtns.length).toBe(3);
 
 		// delete pipeline
 		await fireEvent.click(deleteBtns[0] as HTMLElement);
@@ -213,7 +213,7 @@ describe('PipelinePage container test', () => {
 		expect(
 			document.querySelectorAll('.ant-table-expanded-row [data-icon="delete"]')
 				.length,
-		).toBe(1);
+		).toBe(2);
 	});
 
 	it('should be able to toggle and delete pipeline', async () => {
