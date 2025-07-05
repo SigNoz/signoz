@@ -3,6 +3,7 @@ package sqlschema
 import (
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun/schema"
 )
 
@@ -16,6 +17,25 @@ func NewFormatter(dialect schema.Dialect) Formatter {
 
 func (formatter Formatter) SQLDataTypeOf(dataType DataType) string {
 	return strings.ToUpper(dataType.String())
+}
+
+func (formatter Formatter) DataTypeOf(dataType string) DataType {
+	switch strings.ToUpper(dataType) {
+	case "TEXT":
+		return DataTypeText
+	case "BIGINT":
+		return DataTypeBigInt
+	case "INTEGER":
+		return DataTypeInteger
+	case "NUMERIC":
+		return DataTypeNumeric
+	case "BOOLEAN":
+		return DataTypeBoolean
+	case "TIMESTAMP":
+		return DataTypeTimestamp
+	default:
+		return DataType{s: valuer.NewString(dataType)}
+	}
 }
 
 func (formatter Formatter) AppendIdent(b []byte, ident string) []byte {

@@ -5,27 +5,43 @@ import (
 )
 
 type SQLSchema interface {
+	Tabled() TabledSQLSchema
+
+	// Same as Tabled().DropConstraint() but without the table parameter. It inspects the schema to find the table.
+	DropConstraint(context.Context, TableName, Constraint) ([][]byte, error)
+
+	// Same as Tabled().CreateIndex() but without the table parameter. It inspects the schema to find the table.
+	CreateIndex(context.Context, Index) ([][]byte, error)
+
+	// Same as Tabled().AddColumn() but without the table parameter. It inspects the schema to find the table.
+	AddColumn(context.Context, TableName, *Column, any) ([][]byte, error)
+
+	// Inspects the schema and returns the table with the given name.
+	GetTable(context.Context, TableName) (*Table, []*UniqueConstraint, []Index, error)
+}
+
+type TabledSQLSchema interface {
 	// Returns a list of SQL statements to drop a constraint from a table.
-	// Unsafe might fail if the input table does not exactly match the table without the constraint.
-	// Safe would be to inspect the table and find out the original table definition. This is not implemented yet.
-	DropConstraintUnsafe(context.Context, *Table, Constraint) [][]byte
+	DropConstraint(*Table, []*UniqueConstraint, Constraint) [][]byte
 
 	// Returns a list of SQL statements to create an index.
-	CreateIndex(context.Context, Index) [][]byte
+	CreateIndex(Index) [][]byte
 
-	// Adds a column to a table. If the column is not nullable, the column is added with the input value, then the column is made non-nullable.
-	// Unsafe might fail if the input table does not exactly match the existing table.
-	// Safe would be to inspect the table and find out the original table definition. This is not implemented yet.
-	AddColumnUnsafe(context.Context, *Table, *Column, any) [][]byte
+	// Returns a list of SQL statements to add a column to a table.
+	// If the column is not nullable, the column is added with the input value, then the column is made non-nullable.
+	AddColumn(*Table, *Column, any) [][]byte
 }
 
 type SQLFormatter interface {
+	// Returns the SQL data type for the given data type.
+	SQLDataTypeOf(DataType) string
+
+	// Returns the data type for the given SQL data type.
+	DataTypeOf(string) DataType
+
 	// Appends an identifier to the given byte slice.
-	AppendIdent(b []byte, ident string) []byte
+	AppendIdent([]byte, string) []byte
 
 	// Appends a value to the given byte slice.
-	AppendValue(b []byte, v any) []byte
-
-	// Returns the SQL data type for the given data type.
-	SQLDataTypeOf(dataType DataType) string
+	AppendValue([]byte, any) []byte
 }

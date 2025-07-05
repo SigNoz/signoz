@@ -7,44 +7,34 @@ import (
 	"github.com/uptrace/bun/schema"
 )
 
+var _ sqlschema.SQLSchema = (*Provider)(nil)
+
 type Provider struct {
-	Fmtter schema.Formatter
+	Fmter sqlschema.Formatter
 }
 
 func New() *Provider {
 	return &Provider{
-		Fmtter: schema.NewFormatter(schema.NewNopFormatter().Dialect()),
+		Fmter: sqlschema.NewFormatter(schema.NewNopFormatter().Dialect()),
 	}
 }
 
-func (provider *Provider) Formatter() sqlschema.SQLFormatter {
-	return provider
+func (provider *Provider) Tabled() sqlschema.TabledSQLSchema {
+	return nil
 }
 
-func (provider *Provider) AppendIdent(b []byte, ident string) []byte {
-	return provider.Fmtter.AppendIdent(b, ident)
+func (provider *Provider) CreateIndex(ctx context.Context, index sqlschema.Index) ([][]byte, error) {
+	return [][]byte{index.ToCreateSQL(provider.Fmter)}, nil
 }
 
-func (provider *Provider) AppendValue(b []byte, v any) []byte {
-	return schema.Append(provider.Fmtter, b, v)
+func (provider *Provider) DropConstraint(ctx context.Context, tableName sqlschema.TableName, constraint sqlschema.Constraint) ([][]byte, error) {
+	return nil, nil
 }
 
-func (provider *Provider) SQLDataTypeOf(dataType sqlschema.DataType) string {
-	return dataType.String()
+func (provider *Provider) AddColumn(ctx context.Context, tableName sqlschema.TableName, column *sqlschema.Column, val any) ([][]byte, error) {
+	return nil, nil
 }
 
-func (provider *Provider) CreateIndex(ctx context.Context, index sqlschema.Index) [][]byte {
-	return [][]byte{index.ToCreateSQL(provider)}
-}
-
-func (provider *Provider) DropConstraintUnsafe(ctx context.Context, table *sqlschema.Table, constraint sqlschema.Constraint) [][]byte {
-	return table.ToCreateTempInsertDropAlterSQL(provider)
-}
-
-func (provider *Provider) AddColumnUnsafe(ctx context.Context, table *sqlschema.Table, column *sqlschema.Column, val any) [][]byte {
-	return [][]byte{
-		column.ToAddSQL(provider, table.Name),
-		column.ToUpdateSQL(provider, table.Name, val),
-		column.ToSetNotNullSQL(provider, table.Name),
-	}
+func (provider *Provider) GetTable(ctx context.Context, name sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, []sqlschema.Index, error) {
+	return nil, nil, nil, nil
 }

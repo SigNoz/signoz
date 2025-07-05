@@ -45,7 +45,7 @@ func TestColumnToUpdateSQL(t *testing.T) {
 	testCases := []struct {
 		name      string
 		column    Column
-		tableName string
+		tableName TableName
 		value     any
 		sql       string
 	}{

@@ -50,30 +50,22 @@ func (migration *updateOrgDomain) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	orgs := &sqlschema.Table{
-		Name: "org_domains",
-		Columns: []*sqlschema.Column{
-			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "data", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
-			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
-			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
-		},
-		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{TableName: "org_domains", ColumnNames: []string{"id"}},
-		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
-			{ReferencingTableName: "org_domains", ReferencingColumnName: "org_id", ReferencedTableName: "organizations", ReferencedColumnName: "id"},
-		},
+	dropSQLs, err := migration.sqlschema.DropConstraint(ctx, "org_domains", &sqlschema.UniqueConstraint{ColumnNames: []string{"name"}})
+	if err != nil {
+		return err
 	}
 
-	dropSQLs := migration.sqlschema.DropConstraintUnsafe(ctx, orgs, &sqlschema.UniqueConstraint{TableName: "org_domains", ColumnNames: []string{"name"}})
 	for _, sql := range dropSQLs {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}
 	}
 
-	indexSQLs := migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "org_domains", ColumnNames: []string{"name", "org_id"}})
+	indexSQLs, err := migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "org_domains", ColumnNames: []string{"name", "org_id"}})
+	if err != nil {
+		return err
+	}
+
 	for _, sql := range indexSQLs {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err

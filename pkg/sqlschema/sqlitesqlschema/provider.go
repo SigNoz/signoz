@@ -5,46 +5,77 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 )
 
 type provider struct {
-	fmtter   sqlschema.Formatter
 	settings factory.ScopedProviderSettings
+	fmtter   sqlschema.Formatter
+	sqlstore sqlstore.SQLStore
+	tabled   sqlschema.TabledSQLSchema
 }
 
-func NewFactory() factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config] {
+func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("sqlite"), func(ctx context.Context, providerSettings factory.ProviderSettings, config sqlschema.Config) (sqlschema.SQLSchema, error) {
-		return New(ctx, providerSettings, config)
+		return New(ctx, providerSettings, config, sqlstore)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlschema.Config) (sqlschema.SQLSchema, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlschema.Config, sqlstore sqlstore.SQLStore) (sqlschema.SQLSchema, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlschema/sqlitesqlschema")
+	fmtter := sqlschema.NewFormatter(sqlitedialect.New())
 
 	return &provider{
-		fmtter:   sqlschema.NewFormatter(sqlitedialect.New()),
+		fmtter:   fmtter,
 		settings: settings,
+		sqlstore: sqlstore,
+		tabled:   newTabled(fmtter),
 	}, nil
 }
 
-func (provider *provider) CreateIndex(ctx context.Context, index sqlschema.Index) [][]byte {
-	return [][]byte{index.ToCreateSQL(provider.fmtter)}
+func (provider *provider) Tabled() sqlschema.TabledSQLSchema {
+	return provider.tabled
 }
 
-func (provider *provider) DropConstraintUnsafe(ctx context.Context, table *sqlschema.Table, _ sqlschema.Constraint) [][]byte {
-	return table.ToCreateTempInsertDropAlterSQL(provider.fmtter)
+func (provider *provider) CreateIndex(ctx context.Context, index sqlschema.Index) ([][]byte, error) {
+	return [][]byte{index.ToCreateSQL(provider.fmtter)}, nil
 }
 
-func (provider *provider) AddColumnUnsafe(ctx context.Context, table *sqlschema.Table, column *sqlschema.Column, val any) [][]byte {
-	sqls := [][]byte{
-		column.ToAddSQL(provider.fmtter, table.Name),
-		column.ToUpdateSQL(provider.fmtter, table.Name, val),
+func (provider *provider) DropConstraint(ctx context.Context, tableName sqlschema.TableName, constraint sqlschema.Constraint) ([][]byte, error) {
+	table, uniqueConstraints, _, err := provider.GetTable(ctx, tableName)
+	if err != nil {
+		return nil, err
 	}
 
-	if !column.Nullable {
-		sqls = append(sqls, table.ToCreateTempInsertDropAlterSQL(provider.fmtter)...)
+	return provider.tabled.DropConstraint(table, uniqueConstraints, constraint), nil
+}
+
+func (provider *provider) AddColumn(ctx context.Context, tableName sqlschema.TableName, column *sqlschema.Column, val any) ([][]byte, error) {
+	table, _, _, err := provider.GetTable(ctx, tableName)
+	if err != nil {
+		return nil, err
 	}
 
-	return sqls
+	return provider.tabled.AddColumn(table, column, val), nil
+}
+
+func (provider *provider) GetTable(ctx context.Context, name sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, []sqlschema.Index, error) {
+	var sql string
+
+	if err := provider.
+		sqlstore.
+		BunDB().
+		NewRaw("SELECT sql FROM sqlite_master WHERE type IN (?) AND tbl_name = ? AND sql IS NOT NULL", bun.In([]string{"table"}), string(name)).
+		Scan(ctx, &sql); err != nil {
+		return nil, nil, nil, err
+	}
+
+	table, uniqueConstraints, err := parseCreateTable(sql, provider.fmtter)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return table, uniqueConstraints, nil, nil
 }
