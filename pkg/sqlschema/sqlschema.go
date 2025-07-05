@@ -5,31 +5,44 @@ import (
 )
 
 type SQLSchema interface {
-	Tabled() TabledSQLSchema
-
-	// Same as Tabled().DropConstraint() but without the table parameter. It inspects the schema to find the table.
-	DropConstraint(context.Context, TableName, Constraint) ([][]byte, error)
-
-	// Same as Tabled().CreateIndex() but without the table parameter. It inspects the schema to find the table.
-	CreateIndex(context.Context, Index) ([][]byte, error)
-
-	// Same as Tabled().AddColumn() but without the table parameter. It inspects the schema to find the table.
-	AddColumn(context.Context, TableName, *Column, any) ([][]byte, error)
+	Operator() SQLOperator
 
 	// Inspects the schema and returns the table with the given name.
-	GetTable(context.Context, TableName) (*Table, []*UniqueConstraint, []Index, error)
+	GetTable(context.Context, TableName) (*Table, []*UniqueConstraint, error)
+
+	// Inspects the schema and returns the indices for the given table.
+	GetIndices(context.Context, TableName) ([]Index, error)
 }
 
-type TabledSQLSchema interface {
-	// Returns a list of SQL statements to drop a constraint from a table.
-	DropConstraint(*Table, []*UniqueConstraint, Constraint) [][]byte
+// SQLOperator performs operations on a table.
+type SQLOperator interface {
+	// Returns a list of SQL statements to create a table.
+	CreateTable(*Table) [][]byte
+
+	// Returns a list of SQL statements to drop a table.
+	DropTable(*Table) [][]byte
+
+	// Returns a list of SQL statements to rename a table.
+	RenameTable(*Table, TableName) [][]byte
+
+	// Returns a list of SQL statements to recreate a table.
+	RecreateTable(*Table, []*UniqueConstraint) [][]byte
 
 	// Returns a list of SQL statements to create an index.
 	CreateIndex(Index) [][]byte
 
+	// Returns a list of SQL statements to drop an index.
+	DropIndex(Index) [][]byte
+
 	// Returns a list of SQL statements to add a column to a table.
 	// If the column is not nullable, the column is added with the input value, then the column is made non-nullable.
 	AddColumn(*Table, *Column, any) [][]byte
+
+	// Returns a list of SQL statements to drop a column from a table.
+	DropColumn(*Table, *Column) [][]byte
+
+	// Returns a list of SQL statements to drop a constraint from a table.
+	DropConstraint(*Table, []*UniqueConstraint, Constraint) [][]byte
 }
 
 type SQLFormatter interface {

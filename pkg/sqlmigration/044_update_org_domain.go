@@ -50,23 +50,20 @@ func (migration *updateOrgDomain) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	dropSQLs, err := migration.sqlschema.DropConstraint(ctx, "org_domains", &sqlschema.UniqueConstraint{ColumnNames: []string{"name"}})
+	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("org_domains"))
 	if err != nil {
 		return err
 	}
 
-	for _, sql := range dropSQLs {
-		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
-			return err
-		}
-	}
+	sqls := [][]byte{}
 
-	indexSQLs, err := migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "org_domains", ColumnNames: []string{"name", "org_id"}})
-	if err != nil {
-		return err
-	}
+	dropSQLs := migration.sqlschema.Operator().DropConstraint(table, uniqueConstraints, &sqlschema.UniqueConstraint{ColumnNames: []string{"name"}})
+	sqls = append(sqls, dropSQLs...)
 
-	for _, sql := range indexSQLs {
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "org_domains", ColumnNames: []string{"name", "org_id"}})
+	sqls = append(sqls, indexSQLs...)
+
+	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}

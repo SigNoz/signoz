@@ -54,12 +54,15 @@ func (column *Column) ToDefinitionSQL(fmter SQLFormatter) []byte {
 	return sql
 }
 
-func (column *Column) ToAddSQL(fmter SQLFormatter, tableName TableName) []byte {
+func (column *Column) ToAddSQL(fmter SQLFormatter, tableName TableName, ifNotExists bool) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "ALTER TABLE "...)
 	sql = fmter.AppendIdent(sql, string(tableName))
 	sql = append(sql, " ADD COLUMN "...)
+	if ifNotExists {
+		sql = append(sql, "IF NOT EXISTS "...)
+	}
 
 	if column.Default == "" && !column.Nullable {
 		adjustedColumn := &Column{
@@ -73,6 +76,20 @@ func (column *Column) ToAddSQL(fmter SQLFormatter, tableName TableName) []byte {
 	} else {
 		sql = append(sql, column.ToDefinitionSQL(fmter)...)
 	}
+
+	return sql
+}
+
+func (column *Column) ToDropSQL(fmter SQLFormatter, tableName TableName, ifExists bool) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "ALTER TABLE "...)
+	sql = fmter.AppendIdent(sql, string(tableName))
+	sql = append(sql, " DROP COLUMN "...)
+	if ifExists {
+		sql = append(sql, "IF EXISTS "...)
+	}
+	sql = fmter.AppendIdent(sql, string(column.Name))
 
 	return sql
 }

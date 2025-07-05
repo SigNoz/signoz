@@ -50,33 +50,23 @@ func (migration *updateUserInvite) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	dropSQLs, err := migration.sqlschema.DropConstraint(ctx, "user_invite", &sqlschema.UniqueConstraint{ColumnNames: []string{"email"}})
+	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("user_invite"))
 	if err != nil {
 		return err
 	}
 
-	for _, sql := range dropSQLs {
-		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
-			return err
-		}
-	}
+	sqls := [][]byte{}
 
-	indexSQLs := [][]byte{}
-	indexSQL, err := migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "user_invite", ColumnNames: []string{"email", "org_id"}})
-	if err != nil {
-		return err
-	}
+	dropSQLs := migration.sqlschema.Operator().DropConstraint(table, uniqueConstraints, &sqlschema.UniqueConstraint{ColumnNames: []string{"email"}})
+	sqls = append(sqls, dropSQLs...)
 
-	indexSQLs = append(indexSQLs, indexSQL...)
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "user_invite", ColumnNames: []string{"email", "org_id"}})
+	sqls = append(sqls, indexSQLs...)
 
-	indexSQL, err = migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "user_invite", ColumnNames: []string{"token"}})
-	if err != nil {
-		return err
-	}
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "user_invite", ColumnNames: []string{"token"}})
+	sqls = append(sqls, indexSQLs...)
 
-	indexSQLs = append(indexSQLs, indexSQL...)
-
-	for _, sql := range indexSQLs {
+	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}

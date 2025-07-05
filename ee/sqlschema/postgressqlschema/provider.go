@@ -2,8 +2,6 @@ package postgressqlschema
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
@@ -13,9 +11,9 @@ import (
 
 type provider struct {
 	settings factory.ScopedProviderSettings
-	fmtter   sqlschema.SQLFormatter
+	fmter    sqlschema.SQLFormatter
 	sqlstore sqlstore.SQLStore
-	tabled   sqlschema.TabledSQLSchema
+	operator sqlschema.SQLOperator
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config] {
@@ -26,44 +24,21 @@ func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[sqlschema.SQ
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlschema.Config, sqlstore sqlstore.SQLStore) (sqlschema.SQLSchema, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlschema/postgressqlschema")
-	fmtter := Formatter{Formatter: sqlschema.NewFormatter(pgdialect.New())}
+	fmter := Formatter{Formatter: sqlschema.NewFormatter(pgdialect.New())}
 
 	return &provider{
 		sqlstore: sqlstore,
-		fmtter:   fmtter,
+		fmter:    fmter,
 		settings: settings,
-		tabled:   newTabled(fmtter),
+		operator: sqlschema.NewOperator(fmter, true, true),
 	}, nil
 }
 
-func (provider *provider) Tabled() sqlschema.TabledSQLSchema {
-	return provider.tabled
+func (provider *provider) Operator() sqlschema.SQLOperator {
+	return provider.operator
 }
 
-func (provider *provider) CreateIndex(ctx context.Context, index sqlschema.Index) ([][]byte, error) {
-	return provider.tabled.CreateIndex(index), nil
-}
-
-func (provider *provider) DropConstraint(ctx context.Context, tableName sqlschema.TableName, constraint sqlschema.Constraint) ([][]byte, error) {
-	sql := [][]byte{}
-	sql = append(sql, constraint.ToDropSQL(provider.fmtter, tableName))
-
-	// Postgres typically creates indexes with the convention of `<table_name>_<column_name>_key` if no name is provided.
-	sql = append(sql, constraint.OverrideName(fmt.Sprintf("%s_%s_key", tableName, strings.Join(constraint.Columns(), "_"))).ToDropSQL(provider.fmtter, tableName))
-
-	return sql, nil
-}
-
-func (provider *provider) AddColumn(ctx context.Context, tableName sqlschema.TableName, column *sqlschema.Column, val any) ([][]byte, error) {
-	table, _, _, err := provider.GetTable(ctx, tableName)
-	if err != nil {
-		return nil, err
-	}
-
-	return provider.tabled.AddColumn(table, column, val), nil
-}
-
-func (provider *provider) GetTable(ctx context.Context, name sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, []sqlschema.Index, error) {
+func (provider *provider) GetTable(ctx context.Context, name sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
 	rows, err := provider.
 		sqlstore.
 		BunDB().
@@ -78,7 +53,7 @@ FROM
 WHERE
     c.table_name = ?`, string(name))
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	columns := make([]*sqlschema.Column, 0)
@@ -90,7 +65,7 @@ WHERE
 			defaultVal  *string
 		)
 		if err := rows.Scan(&name, &nullable, &sqlDataType, &defaultVal); err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		columnDefault := ""
@@ -101,13 +76,13 @@ WHERE
 		columns = append(columns, &sqlschema.Column{
 			Name:     sqlschema.ColumnName(name),
 			Nullable: nullable,
-			DataType: provider.fmtter.DataTypeOf(sqlDataType),
+			DataType: provider.fmter.DataTypeOf(sqlDataType),
 			Default:  columnDefault,
 		})
 	}
 
 	if err := rows.Close(); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	rows, err = provider.
@@ -125,7 +100,7 @@ FROM
 WHERE
     c.table_name = ?`, string(name))
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	var primaryKeyConstraint *sqlschema.PrimaryKeyConstraint
@@ -138,7 +113,7 @@ WHERE
 		)
 
 		if err := rows.Scan(&name, &constraintName, &constraintType); err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		if constraintType == "PRIMARY KEY" {
@@ -172,7 +147,7 @@ WHERE
     tc.constraint_type = ?
 	AND kcu.table_name = ?`, "FOREIGN KEY", string(name))
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	foreignKeyConstraints := make([]*sqlschema.ForeignKeyConstraint, 0)
@@ -186,7 +161,7 @@ WHERE
 		)
 
 		if err := rows.Scan(&constraintName, &referencingTable, &referencingColumn, &referencedTable, &referencedColumn); err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		foreignKeyConstraints = append(foreignKeyConstraints, &sqlschema.ForeignKeyConstraint{
@@ -197,10 +172,19 @@ WHERE
 	}
 
 	if err := rows.Close(); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	rows, err = provider.
+	return &sqlschema.Table{
+		Name:                  name,
+		Columns:               columns,
+		PrimaryKeyConstraint:  primaryKeyConstraint,
+		ForeignKeyConstraints: foreignKeyConstraints,
+	}, uniqueConstraints, nil
+}
+
+func (provider *provider) GetIndices(ctx context.Context, name sqlschema.TableName) ([]sqlschema.Index, error) {
+	rows, err := provider.
 		sqlstore.
 		BunDB().
 		QueryContext(ctx, `
@@ -222,7 +206,7 @@ WHERE
     AND ct.relkind = 'r'
     AND ct.relname = ?`, string(name))
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
 
 	uniqueIndicesMap := make(map[string]*sqlschema.UniqueIndex)
@@ -236,7 +220,7 @@ WHERE
 		)
 
 		if err := rows.Scan(&tableName, &indexName, &unique, &primary, &columnName); err != nil {
-			return nil, nil, nil, err
+			return nil, err
 		}
 
 		if unique {
@@ -256,10 +240,5 @@ WHERE
 		indices = append(indices, index)
 	}
 
-	return &sqlschema.Table{
-		Name:                  name,
-		Columns:               columns,
-		PrimaryKeyConstraint:  primaryKeyConstraint,
-		ForeignKeyConstraints: foreignKeyConstraints,
-	}, uniqueConstraints, indices, nil
+	return indices, nil
 }
