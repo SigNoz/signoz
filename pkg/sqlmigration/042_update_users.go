@@ -50,31 +50,22 @@ func (migration *updateUsers) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	users := &sqlschema.Table{
-		Name: "users",
-		Columns: []*sqlschema.Column{
-			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "display_name", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "email", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "role", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
-			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
-			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
-		},
-		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{TableName: "users", ColumnNames: []string{"id"}},
-		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
-			{ReferencingTableName: "users", ReferencingColumnName: "org_id", ReferencedTableName: "organizations", ReferencedColumnName: "id"},
-		},
+	dropSQLs, err := migration.sqlschema.DropConstraint(ctx, "users", &sqlschema.UniqueConstraint{ColumnNames: []string{"email"}})
+	if err != nil {
+		return err
 	}
 
-	dropSQLs := migration.sqlschema.DropConstraintUnsafe(ctx, users, &sqlschema.UniqueConstraint{TableName: "users", ColumnNames: []string{"email"}})
 	for _, sql := range dropSQLs {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}
 	}
 
-	indexSQLs := migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "users", ColumnNames: []string{"email", "org_id"}})
+	indexSQLs, err := migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "users", ColumnNames: []string{"email", "org_id"}})
+	if err != nil {
+		return err
+	}
+
 	for _, sql := range indexSQLs {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err

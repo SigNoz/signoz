@@ -1,8 +1,10 @@
 package sqlschema
 
+type TableName string
+
 type Table struct {
 	// The name of the table.
-	Name string
+	Name TableName
 
 	// The columns that the table contains.
 	Columns []*Column
@@ -14,11 +16,48 @@ type Table struct {
 	ForeignKeyConstraints []*ForeignKeyConstraint
 }
 
+func (table *Table) Clone() *Table {
+	copyOfColumns := make([]*Column, len(table.Columns))
+	copy(copyOfColumns, table.Columns)
+
+	copyOfForeignKeyConstraints := make([]*ForeignKeyConstraint, len(table.ForeignKeyConstraints))
+	copy(copyOfForeignKeyConstraints, table.ForeignKeyConstraints)
+
+	return &Table{
+		Name:                  table.Name,
+		Columns:               copyOfColumns,
+		PrimaryKeyConstraint:  table.PrimaryKeyConstraint,
+		ForeignKeyConstraints: copyOfForeignKeyConstraints,
+	}
+}
+
+func (table *Table) DropConstraint(constraint Constraint) (*Table, bool) {
+	found := false
+	clonedTable := table.Clone()
+
+	if constraint.Equals(clonedTable.PrimaryKeyConstraint) {
+		found = true
+		clonedTable.PrimaryKeyConstraint = nil
+	}
+
+	if constraint.Type() == ConstraintTypeForeignKey {
+		for i, fkConstraint := range clonedTable.ForeignKeyConstraints {
+			if constraint.Equals(fkConstraint) {
+				clonedTable.ForeignKeyConstraints = append(clonedTable.ForeignKeyConstraints[:i], clonedTable.ForeignKeyConstraints[i+1:]...)
+				found = true
+				break
+			}
+		}
+	}
+
+	return clonedTable, found
+}
+
 func (table *Table) ToDropSQL(fmter SQLFormatter) [][]byte {
 	sql := []byte{}
 
 	sql = append(sql, "DROP TABLE IF EXISTS "...)
-	sql = fmter.AppendIdent(sql, table.Name)
+	sql = fmter.AppendIdent(sql, string(table.Name))
 
 	return [][]byte{sql}
 }
@@ -27,7 +66,7 @@ func (table *Table) ToRenameSQL(fmter SQLFormatter, newName string) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "ALTER TABLE "...)
-	sql = fmter.AppendIdent(sql, table.Name)
+	sql = fmter.AppendIdent(sql, string(table.Name))
 	sql = append(sql, " RENAME TO "...)
 	sql = fmter.AppendIdent(sql, newName)
 
@@ -43,11 +82,12 @@ func (table *Table) ToRenameSQL(fmter SQLFormatter, newName string) []byte {
 func (table *Table) ToCreateTempInsertDropAlterSQL(fmter SQLFormatter) [][]byte {
 	sql := [][]byte{}
 
-	tempTable := &Table{
-		Name:                  table.Name + "__temp",
-		Columns:               table.Columns,
-		PrimaryKeyConstraint:  table.PrimaryKeyConstraint,
-		ForeignKeyConstraints: table.ForeignKeyConstraints,
+	tempTable := table.Clone()
+	tempTable.Name = table.Name + "__temp"
+
+	tempTable.PrimaryKeyConstraint = tempTable.PrimaryKeyConstraint.OverrideName(table.PrimaryKeyConstraint.Name(table.Name)).(*PrimaryKeyConstraint)
+	for i, constraint := range tempTable.ForeignKeyConstraints {
+		tempTable.ForeignKeyConstraints[i] = constraint.OverrideName(constraint.Name(table.Name)).(*ForeignKeyConstraint)
 	}
 
 	sql = append(sql, tempTable.ToCreateSQL(fmter))
@@ -63,29 +103,18 @@ func (table *Table) ToCreateTempInsertDropAlterSQL(fmter SQLFormatter) [][]byte 
 
 	insertIntoSelectSQL := []byte{}
 	insertIntoSelectSQL = append(insertIntoSelectSQL, "INSERT INTO "...)
-	insertIntoSelectSQL = fmter.AppendIdent(insertIntoSelectSQL, tempTable.Name)
+	insertIntoSelectSQL = fmter.AppendIdent(insertIntoSelectSQL, string(tempTable.Name))
 	insertIntoSelectSQL = append(insertIntoSelectSQL, " ("...)
 
 	insertIntoSelectSQL = append(insertIntoSelectSQL, columns...)
 	insertIntoSelectSQL = append(insertIntoSelectSQL, ") SELECT "...)
 	insertIntoSelectSQL = append(insertIntoSelectSQL, columns...)
 	insertIntoSelectSQL = append(insertIntoSelectSQL, " FROM "...)
-	insertIntoSelectSQL = fmter.AppendIdent(insertIntoSelectSQL, table.Name)
+	insertIntoSelectSQL = fmter.AppendIdent(insertIntoSelectSQL, string(table.Name))
 
 	sql = append(sql, insertIntoSelectSQL)
 	sql = append(sql, table.ToDropSQL(fmter)...)
-	sql = append(sql, tempTable.ToRenameSQL(fmter, table.Name))
-
-	return sql
-}
-
-func (table *Table) ToDropConstraintSQL(fmter SQLFormatter, constraint Constraint) []byte {
-	sql := []byte{}
-
-	sql = append(sql, "ALTER TABLE "...)
-	sql = fmter.AppendIdent(sql, table.Name)
-	sql = append(sql, " DROP CONSTRAINT IF EXISTS "...)
-	sql = fmter.AppendIdent(sql, constraint.Name())
+	sql = append(sql, tempTable.ToRenameSQL(fmter, string(table.Name)))
 
 	return sql
 }
@@ -95,7 +124,7 @@ func (table *Table) ToCreateSQL(fmter SQLFormatter) []byte {
 
 	sql = append(sql, "CREATE TABLE IF NOT EXISTS "...)
 
-	sql = fmter.AppendIdent(sql, table.Name)
+	sql = fmter.AppendIdent(sql, string(table.Name))
 	sql = append(sql, " ("...)
 
 	for i, column := range table.Columns {
@@ -106,12 +135,14 @@ func (table *Table) ToCreateSQL(fmter SQLFormatter) []byte {
 		sql = append(sql, column.ToDefinitionSQL(fmter)...)
 	}
 
-	sql = append(sql, ", "...)
-	sql = append(sql, table.PrimaryKeyConstraint.ToDefinitionSQL(fmter)...)
+	if table.PrimaryKeyConstraint != nil {
+		sql = append(sql, ", "...)
+		sql = append(sql, table.PrimaryKeyConstraint.ToDefinitionSQL(fmter, table.Name)...)
+	}
 
 	for _, constraint := range table.ForeignKeyConstraints {
 		sql = append(sql, ", "...)
-		sql = append(sql, constraint.ToDefinitionSQL(fmter)...)
+		sql = append(sql, constraint.ToDefinitionSQL(fmter, table.Name)...)
 	}
 
 	sql = append(sql, ")"...)

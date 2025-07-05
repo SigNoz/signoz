@@ -1,6 +1,10 @@
 package postgressqlschema
 
-import "github.com/SigNoz/signoz/pkg/sqlschema"
+import (
+	"strings"
+
+	"github.com/SigNoz/signoz/pkg/sqlschema"
+)
 
 type Formatter struct {
 	sqlschema.Formatter
@@ -11,5 +15,16 @@ func (formatter Formatter) SQLDataTypeOf(dataType sqlschema.DataType) string {
 		return "TIMESTAMPTZ"
 	}
 
-	return dataType.String()
+	return strings.ToUpper(dataType.String())
+}
+
+func (formatter Formatter) DataTypeOf(dataType string) sqlschema.DataType {
+	switch strings.ToUpper(dataType) {
+	case "TIMESTAMPTZ":
+		return sqlschema.DataTypeTimestamp
+	case "INT8":
+		return sqlschema.DataTypeBigInt
+	}
+
+	return formatter.Formatter.DataTypeOf(dataType)
 }

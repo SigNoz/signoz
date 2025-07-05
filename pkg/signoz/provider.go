@@ -71,9 +71,9 @@ func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sql
 	)
 }
 
-func NewSQLSchemaProviderFactories() factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
+func NewSQLSchemaProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
 	return factory.MustNewNamedMap(
-		sqlitesqlschema.NewFactory(),
+		sqlitesqlschema.NewFactory(sqlstore),
 	)
 }
 

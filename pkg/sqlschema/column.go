@@ -54,11 +54,11 @@ func (column *Column) ToDefinitionSQL(fmter SQLFormatter) []byte {
 	return sql
 }
 
-func (column *Column) ToAddSQL(fmter SQLFormatter, tableName string) []byte {
+func (column *Column) ToAddSQL(fmter SQLFormatter, tableName TableName) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "ALTER TABLE "...)
-	sql = fmter.AppendIdent(sql, tableName)
+	sql = fmter.AppendIdent(sql, string(tableName))
 	sql = append(sql, " ADD COLUMN "...)
 
 	if column.Default == "" && !column.Nullable {
@@ -77,11 +77,11 @@ func (column *Column) ToAddSQL(fmter SQLFormatter, tableName string) []byte {
 	return sql
 }
 
-func (column *Column) ToUpdateSQL(fmter SQLFormatter, tableName string, value any) []byte {
+func (column *Column) ToUpdateSQL(fmter SQLFormatter, tableName TableName, value any) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "UPDATE "...)
-	sql = fmter.AppendIdent(sql, tableName)
+	sql = fmter.AppendIdent(sql, string(tableName))
 	sql = append(sql, " SET "...)
 	sql = fmter.AppendIdent(sql, string(column.Name))
 	sql = append(sql, " = "...)
@@ -95,11 +95,11 @@ func (column *Column) ToUpdateSQL(fmter SQLFormatter, tableName string, value an
 	return sql
 }
 
-func (column *Column) ToSetNotNullSQL(fmter SQLFormatter, tableName string) []byte {
+func (column *Column) ToSetNotNullSQL(fmter SQLFormatter, tableName TableName) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "ALTER TABLE "...)
-	sql = fmter.AppendIdent(sql, tableName)
+	sql = fmter.AppendIdent(sql, string(tableName))
 	sql = append(sql, " ALTER COLUMN "...)
 	sql = fmter.AppendIdent(sql, string(column.Name))
 	sql = append(sql, " SET NOT NULL"...)

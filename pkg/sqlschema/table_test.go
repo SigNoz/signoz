@@ -23,7 +23,6 @@ func TestTableToCreateSQL(t *testing.T) {
 					{Name: "org_id", DataType: DataTypeText, Nullable: false},
 				},
 				PrimaryKeyConstraint: &PrimaryKeyConstraint{
-					TableName:   "test",
 					ColumnNames: []string{"id"},
 				},
 			},
@@ -39,12 +38,10 @@ func TestTableToCreateSQL(t *testing.T) {
 					{Name: "org_id", DataType: DataTypeText, Nullable: false},
 				},
 				PrimaryKeyConstraint: &PrimaryKeyConstraint{
-					TableName:   "test",
 					ColumnNames: []string{"id"},
 				},
 				ForeignKeyConstraints: []*ForeignKeyConstraint{
 					{
-						ReferencingTableName:  "test",
 						ReferencingColumnName: "org_id",
 						ReferencedTableName:   "organizations",
 						ReferencedColumnName:  "id",
@@ -64,18 +61,15 @@ func TestTableToCreateSQL(t *testing.T) {
 					{Name: "user_id", DataType: DataTypeText, Nullable: false},
 				},
 				PrimaryKeyConstraint: &PrimaryKeyConstraint{
-					TableName:   "test",
 					ColumnNames: []string{"id"},
 				},
 				ForeignKeyConstraints: []*ForeignKeyConstraint{
 					{
-						ReferencingTableName:  "test",
 						ReferencingColumnName: "org_id",
 						ReferencedTableName:   "organizations",
 						ReferencedColumnName:  "id",
 					},
 					{
-						ReferencingTableName:  "test",
 						ReferencingColumnName: "user_id",
 						ReferencedTableName:   "users",
 						ReferencedColumnName:  "id",
@@ -112,12 +106,10 @@ func TestTableToCreateTempInsertDropAlterSQL(t *testing.T) {
 					{Name: "org_id", DataType: DataTypeText, Nullable: false},
 				},
 				PrimaryKeyConstraint: &PrimaryKeyConstraint{
-					TableName:   "test",
 					ColumnNames: []string{"id"},
 				},
 				ForeignKeyConstraints: []*ForeignKeyConstraint{
 					{
-						ReferencingTableName:  "test",
 						ReferencingColumnName: "org_id",
 						ReferencedTableName:   "organizations",
 						ReferencedColumnName:  "id",

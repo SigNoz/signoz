@@ -62,7 +62,7 @@ func New(
 	emailingProviderFactories factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
-	sqlSchemaProviderFactories factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]],
+	sqlSchemaProviderFactories func(sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 ) (*SigNoz, error) {
@@ -189,7 +189,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.SQLSchema,
-		sqlSchemaProviderFactories,
+		sqlSchemaProviderFactories(sqlstore),
 		config.SQLStore.Provider,
 	)
 	if err != nil {

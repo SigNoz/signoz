@@ -10,21 +10,22 @@ import (
 func TestPrimaryKeyConstraintToDefinitionSQL(t *testing.T) {
 	testCases := []struct {
 		name       string
+		tableName  TableName
 		constraint *PrimaryKeyConstraint
 		sql        string
 	}{
 		{
-			name: "SingleColumn",
+			name:      "SingleColumn",
+			tableName: "test",
 			constraint: &PrimaryKeyConstraint{
-				TableName:   "test",
 				ColumnNames: []string{"id"},
 			},
 			sql: `CONSTRAINT "pk_test" PRIMARY KEY ("id")`,
 		},
 		{
-			name: "MultipleColumns",
+			name:      "MultipleColumns",
+			tableName: "test",
 			constraint: &PrimaryKeyConstraint{
-				TableName:   "test",
 				ColumnNames: []string{"id", "name"},
 			},
 			sql: `CONSTRAINT "pk_test" PRIMARY KEY ("id", "name")`,
@@ -34,7 +35,7 @@ func TestPrimaryKeyConstraintToDefinitionSQL(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			fmter := Formatter{schema.NewNopFormatter()}
-			sql := testCase.constraint.ToDefinitionSQL(fmter)
+			sql := testCase.constraint.ToDefinitionSQL(fmter, testCase.tableName)
 
 			assert.Equal(t, testCase.sql, string(sql))
 		})
@@ -44,13 +45,14 @@ func TestPrimaryKeyConstraintToDefinitionSQL(t *testing.T) {
 func TestForeignKeyConstraintToDefinitionSQL(t *testing.T) {
 	testCases := []struct {
 		name       string
+		tableName  TableName
 		constraint *ForeignKeyConstraint
 		sql        string
 	}{
 		{
-			name: "NoCascade",
+			name:      "NoCascade",
+			tableName: "test",
 			constraint: &ForeignKeyConstraint{
-				ReferencingTableName:  "test",
 				ReferencingColumnName: "id",
 				ReferencedTableName:   "test_referenced",
 				ReferencedColumnName:  "id",
@@ -62,7 +64,7 @@ func TestForeignKeyConstraintToDefinitionSQL(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			fmter := Formatter{schema.NewNopFormatter()}
-			sql := testCase.constraint.ToDefinitionSQL(fmter)
+			sql := testCase.constraint.ToDefinitionSQL(fmter, testCase.tableName)
 
 			assert.Equal(t, testCase.sql, string(sql))
 		})

@@ -51,10 +51,33 @@ func (migration *addIndexes) Up(ctx context.Context, db *bun.DB) error {
 	}()
 
 	indexSQLs := [][]byte{}
-	indexSQLs = append(indexSQLs, migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "factor_password", ColumnNames: []string{"user_id"}})...)
-	indexSQLs = append(indexSQLs, migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []string{"password_id"}})...)
-	indexSQLs = append(indexSQLs, migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []string{"token"}})...)
-	indexSQLs = append(indexSQLs, migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "license", ColumnNames: []string{"org_id"}})...)
+	indexSQL, err := migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "factor_password", ColumnNames: []string{"user_id"}})
+	if err != nil {
+		return err
+	}
+
+	indexSQLs = append(indexSQLs, indexSQL...)
+
+	indexSQL, err = migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []string{"password_id"}})
+	if err != nil {
+		return err
+	}
+
+	indexSQLs = append(indexSQLs, indexSQL...)
+
+	indexSQL, err = migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []string{"token"}})
+	if err != nil {
+		return err
+	}
+
+	indexSQLs = append(indexSQLs, indexSQL...)
+
+	indexSQL, err = migration.sqlschema.CreateIndex(ctx, &sqlschema.UniqueIndex{TableName: "license", ColumnNames: []string{"org_id"}})
+	if err != nil {
+		return err
+	}
+
+	indexSQLs = append(indexSQLs, indexSQL...)
 
 	for _, sql := range indexSQLs {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
