@@ -1,0 +1,40 @@
+{
+    "$schema": "https://inlang.com/schema/project-settings",
+    "sourceLanguageTag": "en",
+    "languageTags": [
+      "en", "en-GB"
+    ],
+    "modules": [
+      "https://cdn.jsdelivr.net/npm/@inlang/message-lint-rule-empty-pattern@latest/dist/index.js",
+      "https://cdn.jsdelivr.net/npm/@inlang/message-lint-rule-identical-pattern@latest/dist/index.js",
+      "https://cdn.jsdelivr.net/npm/@inlang/message-lint-rule-missing-translation@latest/dist/index.js",
+      "https://cdn.jsdelivr.net/npm/@inlang/message-lint-rule-without-source@latest/dist/index.js",
+      "https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@4/dist/index.js"
+    ],
+    "plugin.inlang.i18next": {
+      "pathPattern": {
+        "alerts": "./frontend/public/locales/{languageTag}/alerts.json",
+        "channels": "./frontend/public/locales/{languageTag}/channels.json",
+        "common": "./frontend/public/locales/{languageTag}/common.json",
+        "dashboard": "./frontend/public/locales/{languageTag}/dashboard.json",
+        "errorDetails": "./frontend/public/locales/{languageTag}/errorDetails.json",
+        "explorer": "./frontend/public/locales/{languageTag}/explorer.json",
+        "generalSettings": "./frontend/public/locales/{languageTag}/generalSettings.json",
+        "licenses": "./frontend/public/locales/{languageTag}/licenses.json",
+        "login": "./frontend/public/locales/{languageTag}/login.json",
+        "logs": "./frontend/public/locales/{languageTag}/logs.json",
+        "organixationsettings": "./frontend/public/locales/{languageTag}/organixationsettings.json",
+        "pipeline": "./frontend/public/locales/{languageTag}/pipeline.json",
+        "routes": "./frontend/public/locales/{languageTag}/routes.json",
+        "rules": "./frontend/public/locales/{languageTag}/rules.json",
+        "settings": "./frontend/public/locales/{languageTag}/settings.json",
+        "signup": "./frontend/public/locales/{languageTag}/signup.json",
+        "titles": "./frontend/public/locales/{languageTag}/titles.json",
+        "trace": "./frontend/public/locales/{languageTag}/trace.json",
+        "traceDetails": "./frontend/public/locales/{languageTag}/traceDetails.json",
+        "translation": "./frontend/public/locales/{languageTag}/translation.json",
+        "valueGraph": "./frontend/public/locales/{languageTag}/valueGraph.json"
+      }
+    }
+}
+  
