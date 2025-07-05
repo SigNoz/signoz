@@ -121,15 +121,15 @@ WHERE
 		}
 
 		if constraintType == "PRIMARY KEY" {
-			primaryKeyConstraint = &sqlschema.PrimaryKeyConstraint{
+			primaryKeyConstraint = (&sqlschema.PrimaryKeyConstraint{
 				ColumnNames: []string{name},
-			}
+			}).Named(constraintName).(*sqlschema.PrimaryKeyConstraint)
 		}
 
 		if constraintType == "UNIQUE" {
-			uniqueConstraints = append(uniqueConstraints, &sqlschema.UniqueConstraint{
+			uniqueConstraints = append(uniqueConstraints, (&sqlschema.UniqueConstraint{
 				ColumnNames: []string{name},
-			})
+			}).Named(constraintName).(*sqlschema.UniqueConstraint))
 		}
 	}
 
@@ -168,11 +168,11 @@ WHERE
 			return nil, nil, err
 		}
 
-		foreignKeyConstraints = append(foreignKeyConstraints, &sqlschema.ForeignKeyConstraint{
+		foreignKeyConstraints = append(foreignKeyConstraints, (&sqlschema.ForeignKeyConstraint{
 			ReferencingColumnName: referencingColumn,
 			ReferencedTableName:   referencedTable,
 			ReferencedColumnName:  referencedColumn,
-		})
+		}).Named(constraintName).(*sqlschema.ForeignKeyConstraint))
 	}
 
 	if err := rows.Close(); err != nil {

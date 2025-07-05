@@ -189,7 +189,149 @@ func TestOperatorAddColumn(t *testing.T) {
 			operator := NewOperator(fmter, testCase.support)
 
 			actuals := operator.AddColumn(testCase.table, testCase.uniqueConstraints, testCase.column, testCase.val)
-			assert.ElementsMatch(t, testCase.expectedSQLs, actuals)
+			assert.Equal(t, testCase.expectedSQLs, actuals)
+			assert.Equal(t, testCase.expectedTable, testCase.table)
+		})
+	}
+}
+
+func TestOperatorDropConstraint(t *testing.T) {
+	testCases := []struct {
+		name              string
+		table             *Table
+		constraint        Constraint
+		uniqueConstraints []*UniqueConstraint
+		support           OperatorSupport
+		expectedSQLs      [][]byte
+		expectedTable     *Table
+	}{
+		{
+			name: "PrimaryKeyConstraint_DoesExist_DropConstraintTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{
+					ColumnNames: []string{"id"},
+				},
+			},
+			constraint: &PrimaryKeyConstraint{
+				ColumnNames: []string{"id"},
+			},
+			support: OperatorSupport{
+				DropConstraint: true,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "pk_users"`),
+			},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+		},
+		{
+			name: "PrimaryKeyConstraint_DoesExist_DropConstraintFalse",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{
+					ColumnNames: []string{"id"},
+				},
+			},
+			constraint: &PrimaryKeyConstraint{
+				ColumnNames: []string{"id"},
+			},
+			support: OperatorSupport{
+				DropConstraint: false,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL)`),
+				[]byte(`INSERT INTO "users__temp" ("id") SELECT "id" FROM "users"`),
+				[]byte(`DROP TABLE IF EXISTS "users"`),
+				[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+			},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+		},
+		{
+			name: "UniqueConstraint_DoesExist_DropConstraintTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			constraint: &UniqueConstraint{
+				ColumnNames: []string{"name"},
+			},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []string{"name"}},
+			},
+			support: OperatorSupport{
+				DropConstraint: true,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "uq_users_name"`),
+			},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+		},
+		{
+			name: "UniqueConstraint_DoesExist_DropConstraintFalse",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			constraint: &UniqueConstraint{
+				ColumnNames: []string{"name"},
+			},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []string{"name"}},
+			},
+			support: OperatorSupport{
+				DropConstraint: false,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL)`),
+				[]byte(`INSERT INTO "users__temp" ("id", "name") SELECT "id", "name" FROM "users"`),
+				[]byte(`DROP TABLE IF EXISTS "users"`),
+				[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+			},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			fmter := NewFormatter(schema.NewNopFormatter().Dialect())
+			operator := NewOperator(fmter, testCase.support)
+
+			actuals := operator.DropConstraint(testCase.table, testCase.uniqueConstraints, testCase.constraint)
+			assert.Equal(t, testCase.expectedSQLs, actuals)
 			assert.Equal(t, testCase.expectedTable, testCase.table)
 		})
 	}
