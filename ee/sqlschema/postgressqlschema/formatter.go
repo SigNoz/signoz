@@ -20,10 +20,16 @@ func (formatter Formatter) SQLDataTypeOf(dataType sqlschema.DataType) string {
 
 func (formatter Formatter) DataTypeOf(dataType string) sqlschema.DataType {
 	switch strings.ToUpper(dataType) {
-	case "TIMESTAMPTZ":
+	case "TIMESTAMPTZ", "TIMESTAMP", "TIMESTAMP WITHOUT TIME ZONE", "TIMESTAMP WITH TIME ZONE":
 		return sqlschema.DataTypeTimestamp
 	case "INT8":
 		return sqlschema.DataTypeBigInt
+	case "INT2", "INT4", "SMALLINT", "INTEGER":
+		return sqlschema.DataTypeInteger
+	case "BOOL", "BOOLEAN":
+		return sqlschema.DataTypeBoolean
+	case "VARCHAR", "CHARACTER VARYING", "CHARACTER":
+		return sqlschema.DataTypeText
 	}
 
 	return formatter.Formatter.DataTypeOf(dataType)
