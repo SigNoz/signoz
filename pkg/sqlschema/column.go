@@ -1,19 +1,24 @@
 package sqlschema
 
 import (
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
-	DataTypeText      = DataType{s: valuer.NewString("TEXT")}
-	DataTypeBigInt    = DataType{s: valuer.NewString("BIGINT")}
-	DataTypeInteger   = DataType{s: valuer.NewString("INTEGER")}
-	DataTypeNumeric   = DataType{s: valuer.NewString("NUMERIC")}
-	DataTypeBoolean   = DataType{s: valuer.NewString("BOOLEAN")}
-	DataTypeTimestamp = DataType{s: valuer.NewString("TIMESTAMP")}
+	DataTypeText      = DataType{s: valuer.NewString("TEXT"), z: ""}
+	DataTypeBigInt    = DataType{s: valuer.NewString("BIGINT"), z: int64(0)}
+	DataTypeInteger   = DataType{s: valuer.NewString("INTEGER"), z: int64(0)}
+	DataTypeNumeric   = DataType{s: valuer.NewString("NUMERIC"), z: float64(0)}
+	DataTypeBoolean   = DataType{s: valuer.NewString("BOOLEAN"), z: false}
+	DataTypeTimestamp = DataType{s: valuer.NewString("TIMESTAMP"), z: time.Time{}}
 )
 
-type DataType struct{ s valuer.String }
+type DataType struct {
+	s valuer.String
+	z any
+}
 
 func (d DataType) String() string {
 	return d.s.String()

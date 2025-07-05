@@ -36,7 +36,7 @@ type SQLOperator interface {
 
 	// Returns a list of SQL statements to add a column to a table.
 	// If the column is not nullable, the column is added with the input value, then the column is made non-nullable.
-	AddColumn(*Table, *Column, any) [][]byte
+	AddColumn(*Table, []*UniqueConstraint, *Column, any) [][]byte
 
 	// Returns a list of SQL statements to drop a column from a table.
 	DropColumn(*Table, *Column) [][]byte
