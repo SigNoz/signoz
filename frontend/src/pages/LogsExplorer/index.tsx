@@ -248,7 +248,7 @@ function LogsExplorer(): JSX.Element {
 				)}
 				<section className={cx('log-module-right-section')}>
 					<Toolbar
-						showAutoRefresh={false}
+						showAutoRefresh
 						leftActions={
 							<LeftToolbarActions
 								showFilter={showFilters}
