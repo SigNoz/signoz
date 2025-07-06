@@ -7,36 +7,13 @@ import (
 	"github.com/uptrace/bun/schema"
 )
 
+// See table_test.go for more test cases on creating tables.
 func TestOperatorCreateTable(t *testing.T) {
 	testCases := []struct {
 		name         string
 		table        *Table
 		expectedSQLs [][]byte
 	}{
-		{
-			name: "NoPrimaryKey_NoForeignKey_NotNullable",
-			table: &Table{
-				Name: "users",
-				Columns: []*Column{
-					{Name: "id", DataType: DataTypeText, Nullable: false, Default: ""},
-				},
-			},
-			expectedSQLs: [][]byte{
-				[]byte(`CREATE TABLE IF NOT EXISTS "users" ("id" TEXT NOT NULL)`),
-			},
-		},
-		{
-			name: "NoPrimaryKey_NoForeignKey_Nullable",
-			table: &Table{
-				Name: "users",
-				Columns: []*Column{
-					{Name: "id", DataType: DataTypeText, Nullable: true, Default: ""},
-				},
-			},
-			expectedSQLs: [][]byte{
-				[]byte(`CREATE TABLE IF NOT EXISTS "users" ("id" TEXT)`),
-			},
-		},
 		{
 			name: "PrimaryKey_ForeignKey_NotNullable",
 			table: &Table{
@@ -55,25 +32,6 @@ func TestOperatorCreateTable(t *testing.T) {
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`CREATE TABLE IF NOT EXISTS "users" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL, "org_id" INTEGER NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("id"), CONSTRAINT "fk_users_org_id" FOREIGN KEY ("org_id") REFERENCES "orgs" ("id"))`),
-			},
-		},
-		{
-			name: "NoPrimaryKey_ForeignKey_NotNullable",
-			table: &Table{
-				Name: "users",
-				Columns: []*Column{
-					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
-					{Name: "is_verified", DataType: DataTypeBoolean, Nullable: false, Default: ""},
-					{Name: "created_at", DataType: DataTypeTimestamp, Nullable: false, Default: ""},
-					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
-				},
-				ForeignKeyConstraints: []*ForeignKeyConstraint{
-					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
-				},
-			},
-			expectedSQLs: [][]byte{
-				[]byte(`CREATE TABLE IF NOT EXISTS "users" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL, "is_verified" BOOLEAN NOT NULL, "created_at" TIMESTAMP NOT NULL, "org_id" INTEGER NOT NULL, CONSTRAINT "fk_users_org_id" FOREIGN KEY ("org_id") REFERENCES "orgs" ("id"))`),
 			},
 		},
 	}
