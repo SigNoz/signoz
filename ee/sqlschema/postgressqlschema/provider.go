@@ -119,7 +119,7 @@ WHERE
 	}()
 
 	var primaryKeyConstraint *sqlschema.PrimaryKeyConstraint
-	uniqueConstraints := make([]*sqlschema.UniqueConstraint, 0)
+	uniqueConstraintsMap := make(map[string]*sqlschema.UniqueConstraint)
 	for constraintsRows.Next() {
 		var (
 			name           string
@@ -132,15 +132,23 @@ WHERE
 		}
 
 		if constraintType == "PRIMARY KEY" {
-			primaryKeyConstraint = (&sqlschema.PrimaryKeyConstraint{
-				ColumnNames: []string{name},
-			}).Named(constraintName).(*sqlschema.PrimaryKeyConstraint)
+			if primaryKeyConstraint == nil {
+				primaryKeyConstraint = (&sqlschema.PrimaryKeyConstraint{
+					ColumnNames: []string{name},
+				}).Named(constraintName).(*sqlschema.PrimaryKeyConstraint)
+			} else {
+				primaryKeyConstraint.ColumnNames = append(primaryKeyConstraint.ColumnNames, name)
+			}
 		}
 
 		if constraintType == "UNIQUE" {
-			uniqueConstraints = append(uniqueConstraints, (&sqlschema.UniqueConstraint{
-				ColumnNames: []string{name},
-			}).Named(constraintName).(*sqlschema.UniqueConstraint))
+			if _, ok := uniqueConstraintsMap[constraintName]; !ok {
+				uniqueConstraintsMap[constraintName] = (&sqlschema.UniqueConstraint{
+					ColumnNames: []string{name},
+				}).Named(constraintName).(*sqlschema.UniqueConstraint)
+			} else {
+				uniqueConstraintsMap[constraintName].ColumnNames = append(uniqueConstraintsMap[constraintName].ColumnNames, name)
+			}
 		}
 	}
 
@@ -181,7 +189,7 @@ WHERE
 			referencedColumn  string
 		)
 
-		if err := rows.Scan(&constraintName, &referencingTable, &referencingColumn, &referencedTable, &referencedColumn); err != nil {
+		if err := foreignKeyConstraintsRows.Scan(&constraintName, &referencingTable, &referencingColumn, &referencedTable, &referencedColumn); err != nil {
 			return nil, nil, err
 		}
 
@@ -190,6 +198,11 @@ WHERE
 			ReferencedTableName:   referencedTable,
 			ReferencedColumnName:  referencedColumn,
 		}).Named(constraintName).(*sqlschema.ForeignKeyConstraint))
+	}
+
+	uniqueConstraints := make([]*sqlschema.UniqueConstraint, 0)
+	for _, uniqueConstraint := range uniqueConstraintsMap {
+		uniqueConstraints = append(uniqueConstraints, uniqueConstraint)
 	}
 
 	return &sqlschema.Table{

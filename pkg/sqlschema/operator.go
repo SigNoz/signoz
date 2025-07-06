@@ -95,7 +95,10 @@ func (operator *Operator) DropColumn(table *Table, column *Column) [][]byte {
 }
 
 func (operator *Operator) DropConstraint(table *Table, uniqueConstraints []*UniqueConstraint, constraint Constraint) [][]byte {
-	if found := table.DropConstraint(constraint); !found {
+	// The name of the input constraint is not guaranteed to be the same as the name of the constraint in the database.
+	// So we need to find the constraint in the database and drop it.
+	toDropConstraint, found := table.DropConstraint(constraint)
+	if !found {
 		uniqueConstraintIndex := operator.findUniqueConstraint(uniqueConstraints, constraint)
 		if uniqueConstraintIndex == -1 {
 			return [][]byte{}
@@ -109,7 +112,7 @@ func (operator *Operator) DropConstraint(table *Table, uniqueConstraints []*Uniq
 	}
 
 	if operator.support.DropConstraint {
-		return [][]byte{constraint.ToDropSQL(operator.fmter, table.Name)}
+		return [][]byte{toDropConstraint.ToDropSQL(operator.fmter, table.Name)}
 	}
 
 	return operator.RecreateTable(table, uniqueConstraints)

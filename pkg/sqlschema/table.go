@@ -31,10 +31,12 @@ func (table *Table) Clone() *Table {
 	}
 }
 
-func (table *Table) DropConstraint(constraint Constraint) bool {
+func (table *Table) DropConstraint(constraint Constraint) (Constraint, bool) {
+	var droppedConstraint Constraint
 	found := false
 
 	if constraint.Equals(table.PrimaryKeyConstraint) {
+		droppedConstraint = table.PrimaryKeyConstraint
 		table.PrimaryKeyConstraint = nil
 		found = true
 	}
@@ -42,6 +44,7 @@ func (table *Table) DropConstraint(constraint Constraint) bool {
 	if constraint.Type() == ConstraintTypeForeignKey {
 		for i, fkConstraint := range table.ForeignKeyConstraints {
 			if constraint.Equals(fkConstraint) {
+				droppedConstraint = fkConstraint
 				table.ForeignKeyConstraints = append(table.ForeignKeyConstraints[:i], table.ForeignKeyConstraints[i+1:]...)
 				found = true
 				break
@@ -49,7 +52,7 @@ func (table *Table) DropConstraint(constraint Constraint) bool {
 		}
 	}
 
-	return found
+	return droppedConstraint, found
 }
 
 func (table *Table) ToDropSQL(fmter SQLFormatter) []byte {

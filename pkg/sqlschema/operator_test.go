@@ -233,6 +233,34 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
+			name: "PrimaryKeyConstraintDifferentName_DoesExist_DropConstraintTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{
+					ColumnNames: []string{"id"},
+					name:        "pk_users_different_name",
+				},
+			},
+			constraint: &PrimaryKeyConstraint{
+				ColumnNames: []string{"id"},
+			},
+			support: OperatorSupport{
+				DropConstraint: true,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "pk_users_different_name"`),
+			},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+		},
+		{
 			name: "PrimaryKeyConstraint_DoesExist_DropConstraintFalse",
 			table: &Table{
 				Name: "users",
