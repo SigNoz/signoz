@@ -6,7 +6,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 type provider struct {
@@ -24,7 +23,7 @@ func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[sqlschema.SQ
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlschema.Config, sqlstore sqlstore.SQLStore) (sqlschema.SQLSchema, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlschema/postgressqlschema")
-	fmter := Formatter{Formatter: sqlschema.NewFormatter(pgdialect.New())}
+	fmter := Formatter{Formatter: sqlschema.NewFormatter(sqlstore.BunDB().Dialect())}
 
 	return &provider{
 		sqlstore: sqlstore,
@@ -36,6 +35,10 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			AlterColumnSetNotNull:   true,
 		}),
 	}, nil
+}
+
+func (provider *provider) Formatter() sqlschema.SQLFormatter {
+	return provider.fmter
 }
 
 func (provider *provider) Operator() sqlschema.SQLOperator {
@@ -59,6 +62,12 @@ WHERE
 	if err != nil {
 		return nil, nil, err
 	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
+		}
+	}()
 
 	columns := make([]*sqlschema.Column, 0)
 	for rows.Next() {
@@ -85,11 +94,7 @@ WHERE
 		})
 	}
 
-	if err := rows.Close(); err != nil {
-		return nil, nil, err
-	}
-
-	rows, err = provider.
+	constraintsRows, err := provider.
 		sqlstore.
 		BunDB().
 		QueryContext(ctx, `
@@ -107,16 +112,22 @@ WHERE
 		return nil, nil, err
 	}
 
+	defer func() {
+		if err := constraintsRows.Close(); err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
+		}
+	}()
+
 	var primaryKeyConstraint *sqlschema.PrimaryKeyConstraint
 	uniqueConstraints := make([]*sqlschema.UniqueConstraint, 0)
-	for rows.Next() {
+	for constraintsRows.Next() {
 		var (
 			name           string
 			constraintName string
 			constraintType string
 		)
 
-		if err := rows.Scan(&name, &constraintName, &constraintType); err != nil {
+		if err := constraintsRows.Scan(&name, &constraintName, &constraintType); err != nil {
 			return nil, nil, err
 		}
 
@@ -133,7 +144,7 @@ WHERE
 		}
 	}
 
-	rows, err = provider.
+	foreignKeyConstraintsRows, err := provider.
 		sqlstore.
 		BunDB().
 		QueryContext(ctx, `
@@ -154,8 +165,14 @@ WHERE
 		return nil, nil, err
 	}
 
+	defer func() {
+		if err := foreignKeyConstraintsRows.Close(); err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
+		}
+	}()
+
 	foreignKeyConstraints := make([]*sqlschema.ForeignKeyConstraint, 0)
-	for rows.Next() {
+	for foreignKeyConstraintsRows.Next() {
 		var (
 			constraintName    string
 			referencingTable  string
@@ -173,10 +190,6 @@ WHERE
 			ReferencedTableName:   referencedTable,
 			ReferencedColumnName:  referencedColumn,
 		}).Named(constraintName).(*sqlschema.ForeignKeyConstraint))
-	}
-
-	if err := rows.Close(); err != nil {
-		return nil, nil, err
 	}
 
 	return &sqlschema.Table{
@@ -212,6 +225,12 @@ WHERE
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
+		}
+	}()
 
 	uniqueIndicesMap := make(map[string]*sqlschema.UniqueIndex)
 	for rows.Next() {

@@ -279,13 +279,14 @@ func (constraint *UniqueConstraint) Equals(other Constraint) bool {
 	return true
 }
 
-func (constraint *UniqueConstraint) ToIndexSQL(fmter SQLFormatter, tableName TableName) []byte {
-	index := UniqueIndex{
-		TableName:   string(tableName),
-		ColumnNames: constraint.ColumnNames,
-	}
+func (constraint *UniqueConstraint) ToIndex(tableName TableName) *UniqueIndex {
+	copyOfColumnNames := make([]string, len(constraint.ColumnNames))
+	copy(copyOfColumnNames, constraint.ColumnNames)
 
-	return index.ToCreateSQL(fmter)
+	return &UniqueIndex{
+		TableName:   string(tableName),
+		ColumnNames: copyOfColumnNames,
+	}
 }
 
 func (constraint *UniqueConstraint) ToDefinitionSQL(fmter SQLFormatter, tableName TableName) []byte {

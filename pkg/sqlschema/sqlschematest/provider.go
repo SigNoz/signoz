@@ -26,6 +26,10 @@ func New(tables map[string]*sqlschema.Table, uniqueConstraints map[string][]*sql
 	}
 }
 
+func (provider *Provider) Formatter() sqlschema.SQLFormatter {
+	return provider.Fmter
+}
+
 func (provider *Provider) Operator() sqlschema.SQLOperator {
 	return sqlschema.NewOperator(provider.Fmter, sqlschema.OperatorSupport{})
 }

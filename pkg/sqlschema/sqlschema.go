@@ -5,6 +5,10 @@ import (
 )
 
 type SQLSchema interface {
+	// Returns the formatter for the schema.
+	Formatter() SQLFormatter
+
+	// Returns the operator for the schema.
 	Operator() SQLOperator
 
 	// Inspects the schema and returns the table with the given name.

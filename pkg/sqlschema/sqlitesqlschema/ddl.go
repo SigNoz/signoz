@@ -24,6 +24,17 @@ var (
 	defaultValueRegexp = regexp.MustCompile(`(?i) DEFAULT \(?(.+)?\)?( |COLLATE|GENERATED|$)`)
 )
 
+type parseAllColumnsState int
+
+const (
+	parseAllColumnsState_NONE parseAllColumnsState = iota
+	parseAllColumnsState_Beginning
+	parseAllColumnsState_ReadingRawName
+	parseAllColumnsState_ReadingQuotedName
+	parseAllColumnsState_EndOfName
+	parseAllColumnsState_State_End
+)
+
 func parseCreateTable(str string, fmter sqlschema.Formatter) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
 	sections := tableRegexp.FindStringSubmatch(str)
 	if len(sections) == 0 {
@@ -209,17 +220,6 @@ func parseCreateTable(str string, fmter sqlschema.Formatter) (*sqlschema.Table, 
 		ForeignKeyConstraints: foreignKeyConstraints,
 	}, uniqueConstraints, nil
 }
-
-type parseAllColumnsState int
-
-const (
-	parseAllColumnsState_NONE parseAllColumnsState = iota
-	parseAllColumnsState_Beginning
-	parseAllColumnsState_ReadingRawName
-	parseAllColumnsState_ReadingQuotedName
-	parseAllColumnsState_EndOfName
-	parseAllColumnsState_State_End
-)
 
 func parseAllColumns(in string) ([]string, error) {
 	s := []rune(in)

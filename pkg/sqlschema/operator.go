@@ -35,7 +35,7 @@ func (operator *Operator) RecreateTable(table *Table, uniqueConstraints []*Uniqu
 	sqls = append(sqls, table.ToCreateTempInsertDropAlterSQL(operator.fmter)...)
 
 	for _, uniqueConstraint := range uniqueConstraints {
-		sqls = append(sqls, uniqueConstraint.ToIndexSQL(operator.fmter, table.Name))
+		sqls = append(sqls, uniqueConstraint.ToIndex(table.Name).ToCreateSQL(operator.fmter))
 	}
 
 	return sqls
