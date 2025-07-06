@@ -46,7 +46,7 @@ func (provider *provider) Operator() sqlschema.SQLOperator {
 	return provider.operator
 }
 
-func (provider *provider) GetTable(ctx context.Context, name sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
+func (provider *provider) GetTable(ctx context.Context, tableName sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
 	rows, err := provider.
 		sqlstore.
 		BunDB().
@@ -59,7 +59,7 @@ SELECT
 FROM 
     information_schema.columns AS c
 WHERE
-    c.table_name = ?`, string(name))
+    c.table_name = ?`, string(tableName))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -108,7 +108,7 @@ FROM
 	JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_catalog, table_name, constraint_name) 
 	JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema AND tc.table_name = c.table_name AND ccu.column_name = c.column_name 
 WHERE
-    c.table_name = ?`, string(name))
+    c.table_name = ?`, string(tableName))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -169,7 +169,7 @@ FROM
     JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
 WHERE 
     tc.constraint_type = ?
-	AND kcu.table_name = ?`, "FOREIGN KEY", string(name))
+	AND kcu.table_name = ?`, "FOREIGN KEY", string(tableName))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -207,7 +207,7 @@ WHERE
 	}
 
 	return &sqlschema.Table{
-		Name:                  name,
+		Name:                  tableName,
 		Columns:               columns,
 		PrimaryKeyConstraint:  primaryKeyConstraint,
 		ForeignKeyConstraints: foreignKeyConstraints,
