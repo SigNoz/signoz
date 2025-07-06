@@ -4521,24 +4521,46 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 	}
 
 	queryInfoResult := NewQueryInfoResult(queryRangeParams, version)
-	if !(len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0)) {
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", queryInfoResult.ToMap())
-		return
-	}
-
-	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", queryInfoResult.ToMap())
 
 	if !(queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed) {
 		return
 	}
 
-	referrer := r.Header.Get("Referer")
-	if referrer == "" {
+	properties := queryInfoResult.ToMap()
+
+	// Check if result is empty or has no data
+	if len(result) == 0 {
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
 		return
 	}
 
+	// Check if first result has no series data
+	if len(result[0].Series) == 0 {
+		// Check if first result has no list data
+		if len(result[0].List) == 0 {
+			// Check if first result has no table data
+			if result[0].Table == nil {
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				return
+			}
+
+			if len(result[0].Table.Rows) == 0 {
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				return
+			}
+		}
+	}
+
+	referrer := r.Header.Get("Referer")
+
+	if referrer == "" {
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
+		return
+	}
+
+	properties["referrer"] = referrer
+
 	if matched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer); matched {
-		properties := queryInfoResult.ToMap()
 
 		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
 			if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
@@ -4552,13 +4574,12 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 			}
 		}
 
-		properties["referrer"] = referrer
 		properties["module_name"] = "dashboard"
 		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
+		return
 	}
 
 	if matched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer); matched {
-		properties := queryInfoResult.ToMap()
 
 		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
 			if matches := alertIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
@@ -4566,10 +4587,12 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 			}
 		}
 
-		properties["referrer"] = referrer
 		properties["module_name"] = "rule"
 		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
+		return
 	}
+
+	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
 
 }
 

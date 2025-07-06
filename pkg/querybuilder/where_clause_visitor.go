@@ -29,7 +29,10 @@ type filterExpressionVisitor struct {
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	skipResourceFilter bool
 	skipFullTextFilter bool
+	skipFunctionCalls  bool
 	variables          map[string]qbtypes.VariableItem
+
+	keysWithWarnings map[string]bool
 }
 
 type FilterExprVisitorOpts struct {
@@ -42,6 +45,7 @@ type FilterExprVisitorOpts struct {
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
+	SkipFunctionCalls  bool
 	Variables          map[string]qbtypes.VariableItem
 }
 
@@ -57,7 +61,9 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		jsonKeyToKey:       opts.JsonKeyToKey,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
+		skipFunctionCalls:  opts.SkipFunctionCalls,
 		variables:          opts.Variables,
+		keysWithWarnings:   make(map[string]bool),
 	}
 }
 
@@ -547,6 +553,10 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 
 // VisitFunctionCall handles function calls like has(), hasAny(), etc.
 func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
+	if v.skipFunctionCalls {
+		return "true"
+	}
+
 	// Get function name based on which token is present
 	var functionName string
 	if ctx.HAS() != nil {
@@ -690,7 +700,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		}
 	}
 
-	if len(fieldKeysForName) > 1 {
+	if len(fieldKeysForName) > 1 && !v.keysWithWarnings[keyName] {
 		// this is warning state, we must have a unambiguous key
 		v.warnings = append(v.warnings, fmt.Sprintf(
 			"key `%s` is ambiguous, found %d different combinations of field context and data type: %v",
@@ -698,6 +708,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			len(fieldKeysForName),
 			fieldKeysForName,
 		))
+		v.keysWithWarnings[keyName] = true
 	}
 
 	return fieldKeysForName

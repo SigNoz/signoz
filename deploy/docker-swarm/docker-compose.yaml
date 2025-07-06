@@ -100,7 +100,7 @@ services:
     #   - "9000:9000"
     #   - "8123:8123"
     #   - "9181:9181"
-              
+
     configs:
       - source: clickhouse-config
         target: /etc/clickhouse-server/config.xml
@@ -110,13 +110,12 @@ services:
         target: /etc/clickhouse-server/custom-function.xml
       - source: clickhouse-cluster
         target: /etc/clickhouse-server/config.d/cluster.xml
-        
     volumes:
       - clickhouse:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:v0.87.0
+    image: signoz/signoz:v0.88.1
     command:
       - --config=/root/config/prometheus.yml
     ports:
@@ -148,7 +147,7 @@ services:
       retries: 3
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:v0.111.42
+    image: signoz/signoz-otel-collector:v0.128.0
     command:
       - --config=/etc/otel-collector-config.yaml
       - --manager-config=/etc/manager-config.yaml
@@ -174,7 +173,7 @@ services:
       - signoz
   schema-migrator:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:v0.111.42
+    image: signoz/signoz-schema-migrator:v0.128.0
     deploy:
       restart_policy:
         condition: on-failure
@@ -195,7 +194,6 @@ volumes:
     name: signoz-sqlite
   zookeeper-1:
     name: signoz-zookeeper-1
-
 configs:
   clickhouse-config:
     file: ../common/clickhouse/config.xml
@@ -205,7 +203,6 @@ configs:
     file: ../common/clickhouse/custom-function.xml
   clickhouse-cluster:
     file: ../common/clickhouse/cluster.xml
-
   signoz-prometheus-config:
     file: ../common/signoz/prometheus.yml
   # If you have multiple dashboard files, you can list them individually:
