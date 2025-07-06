@@ -123,7 +123,7 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore, sqlschema sqls
 		sqlmigration.NewUpdateUsersFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateUserInviteFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateOrgDomainFactory(sqlstore, sqlschema),
-		sqlmigration.NewAddIndexesFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
 	)
 }
 
