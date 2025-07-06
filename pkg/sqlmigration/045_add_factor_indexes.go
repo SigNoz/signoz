@@ -10,25 +10,25 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type addIndexes struct {
+type addFactorIndexes struct {
 	sqlstore  sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
 }
 
-func NewAddIndexesFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("add_indexes"), func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
-		return newAddIndexes(ctx, providerSettings, config, sqlstore, sqlschema)
+func NewAddFactorIndexesFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_factor_indexes"), func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
+		return newAddFactorIndexes(ctx, providerSettings, config, sqlstore, sqlschema)
 	})
 }
 
-func newAddIndexes(_ context.Context, _ factory.ProviderSettings, _ Config, sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) (SQLMigration, error) {
-	return &addIndexes{
+func newAddFactorIndexes(_ context.Context, _ factory.ProviderSettings, _ Config, sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) (SQLMigration, error) {
+	return &addFactorIndexes{
 		sqlstore:  sqlstore,
 		sqlschema: sqlschema,
 	}, nil
 }
 
-func (migration *addIndexes) Register(migrations *migrate.Migrations) error {
+func (migration *addFactorIndexes) Register(migrations *migrate.Migrations) error {
 	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func (migration *addIndexes) Register(migrations *migrate.Migrations) error {
 	return nil
 }
 
-func (migration *addIndexes) Up(ctx context.Context, db *bun.DB) error {
+func (migration *addFactorIndexes) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -57,9 +57,6 @@ func (migration *addIndexes) Up(ctx context.Context, db *bun.DB) error {
 	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []sqlschema.ColumnName{"token"}})
 	sqls = append(sqls, indexSQLs...)
 
-	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "license", ColumnNames: []sqlschema.ColumnName{"org_id"}})
-	sqls = append(sqls, indexSQLs...)
-
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
@@ -73,6 +70,6 @@ func (migration *addIndexes) Up(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-func (migration *addIndexes) Down(ctx context.Context, db *bun.DB) error {
+func (migration *addFactorIndexes) Down(ctx context.Context, db *bun.DB) error {
 	return nil
 }
