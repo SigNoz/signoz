@@ -37,10 +37,6 @@ func (migration *addIndexes) Register(migrations *migrate.Migrations) error {
 }
 
 func (migration *addIndexes) Up(ctx context.Context, db *bun.DB) error {
-	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
-		return err
-	}
-
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -71,10 +67,6 @@ func (migration *addIndexes) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, true); err != nil {
 		return err
 	}
 
