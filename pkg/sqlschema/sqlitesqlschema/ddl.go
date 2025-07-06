@@ -9,6 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 )
 
+// Inspired by https://github.com/go-gorm/sqlite
+
 var (
 	sqliteSeparator    = "`|\"|'|\t"
 	sqliteIdentQuote   = "`|\"|'"
