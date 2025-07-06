@@ -57,10 +57,10 @@ func (migration *updateOrgDomain) Up(ctx context.Context, db *bun.DB) error {
 
 	sqls := [][]byte{}
 
-	dropSQLs := migration.sqlschema.Operator().DropConstraint(table, uniqueConstraints, &sqlschema.UniqueConstraint{ColumnNames: []string{"name"}})
+	dropSQLs := migration.sqlschema.Operator().DropConstraint(table, uniqueConstraints, &sqlschema.UniqueConstraint{ColumnNames: []sqlschema.ColumnName{"name"}})
 	sqls = append(sqls, dropSQLs...)
 
-	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "org_domains", ColumnNames: []string{"name", "org_id"}})
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "org_domains", ColumnNames: []sqlschema.ColumnName{"name", "org_id"}})
 	sqls = append(sqls, indexSQLs...)
 
 	for _, sql := range sqls {

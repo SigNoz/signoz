@@ -52,16 +52,16 @@ func (migration *addIndexes) Up(ctx context.Context, db *bun.DB) error {
 
 	sqls := [][]byte{}
 
-	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "factor_password", ColumnNames: []string{"user_id"}})
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "factor_password", ColumnNames: []sqlschema.ColumnName{"user_id"}})
 	sqls = append(sqls, indexSQLs...)
 
-	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []string{"password_id"}})
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []sqlschema.ColumnName{"password_id"}})
 	sqls = append(sqls, indexSQLs...)
 
-	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []string{"token"}})
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "reset_password_token", ColumnNames: []sqlschema.ColumnName{"token"}})
 	sqls = append(sqls, indexSQLs...)
 
-	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "license", ColumnNames: []string{"org_id"}})
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "license", ColumnNames: []sqlschema.ColumnName{"org_id"}})
 	sqls = append(sqls, indexSQLs...)
 
 	for _, sql := range sqls {

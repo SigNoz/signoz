@@ -134,20 +134,20 @@ WHERE
 		if constraintType == "PRIMARY KEY" {
 			if primaryKeyConstraint == nil {
 				primaryKeyConstraint = (&sqlschema.PrimaryKeyConstraint{
-					ColumnNames: []string{name},
+					ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName(name)},
 				}).Named(constraintName).(*sqlschema.PrimaryKeyConstraint)
 			} else {
-				primaryKeyConstraint.ColumnNames = append(primaryKeyConstraint.ColumnNames, name)
+				primaryKeyConstraint.ColumnNames = append(primaryKeyConstraint.ColumnNames, sqlschema.ColumnName(name))
 			}
 		}
 
 		if constraintType == "UNIQUE" {
 			if _, ok := uniqueConstraintsMap[constraintName]; !ok {
 				uniqueConstraintsMap[constraintName] = (&sqlschema.UniqueConstraint{
-					ColumnNames: []string{name},
+					ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName(name)},
 				}).Named(constraintName).(*sqlschema.UniqueConstraint)
 			} else {
-				uniqueConstraintsMap[constraintName].ColumnNames = append(uniqueConstraintsMap[constraintName].ColumnNames, name)
+				uniqueConstraintsMap[constraintName].ColumnNames = append(uniqueConstraintsMap[constraintName].ColumnNames, sqlschema.ColumnName(name))
 			}
 		}
 	}
@@ -194,9 +194,9 @@ WHERE
 		}
 
 		foreignKeyConstraints = append(foreignKeyConstraints, (&sqlschema.ForeignKeyConstraint{
-			ReferencingColumnName: referencingColumn,
-			ReferencedTableName:   referencedTable,
-			ReferencedColumnName:  referencedColumn,
+			ReferencingColumnName: sqlschema.ColumnName(referencingColumn),
+			ReferencedTableName:   sqlschema.TableName(referencedTable),
+			ReferencedColumnName:  sqlschema.ColumnName(referencedColumn),
 		}).Named(constraintName).(*sqlschema.ForeignKeyConstraint))
 	}
 
@@ -262,11 +262,11 @@ WHERE
 		if unique {
 			if _, ok := uniqueIndicesMap[indexName]; !ok {
 				uniqueIndicesMap[indexName] = &sqlschema.UniqueIndex{
-					TableName:   tableName,
-					ColumnNames: []string{columnName},
+					TableName:   name,
+					ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName(columnName)},
 				}
 			} else {
-				uniqueIndicesMap[indexName].ColumnNames = append(uniqueIndicesMap[indexName].ColumnNames, columnName)
+				uniqueIndicesMap[indexName].ColumnNames = append(uniqueIndicesMap[indexName].ColumnNames, sqlschema.ColumnName(columnName))
 			}
 		}
 	}

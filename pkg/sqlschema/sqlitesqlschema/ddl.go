@@ -119,9 +119,9 @@ func parseCreateTable(str string, fmter sqlschema.Formatter) (*sqlschema.Table, 
 			matches := foreignKeyRegexp.FindStringSubmatch(f)
 			if len(matches) >= 4 {
 				foreignKeyConstraints = append(foreignKeyConstraints, &sqlschema.ForeignKeyConstraint{
-					ReferencingColumnName: matches[1],
-					ReferencedTableName:   matches[2],
-					ReferencedColumnName:  matches[3],
+					ReferencingColumnName: sqlschema.ColumnName(matches[1]),
+					ReferencedTableName:   sqlschema.TableName(matches[2]),
+					ReferencedColumnName:  sqlschema.ColumnName(matches[3]),
 				})
 			}
 
@@ -133,9 +133,9 @@ func parseCreateTable(str string, fmter sqlschema.Formatter) (*sqlschema.Table, 
 			matches := referencesRegexp.FindStringSubmatch(f)
 			if len(matches) >= 4 {
 				foreignKeyConstraints = append(foreignKeyConstraints, &sqlschema.ForeignKeyConstraint{
-					ReferencingColumnName: matches[1],
-					ReferencedTableName:   matches[3],
-					ReferencedColumnName:  matches[4],
+					ReferencingColumnName: sqlschema.ColumnName(matches[1]),
+					ReferencedTableName:   sqlschema.TableName(matches[3]),
+					ReferencedColumnName:  sqlschema.ColumnName(matches[4]),
 				})
 			}
 		}
@@ -192,14 +192,14 @@ func parseCreateTable(str string, fmter sqlschema.Formatter) (*sqlschema.Table, 
 
 			if strings.Contains(matchUpper, " UNIQUE") && !strings.Contains(matchUpper, " PRIMARY") {
 				uniqueConstraints = append(uniqueConstraints, &sqlschema.UniqueConstraint{
-					ColumnNames: []string{string(column.Name)},
+					ColumnNames: []sqlschema.ColumnName{column.Name},
 				})
 			}
 
 			if strings.Contains(matchUpper, " PRIMARY") {
 				column.Nullable = false
 				primaryKeyConstraint = &sqlschema.PrimaryKeyConstraint{
-					ColumnNames: []string{string(column.Name)},
+					ColumnNames: []sqlschema.ColumnName{column.Name},
 				}
 			}
 
@@ -221,9 +221,9 @@ func parseCreateTable(str string, fmter sqlschema.Formatter) (*sqlschema.Table, 
 	}, uniqueConstraints, nil
 }
 
-func parseAllColumns(in string) ([]string, error) {
+func parseAllColumns(in string) ([]sqlschema.ColumnName, error) {
 	s := []rune(in)
-	columns := make([]string, 0)
+	columns := make([]sqlschema.ColumnName, 0)
 	state := parseAllColumnsState_NONE
 	quote := rune(0)
 	name := make([]rune, 0)
@@ -254,20 +254,20 @@ func parseAllColumns(in string) ([]string, error) {
 		case parseAllColumnsState_ReadingRawName:
 			if isSeparator(s[i]) {
 				state = parseAllColumnsState_Beginning
-				columns = append(columns, string(name))
+				columns = append(columns, sqlschema.ColumnName(name))
 				name = make([]rune, 0)
 				continue
 			}
 			if s[i] == ')' {
 				state = parseAllColumnsState_State_End
-				columns = append(columns, string(name))
+				columns = append(columns, sqlschema.ColumnName(name))
 			}
 			if isQuote(s[i]) {
 				return nil, fmt.Errorf("unexpected token: %s", string(s[i]))
 			}
 			if isSpace(s[i]) {
 				state = parseAllColumnsState_EndOfName
-				columns = append(columns, string(name))
+				columns = append(columns, sqlschema.ColumnName(name))
 				name = make([]rune, 0)
 				continue
 			}
@@ -281,7 +281,7 @@ func parseAllColumns(in string) ([]string, error) {
 					continue
 				}
 				state = parseAllColumnsState_EndOfName
-				columns = append(columns, string(name))
+				columns = append(columns, sqlschema.ColumnName(name))
 				name = make([]rune, 0)
 				continue
 			}

@@ -57,13 +57,13 @@ func (migration *updateUserInvite) Up(ctx context.Context, db *bun.DB) error {
 
 	sqls := [][]byte{}
 
-	dropSQLs := migration.sqlschema.Operator().DropConstraint(table, uniqueConstraints, &sqlschema.UniqueConstraint{ColumnNames: []string{"email"}})
+	dropSQLs := migration.sqlschema.Operator().DropConstraint(table, uniqueConstraints, &sqlschema.UniqueConstraint{ColumnNames: []sqlschema.ColumnName{"email"}})
 	sqls = append(sqls, dropSQLs...)
 
-	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "user_invite", ColumnNames: []string{"email", "org_id"}})
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "user_invite", ColumnNames: []sqlschema.ColumnName{"email", "org_id"}})
 	sqls = append(sqls, indexSQLs...)
 
-	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "user_invite", ColumnNames: []string{"token"}})
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "user_invite", ColumnNames: []sqlschema.ColumnName{"token"}})
 	sqls = append(sqls, indexSQLs...)
 
 	for _, sql := range sqls {

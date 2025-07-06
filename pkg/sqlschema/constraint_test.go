@@ -18,7 +18,7 @@ func TestPrimaryKeyConstraintToDefinitionSQL(t *testing.T) {
 			name:      "SingleColumn",
 			tableName: "test",
 			constraint: &PrimaryKeyConstraint{
-				ColumnNames: []string{"id"},
+				ColumnNames: []ColumnName{"id"},
 			},
 			sql: `CONSTRAINT "pk_test" PRIMARY KEY ("id")`,
 		},
@@ -26,7 +26,7 @@ func TestPrimaryKeyConstraintToDefinitionSQL(t *testing.T) {
 			name:      "MultipleColumns",
 			tableName: "test",
 			constraint: &PrimaryKeyConstraint{
-				ColumnNames: []string{"id", "name"},
+				ColumnNames: []ColumnName{"id", "name"},
 			},
 			sql: `CONSTRAINT "pk_test" PRIMARY KEY ("id", "name")`,
 		},

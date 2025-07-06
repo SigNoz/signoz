@@ -31,7 +31,7 @@ type Index interface {
 	Type() IndexType
 
 	// The columns that the index is applied to.
-	Columns() []string
+	Columns() []ColumnName
 
 	// The SQL representation of the index.
 	ToCreateSQL(fmter SQLFormatter) []byte
@@ -41,8 +41,8 @@ type Index interface {
 }
 
 type UniqueIndex struct {
-	TableName   string
-	ColumnNames []string
+	TableName   TableName
+	ColumnNames []ColumnName
 	name        string
 }
 
@@ -54,14 +54,19 @@ func (index *UniqueIndex) Name() string {
 	var b strings.Builder
 	b.WriteString(IndexTypeUnique.String())
 	b.WriteString("_")
-	b.WriteString(index.TableName)
+	b.WriteString(string(index.TableName))
 	b.WriteString("_")
-	b.WriteString(strings.Join(index.ColumnNames, "_"))
+	for i, column := range index.ColumnNames {
+		if i > 0 {
+			b.WriteString("_")
+		}
+		b.WriteString(string(column))
+	}
 	return b.String()
 }
 
 func (index *UniqueIndex) Named(name string) Index {
-	copyOfColumnNames := make([]string, len(index.ColumnNames))
+	copyOfColumnNames := make([]ColumnName, len(index.ColumnNames))
 	copy(copyOfColumnNames, index.ColumnNames)
 
 	return &UniqueIndex{
@@ -75,7 +80,7 @@ func (*UniqueIndex) Type() IndexType {
 	return IndexTypeUnique
 }
 
-func (index *UniqueIndex) Columns() []string {
+func (index *UniqueIndex) Columns() []ColumnName {
 	return index.ColumnNames
 }
 
@@ -85,15 +90,15 @@ func (index *UniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
 	sql = append(sql, "CREATE UNIQUE INDEX IF NOT EXISTS "...)
 	sql = fmter.AppendIdent(sql, index.Name())
 	sql = append(sql, " ON "...)
-	sql = fmter.AppendIdent(sql, index.TableName)
+	sql = fmter.AppendIdent(sql, string(index.TableName))
 	sql = append(sql, " ("...)
 
-	for i, col := range index.ColumnNames {
+	for i, column := range index.ColumnNames {
 		if i > 0 {
 			sql = append(sql, ", "...)
 		}
 
-		sql = fmter.AppendIdent(sql, col)
+		sql = fmter.AppendIdent(sql, string(column))
 	}
 
 	sql = append(sql, ")"...)

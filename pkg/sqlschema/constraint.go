@@ -39,7 +39,7 @@ type Constraint interface {
 	Type() ConstraintType
 
 	// The columns that the constraint is applied to.
-	Columns() []string
+	Columns() []ColumnName
 
 	// Equals returns true if the constraint is equal to the other constraint.
 	Equals(other Constraint) bool
@@ -52,7 +52,7 @@ type Constraint interface {
 }
 
 type PrimaryKeyConstraint struct {
-	ColumnNames []string
+	ColumnNames []ColumnName
 	name        string
 }
 
@@ -69,7 +69,7 @@ func (constraint *PrimaryKeyConstraint) Name(tableName TableName) string {
 }
 
 func (constraint *PrimaryKeyConstraint) Named(name string) Constraint {
-	copyOfColumnNames := make([]string, len(constraint.ColumnNames))
+	copyOfColumnNames := make([]ColumnName, len(constraint.ColumnNames))
 	copy(copyOfColumnNames, constraint.ColumnNames)
 
 	return &PrimaryKeyConstraint{
@@ -82,7 +82,7 @@ func (constraint *PrimaryKeyConstraint) Type() ConstraintType {
 	return ConstraintTypePrimaryKey
 }
 
-func (constraint *PrimaryKeyConstraint) Columns() []string {
+func (constraint *PrimaryKeyConstraint) Columns() []ColumnName {
 	return constraint.ColumnNames
 }
 
@@ -95,7 +95,7 @@ func (constraint *PrimaryKeyConstraint) Equals(other Constraint) bool {
 		return false
 	}
 
-	foundColumns := make(map[string]bool)
+	foundColumns := make(map[ColumnName]bool)
 	for _, column := range constraint.ColumnNames {
 		foundColumns[column] = true
 	}
@@ -120,7 +120,7 @@ func (constraint *PrimaryKeyConstraint) ToDefinitionSQL(fmter SQLFormatter, tabl
 		if i > 0 {
 			sql = append(sql, ", "...)
 		}
-		sql = fmter.AppendIdent(sql, column)
+		sql = fmter.AppendIdent(sql, string(column))
 	}
 
 	sql = append(sql, ")"...)
@@ -140,9 +140,9 @@ func (constraint *PrimaryKeyConstraint) ToDropSQL(fmter SQLFormatter, tableName 
 }
 
 type ForeignKeyConstraint struct {
-	ReferencingColumnName string
-	ReferencedTableName   string
-	ReferencedColumnName  string
+	ReferencingColumnName ColumnName
+	ReferencedTableName   TableName
+	ReferencedColumnName  ColumnName
 	name                  string
 }
 
@@ -156,7 +156,7 @@ func (constraint *ForeignKeyConstraint) Name(tableName TableName) string {
 	b.WriteString("_")
 	b.WriteString(string(tableName))
 	b.WriteString("_")
-	b.WriteString(constraint.ReferencingColumnName)
+	b.WriteString(string(constraint.ReferencingColumnName))
 	return b.String()
 }
 
@@ -173,8 +173,8 @@ func (constraint *ForeignKeyConstraint) Type() ConstraintType {
 	return ConstraintTypeForeignKey
 }
 
-func (constraint *ForeignKeyConstraint) Columns() []string {
-	return []string{constraint.ReferencingColumnName}
+func (constraint *ForeignKeyConstraint) Columns() []ColumnName {
+	return []ColumnName{constraint.ReferencingColumnName}
 }
 
 func (constraint *ForeignKeyConstraint) Equals(other Constraint) bool {
@@ -199,11 +199,11 @@ func (constraint *ForeignKeyConstraint) ToDefinitionSQL(fmter SQLFormatter, tabl
 	sql = fmter.AppendIdent(sql, constraint.Name(tableName))
 	sql = append(sql, " FOREIGN KEY ("...)
 
-	sql = fmter.AppendIdent(sql, constraint.ReferencingColumnName)
+	sql = fmter.AppendIdent(sql, string(constraint.ReferencingColumnName))
 	sql = append(sql, ") REFERENCES "...)
-	sql = fmter.AppendIdent(sql, constraint.ReferencedTableName)
+	sql = fmter.AppendIdent(sql, string(constraint.ReferencedTableName))
 	sql = append(sql, " ("...)
-	sql = fmter.AppendIdent(sql, constraint.ReferencedColumnName)
+	sql = fmter.AppendIdent(sql, string(constraint.ReferencedColumnName))
 	sql = append(sql, ")"...)
 
 	return sql
@@ -224,7 +224,7 @@ func (constraint *ForeignKeyConstraint) ToDropSQL(fmter SQLFormatter, tableName 
 // The main difference between a Unique Index and a Unique Constraint is mostly semantic, with a constraint focusing more on data integrity, while an index focuses on performance.
 // We choose to create unique indices because of sqlite. Dropping a unique index is directly supported whilst dropping a unique constraint requires a recreation of the table with the constraint removed.
 type UniqueConstraint struct {
-	ColumnNames []string
+	ColumnNames []ColumnName
 	name        string
 }
 
@@ -238,12 +238,17 @@ func (constraint *UniqueConstraint) Name(tableName TableName) string {
 	b.WriteString("_")
 	b.WriteString(string(tableName))
 	b.WriteString("_")
-	b.WriteString(strings.Join(constraint.ColumnNames, "_"))
+	for i, column := range constraint.ColumnNames {
+		if i > 0 {
+			b.WriteString("_")
+		}
+		b.WriteString(string(column))
+	}
 	return b.String()
 }
 
 func (constraint *UniqueConstraint) Named(name string) Constraint {
-	copyOfColumnNames := make([]string, len(constraint.ColumnNames))
+	copyOfColumnNames := make([]ColumnName, len(constraint.ColumnNames))
 	copy(copyOfColumnNames, constraint.ColumnNames)
 
 	return &UniqueConstraint{
@@ -256,7 +261,7 @@ func (constraint *UniqueConstraint) Type() ConstraintType {
 	return ConstraintTypeUnique
 }
 
-func (constraint *UniqueConstraint) Columns() []string {
+func (constraint *UniqueConstraint) Columns() []ColumnName {
 	return constraint.ColumnNames
 }
 
@@ -265,7 +270,7 @@ func (constraint *UniqueConstraint) Equals(other Constraint) bool {
 		return false
 	}
 
-	foundColumns := make(map[string]bool)
+	foundColumns := make(map[ColumnName]bool)
 	for _, column := range constraint.ColumnNames {
 		foundColumns[column] = true
 	}
@@ -280,11 +285,11 @@ func (constraint *UniqueConstraint) Equals(other Constraint) bool {
 }
 
 func (constraint *UniqueConstraint) ToIndex(tableName TableName) *UniqueIndex {
-	copyOfColumnNames := make([]string, len(constraint.ColumnNames))
+	copyOfColumnNames := make([]ColumnName, len(constraint.ColumnNames))
 	copy(copyOfColumnNames, constraint.ColumnNames)
 
 	return &UniqueIndex{
-		TableName:   string(tableName),
+		TableName:   tableName,
 		ColumnNames: copyOfColumnNames,
 	}
 }
@@ -300,7 +305,7 @@ func (constraint *UniqueConstraint) ToDefinitionSQL(fmter SQLFormatter, tableNam
 		if i > 0 {
 			sql = append(sql, ", "...)
 		}
-		sql = fmter.AppendIdent(sql, column)
+		sql = fmter.AppendIdent(sql, string(column))
 	}
 
 	sql = append(sql, ")"...)

@@ -23,7 +23,7 @@ func TestTableToCreateSQL(t *testing.T) {
 					{Name: "org_id", DataType: DataTypeText, Nullable: false},
 				},
 				PrimaryKeyConstraint: &PrimaryKeyConstraint{
-					ColumnNames: []string{"id"},
+					ColumnNames: []ColumnName{"id"},
 				},
 			},
 			sql: `CREATE TABLE IF NOT EXISTS "test" ("id" TEXT NOT NULL, "name" TEXT NOT NULL, "org_id" TEXT NOT NULL, CONSTRAINT "pk_test" PRIMARY KEY ("id"))`,
@@ -38,7 +38,7 @@ func TestTableToCreateSQL(t *testing.T) {
 					{Name: "org_id", DataType: DataTypeText, Nullable: false},
 				},
 				PrimaryKeyConstraint: &PrimaryKeyConstraint{
-					ColumnNames: []string{"id"},
+					ColumnNames: []ColumnName{"id"},
 				},
 				ForeignKeyConstraints: []*ForeignKeyConstraint{
 					{
@@ -61,7 +61,7 @@ func TestTableToCreateSQL(t *testing.T) {
 					{Name: "user_id", DataType: DataTypeText, Nullable: false},
 				},
 				PrimaryKeyConstraint: &PrimaryKeyConstraint{
-					ColumnNames: []string{"id"},
+					ColumnNames: []ColumnName{"id"},
 				},
 				ForeignKeyConstraints: []*ForeignKeyConstraint{
 					{
@@ -106,7 +106,7 @@ func TestTableToCreateTempInsertDropAlterSQL(t *testing.T) {
 					{Name: "org_id", DataType: DataTypeText, Nullable: false},
 				},
 				PrimaryKeyConstraint: &PrimaryKeyConstraint{
-					ColumnNames: []string{"id"},
+					ColumnNames: []ColumnName{"id"},
 				},
 				ForeignKeyConstraints: []*ForeignKeyConstraint{
 					{

@@ -133,7 +133,7 @@ func TestOperatorAddColumn(t *testing.T) {
 			column: &Column{Name: "num", DataType: DataTypeInteger, Nullable: false, Default: ""},
 			val:    int64(100),
 			uniqueConstraints: []*UniqueConstraint{
-				{ColumnNames: []string{"name"}},
+				{ColumnNames: []ColumnName{"name"}},
 			},
 			support: OperatorSupport{
 				ColumnIfNotExistsExists: true,
@@ -213,11 +213,11 @@ func TestOperatorDropConstraint(t *testing.T) {
 					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
 				},
 				PrimaryKeyConstraint: &PrimaryKeyConstraint{
-					ColumnNames: []string{"id"},
+					ColumnNames: []ColumnName{"id"},
 				},
 			},
 			constraint: &PrimaryKeyConstraint{
-				ColumnNames: []string{"id"},
+				ColumnNames: []ColumnName{"id"},
 			},
 			support: OperatorSupport{
 				DropConstraint: true,
@@ -240,12 +240,12 @@ func TestOperatorDropConstraint(t *testing.T) {
 					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
 				},
 				PrimaryKeyConstraint: &PrimaryKeyConstraint{
-					ColumnNames: []string{"id"},
+					ColumnNames: []ColumnName{"id"},
 					name:        "pk_users_different_name",
 				},
 			},
 			constraint: &PrimaryKeyConstraint{
-				ColumnNames: []string{"id"},
+				ColumnNames: []ColumnName{"id"},
 			},
 			support: OperatorSupport{
 				DropConstraint: true,
@@ -268,11 +268,11 @@ func TestOperatorDropConstraint(t *testing.T) {
 					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
 				},
 				PrimaryKeyConstraint: &PrimaryKeyConstraint{
-					ColumnNames: []string{"id"},
+					ColumnNames: []ColumnName{"id"},
 				},
 			},
 			constraint: &PrimaryKeyConstraint{
-				ColumnNames: []string{"id"},
+				ColumnNames: []ColumnName{"id"},
 			},
 			support: OperatorSupport{
 				DropConstraint: false,
@@ -300,10 +300,10 @@ func TestOperatorDropConstraint(t *testing.T) {
 				},
 			},
 			constraint: &UniqueConstraint{
-				ColumnNames: []string{"name"},
+				ColumnNames: []ColumnName{"name"},
 			},
 			uniqueConstraints: []*UniqueConstraint{
-				{ColumnNames: []string{"name"}},
+				{ColumnNames: []ColumnName{"name"}},
 			},
 			support: OperatorSupport{
 				DropConstraint: true,
@@ -329,10 +329,10 @@ func TestOperatorDropConstraint(t *testing.T) {
 				},
 			},
 			constraint: &UniqueConstraint{
-				ColumnNames: []string{"name"},
+				ColumnNames: []ColumnName{"name"},
 			},
 			uniqueConstraints: []*UniqueConstraint{
-				{ColumnNames: []string{"name"}},
+				{ColumnNames: []ColumnName{"name"}},
 			},
 			support: OperatorSupport{
 				DropConstraint: false,

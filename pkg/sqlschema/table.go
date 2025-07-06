@@ -35,7 +35,7 @@ func (table *Table) DropConstraint(constraint Constraint) (Constraint, bool) {
 	var droppedConstraint Constraint
 	found := false
 
-	if constraint.Equals(table.PrimaryKeyConstraint) {
+	if table.PrimaryKeyConstraint != nil && constraint.Equals(table.PrimaryKeyConstraint) {
 		droppedConstraint = table.PrimaryKeyConstraint
 		table.PrimaryKeyConstraint = nil
 		found = true

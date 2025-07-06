@@ -46,13 +46,13 @@ func (provider *provider) Operator() sqlschema.SQLOperator {
 	return provider.operator
 }
 
-func (provider *provider) GetTable(ctx context.Context, name sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
+func (provider *provider) GetTable(ctx context.Context, tableName sqlschema.TableName) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
 	var sql string
 
 	if err := provider.
 		sqlstore.
 		BunDB().
-		NewRaw("SELECT sql FROM sqlite_master WHERE type IN (?) AND tbl_name = ? AND sql IS NOT NULL", bun.In([]string{"table"}), string(name)).
+		NewRaw("SELECT sql FROM sqlite_master WHERE type IN (?) AND tbl_name = ? AND sql IS NOT NULL", bun.In([]string{"table"}), string(tableName)).
 		Scan(ctx, &sql); err != nil {
 		return nil, nil, err
 	}
@@ -65,11 +65,11 @@ func (provider *provider) GetTable(ctx context.Context, name sqlschema.TableName
 	return table, uniqueConstraints, nil
 }
 
-func (provider *provider) GetIndices(ctx context.Context, name sqlschema.TableName) ([]sqlschema.Index, error) {
+func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.TableName) ([]sqlschema.Index, error) {
 	rows, err := provider.
 		sqlstore.
 		BunDB().
-		QueryContext(ctx, "SELECT * FROM PRAGMA_index_list(?)", string(name))
+		QueryContext(ctx, "SELECT * FROM PRAGMA_index_list(?)", string(tableName))
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (provider *provider) GetIndices(ctx context.Context, name sqlschema.TableNa
 			unique  bool
 			origin  string
 			partial bool
-			columns []string
+			columns []sqlschema.ColumnName
 		)
 		if err := rows.Scan(&seq, &name, &unique, &origin, &partial); err != nil {
 			return nil, err
@@ -114,7 +114,7 @@ func (provider *provider) GetIndices(ctx context.Context, name sqlschema.TableNa
 
 		if unique {
 			indices = append(indices, (&sqlschema.UniqueIndex{
-				TableName:   string(name),
+				TableName:   tableName,
 				ColumnNames: columns,
 			}).Named(name).(*sqlschema.UniqueIndex))
 		}

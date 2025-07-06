@@ -35,7 +35,7 @@ func TestParseCreateTable(t *testing.T) {
 					{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
 					{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: true},
 				},
-				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 				ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
 					{ReferencingColumnName: "org_id", ReferencedTableName: "organizations", ReferencedColumnName: "id"},
 				},
@@ -53,7 +53,7 @@ func TestParseCreateTable(t *testing.T) {
 					{Name: "display_name", DataType: sqlschema.DataTypeText, Nullable: false},
 					{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 				},
-				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 				ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
 					{ReferencingColumnName: "org_id", ReferencedTableName: "organizations", ReferencedColumnName: "id"},
 				},
@@ -71,14 +71,14 @@ func TestParseCreateTable(t *testing.T) {
 					{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
 					{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 				},
-				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 				ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
 					{ReferencingColumnName: "org_id", ReferencedTableName: "organizations", ReferencedColumnName: "id"},
 				},
 			},
 			uniqueConstraints: []*sqlschema.UniqueConstraint{
 				{
-					ColumnNames: []string{"org_id"},
+					ColumnNames: []sqlschema.ColumnName{"org_id"},
 				},
 			},
 			err: nil,
@@ -93,10 +93,10 @@ func TestParseCreateTable(t *testing.T) {
 					{Name: "signal", DataType: sqlschema.DataTypeText, Nullable: false},
 					{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 				},
-				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 			},
 			uniqueConstraints: []*sqlschema.UniqueConstraint{
-				{ColumnNames: []string{"org_id", "signal"}},
+				{ColumnNames: []sqlschema.ColumnName{"org_id", "signal"}},
 			},
 			err: nil,
 		},
@@ -109,7 +109,7 @@ func TestParseCreateTable(t *testing.T) {
 					{Name: "id", DataType: sqlschema.DataTypeInteger, Nullable: false},
 					{Name: "dark_mode", DataType: sqlschema.DataTypeNumeric, Nullable: true, Default: "true"},
 				},
-				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 			},
 			uniqueConstraints: []*sqlschema.UniqueConstraint{},
 			err:               nil,
@@ -138,13 +138,13 @@ func TestParseCreateTable(t *testing.T) {
 					{Name: "status", DataType: sqlschema.DataTypeText, Nullable: false, Default: "'notstarted'"},
 					{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 				},
-				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []string{"id"}},
+				PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 				ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
 					{ReferencingColumnName: "org_id", ReferencedTableName: "organizations", ReferencedColumnName: "id"},
 				},
 			},
 			uniqueConstraints: []*sqlschema.UniqueConstraint{
-				{ColumnNames: []string{"org_id", "status", "created_at"}},
+				{ColumnNames: []sqlschema.ColumnName{"org_id", "status", "created_at"}},
 			},
 			err: nil,
 		},
