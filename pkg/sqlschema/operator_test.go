@@ -7,6 +7,88 @@ import (
 	"github.com/uptrace/bun/schema"
 )
 
+func TestOperatorCreateTable(t *testing.T) {
+	testCases := []struct {
+		name         string
+		table        *Table
+		expectedSQLs [][]byte
+	}{
+		{
+			name: "NoPrimaryKey_NoForeignKey_NotNullable",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`CREATE TABLE IF NOT EXISTS "users" ("id" TEXT NOT NULL)`),
+			},
+		},
+		{
+			name: "NoPrimaryKey_NoForeignKey_Nullable",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeText, Nullable: true, Default: ""},
+				},
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`CREATE TABLE IF NOT EXISTS "users" ("id" TEXT)`),
+			},
+		},
+		{
+			name: "PrimaryKey_ForeignKey_NotNullable",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				PrimaryKeyConstraint: &PrimaryKeyConstraint{
+					ColumnNames: []ColumnName{"id"},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+				},
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`CREATE TABLE IF NOT EXISTS "users" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL, "org_id" INTEGER NOT NULL, CONSTRAINT "pk_users" PRIMARY KEY ("id"), CONSTRAINT "fk_users_org_id" FOREIGN KEY ("org_id") REFERENCES "orgs" ("id"))`),
+			},
+		},
+		{
+			name: "NoPrimaryKey_ForeignKey_NotNullable",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+					{Name: "is_verified", DataType: DataTypeBoolean, Nullable: false, Default: ""},
+					{Name: "created_at", DataType: DataTypeTimestamp, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+				},
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`CREATE TABLE IF NOT EXISTS "users" ("id" INTEGER NOT NULL, "name" TEXT NOT NULL, "is_verified" BOOLEAN NOT NULL, "created_at" TIMESTAMP NOT NULL, "org_id" INTEGER NOT NULL, CONSTRAINT "fk_users_org_id" FOREIGN KEY ("org_id") REFERENCES "orgs" ("id"))`),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			fmter := NewFormatter(schema.NewNopFormatter().Dialect())
+			operator := NewOperator(fmter, OperatorSupport{})
+
+			actuals := operator.CreateTable(testCase.table)
+			assert.Equal(t, testCase.expectedSQLs, actuals)
+		})
+	}
+}
+
 func TestOperatorAddColumn(t *testing.T) {
 	testCases := []struct {
 		name              string
@@ -233,6 +315,28 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
+			name: "PrimaryKeyConstraint_DoesNotExist_DropConstraintTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+			constraint: &PrimaryKeyConstraint{
+				ColumnNames: []ColumnName{"id"},
+			},
+			support: OperatorSupport{
+				DropConstraint: true,
+			},
+			expectedSQLs: [][]byte{},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+		},
+		{
 			name: "PrimaryKeyConstraintDifferentName_DoesExist_DropConstraintTrue",
 			table: &Table{
 				Name: "users",
@@ -291,6 +395,28 @@ func TestOperatorDropConstraint(t *testing.T) {
 			},
 		},
 		{
+			name: "PrimaryKeyConstraint_DoesNotExist_DropConstraintFalse",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+			constraint: &PrimaryKeyConstraint{
+				ColumnNames: []ColumnName{"id"},
+			},
+			support: OperatorSupport{
+				DropConstraint: false,
+			},
+			expectedSQLs: [][]byte{},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+			},
+		},
+		{
 			name: "UniqueConstraint_DoesExist_DropConstraintTrue",
 			table: &Table{
 				Name: "users",
@@ -311,6 +437,33 @@ func TestOperatorDropConstraint(t *testing.T) {
 			expectedSQLs: [][]byte{
 				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "uq_users_name"`),
 			},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+		},
+		{
+			name: "UniqueConstraint_DoesNotExist_DropConstraintTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			constraint: &UniqueConstraint{
+				ColumnNames: []ColumnName{"name"},
+			},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []ColumnName{"id"}},
+			},
+			support: OperatorSupport{
+				DropConstraint: true,
+			},
+			expectedSQLs: [][]byte{},
 			expectedTable: &Table{
 				Name: "users",
 				Columns: []*Column{
@@ -348,6 +501,231 @@ func TestOperatorDropConstraint(t *testing.T) {
 				Columns: []*Column{
 					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
 					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+		},
+		{
+			name: "UniqueConstraint_DoesNotExist_DropConstraintFalse",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+			constraint: &UniqueConstraint{
+				ColumnNames: []ColumnName{"name"},
+			},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []ColumnName{"id"}},
+			},
+			support: OperatorSupport{
+				DropConstraint: false,
+			},
+			expectedSQLs: [][]byte{},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "name", DataType: DataTypeText, Nullable: false, Default: ""},
+				},
+			},
+		},
+		{
+			name: "ForeignKeyConstraint_DoesExist_DropConstraintTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+				},
+			},
+			constraint: &ForeignKeyConstraint{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []ColumnName{"id"}},
+			},
+			support: OperatorSupport{
+				DropConstraint: true,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "fk_users_org_id"`),
+			},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
+			},
+		},
+		{
+			name: "ForeignKeyConstraintDifferentName_DoesExist_DropConstraintTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id", name: "my_fk"},
+				},
+			},
+			constraint: &ForeignKeyConstraint{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []ColumnName{"id"}},
+			},
+			support: OperatorSupport{
+				DropConstraint: true,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "my_fk"`),
+			},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
+			},
+		},
+		{
+			name: "ForeignKeyConstraint_DoesNotExist_DropConstraintTrue",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+				},
+			},
+			// Note that the name of the referencing column is different from the one in the table.
+			constraint: &ForeignKeyConstraint{ReferencingColumnName: "orgid", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []ColumnName{"id"}},
+			},
+			support: OperatorSupport{
+				DropConstraint: true,
+			},
+			expectedSQLs: [][]byte{},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+				},
+			},
+		},
+		{
+			name: "ForeignKeyConstraint_DoesExist_DropConstraintFalse",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+				},
+			},
+			constraint: &ForeignKeyConstraint{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []ColumnName{"id"}},
+			},
+			support: OperatorSupport{
+				DropConstraint: false,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "org_id" INTEGER NOT NULL)`),
+				[]byte(`INSERT INTO "users__temp" ("id", "org_id") SELECT "id", "org_id" FROM "users"`),
+				[]byte(`DROP TABLE IF EXISTS "users"`),
+				[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+				// Note that a unique index is created because a unique constraint already existed for the table.
+				[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_id" ON "users" ("id")`),
+			},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
+			},
+		},
+		{
+			name: "ForeignKeyConstraintDifferentName_DoesExist_DropConstraintFalse",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id", name: "my_fk"},
+				},
+			},
+			constraint: &ForeignKeyConstraint{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []ColumnName{"id"}},
+			},
+			support: OperatorSupport{
+				DropConstraint: false,
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`CREATE TABLE IF NOT EXISTS "users__temp" ("id" INTEGER NOT NULL, "org_id" INTEGER NOT NULL)`),
+				[]byte(`INSERT INTO "users__temp" ("id", "org_id") SELECT "id", "org_id" FROM "users"`),
+				[]byte(`DROP TABLE IF EXISTS "users"`),
+				[]byte(`ALTER TABLE "users__temp" RENAME TO "users"`),
+				// Note that a unique index is created because a unique constraint already existed for the table.
+				[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "uq_users_id" ON "users" ("id")`),
+			},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{},
+			},
+		},
+		{
+			name: "ForeignKeyConstraint_DoesNotExist_DropConstraintFalse",
+			table: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+				},
+			},
+			// Note that the name of the referencing column is different from the one in the table.
+			constraint: &ForeignKeyConstraint{ReferencingColumnName: "orgid", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
+			uniqueConstraints: []*UniqueConstraint{
+				{ColumnNames: []ColumnName{"id"}},
+			},
+			support: OperatorSupport{
+				DropConstraint: false,
+			},
+			expectedSQLs: [][]byte{},
+			expectedTable: &Table{
+				Name: "users",
+				Columns: []*Column{
+					{Name: "id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+					{Name: "org_id", DataType: DataTypeInteger, Nullable: false, Default: ""},
+				},
+				ForeignKeyConstraints: []*ForeignKeyConstraint{
+					{ReferencingColumnName: "org_id", ReferencedTableName: "orgs", ReferencedColumnName: "id"},
 				},
 			},
 		},

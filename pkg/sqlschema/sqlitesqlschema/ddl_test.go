@@ -77,9 +77,7 @@ func TestParseCreateTable(t *testing.T) {
 				},
 			},
 			uniqueConstraints: []*sqlschema.UniqueConstraint{
-				{
-					ColumnNames: []sqlschema.ColumnName{"org_id"},
-				},
+				{ColumnNames: []sqlschema.ColumnName{"org_id"}},
 			},
 			err: nil,
 		},
@@ -115,12 +113,24 @@ func TestParseCreateTable(t *testing.T) {
 			err:               nil,
 		},
 		{
-			name: "SingleLine_BacktickQuotes_NoConstraints",
+			name: "SingleLine_BacktickQuotesInteger_NoConstraints",
 			sql:  "CREATE TABLE `test-hyphen` (`field` integer NOT NULL)",
 			table: &sqlschema.Table{
 				Name: "test-hyphen",
 				Columns: []*sqlschema.Column{
 					{Name: "field", DataType: sqlschema.DataTypeInteger, Nullable: false},
+				},
+			},
+			uniqueConstraints: []*sqlschema.UniqueConstraint{},
+			err:               nil,
+		},
+		{
+			name: "SingleLine_BacktickQuotesNumeric_NoConstraints",
+			sql:  "CREATE TABLE `test-hyphen` (`field` real NOT NULL)",
+			table: &sqlschema.Table{
+				Name: "test-hyphen",
+				Columns: []*sqlschema.Column{
+					{Name: "field", DataType: sqlschema.DataTypeNumeric, Nullable: false},
 				},
 			},
 			uniqueConstraints: []*sqlschema.UniqueConstraint{},
@@ -148,11 +158,24 @@ func TestParseCreateTable(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			name: "SingleLine_QuotesAndDefaultInColumnNames_NoConstraints",
+			sql:  `CREATE TABLE "real_default" ("id" INTEGER NOT NULL, "r" REAL DEFAULT 1.0)`,
+			table: &sqlschema.Table{
+				Name: "real_default",
+				Columns: []*sqlschema.Column{
+					{Name: "id", DataType: sqlschema.DataTypeInteger, Nullable: false},
+					{Name: "r", DataType: sqlschema.DataTypeNumeric, Nullable: true, Default: "1.0"},
+				},
+			},
+			uniqueConstraints: []*sqlschema.UniqueConstraint{},
+			err:               nil,
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			table, uniqueConstraints, err := parseCreateTable(testCase.sql, sqlschema.NewFormatter(sqlitedialect.New()))
+			table, uniqueConstraints, err := parseCreateTable(testCase.sql, Formatter{sqlschema.NewFormatter(sqlitedialect.New())})
 			if testCase.err != nil {
 				assert.Equal(t, testCase.err, err)
 				return

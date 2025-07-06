@@ -35,7 +35,7 @@ const (
 	parseAllColumnsState_State_End
 )
 
-func parseCreateTable(str string, fmter sqlschema.Formatter) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
+func parseCreateTable(str string, fmter sqlschema.SQLFormatter) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
 	sections := tableRegexp.FindStringSubmatch(str)
 	if len(sections) == 0 {
 		return nil, nil, errors.New("invalid DDL")
