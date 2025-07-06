@@ -2,6 +2,8 @@ package sqlschema
 
 import (
 	"context"
+
+	"github.com/uptrace/bun"
 )
 
 type SQLSchema interface {
@@ -16,6 +18,9 @@ type SQLSchema interface {
 
 	// Inspects the schema and returns the indices for the given table.
 	GetIndices(context.Context, TableName) ([]Index, error)
+
+	// Toggles foreign key enforcement for the schema for the current session.
+	ToggleFKEnforcement(context.Context, bun.IDB, bool) error
 }
 
 // SQLOperator performs operations on a table.

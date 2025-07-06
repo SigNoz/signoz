@@ -37,7 +37,7 @@ func (migration *updateUserInvite) Register(migrations *migrate.Migrations) erro
 }
 
 func (migration *updateUserInvite) Up(ctx context.Context, db *bun.DB) error {
-	if err := migration.sqlstore.Dialect().ToggleForeignKeyConstraint(ctx, db, false); err != nil {
+	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
 		return err
 	}
 
@@ -76,7 +76,7 @@ func (migration *updateUserInvite) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	if err := migration.sqlstore.Dialect().ToggleForeignKeyConstraint(ctx, db, true); err != nil {
+	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, true); err != nil {
 		return err
 	}
 

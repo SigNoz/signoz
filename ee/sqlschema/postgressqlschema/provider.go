@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/uptrace/bun"
 )
 
 type provider struct {
@@ -277,4 +278,8 @@ WHERE
 	}
 
 	return indices, nil
+}
+
+func (provider *provider) ToggleFKEnforcement(_ context.Context, _ bun.IDB, _ bool) error {
+	return nil
 }

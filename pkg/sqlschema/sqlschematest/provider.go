@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
+	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/schema"
 )
 
@@ -50,4 +51,8 @@ func (provider *Provider) GetIndices(ctx context.Context, name sqlschema.TableNa
 	}
 
 	return []sqlschema.Index{indices}, nil
+}
+
+func (provider *Provider) ToggleFKEnforcement(_ context.Context, _ bun.IDB, _ bool) error {
+	return nil
 }

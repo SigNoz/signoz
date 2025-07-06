@@ -2,7 +2,9 @@ package sqlitesqlschema
 
 import (
 	"context"
+	"strconv"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -121,4 +123,22 @@ func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.Ta
 	}
 
 	return indices, nil
+}
+
+func (provider *provider) ToggleFKEnforcement(ctx context.Context, db bun.IDB, on bool) error {
+	_, err := db.ExecContext(ctx, "PRAGMA foreign_keys = ?", on)
+	if err != nil {
+		return err
+	}
+
+	var val bool
+	if err := db.NewRaw("PRAGMA foreign_keys").Scan(ctx, &val); err != nil {
+		return err
+	}
+
+	if on == val {
+		return nil
+	}
+
+	return errors.NewInternalf(errors.CodeInternal, "foreign_keys(actual: %s, expected: %s), maybe a transaction is in progress?", strconv.FormatBool(val), strconv.FormatBool(on))
 }
