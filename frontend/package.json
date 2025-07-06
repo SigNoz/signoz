@@ -41,6 +41,7 @@
 		"@sentry/react": "8.41.0",
 		"@sentry/webpack-plugin": "2.22.6",
 		"@signozhq/design-tokens": "1.1.4",
+		"@signozhq/table": "file:.yalc/@signozhq/table",
 		"@tanstack/react-table": "8.20.6",
 		"@tanstack/react-virtual": "3.11.2",
 		"@uiw/react-md-editor": "3.23.5",

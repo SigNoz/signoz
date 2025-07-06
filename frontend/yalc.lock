@@ -1,0 +1,9 @@
+{
+  "version": "v1",
+  "packages": {
+    "@signozhq/table": {
+      "signature": "a82ce696abf1d0eaafed9c9884edbe12",
+      "file": true
+    }
+  }
+}

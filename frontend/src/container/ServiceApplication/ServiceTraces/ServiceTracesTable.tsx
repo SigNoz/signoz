@@ -1,8 +1,9 @@
 import { WarningFilled } from '@ant-design/icons';
+import { DataTable } from '@signozhq/table';
 import { Flex, Typography } from 'antd';
-import { ResizeTable } from 'components/ResizeTable';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
+import { getTableColumns } from 'container/ServiceTable/Columns/ServiceColumn';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useMemo, useState } from 'react';
@@ -10,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { getTotalRPS } from 'utils/services';
 
-import { getColumns } from '../Columns/ServiceColumn';
 import ServiceTableProps from '../types';
 
 function ServiceTraceTable({
@@ -23,7 +23,7 @@ function ServiceTraceTable({
 
 	const { isFetchingActiveLicense, trialInfo } = useAppContext();
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
-	const tableColumns = useMemo(() => getColumns(search, false), [search]);
+	const tableColumns = useMemo(() => getTableColumns(search), [search]);
 
 	useEffect(() => {
 		if (
@@ -65,13 +65,19 @@ function ServiceTraceTable({
 
 			<ResourceAttributesFilter />
 
-			<ResizeTable
-				pagination={paginationConfig}
+			<DataTable
 				columns={tableColumns}
-				loading={loading}
-				dataSource={services}
-				rowKey="serviceName"
-				className="service-traces-table"
+				data={services}
+				tableId="service-traces-table"
+				isLoading={loading}
+				enablePagination
+				pageSize={paginationConfig.defaultPageSize}
+				showHeaders
+				enableSorting
+				enableColumnResizing={false}
+				enableColumnReordering={false}
+				enableColumnPinning={false}
+				enableGlobalFilter={false}
 			/>
 		</div>
 	);

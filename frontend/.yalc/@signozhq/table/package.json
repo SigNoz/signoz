@@ -1,0 +1,45 @@
+{
+	"name": "@signozhq/table",
+	"version": "0.0.0",
+	"license": "MIT",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/data-table.d.ts",
+			"import": "./dist/data-table.js"
+		}
+	},
+	"main": "./dist/data-table.js",
+	"module": "./dist/data-table.js",
+	"types": "./dist/data-table.d.ts",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"lint": "eslint . --max-warnings 0",
+		"clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist"
+	},
+	"dependencies": {
+		"@radix-ui/react-icons": "^1.3.0",
+		"@radix-ui/react-slot": "^1.1.0",
+		"@tanstack/react-table": "^8.21.3",
+		"@tanstack/react-virtual": "^3.13.9",
+		"@types/lodash-es": "^4.17.12",
+		"class-variance-authority": "^0.7.0",
+		"clsx": "^2.1.1",
+		"lodash-es": "^4.17.21",
+		"lucide-react": "^0.445.0",
+		"tailwind-merge": "^2.5.2",
+		"tailwindcss-animate": "^1.0.7"
+	},
+	"peerDependencies": {
+		"react": "^18.2.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"description": "Table component with granular control using tanstack",
+	"yalcSig": "a82ce696abf1d0eaafed9c9884edbe12"
+}
