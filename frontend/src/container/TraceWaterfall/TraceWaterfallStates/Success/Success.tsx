@@ -221,7 +221,7 @@ export function SpanDuration({
 		const textWidthApprox = 8; // Approximate text width in percentage
 
 		// If span would cause text overflow, right-align text to span end
-		if (spanRightEdge > 100 - textWidthApprox) {
+		if (leftOffset > 100 - textWidthApprox) {
 			return {
 				right: `${100 - spanRightEdge}%`,
 				color,
@@ -332,10 +332,12 @@ function getWaterfallColumns({
 				/>
 			),
 			size: 450,
+			minSize: 240,
 		}),
 		columnDefHelper.display({
 			id: 'span-duration',
 			header: () => <div />,
+			minSize: 100,
 			enableResizing: false,
 			cell: (props): JSX.Element => (
 				<SpanDuration
