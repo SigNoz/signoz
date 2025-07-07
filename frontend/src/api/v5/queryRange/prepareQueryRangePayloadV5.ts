@@ -4,7 +4,6 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	QueryFunctionProps,
@@ -126,10 +125,12 @@ function createBaseSpec(
 		selectFields: isEmpty(queryData.selectColumns)
 			? undefined
 			: queryData.selectColumns?.map(
-					(column: BaseAutocompleteData): TelemetryFieldKey => ({
-						name: column.key,
-						fieldDataType: column?.dataType as FieldDataType,
-						fieldContext: column?.type as FieldContext,
+					(column: any): TelemetryFieldKey => ({
+						name: column.name ?? column.key,
+						fieldDataType:
+							column?.fieldDataType ?? (column?.dataType as FieldDataType),
+						fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
+						signal: column?.signal ?? undefined,
 					}),
 			  ),
 	};
