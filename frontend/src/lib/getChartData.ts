@@ -1,31 +1,111 @@
 import { ChartData, ChartDataset } from 'chart.js';
+import dayjs from 'dayjs';
 import getLabelName from 'lib/getLabelName';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
+import getStep from './getStep';
 
 export const limit = 30;
+
+/**
+ * Generates expected timestamps before and after the available data
+ */
+const generateExpectedTimestamps = ({
+	firstItemSeconds,
+	minTimeSeconds,
+	maxTimeSeconds,
+	lastItemSeconds,
+	step,
+}: {
+	firstItemSeconds: number;
+	minTimeSeconds: number;
+	lastItemSeconds: number;
+	maxTimeSeconds: number;
+	step: number;
+}): number[] => {
+	const timestamps: number[] = [];
+	const stepInSeconds = step;
+
+	// Generate timestamps before the first data point
+	for (
+		let timestamp = minTimeSeconds;
+		timestamp < firstItemSeconds;
+		timestamp += stepInSeconds
+	) {
+		timestamps.push(timestamp);
+	}
+
+	// Generate timestamps after the last data point, including maxTimeSeconds
+	for (
+		let timestamp = lastItemSeconds + stepInSeconds;
+		timestamp <= maxTimeSeconds;
+		timestamp += stepInSeconds
+	) {
+		timestamps.push(timestamp);
+	}
+
+	return timestamps;
+};
 
 const getChartData = ({
 	queryData,
 	createDataset,
 	isWarningLimit = false,
+	minTime,
+	maxTime,
 }: GetChartDataProps): {
 	data: ChartData;
 	isWarning: boolean;
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 } => {
-	const uniqueTimeLabels = new Set<number>();
+	const step = getStep({
+		start: minTime,
+		end: maxTime,
+		inputFormat: 'ns',
+	});
+
+	// Get actual timestamps from the data
+	const actualTimeLabels = new Set<number>();
 	queryData.forEach((data) => {
 		data.queryData.forEach((query) => {
 			query.values.forEach((value) => {
-				uniqueTimeLabels.add(value[0]);
+				actualTimeLabels.add(value[0]);
 			});
 		});
 	});
 
-	const labels = Array.from(uniqueTimeLabels).sort((a, b) => a - b);
+	let allTimestamps = new Set([...actualTimeLabels]);
+
+	if (actualTimeLabels.size > 0) {
+		const arrayOfActualTimeLabels = Array.from(actualTimeLabels);
+		const firstItem = arrayOfActualTimeLabels[0];
+		const lastItem = arrayOfActualTimeLabels[arrayOfActualTimeLabels.length - 1];
+
+		const firstItemDate = dayjs(firstItem * 1000);
+		const minTimeDate = dayjs(minTime / 1e6);
+		const lastItemDate = dayjs(lastItem * 1000);
+		const maxTimeDate = dayjs(maxTime / 1e6);
+
+		// Generate expected timestamps if there are gaps at either end
+		if (
+			!firstItemDate.isSame(minTimeDate, 'minute') ||
+			!lastItemDate.isSame(maxTimeDate, 'minute')
+		) {
+			const expectedTimestamps = generateExpectedTimestamps({
+				firstItemSeconds: firstItemDate.unix(),
+				minTimeSeconds: minTimeDate.unix(),
+				lastItemSeconds: lastItemDate.unix(),
+				maxTimeSeconds: maxTimeDate.unix(),
+				step,
+			});
+			allTimestamps = new Set([...actualTimeLabels, ...expectedTimestamps]);
+		}
+	}
+
+	// Generate expected timestamps and include any actual timestamps outside the range
+	const labels = Array.from(allTimestamps).sort((a, b) => a - b);
 
 	const response = queryData.map(
 		({ queryData, query: queryG, legend: legendG }) =>
@@ -131,6 +211,8 @@ export interface GetChartDataProps {
 		index: number,
 		allLabels: string[],
 	) => ChartDataset;
+	minTime: number;
+	maxTime: number;
 	isWarningLimit?: boolean;
 }
 
