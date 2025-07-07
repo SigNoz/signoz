@@ -700,6 +700,7 @@ function K8sPodsList({
 				onAddColumn={handleAddColumn}
 				onRemoveColumn={handleRemoveColumn}
 				entity={K8sCategory.PODS}
+				showAutoRefresh={!selectedPodData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 

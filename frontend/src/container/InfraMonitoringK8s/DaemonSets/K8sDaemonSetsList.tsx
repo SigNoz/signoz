@@ -665,6 +665,7 @@ function K8sDaemonSetsList({
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
 				entity={K8sCategory.DAEMONSETS}
+				showAutoRefresh={!selectedDaemonSetData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 

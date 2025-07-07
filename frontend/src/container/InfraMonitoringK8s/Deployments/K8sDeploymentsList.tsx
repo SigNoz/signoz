@@ -670,6 +670,7 @@ function K8sDeploymentsList({
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
 				entity={K8sCategory.NODES}
+				showAutoRefresh={!selectedDeploymentData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 

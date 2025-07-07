@@ -589,6 +589,7 @@ function K8sVolumesList({
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
 				entity={K8sCategory.NODES}
+				showAutoRefresh={!selectedVolumeData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 

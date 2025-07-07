@@ -666,6 +666,7 @@ function K8sStatefulSetsList({
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
 				entity={K8sCategory.STATEFULSETS}
+				showAutoRefresh={!selectedStatefulSetData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 

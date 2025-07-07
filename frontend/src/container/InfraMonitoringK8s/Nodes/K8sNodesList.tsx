@@ -645,6 +645,7 @@ function K8sNodesList({
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
 				entity={K8sCategory.NODES}
+				showAutoRefresh={!selectedNodeData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 

@@ -657,6 +657,7 @@ function K8sClustersList({
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
 				entity={K8sCategory.NODES}
+				showAutoRefresh={!selectedClusterData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 

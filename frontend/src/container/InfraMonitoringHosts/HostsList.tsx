@@ -242,6 +242,7 @@ function HostsList(): JSX.Element {
 						<HostsListControls
 							filters={filters}
 							handleFiltersChange={handleFiltersChange}
+							showAutoRefresh={!selectedHostData}
 						/>
 					</div>
 					<HostsListTable

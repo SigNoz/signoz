@@ -633,6 +633,7 @@ function K8sJobsList({
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
 				entity={K8sCategory.JOBS}
+				showAutoRefresh={!selectedJobData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
