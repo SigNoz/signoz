@@ -6,9 +6,11 @@ import {
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
+import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -25,6 +27,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 	options,
 	headers,
 ) => {
+	const { showErrorModal } = useErrorModal();
 	const newRequestData: GetQueryResultsProps = useMemo(() => {
 		const firstQueryData = requestData.query.builder?.queryData[0];
 		const isListWithSingleTimestampOrder =
@@ -106,6 +109,10 @@ export const useGetQueryRange: UseGetQueryRange = (
 		queryFn: async ({ signal }) =>
 			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
 		...options,
+		onError: (error) => {
+			showErrorModal(error as APIError);
+			options?.onError?.(error);
+		},
 		queryKey,
 	});
 };

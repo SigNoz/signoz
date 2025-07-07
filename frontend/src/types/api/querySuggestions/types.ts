@@ -39,6 +39,6 @@ export interface QueryKeyValueSuggestionsResponseProps {
 }
 
 export interface QueryKeyValueRequestProps {
-	signal: string;
+	signal: 'traces' | 'logs' | 'metrics';
 	key: string;
 }

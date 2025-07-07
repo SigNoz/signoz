@@ -63,7 +63,6 @@ export const useGetExplorerQueryRange = (
 		ENTITY_VERSION_V5,
 		{
 			...options,
-			retry: false,
 			queryKey: [
 				key,
 				selectedTimeInterval ?? globalSelectedInterval,

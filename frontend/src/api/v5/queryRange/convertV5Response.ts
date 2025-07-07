@@ -4,11 +4,35 @@ import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import {
 	DistributionData,
 	MetricRangePayloadV5,
+	QueryRangeRequestV5,
 	RawData,
 	ScalarData,
 	TimeSeriesData,
 } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
+
+function getColName(
+	col: ScalarData['columns'][number],
+	legendMap: Record<string, string>,
+	aggregationPerQuery: Record<string, any>,
+): string {
+	const aggregation =
+		aggregationPerQuery?.[col.queryName]?.[col.aggregationIndex];
+	const legend = legendMap[col.queryName];
+	const aggregationName = aggregation?.alias || aggregation?.expression || '';
+
+	if (col.columnType === 'group') {
+		return col.name;
+	}
+
+	if (aggregationName && aggregationPerQuery[col.queryName].length > 1) {
+		if (legend) {
+			return `${aggregationName}-${legend}`;
+		}
+		return `${col.queryName}.${aggregationName}`;
+	}
+	return legend || col.queryName;
+}
 
 /**
  * Converts V5 TimeSeriesData to legacy format
@@ -18,11 +42,18 @@ function convertTimeSeriesData(
 	legendMap: Record<string, string>,
 ): QueryDataV3 {
 	// Convert V5 time series format to legacy QueryDataV3 format
+
 	return {
 		queryName: timeSeriesData.queryName,
 		legend: legendMap[timeSeriesData.queryName] || timeSeriesData.queryName,
-		series: timeSeriesData?.aggregations?.flatMap((aggregation) =>
-			aggregation.series.map((series) => ({
+		series: timeSeriesData?.aggregations?.flatMap((aggregation) => {
+			const { index, alias, series } = aggregation;
+
+			if (!series || !series.length) {
+				return [];
+			}
+
+			return series.map((series) => ({
 				labels: series.labels
 					? Object.fromEntries(
 							series.labels.map((label) => [label.key.name, label.value]),
@@ -35,8 +66,13 @@ function convertTimeSeriesData(
 					timestamp: value.timestamp,
 					value: String(value.value),
 				})),
-			})),
-		),
+				metaData: {
+					alias,
+					index,
+					queryName: timeSeriesData.queryName,
+				},
+			}));
+		}),
 		list: null,
 	};
 }
@@ -47,6 +83,7 @@ function convertTimeSeriesData(
 function convertScalarDataArrayToTable(
 	scalarDataArray: ScalarData[],
 	legendMap: Record<string, string>,
+	aggregationPerQuery: Record<string, any>,
 ): QueryDataV3[] {
 	// If no scalar data, return empty structure
 
@@ -59,9 +96,20 @@ function convertScalarDataArrayToTable(
 		// Get query name from the first column
 		const queryName = scalarData?.columns?.[0]?.queryName || '';
 
+		if ((scalarData as any)?.aggregations?.length > 0) {
+			return {
+				...convertTimeSeriesData(scalarData as any, legendMap),
+				table: {
+					columns: [],
+					rows: [],
+				},
+				list: null,
+			};
+		}
+
 		// Collect columns for this specific query
 		const columns = scalarData?.columns?.map((col) => ({
-			name: col.columnType === 'aggregation' ? col.queryName : col.name,
+			name: getColName(col, legendMap, aggregationPerQuery),
 			queryName: col.queryName,
 			isValueColumn: col.columnType === 'aggregation',
 		}));
@@ -71,8 +119,7 @@ function convertScalarDataArrayToTable(
 			const rowData: Record<string, any> = {};
 
 			scalarData?.columns?.forEach((col, colIndex) => {
-				const columnName =
-					col.columnType === 'aggregation' ? col.queryName : col.name;
+				const columnName = getColName(col, legendMap, aggregationPerQuery);
 				rowData[columnName] = dataRow[colIndex];
 			});
 
@@ -82,6 +129,51 @@ function convertScalarDataArrayToTable(
 		return {
 			queryName,
 			legend: legendMap[queryName] || '',
+			series: null,
+			list: null,
+			table: {
+				columns,
+				rows,
+			},
+		};
+	});
+}
+
+function convertScalerWithFormatForWeb(
+	scalarDataArray: ScalarData[],
+	legendMap: Record<string, string>,
+	aggregationPerQuery: Record<string, any>,
+): QueryDataV3[] {
+	if (!scalarDataArray || scalarDataArray.length === 0) {
+		return [];
+	}
+
+	return scalarDataArray.map((scalarData) => {
+		const columns =
+			scalarData.columns?.map((col) => {
+				const colName = getColName(col, legendMap, aggregationPerQuery);
+
+				return {
+					name: colName,
+					queryName: col.queryName,
+					isValueColumn: col.columnType === 'aggregation',
+				};
+			}) || [];
+
+		const rows =
+			scalarData.data?.map((dataRow) => {
+				const rowData: Record<string, any> = {};
+				columns?.forEach((col, colIndex) => {
+					rowData[col.name] = dataRow[colIndex];
+				});
+				return { data: rowData };
+			}) || [];
+
+		const queryName = scalarData.columns?.[0]?.queryName || '';
+
+		return {
+			queryName,
+			legend: legendMap[queryName] || queryName,
 			series: null,
 			list: null,
 			table: {
@@ -136,6 +228,7 @@ function convertDistributionData(
 function convertV5DataByType(
 	v5Data: any,
 	legendMap: Record<string, string>,
+	aggregationPerQuery: Record<string, any>,
 ): MetricRangePayloadV3['data'] {
 	switch (v5Data?.type) {
 		case 'time_series': {
@@ -150,7 +243,11 @@ function convertV5DataByType(
 		case 'scalar': {
 			const scalarData = v5Data.data.results as ScalarData[];
 			// For scalar data, combine all results into separate table entries
-			const combinedTables = convertScalarDataArrayToTable(scalarData, legendMap);
+			const combinedTables = convertScalarDataArrayToTable(
+				scalarData,
+				legendMap,
+				aggregationPerQuery,
+			);
 			return {
 				resultType: 'scalar',
 				result: combinedTables,
@@ -183,23 +280,54 @@ function convertV5DataByType(
 /**
  * Converts V5 API response to legacy format expected by frontend components
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function convertV5ResponseToLegacy(
 	v5Response: SuccessResponse<MetricRangePayloadV5>,
 	legendMap: Record<string, string>,
-	// formatForWeb?: boolean,
+	formatForWeb?: boolean,
 ): SuccessResponse<MetricRangePayloadV3> {
-	const { payload } = v5Response;
+	const { payload, params } = v5Response;
 	const v5Data = payload?.data;
 
-	// todo - sagar
+	const aggregationPerQuery =
+		(params as QueryRangeRequestV5)?.compositeQuery?.queries
+			?.filter((query) => query.type === 'builder_query')
+			.reduce((acc, query) => {
+				if (
+					query.type === 'builder_query' &&
+					'aggregations' in query.spec &&
+					query.spec.name
+				) {
+					acc[query.spec.name] = query.spec.aggregations;
+				}
+				return acc;
+			}, {} as Record<string, any>) || {};
+
 	// If formatForWeb is true, return as-is (like existing logic)
-	// Exception: scalar data should always be converted to table format
-	// if (formatForWeb && v5Data?.type !== 'scalar') {
-	// 	return v5Response as any;
-	// }
+	if (formatForWeb && v5Data?.type === 'scalar') {
+		const scalarData = v5Data.data.results as ScalarData[];
+		const webTables = convertScalerWithFormatForWeb(
+			scalarData,
+			legendMap,
+			aggregationPerQuery,
+		);
+		return {
+			...v5Response,
+			payload: {
+				data: {
+					resultType: 'scalar',
+					result: webTables,
+				},
+			},
+		};
+	}
 
 	// Convert based on V5 response type
-	const convertedData = convertV5DataByType(v5Data, legendMap);
+	const convertedData = convertV5DataByType(
+		v5Data,
+		legendMap,
+		aggregationPerQuery,
+	);
 
 	// Create legacy-compatible response structure
 	const legacyResponse: SuccessResponse<MetricRangePayloadV3> = {

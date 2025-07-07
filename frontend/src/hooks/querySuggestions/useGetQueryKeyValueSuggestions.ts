@@ -8,7 +8,7 @@ export const useGetQueryKeyValueSuggestions = ({
 	signal,
 }: {
 	key: string;
-	signal: string;
+	signal: 'traces' | 'logs' | 'metrics';
 }): UseQueryResult<
 	AxiosResponse<QueryKeyValueSuggestionsResponseProps>,
 	AxiosError

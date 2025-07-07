@@ -16,6 +16,7 @@ function TablePanelWrapper({
 	const panelData =
 		(queryResponse.data?.payload?.data?.result?.[0] as any)?.table || [];
 	const { thresholds } = widget;
+	console.log('panelData', panelData);
 	return (
 		<GridTableComponent
 			data={panelData}
