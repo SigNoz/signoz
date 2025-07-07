@@ -87,8 +87,8 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeTraceOperator:
 		var spec QueryBuilderTraceOperator
-		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid trace operator spec")
+		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "trace operator spec"); err != nil {
+			return wrapUnmarshalError(err, "invalid trace operator spec: %v", err)
 		}
 		q.Spec = spec
 

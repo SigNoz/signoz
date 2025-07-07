@@ -16,6 +16,13 @@ var (
 	ErrUnsupportedOperator = errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported operator")
 )
 
+type ContextKey string
+
+const (
+	// CompositeQueryContextKey is used to store composite query in context
+	CompositeQueryContextKey ContextKey = "compositeQuery"
+)
+
 type JsonKeyToFieldFunc func(context.Context, *telemetrytypes.TelemetryFieldKey, FilterOperator, any) (string, any)
 
 // FieldMapper maps the telemetry field key to the table field name.
