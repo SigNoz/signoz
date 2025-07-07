@@ -195,10 +195,24 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		};
 	}, [checkScroll]);
 
+	const {
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityUser,
+		isCommunityEnterpriseUser,
+	} = useGetTenantLicense();
+
+	const [licenseTag, setLicenseTag] = useState('');
+	const isAdmin = user.role === USER_ROLES.ADMIN;
+	const isEditor = user.role === USER_ROLES.EDITOR;
+
 	useEffect(() => {
 		const navShortcuts = (userPreferences?.find(
 			(preference) => preference.name === USER_PREFERENCES.NAV_SHORTCUTS,
 		)?.value as unknown) as string[];
+
+		const shouldShowIntegrations =
+			(isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor);
 
 		if (navShortcuts && isArray(navShortcuts) && navShortcuts.length > 0) {
 			// nav shortcuts is array of strings
@@ -211,11 +225,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			// Set pinned items in the order they were stored
 			setPinnedMenuItems(pinnedItems);
 
-			// Set secondary items with proper isPinned state
 			setSecondaryMenuItems(
 				defaultMoreMenuItems.map((item) => ({
 					...item,
 					isPinned: pinnedItems.some((pinned) => pinned.itemKey === item.itemKey),
+					isEnabled:
+						item.key === ROUTES.INTEGRATIONS
+							? shouldShowIntegrations
+							: item.isEnabled,
 				})),
 			);
 		} else {
@@ -225,17 +242,26 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			);
 			setPinnedMenuItems(defaultPinnedItems);
 
-			// Set secondary items with proper isPinned state
 			setSecondaryMenuItems(
 				defaultMoreMenuItems.map((item) => ({
 					...item,
 					isPinned: defaultPinnedItems.some(
 						(pinned) => pinned.itemKey === item.itemKey,
 					),
+					isEnabled:
+						item.key === ROUTES.INTEGRATIONS
+							? shouldShowIntegrations
+							: item.isEnabled,
 				})),
 			);
 		}
-	}, [userPreferences]);
+	}, [
+		userPreferences,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isAdmin,
+		isEditor,
+	]);
 
 	const isOnboardingV3Enabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
@@ -248,10 +274,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const isPremiumSupportEnabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT,
 	)?.active;
-
-	const [licenseTag, setLicenseTag] = useState('');
-	const isAdmin = user.role === USER_ROLES.ADMIN;
-	const isEditor = user.role === USER_ROLES.EDITOR;
 
 	const userSettingsMenuItem = {
 		key: ROUTES.SETTINGS,
@@ -374,13 +396,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	}, [isReorderShortcutNavItemsModalOpen, pinnedMenuItems]);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-
-	const {
-		isCloudUser,
-		isEnterpriseSelfHostedUser,
-		isCommunityUser,
-		isCommunityEnterpriseUser,
-	} = useGetTenantLicense();
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
@@ -718,35 +733,13 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	};
 
-	useEffect(() => {
-		if ((isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor)) {
-			// enable integrations for cloud users
-			setSecondaryMenuItems((prevItems) =>
-				prevItems.map((item) => ({
-					...item,
-					isEnabled: item.key === ROUTES.INTEGRATIONS ? true : item.isEnabled,
-				})),
-			);
-
-			// enable integrations for pinned menu items
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			setPinnedMenuItems((prevItems) =>
-				prevItems.map((item) => ({
-					...item,
-					isEnabled: item.key === ROUTES.INTEGRATIONS ? true : item.isEnabled,
-				})),
-			);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isCloudUser, isEnterpriseSelfHostedUser]);
-
 	const onClickVersionHandler = useCallback((): void => {
-		if (isCloudUser) {
+		if (isCloudUser || !changelog) {
 			return;
 		}
 
 		setShowChangelogModal(true);
-	}, [isCloudUser]);
+	}, [isCloudUser, changelog]);
 
 	useEffect(() => {
 		if (!isLatestVersion && !isCloudUser) {
@@ -814,7 +807,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 											}
 										>
 											<div className="version-container">
-												<span className="version" onClick={onClickVersionHandler}>
+												<span
+													className={cx('version', changelog && 'version-clickable')}
+													onClick={onClickVersionHandler}
+												>
 													{currentVersion}
 												</span>
 
