@@ -91,7 +91,6 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 		return nil, err
 	}
 
-	// send telemetry event
 	for i := 0; i < len(invites); i++ {
 		m.analytics.TrackUser(ctx, orgID, creator.ID.String(), "Invite Sent", map[string]any{"invitee_email": invites[i].Email, "invitee_role": invites[i].Role})
 
