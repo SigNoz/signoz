@@ -16,6 +16,7 @@ export interface IQueryPair {
 	key: string;
 	operator: string;
 	value?: string;
+	hasNegation?: boolean; // Indicates if the pair has a negation operator (e.g., NOT)
 	position: {
 		keyStart: number;
 		keyEnd: number;
@@ -23,6 +24,8 @@ export interface IQueryPair {
 		operatorEnd: number;
 		valueStart?: number;
 		valueEnd?: number;
+		negationStart?: number;
+		negationEnd?: number;
 	};
 	isComplete: boolean; // true if the pair has all three components
 }
@@ -35,6 +38,7 @@ export interface IQueryContext {
 	currentToken: string;
 	isInValue: boolean;
 	isInKey: boolean;
+	isInNegation: boolean;
 	isInOperator: boolean;
 	isInFunction: boolean;
 	isInConjunction?: boolean;
