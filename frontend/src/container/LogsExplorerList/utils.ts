@@ -1,17 +1,17 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { IField } from 'types/api/logs/fields';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 
 export const convertKeysToColumnFields = (
-	keys: BaseAutocompleteData[],
+	keys: TelemetryFieldKey[],
 ): IField[] =>
 	keys.map((item) => ({
-		dataType: item.dataType as string,
-		name: item.key,
-		type: item.type as string,
+		dataType: item.fieldDataType ?? '',
+		name: item.name,
+		type: item.fieldContext ?? '',
 	}));
 /**
  * Determines if a query represents a trace-to-logs navigation
