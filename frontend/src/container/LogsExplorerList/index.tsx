@@ -48,7 +48,6 @@ function LogsExplorerList({
 	isFilterApplied,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
-	const { initialDataSource } = useQueryBuilder();
 
 	const { activeLogId } = useCopyLogLink();
 
@@ -62,7 +61,7 @@ function LogsExplorerList({
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.METRICS,
+		dataSource: DataSource.LOGS,
 		aggregateOperator:
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
 	});

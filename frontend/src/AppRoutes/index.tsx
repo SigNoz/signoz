@@ -191,7 +191,8 @@ function App(): JSX.Element {
 				// if the user is on basic plan then remove billing
 				if (isOnBasicPlan) {
 					updatedRoutes = updatedRoutes.filter(
-						(route) => route?.path !== ROUTES.BILLING,
+						(route) =>
+							route?.path !== ROUTES.BILLING && route?.path !== ROUTES.INTEGRATIONS,
 					);
 				}
 
@@ -204,7 +205,8 @@ function App(): JSX.Element {
 			} else {
 				// if not a cloud user then remove billing and add list licenses route
 				updatedRoutes = updatedRoutes.filter(
-					(route) => route?.path !== ROUTES.BILLING,
+					(route) =>
+						route?.path !== ROUTES.BILLING && route?.path !== ROUTES.INTEGRATIONS,
 				);
 				updatedRoutes = [...updatedRoutes, LIST_LICENSES];
 			}

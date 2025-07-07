@@ -153,13 +153,13 @@ function LogsExplorerViews({
 
 	const isMultipleQueries = useMemo(
 		() =>
-			currentQuery.builder.queryData.length > 1 ||
-			currentQuery.builder.queryFormulas.length > 0,
+			currentQuery?.builder?.queryData?.length > 1 ||
+			currentQuery?.builder?.queryFormulas?.length > 0,
 		[currentQuery],
 	);
 
 	const isGroupByExist = useMemo(() => {
-		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
+		const groupByCount: number = currentQuery?.builder?.queryData?.reduce<number>(
 			(acc, query) => acc + query.groupBy.length,
 			0,
 		);
