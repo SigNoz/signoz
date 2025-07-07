@@ -91,9 +91,14 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID, userID string, bul
 		return nil, err
 	}
 
-	// send telemetry event
 	for i := 0; i < len(invites); i++ {
 		m.analytics.TrackUser(ctx, orgID, creator.ID.String(), "Invite Sent", map[string]any{"invitee_email": invites[i].Email, "invitee_role": invites[i].Role})
+
+		// if the frontend base url is not provided, we don't send the email
+		if bulkInvites.Invites[i].FrontendBaseUrl == "" {
+			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", invites[i].Email)
+			continue
+		}
 
 		if err := m.emailing.SendHTML(ctx, invites[i].Email, "You are invited to join a team in SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
 			"CustomerName": invites[i].Name,
