@@ -24,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -56,6 +57,9 @@ type Config struct {
 
 	// SQLMigrator config
 	SQLMigrator sqlmigrator.Config `mapstructure:"sqlmigrator"`
+
+	// SQLSchema config
+	SQLSchema sqlschema.Config `mapstructure:"sqlschema"`
 
 	// API Server config
 	APIServer apiserver.Config `mapstructure:"apiserver"`
@@ -111,6 +115,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 		cache.NewConfigFactory(),
 		sqlstore.NewConfigFactory(),
 		sqlmigrator.NewConfigFactory(),
+		sqlschema.NewConfigFactory(),
 		apiserver.NewConfigFactory(),
 		telemetrystore.NewConfigFactory(),
 		prometheus.NewConfigFactory(),

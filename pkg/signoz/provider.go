@@ -26,6 +26,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sharder/singlesharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
+	"github.com/SigNoz/signoz/pkg/sqlschema/sqlitesqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
@@ -69,7 +71,13 @@ func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sql
 	)
 }
 
-func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
+func NewSQLSchemaProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
+	return factory.MustNewNamedMap(
+		sqlitesqlschema.NewFactory(sqlstore),
+	)
+}
+
+func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
 	return factory.MustNewNamedMap(
 		sqlmigration.NewAddDataMigrationsFactory(),
 		sqlmigration.NewAddOrganizationFactory(),
@@ -112,6 +120,10 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewDropFeatureSetFactory(),
 		sqlmigration.NewDropDeprecatedTablesFactory(),
 		sqlmigration.NewUpdateAgentsFactory(sqlstore),
+		sqlmigration.NewUpdateUsersFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateUserInviteFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateOrgDomainFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
 	)
 }
 
