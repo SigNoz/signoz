@@ -13,7 +13,6 @@ import {
 	isNonValueOperatorToken,
 	isOperatorToken,
 	isValueToken,
-	isWrappedUnderQuotes,
 } from './tokenUtils';
 
 // Function to normalize multiple spaces to single spaces when not in quotes
