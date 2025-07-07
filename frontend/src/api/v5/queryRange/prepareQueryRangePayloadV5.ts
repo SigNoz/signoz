@@ -73,8 +73,11 @@ function createBaseSpec(
 	requestType: RequestType,
 	panelType?: PANEL_TYPES,
 ): BaseBuilderQuery {
+	const nonEmptySelectColumns = queryData.selectColumns?.filter((c) =>
+		'key' in c ? c.key : c.name,
+	);
 	return {
-		stepInterval: queryData.stepInterval,
+		stepInterval: queryData?.stepInterval || undefined,
 		disabled: queryData.disabled,
 		filter: queryData?.filter?.expression ? queryData.filter : undefined,
 		groupBy:
@@ -122,9 +125,9 @@ function createBaseSpec(
 						})),
 					}),
 			  ),
-		selectFields: isEmpty(queryData.selectColumns)
+		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
-			: queryData.selectColumns?.map(
+			: nonEmptySelectColumns?.map(
 					(column: any): TelemetryFieldKey => ({
 						name: column.name ?? column.key,
 						fieldDataType:
@@ -158,6 +161,9 @@ export function parseAggregations(
 export function createAggregation(
 	queryData: any,
 ): TraceAggregation[] | LogAggregation[] | MetricAggregation[] {
+	if (!queryData) {
+		return [];
+	}
 	if (queryData.dataSource === DataSource.METRICS) {
 		return [
 			{
@@ -244,7 +250,7 @@ function convertPromQueriesToV5(
 				name: queryName,
 				query: queryData.query,
 				disabled: queryData.disabled || false,
-				step: queryData.stepInterval,
+				step: queryData?.stepInterval,
 				stats: false, // PromQL specific field
 			},
 		}),
@@ -319,6 +325,7 @@ export const prepareQueryRangePayloadV5 = ({
 	start: startTime,
 	end: endTime,
 	formatForWeb,
+	originalGraphType,
 }: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
@@ -382,7 +389,11 @@ export const prepareQueryRangePayloadV5 = ({
 			queries,
 		},
 		formatOptions: {
-			formatTableResultForUI: !!formatForWeb,
+			formatTableResultForUI:
+				!!formatForWeb ||
+				(originalGraphType
+					? originalGraphType === PANEL_TYPES.TABLE
+					: graphType === PANEL_TYPES.TABLE),
 		},
 		variables: Object.entries(variables).reduce((acc, [key, value]) => {
 			acc[key] = { value };

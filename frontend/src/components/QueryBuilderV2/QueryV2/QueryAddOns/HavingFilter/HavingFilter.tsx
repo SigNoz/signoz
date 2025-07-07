@@ -53,17 +53,6 @@ const havingOperators = [
 	},
 ];
 
-// Add common value suggestions
-const commonValues = [
-	{ label: '0', value: '0 ' },
-	{ label: '1', value: '1 ' },
-	{ label: '5', value: '5 ' },
-	{ label: '10', value: '10 ' },
-	{ label: '50', value: '50 ' },
-	{ label: '100', value: '100 ' },
-	{ label: '1000', value: '1000 ' },
-];
-
 const conjunctions = [
 	{ label: 'AND', value: 'AND ' },
 	{ label: 'OR', value: 'OR ' },
@@ -250,22 +239,18 @@ function HavingFilter({
 						};
 					}
 
-					// Show value suggestions after operator
+					// Close dropdown after operator to allow custom value entry
 					if (isAfterOperator(tokens)) {
-						return {
-							from: context.pos,
-							options: [
-								...commonValues.map((value) => ({
-									...value,
-									apply: applyValueCompletion,
-								})),
-								{
-									label: 'Enter a custom number value',
-									type: 'text',
-									apply: applyValueCompletion,
-								},
-							],
-						};
+						return null;
+					}
+
+					// Hide suggestions while typing a value after an operator
+					if (
+						!text.endsWith(' ') &&
+						tokens.length >= 2 &&
+						havingOperators.some((op) => op.value === tokens[tokens.length - 2])
+					) {
+						return null;
 					}
 
 					// Suggest key/operator pairs and ( for grouping
@@ -346,6 +331,7 @@ function HavingFilter({
 						havingAutocomplete,
 						javascript({ jsx: false, typescript: false }),
 						stopEventsExtension,
+						EditorView.lineWrapping,
 						keymap.of([
 							...completionKeymap,
 							{

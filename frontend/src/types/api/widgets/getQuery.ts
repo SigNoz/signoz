@@ -30,6 +30,11 @@ export interface QueryData {
 			[key: string]: string;
 		}[];
 	};
+	metaData?: {
+		alias: string;
+		index: number;
+		queryName: string;
+	};
 }
 
 export interface SeriesItem {
@@ -38,6 +43,11 @@ export interface SeriesItem {
 	};
 	labelsArray: { [key: string]: string }[];
 	values: { timestamp: number; value: string }[];
+	metaData?: {
+		alias: string;
+		index: number;
+		queryName: string;
+	};
 }
 
 export interface QueryDataV3 {

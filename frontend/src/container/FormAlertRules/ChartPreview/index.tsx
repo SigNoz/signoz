@@ -17,6 +17,7 @@ import {
 	Time as TimeV2,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -79,6 +80,7 @@ function ChartPreview({
 	const threshold = alertDef?.condition.target || 0;
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+	const { currentQuery } = useQueryBuilder();
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -254,6 +256,8 @@ function ChartPreview({
 				tzDate: (timestamp: number) =>
 					uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 				timezone: timezone.value,
+				currentQuery,
+				query: query || currentQuery,
 			}),
 		[
 			yAxisUnit,
@@ -269,6 +273,8 @@ function ChartPreview({
 			alertDef?.condition.targetUnit,
 			graphType,
 			timezone.value,
+			currentQuery,
+			query,
 		],
 	);
 

@@ -144,7 +144,7 @@ export function QueryBuilderProvider({
 				.includes(queryData.aggregateOperator);
 
 			if (!isCurrentOperatorAvailableInList) {
-				return { ...queryData, aggregateOperator: initialOperators[0].value };
+				return { ...queryData, aggregateOperator: initialOperators[0]?.value };
 			}
 
 			return queryData;
@@ -246,6 +246,8 @@ export function QueryBuilderProvider({
 			const queryData = query.builder.queryData?.map((item) =>
 				getElementWithActualOperator(item, dataSource, panelType),
 			);
+
+			console.log('queryData', queryData, panelType, dataSource);
 
 			return { ...query, builder: { ...query.builder, queryData } };
 		},
