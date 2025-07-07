@@ -4,6 +4,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	QueryFunctionProps,
@@ -73,9 +74,11 @@ function createBaseSpec(
 	requestType: RequestType,
 	panelType?: PANEL_TYPES,
 ): BaseBuilderQuery {
-	const nonEmptySelectColumns = queryData.selectColumns?.filter((c) =>
-		'key' in c ? c.key : c.name,
-	);
+	const nonEmptySelectColumns = (queryData.selectColumns as (
+		| BaseAutocompleteData
+		| TelemetryFieldKey
+	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
+
 	return {
 		stepInterval: queryData?.stepInterval || undefined,
 		disabled: queryData.disabled,
