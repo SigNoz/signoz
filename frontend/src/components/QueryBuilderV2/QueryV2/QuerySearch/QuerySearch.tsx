@@ -111,12 +111,20 @@ function QuerySearch({
 	const [isFocused, setIsFocused] = useState(false);
 
 	const [isCompleteKeysList, setIsCompleteKeysList] = useState(false);
+	const [isCompleteValuesList, setIsCompleteValuesList] = useState<boolean>(
+		false,
+	);
+	const [
+		isFetchingCompleteValuesList,
+		setIsFetchingCompleteValuesList,
+	] = useState<boolean>(false);
 
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
 
 	// Reference to the editor view for programmatic autocompletion
 	const editorRef = useRef<EditorView | null>(null);
 	const lastKeyRef = useRef<string>('');
+	const lastValueRef = useRef<string>('');
 	const isMountedRef = useRef<boolean>(true);
 
 	// const {
@@ -236,17 +244,29 @@ function QuerySearch({
 	// Use callback to prevent dependency changes on each render
 	const fetchValueSuggestions = useCallback(
 		// eslint-disable-next-line sonarjs/cognitive-complexity
-		async (key: string): Promise<void> => {
+		async ({
+			key,
+			searchText,
+			fetchingComplete = false,
+		}: {
+			key: string;
+			searchText?: string;
+			fetchingComplete?: boolean;
+		}): Promise<void> => {
 			if (
 				!key ||
-				(key === activeKey && !isLoadingSuggestions) ||
+				(key === activeKey && !isLoadingSuggestions && !fetchingComplete) ||
 				!isMountedRef.current
 			)
 				return;
 
 			// Set loading state and store the key we're fetching for
 			setIsLoadingSuggestions(true);
+			if (fetchingComplete) {
+				setIsFetchingCompleteValuesList(true);
+			}
 			lastKeyRef.current = key;
+			lastValueRef.current = searchText || '';
 			setActiveKey(key);
 
 			setValueSuggestions([
@@ -258,14 +278,21 @@ function QuerySearch({
 				},
 			]);
 
+			const sanitizedSearchText = searchText ? searchText?.trim() : '';
+
 			try {
 				const response = await getValueSuggestions({
 					key,
+					searchText: sanitizedSearchText,
 					signal: dataSource,
 				});
 
 				// Skip updates if component unmounted or key changed
-				if (!isMountedRef.current || lastKeyRef.current !== key) {
+				if (
+					!isMountedRef.current ||
+					lastKeyRef.current !== key ||
+					lastValueRef.current !== sanitizedSearchText
+				) {
 					return; // Skip updating if key has changed or component unmounted
 				}
 
@@ -344,6 +371,9 @@ function QuerySearch({
 					]);
 					setIsLoadingSuggestions(false);
 				}
+			} finally {
+				setIsLoadingSuggestions(false);
+				setIsFetchingCompleteValuesList(false);
 			}
 		},
 		[activeKey, dataSource, isLoadingSuggestions],
@@ -473,7 +503,8 @@ function QuerySearch({
 	// Enhanced myCompletions function to better use context including query pairs
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	function autoSuggestions(context: CompletionContext): CompletionResult | null {
-		const word = context.matchBefore(/[.\w]*/);
+		// This matches words before the cursor position
+		const word = context.matchBefore(/[a-zA-Z0-9_.:/?&=#%\-\[\]]*/);
 		if (word?.from === word?.to && !context.explicit) return null;
 
 		// Get the query context at the cursor position
@@ -559,21 +590,36 @@ function QuerySearch({
 				return null;
 			}
 
+			const searchText = word?.text.toLowerCase().trim() ?? '';
+			options = (valueSuggestions || []).filter((option) =>
+				option.label.toLowerCase().includes(searchText),
+			);
+
 			if (
 				keyName &&
-				(keyName !== activeKey || isLoadingSuggestions) &&
+				((options.length === 0 &&
+					(!isCompleteValuesList || lastValueRef.current !== searchText) &&
+					!isFetchingCompleteValuesList) ||
+					keyName !== activeKey ||
+					isLoadingSuggestions) &&
 				!(isLoadingSuggestions && lastKeyRef.current === keyName)
 			) {
-				fetchValueSuggestions(keyName);
+				setTimeout(() => {
+					fetchValueSuggestions({
+						key: keyName,
+						searchText,
+						fetchingComplete: true,
+					});
+				}, 300);
 			}
 
 			// For values in bracket list, just add quotes without enclosing in brackets
-			const processedOptions = valueSuggestions.map((option) => {
+			const processedOptions = options.map((option) => {
 				// Clone the option to avoid modifying the original
 				const processedOption = { ...option };
 
 				// Skip processing for non-selectable items
-				if (option.apply === false || typeof option.apply === 'function') {
+				if (!option.apply || typeof option.apply === 'function') {
 					return option;
 				}
 
@@ -713,14 +759,29 @@ function QuerySearch({
 			if (!keyName) {
 				return null;
 			}
+			const searchText = word?.text.toLowerCase().trim() ?? '';
+
+			options = (valueSuggestions || []).filter((option) =>
+				option.label.toLowerCase().includes(searchText),
+			);
 
 			// Trigger fetch only if needed
 			if (
 				keyName &&
-				(keyName !== activeKey || isLoadingSuggestions) &&
+				((options.length === 0 &&
+					(!isCompleteValuesList || lastValueRef.current !== searchText) &&
+					!isFetchingCompleteValuesList) ||
+					keyName !== activeKey ||
+					isLoadingSuggestions) &&
 				!(isLoadingSuggestions && lastKeyRef.current === keyName)
 			) {
-				fetchValueSuggestions(keyName);
+				setTimeout(() => {
+					fetchValueSuggestions({
+						key: keyName,
+						searchText,
+						fetchingComplete: true,
+					});
+				}, 300);
 			}
 
 			// Process options to add appropriate formatting when selected
@@ -919,7 +980,7 @@ function QuerySearch({
 
 			// Only fetch if needed and if we have a valid key
 			if (key && key !== activeKey && !isLoadingSuggestions) {
-				fetchValueSuggestions(key);
+				fetchValueSuggestions({ key });
 			}
 		}
 	}, [queryContext, activeKey, isLoadingSuggestions, fetchValueSuggestions]);
