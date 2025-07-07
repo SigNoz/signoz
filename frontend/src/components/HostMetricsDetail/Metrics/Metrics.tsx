@@ -20,7 +20,7 @@ import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueries, UseQueryResult } from 'react-query';
+import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
@@ -73,8 +73,11 @@ function Metrics({
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({
 			queryKey: ['host-metrics', payload, ENTITY_VERSION_V4, 'HOST'],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
+			queryFn: ({
+				signal,
+			}: QueryFunctionContext): Promise<
+				SuccessResponse<MetricRangePayloadProps>
+			> => GetMetricQueryRange(payload, ENTITY_VERSION_V4, signal),
 			enabled: !!payload && visibilities[index],
 			keepPreviousData: true,
 		})),
