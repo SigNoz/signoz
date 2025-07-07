@@ -215,6 +215,27 @@ export function SpanDuration({
 		setHasActionButtons(false);
 	};
 
+	// Calculate text positioning to handle overflow cases
+	const textStyle = useMemo(() => {
+		const spanRightEdge = leftOffset + width;
+		const textWidthApprox = 8; // Approximate text width in percentage
+
+		// If span would cause text overflow, right-align text to span end
+		if (spanRightEdge > 100 - textWidthApprox) {
+			return {
+				right: `${100 - spanRightEdge}%`,
+				color,
+				textAlign: 'right' as const,
+			};
+		}
+
+		// Default: left-align text to span start
+		return {
+			left: `${leftOffset}%`,
+			color,
+		};
+	}, [leftOffset, width, color]);
+
 	return (
 		<div
 			className={cx(
@@ -270,7 +291,7 @@ export function SpanDuration({
 				<Typography.Text
 					className="span-line-text"
 					ellipsis
-					style={{ left: `${leftOffset}%`, color }}
+					style={textStyle}
 				>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
 			</Tooltip>
 		</div>
