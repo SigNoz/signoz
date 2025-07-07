@@ -14,8 +14,10 @@ type SQLMigration interface {
 	// Register registers the migration with the given migrations. Each migration needs to be registered
 	//in a dedicated `*.go` file so that the correct migration semantics can be detected.
 	Register(*migrate.Migrations) error
+
 	// Up runs the migration.
 	Up(context.Context, *bun.DB) error
+
 	// Down rolls back the migration.
 	Down(context.Context, *bun.DB) error
 }
@@ -66,5 +68,6 @@ func MustNew(
 	if err != nil {
 		panic(err)
 	}
+
 	return migrations
 }
