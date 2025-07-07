@@ -30,6 +30,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Options } from 'uplot';
 
 import { FeatureKeys } from '../../../../constants/features';
+import { useMultiIntersectionObserver } from '../../../../hooks/useMultiIntersectionObserver';
 import { useAppContext } from '../../../../providers/App/App';
 
 interface EntityMetricsProps<T> {
@@ -73,6 +74,12 @@ function EntityMetrics<T>({
 	const dotMetricsEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
+
+	const {
+		visibilities,
+		setElement,
+	} = useMultiIntersectionObserver(entityWidgetInfo.length, { threshold: 0.1 });
+
 	const queryPayloads = useMemo(
 		() =>
 			getEntityQueryPayload(
@@ -91,11 +98,11 @@ function EntityMetrics<T>({
 	);
 
 	const queries = useQueries(
-		queryPayloads.map((payload) => ({
+		queryPayloads.map((payload, index) => ({
 			queryKey: [queryKey, payload, ENTITY_VERSION_V4, category],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
-			enabled: !!payload,
+			enabled: !!payload && visibilities[index],
 			keepPreviousData: true,
 		})),
 	);
@@ -187,7 +194,7 @@ function EntityMetrics<T>({
 		query: UseQueryResult<SuccessResponse<MetricRangePayloadProps>, unknown>,
 		idx: number,
 	): JSX.Element => {
-		if (!query.data && query.isLoading) {
+		if ((!query.data && query.isLoading) || !visibilities[idx]) {
 			return <Skeleton />;
 		}
 
@@ -197,7 +204,7 @@ function EntityMetrics<T>({
 			return <div>{errorMessage}</div>;
 		}
 
-		const { panelType } = (query.data?.params as any).compositeQuery;
+		const panelType = (query.data?.params as any)?.compositeQuery?.panelType;
 
 		return (
 			<div
@@ -235,7 +242,7 @@ function EntityMetrics<T>({
 			</div>
 			<Row gutter={24} className="entity-metrics-container">
 				{queries.map((query, idx) => (
-					<Col span={12} key={entityWidgetInfo[idx].title}>
+					<Col ref={setElement(idx)} span={12} key={entityWidgetInfo[idx].title}>
 						<Typography.Text>{entityWidgetInfo[idx].title}</Typography.Text>
 						<Card bordered className="entity-metrics-card" ref={graphRef}>
 							{renderCardContent(query, idx)}
