@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './QuerySearch.styles.scss';
 
 import { CheckCircleFilled } from '@ant-design/icons';
