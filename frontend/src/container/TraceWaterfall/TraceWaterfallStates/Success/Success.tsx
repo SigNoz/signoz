@@ -332,12 +332,20 @@ function getWaterfallColumns({
 				/>
 			),
 			size: 450,
+			/**
+			 * Note: The TanStack table currently does not support percentage-based column sizing.
+			 * Therefore, we specify both `minSize` and `maxSize` for the "span-name" column to ensure
+			 * that its width remains between 240px and 900px. Setting a `maxSize` here is important
+			 * because the "span-duration" column has column resizing disabled, making it difficult
+			 * to enforce a minimum width for that column. By constraining the "span-name" column,
+			 * we indirectly control the minimum width available for the "span-duration" column.
+			 */
 			minSize: 240,
+			maxSize: 900,
 		}),
 		columnDefHelper.display({
 			id: 'span-duration',
 			header: () => <div />,
-			minSize: 100,
 			enableResizing: false,
 			cell: (props): JSX.Element => (
 				<SpanDuration
