@@ -26,22 +26,21 @@ const generateExpectedTimestamps = ({
 	step: number;
 }): number[] => {
 	const timestamps: number[] = [];
-	const stepInSeconds = step;
 
 	// Generate timestamps before the first data point
 	for (
 		let timestamp = minTimeSeconds;
 		timestamp < firstItemSeconds;
-		timestamp += stepInSeconds
+		timestamp += step
 	) {
 		timestamps.push(timestamp);
 	}
 
 	// Generate timestamps after the last data point, including maxTimeSeconds
 	for (
-		let timestamp = lastItemSeconds + stepInSeconds;
+		let timestamp = lastItemSeconds + step;
 		timestamp <= maxTimeSeconds;
-		timestamp += stepInSeconds
+		timestamp += step
 	) {
 		timestamps.push(timestamp);
 	}
