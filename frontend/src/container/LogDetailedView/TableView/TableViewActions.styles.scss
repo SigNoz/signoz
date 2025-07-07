@@ -11,6 +11,18 @@
 	}
 }
 
+.selectable-tree {
+	.ant-tree-node-content-wrapper {
+		user-select: text !important;
+		cursor: text !important;
+	}
+	
+	.ant-tree-title {
+		user-select: text !important;
+		cursor: text !important;
+	}
+}
+
 .table-view-actions-content {
 	.ant-popover-inner {
 		border-radius: 4px;
