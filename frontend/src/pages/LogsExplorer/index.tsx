@@ -8,6 +8,7 @@ import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
 import {
@@ -33,6 +34,8 @@ import { SELECTED_VIEWS } from './utils';
 
 function LogsExplorer(): JSX.Element {
 	const [showFrequencyChart, setShowFrequencyChart] = useState(true);
+	const showFrequencyChartRef = useRef<boolean>(true);
+	const prevPanelTypeRef = useRef<string | null>(null);
 	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
 		SELECTED_VIEWS.SEARCH,
 	);
@@ -48,7 +51,7 @@ function LogsExplorer(): JSX.Element {
 		return true;
 	});
 
-	const { handleRunQuery, currentQuery } = useQueryBuilder();
+	const { handleRunQuery, currentQuery, panelType } = useQueryBuilder();
 
 	const listQueryKeyRef = useRef<any>();
 
@@ -164,6 +167,18 @@ function LogsExplorer(): JSX.Element {
 		},
 		[mergeWithRequiredColumns, logListOptionsFromLocalStorage],
 	);
+
+	useEffect(() => {
+		if (prevPanelTypeRef.current !== panelType) {
+			if (panelType === PANEL_TYPES.TABLE) {
+				showFrequencyChartRef.current = showFrequencyChart;
+				setShowFrequencyChart(false);
+			} else if (prevPanelTypeRef.current === PANEL_TYPES.TABLE) {
+				setShowFrequencyChart(showFrequencyChartRef.current);
+			}
+			prevPanelTypeRef.current = panelType;
+		}
+	}, [panelType, showFrequencyChart]);
 
 	useEffect(() => {
 		if (!preferences || preferencesLoading) {

@@ -3,6 +3,8 @@ import './ToolbarActions.styles.scss';
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Switch, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Atom, SquareMousePointer, Terminal } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 
@@ -30,6 +32,7 @@ export default function LeftToolbarActions({
 	handleFilterVisibilityChange,
 }: LeftToolbarActionsProps): JSX.Element {
 	const { clickhouse, search, queryBuilder: QB } = items;
+	const { panelType } = useQueryBuilder();
 
 	return (
 		<div className="left-toolbar">
@@ -85,12 +88,27 @@ export default function LeftToolbarActions({
 
 			<div className="frequency-chart-view-controller">
 				<Typography>Frequency chart</Typography>
-				<Switch
-					size="small"
-					checked={showFrequencyChart}
-					defaultChecked
-					onChange={onToggleHistrogramVisibility}
-				/>
+				{panelType === PANEL_TYPES.TABLE ? (
+					<Tooltip title="Frequency chart is not available in table view">
+						<span>
+							<Switch
+								size="small"
+								checked={false}
+								disabled
+								defaultChecked
+								onChange={onToggleHistrogramVisibility}
+							/>
+						</span>
+					</Tooltip>
+				) : (
+					<Switch
+						size="small"
+						checked={showFrequencyChart}
+						disabled={false}
+						defaultChecked
+						onChange={onToggleHistrogramVisibility}
+					/>
+				)}
 			</div>
 		</div>
 	);
