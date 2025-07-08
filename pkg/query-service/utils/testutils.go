@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -69,6 +71,7 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 			sqlmigration.NewUpdateApiMonitoringFiltersFactory(sqlStore),
 			sqlmigration.NewAddKeyOrganizationFactory(sqlStore),
 			sqlmigration.NewUpdateDashboardFactory(sqlStore),
+			sqlmigration.NewUpdateAgentsFactory(sqlStore),
 		),
 	)
 	if err != nil {
@@ -86,4 +89,31 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
 	sqlStore, _ := NewTestSqliteDB(t)
 	return sqlStore
+}
+
+func CreateTestOrg(t *testing.T, store sqlstore.SQLStore) error {
+	org := &types.Organization{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		Name: "testOrg",
+	}
+	_, err := store.BunDB().NewInsert().Model(org).Exec(context.Background())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetTestOrgId(store sqlstore.SQLStore) (valuer.UUID, error) {
+	var orgID valuer.UUID
+	err := store.BunDB().NewSelect().
+		Model(&types.Organization{}).
+		Column("id").
+		Limit(1).
+		Scan(context.Background(), &orgID)
+	if err != nil {
+		return orgID, err
+	}
+	return orgID, nil
 }

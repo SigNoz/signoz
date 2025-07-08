@@ -9,9 +9,11 @@ import (
 	"github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	"github.com/SigNoz/signoz/ee/query-service/app"
+	"github.com/SigNoz/signoz/ee/sqlschema/postgressqlschema"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
@@ -20,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -101,10 +104,14 @@ func main() {
 			fileprovider.NewFactory(),
 		},
 	}, signoz.DeprecatedFlags{
-		MaxIdleConns: maxIdleConns,
-		MaxOpenConns: maxOpenConns,
-		DialTimeout:  dialTimeout,
-		Config:       promConfigPath,
+		MaxIdleConns:               maxIdleConns,
+		MaxOpenConns:               maxOpenConns,
+		DialTimeout:                dialTimeout,
+		Config:                     promConfigPath,
+		FluxInterval:               fluxInterval,
+		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
+		Cluster:                    cluster,
+		GatewayUrl:                 gatewayUrl,
 	})
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
@@ -134,12 +141,20 @@ func main() {
 		zeus.Config(),
 		httpzeus.NewProviderFactory(),
 		licensing.Config(24*time.Hour, 3),
-		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus, orgGetter organization.Getter) factory.ProviderFactory[pkglicensing.Licensing, pkglicensing.Config] {
-			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter)
+		func(sqlstore sqlstore.SQLStore, zeus pkgzeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) factory.ProviderFactory[pkglicensing.Licensing, pkglicensing.Config] {
+			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter, analytics)
 		},
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),
+		func(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
+			existingFactories := signoz.NewSQLSchemaProviderFactories(sqlstore)
+			if err := existingFactories.Add(postgressqlschema.NewFactory(sqlstore)); err != nil {
+				zap.L().Fatal("Failed to add postgressqlschema factory", zap.Error(err))
+			}
+
+			return existingFactories
+		},
 		sqlStoreFactories,
 		signoz.NewTelemetryStoreProviderFactories(),
 	)
@@ -147,20 +162,7 @@ func main() {
 		zap.L().Fatal("Failed to create signoz", zap.Error(err))
 	}
 
-	serverOptions := &app.ServerOptions{
-		Config:                     config,
-		SigNoz:                     signoz,
-		HTTPHostPort:               baseconst.HTTPHostPort,
-		PreferSpanMetrics:          preferSpanMetrics,
-		PrivateHostPort:            baseconst.PrivateHostPort,
-		FluxInterval:               fluxInterval,
-		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
-		Cluster:                    cluster,
-		GatewayUrl:                 gatewayUrl,
-		Jwt:                        jwt,
-	}
-
-	server, err := app.NewServer(serverOptions)
+	server, err := app.NewServer(config, signoz, jwt)
 	if err != nil {
 		zap.L().Fatal("Failed to create server", zap.Error(err))
 	}

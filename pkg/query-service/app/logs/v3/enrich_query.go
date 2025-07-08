@@ -81,6 +81,59 @@ func isEnriched(field v3.AttributeKey) bool {
 	return false
 }
 
+// returns the name of all the fields from the query
+// this will be used to get the corresponding fields
+func GetFieldNames(compositeQuery *v3.CompositeQuery) []string {
+	fieldNames := make(map[string]struct{})
+	result := []string{}
+	if compositeQuery == nil {
+		return result
+	}
+
+	for queryName, query := range compositeQuery.BuilderQueries {
+		if query.Expression != queryName {
+			continue
+		}
+
+		if query.AggregateAttribute.Key != "" {
+			fieldNames[query.AggregateAttribute.Key] = struct{}{}
+		}
+
+		// attribute
+		if query.Filters != nil && len(query.Filters.Items) != 0 {
+			for i := 0; i < len(query.Filters.Items); i++ {
+				tempItem := jsonFilterEnrich(query.Filters.Items[i])
+				// since json query is only for logs
+				if query.DataSource == v3.DataSourceLogs && tempItem.Key.IsJSON {
+					key, found := strings.CutPrefix(tempItem.Key.Key, "body.")
+					if found {
+						fieldNames[key] = struct{}{}
+					}
+				} else {
+					fieldNames[query.Filters.Items[i].Key.Key] = struct{}{}
+				}
+			}
+		}
+
+		// groupby
+		for i := 0; i < len(query.GroupBy); i++ {
+			fieldNames[query.GroupBy[i].Key] = struct{}{}
+		}
+
+		// orderby
+		for i := 0; i < len(query.OrderBy); i++ {
+			fieldNames[query.OrderBy[i].ColumnName] = struct{}{}
+		}
+
+	}
+
+	for key := range fieldNames {
+		result = append(result, key)
+	}
+
+	return result
+}
+
 func Enrich(params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey) {
 	compositeQuery := params.CompositeQuery
 	if compositeQuery == nil {
@@ -217,7 +270,6 @@ func jsonReplaceField(filter v3.FilterItem, fields map[string]v3.AttributeKey) v
 }
 
 func parseStrValue(valueStr string, operator v3.FilterOperator) (string, interface{}) {
-
 	valueType := "string"
 
 	// for the following operators it will always be string
@@ -229,12 +281,12 @@ func parseStrValue(valueStr string, operator v3.FilterOperator) (string, interfa
 
 	var err error
 	var parsedValue interface{}
-	if parsedValue, err = strconv.ParseBool(valueStr); err == nil {
-		valueType = "bool"
-	} else if parsedValue, err = strconv.ParseInt(valueStr, 10, 64); err == nil {
+	if parsedValue, err = strconv.ParseInt(valueStr, 10, 64); err == nil {
 		valueType = "int64"
 	} else if parsedValue, err = strconv.ParseFloat(valueStr, 64); err == nil {
 		valueType = "float64"
+	} else if parsedValue, err = strconv.ParseBool(valueStr); err == nil {
+		valueType = "bool"
 	} else {
 		parsedValue = valueStr
 		valueType = "string"

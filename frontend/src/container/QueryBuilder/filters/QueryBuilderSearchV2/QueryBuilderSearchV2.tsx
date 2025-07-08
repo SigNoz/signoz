@@ -98,6 +98,7 @@ interface QueryBuilderSearchV2Props {
 	hideSpanScopeSelector?: boolean;
 	// Determines whether to call onChange when a tag is closed
 	triggerOnChangeOnClose?: boolean;
+	skipQueryBuilderRedirect?: boolean;
 }
 
 export interface Option {
@@ -137,6 +138,7 @@ function QueryBuilderSearchV2(
 		operatorConfigKey,
 		hideSpanScopeSelector,
 		triggerOnChangeOnClose,
+		skipQueryBuilderRedirect,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -1037,7 +1039,13 @@ function QueryBuilderSearchV2(
 					);
 				})}
 			</Select>
-			{!hideSpanScopeSelector && <SpanScopeSelector queryName={query.queryName} />}
+			{!hideSpanScopeSelector && (
+				<SpanScopeSelector
+					query={query}
+					onChange={onChange}
+					skipQueryBuilderRedirect={skipQueryBuilderRedirect}
+				/>
+			)}
 		</div>
 	);
 }
@@ -1054,6 +1062,7 @@ QueryBuilderSearchV2.defaultProps = {
 	operatorConfigKey: undefined,
 	hideSpanScopeSelector: true,
 	triggerOnChangeOnClose: false,
+	skipQueryBuilderRedirect: false,
 };
 
 export default QueryBuilderSearchV2;

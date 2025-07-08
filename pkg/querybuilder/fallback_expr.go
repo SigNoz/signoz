@@ -68,7 +68,7 @@ func CollisionHandledFinalExpr(
 				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
 			} else {
 				// not even a close match, return an error
-				return "", nil, err
+				return "", nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field %s not found", field.Name)
 			}
 		} else {
 			for _, key := range keysForField {
@@ -93,4 +93,12 @@ func CollisionHandledFinalExpr(
 	multiIfStmt := fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", "))
 
 	return multiIfStmt, allArgs, nil
+}
+
+func GroupByKeys(keys []qbtypes.GroupByKey) []string {
+	k := []string{}
+	for _, key := range keys {
+		k = append(k, "`"+key.Name+"`")
+	}
+	return k
 }

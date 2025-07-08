@@ -62,3 +62,7 @@ func (provider *noopLicensing) GetActive(ctx context.Context, organizationID val
 func (provider *noopLicensing) GetFeatureFlags(_ context.Context, _ valuer.UUID) ([]*licensetypes.Feature, error) {
 	return licensetypes.DefaultFeatureSet, nil
 }
+
+func (provider *noopLicensing) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	return map[string]any{}, nil
+}

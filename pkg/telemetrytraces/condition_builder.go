@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/maps"
 )
 
 type conditionBuilder struct {
@@ -127,7 +130,10 @@ func (c *conditionBuilder) conditionFor(
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 		// if the field is intrinsic, it always exists
-		if slices.Contains(IntrinsicFields, tblFieldName) || slices.Contains(CalculatedFields, tblFieldName) {
+		if slices.Contains(maps.Keys(IntrinsicFields), tblFieldName) ||
+			slices.Contains(maps.Keys(CalculatedFields), tblFieldName) ||
+			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), tblFieldName) ||
+			slices.Contains(maps.Keys(CalculatedFieldsDeprecated), tblFieldName) {
 			return "true", nil
 		}
 
@@ -188,6 +194,10 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
+	if c.isSpanScopeField(key.Name) {
+		return c.buildSpanScopeCondition(key, operator, value)
+	}
+
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
 	if err != nil {
 		return "", err
@@ -196,7 +206,10 @@ func (c *conditionBuilder) ConditionFor(
 	if operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
 		field, _ := c.fm.FieldFor(ctx, key)
-		if slices.Contains(IntrinsicFields, field) || slices.Contains(CalculatedFields, field) {
+		if slices.Contains(maps.Keys(IntrinsicFields), field) ||
+			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), field) ||
+			slices.Contains(maps.Keys(CalculatedFields), field) ||
+			slices.Contains(maps.Keys(CalculatedFieldsDeprecated), field) {
 			return condition, nil
 		}
 
@@ -207,4 +220,40 @@ func (c *conditionBuilder) ConditionFor(
 		return sb.And(condition, existsCondition), nil
 	}
 	return condition, nil
+}
+
+func (c *conditionBuilder) isSpanScopeField(name string) bool {
+	keyName := strings.ToLower(name)
+	return keyName == SpanSearchScopeRoot || keyName == SpanSearchScopeEntryPoint
+}
+
+func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, error) {
+	if operator != qbtypes.FilterOperatorEqual {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s only supports '=' operator", key.Name)
+	}
+
+	isTrue := false
+	switch v := value.(type) {
+	case bool:
+		isTrue = v
+	case string:
+		isTrue = strings.ToLower(v) == "true"
+	default:
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s expects boolean value, got %T", key.Name, value)
+	}
+
+	if !isTrue {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s can only be filtered with value 'true'", key.Name)
+	}
+
+	keyName := strings.ToLower(key.Name)
+	switch keyName {
+	case SpanSearchScopeRoot:
+		return "parent_span_id = ''", nil
+	case SpanSearchScopeEntryPoint:
+		return fmt.Sprintf("((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
+			DBName, TopLevelOperationsTableName), nil
+	default:
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid span search scope: %s", key.Name)
+	}
 }

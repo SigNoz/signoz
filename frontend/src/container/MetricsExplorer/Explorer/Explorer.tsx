@@ -2,6 +2,7 @@ import './Explorer.styles.scss';
 
 import * as Sentry from '@sentry/react';
 import { Switch } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
@@ -10,7 +11,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -18,6 +19,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 as uuid } from 'uuid';
 
+import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import QuerySection from './QuerySection';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
@@ -92,6 +94,12 @@ function Explorer(): JSX.Element {
 			),
 		[stagedQuery],
 	);
+
+	useEffect(() => {
+		logEvent(MetricsExplorerEvents.TabChanged, {
+			[MetricsExplorerEventKeys.Tab]: 'explorer',
+		});
+	}, []);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>

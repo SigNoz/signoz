@@ -11,14 +11,16 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass, Crosshair, X } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';
 import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
+import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import { isInspectEnabled } from '../Inspect/utils';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import AllAttributes from './AllAttributes';
@@ -95,10 +97,21 @@ function MetricDetails({
 				},
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 			);
+			logEvent(MetricsExplorerEvents.OpenInExplorerClicked, {
+				[MetricsExplorerEventKeys.MetricName]: metricName,
+				[MetricsExplorerEventKeys.Tab]: 'summary',
+				[MetricsExplorerEventKeys.Modal]: 'metric-details',
+			});
 		}
 	}, [metricName, handleExplorerTabChange, metric?.metadata?.metric_type]);
 
 	const isMetricDetailsError = metricDetailsError || !metric;
+
+	useEffect(() => {
+		logEvent(MetricsExplorerEvents.ModalOpened, {
+			[MetricsExplorerEventKeys.Modal]: 'metric-details',
+		});
+	}, []);
 
 	return (
 		<Drawer

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -13,19 +14,21 @@ import (
 )
 
 type module struct {
-	store    dashboardtypes.Store
-	settings factory.ScopedProviderSettings
+	store     dashboardtypes.Store
+	settings  factory.ScopedProviderSettings
+	analytics analytics.Analytics
 }
 
-func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings) dashboard.Module {
+func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/impldashboard")
 	return &module{
-		store:    NewStore(sqlstore),
-		settings: scopedProviderSettings,
+		store:     NewStore(sqlstore),
+		settings:  scopedProviderSettings,
+		analytics: analytics,
 	}
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, postableDashboard dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postableDashboard dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
 	dashboard, err := dashboardtypes.NewDashboard(orgID, createdBy, postableDashboard)
 	if err != nil {
 		return nil, err
@@ -35,11 +38,13 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 	if err != nil {
 		return nil, err
 	}
+
 	err = module.store.Create(ctx, storableDashboard)
 	if err != nil {
 		return nil, err
 	}
 
+	module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
 	return dashboard, nil
 }
 
@@ -206,4 +211,13 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 	}
 
 	return result, nil
+}
+
+func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	dashboards, err := module.store.List(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewStatsFromStorableDashboards(dashboards), nil
 }

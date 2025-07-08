@@ -10,13 +10,14 @@ import { getTraceToLogsQuery } from 'container/TraceDetail/SelectedSpanDetails/c
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { Anvil, Bookmark, PanelRight, Search } from 'lucide-react';
+import { Anvil, Bookmark, Link2, PanelRight, Search } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
 import Attributes from './Attributes/Attributes';
 import Events from './Events/Events';
+import LinkedSpans from './LinkedSpans/LinkedSpans';
 
 const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 interface ISpanDetailsDrawerProps {
@@ -73,6 +74,19 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 						isSearchVisible={isSearchVisible}
 					/>
 				),
+			},
+			{
+				label: (
+					<Button
+						type="text"
+						icon={<Link2 size="14" />}
+						className="linked-spans-tab-btn"
+					>
+						Links
+					</Button>
+				),
+				key: 'linked-spans',
+				children: <LinkedSpans span={span} />,
 			},
 		];
 	}
@@ -178,6 +192,19 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								</Typography.Text>
 							</div>
 						</div>
+
+						{selectedSpan.statusMessage && (
+							<div className="item">
+								<Typography.Text className="attribute-key">
+									status message
+								</Typography.Text>
+								<div className="value-wrapper">
+									<Typography.Text className="attribute-value">
+										{selectedSpan.statusMessage}
+									</Typography.Text>
+								</div>
+							</div>
+						)}
 					</section>
 
 					<Button onClick={onLogsHandler} className="related-logs">

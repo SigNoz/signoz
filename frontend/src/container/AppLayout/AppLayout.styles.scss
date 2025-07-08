@@ -1,7 +1,36 @@
+// Earlier we were having app-banner-container class
+// we change it to app-banner-wrapper as the adblocker was blocking the app-banner-container class
+// Keep an eye on What classnames are used in the codebase
+.app-banner-wrapper {
+	position: relative;
+	width: 100%;
+}
+
 .app-layout {
 	position: relative;
 	height: 100%;
 	width: 100%;
+
+	&.isWorkspaceRestricted {
+		height: calc(100% - 32px);
+
+		// same styles as its either trial expired or payment failed
+		&.isTrialExpired {
+			height: calc(100% - 64px);
+		}
+
+		&.isPaymentFailed {
+			height: calc(100% - 64px);
+		}
+	}
+
+	&.isTrialExpired {
+		height: calc(100% - 32px);
+	}
+
+	&.isPaymentFailed {
+		height: calc(100% - 32px);
+	}
 
 	.app-content {
 		width: calc(100% - 64px); // width of the sidebar
@@ -20,6 +49,12 @@
 			flex-direction: column;
 			height: 100%;
 			width: 100%;
+		}
+	}
+
+	&.side-nav-pinned {
+		.app-content {
+			width: calc(100% - 240px);
 		}
 	}
 }
@@ -156,4 +191,10 @@
 		text-decoration-thickness: 2px;
 		text-underline-offset: 2px;
 	}
+}
+
+.workspace-restricted-banner,
+.trial-expiry-banner,
+.payment-failed-banner {
+	height: 32px;
 }

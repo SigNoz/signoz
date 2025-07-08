@@ -136,8 +136,13 @@ function Filters({
 	return (
 		<div className="filter-row">
 			<QueryBuilderSearchV2
-				query={BASE_FILTER_QUERY}
+				query={{
+					...BASE_FILTER_QUERY,
+					filters,
+				}}
 				onChange={handleFilterChange}
+				hideSpanScopeSelector={false}
+				skipQueryBuilderRedirect
 			/>
 			{filteredSpanIds.length > 0 && (
 				<div className="pre-next-toggle">

@@ -32,6 +32,8 @@ type License struct {
 	PlanName        valuer.String
 	Features        []*Feature
 	Status          valuer.String
+	State           string
+	FreeUntil       time.Time
 	ValidFrom       int64
 	ValidUntil      int64
 	CreatedAt       time.Time
@@ -165,6 +167,21 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 		planName = PlanNameBasic
 	}
 
+	state, err := extractKeyFromMapStringInterface[string](licenseData, "state")
+	if err != nil {
+		state = ""
+	}
+
+	freeUntilStr, err := extractKeyFromMapStringInterface[string](licenseData, "free_until")
+	if err != nil {
+		freeUntilStr = ""
+	}
+
+	freeUntil, err := time.Parse(time.RFC3339, freeUntilStr)
+	if err != nil {
+		freeUntil = time.Time{}
+	}
+
 	featuresFromZeus := make([]*Feature, 0)
 	if _features, ok := licenseData["features"]; ok {
 		featuresData, err := json.Marshal(_features)
@@ -224,6 +241,8 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 		ValidFrom:       validFrom,
 		ValidUntil:      validUntil,
 		Status:          status,
+		State:           state,
+		FreeUntil:       freeUntil,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 		LastValidatedAt: time.Now(),
@@ -306,6 +325,21 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 	}
 	validUntil := int64(_validUntil)
 
+	state, err := extractKeyFromMapStringInterface[string](storableLicense.Data, "state")
+	if err != nil {
+		state = ""
+	}
+
+	freeUntilStr, err := extractKeyFromMapStringInterface[string](storableLicense.Data, "free_until")
+	if err != nil {
+		freeUntilStr = ""
+	}
+
+	freeUntil, err := time.Parse(time.RFC3339, freeUntilStr)
+	if err != nil {
+		freeUntil = time.Time{}
+	}
+
 	return &License{
 		ID:              storableLicense.ID,
 		Key:             storableLicense.Key,
@@ -315,12 +349,23 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 		ValidFrom:       validFrom,
 		ValidUntil:      validUntil,
 		Status:          status,
+		State:           state,
+		FreeUntil:       freeUntil,
 		CreatedAt:       storableLicense.CreatedAt,
 		UpdatedAt:       storableLicense.UpdatedAt,
 		LastValidatedAt: storableLicense.LastValidatedAt,
 		OrganizationID:  storableLicense.OrgID,
 	}, nil
 
+}
+
+func NewStatsFromLicense(license *License) map[string]any {
+	return map[string]any{
+		"license.id":              license.ID.StringValue(),
+		"license.plan.name":       license.PlanName.StringValue(),
+		"license.state.name":      license.State,
+		"license.free_until.time": license.FreeUntil.UTC(),
+	}
 }
 
 func (license *License) UpdateFeatures(features []*Feature) {

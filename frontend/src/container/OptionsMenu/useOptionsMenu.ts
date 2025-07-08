@@ -1,7 +1,4 @@
-import getFromLocalstorage from 'api/browser/localstorage/get';
-import setToLocalstorage from 'api/browser/localstorage/set';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { LogViewMode } from 'container/LogsTable';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import useDebounce from 'hooks/useDebounce';
@@ -11,6 +8,7 @@ import {
 	AllTraceFilterKeys,
 	AllTraceFilterKeyValue,
 } from 'pages/TracesExplorer/Filter/filterUtils';
+import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -35,10 +33,10 @@ import {
 import { getOptionsFromKeys } from './utils';
 
 interface UseOptionsMenuProps {
+	storageKey?: string;
 	dataSource: DataSource;
 	aggregateOperator: string;
 	initialOptions?: InitialOptions;
-	storageKey: LOCALSTORAGE;
 }
 
 interface UseOptionsMenu {
@@ -48,21 +46,20 @@ interface UseOptionsMenu {
 }
 
 const useOptionsMenu = ({
-	storageKey,
 	dataSource,
 	aggregateOperator,
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
 	const { notifications } = useNotifications();
+	const {
+		preferences,
+		updateColumns,
+		updateFormatting,
+	} = usePreferenceContext();
 
 	const [searchText, setSearchText] = useState<string>('');
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 	const debouncedSearchText = useDebounce(searchText, 300);
-
-	const localStorageOptionsQuery = useMemo(
-		() => getFromLocalstorage(storageKey),
-		[storageKey],
-	);
 
 	const initialQueryParams = useMemo(
 		() => ({
@@ -77,7 +74,6 @@ const useOptionsMenu = ({
 
 	const {
 		query: optionsQuery,
-		queryData: optionsQueryData,
 		redirectWithQuery: redirectWithOptionsData,
 	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
@@ -105,7 +101,9 @@ const useOptionsMenu = ({
 	);
 
 	const initialSelectedColumns = useMemo(() => {
-		if (!isFetchedInitialAttributes) return [];
+		if (!isFetchedInitialAttributes) {
+			return [];
+		}
 
 		const attributesData = initialAttributesResult?.reduce(
 			(acc, attributeResponse) => {
@@ -142,14 +140,12 @@ const useOptionsMenu = ({
 				})
 				.filter(Boolean) as BaseAutocompleteData[];
 
-			// this is the last point where we can set the default columns and if uptil now also we have an empty array then we will set the default columns
 			if (!initialSelected || !initialSelected?.length) {
 				initialSelected = defaultTraceSelectedColumns;
 			}
 		}
 
 		return initialSelected || [];
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isFetchedInitialAttributes,
 		initialOptions?.selectColumns,
@@ -171,7 +167,6 @@ const useOptionsMenu = ({
 	const searchedAttributeKeys = useMemo(() => {
 		if (searchedAttributesData?.payload?.attributeKeys?.length) {
 			if (dataSource === DataSource.LOGS) {
-				// add timestamp and body to the list of attributes
 				return [
 					...defaultLogsSelectedColumns,
 					...searchedAttributesData.payload.attributeKeys.filter(
@@ -188,32 +183,35 @@ const useOptionsMenu = ({
 		return [];
 	}, [dataSource, searchedAttributesData?.payload?.attributeKeys]);
 
-	const initialOptionsQuery: OptionsQuery = useMemo(
-		() => ({
+	const initialOptionsQuery: OptionsQuery = useMemo(() => {
+		let defaultColumns = defaultOptionsQuery.selectColumns;
+		if (dataSource === DataSource.TRACES) {
+			defaultColumns = defaultTraceSelectedColumns;
+		} else if (dataSource === DataSource.LOGS) {
+			defaultColumns = defaultLogsSelectedColumns;
+		}
+
+		const finalSelectColumns = initialOptions?.selectColumns
+			? initialSelectedColumns
+			: defaultColumns;
+
+		return {
 			...defaultOptionsQuery,
 			...initialOptions,
-			// eslint-disable-next-line no-nested-ternary
-			selectColumns: initialOptions?.selectColumns
-				? initialSelectedColumns
-				: dataSource === DataSource.TRACES
-				? defaultTraceSelectedColumns
-				: defaultOptionsQuery.selectColumns,
-		}),
-		[dataSource, initialOptions, initialSelectedColumns],
-	);
+			selectColumns: finalSelectColumns,
+		};
+	}, [dataSource, initialOptions, initialSelectedColumns]);
 
 	const selectedColumnKeys = useMemo(
-		() => optionsQueryData?.selectColumns?.map(({ id }) => id) || [],
-		[optionsQueryData],
+		() => preferences?.columns?.map(({ id }) => id) || [],
+		[preferences?.columns],
 	);
 
 	const optionsFromAttributeKeys = useMemo(() => {
 		const filteredAttributeKeys = searchedAttributeKeys.filter((item) => {
-			// For other data sources, only filter out 'body' if it exists
 			if (dataSource !== DataSource.LOGS) {
 				return item.key !== 'body';
 			}
-			// For LOGS, keep all keys
 			return true;
 		});
 
@@ -223,10 +221,8 @@ const useOptionsMenu = ({
 	const handleRedirectWithOptionsData = useCallback(
 		(newQueryData: OptionsQuery) => {
 			redirectWithOptionsData(newQueryData);
-
-			setToLocalstorage(storageKey, JSON.stringify(newQueryData));
 		},
-		[storageKey, redirectWithOptionsData],
+		[redirectWithOptionsData],
 	);
 
 	const handleSelectColumns = useCallback(
@@ -235,7 +231,7 @@ const useOptionsMenu = ({
 			const newSelectedColumns = newSelectedColumnKeys.reduce((acc, key) => {
 				const column = [
 					...searchedAttributeKeys,
-					...optionsQueryData.selectColumns,
+					...(preferences?.columns || []),
 				].find(({ id }) => id === key);
 
 				if (!column) return acc;
@@ -243,75 +239,116 @@ const useOptionsMenu = ({
 			}, [] as BaseAutocompleteData[]);
 
 			const optionsData: OptionsQuery = {
-				...optionsQueryData,
+				...defaultOptionsQuery,
 				selectColumns: newSelectedColumns,
+				format: preferences?.formatting?.format || defaultOptionsQuery.format,
+				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
+				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
 			};
 
+			updateColumns(newSelectedColumns);
 			handleRedirectWithOptionsData(optionsData);
 		},
 		[
 			searchedAttributeKeys,
 			selectedColumnKeys,
-			optionsQueryData,
+			preferences,
 			handleRedirectWithOptionsData,
+			updateColumns,
 		],
 	);
 
 	const handleRemoveSelectedColumn = useCallback(
 		(columnKey: string) => {
-			const newSelectedColumns = optionsQueryData?.selectColumns?.filter(
+			const newSelectedColumns = preferences?.columns?.filter(
 				({ id }) => id !== columnKey,
 			);
 
-			if (!newSelectedColumns.length && dataSource !== DataSource.LOGS) {
+			if (!newSelectedColumns?.length && dataSource !== DataSource.LOGS) {
 				notifications.error({
 					message: 'There must be at least one selected column',
 				});
 			} else {
 				const optionsData: OptionsQuery = {
-					...optionsQueryData,
-					selectColumns: newSelectedColumns,
+					...defaultOptionsQuery,
+					selectColumns: newSelectedColumns || [],
+					format: preferences?.formatting?.format || defaultOptionsQuery.format,
+					maxLines:
+						preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
+					fontSize:
+						preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
 				};
-
+				updateColumns(newSelectedColumns || []);
 				handleRedirectWithOptionsData(optionsData);
 			}
 		},
-		[dataSource, notifications, optionsQueryData, handleRedirectWithOptionsData],
+		[
+			dataSource,
+			notifications,
+			preferences,
+			handleRedirectWithOptionsData,
+			updateColumns,
+		],
 	);
 
 	const handleFormatChange = useCallback(
 		(value: LogViewMode) => {
 			const optionsData: OptionsQuery = {
-				...optionsQueryData,
+				...defaultOptionsQuery,
+				selectColumns: preferences?.columns || [],
 				format: value,
+				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
+				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
 			};
 
+			updateFormatting({
+				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
+				format: value,
+				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
+			});
 			handleRedirectWithOptionsData(optionsData);
 		},
-		[handleRedirectWithOptionsData, optionsQueryData],
+		[handleRedirectWithOptionsData, preferences, updateFormatting],
 	);
 
 	const handleMaxLinesChange = useCallback(
 		(value: string | number | null) => {
 			const optionsData: OptionsQuery = {
-				...optionsQueryData,
+				...defaultOptionsQuery,
+				selectColumns: preferences?.columns || [],
+				format: preferences?.formatting?.format || defaultOptionsQuery.format,
 				maxLines: value as number,
+				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
 			};
 
+			updateFormatting({
+				maxLines: value as number,
+				format: preferences?.formatting?.format || defaultOptionsQuery.format,
+				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
+			});
 			handleRedirectWithOptionsData(optionsData);
 		},
-		[handleRedirectWithOptionsData, optionsQueryData],
+		[handleRedirectWithOptionsData, preferences, updateFormatting],
 	);
+
 	const handleFontSizeChange = useCallback(
 		(value: FontSize) => {
 			const optionsData: OptionsQuery = {
-				...optionsQueryData,
+				...defaultOptionsQuery,
+				selectColumns: preferences?.columns || [],
+				format: preferences?.formatting?.format || defaultOptionsQuery.format,
+				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
 				fontSize: value,
 			};
 
+			updateFormatting({
+				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
+				format: preferences?.formatting?.format || defaultOptionsQuery.format,
+				fontSize: value,
+			});
 			handleRedirectWithOptionsData(optionsData);
 		},
-		[handleRedirectWithOptionsData, optionsQueryData],
+		[handleRedirectWithOptionsData, preferences, updateFormatting],
 	);
 
 	const handleSearchAttribute = useCallback((value: string) => {
@@ -331,7 +368,7 @@ const useOptionsMenu = ({
 		() => ({
 			addColumn: {
 				isFetching: isSearchedAttributesFetching,
-				value: optionsQueryData?.selectColumns || defaultOptionsQuery.selectColumns,
+				value: preferences?.columns || defaultOptionsQuery.selectColumns,
 				options: optionsFromAttributeKeys || [],
 				onFocus: handleFocus,
 				onBlur: handleBlur,
@@ -340,24 +377,21 @@ const useOptionsMenu = ({
 				onSearch: handleSearchAttribute,
 			},
 			format: {
-				value: optionsQueryData.format || defaultOptionsQuery.format,
+				value: preferences?.formatting?.format || defaultOptionsQuery.format,
 				onChange: handleFormatChange,
 			},
 			maxLines: {
-				value: optionsQueryData.maxLines || defaultOptionsQuery.maxLines,
+				value: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
 				onChange: handleMaxLinesChange,
 			},
 			fontSize: {
-				value: optionsQueryData?.fontSize || defaultOptionsQuery.fontSize,
+				value: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
 				onChange: handleFontSizeChange,
 			},
 		}),
 		[
 			isSearchedAttributesFetching,
-			optionsQueryData?.selectColumns,
-			optionsQueryData.format,
-			optionsQueryData.maxLines,
-			optionsQueryData?.fontSize,
+			preferences,
 			optionsFromAttributeKeys,
 			handleSelectColumns,
 			handleRemoveSelectedColumn,
@@ -369,23 +403,25 @@ const useOptionsMenu = ({
 	);
 
 	useEffect(() => {
-		if (optionsQuery || !isFetchedInitialAttributes) return;
+		if (optionsQuery || !isFetchedInitialAttributes) {
+			return;
+		}
 
-		const nextOptionsQuery = localStorageOptionsQuery
-			? JSON.parse(localStorageOptionsQuery)
-			: initialOptionsQuery;
-
-		redirectWithOptionsData(nextOptionsQuery);
+		redirectWithOptionsData(initialOptionsQuery);
 	}, [
 		isFetchedInitialAttributes,
 		optionsQuery,
 		initialOptionsQuery,
-		localStorageOptionsQuery,
 		redirectWithOptionsData,
 	]);
 
 	return {
-		options: optionsQueryData,
+		options: {
+			selectColumns: preferences?.columns || [],
+			format: preferences?.formatting?.format || defaultOptionsQuery.format,
+			maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
+			fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
+		},
 		config: optionsMenuConfig,
 		handleOptionsChange: handleRedirectWithOptionsData,
 	};

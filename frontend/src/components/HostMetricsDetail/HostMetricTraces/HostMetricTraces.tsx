@@ -194,7 +194,7 @@ function HostMetricTraces({
 			{!isError && traces.length > 0 && (
 				<div className="host-metric-traces-table">
 					<TraceExplorerControls
-						isLoading={isFetching}
+						isLoading={isFetching && traces.length === 0}
 						totalCount={totalCount}
 						perPageOptions={PER_PAGE_OPTIONS}
 						showSizeChanger={false}
@@ -203,7 +203,7 @@ function HostMetricTraces({
 						tableLayout="fixed"
 						pagination={false}
 						scroll={{ x: true }}
-						loading={isFetching}
+						loading={isFetching && traces.length === 0}
 						dataSource={traces}
 						columns={traceListColumns}
 						onRow={(): Record<string, unknown> => ({

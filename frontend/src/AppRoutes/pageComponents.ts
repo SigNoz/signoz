@@ -128,12 +128,7 @@ export const AlertOverview = Loadable(
 );
 
 export const CreateAlertChannelAlerts = Loadable(
-	() =>
-		import(/* webpackChunkName: "Create Channels" */ 'pages/AlertChannelCreate'),
-);
-
-export const EditAlertChannelsAlerts = Loadable(
-	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/ChannelsEdit'),
+	() => import(/* webpackChunkName: "Create Channels" */ 'pages/Settings'),
 );
 
 export const AllAlertChannels = Loadable(
@@ -165,7 +160,7 @@ export const APIKeys = Loadable(
 );
 
 export const MySettings = Loadable(
-	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
+	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
 );
 
 export const CustomDomainSettings = Loadable(
@@ -222,7 +217,7 @@ export const LogsIndexToFields = Loadable(
 );
 
 export const BillingPage = Loadable(
-	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Billing'),
+	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Settings'),
 );
 
 export const SupportPage = Loadable(
@@ -249,7 +244,7 @@ export const WorkspaceAccessRestricted = Loadable(
 );
 
 export const ShortcutsPage = Loadable(
-	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
+	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Settings'),
 );
 
 export const InstalledIntegrations = Loadable(

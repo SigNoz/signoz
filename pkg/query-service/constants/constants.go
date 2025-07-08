@@ -4,7 +4,6 @@ import (
 	"maps"
 	"os"
 	"strconv"
-	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -18,27 +17,7 @@ const (
 	OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
 )
 
-var DEFAULT_TELEMETRY_ANONYMOUS = false
-
-func IsOSSTelemetryEnabled() bool {
-	ossSegmentKey := GetOrDefaultEnv("OSS_TELEMETRY_ENABLED", "true")
-	return ossSegmentKey == "true"
-}
-
 const MaxAllowedPointsInTimeSeries = 300
-
-func IsTelemetryEnabled() bool {
-	if testing.Testing() {
-		return false
-	}
-
-	isTelemetryEnabledStr := os.Getenv("TELEMETRY_ENABLED")
-	isTelemetryEnabledBool, err := strconv.ParseBool(isTelemetryEnabledStr)
-	if err != nil {
-		return true
-	}
-	return isTelemetryEnabledBool
-}
 
 const TraceTTL = "traces"
 const MetricsTTL = "metrics"
@@ -47,10 +26,6 @@ const LogsTTL = "logs"
 const SpanSearchScopeRoot = "isroot"
 const SpanSearchScopeEntryPoint = "isentrypoint"
 const OrderBySpanCount = "span_count"
-
-var TELEMETRY_HEART_BEAT_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_HEART_BEAT_DURATION_MINUTES", 720)
-
-var TELEMETRY_ACTIVE_USER_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_ACTIVE_USER_DURATION_MINUTES", 360)
 
 // Deprecated: Use the new emailing service instead
 var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email.gotmpl")
@@ -243,13 +218,12 @@ const (
 		"scope_string "
 	TracesExplorerViewSQLSelectWithSubQuery = "(SELECT traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s ORDER BY durationNano DESC LIMIT 1 BY traceID"
-	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
-		"span_count, subQuery.durationNano, subQuery.traceID AS traceID FROM %s.%s INNER JOIN ( SELECT * FROM "
-	TracesExplorerViewSQLSelectAfterSubQuery = "AS inner_subquery ) AS subQuery ON %s.%s.traceID = subQuery.traceID WHERE %s %s " +
+	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName as `subQuery.serviceName`, subQuery.name as `subQuery.name`, count() AS " +
+		"span_count, subQuery.durationNano as `subQuery.durationNano`, subQuery.traceID FROM " +
+		"(SELECT traceID AS dist_traceID, timestamp, ts_bucket_start FROM %s.%s WHERE %s%s) as dist_table " +
+		"INNER JOIN ( SELECT * FROM "
+	TracesExplorerViewSQLSelectAfterSubQuery = " AS inner_subquery ) AS subQuery ON dist_table.dist_traceID = subQuery.traceID " +
 		"GROUP BY subQuery.traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc LIMIT 1 BY subQuery.traceID "
-	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
-		"span_count, subQuery.durationNano, traceID FROM %s.%s GLOBAL INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
-		"BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;"
 	TracesExplorerSpanCountWithSubQuery  = "(SELECT trace_id, count() as span_count FROM %s.%s WHERE %s %s GROUP BY trace_id ORDER BY span_count DESC LIMIT 1 BY trace_id"
 	TraceExplorerSpanCountBeforeSubQuery = "SELECT serviceName, name, subQuery.span_count as span_count, durationNano, trace_id as traceID from %s.%s GLOBAL INNER JOIN ( SELECT * FROM "
 	TraceExplorerSpanCountAfterSubQuery  = "AS inner_subquery ) AS subQuery ON %s.%s.trace_id = subQuery.trace_id WHERE parent_span_id = '' AND %s ORDER BY subQuery.span_count DESC"
@@ -629,12 +603,16 @@ var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
 var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
 var IsDotMetricsEnabled = false
+var PreferSpanMetrics = false
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
 	if GetOrDefaultEnv(DotMetricsEnabled, "false") == "true" {
 		IsDotMetricsEnabled = true
+	}
+	if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
+		PreferSpanMetrics = true
 	}
 }
 

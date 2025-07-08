@@ -316,12 +316,20 @@ type LogAggregation struct {
 type MetricAggregation struct {
 	// metric to query
 	MetricName string `json:"metricName"`
+	// type of the metric
+	Type metrictypes.Type `json:"-"`
 	// temporality to apply to the query
 	Temporality metrictypes.Temporality `json:"temporality"`
 	// time aggregation to apply to the query
 	TimeAggregation metrictypes.TimeAggregation `json:"timeAggregation"`
 	// space aggregation to apply to the query
 	SpaceAggregation metrictypes.SpaceAggregation `json:"spaceAggregation"`
+	// table hints to use for the query
+	TableHints *metrictypes.MetricTableHints `json:"-"`
+	// value filter to apply to the query
+	ValueFilter *metrictypes.MetricValueFilter `json:"-"`
+	// reduce to operator for metric scalar requests
+	ReduceTo ReduceTo `json:"reduceTo,omitempty"`
 }
 
 type Filter struct {
@@ -373,7 +381,7 @@ type FunctionArg struct {
 	// name of the argument
 	Name string `json:"name,omitempty"`
 	// value of the argument
-	Value string `json:"value"`
+	Value any `json:"value"`
 }
 
 type Function struct {

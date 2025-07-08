@@ -10,17 +10,23 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
@@ -33,6 +39,9 @@ type Config struct {
 
 	// Instrumentation config
 	Instrumentation instrumentation.Config `mapstructure:"instrumentation"`
+
+	// Analytics config
+	Analytics analytics.Config `mapstructure:"analytics"`
 
 	// Web config
 	Web web.Config `mapstructure:"web"`
@@ -49,6 +58,9 @@ type Config struct {
 	// SQLMigrator config
 	SQLMigrator sqlmigrator.Config `mapstructure:"sqlmigrator"`
 
+	// SQLSchema config
+	SQLSchema sqlschema.Config `mapstructure:"sqlschema"`
+
 	// API Server config
 	APIServer apiserver.Config `mapstructure:"apiserver"`
 
@@ -61,36 +73,59 @@ type Config struct {
 	// Alertmanager config
 	Alertmanager alertmanager.Config `mapstructure:"alertmanager" yaml:"alertmanager"`
 
+	// Querier config
+	Querier querier.Config `mapstructure:"querier"`
+
+	// Ruler config
+	Ruler ruler.Config `mapstructure:"ruler"`
+
 	// Emailing config
 	Emailing emailing.Config `mapstructure:"emailing" yaml:"emailing"`
 
 	// Sharder config
 	Sharder sharder.Config `mapstructure:"sharder" yaml:"sharder"`
+
+	// StatsReporter config
+	StatsReporter statsreporter.Config `mapstructure:"statsreporter"`
+
+	// Gateway config
+	Gateway gateway.Config `mapstructure:"gateway"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
 // These flags are used to ensure backward compatibility with the old flags.
 type DeprecatedFlags struct {
-	MaxIdleConns int
-	MaxOpenConns int
-	DialTimeout  time.Duration
-	Config       string
+	MaxIdleConns               int
+	MaxOpenConns               int
+	DialTimeout                time.Duration
+	Config                     string
+	FluxInterval               string
+	FluxIntervalForTraceDetail string
+	PreferSpanMetrics          bool
+	Cluster                    string
+	GatewayUrl                 string
 }
 
 func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {
 	configFactories := []factory.ConfigFactory{
 		version.NewConfigFactory(),
 		instrumentation.NewConfigFactory(),
+		analytics.NewConfigFactory(),
 		web.NewConfigFactory(),
 		cache.NewConfigFactory(),
 		sqlstore.NewConfigFactory(),
 		sqlmigrator.NewConfigFactory(),
+		sqlschema.NewConfigFactory(),
 		apiserver.NewConfigFactory(),
 		telemetrystore.NewConfigFactory(),
 		prometheus.NewConfigFactory(),
 		alertmanager.NewConfigFactory(),
+		querier.NewConfigFactory(),
+		ruler.NewConfigFactory(),
 		emailing.NewConfigFactory(),
 		sharder.NewConfigFactory(),
+		statsreporter.NewConfigFactory(),
+		gateway.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
@@ -234,5 +269,48 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 	if os.Getenv("SMTP_FROM") != "" {
 		fmt.Println("[Deprecated] env SMTP_FROM is deprecated and scheduled for removal. Please use SIGNOZ_EMAILING_FROM instead.")
 		config.Emailing.SMTP.From = os.Getenv("SMTP_FROM")
+	}
+
+	if os.Getenv("SIGNOZ_SAAS_SEGMENT_KEY") != "" {
+		fmt.Println("[Deprecated] env SIGNOZ_SAAS_SEGMENT_KEY is deprecated and scheduled for removal. Please use SIGNOZ_ANALYTICS_SEGMENT_KEY instead.")
+		config.Analytics.Segment.Key = os.Getenv("SIGNOZ_SAAS_SEGMENT_KEY")
+	}
+
+	if os.Getenv("TELEMETRY_ENABLED") != "" {
+		fmt.Println("[Deprecated] env TELEMETRY_ENABLED is deprecated and scheduled for removal. Please use SIGNOZ_ANALYTICS_ENABLED instead.")
+		config.Analytics.Enabled = os.Getenv("TELEMETRY_ENABLED") == "true"
+	}
+
+	if deprecatedFlags.FluxInterval != "" {
+		fmt.Println("[Deprecated] flag --flux-interval is deprecated and scheduled for removal. Please use SIGNOZ_QUERIER_FLUX__INTERVAL instead.")
+		fluxInterval, err := time.ParseDuration(deprecatedFlags.FluxInterval)
+		if err != nil {
+			fmt.Println("Error parsing --flux-interval, using default value.")
+		} else {
+			config.Querier.FluxInterval = fluxInterval
+		}
+	}
+
+	if deprecatedFlags.FluxIntervalForTraceDetail != "" {
+		fmt.Println("[Deprecated] flag --flux-interval-for-trace-detail is deprecated and scheduled for complete removal. Please use SIGNOZ_QUERIER_FLUX__INTERVAL instead.")
+	}
+
+	if deprecatedFlags.Cluster != "" {
+		fmt.Println("[Deprecated] flag --cluster is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER instead.")
+		config.TelemetryStore.Clickhouse.Cluster = deprecatedFlags.Cluster
+	}
+
+	if deprecatedFlags.PreferSpanMetrics {
+		fmt.Println("[Deprecated] flag --prefer-span-metrics is deprecated and scheduled for removal. Please use USE_SPAN_METRICS instead.")
+	}
+
+	if deprecatedFlags.GatewayUrl != "" {
+		fmt.Println("[Deprecated] flag --gateway-url is deprecated and scheduled for removal. Please use SIGNOZ_GATEWAY_URL instead.")
+		u, err := url.Parse(deprecatedFlags.GatewayUrl)
+		if err != nil {
+			fmt.Println("Error parsing --gateway-url, using default value.")
+		} else {
+			config.Gateway.URL = u
+		}
 	}
 }

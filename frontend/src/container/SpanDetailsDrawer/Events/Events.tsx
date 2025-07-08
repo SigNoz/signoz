@@ -1,12 +1,13 @@
 import './Events.styles.scss';
 
-import { Collapse, Input, Tooltip, Typography } from 'antd';
+import { Collapse, Input, Modal, Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Diamond } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Event, Span } from 'types/api/trace/getTraceV2';
+import { useState } from 'react';
+import { Span } from 'types/api/trace/getTraceV2';
 
 import NoData from '../NoData/NoData';
+import EventAttribute from './components/EventAttribute';
 
 interface IEventsTableProps {
 	span: Span;
@@ -17,14 +18,20 @@ interface IEventsTableProps {
 function EventsTable(props: IEventsTableProps): JSX.Element {
 	const { span, startTime, isSearchVisible } = props;
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
-	const events: Event[] = useMemo(() => {
-		const tempEvents = [];
-		for (let i = 0; i < span.event?.length; i++) {
-			const parsedEvent = JSON.parse(span.event[i]);
-			tempEvents.push(parsedEvent);
-		}
-		return tempEvents;
-	}, [span.event]);
+	const [modalContent, setModalContent] = useState<{
+		title: string;
+		content: string;
+	} | null>(null);
+
+	const showAttributeModal = (title: string, content: string): void => {
+		setModalContent({ title, content });
+	};
+
+	const handleCancel = (): void => {
+		setModalContent(null);
+	};
+
+	const events = span.event;
 
 	return (
 		<div className="events-table">
@@ -81,27 +88,29 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 															)}
 														</Typography.Text>
 														<Typography.Text className="timestamp-text">
-															after the start
+															since trace start
+														</Typography.Text>
+													</div>
+													<div className="timestamp-container">
+														<Typography.Text className="attribute-value">
+															{getYAxisFormattedValue(
+																`${(event.timeUnixNano || 0) / 1e6 - span.timestamp}`,
+																'ms',
+															)}
+														</Typography.Text>
+														<Typography.Text className="timestamp-text">
+															since span start
 														</Typography.Text>
 													</div>
 												</div>
 												{event.attributeMap &&
 													Object.keys(event.attributeMap).map((attributeKey) => (
-														<div className="attribute-container" key={attributeKey}>
-															<Tooltip title={attributeKey}>
-																<Typography.Text className="attribute-key" ellipsis>
-																	{attributeKey}
-																</Typography.Text>
-															</Tooltip>
-
-															<div className="wrapper">
-																<Tooltip title={event.attributeMap[attributeKey]}>
-																	<Typography.Text className="attribute-value" ellipsis>
-																		{event.attributeMap[attributeKey]}
-																	</Typography.Text>
-																</Tooltip>
-															</div>
-														</div>
+														<EventAttribute
+															key={attributeKey}
+															attributeKey={attributeKey}
+															attributeValue={event.attributeMap[attributeKey]}
+															onExpand={showAttributeModal}
+														/>
 													))}
 											</div>
 										),
@@ -111,6 +120,18 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 						</div>
 					))}
 			</div>
+			<Modal
+				title={modalContent?.title}
+				open={!!modalContent}
+				onCancel={handleCancel}
+				footer={null}
+				width="80vw"
+				centered
+			>
+				<pre className="attribute-with-expandable-popover__full-view">
+					{modalContent?.content}
+				</pre>
+			</Modal>
 		</div>
 	);
 }

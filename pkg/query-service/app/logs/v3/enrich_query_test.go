@@ -1,6 +1,8 @@
 package v3
 
 import (
+	"reflect"
+	"sort"
 	"testing"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -520,6 +522,28 @@ var testJSONFilterEnrichData = []struct {
 		},
 	},
 	{
+		Name: "int64 string",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.intx",
+				DataType: v3.AttributeKeyDataTypeUnspecified,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "=",
+			Value:    "0",
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.intx",
+				DataType: v3.AttributeKeyDataTypeInt64,
+				Type:     v3.AttributeKeyTypeUnspecified,
+				IsJSON:   true,
+			},
+			Operator: "=",
+			Value:    int64(0),
+		},
+	},
+	{
 		Name: "float64",
 		Filter: v3.FilterItem{
 			Key: v3.AttributeKey{
@@ -783,6 +807,288 @@ func TestParseStrValue(t *testing.T) {
 			vtype, value := parseStrValue(tt.Value.(string), tt.Operator)
 			So(vtype, ShouldEqual, tt.ResultType)
 			So(value, ShouldEqual, tt.Result)
+		})
+	}
+}
+
+func TestGetFieldNames(t *testing.T) {
+	type args struct {
+		compositeQuery *v3.CompositeQuery
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "nil composite query",
+			args: args{
+				compositeQuery: nil,
+			},
+			want: []string{},
+		},
+		{
+			name: "empty builder queries",
+			args: args{
+				compositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{},
+				},
+			},
+			want: []string{},
+		},
+		{
+			name: "aggregate attribute only",
+			args: args{
+				compositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"test": {
+							QueryName:  "test",
+							Expression: "test",
+							DataSource: v3.DataSourceLogs,
+							AggregateAttribute: v3.AttributeKey{
+								Key: "response_time",
+							},
+						},
+					},
+				},
+			},
+			want: []string{"response_time"},
+		},
+		{
+			name: "filters only",
+			args: args{
+				compositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"test": {
+							QueryName:  "test",
+							Expression: "test",
+							DataSource: v3.DataSourceLogs,
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{Key: v3.AttributeKey{Key: "user_name"}, Value: "john", Operator: "="},
+									{Key: v3.AttributeKey{Key: "status"}, Value: "error", Operator: "!="},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: []string{"user_name", "status"},
+		},
+		{
+			name: "JSON filters",
+			args: args{
+				compositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"test": {
+							QueryName:  "test",
+							Expression: "test",
+							DataSource: v3.DataSourceLogs,
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{Key: v3.AttributeKey{Key: "body.user_name"}, Value: "john", Operator: "="},
+									{Key: v3.AttributeKey{Key: "body.status.code"}, Value: 200, Operator: "="},
+									{Key: v3.AttributeKey{Key: "body.requestor_list[*]"}, Value: "index_service", Operator: "has"},
+								},
+							},
+						},
+					},
+				},
+			},
+			// requestor_list[*] is not required though
+			want: []string{"user_name", "status.code", "requestor_list[*]"},
+		},
+		{
+			name: "groupBy only",
+			args: args{
+				compositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"test": {
+							QueryName:  "test",
+							Expression: "test",
+							DataSource: v3.DataSourceLogs,
+							GroupBy: []v3.AttributeKey{
+								{Key: "service_name"},
+								{Key: "host_name"},
+							},
+						},
+					},
+				},
+			},
+			want: []string{"service_name", "host_name"},
+		},
+		{
+			name: "orderBy only",
+			args: args{
+				compositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"test": {
+							QueryName:  "test",
+							Expression: "test",
+							DataSource: v3.DataSourceLogs,
+							OrderBy: []v3.OrderBy{
+								{ColumnName: "timestamp", Order: "DESC"},
+								{ColumnName: "response_time", Order: "ASC"},
+							},
+						},
+					},
+				},
+			},
+			want: []string{"timestamp", "response_time"},
+		},
+		{
+			name: "all field types combined",
+			args: args{
+				compositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"test": {
+							QueryName:  "test",
+							Expression: "test",
+							DataSource: v3.DataSourceLogs,
+							AggregateAttribute: v3.AttributeKey{
+								Key: "response_time",
+							},
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{Key: v3.AttributeKey{Key: "user_name"}, Value: "john", Operator: "="},
+									{Key: v3.AttributeKey{Key: "body.status"}, Value: "error", Operator: "!="},
+								},
+							},
+							GroupBy: []v3.AttributeKey{
+								{Key: "service_name"},
+								{Key: "user_name"},
+							},
+							OrderBy: []v3.OrderBy{
+								{ColumnName: "timestamp", Order: "DESC"},
+							},
+						},
+					},
+				},
+			},
+			want: []string{"response_time", "user_name", "status", "service_name", "timestamp"},
+		},
+		{
+			name: "multiple builder queries",
+			args: args{
+				compositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"query1": {
+							QueryName:  "query1",
+							Expression: "query1",
+							DataSource: v3.DataSourceLogs,
+							AggregateAttribute: v3.AttributeKey{
+								Key: "field1",
+							},
+						},
+						"query2": {
+							QueryName:  "query2",
+							Expression: "query2",
+							DataSource: v3.DataSourceLogs,
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{Key: v3.AttributeKey{Key: "field2"}, Value: "value", Operator: "="},
+								},
+							},
+						},
+						"query3": {
+							QueryName:  "query3",
+							Expression: "different_expression",
+							DataSource: v3.DataSourceLogs,
+							AggregateAttribute: v3.AttributeKey{
+								Key: "field3",
+							},
+						},
+					},
+				},
+			},
+			want: []string{"field1", "field2"},
+		},
+		{
+			name: "empty aggregate attribute key and filters",
+			args: args{
+				compositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"test": {
+							QueryName:  "test",
+							Expression: "test",
+							DataSource: v3.DataSourceLogs,
+							AggregateAttribute: v3.AttributeKey{
+								Key: "",
+							},
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{Key: v3.AttributeKey{Key: "user_name"}, Value: "john", Operator: "="},
+								},
+							},
+							GroupBy: []v3.AttributeKey{
+								{Key: "service_name"},
+							},
+						},
+					},
+				},
+			},
+			want: []string{"user_name", "service_name"},
+		},
+		{
+			name: "JSON filter with array suffix - no use",
+			args: args{
+				compositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"test": {
+							QueryName:  "test",
+							Expression: "test",
+							DataSource: v3.DataSourceLogs,
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{Key: v3.AttributeKey{Key: "body.tags[*]"}, Value: "important", Operator: "has"},
+									{Key: v3.AttributeKey{Key: "body.nested.array[*]"}, Value: "value", Operator: "has"},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: []string{"tags[*]", "nested.array[*]"},
+		},
+		{
+			name: "mixed JSON and regular filters",
+			args: args{
+				compositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"test": {
+							QueryName:  "test",
+							Expression: "test",
+							DataSource: v3.DataSourceLogs,
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{Key: v3.AttributeKey{Key: "user_name"}, Value: "john", Operator: "="},
+									{Key: v3.AttributeKey{Key: "body.status.abc"}, Value: "error", Operator: "!="},
+									{Key: v3.AttributeKey{Key: "service_name"}, Value: "api", Operator: "="},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: []string{"user_name", "status.abc", "service_name"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GetFieldNames(tt.args.compositeQuery)
+			// Sort both slices since order doesn't matter
+			sort.Strings(got)
+			sort.Strings(tt.want)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetFieldNames() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
