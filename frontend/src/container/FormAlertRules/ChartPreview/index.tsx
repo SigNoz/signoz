@@ -158,7 +158,6 @@ function ChartPreview({
 				maxTime,
 				alertDef?.ruleType,
 			],
-			retry: false,
 			enabled: canQuery,
 		},
 	);

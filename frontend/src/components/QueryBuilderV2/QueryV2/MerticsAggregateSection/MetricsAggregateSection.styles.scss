@@ -145,3 +145,31 @@
 	line-height: 20px; /* 142.857% */
 	letter-spacing: -0.07px;
 }
+
+.lightMode {
+	.metrics-aggregate-section {
+		.metrics-aggregation-section-content {
+			.metrics-aggregation-section-content-item {
+				.metrics-aggregation-section-content-item-label {
+					color: var(--text-ink-200);
+
+					&.main-label {
+						color: var(--text-slate-100);
+					}
+				}
+
+				.metrics-aggregation-section-content-item-value {
+					.ant-select-selector {
+						border: 1px solid var(--bg-vanilla-300) !important;
+						background: var(--bg-vanilla-100) !important;
+					}
+				}
+			}
+		}
+	}
+	.metrics-operators-select {
+		border: 1px solid var(--bg-vanilla-300) !important;
+		background: var(--bg-vanilla-100) !important;
+		color: var(--text-ink-100);
+	}
+}

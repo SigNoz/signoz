@@ -579,8 +579,10 @@
 						background-color: var(--bg-vanilla-100) !important;
 						color: var(--bg-ink-300) !important;
 
-						&:hover {
-							background-color: var(--bg-vanilla-200) !important;
+						&:hover,
+						&[aria-selected='true'] {
+							background-color: var(--bg-vanilla-300) !important;
+							font-weight: 600;
 						}
 					}
 				}

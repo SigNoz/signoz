@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { updateStepInterval } from 'container/GridCardLayout/utils';
@@ -105,10 +106,32 @@ export const useGetQueryRange: UseGetQueryRange = (
 		return requestData;
 	}, [requestData]);
 
+	const retry = useMemo(() => {
+		if (options?.retry !== undefined) {
+			return options.retry;
+		}
+		return (failureCount: number, error: Error): boolean => {
+			let status: number | undefined;
+
+			if (error instanceof APIError) {
+				status = error.getHttpStatusCode();
+			} else if (isAxiosError(error)) {
+				status = error.response?.status;
+			}
+
+			if (status && status >= 400 && status < 500) {
+				return false;
+			}
+
+			return failureCount < 3;
+		};
+	}, [options?.retry]);
+
 	return useQuery<SuccessResponse<MetricRangePayloadProps>, Error>({
 		queryFn: async ({ signal }) =>
 			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
 		...options,
+		retry,
 		onError: (error) => {
 			showErrorModal(error as APIError);
 			options?.onError?.(error);

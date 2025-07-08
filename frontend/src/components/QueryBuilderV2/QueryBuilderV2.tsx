@@ -149,6 +149,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 											formula={formula}
 											index={index}
 											isAdditionalFilterEnable={false}
+											isQBV2
 										/>
 									</div>
 								);
