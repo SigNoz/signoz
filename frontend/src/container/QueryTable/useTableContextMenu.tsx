@@ -1,4 +1,3 @@
-import { CustomDataColumnType } from 'container/GridTableComponent/utils';
 import {
 	ConfigType,
 	getContextMenuConfig,
@@ -6,14 +5,9 @@ import {
 import useAggregateDrilldown from 'container/QueryTable/useAggregateDrilldown';
 import useFilterDrilldown from 'container/QueryTable/useFilterDrilldown';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { ClickedData } from 'periscope/components/ContextMenu/types';
 import { useMemo } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-
-interface ClickedData {
-	record: RowData;
-	column: CustomDataColumnType<RowData>;
-}
 
 interface UseTableContextMenuProps {
 	widgetId?: string;
@@ -21,6 +15,8 @@ interface UseTableContextMenuProps {
 	clickedData: ClickedData | null;
 	onClose: () => void;
 	coordinates: { x: number; y: number } | null;
+	subMenu: string;
+	setSubMenu: (subMenu: string) => void;
 }
 
 export function useTableContextMenu({
@@ -29,6 +25,8 @@ export function useTableContextMenu({
 	clickedData,
 	onClose,
 	coordinates,
+	subMenu,
+	setSubMenu,
 }: UseTableContextMenuProps): {
 	menuItemsConfig: { header?: string; items?: React.ReactNode };
 } {
@@ -57,6 +55,8 @@ export function useTableContextMenu({
 		widgetId,
 		clickedData,
 		onClose,
+		subMenu,
+		setSubMenu,
 	});
 
 	const menuItemsConfig = useMemo(() => {

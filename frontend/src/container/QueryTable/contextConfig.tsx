@@ -1,12 +1,17 @@
-import {
-	OPERATORS,
-	QUERY_BUILDER_OPERATORS_BY_TYPES,
-} from 'constants/queryBuilder';
-import { BarChart2, DraftingCompass, ScrollText } from 'lucide-react';
+import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
+import BreakoutOptions from 'container/QueryTable/BreakoutOptions';
+import { getBaseMeta } from 'container/QueryTable/drilldownUtils';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+
+import { AGGREGATE_OPTIONS, SUPPORTED_OPERATORS } from './menuOptions';
+import {
+	getBreakoutQuery,
+	getFiltersToAdd,
+	getQueryData,
+} from './tableDrilldownUtils';
 
 export type ContextMenuItem = ReactNode;
 
@@ -15,66 +20,28 @@ export enum ConfigType {
 	AGGREGATE = 'aggregate',
 }
 
-function getBaseMeta(
-	query: Query,
-	filterKey: string,
-): BaseAutocompleteData | null {
-	const steps = query.builder.queryData;
-	for (let i = 0; i < steps.length; i++) {
-		const { groupBy } = steps[i];
-		for (let j = 0; j < groupBy.length; j++) {
-			if (groupBy[j].key === filterKey) {
-				return groupBy[j];
-			}
-		}
-	}
-	return null;
-}
-
-const SUPPORTED_OPERATORS = {
-	[OPERATORS['=']]: {
-		label: 'Is this',
-		icon: '=',
-		value: '=',
-	},
-	[OPERATORS['!=']]: {
-		label: 'Is not this',
-		icon: '!=',
-		value: '!=',
-	},
-	[OPERATORS['>=']]: {
-		label: 'Is greater than or equal to',
-		icon: '>=',
-		value: '>=',
-	},
-	[OPERATORS['<=']]: {
-		label: 'Is less than or equal to',
-		icon: '<=',
-		value: '<=',
-	},
-	[OPERATORS['<']]: {
-		label: 'Is less than',
-		icon: '<',
-		value: '<',
-	},
-};
-
-interface ContextMenuConfigParams {
+export interface ContextMenuConfigParams {
 	configType: ConfigType;
 	query: Query;
 	clickedData: any;
 	panelType?: string;
-	onColumnClick: (operator: string) => void;
+	onColumnClick: (key: string, query?: Query) => void;
+	subMenu?: string;
 }
 
-interface GroupContextMenuConfig {
+export interface GroupContextMenuConfig {
 	header?: string;
 	items?: ContextMenuItem;
 }
 
-interface AggregateContextMenuConfig {
+export interface AggregateContextMenuConfig {
 	header?: string;
 	items?: ContextMenuItem;
+}
+
+export interface BreakoutOptionsProps {
+	queryData: IBuilderQuery;
+	onColumnClick: (groupBy: BaseAutocompleteData) => void;
 }
 
 function getGroupContextMenuConfig({
@@ -120,31 +87,38 @@ function getGroupContextMenuConfig({
 }
 
 function getAggregateContextMenuConfig({
-	// query,
-	// clickedData,
+	subMenu,
+	query,
+	clickedData,
 	onColumnClick,
 }: Omit<ContextMenuConfigParams, 'configType'>): AggregateContextMenuConfig {
-	const options = [
-		{
-			key: 'view_logs',
-			icon: <ScrollText size={16} />,
-			label: 'View in Logs',
-		},
-		{
-			key: 'view_metrics',
-			icon: <BarChart2 size={16} />,
-			label: 'View in Metrics',
-		},
-		{
-			key: 'view_traces',
-			icon: <DraftingCompass size={16} />,
-			label: 'View in Traces',
-		},
-	];
+	console.log('getAggregateContextMenuConfig', { clickedData, query });
+
+	if (subMenu === 'breakout') {
+		const queryData = getQueryData(query, clickedData);
+		return {
+			header: 'Breakout by',
+			items: (
+				<BreakoutOptions
+					queryData={queryData}
+					onColumnClick={(groupBy: BaseAutocompleteData): void => {
+						const filtersToAdd = getFiltersToAdd(query, clickedData);
+						const breakoutQuery = getBreakoutQuery(
+							query,
+							clickedData,
+							groupBy,
+							filtersToAdd,
+						);
+						onColumnClick('breakout', breakoutQuery);
+					}}
+				/>
+			),
+		};
+	}
 
 	return {
 		header: 'Aggregate by',
-		items: options.map(({ key, label, icon }) => (
+		items: AGGREGATE_OPTIONS.map(({ key, label, icon }) => (
 			<ContextMenu.Item
 				key={key}
 				icon={icon}
@@ -157,6 +131,7 @@ function getAggregateContextMenuConfig({
 }
 
 export function getContextMenuConfig({
+	subMenu,
 	configType,
 	query,
 	clickedData,
@@ -174,6 +149,7 @@ export function getContextMenuConfig({
 
 	if (configType === ConfigType.AGGREGATE) {
 		return getAggregateContextMenuConfig({
+			subMenu,
 			query,
 			clickedData,
 			panelType,

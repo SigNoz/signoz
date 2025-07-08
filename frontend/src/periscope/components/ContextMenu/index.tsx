@@ -1,19 +1,17 @@
 import './styles.scss';
 
-import { Popover, PopoverProps } from 'antd';
+import { Popover } from 'antd';
 import { ReactNode } from 'react';
 
+import { Coordinates, PopoverPosition } from './types';
 import { useCoordinates } from './useCoordinates';
 
 export { useCoordinates };
+export type { ClickedData, Coordinates, PopoverPosition } from './types';
 
 interface ContextMenuProps {
-	coordinates: { x: number; y: number } | null;
-	popoverPosition?: {
-		left: number;
-		top: number;
-		placement: PopoverProps['placement'];
-	} | null;
+	coordinates: Coordinates | null;
+	popoverPosition?: PopoverPosition | null;
 	title?: string;
 	items?: ReactNode;
 	onClose: () => void;
@@ -64,10 +62,10 @@ export function ContextMenu({
 		return null;
 	}
 
-	const position = popoverPosition ?? {
+	const position: PopoverPosition = popoverPosition ?? {
 		left: coordinates.x + 10,
 		top: coordinates.y - 10,
-		placement: 'right' as PopoverProps['placement'],
+		placement: 'right',
 	};
 
 	return (

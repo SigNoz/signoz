@@ -67,6 +67,8 @@
 // Target the popover inner specifically for context menu
 .context-menu .ant-popover-inner {
 	padding: 12px 8px !important;
+	max-height: 254px !important;	
+	max-width: 180px !important;
 }
 
 // Dark mode support

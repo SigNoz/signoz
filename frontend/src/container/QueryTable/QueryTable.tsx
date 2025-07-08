@@ -40,6 +40,8 @@ export function QueryTable({
 		clickedData,
 		onClose,
 		onClick,
+		subMenu,
+		setSubMenu,
 	} = useCoordinates();
 	const { menuItemsConfig } = useTableContextMenu({
 		widgetId: widgetId || '',
@@ -47,6 +49,8 @@ export function QueryTable({
 		clickedData,
 		onClose,
 		coordinates,
+		subMenu,
+		setSubMenu,
 	});
 
 	const { columns: newColumns, dataSource: newDataSource } = useMemo(() => {
@@ -168,14 +172,6 @@ export function QueryTable({
 				items={menuItemsConfig.items}
 				onClose={onClose}
 			/>
-
-			{/* <ContextMenuV2
-				coordinates={coordinates}
-				popoverPosition={popoverPosition}
-				title={menuItemsConfig.header}
-				items={menuItemsConfig.items}
-				onClose={onClose}
-			/> */}
 		</>
 	);
 }

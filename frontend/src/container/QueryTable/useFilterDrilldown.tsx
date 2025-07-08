@@ -1,15 +1,9 @@
 import { QueryParams } from 'constants/query';
-import { CustomDataColumnType } from 'container/GridTableComponent/utils';
 import { addFilterToQuery } from 'container/QueryTable/drilldownUtils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { ClickedData } from 'periscope/components/ContextMenu/types';
 import { useCallback } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-
-interface ClickedData {
-	record: RowData;
-	column: CustomDataColumnType<RowData>;
-}
 
 const useFilterDrilldown = ({
 	query,

@@ -1,82 +1,68 @@
-import { PopoverProps } from 'antd';
-import { ColumnType } from 'antd/lib/table';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useCallback, useState } from 'react';
 
-interface ClickedData {
-	record: RowData;
-	column: ColumnType<RowData>;
-	tableColumns: ColumnType<RowData>[];
-}
+import { ClickedData, Coordinates, PopoverPosition } from './types';
 
 // Custom hook for managing coordinates
 export const useCoordinates = (): {
-	coordinates: { x: number; y: number } | null;
+	coordinates: Coordinates | null;
 	clickedData: ClickedData | null;
-	popoverPosition: {
-		left: number;
-		top: number;
-		placement: PopoverProps['placement'];
-	} | null;
+	popoverPosition: PopoverPosition | null;
 	onClick: (e: React.MouseEvent, data?: ClickedData) => void;
 	onClose: () => void;
+	subMenu: string; // todo: create enum
+	setSubMenu: (subMenu: string) => void;
 } => {
-	const [coordinates, setCoordinates] = useState<{
-		x: number;
-		y: number;
-	} | null>(null);
+	const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
 	const [clickedData, setClickedData] = useState<ClickedData | null>(null);
-	const [popoverPosition, setPopoverPosition] = useState<{
-		left: number;
-		top: number;
-		placement: PopoverProps['placement'];
-	} | null>(null);
+	const [subMenu, setSubMenu] = useState<string>('');
+	const [popoverPosition, setPopoverPosition] = useState<PopoverPosition | null>(
+		null,
+	);
 
-	const calculatePosition = useCallback((x: number, y: number): {
-		left: number;
-		top: number;
-		placement: PopoverProps['placement'];
-	} => {
-		const windowWidth = window.innerWidth;
-		const windowHeight = window.innerHeight;
-		const popoverWidth = 180;
-		const popoverHeight = 254;
-		const offset = 10;
+	const calculatePosition = useCallback(
+		(x: number, y: number): PopoverPosition => {
+			const windowWidth = window.innerWidth;
+			const windowHeight = window.innerHeight;
+			const popoverWidth = 180;
+			const popoverHeight = 254;
+			const offset = 10;
 
-		let left = x + offset;
-		let top = y - offset;
-		let placement = 'right';
+			let left = x + offset;
+			let top = y - offset;
+			let placement: PopoverPosition['placement'] = 'right';
 
-		// Check if popover would go off the right edge
-		if (left + popoverWidth > windowWidth) {
-			left = x - popoverWidth + offset;
-			placement = 'left';
-		}
+			// Check if popover would go off the right edge
+			if (left + popoverWidth > windowWidth) {
+				left = x - popoverWidth + offset;
+				placement = 'left';
+			}
 
-		// Check if popover would go off the left edge
-		if (left < 0) {
-			left = offset;
-			placement = 'right';
-		}
+			// Check if popover would go off the left edge
+			if (left < 0) {
+				left = offset;
+				placement = 'right';
+			}
 
-		// Check if popover would go off the top edge
-		if (top < 0) {
-			top = offset;
-			placement = placement === 'right' ? 'bottomRight' : 'bottomLeft';
-		}
+			// Check if popover would go off the top edge
+			if (top < 0) {
+				top = offset;
+				placement = placement === 'right' ? 'bottomRight' : 'bottomLeft';
+			}
 
-		// Check if popover would go off the bottom edge
-		if (top + popoverHeight > windowHeight) {
-			top = windowHeight - popoverHeight - offset;
-			placement = placement === 'right' ? 'topRight' : 'topLeft';
-		}
+			// Check if popover would go off the bottom edge
+			if (top + popoverHeight > windowHeight) {
+				top = windowHeight - popoverHeight - offset;
+				placement = placement === 'right' ? 'topRight' : 'topLeft';
+			}
 
-		return { left, top, placement: placement as PopoverProps['placement'] };
-	}, []);
+			return { left, top, placement };
+		},
+		[],
+	);
 
 	const onClick = useCallback(
 		(e: React.MouseEvent, data?: ClickedData): void => {
-			const coords = { x: e.clientX, y: e.clientY };
+			const coords: Coordinates = { x: e.clientX, y: e.clientY };
 			const position = calculatePosition(coords.x, coords.y);
 
 			setCoordinates(coords);
@@ -92,9 +78,18 @@ export const useCoordinates = (): {
 		setCoordinates(null);
 		setClickedData(null);
 		setPopoverPosition(null);
+		setSubMenu('');
 	}, []);
 
-	return { coordinates, clickedData, popoverPosition, onClick, onClose };
+	return {
+		coordinates,
+		clickedData,
+		popoverPosition,
+		onClick,
+		onClose,
+		subMenu,
+		setSubMenu,
+	};
 };
 
 export default useCoordinates;

@@ -1,14 +1,11 @@
 import { QueryParams } from 'constants/query';
-import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { CustomDataColumnType } from 'container/GridTableComponent/utils';
-import {
-	addFilterToQuery,
-	FilterData,
-} from 'container/QueryTable/drilldownUtils';
+import { addFilterToQuery } from 'container/QueryTable/drilldownUtils';
+import { getFiltersToAddToView } from 'container/QueryTable/tableDrilldownUtils';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { ClickedData } from 'periscope/components/ContextMenu/types';
 import { useCallback, useMemo } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -17,11 +14,6 @@ import {
 	ContextMenuItem,
 	getContextMenuConfig,
 } from './contextConfig';
-
-interface ClickedData {
-	record: RowData;
-	column: CustomDataColumnType<RowData>;
-}
 
 const getRoute = (key: string): string => {
 	switch (key) {
@@ -41,45 +33,55 @@ const useAggregateDrilldown = ({
 	widgetId,
 	clickedData,
 	onClose,
+	subMenu,
+	setSubMenu,
 }: {
 	query: Query;
 	widgetId: string;
 	clickedData: ClickedData | null;
 	onClose: () => void;
+	subMenu: string;
+	setSubMenu: (subMenu: string) => void;
 }): {
 	aggregateDrilldownConfig: { header?: string; items?: ContextMenuItem };
 } => {
+	const { redirectWithQueryBuilderData } = useQueryBuilder();
+
+	const redirectToViewMode = useCallback(
+		(query: Query): void => {
+			redirectWithQueryBuilderData(
+				query,
+				{ [QueryParams.expandedWidgetId]: widgetId },
+				undefined,
+				true,
+			);
+		},
+		[widgetId, redirectWithQueryBuilderData],
+	);
 	const { safeNavigate } = useSafeNavigate();
 
-	// const isEmptyFilterValue = (value: any) => {
-	//     return value === '' || value === null || value === undefined || value === 'n/a';
-	// }
-
 	const handleAggregateDrilldown = useCallback(
-		(key: string): void => {
-			// TODO: Implement aggregate drilldown logic
+		(key: string, drilldownQuery?: Query): void => {
 			console.log('Aggregate drilldown:', { clickedData, widgetId, query, key });
+
+			if (key === 'breakout') {
+				if (!drilldownQuery) {
+					setSubMenu(key);
+				} else {
+					redirectToViewMode(drilldownQuery);
+					onClose();
+				}
+				return;
+			}
 
 			const route = getRoute(key);
 
-			const filtersToAdd = Object.keys(clickedData?.record || {}).reduce(
-				(acc: FilterData[], key) => [
-					...acc,
-					{
-						filterKey: key,
-						filterValue: clickedData?.record?.[key] || '',
-						operator: OPERATORS['='],
-					},
-				],
-				[],
-			);
+			const filtersToAdd = getFiltersToAddToView(clickedData);
 
 			const newQuery = addFilterToQuery(query, filtersToAdd);
 
-			console.log('filtersToAdd', filtersToAdd);
 			const queryParams = {
 				[QueryParams.compositeQuery]: JSON.stringify(newQuery),
-				// [QueryParams.compositeQuery]: JSON.stringify(query),
 			};
 
 			if (route) {
@@ -90,19 +92,28 @@ const useAggregateDrilldown = ({
 
 			onClose();
 		},
-		[clickedData, query, widgetId, safeNavigate, onClose],
+		[
+			clickedData,
+			query,
+			widgetId,
+			safeNavigate,
+			onClose,
+			redirectToViewMode,
+			setSubMenu,
+		],
 	);
 
 	const aggregateDrilldownConfig = useMemo(
 		() =>
 			getContextMenuConfig({
+				subMenu,
 				configType: ConfigType.AGGREGATE,
 				query,
 				clickedData,
 				panelType: 'table',
 				onColumnClick: handleAggregateDrilldown,
 			}),
-		[handleAggregateDrilldown, clickedData, query],
+		[handleAggregateDrilldown, clickedData, query, subMenu],
 	);
 	return { aggregateDrilldownConfig };
 };
