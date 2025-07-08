@@ -8,3 +8,6 @@ public/
 
 # Ignore all JSON files:
 **/*.json
+
+# Ignore all files in parser folder:
+src/parser/**
