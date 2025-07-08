@@ -60,7 +60,13 @@ function BreakoutOptions({
 
 	return (
 		<div style={{ height: '200px' }}>
-			<OverlayScrollbar>
+			<OverlayScrollbar
+				options={{
+					overflow: {
+						x: 'hidden',
+					},
+				}}
+			>
 				{/* eslint-disable-next-line react/jsx-no-useless-fragment */}
 				<>
 					{isFetching ? (
