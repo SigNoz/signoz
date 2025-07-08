@@ -275,11 +275,13 @@
 									&:hover {
 										background-color: var(--bg-vanilla-300) !important;
 										color: var(--bg-ink-500) !important;
+										font-weight: 600;
 									}
 
 									&[aria-selected='true'] {
 										background: var(--bg-vanilla-300) !important;
 										color: var(--bg-ink-500) !important;
+										font-weight: 600;
 									}
 								}
 							}
