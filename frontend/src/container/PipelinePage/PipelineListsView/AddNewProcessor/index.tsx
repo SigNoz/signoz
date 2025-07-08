@@ -160,6 +160,7 @@ function AddNewProcessor({
 			width={800}
 			footer={null}
 			onCancel={onCancelModal}
+			destroyOnClose
 		>
 			<Divider plain />
 			<Form
