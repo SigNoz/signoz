@@ -179,7 +179,8 @@ function TopOperationsTable({
 
 	const entryPointSpanInfo = {
 		text: 'Shows the spans where requests enter new services for the first time',
-		url: 'https://signoz.io/docs/userguide/entry_point_service_overview/',
+		url:
+			'https://signoz.io/docs/traces-management/guides/entry-point-spans-service-overview/',
 		urlText: 'Learn more about Entrypoint Spans.',
 	};
 
