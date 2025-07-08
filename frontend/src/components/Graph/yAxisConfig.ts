@@ -1,5 +1,8 @@
 import { formattedValueToString, getValueFormat } from '@grafana/data';
-import { UniversalUnitToGrafanaUnit } from 'components/YAxisUnitSelector/constants';
+import {
+	CustomGraphUnitToUniversalUnit,
+	UniversalUnitToGrafanaUnit,
+} from 'components/YAxisUnitSelector/constants';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 
 export const getYAxisFormattedValue = (
@@ -63,15 +66,20 @@ export const getToolTipValue = (value: string, format?: string): string => {
 		processedFormat = 'short';
 	}
 	try {
+		const valueFormat = getValueFormat(processedFormat)(
+			parseFloat(value),
+			undefined,
+			undefined,
+			undefined,
+		);
+		// For universal units, check if it requires a custom suffix
+		const suffix = valueFormat?.suffix?.trim() || '';
+		if (universalMappingExists && suffix in CustomGraphUnitToUniversalUnit) {
+			return `${valueFormat.text} ${CustomGraphUnitToUniversalUnit[suffix]}`;
+		}
 		return (
-			formattedValueToString(
-				getValueFormat(processedFormat)(
-					parseFloat(value),
-					undefined,
-					undefined,
-					undefined,
-				),
-			) + (universalMappingNotFound ? ` ${format}` : '')
+			formattedValueToString(valueFormat) +
+			(universalMappingNotFound ? ` ${format}` : '')
 		);
 	} catch (error) {
 		console.error(error);

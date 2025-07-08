@@ -536,3 +536,14 @@ export const UniversalUnitToGrafanaUnit: Record<UniversalYAxisUnit, string> = {
 	// None
 	[UniversalYAxisUnit.NONE]: 'none',
 };
+
+export const CustomGraphUnitToUniversalUnit: Record<
+	string,
+	UniversalYAxisUnit
+> = {
+	KiB: UniversalYAxisUnit.KILOBITS,
+	MiB: UniversalYAxisUnit.MEGABITS,
+	GiB: UniversalYAxisUnit.GIGABITS,
+	TiB: UniversalYAxisUnit.TERABITS,
+	PiB: UniversalYAxisUnit.PETABITS,
+};
