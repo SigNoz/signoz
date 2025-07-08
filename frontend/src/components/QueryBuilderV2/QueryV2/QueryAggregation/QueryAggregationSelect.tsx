@@ -28,6 +28,7 @@ import CodeMirror, {
 } from '@uiw/react-codemirror';
 import { Button, Popover } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
+import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { TriangleAlert } from 'lucide-react';
@@ -308,7 +309,7 @@ function QueryAggregationSelect({
 				functionContextForFetch &&
 				operatorsWithoutDataType.includes(functionContextForFetch)
 					? undefined
-					: 'number';
+					: QUERY_BUILDER_KEY_TYPES.NUMBER;
 
 			return getKeySuggestions({
 				signal: queryData.dataSource,
