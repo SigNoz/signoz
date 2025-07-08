@@ -1,7 +1,10 @@
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import ROUTES from 'constants/routes';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
@@ -32,6 +35,11 @@ export const getRoute = (key: string): string => {
 		default:
 			return '';
 	}
+};
+
+export const isNumberDataType = (dataType: DataTypes | undefined): boolean => {
+	if (!dataType) return false;
+	return dataType === DataTypes.Int64 || dataType === DataTypes.Float64;
 };
 
 export interface FilterData {
@@ -72,7 +80,9 @@ function addFiltersToQuerySteps(
 				id: uuid(),
 				key: baseMeta,
 				op: operator,
-				value: filterValue,
+				value: isNumberDataType(baseMeta.dataType)
+					? Number(filterValue)
+					: filterValue,
 			});
 		});
 
