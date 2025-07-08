@@ -124,3 +124,7 @@ ContextMenu.defaultProps = {
 	children: null,
 };
 export default ContextMenu;
+
+// ENHANCEMENT:
+// 1. Adjust postion based on variable height of items. Currently hardcoded to 254px
+// 2. Disable scrolling outside of the menu when open.

@@ -64,11 +64,10 @@ export const useCoordinates = (): {
 		(e: React.MouseEvent, data?: ClickedData): void => {
 			const coords: Coordinates = { x: e.clientX, y: e.clientY };
 			const position = calculatePosition(coords.x, coords.y);
-
-			setCoordinates(coords);
-			setPopoverPosition(position);
 			if (data) {
 				setClickedData(data);
+				setCoordinates(coords);
+				setPopoverPosition(position);
 			}
 		},
 		[calculatePosition],
