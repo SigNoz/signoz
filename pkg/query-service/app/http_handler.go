@@ -4556,6 +4556,28 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 		return
 	}
 
+	if dashboardMatched {
+		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
+			if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+				properties["dashboard_id"] = matches[1]
+			}
+		}
+
+		if widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`); err == nil {
+			if matches := widgetIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+				properties["widget_id"] = matches[1]
+			}
+		}
+	}
+
+	if alertMatched {
+		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
+			if matches := alertIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
+				properties["rule_id"] = matches[1]
+			}
+		}
+	}
+
 	// Check if result is empty or has no data
 	if len(result) == 0 {
 		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
@@ -4577,36 +4599,6 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 				return
 			}
 		}
-	}
-
-	if dashboardMatched {
-
-		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
-			if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["dashboard_id"] = matches[1]
-			}
-		}
-
-		if widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`); err == nil {
-			if matches := widgetIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["widget_id"] = matches[1]
-			}
-		}
-
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
-		return
-	}
-
-	if alertMatched {
-
-		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
-			if matches := alertIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["alert_id"] = matches[1]
-			}
-		}
-
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
-		return
 	}
 
 	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
