@@ -1,7 +1,8 @@
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
+import { Column, QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function populateMultipleResults(
 	responseData: SuccessResponse<MetricRangePayloadProps, unknown>,
 ): SuccessResponse<MetricRangePayloadProps, unknown> {
@@ -14,8 +15,8 @@ export function populateMultipleResults(
 
 		const { columns, rows } = table;
 
-		const valueCol = columns?.find((c) => c.isValueColumn);
-		const labelCols = columns?.filter((c) => !c.isValueColumn);
+		const valueCol = columns?.find((column: Column) => column.isValueColumn);
+		const labelCols = columns?.filter((column: Column) => !column.isValueColumn);
 
 		rows?.forEach((row) => {
 			const metric: Record<string, string> = {};
@@ -23,9 +24,17 @@ export function populateMultipleResults(
 				metric[col.name] = String(row.data[col.name]);
 			});
 
+			let colValue;
+
+			if (valueCol) {
+				colValue = row.data[valueCol.name];
+			} else {
+				colValue = '';
+			}
+
 			allFormattedResults.push({
 				metric,
-				values: [[0, String(row.data[valueCol!.name])]],
+				values: [[0, String(colValue)]],
 				queryName,
 				legend: legend || '',
 			});
