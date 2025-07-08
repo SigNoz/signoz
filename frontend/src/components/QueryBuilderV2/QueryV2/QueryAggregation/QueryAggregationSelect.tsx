@@ -309,7 +309,7 @@ function QueryAggregationSelect({
 				functionContextForFetch &&
 				operatorsWithoutDataType.includes(functionContextForFetch)
 					? undefined
-					: 'number';
+					: QUERY_BUILDER_KEY_TYPES.NUMBER;
 
 			return getKeySuggestions({
 				signal: queryData.dataSource,

@@ -280,24 +280,6 @@ function convertClickHouseQueriesToV5(
 }
 
 /**
- * Converts query formulas to V5 format
- */
-function convertFormulasToV5(
-	formulas: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
-): QueryEnvelope[] {
-	return Object.entries(formulas).map(
-		([queryName, formulaData]): QueryEnvelope => ({
-			type: 'builder_formula' as QueryType,
-			spec: {
-				name: queryName,
-				expression: formulaData.expression || '',
-				functions: formulaData.functions,
-			},
-		}),
-	);
-}
-
-/**
  * Helper function to reduce query arrays to objects
  */
 function reduceQueriesToObject(
@@ -354,7 +336,26 @@ export const prepareQueryRangePayloadV5 = ({
 			);
 
 			// Convert formulas as separate query type
-			const formulaQueries = convertFormulasToV5(currentFormulas.data);
+			const formulaQueries = Object.entries(currentFormulas.data).map(
+				([queryName, formulaData]): QueryEnvelope => ({
+					type: 'builder_formula' as const,
+					spec: {
+						name: queryName,
+						expression: formulaData.expression || '',
+						disabled: formulaData.disabled,
+						limit: formulaData.limit ?? undefined,
+						order: formulaData.orderBy?.map(
+							// eslint-disable-next-line sonarjs/no-identical-functions
+							(order: any): OrderBy => ({
+								key: {
+									name: order.columnName,
+								},
+								direction: order.order,
+							}),
+						),
+					},
+				}),
+			);
 
 			// Combine both types
 			queries = [...builderQueries, ...formulaQueries];
