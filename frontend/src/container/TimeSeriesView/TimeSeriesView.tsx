@@ -42,7 +42,6 @@ function TimeSeriesView({
 	yAxisUnit,
 	isFilterApplied,
 	dataSource,
-	usingUniversalUnits,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -160,7 +159,6 @@ function TimeSeriesView({
 		tzDate: (timestamp: number) =>
 			uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 		timezone: timezone.value,
-		usingUniversalUnits,
 	});
 
 	return (
@@ -217,13 +215,11 @@ interface TimeSeriesViewProps {
 	isError: boolean;
 	isFilterApplied: boolean;
 	dataSource: DataSource;
-	usingUniversalUnits?: boolean;
 }
 
 TimeSeriesView.defaultProps = {
 	data: undefined,
 	yAxisUnit: 'short',
-	usingUniversalUnits: false,
 };
 
 export default TimeSeriesView;

@@ -48,15 +48,12 @@ export const getYAxisFormattedValue = (
 	return `${parseFloat(value)}`;
 };
 
-export const getToolTipValue = (
-	value: string,
-	format?: string,
-	usingUniversalUnits = true,
-): string => {
-	const universalMappingExists =
-		usingUniversalUnits && format && format in UniversalUnitToGrafanaUnit;
+export const getToolTipValue = (value: string, format?: string): string => {
+	const universalMappingExists = format && format in UniversalUnitToGrafanaUnit;
 	const universalMappingNotFound =
-		usingUniversalUnits && format && !(format in UniversalUnitToGrafanaUnit);
+		format &&
+		format in UniversalYAxisUnit &&
+		!(format in UniversalUnitToGrafanaUnit);
 
 	let processedFormat = universalMappingExists
 		? UniversalUnitToGrafanaUnit[format as UniversalYAxisUnit]
