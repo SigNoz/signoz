@@ -35,6 +35,7 @@ export interface IAppContext {
 	updateOrg(orgId: string, updatedOrgName: string): void;
 	updateChangelog(payload: ChangelogSchema): void;
 	versionData: PayloadProps | null;
+	hasEditPermission: boolean;
 }
 
 // User

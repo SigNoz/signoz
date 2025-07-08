@@ -313,6 +313,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			updateOrg,
 			updateChangelog,
 			versionData: versionData?.payload || null,
+			hasEditPermission:
+				user?.role === USER_ROLES.ADMIN || user?.role === USER_ROLES.EDITOR,
 		}),
 		[
 			trialInfo,
