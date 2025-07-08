@@ -59,13 +59,27 @@ describe('HostsListTable', () => {
 		setPageSize: mockSetPageSize,
 	} as any;
 
-	it('renders loading state if isLoading is true', () => {
-		const { container } = render(<HostsListTable {...mockProps} isLoading />);
+	it('renders loading state if isLoading is true and tableData is empty', () => {
+		const { container } = render(
+			<HostsListTable
+				{...mockProps}
+				isLoading
+				hostMetricsData={[]}
+				tableData={{ payload: { data: { hosts: [] } } }}
+			/>,
+		);
 		expect(container.querySelector('.hosts-list-loading-state')).toBeTruthy();
 	});
 
-	it('renders loading state if isFetching is true', () => {
-		const { container } = render(<HostsListTable {...mockProps} isFetching />);
+	it('renders loading state if isFetching is true and tableData is empty', () => {
+		const { container } = render(
+			<HostsListTable
+				{...mockProps}
+				isFetching
+				hostMetricsData={[]}
+				tableData={{ payload: { data: { hosts: [] } } }}
+			/>,
+		);
 		expect(container.querySelector('.hosts-list-loading-state')).toBeTruthy();
 	});
 
@@ -75,7 +89,17 @@ describe('HostsListTable', () => {
 	});
 
 	it('renders empty state if no hosts are found', () => {
-		const { container } = render(<HostsListTable {...mockProps} />);
+		const { container } = render(
+			<HostsListTable
+				{...mockProps}
+				hostMetricsData={[]}
+				tableData={{
+					payload: {
+						data: { hosts: [] },
+					},
+				}}
+			/>,
+		);
 		expect(container.querySelector(EMPTY_STATE_CONTAINER_CLASS)).toBeTruthy();
 	});
 
@@ -83,6 +107,7 @@ describe('HostsListTable', () => {
 		const { container } = render(
 			<HostsListTable
 				{...mockProps}
+				hostMetricsData={[]}
 				tableData={{
 					...mockTableData,
 					payload: {
@@ -90,6 +115,7 @@ describe('HostsListTable', () => {
 						data: {
 							...mockTableData.payload.data,
 							sentAnyHostMetricsData: false,
+							hosts: [],
 						},
 					},
 				}}
@@ -102,6 +128,7 @@ describe('HostsListTable', () => {
 		const { container } = render(
 			<HostsListTable
 				{...mockProps}
+				hostMetricsData={[]}
 				tableData={{
 					...mockTableData,
 					payload: {
@@ -109,6 +136,7 @@ describe('HostsListTable', () => {
 						data: {
 							...mockTableData.payload.data,
 							isSendingIncorrectK8SAgentMetrics: true,
+							hosts: [],
 						},
 					},
 				}}

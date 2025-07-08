@@ -75,14 +75,13 @@ function Summary(): JSX.Element {
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.TabChanged, {
 			[MetricsExplorerEventKeys.Tab]: 'summary',
+			[MetricsExplorerEventKeys.TimeRange]: {
+				startTime: convertNanoToMilliseconds(minTime),
+				endTime: convertNanoToMilliseconds(maxTime),
+			},
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
-
-	useEffect(() => {
-		logEvent(MetricsExplorerEvents.TimeUpdated, {
-			[MetricsExplorerEventKeys.Tab]: 'summary',
-		});
-	}, [maxTime, minTime]);
 
 	// This is used to avoid the filters from being serialized with the id
 	const queryFiltersWithoutId = useMemo(() => {
@@ -168,9 +167,11 @@ function Summary(): JSX.Element {
 				[SUMMARY_FILTERS_KEY]: JSON.stringify(value),
 			});
 			setCurrentPage(1);
-			logEvent(MetricsExplorerEvents.FilterApplied, {
-				[MetricsExplorerEventKeys.Tab]: 'summary',
-			});
+			if (value.items.length > 0) {
+				logEvent(MetricsExplorerEvents.FilterApplied, {
+					[MetricsExplorerEventKeys.Tab]: 'summary',
+				});
+			}
 		},
 		[setSearchParams, searchParams],
 	);
