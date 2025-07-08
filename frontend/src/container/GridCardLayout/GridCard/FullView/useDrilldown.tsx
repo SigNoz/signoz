@@ -1,7 +1,14 @@
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { Dispatch, SetStateAction, useEffect, useRef } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+} from 'react';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 
@@ -14,6 +21,8 @@ export interface DrilldownQueryProps {
 
 export interface UseDrilldownReturn {
 	dashboardEditView: string;
+	handleResetQuery: () => void;
+	showResetQuery: boolean;
 }
 
 const useDrilldown = ({
@@ -52,8 +61,21 @@ const useDrilldown = ({
 		widgetId: widget.id,
 	});
 
+	const showResetQuery = useMemo(
+		() =>
+			JSON.stringify(widget.query?.builder) !==
+			JSON.stringify(compositeQuery?.builder),
+		[widget.query, compositeQuery],
+	);
+
+	const handleResetQuery = useCallback((): void => {
+		redirectWithQueryBuilderData(widget.query);
+	}, [redirectWithQueryBuilderData, widget.query]);
+
 	return {
 		dashboardEditView,
+		handleResetQuery,
+		showResetQuery,
 	};
 };
 

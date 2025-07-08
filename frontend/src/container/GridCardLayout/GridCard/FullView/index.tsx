@@ -122,7 +122,7 @@ function FullView({
 		};
 	});
 
-	const { dashboardEditView } = useDrilldown({
+	const { dashboardEditView, handleResetQuery, showResetQuery } = useDrilldown({
 		enableDrillDown,
 		widget,
 		setRequestData,
@@ -225,15 +225,22 @@ function FullView({
 						{fullViewOptions && (
 							<TimeContainer $panelType={widget.panelTypes}>
 								{enableDrillDown && (
-									<Button
-										className="switch-edit-btn"
-										disabled={response.isFetching || response.isLoading}
-										onClick={(): void => {
-											safeNavigate(dashboardEditView);
-										}}
-									>
-										Switch to Edit Mode
-									</Button>
+									<div className="drildown-options-container">
+										{showResetQuery && (
+											<Button type="link" onClick={handleResetQuery}>
+												Reset Query
+											</Button>
+										)}
+										<Button
+											className="switch-edit-btn"
+											disabled={response.isFetching || response.isLoading}
+											onClick={(): void => {
+												safeNavigate(dashboardEditView);
+											}}
+										>
+											Switch to Edit Mode
+										</Button>
+									</div>
 								)}
 								<div className="time-container">
 									{response.isFetching && (
