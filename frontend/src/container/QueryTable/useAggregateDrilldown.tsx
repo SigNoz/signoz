@@ -1,7 +1,9 @@
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { addFilterToQuery } from 'container/QueryTable/drilldownUtils';
-import { getFiltersToAddToView } from 'container/QueryTable/tableDrilldownUtils';
+import {
+	getFiltersToAddToView,
+	getViewQuery,
+} from 'container/QueryTable/tableDrilldownUtils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
@@ -75,14 +77,21 @@ const useAggregateDrilldown = ({
 			}
 
 			const route = getRoute(key);
-
 			const filtersToAdd = getFiltersToAddToView(clickedData);
+			const viewQuery = getViewQuery(query, filtersToAdd, key);
 
-			const newQuery = addFilterToQuery(query, filtersToAdd);
+			let queryParams = {
+				[QueryParams.compositeQuery]: JSON.stringify(viewQuery),
+			} as Record<string, string>;
 
-			const queryParams = {
-				[QueryParams.compositeQuery]: JSON.stringify(newQuery),
-			};
+			if (route === ROUTES.METRICS_EXPLORER) {
+				queryParams = {
+					...queryParams,
+					[QueryParams.summaryFilters]: JSON.stringify(
+						viewQuery?.builder.queryData[0].filters,
+					),
+				};
+			}
 
 			if (route) {
 				safeNavigate(`${route}?${createQueryParams(queryParams)}`, {
