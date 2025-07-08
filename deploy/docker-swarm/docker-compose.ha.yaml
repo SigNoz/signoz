@@ -194,6 +194,7 @@ services:
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-swarm
       - SIGNOZ_JWT_SECRET=secret
+      - DOT_METRICS_ENABLED=true
     healthcheck:
       test:
         - CMD

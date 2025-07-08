@@ -135,6 +135,7 @@ services:
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-swarm
+      - DOT_METRICS_ENABLED=true
     healthcheck:
       test:
         - CMD
