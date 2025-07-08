@@ -110,3 +110,40 @@ export const addFilterToSelectedQuery = (
 	filters: FilterData[],
 	queryName: string,
 ): Query => addFiltersToQuerySteps(query, filters, queryName);
+
+export const getAggregateColumnHeader = (
+	query: Query,
+	queryName: string,
+): { dataSource: string; aggregations: string } => {
+	// Find the query step with the matching queryName
+	const queryStep = query.builder.queryData.find(
+		(step) => step.queryName === queryName,
+	);
+
+	if (!queryStep) {
+		return { dataSource: '', aggregations: '' };
+	}
+
+	const { dataSource, aggregations } = queryStep;
+
+	// Extract aggregation expressions based on data source type
+	let aggregationExpressions: string[] = [];
+
+	if (aggregations && aggregations.length > 0) {
+		if (dataSource === 'metrics') {
+			// For metrics, construct expression from spaceAggregation(metricName)
+			aggregationExpressions = aggregations.map((agg: any) => {
+				const { spaceAggregation, metricName } = agg;
+				return `${spaceAggregation}(${metricName})`;
+			});
+		} else {
+			// For traces and logs, use the expression field directly
+			aggregationExpressions = aggregations.map((agg: any) => agg.expression);
+		}
+	}
+
+	return {
+		dataSource,
+		aggregations: aggregationExpressions.join(', '),
+	};
+};

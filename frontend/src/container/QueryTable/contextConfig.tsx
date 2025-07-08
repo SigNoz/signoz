@@ -1,11 +1,12 @@
 import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
 import BreakoutOptions from 'container/QueryTable/BreakoutOptions';
 import { getBaseMeta } from 'container/QueryTable/drilldownUtils';
-import ContextMenu from 'periscope/components/ContextMenu';
+import ContextMenu, { ClickedData } from 'periscope/components/ContextMenu';
 import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { getAggregateColumnHeader } from './drilldownUtils';
 import { AGGREGATE_OPTIONS, SUPPORTED_OPERATORS } from './menuOptions';
 import {
 	getBreakoutQuery,
@@ -23,7 +24,7 @@ export enum ConfigType {
 export interface ContextMenuConfigParams {
 	configType: ConfigType;
 	query: Query;
-	clickedData: any;
+	clickedData: ClickedData;
 	panelType?: string;
 	onColumnClick: (key: string, query?: Query) => void;
 	subMenu?: string;
@@ -35,7 +36,7 @@ export interface GroupContextMenuConfig {
 }
 
 export interface AggregateContextMenuConfig {
-	header?: string;
+	header?: string | ReactNode;
 	items?: ContextMenuItem;
 }
 
@@ -53,7 +54,8 @@ function getGroupContextMenuConfig({
 	const filterKey = clickedData?.column?.dataIndex;
 	const header = `Filter by ${filterKey}`;
 
-	const filterDataType = getBaseMeta(query, filterKey)?.dataType || 'string';
+	const filterDataType =
+		getBaseMeta(query, filterKey as string)?.dataType || 'string';
 
 	const operators =
 		QUERY_BUILDER_OPERATORS_BY_TYPES[
@@ -116,8 +118,18 @@ function getAggregateContextMenuConfig({
 		};
 	}
 
+	const { dataSource, aggregations } = getAggregateColumnHeader(
+		query,
+		clickedData?.column?.dataIndex as string,
+	);
+
 	return {
-		header: 'Aggregate by',
+		header: (
+			<div>
+				<div style={{ textTransform: 'capitalize' }}>{dataSource}</div>
+				<div>{aggregations}</div>
+			</div>
+		),
 		items: AGGREGATE_OPTIONS.map(({ key, label, icon }) => (
 			<ContextMenu.Item
 				key={key}
@@ -137,7 +149,10 @@ export function getContextMenuConfig({
 	clickedData,
 	panelType,
 	onColumnClick,
-}: ContextMenuConfigParams): { header?: string; items?: ContextMenuItem } {
+}: ContextMenuConfigParams): {
+	header?: string | ReactNode;
+	items?: ContextMenuItem;
+} {
 	if (configType === ConfigType.GROUP) {
 		return getGroupContextMenuConfig({
 			query,
