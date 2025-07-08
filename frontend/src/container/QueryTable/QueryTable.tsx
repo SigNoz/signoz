@@ -76,7 +76,7 @@ export function QueryTable({
 
 	const tableColumns = modifyColumns ? modifyColumns(newColumns) : newColumns;
 
-	// Add click handlers to columns to capture clicked data
+	// Click handler to columns to capture clicked data
 	const columnsWithClickHandlers = useMemo(
 		() =>
 			tableColumns.map((column: any): any => ({
@@ -89,21 +89,14 @@ export function QueryTable({
 
 					return (
 						<div
-							// have its dimension equal to the column width
+							role="button"
+							className="clickable-cell"
+							tabIndex={0}
 							onClick={(e): void => {
 								e.stopPropagation();
 								onClick(e, { record, column, tableColumns });
 							}}
-							onKeyDown={(e): void => {
-								if (e.key === 'Enter' || e.key === ' ') {
-									e.preventDefault();
-									e.stopPropagation();
-									onClick(e as any, { record, column, tableColumns });
-								}
-							}}
-							style={{ cursor: 'pointer' }}
-							role="button"
-							tabIndex={0}
+							onKeyDown={(): void => {}}
 						>
 							{renderedContent}
 						</div>
