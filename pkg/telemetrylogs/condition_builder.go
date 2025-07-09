@@ -155,6 +155,13 @@ func (c *conditionBuilder) conditionFor(
 
 		var value any
 		switch column.Type {
+		case schema.ColumnTypeJSON:
+			value = "NULL"
+			if operator == qbtypes.FilterOperatorExists {
+				return sb.NE(tblFieldName, value), nil
+			} else {
+				return sb.E(tblFieldName, value), nil
+			}
 		case schema.ColumnTypeString, schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}:
 			value = ""
 			if operator == qbtypes.FilterOperatorExists {

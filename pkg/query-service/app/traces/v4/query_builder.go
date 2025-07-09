@@ -55,6 +55,11 @@ func getColumnName(key v3.AttributeKey) string {
 		return key.Key
 	}
 
+	// if resource attribute, then use the new json column
+	if key.Type == v3.AttributeKeyTypeResource {
+		return fmt.Sprintf("'resource.%s'", key.Key)
+	}
+
 	if !key.IsColumn {
 		keyType := getClickHouseTracesColumnType(key.Type)
 		keyDType := getClickHouseTracesColumnDataType(key.DataType)

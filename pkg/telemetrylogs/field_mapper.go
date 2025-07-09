@@ -43,6 +43,7 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
+		"resource":      {Name: "resource", Type: schema.ColumnTypeJSON},
 		"scope_name":    {Name: "scope_name", Type: schema.ColumnTypeString},
 		"scope_version": {Name: "scope_version", Type: schema.ColumnTypeString},
 		"scope_string": {Name: "scope_string", Type: schema.MapColumnType{
@@ -62,7 +63,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return logsV2Columns["resources_string"], nil
+		return logsV2Columns["resource"], nil
 	case telemetrytypes.FieldContextScope:
 		switch key.Name {
 		case "name", "scope.name", "scope_name":
@@ -102,6 +103,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 	}
 
 	switch column.Type {
+	case schema.ColumnTypeJSON:
+		return fmt.Sprintf("'resource.%s'", key.Name), nil
 	case schema.ColumnTypeString,
 		schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		schema.ColumnTypeUInt64,

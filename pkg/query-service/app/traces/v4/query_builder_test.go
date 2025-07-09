@@ -179,7 +179,7 @@ func Test_getSelectLabels(t *testing.T) {
 					{Key: "service_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource, IsColumn: true},
 				},
 			},
-			want: " name as `name`, `resource_string_service_name` as `service_name`",
+			want: " name as `name`, 'resource.service_name' as `service_name`",
 		},
 	}
 	for _, tt := range tests {
@@ -524,12 +524,12 @@ func Test_buildTracesQuery(t *testing.T) {
 							{Key: v3.AttributeKey{Key: "service.name", Type: v3.AttributeKeyTypeResource, DataType: v3.AttributeKeyDataTypeString}, Value: "myService", Operator: "="},
 						},
 					},
-					GroupBy: []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeResource}},
+					GroupBy: []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}},
 					OrderBy: []v3.OrderBy{
 						{ColumnName: "host", Order: "ASC"}},
 				},
 			},
-			want: "SELECT  resources_number['host'] as `host`, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			want: "SELECT  'resource.host' as `host`, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_number['bytes'] > 100 AND " +
 				"(resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND " +
 				"(seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'myService' AND labels like '%service.name%myService%' AND " +
@@ -860,7 +860,7 @@ func TestPrepareTracesQuery(t *testing.T) {
 					GraphLimitQtype: constants.FirstQueryGraphLimit,
 				},
 			},
-			want: "SELECT `function`,`service.name` from (SELECT `attribute_string_function` as `function`, `resource_string_service$$name` as `service.name`, toFloat64(count(distinct(name))) as value " +
+			want: "SELECT `function`,`service.name` from (SELECT `attribute_string_function` as `function`, 'resource.service.name' as `service.name`, toFloat64(count(distinct(name))) as value " +
 				"from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
 				"AND attributes_number['line'] = 100 AND (resource_fingerprint GLOBAL IN (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE " +
 				"(seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'hostname') = 'server1' AND labels like '%hostname%server1%' AND " +
