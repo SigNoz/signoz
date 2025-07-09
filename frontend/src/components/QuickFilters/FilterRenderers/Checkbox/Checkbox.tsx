@@ -10,10 +10,8 @@ import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import {
-	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
-	OPERATORS,
-} from 'constants/queryBuilder';
+import { OPERATORS } from 'constants/antlrQueryConstants';
+import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
@@ -30,7 +28,7 @@ import { v4 as uuid } from 'uuid';
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
 
 const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
-const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'nin'];
+const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in'];
 
 const SOURCES_WITH_EMPTY_STATE_ENABLED = [QuickFiltersSource.LOGS_EXPLORER];
 
@@ -293,7 +291,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 								}
 							}
 							break;
-						case 'nin':
+						case 'not in':
 							// if the current running operator is NIN then when unchecking the value it gets
 							// added to the clause like key NIN [value1 , currentUnselectedValue]
 							if (!checked) {
@@ -372,7 +370,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							if (!checked) {
 								const newFilter = {
 									...currentFilter,
-									op: getOperatorValue(OPERATORS.NIN),
+									op: getOperatorValue('NOT_IN'),
 									value: [currentFilter.value as string, value],
 								};
 								query.filters.items = query.filters.items.map((item) => {
@@ -395,7 +393,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				// case  - when there is no filter for the current key that means all are selected right now.
 				const newFilterItem: TagFilterItem = {
 					id: uuid(),
-					op: getOperatorValue(OPERATORS.NIN),
+					op: getOperatorValue('NOT_IN'),
 					key: filter.attributeKey,
 					value,
 				};
