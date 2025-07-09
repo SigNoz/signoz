@@ -84,6 +84,7 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 					date.tz(timezone.value).format(DATE_TIME_FORMATS.ISO_DATETIME)
 				}
 				onOk={onModalOkHandler}
+				data-1p-ignore
 				{...(selectedTime === 'custom' &&
 					!onTimeChange && {
 						value: rangeValue,
