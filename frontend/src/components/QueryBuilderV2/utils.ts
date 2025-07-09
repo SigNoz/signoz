@@ -153,14 +153,6 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		);
 	}
 
-	const presentFilterItemsSet: Set<string> = new Set(
-		filters.items
-			.filter((filterItem) => filterItem.key && filterItem.key?.key)
-			.map((filterItem) =>
-				`${filterItem.key?.key}-${filterItem.op}`.trim().toLowerCase(),
-			),
-	);
-
 	filters.items.forEach((filter) => {
 		const { key, op, value } = filter;
 
@@ -277,15 +269,18 @@ export const convertFiltersToExpressionWithExistingQuery = (
 				default:
 					break;
 			}
-			return;
+		}
+
+		if (
+			queryPairsMap.has(`${filter.key?.key}-${filter.op}`.trim().toLowerCase())
+		) {
+			visitedPairs.add(`${filter.key?.key}-${filter.op}`.trim().toLowerCase());
 		}
 
 		// Add filters that don't have an existing pair to non-existing filters
 		if (
 			shouldAddToNonExisting &&
-			!presentFilterItemsSet.has(
-				`${filter.key?.key}-${filter.op}`.trim().toLowerCase(),
-			)
+			!queryPairsMap.has(`${filter.key?.key}-${filter.op}`.trim().toLowerCase())
 		) {
 			nonExistingFilters.push(filter);
 		}
@@ -337,7 +332,9 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		return {
 			filters: updatedFilters,
 			filter: {
-				expression: `${modifiedQuery} ${nonExistingFilterExpression.expression}`,
+				expression: `${modifiedQuery.trim()} ${
+					nonExistingFilterExpression.expression
+				}`,
 			},
 		};
 	}
