@@ -891,7 +891,7 @@ func TestProcessJSONParser_WithFlatteningAndMapping(t *testing.T) {
 	// Parent is always first
 	parentOp := ops[0]
 	require.Equal(t, "json_parser", parentOp.Type)
-	require.Equal(t, 3, parentOp.MaxFlatteningDepth)
+	require.Equal(t, 1, parentOp.MaxFlatteningDepth)
 	require.Nil(t, parentOp.Mapping) // Mapping should be removed
 	require.Nil(t, parent.Mapping)   // Mapping should be removed
 	require.Contains(t, parentOp.If, `isJSON(body)`)
