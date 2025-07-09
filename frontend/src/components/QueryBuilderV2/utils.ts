@@ -91,7 +91,7 @@ export const convertFiltersToExpression = (
 		.filter((expression) => expression !== ''); // Remove empty expressions
 
 	return {
-		expression: expressions.join('AND '),
+		expression: expressions.join(' AND '),
 	};
 };
 
@@ -152,6 +152,14 @@ export const convertFiltersToExpressionWithExistingQuery = (
 			}),
 		);
 	}
+
+	const presentFilterItemsSet: Set<string> = new Set(
+		filters.items
+			.filter((filterItem) => filterItem.key && filterItem.key?.key)
+			.map((filterItem) =>
+				`${filterItem.key?.key}-${filterItem.op}`.trim().toLowerCase(),
+			),
+	);
 
 	filters.items.forEach((filter) => {
 		const { key, op, value } = filter;
@@ -273,7 +281,12 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		}
 
 		// Add filters that don't have an existing pair to non-existing filters
-		if (shouldAddToNonExisting) {
+		if (
+			shouldAddToNonExisting &&
+			!presentFilterItemsSet.has(
+				`${filter.key?.key}-${filter.op}`.trim().toLowerCase(),
+			)
+		) {
 			nonExistingFilters.push(filter);
 		}
 	});
