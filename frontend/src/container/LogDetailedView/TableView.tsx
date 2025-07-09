@@ -32,7 +32,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
-import { TableViewActions } from './TableView/TableViewActions';
+import TableViewActions from './TableView/TableViewActions';
 import {
 	filterKeyForField,
 	findKeyPath,

@@ -14,10 +14,17 @@ const useUrlQueryData = <T>(
 
 	const query = useMemo(() => urlQuery.get(queryKey), [urlQuery, queryKey]);
 
-	const queryData: T = useMemo(() => (query ? JSON.parse(query) : defaultData), [
-		query,
-		defaultData,
-	]);
+	const queryData: T = useMemo(() => {
+		if (query) {
+			try {
+				return JSON.parse(query);
+			} catch (e) {
+				console.warn('Failed to parse query as JSON:', query, e);
+				return defaultData;
+			}
+		}
+		return defaultData;
+	}, [query, defaultData]);
 
 	const redirectWithQuery = useCallback(
 		(newQueryData: T): void => {

@@ -4521,25 +4521,42 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 	}
 
 	queryInfoResult := NewQueryInfoResult(queryRangeParams, version)
-	if !(len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0)) {
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", queryInfoResult.ToMap())
-		return
-	}
-
-	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", queryInfoResult.ToMap())
 
 	if !(queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed) {
 		return
 	}
 
+	properties := queryInfoResult.ToMap()
 	referrer := r.Header.Get("Referer")
+
 	if referrer == "" {
 		return
 	}
 
-	if matched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer); matched {
-		properties := queryInfoResult.ToMap()
+	properties["referrer"] = referrer
 
+	logsExplorerMatched, _ := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
+	traceExplorerMatched, _ := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
+	metricsExplorerMatched, _ := regexp.MatchString(`/metrics-explorer/explorer(?:\?.*)?$`, referrer)
+	dashboardMatched, _ := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	alertMatched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+
+	switch {
+	case dashboardMatched:
+		properties["module_name"] = "dashboard"
+	case alertMatched:
+		properties["module_name"] = "rule"
+	case metricsExplorerMatched:
+		properties["module_name"] = "metrics-explorer"
+	case logsExplorerMatched:
+		properties["module_name"] = "logs-explorer"
+	case traceExplorerMatched:
+		properties["module_name"] = "traces-explorer"
+	default:
+		return
+	}
+
+	if dashboardMatched {
 		if dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`); err == nil {
 			if matches := dashboardIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
 				properties["dashboard_id"] = matches[1]
@@ -4551,25 +4568,40 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 				properties["widget_id"] = matches[1]
 			}
 		}
-
-		properties["referrer"] = referrer
-		properties["module_name"] = "dashboard"
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
 	}
 
-	if matched, _ := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer); matched {
-		properties := queryInfoResult.ToMap()
-
+	if alertMatched {
 		if alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`); err == nil {
 			if matches := alertIDRegex.FindStringSubmatch(referrer); len(matches) > 1 {
-				properties["alert_id"] = matches[1]
+				properties["rule_id"] = matches[1]
 			}
 		}
-
-		properties["referrer"] = referrer
-		properties["module_name"] = "rule"
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
 	}
+
+	// Check if result is empty or has no data
+	if len(result) == 0 {
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+		return
+	}
+
+	// Check if first result has no series data
+	if len(result[0].Series) == 0 {
+		// Check if first result has no list data
+		if len(result[0].List) == 0 {
+			// Check if first result has no table data
+			if result[0].Table == nil {
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				return
+			}
+
+			if len(result[0].Table.Rows) == 0 {
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				return
+			}
+		}
+	}
+
+	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
 
 }
 

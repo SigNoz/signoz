@@ -155,13 +155,13 @@ function LogsExplorerViewsContainer({
 
 	const isMultipleQueries = useMemo(
 		() =>
-			currentQuery.builder.queryData.length > 1 ||
-			currentQuery.builder.queryFormulas.length > 0,
+			currentQuery?.builder?.queryData?.length > 1 ||
+			currentQuery?.builder?.queryFormulas?.length > 0,
 		[currentQuery],
 	);
 
 	const isGroupByExist = useMemo(() => {
-		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
+		const groupByCount: number = currentQuery?.builder?.queryData?.reduce<number>(
 			(acc, query) => acc + query.groupBy.length,
 			0,
 		);
@@ -564,19 +564,19 @@ function LogsExplorerViewsContainer({
 		if (!stagedQuery) return [];
 
 		if (panelType === PANEL_TYPES.LIST) {
-			if (listChartData && listChartData.payload.data.result.length > 0) {
+			if (listChartData && listChartData.payload.data?.result.length > 0) {
 				return listChartData.payload.data.result;
 			}
 			return [];
 		}
 
-		if (!data || data.payload.data.result.length === 0) return [];
+		if (!data || data.payload.data?.result.length === 0) return [];
 
 		const isGroupByExist = stagedQuery.builder.queryData.some(
 			(queryData) => queryData.groupBy.length > 0,
 		);
 
-		const firstPayloadQuery = data.payload.data.result.find(
+		const firstPayloadQuery = data.payload.data?.result.find(
 			(item) => item.queryName === listQuery?.queryName,
 		);
 

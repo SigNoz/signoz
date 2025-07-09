@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './QuerySearch.styles.scss';
 
 import { CheckCircleFilled } from '@ant-design/icons';
@@ -41,6 +42,7 @@ import {
 } from 'utils/queryContextUtils';
 
 import { queryExamples } from './constants';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 const { Panel } = Collapse;
 
@@ -132,6 +134,8 @@ function QuerySearch({
 	const lastKeyRef = useRef<string>('');
 	const lastValueRef = useRef<string>('');
 	const isMountedRef = useRef<boolean>(true);
+
+	const { handleRunQuery } = useQueryBuilder();
 
 	// const {
 	// 	data: queryKeySuggestions,
@@ -1161,6 +1165,7 @@ function QuerySearch({
 									// and instead run a custom action
 									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
 									run: (): boolean => {
+										handleRunQuery(true, true);
 										return true;
 									},
 								},

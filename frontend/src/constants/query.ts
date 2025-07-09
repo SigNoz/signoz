@@ -46,5 +46,6 @@ export enum QueryParams {
 	msgSystem = 'msgSystem',
 	destination = 'destination',
 	kindString = 'kindString',
+	tab = 'tab',
 	selectedExplorerView = 'selectedExplorerView',
 }
