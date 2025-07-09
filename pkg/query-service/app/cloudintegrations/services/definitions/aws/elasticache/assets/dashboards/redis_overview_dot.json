@@ -175,7 +175,7 @@
       "multiSelect": false,
       "name": "Account",
       "order": 0,
-      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud.account.id') AS cloud.account.id FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'aws_ElastiCache_CPUUtilization_max' GROUP BY cloud.account.id",
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud.account.id') AS cloud.account.id FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'aws_ElastiCache_CPUUtilization_max' GROUP BY `cloud.account.id`",
       "showALLOption": false,
       "sort": "DISABLED",
       "textboxValue": "",
