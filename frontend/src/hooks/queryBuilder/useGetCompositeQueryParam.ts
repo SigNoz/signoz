@@ -1,6 +1,6 @@
 import {
 	convertAggregationToExpression,
-	convertFiltersToExpression,
+	convertFiltersToExpressionWithExistingQuery,
 	convertHavingToExpression,
 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
@@ -28,13 +28,15 @@ export const useGetCompositeQueryParam = (): Query | null => {
 			if (parsedCompositeQuery?.builder?.queryData) {
 				parsedCompositeQuery.builder.queryData = parsedCompositeQuery.builder.queryData.map(
 					(query) => {
+						const existingExpression = query.filter?.expression || '';
 						const convertedQuery = { ...query };
 
-						// Convert filters if needed
-						if (query.filters?.items?.length > 0 && !query.filter?.expression) {
-							const convertedFilter = convertFiltersToExpression(query.filters);
-							convertedQuery.filter = convertedFilter;
-						}
+						const convertedFilter = convertFiltersToExpressionWithExistingQuery(
+							query.filters,
+							existingExpression,
+						);
+						convertedQuery.filter = convertedFilter.filter;
+						convertedQuery.filters = convertedFilter.filters;
 
 						// Convert having if needed
 						if (query.having?.length > 0 && !query.havingExpression?.expression) {
@@ -53,7 +55,6 @@ export const useGetCompositeQueryParam = (): Query | null => {
 							) as any; // Type assertion to handle union type
 							convertedQuery.aggregations = convertedAggregation;
 						}
-
 						return convertedQuery;
 					},
 				);
