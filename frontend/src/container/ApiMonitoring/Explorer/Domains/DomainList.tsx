@@ -1,7 +1,7 @@
 import '../Explorer.styles.scss';
 
-import { LoadingOutlined } from '@ant-design/icons';
-import { Spin, Table, Typography } from 'antd';
+import { DataTable } from '@signozhq/table';
+import { Typography } from 'antd';
 import axios from 'api';
 import logEvent from 'api/common/logEvent';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
@@ -27,7 +27,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { DEFAULT_PARAMS, useApiMonitoringParams } from '../../queryParams';
 import {
-	columnsConfig,
+	dataTableColumnsConfig,
 	formatDataForTable,
 	hardcodedAttributeKeys,
 } from '../../utils';
@@ -157,50 +157,42 @@ function DomainList(): JSX.Element {
 					hardcodedAttributeKeys={hardcodedAttributeKeys}
 				/>
 			</div>
-			<Table
-				className={cx('api-monitoring-domain-list-table')}
-				dataSource={isFetching || isLoading ? [] : formattedDataForTable}
-				columns={columnsConfig}
-				loading={{
-					spinning: isFetching || isLoading,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+			{!isFetching && !isLoading && formattedDataForTable.length === 0 && (
+				<div className="no-filtered-domains-message-container">
+					<div className="no-filtered-domains-message-content">
+						<img
+							src="/Icons/emptyState.svg"
+							alt="thinking-emoji"
+							className="empty-state-svg"
+						/>
+						<Typography.Text className="no-filtered-domains-message">
+							This query had no results. Edit your query and try again!
+						</Typography.Text>
+					</div>
+				</div>
+			)}
+			<DataTable
+				columns={dataTableColumnsConfig}
+				data={isFetching || isLoading ? [] : formattedDataForTable}
+				tableId="api-monitoring-domain-list-table"
+				isLoading={isFetching || isLoading}
+				enablePagination={false}
+				showHeaders
+				enableSorting
+				enableColumnResizing={false}
+				enableColumnReordering={false}
+				enableColumnPinning={false}
+				enableGlobalFilter={false}
+				onRowClick={(record, index): void => {
+					if (index !== undefined) {
+						const dataIndex = formattedDataForTable.findIndex(
+							(item) => item.key === record.original.key,
+						);
+						setSelectedDomainIndex(dataIndex);
+						setParams({ selectedDomain: record.original.domainName });
+						logEvent('API Monitoring: Domain name row clicked', {});
+					}
 				}}
-				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-domains-message-container">
-								<div className="no-filtered-domains-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
-
-									<Typography.Text className="no-filtered-domains-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
-								</div>
-							</div>
-						),
-				}}
-				scroll={{ x: true }}
-				tableLayout="fixed"
-				onRow={(record, index): { onClick: () => void; className: string } => ({
-					onClick: (): void => {
-						if (index !== undefined) {
-							const dataIndex = formattedDataForTable.findIndex(
-								(item) => item.key === record.key,
-							);
-							setSelectedDomainIndex(dataIndex);
-							setParams({ selectedDomain: record.domainName });
-							logEvent('API Monitoring: Domain name row clicked', {});
-						}
-					},
-					className: 'expanded-clickable-row',
-				})}
-				rowClassName={(_, index): string =>
-					index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
-				}
 			/>
 			{selectedDomainIndex !== -1 && (
 				<DomainDetails

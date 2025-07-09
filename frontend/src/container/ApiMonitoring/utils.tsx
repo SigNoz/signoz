@@ -1,5 +1,7 @@
+/* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/no-duplicate-string */
 import { Color } from '@signozhq/design-tokens';
+import { ColumnDef } from '@tanstack/react-table';
 import { Progress, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
@@ -246,6 +248,152 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		},
 		align: 'right',
 		className: `column`,
+	},
+];
+
+// DataTable columns configuration for SignozHq DataTable
+export const dataTableColumnsConfig: ColumnDef<APIDomainsRowData>[] = [
+	{
+		accessorKey: 'domainName',
+		header: (): React.ReactNode => (
+			<div className="domain-list-name-col-header">Domain</div>
+		),
+		size: 237,
+		enableSorting: false,
+		cell: ({ getValue }): React.ReactNode => (
+			<div className="domain-list-name-col-value">{getValue() as string}</div>
+		),
+	},
+	{
+		accessorKey: 'endpointCount',
+		header: 'Endpoints in use',
+		size: 142,
+		enableSorting: true,
+		sortingFn: (rowA, rowB): number => {
+			const endpointA =
+				rowA.original.endpointCount === '-' || rowA.original.endpointCount === 'n/a'
+					? ''
+					: rowA.original.endpointCount;
+			const endpointB =
+				rowB.original.endpointCount === '-' || rowB.original.endpointCount === 'n/a'
+					? ''
+					: rowB.original.endpointCount;
+
+			if (!endpointA && !endpointB) return 0;
+			if (!endpointA) return 1;
+			if (!endpointB) return -1;
+
+			return Number(endpointA) - Number(endpointB);
+		},
+	},
+	{
+		accessorKey: 'lastUsed',
+		header: 'Last used',
+		size: 142,
+		enableSorting: true,
+		sortingFn: (rowA, rowB): number => {
+			const dateA =
+				rowA.original.lastUsed === '-' || rowA.original.lastUsed === 'n/a'
+					? new Date(0).toISOString()
+					: rowA.original.lastUsed;
+			const dateB =
+				rowB.original.lastUsed === '-' || rowB.original.lastUsed === 'n/a'
+					? new Date(0).toISOString()
+					: rowB.original.lastUsed;
+
+			return new Date(dateB).getTime() - new Date(dateA).getTime();
+		},
+		cell: ({ getValue }): React.ReactNode => {
+			const lastUsed = getValue() as string;
+			return lastUsed === 'n/a' || lastUsed === '-'
+				? '-'
+				: getLastUsedRelativeTime(new Date(lastUsed).getTime());
+		},
+	},
+	{
+		accessorKey: 'rate',
+		header: (): React.ReactNode => (
+			<div>
+				Rate <span className="round-metric-tag">ops/s</span>
+			</div>
+		),
+		size: 142,
+		enableSorting: true,
+		sortingFn: (rowA, rowB): number => {
+			const rateA =
+				rowA.original.rate === '-' || rowA.original.rate === 'n/a'
+					? 0
+					: rowA.original.rate;
+			const rateB =
+				rowB.original.rate === '-' || rowB.original.rate === 'n/a'
+					? 0
+					: rowB.original.rate;
+			return Number(rateA) - Number(rateB);
+		},
+	},
+	{
+		accessorKey: 'errorRate',
+		header: (): React.ReactNode => (
+			<div>
+				Error <span className="round-metric-tag">%</span>
+			</div>
+		),
+		size: 142,
+		enableSorting: true,
+		sortingFn: (rowA, rowB): number => {
+			const errorRateA =
+				rowA.original.errorRate === '-' || rowA.original.errorRate === 'n/a'
+					? 0
+					: rowA.original.errorRate;
+			const errorRateB =
+				rowB.original.errorRate === '-' || rowB.original.errorRate === 'n/a'
+					? 0
+					: rowB.original.errorRate;
+
+			return Number(errorRateA) - Number(errorRateB);
+		},
+		cell: ({ getValue }): React.ReactNode => {
+			const errorRate = getValue() as number | string;
+			const errorRateValue =
+				errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate;
+			return (
+				<Progress
+					status="active"
+					percent={Number((errorRateValue as number).toFixed(2))}
+					strokeLinecap="butt"
+					size="small"
+					strokeColor={((): string => {
+						const errorRatePercent = Number((errorRateValue as number).toFixed(2));
+						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
+					className="progress-bar error-rate"
+				/>
+			);
+		},
+	},
+	{
+		accessorKey: 'latency',
+		header: (): React.ReactNode => (
+			<div>
+				Avg. Latency <span className="round-metric-tag">ms</span>
+			</div>
+		),
+		size: 142,
+		enableSorting: true,
+		sortingFn: (rowA, rowB): number => {
+			const latencyA =
+				rowA.original.latency === '-' || rowA.original.latency === 'n/a'
+					? 0
+					: rowA.original.latency;
+			const latencyB =
+				rowB.original.latency === '-' || rowB.original.latency === 'n/a'
+					? 0
+					: rowB.original.latency;
+
+			return Number(latencyA) - Number(latencyB);
+		},
 	},
 ];
 
