@@ -215,6 +215,27 @@ export function SpanDuration({
 		setHasActionButtons(false);
 	};
 
+	// Calculate text positioning to handle overflow cases
+	const textStyle = useMemo(() => {
+		const spanRightEdge = leftOffset + width;
+		const textWidthApprox = 8; // Approximate text width in percentage
+
+		// If span would cause text overflow, right-align text to span end
+		if (leftOffset > 100 - textWidthApprox) {
+			return {
+				right: `${100 - spanRightEdge}%`,
+				color,
+				textAlign: 'right' as const,
+			};
+		}
+
+		// Default: left-align text to span start
+		return {
+			left: `${leftOffset}%`,
+			color,
+		};
+	}, [leftOffset, width, color]);
+
 	return (
 		<div
 			className={cx(
@@ -270,7 +291,7 @@ export function SpanDuration({
 				<Typography.Text
 					className="span-line-text"
 					ellipsis
-					style={{ left: `${leftOffset}%`, color }}
+					style={textStyle}
 				>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
 			</Tooltip>
 		</div>
@@ -311,6 +332,16 @@ function getWaterfallColumns({
 				/>
 			),
 			size: 450,
+			/**
+			 * Note: The TanStack table currently does not support percentage-based column sizing.
+			 * Therefore, we specify both `minSize` and `maxSize` for the "span-name" column to ensure
+			 * that its width remains between 240px and 900px. Setting a `maxSize` here is important
+			 * because the "span-duration" column has column resizing disabled, making it difficult
+			 * to enforce a minimum width for that column. By constraining the "span-name" column,
+			 * we indirectly control the minimum width available for the "span-duration" column.
+			 */
+			minSize: 240,
+			maxSize: 900,
 		}),
 		columnDefHelper.display({
 			id: 'span-duration',
