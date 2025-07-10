@@ -198,39 +198,53 @@ const config = {
 			}),
 			new CssMinimizerPlugin(),
 			new ImageMinimizerPlugin({
-				minimizer: {
-					implementation: ImageMinimizerPlugin.imageminMinify,
-					options: {
-						// Lossless optimization with custom option
-						// Feel free to experiment with options for better results
-						plugins: [
-							['gifsicle', { interlaced: false }],
-							['jpegtran', { progressive: true }],
-							['optipng', { optimizationLevel: 7 }],
-							// SVGO configuration here https://github.com/svg/svgo#configuration
-							[
-								'svgo',
-								{
-									plugins: [
-										{
-											name: 'preset-default',
-											params: {
-												overrides: {
-													removeViewBox: false,
-													addAttributesToSVGElement: {
-														params: {
-															attributes: [{ xmlns: 'http://www.w3.org/2000/svg' }],
+				minimizer: [
+					{
+						implementation: ImageMinimizerPlugin.sharpMinify,
+						options: {
+							encodeOptions: {
+								jpeg: {
+									quality: 80,
+								},
+								webp: {
+									lossless: true,
+								},
+								avif: {
+									lossless: true,
+								},
+								png: {},
+								gif: {},
+							},
+						},
+					},
+					{
+						implementation: ImageMinimizerPlugin.imageminMinify,
+						options: {
+							plugins: [
+								[
+									'svgo',
+									{
+										plugins: [
+											{
+												name: 'preset-default',
+												params: {
+													overrides: {
+														removeViewBox: false,
+														addAttributesToSVGElement: {
+															params: {
+																attributes: [{ xmlns: 'http://www.w3.org/2000/svg' }],
+															},
 														},
 													},
 												},
 											},
-										},
-									],
-								},
+										],
+									},
+								],
 							],
-						],
+						},
 					},
-				},
+				],
 			}),
 		],
 	},
