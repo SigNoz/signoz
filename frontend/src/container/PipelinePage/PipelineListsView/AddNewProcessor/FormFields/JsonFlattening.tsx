@@ -26,15 +26,16 @@ function JsonFlattening({
 		!!mappingValue && Object.keys(mappingValue).length > 0,
 	);
 
+	const selectedMapping = selectedProcessorData?.mapping;
 	useEffect(() => {
 		if (!enableMapping) {
 			form.setFieldsValue({ mapping: undefined });
 		} else if (form.getFieldValue('mapping') === undefined) {
 			form.setFieldsValue({
-				mapping: selectedProcessorData?.mapping || PREDEFINED_MAPPING,
+				mapping: selectedMapping || PREDEFINED_MAPPING,
 			});
 		}
-	}, [enableMapping, form, selectedProcessorData?.mapping]);
+	}, [enableMapping, form, selectedMapping]);
 
 	const handleEnableMappingChange = (checked: boolean): void => {
 		setEnableMapping(checked);
