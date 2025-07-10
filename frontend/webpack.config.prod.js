@@ -14,6 +14,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const { RetryChunkLoadPlugin } = require('webpack-retry-chunk-load-plugin');
+const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
 
 dotenv.config();
 
@@ -135,24 +136,8 @@ const config = {
 				],
 			},
 			{
-				test: /\.(png|jpe?g|gif|svg)$/i,
-				use: [
-					{
-						loader: 'file-loader',
-					},
-					{
-						loader: 'image-webpack-loader',
-						options: {
-							bypassOnDebug: true,
-							optipng: {
-								optimizationLevel: 7,
-							},
-							gifsicle: {
-								interlaced: false,
-							},
-						},
-					},
-				],
+				test: /\.(jpe?g|png|gif|svg)$/i,
+				type: 'asset',
 			},
 
 			{
@@ -212,6 +197,41 @@ const config = {
 				},
 			}),
 			new CssMinimizerPlugin(),
+			new ImageMinimizerPlugin({
+				minimizer: {
+					implementation: ImageMinimizerPlugin.imageminMinify,
+					options: {
+						// Lossless optimization with custom option
+						// Feel free to experiment with options for better results
+						plugins: [
+							['gifsicle', { interlaced: false }],
+							['jpegtran', { progressive: true }],
+							['optipng', { optimizationLevel: 7 }],
+							// SVGO configuration here https://github.com/svg/svgo#configuration
+							[
+								'svgo',
+								{
+									plugins: [
+										{
+											name: 'preset-default',
+											params: {
+												overrides: {
+													removeViewBox: false,
+													addAttributesToSVGElement: {
+														params: {
+															attributes: [{ xmlns: 'http://www.w3.org/2000/svg' }],
+														},
+													},
+												},
+											},
+										},
+									],
+								},
+							],
+						],
+					},
+				},
+			}),
 		],
 	},
 	performance: {
