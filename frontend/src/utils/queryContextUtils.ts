@@ -967,6 +967,30 @@ export function getQueryContextAtCursor(
 					currentPair: currentPair,
 				};
 			}
+
+			if (
+				lastTokenContext.isInParenthesis &&
+				lastTokenBeforeCursor.type === FilterQueryLexer.RPAREN
+			) {
+				// If we are after a parenthesis we should enter the conjunction context.
+				return {
+					tokenType: lastTokenBeforeCursor.type,
+					text: lastTokenBeforeCursor.text,
+					start: adjustedCursorIndex,
+					stop: adjustedCursorIndex,
+					currentToken: lastTokenBeforeCursor.text,
+					isInKey: false,
+					isInNegation: false,
+					isInOperator: false,
+					isInValue: false,
+					isInFunction: false,
+					isInConjunction: true, // After RPARAN + space, should be conjunction context
+					isInParenthesis: false,
+					isInBracketList: false,
+					queryPairs: queryPairs,
+					currentPair: currentPair,
+				};
+			}
 		}
 
 		// FIXED: Consider the case where the cursor is at the end of a token
