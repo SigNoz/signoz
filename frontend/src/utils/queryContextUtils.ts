@@ -1521,7 +1521,6 @@ export function getCurrentQueryPair(
 				const pairStart =
 					position.keyStart ?? (position.operatorStart || position.valueStart || 0);
 
-				const ll = getIndexTillSpace(pair, query);
 				// If this pair ends at or before the cursor, and it's further right than our previous best match
 				if (
 					((pairEnd >= cursorIndex && pairStart <= cursorIndex) ||
