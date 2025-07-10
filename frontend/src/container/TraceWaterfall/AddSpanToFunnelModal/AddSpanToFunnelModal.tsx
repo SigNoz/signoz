@@ -210,13 +210,13 @@ function AddSpanToFunnelModal({
 				<ArrowLeft size={14} />
 				All funnels
 			</Button>
-			<Spin
-				style={{ height: 400 }}
-				spinning={isFunnelDetailsLoading || isFunnelDetailsFetching}
-				indicator={<LoadingOutlined spin />}
-			>
-				<div className="traces-funnel-details">
-					<div className="traces-funnel-details__steps-config">
+			<div className="traces-funnel-details">
+				<div className="traces-funnel-details__steps-config">
+					<Spin
+						className="add-span-to-funnel-modal__loading-spinner"
+						spinning={isFunnelDetailsLoading || isFunnelDetailsFetching}
+						indicator={<LoadingOutlined spin />}
+					>
 						{selectedFunnelId && funnelDetails?.payload && (
 							<FunnelProvider
 								funnelId={selectedFunnelId}
@@ -232,9 +232,9 @@ function AddSpanToFunnelModal({
 								/>
 							</FunnelProvider>
 						)}
-					</div>
+					</Spin>
 				</div>
-			</Spin>
+			</div>
 		</div>
 	);
 
