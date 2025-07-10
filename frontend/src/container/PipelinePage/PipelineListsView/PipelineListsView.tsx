@@ -6,7 +6,7 @@ import { ExpandableConfig } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
-import { isUndefined } from 'lodash-es';
+import { isEqual, isUndefined } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import React, {
 	useCallback,
@@ -423,8 +423,7 @@ function PipelineListsView({
 							prevProcessor.enable_flattening !== processor.enable_flattening ||
 							prevProcessor.enable_paths !== processor.enable_paths ||
 							prevProcessor.path_prefix !== processor.path_prefix ||
-							JSON.stringify(prevProcessor.mapping || {}) !==
-								JSON.stringify(processor.mapping || {})
+							!isEqual(prevProcessor.mapping, processor.mapping)
 						);
 					})
 					.map((processor) => ({
