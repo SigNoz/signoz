@@ -718,7 +718,6 @@ export function getQueryContextAtCursor(
 			isInValueBoundary ||
 			isInConjunctionBoundary ||
 			isInBracketListBoundary ||
-			isInParenthesisBoundary ||
 			isAfterClosingBracketList
 		) {
 			// Extract information from the current pair (if available)
@@ -1454,6 +1453,19 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 	}
 }
 
+function getIndexTillSpace(pair: IQueryPair, query: string): number {
+	const { position } = pair;
+	let pairEnd = position.valueEnd || position.operatorEnd || position.keyEnd;
+
+	// Start from the next index after pairEnd
+	pairEnd += 1;
+	while (pairEnd < query.length && query.charAt(pairEnd) === ' ') {
+		pairEnd += 1;
+	}
+
+	return pairEnd;
+}
+
 /**
  * Gets the current query pair at the cursor position
  * This is useful for getting suggestions based on the current context
@@ -1483,12 +1495,15 @@ export function getCurrentQueryPair(
 					position.valueEnd || position.operatorEnd || position.keyEnd;
 
 				const pairStart =
-					position.keyStart || position.operatorStart || position.valueStart || 0;
+					position.keyStart ?? (position.operatorStart || position.valueStart || 0);
 
+				const ll = getIndexTillSpace(pair, query);
 				// If this pair ends at or before the cursor, and it's further right than our previous best match
 				if (
-					pairEnd >= cursorIndex &&
-					pairStart <= cursorIndex &&
+					((pairEnd >= cursorIndex && pairStart <= cursorIndex) ||
+						(!pair.isComplete &&
+							pairStart <= cursorIndex &&
+							getIndexTillSpace(pair, query) >= cursorIndex)) &&
 					(!bestMatch ||
 						pairEnd >
 							(bestMatch.position.valueEnd ||
