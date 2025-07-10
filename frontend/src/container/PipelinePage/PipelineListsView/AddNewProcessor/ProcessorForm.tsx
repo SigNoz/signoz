@@ -88,6 +88,7 @@ function ProcessorFieldInput({
 							selectedProcessorData?.enable_flattening ?? fieldData.initialValue
 						}
 						valuePropName="checked"
+						className="enable-flattening-switch"
 					>
 						<Space>
 							<Switch
