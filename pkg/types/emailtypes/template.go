@@ -12,7 +12,7 @@ import (
 var (
 	// Templates is a list of all the templates that are supported by the emailing service.
 	// This list should be updated whenever a new template is added.
-	Templates = []TemplateName{TemplateNameInvitationEmail}
+	Templates = []TemplateName{TemplateNameInvitationEmail, TemplateNameUpdateRole}
 )
 
 var (
