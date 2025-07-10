@@ -947,7 +947,7 @@ func TestProcessJSONParser_WithoutMapping(t *testing.T) {
 
 	op := ops[0]
 	require.Equal(t, "json_parser", op.Type)
-	require.Equal(t, 3, op.MaxFlatteningDepth)
+	require.Equal(t, 1, op.MaxFlatteningDepth)
 	require.True(t, op.EnableFlattening)
 	require.True(t, op.EnablePaths)
 	require.Equal(t, "parsed", op.PathPrefix)
