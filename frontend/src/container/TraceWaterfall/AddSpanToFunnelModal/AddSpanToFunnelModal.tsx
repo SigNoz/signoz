@@ -99,6 +99,7 @@ function AddSpanToFunnelModal({
 	const [triggerSave, setTriggerSave] = useState<boolean>(false);
 	const [isUnsavedChanges, setIsUnsavedChanges] = useState<boolean>(false);
 	const [triggerDiscard, setTriggerDiscard] = useState<boolean>(false);
+	const [isCreatedFromSpan, setIsCreatedFromSpan] = useState<boolean>(false);
 
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchQuery(e.target.value);
@@ -126,6 +127,7 @@ function AddSpanToFunnelModal({
 	const handleFunnelClick = (funnel: FunnelData): void => {
 		setSelectedFunnelId(funnel.funnel_id);
 		setActiveView(ModalView.DETAILS);
+		setIsCreatedFromSpan(false);
 	};
 
 	const handleBack = (): void => {
@@ -133,6 +135,7 @@ function AddSpanToFunnelModal({
 		setSelectedFunnelId(undefined);
 		setIsUnsavedChanges(false);
 		setTriggerSave(false);
+		setIsCreatedFromSpan(false);
 	};
 
 	const handleCreateNewClick = (): void => {
@@ -188,6 +191,7 @@ function AddSpanToFunnelModal({
 					if (funnelId) {
 						setSelectedFunnelId(funnelId);
 						setActiveView(ModalView.DETAILS);
+						setIsCreatedFromSpan(true);
 					}
 					setIsCreateModalOpen(false);
 				}}
@@ -214,7 +218,10 @@ function AddSpanToFunnelModal({
 				<div className="traces-funnel-details">
 					<div className="traces-funnel-details__steps-config">
 						{selectedFunnelId && funnelDetails?.payload && (
-							<FunnelProvider funnelId={selectedFunnelId}>
+							<FunnelProvider
+								funnelId={selectedFunnelId}
+								hasSingleStep={isCreatedFromSpan}
+							>
 								<FunnelDetailsView
 									funnel={funnelDetails.payload}
 									span={span}
