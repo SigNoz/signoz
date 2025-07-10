@@ -238,7 +238,7 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 		}
 	}
 
-	return user, nil
+	return updatedUser, nil
 }
 
 func (m *Module) DeleteUser(ctx context.Context, orgID string, id string, deletedBy string) error {
