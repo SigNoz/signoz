@@ -224,7 +224,7 @@ func (m *Module) UpdateUser(ctx context.Context, orgID string, id string, user *
 	m.analytics.IdentifyUser(ctx, user.OrgID, user.ID.String(), traits)
 
 	traits["updated_by"] = updatedBy
-	m.analytics.TrackUser(ctx, updatedUser.OrgID, updatedUser.ID.String(), "User Updated", traits)
+	m.analytics.TrackUser(ctx, user.OrgID, user.ID.String(), "User Updated", traits)
 
 	// if the role is updated then send an email
 	if existingUser.Role != updatedUser.Role {
