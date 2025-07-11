@@ -723,10 +723,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 			{showAddCreditCardModal && <ChatSupportGateway />}
 			{showChangelogModal && changelog && (
-				<ChangelogModal
-					changelog={changelog}
-					onClose={(): void => toggleChangelogModal()}
-				/>
+				<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
 			)}
 		</Layout>
 	);

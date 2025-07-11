@@ -36,10 +36,6 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 
 	const { mutate: updateUserPreferenceMutation } = useMutation(
 		updateUserPreference,
-		{
-			onSuccess: () => {},
-			onError: () => {},
-		},
 	);
 
 	useEffect(() => {
