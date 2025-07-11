@@ -6,6 +6,7 @@ import {
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useMemo } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export const useGetCompositeQueryParam = (): Query | null => {
@@ -48,7 +49,7 @@ export const useGetCompositeQueryParam = (): Query | null => {
 						if (!query.aggregations && query.aggregateOperator) {
 							const convertedAggregation = convertAggregationToExpression(
 								query.aggregateOperator,
-								query.aggregateAttribute,
+								query.aggregateAttribute as BaseAutocompleteData,
 								query.dataSource,
 								query.timeAggregation,
 								query.spaceAggregation,
