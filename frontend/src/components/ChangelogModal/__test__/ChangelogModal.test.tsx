@@ -59,10 +59,10 @@ jest.mock('providers/App/App', () => ({
 	})),
 }));
 
-function renderChangelog(): void {
+function renderChangelog(onClose: () => void = jest.fn()): void {
 	render(
 		<MockQueryClientProvider>
-			<ChangelogModal changelog={mockChangelog} onClose={jest.fn()} />
+			<ChangelogModal changelog={mockChangelog} onClose={onClose} />
 		</MockQueryClientProvider>,
 	);
 }
@@ -81,11 +81,7 @@ describe('ChangelogModal', () => {
 
 	it('calls onClose when Skip for now is clicked', () => {
 		const onClose = jest.fn();
-		render(
-			<MockQueryClientProvider>
-				<ChangelogModal changelog={mockChangelog} onClose={onClose} />
-			</MockQueryClientProvider>,
-		);
+		renderChangelog(onClose);
 		fireEvent.click(screen.getByText('Skip for now'));
 		expect(onClose).toHaveBeenCalled();
 	});
