@@ -34,7 +34,6 @@ const mockChangelog: ChangelogSchema = {
 	],
 	bug_fixes: 'Bug fix details',
 	maintenance: 'Maintenance details',
-	// Add any other required fields with mock values as per ChangelogSchema definition
 };
 
 // Mock react-markdown to just render children as plain text
