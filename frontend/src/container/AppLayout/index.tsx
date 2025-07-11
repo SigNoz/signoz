@@ -55,7 +55,10 @@ import {
 } from 'types/actions/app';
 import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
-import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import {
+	ChangelogSchema,
+	DeploymentType,
+} from 'types/api/changelog/getChangelogByVersion';
 import APIError from 'types/api/error';
 import {
 	LicenseEvent,
@@ -144,6 +147,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
+	const changelogForTenant = isCloudUserVal
+		? DeploymentType.CLOUD_ONLY
+		: DeploymentType.OSS_ONLY;
+
 	const [
 		getUserVersionResponse,
 		getUserLatestVersionResponse,
@@ -161,8 +168,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		},
 		{
 			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
-				getChangelogByVersion(latestVersion),
-			queryKey: ['getChangelogByVersion', latestVersion],
+				getChangelogByVersion(latestVersion, changelogForTenant),
+			queryKey: ['getChangelogByVersion', latestVersion, changelogForTenant],
 			enabled: isLoggedIn && !isCloudUserVal && Boolean(latestVersion),
 		},
 	]);
