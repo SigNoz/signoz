@@ -41,11 +41,12 @@ import {
 	ChevronUp,
 	Cog,
 	Ellipsis,
+	GitCommitVertical,
 	GripVertical,
+	LampDesk,
 	Logs,
 	MousePointerClick,
 	PackagePlus,
-	Plus,
 	ScrollText,
 	X,
 } from 'lucide-react';
@@ -551,7 +552,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							<span>{feature.title}</span>
 						</div>
 					),
-					icon: <Plus size={14} />,
+					icon: idx === 0 ? <LampDesk size={14} /> : <GitCommitVertical size={14} />,
 					itemKey: `changelog-${idx + 1}`,
 				}),
 			);
@@ -725,7 +726,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		if (item && !('type' in item)) {
 			logEvent('Help Popover: Item clicked', {
 				menuRoute: item.key,
-				menuLabel: item.label,
+				menuLabel: String(item.label),
 			});
 
 			switch (item.key) {

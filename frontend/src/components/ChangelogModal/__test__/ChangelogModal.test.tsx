@@ -3,7 +3,10 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import {
+	ChangelogSchema,
+	DeploymentType,
+} from 'types/api/changelog/getChangelogByVersion';
 
 import ChangelogModal from '../ChangelogModal';
 
@@ -26,7 +29,7 @@ const mockChangelog: ChangelogSchema = {
 			createdAt: '2025-06-09T12:00:00Z',
 			updatedAt: '2025-06-09T13:00:00Z',
 			publishedAt: '2025-06-09T14:00:00Z',
-			deployment_type: 'oss',
+			deployment_type: DeploymentType.ALL,
 		},
 	],
 	bug_fixes: 'Bug fix details',
