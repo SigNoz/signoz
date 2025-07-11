@@ -89,10 +89,11 @@ export const useActiveLog = (): UseActiveLog => {
 					async () =>
 						getAggregateKeys({
 							searchText: fieldKey,
-							aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
+							aggregateOperator:
+								currentQuery.builder.queryData[0].aggregateOperator || '',
 							dataSource: currentQuery.builder.queryData[0].dataSource,
 							aggregateAttribute:
-								currentQuery.builder.queryData[0].aggregateAttribute.key,
+								currentQuery.builder.queryData[0].aggregateAttribute?.key || '',
 						}),
 				);
 
@@ -151,10 +152,11 @@ export const useActiveLog = (): UseActiveLog => {
 					async () =>
 						getAggregateKeys({
 							searchText: fieldKey,
-							aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
+							aggregateOperator:
+								currentQuery.builder.queryData[0].aggregateOperator || '',
 							dataSource: currentQuery.builder.queryData[0].dataSource,
 							aggregateAttribute:
-								currentQuery.builder.queryData[0].aggregateAttribute.key,
+								currentQuery.builder.queryData[0].aggregateAttribute?.key || '',
 						}),
 				);
 

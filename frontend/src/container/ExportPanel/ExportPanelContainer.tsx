@@ -1,6 +1,6 @@
 import { Button, Typography } from 'antd';
 import createDashboard from 'api/v1/dashboards/create';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useCallback, useMemo, useState } from 'react';
@@ -75,7 +75,7 @@ function ExportPanelContainer({
 					ns: 'dashboard',
 				}),
 				uploadedGrafana: false,
-				version: ENTITY_VERSION_V4,
+				version: ENTITY_VERSION_V5,
 			});
 		} catch (error) {
 			showErrorModal(error as APIError);
