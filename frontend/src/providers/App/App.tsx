@@ -61,6 +61,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const [org, setOrg] = useState<Organization[] | null>(null);
 	const [changelog, setChangelog] = useState<ChangelogSchema | null>(null);
 
+	const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
+
 	// if the user.id is not present, for migration older cases then we need to logout only for current logged in users!
 	useEffect(() => {
 		if (!user.id && isLoggedIn) {
@@ -262,6 +264,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		[setChangelog],
 	);
 
+	const toggleChangelogModal = useCallback(() => {
+		setShowChangelogModal((prev) => !prev);
+	}, []);
+
 	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
 	useGlobalEventListener('AFTER_LOGIN', (event) => {
 		if (event.detail) {
@@ -306,12 +312,14 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			orgPreferencesFetchError,
 			activeLicense,
 			changelog,
+			showChangelogModal,
 			activeLicenseRefetch,
 			updateUser,
 			updateOrgPreferences,
 			updateUserPreferenceInContext,
 			updateOrg,
 			updateChangelog,
+			toggleChangelogModal,
 			versionData: versionData?.payload || null,
 		}),
 		[
@@ -331,9 +339,11 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			activeLicenseRefetch,
 			orgPreferencesFetchError,
 			changelog,
+			showChangelogModal,
 			updateUserPreferenceInContext,
 			updateOrg,
 			updateChangelog,
+			toggleChangelogModal,
 			user,
 			userFetchError,
 			versionData,
