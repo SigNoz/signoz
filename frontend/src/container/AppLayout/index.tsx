@@ -93,8 +93,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		toggleChangelogModal,
 		showChangelogModal,
 		changelog,
-		// currentChangelog,
-		// latestChangelog,
 	} = useAppContext();
 
 	const { notifications } = useNotifications();
@@ -151,6 +149,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		? DeploymentType.CLOUD_ONLY
 		: DeploymentType.OSS_ONLY;
 
+	const seenChangelogVersion = userPreferences?.find(
+		(preference) =>
+			preference.name === USER_PREFERENCES.LAST_SEEN_CHANGELOG_VERSION,
+	)?.value as string;
+
 	const [
 		getUserVersionResponse,
 		getUserLatestVersionResponse,
@@ -170,8 +173,26 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
 				getChangelogByVersion(latestVersion, changelogForTenant),
 			queryKey: ['getChangelogByVersion', latestVersion, changelogForTenant],
-			enabled: isLoggedIn && !isCloudUserVal && Boolean(latestVersion),
+			enabled: isLoggedIn && Boolean(latestVersion),
 		},
+	]);
+
+	useEffect(() => {
+		if (
+			isCloudUserVal &&
+			Boolean(latestVersion) &&
+			latestVersion !== seenChangelogVersion
+		) {
+			// Automatically open the changelog modal for cloud users after 1s, if they've not seen this version before.
+			setTimeout(() => {
+				toggleChangelogModal();
+			}, 1000);
+		}
+	}, [
+		isCloudUserVal,
+		latestVersion,
+		seenChangelogVersion,
+		toggleChangelogModal,
 	]);
 
 	useEffect(() => {

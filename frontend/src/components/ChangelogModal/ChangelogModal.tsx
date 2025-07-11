@@ -2,11 +2,16 @@ import './ChangelogModal.styles.scss';
 
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { Button, Modal } from 'antd';
+import updateUserPreference from 'api/v1/user/preferences/name/update';
 import cx from 'classnames';
+import { USER_PREFERENCES } from 'constants/userPreferences';
 import dayjs from 'dayjs';
 import { ChevronsDown, ScrollText } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import { UserPreference } from 'types/api/preferences/preference';
 
 import ChangelogRenderer from './components/ChangelogRenderer';
 
@@ -18,10 +23,41 @@ interface Props {
 function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 	const [hasScroll, setHasScroll] = useState(false);
 	const changelogContentSectionRef = useRef<HTMLDivElement>(null);
+	const { userPreferences, updateUserPreferenceInContext } = useAppContext();
 
 	const formattedReleaseDate = dayjs(changelog?.release_date).format(
 		'MMMM D, YYYY',
 	);
+
+	const seenChangelogVersion = userPreferences?.find(
+		(preference) =>
+			preference.name === USER_PREFERENCES.LAST_SEEN_CHANGELOG_VERSION,
+	)?.value as string;
+
+	const { mutate: updateUserPreferenceMutation } = useMutation(
+		updateUserPreference,
+		{
+			onSuccess: () => {},
+			onError: () => {},
+		},
+	);
+
+	useEffect(() => {
+		// Update the seen version
+		if (seenChangelogVersion !== changelog.version) {
+			const version = {
+				name: USER_PREFERENCES.LAST_SEEN_CHANGELOG_VERSION,
+				value: changelog.version,
+			};
+			updateUserPreferenceInContext(version as UserPreference);
+			updateUserPreferenceMutation(version);
+		}
+	}, [
+		seenChangelogVersion,
+		changelog.version,
+		updateUserPreferenceMutation,
+		updateUserPreferenceInContext,
+	]);
 
 	const checkScroll = useCallback((): void => {
 		if (changelogContentSectionRef.current) {
