@@ -8,6 +8,7 @@ import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
 import { isUndefined } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import React, {
 	useCallback,
 	useEffect,
@@ -18,6 +19,7 @@ import React, {
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
+import APIError from 'types/api/error';
 import {
 	ActionMode,
 	ActionType,
@@ -95,6 +97,7 @@ function PipelineListsView({
 	pipelineData,
 	refetchPipelineLists,
 }: PipelineListsViewProps): JSX.Element {
+	const { showErrorModal } = useErrorModal();
 	const [pipelineForm] = Form.useForm<PipelineData>();
 	const { t } = useTranslation(['pipeline', 'common']);
 	const [modal, contextHolder] = Modal.useModal();
@@ -413,15 +416,15 @@ function PipelineListsView({
 			delete pipelineData?.id;
 			return pipelineData;
 		});
-		const response = await savePipeline({
-			data: { pipelines: modifiedPipelineData },
-		});
-		if (response.statusCode === 200) {
+		try {
+			const response = await savePipeline({
+				data: { pipelines: modifiedPipelineData },
+			});
 			refetchPipelineLists();
 			setActionMode(ActionMode.Viewing);
 			setShowSaveButton(undefined);
 
-			const pipelinesInDB = response.payload?.pipelines || [];
+			const pipelinesInDB = response.data?.pipelines || [];
 			setCurrPipelineData(pipelinesInDB);
 			setPrevPipelineData(pipelinesInDB);
 
@@ -430,7 +433,7 @@ function PipelineListsView({
 				enabled: pipelinesInDB.filter((p) => p.enabled).length,
 				source: 'signoz-ui',
 			});
-		} else {
+		} catch (error) {
 			modifiedPipelineData.forEach((item: PipelineData) => {
 				const pipelineData = item;
 				pipelineData.id = v4();
@@ -438,10 +441,7 @@ function PipelineListsView({
 			});
 			setActionMode(ActionMode.Editing);
 			setShowSaveButton(ActionMode.Editing);
-			notifications.error({
-				message: 'Error',
-				description: response.error || t('something_went_wrong'),
-			});
+			showErrorModal(error as APIError);
 			setCurrPipelineData(modifiedPipelineData);
 			setPrevPipelineData(modifiedPipelineData);
 		}
