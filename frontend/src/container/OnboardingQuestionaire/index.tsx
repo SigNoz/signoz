@@ -254,7 +254,7 @@ function OnboardingQuestionaire(): JSX.Element {
 							setCurrentStep(2);
 						}}
 						onNext={handleUpdateProfile}
-						onWillDoLater={(): void => setCurrentStep(4)}
+						onWillDoLater={handleUpdateProfile}
 					/>
 				)}
 
