@@ -5,12 +5,8 @@ import { Button, Modal } from 'antd';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import { ChevronsDown, ScrollText } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-	ChangelogSchema,
-	ChangelogType,
-} from 'types/api/changelog/getChangelogByVersion';
+import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 
 import ChangelogRenderer from './components/ChangelogRenderer';
 
@@ -22,7 +18,6 @@ interface Props {
 function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 	const [hasScroll, setHasScroll] = useState(false);
 	const changelogContentSectionRef = useRef<HTMLDivElement>(null);
-	const { changelogToShow } = useAppContext();
 
 	const formattedReleaseDate = dayjs(changelog?.release_date).format(
 		'MMMM D, YYYY',
@@ -94,20 +89,18 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 							{changelog.features.length > 1 ? 'features' : 'feature'}
 						</span>
 					)}
-					{changelogToShow === ChangelogType.LATEST && (
-						<div className="changelog-modal-footer-ctas">
-							<Button type="default" icon={<CloseOutlined />} onClick={onClose}>
-								Skip for now
-							</Button>
-							<Button
-								type="primary"
-								icon={<CheckOutlined />}
-								onClick={onClickUpdateWorkspace}
-							>
-								Update my workspace
-							</Button>
-						</div>
-					)}
+					<div className="changelog-modal-footer-ctas">
+						<Button type="default" icon={<CloseOutlined />} onClick={onClose}>
+							Skip for now
+						</Button>
+						<Button
+							type="primary"
+							icon={<CheckOutlined />}
+							onClick={onClickUpdateWorkspace}
+						>
+							Update my workspace
+						</Button>
+					</div>
 					{changelog && (
 						<div className="scroll-btn-container">
 							<button

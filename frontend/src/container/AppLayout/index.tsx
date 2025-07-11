@@ -55,10 +55,7 @@ import {
 } from 'types/actions/app';
 import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
-import {
-	ChangelogSchema,
-	ChangelogType,
-} from 'types/api/changelog/getChangelogByVersion';
+import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import APIError from 'types/api/error';
 import {
 	LicenseEvent,
@@ -89,12 +86,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
 		userPreferences,
-		updateLatestChangelog,
-		updateCurrentChangelog,
+		updateChangelog,
 		toggleChangelogModal,
-		changelogToShow,
-		currentChangelog,
-		latestChangelog,
+		showChangelogModal,
+		changelog,
+		// currentChangelog,
+		// latestChangelog,
 	} = useAppContext();
 
 	const { notifications } = useNotifications();
@@ -107,7 +104,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const [showSlowApiWarning, setShowSlowApiWarning] = useState(false);
 	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
 
-	const { latestVersion, currentVersion } = useSelector<AppState, AppReducer>(
+	const { latestVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 
@@ -150,8 +147,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const [
 		getUserVersionResponse,
 		getUserLatestVersionResponse,
-		getLatestChangelogByVersionResponse,
-		getCurrentChangelogByVersionResponse,
+		getChangelogByVersionResponse,
 	] = useQueries([
 		{
 			queryFn: getUserVersion,
@@ -168,16 +164,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				getChangelogByVersion(latestVersion),
 			queryKey: ['getLatestChangelogByVersionResponse', latestVersion],
 			enabled: isLoggedIn && !isCloudUserVal && Boolean(latestVersion),
-		},
-		{
-			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
-				getChangelogByVersion(currentVersion),
-			queryKey: ['getCurrentChangelogByVersionResponse', currentVersion],
-			enabled:
-				isLoggedIn &&
-				!isCloudUserVal &&
-				Boolean(currentVersion) &&
-				latestVersion !== currentVersion,
 		},
 	]);
 
@@ -284,38 +270,20 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (
-			getLatestChangelogByVersionResponse.isFetched &&
-			getLatestChangelogByVersionResponse.isSuccess &&
-			getLatestChangelogByVersionResponse.data &&
-			getLatestChangelogByVersionResponse.data.payload
+			getChangelogByVersionResponse.isFetched &&
+			getChangelogByVersionResponse.isSuccess &&
+			getChangelogByVersionResponse.data &&
+			getChangelogByVersionResponse.data.payload
 		) {
-			updateLatestChangelog(getLatestChangelogByVersionResponse.data.payload);
+			updateChangelog(getChangelogByVersionResponse.data.payload);
 		}
 	}, [
-		updateLatestChangelog,
-		getLatestChangelogByVersionResponse.isFetched,
-		getLatestChangelogByVersionResponse.isLoading,
-		getLatestChangelogByVersionResponse.isError,
-		getLatestChangelogByVersionResponse.data,
-		getLatestChangelogByVersionResponse.isSuccess,
-	]);
-
-	useEffect(() => {
-		if (
-			getCurrentChangelogByVersionResponse.isFetched &&
-			getCurrentChangelogByVersionResponse.isSuccess &&
-			getCurrentChangelogByVersionResponse.data &&
-			getCurrentChangelogByVersionResponse.data.payload
-		) {
-			updateCurrentChangelog(getCurrentChangelogByVersionResponse.data.payload);
-		}
-	}, [
-		updateCurrentChangelog,
-		getCurrentChangelogByVersionResponse.isFetched,
-		getCurrentChangelogByVersionResponse.isLoading,
-		getCurrentChangelogByVersionResponse.isError,
-		getCurrentChangelogByVersionResponse.data,
-		getCurrentChangelogByVersionResponse.isSuccess,
+		updateChangelog,
+		getChangelogByVersionResponse.isFetched,
+		getChangelogByVersionResponse.isLoading,
+		getChangelogByVersionResponse.isError,
+		getChangelogByVersionResponse.data,
+		getChangelogByVersionResponse.isSuccess,
 	]);
 
 	const isToDisplayLayout = isLoggedIn;
@@ -335,13 +303,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 
 	const [showWorkspaceRestricted, setShowWorkspaceRestricted] = useState(false);
-
-	const changelog: ChangelogSchema | null = useMemo(() => {
-		if (!changelogToShow) return null;
-		return changelogToShow === ChangelogType.CURRENT
-			? currentChangelog
-			: latestChangelog;
-	}, [changelogToShow, currentChangelog, latestChangelog]);
 
 	useEffect(() => {
 		if (
@@ -728,7 +689,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			</Flex>
 
 			{showAddCreditCardModal && <ChatSupportGateway />}
-			{changelog && (
+			{showChangelogModal && changelog && (
 				<ChangelogModal
 					changelog={changelog}
 					onClose={(): void => toggleChangelogModal()}

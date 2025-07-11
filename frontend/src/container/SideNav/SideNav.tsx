@@ -62,7 +62,6 @@ import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { ChangelogType } from 'types/api/changelog/getChangelogByVersion';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
@@ -132,8 +131,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		trialInfo,
 		isLoggedIn,
 		userPreferences,
-		latestChangelog,
-		currentChangelog,
+		changelog,
 		toggleChangelogModal,
 		updateUserPreferenceInContext,
 	} = useAppContext();
@@ -543,8 +541,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			);
 		}
 
-		if (currentChangelog) {
-			const firstTwoFeatures = currentChangelog.features.slice(0, 2);
+		if (changelog) {
+			const firstTwoFeatures = changelog.features.slice(0, 2);
 			const dropdownItems: SidebarItem[] = firstTwoFeatures.map(
 				(feature, idx) => ({
 					key: `changelog-${idx + 1}`,
@@ -585,7 +583,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isPremiumSupportEnabled,
 		isCloudUser,
 		trialInfo,
-		currentChangelog,
+		changelog,
 	]);
 
 	const [isCurrentOrgSettings] = useComponentPermission(
@@ -747,7 +745,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				case 'changelog-1':
 				case 'changelog-2':
 				case CHANGELOG_LABEL.toLowerCase().replace(' ', '-'):
-					toggleChangelogModal(ChangelogType.CURRENT);
+					toggleChangelogModal();
 					break;
 				default:
 					break;
@@ -790,12 +788,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	};
 
 	const onClickVersionHandler = useCallback((): void => {
-		if (isCloudUser || !latestChangelog) {
+		if (isCloudUser || !changelog) {
 			return;
 		}
 
-		toggleChangelogModal(ChangelogType.LATEST);
-	}, [isCloudUser, latestChangelog, toggleChangelogModal]);
+		toggleChangelogModal();
+	}, [isCloudUser, changelog, toggleChangelogModal]);
 
 	useEffect(() => {
 		if (!isLatestVersion && !isCloudUser) {
@@ -836,7 +834,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										isCommunityEnterpriseUser && 'community-enterprise-user',
 										isCloudUser && 'cloud-user',
 										showVersionUpdateNotification &&
-											latestChangelog &&
+											changelog &&
 											'version-update-notification',
 									)}
 								>
@@ -849,7 +847,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 											arrow={false}
 											overlay={
 												showVersionUpdateNotification &&
-												latestChangelog && (
+												changelog && (
 													<div className="version-update-notification-tooltip">
 														<div className="version-update-notification-tooltip-title">
 															There&apos;s a new version available.
@@ -864,13 +862,13 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										>
 											<div className="version-container">
 												<span
-													className={cx('version', latestChangelog && 'version-clickable')}
+													className={cx('version', changelog && 'version-clickable')}
 													onClick={onClickVersionHandler}
 												>
 													{currentVersion}
 												</span>
 
-												{showVersionUpdateNotification && latestChangelog && (
+												{showVersionUpdateNotification && changelog && (
 													<span className="version-update-notification-dot-icon" />
 												)}
 											</div>

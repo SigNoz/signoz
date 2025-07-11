@@ -3,10 +3,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import {
-	ChangelogSchema,
-	ChangelogType,
-} from 'types/api/changelog/getChangelogByVersion';
+import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 
 import ChangelogModal from '../ChangelogModal';
 
@@ -45,11 +42,6 @@ jest.mock(
 			return <div>{children}</div>;
 		},
 );
-
-// mock useAppContext
-jest.mock('providers/App/App', () => ({
-	useAppContext: jest.fn(() => ({ changelogToShow: ChangelogType.LATEST })),
-}));
 
 describe('ChangelogModal', () => {
 	it('renders modal with changelog data', () => {

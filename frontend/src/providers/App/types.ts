@@ -1,7 +1,4 @@
-import {
-	ChangelogSchema,
-	ChangelogType,
-} from 'types/api/changelog/getChangelogByVersion';
+import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import APIError from 'types/api/error';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import { LicenseResModel, TrialInfo } from 'types/api/licensesV3/getActive';
@@ -30,17 +27,15 @@ export interface IAppContext {
 	activeLicenseFetchError: APIError | null;
 	featureFlagsFetchError: unknown;
 	orgPreferencesFetchError: unknown;
-	latestChangelog: ChangelogSchema | null;
-	currentChangelog: ChangelogSchema | null;
-	changelogToShow: ChangelogType | null;
+	changelog: ChangelogSchema | null;
+	showChangelogModal: boolean;
 	activeLicenseRefetch: () => void;
 	updateUser: (user: IUser) => void;
 	updateOrgPreferences: (orgPreferences: OrgPreference[]) => void;
 	updateUserPreferenceInContext: (userPreference: UserPreference) => void;
 	updateOrg(orgId: string, updatedOrgName: string): void;
-	updateLatestChangelog(payload: ChangelogSchema): void;
-	updateCurrentChangelog(payload: ChangelogSchema): void;
-	toggleChangelogModal(type?: ChangelogType): void;
+	updateChangelog(payload: ChangelogSchema): void;
+	toggleChangelogModal(): void;
 	versionData: PayloadProps | null;
 }
 

@@ -19,10 +19,7 @@ import {
 	useState,
 } from 'react';
 import { useQuery } from 'react-query';
-import {
-	ChangelogSchema,
-	ChangelogType,
-} from 'types/api/changelog/getChangelogByVersion';
+import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import {
 	LicensePlatform,
@@ -62,17 +59,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	);
 	const [org, setOrg] = useState<Organization[] | null>(null);
-	const [
-		currentChangelog,
-		setCurrentChangelog,
-	] = useState<ChangelogSchema | null>(null);
-	const [latestChangelog, setLatestChangelog] = useState<ChangelogSchema | null>(
-		null,
-	);
+	const [changelog, setChangelog] = useState<ChangelogSchema | null>(null);
 
-	const [changelogToShow, setChangelogToShow] = useState<ChangelogType | null>(
-		null,
-	);
+	const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
 
 	// if the user.id is not present, for migration older cases then we need to logout only for current logged in users!
 	useEffect(() => {
@@ -268,22 +257,15 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		[org],
 	);
 
-	const updateLatestChangelog = useCallback(
+	const updateChangelog = useCallback(
 		(payload: ChangelogSchema): void => {
-			setLatestChangelog(payload);
+			setChangelog(payload);
 		},
-		[setLatestChangelog],
+		[setChangelog],
 	);
 
-	const updateCurrentChangelog = useCallback(
-		(payload: ChangelogSchema): void => {
-			setCurrentChangelog(payload);
-		},
-		[setCurrentChangelog],
-	);
-
-	const toggleChangelogModal = useCallback((type?: ChangelogType) => {
-		setChangelogToShow((prev) => (!!prev || !type ? null : type));
+	const toggleChangelogModal = useCallback(() => {
+		setShowChangelogModal((prev) => !prev);
 	}, []);
 
 	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
@@ -329,16 +311,14 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			featureFlagsFetchError,
 			orgPreferencesFetchError,
 			activeLicense,
-			latestChangelog,
-			currentChangelog,
-			changelogToShow,
+			changelog,
+			showChangelogModal,
 			activeLicenseRefetch,
 			updateUser,
 			updateOrgPreferences,
 			updateUserPreferenceInContext,
 			updateOrg,
-			updateLatestChangelog,
-			updateCurrentChangelog,
+			updateChangelog,
 			toggleChangelogModal,
 			versionData: versionData?.payload || null,
 		}),
@@ -358,13 +338,11 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			orgPreferences,
 			activeLicenseRefetch,
 			orgPreferencesFetchError,
-			latestChangelog,
-			currentChangelog,
-			changelogToShow,
+			changelog,
+			showChangelogModal,
 			updateUserPreferenceInContext,
 			updateOrg,
-			updateLatestChangelog,
-			updateCurrentChangelog,
+			updateChangelog,
 			toggleChangelogModal,
 			user,
 			userFetchError,
