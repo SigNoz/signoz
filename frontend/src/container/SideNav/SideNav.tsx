@@ -557,25 +557,44 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				}),
 			);
 			const changelogKey = CHANGELOG_LABEL.toLowerCase().replace(' ', '-');
-			setHelpSupportDropdownMenuItems((prevState) => [
-				...prevState,
-				{
-					type: 'group',
-					label: "WHAT's NEW",
-				},
-				...dropdownItems,
-				{
-					key: changelogKey,
-					label: (
-						<div className="nav-item-label-container">
-							<span>{CHANGELOG_LABEL}</span>
-							<ArrowUpRight size={14} />
-						</div>
-					),
-					icon: <ScrollText size={14} />,
-					itemKey: changelogKey,
-				},
-			]);
+			setHelpSupportDropdownMenuItems((prevState) => {
+				if (dropdownItems.length === 0) {
+					return [
+						...prevState,
+						{
+							key: changelogKey,
+							label: (
+								<div className="nav-item-label-container">
+									<span>{CHANGELOG_LABEL}</span>
+									<ArrowUpRight size={14} />
+								</div>
+							),
+							icon: <ScrollText size={14} />,
+							itemKey: changelogKey,
+						},
+					];
+				}
+
+				return [
+					...prevState,
+					{
+						type: 'group',
+						label: "WHAT's NEW",
+					},
+					...dropdownItems,
+					{
+						key: changelogKey,
+						label: (
+							<div className="nav-item-label-container">
+								<span>{CHANGELOG_LABEL}</span>
+								<ArrowUpRight size={14} />
+							</div>
+						),
+						icon: <ScrollText size={14} />,
+						itemKey: changelogKey,
+					},
+				];
+			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
