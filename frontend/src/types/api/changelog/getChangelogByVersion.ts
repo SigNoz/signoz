@@ -34,6 +34,11 @@ export interface ChangelogSchema {
 	features: Feature[];
 }
 
+export enum ChangelogType {
+	LATEST = 'LATEST',
+	CURRENT = 'CURRENT',
+}
+
 export const SupportedImageTypes = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 
 export const SupportedVideoTypes = ['.mp4', '.webm'];
