@@ -1586,10 +1586,8 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 		groups[kv{r.Key, r.Value}] = append(groups[kv{r.Key, r.Value}], r.Name)
 	}
 
-	// Build the multiIf conditions for logs_v2 table
 	var conditions []string
 	for k, names := range groups {
-		// quote each name
 		quoted := make([]string, len(names))
 		for i, n := range names {
 			quoted[i] = fmt.Sprintf("'%s'", n)
@@ -1603,17 +1601,14 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 		conditions = append(conditions, cond)
 	}
 
-	// 3) assemble
 	multiIfExpr := fmt.Sprintf(
 		"multiIf(%s, %d)",
 		strings.Join(conditions, ", "),
 		params.DefaultTTLDays,
 	)
 
-	// Build the multiIf conditions for logs_v2_resource table
 	var resourceConditions []string
 	for k, names := range groups {
-		// quote each name
 		quoted := make([]string, len(names))
 		for i, n := range names {
 			quoted[i] = fmt.Sprintf("'%s'", n)
@@ -1627,7 +1622,6 @@ func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID stri
 		resourceConditions = append(resourceConditions, cond)
 	}
 
-	// 3) assemble
 	resourceMultiIfExpr := fmt.Sprintf(
 		"multiIf(%s, %d)",
 		strings.Join(resourceConditions, ", "),
@@ -1705,7 +1699,6 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 	}
 
 	if err == sql.ErrNoRows {
-		// No custom retention TTL set, return default
 		return &model.GetCustomRetentionTTLResponse{
 			DefaultTTLDays: 15,
 			ResourceRules:  []model.CustomRetentionRule{},
@@ -1713,7 +1706,6 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 		}, nil
 	}
 
-	// Parse the resource rules from JSON
 	var resourceRules []model.CustomRetentionRule
 	if customTTL.ResourceRules != "" {
 		if err := json.Unmarshal([]byte(customTTL.ResourceRules), &resourceRules); err != nil {
