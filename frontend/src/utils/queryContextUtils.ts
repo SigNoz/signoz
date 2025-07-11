@@ -911,8 +911,8 @@ export function getQueryContextAtCursor(
 				return {
 					tokenType: lastTokenBeforeCursor.type,
 					text: lastTokenBeforeCursor.text,
-					start: adjustedCursorIndex,
-					stop: adjustedCursorIndex,
+					start: cursorIndex,
+					stop: cursorIndex,
 					currentToken: lastTokenBeforeCursor.text,
 					isInKey: false,
 					isInNegation: false,

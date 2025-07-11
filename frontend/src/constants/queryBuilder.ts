@@ -170,7 +170,15 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	timeAggregation: MetricAggregateOperator.RATE,
 	spaceAggregation: MetricAggregateOperator.SUM,
 	filter: { expression: '' },
-	aggregations: [{ expression: 'count() ' }],
+	aggregations: [
+		{
+			metricName: '',
+			temporality: '',
+			timeAggregation: MetricAggregateOperator.COUNT,
+			spaceAggregation: MetricAggregateOperator.SUM,
+			reduceTo: 'avg',
+		},
+	],
 	havingExpression: { expression: '' },
 	functions: [],
 	filters: { items: [], op: 'AND' },
@@ -191,12 +199,14 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 const initialQueryBuilderFormLogsValues: IBuilderQuery = {
 	...initialQueryBuilderFormValues,
 	aggregateOperator: LogsAggregatorOperator.COUNT,
+	aggregations: [{ expression: 'count() ' }],
 	dataSource: DataSource.LOGS,
 };
 
 const initialQueryBuilderFormTracesValues: IBuilderQuery = {
 	...initialQueryBuilderFormValues,
 	aggregateOperator: TracesAggregatorOperator.COUNT,
+	aggregations: [{ expression: 'count() ' }],
 	dataSource: DataSource.TRACES,
 };
 

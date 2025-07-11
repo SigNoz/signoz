@@ -175,13 +175,13 @@ function QueryBuilderSearchV2(
 			searchValue,
 			query.dataSource,
 			query.aggregateOperator,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 		],
 		[
 			searchValue,
 			query.dataSource,
 			query.aggregateOperator,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 		],
 	);
 
@@ -206,7 +206,7 @@ function QueryBuilderSearchV2(
 		() => [
 			query.aggregateOperator,
 			query.dataSource,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 			currentFilterItem?.key?.key || '',
 			currentFilterItem?.key?.dataType,
 			currentFilterItem?.key?.type ?? '',
@@ -217,7 +217,7 @@ function QueryBuilderSearchV2(
 		[
 			query.aggregateOperator,
 			query.dataSource,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 			currentFilterItem?.key?.key,
 			currentFilterItem?.key?.dataType,
 			currentFilterItem?.key?.type,
@@ -237,19 +237,20 @@ function QueryBuilderSearchV2(
 	const isQueryEnabled = useMemo(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
 			return query.dataSource === DataSource.METRICS
-				? !!query.dataSource && !!query.aggregateAttribute.dataType
+				? !!query.dataSource && !!query.aggregateAttribute?.dataType
 				: true;
 		}
+
 		return false;
-	}, [currentState, query.aggregateAttribute.dataType, query.dataSource]);
+	}, [currentState, query.aggregateAttribute?.dataType, query.dataSource]);
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
 			searchText: searchValue?.split(' ')[0],
 			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator,
-			aggregateAttribute: query.aggregateAttribute.key,
-			tagType: query.aggregateAttribute.type ?? null,
+			aggregateOperator: query.aggregateOperator || '',
+			aggregateAttribute: query.aggregateAttribute?.key || '',
+			tagType: query.aggregateAttribute?.type ?? null,
 		},
 		{
 			queryKey: [searchParams],
@@ -277,9 +278,9 @@ function QueryBuilderSearchV2(
 		isFetching: isFetchingAttributeValues,
 	} = useGetAggregateValues(
 		{
-			aggregateOperator: query.aggregateOperator,
+			aggregateOperator: query.aggregateOperator || '',
 			dataSource: query.dataSource,
-			aggregateAttribute: query.aggregateAttribute.key,
+			aggregateAttribute: query.aggregateAttribute?.key || '',
 			attributeKey: currentFilterItem?.key?.key || '',
 			filterAttributeKeyDataType:
 				currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
@@ -992,7 +993,7 @@ function QueryBuilderSearchV2(
 					className,
 				)}
 				rootClassName={cx('query-builder-search', rootClassName)}
-				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
 				style={selectStyle}
 				onSearch={handleSearch}
 				onSelect={handleDropdownSelect}

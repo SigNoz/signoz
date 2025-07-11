@@ -527,3 +527,58 @@ export function getQueryLabelWithAggregation(
 
 	return labels;
 }
+
+export const adjustQueryForV5 = (currentQuery: Query): Query => {
+	if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
+		console.log('currentQuery', currentQuery);
+		const newQueryData = currentQuery.builder.queryData.map((query) => {
+			const aggregations = query.aggregations?.map((aggregation) => {
+				if (query.dataSource === DataSource.METRICS) {
+					const metricAggregation = aggregation as MetricAggregation;
+					return {
+						...aggregation,
+						metricName:
+							metricAggregation.metricName || query.aggregateAttribute?.key || '',
+						timeAggregation:
+							metricAggregation.timeAggregation || query.timeAggregation || '',
+						spaceAggregation:
+							metricAggregation.spaceAggregation || query.spaceAggregation || '',
+						reduceTo: metricAggregation.reduceTo || query.reduceTo || 'avg',
+					};
+				}
+				return aggregation;
+			});
+
+			console.log('aggregations', aggregations);
+
+			const {
+				aggregateAttribute,
+				aggregateOperator,
+				timeAggregation,
+				spaceAggregation,
+				reduceTo,
+				...retainedQuery
+			} = query;
+
+			const newAggregations =
+				query.dataSource === DataSource.METRICS
+					? (aggregations as MetricAggregation[])
+					: (aggregations as (TraceAggregation | LogAggregation)[]);
+
+			return {
+				...retainedQuery,
+				aggregations: newAggregations,
+			};
+		});
+
+		return {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: newQueryData,
+			},
+		};
+	}
+
+	return currentQuery;
+};
