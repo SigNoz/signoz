@@ -178,16 +178,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	]);
 
 	useEffect(() => {
+		let timer: ReturnType<typeof setTimeout>;
 		if (
 			isCloudUserVal &&
 			Boolean(latestVersion) &&
 			latestVersion !== seenChangelogVersion
 		) {
 			// Automatically open the changelog modal for cloud users after 1s, if they've not seen this version before.
-			setTimeout(() => {
+			timer = setTimeout(() => {
 				toggleChangelogModal();
 			}, 1000);
 		}
+
+		return (): void => {
+			clearInterval(timer);
+		};
 	}, [
 		isCloudUserVal,
 		latestVersion,
