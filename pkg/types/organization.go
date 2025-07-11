@@ -70,6 +70,18 @@ type TTLSetting struct {
 	OrgID          string `json:"-" bun:"org_id,notnull"`
 }
 
+type CustomRetentionTTLSetting struct {
+	bun.BaseModel `bun:"table:custom_retention_ttl_setting"`
+	Identifiable
+	TimeAuditable
+	TransactionID  string `bun:"transaction_id,type:text,notnull"`
+	TableName      string `bun:"table_name,type:text,notnull"`
+	DefaultTTLDays int    `bun:"default_ttl_days,notnull,default:15"`
+	ResourceRules  string `bun:"resource_rules,type:text"`
+	Status         string `bun:"status,type:text,notnull"`
+	OrgID          string `json:"-" bun:"org_id,notnull"`
+}
+
 type OrganizationStore interface {
 	Create(context.Context, *Organization) error
 	Get(context.Context, valuer.UUID) (*Organization, error)

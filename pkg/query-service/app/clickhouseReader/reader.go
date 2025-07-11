@@ -1551,6 +1551,216 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
+func (r *ClickHouseReader) SetCustomRetentionTTL(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, *model.ApiError) {
+	// Keep only latest 100 transactions/requests
+	r.deleteTtlTransactions(ctx, orgID, 100)
+
+	uuidWithHyphen := uuid.New()
+	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+
+	if params.Type != constants.LogsTTL {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("custom retention TTL only supported for logs")}
+	}
+
+	tableNames := []string{
+		r.logsDB + "." + r.logsLocalTableV2,
+		r.logsDB + "." + r.logsResourceLocalTableV2,
+	}
+
+	for _, tableName := range tableNames {
+		statusItem, err := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing custom_retention_ttl_status check sql query")}
+		}
+		if statusItem.Status == constants.StatusPending {
+			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("custom retention TTL is already running")}
+		}
+	}
+
+	type kv struct {
+		Key string
+		TTL int
+	}
+	groups := make(map[kv][]string)
+	for _, r := range params.ResourceRules {
+		groups[kv{r.Key, r.Value}] = append(groups[kv{r.Key, r.Value}], r.Name)
+	}
+
+	// Build the multiIf conditions for logs_v2 table
+	var conditions []string
+	for k, names := range groups {
+		// quote each name
+		quoted := make([]string, len(names))
+		for i, n := range names {
+			quoted[i] = fmt.Sprintf("'%s'", n)
+		}
+		cond := fmt.Sprintf(
+			"resources_string['%s'] IN (%s), %d",
+			k.Key,
+			strings.Join(quoted, ", "),
+			k.TTL,
+		)
+		conditions = append(conditions, cond)
+	}
+
+	// 3) assemble
+	multiIfExpr := fmt.Sprintf(
+		"multiIf(%s, %d)",
+		strings.Join(conditions, ", "),
+		params.DefaultTTLDays,
+	)
+
+	// Build the multiIf conditions for logs_v2_resource table
+	var resourceConditions []string
+	for k, names := range groups {
+		// quote each name
+		quoted := make([]string, len(names))
+		for i, n := range names {
+			quoted[i] = fmt.Sprintf("'%s'", n)
+		}
+		cond := fmt.Sprintf(
+			"JSONExtractString(labels, '%s') IN (%s), %d",
+			k.Key,
+			strings.Join(quoted, ", "),
+			k.TTL,
+		)
+		resourceConditions = append(resourceConditions, cond)
+	}
+
+	// 3) assemble
+	resourceMultiIfExpr := fmt.Sprintf(
+		"multiIf(%s, %d)",
+		strings.Join(resourceConditions, ", "),
+		params.DefaultTTLDays,
+	)
+
+	ttlPayload := map[string]string{
+		tableNames[0]: fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 MATERIALIZED %s`,
+			tableNames[0], r.cluster, multiIfExpr),
+		tableNames[1]: fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days UInt16 MATERIALIZED %s`,
+			tableNames[1], r.cluster, resourceMultiIfExpr),
+	}
+
+	resourceRulesJSON, err := json.Marshal(params.ResourceRules)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error marshaling resource rules: %v", err)}
+	}
+
+	// Execute the TTL modifications asynchronously
+	go func(ttlPayload map[string]string, resourceRulesJSON string, defaultTTLDays int) {
+		for tableName, query := range ttlPayload {
+			// Store the operation in the database
+			customTTL := types.CustomRetentionTTLSetting{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				TransactionID:  uuid,
+				TableName:      tableName,
+				DefaultTTLDays: defaultTTLDays,
+				ResourceRules:  resourceRulesJSON,
+				Status:         constants.StatusPending,
+				OrgID:          orgID,
+			}
+
+			// Use context.Background() for async operation
+			_, dbErr := r.sqlDB.BunDB().NewInsert().Model(&customTTL).Exec(context.Background())
+			if dbErr != nil {
+				zap.L().Error("error in inserting to custom_retention_ttl_settings table", zap.Error(dbErr))
+				return
+			}
+
+			zap.L().Info("Executing custom retention TTL request: ", zap.String("request", query))
+
+			if err := r.db.Exec(context.Background(), query); err != nil {
+				zap.L().Error("error while setting custom retention ttl", zap.Error(err))
+				r.updateCustomRetentionTTLStatus(context.Background(), orgID, tableName, constants.StatusFailed)
+				return
+			}
+
+			r.updateCustomRetentionTTLStatus(context.Background(), orgID, tableName, constants.StatusSuccess)
+		}
+	}(ttlPayload, string(resourceRulesJSON), params.DefaultTTLDays)
+
+	return &model.CustomRetentionTTLResponse{Message: "custom retention TTL has been successfully set up"}, nil
+}
+
+func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID string) (*model.GetCustomRetentionTTLResponse, *model.ApiError) {
+	// Get the latest custom retention TTL setting
+	customTTL := new(types.CustomRetentionTTLSetting)
+	err := r.sqlDB.BunDB().NewSelect().
+		Model(customTTL).
+		Where("org_id = ?", orgID).
+		Where("table_name = ?", r.logsDB+"."+r.logsLocalTableV2).
+		OrderExpr("created_at DESC").
+		Limit(1).
+		Scan(ctx)
+
+	if err != nil && err != sql.ErrNoRows {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing get custom retention ttl query")}
+	}
+
+	if err == sql.ErrNoRows {
+		// No custom retention TTL set, return default
+		return &model.GetCustomRetentionTTLResponse{
+			DefaultTTLDays: 15,
+			ResourceRules:  []model.CustomRetentionRule{},
+			Status:         constants.StatusFailed,
+		}, nil
+	}
+
+	// Parse the resource rules from JSON
+	var resourceRules []model.CustomRetentionRule
+	if customTTL.ResourceRules != "" {
+		if err := json.Unmarshal([]byte(customTTL.ResourceRules), &resourceRules); err != nil {
+			zap.L().Error("Error parsing resource rules", zap.Error(err))
+			resourceRules = []model.CustomRetentionRule{}
+		}
+	}
+
+	return &model.GetCustomRetentionTTLResponse{
+		DefaultTTLDays: customTTL.DefaultTTLDays,
+		ResourceRules:  resourceRules,
+		Status:         customTTL.Status,
+	}, nil
+}
+
+func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.CustomRetentionTTLSetting, *model.ApiError) {
+	ttl := new(types.CustomRetentionTTLSetting)
+	err := r.sqlDB.BunDB().NewSelect().
+		Model(ttl).
+		Where("table_name = ?", tableName).
+		Where("org_id = ?", orgID).
+		OrderExpr("created_at DESC").
+		Limit(1).
+		Scan(ctx)
+
+	if err != nil && err != sql.ErrNoRows {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return ttl, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing custom_retention_ttl_status check sql query")}
+	}
+	return ttl, nil
+}
+
+func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, orgID, tableName, status string) {
+	statusItem, err := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
+	if err == nil && statusItem != nil {
+		_, dbErr := r.sqlDB.BunDB().NewUpdate().
+			Model(new(types.CustomRetentionTTLSetting)).
+			Set("updated_at = ?", time.Now()).
+			Set("status = ?", status).
+			Where("id = ?", statusItem.ID.StringValue()).
+			Exec(ctx)
+		if dbErr != nil {
+			zap.L().Error("Error in processing custom_retention_ttl_status update sql query", zap.Error(dbErr))
+		}
+	}
+}
+
 // SetTTL sets the TTL for traces or metrics or logs tables.
 // This is an async API which creates goroutines to set TTL.
 // Status of TTL update is tracked with ttl_status table in sqlite db.
