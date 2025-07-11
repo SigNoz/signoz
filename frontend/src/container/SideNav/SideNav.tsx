@@ -23,7 +23,6 @@ import logEvent from 'api/common/logEvent';
 import { Logout } from 'api/utils';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import cx from 'classnames';
-import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
@@ -35,6 +34,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isArray } from 'lodash-es';
 import {
+	ArrowUpRight,
 	Check,
 	ChevronDown,
 	ChevronsDown,
@@ -45,6 +45,8 @@ import {
 	Logs,
 	MousePointerClick,
 	PackagePlus,
+	Plus,
+	ScrollText,
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
@@ -60,6 +62,7 @@ import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { ChangelogType } from 'types/api/changelog/getChangelogByVersion';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
@@ -74,7 +77,11 @@ import {
 	primaryMenuItems,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
-import { SidebarItem } from './sideNav.types';
+import {
+	CHANGELOG_LABEL,
+	DropdownSeparator,
+	SidebarItem,
+} from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 
 function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
@@ -125,7 +132,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		trialInfo,
 		isLoggedIn,
 		userPreferences,
-		changelog,
+		latestChangelog,
+		currentChangelog,
+		toggleChangelogModal,
 		updateUserPreferenceInContext,
 	} = useAppContext();
 
@@ -143,7 +152,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const [
 		helpSupportDropdownMenuItems,
 		setHelpSupportDropdownMenuItems,
-	] = useState<SidebarItem[]>(DefaultHelpSupportDropdownMenuItems);
+	] = useState<(SidebarItem | DropdownSeparator)[]>(
+		DefaultHelpSupportDropdownMenuItems,
+	);
 
 	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>([]);
 
@@ -157,7 +168,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const [hasScroll, setHasScroll] = useState(false);
 	const navTopSectionRef = useRef<HTMLDivElement>(null);
-	const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
 
 	const checkScroll = useCallback((): void => {
 		if (navTopSectionRef.current) {
@@ -511,7 +521,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	useEffect(() => {
 		if (!isAdmin) {
 			setHelpSupportDropdownMenuItems((prevState) =>
-				prevState.filter((item) => item.key !== 'invite-collaborators'),
+				prevState.filter(
+					(item) => !('key' in item) || item.key !== 'invite-collaborators',
+				),
 			);
 		}
 
@@ -527,8 +539,44 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			)
 		) {
 			setHelpSupportDropdownMenuItems((prevState) =>
-				prevState.filter((item) => item.key !== 'chat-support'),
+				prevState.filter((item) => !('key' in item) || item.key !== 'chat-support'),
 			);
+		}
+
+		if (currentChangelog) {
+			const firstTwoFeatures = currentChangelog.features.slice(0, 2);
+			const dropdownItems: SidebarItem[] = firstTwoFeatures.map(
+				(feature, idx) => ({
+					key: `changelog-${idx + 1}`,
+					label: (
+						<div className="nav-item-label-container">
+							<span>{feature.title}</span>
+						</div>
+					),
+					icon: <Plus size={14} />,
+					itemKey: `changelog-${idx + 1}`,
+				}),
+			);
+			const changelogKey = CHANGELOG_LABEL.toLowerCase().replace(' ', '-');
+			setHelpSupportDropdownMenuItems((prevState) => [
+				...prevState,
+				{
+					type: 'group',
+					label: "WHAT's NEW",
+				},
+				...dropdownItems,
+				{
+					key: changelogKey,
+					label: (
+						<div className="nav-item-label-container">
+							<span>{CHANGELOG_LABEL}</span>
+							<ArrowUpRight size={14} />
+						</div>
+					),
+					icon: <ScrollText size={14} />,
+					itemKey: changelogKey,
+				},
+			]);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
@@ -537,6 +585,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isPremiumSupportEnabled,
 		isCloudUser,
 		trialInfo,
+		currentChangelog,
 	]);
 
 	const [isCurrentOrgSettings] = useComponentPermission(
@@ -668,34 +717,41 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const handleHelpSupportMenuItemClick = (info: SidebarItem): void => {
 		const item = helpSupportDropdownMenuItems.find(
-			(item) => item.key === info.key,
+			(item) => !('type' in item) && item.key === info.key,
 		);
 
-		if (item?.isExternal && item?.url) {
+		if (item && !('type' in item) && item.isExternal && item.url) {
 			window.open(item.url, '_blank');
 		}
 
-		logEvent('Help Popover: Item clicked', {
-			menuRoute: item?.key,
-			menuLabel: item?.label,
-		});
+		if (item && !('type' in item)) {
+			logEvent('Help Popover: Item clicked', {
+				menuRoute: item.key,
+				menuLabel: item.label,
+			});
 
-		switch (item?.key) {
-			case ROUTES.SHORTCUTS:
-				history.push(ROUTES.SHORTCUTS);
-				break;
-			case 'invite-collaborators':
-				history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
-				break;
-			case 'chat-support':
-				if (window.pylon) {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
-					window.Pylon('show');
-				}
-				break;
-			default:
-				break;
+			switch (item.key) {
+				case ROUTES.SHORTCUTS:
+					history.push(ROUTES.SHORTCUTS);
+					break;
+				case 'invite-collaborators':
+					history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+					break;
+				case 'chat-support':
+					if (window.pylon) {
+						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+						// @ts-ignore
+						window.Pylon('show');
+					}
+					break;
+				case 'changelog-1':
+				case 'changelog-2':
+				case CHANGELOG_LABEL.toLowerCase().replace(' ', '-'):
+					toggleChangelogModal(ChangelogType.CURRENT);
+					break;
+				default:
+					break;
+			}
 		}
 	};
 
@@ -734,12 +790,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	};
 
 	const onClickVersionHandler = useCallback((): void => {
-		if (isCloudUser || !changelog) {
+		if (isCloudUser || !latestChangelog) {
 			return;
 		}
 
-		setShowChangelogModal(true);
-	}, [isCloudUser, changelog]);
+		toggleChangelogModal(ChangelogType.LATEST);
+	}, [isCloudUser, latestChangelog, toggleChangelogModal]);
 
 	useEffect(() => {
 		if (!isLatestVersion && !isCloudUser) {
@@ -780,7 +836,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										isCommunityEnterpriseUser && 'community-enterprise-user',
 										isCloudUser && 'cloud-user',
 										showVersionUpdateNotification &&
-											changelog &&
+											latestChangelog &&
 											'version-update-notification',
 									)}
 								>
@@ -793,7 +849,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 											arrow={false}
 											overlay={
 												showVersionUpdateNotification &&
-												changelog && (
+												latestChangelog && (
 													<div className="version-update-notification-tooltip">
 														<div className="version-update-notification-tooltip-title">
 															There&apos;s a new version available.
@@ -808,13 +864,13 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										>
 											<div className="version-container">
 												<span
-													className={cx('version', changelog && 'version-clickable')}
+													className={cx('version', latestChangelog && 'version-clickable')}
 													onClick={onClickVersionHandler}
 												>
 													{currentVersion}
 												</span>
 
-												{showVersionUpdateNotification && changelog && (
+												{showVersionUpdateNotification && latestChangelog && (
 													<span className="version-update-notification-dot-icon" />
 												)}
 											</div>
@@ -1045,9 +1101,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					</div>
 				</div>
 			</Modal>
-			{showChangelogModal && (
-				<ChangelogModal onClose={(): void => setShowChangelogModal(false)} />
-			)}
 		</div>
 	);
 }
