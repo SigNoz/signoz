@@ -70,7 +70,7 @@ function HostMetricLogsDetailedView({
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
-							query={query}
+							query={query as IBuilderQuery}
 							onChange={(value): void => handleChangeLogFilters(value, VIEWS.LOGS)}
 							disableNavigationShortcuts
 						/>

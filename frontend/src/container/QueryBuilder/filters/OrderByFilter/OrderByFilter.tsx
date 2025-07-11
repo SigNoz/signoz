@@ -28,13 +28,13 @@ export function OrderByFilter({
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
-			aggregateAttribute: query.aggregateAttribute.key,
+			aggregateAttribute: query.aggregateAttribute?.key || '',
 			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator,
+			aggregateOperator: query.aggregateOperator || '',
 			searchText: debouncedSearchText,
 		},
 		{
-			enabled: !!query.aggregateAttribute.key || isListViewPanel,
+			enabled: !!query.aggregateAttribute?.key || isListViewPanel,
 			keepPreviousData: true,
 		},
 	);
@@ -71,7 +71,7 @@ export function OrderByFilter({
 	]);
 
 	const isDisabledSelect =
-		!query.aggregateAttribute.key ||
+		!query.aggregateAttribute?.key ||
 		query.aggregateOperator === MetricAggregateOperator.NOOP;
 
 	const isMetricsDataSource = query.dataSource === DataSource.METRICS;

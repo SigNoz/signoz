@@ -43,7 +43,7 @@ export const omitIdFromQuery = (query: Query | null): any => ({
 	builder: {
 		...query?.builder,
 		queryData: query?.builder.queryData.map((queryData) => {
-			const { id, ...rest } = queryData.aggregateAttribute;
+			const { id, ...rest } = queryData.aggregateAttribute || {};
 			const newAggregateAttribute = rest;
 			const newGroupByAttributes = queryData.groupBy.map((groupByAttribute) => {
 				const { id, ...rest } = groupByAttribute;

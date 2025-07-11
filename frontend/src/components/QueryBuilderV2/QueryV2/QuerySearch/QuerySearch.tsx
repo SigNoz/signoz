@@ -163,7 +163,7 @@ function QuerySearch({
 		const response = await getKeySuggestions({
 			signal: dataSource,
 			searchText: searchText || '',
-			metricName: queryData.aggregateAttribute.key ?? undefined,
+			metricName: queryData.aggregateAttribute?.key ?? undefined,
 		});
 
 		if (response.data.data) {
@@ -184,7 +184,7 @@ function QuerySearch({
 		setKeySuggestions([]);
 		fetchKeySuggestions();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dataSource, queryData.aggregateAttribute.key]);
+	}, [dataSource, queryData.aggregateAttribute?.key]);
 
 	// Add a state for tracking editing mode
 	const [editingMode, setEditingMode] = useState<
@@ -523,7 +523,7 @@ function QuerySearch({
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	function autoSuggestions(context: CompletionContext): CompletionResult | null {
 		// This matches words before the cursor position
-		const word = context.matchBefore(/[a-zA-Z0-9_.:/?&=#%\-\[\]]*/);
+		const word = context.matchBefore(/[a-zA-Z0-9_.:/?&=#%\-[\]]*/);
 		if (word?.from === word?.to && !context.explicit) return null;
 
 		// Get the query context at the cursor position

@@ -48,7 +48,7 @@ function HostsListControls({
 		<div className="hosts-list-controls">
 			<div className="hosts-list-controls-left">
 				<QueryBuilderSearch
-					query={query}
+					query={query as IBuilderQuery}
 					onChange={handleChangeTagFilters}
 					isInfraMonitoring
 					disableNavigationShortcuts

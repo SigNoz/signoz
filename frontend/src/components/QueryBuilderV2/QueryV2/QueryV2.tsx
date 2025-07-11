@@ -1,6 +1,6 @@
 import { Dropdown } from 'antd';
 import cx from 'classnames';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import QBEntityOptions from 'container/QueryBuilder/components/QBEntityOptions/QBEntityOptions';
 import { QueryProps } from 'container/QueryBuilder/components/Query/Query.interfaces';
@@ -170,7 +170,11 @@ export const QueryV2 = memo(function QueryV2({
 						<div className="qb-search-container">
 							{dataSource === DataSource.METRICS && (
 								<div className="metrics-select-container">
-									<MetricsSelect query={query} index={index} version="v4" />
+									<MetricsSelect
+										query={query}
+										index={index}
+										version={ENTITY_VERSION_V5}
+									/>
 								</div>
 							)}
 

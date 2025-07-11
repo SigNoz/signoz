@@ -166,8 +166,8 @@ const addOperatorFormulaColumns = (
 	if (queryType === EQueryType.QUERY_BUILDER) {
 		const currentQueryData = query as IBuilderQuery;
 		let operatorLabel = `${currentQueryData.aggregateOperator}`;
-		if (currentQueryData.aggregateAttribute.key) {
-			operatorLabel += `(${currentQueryData.aggregateAttribute.key})`;
+		if (currentQueryData.aggregateAttribute?.key) {
+			operatorLabel += `(${currentQueryData.aggregateAttribute?.key})`;
 		}
 
 		if (currentQueryData.legend) {

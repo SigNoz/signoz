@@ -32,6 +32,7 @@ import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5'
  * Validates if metric name is available for METRICS data source
  */
 function validateMetricNameForMetricsDataSource(query: Query): boolean {
+	console.log('validateMetricNameForMetricsDataSource', query);
 	if (query.queryType !== 'builder') {
 		return true; // Non-builder queries don't need this validation
 	}
@@ -50,7 +51,8 @@ function validateMetricNameForMetricsDataSource(query: Query): boolean {
 
 	// Check if ALL METRICS queries are missing metric names
 	const allMetricsQueriesMissingNames = metricsQueries.every((queryItem) => {
-		const metricName = queryItem.aggregateAttribute?.key;
+		const metricName =
+			queryItem.aggregations?.[0]?.metricName || queryItem.aggregateAttribute?.key;
 		return !metricName || metricName.trim() === '';
 	});
 

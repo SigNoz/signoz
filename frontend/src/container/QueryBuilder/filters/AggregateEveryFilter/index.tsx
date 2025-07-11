@@ -22,7 +22,7 @@ function AggregateEveryFilter({
 	};
 
 	const isDisabled =
-		(isMetricsDataSource && !query.aggregateAttribute.key) || disabled;
+		(isMetricsDataSource && !query.aggregateAttribute?.key) || disabled;
 
 	return (
 		<InputNumber

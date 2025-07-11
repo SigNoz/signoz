@@ -32,6 +32,9 @@ function ResourceAttributesFilter(): JSX.Element | null {
 						aggregateOperator: 'noop',
 						aggregateAttribute: {
 							...initialQueriesMap.traces.builder.queryData[0].aggregateAttribute,
+							key:
+								initialQueriesMap.traces.builder.queryData[0].aggregateAttribute?.key ||
+								'',
 							type: 'resource',
 						},
 						queryName: '',

@@ -10,6 +10,7 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { Info } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { MetricAggregation } from 'types/api/v5/queryRange';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
 
@@ -37,21 +38,27 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 		entityVersion: version,
 	});
 
+	// this function is only relevant for metrics and now operators are part of aggregations
+	const queryAggregation = useMemo(
+		() => query.aggregations?.[0] as MetricAggregation,
+		[query.aggregations],
+	);
+
 	const isHistogram = useMemo(
-		() => query.aggregateAttribute.type === ATTRIBUTE_TYPES.HISTOGRAM,
-		[query.aggregateAttribute.type],
+		() => query.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM,
+		[query.aggregateAttribute?.type],
 	);
 
 	useEffect(() => {
 		setAggregationOptions([
 			{
-				func: query.spaceAggregation || 'count',
-				arg: query.aggregateAttribute.key || '',
+				func: queryAggregation.spaceAggregation || 'count',
+				arg: queryAggregation.metricName || '',
 			},
 		]);
 	}, [
-		query.spaceAggregation,
-		query.aggregateAttribute.key,
+		queryAggregation.spaceAggregation,
+		queryAggregation.metricName,
 		setAggregationOptions,
 		query,
 	]);
@@ -80,7 +87,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	}, [panelType]);
 
 	const disableOperatorSelector =
-		!query?.aggregateAttribute.key || query?.aggregateAttribute.key === '';
+		!queryAggregation.metricName || queryAggregation.metricName === '';
 
 	return (
 		<div
@@ -101,7 +108,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 								</div>
 								<div className="metrics-aggregation-section-content-item-value">
 									<OperatorsSelect
-										value={query.aggregateOperator}
+										value={queryAggregation.timeAggregation || ''}
 										onChange={handleChangeOperator}
 										operators={operators}
 										className="metrics-operators-select"
@@ -140,11 +147,11 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 								<div className="metrics-aggregation-section-content-item-value">
 									<SpaceAggregationOptions
 										panelType={panelType}
-										key={`${panelType}${query.spaceAggregation}${query.timeAggregation}`}
+										key={`${panelType}${queryAggregation.spaceAggregation}${queryAggregation.timeAggregation}`}
 										aggregatorAttributeType={
-											query?.aggregateAttribute.type as ATTRIBUTE_TYPES
+											query?.aggregateAttribute?.type as ATTRIBUTE_TYPES
 										}
-										selectedValue={query.spaceAggregation}
+										selectedValue={queryAggregation.spaceAggregation || ''}
 										disabled={disableOperatorSelector}
 										onSelect={handleSpaceAggregationChange}
 										operators={spaceAggregationOptions}
@@ -158,7 +165,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 
 								<div className="metrics-aggregation-section-content-item-value group-by-filter-container">
 									<GroupByFilter
-										disabled={!query.aggregateAttribute.key}
+										disabled={!queryAggregation.metricName}
 										query={query}
 										onChange={handleChangeGroupByKeys}
 									/>
@@ -176,11 +183,11 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 							<div className="metrics-aggregation-section-content-item-value">
 								<SpaceAggregationOptions
 									panelType={panelType}
-									key={`${panelType}${query.spaceAggregation}${query.timeAggregation}`}
+									key={`${panelType}${queryAggregation.spaceAggregation}${queryAggregation.timeAggregation}`}
 									aggregatorAttributeType={
-										query?.aggregateAttribute.type as ATTRIBUTE_TYPES
+										query?.aggregateAttribute?.type as ATTRIBUTE_TYPES
 									}
-									selectedValue={query.spaceAggregation}
+									selectedValue={queryAggregation.spaceAggregation || ''}
 									disabled={disableOperatorSelector}
 									onSelect={handleSpaceAggregationChange}
 									operators={spaceAggregationOptions}
@@ -194,7 +201,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 
 							<div className="metrics-aggregation-section-content-item-value group-by-filter-container">
 								<GroupByFilter
-									disabled={!query.aggregateAttribute.key}
+									disabled={!queryAggregation.metricName}
 									query={query}
 									onChange={handleChangeGroupByKeys}
 								/>
