@@ -71,8 +71,13 @@ function BodyTitleRenderer({
 		onClick: onClickHandler,
 	};
 
+	const handleTextSelection = (e: React.MouseEvent): void => {
+		// Prevent tree node click when user is trying to select text
+		e.stopPropagation();
+	};
+
 	return (
-		<TitleWrapper>
+		<TitleWrapper onMouseDown={handleTextSelection}>
 			<Dropdown menu={menu} trigger={['click']}>
 				<SettingOutlined style={{ marginRight: 8 }} className="hover-reveal" />
 			</Dropdown>
