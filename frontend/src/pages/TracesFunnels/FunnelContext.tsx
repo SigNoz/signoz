@@ -10,7 +10,10 @@ import { normalizeSteps } from 'hooks/TracesFunnels/useFunnelConfiguration';
 import { useValidateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { isEqual } from 'lodash-es';
-import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
+import {
+	createInitialStepsData,
+	createSingleStepData,
+} from 'pages/TracesFunnelDetails/constants';
 import {
 	createContext,
 	Dispatch,
@@ -68,9 +71,11 @@ const FunnelContext = createContext<FunnelContextType | undefined>(undefined);
 export function FunnelProvider({
 	children,
 	funnelId,
+	hasSingleStep = false,
 }: {
 	children: React.ReactNode;
 	funnelId: string;
+	hasSingleStep?: boolean;
 }): JSX.Element {
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -89,7 +94,13 @@ export function FunnelProvider({
 		funnelId,
 	]);
 	const funnel = data?.payload;
-	const initialSteps = funnel?.steps?.length ? funnel.steps : initialStepsData;
+
+	const defaultSteps = useMemo(
+		() => (hasSingleStep ? createSingleStepData() : createInitialStepsData()),
+		[hasSingleStep],
+	);
+
+	const initialSteps = funnel?.steps?.length ? funnel.steps : defaultSteps;
 	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
 	const [triggerSave, setTriggerSave] = useState<boolean>(false);
 	const [isUpdatingFunnel, setIsUpdatingFunnel] = useState<boolean>(false);
@@ -155,7 +166,7 @@ export function FunnelProvider({
 		setSteps((prev) => [
 			...prev,
 			{
-				...initialStepsData[0],
+				...createInitialStepsData()[0],
 				id: v4(),
 				step_order: prev.length + 1,
 			},
@@ -295,6 +306,10 @@ export function FunnelProvider({
 		<FunnelContext.Provider value={value}>{children}</FunnelContext.Provider>
 	);
 }
+
+FunnelProvider.defaultProps = {
+	hasSingleStep: false,
+};
 
 export function useFunnelContext(): FunnelContextType {
 	const context = useContext(FunnelContext);
