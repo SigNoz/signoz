@@ -1,3 +1,4 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { LogViewMode } from 'container/LogsTable';
 import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
@@ -7,10 +8,7 @@ import {
 	PreferenceMode,
 	Preferences,
 } from 'providers/preferences/types';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';
 
@@ -65,11 +63,11 @@ describe('logsUpdaterConfig', () => {
 			setSavedViewPreferences,
 		);
 
-		const newColumns: BaseAutocompleteData[] = [
+		const newColumns: TelemetryFieldKey[] = [
 			{
-				key: 'new-column',
-				type: 'tag',
-				dataType: DataTypes.String,
+				name: 'new-column',
+				fieldContext: '',
+				fieldDataType: DataTypes.String,
 				isColumn: true,
 			},
 		];
@@ -114,11 +112,11 @@ describe('logsUpdaterConfig', () => {
 			setSavedViewPreferences,
 		);
 
-		const newColumns: BaseAutocompleteData[] = [
+		const newColumns: TelemetryFieldKey[] = [
 			{
-				key: 'new-column',
-				type: 'tag',
-				dataType: DataTypes.String,
+				name: 'new-column',
+				fieldContext: '',
+				fieldDataType: DataTypes.String,
 				isColumn: true,
 			},
 		];

@@ -14,6 +14,7 @@ import {
 import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
 import { useGraphClickToShowButton } from 'container/GridCardLayout/useGraphClickToShowButton';
 import useNavigateToExplorerPages from 'container/GridCardLayout/useNavigateToExplorerPages';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useNotifications } from 'hooks/useNotifications';
@@ -112,6 +113,7 @@ function StatusCodeBarCharts({
 	});
 
 	const navigateToExplorer = useNavigateToExplorer();
+	const { currentQuery } = useQueryBuilder();
 
 	const navigateToExplorerPages = useNavigateToExplorerPages();
 	const { notifications } = useNotifications();
@@ -204,6 +206,7 @@ function StatusCodeBarCharts({
 				customSeries: getCustomSeries,
 				onDragSelect,
 				colorMapping,
+				query: currentQuery,
 			}),
 		[
 			minTime,
@@ -217,6 +220,7 @@ function StatusCodeBarCharts({
 			getCustomSeries,
 			onDragSelect,
 			colorMapping,
+			currentQuery,
 		],
 	);
 

@@ -7,10 +7,6 @@ import { SelectOption } from 'types/common/select';
 
 export const metricAggregateOperatorOptions: SelectOption<string, string>[] = [
 	{
-		value: MetricAggregateOperator.NOOP,
-		label: 'NOOP',
-	},
-	{
 		value: MetricAggregateOperator.COUNT,
 		label: 'Count',
 	},
@@ -131,10 +127,6 @@ export const metricAggregateOperatorOptions: SelectOption<string, string>[] = [
 
 export const tracesAggregateOperatorOptions: SelectOption<string, string>[] = [
 	{
-		value: TracesAggregatorOperator.NOOP,
-		label: 'NOOP',
-	},
-	{
 		value: TracesAggregatorOperator.COUNT,
 		label: 'Count',
 	},
@@ -217,10 +209,6 @@ export const tracesAggregateOperatorOptions: SelectOption<string, string>[] = [
 ];
 
 export const logsAggregateOperatorOptions: SelectOption<string, string>[] = [
-	{
-		value: LogsAggregatorOperator.NOOP,
-		label: 'NOOP',
-	},
 	{
 		value: LogsAggregatorOperator.COUNT,
 		label: 'Count',
