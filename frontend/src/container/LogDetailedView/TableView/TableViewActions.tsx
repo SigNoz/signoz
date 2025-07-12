@@ -53,7 +53,12 @@ const convert = new Convert();
 
 // Memoized Tree Component
 const MemoizedTree = React.memo<{ treeData: any[] }>(({ treeData }) => (
-	<Tree defaultExpandAll showLine treeData={treeData} />
+	<Tree
+		defaultExpandAll
+		showLine
+		treeData={treeData}
+		className="selectable-tree"
+	/>
 ));
 
 MemoizedTree.displayName = 'MemoizedTree';

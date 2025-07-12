@@ -146,41 +146,70 @@ func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFie
 	// So we handle the data type collisions here
 	switch key.FieldDataType {
 	case FieldDataTypeString:
-		switch value.(type) {
+		switch v := value.(type) {
 		case float64:
 			// try to convert the string value to to number
-			tblFieldName = fmt.Sprintf(`toFloat64OrNull(%s)`, tblFieldName)
+			tblFieldName = castFloat(tblFieldName)
 		case []any:
-			areFloats := true
-			for _, v := range value.([]any) {
-				if _, ok := v.(float64); !ok {
-					areFloats = false
-					break
-				}
-			}
-			if areFloats {
-				tblFieldName = fmt.Sprintf(`toFloat64OrNull(%s)`, tblFieldName)
+			if allFloats(v) {
+				tblFieldName = castFloat(tblFieldName)
+			} else if hasString(v) {
+				_, value = castString(tblFieldName), toStrings(v)
 			}
 		case bool:
 			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
-			value = fmt.Sprintf("%t", value)
-		case string:
-			// nothing to do
+			value = fmt.Sprintf("%t", v)
 		}
+
 	case FieldDataTypeFloat64, FieldDataTypeInt64, FieldDataTypeNumber:
-		switch value.(type) {
+		switch v := value.(type) {
 		case string:
-			// try to convert the string value to to number
-			tblFieldName = fmt.Sprintf(`toString(%s)`, tblFieldName)
-		case float64:
-			// nothing to do
+			// try to convert the number attribute to string
+			tblFieldName = castString(tblFieldName) // numeric col vs string literal
+		case []any:
+			if hasString(v) {
+				tblFieldName, value = castString(tblFieldName), toStrings(v)
+			}
 		}
+
 	case FieldDataTypeBool:
-		switch value.(type) {
+		switch v := value.(type) {
 		case string:
-			// try to convert the string value to to number
-			tblFieldName = fmt.Sprintf(`toString(%s)`, tblFieldName)
+			tblFieldName = castString(tblFieldName)
+		case []any:
+			if hasString(v) {
+				tblFieldName, value = castString(tblFieldName), toStrings(v)
+			}
 		}
 	}
 	return tblFieldName, value
+}
+
+func castFloat(col string) string  { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
+func castString(col string) string { return fmt.Sprintf("toString(%s)", col) }
+
+func allFloats(in []any) bool {
+	for _, x := range in {
+		if _, ok := x.(float64); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func hasString(in []any) bool {
+	for _, x := range in {
+		if _, ok := x.(string); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func toStrings(in []any) []any {
+	out := make([]any, len(in))
+	for i, x := range in {
+		out[i] = fmt.Sprintf("%v", x)
+	}
+	return out
 }

@@ -129,13 +129,6 @@ func (c *conditionBuilder) conditionFor(
 	// in the query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		// if the field is intrinsic, it always exists
-		if slices.Contains(maps.Keys(IntrinsicFields), tblFieldName) ||
-			slices.Contains(maps.Keys(CalculatedFields), tblFieldName) ||
-			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), tblFieldName) ||
-			slices.Contains(maps.Keys(CalculatedFieldsDeprecated), tblFieldName) {
-			return "true", nil
-		}
 
 		var value any
 		switch column.Type {
@@ -251,7 +244,7 @@ func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.Telemetry
 	case SpanSearchScopeRoot:
 		return "parent_span_id = ''", nil
 	case SpanSearchScopeEntryPoint:
-		return fmt.Sprintf("((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
+		return fmt.Sprintf("((name, resource_string_service$$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
 			DBName, TopLevelOperationsTableName), nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid span search scope: %s", key.Name)

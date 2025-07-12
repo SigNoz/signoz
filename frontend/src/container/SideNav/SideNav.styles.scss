@@ -829,6 +829,20 @@
 	}
 }
 
+.nav-item-label-container {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+
+	& span {
+		display: block;
+		max-width: 170px;
+		white-space: nowrap; /* Prevents line breaks */
+		overflow: hidden; /* Hides overflowing content */
+		text-overflow: ellipsis;
+	}
+}
+
 .nav-dropdown-overlay {
 	.ant-dropdown-menu {
 		margin-left: 8px !important;
