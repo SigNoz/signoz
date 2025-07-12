@@ -219,21 +219,6 @@ function PipelineExpandView({
 			moveRow: moveProcessorRow,
 		} as React.HTMLAttributes<unknown>);
 
-	const processorData = useMemo(
-		() =>
-			expandedPipelineData?.config &&
-			expandedPipelineData?.config.map(
-				(item: ProcessorData): ProcessorData => ({
-					id: item.id,
-					orderId: item.orderId,
-					type: item.type,
-					name: item.name,
-					enabled: item.enabled,
-				}),
-			),
-		[expandedPipelineData],
-	);
-
 	const getLocales = (): TableLocale => ({
 		emptyText: <span />,
 	});
@@ -248,7 +233,7 @@ function PipelineExpandView({
 				rowKey="id"
 				size="small"
 				components={tableComponents}
-				dataSource={processorData}
+				dataSource={expandedPipelineData?.config}
 				pagination={false}
 				onRow={onRowHandler}
 				footer={footer}

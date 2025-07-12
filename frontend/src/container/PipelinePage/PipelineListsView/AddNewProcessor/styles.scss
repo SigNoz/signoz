@@ -24,3 +24,7 @@
 	flex-grow: 1;
 	margin-left: 2.5rem;
 }
+
+.enable-flattening-switch .ant-form-item-control-input {
+	min-height: unset !important;
+}
