@@ -156,7 +156,7 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			value:             []any{float64(500), "TIMEOUT", float64(503)},
 			tblFieldName:      "attribute_string_error$$codes",
 			expectedFieldName: "attribute_string_error$$codes",
-			expectedValue:     []any{float64(500), "TIMEOUT", float64(503)},
+			expectedValue:     []any{"500", "TIMEOUT", "503"},
 		},
 
 		// numbers

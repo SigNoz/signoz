@@ -153,6 +153,8 @@ func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFie
 		case []any:
 			if allFloats(v) {
 				tblFieldName = castFloat(tblFieldName)
+			} else if hasString(v) {
+				_, value = castString(tblFieldName), toStrings(v)
 			}
 		case bool:
 			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
