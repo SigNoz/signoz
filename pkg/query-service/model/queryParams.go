@@ -404,6 +404,28 @@ type TTLParams struct {
 	DelDuration           int64  // Seconds after which data will be deleted.
 }
 
+type CustomRetentionTTLParams struct {
+	Type           string                `json:"type"`
+	DefaultTTLDays int                   `json:"defaultTTLDays"`
+	ResourceRules  []CustomRetentionRule `json:"resourceRules"`
+}
+
+type CustomRetentionRule struct {
+	Key   string `json:"key"`
+	Name  string `json:"name"`
+	Value int    `json:"value"`
+}
+
+type CustomRetentionTTLResponse struct {
+	Message string `json:"message"`
+}
+
+type GetCustomRetentionTTLResponse struct {
+	DefaultTTLDays int                   `json:"defaultTTLDays"`
+	ResourceRules  []CustomRetentionRule `json:"resourceRules"`
+	Status         string                `json:"status"`
+}
+
 type GetTTLParams struct {
 	Type string
 }

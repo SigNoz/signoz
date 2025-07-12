@@ -472,6 +472,23 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	return &model.GetTTLParams{Type: typeTTL}, nil
 }
 
+func validateCustomRetentionTTLParams(params *model.CustomRetentionTTLParams) error {
+	if params.DefaultTTLDays <= 0 {
+		return fmt.Errorf("default TTL days must be greater than 0")
+	}
+
+	for _, rule := range params.ResourceRules {
+		if rule.Key == "" || rule.Name == "" {
+			return fmt.Errorf("resource rule key and name cannot be empty")
+		}
+		if rule.Value <= 0 {
+			return fmt.Errorf("resource rule TTL value must be greater than 0")
+		}
+	}
+
+	return nil
+}
+
 func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequest, error) {
 	var req v3.AggregateAttributeRequest
 

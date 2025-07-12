@@ -541,6 +541,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/custom_retention_ttl", am.AdminAccess(aH.setCustomRetentionTTL)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/custom_retention_ttl", am.ViewAccess(aH.getCustomRetentionTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.Signoz.Handlers.Apdex.Set)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.Signoz.Handlers.Apdex.Get)).Methods(http.MethodGet)
 
@@ -1867,6 +1869,56 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 
 	aH.WriteJSON(w, r, result)
 
+}
+
+func (aH *APIHandler) setCustomRetentionTTL(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
+		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+		return
+	}
+
+	var params model.CustomRetentionTTLParams
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	// Validate params
+	if err := validateCustomRetentionTTLParams(&params); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	// Context is not used here as TTL is long duration DB operation
+	result, apiErr := aH.reader.SetCustomRetentionTTL(context.Background(), claims.OrgID, &params)
+	if apiErr != nil {
+		if apiErr.Typ == model.ErrorConflict {
+			aH.HandleError(w, apiErr.Err, http.StatusConflict)
+		} else {
+			aH.HandleError(w, apiErr.Err, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
+}
+
+func (aH *APIHandler) getCustomRetentionTTL(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, errv2 := authtypes.ClaimsFromContext(ctx)
+	if errv2 != nil {
+		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+		return
+	}
+
+	result, apiErr := aH.reader.GetCustomRetentionTTL(r.Context(), claims.OrgID)
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
 }
 
 func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
