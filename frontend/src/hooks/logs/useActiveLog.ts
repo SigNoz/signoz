@@ -2,6 +2,7 @@ import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { OPERATORS, QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { MetricsType } from 'container/MetricsApplication/constant';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
@@ -82,6 +83,7 @@ export const useActiveLog = (): UseActiveLog => {
 			operator: string,
 			isJSON?: boolean,
 			dataType?: DataTypes,
+			fieldType?: MetricsType | undefined,
 		): Promise<void> => {
 			try {
 				const keysAutocompleteResponse = await queryClient.fetchQuery(
@@ -104,6 +106,7 @@ export const useActiveLog = (): UseActiveLog => {
 					fieldKey,
 					isJSON,
 					dataType,
+					fieldType,
 				);
 
 				const currentOperator = getOperatorValue(operator);
